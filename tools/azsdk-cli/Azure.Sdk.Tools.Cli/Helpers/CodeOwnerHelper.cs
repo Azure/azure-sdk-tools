@@ -305,7 +305,6 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 .Trim('-')
                 .ToLowerInvariant();
         }
-        
     }
 
     // Data models - moved from CodeOwnerTools for better organization

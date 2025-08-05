@@ -17,6 +17,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         private Mock<IGitHubService> mockGitHubService;
         private Mock<IOutputService> mockOutputService;
         private Mock<ILogger<CodeownerTools>> mockLogger;
+        private Mock<ITypeSpecHelper> mockTypeSpecHelper;
         private Mock<ICodeOwnerHelper> mockCodeOwnerHelper;
         private Mock<ICodeOwnerValidatorHelper> mockCodeOwnerValidator;
         private Mock<ILabelHelper> mockLabelHelper;
@@ -27,6 +28,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             mockGitHubService = new Mock<IGitHubService>();
             mockOutputService = new Mock<IOutputService>();
             mockLogger = new Mock<ILogger<CodeownerTools>>();
+            mockTypeSpecHelper = new Mock<ITypeSpecHelper>();
             mockCodeOwnerHelper = new Mock<ICodeOwnerHelper>();
             mockCodeOwnerValidator = new Mock<ICodeOwnerValidatorHelper>();
             mockLabelHelper = new Mock<ILabelHelper>();
@@ -35,6 +37,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 mockGitHubService.Object,
                 mockOutputService.Object,
                 mockLogger.Object,
+                mockTypeSpecHelper.Object,
                 mockCodeOwnerHelper.Object,
                 mockCodeOwnerValidator.Object,
                 mockLabelHelper.Object);
@@ -160,11 +163,58 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             mockCodeOwnerValidator.Setup(x => x.ValidateCodeOwnerAsync(It.IsAny<string>(), false))
                                   .ReturnsAsync(validationResult);
 
+            // Mock CreatePullRequestAsync to return empty list
+            mockGitHubService.Setup(x => x.CreatePullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()))
+                            .ReturnsAsync(new List<string>());
+
+            // Mock CODEOWNERS file retrieval
+            var mockFileContent = new List<RepositoryContent>
+            {
+                new RepositoryContent(
+                    name: "CODEOWNERS",
+                    path: ".github/CODEOWNERS",
+                    sha: "sha123",
+                    size: 100,
+                    type: ContentType.File,
+                    downloadUrl: "https://raw.githubusercontent.com/Azure/azure-sdk-for-net/main/.github/CODEOWNERS",
+                    url: "https://api.github.com/repos/Azure/azure-sdk-for-net/contents/.github/CODEOWNERS",
+                    htmlUrl: "https://github.com/Azure/azure-sdk-for-net/blob/main/.github/CODEOWNERS",
+                    gitUrl: null,
+                    encoding: "base64",
+                    encodedContent: "IyBDb2Rld3JuZXJzIGZpbGU=", // base64 for "# Codeowners file"
+                    target: null,
+                    submoduleGitUrl: null
+                )
+            };
+            mockGitHubService.Setup(x => x.GetContentsAsync("Azure", "azure-sdk-for-net", ".github/CODEOWNERS"))
+                            .ReturnsAsync(mockFileContent);
+
+            // Mock service label validation
+            mockGitHubService.Setup(x => x.GetContentsAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv"))
+                            .ReturnsAsync(new List<RepositoryContent>
+                            {
+                                new RepositoryContent(
+                                    name: "common-labels.csv",
+                                    path: "tools/github/data/common-labels.csv",
+                                    sha: "sha456",
+                                    size: 100,
+                                    type: ContentType.File,
+                                    downloadUrl: "https://raw.githubusercontent.com/Azure/azure-sdk-tools/main/tools/github/data/common-labels.csv",
+                                    url: "https://api.github.com/repos/Azure/azure-sdk-tools/contents/tools/github/data/common-labels.csv",
+                                    htmlUrl: "https://github.com/Azure/azure-sdk-tools/blob/main/tools/github/data/common-labels.csv",
+                                    gitUrl: null,
+                                    encoding: "base64",
+                                    encodedContent: "U2VydmljZSBCdXMsaHR0cHM6Ly9naXRodWIuY29tL0F6dXJlL2F6dXJlLXNkay1mb3ItbmV0L2lzc3Vlcy9uZXc=", // base64 for "Service Bus,https://github.com/Azure/azure-sdk-for-net/issues/new"
+                                    target: null,
+                                    submoduleGitUrl: null
+                                )
+                            });
+
             // Act
-            var result = await codeownerTools.AddCodeownerEntry("dotnet", "sdk/test/", "Service Bus", serviceOwners, sourceOwners);
+            var result = await codeownerTools.AddCodeownerEntry("dotnet", "sdk/test/", "Service Bus", serviceOwners, sourceOwners, "/test/typespec/project");
 
             // Assert
-            Assert.That(result, Does.Contain("There must be at least one valid source owner"));
+            Assert.That(result, Does.Contain("There must be at least two valid source owners"));
         }
 
         [Test]
@@ -188,10 +238,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                             .ReturnsAsync((IReadOnlyList<RepositoryContent>?)null);
 
             // Act
-            var result = await codeownerTools.AddCodeownerEntry("dotnet", "sdk/test/", "Service Bus", serviceOwners, sourceOwners);
+            var result = await codeownerTools.AddCodeownerEntry("dotnet", "sdk/test/", "Service Bus", serviceOwners, sourceOwners, "/test/typespec/project");
 
             // Assert
-            Assert.That(result, Does.Contain("Could not retrieve service labels for validation"));
+            Assert.That(result, Does.Contain("Could not retrieve common labels file"));
         }
 
         #endregion

@@ -179,9 +179,9 @@ namespace Azure.Sdk.Tools.Cli.Tools
                         validateRepoPath);
                     output.Output(validateResult);
                     return;
-                case mockToolCommandName:
-                    await MockTool();
-                    return;
+                // case mockToolCommandName:
+                //     await MockTool();
+                //     return;
                 default:
                     SetFailure();
                     output.OutputError($"Unknown command: '{command}'");
@@ -348,11 +348,11 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 var validServiceOwners = response.serviceOwners?.Where(owner => owner.IsValidCodeOwner).ToList() ?? new List<CodeOwnerValidationResult>();
                 var validSourceOwners = response.sourceOwners?.Where(owner => owner.IsValidCodeOwner).ToList() ?? new List<CodeOwnerValidationResult>();
 
-                if (string.IsNullOrEmpty(response.serviceLabel) && validServiceOwners.Count < 2)
+                if (!string.IsNullOrEmpty(response.serviceLabel) && validServiceOwners.Count < 2)
                 {
                     response.ValidationMessages.Add("There must be at least two valid service owners.");
                 }
-                if (string.IsNullOrEmpty(response.path) && validSourceOwners.Count < 2)
+                if (!string.IsNullOrEmpty(response.path) && validSourceOwners.Count < 2)
                 {
                     response.ValidationMessages.Add("There must be at least two valid source owners.");
                 }
@@ -382,7 +382,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 {
                     (startLine, endLine) = codeownerHelper.findBlock(content, dataPlaneCategory);
                 }
-                logger.LogInformation($"startline: {startLine}, endline: {endLine}");
 
                 var codeownersEntries = CodeownersParser.ParseCodeownersFile(response.codeownersUrl, "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/azure-sdk-write-teams-blob", startLine, endLine);
 
@@ -463,11 +462,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 var content = response.fileContent.Content;
                 var sha = response.fileContent.Sha;
 
-                if (content.Contains(response.path))
-                {
-                    return $"{response.path} already exists in the CODEOWNERS file.";
-                }
-
                 // Step 2: Find the service category block
                 var (startLine, endLine) = codeownerHelper.findBlock(content, response.serviceCategory);
 
@@ -478,17 +472,17 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     (codeownersEntries, i) = codeownerHelper.mergeCodeownerEntries(codeownersEntries, i);
                 }
 
-                CodeownersEntry targetEntry = null;
+                CodeownersEntry? targetEntry = null;
                 if (!string.IsNullOrEmpty(response.path))
                 {
                     // get the first entry that matches if no one get null. Then compare the path of the entry with the given path 
                     targetEntry = codeownersEntries.FirstOrDefault(entry =>
                         entry.PathExpression?.Equals(response.path, StringComparison.OrdinalIgnoreCase) == true);
                 }
-                else if (!string.IsNullOrEmpty(serviceLabel))
+                else if (!string.IsNullOrEmpty(response.serviceLabel))
                 {   // search for service label in the service labels of the entries
                     targetEntry = codeownersEntries.FirstOrDefault(entry =>
-                        entry.ServiceLabels?.Any(label => label.Contains(serviceLabel, StringComparison.OrdinalIgnoreCase)) == true);
+                        entry.ServiceLabels?.Any(label => label.Contains(response.serviceLabel, StringComparison.OrdinalIgnoreCase)) == true);
                 }
 
                 if (targetEntry == null)
@@ -499,7 +493,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 // Step 4: Modify the content using the entry's line information
                 var lines = content.Split('\n').ToList();
 
-                var modifiedContent = ModifyCodeownersEntryLines(lines, targetEntry, response.serviceOwners, response.sourceOwners, isAdding);
+                var modifiedContent = await ModifyCodeownersEntryLines(lines, targetEntry, response.serviceOwners, response.sourceOwners, isAdding);
 
                 // Step 5: Branch management and file update
                 List<string> resultMessages = new();
@@ -545,7 +539,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        private List<string> ModifyCodeownersEntryLines(
+        private async Task<List<string>> ModifyCodeownersEntryLines(
             List<string> lines,
             CodeownersEntry targetEntry,
             List<CodeOwnerValidationResult> newServiceOwners,
@@ -554,42 +548,79 @@ namespace Azure.Sdk.Tools.Cli.Tools
         {
             var modifiedLines = new List<string>(lines);
 
-            for (int i = targetEntry.startLine; i <= targetEntry.endLine; i++)
+            if (isAdding)
             {
-                var line = modifiedLines[i];
+                var validServiceOwnersToAdd = newServiceOwners?.Where(owner => owner.IsValidCodeOwner).ToList() ?? new List<CodeOwnerValidationResult>();
+                var validSourceOwnersToAdd = newSourceOwners?.Where(owner => owner.IsValidCodeOwner).ToList() ?? new List<CodeOwnerValidationResult>();
 
-                // Modify ServiceOwners
-                if (line.TrimStart().StartsWith("# ServiceOwners:"))
+                // Add to the Entry object
+                if (validServiceOwnersToAdd.Any())
                 {
-                    if (isAdding)
+                    foreach (var owner in validServiceOwnersToAdd)
                     {
-                        var validServiceOwnersToAdd = newServiceOwners?.Where(owner => owner.IsValidCodeOwner)
-                            .Select(owner => owner.Username.TrimStart('@')).ToList() ?? new List<string>();
-
-                        if (validServiceOwnersToAdd.Any())
+                        if (!targetEntry.ServiceOwners.Any(existing => existing.TrimStart('@')
+                            .Equals(owner.Username.TrimStart('@'), StringComparison.OrdinalIgnoreCase)))
                         {
-                            modifiedLines[i] = AddOwnersToLine(line, validServiceOwnersToAdd);
+                            targetEntry.ServiceOwners.Add(owner.Username);
                         }
                     }
-                    // TODO: Add delete logic
                 }
-                // Modify SourceOwners
-                else if (ParsingUtils.IsSourcePathOwnerLine(line) && line.Contains(targetEntry.PathExpression))
+                if (validSourceOwnersToAdd.Any())
                 {
-                    if (isAdding)
+                    foreach (var owner in validSourceOwnersToAdd)
                     {
-                        var validSourceOwnersToAdd = newSourceOwners?.Where(owner => owner.IsValidCodeOwner)
-                            .Select(owner => owner.Username.TrimStart('@')).ToList() ?? new List<string>();
-
-                        if (validSourceOwnersToAdd.Any())
+                        if (!targetEntry.SourceOwners.Any(existing => existing.TrimStart('@')
+                            .Equals(owner.Username.TrimStart('@'), StringComparison.OrdinalIgnoreCase)))
                         {
-                            modifiedLines[i] = AddOwnersToLine(line, validSourceOwnersToAdd);
+                            targetEntry.SourceOwners.Add(owner.Username);
                         }
                     }
-                    // TODO: Add delete logic
                 }
             }
-            // probably here validation if there are minimum of 2 valid service and source owners)
+            else
+            {
+                // For removing, use the object-based approach
+                var validServiceOwnersToDelete = newServiceOwners?.Select(owner => owner.Username.TrimStart('@')).ToList() ?? new List<string>();
+                var validSourceOwnersToDelete = newSourceOwners?.Select(owner => owner.Username.TrimStart('@')).ToList() ?? new List<string>();
+
+                // Remove from the object
+                if (validServiceOwnersToDelete.Any())
+                {
+                    targetEntry.ServiceOwners.RemoveAll(owner => validServiceOwnersToDelete.Contains(owner.TrimStart('@')));
+                }
+                if (validSourceOwnersToDelete.Any())
+                {
+                    targetEntry.SourceOwners.RemoveAll(owner => validSourceOwnersToDelete.Contains(owner.TrimStart('@')));
+                }
+            }
+
+            var (validatedServiceOwners, validatedSourceOwners) = await validateCodeowners(targetEntry.ServiceOwners, targetEntry.SourceOwners);
+
+            // Validate that the modified entry has at least 2 valid service and source owners
+            var validServiceOwnersCount = validatedServiceOwners.Count(owner => owner.IsValidCodeOwner);
+            var validSourceOwnersCount = validatedSourceOwners.Count(owner => owner.IsValidCodeOwner);
+
+            if (validServiceOwnersCount < 2)
+            {
+                throw new InvalidOperationException($"Modified entry must have at least 2 valid service owners. Current count: {validServiceOwnersCount}");
+            }
+
+            if (validSourceOwnersCount < 2)
+            {
+                throw new InvalidOperationException($"Modified entry must have at least 2 valid source owners. Current count: {validSourceOwnersCount}");
+            }
+
+            // Generate the new formatted entry for both adding and removing
+            var formattedCodeownersEntry = codeownerHelper.formatCodeownersEntry(targetEntry.PathExpression, targetEntry.ServiceLabels[0], targetEntry.ServiceOwners, targetEntry.SourceOwners);
+
+            // Remove the old entry lines
+            int originalEntryLineCount = targetEntry.endLine - targetEntry.startLine + 1;
+            modifiedLines.RemoveRange(targetEntry.startLine, originalEntryLineCount);
+
+            // Insert the new formatted entry at the same position
+            var entryLines = formattedCodeownersEntry.Split('\n');
+            modifiedLines.InsertRange(targetEntry.startLine, entryLines);
+
             return modifiedLines;
         }
 
@@ -639,6 +670,11 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     return (false, "");
                 }
 
+                if (csvContent == null || csvContent.Count == 0)
+                {
+                    return (false, "");
+                }
+
                 else
                 {
                     var serviceLabelValidationResults = labelHelper.CheckServiceLabel(csvContent[0].Content, serviceLabel);
@@ -665,11 +701,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
         {
             try
             {
-                var resultMessages = new List<string>();
-
-                var allOwners = new List<string>();
-                allOwners.Concat(sourceOwners).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-                allOwners.Concat(serviceOwners).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
                 var serviceOwnersValidationResults = await ValidateCodeOwnersConcurrently(serviceOwners);
                 var sourceOwnersValidationResults = await ValidateCodeOwnersConcurrently(sourceOwners);
 
@@ -747,9 +778,12 @@ namespace Azure.Sdk.Tools.Cli.Tools
             {
                 resultMessages.Add($"Could not retrieve CODEOWNERS file");
             }
+            else
+            {
+                response.fileContent = fileContent[0];
+            }
 
             response.codeownersUrl = $"https://raw.githubusercontent.com/Azure/{fullRepoName}/main/.github/CODEOWNERS";
-            response.fileContent = fileContent[0];
             response.ValidationMessages = resultMessages;
 
             return response;
@@ -775,35 +809,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
             public string codeownersUrl { get; set; }
             public RepositoryContent fileContent { get; set; }
             public List<string> ValidationMessages { get; set; }
-        }
-
-        [McpServerTool(Name = "mocktool"), Description("Does mock stuff.")]
-        public async Task<string> MockTool()
-        {
-            try
-            {
-                List<string> sourceOwners = new() { "@anna", "@annastich" };
-
-                CodeownersEntry existingEntry = new()
-                {
-                    PathExpression = "/sdk/test/",
-                    SourceOwners = sourceOwners
-                };
-
-                logger.LogInformation(existingEntry.ToString());
-
-                // add new owners
-                existingEntry.SourceOwners.Remove("@anna");
-
-                logger.LogInformation($"after, {existingEntry.ToString()}");
-                var returnedentry = codeownerHelper.formatCodeownersEntry(existingEntry.PathExpression, "", existingEntry.ServiceOwners, existingEntry.SourceOwners);
-                logger.LogInformation($"formatted: {returnedentry}");
-                return "";
-            }
-            catch (Exception ex)
-            {
-                return $"{ex}";
-            }
         }
 
         // [McpServerTool(Name = "mocktool"), Description("Does mock stuff.")]

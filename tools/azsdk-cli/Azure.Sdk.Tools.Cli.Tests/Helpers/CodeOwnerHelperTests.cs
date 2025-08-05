@@ -42,7 +42,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
 
             // Assert
             Assert.That(result.Count, Is.EqualTo(1));
-            Assert.That(result[0].PathExpression, Is.EqualTo("sdk/servicebus/"));
+            Assert.That(result[0]?.PathExpression, Is.EqualTo("sdk/servicebus/"));
         }
 
         [Test]
@@ -164,7 +164,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             // Assert
             var lines = result.Split('\n');
             Assert.That(lines[0], Is.EqualTo("# PRLabel: %Service Bus"));
-            Assert.That(lines[1], Is.EqualTo("sdk/servicebus/           @source1 @source2"));
+            Assert.That(lines[1], Is.EqualTo("sdk/servicebus/                                                    @source1 @source2"));
             Assert.That(lines[2], Is.EqualTo(""));
             Assert.That(lines[3], Is.EqualTo("# ServiceLabel: %Service Bus"));
             Assert.That(lines[4], Is.EqualTo("# ServiceOwners: @user1 @user2"));
@@ -182,7 +182,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
 
             // Assert
             var lines = result.Split('\n');
-            Assert.That(lines[0], Is.EqualTo("sdk/servicebus/           @source1"));
+            Assert.That(lines[0], Is.EqualTo("sdk/servicebus/                                                    @source1"));
             Assert.That(lines[1], Is.EqualTo(""));
         }
 

@@ -159,14 +159,23 @@ namespace APIViewWeb.LeanControllers
         /// <param name="apiRevisionId"></param>
         /// <returns></returns>
         [HttpPost("{reviewId}/{apiRevisionId}", Name = "ToggleAPIRevisionApproval")]
-        public async Task<ActionResult<APIRevisionListItemModel>> ToggleReviewApprovalAsync(string reviewId, string apiRevisionId)
+        public async Task<ActionResult<APIRevisionListItemModel>> ToggleReviewApprovalAsync(string reviewId, string apiRevisionId, [FromBody] ApprovalRequest approvalRequest)
         {
-            (var updateReview, var apiRevision) = await _apiRevisionsManager.ToggleAPIRevisionApprovalAsync(User, reviewId, apiRevisionId);
+            APIRevisionListItemModel currentAPIRevision = await _apiRevisionsManager.GetAPIRevisionAsync(User, apiRevisionId);
+
+            if (currentAPIRevision.IsApproved == approvalRequest.Approve)
+            {
+                return new LeanJsonResult(currentAPIRevision, StatusCodes.Status200OK);
+            }
+
+
+            (bool updateReview, APIRevisionListItemModel apiRevision) = await _apiRevisionsManager.ToggleAPIRevisionApprovalAsync(User, reviewId, apiRevisionId);
             if (updateReview)
             {
                 var updatedReview = await _reviewManager.ToggleReviewApprovalAsync(User, reviewId, apiRevisionId);
                 await _signalRHubContext.Clients.All.SendAsync("ReviewUpdated", updatedReview);
             }
+
             await _signalRHubContext.Clients.All.SendAsync("APIRevisionUpdated", apiRevision);
             return new LeanJsonResult(apiRevision, StatusCodes.Status200OK);
         }

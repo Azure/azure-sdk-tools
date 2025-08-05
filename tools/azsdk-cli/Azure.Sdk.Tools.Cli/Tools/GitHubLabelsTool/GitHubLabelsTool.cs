@@ -69,7 +69,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     var documentationLink = commandParser.GetValueForOption(documentationLinkOpt);
                     var createdPRResult = await CreateServiceLabel(proposedServiceLabel, documentationLink ?? "");
                     ctx.ExitCode = ExitCode;
-                    output.Output(createdPRResult.ToString());
+                    output.Output(createdPRResult);
                     return;
                 default:
                     SetFailure();

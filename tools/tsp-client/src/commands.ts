@@ -68,14 +68,15 @@ async function getEmitter(
   // find the right emitter. The list of supported emitters will be checked in order, stopping
   // at the first match in tspconfig.yaml.
   if (globalConfigFile && globalConfigFile.supportedEmitters) {
+    // Create a Set of config emitter names for lookup
+    const configEmitterNames = new Set(Object.keys(tspConfigData.options) ?? []);
+
     for (const supportedEmitter of globalConfigFile.supportedEmitters) {
-      for (const configEmitter of Object.keys(tspConfigData.options) ?? []) {
-        if (supportedEmitter.name === configEmitter) {
-          Logger.debug(
-            `Using emitter: ${supportedEmitter.name} from tspconfig.yaml. There will be no further processing for other supported emitters.`,
-          );
-          return { emitter: configEmitter, path: supportedEmitter.path };
-        }
+      if (configEmitterNames.has(supportedEmitter.name)) {
+        Logger.debug(
+          `Using emitter: ${supportedEmitter.name} from tspconfig.yaml. There will be no further processing for other supported emitters.`,
+        );
+        return { emitter: supportedEmitter.name, path: supportedEmitter.path };
       }
     }
   }

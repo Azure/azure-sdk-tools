@@ -157,17 +157,16 @@ namespace APIViewWeb.LeanControllers
         /// </summary>
         /// <param name="reviewId"></param>
         /// <param name="apiRevisionId"></param>
+        /// <param name="approvalRequest"></param>
         /// <returns></returns>
         [HttpPost("{reviewId}/{apiRevisionId}", Name = "ToggleAPIRevisionApproval")]
         public async Task<ActionResult<APIRevisionListItemModel>> ToggleReviewApprovalAsync(string reviewId, string apiRevisionId, [FromBody] ApprovalRequest approvalRequest)
         {
             APIRevisionListItemModel currentAPIRevision = await _apiRevisionsManager.GetAPIRevisionAsync(User, apiRevisionId);
-
             if (currentAPIRevision.IsApproved == approvalRequest.Approve)
             {
                 return new LeanJsonResult(currentAPIRevision, StatusCodes.Status200OK);
             }
-
 
             (bool updateReview, APIRevisionListItemModel apiRevision) = await _apiRevisionsManager.ToggleAPIRevisionApprovalAsync(User, reviewId, apiRevisionId);
             if (updateReview)

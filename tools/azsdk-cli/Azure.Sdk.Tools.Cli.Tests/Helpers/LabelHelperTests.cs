@@ -16,102 +16,43 @@ internal class LabelHelperTests
     }
 
     [Test]
-    public void TestCheckServiceLabel_FindsServiceLabel()
+    [TestCase("TestService,Description,e99695\nAnotherService,Description2,e99695", "TestService", LabelHelper.ServiceLabelStatus.Exists)]
+    [TestCase("TestService,Description,e99695\r\nAnotherService,Description2,e99695\nThirdService,Description3,e99695", "AnotherService", LabelHelper.ServiceLabelStatus.Exists)]
+    [TestCase("TestService,Description,e99695\nAnotherService,Description2,e99695\n\r", "TestService", LabelHelper.ServiceLabelStatus.Exists)]
+    [TestCase("TestService,Description,e99695\nAnotherService,Description2,e99695", "NonExistentService", LabelHelper.ServiceLabelStatus.DoesNotExist)]
+    [TestCase("TestService,Description,123456\nAnotherService,Description2,e99695", "TestService", LabelHelper.ServiceLabelStatus.NotAServiceLabel)]
+    [TestCase("Service - TestService,Description with commas and stuff,e99695\nAnotherService,Description2,e99695", "Service - TestService", LabelHelper.ServiceLabelStatus.Exists)]
+    [TestCase("Service - TestService,Description with commas and stuff,e99695\nAnotherService,Description2,e99695", "AnotherService", LabelHelper.ServiceLabelStatus.Exists)]
+    public void TestCheckServiceLabel_DataDriven(string csvContent, string serviceLabel, LabelHelper.ServiceLabelStatus expected)
     {
-        var csvContent = "TestService,Description,e99695\nAnotherService,Description2,e99695";
-        var actual = labelHelper.CheckServiceLabel(csvContent, "TestService");
-        Assert.That(actual, Is.EqualTo(LabelHelper.ServiceLabelStatus.Exists));
-    }
-
-    [Test]
-    public void TestCheckServiceLabel_DoesNotFindServiceLabel()
-    {
-        var csvContent = "TestService,Description,e99695\nAnotherService,Description2,e99695";
-        var actual = labelHelper.CheckServiceLabel(csvContent, "NonExistentService");
-        Assert.That(actual, Is.EqualTo(LabelHelper.ServiceLabelStatus.DoesNotExist));
-    }
-
-    [Test]
-    public void TestCheckServiceLabel_ColorCodeDoesNotMatch()
-    {
-        var csvContent = "TestService,Description,123456\nAnotherService,Description2,e99695";
-        var actual = labelHelper.CheckServiceLabel(csvContent, "TestService");
-        Assert.That(actual, Is.EqualTo(LabelHelper.ServiceLabelStatus.NotAServiceLabel));
-    }
-
-    [Test]
-    public void TestCheckServiceLabel_WithComplexCsvFormat()
-    {
-        var csvContent = "Service - TestService,Description with commas and stuff,e99695\nAnotherService,Description2,e99695";
-        
-        var actual1 = labelHelper.CheckServiceLabel(csvContent, "Service - TestService");
-        var actual2 = labelHelper.CheckServiceLabel(csvContent, "AnotherService");
-        
-        Assert.That(actual1, Is.EqualTo(LabelHelper.ServiceLabelStatus.Exists));
-        Assert.That(actual2, Is.EqualTo(LabelHelper.ServiceLabelStatus.Exists));
-    }
-
-    [Test]
-    public void TestCreateServiceLabelInsertion()
-    {
-        // Test that a service label is inserted in the correct alphabetical position
-        var csvContent = "AAA,,e99695\nCCC,,e99695\nZZZ,,e99695";
-        var serviceLabel = "BBB";
-        var actual = labelHelper.CreateServiceLabel(csvContent, serviceLabel);
-        var expected = "AAA,,e99695\nBBB,,e99695\nCCC,,e99695\nZZZ,,e99695";
+        var actual = labelHelper.CheckServiceLabel(csvContent, serviceLabel);
         Assert.That(actual, Is.EqualTo(expected));
     }
 
     [Test]
-    public void TestCreateServiceLabelInsertionAtBeginning()
+    [TestCase("AAA,,e99695\nCCC,,e99695\nZZZ,,e99695", "BBB", "AAA,,e99695\nBBB,,e99695\nCCC,,e99695\nZZZ,,e99695")]
+    [TestCase("BBB,,e99695\nCCC,,e99695\nZZZ,,e99695", "AAA", "AAA,,e99695\nBBB,,e99695\nCCC,,e99695\nZZZ,,e99695")]
+    [TestCase("AAA,,e99695\nBBB,,e99695\nCCC,,e99695", "ZZZ", "AAA,,e99695\nBBB,,e99695\nCCC,,e99695\nZZZ,,e99695")]
+    [TestCase("", "TestService", "\nTestService,,e99695")]
+    [TestCase("AAA,,e99695", "BBB", "AAA,,e99695\nBBB,,e99695")]
+    [TestCase("AAA,,e99695\r\nCCC,,e99695", "BBB", "AAA,,e99695\r\nBBB,,e99695\nCCC,,e99695")]
+    [TestCase("AAA,,e99695\nCCC,,e99695\nZZZ,,e99695", "CCC", "AAA,,e99695\nCCC,,e99695\nCCC,,e99695\nZZZ,,e99695")]
+    public void TestCreateServiceLabel_DataDriven(string csvContent, string serviceLabel, string expected)
     {
-        // Test insertion at the beginning
-        var csvContent = "BBB,,e99695\nCCC,,e99695\nZZZ,,e99695";
-        var serviceLabel = "AAA";
         var actual = labelHelper.CreateServiceLabel(csvContent, serviceLabel);
-        var expected = "AAA,,e99695\nBBB,,e99695\nCCC,,e99695\nZZZ,,e99695";
         Assert.That(actual, Is.EqualTo(expected));
     }
 
     [Test]
-    public void TestCreateServiceLabelInsertionAtEnd()
+    [TestCase("Test - Service", "test-service")]
+    [TestCase("New Test Service", "new-test-service")]
+    [TestCase("Test/Service", "test-service")]
+    [TestCase("  Test Service  ", "test-service")]
+    [TestCase("-Test Service-", "test-service")]
+    [TestCase("  -Test Service-  ", "test-service")]
+    public void TestNormalizeLabel_DataDriven(string input, string expected)
     {
-        // Test insertion at the end
-        var csvContent = "AAA,,e99695\nBBB,,e99695\nCCC,,e99695";
-        var serviceLabel = "ZZZ";
-        var actual = labelHelper.CreateServiceLabel(csvContent, serviceLabel);
-        var expected = "AAA,,e99695\nBBB,,e99695\nCCC,,e99695\nZZZ,,e99695";
+        var actual = labelHelper.NormalizeLabel(input);
         Assert.That(actual, Is.EqualTo(expected));
-    }
-
-    [Test]
-    public void TestCreateServiceLabelEmptyCSV()
-    {
-        var csvContent = "";
-        var serviceLabel = "TestService";
-        var actual = labelHelper.CreateServiceLabel(csvContent, serviceLabel);
-        var expected = "\nTestService,,e99695";
-        Assert.That(actual, Is.EqualTo(expected));
-    }
-
-    [Test]
-    public void TestNormalizeLabel_WithSpacesAndDashes()
-    {
-        var actual = labelHelper.NormalizeLabel("Test - Service");
-        Assert.That(actual, Is.EqualTo("test-service"));
-    }
-
-    [Test]
-    public void TestNormalizeLabel_WithSpaces()
-    {
-        var actual = labelHelper.NormalizeLabel("New Test Service");
-        Assert.That(actual, Is.EqualTo("new-test-service"));
-    }
-
-    [Test]
-    public void TestNormalizeLabel_WithSlash()
-    {
-        var actual = labelHelper.NormalizeLabel("Test/Service");
-        Assert.That(actual, Is.EqualTo("test-service"));
     }
 }

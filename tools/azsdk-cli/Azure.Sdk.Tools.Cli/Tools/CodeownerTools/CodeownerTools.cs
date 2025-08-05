@@ -629,7 +629,20 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
             }
 
-            // probably here validation if there are minimum of 2 valid service and source owners)
+            // Validate that the modified entry has at least 2 valid service and source owners
+            var validServiceOwnersCount = targetEntry.ServiceOwners?.Count(owner => owner.IsValidCodeOwner) ?? 0;
+            var validSourceOwnersCount = targetEntry.SourceOwners?.Count(owner => owner.IsValidCodeOwner) ?? 0;
+
+            if (validServiceOwnersCount < 2)
+            {
+                throw new InvalidOperationException($"Modified entry must have at least 2 valid service owners. Current count: {validServiceOwnersCount}");
+            }
+
+            if (validSourceOwnersCount < 2)
+            {
+                throw new InvalidOperationException($"Modified entry must have at least 2 valid source owners. Current count: {validSourceOwnersCount}");
+            }
+
             return modifiedLines;
         }
 

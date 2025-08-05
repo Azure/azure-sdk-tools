@@ -76,9 +76,13 @@ public class Program
         {
             throw new ArgumentException($"Invalid output format '{outputFormat}'. Supported formats are: plain, json");
         }
+        
 
         builder.Services.AddAzureClients(clientBuilder =>
         {
+            var service = new AzureService();
+            clientBuilder.UseCredential(service.GetCredential());
+
             // Azure OpenAI client does not, for some reason, have an
             // in-package facade for this, so register manually.
             clientBuilder.AddClient<AzureOpenAIClient, AzureOpenAIClientOptions>(

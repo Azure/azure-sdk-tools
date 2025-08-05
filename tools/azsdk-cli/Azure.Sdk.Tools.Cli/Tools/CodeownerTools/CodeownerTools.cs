@@ -788,15 +788,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
             return response;
         }
-
-        private string AddOwnersToLine(string line, List<string> ownersToAdd)
-        {
-            if (!ownersToAdd.Any()) return line;
-
-            var formattedOwners = ownersToAdd.Select(owner => owner.StartsWith("@") ? owner : $"@{owner}");
-            return $"{line.TrimEnd()} {string.Join(" ", formattedOwners)}";
-        }
-
         public class CodeownerWorkflowResponse
         {
             public string fullRepoName { get; set; }

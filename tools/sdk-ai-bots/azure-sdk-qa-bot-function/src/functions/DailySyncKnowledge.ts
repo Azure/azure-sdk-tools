@@ -831,12 +831,11 @@ async function preprocessSpectorCases(docsDir: string, context: InvocationContex
     }
 }
 
-// // Register the functions
-// app.timer('dailySyncKnowledgeTimer', {
-//     // Run daily at 2 AM UTC
-//     schedule: '0 0 9 * * *',
-//     handler: dailySyncKnowledgeTimer,
-// });
+// Register the functions
+app.timer('dailySyncKnowledgeTimer', {
+    schedule: '0 0 9 * * *',
+    handler: dailySyncKnowledgeTimer,
+});
 
 app.http('dailySyncKnowledgeHttp', {
     methods: ['GET'],

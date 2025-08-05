@@ -28,20 +28,21 @@ export class StorageService {
      * Upload content to blob storage
      */
     async putBlob(containerName: string, blobPath: string, content: Buffer | string): Promise<void> {
-        // try {
-        //     const containerClient = this.blobServiceClient.getContainerClient(containerName);
-        //     const blockBlobClient = containerClient.getBlockBlobClient(blobPath);
+        try {
+            const containerClient = this.blobServiceClient.getContainerClient(containerName);
+            const blockBlobClient = containerClient.getBlockBlobClient(blobPath);
             
-        //     const uploadOptions = {
-        //         blobHTTPHeaders: {
-        //             blobContentType: this.getContentType(blobPath)
-        //         }
-        //     };
+            const uploadOptions = {
+                blobHTTPHeaders: {
+                    blobContentType: this.getContentType(blobPath)
+                }
+            };
             
-        //     await blockBlobClient.upload(content, Buffer.byteLength(content.toString()), uploadOptions);
-        // } catch (error) {
-        //     throw new Error(`Failed to upload blob ${blobPath}: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        // }
+            await blockBlobClient.upload(content, Buffer.byteLength(content.toString()), uploadOptions);
+            console.log(`Uploaded ${blobPath} to blob storage`);
+        } catch (error) {
+            throw new Error(`Failed to upload blob ${blobPath}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
     }
     
     /**
@@ -65,17 +66,22 @@ export class StorageService {
     }
     
     /**
-     * Delete a blob from storage
+     * Delete a blob from storage (soft delete using metadata)
      */
     async deleteBlob(containerName: string, blobPath: string): Promise<void> {
-        // try {
-        //     const containerClient = this.blobServiceClient.getContainerClient(containerName);
-        //     const blockBlobClient = containerClient.getBlockBlobClient(blobPath);
+        try {
+            const containerClient = this.blobServiceClient.getContainerClient(containerName);
+            const blockBlobClient = containerClient.getBlockBlobClient(blobPath);
             
-        //     await blockBlobClient.deleteIfExists();
-        // } catch (error) {
-        //     throw new Error(`Failed to delete blob ${blobPath}: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        // }
+            // Set metadata to mark blob as deleted (soft delete)
+            await blockBlobClient.setMetadata({
+                IsDeleted: 'true'
+            });
+            
+            console.log(`Deleted blob ${blobPath}`);
+        } catch (error) {
+            throw new Error(`Failed to delete blob ${blobPath}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
     }
     
     /**

@@ -258,9 +258,9 @@ export async function generateRLCInPipeline(options: {
                         
             logger.info(`Start to build '${packageName}', except for tests and samples, which may be written manually.`);
             // To build generated codes except test and sample, we need to change tsconfig.json.
-            execSync(`pnpm build --filter ${packageName}`, {stdio: 'inherit'});
-            logger.info(`Start to run command 'pnpm pack ' under ${packagePath}.`);
-            execSync(`pnpm pack `, {stdio: 'inherit',cwd: packagePath});
+            execSync(`pnpm build --filter ${packageName}...`, {stdio: 'inherit'});
+            logger.info(`Start to run command 'pnpm run --filter ${packageJson.name}... pack'.`);
+            execSync(`pnpm run --filter ${packageJson.name}... pack`, {stdio: 'inherit'});
         }
 
         await updateSnippets(packagePath);

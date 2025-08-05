@@ -184,7 +184,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
                 if (result != null)
                 {
-                    logger.LogError($"[FAIL] Verify-Links.ps1 failed: {result}");
+                    logger.LogInformation("[FAIL] Verify-Links.ps1 failed: {Result}", result);
                     valid = false;
                 }
                 else
@@ -194,7 +194,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
             catch (Exception ex)
             {
-                logger.LogError($"[ERROR] Verify-Links.ps1 threw an exception: {ex.Message}");
+                logger.LogError(ex, "[ERROR] Verify-Links.ps1 threw an exception");
                 valid = false;
             }
 
@@ -214,7 +214,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             var verifyLinksPs1 = Path.Join(repoPath, "eng", "common", "scripts", "Verify-Links.ps1");
             var errors = new List<string>();
 
-            logger.LogInformation($"Running {verifyLinksPs1} {readmePath}");
+            logger.LogInformation("Running {VerifyLinksPs1} {ReadmePath}", verifyLinksPs1, readmePath);
 
             var process = Process.Start(new ProcessStartInfo()
             {
@@ -225,7 +225,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             });
 
             using var verifyLinksCt = CancellationTokenSource.CreateLinkedTokenSource(ct);
-            verifyLinksCt.CancelAfter(TimeSpan.FromSeconds(30)); // Set your time limit here
+            verifyLinksCt.CancelAfter(TimeSpan.FromSeconds(60)); // Set your time limit here
 
             await process!.WaitForExitAsync(verifyLinksCt.Token);
 

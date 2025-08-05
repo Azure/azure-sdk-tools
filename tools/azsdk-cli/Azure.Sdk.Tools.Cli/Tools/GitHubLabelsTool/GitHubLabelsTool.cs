@@ -77,7 +77,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        [McpServerTool(Name = "CheckServiceLabel"), Description("Checks if a service label exists in the common-labels.csv and returns its details if found.")]
+        [McpServerTool(Name = "CheckServiceLabel"), Description("Checks if a service label exists and returns its details")]
         public async Task<ServiceLabelResponse> CheckServiceLabel(string serviceLabel)
         {
             try
@@ -132,7 +132,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        [McpServerTool(Name = "CreateServiceLabel"), Description("Creates a pull request to add a new service label to the common-labels.csv.")]
+        [McpServerTool(Name = "CreateServiceLabel"), Description("Creates a pull request to add a new service label")]
         public async Task<ServiceLabelResponse> CreateServiceLabel(string label, string link)
         {
             try

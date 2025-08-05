@@ -97,6 +97,9 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 {
                     Status = "Error",
                     Label = serviceLabel
+                return new ServiceLabelResponse
+                {
+                    ResponseError = $"Error occurred while checking service label: {serviceLabel}";
                 };
             }
         }

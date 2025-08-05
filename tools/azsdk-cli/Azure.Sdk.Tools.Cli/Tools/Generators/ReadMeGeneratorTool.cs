@@ -49,8 +49,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
         };
 
         private Option<string> modelOption = new(
-            name: "--model", 
-            getDefaultValue: () => "gpt-4.1", 
+            name: "--model",
+            getDefaultValue: () => "gpt-4.1",
             description: "The OpenAI model to use when generating the readme. Note, this will match the name of your Azure OpenAI model deployment.")
         {
             IsRequired = true,
@@ -82,29 +82,41 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
         public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
         {
-            var pr = ctx.ParseResult;
-
-            var templatePath = pr.GetValueForOption(templatePathOption);
-            var serviceDocumentation = pr.GetValueForOption(serviceDocumentationOption);
-            var outputPath = pr.GetValueForOption(outputPathOption);
-            var model = pr.GetValueForOption(modelOption);
-
-            var chatClient = openAiClient.GetChatClient(model);
-
-            var (repoPath, subPackagePath) = GetPackageInfoFromPath(pr.GetValueForOption(packagePathOption));
-
-            var validReadme = await Generate(
-                chatClient: chatClient,
-                repoPath: repoPath,
-                templatePath: templatePath,
-                serviceDocumentation: new Uri(serviceDocumentation),
-                packagePath: subPackagePath,
-                outputPath: outputPath,
-                ct: ct);
-
-            if (!validReadme)
+            try
             {
-                output.OutputError("The generated readme did not pass validation checks. Please check the output for details.");
+                var pr = ctx.ParseResult;
+
+                var templatePath = pr.GetValueForOption(templatePathOption);
+                var serviceDocumentation = pr.GetValueForOption(serviceDocumentationOption);
+                var outputPath = pr.GetValueForOption(outputPathOption);
+                var model = pr.GetValueForOption(modelOption);
+
+                var chatClient = openAiClient.GetChatClient(model);
+
+                var (repoPath, subPackagePath) = GetPackageInfoFromPath(pr.GetValueForOption(packagePathOption));
+
+                var validReadme = await Generate(
+                    chatClient: chatClient,
+                    repoPath: repoPath,
+                    templatePath: templatePath,
+                    serviceDocumentation: new Uri(serviceDocumentation),
+                    packagePath: subPackagePath,
+                    outputPath: outputPath,
+                    ct: ct);
+
+                if (!validReadme)
+                {
+                    output.OutputError("The generated readme did not pass validation checks. Please check the output for details.");
+                    ctx.ExitCode = 1;
+                }
+                else
+                {
+                    output.Output($"Readme written to {outputPath}");
+                }
+            }
+            catch (Exception ex)
+            {
+                output.OutputError($"ReadmeGenerator threw an exception: {ex.ToString()}");
                 ctx.ExitCode = 1;
             }
         }
@@ -158,7 +170,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
             var generatedReadmeText = Customize(response.Value.Content[0].Text);
 
             await File.WriteAllTextAsync(outputPath, generatedReadmeText, ct);
-            output.Output($"Readme written to {outputPath}");
 
             return await IsValid(repoPath: repoPath, readmePath: outputPath, ct: ct);
         }
@@ -173,17 +184,17 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
                 if (result != null)
                 {
-                    output.OutputError($"[FAIL] Verify-Links.ps1 failed: {result}");
+                    logger.LogError($"[FAIL] Verify-Links.ps1 failed: {result}");
                     valid = false;
                 }
                 else
                 {
-                    output.Output($"[PASS] Verify-Links.ps1 passed");
+                    logger.LogInformation($"[PASS] Verify-Links.ps1 passed");
                 }
             }
             catch (Exception ex)
             {
-                output.OutputError($"[ERROR] Verify-Links.ps1 threw an exception: {ex.Message}");
+                logger.LogError($"[ERROR] Verify-Links.ps1 threw an exception: {ex.Message}");
                 valid = false;
             }
 
@@ -203,7 +214,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             var verifyLinksPs1 = Path.Join(repoPath, "eng", "common", "scripts", "Verify-Links.ps1");
             var errors = new List<string>();
 
-            output.Output($"Running {verifyLinksPs1} {readmePath}");
+            logger.LogInformation($"Running {verifyLinksPs1} {readmePath}");
 
             var process = Process.Start(new ProcessStartInfo()
             {

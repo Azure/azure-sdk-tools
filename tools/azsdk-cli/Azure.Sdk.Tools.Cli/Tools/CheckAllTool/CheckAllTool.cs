@@ -187,26 +187,28 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                 var analysisResult = await languageService.AnalyzeDependenciesAsync();
                 stopwatch.Stop();
                 
-                // Process the result dictionary from LanguageRepoService
+                // Process the result from LanguageRepoService
                 bool success = false;
                 string message = "Unknown result";
                 
-                if (analysisResult.ContainsKey("success") && analysisResult["success"].Equals(true))
+                switch (analysisResult)
                 {
-                    success = true;
-                    message = analysisResult.ContainsKey("response") ? analysisResult["response"].ToString() : "Dependency check completed successfully";
-                }
-                else if (analysisResult.ContainsKey("failure") && analysisResult["failure"].Equals(true))
-                {
-                    success = false;
-                    message = analysisResult.ContainsKey("response") ? analysisResult["response"].ToString() : "Dependency check failed";
-                }
-                else if (analysisResult.ContainsKey("cookbook"))
-                {
-                    success = false;
-                    var cookbook = analysisResult["cookbook"].ToString();
-                    var response = analysisResult.ContainsKey("response") ? analysisResult["response"].ToString() : "";
-                    message = $"See cookbook reference: {cookbook}. {response}";
+                    case SuccessResult successResult:
+                        success = true;
+                        message = successResult.Output ?? "Dependency check completed successfully";
+                        break;
+                    case FailureResult failureResult:
+                        success = false;
+                        message = failureResult.Output ?? "Dependency check failed";
+                        break;
+                    case CookbookResult cookbookResult:
+                        success = false;
+                        message = $"See cookbook reference: {cookbookResult.CookbookReference}. {cookbookResult.Output}";
+                        break;
+                    default:
+                        success = false;
+                        message = analysisResult.Output ?? "Dependency check completed with unknown result";
+                        break;
                 }
                 
                 return new CheckResult

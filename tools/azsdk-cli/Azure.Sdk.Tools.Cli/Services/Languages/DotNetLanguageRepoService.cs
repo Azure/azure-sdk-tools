@@ -4,12 +4,12 @@ using Azure.Sdk.Tools.Cli.Models;
 namespace Azure.Sdk.Tools.Cli.Services;
 
 /// <summary>
-/// JavaScript/Node.js-specific implementation of language repository service.
-/// Uses tools like npm, prettier, eslint, jest, etc. for JavaScript development workflows.
+/// .NET/C#-specific implementation of language repository service.
+/// Uses tools like dotnet build, dotnet test, dotnet format, etc. for .NET development workflows.
 /// </summary>
-public class JavaScriptLanguageRepoService : LanguageRepoService
+public class DotNetLanguageRepoService : LanguageRepoService
 {
-    public JavaScriptLanguageRepoService(string repositoryPath) : base(repositoryPath)
+    public DotNetLanguageRepoService(string repositoryPath) : base(repositoryPath)
     {
     }
 
@@ -17,8 +17,8 @@ public class JavaScriptLanguageRepoService : LanguageRepoService
     {
         try
         {
-            // Run npm audit for dependency analysis
-            var result = await RunCommandAsync("npm", "audit");
+            // Run dotnet list package for dependency analysis
+            var result = await RunCommandAsync("dotnet", "list package --vulnerable --include-transitive");
             
             if (result.ExitCode == 0)
             {
@@ -32,8 +32,8 @@ public class JavaScriptLanguageRepoService : LanguageRepoService
         catch (Exception ex)
         {
             return CreateCookbookResponse(
-                "https://docs.npmjs.com/cli/v10/commands/npm-audit", 
-                $"Failed to run dependency analysis. Ensure npm is installed. Error: {ex.Message}");
+                "https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-list-package", 
+                $"Failed to run dependency analysis. Ensure dotnet CLI is installed. Error: {ex.Message}");
         }
     }
 
@@ -41,8 +41,8 @@ public class JavaScriptLanguageRepoService : LanguageRepoService
     {
         try
         {
-            // Run prettier for code formatting
-            var result = await RunCommandAsync("npx", "prettier --write .");
+            // Run dotnet format for code formatting
+            var result = await RunCommandAsync("dotnet", "format");
             
             if (result.ExitCode == 0)
             {
@@ -56,8 +56,8 @@ public class JavaScriptLanguageRepoService : LanguageRepoService
         catch (Exception ex)
         {
             return CreateCookbookResponse(
-                "https://prettier.io/docs/en/install.html", 
-                $"Failed to run code formatting. Ensure prettier is installed. Error: {ex.Message}");
+                "https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-format", 
+                $"Failed to run code formatting. Ensure dotnet CLI is installed. Error: {ex.Message}");
         }
     }
 
@@ -65,8 +65,8 @@ public class JavaScriptLanguageRepoService : LanguageRepoService
     {
         try
         {
-            // Run eslint for linting
-            var result = await RunCommandAsync("npx", "eslint .");
+            // Run dotnet build for basic static analysis
+            var result = await RunCommandAsync("dotnet", "build --verbosity quiet --no-restore");
             
             if (result.ExitCode == 0)
             {
@@ -80,8 +80,8 @@ public class JavaScriptLanguageRepoService : LanguageRepoService
         catch (Exception ex)
         {
             return CreateCookbookResponse(
-                "https://eslint.org/docs/latest/use/getting-started", 
-                $"Failed to run linting. Ensure eslint is installed. Error: {ex.Message}");
+                "https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-build", 
+                $"Failed to run linting. Ensure dotnet CLI is installed. Error: {ex.Message}");
         }
     }
 
@@ -89,8 +89,8 @@ public class JavaScriptLanguageRepoService : LanguageRepoService
     {
         try
         {
-            // Run npm test (typically jest or another test runner)
-            var result = await RunCommandAsync("npm", "test");
+            // Run dotnet test
+            var result = await RunCommandAsync("dotnet", "test --no-build --verbosity quiet");
             
             if (result.ExitCode == 0)
             {
@@ -104,8 +104,8 @@ public class JavaScriptLanguageRepoService : LanguageRepoService
         catch (Exception ex)
         {
             return CreateCookbookResponse(
-                "https://jestjs.io/docs/getting-started", 
-                $"Failed to run tests. Ensure test runner is configured. Error: {ex.Message}");
+                "https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-test", 
+                $"Failed to run tests. Ensure dotnet CLI is installed. Error: {ex.Message}");
         }
     }
 
@@ -113,8 +113,8 @@ public class JavaScriptLanguageRepoService : LanguageRepoService
     {
         try
         {
-            // Run npm run build
-            var result = await RunCommandAsync("npm", "run build");
+            // Run dotnet build
+            var result = await RunCommandAsync("dotnet", "build --configuration Release");
             
             if (result.ExitCode == 0)
             {
@@ -128,8 +128,8 @@ public class JavaScriptLanguageRepoService : LanguageRepoService
         catch (Exception ex)
         {
             return CreateCookbookResponse(
-                "https://docs.npmjs.com/cli/v10/commands/npm-run-script", 
-                $"Failed to build project. Ensure build script is configured in package.json. Error: {ex.Message}");
+                "https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-build", 
+                $"Failed to build project. Ensure dotnet CLI is installed. Error: {ex.Message}");
         }
     }
 

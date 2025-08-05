@@ -14,18 +14,10 @@ namespace Azure.Sdk.Tools.Cli.Commands
     {
         public static readonly List<Type> ToolsList = [
             typeof(CheckAllTool),
-            typeof(SpellCheckTool),
-            typeof(SpellCheckFixTool),
-            typeof(LinkValidationTool),
-            typeof(LinkValidationFixTool),
-            typeof(ReadmeValidationTool),
-            typeof(ReadmeValidationFixTool),
             typeof(DependencyCheckTool),
             typeof(DependencyCheckFixTool),
             typeof(ChangelogValidationTool),
             typeof(ChangelogValidationFixTool),
-            typeof(SnippetUpdateTool),
-            typeof(SnippetUpdateFixTool),
             typeof(CleanupTool),
             typeof(DownloadPromptsTool),
             typeof(LogAnalysisTool),

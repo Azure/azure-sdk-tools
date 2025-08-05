@@ -1,0 +1,16 @@
+steps:
+  - template: /eng/pipelines/templates/steps/install-dotnet.yml
+
+  - template: /eng/pipelines/templates/steps/test-proxy-local-tool.yml
+    parameters:
+      runProxy: false
+      rootFolder: $(Build.SourcesDirectory)
+
+  - template: /eng/common/pipelines/templates/steps/run-pester-tests.yml
+    parameters:
+      TargetTags: "Integration"
+      TargetDirectory: tools/test-proxy/scripts/test-scripts/
+      EnvVars:
+        GIT_TOKEN: $(azuresdk-github-pat)
+        GIT_COMMIT_OWNER: azure-sdk
+        GIT_COMMIT_EMAIL: azuresdk@microsoft.com

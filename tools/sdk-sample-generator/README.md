@@ -56,6 +56,8 @@ flowchart TD
 
 This project requires access to LLM services for code generation. You can use either Azure OpenAI or OpenAI directly.
 
+For detailed configuration options and additional setup guidance, see the [GenAIScript Configuration Documentation](https://microsoft.github.io/genaiscript/configuration/).
+
 ### Azure OpenAI (Recommended)
 1. Create an Azure OpenAI resource in the Azure portal
 2. Note your endpoint URL and ensure you have access to GPT models

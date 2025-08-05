@@ -1,4 +1,4 @@
-import { readFileSync } from 'fs';
+import { readFileSync } from 'node:fs';
 import * as Handlebars from 'handlebars';
 import { getSDKAutomationStateString, SDKAutomationState } from '../automation/sdkAutomationState';
 import { formatSuppressionLine } from '../utils/reportFormat';

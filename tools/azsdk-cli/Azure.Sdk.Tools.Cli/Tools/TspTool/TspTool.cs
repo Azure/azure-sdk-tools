@@ -7,7 +7,7 @@ using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using ModelContextProtocol.Server;
-using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Helpers.Process;
 
 namespace Azure.Sdk.Tools.Cli.Tools.TspTool
 {

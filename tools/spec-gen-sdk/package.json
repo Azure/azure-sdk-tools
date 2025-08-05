@@ -83,6 +83,7 @@
     "watch": "tsc --watch",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:update": "vitest --update",
     "test:coverage": "vitest run --coverage",
     "start": "node dist/cli/cli.js",
     "build-test": "npm run build && npm test",

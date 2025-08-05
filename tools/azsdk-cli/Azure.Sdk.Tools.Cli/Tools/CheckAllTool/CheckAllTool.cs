@@ -82,7 +82,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                 var results = new List<IOperationResult>();
                 var overallSuccess = true;
 
-                var dependencyCheckResult = await RunDependencyCheck(projectPath);
+                // Create DependencyCheckTool instance for dependency checking
+                var dependencyCheckTool = new DependencyCheckTool(
+                    Microsoft.Extensions.Logging.Abstractions.NullLogger<DependencyCheckTool>.Instance,
+                    output);
+                
+                var dependencyCheckResponse = await dependencyCheckTool.RunDependencyCheck(projectPath);
+                var dependencyCheckResult = dependencyCheckResponse.Result as IOperationResult 
+                    ?? new FailureResult(1, dependencyCheckResponse.ResponseError ?? "Dependency check failed");
+                
                 results.Add(dependencyCheckResult);
                 if (dependencyCheckResult.ExitCode != 0) overallSuccess = false;
 
@@ -111,33 +119,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                 {
                     ResponseError = $"Unhandled exception: {ex.Message}"
                 };
-            }
-        }
-
-        private async Task<IOperationResult> RunDependencyCheck(string projectPath)
-        {
-            logger.LogInformation("Running dependency check...");
-            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-            
-            try
-            {
-                // Create language service using factory (detects language automatically)
-                var languageService = LanguageRepoServiceFactory.CreateService(projectPath);
-                logger.LogInformation($"Using language service: {languageService.GetType().Name}");
-                
-                // Call AnalyzeDependencies method
-                var analysisResult = await languageService.AnalyzeDependenciesAsync();
-                stopwatch.Stop();
-                
-                // Return the result directly since it's already an IOperationResult
-                return analysisResult;
-            }
-            catch (Exception ex)
-            {
-                stopwatch.Stop();
-                logger.LogError(ex, "Error during language-specific dependency check");
-                
-                return new FailureResult(1, $"Error during dependency check: {ex.Message}");
             }
         }
 

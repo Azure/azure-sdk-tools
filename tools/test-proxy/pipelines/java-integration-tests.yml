@@ -1,0 +1,52 @@
+parameters:
+  - name: REPO
+    type: string
+    default: "Azure/azure-sdk-for-java"
+  - name: CLONE_LOCATION
+    type: string
+    default: "$(Agent.BuildDirectory)/java_repo"
+
+steps:
+  - template: /eng/pipelines/templates/steps/install-dotnet.yml
+
+  - template: /eng/pipelines/templates/steps/use-python-version.yml
+    parameters:
+      versionSpec: '3.9'
+
+  - pwsh: |
+      git clone https://github.com/${{ parameters.REPO }} ${{ parameters.CLONE_LOCATION }} --depth 1
+    displayName: Clone Repo
+
+  - pwsh: |
+      Write-Host "mvn install -f eng/code-quality-reports/pom.xml `"-Dspotless.skip=true`" `"-Dcodesnippet.skip=true`" `"-Drevapi.skip=true`" `"-Dspotbugs.skip=true`" `"-DskipTests=true`" `"-Djacoco.skip=true`" `"-Dmaven.javadoc.skip=true`" -DskipTestCompile "-DskipCheckStyle=true" -DskipTests --no-transfer-progress"
+      mvn install -f eng/code-quality-reports/pom.xml "-Dspotless.skip=true" "-Dcodesnippet.skip=true" "-Drevapi.skip=true" "-Dspotbugs.skip=true" "-DskipTests=true" "-Djacoco.skip=true" "-Dmaven.javadoc.skip=true" -DskipTestCompile "-DskipCheckStyle=true" --no-transfer-progress
+
+      Write-Host "mvn install -f sdk/serialization/azure-xml/pom.xml             `"-Dspotless.skip=true`" `"-Dcodesnippet.skip=true`" `"-Drevapi.skip=true`" `"-Dspotbugs.skip=true`" `"-DskipTests=true`" `"-Djacoco.skip=true`" `"-Dmaven.javadoc.skip=true`" -DskipTestCompile `"-DskipCheckStyle=true`" -DskipTests --no-transfer-progress"
+      mvn install -f sdk/serialization/azure-xml/pom.xml "-Dspotless.skip=true" "-Dcodesnippet.skip=true" "-Drevapi.skip=true" "-Dspotbugs.skip=true" "-DskipTests=true" "-Djacoco.skip=true" "-Dmaven.javadoc.skip=true" -DskipTestCompile "-DskipCheckStyle=true" -DskipTests --no-transfer-progress
+
+      Write-Host "mvn install -f sdk/core/pom.xml `"-Dspotless.skip=true`" `"-Dcodesnippet.skip=true`" `"-Drevapi.skip=true`" `"-Dspotbugs.skip=true`" `"-DskipTests=true`" `"-Djacoco.skip=true`" `"-Dmaven.javadoc.skip=true`" -DskipTestCompile `"-DskipCheckStyle=true`" --no-transfer-progress"
+      mvn install -f sdk/core/pom.xml "-Dspotless.skip=true" "-Dcodesnippet.skip=true" "-Drevapi.skip=true" "-Dspotbugs.skip=true" "-DskipTests=true" "-Djacoco.skip=true" "-Dmaven.javadoc.skip=true" -DskipTestCompile "-DskipCheckStyle=true" --no-transfer-progress
+
+      Write-Host "mvn install -f sdk/core/azure-core-test/pom.xml `"-Dspotless.skip=true`" -DskipTests=true `"-Dmaven.javadoc.skip=true`" -DskipCheckStyle=true --no-transfer-progress"
+      mvn install -f sdk/core/azure-core-test/pom.xml "-Dspotless.skip=true" -DskipTests=true "-Dmaven.javadoc.skip=true" -DskipCheckStyle=true --no-transfer-progress
+    displayName: 'Install azure-core-test'
+    workingDirectory: ${{ parameters.CLONE_LOCATION }}
+
+  # we want the proxy available so we can restore recordings and avoid the race condition error
+  # however, we also want to not run it such that the local executable is used by the java tests.
+  - template: /eng/pipelines/templates/steps/test-proxy-local-tool.yml
+    parameters:
+      runProxy: false
+
+  - pwsh: |
+      Get-ChildItem -Recurse -Path ${{ parameters.CLONE_LOCATION }}/sdk/ -Filter assets.json | `
+        ForEach-Object { test-proxy restore -a $_.FullName }
+    displayName: Restore Recordings
+
+  - pwsh: |
+      # To run java in 'local' mode, we need to ensure that the natively set CI variable $env:TF_BUILD
+      # is not populated. Given it's auto-populated at step init by devops, we do it inline here.
+      $env:TF_BUILD=""
+      mvn surefire:test -f sdk/core/azure-core-test/pom.xml
+    displayName: 'Invoke Tests'
+    workingDirectory: ${{ parameters.CLONE_LOCATION }}

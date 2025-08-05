@@ -1,3 +1,4 @@
+using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Services;
 using System.Text;
 
@@ -12,7 +13,6 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
     public class LabelHelper(ILogger<LabelHelper> logger) : ILabelHelper
     {
-        internal const string ServiceLabelColorCode = "e99695"; // color code for service labels in common-labels.csv
 
         public enum ServiceLabelStatus
         {
@@ -50,7 +50,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 if (label.Equals(serviceName, StringComparison.OrdinalIgnoreCase))
                 {
                     // Check if it's a service label by color code
-                    if (color.Equals(ServiceLabelColorCode, StringComparison.OrdinalIgnoreCase))
+                    if (color.Equals(Constants.SERVICE_LABELS_COLOR_CODE, StringComparison.OrdinalIgnoreCase))
                     {
                         return ServiceLabelStatus.Exists;
                     }
@@ -68,7 +68,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         {
             List<string> lines = csvContent.Split("\n").ToList();
 
-            var newServiceLabel = $"{serviceLabel},,{ServiceLabelColorCode}";
+            var newServiceLabel = $"{serviceLabel},,{Constants.SERVICE_LABELS_COLOR_CODE}";
 
             bool inserted = false;
             for (int i = 0; i < lines.Count; i++)

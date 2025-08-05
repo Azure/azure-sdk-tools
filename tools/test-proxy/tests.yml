@@ -29,7 +29,7 @@ stages:
       steps:
         - template: pipelines/proxy-solution-integration-tests.yml
 
-    - job: Solution_Integration_Test_Macs
+    - job: Solution_Integration_Test_Mac
 
       pool:
         name: 'Azure Pipelines'
@@ -57,7 +57,7 @@ stages:
       steps:
         - template: pipelines/proxy-cli-integration-tests.yml
 
-    - job: CLI_Integration_Test
+    - job: CLI_Integration_Test_Mac
 
       pool:
         name: 'Azure Pipelines'

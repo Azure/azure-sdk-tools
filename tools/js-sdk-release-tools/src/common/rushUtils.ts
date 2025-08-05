@@ -44,7 +44,7 @@ async function packPackage(packageDirectory: string, packageName: string, rushxS
     if (isRushRepo(sdkRepoRoot)) {
         await runCommand('node', [rushxScript, 'pack'], { ...runCommandOptions, cwd }, false);
     } else {
-        await runCommand('pnpm', ['pack'], { ...runCommandOptions, cwd }, false);
+        await runCommand('pnpm', ['run', '--filter', `${packageName}...`, 'pack'], { ...runCommandOptions, cwd }, false);
     }
     logger.info(`Pack '${packageName}' successfully.`);
 }

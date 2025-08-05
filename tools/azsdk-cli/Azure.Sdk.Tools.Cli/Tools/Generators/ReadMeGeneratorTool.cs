@@ -20,11 +20,41 @@ namespace Azure.Sdk.Tools.Cli.Tools.Generators
         private readonly ILogger<ReadMeGeneratorTool> logger;
         private readonly IOutputService output;
         private readonly AzureOpenAIClient openAiClient;
-        private Option<string> packagePathOption;
-        private Option<string> outputPathOption;
-        private Option<string> templatePathOption;
-        private Option<string> serviceDocumentationOption;
-        private Option<string> modelOption;
+
+        private Option<string> packagePathOption = new(
+                name: "--package-path",
+                getDefaultValue: () => ".",
+                description: "Path to a module, underneath the 'sdk' folder for your repository (ex: /yoursource/azure-sdk-for-go/sdk/messaging/azservicebus)")
+        {
+            IsRequired = true,
+        };
+
+        private Option<string> outputPathOption = new(
+                name: "--output-path",
+                getDefaultValue: () => "README.output.md",
+                description: "Path to write the generated README contents")
+        {
+            IsRequired = true,
+        };
+
+        private Option<string> templatePathOption = new("--template-path", "Path to the README template file (ie: Templates/ReadMeGenerator/README-template.go.md)")
+        {
+            IsRequired = true,
+        };
+
+        private Option<string> serviceDocumentationOption = new(
+                "--service-url", "URL to the service documentation (ex: https://learn.microsoft.com/azure/service-bus-messaging)")
+        {
+            IsRequired = true
+        };
+
+        private Option<string> modelOption = new(
+            name: "--model", 
+            getDefaultValue: () => "gpt-4.1", 
+            description: "The OpenAI model to use when generating the readme. Note, this will match the name of your Azure OpenAI model deployment.")
+        {
+            IsRequired = true,
+        };
 
         public ReadMeGeneratorTool(ILogger<ReadMeGeneratorTool> logger, IOutputService output, AzureOpenAIClient openAiClient)
         {
@@ -37,46 +67,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Generators
 
         public override Command GetCommand()
         {
-            templatePathOption = new Option<string>("--template-path")
-            {
-                IsRequired = true,
-                Description = "Path to the README template file (ie: Templates/README-template.go.md)",
-            };
-
-            serviceDocumentationOption = new Option<string>(
-                "--service-url")
-            {
-                Description = "URL to the service documentation (ex: https://learn.microsoft.com/azure/service-bus-messaging)",
-                IsRequired = true
-            };
-
-            packagePathOption = new Option<string>(
-                "--package-path")
-            {
-                Description = "Path to a module, underneath the 'sdk' folder for your repository (ex: /yoursource/azure-sdk-for-go/sdk/messaging/azservicebus)",
-                IsRequired = true,
-            };
-
-            packagePathOption.SetDefaultValue(".");
-
-            outputPathOption = new Option<string>(
-                "--output-path")
-            {
-                Description = "Path to write the generated README contents",
-                IsRequired = true,
-            };
-
-            outputPathOption.SetDefaultValue("README.output.md");
-
-            modelOption = new Option<string>("--model")
-            {
-                Description = "The OpenAI model to use when generating the readme. Note, this will match the name of your Azure OpenAI model deployment.",
-                IsRequired = true,
-            };
-
-            modelOption.SetDefaultValue("gpt-4.1");
-
-            var command = new Command("readme", "README generator tool") {                
+            var command = new Command("readme", "README generator tool") {
                 modelOption,
                 outputPathOption,
                 packagePathOption,

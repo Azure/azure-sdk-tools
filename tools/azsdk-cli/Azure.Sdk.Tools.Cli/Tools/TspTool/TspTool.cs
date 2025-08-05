@@ -73,7 +73,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspTool
             var isArm = ctx.ParseResult.GetValueForOption(isArmOption);
             var fullyCompatible = ctx.ParseResult.GetValueForOption(fullyCompatibleOption);
 
-            var result = ConvertSwagger(swaggerReadme, outputDirectory, isArm, fullyCompatible);
+            TspToolResponse result = ConvertSwagger(swaggerReadme, outputDirectory, isArm, fullyCompatible);
             ctx.ExitCode = ExitCode;
             output.Output(result.ToString());
             return Task.CompletedTask;

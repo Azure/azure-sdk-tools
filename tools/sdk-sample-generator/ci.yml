@@ -26,7 +26,7 @@ extends:
   parameters:
     BuildStageName: InstallAndBuild
     ArtifactName: drop
-    PackageJsonPath: $(Build.SourcesDirectory)/tools/spec-gen-sdk
+    PackageJsonPath: $(Build.SourcesDirectory)/tools/sdk-sample-generator
     BuildStages:
       - stage: InstallAndBuild
         variables:
@@ -53,21 +53,21 @@ extends:
               - bash: |
                   npm ci
                 displayName: 'npm ci'
-                workingDirectory: $(System.DefaultWorkingDirectory)/tools/spec-gen-sdk
+                workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-sample-generator
 
               - bash: |
                   npm run build-test
                 displayName: 'build and test'
-                workingDirectory: $(System.DefaultWorkingDirectory)/tools/spec-gen-sdk
+                workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-sample-generator
 
               - bash: |
                   npm pack
                 displayName: 'npm pack'
-                workingDirectory: $(System.DefaultWorkingDirectory)/tools/spec-gen-sdk
+                workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-sample-generator
 
-              - bash: 'cp azure-tools-spec-gen-sdk-*.tgz $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
+              - bash: 'cp azure-tools-sdk-sample-generator-*.tgz $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY)'
                 displayName: 'copy to staging directory'
-                workingDirectory: $(System.DefaultWorkingDirectory)/tools/spec-gen-sdk
+                workingDirectory: $(System.DefaultWorkingDirectory)/tools/sdk-sample-generator
 
               - pwsh: |
                   Get-ChildItem -Path $(VAR_BUILD_ARTIFACT_STAGING_DIRECTORY) `

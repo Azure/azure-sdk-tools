@@ -21,11 +21,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
         IGitHubService githubService,
         IOutputService output,
         ILogger<CodeownerTools> logger,
+        ITypeSpecHelper typespecHelper,
         ICodeOwnerHelper codeownerHelper,
         ICodeOwnerValidatorHelper codeOwnerValidator,
         ILabelHelper labelHelper) : MCPTool
     {
         private static ConcurrentDictionary<string, CodeOwnerValidationResult> codeOwnerValidationCache = new ConcurrentDictionary<string, CodeOwnerValidationResult>();
+        private static readonly string mgmtPlaneCategory = "# Management Plane SDKs";
+        private static readonly string dataPlaneCategory = "# Client SDKs";
         private static readonly Dictionary<string, (string RepoName, string ServiceCategory)> azureRepositories = new()
         {
             { "dotnet", ("azure-sdk-for-net", "# ######## Services ########") },
@@ -52,6 +55,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private readonly Option<string> serviceLabelOption = new(["--service-label", "-sl"], "The service label");
         private readonly Option<string[]> serviceOwnersOption = new(["--service-owners", "-so"], "The service owners (space-separated)");
         private readonly Option<string[]> sourceOwnersOption = new(["--source-owners", "-sro"], "The source owners (space-separated)") { IsRequired = true };
+        private readonly Option<string> typeSpecProjectPathOption = new(["--typespec-project"], "Path to typespec project") { IsRequired = true };
         private readonly Option<bool> isAddingOption = new(["--is-adding", "-ia"], "Whether to add (true) or remove (false) owners") { IsRequired = true };
         private readonly Option<string> workingBranchOption = new(["--working-branch", "-wb"], "The existing branch to add changes to (from SDK generation)");
 
@@ -67,6 +71,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     serviceLabelOption,
                     serviceOwnersOption,
                     sourceOwnersOption,
+                    typeSpecProjectPathOption,
                     workingBranchOption
                 },
                 new Command(updateCodeownersCommandName, "Update codeowners in a repository")
@@ -76,6 +81,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     serviceLabelOption,
                     serviceOwnersOption,
                     sourceOwnersOption,
+                    typeSpecProjectPathOption,
                     isAddingOption,
                     workingBranchOption
                 },
@@ -117,6 +123,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     var serviceLabelValue = commandParser.GetValueForOption(serviceLabelOption);
                     var serviceOwnersValue = commandParser.GetValueForOption(serviceOwnersOption);
                     var sourceOwnersValue = commandParser.GetValueForOption(sourceOwnersOption);
+                    var typespecPathValue = commandParser.GetValueForOption(typeSpecProjectPathOption);
                     var workingBranchValue = commandParser.GetValueForOption(workingBranchOption);
 
                     var addResult = await AddCodeownerEntry(
@@ -125,6 +132,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                         serviceLabelValue ?? "",
                         serviceOwnersValue?.ToList() ?? new List<string>(),
                         sourceOwnersValue?.ToList() ?? new List<string>(),
+                        typespecPathValue ?? "",
                         workingBranchValue ?? "");
                     output.Output(addResult);
                     return;
@@ -134,6 +142,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     var serviceLabelValue2 = commandParser.GetValueForOption(serviceLabelOption);
                     var serviceOwnersValue2 = commandParser.GetValueForOption(serviceOwnersOption);
                     var sourceOwnersValue2 = commandParser.GetValueForOption(sourceOwnersOption);
+                    var typespecPathValue2 = commandParser.GetValueForOption(typeSpecProjectPathOption);
                     var isAddingValue = commandParser.GetValueForOption(isAddingOption);
                     var workingBranchValue2 = commandParser.GetValueForOption(workingBranchOption);
 
@@ -143,6 +152,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                         serviceLabelValue2 ?? "",
                         serviceOwnersValue2?.ToList() ?? new List<string>(),
                         sourceOwnersValue2?.ToList() ?? new List<string>(),
+                        typespecPathValue2 ?? "",
                         isAddingValue,
                         workingBranchValue2 ?? "");
                     output.Output(addResult2);
@@ -169,9 +179,9 @@ namespace Azure.Sdk.Tools.Cli.Tools
                         validateRepoPath);
                     output.Output(validateResult);
                     return;
-                // case mockToolCommandName:
-                //     await MockTool();
-                //     return;
+                case mockToolCommandName:
+                    await MockTool();
+                    return;
                 default:
                     SetFailure();
                     output.OutputError($"Unknown command: '{command}'");
@@ -319,164 +329,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
             return result;
         }
 
-        public (bool isValid, string, string) validateRepo(string repo)
-        {
-            try
-            {
-                azureRepositories.TryGetValue(repo, out var repoInfo);
-                var fullRepoName = repoInfo.RepoName;
-                var serviceCategory = repoInfo.ServiceCategory;
-                return (true, fullRepoName, serviceCategory);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError($"Error: {ex}");
-                return (false, "", "");
-            }
-        }
-
-        public (bool isValid, string) validatePath(string path)
-        {
-            try
-            {
-                if (!string.IsNullOrEmpty(path))
-                {
-                    path = path.Trim('/');
-                    path = $"/{path}/";
-                    return (true, path);
-                }
-                return (false, "");
-            }
-            catch (Exception ex)
-            {
-                logger.LogError($"Error: {ex}");
-                return (false, "");
-            }
-        }
-
-        public async Task<(bool isValid, string)> validateServiceLabel(string serviceLabel, IReadOnlyList<RepositoryContent> csvContent)
-        {
-            try
-            {
-                List<string> resultMessages = new();
-
-                if (string.IsNullOrEmpty(serviceLabel))
-                {
-                    return (false, "");
-                }
-
-                else
-                {
-                    var serviceLabelValidationResults = labelHelper.CheckServiceLabel(csvContent[0].Content, serviceLabel);
-                    if (serviceLabelValidationResults != LabelHelper.ServiceLabelStatus.Exists)
-                    {
-                        var pullRequests = await githubService.SearchPullRequestsByTitleAsync("Azure", "azure-sdk-tools", "Service Label");
-
-                        if (!labelHelper.CheckServiceLabelInReview(pullRequests, serviceLabel))
-                        {
-                            return (false, "");
-                        }
-                    }
-                }
-                return (true, serviceLabel);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError($"Error: {ex}");
-                return (false, "");
-            }
-        }
-
-        public async Task<(List<CodeOwnerValidationResult>, List<CodeOwnerValidationResult>)> validateCodeowners(List<string> serviceOwners, List<string> sourceOwners)
-        {
-            try
-            {
-                var resultMessages = new List<string>();
-
-                var allOwners = new List<string>();
-                allOwners.Concat(sourceOwners).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-                allOwners.Concat(serviceOwners).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-                var serviceOwnersValidationResults = await ValidateCodeOwnersConcurrently(serviceOwners);
-                var sourceOwnersValidationResults =  await ValidateCodeOwnersConcurrently(sourceOwners);
-
-                return (serviceOwnersValidationResults, sourceOwnersValidationResults);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError($"Error: {ex}");
-                return (new List<CodeOwnerValidationResult>(), new List<CodeOwnerValidationResult>());
-            }
-        }
-
-        public async Task<CodeownerWorkflowResponse> setup(
-            string repo,
-            string inputPath,
-            string inputServiceLabel,
-            List<string> inputtedServiceOwners,
-            List<string> inputtedSourceOwners)
-        {
-            List<string> resultMessages = new();
-            var response = new CodeownerWorkflowResponse();
-
-            // Validate Repo
-            var (validRepo, fullRepoName, serviceCategory) = validateRepo(repo);
-            if (!validRepo)
-            {
-                resultMessages.Add($"Repo path: {repo} is invalid.");
-            }
-            else
-            {
-                response.fullRepoName = fullRepoName;
-                response.serviceCategory = serviceCategory;
-            }
-
-            // Validate path
-            var (validPath, path) = validatePath(inputPath);
-            if (!validPath)
-            {
-                resultMessages.Add($"Path: {inputPath} is invalid.");
-            }
-            else
-            {
-                response.path = path;
-            }
-
-            // Get common labels file.
-            var csvContent = await githubService.GetContentsAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv");
-            if (csvContent == null || csvContent.Count == 0)
-            {
-                resultMessages.Add("Could not retrieve common labels file.");
-            }
-
-            // Validate service label
-            var (validServiceLabel, serviceLabel) = await validateServiceLabel(inputServiceLabel, csvContent);
-            if (!validServiceLabel)
-            {
-                resultMessages.Add($"Service label: {inputServiceLabel} is invalid.");
-            }
-            else
-            {
-                response.serviceLabel = serviceLabel;
-            }
-
-            // Validate owners
-            (response.serviceOwners, response.sourceOwners) = await validateCodeowners(inputtedServiceOwners, inputtedSourceOwners);
-
-            // Get CODEOWNERS file contents.
-            var fileContent = await githubService.GetContentsAsync("Azure", fullRepoName, ".github/CODEOWNERS");
-
-            if (fileContent == null || fileContent.Count == 0)
-            {
-                resultMessages.Add($"Could not retrieve CODEOWNERS file");
-            }
-
-            response.codeownersUrl = $"https://raw.githubusercontent.com/Azure/{fullRepoName}/main/.github/CODEOWNERS";
-            response.fileContent = fileContent[0];
-            response.ValidationMessages = resultMessages;
-
-            return response;
-        }
-
         [McpServerTool(Name = "AddCodeownerEntry"), Description("Adds a codeowner entry for a given service label or path for a repo.")]
         public async Task<string> AddCodeownerEntry(
             string repo,
@@ -484,17 +336,18 @@ namespace Azure.Sdk.Tools.Cli.Tools
             string serviceLabel,
             List<string> serviceOwners,
             List<string> sourceOwners,
+            string typeSpecProjectRoot,
             string workingBranch = null)
         {
             try
             {
                 // Step 0: Validation.
-                var response = await setup(repo, inputPath, serviceLabel, serviceOwners, sourceOwners);
+                var response = await setup(repo, inputPath, serviceLabel, serviceOwners, sourceOwners, typeSpecProjectRoot);
 
                 // Check that we have enough valid owners
                 var validServiceOwners = response.serviceOwners?.Where(owner => owner.IsValidCodeOwner).ToList() ?? new List<CodeOwnerValidationResult>();
                 var validSourceOwners = response.sourceOwners?.Where(owner => owner.IsValidCodeOwner).ToList() ?? new List<CodeOwnerValidationResult>();
-                
+
                 if (string.IsNullOrEmpty(response.serviceLabel) && validServiceOwners.Count < 2)
                 {
                     response.ValidationMessages.Add("There must be at least two valid service owners.");
@@ -520,7 +373,16 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
                 // Step 2: Modify contents logic.
-                var (startLine, endLine) = codeownerHelper.findBlock(content, response.serviceCategory);
+                var (startLine, endLine) = (-1, -1);
+                if (response.isMgmtPlane)
+                {
+                    (startLine, endLine) = codeownerHelper.findBlock(content, mgmtPlaneCategory);
+                }
+                else
+                {
+                    (startLine, endLine) = codeownerHelper.findBlock(content, dataPlaneCategory);
+                }
+                logger.LogInformation($"startline: {startLine}, endline: {endLine}");
 
                 var codeownersEntries = CodeownersParser.ParseCodeownersFile(response.codeownersUrl, "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/azure-sdk-write-teams-blob", startLine, endLine);
 
@@ -582,13 +444,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
             string serviceLabel,
             List<string> serviceOwners,
             List<string> sourceOwners,
+            string typeSpecProjectRoot,
             bool isAdding,
             string workingBranch = null)
         {
             try
             {
                 // Step 0: Validation
-                var response = await setup(repo, inputPath, serviceLabel, serviceOwners, sourceOwners);
+                var response = await setup(repo, inputPath, serviceLabel, serviceOwners, sourceOwners, typeSpecProjectRoot);
                 var responseMessages = string.Join("\n", response.ValidationMessages);
 
                 if (!string.IsNullOrEmpty(responseMessages))
@@ -770,6 +633,168 @@ namespace Azure.Sdk.Tools.Cli.Tools
             return modifiedLines;
         }
 
+        public (bool isValid, string, string) validateRepo(string repo)
+        {
+            try
+            {
+                azureRepositories.TryGetValue(repo, out var repoInfo);
+                var fullRepoName = repoInfo.RepoName;
+                var serviceCategory = repoInfo.ServiceCategory;
+                return (true, fullRepoName, serviceCategory);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"Error: {ex}");
+                return (false, "", "");
+            }
+        }
+
+        public (bool isValid, string) validatePath(string path)
+        {
+            try
+            {
+                if (!string.IsNullOrEmpty(path))
+                {
+                    path = path.Trim('/');
+                    path = $"/{path}/";
+                    return (true, path);
+                }
+                return (false, "");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"Error: {ex}");
+                return (false, "");
+            }
+        }
+
+        public async Task<(bool isValid, string)> validateServiceLabel(string serviceLabel, IReadOnlyList<RepositoryContent> csvContent)
+        {
+            try
+            {
+                List<string> resultMessages = new();
+
+                if (string.IsNullOrEmpty(serviceLabel))
+                {
+                    return (false, "");
+                }
+
+                else
+                {
+                    var serviceLabelValidationResults = labelHelper.CheckServiceLabel(csvContent[0].Content, serviceLabel);
+                    if (serviceLabelValidationResults != LabelHelper.ServiceLabelStatus.Exists)
+                    {
+                        var pullRequests = await githubService.SearchPullRequestsByTitleAsync("Azure", "azure-sdk-tools", "Service Label");
+
+                        if (!labelHelper.CheckServiceLabelInReview(pullRequests, serviceLabel))
+                        {
+                            return (false, "");
+                        }
+                    }
+                }
+                return (true, serviceLabel);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"Error: {ex}");
+                return (false, "");
+            }
+        }
+
+        public async Task<(List<CodeOwnerValidationResult>, List<CodeOwnerValidationResult>)> validateCodeowners(List<string> serviceOwners, List<string> sourceOwners)
+        {
+            try
+            {
+                var resultMessages = new List<string>();
+
+                var allOwners = new List<string>();
+                allOwners.Concat(sourceOwners).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+                allOwners.Concat(serviceOwners).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+                var serviceOwnersValidationResults = await ValidateCodeOwnersConcurrently(serviceOwners);
+                var sourceOwnersValidationResults = await ValidateCodeOwnersConcurrently(sourceOwners);
+
+                return (serviceOwnersValidationResults, sourceOwnersValidationResults);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"Error: {ex}");
+                return (new List<CodeOwnerValidationResult>(), new List<CodeOwnerValidationResult>());
+            }
+        }
+
+        public async Task<CodeownerWorkflowResponse> setup(
+            string repo,
+            string inputPath,
+            string inputServiceLabel,
+            List<string> inputtedServiceOwners,
+            List<string> inputtedSourceOwners,
+            string typeSpecProjectRoot)
+        {
+            List<string> resultMessages = new();
+            var response = new CodeownerWorkflowResponse();
+
+            // Validate Repo
+            var (validRepo, fullRepoName, serviceCategory) = validateRepo(repo);
+            if (!validRepo)
+            {
+                resultMessages.Add($"Repo path: {repo} is invalid.");
+            }
+            else
+            {
+                response.fullRepoName = fullRepoName;
+                response.serviceCategory = serviceCategory;
+            }
+
+            // Validate path
+            var (validPath, path) = validatePath(inputPath);
+            if (!validPath)
+            {
+                resultMessages.Add($"Path: {inputPath} is invalid.");
+            }
+            else
+            {
+                response.path = path;
+            }
+
+            // Get common labels file.
+            var csvContent = await githubService.GetContentsAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv");
+            if (csvContent == null || csvContent.Count == 0)
+            {
+                resultMessages.Add("Could not retrieve common labels file.");
+            }
+
+            // Validate service label
+            var (validServiceLabel, serviceLabel) = await validateServiceLabel(inputServiceLabel, csvContent);
+            if (!validServiceLabel)
+            {
+                resultMessages.Add($"Service label: {inputServiceLabel} is invalid.");
+            }
+            else
+            {
+                response.serviceLabel = serviceLabel;
+            }
+
+            // Validate owners
+            (response.serviceOwners, response.sourceOwners) = await validateCodeowners(inputtedServiceOwners, inputtedSourceOwners);
+
+            // Check if it's management plane.
+            response.isMgmtPlane = typespecHelper.IsTypeSpecProjectForMgmtPlane(typeSpecProjectRoot);
+
+            // Get CODEOWNERS file contents.
+            var fileContent = await githubService.GetContentsAsync("Azure", fullRepoName, ".github/CODEOWNERS");
+
+            if (fileContent == null || fileContent.Count == 0)
+            {
+                resultMessages.Add($"Could not retrieve CODEOWNERS file");
+            }
+
+            response.codeownersUrl = $"https://raw.githubusercontent.com/Azure/{fullRepoName}/main/.github/CODEOWNERS";
+            response.fileContent = fileContent[0];
+            response.ValidationMessages = resultMessages;
+
+            return response;
+        }
+
         private string AddOwnersToLine(string line, List<string> ownersToAdd)
         {
             if (!ownersToAdd.Any()) return line;
@@ -777,7 +802,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             var formattedOwners = ownersToAdd.Select(owner => owner.StartsWith("@") ? owner : $"@{owner}");
             return $"{line.TrimEnd()} {string.Join(" ", formattedOwners)}";
         }
-        
+
         public class CodeownerWorkflowResponse
         {
             public string fullRepoName { get; set; }
@@ -786,9 +811,39 @@ namespace Azure.Sdk.Tools.Cli.Tools
             public string serviceLabel { get; set; }
             public List<CodeOwnerValidationResult> serviceOwners { get; set; }
             public List<CodeOwnerValidationResult> sourceOwners { get; set; }
+            public bool isMgmtPlane { get; set; }
             public string codeownersUrl { get; set; }
             public RepositoryContent fileContent { get; set; }
             public List<string> ValidationMessages { get; set; }
+        }
+
+        [McpServerTool(Name = "mocktool"), Description("Does mock stuff.")]
+        public async Task<string> MockTool()
+        {
+            try
+            {
+                List<string> sourceOwners = new() { "@anna", "@annastich" };
+
+                CodeownersEntry existingEntry = new()
+                {
+                    PathExpression = "/sdk/test/",
+                    SourceOwners = sourceOwners
+                };
+
+                logger.LogInformation(existingEntry.ToString());
+
+                // add new owners
+                existingEntry.SourceOwners.Remove("@anna");
+
+                logger.LogInformation($"after, {existingEntry.ToString()}");
+                var returnedentry = codeownerHelper.formatCodeownersEntry(existingEntry.PathExpression, "", existingEntry.ServiceOwners, existingEntry.SourceOwners);
+                logger.LogInformation($"formatted: {returnedentry}");
+                return "";
+            }
+            catch (Exception ex)
+            {
+                return $"{ex}";
+            }
         }
 
         // [McpServerTool(Name = "mocktool"), Description("Does mock stuff.")]

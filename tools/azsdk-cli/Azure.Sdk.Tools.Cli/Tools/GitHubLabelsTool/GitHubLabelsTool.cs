@@ -18,7 +18,7 @@ using System.Text.Json;
 namespace Azure.Sdk.Tools.Cli.Tools
 {
 
-    [McpServerToolType, Description("Tools for working with GitHub service labels from the Azure SDK Tools common-labels.csv")]
+    [McpServerToolType, Description("Tools for working with GitHub labels for services")]
     public class GitHubLabelsTool(
         ILogger<GitHubLabelsTool> logger,
         IOutputService output,

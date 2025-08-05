@@ -556,31 +556,29 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
             if (isAdding)
             {
-                // For adding, use the existing line-by-line approach
-                for (int i = targetEntry.startLine; i <= targetEntry.endLine; i++)
+                var validServiceOwnersToAdd = newServiceOwners?.Where(owner => owner.IsValidCodeOwner).ToList() ?? new List<CodeOwnerValidationResult>();
+                var validSourceOwnersToAdd = newSourceOwners?.Where(owner => owner.IsValidCodeOwner).ToList() ?? new List<CodeOwnerValidationResult>();
+
+                // Add to the Entry object
+                if (validServiceOwnersToAdd.Any())
                 {
-                    var line = modifiedLines[i];
-
-                    // Modify ServiceOwners
-                    if (line.TrimStart().StartsWith("# ServiceOwners:"))
+                    foreach (var owner in validServiceOwnersToAdd)
                     {
-                        var validServiceOwnersToAdd = newServiceOwners?.Where(owner => owner.IsValidCodeOwner)
-                            .Select(owner => owner.Username.TrimStart('@')).ToList() ?? new List<string>();
-
-                        if (validServiceOwnersToAdd.Any())
+                        if (!targetEntry.ServiceOwners.Any(existing => existing.Username.TrimStart('@')
+                            .Equals(owner.Username.TrimStart('@'), StringComparison.OrdinalIgnoreCase)))
                         {
-                            modifiedLines[i] = AddOwnersToLine(line, validServiceOwnersToAdd);
+                            targetEntry.ServiceOwners.Add(owner);
                         }
                     }
-                    // Modify SourceOwners
-                    else if (ParsingUtils.IsSourcePathOwnerLine(line) && line.Contains(targetEntry.PathExpression))
+                }
+                if (validSourceOwnersToAdd.Any())
+                {
+                    foreach (var owner in validSourceOwnersToAdd)
                     {
-                        var validSourceOwnersToAdd = newSourceOwners?.Where(owner => owner.IsValidCodeOwner)
-                            .Select(owner => owner.Username.TrimStart('@')).ToList() ?? new List<string>();
-
-                        if (validSourceOwnersToAdd.Any())
+                        if (!targetEntry.SourceOwners.Any(existing => existing.Username.TrimStart('@')
+                            .Equals(owner.Username.TrimStart('@'), StringComparison.OrdinalIgnoreCase)))
                         {
-                            modifiedLines[i] = AddOwnersToLine(line, validSourceOwnersToAdd);
+                            targetEntry.SourceOwners.Add(owner);
                         }
                     }
                 }
@@ -600,33 +598,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 {
                     targetEntry.SourceOwners.RemoveAll(owner => validSourceOwnersToDelete.Contains(owner.Username.TrimStart('@')));
                 }
-
-                // Generate the new formatted entry
-                var newEntryLines = targetEntry.FormatCodeownersEntry().Split('\n');
-
-                // Replace the entire block with the new formatted version
-                for (int i = 0; i < newEntryLines.Length; i++)
-                {
-                    if (targetEntry.startLine + i <= targetEntry.endLine)
-                    {
-                        modifiedLines[targetEntry.startLine + i] = newEntryLines[i];
-                    }
-                    else
-                    {
-                        // Insert additional lines if the new entry is longer
-                        modifiedLines.Insert(targetEntry.startLine + i, newEntryLines[i]);
-                    }
-                }
-
-                // Remove any extra lines if the new entry is shorter
-                int linesToRemove = (targetEntry.endLine - targetEntry.startLine + 1) - newEntryLines.Length;
-                for (int i = 0; i < linesToRemove; i++)
-                {
-                    if (targetEntry.startLine + newEntryLines.Length < modifiedLines.Count)
-                    {
-                        modifiedLines.RemoveAt(targetEntry.startLine + newEntryLines.Length);
-                    }
-                }
             }
 
             // Validate that the modified entry has at least 2 valid service and source owners
@@ -641,6 +612,33 @@ namespace Azure.Sdk.Tools.Cli.Tools
             if (validSourceOwnersCount < 2)
             {
                 throw new InvalidOperationException($"Modified entry must have at least 2 valid source owners. Current count: {validSourceOwnersCount}");
+            }
+
+            // Generate the new formatted entry for both adding and removing
+            var newEntryLines = targetEntry.FormatCodeownersEntry().Split('\n');
+
+            // Replace the entire block with the new formatted version
+            for (int i = 0; i < newEntryLines.Length; i++)
+            {
+                if (targetEntry.startLine + i <= targetEntry.endLine)
+                {
+                    modifiedLines[targetEntry.startLine + i] = newEntryLines[i];
+                }
+                else
+                {
+                    // Insert additional lines if the new entry is longer
+                    modifiedLines.Insert(targetEntry.startLine + i, newEntryLines[i]);
+                }
+            }
+
+            // Remove any extra lines if the new entry is shorter
+            int linesToRemove = (targetEntry.endLine - targetEntry.startLine + 1) - newEntryLines.Length;
+            for (int i = 0; i < linesToRemove; i++)
+            {
+                if (targetEntry.startLine + newEntryLines.Length < modifiedLines.Count)
+                {
+                    modifiedLines.RemoveAt(targetEntry.startLine + newEntryLines.Length);
+                }
             }
 
             return modifiedLines;

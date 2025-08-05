@@ -63,7 +63,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
             }
         }
 
-        [McpServerTool(Name = "run-all-checks"), Description("Run all validation checks for SDK projects. Provide absolute path to project root as param.")]
+        [McpServerTool(Name = "All"), Description("Run all validation checks for SDK projects. Provide absolute path to project root as param.")]
         public async Task<DefaultCommandResponse> RunAllChecks(string projectPath)
         {
             try

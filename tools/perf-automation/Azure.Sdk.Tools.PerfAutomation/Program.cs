@@ -12,6 +12,7 @@ using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using YamlDotNet.Core;
+using YamlDotNet.Core.Tokens;
 using YamlDotNet.Serialization;
 
 namespace Azure.Sdk.Tools.PerfAutomation
@@ -101,6 +102,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             [Option("tests-file", Required = true)]
             public string TestsFile { get; set; }
+
+            [Option("advanced-stats")]
+            public bool AdvancedStats { get; set; }
         }
 
         public static async Task Main(string[] args)
@@ -215,10 +219,16 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             var results = new List<Result>();
             DirectoryInfo profileDirectory = null;
+            string resultsRoot = null;
 
             if (options.Profile)
             {
                 profileDirectory = Directory.CreateDirectory(Util.GetProfileDirectory(options.RepoRoot));
+            }
+            if (options.AdvancedStats)
+            {
+                resultsRoot = Path.Join(Path.GetTempPath(), Path.GetRandomFileName());
+                Directory.CreateDirectory(resultsRoot);
             }
 
             foreach (var packageVersions in selectedPackageVersions)
@@ -234,7 +244,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
                     outputCsv,
                     outputTxt,
                     outputMd,
-                    results);
+                    results,
+                    resultsRoot);
             }
 
             if (options.Profile)
@@ -254,7 +265,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
             string outputCsv,
             string outputTxt,
             string outputMd,
-            List<Result> results)
+            List<Result> results,
+            string resultsRoot)
         {
             var language = options.Language;
             var languageVersion = options.LanguageVersion;
@@ -308,6 +320,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
                     foreach (var arguments in selectedArguments)
                     {
                         var allArguments = arguments;
+                        string resultsDir = null;
+                        List<OperationResult> operationResults = null;
 
                         if (options.Insecure)
                         {
@@ -322,6 +336,14 @@ namespace Azure.Sdk.Tools.PerfAutomation
                         if (options.TestProxy != null)
                         {
                             allArguments += $" --test-proxy {options.TestProxy}";
+                        }
+
+                        if (options.AdvancedStats)
+                        {
+                            allArguments += " --latency";
+                            resultsDir = Path.Join(resultsRoot, Guid.NewGuid().ToString());
+                            Directory.CreateDirectory(resultsDir);
+                            operationResults = [];
                         }
 
                         var result = new Result
@@ -348,11 +370,20 @@ namespace Azure.Sdk.Tools.PerfAutomation
                         {
                             for (var i = 0; i < options.Iterations; i++)
                             {
+                                string iterationArguments = allArguments;
+                                string resultsFile = null;
+
+                                if (options.AdvancedStats)
+                                {
+                                    resultsFile = Path.Combine(resultsDir, $"{i}.json");
+                                    iterationArguments += $" --results-file {resultsFile}";
+                                }
+
                                 IterationResult iterationResult;
                                 try
                                 {
                                     Console.WriteLine($"RunAsync({project}, {languageVersion}, " +
-                                        $"{test.Class}, {allArguments}, {context}, {options.Profile}, {options.ProfilerOptions})");
+                                        $"{test.Class}, {iterationArguments}, {context}, {options.Profile}, {options.ProfilerOptions})");
                                     Console.WriteLine();
 
                                     iterationResult = await _languages[language].RunAsync(
@@ -361,10 +392,15 @@ namespace Azure.Sdk.Tools.PerfAutomation
                                         primaryPackage,
                                         packageVersions,
                                         test.Class,
-                                        allArguments,
+                                        iterationArguments,
                                         options.Profile,
                                         options.ProfilerOptions,
                                         context);
+
+                                    if (options.AdvancedStats)
+                                    {
+                                        operationResults.AddRange(await ParseOperationResults(resultsFile));
+                                    }
                                 }
                                 catch (Exception e)
                                 {
@@ -392,6 +428,12 @@ namespace Azure.Sdk.Tools.PerfAutomation
                         }
 
                         result.End = DateTime.Now;
+                        if (options.AdvancedStats && operationResults.Count > 0)
+                        {
+                            result.AdvancedStatistics = CalculateAdvancedStatistics(operationResults);
+                        }
+
+                        await WriteResults(outputJson, outputCsv, outputTxt, outputMd, results);
                     }
                 }
             }
@@ -599,6 +641,57 @@ namespace Azure.Sdk.Tools.PerfAutomation
             using var fileReader = File.OpenText(path);
             var parser = new MergingParser(new YamlDotNet.Core.Parser(fileReader));
             return new Deserializer().Deserialize<T>(parser);
+        }
+
+        private static async Task<List<OperationResult>> ParseOperationResults(string resultsFile)
+        {
+            string json = await File.ReadAllTextAsync(resultsFile);
+            return JsonSerializer.Deserialize<List<OperationResult>>(json);
+        }
+
+        private static AdvancedStatistics CalculateAdvancedStatistics(List<OperationResult> opeartionResults)
+        {
+            List<double> latencies = [];
+            double latencySum = 0;
+            double latencyMin = double.MaxValue;
+            double latencyMax = double.MinValue;
+            long totalSize = 0;
+            int count = 0;
+
+            foreach (OperationResult result in opeartionResults)
+            {
+                double latency = result.Time.TotalMilliseconds;
+                latencies.Add(latency);
+                latencySum += latency;
+                latencyMin = Math.Min(latencyMin, latency);
+                latencyMax = Math.Max(latencyMax, latency);
+
+                if (result.Size > 0)
+                {
+                    totalSize += result.Size;
+                }
+                count++;
+            }
+
+            int[] percentiles = [50, 75, 90, 95, 99];
+            latencies.Sort();
+
+            Dictionary<int, double> latencyPercentiles = new();
+            foreach (int p in percentiles)
+            {
+                int index = (int)Math.Ceiling(p / 100.0 * count) - 1;
+                latencyPercentiles.Add(p, latencies[index]);
+            }
+
+            double throughputMean = totalSize / latencySum * 1000;  // B/s
+            return new()
+            {
+                LatencyMean = latencySum / count,
+                LatencyMax = latencyMax,
+                LatencyMin = latencyMin,
+                LatencyPercentiles = latencyPercentiles,
+                ThroughputMBpsMean = throughputMean / (1024 * 1024),  // MB/s
+            };
         }
     }
 }

@@ -13,32 +13,32 @@ public interface ILanguageRepoService
     /// <summary>
     /// Perform dependency analysis for the target language.
     /// </summary>
-    /// <returns>Dictionary containing success/failure status and response message</returns>
-    Task<Dictionary<string, object>> AnalyzeDependenciesAsync();
+    /// <returns>Operation result containing success/failure status and response message</returns>
+    Task<IOperationResult> AnalyzeDependenciesAsync();
 
     /// <summary>
     /// Format code for the target language.
     /// </summary>
-    /// <returns>Dictionary containing success/failure status and response message</returns>
-    Task<Dictionary<string, object>> FormatCodeAsync();
+    /// <returns>Operation result containing success/failure status and response message</returns>
+    Task<IOperationResult> FormatCodeAsync();
 
     /// <summary>
     /// Run linting/static analysis for the target language.
     /// </summary>
-    /// <returns>Dictionary containing success/failure status and response message</returns>
-    Task<Dictionary<string, object>> LintCodeAsync();
+    /// <returns>Operation result containing success/failure status and response message</returns>
+    Task<IOperationResult> LintCodeAsync();
 
     /// <summary>
     /// Run tests for the target language.
     /// </summary>
-    /// <returns>Dictionary containing success/failure status and response message</returns>
-    Task<Dictionary<string, object>> RunTestsAsync();
+    /// <returns>Operation result containing success/failure status and response message</returns>
+    Task<IOperationResult> RunTestsAsync();
 
     /// <summary>
     /// Build/compile the project for the target language.
     /// </summary>
-    /// <returns>Dictionary containing success/failure status and response message</returns>
-    Task<Dictionary<string, object>> BuildProjectAsync();
+    /// <returns>Operation result containing success/failure status and response message</returns>
+    Task<IOperationResult> BuildProjectAsync();
 }
 
 /// <summary>
@@ -55,73 +55,65 @@ public class LanguageRepoService : ILanguageRepoService
     }
 
     /// <summary>
-    /// Creates a success response dictionary.
+    /// Creates a success response.
     /// </summary>
     /// <param name="message">Success message</param>
-    /// <returns>Dictionary with success status and response</returns>
-    protected static Dictionary<string, object> CreateSuccessResponse(string message)
+    /// <param name="exitCode">Exit code (default: 0 for success)</param>
+    /// <returns>SuccessResult with success status and response</returns>
+    protected static SuccessResult CreateSuccessResponse(string message, int exitCode = 0)
     {
-        return new Dictionary<string, object>
-        {
-            ["success"] = true,
-            ["response"] = message
-        };
+        return new SuccessResult(exitCode, message);
     }
 
     /// <summary>
-    /// Creates a failure response dictionary.
+    /// Creates a failure response.
     /// </summary>
     /// <param name="message">Failure message</param>
-    /// <returns>Dictionary with failure status and response</returns>
-    protected static Dictionary<string, object> CreateFailureResponse(string message)
+    /// <param name="exitCode">Exit code (default: 1 for failure)</param>
+    /// <param name="error">Additional error details</param>
+    /// <returns>FailureResult with failure status and response</returns>
+    protected static FailureResult CreateFailureResponse(string message, int exitCode = 1, string error = "")
     {
-        return new Dictionary<string, object>
-        {
-            ["failure"] = true,
-            ["response"] = message
-        };
+        return new FailureResult(exitCode, message, error);
     }
 
     /// <summary>
-    /// Creates a cookbook response dictionary.
+    /// Creates a cookbook response.
     /// </summary>
     /// <param name="cookbookReference">Reference to cookbook or documentation</param>
     /// <param name="message">Additional response message</param>
-    /// <returns>Dictionary with cookbook reference and response</returns>
-    protected static Dictionary<string, object> CreateCookbookResponse(string cookbookReference, string message)
+    /// <param name="exitCode">Exit code (default: 0 for success)</param>
+    /// <returns>CookbookResult with cookbook reference and response</returns>
+    protected static CookbookResult CreateCookbookResponse(string cookbookReference, string message, int exitCode = 0)
     {
-        return new Dictionary<string, object>
-        {
-            ["cookbook"] = cookbookReference,
-            ["response"] = message
-        };
+        return new CookbookResult(exitCode, message, cookbookReference);
     }
 
-    public virtual async Task<Dictionary<string, object>> AnalyzeDependenciesAsync()
+    public virtual async Task<IOperationResult> AnalyzeDependenciesAsync()
     {
         await Task.CompletedTask;
         return CreateFailureResponse("AnalyzeDependencies not implemented for this language");
     }
 
-    public virtual async Task<Dictionary<string, object>> FormatCodeAsync()
+    public virtual async Task<IOperationResult> FormatCodeAsync()
     {
         await Task.CompletedTask;
         return CreateFailureResponse("FormatCode not implemented for this language");
     }
 
-    public virtual async Task<Dictionary<string, object>> LintCodeAsync()
+    public virtual async Task<IOperationResult> LintCodeAsync()
     {
         await Task.CompletedTask;
         return CreateFailureResponse("LintCode not implemented for this language");
     }
 
-    public virtual async Task<Dictionary<string, object>> RunTestsAsync()
+    public virtual async Task<IOperationResult> RunTestsAsync()
     {
         await Task.CompletedTask;
         return CreateFailureResponse("RunTests not implemented for this language");
     }
 
-    public virtual async Task<Dictionary<string, object>> BuildProjectAsync()
+    public virtual async Task<IOperationResult> BuildProjectAsync()
     {
         await Task.CompletedTask;
         return CreateFailureResponse("BuildProject not implemented for this language");

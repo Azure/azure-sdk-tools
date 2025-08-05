@@ -13,7 +13,7 @@ public class GoLanguageRepoService : LanguageRepoService
     {
     }
 
-    public override async Task<Dictionary<string, object>> AnalyzeDependenciesAsync()
+    public override async Task<IOperationResult> AnalyzeDependenciesAsync()
     {
         try
         {
@@ -22,7 +22,7 @@ public class GoLanguageRepoService : LanguageRepoService
             
             if (result.ExitCode == 0)
             {
-                return CreateSuccessResponse($"Dependency analysis completed successfully.\n{result.Output}");
+                return CreateSuccessResponse($"D ependency analysis completed successfully.\n{result.Output}");
             }
             else
             {
@@ -38,7 +38,7 @@ public class GoLanguageRepoService : LanguageRepoService
         }
     }
 
-    public override async Task<Dictionary<string, object>> FormatCodeAsync()
+    public override async Task<IOperationResult> FormatCodeAsync()
     {
         try
         {
@@ -63,7 +63,7 @@ public class GoLanguageRepoService : LanguageRepoService
         }
     }
 
-    public override async Task<Dictionary<string, object>> LintCodeAsync()
+    public override async Task<IOperationResult> LintCodeAsync()
     {
         try
         {
@@ -87,7 +87,7 @@ public class GoLanguageRepoService : LanguageRepoService
         }
     }
 
-    public override async Task<Dictionary<string, object>> RunTestsAsync()
+    public override async Task<IOperationResult> RunTestsAsync()
     {
         try
         {
@@ -111,7 +111,7 @@ public class GoLanguageRepoService : LanguageRepoService
         }
     }
 
-    public override async Task<Dictionary<string, object>> BuildProjectAsync()
+    public override async Task<IOperationResult> BuildProjectAsync()
     {
         try
         {

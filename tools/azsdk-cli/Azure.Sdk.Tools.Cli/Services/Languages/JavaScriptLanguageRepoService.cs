@@ -12,7 +12,7 @@ public class JavaScriptLanguageRepoService : LanguageRepoService
     {
     }
 
-    public override async Task<Dictionary<string, object>> AnalyzeDependenciesAsync()
+    public override async Task<IOperationResult> AnalyzeDependenciesAsync()
     {
         try
         {
@@ -36,7 +36,7 @@ public class JavaScriptLanguageRepoService : LanguageRepoService
         }
     }
 
-    public override async Task<Dictionary<string, object>> FormatCodeAsync()
+    public override async Task<IOperationResult> FormatCodeAsync()
     {
         try
         {
@@ -60,7 +60,7 @@ public class JavaScriptLanguageRepoService : LanguageRepoService
         }
     }
 
-    public override async Task<Dictionary<string, object>> LintCodeAsync()
+    public override async Task<IOperationResult> LintCodeAsync()
     {
         try
         {
@@ -84,7 +84,7 @@ public class JavaScriptLanguageRepoService : LanguageRepoService
         }
     }
 
-    public override async Task<Dictionary<string, object>> RunTestsAsync()
+    public override async Task<IOperationResult> RunTestsAsync()
     {
         try
         {
@@ -108,7 +108,7 @@ public class JavaScriptLanguageRepoService : LanguageRepoService
         }
     }
 
-    public override async Task<Dictionary<string, object>> BuildProjectAsync()
+    public override async Task<IOperationResult> BuildProjectAsync()
     {
         try
         {

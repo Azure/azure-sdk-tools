@@ -1,10 +1,10 @@
 # Azure Template Package client library for Go
 
-<Describe the service, and what kinds of features it provides - this should be a short paragraph>
+[Describe the service, and what kinds of features it provides - this should be a short paragraph]
 
-Use the <package> client module `github.com/Azure/azure-sdk-for-go/sdk/<package path>` in your application to:
+Use the (package) client module `github.com/Azure/azure-sdk-for-go/sdk/(package path)` in your application to:
 
-<give a bullet point list of activities you can do with this client>
+(give a bullet point list of activities you can do with this client)
 
 Key links:
 
@@ -16,23 +16,23 @@ Key links:
 
 - [Supported](https://aka.ms/azsdk/go/supported-versions) version of Go - [Install Go](https://go.dev/doc/install)
 - Azure subscription - [Create a free account](https://azure.microsoft.com/free/)
-- <Include examples on how to deploy this resource using the Azure CLI, and via the Azure Portal>
+- (Include examples on how to deploy this resource using the Azure CLI, and via the Azure Portal)
 
 ### Install the package
 
-Install the Azure <TODO: package name goes here> client module for Go with [go get][goget]:
+Install the Azure (TODO: package name goes here) client module for Go with `go get`:
 
 ```
-go get github.com/Azure/azure-sdk-for-go/sdk/<package path>
+go get github.com/Azure/azure-sdk-for-go/sdk/(package path)
 ```
 
 # Key concepts
 
-<Bullet point list of your library's main concepts.>
+(Bullet point list of your library's main concepts.)
 
 # Examples
 
-Examples for using this library can be found with the module documentation at https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/<package path>#pkg-examples
+Examples for using this library can be found with the module documentation at https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/(package path)#pkg-examples
 
 # Troubleshooting
 
@@ -100,7 +100,7 @@ Azure SDK for Go is licensed under the [MIT](https://github.com/Azure/azure-sdk-
 [azure_sub]: https://azure.microsoft.com/free/
 [cloud_shell]: https://learn.microsoft.com/azure/cloud-shell/overview
 [cloud_shell_bash]: https://shell.azure.com/bash
-[source]: https://github.com/Azure/azure-sdk-for-go/tree/main/sdk/<package path>
-[docs]: https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/tree/main/sdk/<package path>
-[product_docs]: <service URL>
-[go_samples]: https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/<package path>#pkg-examples
+[source]: https://github.com/Azure/azure-sdk-for-go/tree/main/sdk/(package path)
+[docs]: https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/tree/main/sdk/(package path)
+[product_docs]: (service URL)
+[go_samples]: https://pkg.go.dev/github.com/Azure/azure-sdk-for-go/sdk/(package path)#pkg-examples

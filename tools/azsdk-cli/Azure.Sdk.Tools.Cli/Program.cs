@@ -14,6 +14,11 @@ public class Program
         ServerApp = CreateAppBuilder(args).Build();
         var rootCommand = CommandFactory.CreateRootCommand(args, ServerApp.Services);
 
+        if (!IsCLI(args))
+        {
+            ServerApp.MapMcp();
+        }
+
         var parsedCommands = new CommandLineBuilder(rootCommand)
                .UseDefaults()            // adds help, version, error reporting, suggestions…
                .UseExceptionHandler()    // catches unhandled exceptions and writes them out
@@ -86,6 +91,7 @@ public class Program
         builder.Services
             .AddMcpServer()
             .WithStdioServerTransport()
+            .WithHttpTransport()
             .WithTools(toolTypes);
 
         return builder;

@@ -28,7 +28,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
     {
         private static ConcurrentDictionary<string, CodeOwnerValidationResult> codeOwnerValidationCache = new ConcurrentDictionary<string, CodeOwnerValidationResult>();
         private static readonly string mgmtPlaneCategory = "# Management Plane SDKs";
-        private static readonly string dataPlaneCategory = "# Client SDKs";
+        private static readonly string dataPlaneCategory = "# Client Libraries";
         private static readonly Dictionary<string, (string RepoName, string ServiceCategory)> azureRepositories = new()
         {
             { "dotnet", ("azure-sdk-for-net", "# ######## Services ########") },
@@ -179,9 +179,9 @@ namespace Azure.Sdk.Tools.Cli.Tools
                         validateRepoPath);
                     output.Output(validateResult);
                     return;
-                // case mockToolCommandName:
-                //     await MockTool();
-                //     return;
+                case mockToolCommandName:
+                    await MockTool();
+                    return;
                 default:
                     SetFailure();
                     output.OutputError($"Unknown command: '{command}'");
@@ -811,70 +811,70 @@ namespace Azure.Sdk.Tools.Cli.Tools
             public List<string> ValidationMessages { get; set; }
         }
 
-        // [McpServerTool(Name = "mocktool"), Description("Does mock stuff.")]
-        // public async Task MockTool()
-        // {
-        //     try
-        //     {
-        //         var fileContent = await githubService.GetContentsAsync("Azure", "azure-sdk-for-net", ".github/CODEOWNERS");
+        [McpServerTool(Name = "mocktool"), Description("Does mock stuff.")]
+        public async Task MockTool()
+        {
+            try
+            {
+                var fileContent = await githubService.GetContentsAsync("Azure", "azure-sdk-for-net", ".github/CODEOWNERS");
 
-        //         if (fileContent == null || fileContent.Count == 0)
-        //         {
-        //             logger.LogError("Could not retrieve CODEOWNERS file");
-        //             return;
-        //         }
+                if (fileContent == null || fileContent.Count == 0)
+                {
+                    logger.LogError("Could not retrieve CODEOWNERS file");
+                    return;
+                }
 
-        //         var content = fileContent[0].Content;
-        //         var (startLine, endLine) = codeownerHelper.findBlock(content, "# ######## Services ########");
-        //         logger.LogInformation($"start = {startLine}, end = {endLine}");
+                var content = fileContent[0].Content;
+                var (startLine, endLine) = codeownerHelper.findBlock(content, "# ######## Services ########");
+                logger.LogInformation($"start = {startLine}, end = {endLine}");
 
-        //         var codeownersUrl = $"https://raw.githubusercontent.com/Azure/azure-sdk-for-net/main/.github/CODEOWNERS";
-        //         var codeownersEntries = CodeownersParser.ParseCodeownersFile(codeownersUrl, startLine : startLine, endLine : endLine);
+                var codeownersUrl = $"https://raw.githubusercontent.com/Azure/azure-sdk-for-net/main/.github/CODEOWNERS";
+                var codeownersEntries = CodeownersParser.ParseCodeownersFile(codeownersUrl, startLine : startLine, endLine : endLine);
 
-        //         for (int i = 0; i < codeownersEntries.Count; i++)
-        //         {
-        //             (codeownersEntries, i) = codeownerHelper.mergeCodeownerEntries(codeownersEntries, i);
-        //         }
+                for (int i = 0; i < codeownersEntries.Count; i++)
+                {
+                    (codeownersEntries, i) = codeownerHelper.mergeCodeownerEntries(codeownersEntries, i);
+                }
 
-        //         // Create our custom comparer and sort the entries
-        //         var comparer = new CodeownersEntryPathComparer();
-        //         var sortedEntries = codeownersEntries.OrderBy(entry => entry, comparer).ToList();
+                // Create our custom comparer and sort the entries
+                var comparer = new CodeownersEntryPathComparer();
+                var sortedEntries = codeownersEntries.OrderBy(entry => entry, comparer).ToList();
 
-        //         // Write the sorted entries to a new file
-        //         var outputPath = "./Tools/CodeownerTools/CODEOWNER_EDITED";
-        //         var outputLines = new List<string>();
+                // Write the sorted entries to a new file
+                var outputPath = "./Tools/CodeownerTools/CODEOWNER_EDITED";
+                var outputLines = new List<string>();
 
-        //         var lines = content.Split('\n');
+                var lines = content.Split('\n');
 
-        //         for (int i = 0; i < startLine + 2; i++)
-        //         {
-        //             outputLines.Add(lines[i]);
-        //         }
+                for (int i = 0; i < startLine + 2; i++)
+                {
+                    outputLines.Add(lines[i]);
+                }
 
-        //         foreach (var entry in sortedEntries)
-        //         {
-        //             var formattedEntry = entry.FormatCodeownersEntry();
-        //             if (!string.IsNullOrWhiteSpace(formattedEntry))
-        //             {
-        //                 outputLines.Add(formattedEntry);
-        //                 outputLines.Add("");
-        //             }
-        //         }
+                foreach (var entry in sortedEntries)
+                {
+                    var formattedEntry = entry.FormatCodeownersEntry();
+                    if (!string.IsNullOrWhiteSpace(formattedEntry))
+                    {
+                        outputLines.Add(formattedEntry);
+                        outputLines.Add("");
+                    }
+                }
 
-        //         for (int i = endLine; i < lines.Length; i++)
-        //         {
-        //             outputLines.Add(lines[i]);
-        //         }
+                for (int i = endLine; i < lines.Length; i++)
+                {
+                    outputLines.Add(lines[i]);
+                }
 
-        //         // Write all lines to the file
-        //         await File.WriteAllLinesAsync(outputPath, outputLines);
+                // Write all lines to the file
+                await File.WriteAllLinesAsync(outputPath, outputLines);
 
-        //         logger.LogInformation($"Successfully wrote {sortedEntries.Count} sorted entries to {outputPath}");
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         logger.LogInformation($"Error: {ex}");
-        //     }
-        // }
+                logger.LogInformation($"Successfully wrote {sortedEntries.Count} sorted entries to {outputPath}");
+            }
+            catch (Exception ex)
+            {
+                logger.LogInformation($"Error: {ex}");
+            }
+        }
     }
 }

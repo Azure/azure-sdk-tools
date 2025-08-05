@@ -26,6 +26,7 @@ extends:
   parameters:
     ToolDirectory: tools/test-proxy
     ReleaseBinaries: true
+    SkipReleaseStage: false
     StandaloneExeMatrix:
     - rid: osx-arm64
       framework: net8.0

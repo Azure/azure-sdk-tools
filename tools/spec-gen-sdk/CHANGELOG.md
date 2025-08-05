@@ -1,6 +1,6 @@
 # Release
 
-## 2025-01-XX - 0.9.1
+## 2025-08-05 - 0.9.1
 
 - Support SDK breaking change flagging for V2 folder structure by detecting management plane TypeSpec projects containing 'resource-manager' in the path
 

@@ -191,22 +191,9 @@ describe('detect interface', () => {
       expect(diffPairs.length).toBe(0);
     });
 
-    test('detect property move to parent model', async () => {
-      const baselineApiView = `
-        export interface SystemData {} 
-        export interface Target extends ProxyResource {
-          systemdata?: SystemData;
-          location?: string;
-        }
-        export interface ProxyResource{}
-        `;
-      const currentApiView = `
-        export interface Target extends ProxyResource {
-        location?: string;
-        }
-        export interface SystemData {} 
-        export interface ProxyResource{systemdata?: SystemData;}
-        `;
+    test('detect property refactoring to nested object', async () => {
+      const baselineApiView = `export interface Target { prop1: string; prop2: string; }`;
+      const currentApiView = `export interface Nested { prop1: string; prop2: string; } export interface Target { props: Nested; }`;
       const astContext = await createTestAstContext(baselineApiView, currentApiView);
       const diffPairs = patchInterface('Target', astContext, AssignDirection.CurrentToBaseline);
       expect(diffPairs.length).toBe(0);

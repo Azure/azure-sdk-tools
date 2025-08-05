@@ -246,6 +246,75 @@ export class DeclarationDifferenceDetector {
     return [...removed, ...changed];
   }
 
+  private filterPropertyRefactorings(diffs: DiffPair[], sourceProperties: Symbol[], targetProperties: Symbol[]): DiffPair[] {
+    // Find removed properties and added properties
+    const removedProperties = diffs.filter(d => d.reasons === DiffReasons.Removed && d.location === DiffLocation.Property);
+    const addedProperties = diffs.filter(d => d.reasons === DiffReasons.Added && d.location === DiffLocation.Property);
+    
+    if (removedProperties.length === 0 || addedProperties.length === 0) {
+      return diffs;
+    }
+
+    // For each added property, check if its type contains all the removed properties
+    for (const addedProp of addedProperties) {
+      const addedPropName = addedProp.source?.name;
+      if (!addedPropName) continue;
+
+      const addedSymbol = sourceProperties.find(p => p.getName() === addedPropName);
+      if (!addedSymbol) continue;
+
+      try {
+        const addedDeclaration = addedSymbol.getValueDeclarationOrThrow();
+        const addedPropType = addedDeclaration.getType();
+        const addedPropTypeProperties = addedPropType.getProperties();
+
+        // Check if all removed properties exist in the added property's type
+        const allRemovedPropsExistInAdded = removedProperties.every(removedProp => {
+          const removedPropName = removedProp.target?.name;
+          if (!removedPropName) return false;
+
+          const matchingProp = addedPropTypeProperties.find((p: any) => p.getName() === removedPropName);
+          if (!matchingProp) return false;
+
+          // Find the original removed property to compare types
+          const originalRemovedSymbol = targetProperties.find(p => p.getName() === removedPropName);
+          if (!originalRemovedSymbol) return false;
+
+          try {
+            // Check if the types are assignable
+            const originalDeclaration = originalRemovedSymbol.getValueDeclarationOrThrow();
+            const originalType = originalDeclaration.getType();
+            const matchingDeclaration = matchingProp.getValueDeclarationOrThrow();
+            const nestedType = matchingDeclaration.getType();
+            return nestedType.isAssignableTo(originalType) && originalType.isAssignableTo(nestedType);
+          } catch {
+            // If type comparison fails, consider them different
+            return false;
+          }
+        });
+
+        if (allRemovedPropsExistInAdded && removedProperties.length > 0) {
+          // This is a valid refactoring - filter out these diffs
+          const removedPropNames = removedProperties.map(p => p.target?.name).filter(Boolean);
+          return diffs.filter(d => {
+            if (d.reasons === DiffReasons.Removed && removedPropNames.includes(d.target?.name)) {
+              return false;
+            }
+            if (d.reasons === DiffReasons.Added && d.source?.name === addedPropName) {
+              return false;
+            }
+            return true;
+          });
+        }
+      } catch {
+        // If type analysis fails, keep the original diffs
+        continue;
+      }
+    }
+
+    return diffs;
+  }
+
   private findReturnTypeBreakingChangesCore(source: Node, target: Node): DiffPair[] {
     const getName = (node: Node) => (Node.hasName(node) ? node.getName() : node.getText());
     const targetNameNode = target ? { name: getName(target), node: target } : undefined;
@@ -378,11 +447,14 @@ export class DeclarationDifferenceDetector {
       .filter((p) => p.reasons === DiffReasons.Removed)
       .map(this.updateDiffPairForNewFeature);
 
+    // Check for property refactoring: properties moved into nested objects
+    const allPropertyDiffs = [...propertyBreakingChanges, ...propertyNewFeatures];
+    const filteredPropertyDiffs = this.filterPropertyRefactorings(allPropertyDiffs, sourceProperties, targetProperties);
+
     return [
       ...callSignatureBreakingChanges,
       ...callSignatureNewFeatures,
-      ...propertyBreakingChanges,
-      ...propertyNewFeatures,
+      ...filteredPropertyDiffs,
     ];
   }
 

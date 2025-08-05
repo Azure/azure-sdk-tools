@@ -51,12 +51,12 @@ async function packPackage(packageDirectory: string, packageName: string, rushxS
 
 async function ensurePnpmInstalled() {
   try {
-    await runCommand('pnpm', ['--version'], { stdio: 'ignore' });
-    console.log('pnpm is already installed.');
+    await runCommand('pnpm', ['--version'], runCommandOptions, false);
+    logger.info('pnpm is already installed.');
   } catch (error) {
-    console.log('pnpm not found. Installing...');
-    await runCommand('npm', ['install', '-g', 'pnpm'], { stdio: 'inherit' });
-    console.log('pnpm installed successfully.');
+    logger.info('pnpm not found. Installing...');
+    await runCommand('npm', ['install', '-g', 'pnpm'], runCommandOptions);
+    logger.info('pnpm installed successfully.');
   }
 }
 

@@ -216,6 +216,11 @@ function getAuthenticatedUrl(repo: RepositoryConfig, context: InvocationContext)
     }
     
     if (repo.authType === 'token') {
+        if (!repo.token) {
+            context.error(`Token is missing for repository ${repo.name}. Please check environment variable.`);
+            throw new Error(`Authentication token missing for ${repo.name}`);
+        }
+        context.log(`Using token authentication for ${repo.name}`);
         return repo.url.replace('https://', `https://${repo.token}@`);
     }
     
@@ -229,9 +234,97 @@ function getAuthenticatedUrl(repo: RepositoryConfig, context: InvocationContext)
 }
 
 /**
+ * Setup SSH configuration for git operations (Windows and Linux compatible)
+ */
+async function setupSSHConfig(context: InvocationContext): Promise<void> {
+    const sshPrivateKey = process.env.SSH_PRIVATE_KEY;
+    
+    if (!sshPrivateKey) {
+        context.warn('SSH_PRIVATE_KEY environment variable not found');
+        return;
+    }
+    
+    try {
+        // Determine home directory based on platform
+        const homeDir = process.env.HOME;
+        
+        const sshDir = path.join(homeDir, '.ssh');
+        
+        // Create .ssh directory if it doesn't exist
+        if (!fs.existsSync(sshDir)) {
+            fs.mkdirSync(sshDir, { recursive: true });
+        }
+        
+        // Set correct permissions on .ssh directory (700 = owner read/write/execute only)
+        fs.chmodSync(sshDir, 0o700);
+        
+        // Decode and write the private key
+        const privateKeyPath = path.join(sshDir, 'id_ed25519');
+        const decodedKey = Buffer.from(sshPrivateKey, 'base64').toString('utf-8');
+        
+        fs.writeFileSync(privateKeyPath, decodedKey);
+        
+        // Set correct permissions on the private key file (600 = owner read/write only)
+        fs.chmodSync(privateKeyPath, 0o600);
+    
+        // Create SSH config for github-microsoft
+        const sshConfigPath = path.join(sshDir, 'config');
+        const sshConfig = `# For cloud-and-ai-microsoft repositories
+Host github-microsoft
+    HostName github.com
+    User git
+    IdentityFile ${privateKeyPath.replace(/\\/g, '/')}
+    IdentitiesOnly yes
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null
+
+# For general GitHub repositories  
+Host github.com
+    HostName github.com
+    User git
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null
+`;
+        
+        fs.writeFileSync(sshConfigPath, sshConfig);
+        
+        // Set correct permissions on SSH config file (644 = owner read/write, group/others read only)
+        fs.chmodSync(sshConfigPath, 0o644);
+        
+        context.log(`SSH configuration setup completed`);
+        context.log(`SSH directory: ${sshDir}`);
+        context.log(`Private key path: ${privateKeyPath}`);
+        context.log(`SSH config path: ${sshConfigPath}`);
+        
+        // Set GIT_SSH_COMMAND environment variable to use the custom SSH config
+        process.env.GIT_SSH_COMMAND = `ssh -F "${sshConfigPath}" -o StrictHostKeyChecking=no`;
+        
+        // Test SSH connection
+        context.log('Testing SSH connection to github-microsoft...');
+        try {
+            const { execSync } = require('child_process');
+            const testResult = execSync(`ssh -F "${sshConfigPath}" -T git@github-microsoft -o ConnectTimeout=10`, {
+                stdio: 'pipe',
+                timeout: 15000
+            }).toString();
+            context.log('SSH test result:', testResult);
+        } catch (testError) {
+            context.warn('SSH test failed (this might be normal):', testError.message);
+        }
+        
+    } catch (error) {
+        context.error('Error setting up SSH configuration:', error);
+        throw error;
+    }
+}
+
+/**
  * Setup documentation repositories by cloning or updating them
  */
 async function setupDocumentationRepositories(docsDir: string, context: InvocationContext): Promise<void> {
+    // Setup SSH configuration first
+    await setupSSHConfig(context);
+    
     const repositories = [
         {
             name: 'TypeSpec',
@@ -268,12 +361,12 @@ async function setupDocumentationRepositories(docsDir: string, context: Invocati
         },
         {
             name: 'Azure Resource Provider Contract',
-            url: 'https://github.com/cloud-and-ai-microsoft/resource-provider-contract.git',
+            url: 'git@github-microsoft:cloud-and-ai-microsoft/resource-provider-contract.git',
             path: 'resource-provider-contract',
             branch: 'master',
             sparseCheckout: ['v1.0'],
-            authType: 'token',
-            token: process.env.AZURE_RPC_GUIDELINE_TOKEN,
+            authType: 'ssh',
+            sshHost: 'github-microsoft'
         },
         {
             name: 'Azure SDK Engineering System',
@@ -303,24 +396,24 @@ async function setupDocumentationRepositories(docsDir: string, context: Invocati
                 // Update existing repository
                 process.chdir(repoPath);
                 
-                execSync('git fetch origin', { stdio: 'pipe' });
-                execSync('git reset --hard origin/main || git reset --hard origin/master', { stdio: 'pipe' });
+                execSync('git fetch origin', { stdio: 'pipe', env: process.env });
+                execSync('git reset --hard origin/main || git reset --hard origin/master', { stdio: 'pipe', env: process.env });
             } else {
                 // Clone new repository
                 process.chdir(docsDir);
                 
                 if (repo.sparseCheckout) {
                     // Use sparse checkout for large repositories
-                    execSync(`git clone --filter=blob:none --sparse ${cloneUrl} ${repo.path}`, { stdio: 'pipe' });
+                    execSync(`git clone --filter=blob:none --sparse ${cloneUrl} ${repo.path}`, { stdio: 'pipe', env: process.env });
                     process.chdir(repoPath);
-                    execSync('git config core.sparseCheckout true', { stdio: 'pipe' });
+                    execSync('git config core.sparseCheckout true', { stdio: 'pipe', env: process.env });
                     
                     const sparseCheckoutFile = path.join(repoPath, '.git/info/sparse-checkout');
                     fs.writeFileSync(sparseCheckoutFile, repo.sparseCheckout.join('\n'));
                     
-                    execSync('git checkout main || git checkout master', { stdio: 'pipe' });
+                    execSync('git checkout main || git checkout master', { stdio: 'pipe', env: process.env });
                 } else {
-                    execSync(`git clone ${cloneUrl} ${repo.path}`, { stdio: 'pipe' });
+                    execSync(`git clone ${cloneUrl} ${repo.path}`, { stdio: 'pipe', env: process.env });
                 }
             }
             

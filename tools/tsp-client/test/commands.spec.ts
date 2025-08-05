@@ -406,7 +406,7 @@ describe.sequential("Verify commands", () => {
     }
   });
 
-  it.only("Init with global tspclientconfig.yaml with no emitter matches", async () => {
+  it("Init with global tspclientconfig.yaml with no emitter matches", async () => {
     await cp(
       joinPaths(cwd(), "test/utils/tspclientconfig-no-match.yaml"),
       joinPaths(await getRepoRoot("."), "eng", "tspclientconfig.yaml"),

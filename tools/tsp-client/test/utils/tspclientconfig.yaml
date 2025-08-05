@@ -3,3 +3,5 @@ supportedEmitters:
     path: "tools/tsp-client/test/utils/alternate-emitter-package.json"
   - name: "@azure-tools/typespec-http-client-csharp"
     path: "eng/emitter-package-http-client-csharp.json"
+  - name: "@azure-tools/typespec-python"
+    path: "eng/emitter-package-python.json"

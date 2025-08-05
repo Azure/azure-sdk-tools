@@ -13,11 +13,11 @@ async def process_file(input_file: str, output_file: str, is_bot: bool) -> None:
     print(f"Processing file: {input_file}")
     
     azure_api_key = os.environ["AZURE_API_KEY"]
-    bot_service_endpoint = os.environ["BOT_SERVICE_ENDPOINT"]
-    api_url = f"{bot_service_endpoint}/completion"
+    bot_service_endpoint = os.environ.get("BOT_SERVICE_ENDPOINT", None) 
+    api_url = f"{bot_service_endpoint}/completion" if bot_service_endpoint is not None else "http://localhost:8088/completion"
     start_time = time.time()
     outputFile = open("output/"+output_file, 'a', encoding='utf-8')
-    with open("data.jsonl", "r", encoding="utf-8") as f:
+    with open(input_file, "r", encoding="utf-8") as f:
         for line in f:
             record = json.loads(line)
             print(record)
@@ -72,14 +72,15 @@ async def prepare_dataset(testdata_dir: str, file_prefix: str = None, is_bot: bo
                     If provided, only files starting with this prefix will be processed.
     """
     print("📁 Preparing dataset...")
+    data_dir = Path(testdata_dir)
     output_dir = Path("output")
     output_dir.mkdir(exist_ok=True)
     
-    print(f"📂 Data directory: {testdata_dir.absolute()}")
+    print(f"📂 Data directory: {data_dir.absolute()}")
     print(f"📂 Output directory: {output_dir.absolute()}")
     
-    if not testdata_dir.exists():
-        print(f"❌ Data directory {testdata_dir.absolute()} does not exist!")
+    if not data_dir.exists():
+        print(f"❌ Data directory {data_dir.absolute()} does not exist!")
         return None
     
     current_date = datetime.now().strftime("%Y_%m_%d")
@@ -89,21 +90,21 @@ async def prepare_dataset(testdata_dir: str, file_prefix: str = None, is_bot: bo
     
     # Process markdown files in the folder, optionally filtered by prefix
     glob_pattern = f"{file_prefix}*.jsonl" if file_prefix else "*.jsonl"
-    matching_files = list(testdata_dir.glob(glob_pattern))
+    matching_files = list(data_dir.glob(glob_pattern))
     
     print(f"🔍 Looking for files matching pattern: {glob_pattern}")
     print(f"📋 Found {len(matching_files)} matching files")
     
     if matching_files:
-        print(f"Found {len(matching_files)} files matching prefix '{file_prefix}' in {testdata_dir}/")
+        print(f"Found {len(matching_files)} files matching prefix '{file_prefix}' in {data_dir}/")
         for file_path in matching_files:
             print(f"  - {file_path.name}")
             await process_file(str(file_path), str(output_file), is_bot)
     elif file_prefix:
-        print(f"No files found matching prefix '{file_prefix}' in {testdata_dir}/")
+        print(f"No files found matching prefix '{file_prefix}' in {data_dir}/")
         return None
     else:
-        print(f"No markdown files found in {testdata_dir}/")
+        print(f"No files found in {data_dir}/")
         return None
         
     print("Processing complete. Results written to output directory.")
@@ -132,13 +133,19 @@ if __name__ == "__main__":
     # Required environment variables
     azure_ai_project_endpoint = os.environ["AZURE_AI_PROJECT_ENDPOINT"]
     print(f"📋 Using project endpoint: {azure_ai_project_endpoint}")
+    model_config: dict[str, str] = {
+        "azure_endpoint": os.environ["AZURE_OPENAI_ENDPOINT"],
+        "api_key": os.environ["AZURE_OPENAI_API_KEY"],
+        "azure_deployment": "gpt-4o",
+        "api_version": "2025-03-01-preview",
+    }
     try: 
         print("📊 Preparing dataset...")
         output_file = asyncio.run(prepare_dataset(args.test_folder, args.prefix, args.is_bot))
         result = evaluate(
             data=output_file,
             evaluators={
-                "similarity": SimilarityEvaluator() 
+                "similarity": SimilarityEvaluator(model_config=model_config) 
             },
             # column mapping
             evaluator_config={

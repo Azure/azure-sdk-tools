@@ -55,7 +55,6 @@ export class SpectorCaseProcessor {
         for (const result of results) {
             if (result.error) {
                 context.error(`Error processing specs: ${result.error.message}`);
-                throw result.error;
             }
         }
         
@@ -132,7 +131,6 @@ export class SpectorCaseProcessor {
             await this.save(doc, targetDir, targetPath, context);
         } catch (error) {
             context.error(`Error processing spec file ${specPath}:`, error);
-            throw error;
         }
     }
     

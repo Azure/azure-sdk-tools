@@ -21,12 +21,11 @@ func NewFeedbackService() *FeedbackService {
 
 func (s *FeedbackService) SaveFeedback(feedback model.FeedbackReq) error {
 	timestamp := time.Now()
-	// Get month and week number
-	_, month, _ := timestamp.Date()
-	_, week := timestamp.ISOWeek()
-
-	// Format: feedback_MM_WW.xlsx (2-digit month, 2-digit week)
-	filename := fmt.Sprintf("feedback_month_%02d_week_%02d.xlsx", int(month), week)
+	// Get year and month
+	year, month, _ := timestamp.Date()
+	
+	// Format: feedback_YYYY_MM.xlsx
+	filename := fmt.Sprintf("feedback_%04d_%02d.xlsx", year, int(month))
 
 	// Read file from storage
 	storageService, err := storage.NewStorageService()

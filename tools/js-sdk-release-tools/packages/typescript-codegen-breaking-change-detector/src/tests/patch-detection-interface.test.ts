@@ -173,6 +173,24 @@ describe('detect interface', () => {
       expect(diffPairs.length).toBe(0);
     });
 
+    test('change classic property type to equivalent type alias', async () => {
+      const baselineApiView = `export interface TestInterface { prop: string; }`;
+      const currentApiView = `export type Str = string; export interface TestInterface { prop: Str; }`;
+
+      const astContext = await createTestAstContext(baselineApiView, currentApiView);
+      const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
+      expect(diffPairs.length).toBe(0);
+    });
+
+    test('change classic property type between equivalent JS/TS type', async () => {
+      const baselineApiView = `export interface AAA {p: string}; export interface TestInterface { prop: Record<string, AAA>; }`;
+      const currentApiView = `export interface AAA {p: string}; export interface TestInterface { prop: {[p: string]: AAA}; }`;
+
+      const astContext = await createTestAstContext(baselineApiView, currentApiView);
+      const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
+      expect(diffPairs.length).toBe(0);
+    });
+
     test('detect property move to parent model', async () => {
       const baselineApiView = `
         export interface SystemData {} 
@@ -191,24 +209,6 @@ describe('detect interface', () => {
         `;
       const astContext = await createTestAstContext(baselineApiView, currentApiView);
       const diffPairs = patchInterface('Target', astContext, AssignDirection.CurrentToBaseline);
-      expect(diffPairs.length).toBe(0);
-    });
-
-    test('change classic property type to equivalent type alias', async () => {
-      const baselineApiView = `export interface TestInterface { prop: string; }`;
-      const currentApiView = `export type Str = string; export interface TestInterface { prop: Str; }`;
-
-      const astContext = await createTestAstContext(baselineApiView, currentApiView);
-      const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
-      expect(diffPairs.length).toBe(0);
-    });
-
-    test('change classic property type between equivalent JS/TS type', async () => {
-      const baselineApiView = `export interface AAA {p: string}; export interface TestInterface { prop: Record<string, AAA>; }`;
-      const currentApiView = `export interface AAA {p: string}; export interface TestInterface { prop: {[p: string]: AAA}; }`;
-
-      const astContext = await createTestAstContext(baselineApiView, currentApiView);
-      const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
       expect(diffPairs.length).toBe(0);
     });
 

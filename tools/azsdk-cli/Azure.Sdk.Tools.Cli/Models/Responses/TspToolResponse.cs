@@ -1,4 +1,3 @@
-using System.Text;
 using System.Text.Json.Serialization;
 
 
@@ -13,25 +12,16 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses
         [JsonPropertyName("is_successful")]
         public bool IsSuccessful { get; set; }
 
-        [JsonPropertyName("error_message")]
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-        public string ErrorMessage { get; set; } = string.Empty;
-
         public override string ToString()
         {
-            StringBuilder output = new StringBuilder();
-
-            output.AppendLine($"### Is Successful: {IsSuccessful}");
-            if (IsSuccessful)
+            if (!IsSuccessful)
             {
-                output.AppendLine($"### TypeSpec Project Path: {TypeSpecProjectPath}");
+                return ToString(string.Empty);
             }
             else
             {
-                output.AppendLine($"### Error Message: {ErrorMessage}");
+                return $"### TypeSpec Project Path: {TypeSpecProjectPath}";
             }
-
-            return output.ToString();
         }
     }
 }

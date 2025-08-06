@@ -22,9 +22,9 @@ namespace Azure.Sdk.Tools.Cli.Tools
         // commands
         private const string ConvertSwaggerCommandName = "convert-swagger";
 
-        private readonly Option<string> outputDirectoryArg = new("--output-directory", "The output directory for the generated TypeSpec project. This directory must already exist and be empty.");
+        private readonly Option<string> outputDirectoryArg = new("--output-directory", "The output directory for the generated TypeSpec project. This directory must already exist and be empty.") { IsRequired = true };
 
-        private readonly Option<string> swaggerReadmeArg = new("--swagger-readme", "The path or URL to an Azure swagger README file.");
+        private readonly Option<string> swaggerReadmeArg = new("--swagger-readme", "The path or URL to an Azure swagger README file.") { IsRequired = true };
         private readonly Option<bool> isArmOption = new("--arm", "Whether the generated TypeSpec project is for an Azure Resource Management (ARM) API. This should be true if the swagger's path contains 'resource-manager'.");
         private readonly Option<bool> fullyCompatibleOption = new("--fully-compatible", "Whether to generate a TypeSpec project that is fully compatible with the swagger. It is recommended not to set this to true so that the converted TypeSpec project leverages TypeSpec built-in libraries with standard patterns and templates.");
 
@@ -59,7 +59,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             {
                 case ConvertSwaggerCommandName:
                     await HandleConvertCommand(ctx, ct);
-                    return 0;
+                    return ctx.ExitCode;
                 default:
                     logger.LogError($"Unknown command: {command}");
                     return 1;
@@ -75,13 +75,11 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
             TspToolResponse result = ConvertSwagger(swaggerReadme, outputDirectory, isArm, fullyCompatible);
             ctx.ExitCode = ExitCode;
-            output.Output(result.ToString());
+            output.Output(result);
             return Task.CompletedTask;
         }
 
-        [McpServerTool(Name = "ConvertSwaggerToTypeSpec"), Description(@"**Call this tool when trying to convert an existing Azure service to TypeSpec.**
-        This command should only be ran once to get started working on a TypeSpec project.
-        Verify whether the source swagger describes an Azure Resource Management (ARM) API or a data plane API if unsure.
+        [McpServerTool(Name = "ConvertSwaggerToTypeSpec"), Description(@"Converts an existing Azure service swagger definition to a TypeSpec project.
         Pass in the `pathToSwaggerReadme` which is the path to the swagger README file.
         Pass in the `outputDirectory` where the TypeSpec project should be created. This must be an existing empty directory.
         Pass in `isAzureResourceManagement` to indicate whether the swagger is for an Azure Resource Management (ARM) API.
@@ -104,7 +102,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     SetFailure();
                     return new TspToolResponse
                     {
-                        ErrorMessage = readmeValidationResult
+                        ResponseError = readmeValidationResult
                     };
                 }
                 // fullPathToSwaggerReadme is not null or empty at this point - already validated
@@ -117,7 +115,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     SetFailure();
                     return new TspToolResponse
                     {
-                        ErrorMessage = validationResult
+                        ResponseError = validationResult
                     };
                 }
 
@@ -130,7 +128,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 SetFailure();
                 return new TspToolResponse
                 {
-                    ErrorMessage = $"Failed: An error occurred trying to convert '{pathToSwaggerReadme}': {ex.Message}"
+                    ResponseError = $"Failed: An error occurred trying to convert '{pathToSwaggerReadme}': {ex.Message}"
                 };
             }
         }
@@ -216,7 +214,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 SetFailure();
                 return new TspToolResponse
                 {
-                    ErrorMessage = $"Failed to convert swagger to TypeSpec project: {result.Output}"
+                    ResponseError = $"Failed to convert swagger to TypeSpec project: {result.Output}"
                 };
             }
 

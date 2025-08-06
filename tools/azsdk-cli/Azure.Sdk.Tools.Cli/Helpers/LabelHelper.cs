@@ -28,23 +28,22 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             while ((line = reader.ReadLine()) != null)
             {
                 if (string.IsNullOrWhiteSpace(line))
-                    continue;
-
-                var commaIndices = new List<int>();
-                for (int i = 0; i < line.Length; i++)
                 {
-                    if (line[i] == ',')
-                        commaIndices.Add(i);
+                    continue;
                 }
 
-                if (commaIndices.Count < 2)
-                    continue; // Skip lines that don't have at least 2 commas
+                var commaIndices = line.Split(",");
 
-                // Label is everything before the first comma
-                var label = line.Substring(0, commaIndices[0]).Trim();
+                if (commaIndices.Length < 2)
+                {
+                    continue; // Skip lines that don't have at least 2 commas
+                }
+
+                // Label is the first part (before first comma)
+                var label = commaIndices[0].Trim();
                 
-                // Color is everything after the last comma
-                var color = line.Substring(commaIndices[commaIndices.Count - 1] + 1).Trim();
+                // Color is the last part (after last comma)
+                var color = commaIndices[commaIndices.Length - 1].Trim();
                 
                 // Check if this is the service we're looking for
                 if (label.Equals(serviceName, StringComparison.OrdinalIgnoreCase))
@@ -66,7 +65,10 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
         public string CreateServiceLabel(string csvContent, string serviceLabel)
         {
-            List<string> lines = csvContent.Split("\n").ToList();
+            // Filter out empty or whitespace-only lines
+            List<string> lines = csvContent.Split("\n")
+                .Where(line => !string.IsNullOrWhiteSpace(line))
+                .ToList();
 
             var newServiceLabel = $"{serviceLabel},,{Constants.SERVICE_LABELS_COLOR_CODE}";
 

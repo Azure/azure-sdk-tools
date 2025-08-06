@@ -25,7 +25,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
         private readonly IOutputService output;
         private readonly IGitHelper gitHelper;
 
-        private readonly Option<string> projectPathOption = new(["--project-path", "-p"], "Path to the project directory to check") { IsRequired = true };
+        private readonly Option<string> packagePathOption = new(["--package-path", "-p"], "Path to the package directory to check") { IsRequired = true };
 
         public DependencyCheckTool(ILogger<DependencyCheckTool> logger, IOutputService output, IGitHelper gitHelper) : base()
         {
@@ -38,7 +38,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
         public override Command GetCommand()
         {
             Command command = new("dependency-check", "Run dependency check for SDK projects");
-            command.AddOption(projectPathOption);
+            command.AddOption(packagePathOption);
             command.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
             return command;
         }
@@ -47,8 +47,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
         {
             try
             {
-                var projectPath = ctx.ParseResult.GetValueForOption(projectPathOption);
-                var result = await RunDependencyCheck(projectPath);
+                var packagePath = ctx.ParseResult.GetValueForOption(packagePathOption);
+                var result = await RunDependencyCheck(packagePath);
 
                 output.Output(result);
                 ctx.ExitCode = ExitCode;
@@ -65,17 +65,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
             }
         }
 
-        [McpServerTool(Name = "RunDependencyCheck"), Description("Run dependency check for SDK projects. Provide absolute path to project root as param.")]
-        public async Task<ICLICheckResponse> RunDependencyCheck(string projectPath)
+        [McpServerTool(Name = "RunDependencyCheck"), Description("Run dependency check for SDK packages. Provide absolute path to package root as param.")]
+        public async Task<ICLICheckResponse> RunDependencyCheck(string packagePath)
         {
             try
             {
-                logger.LogInformation($"Starting dependency check for project at: {projectPath}");
+                logger.LogInformation($"Starting dependency check for package at: {packagePath}");
                 
-                if (!Directory.Exists(projectPath))
+                if (!Directory.Exists(packagePath))
                 {
                     SetFailure(1);
-                    return new FailureCLICheckResponse(1, "", $"Project path does not exist: {projectPath}");
+                    return new FailureCLICheckResponse(1, "", $"Package path does not exist: {packagePath}");
                 }
 
                 // Use LanguageRepoService to detect language and run appropriate dependency analysis
@@ -112,12 +112,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                     result = new FailureCLICheckResponse(1, $"Error during dependency analysis: {ex.Message}");
                 }
 
-                return new SuccessCLICheckResponse(result.ExitCode, System.Text.Json.JsonSerializer.Serialize(new
+                // Create response with timing information, preserving the actual result type
+                var responseData = new
                 {
                     Message = result.Output ?? "Dependency check completed",
                     Duration = stopwatch.ElapsedMilliseconds,
                     OriginalOutput = result.Output
-                }));
+                };
+                
+                string serializedResponse = System.Text.Json.JsonSerializer.Serialize(responseData);
+                
+                // Return appropriate response type based on the actual result
+                return result.ExitCode == 0 
+                    ? new SuccessCLICheckResponse(result.ExitCode, serializedResponse)
+                    : new FailureCLICheckResponse(result.ExitCode, serializedResponse, result is FailureCLICheckResponse failure ? failure.Error : "Check failed");
             }
             catch (Exception ex)
             {

@@ -28,7 +28,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
         private readonly IOutputService output;
         private readonly IGitHelper gitHelper;
 
-        private readonly Option<string> projectPathOption = new(["--project-path", "-p"], "Path to the project directory to check") { IsRequired = true };
+        private readonly Option<string> packagePathOption = new(["--package-path", "-p"], "Path to the package directory to check") { IsRequired = true };
 
         public ChangelogValidationTool(ILogger<ChangelogValidationTool> logger, IOutputService output, IGitHelper gitHelper) : base()
         {
@@ -41,7 +41,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
         public override Command GetCommand()
         {
             Command command = new("changelog-validation", "Run changelog validation for SDK projects");
-            command.AddOption(projectPathOption);
+            command.AddOption(packagePathOption);
             command.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
             return command;
         }
@@ -50,8 +50,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
         {
             try
             {
-                var projectPath = ctx.ParseResult.GetValueForOption(projectPathOption);
-                var result = await RunChangelogValidation(projectPath);
+                var packagePath = ctx.ParseResult.GetValueForOption(packagePathOption);
+                var result = await RunChangelogValidation(packagePath);
 
                 output.Output(result);
                 ctx.ExitCode = ExitCode;
@@ -68,33 +68,33 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
             }
         }
 
-        [McpServerTool(Name = "RunChangelogValidation"), Description("Run changelog validation for SDK projects. Provide absolute path to project root as param.")]
-        public async Task<ICLICheckResponse> RunChangelogValidation(string projectPath)
+        [McpServerTool(Name = "RunChangelogValidation"), Description("Run changelog validation for SDK packages. Provide absolute path to package root as param.")]
+        public async Task<ICLICheckResponse> RunChangelogValidation(string packagePath)
         {
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             
             try
             {
-                logger.LogInformation($"Starting changelog validation for project at: {projectPath}");
+                logger.LogInformation($"Starting changelog validation for package at: {packagePath}");
                 
-                if (!Directory.Exists(projectPath))
+                if (!Directory.Exists(packagePath))
                 {
                     SetFailure(1);
-                    return new FailureCLICheckResponse(1, "", $"Project path does not exist: {projectPath}");
+                    return new FailureCLICheckResponse(1, "", $"Package path does not exist: {packagePath}");
                 }
 
                 // Find the SDK repository root by looking for common repository indicators
-                // Start from the project path and work upwards to find the SDK repo root
-                var projectRepoRoot = gitHelper.DiscoverRepoRoot(projectPath);
-                if (string.IsNullOrEmpty(projectRepoRoot))
+                // Start from the package path and work upwards to find the SDK repo root
+                var packageRepoRoot = gitHelper.DiscoverRepoRoot(packagePath);
+                if (string.IsNullOrEmpty(packageRepoRoot))
                 {
                     SetFailure(1);
-                    return new FailureCLICheckResponse(1, "", $"Could not find repository root from project path: {projectPath}");
+                    return new FailureCLICheckResponse(1, "", $"Could not find repository root from package path: {packagePath}");
                 }
 
                 // Construct the path to the PowerShell script in the SDK repository
-                // The script should be in the project's repository root, not relative to this tool's location
-                var scriptPath = Path.Combine(projectRepoRoot, "eng", "common", "scripts", "Verify-ChangeLog.ps1");
+                // The script should be in the package's repository root, not relative to this tool's location
+                var scriptPath = Path.Combine(packageRepoRoot, "eng", "common", "scripts", "Verify-ChangeLog.ps1");
                 
                 if (!File.Exists(scriptPath))
                 {
@@ -103,7 +103,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                 }
 
                 // Execute the PowerShell script
-                var result = await ExecuteChangelogValidationScript(scriptPath, projectPath);
+                var result = await ExecuteChangelogValidationScript(scriptPath, packagePath);
                 stopwatch.Stop();
 
                 if (result.Success)
@@ -133,9 +133,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
         /// Executes the PowerShell changelog validation script
         /// </summary>
         /// <param name="scriptPath">Path to the PowerShell script</param>
-        /// <param name="projectPath">Path to the project directory</param>
+        /// <param name="packagePath">Path to the package directory</param>
         /// <returns>Validation result</returns>
-        private async Task<(bool Success, string ErrorMessage, List<string> Details)> ExecuteChangelogValidationScript(string scriptPath, string projectPath)
+        private async Task<(bool Success, string ErrorMessage, List<string> Details)> ExecuteChangelogValidationScript(string scriptPath, string packagePath)
         {
             var details = new List<string>();
             
@@ -145,8 +145,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                 var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
                 var fileName = isWindows ? "cmd.exe" : "pwsh";
                 var arguments = isWindows 
-                    ? $"/C pwsh -NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -PackageName \"{Path.GetFileName(projectPath)}\""
-                    : $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -PackageName \"{Path.GetFileName(projectPath)}\"";
+                    ? $"/C pwsh -NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -PackageName \"{Path.GetFileName(packagePath)}\""
+                    : $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -PackageName \"{Path.GetFileName(packagePath)}\"";
 
                 var processStartInfo = new ProcessStartInfo
                 {
@@ -157,7 +157,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                     RedirectStandardInput = true,
                     UseShellExecute = false,
                     CreateNoWindow = true,
-                    WorkingDirectory = projectPath
+                    WorkingDirectory = packagePath
                 };
 
                 using var process = new System.Diagnostics.Process();

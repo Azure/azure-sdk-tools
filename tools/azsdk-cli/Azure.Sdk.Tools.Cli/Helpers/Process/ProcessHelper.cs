@@ -3,7 +3,7 @@
 using System.Diagnostics;
 using System.Text;
 
-namespace Azure.Sdk.Tools.Cli.Helpers.Process
+namespace Azure.Sdk.Tools.Cli.Helpers
 {
     public interface IProcessHelper
     {
@@ -66,7 +66,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers.Process
             var output = new StringBuilder();
             int exitCode = -1;
 
-            using (var process = new System.Diagnostics.Process())
+            using (var process = new Process())
             {
                 process.StartInfo = processStartInfo;
                 process.OutputDataReceived += (sender, e) =>

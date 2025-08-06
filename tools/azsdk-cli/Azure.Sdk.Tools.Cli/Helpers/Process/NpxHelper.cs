@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 using System.Runtime.InteropServices;
 
-namespace Azure.Sdk.Tools.Cli.Helpers.Process
+namespace Azure.Sdk.Tools.Cli.Helpers
 {
     public interface INpxHelper
     {

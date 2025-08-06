@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tools.TspTool;
 using Moq;
-using Azure.Sdk.Tools.Cli.Helpers.Process;
+using Azure.Sdk.Tools.Cli.Helpers;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools
 {

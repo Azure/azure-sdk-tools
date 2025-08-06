@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 using Azure.AI.OpenAI;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Helpers.Process;
 using Microsoft.Extensions.Azure;
 
 namespace Azure.Sdk.Tools.Cli.Services

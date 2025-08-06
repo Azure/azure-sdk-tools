@@ -18,7 +18,7 @@ internal class LabelHelperTests
     [Test]
     [TestCase("TestService,Description,e99695\nAnotherService,Description2,e99695", "TestService", LabelHelper.ServiceLabelStatus.Exists)]
     [TestCase("TestService,Description,e99695\r\nAnotherService,Description2,e99695\nThirdService,Description3,e99695", "AnotherService", LabelHelper.ServiceLabelStatus.Exists)]
-    [TestCase("TestService,Description,e99695\nAnotherService,Description2,e99695\n\r", "TestService", LabelHelper.ServiceLabelStatus.Exists)]
+    [TestCase("TestService,Description,e99695\nAnotherService,Description2,e99695\r\n", "TestService", LabelHelper.ServiceLabelStatus.Exists)]
     [TestCase("TestService,Description,e99695\nAnotherService,Description2,e99695", "NonExistentService", LabelHelper.ServiceLabelStatus.DoesNotExist)]
     [TestCase("TestService,Description,123456\nAnotherService,Description2,e99695", "TestService", LabelHelper.ServiceLabelStatus.NotAServiceLabel)]
     [TestCase("Service - TestService,Description with commas and stuff,e99695\nAnotherService,Description2,e99695", "Service - TestService", LabelHelper.ServiceLabelStatus.Exists)]

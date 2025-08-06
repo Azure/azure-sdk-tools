@@ -33,6 +33,7 @@ public class LanguageRepoServiceFactory
             "csharp" => new DotNetLanguageRepoService(repositoryPath),
             "dotnet" => new DotNetLanguageRepoService(repositoryPath),
             "go" => new GoLanguageRepoService(repositoryPath),
+            "java" => new JavaLanguageRepoService(repositoryPath),
             _ => new LanguageRepoService(repositoryPath) // Base implementation for unsupported languages
         };
     }
@@ -66,6 +67,10 @@ public class LanguageRepoServiceFactory
                     content.Contains("dotnet", StringComparison.OrdinalIgnoreCase) ||
                     content.Contains(".net", StringComparison.OrdinalIgnoreCase))
                     return "csharp";
+                if (content.Contains("java", StringComparison.OrdinalIgnoreCase))
+                    return "java";
+                if (content.Contains("go", StringComparison.OrdinalIgnoreCase))
+                    return "go";
             }
             catch
             {
@@ -142,6 +147,6 @@ public class LanguageRepoServiceFactory
     /// <returns>Array of supported language strings</returns>
     public static string[] GetSupportedLanguages()
     {
-        return new[] { "python", "javascript", "typescript", "csharp", "dotnet", "go" };
+        return new[] { "python", "javascript", "typescript", "csharp", "dotnet", "go", "java" };
     }
 }

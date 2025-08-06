@@ -59,7 +59,9 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
 
             // Exclude specific framework methods by name
             if (methodSymbol.Name == "GetCommand" || methodSymbol.Name == "HandleCommand")
+            {
                 return;
+            }
 
             // Get the return type
             var returnType = methodSymbol.ReturnType;

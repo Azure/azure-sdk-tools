@@ -43,7 +43,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   @Input() hasHiddenAPIs : boolean = false;
   @Input() hasHiddenAPIThatIsDiff : boolean = false;
   @Input() codeLineSearchInfo : CodeLineSearchInfo | undefined = undefined;
-  
+
   @Output() diffStyleEmitter : EventEmitter<string> = new EventEmitter<string>();
   @Output() showCommentsEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() showSystemCommentsEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
@@ -56,17 +56,18 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   @Output() showLineNumbersEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() apiRevisionApprovalEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() reviewApprovalEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() namespaceApprovalEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() commentThreadNavaigationEmitter : EventEmitter<CodeLineRowNavigationDirection> = new EventEmitter<CodeLineRowNavigationDirection>();
   @Output() diffNavaigationEmitter : EventEmitter<CodeLineRowNavigationDirection> = new EventEmitter<CodeLineRowNavigationDirection>();
-  @Output() copyReviewTextEmitter : EventEmitter<boolean> = new EventEmitter<boolean>(); 
+  @Output() copyReviewTextEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() codeLineSearchTextEmitter : EventEmitter<string> = new EventEmitter<string>();
   @Output() codeLineSearchInfoEmitter : EventEmitter<CodeLineSearchInfo> = new EventEmitter<CodeLineSearchInfo>();
 
   private destroy$ = new Subject<void>();
-  
+
   webAppUrl : string = this.configService.webAppUrl
   assetsPath : string = environment.assetsPath;
-  
+
   showCommentsSwitch : boolean = true;
   showSystemCommentsSwitch : boolean = true;
   showDocumentationSwitch : boolean = true;
@@ -86,13 +87,21 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   showDisableCodeLinesLazyLoadingModal: boolean = false;
   overrideActiveConversationforApproval : boolean = false;
   overrideFatalDiagnosticsforApproval : boolean = false;
-  
+
   canApproveReview: boolean | undefined = undefined;
   reviewIsApproved: boolean | undefined = undefined;
   reviewApprover: string = 'azure-sdk';
   copyReviewTextButtonText : string = 'Copy review text';
   generateAIReviewButtonText : string = 'Generate copilot review';
   aiReviewGenerationState : 'NotStarted' | 'InProgress' | 'Completed' | 'Failed' = 'NotStarted';
+
+  // Namespace review properties
+  canRequestNamespaceReview: boolean = false;
+  isNamespaceReviewRequested: boolean = false;
+  isNamespaceReviewInProgress: boolean = false;
+  namespaceReviewBtnClass: string = '';
+  namespaceReviewBtnLabel: string = '';
+  namespaceReviewMessage: string = '';
 
   codeLineSearchText: FormControl = new FormControl('');
 
@@ -118,7 +127,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   };
 
   constructor(
-    private configService: ConfigService, private route: ActivatedRoute, 
+    private configService: ConfigService, private route: ActivatedRoute,
     private router: Router,  private apiRevisionsService: APIRevisionsService, private commentsService: CommentsService,
     private pullRequestService: PullRequestsService, private messageService: MessageService,
     private signalRService: SignalRService, private notificationsService: NotificationsService) { }
@@ -166,10 +175,25 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
       this.setAPIRevisionApprovalStates();
     }
 
-    if (changes['review'] && changes['review'].currentValue != undefined) { 
+    if (changes['review'] && changes['review'].currentValue != undefined) {
       this.setSubscribeSwitch();
       this.setReviewApprovalStatus();
+      this.setNamespaceReviewStates();
       this.updateDiffStyle();
+
+      // Reset loading state when review data is updated (indicating the request completed)
+      if (this.isNamespaceReviewInProgress) {
+        console.log('Checking namespace review status:', changes['review'].currentValue.namespaceReviewStatus);
+        console.log('Current isNamespaceReviewInProgress:', this.isNamespaceReviewInProgress);
+
+        // Reset loading if status changed to pending or approved (indicating request completed)
+        if (changes['review'].currentValue.namespaceReviewStatus === 'pending' ||
+            changes['review'].currentValue.namespaceReviewStatus === 'approved') {
+          console.log('Resetting namespace review loading state');
+          this.isNamespaceReviewInProgress = false;
+          this.updateNamespaceReviewButtonState();
+        }
+      }
     }
 
     if (changes['hasHiddenAPIThatIsDiff']) {
@@ -222,9 +246,9 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   }
 
   /**
-  * Disable Lazy Loading
-  * @param event the Filter event
-  */
+   * Disable Lazy Loading
+   * @param event the Filter event
+   */
   onDisableLazyLoadingSwitchChange(event: InputSwitchChangeEvent) {
     if (event.checked) {
       this.showDisableCodeLinesLazyLoadingModal = true;
@@ -232,7 +256,28 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
       this.disableCodeLinesLazyLoadingEmitter.emit(event.checked);
     }
   }
-  
+
+  /**
+   * Handle disable lazy loading modal hide
+   */
+  onDisableLazyLoadingModalHide() {
+    this.showDisableCodeLinesLazyLoadingModal = false;
+  }
+
+  /**
+   * Confirm disable lazy loading
+   */
+  onDisableLazyLoadingConfirm() {
+    this.disableCodeLinesLazyLoadingEmitter.emit(true);
+    this.showDisableCodeLinesLazyLoadingModal = false;
+  }
+
+  /**
+   * Cancel disable lazy loading
+   */
+  onDisableLazyLoadingCancel() {
+    this.showDisableCodeLinesLazyLoadingModal = false;
+  }
 
   /**
   * Callback for markedAsViewSwitch Change
@@ -322,17 +367,34 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
       this.apiRevisionApprovalBtnLabel = (this.activeAPIRevisionIsApprovedByCurrentUser) ? "Revert API Approval" : "Approve";
     }
   }
-
   setReviewApprovalStatus() {
-    this.canToggleApproveAPIRevision = (this.review && this.review!.packageName && !(mapLanguageAliases(["Swagger", "TypeSpec"]).includes(this.review?.language!))) ? true : false;
-    this.reviewIsApproved = this.review && this.review?.isApproved ? true : false;
+    this.reviewIsApproved = !!this.review?.isApproved;
     if (this.reviewIsApproved) {
       this.reviewApprover = this.review?.changeHistory.find(ch => ch.changeAction === 'approved')?.changedBy ?? 'azure-sdk';
     }
   }
 
+  setNamespaceReviewStates() {
+    // Only show namespace review request for TypeSpec language
+    this.canRequestNamespaceReview = this.review?.language === 'TypeSpec';
+    this.isNamespaceReviewRequested = this.review?.namespaceReviewStatus === 'pending' || this.review?.namespaceReviewStatus === 'approved';
+
+    console.log('setNamespaceReviewStates - namespaceReviewStatus:', this.review?.namespaceReviewStatus);
+    console.log('setNamespaceReviewStates - isNamespaceReviewRequested:', this.isNamespaceReviewRequested);
+    console.log('setNamespaceReviewStates - isNamespaceReviewInProgress:', this.isNamespaceReviewInProgress);
+
+    // CRITICAL FIX: If we were in progress and now have a pending/approved status, reset loading state
+    if (this.isNamespaceReviewInProgress && this.isNamespaceReviewRequested) {
+      console.log('🎯 RESETTING LOADING STATE: Was in progress, now has pending/approved status');
+      this.isNamespaceReviewInProgress = false;
+    }
+
+    // Update button state
+    this.updateNamespaceReviewButtonState();
+  }
+
   setPullRequestsInfo() {
-    if (this.activeAPIRevision?.apiRevisionType === 'pullRequest') { 
+    if (this.activeAPIRevision?.apiRevisionType === 'pullRequest') {
       this.pullRequestService.getAssociatedPullRequests(this.activeAPIRevision.reviewId, this.activeAPIRevision.id).pipe(take(1)).subscribe({
         next: (response: PullRequestModel[]) => {
           this.associatedPullRequests = response;
@@ -350,7 +412,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
       });
     }
   }
-  
+
   setSubscribeSwitch() {
     this.subscribeSwitch = (this.userProfile && this.review) ? this.review!.subscribers.includes(this.userProfile?.email!) : this.subscribeSwitch;
   }
@@ -425,7 +487,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
 
   /**
    * Use positive number to navigate to the next search result and negative number to navigate to the previous search result
-   * @param number 
+   * @param number
    */
   navigateSearch(number: 1 | -1) {
     if (number == 1) {
@@ -495,15 +557,61 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
             this.aiReviewGenerationState = 'Completed';
             this.generateAIReviewButtonText = 'Generate copilot review';
           }, 3000);
-          
+
         }
       }
     });
   }
-
   toggleAPIRevisionApproval() {
     this.apiRevisionApprovalEmitter.emit(true);
     this.showAPIRevisionApprovalModal = false;
+  }
+  handleNamespaceReviewAction() {
+    console.log('Namespace review button clicked, isNamespaceReviewRequested:', this.isNamespaceReviewRequested);
+    // Only allow if not already requested
+    if (!this.isNamespaceReviewRequested && !this.isNamespaceReviewInProgress) {
+      // Optimistic UI update - immediately show as in progress
+      this.isNamespaceReviewInProgress = true;
+      this.updateNamespaceReviewButtonState();
+
+      // Emit the action to parent component
+      this.namespaceApprovalEmitter.emit(true);
+    }
+  }
+
+  updateNamespaceReviewButtonState() {
+    if (this.isNamespaceReviewInProgress) {
+      this.namespaceReviewBtnClass = "btn btn-outline-primary";
+      this.namespaceReviewBtnLabel = "Requesting...";
+      this.namespaceReviewMessage = "";
+    } else if (this.isNamespaceApproved()) {
+      this.namespaceReviewBtnClass = "btn btn-outline-success";
+      this.namespaceReviewBtnLabel = "Namespace Review Approved";
+      this.namespaceReviewMessage = "";
+    } else if (this.isNamespaceReviewRequested) {
+      this.namespaceReviewBtnClass = "btn btn-secondary disabled";
+      this.namespaceReviewBtnLabel = "Namespace Review Requested";
+      this.namespaceReviewMessage = "Please check the review status in associated API Revisions";
+    } else {
+      this.namespaceReviewBtnClass = "btn btn-success";
+      this.namespaceReviewBtnLabel = "Request Namespace Review";
+      this.namespaceReviewMessage = "Request namespace reviews for associated API revisions; corresponding reviewers will be notified.";
+    }
+  }
+
+  /**
+   * Reset the namespace review loading state (called when request fails)
+   */
+  resetNamespaceReviewLoadingState() {
+    this.isNamespaceReviewInProgress = false;
+    this.updateNamespaceReviewButtonState();
+  }
+
+  /**
+   * Check if namespace review has been approved in change history
+   */
+  isNamespaceApproved(): boolean {
+    return this.review?.changeHistory?.some(ch => ch.changeAction === 'namespaceApproved') || false;
   }
 
   getPullRequestsOfAssociatedAPIRevisionsUrl(pr: PullRequestModel) {

@@ -137,7 +137,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     {
                         Status = "NotAServiceLabel",
                         Label = label,
-                        ResponseError = "Label exists but is not a service label"
                     };
                 }
 

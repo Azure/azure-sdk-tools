@@ -604,12 +604,12 @@ namespace Azure.Sdk.Tools.Cli.Tools
             
             if (validServiceOwnersCount < 2)
             {
-                validationErrors.Add($"Modified entry must have at least 2 valid service owners. Current count: {validServiceOwnersCount}");
+                validationErrors.Add($"Modified entry must have at least 2 valid service owners. Current count: {validServiceOwnersCount}.");
             }
 
             if (validSourceOwnersCount < 2)
             {
-                validationErrors.Add($"Modified entry must have at least 2 valid source owners. Current count: {validSourceOwnersCount}");
+                validationErrors.Add($"Modified entry must have at least 2 valid source owners. Current count: {validSourceOwnersCount}.");
             }
 
             if (validationErrors.Any())

@@ -24,7 +24,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
         private readonly IOutputService output;
         private readonly IGitHelper gitHelper;
 
-        private readonly Option<string> projectPathOption = new(["--project-path", "-p"], "Path to the project directory to check") { IsRequired = true };
+        private readonly Option<string> packagePathOption = new(["--package-path", "-p"], "Path to the package directory to check") { IsRequired = true };
 
         public CheckAllTool(
             ILogger<CheckAllTool> logger, 
@@ -40,7 +40,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
         public override Command GetCommand()
         {
             Command command = new("all", "Run all validation checks for SDK projects");
-            command.AddOption(projectPathOption);
+            command.AddOption(packagePathOption);
             command.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
             return command;
         }
@@ -49,8 +49,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
         {
             try
             {
-                var projectPath = ctx.ParseResult.GetValueForOption(projectPathOption);
-                var result = await RunAllChecks(projectPath);
+                var packagePath = ctx.ParseResult.GetValueForOption(packagePathOption);
+                var result = await RunAllChecks(packagePath);
 
                 // Convert ICLICheckResponse to DefaultCommandResponse for output
                 var response = new DefaultCommandResponse
@@ -75,17 +75,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
             }
         }
 
-        [McpServerTool(Name = "All"), Description("Run all validation checks for SDK projects. Provide absolute path to project root as param.")]
-        public async Task<ICLICheckResponse> RunAllChecks(string projectPath)
+        [McpServerTool(Name = "All"), Description("Run all validation checks for SDK packages. Provide absolute path to package root as param.")]
+        public async Task<ICLICheckResponse> RunAllChecks(string packagePath)
         {
             try
             {
-                logger.LogInformation($"Starting all checks for project at: {projectPath}");
+                logger.LogInformation($"Starting all checks for package at: {packagePath}");
                 
-                if (!Directory.Exists(projectPath))
+                if (!Directory.Exists(packagePath))
                 {
                     SetFailure(1);
-                    return new FailureCLICheckResponse(1, "", $"Project path does not exist: {projectPath}");
+                    return new FailureCLICheckResponse(1, "", $"Package path does not exist: {packagePath}");
                 }
 
                 var results = new List<ICLICheckResponse>();
@@ -96,12 +96,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                     Microsoft.Extensions.Logging.Abstractions.NullLogger<DependencyCheckTool>.Instance,
                     output);
                 
-                var dependencyCheckResult = await dependencyCheckTool.RunDependencyCheck(projectPath);
+                var dependencyCheckResult = await dependencyCheckTool.RunDependencyCheck(packagePath);
                 
                 results.Add(dependencyCheckResult);
                 if (dependencyCheckResult.ExitCode != 0) overallSuccess = false;
 
-                var changelogValidationResult = await RunChangelogValidation(projectPath);
+                var changelogValidationResult = await RunChangelogValidation(packagePath);
                 results.Add(changelogValidationResult);
                 if (changelogValidationResult.ExitCode != 0) overallSuccess = false;
 
@@ -126,7 +126,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
             }
         }
 
-    private async Task<ICLICheckResponse> RunChangelogValidation(string projectPath)
+    private async Task<ICLICheckResponse> RunChangelogValidation(string packagePath)
     {
         logger.LogInformation("Running changelog validation...");
         
@@ -136,7 +136,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
             output,
             gitHelper);
         
-        return await changelogValidationTool.RunChangelogValidation(projectPath);
+        return await changelogValidationTool.RunChangelogValidation(packagePath);
     }
 
     }

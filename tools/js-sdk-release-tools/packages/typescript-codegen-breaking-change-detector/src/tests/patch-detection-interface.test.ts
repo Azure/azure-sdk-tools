@@ -164,6 +164,15 @@ describe('detect interface', () => {
       expect(diffPairs[0].source?.node.asKind(SyntaxKind.PropertySignature)?.getTypeNode()?.getText()).toBe('number');
     });
 
+    test('ignore change property type', async () => {
+      const baselineApiView = `export interface TestInterface { prop: Record<string, unknown>; }`;
+      const currentApiView = `export interface TestInterface { prop: any; }`;
+
+      const astContext = await createTestAstContext(baselineApiView, currentApiView);
+      const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
+      expect(diffPairs.length).toBe(0);
+    });
+
     test('detect property move to parent model', async () => {
       const baselineApiView = `
         export interface SystemData {} 
@@ -182,15 +191,6 @@ describe('detect interface', () => {
         `;
       const astContext = await createTestAstContext(baselineApiView, currentApiView);
       const diffPairs = patchInterface('Target', astContext, AssignDirection.CurrentToBaseline);
-      expect(diffPairs.length).toBe(0);
-    });
-
-    test('ignore change property type', async () => {
-      const baselineApiView = `export interface TestInterface { prop: Record<string, unknown>; }`;
-      const currentApiView = `export interface TestInterface { prop: any; }`;
-
-      const astContext = await createTestAstContext(baselineApiView, currentApiView);
-      const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
       expect(diffPairs.length).toBe(0);
     });
 

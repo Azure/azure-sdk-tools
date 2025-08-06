@@ -286,7 +286,8 @@ export class DeclarationDifferenceDetector {
             const originalType = originalDeclaration.getType();
             const matchingDeclaration = matchingProp.getValueDeclarationOrThrow();
             const nestedType = matchingDeclaration.getType();
-            return nestedType.isAssignableTo(originalType) && originalType.isAssignableTo(nestedType);
+            // Use explicit type equality check for clarity (see CodeQL recommendation)
+            return nestedType.getText() === originalType.getText();
           } catch {
             // If type comparison fails, consider them different
             return false;

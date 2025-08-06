@@ -28,7 +28,6 @@
 # Eng Sys Tools
 ###########
 /tools/                                 @azure/azure-sdk-eng
-/tools/azsdk-cli/                       @benbp @scbedd @praveenkuttappan @smw-ms @Jeo02 @maririos 
 /tools/azure-rest-api-specs-examples-automation/ @weidongxu-microsoft
 /tools/codeowners-utils/                @weshaggard
 /tools/fxlister/                        @KrzysztofCwalina
@@ -48,6 +47,9 @@
 /tools/typespec-bump-deps/              @weidongxu-microsoft
 /tools/content-validation/              @xiangyan99 @zedy-wj
 /tools/perf-regression-finder/          @sa7936 @m-redding @jsquire
+
+# PRLabel: %azsdk-cli
+/tools/azsdk-cli/                       @benbp @scbedd @praveenkuttappan @smw-ms @Jeo02 @maririos 
 
 ###########
 # Stress

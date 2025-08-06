@@ -1,0 +1,79 @@
+name: Release Plan
+description: Create a release plan for a new SDK or an SDK update
+title: "[Release Plan]: <Product name>"
+labels: [release-plan]
+
+body:
+  - type: input
+    id: typeSpecProjectPath
+    attributes:
+      label: TypeSpec Project Path
+      description: Path to the TypeSpec project in the repository
+      placeholder: e.g., specification/service-name/TypeSpecProject-RootPath
+    validations:
+      required: true
+
+  - type: input
+    id: targetReleaseMonthYear
+    attributes:
+      label: Target Release Month and Year
+      description: The target month and year for the SDK release
+      placeholder: e.g., July 2025
+    validations:
+      required: true
+
+  - type: input
+    id: serviceTreeId
+    attributes:
+      label: Service Tree ID
+      description: The service tree ID associated with the release
+      placeholder: e.g., 12345678-abcd-1234-abcd-1234567890ab
+    validations:
+      required: true
+
+  - type: input
+    id: productTreeId
+    attributes:
+      label: Product Tree ID
+      description: The product tree ID associated with the release
+      placeholder: e.g., 87654321-dcba-4321-dcba-0987654321ba
+    validations:
+      required: true
+
+  - type: input
+    id: specApiVersion
+    attributes:
+      label: Spec API Version
+      description: The API version defined in the specification
+      placeholder: e.g., 2024-07-01-preview
+    validations:
+      required: true
+
+  - type: input
+    id: specPullRequestUrl
+    attributes:
+      label: Spec Pull Request URL
+      description: URL to the pull request for the API specification
+      placeholder: e.g., https://github.com/Azure/azure-rest-api-specs/pull/12345
+    validations:
+      required: true
+
+  - type: dropdown
+    id: sdkReleaseType
+    attributes:
+      label: SDK Release Type
+      description: Select the type of SDK release
+      options:
+        - beta
+        - stable
+    validations:
+      required: true
+
+  - type: input
+    id: userEmail
+    attributes:
+      label: User Email
+      description: Microsoft email address of the person creating the release plan
+      placeholder: e.g., user@microsoft.com
+    validations:
+      required: false

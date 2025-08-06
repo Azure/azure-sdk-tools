@@ -10,16 +10,20 @@ namespace Azure.Tools.GeneratorAgent
         private readonly ILogger<ErrorFixerAgent> Logger;
         private readonly PersistentAgentsAdministrationClient AdminClient;
         private readonly Lazy<PersistentAgent> Agent;
-        private bool _disposed = false;
+        private bool Disposed = false;
 
         public ErrorFixerAgent(
             AppSettings appSettings,
             ILogger<ErrorFixerAgent> logger,
             PersistentAgentsAdministrationClient adminClient)
         {
-            AppSettings = appSettings ?? throw new ArgumentNullException(nameof(appSettings));
-            Logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            AdminClient = adminClient ?? throw new ArgumentNullException(nameof(adminClient));
+            ArgumentNullException.ThrowIfNull(appSettings);
+            ArgumentNullException.ThrowIfNull(logger);
+            ArgumentNullException.ThrowIfNull(adminClient);
+            
+            AppSettings = appSettings;
+            Logger = logger;
+            AdminClient = adminClient;
             Agent = new Lazy<PersistentAgent>(() => CreateAgent());
         }
 
@@ -78,12 +82,12 @@ namespace Azure.Tools.GeneratorAgent
 
         public async ValueTask DisposeAsync()
         {
-            if (_disposed)
+            if (Disposed)
             {
                 return;
             }
 
-            _disposed = true;
+            Disposed = true;
 
             if (Agent.IsValueCreated)
             {

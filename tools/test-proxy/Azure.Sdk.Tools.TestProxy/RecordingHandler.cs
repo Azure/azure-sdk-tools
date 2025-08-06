@@ -1093,14 +1093,21 @@ namespace Azure.Sdk.Tools.TestProxy
         }
 
 
-        public void SetMatcherForRecording(string recordingId, RecordMatcher matcher)
+        public async Task SetMatcherForRecording(string recordingId, RecordMatcher matcher)
         {
             if (!PlaybackSessions.TryGetValue(recordingId, out var session))
             {
                 throw new HttpException(HttpStatusCode.BadRequest, $"{recordingId} is not an active playback session. Check the value being passed and try again.");
             }
 
-            session.CustomMatcher = matcher;
+            await session.Session.EntryLock.WaitAsync();
+            try {
+                session.CustomMatcher = matcher;
+            }
+            finally
+            {
+                session.Session.EntryLock.Release();
+            }
         }
 
         public async Task SetDefaultExtensions(string recordingId = null)

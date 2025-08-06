@@ -292,7 +292,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         public string CreateBranchName(string prefix, string identifier)
         {
             var normalizedIdentifier = NormalizeIdentifier(identifier);
-            return $"{prefix}-{normalizedIdentifier}-{DateTime.Now:yyyyMMdd-HHmmss}";
+            return $"{prefix}-{normalizedIdentifier}";
         }
 
         public string NormalizeIdentifier(string input)

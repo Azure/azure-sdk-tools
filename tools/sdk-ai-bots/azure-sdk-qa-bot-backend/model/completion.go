@@ -83,7 +83,6 @@ type CompletionResp struct {
 	References        []Reference      `json:"references" jsonschema:"omitempty,description=The references to the documents used to generate the answer"`
 	FullContext       *string          `json:"full_context" jsonschema:"omitempty,description=The full context used to generate the answer"`
 	Intension         *IntensionResult `json:"intension" jsonschema:"omitempty,description=The intension of the question"`
-	Category          *string          `json:"category,omitempty" jsonschema:"omitempty,description=The category of the question, such as typespec syntax, typespec migration, ci-failure, etc."`
 	ReasoningProgress *string          `json:"reasoning_progress,omitempty" jsonschema:"omitempty,description=The reasoning progress of generating the answer"`
 }
 

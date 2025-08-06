@@ -34,7 +34,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
 
         public override Command GetCommand()
         {
-            Command command = new("dependencyCheck", "Run dependency check for SDK projects");
+            Command command = new("dependency-check", "Run dependency check for SDK projects");
             command.AddOption(projectPathOption);
             command.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
             return command;

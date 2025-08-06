@@ -7,6 +7,7 @@ import time
 from typing import Any, Dict
 from azure.ai.evaluation import evaluate, SimilarityEvaluator, GroundednessEvaluator
 import aiohttp
+from azure.identity import AzurePipelinesCredential, DefaultAzureCredential
 
 async def process_file(input_file: str, output_file: str, is_bot: bool) -> None:
     """Process a single input file"""
@@ -160,6 +161,24 @@ if __name__ == "__main__":
     }
     try: 
         print("📊 Preparing dataset...")
+        if args.is_cli:
+            service_connection_id = os.environ["AZURESUBSCRIPTION_SERVICE_CONNECTION_ID"]
+            client_id = os.environ["AZURESUBSCRIPTION_CLIENT_ID"]
+            tenant_id = os.environ["AZURESUBSCRIPTION_TENANT_ID"]
+            system_access_token = os.environ["SYSTEM_ACCESSTOKEN"]
+            kwargs = {
+                "credential": AzurePipelinesCredential(
+                    service_connection_id=service_connection_id,
+                    client_id=client_id,
+                    tenant_id=tenant_id,
+                    system_access_token=system_access_token,
+                )
+            }
+        else:
+            kwargs = {
+                "credential": DefaultAzureCredential()
+            }
+        
         output_file = asyncio.run(prepare_dataset(args.test_folder, args.prefix, args.is_bot))
         result = evaluate(
             data=output_file,
@@ -180,7 +199,8 @@ if __name__ == "__main__":
             # Optionally provide your Azure AI Foundry project information to track your evaluation results in your project portal
             azure_ai_project = azure_ai_project,
             # Optionally provide an output path to dump a json of metric summary, row level data and metric and Azure AI project URL
-            output_path="./evalresults.json"
+            output_path="./evalresults.json",
+            **kwargs
         )
         print("✅ Evaluation completed. Results:", result)
     except Exception as e:

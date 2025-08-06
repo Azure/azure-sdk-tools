@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 using Microsoft.Extensions.Logging;
 using Azure.Sdk.Tools.Cli.Services;
-using Azure.Sdk.Tools.Cli.Tools.TspTool;
+using Azure.Sdk.Tools.Cli.Tools;
 using Moq;
 using Azure.Sdk.Tools.Cli.Helpers;
 

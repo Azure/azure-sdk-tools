@@ -6,7 +6,6 @@ using Azure.Sdk.Tools.Cli.Tools.HelloWorldTool;
 using Azure.Sdk.Tools.Cli.Tools.HostServer;
 using Azure.Sdk.Tools.Cli.Tools.SdkRelease;
 using Azure.Sdk.Tools.Cli.Tools.ReleaseReadiness;
-using Azure.Sdk.Tools.Cli.Tools.TspTool;
 
 namespace Azure.Sdk.Tools.Cli.Commands
 {

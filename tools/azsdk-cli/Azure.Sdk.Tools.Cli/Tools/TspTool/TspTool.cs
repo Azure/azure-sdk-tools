@@ -9,7 +9,7 @@ using Azure.Sdk.Tools.Cli.Models.Responses;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Helpers;
 
-namespace Azure.Sdk.Tools.Cli.Tools.TspTool
+namespace Azure.Sdk.Tools.Cli.Tools
 {
     /// <summary>
     /// This tool provides functionality for initializing TypeSpec projects and converting existing Azure service swagger definitions to TypeSpec projects.

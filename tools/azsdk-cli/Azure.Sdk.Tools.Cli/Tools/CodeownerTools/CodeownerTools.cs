@@ -395,9 +395,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     response.fullRepoName,                             // Full repository name
                     modifiedCodeownersContent,                         // Modified content
                     sha,                                               // SHA of the file to update
-                    $"Add codeowner entry for {response.serviceLabel ?? response.path}", // Commit message
-                    $"Add codeowner entry for {response.serviceLabel ?? response.path}", // PR title
-                    $"Add codeowner entry for {response.serviceLabel ?? response.path}", // PR description
+                    $"Add codeowner entry for {response.serviceLabel ?? response.path}", // Description for commit message, PR title, and description
                     "add-codeowner-entry",                             // Branch prefix for the action
                     response.serviceLabel ?? response.path,            // Identifier for the PR
                     workingBranch);
@@ -478,9 +476,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     response.fullRepoName,                                  // Full repository name
                     string.Join('\n', modifiedContent),                     // Modified content
                     sha,                                                    // SHA of the file to update 
-                    $"{actionDescription} {targetEntry.ServiceLabel ?? targetEntry.PathExpression}", // Commit message
-                    $"{actionDescription} {targetEntry.ServiceLabel ?? targetEntry.PathExpression}", // PR title
-                    $"{actionDescription} {targetEntry.ServiceLabel ?? targetEntry.PathExpression}", // PR description
+                    $"{actionDescription} {targetEntry.ServiceLabel ?? targetEntry.PathExpression}", // Description for commit message, PR title, and description
                     actionType,                                             // Branch prefix for the action
                     targetEntry.ServiceLabel ?? targetEntry.PathExpression, // Identifier for the PR
                     workingBranch);
@@ -498,9 +494,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             string fullRepoName,
             string modifiedContent,
             string sha,
-            string commitMessage,
-            string prTitle,
-            string prDescription,
+            string description, // used for commit message, PR title, and PR description
             string branchPrefix,
             string identifier,
             string workingBranch = null)
@@ -523,7 +517,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
 
             // Update file
-            await githubService.UpdateFileAsync("Azure", fullRepoName, ".github/CODEOWNERS", commitMessage, modifiedContent, sha, branchName);
+            await githubService.UpdateFileAsync("Azure", fullRepoName, ".github/CODEOWNERS", description, modifiedContent, sha, branchName);
 
             // Handle PR creation or update existing PR
             var existingPR = await githubService.GetPullRequestForBranchAsync("Azure", fullRepoName, branchName);
@@ -535,7 +529,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             else
             {
                 // No existing PR - create a new one if needed
-                var prInfoList = await githubService.CreatePullRequestAsync(fullRepoName, "Azure", "main", branchName, prTitle, prDescription, true);
+                var prInfoList = await githubService.CreatePullRequestAsync(fullRepoName, "Azure", "main", branchName, description, description, true);
                 resultMessages.AddRange(prInfoList);
             }
 

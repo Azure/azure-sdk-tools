@@ -107,6 +107,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
             throw new NotImplementedException();
         }
 
+        public Task<(IReadOnlyList<RepositoryContent>, string)> GetFileContentsAsync()
+        {
+            throw new NotImplementedException();
+        }
+
         private RepositoryContent CreateMockRepositoryContent(string name, string path, string encodedContent)
         {
             return new RepositoryContent(
@@ -118,7 +123,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
                 downloadUrl: $"https://raw.githubusercontent.com/testowner/testrepo/main/{path}",
                 url: $"https://api.github.com/repos/testowner/testrepo/contents/{path}",
                 htmlUrl: $"https://github.com/testowner/testrepo/blob/main/{path}",
-                gitUrl: null, 
+                gitUrl: null,
                 encoding: "base64",
                 encodedContent: encodedContent,
                 target: null,

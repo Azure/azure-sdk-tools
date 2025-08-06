@@ -24,7 +24,7 @@ internal class LabelHelperTests
     [TestCase("Service - TestService,Description with commas and stuff,e99695\nAnotherService,Description2,e99695", "Service - TestService", LabelHelper.ServiceLabelStatus.Exists)]
     [TestCase("   \nAnotherService,Description2,e99695", "AnotherService", LabelHelper.ServiceLabelStatus.Exists)]
     [TestCase("TestService,Description\nAnotherService,Description2,e99695", "AnotherService", LabelHelper.ServiceLabelStatus.Exists)]
-    public void TestCheckServiceLabel_DataDriven(string csvContent, string serviceLabel, LabelHelper.ServiceLabelStatus expected)
+    public void TestCheckServiceLabel(string csvContent, string serviceLabel, LabelHelper.ServiceLabelStatus expected)
     {
         var actual = labelHelper.CheckServiceLabel(csvContent, serviceLabel);
         Assert.That(actual, Is.EqualTo(expected));
@@ -38,7 +38,7 @@ internal class LabelHelperTests
     [TestCase("AAA,,e99695", "BBB", "AAA,,e99695\nBBB,,e99695")]
     [TestCase("AAA,,e99695\r\nCCC,,e99695", "BBB", "AAA,,e99695\r\nBBB,,e99695\nCCC,,e99695")]
     [TestCase("AAA,,e99695\nCCC,,e99695\nZZZ,,e99695", "CCC", "AAA,,e99695\nCCC,,e99695\nCCC,,e99695\nZZZ,,e99695")]
-    public void TestCreateServiceLabel_DataDriven(string csvContent, string serviceLabel, string expected)
+    public void TestCreateServiceLabel(string csvContent, string serviceLabel, string expected)
     {
         var actual = labelHelper.CreateServiceLabel(csvContent, serviceLabel);
         Assert.That(actual, Is.EqualTo(expected));
@@ -51,7 +51,7 @@ internal class LabelHelperTests
     [TestCase("  Test Service  ", "test-service")]
     [TestCase("-Test Service-", "test-service")]
     [TestCase("  -Test Service-  ", "test-service")]
-    public void TestNormalizeLabel_DataDriven(string input, string expected)
+    public void TestNormalizeLabel(string input, string expected)
     {
         var actual = labelHelper.NormalizeLabel(input);
         Assert.That(actual, Is.EqualTo(expected));

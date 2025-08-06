@@ -49,12 +49,6 @@ namespace Azure.Sdk.Tools.Cli.Commands
                 var hierarchy = tool.CommandHierarchy;
                 Command previousParent = rootCommand;
 
-                // Skip MCP-only tools that don't have CLI commands
-                if (leaf == null)
-                {
-                    continue;
-                }
-
                 if (hierarchy.Length == 0)
                 {
                     // if there is no hierarchy, add the command directly to the root command
@@ -95,10 +89,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
                     if (i == hierarchy.Length - 1)
                     {
                         // if we're at the end of the hierarchy, add the leaf command
-                        if (leaf != null)
-                        {
-                            currentNode.AddCommand(leaf);
-                        }
+                        currentNode.AddCommand(leaf);
                     }
                     else
                     {

@@ -109,8 +109,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
 
             // Assert
             Assert.IsNotNull(result);
-            Assert.IsNull(result.ResponseError);
-            Assert.IsTrue(result.Message.Contains("Dependency check fixes completed"));
+            Assert.That(result.ExitCode, Is.EqualTo(0)); // Success should have exit code 0
+            Assert.IsTrue(result.Output.Contains("Dependency check fixes completed"));
         }
 
         [Test]
@@ -124,8 +124,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
 
             // Assert
             Assert.IsNotNull(result);
-            Assert.IsNull(result.ResponseError);
-            Assert.IsTrue(result.Message.Contains("Changelog validation fixes completed"));
+            Assert.That(result.ExitCode, Is.EqualTo(0)); // Success should have exit code 0
+            Assert.IsTrue(result.Output.Contains("Changelog validation fixes completed"));
         }
     }
 }

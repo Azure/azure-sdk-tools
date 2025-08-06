@@ -87,9 +87,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                     Microsoft.Extensions.Logging.Abstractions.NullLogger<DependencyCheckTool>.Instance,
                     output);
                 
-                var dependencyCheckResponse = await dependencyCheckTool.RunDependencyCheck(projectPath);
-                var dependencyCheckResult = dependencyCheckResponse.Result as IOperationResult 
-                    ?? new FailureResult(1, dependencyCheckResponse.ResponseError ?? "Dependency check failed");
+                var dependencyCheckResult = await dependencyCheckTool.RunDependencyCheck(projectPath);
                 
                 results.Add(dependencyCheckResult);
                 if (dependencyCheckResult.ExitCode != 0) overallSuccess = false;

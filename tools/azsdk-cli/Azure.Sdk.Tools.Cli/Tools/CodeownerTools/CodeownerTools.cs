@@ -408,7 +408,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     // Create a new branch only if no working branch exists
                     branchName = codeownerHelper.CreateBranchName("add-codeowner-entry", response.path ?? response.serviceLabel);
                     var createBranchInfo = await githubService.CreateBranchAsync("Azure", response.fullRepoName, branchName);
-                    resultMessages.Add($"{createBranchInfo}");
+                    resultMessages.Add($"Created branch: {branchName} - Status: {createBranchInfo}"); 
                 }
 
                 await githubService.UpdateFileAsync("Azure", response.fullRepoName, ".github/CODEOWNERS", $"Add codeowner entry for {response.path ?? response.serviceLabel}", modifiedCodeownersContent, sha, branchName);
@@ -431,8 +431,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
             catch (Exception ex)
             {
-                logger.LogError($"{ex}");
-                return $"Error: {ex}";
+                logger.LogError(ex, $"Error in AddCodeownerEntry");
+                return $"Error: {ex.Message}";
             }
         }
 
@@ -482,7 +482,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 else if (!string.IsNullOrEmpty(response.serviceLabel))
                 {   // search for service label in the service labels of the entries
                     targetEntry = codeownersEntries.FirstOrDefault(entry =>
-                        entry.ServiceLabels?.Any(label => label.Contains(response.serviceLabel, StringComparison.OrdinalIgnoreCase)) == true);
+                        entry.ServiceLabels?.Any(label => label.Equals(response.serviceLabel, StringComparison.OrdinalIgnoreCase)) == true);
                 }
 
                 if (targetEntry == null)
@@ -499,34 +499,42 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 List<string> resultMessages = new();
 
                 var branchName = "";
+
+                // Check if we have a working branch from SDK generation
                 if (!string.IsNullOrEmpty(workingBranch) && await githubService.GetBranchAsync("Azure", response.fullRepoName, workingBranch))
                 {
+                    // Reuse the existing branch from SDK generation
                     branchName = workingBranch;
                     resultMessages.Add($"Using existing branch: {branchName}");
                 }
                 else
                 {
-                    branchName = codeownerHelper.CreateBranchName("add-codeowner-alias", targetEntry.PathExpression ?? serviceLabel);
+                    // Create a new branch only if no working branch exists
+                    var actionType = isAdding ? "add-codeowner-alias" : "remove-codeowner-alias";
+                    branchName = codeownerHelper.CreateBranchName(actionType, targetEntry.PathExpression ?? serviceLabel);
                     var createBranchResult = await githubService.CreateBranchAsync("Azure", response.fullRepoName, branchName);
                     resultMessages.Add($"Created branch: {branchName} - Status: {createBranchResult}");
                 }
 
-                // Step 6: Update file
+                // Update file
+                var actionDescription = isAdding ? "Add codeowner aliases for" : "Remove codeowner aliases for";
                 await githubService.UpdateFileAsync("Azure", response.fullRepoName, ".github/CODEOWNERS",
-                    $"Add codeowner aliases for {targetEntry.PathExpression ?? serviceLabel}",
+                    $"{actionDescription} {targetEntry.PathExpression ?? serviceLabel}",
                     string.Join('\n', modifiedContent), sha, branchName);
 
-                // Step 7: Handle PR creation or update
+                // Step 6: Handle PR creation or update existing PR
                 var existingPR = await githubService.GetPullRequestForBranchAsync("Azure", response.fullRepoName, branchName);
                 if (existingPR != null)
                 {
+                    // PR already exists - the file update will automatically be added to it
                     resultMessages.Add($"Codeowner changes added to existing PR #{existingPR.Number}: {existingPR.HtmlUrl}");
                 }
                 else
                 {
+                    // No existing PR - create a new one if needed
                     var prInfoList = await githubService.CreatePullRequestAsync(response.fullRepoName, "Azure", "main", branchName,
-                        $"Add codeowner aliases for {targetEntry.PathExpression ?? serviceLabel}",
-                        $"Add codeowner aliases for {targetEntry.PathExpression ?? serviceLabel}", true);
+                        $"{actionDescription} {targetEntry.PathExpression ?? serviceLabel}",
+                        $"{actionDescription} {targetEntry.PathExpression ?? serviceLabel}", true);
                     resultMessages.AddRange(prInfoList);
                 }
 
@@ -534,7 +542,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error in AddCodeowners");
+                logger.LogError(ex, "Error in UpdateCodeowners");
                 return $"Error: {ex.Message}";
             }
         }
@@ -553,7 +561,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 var validServiceOwnersToAdd = newServiceOwners?.Where(owner => owner.IsValidCodeOwner).ToList() ?? new List<CodeOwnerValidationResult>();
                 var validSourceOwnersToAdd = newSourceOwners?.Where(owner => owner.IsValidCodeOwner).ToList() ?? new List<CodeOwnerValidationResult>();
 
-                // Add to the Entry object
+                // Add owners to the Entry object directly
                 if (validServiceOwnersToAdd.Any())
                 {
                     foreach (var owner in validServiceOwnersToAdd)
@@ -579,11 +587,10 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
             else
             {
-                // For removing, use the object-based approach
                 var validServiceOwnersToDelete = newServiceOwners?.Select(owner => owner.Username.TrimStart('@')).ToList() ?? new List<string>();
                 var validSourceOwnersToDelete = newSourceOwners?.Select(owner => owner.Username.TrimStart('@')).ToList() ?? new List<string>();
 
-                // Remove from the object
+                // Delete owners from the Entry object directly
                 if (validServiceOwnersToDelete.Any())
                 {
                     targetEntry.ServiceOwners.RemoveAll(owner => validServiceOwnersToDelete.Contains(owner.TrimStart('@')));

@@ -108,14 +108,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 // fullPathToSwaggerReadme is not null or empty at this point - already validated
                 var fullPathToSwaggerReadme = Path.GetFullPath(pathToSwaggerReadme.Trim());
 
-                // validate outputDirectory using the extracted method
-                var validationResult = ValidateOutputDirectory(outputDirectory);
+                // validate outputDirectory using FileHelper
+                var validationResult = FileHelper.ValidateEmptyDirectory(outputDirectory);
                 if (validationResult != null)
                 {
                     SetFailure();
                     return new TspToolResponse
                     {
-                        ResponseError = validationResult
+                        ResponseError = $"Failed: Invalid --output-dir, {validationResult}"
                     };
                 }
 
@@ -151,32 +151,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
             {
 
                 return $"Failed: pathToSwaggerReadme '{fullPathToSwaggerReadme}' does not exist.";
-            }
-
-            return null; // Validation passed
-        }
-
-        private static string? ValidateOutputDirectory(string outputDir)
-        {
-            if (string.IsNullOrWhiteSpace(outputDir))
-            {
-                return "Failed: outputDirectory must be provided";
-            }
-
-            var fullOutputDir = Path.GetFullPath(outputDir.Trim());
-            if (string.IsNullOrEmpty(fullOutputDir))
-            {
-                return $"Failed: outputDirectory '{outputDir}' could not be resolved to a full path.";
-            }
-
-            if (!Directory.Exists(fullOutputDir))
-            {
-                return $"Failed: Full output directory '{fullOutputDir}' does not exist.";
-            }
-
-            if (Directory.GetFileSystemEntries(fullOutputDir).Length != 0)
-            {
-                return $"Failed: The full output directory '{fullOutputDir}' points to a non-empty directory.";
             }
 
             return null; // Validation passed

@@ -7,19 +7,31 @@ extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
   parameters:
     stages:
-      - stage: 'Build'
+      - stage: 'evaluation'
         jobs:
-          - job: 'Build backend AI service'
+          - job: 'evaluation'
+            displayName: 'evaluation'
             steps:
+              - template: /eng/pipelines/templates/steps/use-python-version.yml
+                parameters:
+                  versionSpec: '${{ parameters.PythonVersion }}'
               - script: |
-                  sudo api Update
-                  sudo apt install golang-go
-                displayName: 'install go-lang'
+                  python --version
+                displayName: 'check python'
+              - task: GoTool@0
+                inputs:
+                  version: '1.24'
+                displayName: 'install go'
               - script: |
-                  cd $(Build.SourcesDirectory)/wanl-fork-azure-sdk-fools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend
+                  go version
+                displayName: 'check go'
+              - script: |
+                  cd $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend
                   ./run.sh start
                 displayName: 'start backend AI agent service'
+                workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
               - script: |
                   pip install -r requirements.txt
+                  python evaluate.py
                 displayName: 'Run Evals'
-                workingDirectory: $(Build.SourcesDirectory)/wanl-fork-azure-sdk-fools/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
+                workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation

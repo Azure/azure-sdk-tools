@@ -12,7 +12,7 @@ async def process_file(input_file: str, output_file: str, is_bot: bool) -> None:
     """Process a single input file"""
     print(f"Processing file: {input_file}")
     
-    azure_api_key = os.environ["AZURE_API_KEY"]
+    azure_openai_api_key = os.environ["AZURE_OPENAI_API_KEY"]
     bot_service_endpoint = os.environ.get("BOT_SERVICE_ENDPOINT", None) 
     api_url = f"{bot_service_endpoint}/completion" if bot_service_endpoint is not None else "http://localhost:8088/completion"
     start_time = time.time()
@@ -23,7 +23,7 @@ async def process_file(input_file: str, output_file: str, is_bot: bool) -> None:
             print(record)
             if is_bot:
                 try:
-                    api_response = await call_bot_api(record["query"], api_url, azure_api_key)
+                    api_response = await call_bot_api(record["query"], api_url, azure_openai_api_key)
                     answer = api_response.get("answer", "")
                     latency = time.time() - start_time
                     processed_test_data = {
@@ -40,6 +40,8 @@ async def process_file(input_file: str, output_file: str, is_bot: bool) -> None:
                     print(f"❌ Error occurred when process {input_file}: {str(e)}")
                     import traceback
                     traceback.print_exc()
+    outputFile.flush()
+    outputFile.close()
 
 async def call_bot_api(question: str, bot_endpoint: str, api_key: str, tenant_id: str = None) -> Dict[str, Any]:
     """Call the completion API endpoint."""
@@ -126,8 +128,17 @@ if __name__ == "__main__":
     args.is_bot = args.is_bot.lower() in ('true', '1', 'yes', 'on')
     args.is_cli = args.is_cli.lower() in ('true', '1', 'yes', 'on')
 
+    
+    script_directory = os.path.dirname(os.path.abspath(__file__))
+    print("Script directory:", script_directory)
+
+    
+    current_file_path = os.getcwd()
+    print("Current working directory:", current_file_path)
+
+
     if (args.test_folder == None):
-        args.test_folder = os.path.join("tests")
+        args.test_folder = os.path.join(script_directory, "tests")
     
     print(f"test folder: {args.test_folder}")
     # Required environment variables

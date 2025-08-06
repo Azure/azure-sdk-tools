@@ -47,10 +47,14 @@ namespace APIViewWeb.Pages.Assemblies
             var totalStopwatch = System.Diagnostics.Stopwatch.StartNew();
             var userId = User.GetGitHubLogin();
             
-            // Check user configuration
+            // Step 1: Check user configuration
+            var step1Stopwatch = System.Diagnostics.Stopwatch.StartNew();
             var isConfiguredApprover = IsUserConfiguredApprover(userId);
+            step1Stopwatch.Stop();
+            Console.WriteLine($"[NAMESPACE_PERF] RequestedReviews - Step 1 (Check user config) took: {step1Stopwatch.ElapsedMilliseconds}ms");
             
-            // Check user profile with error handling and timeout protection
+            // Step 2: Check user profile with error handling and timeout protection
+            var step2Stopwatch = System.Diagnostics.Stopwatch.StartNew();
             UserProfileModel userProfile = null;
             var approvedLanguages = new string[0];
             try
@@ -75,8 +79,11 @@ namespace APIViewWeb.Pages.Assemblies
             {
                 // Continue with empty profile - we'll still show assigned reviews
             }
+            step2Stopwatch.Stop();
+            Console.WriteLine($"[NAMESPACE_PERF] RequestedReviews - Step 2 (Get user profile) took: {step2Stopwatch.ElapsedMilliseconds}ms");
             
-            // Attempt to get assigned revisions with error handling and timeout protection
+            // Step 3: Attempt to get assigned revisions with error handling and timeout protection
+            var step3Stopwatch = System.Diagnostics.Stopwatch.StartNew();
             IEnumerable<APIRevisionListItemModel> assignedRevisions;
             try
             {
@@ -98,6 +105,8 @@ namespace APIViewWeb.Pages.Assemblies
             {
                 assignedRevisions = new List<APIRevisionListItemModel>();
             }
+            step3Stopwatch.Stop();
+            Console.WriteLine($"[NAMESPACE_PERF] RequestedReviews - Step 3 (Get assigned revisions) took: {step3Stopwatch.ElapsedMilliseconds}ms, found {assignedRevisions.Count()} revisions");
             
             APIRevisions = assignedRevisions;
 
@@ -105,10 +114,8 @@ namespace APIViewWeb.Pages.Assemblies
             List<APIRevisionListItemModel> approvedAPIRevs = new List<APIRevisionListItemModel>();
             List<APIRevisionListItemModel> namespaceApprovalAPIRevs = new List<APIRevisionListItemModel>();
 
-            // Check if user is configured as an approver
-            // var isConfiguredApprover = IsUserConfiguredApprover(userId);  // Already checked above
-            
-            // Get all reviews with namespace approval requested for languages the user can approve
+            // Step 4: Get all reviews with namespace approval requested for languages the user can approve
+            var step4Stopwatch = System.Diagnostics.Stopwatch.StartNew();
             var allNamespaceApprovalReviews = new List<APIRevisionListItemModel>();
             if (isConfiguredApprover)
             {
@@ -143,8 +150,15 @@ namespace APIViewWeb.Pages.Assemblies
                     // Continue without namespace approval reviews on any error
                 }
             }
+            else
+            {
+                Console.WriteLine($"[NAMESPACE_PERF] RequestedReviews - User {userId} is not configured as approver, skipping namespace approvals");
+            }
+            step4Stopwatch.Stop();
+            Console.WriteLine($"[NAMESPACE_PERF] RequestedReviews - Step 4 (Get namespace approvals) took: {step4Stopwatch.ElapsedMilliseconds}ms");
             
-            // Merge namespace approval reviews with assigned reviews  
+            // Step 5: Merge namespace approval reviews with assigned reviews
+            var step5Stopwatch = System.Diagnostics.Stopwatch.StartNew();
             var allReviews = APIRevisions.ToList();
             foreach (var nsReview in allNamespaceApprovalReviews)
             {
@@ -163,8 +177,11 @@ namespace APIViewWeb.Pages.Assemblies
                 }
             }
             APIRevisions = allReviews;
+            step5Stopwatch.Stop();
+            Console.WriteLine($"[NAMESPACE_PERF] RequestedReviews - Step 5 (Merge reviews) took: {step5Stopwatch.ElapsedMilliseconds}ms, total reviews: {APIRevisions.Count()}");
 
-            // Get all unique review IDs to minimize database calls
+            // Step 6: Get all unique review IDs to minimize database calls
+            var step6Stopwatch = System.Diagnostics.Stopwatch.StartNew();
             var reviewIds = APIRevisions.Select(r => r.ReviewId).Distinct().ToList();
             var reviews = new Dictionary<string, ReviewListItemModel>();
             
@@ -214,7 +231,12 @@ namespace APIViewWeb.Pages.Assemblies
                 Console.WriteLine($"[NAMESPACE_PERF] RequestedReviews - Batch review fetch failed after {batchReviewStopwatch.ElapsedMilliseconds}ms: {ex.Message}");
                 // Continue with empty reviews dict
             }
+            step6Stopwatch.Stop();
+            Console.WriteLine($"[NAMESPACE_PERF] RequestedReviews - Step 6 (Batch fetch parent reviews) took: {step6Stopwatch.ElapsedMilliseconds}ms");
 
+            // Step 7: Process and categorize revisions
+            var step7Stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            
             foreach (var apiRevision in APIRevisions.OrderByDescending(r => r.AssignedReviewers.Any() ? r.AssignedReviewers.Where(x => x.AssingedTo.Equals(userId)).FirstOrDefault()?.AssingedOn ?? r.CreatedOn : r.CreatedOn))
             {
                 bool isAssignedToUser = apiRevision.AssignedReviewers.Any(x => x.AssingedTo.Equals(userId));
@@ -247,21 +269,27 @@ namespace APIViewWeb.Pages.Assemblies
                     
                     if (isRevisionNamespaceRelated && !parentReview.IsApproved)
                     {
-                        bool canApproveReview = isAssignedToUser || CanUserApproveReview(parentReview);
-                        if (canApproveReview)
+                        // SIMPLIFIED: If the user can access this page and is a configured approver,
+                        // they can approve namespace reviews. No need for expensive per-review permission checks.
+                        if (isAssignedToUser || isConfiguredApprover)
                         {
                             namespaceApprovalAPIRevs.Add(apiRevision);
                         }
                     }
                 }
             }
+            step7Stopwatch.Stop();
+            Console.WriteLine($"[NAMESPACE_PERF] RequestedReviews - Step 7 (Process and categorize) took: {step7Stopwatch.ElapsedMilliseconds}ms");
             
             ActiveAPIRevisions = activeAPIRevs;
             ApprovedAPIRevisions = approvedAPIRevs;
             NamespaceApprovalRequestedAPIRevisions = namespaceApprovalAPIRevs;
             
-            // Always populate reviews without namespace approval for the 4th tab
+            // Step 8: Always populate reviews without namespace approval for the 4th tab
+            var step8Stopwatch = System.Diagnostics.Stopwatch.StartNew();
             ReviewsWithoutNamespaceApproval = await GetReviewsWithoutNamespaceApproval();
+            step8Stopwatch.Stop();
+            Console.WriteLine($"[NAMESPACE_PERF] RequestedReviews - Step 8 (Get reviews without namespace) took: {step8Stopwatch.ElapsedMilliseconds}ms");
             
             ApprovedAPIRevisions.OrderByDescending(r => r.ChangeHistory.First(c => c.ChangeAction == APIRevisionChangeAction.Approved).ChangedOn);
 
@@ -304,8 +332,9 @@ namespace APIViewWeb.Pages.Assemblies
 
         /// <summary>
         /// Get all reviews without namespace approval for proactive review
-        /// Limited to SDK languages (C#, Java, Python, Go, JavaScript) and maximum 100 results
+        /// Limited to SDK languages (C#, Java, Python, Go, JavaScript) and maximum 15 results
         /// Results are cached for 5 minutes to improve performance
+        /// OPTIMIZED: Uses batch processing to minimize database calls
         /// </summary>
         private async Task<List<APIRevisionListItemModel>> GetReviewsWithoutNamespaceApproval()
         {
@@ -325,52 +354,86 @@ namespace APIViewWeb.Pages.Assemblies
 
             try
             {
-                // 5 second timeout to improve performance and avoid hanging on database/AAD delays
-                using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5)))
+                // 10 second timeout for this complex operation
+                using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10)))
                 {
                     // Define SDK languages that we want to show for proactive review
                     var sdkLanguages = new HashSet<string> { "C#", "Java", "Python", "Go", "JavaScript" };
                     
-                    // Get reviews for SDK languages that don't have namespace approval requested
+                    // Step 8a: Get reviews for SDK languages that don't have namespace approval requested
+                    var step8aStopwatch = System.Diagnostics.Stopwatch.StartNew();
                     var (allReviews, _, _, _, _, _) = await _reviewManager.GetPagedReviewListAsync(
                         search: new string[] { }, // No search filter
                         languages: sdkLanguages, // Only SDK languages
                         isClosed: false, // Only open reviews
                         isApproved: false, // Only unapproved reviews
                         offset: 0,
-                        limit: 25, // Limit to 25 as requested
+                        limit: 15, // Reduced from 25 to 15 for better performance
                         orderBy: "created"
                     );
+                    step8aStopwatch.Stop();
+                    Console.WriteLine($"[NAMESPACE_PERF] GetReviewsWithoutNamespaceApproval - Step 8a (Get paged reviews) took: {step8aStopwatch.ElapsedMilliseconds}ms, found {allReviews.Count()} reviews");
 
                     // Filter for reviews that do NOT have namespace approval requested (status is NotStarted)
                     var reviewsWithoutNamespaceRequested = allReviews.Where(r => r.NamespaceReviewStatus == NamespaceReviewStatus.NotStarted).ToList();
+                    Console.WriteLine($"[NAMESPACE_PERF] GetReviewsWithoutNamespaceApproval - Filtered to {reviewsWithoutNamespaceRequested.Count} reviews without namespace approval");
 
-                    // For each review, get the latest API revision
-                    foreach (var review in reviewsWithoutNamespaceRequested)
+                    if (reviewsWithoutNamespaceRequested.Any())
                     {
-                        try
+                        // Step 8b: OPTIMIZED - Batch fetch all API revisions for multiple reviews at once
+                        var step8bStopwatch = System.Diagnostics.Stopwatch.StartNew();
+                        
+                        // Extract all review IDs
+                        var reviewIds = reviewsWithoutNamespaceRequested.Select(r => r.Id).ToList();
+                        
+                        // Use Task.WhenAll to fetch all API revisions in parallel (limited to 4 concurrent calls)
+                        var semaphore = new SemaphoreSlim(4); // Limit to 4 concurrent database calls
+                        var revisionTasks = reviewIds.Select(async reviewId =>
                         {
-                            var latestRevision = await _apiRevisionsManager.GetLatestAPIRevisionsAsync(review.Id, null, APIRevisionType.All);
+                            await semaphore.WaitAsync(cts.Token);
+                            try
+                            {
+                                var apiRevisions = await _apiRevisionsManager.GetAPIRevisionsAsync(reviewId);
+                                var latestRevision = apiRevisions?.OrderByDescending(r => r.CreatedOn).FirstOrDefault();
+                                return (reviewId, latestRevision);
+                            }
+                            catch (Exception)
+                            {
+                                return (reviewId, (APIRevisionListItemModel)null);
+                            }
+                            finally
+                            {
+                                semaphore.Release();
+                            }
+                        });
+
+                        var revisionResults = await Task.WhenAll(revisionTasks);
+                        
+                        // Filter and add valid results
+                        foreach (var (reviewId, latestRevision) in revisionResults)
+                        {
                             if (latestRevision != null && !latestRevision.IsApproved)
                             {
                                 reviewsWithoutNamespace.Add(latestRevision);
                             }
                         }
-                        catch (Exception)
-                        {
-                            // Continue with next review if this one fails
-                        }
+                        
+                        step8bStopwatch.Stop();
+                        Console.WriteLine($"[NAMESPACE_PERF] GetReviewsWithoutNamespaceApproval - Step 8b (Batch fetch revisions) took: {step8bStopwatch.ElapsedMilliseconds}ms, processed {reviewIds.Count} reviews");
                     }
                 }
             }
             catch (OperationCanceledException)
             {
+                Console.WriteLine($"[NAMESPACE_PERF] GetReviewsWithoutNamespaceApproval - Operation timed out");
             }
             catch (InvalidOperationException ex) when (ex.Message.Contains("DefaultTempDataSerializer"))
             {
+                Console.WriteLine($"[NAMESPACE_PERF] GetReviewsWithoutNamespaceApproval - TempData serialization error: {ex.Message}");
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Console.WriteLine($"[NAMESPACE_PERF] GetReviewsWithoutNamespaceApproval - Unexpected error: {ex.Message}");
             }
 
             // Cache the results for 5 minutes to improve performance

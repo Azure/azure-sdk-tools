@@ -294,7 +294,7 @@ export class DeclarationDifferenceDetector {
           }
         });
 
-        if (allRemovedPropsExistInAdded && removedProperties.length > 0) {
+        if (allRemovedPropsExistInAdded) {
           // This is a valid refactoring - filter out these diffs
           const removedPropNames = removedProperties.map(p => p.target?.name).filter(Boolean);
           return diffs.filter(d => {

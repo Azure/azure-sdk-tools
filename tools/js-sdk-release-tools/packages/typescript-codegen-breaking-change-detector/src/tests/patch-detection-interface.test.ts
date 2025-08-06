@@ -149,6 +149,21 @@ describe('detect interface', () => {
       expect(diffPairs[0].target?.name).toBe('prop');
     });
 
+    test('change classic property type', async () => {
+      const baselineApiView = `export interface TestInterface { prop: string; }`;
+      const currentApiView = `export interface TestInterface { prop: number; }`;
+
+      const astContext = await createTestAstContext(baselineApiView, currentApiView);
+      const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
+      expect(diffPairs.length).toBe(1);
+      expect(diffPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
+      expect(diffPairs[0].location).toBe(DiffLocation.Property);
+      expect(diffPairs[0].reasons).toBe(DiffReasons.TypeChanged);
+      expect(diffPairs[0].target?.name).toBe('prop');
+      expect(diffPairs[0].target?.node.asKind(SyntaxKind.PropertySignature)?.getTypeNode()?.getText()).toBe('string');
+      expect(diffPairs[0].source?.node.asKind(SyntaxKind.PropertySignature)?.getTypeNode()?.getText()).toBe('number');
+    });
+
     test('detect property move to parent model', async () => {
       const baselineApiView = `
         export interface SystemData {} 
@@ -168,21 +183,6 @@ describe('detect interface', () => {
       const astContext = await createTestAstContext(baselineApiView, currentApiView);
       const diffPairs = patchInterface('Target', astContext, AssignDirection.CurrentToBaseline);
       expect(diffPairs.length).toBe(0);
-    });
-
-    test('change classic property type', async () => {
-      const baselineApiView = `export interface TestInterface { prop: string; }`;
-      const currentApiView = `export interface TestInterface { prop: number; }`;
-
-      const astContext = await createTestAstContext(baselineApiView, currentApiView);
-      const diffPairs = patchInterface('TestInterface', astContext, AssignDirection.CurrentToBaseline);
-      expect(diffPairs.length).toBe(1);
-      expect(diffPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
-      expect(diffPairs[0].location).toBe(DiffLocation.Property);
-      expect(diffPairs[0].reasons).toBe(DiffReasons.TypeChanged);
-      expect(diffPairs[0].target?.name).toBe('prop');
-      expect(diffPairs[0].target?.node.asKind(SyntaxKind.PropertySignature)?.getTypeNode()?.getText()).toBe('string');
-      expect(diffPairs[0].source?.node.asKind(SyntaxKind.PropertySignature)?.getTypeNode()?.getText()).toBe('number');
     });
 
     test('ignore change property type', async () => {

@@ -4,6 +4,7 @@
 using System.ComponentModel;
 using System.CommandLine;
 using System.CommandLine.Invocation;
+using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Models;
@@ -38,7 +39,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
         }
 
         [McpServerTool(Name = "FixDependencyCheckValidation"), Description("Fix dependency conflicts in SDK projects. Provide absolute path to project root as param.")]
-        public async Task<DefaultCommandResponse> FixDependencyCheckValidation(string projectPath)
+        public async Task<IOperationResult> FixDependencyCheckValidation(string projectPath)
         {
             try
             {
@@ -47,10 +48,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                 if (!Directory.Exists(projectPath))
                 {
                     SetFailure(1);
-                    return new DefaultCommandResponse
-                    {
-                        ResponseError = $"Project path does not exist: {projectPath}"
-                    };
+                    return new FailureResult(1, "", $"Project path does not exist: {projectPath}");
                 }
 
                 // TODO: Implement actual dependency check fix logic
@@ -67,27 +65,21 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                 var removedDependencies = 2; // Placeholder for removed dependencies
                 var conflictsResolved = 3; // Placeholder for conflicts resolved
 
-                return new DefaultCommandResponse
+                return new SuccessResult(0, System.Text.Json.JsonSerializer.Serialize(new
                 {
                     Message = $"Dependency check fixes completed. Updated {updatedDependencies} dependencies, removed {removedDependencies} unused, resolved {conflictsResolved} conflicts.",
                     Duration = 400,
-                    Result = new
-                    {
-                        UpdatedDependencies = updatedDependencies,
-                        RemovedDependencies = removedDependencies,
-                        ConflictsResolved = conflictsResolved,
-                        ProjectPath = projectPath
-                    }
-                };
+                    UpdatedDependencies = updatedDependencies,
+                    RemovedDependencies = removedDependencies,
+                    ConflictsResolved = conflictsResolved,
+                    ProjectPath = projectPath
+                }));
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Unhandled exception while fixing dependency check issues");
                 SetFailure(1);
-                return new DefaultCommandResponse
-                {
-                    ResponseError = $"Unhandled exception: {ex.Message}"
-                };
+                return new FailureResult(1, "", $"Unhandled exception: {ex.Message}");
             }
         }
     }

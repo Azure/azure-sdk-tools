@@ -4,6 +4,7 @@
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.ComponentModel;
+using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Commands;
@@ -62,7 +63,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
         }
 
         [McpServerTool(Name = "RunDependencyCheck"), Description("Run dependency check for SDK projects. Provide absolute path to project root as param.")]
-        public async Task<DefaultCommandResponse> RunDependencyCheck(string projectPath)
+        public async Task<IOperationResult> RunDependencyCheck(string projectPath)
         {
             try
             {
@@ -71,10 +72,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                 if (!Directory.Exists(projectPath))
                 {
                     SetFailure(1);
-                    return new DefaultCommandResponse
-                    {
-                        ResponseError = $"Project path does not exist: {projectPath}"
-                    };
+                    return new FailureResult(1, "", $"Project path does not exist: {projectPath}");
                 }
 
                 // Use LanguageRepoService to detect language and run appropriate dependency analysis
@@ -105,21 +103,18 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                     result = new FailureResult(1, $"Error during dependency analysis: {ex.Message}");
                 }
 
-                return new DefaultCommandResponse
+                return new SuccessResult(result.ExitCode, System.Text.Json.JsonSerializer.Serialize(new
                 {
                     Message = result.Output ?? "Dependency check completed",
                     Duration = stopwatch.ElapsedMilliseconds,
-                    Result = result
-                };
+                    OriginalOutput = result.Output
+                }));
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Unhandled exception while running dependency check");
                 SetFailure(1);
-                return new DefaultCommandResponse
-                {
-                    ResponseError = $"Unhandled exception: {ex.Message}"
-                };
+                return new FailureResult(1, "", $"Unhandled exception: {ex.Message}");
             }
         }
     }

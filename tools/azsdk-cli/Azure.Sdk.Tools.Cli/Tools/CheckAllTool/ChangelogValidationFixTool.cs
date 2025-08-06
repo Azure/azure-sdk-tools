@@ -4,6 +4,7 @@
 using System.ComponentModel;
 using System.CommandLine;
 using System.CommandLine.Invocation;
+using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Models;
@@ -38,7 +39,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
         }
 
         [McpServerTool(Name = "FixChangelogValidation"), Description("Fix changelog format violations in SDK projects. Provide absolute path to project root as param.")]
-        public async Task<DefaultCommandResponse> FixChangelogValidation(string projectPath)
+        public async Task<IOperationResult> FixChangelogValidation(string projectPath)
         {
             try
             {
@@ -47,10 +48,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                 if (!Directory.Exists(projectPath))
                 {
                     SetFailure(1);
-                    return new DefaultCommandResponse
-                    {
-                        ResponseError = $"Project path does not exist: {projectPath}"
-                    };
+                    return new FailureResult(1, "", $"Project path does not exist: {projectPath}");
                 }
 
                 // Find CHANGELOG.md file
@@ -62,36 +60,27 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                     
                     if (string.IsNullOrEmpty(changelogPath))
                     {
-                        return new DefaultCommandResponse
-                        {
-                            ResponseError = $"No CHANGELOG.md file found in project at: {projectPath}"
-                        };
+                        return new FailureResult(1, "", $"No CHANGELOG.md file found in project at: {projectPath}");
                     }
                 }
 
                 var changelogContent = await File.ReadAllTextAsync(changelogPath);
                 var prompt = GenerateChangelogFixPrompt(changelogContent, projectPath);
 
-                return new DefaultCommandResponse
+                return new SuccessResult(0, System.Text.Json.JsonSerializer.Serialize(new
                 {
                     Message = "Changelog validation fix prompt generated successfully.",
-                    Result = new
-                    {
-                        Prompt = prompt,
-                        ChangelogPath = changelogPath,
-                        ProjectPath = projectPath,
-                        Instructions = "Use this prompt with an LLM to fix changelog format violations. The LLM should return the corrected changelog content."
-                    }
-                };
+                    Prompt = prompt,
+                    ChangelogPath = changelogPath,
+                    ProjectPath = projectPath,
+                    Instructions = "Use this prompt with an LLM to fix changelog format violations. The LLM should return the corrected changelog content."
+                }));
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Unhandled exception while generating changelog validation fix prompt");
                 SetFailure(1);
-                return new DefaultCommandResponse
-                {
-                    ResponseError = $"Unhandled exception: {ex.Message}"
-                };
+                return new FailureResult(1, "", $"Unhandled exception: {ex.Message}");
             }
         }
 

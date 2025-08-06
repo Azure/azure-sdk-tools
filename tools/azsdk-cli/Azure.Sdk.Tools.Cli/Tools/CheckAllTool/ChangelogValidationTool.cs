@@ -7,6 +7,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Commands;
@@ -68,7 +69,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
         }
 
         [McpServerTool(Name = "RunChangelogValidation"), Description("Run changelog validation for SDK projects. Provide absolute path to project root as param.")]
-        public async Task<DefaultCommandResponse> RunChangelogValidation(string projectPath)
+        public async Task<IOperationResult> RunChangelogValidation(string projectPath)
         {
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             
@@ -79,10 +80,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                 if (!Directory.Exists(projectPath))
                 {
                     SetFailure(1);
-                    return new DefaultCommandResponse
-                    {
-                        ResponseError = $"Project path does not exist: {projectPath}"
-                    };
+                    return new FailureResult(1, "", $"Project path does not exist: {projectPath}");
                 }
 
                 // Find the SDK repository root by looking for common repository indicators
@@ -91,10 +89,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                 if (string.IsNullOrEmpty(projectRepoRoot))
                 {
                     SetFailure(1);
-                    return new DefaultCommandResponse
-                    {
-                        ResponseError = $"Could not find repository root from project path: {projectPath}"
-                    };
+                    return new FailureResult(1, "", $"Could not find repository root from project path: {projectPath}");
                 }
 
                 // Construct the path to the PowerShell script in the SDK repository
@@ -104,10 +99,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                 if (!File.Exists(scriptPath))
                 {
                     SetFailure(1);
-                    return new DefaultCommandResponse
-                    {
-                        ResponseError = $"PowerShell script not found at expected location: {scriptPath}"
-                    };
+                    return new FailureResult(1, "", $"PowerShell script not found at expected location: {scriptPath}");
                 }
 
                 // Execute the PowerShell script
@@ -116,22 +108,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
 
                 if (result.Success)
                 {
-                    return new DefaultCommandResponse
+                    return new SuccessResult(0, System.Text.Json.JsonSerializer.Serialize(new
                     {
                         Message = "Changelog validation completed successfully",
-                        Duration = (int)stopwatch.ElapsedMilliseconds,
-                        Result = new SuccessResult(0, "Changelog validation completed successfully")
-                    };
+                        Duration = (int)stopwatch.ElapsedMilliseconds
+                    }));
                 }
                 else
                 {
                     SetFailure(1);
-                    return new DefaultCommandResponse
-                    {
-                        ResponseError = result.ErrorMessage,
-                        Duration = (int)stopwatch.ElapsedMilliseconds,
-                        Result = new FailureResult(1, result.ErrorMessage)
-                    };
+                    return new FailureResult(1, "", result.ErrorMessage);
                 }
             }
             catch (Exception ex)
@@ -139,11 +125,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                 logger.LogError(ex, "Unhandled exception while running changelog validation");
                 stopwatch.Stop();
                 SetFailure(1);
-                return new DefaultCommandResponse
-                {
-                    ResponseError = $"Unhandled exception: {ex.Message}",
-                    Duration = (int)stopwatch.ElapsedMilliseconds
-                };
+                return new FailureResult(1, "", $"Unhandled exception: {ex.Message}");
             }
         }
 

@@ -493,7 +493,14 @@ export class ReviewPageComponent implements OnInit {
 
   handleNamespaceApprovalEmitter(value: boolean) {
     if (value) {
-      this.reviewsService.requestNamespaceReview(this.reviewId!).pipe(take(1)).subscribe({
+      // Collect associated review IDs from the review page options component
+      // Each pull request has a reviewId that corresponds to the individual language review to update
+      // Filter out the active TypeSpec review since it's the source requesting the review, not a target
+      const associatedReviewIds = this.reviewPageOptionsComponent?.pullRequestsOfAssociatedAPIRevisions
+        ?.map(pr => pr.reviewId)
+        ?.filter(reviewId => reviewId !== this.reviewId) || [];
+
+      this.reviewsService.requestNamespaceReview(this.reviewId!, associatedReviewIds).pipe(take(1)).subscribe({
         next: (review: Review) => {
           this.review = review;
         },

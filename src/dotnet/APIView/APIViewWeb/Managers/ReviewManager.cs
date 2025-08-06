@@ -10,6 +10,7 @@ using System.Net.Http;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using ApiView;
 using APIViewWeb.Helpers;
@@ -344,9 +345,10 @@ namespace APIViewWeb.Managers
         /// </summary>
         /// <param name="user"></param>
         /// <param name="reviewId"></param>
+        /// <param name="associatedReviewIds">List of review IDs for associated language reviews to update</param>
         /// <param name="notes"></param>
         /// <returns></returns>
-        public async Task<ReviewListItemModel> RequestNamespaceReviewAsync(ClaimsPrincipal user, string reviewId, string notes = "")
+        public async Task<ReviewListItemModel> RequestNamespaceReviewAsync(ClaimsPrincipal user, string reviewId,List<string> associatedReviewIds, string notes = "")
         {
             ReviewListItemModel typeSpecReview = await _reviewsRepository.GetReviewAsync(reviewId);
             
@@ -364,73 +366,183 @@ namespace APIViewWeb.Managers
             var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction<ReviewChangeHistoryModel, ReviewChangeAction>(
                 typeSpecReview.ChangeHistory, ReviewChangeAction.NamespaceReviewRequested, userId, notes);
             typeSpecReview.ChangeHistory = changeUpdate.ChangeHistory;
-            typeSpecReview.IsNamespaceReviewRequested = changeUpdate.ChangeStatus;
+            typeSpecReview.NamespaceReviewStatus = NamespaceReviewStatus.Pending;
             
             await _reviewsRepository.UpsertReviewAsync(typeSpecReview);
 
             // Send email notifications to preferred approvers
             await _notificationManager.NotifyApproversOnNamespaceReviewRequest(user, typeSpecReview, notes);
 
-            // Find and mark related SDK language reviews with the new namespace approval fields
-            await MarkRelatedSDKReviewsForNamespaceReview(typeSpecReview.PackageName, userId, notes, requestId, requestedOn);
+            // Update the reviews identified by review IDs with namespace approval fields
+            await MarkAssociatedReviewsForNamespaceReview(associatedReviewIds, userId, notes, requestId, requestedOn);
 
             return typeSpecReview;
         }
 
         /// <summary>
-        /// Find related SDK language reviews and mark them as namespace approval requested
+        /// Update the associated language reviews with namespace approval fields
+        /// This method takes review IDs and updates the review records only
         /// </summary>
-        /// <param name="packageName"></param>
+        /// <param name="associatedReviewIds">List of review IDs to update</param>
+        /// <param name="userId">User requesting the namespace review</param>
+        /// <param name="notes"></param>
+        /// <param name="requestId">Unique ID for this namespace approval request</param>
+        /// <param name="requestedOn">When the namespace approval was requested</param>
+        /// <returns></returns>
+        private async Task MarkAssociatedReviewsForNamespaceReview(List<string> associatedReviewIds, string userId, string notes, string requestId, DateTime requestedOn)
+        {
+            try
+            {
+                var updatedCount = 0;
+
+                // Update all provided associated reviews
+                foreach (var reviewId in associatedReviewIds.Where(id => !string.IsNullOrEmpty(id)))
+                {
+                    try
+                    {
+                        // Get the review and update it with namespace approval fields
+                        var review = await _reviewsRepository.GetReviewAsync(reviewId);
+                        if (review != null && IsSDKLanguageOrTypeSpec(review.Language))
+                        {
+                            // Update the review record itself with namespace approval fields
+                            review.IsNamespaceReviewRequested = true;
+                            review.NamespaceApprovalRequestId = requestId;
+                            review.NamespaceApprovalRequestedBy = userId;
+                            review.NamespaceApprovalRequestedOn = requestedOn;
+                            
+                            // Add to review change history
+                            var reviewChangeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction<ReviewChangeHistoryModel, ReviewChangeAction>(
+                                review.ChangeHistory, ReviewChangeAction.NamespaceReviewRequested, userId, 
+                                $"Namespace approval requested for associated language review");
+                            review.ChangeHistory = reviewChangeUpdate.ChangeHistory;
+                            
+                            // Update the review record in database
+                            await _reviewsRepository.UpsertReviewAsync(review);
+                            
+                            updatedCount++;
+                            _telemetryClient.TrackTrace($"[NAMESPACE] Updated review {reviewId} ({review.Language}) with namespace approval fields");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _telemetryClient.TrackException(ex);
+                        _telemetryClient.TrackTrace($"[NAMESPACE] Error updating review {reviewId}: {ex.Message}");
+                        // Continue with other reviews
+                    }
+                }
+
+                _telemetryClient.TrackTrace($"[NAMESPACE] Updated {updatedCount} reviews with namespace approval fields using provided review IDs");
+            }
+            catch (Exception ex)
+            {
+                _telemetryClient.TrackException(ex);
+                _telemetryClient.TrackTrace($"[NAMESPACE] Error updating associated reviews: {ex.Message}");
+                // Continue - don't fail the namespace request if this fails
+            }
+        }
+
+        /// <summary>
+        /// Update the provided API revision IDs with namespace approval fields
+        /// This uses the revision IDs already identified by the frontend from Associated API Revisions
+        /// </summary>
+        /// <param name="activeApiRevisionId">Current API revision ID being viewed</param>
+        /// <param name="associatedApiRevisionIds">List of associated API revision IDs from frontend</param>
         /// <param name="userId"></param>
         /// <param name="notes"></param>
         /// <param name="requestId">Unique ID for this namespace approval request</param>
         /// <param name="requestedOn">When the namespace approval was requested</param>
         /// <returns></returns>
-        private async Task MarkRelatedSDKReviewsForNamespaceReview(string packageName, string userId, string notes, string requestId, DateTime requestedOn)
+        private async Task MarkProvidedAPIRevisionsForNamespaceReview(string activeApiRevisionId, List<string> associatedApiRevisionIds, string userId, string notes, string requestId, DateTime requestedOn)
         {
-            // SDK languages to look for
-            var sdkLanguages = new[] { "C#", "Java", "Python", "Go", "JavaScript" };
-            
-            foreach (var language in sdkLanguages)
+            try
             {
-                try
-                {
-                    // Find review with the same package name in each SDK language
-                    var relatedReview = await _reviewsRepository.GetReviewAsync(language, packageName, false);
-                    if (relatedReview != null && !relatedReview.IsDeleted)
-                    {
-                        // Mark as namespace review requested
-                        var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction<ReviewChangeHistoryModel, ReviewChangeAction>(
-                            relatedReview.ChangeHistory, ReviewChangeAction.NamespaceReviewRequested, userId, notes);
-                        relatedReview.ChangeHistory = changeUpdate.ChangeHistory;
-                        relatedReview.IsNamespaceReviewRequested = changeUpdate.ChangeStatus;
-                        
-                        await _reviewsRepository.UpsertReviewAsync(relatedReview);
+                var updatedCount = 0;
 
-                        // Get all API revisions for this review and mark them with namespace approval fields
-                        var apiRevisions = await _apiRevisionsManager.GetAPIRevisionsAsync(relatedReview.Id);
-                        foreach (var revision in apiRevisions.Where(r => !r.IsDeleted))
-                        {
-                            revision.NamespaceApprovalRequestId = requestId;
-                            revision.NamespaceApprovalRequestedOn = requestedOn;
-                            revision.NamespaceApprovalRequestedBy = userId;
-                            
-                            // Also add to change history
-                            var revisionChangeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction<APIRevisionChangeHistoryModel, APIRevisionChangeAction>(
-                                revision.ChangeHistory, APIRevisionChangeAction.NamespaceReviewRequested, userId, 
-                                $"Namespace approval requested for TypeSpec package: {packageName}");
-                            revision.ChangeHistory = revisionChangeUpdate.ChangeHistory;
-                            
-                            await _apiRevisionsRepository.UpsertAPIRevisionAsync(revision);
-                        }
+                // Always update the current active revision
+                if (!string.IsNullOrEmpty(activeApiRevisionId))
+                {
+                    var currentRevision = await _apiRevisionsManager.GetAPIRevisionAsync(activeApiRevisionId);
+                    if (currentRevision != null)
+                    {
+                        await UpdateSingleAPIRevisionWithNamespaceFields(currentRevision, requestId, userId, requestedOn, notes);
+                        updatedCount++;
                     }
                 }
-                catch (Exception)
+
+                // Update all provided associated API revisions
+                foreach (var revisionId in associatedApiRevisionIds.Where(id => !string.IsNullOrEmpty(id) && id != activeApiRevisionId))
                 {
-                    // Continue if we can't find a review for this language - it might not exist
-                    continue;
+                    try
+                    {
+                        var revision = await _apiRevisionsManager.GetAPIRevisionAsync(revisionId);
+                        if (revision != null && IsSDKLanguageOrTypeSpec(revision.Language))
+                        {
+                            await UpdateSingleAPIRevisionWithNamespaceFields(revision, requestId, userId, requestedOn, notes);
+                            updatedCount++;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _telemetryClient.TrackException(ex);
+                        _telemetryClient.TrackTrace($"[NAMESPACE] Error updating revision {revisionId}: {ex.Message}");
+                        // Continue with other revisions
+                    }
                 }
+
+                _telemetryClient.TrackTrace($"[NAMESPACE] Updated {updatedCount} API revisions with namespace approval fields using provided revision IDs");
             }
+            catch (Exception ex)
+            {
+                _telemetryClient.TrackException(ex);
+                _telemetryClient.TrackTrace($"[NAMESPACE] Error updating provided API revisions: {ex.Message}");
+                // Continue - don't fail the namespace request if this fails
+            }
+        }
+
+        /// <summary>
+        /// Update a single API revision with namespace approval fields
+        /// </summary>
+        /// <param name="revision"></param>
+        /// <param name="requestId"></param>
+        /// <param name="userId"></param>
+        /// <param name="requestedOn"></param>
+        /// <param name="notes"></param>
+        /// <returns></returns>
+        private async Task UpdateSingleAPIRevisionWithNamespaceFields(APIRevisionListItemModel revision, string requestId, string userId, DateTime requestedOn, string notes)
+        {
+            try
+            {
+                revision.NamespaceApprovalRequestId = requestId;
+                revision.NamespaceApprovalRequestedBy = userId;
+                revision.IsNamespaceReviewRequested = true;
+                
+                // Also add to change history
+                var revisionChangeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction<APIRevisionChangeHistoryModel, APIRevisionChangeAction>(
+                    revision.ChangeHistory, APIRevisionChangeAction.NamespaceReviewRequested, userId, 
+                    $"Namespace approval requested for associated revisions");
+                revision.ChangeHistory = revisionChangeUpdate.ChangeHistory;
+                
+                await _apiRevisionsRepository.UpsertAPIRevisionAsync(revision);
+                
+                _telemetryClient.TrackTrace($"[NAMESPACE] Updated revision {revision.Id} ({revision.Language}) with namespace approval fields");
+            }
+            catch (Exception ex)
+            {
+                _telemetryClient.TrackException(ex);
+                _telemetryClient.TrackTrace($"[NAMESPACE] Error updating revision {revision.Id}: {ex.Message}");
+                // Continue with other revisions
+            }
+        }
+
+        /// <summary>
+        /// Check if the language is TypeSpec or one of the 5 supported SDK languages
+        /// </summary>
+        /// <param name="language"></param>
+        /// <returns></returns>
+        private bool IsSDKLanguageOrTypeSpec(string language)
+        {
+            var supportedLanguages = new[] { "TypeSpec", "C#", "Java", "Python", "Go", "JavaScript" };
+            return supportedLanguages.Contains(language);
         }
 
         /// <summary>
@@ -617,7 +729,7 @@ namespace APIViewWeb.Managers
                     
                     if (changeUpdate.ChangeStatus)
                     {
-                        typeSpecReview.NamespaceApprovers.Add(userId);
+                        typeSpecReview.NamespaceReviewStatus = NamespaceReviewStatus.Approved;
                     }
                     
                     await _reviewsRepository.UpsertReviewAsync(typeSpecReview);
@@ -774,6 +886,181 @@ namespace APIViewWeb.Managers
                 _telemetryClient.TrackTrace($"Error in UpdateReviewsUsingPipeline for language {language}: {ex.Message}");
                 // Don't rethrow - this shouldn't break the background update process
             }
+        }
+
+        /// <summary>
+        /// Get all pending namespace approval requests in a single optimized database query
+        /// This queries review records directly with database-level filtering for better performance
+        /// </summary>
+        /// <param name="user">Current user to check permissions</param>
+        /// <param name="limit">Maximum number of results to return (default 100)</param>
+        /// <returns>List of API revisions that have pending namespace approval requests</returns>
+        public async Task<List<APIRevisionListItemModel>> GetPendingNamespaceApprovalsBatchAsync(ClaimsPrincipal user, int limit = 100)
+        {
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            var userId = user.GetGitHubLogin();
+            var pendingApprovals = new List<APIRevisionListItemModel>();
+
+            try
+            {
+                _telemetryClient.TrackTrace($"[NAMESPACE_PERF] Starting optimized GetPendingNamespaceApprovalsBatchAsync for user: {userId}, limit: {limit}");
+
+                // Add timeout protection to prevent hanging
+                using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30)))
+                {
+                    var step1Stopwatch = System.Diagnostics.Stopwatch.StartNew();
+                    // Get all reviews that have namespace approval requests with single optimized query
+                    var sdkLanguages = new[] { "C#", "Java", "Python", "Go", "JavaScript" };
+                    var allNamespaceReviews = await _reviewsRepository.GetPendingNamespaceApprovalReviewsAsync(sdkLanguages);
+                    step1Stopwatch.Stop();
+                    _telemetryClient.TrackTrace($"[NAMESPACE_PERF] Step 1 - Optimized database query took: {step1Stopwatch.ElapsedMilliseconds}ms, found {allNamespaceReviews.Count()} reviews");
+
+                    var step2Stopwatch = System.Diagnostics.Stopwatch.StartNew();
+                    // For each review, get the API revisions and find the one we can display
+                    foreach (var review in allNamespaceReviews.Take(limit))
+                    {
+                        try
+                        {
+                            // Get API revisions for this review
+                            var apiRevisions = await _apiRevisionsManager.GetAPIRevisionsAsync(review.Id);
+                            var latestRevision = apiRevisions.OrderByDescending(r => r.CreatedOn).FirstOrDefault();
+                            
+                            if (latestRevision != null)
+                            {
+                                // Copy namespace approval fields from review to API revision for display
+                                latestRevision.IsNamespaceReviewRequested = review.IsNamespaceReviewRequested;
+                                latestRevision.NamespaceApprovalRequestId = review.NamespaceApprovalRequestId;
+                                latestRevision.NamespaceApprovalRequestedBy = review.NamespaceApprovalRequestedBy;
+                                latestRevision.NamespaceApprovalRequestedOn = review.NamespaceApprovalRequestedOn;
+                                
+                                pendingApprovals.Add(latestRevision);
+                                _telemetryClient.TrackTrace($"[NAMESPACE_PERF] Added revision {latestRevision.Id} for review {review.Id} ({review.Language} - {review.PackageName})");
+                            }
+                            else
+                            {
+                                _telemetryClient.TrackTrace($"[NAMESPACE_PERF] No API revisions found for review {review.Id} ({review.Language} - {review.PackageName})");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _telemetryClient.TrackTrace($"[NAMESPACE_PERF] Error processing review {review.Id}: {ex.Message}");
+                            // Continue with other reviews
+                        }
+                    }
+                    step2Stopwatch.Stop();
+                    _telemetryClient.TrackTrace($"[NAMESPACE_PERF] Step 2 - Process reviews and get API revisions took: {step2Stopwatch.ElapsedMilliseconds}ms, processed {pendingApprovals.Count} revisions");
+
+                    var step3Stopwatch = System.Diagnostics.Stopwatch.StartNew();
+                    // Just sort by NamespaceApprovalRequestedOn without grouping to show all individual SDK reviews
+                    var sortedApprovals = pendingApprovals
+                        .OrderByDescending(r => r.NamespaceApprovalRequestedOn)
+                        .ToList();
+                    step3Stopwatch.Stop();
+                    _telemetryClient.TrackTrace($"[NAMESPACE_PERF] Step 3 - Sorting took: {step3Stopwatch.ElapsedMilliseconds}ms, final result: {sortedApprovals.Count} individual reviews");
+
+                    stopwatch.Stop();
+                    _telemetryClient.TrackTrace($"[NAMESPACE_PERF] TOTAL optimized GetPendingNamespaceApprovalsBatchAsync took: {stopwatch.ElapsedMilliseconds}ms for user: {userId}");
+
+                    return sortedApprovals;
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                stopwatch.Stop();
+                _telemetryClient.TrackTrace($"[NAMESPACE_PERF] TIMEOUT in GetPendingNamespaceApprovalsBatchAsync after {stopwatch.ElapsedMilliseconds}ms for user: {userId}");
+                // Return empty list on timeout to prevent infinite loading
+                return new List<APIRevisionListItemModel>();
+            }
+            catch (Exception ex)
+            {
+                stopwatch.Stop();
+                _telemetryClient.TrackTrace($"[NAMESPACE_PERF] ERROR in GetPendingNamespaceApprovalsBatchAsync after {stopwatch.ElapsedMilliseconds}ms: {ex.Message}");
+                _telemetryClient.TrackException(ex);
+                // Return empty list on error to be safe
+                return new List<APIRevisionListItemModel>();
+            }
+        }
+
+        /// <summary>
+        /// Check and update namespace review status based on associated API revisions
+        /// This should be called when loading a TypeSpec review page to check if all related SDK revisions are approved
+        /// </summary>
+        /// <param name="typeSpecReview">The TypeSpec review to check</param>
+        /// <returns>Updated review with correct namespace status</returns>
+        public async Task<ReviewListItemModel> CheckAndUpdateNamespaceReviewStatusAsync(ReviewListItemModel typeSpecReview)
+        {
+            // Only process TypeSpec reviews that have pending namespace review status
+            if (typeSpecReview.Language != "TypeSpec" || typeSpecReview.NamespaceReviewStatus != NamespaceReviewStatus.Pending)
+            {
+                return typeSpecReview;
+            }
+
+            try
+            {
+                // Find all related SDK API revisions for this package
+                var sdkLanguages = new[] { "C#", "Java", "Python", "Go", "JavaScript" };
+                var relatedRevisions = new List<APIRevisionListItemModel>();
+
+                foreach (var language in sdkLanguages)
+                {
+                    try
+                    {
+                        // Find review with the same package name in each SDK language
+                        var relatedReview = await _reviewsRepository.GetReviewAsync(language, typeSpecReview.PackageName, false);
+                        if (relatedReview != null && !relatedReview.IsDeleted)
+                        {
+                            // Get all API revisions for this review
+                            var apiRevisions = await _apiRevisionsManager.GetAPIRevisionsAsync(relatedReview.Id);
+                            var namespacePendingRevisions = apiRevisions.Where(r => 
+                                !string.IsNullOrEmpty(r.NamespaceApprovalRequestId) && 
+                                r.IsNamespaceReviewRequested && 
+                                !r.IsDeleted).ToList();
+                            
+                            relatedRevisions.AddRange(namespacePendingRevisions);
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        // Continue if we can't find a review for this language
+                        continue;
+                    }
+                }
+
+                // Check if we have any related revisions and if all are approved
+                if (relatedRevisions.Any() && relatedRevisions.All(r => r.IsApproved))
+                {
+                    // All related SDK revisions are approved, update status to Approved
+                    typeSpecReview.NamespaceReviewStatus = NamespaceReviewStatus.Approved;
+                    
+                    // Add to change history
+                    var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction<ReviewChangeHistoryModel, ReviewChangeAction>(
+                        typeSpecReview.ChangeHistory, ReviewChangeAction.NamespaceApproved, "system", 
+                        "Auto-approved: All related SDK API revisions are approved");
+                    typeSpecReview.ChangeHistory = changeUpdate.ChangeHistory;
+                    
+                    await _reviewsRepository.UpsertReviewAsync(typeSpecReview);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log the error but don't fail the page load
+                System.Diagnostics.Debug.WriteLine($"Error checking namespace review status: {ex.Message}");
+            }
+
+            return typeSpecReview;
+        }
+
+        /// <summary>
+        /// Helper method to check if user can approve a review
+        /// </summary>
+        /// <param name="review">Review to check permissions for</param>
+        /// <returns>True if user has permission to approve</returns>
+        private bool CanUserApproveReview(ReviewListItemModel review)
+        {
+            // Add your business logic here for determining if user can approve
+            // This might check user roles, permissions, etc.
+            // For now, return true as placeholder - you should implement the actual logic
+            return true;
         }
     }
 }

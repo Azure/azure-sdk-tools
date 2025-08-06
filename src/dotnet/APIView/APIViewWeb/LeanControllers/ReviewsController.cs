@@ -23,6 +23,7 @@ namespace APIViewWeb.LeanControllers
     public class RequestNamespaceReviewModel
     {
         public string Notes { get; set; } = "";
+        public List<string> AssociatedReviewIds { get; set; } = new List<string>();
     }
 
     public class ReviewsController : BaseApiController
@@ -150,8 +151,10 @@ namespace APIViewWeb.LeanControllers
             try
             {
                 var notes = request?.Notes ?? "";
-                _logger.LogInformation("RequestNamespaceReview called for reviewId: {ReviewId}, notes: {Notes}", reviewId, notes);
-                var updatedReview = await _reviewManager.RequestNamespaceReviewAsync(User, reviewId, notes);
+                var associatedReviewIds = request?.AssociatedReviewIds ?? new List<string>();
+                _logger.LogInformation("RequestNamespaceReview called for reviewId: {ReviewId}, associatedCount: {AssociatedCount}, notes: {Notes}", 
+                    reviewId, associatedReviewIds.Count, notes);
+                var updatedReview = await _reviewManager.RequestNamespaceReviewAsync(User, reviewId, associatedReviewIds, notes);
                 await _signalRHubContext.Clients.All.SendAsync("ReviewUpdated", updatedReview);
                 _logger.LogInformation("RequestNamespaceReview completed successfully for reviewId: {ReviewId}", reviewId);
                 return new LeanJsonResult(updatedReview, StatusCodes.Status200OK);

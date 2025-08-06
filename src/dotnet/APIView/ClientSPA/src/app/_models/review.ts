@@ -13,8 +13,8 @@ export class Review {
   lastUpdatedOn: string;
   isDeleted: boolean;
   isApproved: boolean;
-  namespaceApprovers: string[];
-  isNamespaceReviewRequested: boolean;
+
+  namespaceReviewStatus: string;
   changeHistory: ChangeHistory[];
   subscribers: string[];
   constructor() {
@@ -24,8 +24,8 @@ export class Review {
     this.lastUpdatedOn = ''
     this.isDeleted = false
     this.isApproved = false
-    this.namespaceApprovers = []
-    this.isNamespaceReviewRequested = false
+
+    this.namespaceReviewStatus = 'NotStarted'
     this.changeHistory = []
     this.subscribers = []
   }

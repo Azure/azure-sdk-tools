@@ -109,11 +109,14 @@ export class ReviewsService {
       withCredentials: true,
     });  }
 
-  requestNamespaceReview(reviewId: string, notes: string = '') : Observable<Review> {
+  requestNamespaceReview(reviewId: string, associatedReviewIds: string[] = [], notes: string = '') : Observable<Review> {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
     });
-    return this.http.post<Review>(this.baseUrl + `/${reviewId}/requestNamespaceReview`, { notes },
+    return this.http.post<Review>(this.baseUrl + `/${reviewId}/requestNamespaceReview`, {
+      notes: notes,
+      associatedReviewIds: associatedReviewIds
+    },
     {
       headers: headers,
       withCredentials: true,

@@ -31,6 +31,14 @@ namespace APIViewWeb.LeanModels
         Approved
     }
 
+    [JsonConverter(typeof(StringEnumConverter))]
+    public enum NamespaceReviewStatus
+    {
+        NotStarted = 0,
+        Pending = 1,
+        Approved = 2
+    }
+
     public class ReviewAssignmentModel
     {
         public string AssignedBy { get; set; }
@@ -105,12 +113,17 @@ namespace APIViewWeb.LeanModels
         public List<ReviewAssignmentModel> AssignedReviewers { get; set; } = new List<ReviewAssignmentModel>();
         public bool IsClosed { get; set; }
         public bool IsApproved { get; set; }
-        public HashSet<string> NamespaceApprovers { get; set; } = new HashSet<string>();
-        public bool IsNamespaceReviewRequested { get; set; }
+        public NamespaceReviewStatus NamespaceReviewStatus { get; set; } = NamespaceReviewStatus.NotStarted;
         public string CreatedBy { get; set; }
         public DateTime CreatedOn { get; set; }
         public DateTime LastUpdatedOn { get; set; }
         public bool IsDeleted { get; set; }
+        
+        // Namespace approval fields for performance optimization
+        public bool IsNamespaceReviewRequested { get; set; }
+        public string NamespaceApprovalRequestId { get; set; }
+        public string NamespaceApprovalRequestedBy { get; set; }
+        public DateTime? NamespaceApprovalRequestedOn { get; set; }
     }
 
     public class APIRevisionListItemModel : BaseListitemModel
@@ -147,9 +160,10 @@ namespace APIViewWeb.LeanModels
         public HashSet<string> ViewedBy { get; set; } = new HashSet<string>();
         
         // Namespace approval fields for performance optimization
+        public bool IsNamespaceReviewRequested { get; set; }
         public string NamespaceApprovalRequestId { get; set; }
-        public DateTime? NamespaceApprovalRequestedOn { get; set; }
         public string NamespaceApprovalRequestedBy { get; set; }
+        public DateTime? NamespaceApprovalRequestedOn { get; set; }
     }
 
 

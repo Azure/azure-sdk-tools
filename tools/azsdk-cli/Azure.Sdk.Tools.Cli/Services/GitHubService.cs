@@ -94,7 +94,7 @@ public class GitConnection
         public Task UpdateFileAsync(string owner, string repoName, string path, string message, string content, string sha, string branch);
         public Task<CreateBranchStatus> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranchName = "main");
         public Task<bool> GetBranchAsync(string repoOwner, string repoName, string branchName);
-        public Task<(IReadOnlyList<RepositoryContent>, string)> GetFileContentsAsync();
+        public Task<string> GetFileContentsAsync(string repoOwner, string repoName, string path);
     }
 
     public class GitHubService : GitConnection, IGitHubService
@@ -394,9 +394,9 @@ public class GitConnection
             }
         }
 
-        public async Task<(IReadOnlyList<RepositoryContent>, string)> GetFileContentsAsync()
+        public async Task<string> GetFileContentsAsync(string owner, string repoName, string path)
         {
-            var contents = await GetContentsAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv");
+            var contents = await GetContentsAsync(owner, repoName, path);
             if (contents == null || contents.Count == 0)
             {
                 throw new InvalidOperationException("Could not retrieve common-labels.csv file");
@@ -406,7 +406,7 @@ public class GitConnection
             {
                 throw new InvalidOperationException("common-labels.csv file is empty");
             }
-            return (contents, csvContent);
+            return csvContent;
         }
     }
 }

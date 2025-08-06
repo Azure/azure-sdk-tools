@@ -104,7 +104,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         {
             logger.LogInformation($"Checking service label: {serviceLabel}");
 
-            var (contents, csvContent) = await githubService.GetFileContentsAsync();
+            var csvContent = await githubService.GetFileContentsAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv");
 
             var result = labelHelper.CheckServiceLabel(csvContent, serviceLabel);
 
@@ -158,7 +158,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 logger.LogInformation($"Creating new service label: {label}. Documentation link: {link}");
 
                 // Update the common-labels.csv file
-                var (csvContent, csvContentString) = await githubService.GetFileContentsAsync();
+                var csvContent = await githubService.GetContentsAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv");
+                var csvContentString = await githubService.GetFileContentsAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv");
 
                 var updatedFile = labelHelper.CreateServiceLabel(csvContentString, label); // Contains updated CSV content with the new service label added
 

@@ -40,7 +40,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
 
         public override Command GetCommand()
         {
-            Command command = new("changelogValidation", "Run changelog validation for SDK projects");
+            Command command = new("changelog-validation", "Run changelog validation for SDK projects");
             command.AddOption(projectPathOption);
             command.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
             return command;

@@ -59,7 +59,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
             }
         }
 
-        [McpServerTool(Name = "FixDependencyCheckValidation"), Description("Fix dependency conflicts in SDK projects. Provide absolute path to project root as param.")]
+        [McpServerTool(Name = "fix_dependency_check_validation"), Description("Fix dependency conflicts in SDK projects. Provide absolute path to project root as param.")]
         public async Task<IOperationResult> FixDependencyCheckValidation(string projectPath)
         {
             try

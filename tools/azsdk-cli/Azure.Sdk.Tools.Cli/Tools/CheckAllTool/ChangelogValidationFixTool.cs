@@ -59,7 +59,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
             }
         }
 
-        [McpServerTool(Name = "FixChangelogValidation"), Description("Fix changelog format violations in SDK projects. Provide absolute path to project root as param.")]
+        [McpServerTool(Name = "fix_changelog_validation"), Description("Fix changelog format violations in SDK projects. Provide absolute path to project root as param.")]
         public async Task<IOperationResult> FixChangelogValidation(string projectPath)
         {
             try

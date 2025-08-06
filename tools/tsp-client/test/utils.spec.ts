@@ -1,15 +1,17 @@
-import { describe, it } from "vitest";
+import { afterAll, beforeAll, describe, it } from "vitest";
 import {
   formatAdditionalDirectories,
   getAdditionalDirectoryName,
   getServiceDir,
   makeSparseSpecDir,
   updateExistingTspLocation,
+  parseTspClientRepoConfig,
 } from "../src/utils.js";
+import { getRepoRoot } from "../src/git.js";
 import { removeDirectory } from "../src/fs.js";
 import { parse as parseYaml } from "yaml";
 import { assert } from "chai";
-import { readFile, stat } from "node:fs/promises";
+import { cp, readFile, rm, stat } from "node:fs/promises";
 import { joinPaths } from "@typespec/compiler";
 import { cwd } from "node:process";
 
@@ -70,7 +72,7 @@ describe("Verify other utils functions", function () {
       commit: "1234567890abcdef",
       repo: "Azure/foo-repo",
       additionalDirectories: [],
-      entrypointFile: "foo.tsp"
+      entrypointFile: "foo.tsp",
     });
   });
 
@@ -92,7 +94,32 @@ describe("Verify other utils functions", function () {
       repo: "Azure/foo-repo",
       additionalDirectories: [],
       entrypointFile: "foo.tsp",
-      emitterPackageJsonPath: "example.json"
+      emitterPackageJsonPath: "example.json",
     });
+  });
+});
+
+describe("Verify fs functions", function () {
+  beforeAll(async () => {
+    await cp(
+      joinPaths(cwd(), "test/utils/tspclientconfig.yaml"),
+      joinPaths(await getRepoRoot("."), "eng", "tspclientconfig.yaml"),
+    );
+  });
+
+  afterAll(async () => {
+    await rm(joinPaths(await getRepoRoot("."), "eng", "tspclientconfig.yaml"));
+  });
+
+  it("Check parseTspClientRepoConfig", async function () {
+    const config = await parseTspClientRepoConfig(await getRepoRoot("."));
+    assert.ok(config);
+    assert.ok(config.supportedEmitters);
+    assert.equal(config.supportedEmitters.length, 3);
+    assert.equal(config.supportedEmitters[0].name, "@azure-tools/typespec-csharp");
+    assert.equal(
+      config.supportedEmitters[0].path,
+      "tools/tsp-client/test/utils/alternate-emitter-package.json",
+    );
   });
 });

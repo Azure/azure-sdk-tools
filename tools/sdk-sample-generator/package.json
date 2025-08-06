@@ -1,5 +1,5 @@
 {
-  "name": "@azure-tools/sdk-samples-generator",
+  "name": "@azure-tools/sdk-sample-generator",
   "version": "1.0.0",
   "main": "index.js",
   "type": "module",

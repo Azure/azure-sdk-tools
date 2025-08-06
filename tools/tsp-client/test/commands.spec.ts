@@ -1,4 +1,4 @@
-import { cp, stat, rm, readFile } from "node:fs/promises";
+import { cp, stat, rm, readFile, mkdir } from "node:fs/promises";
 import {
   initCommand,
   generateCommand,
@@ -26,6 +26,8 @@ describe.sequential("Verify commands", () => {
       "./test/utils/emitter-package.json",
       joinPaths(repoRoot, "eng", "emitter-package.json"),
     );
+    await mkdir(joinPaths(cwd(), "test/examples/initGlobalConfig/"), { recursive: true });
+    await mkdir(joinPaths(cwd(), "test/examples/initGlobalConfigNoMatch/"), { recursive: true });
   });
 
   afterAll(async () => {
@@ -42,6 +44,8 @@ describe.sequential("Verify commands", () => {
       { recursive: true },
     );
     await rm("./test/examples/sdk/local-spec-sdk/TempTypeSpecFiles/", { recursive: true });
+    await rm("./test/examples/initGlobalConfig/", { recursive: true });
+    await rm("./test/examples/initGlobalConfigNoMatch/", { recursive: true });
   });
 
   it("Generate lock file", async () => {
@@ -313,6 +317,121 @@ describe.sequential("Verify commands", () => {
       assert.equal(tspLocation.commit, "<replace with your value>");
       assert.equal(tspLocation.repo, "<replace with your value>");
       await removeDirectory(joinPaths(cwd(), "./test/examples/init/sdk"));
+    } catch (error: any) {
+      assert.fail("Failed to init. Error: " + error);
+    }
+  });
+
+  it("Init with --update-if-exists", async () => {
+    try {
+      const args = {
+        "output-dir": joinPaths(cwd(), "./test/examples/initOrUpdate/"),
+        "tsp-config": joinPaths(
+          cwd(),
+          "./test/examples/specification/contosowidgetmanager/Contoso.WidgetManager/",
+        ),
+        "update-if-exists": true,
+        commit: "abc",
+      };
+
+      // Add a tsp-location.yaml file to the output directory for the initOrUpdate test to simulate an existing project
+      const existingTspLocation: TspLocation = {
+        directory: "specification/contosowidgetmanager/Contoso.WidgetManager",
+        commit: "45924e49834c4e01c0713e6b7ca21f94be17e396",
+        repo: "Azure/azure-rest-api-specs",
+        additionalDirectories: [
+          "tools/tsp-client/test/examples/specification/contosowidgetmanager/Contoso.WidgetManager.Shared",
+        ],
+        emitterPackageJsonPath: "tools/tsp-client/test/utils/emitter-package.json",
+      };
+      await mkdir(
+        joinPaths(
+          cwd(),
+          "test/examples/initOrUpdate/sdk/contosowidgetmanager/contosowidgetmanager-rest",
+        ),
+        { recursive: true },
+      );
+      await writeTspLocationYaml(
+        existingTspLocation,
+        joinPaths(
+          cwd(),
+          "test/examples/initOrUpdate/sdk/contosowidgetmanager/contosowidgetmanager-rest",
+        ),
+      );
+      // Now run the init command with --update-if-exists with a local spec so that we can pass in a dummy commit for testing
+      const outputDir = await initCommand(args);
+      const tspLocation = await readTspLocation(outputDir);
+      assert.deepEqual(tspLocation, {
+        directory: "specification/contosowidgetmanager/Contoso.WidgetManager",
+        commit: "abc",
+        repo: "Azure/azure-rest-api-specs",
+        additionalDirectories: [
+          "tools/tsp-client/test/examples/specification/contosowidgetmanager/Contoso.WidgetManager.Shared",
+        ],
+        emitterPackageJsonPath: "tools/tsp-client/test/utils/emitter-package.json",
+      });
+      await rm("./test/examples/initOrUpdate/", { recursive: true });
+    } catch (error: any) {
+      assert.fail("Failed to init. Error: " + error);
+    }
+  });
+
+  it("Init with global tspclientconfig.yaml", async () => {
+    await cp(
+      joinPaths(cwd(), "test/utils/tspclientconfig.yaml"),
+      joinPaths(await getRepoRoot("."), "eng", "tspclientconfig.yaml"),
+    );
+    try {
+      const args = {
+        "output-dir": joinPaths(cwd(), "./test/examples/initGlobalConfig/"),
+        "tsp-config": joinPaths(
+          cwd(),
+          "./test/examples/specification/contosowidgetmanager/Contoso.WidgetManager/",
+        ),
+      };
+      const outputDir = await initCommand(args);
+      const tspLocation = await readTspLocation(outputDir);
+      assert.deepEqual(tspLocation, {
+        directory: "specification/contosowidgetmanager/Contoso.WidgetManager",
+        commit: "<replace with your value>",
+        repo: "<replace with your value>",
+        additionalDirectories: [
+          "tools/tsp-client/test/examples/specification/contosowidgetmanager/Contoso.WidgetManager.Shared",
+        ],
+        emitterPackageJsonPath: "tools/tsp-client/test/utils/alternate-emitter-package.json",
+      });
+      await rm(joinPaths(await getRepoRoot("."), "eng", "tspclientconfig.yaml"));
+    } catch (error: any) {
+      assert.fail("Failed to init. Error: " + error);
+    }
+  });
+
+  it("Init with global tspclientconfig.yaml with no emitter matches", async () => {
+    await cp(
+      joinPaths(cwd(), "test/utils/tspclientconfig-no-match.yaml"),
+      joinPaths(await getRepoRoot("."), "eng", "tspclientconfig.yaml"),
+    );
+    try {
+      const args = {
+        "output-dir": joinPaths(cwd(), "./test/examples/initGlobalConfigNoMatch/"),
+        "tsp-config": joinPaths(
+          cwd(),
+          "./test/examples/specification/contosowidgetmanager/Contoso.WidgetManager/",
+        ),
+      };
+      const outputDir = await initCommand(args);
+      const tspLocation = await readTspLocation(outputDir);
+      // When no emitters match between global config and tspconfig, it should fall back to default emitter-package.json
+      // and emitterPackageJsonPath should be undefined (since it's using the default path)
+      assert.deepEqual(tspLocation, {
+        directory: "specification/contosowidgetmanager/Contoso.WidgetManager",
+        commit: "<replace with your value>",
+        repo: "<replace with your value>",
+        additionalDirectories: [
+          "tools/tsp-client/test/examples/specification/contosowidgetmanager/Contoso.WidgetManager.Shared",
+        ],
+      });
+      await rm(joinPaths(await getRepoRoot("."), "eng", "tspclientconfig.yaml"));
     } catch (error: any) {
       assert.fail("Failed to init. Error: " + error);
     }

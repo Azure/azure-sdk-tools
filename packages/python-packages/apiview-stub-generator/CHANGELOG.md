@@ -1,5 +1,8 @@
 # Release History
 
+## Version 0.3.20 (2025-07-28)
+Added a feature to distinguish handwritten code from generated code by applying specific CSS to handwritten lines.
+
 ## Version 0.3.19 (2025-07-17)
 Fixed an issue with APIView not running in src directories where the package name differs from the directory name.
 

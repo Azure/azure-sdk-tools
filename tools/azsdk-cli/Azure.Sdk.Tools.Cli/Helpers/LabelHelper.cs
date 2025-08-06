@@ -49,14 +49,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 if (label.Equals(serviceName, StringComparison.OrdinalIgnoreCase))
                 {
                     // Check if it's a service label by color code
-                    if (color.Equals(Constants.SERVICE_LABELS_COLOR_CODE, StringComparison.OrdinalIgnoreCase))
-                    {
-                        return ServiceLabelStatus.Exists;
-                    }
-                    else
-                    {
-                        return ServiceLabelStatus.NotAServiceLabel;
-                    }
+                    return color.Equals(Constants.SERVICE_LABELS_COLOR_CODE, StringComparison.OrdinalIgnoreCase))?  ServiceLabelStatus.Exists : ServiceLabelStatus.NotAServiceLabel;
                 }
             }
 

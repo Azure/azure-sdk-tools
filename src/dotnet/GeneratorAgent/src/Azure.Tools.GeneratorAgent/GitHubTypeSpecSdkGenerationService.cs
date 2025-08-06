@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading;
 using Azure.Tools.GeneratorAgent.Configuration;
 using Azure.Tools.GeneratorAgent.Security;
+using Azure.Tools.GeneratorAgent.Exceptions;
 using Microsoft.Extensions.Logging;
 
 namespace Azure.Tools.GeneratorAgent
@@ -39,66 +40,74 @@ namespace Azure.Tools.GeneratorAgent
             SdkOutputDir = validationContext.ValidatedSdkDir;
         }
 
-        public async Task CompileTypeSpecAsync(CancellationToken cancellationToken = default)
+        public async Task<Result<object>> CompileTypeSpecAsync(CancellationToken cancellationToken = default)
         {
-            Logger.LogInformation("\n Starting GitHub-based TypeSpec compilation for commit: {CommitId}", CommitId);
+            Logger.LogInformation("Starting TypeSpec compilation for commit: {CommitId}", CommitId);
 
-            string azureSdkDir = await ExtractAzureSdkDirAsync();
+            Result<string> sdkDirResult = await ExtractAzureSdkDirAsync();
+            if (sdkDirResult.IsFailure)
+            {
+                return Result<object>.Failure(sdkDirResult.Exception ?? new InvalidOperationException("Failed to extract Azure SDK directory"));
+            }
 
-            // Step 1: Run PowerShell generation script
-            Result powerShellResult = await RunPowerShellGenerationScriptAsync(azureSdkDir, cancellationToken);
+            Result<object> powerShellResult = await RunPowerShellGenerationScriptAsync(sdkDirResult.Value!, cancellationToken);
             if (powerShellResult.IsFailure)
             {
-                throw new InvalidOperationException($"PowerShell generation script failed: {powerShellResult.Error}");
+                return powerShellResult;
             }
 
-            // Step 2: Run dotnet build generateCode
-            Result buildResult = await RunDotNetBuildGenerateCodeAsync(cancellationToken);
+            Result<object> buildResult = await RunDotNetBuildGenerateCodeAsync(cancellationToken);
             if (buildResult.IsFailure)
             {
-                // TODO: Send buildResult.Error to AI for analysis
-                throw new InvalidOperationException($"dotnet build /t:generateCode failed: {buildResult.Error}");
+                return buildResult;
             }
-            
-            Logger.LogInformation("GitHub-based TypeSpec compilation completed successfully");
+
+            Logger.LogInformation("TypeSpec compilation completed successfully");
+            return Result<object>.Success("TypeSpec compilation completed successfully");
         }
 
-        protected virtual async Task<string> ExtractAzureSdkDirAsync()
+        protected virtual async Task<Result<string>> ExtractAzureSdkDirAsync()
         {
+            Exception? gitException = null;
+            
             try
             {
-                Result result = await ProcessExecutor.ExecuteAsync(
+                Result<object> result = await ProcessExecutor.ExecuteAsync(
                     SecureProcessConfiguration.GitExecutable,
                     "rev-parse --show-toplevel",
                     SdkOutputDir,
                     CancellationToken.None).ConfigureAwait(false);
 
-                if (result.IsSuccess && !string.IsNullOrEmpty(result.Output))
+                if (result.IsSuccess && result.Value is string output && !string.IsNullOrEmpty(output))
                 {
-                    string gitRoot = result.Output.Trim();
-                    
-                    if (Directory.Exists(gitRoot) && Directory.Exists(Path.Combine(gitRoot, ".git")))
+                    string gitRoot = output.Trim();
+                    if (Directory.Exists(gitRoot))
                     {
-                        Logger.LogInformation("Found Azure SDK directory via git: {AzureSdkDir}", gitRoot);
-                        return gitRoot;
+                        return Result<string>.Success(gitRoot);
                     }
-                    
-                    Logger.LogWarning("Git root path does not contain .git directory, falling back to directory traversal");
                 }
-                else
-                {
-                    Logger.LogWarning("Git command failed, falling back to directory traversal. Error: {Error}", result.Error);
-                }
+                
+                gitException = result.ProcessException ?? result.Exception;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
+                gitException = ex;
                 Logger.LogWarning(ex, "Failed to execute git command, falling back to directory traversal");
             }
 
-            return ExtractAzureSdkDirFallback();
+            Result<string> fallbackResult = ExtractAzureSdkDirFallback();
+            
+            if (fallbackResult.IsFailure && gitException != null)
+            {
+                return Result<string>.Failure(new InvalidOperationException(
+                    $"Both git detection and directory traversal failed. Git error: {gitException.Message}. Traversal error: {fallbackResult.Exception?.Message}",
+                    gitException));
+            }
+            
+            return fallbackResult;
         }
 
-        private string ExtractAzureSdkDirFallback()
+        private Result<string> ExtractAzureSdkDirFallback()
         {
             string? currentDir = SdkOutputDir;
             string? azureSdkDirByName = null;
@@ -111,7 +120,7 @@ namespace Azure.Tools.GeneratorAgent
                 
                 if (Directory.Exists(Path.Combine(currentDir, ".git")))
                 {
-                    return currentDir;
+                    return Result<string>.Success(currentDir);
                 }
                 
                 if (azureSdkDirByName == null && 
@@ -128,21 +137,21 @@ namespace Azure.Tools.GeneratorAgent
                 currentDir = parentPath;
             }
             
+            if (!string.IsNullOrEmpty(azureSdkDirByName))
+            {
+                Logger.LogInformation("Found Azure SDK directory by name: {AzureSdkDir}", azureSdkDirByName);
+                return Result<string>.Success(azureSdkDirByName);
+            }
+
             if (iterations >= maxIterations)
             {
                 Logger.LogWarning("Directory traversal reached maximum depth of {MaxIterations} levels, stopping to prevent infinite recursion", maxIterations);
             }
-            
-            if (!string.IsNullOrEmpty(azureSdkDirByName))
-            {
-                Logger.LogInformation("Found Azure SDK directory by name: {AzureSdkDir}", azureSdkDirByName);
-                return azureSdkDirByName;
-            }
 
-            throw new InvalidOperationException("Could not locate azure-sdk-for-net directory from SDK output path");
+            return Result<string>.Failure(new InvalidOperationException("Could not locate azure-sdk-for-net directory from SDK output path"));
         }
 
-        private async Task<Result> RunPowerShellGenerationScriptAsync(string azureSdkPath, CancellationToken cancellationToken)
+        private async Task<Result<object>> RunPowerShellGenerationScriptAsync(string azureSdkPath, CancellationToken cancellationToken)
         {
             Logger.LogInformation("Running PowerShell generation script \n");
 
@@ -151,7 +160,7 @@ namespace Azure.Tools.GeneratorAgent
             Result<string> scriptValidation = InputValidator.ValidatePowerShellScriptPath(AppSettings.PowerShellScriptPath, azureSdkPath);
             if (scriptValidation.IsFailure)
             {
-                return Result.Failure($"PowerShell script validation failed: {scriptValidation.Error}");
+                throw new ArgumentException($"PowerShell script validation failed: {scriptValidation.Exception?.Message}");
             }
 
             List<string> arguments = new List<string>
@@ -168,36 +177,27 @@ namespace Azure.Tools.GeneratorAgent
             Result<string> argValidation = InputValidator.ValidateProcessArguments(argumentString);
             if (argValidation.IsFailure)
             {
-                return Result.Failure($"PowerShell process arguments validation failed: {argValidation.Error}");
+                throw new ArgumentException($"PowerShell process arguments validation failed: {argValidation.Exception?.Message}");
             }
 
             try
             {
-                Result result = await ProcessExecutor.ExecuteAsync(
+                Result<object> result = await ProcessExecutor.ExecuteAsync(
                     SecureProcessConfiguration.PowerShellExecutable,
-                    argValidation.Value,
+                    argValidation.Value!,
                     azureSdkPath,
                     cancellationToken).ConfigureAwait(false);
 
-                if (result.IsFailure)
-                {
-                    return Result.Failure(result.Error);
-                }
-
-                Logger.LogInformation("PowerShell generation script completed successfully");
-                return Result.Success();
+                return result;
             }
-            catch (OperationCanceledException)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
+                Logger.LogCritical(ex, "Unexpected system error during PowerShell generation script");
                 throw;
-            }
-            catch (Exception ex)
-            {
-                return Result.Failure(ex.Message, ex);
             }
         }
 
-        private async Task<Result> RunDotNetBuildGenerateCodeAsync(CancellationToken cancellationToken)
+        private async Task<Result<object>> RunDotNetBuildGenerateCodeAsync(CancellationToken cancellationToken)
         {
             Logger.LogInformation("Running dotnet build /t:generateCode");
 
@@ -205,38 +205,41 @@ namespace Azure.Tools.GeneratorAgent
 
             if (!Directory.Exists(srcDirectory))
             {
-                return Result.Failure($"Source directory not found: {srcDirectory}");
+                throw new DirectoryNotFoundException($"Source directory not found: {srcDirectory}");
             }
 
             try
             {
-                Result result = await ProcessExecutor.ExecuteAsync(
+                Result<object> result = await ProcessExecutor.ExecuteAsync(
                     SecureProcessConfiguration.DotNetExecutable,
                     "build /t:generateCode /p:Debug=True",
                     srcDirectory,
                     cancellationToken).ConfigureAwait(false);
 
-                if (!string.IsNullOrEmpty(result.Output))
+                if (result.IsFailure && result.ProcessException != null)
                 {
-                    Logger.LogInformation("dotnet build output: {Output}", result.Output);
+                    return Result<object>.Failure(
+                        new TypeSpecCompilationException(
+                            result.ProcessException.Command,
+                            result.ProcessException.Output,
+                            result.ProcessException.Error,
+                            result.ProcessException.ExitCode ?? -1,
+                            result.ProcessException));
                 }
 
-                if (result.IsFailure)
+                if (result.Value is string buildOutput && !string.IsNullOrEmpty(buildOutput))
                 {
-                    return Result.Failure(result.Error);
+                    Logger.LogInformation("dotnet build output: {Output}", buildOutput);
                 }
 
-                Logger.LogInformation("dotnet build /t:generateCode completed successfully");
-                return Result.Success();
+                return result;
             }
-            catch (OperationCanceledException)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
+                Logger.LogCritical(ex, "Unexpected system error during dotnet build");
                 throw;
-            }
-            catch (Exception ex)
-            {
-                return Result.Failure(ex.Message, ex);
             }
         }
     }
 }
+

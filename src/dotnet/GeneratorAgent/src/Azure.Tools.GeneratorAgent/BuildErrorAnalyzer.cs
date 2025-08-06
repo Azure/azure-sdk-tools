@@ -6,6 +6,7 @@ using Azure.Tools.ErrorAnalyzers;
 using Azure.Tools.ErrorAnalyzers.ClientRuleAnalyzers;
 using Azure.Tools.ErrorAnalyzers.GeneralRuleAnalyzers;
 using Azure.Tools.ErrorAnalyzers.ManagementRuleAnalyzers;
+using Azure.Tools.GeneratorAgent.Exceptions;
 using Microsoft.Extensions.Logging;
 
 namespace Azure.Tools.GeneratorAgent
@@ -15,60 +16,94 @@ namespace Azure.Tools.GeneratorAgent
     /// </summary>
     internal class BuildErrorAnalyzer
     {
+        // Regular expression to match error patterns.
+        private static readonly Regex ErrorRegex = new(@"error\s+([A-Z]+\d+):\s*(.+?)(?=\s*\[|$)", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.Compiled);
+        
         private readonly ILogger<BuildErrorAnalyzer> Logger;
-        private static readonly object InitializationLock = new object();
-        private static bool IsInitialized = false;
+
+        /// <summary>
+        /// Static constructor to initialize ErrorAnalyzer providers.
+        /// </summary>
+        static BuildErrorAnalyzer()
+        {
+            ErrorAnalyzerService.RegisterProvider(new ClientAnalyzerProvider());
+            ErrorAnalyzerService.RegisterProvider(new GeneralAnalyzerProvider());
+            ErrorAnalyzerService.RegisterProvider(new ManagementAnalyzerProvider());
+        }
 
         public BuildErrorAnalyzer(ILogger<BuildErrorAnalyzer> logger)
         {
             ArgumentNullException.ThrowIfNull(logger);
             Logger = logger;
-            
-            InitializeErrorAnalyzers();
         }
 
         /// <summary>
-        /// Initializes the ErrorAnalyzer providers. Thread-safe singleton initialization.
+        /// Analyzes both compile and build results to generate a unified list of fixes.
         /// </summary>
-        private static void InitializeErrorAnalyzers()
+        public List<Fix> AnalyzeAndGetFixes(Result<object>? compileResult, Result<object>? buildResult)
         {
-            if (IsInitialized) return;
+            List<Fix> allFixes = new List<Fix>();
 
-            lock (InitializationLock)
+            // Process TypeSpec compilation errors
+            if (compileResult?.IsFailure == true && compileResult.ProcessException is TypeSpecCompilationException typeSpecEx)
             {
-                if (IsInitialized) return;
-
+                Logger.LogInformation("Analyzing TypeSpec compilation errors for command: {Command}", typeSpecEx.Command);
                 try
                 {
-                    ErrorAnalyzerService.RegisterProvider(new ClientAnalyzerProvider());
-                    ErrorAnalyzerService.RegisterProvider(new GeneralAnalyzerProvider());
-                    ErrorAnalyzerService.RegisterProvider(new ManagementAnalyzerProvider());
-                    IsInitialized = true;
+                    List<RuleError> typeSpecErrors = ParseBuildOutput(typeSpecEx);
+                    IEnumerable<Fix> typeSpecFixes = GetFixes(typeSpecErrors);
+                    allFixes.AddRange(typeSpecFixes);
+                    Logger.LogInformation("Generated fixes for TypeSpec compilation errors");
                 }
                 catch (Exception ex)
                 {
-                    // Log the error but don't throw - we can still continue without error analysis
-                    System.Diagnostics.Debug.WriteLine($"Failed to initialize ErrorAnalyzers: {ex.Message}");
+                    Logger.LogError(ex, "Failed to analyze TypeSpec compilation errors");
                 }
             }
+
+            // Process .NET build errors  
+            if (buildResult?.IsFailure == true && buildResult.ProcessException is DotNetBuildException dotNetEx)
+            {
+                Logger.LogInformation("Analyzing .NET build errors for command: {Command}", dotNetEx.Command);
+                try
+                {
+                    List<RuleError> buildErrors = ParseBuildOutput(dotNetEx);
+                    IEnumerable<Fix> buildFixes = GetFixes(buildErrors);
+                    allFixes.AddRange(buildFixes);
+                    Logger.LogInformation("Generated fixes for .NET build errors");
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex, "Failed to analyze .NET build errors");
+                }
+            }
+
+            Logger.LogInformation("Total fixes generated: {TotalFixCount}", allFixes.Count);
+            return allFixes;
         }
 
         /// <summary>
-        /// Takes raw build output string and generates List&lt;RuleError&gt;
+        /// Takes ProcessExecutionException and generates List&lt;RuleError&gt;
         /// </summary>
-        public List<RuleError> ParseBuildOutput(string buildOutput)
+        public List<RuleError> ParseBuildOutput(ProcessExecutionException processException)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(buildOutput);
+            ArgumentNullException.ThrowIfNull(processException);
+
+            // Combine both output and error streams for comprehensive analysis
+            string combinedOutput = $"{processException.Output}\n{processException.Error}".Trim();
+
+            if (string.IsNullOrWhiteSpace(combinedOutput))
+            {
+                Logger.LogWarning("No output or error content available for analysis from command: {Command}", processException.Command);
+                return new List<RuleError>();
+            }
 
             List<RuleError> errors = new List<RuleError>();
             
-            // Regular expression to match error patterns like:
-            // error AZC0012: Single word class names are too generic...
-            string errorPattern = @"error\s+([A-Z]+\d+):\s*(.+?)(?=\s*\[|$)";
-            Regex regex = new Regex(errorPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline);
-
-            MatchCollection matches = regex.Matches(buildOutput);
-            Logger.LogDebug("Found {MatchCount} potential error matches", matches.Count);
+            MatchCollection matches = ErrorRegex.Matches(combinedOutput);
+            Logger.LogDebug("Found {MatchCount} potential error matches using pattern", matches.Count);
+            
+            // TODO: Implement LLM-based error message parsing as a fallback
 
             foreach (Match match in matches)
             {
@@ -97,33 +132,23 @@ namespace Azure.Tools.GeneratorAgent
             }
 
             // Remove duplicates based on both type and message
-            List<RuleError> uniqueErrors = errors
+            return errors
                 .GroupBy(e => new { e.type, e.message })
                 .Select(g => g.First())
                 .ToList();
-
-            Logger.LogDebug("Extracted {UniqueErrorCount} unique errors from {TotalErrorCount} total matches", uniqueErrors.Count, errors.Count);
-
-            return uniqueErrors;
         }
-
+        
         /// <summary>
         /// Takes List&lt;RuleError&gt; and calls ErrorAnalyzers.GetFixes method
         /// </summary>
         public IEnumerable<Fix> GetFixes(List<RuleError> errors)
         {
             ArgumentNullException.ThrowIfNull(errors);
-
-            Logger.LogInformation("Generating fixes for {ErrorCount} errors", errors.Count);
-
             try
             {
                 IEnumerable<Fix> fixes = ErrorAnalyzerService.GetFixes(errors);
-                List<Fix> fixList = fixes.ToList();
-                
-                Logger.LogInformation("Generated {FixCount} fixes for {ErrorCount} errors", fixList.Count, errors.Count);
-                
-                return fixList;
+                Logger.LogInformation("Generated fixes for {ErrorCount} errors", errors.Count);
+                return fixes;
             }
             catch (Exception ex)
             {

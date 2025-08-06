@@ -33,7 +33,7 @@ namespace Azure.Tools.GeneratorAgent.Security
         {
             if (string.IsNullOrWhiteSpace(path))
             {
-                return Result<string>.Failure($"{pathType} cannot be null or empty");
+                throw new ArgumentException($"{pathType} cannot be null or empty", nameof(path));
             }
 
             return Result<string>.Success(path);
@@ -56,11 +56,11 @@ namespace Azure.Tools.GeneratorAgent.Security
             {
                 if (isLocalPath)
                 {
-                    string fullPath = Path.GetFullPath(pathTraversalValidation.Value);
+                    string fullPath = Path.GetFullPath(pathTraversalValidation.Value!);
                     
                     if (!Directory.Exists(fullPath))
                     {
-                        return Result<string>.Failure($"TypeSpec directory not found: {fullPath}");
+                        throw new DirectoryNotFoundException($"TypeSpec directory not found: {fullPath}");
                     }
                     
                     string[] allFiles = Directory.GetFiles(fullPath, "*.*", SearchOption.TopDirectoryOnly);
@@ -69,7 +69,7 @@ namespace Azure.Tools.GeneratorAgent.Security
 
                     if (!hasTypeSpecFiles)
                     {
-                        return Result<string>.Failure($"No .tsp or .yaml files found in directory: {fullPath}");
+                        throw new InvalidOperationException($"No .tsp or .yaml files found in directory: {fullPath}");
                     }
                     
                     if (allFiles.Any(file => !TypeSpecFileRegex.IsMatch(file)))
@@ -77,22 +77,22 @@ namespace Azure.Tools.GeneratorAgent.Security
                         string invalidFiles = string.Join(", ", allFiles
                             .Where(file => !TypeSpecFileRegex.IsMatch(file))
                             .Select(Path.GetFileName));
-                        return Result<string>.Failure($"Directory contains non-TypeSpec files: {invalidFiles}. Only .tsp and .yaml files are allowed.");
+                        throw new InvalidOperationException($"Directory contains non-TypeSpec files: {invalidFiles}. Only .tsp and .yaml files are allowed.");
                     }
                     
                     return Result<string>.Success(fullPath);
                 }
                 else
                 {
-                    string validatedPath = pathTraversalValidation.Value;
+                    string validatedPath = pathTraversalValidation.Value!;
                     if (validatedPath.StartsWith("/") || validatedPath.StartsWith("\\"))
                     {
-                        return Result<string>.Failure("Repository path cannot start with / or \\");
+                        throw new ArgumentException("Repository path cannot start with / or \\", nameof(path));
                     }
                     
                     if (validatedPath.Contains("//") || validatedPath.Contains("\\\\"))
                     {
-                        return Result<string>.Failure("Repository path contains invalid double separators");
+                        throw new ArgumentException("Repository path contains invalid double separators", nameof(path));
                     }
                     
                     string normalizedPath = validatedPath.Replace('\\', '/');
@@ -102,7 +102,7 @@ namespace Azure.Tools.GeneratorAgent.Security
             }
             catch (Exception ex)
             {
-                return Result<string>.Failure($"Invalid path format: {ex.Message}");
+                throw new ArgumentException($"Invalid path format: {ex.Message}", nameof(path), ex);
             }
         }
 
@@ -118,7 +118,7 @@ namespace Azure.Tools.GeneratorAgent.Security
 
             if (!CommitIdRegex.IsMatch(commitId))
             {
-                return Result<string>.Failure("Commit ID must be 6-40 hexadecimal characters");
+                throw new ArgumentException("Commit ID must be 6-40 hexadecimal characters", nameof(commitId));
             }
 
             return Result<string>.Success(commitId);
@@ -137,19 +137,19 @@ namespace Azure.Tools.GeneratorAgent.Security
 
             try
             {
-                string fullPath = Path.GetFullPath(pathTraversalValidation.Value);
+                string fullPath = Path.GetFullPath(pathTraversalValidation.Value!);
                 
                 string? parentDir = Path.GetDirectoryName(fullPath);
                 if (!string.IsNullOrEmpty(parentDir) && !Directory.Exists(parentDir))
                 {
-                    return Result<string>.Failure($"Parent directory does not exist: {parentDir}");
+                    throw new DirectoryNotFoundException($"Parent directory does not exist: {parentDir}");
                 }
 
                 return Result<string>.Success(fullPath);
             }
             catch (Exception ex)
             {
-                return Result<string>.Failure($"Invalid path format: {ex.Message}");
+                throw new ArgumentException($"Invalid path format: {ex.Message}", nameof(path), ex);
             }
         }
 
@@ -160,13 +160,13 @@ namespace Azure.Tools.GeneratorAgent.Security
         {
             if (string.IsNullOrWhiteSpace(scriptPath))
             {
-                return Result<string>.Failure("PowerShell script path cannot be null or empty");
+                throw new ArgumentException("PowerShell script path cannot be null or empty", nameof(scriptPath));
             }
 
             // Ensure it's a PowerShell script
             if (!string.Equals(Path.GetExtension(scriptPath), ".ps1", StringComparison.OrdinalIgnoreCase))
             {
-                return Result<string>.Failure("PowerShell script must have .ps1 extension");
+                throw new ArgumentException("PowerShell script must have .ps1 extension", nameof(scriptPath));
             }
 
             try
@@ -175,7 +175,7 @@ namespace Azure.Tools.GeneratorAgent.Security
                 
                 if (!File.Exists(fullScriptPath))
                 {
-                    return Result<string>.Failure($"PowerShell script not found: {fullScriptPath}");
+                    throw new FileNotFoundException($"PowerShell script not found: {fullScriptPath}");
                 }
 
                 string normalizedPath = Path.GetFullPath(fullScriptPath);
@@ -183,14 +183,14 @@ namespace Azure.Tools.GeneratorAgent.Security
                 
                 if (!normalizedPath.StartsWith(normalizedAzureSdkPath, StringComparison.OrdinalIgnoreCase))
                 {
-                    return Result<string>.Failure("PowerShell script must be within Azure SDK directory");
+                    throw new UnauthorizedAccessException("PowerShell script must be within Azure SDK directory");
                 }
 
                 return Result<string>.Success(fullScriptPath);
             }
             catch (Exception ex)
             {
-                return Result<string>.Failure($"Error validating script path: {ex.Message}");
+                throw new ArgumentException($"Error validating script path: {ex.Message}", nameof(scriptPath), ex);
             }
         }
 
@@ -209,7 +209,7 @@ namespace Azure.Tools.GeneratorAgent.Security
             {
                 if (arguments.Contains(separator, StringComparison.OrdinalIgnoreCase))
                 {
-                    return Result<string>.Failure($"Arguments contain command separator: {separator}");
+                    throw new ArgumentException($"Arguments contain command separator: {separator}", nameof(arguments));
                 }
             }
 
@@ -234,18 +234,18 @@ namespace Azure.Tools.GeneratorAgent.Security
 
             try
             {
-                string fullPath = Path.GetFullPath(pathTraversalValidation.Value);
+                string fullPath = Path.GetFullPath(pathTraversalValidation.Value!);
                 
                 if (!Directory.Exists(fullPath))
                 {
-                    return Result<string>.Failure($"Working directory does not exist: {fullPath}");
+                    throw new DirectoryNotFoundException($"Working directory does not exist: {fullPath}");
                 }
 
                 return Result<string>.Success(fullPath);
             }
             catch (Exception ex)
             {
-                return Result<string>.Failure($"Invalid working directory path: {ex.Message}");
+                throw new ArgumentException($"Invalid working directory path: {ex.Message}", nameof(workingDirectory), ex);
             }
         }
     }

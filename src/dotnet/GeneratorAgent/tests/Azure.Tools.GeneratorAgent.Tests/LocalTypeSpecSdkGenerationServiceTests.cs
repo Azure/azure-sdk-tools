@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Azure.Tools.GeneratorAgent;
 using Azure.Tools.GeneratorAgent.Configuration;
 using Azure.Tools.GeneratorAgent.Security;
+using Azure.Tools.GeneratorAgent.Exceptions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -227,18 +228,17 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 logger: mockLogger.Object,
                 processExecutor: mockProcessExecutor.Object);
 
-            await service.CompileTypeSpecAsync();
+            var result = await service.CompileTypeSpecAsync();
 
+            Assert.That(result.IsSuccess, Is.True);
             VerifyLogMessage(mockLogger, LogLevel.Information, "Starting TypeSpec compilation for project:");
             VerifyLogMessage(mockLogger, LogLevel.Information, "Installing TypeSpec dependencies globally");
-            VerifyLogMessage(mockLogger, LogLevel.Information, "TypeSpec dependencies installed globally successfully..");
             VerifyLogMessage(mockLogger, LogLevel.Information, "Compiling TypeSpec project");
-            VerifyLogMessage(mockLogger, LogLevel.Information, "TypeSpec compilation completed");
             VerifyLogMessage(mockLogger, LogLevel.Information, "TypeSpec compilation completed successfully");
         }
 
         [Test]
-        public void CompileTypeSpecAsync_WithGlobalInstallFailure_ShouldThrowException()
+        public async Task CompileTypeSpecAsync_WithGlobalInstallFailure_ShouldReturnFailure()
         {
             using var fixture = new TestEnvironmentFixture();
             
@@ -251,11 +251,14 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 logger: mockLogger.Object,
                 processExecutor: mockProcessExecutor.Object);
 
-            Assert.ThrowsAsync<InvalidOperationException>(() => service.CompileTypeSpecAsync());
+            var result = await service.CompileTypeSpecAsync();
+            
+            Assert.That(result.IsFailure, Is.True);
+            Assert.That(result.Exception, Is.Not.Null);
         }
 
         [Test]
-        public void CompileTypeSpecAsync_WithTspCompileFailure_ShouldThrowException()
+        public async Task CompileTypeSpecAsync_WithTspCompileFailure_ShouldReturnFailure()
         {
             using var fixture = new TestEnvironmentFixture();
             
@@ -269,7 +272,10 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 logger: mockLogger.Object,
                 processExecutor: mockProcessExecutor.Object);
 
-            Assert.ThrowsAsync<InvalidOperationException>(() => service.CompileTypeSpecAsync());
+            var result = await service.CompileTypeSpecAsync();
+            
+            Assert.That(result.IsFailure, Is.True);
+            Assert.That(result.Exception, Is.Not.Null);
         }
 
         [Test]
@@ -293,7 +299,9 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 logger: mockLogger.Object,
                 processExecutor: mockProcessExecutor.Object);
 
-            Assert.ThrowsAsync<InvalidOperationException>(() => service.CompileTypeSpecAsync());
+            var ex = Assert.ThrowsAsync<InvalidOperationException>(() => service.CompileTypeSpecAsync());
+            
+            Assert.That(ex!.Message, Is.EqualTo("Test exception"));
         }
 
         [Test]
@@ -427,7 +435,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
                     customFixture.TypeSpecDir,
                     It.IsAny<CancellationToken>(),
                     It.IsAny<TimeSpan?>()))
-                .ReturnsAsync(Result.Success("Custom compile succeeded"));
+                .ReturnsAsync(Result<object>.Success("Custom compile succeeded"));
 
             var service = customFixture.CreateService(processExecutor: mockProcessExecutor.Object);
 
@@ -456,8 +464,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 logger: mockLogger.Object,
                 processExecutor: mockProcessExecutor.Object);
 
-            InvalidOperationException caughtException = Assert.ThrowsAsync<InvalidOperationException>(() => service.CompileTypeSpecAsync())!;
-            Assert.That(caughtException.Message, Does.Contain("Failed to install TypeSpec dependencies"));
+            TimeoutException caughtException = Assert.ThrowsAsync<TimeoutException>(() => service.CompileTypeSpecAsync())!;
             Assert.That(caughtException.Message, Does.Contain("Install timeout"));
         }
 
@@ -486,8 +493,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 logger: mockLogger.Object,
                 processExecutor: mockProcessExecutor.Object);
 
-            InvalidOperationException caughtException = Assert.ThrowsAsync<InvalidOperationException>(() => service.CompileTypeSpecAsync())!;
-            Assert.That(caughtException.Message, Does.Contain("Failed to compile TypeSpec"));
+            TimeoutException caughtException = Assert.ThrowsAsync<TimeoutException>(() => service.CompileTypeSpecAsync())!;
             Assert.That(caughtException.Message, Does.Contain("Compile timeout"));
         }
 
@@ -509,11 +515,11 @@ namespace Azure.Tools.GeneratorAgent.Tests
             await service.CompileTypeSpecAsync(CancellationToken.None);
 
             VerifyLogMessage(mockLogger, LogLevel.Information, "Installing TypeSpec dependencies globally");
-            VerifyLogMessage(mockLogger, LogLevel.Information, "TypeSpec dependencies installed globally successfully..");
+            VerifyLogMessage(mockLogger, LogLevel.Information, "Compiling TypeSpec project");
         }
 
         [Test]
-        public void CompileTypeSpecAsync_WithGlobalInstallFailure_ShouldThrowException2()
+        public async Task CompileTypeSpecAsync_WithGlobalInstallFailure_ShouldReturnFailure2()
         {
             using var fixture = new TestEnvironmentFixture();
             
@@ -526,7 +532,10 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 logger: mockLogger.Object,
                 processExecutor: mockProcessExecutor.Object);
 
-            Assert.ThrowsAsync<InvalidOperationException>(() => service.CompileTypeSpecAsync(CancellationToken.None));
+            var result = await service.CompileTypeSpecAsync(CancellationToken.None);
+            
+            Assert.That(result.IsFailure, Is.True);
+            Assert.That(result.Exception, Is.Not.Null);
         }
 
         [Test]
@@ -563,7 +572,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
                     It.IsAny<string>(),
                     It.IsAny<CancellationToken>(),
                     It.IsAny<TimeSpan?>()))
-                .ReturnsAsync(Result.Success("Global install succeeded"));
+                .ReturnsAsync(Result<object>.Success("Global install succeeded"));
         }
 
         private static void SetupFailedGlobalInstall(Mock<ProcessExecutor> mockProcessExecutor, TestEnvironmentFixture fixture)
@@ -574,7 +583,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
                     It.IsAny<string>(),
                     It.IsAny<CancellationToken>(),
                     It.IsAny<TimeSpan?>()))
-                .ReturnsAsync(Result.Failure("Global install failed"));
+                .ReturnsAsync(Result<object>.Failure(new InvalidOperationException("Global install failed")));
         }
 
         private static void SetupSuccessfulTspCompile(Mock<ProcessExecutor> mockProcessExecutor, TestEnvironmentFixture fixture)
@@ -588,7 +597,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
                     fixture.TypeSpecDir,
                     It.IsAny<CancellationToken>(),
                     It.IsAny<TimeSpan?>()))
-                .ReturnsAsync(Result.Success("Compile succeeded"));
+                .ReturnsAsync(Result<object>.Success("Compile succeeded"));
         }
 
         private static void SetupFailedTspCompile(Mock<ProcessExecutor> mockProcessExecutor, TestEnvironmentFixture fixture)
@@ -602,7 +611,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
                     fixture.TypeSpecDir,
                     It.IsAny<CancellationToken>(),
                     It.IsAny<TimeSpan?>()))
-                .ReturnsAsync(Result.Failure("Compile failed"));
+                .ReturnsAsync(Result<object>.Failure(new InvalidOperationException("Compile failed")));
         }
 
         private static void VerifyLogMessage(

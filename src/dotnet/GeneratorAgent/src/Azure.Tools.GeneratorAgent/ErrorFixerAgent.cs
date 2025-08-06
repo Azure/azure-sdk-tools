@@ -96,7 +96,7 @@ namespace Azure.Tools.GeneratorAgent
             });
 
             string?[] results = await Task.WhenAll(uploadTasks);
-            List<string> uploadedFilesIds = results.Where(id => !string.IsNullOrEmpty(id)).Cast<string>().ToList();
+            List<string> uploadedFilesIds = results.Where(id => !string.IsNullOrEmpty(id)).Select(id => id!).ToList();
 
             Logger.LogInformation("Successfully uploaded {Count}/{Total} TypeSpec files as text files", uploadedFilesIds.Count, tspFiles.Length);
             return uploadedFilesIds;
@@ -107,44 +107,29 @@ namespace Azure.Tools.GeneratorAgent
             try
             {
                 string fileName = Path.GetFileNameWithoutExtension(filePath);
+                string txtFileName = $"{fileName}.txt";
 
                 // Read the .tsp file content and upload as .txt since .tsp is not supported
                 string content = await File.ReadAllTextAsync(filePath, ct);
-                string tempTxtPath = Path.GetTempFileName();
-                string txtFileName = $"{fileName}.txt";
+                using var contentStream = new MemoryStream(Encoding.UTF8.GetBytes(content));
+                
+                Response<PersistentAgentFileInfo>? uploaded = await Client.Files.UploadFileAsync(
+                    contentStream,
+                    PersistentAgentFilePurpose.Agents,
+                    txtFileName,
+                    cancellationToken: ct
+                );
 
-                try
+                if (uploaded?.Value?.Id != null)
                 {
-                    // Write content to a temporary .txt file
-                    await File.WriteAllTextAsync(tempTxtPath, content, ct);
-
-                    using FileStream fileStream = new FileStream(tempTxtPath, FileMode.Open, FileAccess.Read);
-                    Response<PersistentAgentFileInfo>? uploaded = await Client.Files.UploadFileAsync(
-                        fileStream,
-                        PersistentAgentFilePurpose.Agents,
-                        txtFileName,
-                        cancellationToken: ct
-                    );
-
-                    if (uploaded?.Value?.Id != null)
-                    {
-                        Logger.LogDebug("Uploaded TypeSpec file as text: {OriginalFile} -> {FileName} -> {FileId}",
-                            Path.GetFileName(filePath), txtFileName, uploaded.Value.Id);
-                        return uploaded.Value.Id;
-                    }
-                    else
-                    {
-                        Logger.LogWarning("Failed to upload file: {FileName}", fileName);
-                        return null;
-                    }
+                    Logger.LogDebug("Uploaded TypeSpec file as text: {OriginalFile} -> {FileName} -> {FileId}",
+                        Path.GetFileName(filePath), txtFileName, uploaded.Value.Id);
+                    return uploaded.Value.Id;
                 }
-                finally
+                else
                 {
-                    // Clean up temporary file
-                    if (File.Exists(tempTxtPath))
-                    {
-                        File.Delete(tempTxtPath);
-                    }
+                    Logger.LogWarning("Failed to upload file: {FileName}", fileName);
+                    return null;
                 }
             }
             catch (Exception ex)
@@ -156,29 +141,29 @@ namespace Azure.Tools.GeneratorAgent
 
         private async Task WaitForIndexingAsync(List<string> uploadedFilesIds, CancellationToken ct)
         {
-            TimeSpan maxWaitTime = TimeSpan.FromSeconds(180);
-            TimeSpan pollingInterval = TimeSpan.FromSeconds(5);
+            TimeSpan maxWaitTime = AppSettings.IndexingMaxWaitTime;
+            TimeSpan pollingInterval = AppSettings.IndexingPollingInterval;
             System.Diagnostics.Stopwatch stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
-            Logger.LogInformation("Waiting for {Count} files to be indexed... (timeout: {Timeout}s)", 
-                uploadedFilesIds.Count, maxWaitTime.TotalSeconds);
+            Logger.LogInformation("Waiting for {Count} files to be indexed... (timeout: {Timeout}s, polling interval: {Interval}s)", 
+                uploadedFilesIds.Count, maxWaitTime.TotalSeconds, pollingInterval.TotalSeconds);
 
-            Dictionary<string, int> statusCounts = new Dictionary<string, int>();
-
+            const int batchSize = 10;
             while (stopwatch.Elapsed < maxWaitTime)
             {
-                List<Task<(string FileId, PersistentAgentFileInfo? File)>> checkTasks = new List<Task<(string FileId, PersistentAgentFileInfo? File)>>();
-
-                foreach (string fileId in uploadedFilesIds)
-                {
-                    checkTasks.Add(CheckFileStatusAsync(fileId, ct));
-                }
-
-                (string FileId, PersistentAgentFileInfo? File)[] results = await Task.WhenAll(checkTasks);
+                var results = new List<(string FileId, PersistentAgentFileInfo? File)>();
                 
-                statusCounts.Clear();
+                for (int i = 0; i < uploadedFilesIds.Count; i += batchSize)
+                {
+                    var batch = uploadedFilesIds.Skip(i).Take(batchSize);
+                    var checkTasks = batch.Select(fileId => CheckFileStatusAsync(fileId, ct));
+                    var batchResults = await Task.WhenAll(checkTasks);
+                    results.AddRange(batchResults);
+                }
+                
                 bool allIndexed = true;
-                List<string> pendingFiles = new List<string>();
+                List<string>? pendingFiles = Logger.IsEnabled(LogLevel.Debug) ? new List<string>() : null;
+                var currentStatusCounts = Logger.IsEnabled(LogLevel.Information) ? new Dictionary<string, int>() : null;
                 
                 foreach ((string FileId, PersistentAgentFileInfo? File) result in results)
                 {
@@ -186,13 +171,19 @@ namespace Azure.Tools.GeneratorAgent
                     {
                         Logger.LogWarning("Could not retrieve status for file: {FileId}", result.FileId);
                         allIndexed = false;
-                        pendingFiles.Add(result.FileId);
-                        statusCounts["Unknown"] = statusCounts.GetValueOrDefault("Unknown") + 1;
+                        pendingFiles?.Add(result.FileId);
+                        if (currentStatusCounts != null)
+                        {
+                            currentStatusCounts["Unknown"] = currentStatusCounts.GetValueOrDefault("Unknown") + 1;
+                        }
                     }
                     else
                     {
                         string status = result.File?.Status.ToString() ?? "Unknown";
-                        statusCounts[status] = statusCounts.GetValueOrDefault(status) + 1;
+                        if (currentStatusCounts != null)
+                        {
+                            currentStatusCounts[status] = currentStatusCounts.GetValueOrDefault(status) + 1;
+                        }
                         
                         Logger.LogDebug("File {Filename} (ID: {FileId}) status: {Status}", 
                             result.File?.Filename, result.FileId, status);
@@ -200,14 +191,20 @@ namespace Azure.Tools.GeneratorAgent
                         if (!status.Equals("Processed", StringComparison.OrdinalIgnoreCase))
                         {
                             allIndexed = false;
-                            pendingFiles.Add($"{result.File?.Filename}({status})");
+                            if (result.File != null)
+                            {
+                                pendingFiles?.Add($"{result.File.Filename}({status})");
+                            }
                         }
                     }
                 }
 
-                string statusSummary = string.Join(", ", statusCounts.Select(kvp => $"{kvp.Key}: {kvp.Value}"));
-                Logger.LogInformation("Indexing status summary: {StatusSummary} | Elapsed: {Elapsed:F1}s", 
-                    statusSummary, stopwatch.Elapsed.TotalSeconds);
+                if (Logger.IsEnabled(LogLevel.Information) && currentStatusCounts != null)
+                {
+                    string statusSummary = string.Join(", ", currentStatusCounts.Select(kvp => $"{kvp.Key}: {kvp.Value}"));
+                    Logger.LogInformation("Indexing status summary: {StatusSummary} | Elapsed: {Elapsed:F1}s", 
+                        statusSummary, stopwatch.Elapsed.TotalSeconds);
+                }
 
                 if (allIndexed)
                 {
@@ -216,7 +213,7 @@ namespace Azure.Tools.GeneratorAgent
                     return;
                 }
 
-                if (pendingFiles.Count <= 3)
+                if (Logger.IsEnabled(LogLevel.Debug) && pendingFiles?.Count <= 3)
                 {
                     Logger.LogDebug("Still waiting for: {PendingFiles}", string.Join(", ", pendingFiles));
                 }
@@ -225,6 +222,15 @@ namespace Azure.Tools.GeneratorAgent
             }
 
             (string FileId, PersistentAgentFileInfo? File)[] finalResults = await Task.WhenAll(uploadedFilesIds.Select(id => CheckFileStatusAsync(id, ct)));
+            
+            bool allProcessed = finalResults.All(r => r.File?.Status.ToString().Equals("Processed", StringComparison.OrdinalIgnoreCase) == true);
+            if (allProcessed)
+            {
+                Logger.LogInformation("All {Count} files indexed successfully in {Duration:F1}s (completed during final check)", 
+                    uploadedFilesIds.Count, stopwatch.Elapsed.TotalSeconds);
+                return;
+            }
+
             Dictionary<string, int> finalSummary = finalResults
                 .Where(r => r.File != null)
                 .GroupBy(r => r.File!.Status.ToString() ?? "Unknown")

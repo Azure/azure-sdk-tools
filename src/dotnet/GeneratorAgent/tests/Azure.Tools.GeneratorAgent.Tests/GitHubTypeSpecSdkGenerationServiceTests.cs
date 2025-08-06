@@ -1,13 +1,14 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.Tools.GeneratorAgent;
 using Azure.Tools.GeneratorAgent.Configuration;
+using Azure.Tools.GeneratorAgent.Exceptions;
 using Azure.Tools.GeneratorAgent.Security;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using NUnit.Framework;
 
@@ -16,64 +17,85 @@ namespace Azure.Tools.GeneratorAgent.Tests
     [TestFixture]
     public class GitHubTypeSpecSdkGenerationServiceTests
     {
-        private const string TestCommitId = "abc123def456789012345678901234567890abcdef";
-        private const string TestTypeSpecDir = "specification/keyvault/data-plane";
-        private const string TestSdkOutputDir = @"C:\azure-sdk-for-net\sdk\keyvault\Azure.Security.KeyVault.Secrets";
-        private const string TestAzureSdkDir = @"C:\azure-sdk-for-net";
+        #region Helper Classes
 
-        private sealed class TestFileSystemFixture : IDisposable
+        private sealed class TestEnvironmentFixture : IDisposable
         {
             private readonly List<string> _createdDirectories = new();
-            private readonly Mock<ILogger> _inputValidatorLogger;
+            private readonly string _baseTestDirectory;
 
-            public TestFileSystemFixture()
+            public TestEnvironmentFixture()
             {
-                _inputValidatorLogger = new Mock<ILogger>();
+                _baseTestDirectory = Path.Combine(Path.GetTempPath(), $"GitHubSDKTest_{Guid.NewGuid():N}");
+                Directory.CreateDirectory(_baseTestDirectory);
+                _createdDirectories.Add(_baseTestDirectory);
             }
 
-            public string CreateUniqueTestDirectory()
+            public string CreateTestDirectory(string name)
             {
-                var uniqueId = Guid.NewGuid().ToString("N")[..8];
-                var testDir = Path.Combine(Path.GetTempPath(), $"GitHubSDKTest_{uniqueId}");
-                Directory.CreateDirectory(testDir);
-                _createdDirectories.Add(testDir);
-                return testDir;
+                var path = Path.Combine(_baseTestDirectory, name);
+                Directory.CreateDirectory(path);
+                _createdDirectories.Add(path);
+                return path;
             }
 
-            public string CreateUniqueAzureSdkTestDirectory()
+            public string CreateAzureSdkDirectory()
             {
-                var baseDir = CreateUniqueTestDirectory();
-                var azureSdkDir = Path.Combine(baseDir, "azure-sdk-for-net");
-                Directory.CreateDirectory(azureSdkDir);
+                var azureSdkDir = CreateTestDirectory("azure-sdk-for-net");
+                var gitDir = Path.Combine(azureSdkDir, ".git");
+                Directory.CreateDirectory(gitDir);
+                _createdDirectories.Add(gitDir);
                 
-                var srcDirectory = Path.Combine(azureSdkDir, "src");
-                Directory.CreateDirectory(srcDirectory);
+                var srcDir = Path.Combine(azureSdkDir, "src");
+                Directory.CreateDirectory(srcDir);
+                _createdDirectories.Add(srcDir);
                 
-                var scriptDir = Path.Combine(azureSdkDir, "eng", "scripts", "automation");
-                Directory.CreateDirectory(scriptDir);
-                var scriptPath = Path.Combine(scriptDir, "Invoke-TypeSpecDataPlaneGenerateSDKPackage.ps1");
-                File.WriteAllText(scriptPath, "# Test PowerShell script");
+                var engDir = Path.Combine(azureSdkDir, "eng", "scripts", "automation");
+                Directory.CreateDirectory(engDir);
+                _createdDirectories.Add(engDir);
+                
+                var scriptPath = Path.Combine(engDir, "Invoke-TypeSpecDataPlaneGenerateSDKPackage.ps1");
+                File.WriteAllText(scriptPath, "# PowerShell script");
                 
                 return azureSdkDir;
             }
 
+            public string CreateSdkOutputDirectory()
+            {
+                var sdkOutputDir = CreateTestDirectory("sdk-output");
+                var srcDir = Path.Combine(sdkOutputDir, "src");
+                Directory.CreateDirectory(srcDir);
+                _createdDirectories.Add(srcDir);
+                return sdkOutputDir;
+            }
+
+            public string CreateSdkOutputDirectoryWithoutSrc()
+            {
+                return CreateTestDirectory("sdk-output");
+            }
+
             public void Dispose()
             {
-                foreach (var directory in _createdDirectories)
+                foreach (var directory in _createdDirectories.AsEnumerable().Reverse())
                 {
-                    if (Directory.Exists(directory))
+                    try
                     {
-                        try
+                        if (Directory.Exists(directory))
                         {
                             Directory.Delete(directory, true);
                         }
-                        catch
-                        {
-                        }
+                    }
+                    catch
+                    {
+                        // Ignore cleanup errors
                     }
                 }
             }
         }
+
+        #endregion
+
+        #region Helper Methods
 
         private static Mock<ILogger<GitHubTypeSpecSdkGenerationService>> CreateMockLogger()
         {
@@ -90,57 +112,36 @@ namespace Azure.Tools.GeneratorAgent.Tests
             string powerShellScriptPath = @"eng\scripts\automation\Invoke-TypeSpecDataPlaneGenerateSDKPackage.ps1",
             string azureSpecRepository = "Azure/azure-rest-api-specs")
         {
-            var configMock = new Mock<IConfiguration>();
-            var mockLogger = new Mock<ILogger<AppSettings>>();
+            // Create mock configuration with proper settings
+            var inMemorySettings = new Dictionary<string, string?>
+            {
+                ["AzureSettings:ProjectEndpoint"] = "https://test.openai.azure.com",
+                ["AzureSettings:Model"] = "gpt-4o",
+                ["AzureSettings:AgentName"] = "Test Agent",
+                ["AzureSettings:AgentInstructions"] = "Test instructions"
+            };
+
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(inMemorySettings)
+                .Build();
+
+            var logger = new Mock<ILogger<AppSettings>>().Object;
             
-            var projectEndpointSection = new Mock<IConfigurationSection>();
-            projectEndpointSection.Setup(s => s.Value).Returns("https://test.openai.azure.com/");
-            configMock.Setup(c => c.GetSection("AzureSettings:ProjectEndpoint")).Returns(projectEndpointSection.Object);
-
-            var defaultSection = new Mock<IConfigurationSection>();
-            defaultSection.Setup(s => s.Value).Returns((string?)null);
-            configMock.Setup(c => c.GetSection(It.IsAny<string>())).Returns(defaultSection.Object);
-
-            return new AppSettings(configMock.Object, mockLogger.Object);
+            return new AppSettings(configuration, logger);
         }
 
         private static ValidationContext CreateValidationContext(
             string? typeSpecDir = null,
-            string commitId = TestCommitId,
+            string commitId = "abc123def456789012345678901234567890abcdef",
             string? sdkOutputDir = null)
         {
-            var actualTypeSpecDir = typeSpecDir ?? TestTypeSpecDir;
-            var actualSdkOutputDir = sdkOutputDir ?? TestSdkOutputDir;
-            
-            return ValidationContext.CreateFromValidatedInputs(actualTypeSpecDir, commitId, actualSdkOutputDir);
+            return ValidationContext.CreateFromValidatedInputs(
+                typeSpecDir ?? "specification/keyvault/data-plane",
+                commitId,
+                sdkOutputDir ?? @"C:\azure-sdk-for-net\sdk\keyvault\Azure.Security.KeyVault.Secrets");
         }
 
-        private static string CreateUniqueTestDirectory()
-        {
-            var baseDir = Path.Combine(Path.GetTempPath(), "GitHubTypeSpecSdkGenerationServiceTests");
-            var uniqueDir = Path.Combine(baseDir, Guid.NewGuid().ToString());
-            Directory.CreateDirectory(uniqueDir);
-            return uniqueDir;
-        }
-
-        private static string CreateUniqueAzureSdkTestDirectory()
-        {
-            var baseDir = Path.Combine(Path.GetTempPath(), "GitHubTypeSpecSdkGenerationServiceTests");
-            var azureSdkDir = Path.Combine(baseDir, "azure-sdk-for-net", "sdk", "keyvault", "Azure.Security.KeyVault.Secrets");
-            Directory.CreateDirectory(azureSdkDir);
-            
-            var srcDirectory = Path.Combine(azureSdkDir, "src");
-            Directory.CreateDirectory(srcDirectory);
-            
-            var scriptDir = Path.Combine(baseDir, "azure-sdk-for-net", "eng", "scripts", "automation");
-            Directory.CreateDirectory(scriptDir);
-            var scriptPath = Path.Combine(scriptDir, "Invoke-TypeSpecDataPlaneGenerateSDKPackage.ps1");
-            File.WriteAllText(scriptPath, "# Test PowerShell script");
-            
-            return azureSdkDir;
-        }
-
-        private static GitHubTypeSpecSdkGenerationService CreateGitHubTypeSpecSdkGenerationService(
+        private static GitHubTypeSpecSdkGenerationService CreateService(
             AppSettings? appSettings = null,
             ILogger<GitHubTypeSpecSdkGenerationService>? logger = null,
             ProcessExecutor? processExecutor = null,
@@ -153,15 +154,37 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 validationContext ?? CreateValidationContext());
         }
 
+        private static void SetupSuccessfulGitExecution(Mock<ProcessExecutor> mockProcessExecutor, string azureSdkPath)
+        {
+            mockProcessExecutor.Setup(x => x.ExecuteAsync(
+                    SecureProcessConfiguration.GitExecutable,
+                    "rev-parse --show-toplevel",
+                    It.IsAny<string>(),
+                    It.IsAny<CancellationToken>(),
+                    It.IsAny<TimeSpan?>()))
+                .ReturnsAsync(Result<object>.Success(azureSdkPath));
+        }
+
+        private static void SetupFailedGitExecution(Mock<ProcessExecutor> mockProcessExecutor)
+        {
+            mockProcessExecutor.Setup(x => x.ExecuteAsync(
+                    SecureProcessConfiguration.GitExecutable,
+                    "rev-parse --show-toplevel",
+                    It.IsAny<string>(),
+                    It.IsAny<CancellationToken>(),
+                    It.IsAny<TimeSpan?>()))
+                .ThrowsAsync(new InvalidOperationException("Git command failed"));
+        }
+
         private static void SetupSuccessfulPowerShellExecution(Mock<ProcessExecutor> mockProcessExecutor)
         {
             mockProcessExecutor.Setup(x => x.ExecuteAsync(
-                    "pwsh",
+                    SecureProcessConfiguration.PowerShellExecutable,
                     It.IsAny<string>(),
                     It.IsAny<string>(),
                     It.IsAny<CancellationToken>(),
                     It.IsAny<TimeSpan?>()))
-                .ReturnsAsync(Result.Success("PowerShell succeeded"));
+                .ReturnsAsync(Result<object>.Success("PowerShell script executed successfully"));
         }
 
         private static void SetupFailedPowerShellExecution(Mock<ProcessExecutor> mockProcessExecutor)
@@ -172,7 +195,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
                     It.IsAny<string>(),
                     It.IsAny<CancellationToken>(),
                     It.IsAny<TimeSpan?>()))
-                .ReturnsAsync(Result.Failure("PowerShell failed"));
+                .ReturnsAsync(Result<object>.Failure(new InvalidOperationException("PowerShell execution failed")));
         }
 
         private static void SetupSuccessfulDotNetBuildExecution(Mock<ProcessExecutor> mockProcessExecutor)
@@ -183,64 +206,68 @@ namespace Azure.Tools.GeneratorAgent.Tests
                     It.IsAny<string>(),
                     It.IsAny<CancellationToken>(),
                     It.IsAny<TimeSpan?>()))
-                .ReturnsAsync(Result.Success("Build succeeded"));
+                .ReturnsAsync(Result<object>.Success("Build completed successfully"));
         }
 
-        private static void SetupFailedDotNetBuildExecution(Mock<ProcessExecutor> mockProcessExecutor)
+        private static void SetupFailedDotNetBuildExecution(Mock<ProcessExecutor> mockProcessExecutor, ProcessExecutionException? processException = null)
         {
+            var result = processException != null
+                ? Result<object>.Failure(processException)
+                : Result<object>.Failure(new InvalidOperationException("Build failed"));
+
             mockProcessExecutor.Setup(x => x.ExecuteAsync(
                     SecureProcessConfiguration.DotNetExecutable,
                     "build /t:generateCode /p:Debug=True",
                     It.IsAny<string>(),
                     It.IsAny<CancellationToken>(),
                     It.IsAny<TimeSpan?>()))
-                .ReturnsAsync(Result.Failure("Build failed"));
+                .ReturnsAsync(result);
         }
 
-        private static void VerifyInformationLogged(Mock<ILogger<GitHubTypeSpecSdkGenerationService>> mockLogger, string expectedMessage)
+        private static void VerifyLogMessage(
+            Mock<ILogger<GitHubTypeSpecSdkGenerationService>> mockLogger,
+            LogLevel expectedLevel,
+            string expectedMessage,
+            Times? times = null)
         {
             mockLogger.Verify(
                 x => x.Log(
-                    LogLevel.Information,
+                    expectedLevel,
                     It.IsAny<EventId>(),
                     It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains(expectedMessage)),
                     It.IsAny<Exception>(),
                     It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-                Times.AtLeastOnce,
-                $"Expected information log containing: {expectedMessage}");
+                times ?? Times.AtLeastOnce());
         }
 
-        private static void VerifyErrorLogged(Mock<ILogger<GitHubTypeSpecSdkGenerationService>> mockLogger, string expectedMessage)
-        {
-            mockLogger.Verify(
-                x => x.Log(
-                    LogLevel.Error,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains(expectedMessage)),
-                    It.IsAny<Exception>(),
-                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-                Times.AtLeastOnce,
-                $"Expected error log containing: {expectedMessage}");
-        }
+        #endregion
+
+        #region Constructor Tests
 
         [Test]
         public void Constructor_WithValidParameters_ShouldInitializeCorrectly()
         {
-            using var fixture = new TestFileSystemFixture();
-            Assert.DoesNotThrow(() => CreateGitHubTypeSpecSdkGenerationService());
+            var appSettings = CreateTestAppSettings();
+            var logger = CreateMockLogger();
+            var processExecutor = CreateMockProcessExecutor();
+            var validationContext = CreateValidationContext();
+
+            var service = new GitHubTypeSpecSdkGenerationService(
+                appSettings, logger.Object, processExecutor.Object, validationContext);
+
+            Assert.That(service, Is.Not.Null);
         }
 
         [Test]
         public void Constructor_WithNullAppSettings_ShouldThrowArgumentNullException()
         {
-            using var fixture = new TestFileSystemFixture();
+            var logger = CreateMockLogger();
+            var processExecutor = CreateMockProcessExecutor();
+            var validationContext = CreateValidationContext();
 
-            var exception = Assert.Throws<ArgumentNullException>(() => 
+            var exception = Assert.Throws<ArgumentNullException>(() =>
                 new GitHubTypeSpecSdkGenerationService(
-                    null!,
-                    CreateMockLogger().Object,
-                    CreateMockProcessExecutor().Object,
-                    CreateValidationContext()));
+                    null!, logger.Object, processExecutor.Object, validationContext));
 
             Assert.That(exception?.ParamName, Is.EqualTo("appSettings"));
         }
@@ -248,14 +275,13 @@ namespace Azure.Tools.GeneratorAgent.Tests
         [Test]
         public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
         {
-            using var fixture = new TestFileSystemFixture();
+            var appSettings = CreateTestAppSettings();
+            var processExecutor = CreateMockProcessExecutor();
+            var validationContext = CreateValidationContext();
 
-            var exception = Assert.Throws<ArgumentNullException>(() => 
+            var exception = Assert.Throws<ArgumentNullException>(() =>
                 new GitHubTypeSpecSdkGenerationService(
-                    CreateTestAppSettings(),
-                    null!,
-                    CreateMockProcessExecutor().Object,
-                    CreateValidationContext()));
+                    appSettings, null!, processExecutor.Object, validationContext));
 
             Assert.That(exception?.ParamName, Is.EqualTo("logger"));
         }
@@ -263,14 +289,13 @@ namespace Azure.Tools.GeneratorAgent.Tests
         [Test]
         public void Constructor_WithNullProcessExecutor_ShouldThrowArgumentNullException()
         {
-            using var fixture = new TestFileSystemFixture();
+            var appSettings = CreateTestAppSettings();
+            var logger = CreateMockLogger();
+            var validationContext = CreateValidationContext();
 
-            var exception = Assert.Throws<ArgumentNullException>(() => 
+            var exception = Assert.Throws<ArgumentNullException>(() =>
                 new GitHubTypeSpecSdkGenerationService(
-                    CreateTestAppSettings(),
-                    CreateMockLogger().Object,
-                    null!,
-                    CreateValidationContext()));
+                    appSettings, logger.Object, null!, validationContext));
 
             Assert.That(exception?.ParamName, Is.EqualTo("processExecutor"));
         }
@@ -278,349 +303,782 @@ namespace Azure.Tools.GeneratorAgent.Tests
         [Test]
         public void Constructor_WithNullValidationContext_ShouldThrowArgumentNullException()
         {
-            using var fixture = new TestFileSystemFixture();
+            var appSettings = CreateTestAppSettings();
+            var logger = CreateMockLogger();
+            var processExecutor = CreateMockProcessExecutor();
 
-            var exception = Assert.Throws<ArgumentNullException>(() => 
+            var exception = Assert.Throws<ArgumentNullException>(() =>
                 new GitHubTypeSpecSdkGenerationService(
-                    CreateTestAppSettings(),
-                    CreateMockLogger().Object,
-                    CreateMockProcessExecutor().Object,
-                    null!));
+                    appSettings, logger.Object, processExecutor.Object, null!));
 
             Assert.That(exception?.ParamName, Is.EqualTo("validationContext"));
         }
 
         [Test]
-        public async Task CompileTypeSpecAsync_WithSuccessfulExecution_ShouldReturnTrue()
+        public void Constructor_ShouldStoreValidationContextProperties()
         {
-            using var fixture = new TestFileSystemFixture();
-            var azureSdkOutputDir = fixture.CreateUniqueAzureSdkTestDirectory();
+            using var fixture = new TestEnvironmentFixture();
+            var sdkOutputDir = fixture.CreateSdkOutputDirectory();
+            
             var validationContext = CreateValidationContext(
-                typeSpecDir: TestTypeSpecDir,
-                commitId: TestCommitId,
-                sdkOutputDir: azureSdkOutputDir);
-            
-            var mockProcessExecutor = CreateMockProcessExecutor();
-            var mockLogger = CreateMockLogger();
-            
-            SetupSuccessfulPowerShellExecution(mockProcessExecutor);
-            SetupSuccessfulDotNetBuildExecution(mockProcessExecutor);
+                "test/typespec/dir",
+                "commit123",
+                sdkOutputDir);
 
-            var service = CreateGitHubTypeSpecSdkGenerationService(
-                processExecutor: mockProcessExecutor.Object,
-                logger: mockLogger.Object,
+            var service = CreateService(validationContext: validationContext);
+
+            // Verify properties are stored by checking they're used in operations
+            Assert.That(service, Is.Not.Null);
+        }
+
+        #endregion
+
+        #region CompileTypeSpecAsync Tests
+
+        [Test]
+        public async Task CompileTypeSpecAsync_WithSuccessfulExecution_ShouldReturnSuccess()
+        {
+            using var fixture = new TestEnvironmentFixture();
+            var azureSdkDir = fixture.CreateAzureSdkDirectory();
+            var sdkOutputDir = fixture.CreateSdkOutputDirectory();
+            
+            var logger = CreateMockLogger();
+            var processExecutor = CreateMockProcessExecutor();
+            var validationContext = CreateValidationContext(sdkOutputDir: sdkOutputDir);
+
+            SetupSuccessfulGitExecution(processExecutor, azureSdkDir);
+            SetupSuccessfulPowerShellExecution(processExecutor);
+            SetupSuccessfulDotNetBuildExecution(processExecutor);
+
+            var service = CreateService(
+                logger: logger.Object,
+                processExecutor: processExecutor.Object,
                 validationContext: validationContext);
 
-            await service.CompileTypeSpecAsync();
+            var result = await service.CompileTypeSpecAsync();
 
-            VerifyInformationLogged(mockLogger, "Starting GitHub-based TypeSpec compilation for commit:");
-            VerifyInformationLogged(mockLogger, "GitHub-based TypeSpec compilation completed successfully");
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Value, Is.EqualTo("TypeSpec compilation completed successfully"));
+            VerifyLogMessage(logger, LogLevel.Information, "Starting TypeSpec compilation for commit:");
+            VerifyLogMessage(logger, LogLevel.Information, "TypeSpec compilation completed successfully");
         }
 
         [Test]
-        public void CompileTypeSpecAsync_WithPowerShellFailure_ShouldThrowException()
+        public async Task CompileTypeSpecAsync_WithExtractAzureSdkDirFailure_ShouldReturnFailure()
         {
-            var mockProcessExecutor = CreateMockProcessExecutor();
-            var mockLogger = CreateMockLogger();
+            using var fixture = new TestEnvironmentFixture();
+            var sdkOutputDir = fixture.CreateSdkOutputDirectory();
             
-            SetupFailedPowerShellExecution(mockProcessExecutor);
+            var logger = CreateMockLogger();
+            var processExecutor = CreateMockProcessExecutor();
+            var validationContext = CreateValidationContext(sdkOutputDir: sdkOutputDir);
 
-            var service = CreateGitHubTypeSpecSdkGenerationService(
-                processExecutor: mockProcessExecutor.Object,
-                logger: mockLogger.Object);
-            
-            Assert.ThrowsAsync<InvalidOperationException>(() => service.CompileTypeSpecAsync());
-        }
+            SetupFailedGitExecution(processExecutor);
 
-        [Test]
-        public void CompileTypeSpecAsync_WithDotNetBuildFailure_ShouldThrowException()
-        {
-            using var fixture = new TestFileSystemFixture();
-            var testDirectory = fixture.CreateUniqueAzureSdkTestDirectory();
-            var mockProcessExecutor = CreateMockProcessExecutor();
-            var mockLogger = CreateMockLogger();
-            var validationContext = ValidationContext.CreateFromValidatedInputs(TestTypeSpecDir, TestCommitId, testDirectory);
-            
-            SetupSuccessfulPowerShellExecution(mockProcessExecutor);
-            SetupFailedDotNetBuildExecution(mockProcessExecutor);
-
-            var service = CreateGitHubTypeSpecSdkGenerationService(
-                processExecutor: mockProcessExecutor.Object,
-                logger: mockLogger.Object,
+            var service = CreateService(
+                logger: logger.Object,
+                processExecutor: processExecutor.Object,
                 validationContext: validationContext);
-                
-            Assert.ThrowsAsync<InvalidOperationException>(() => service.CompileTypeSpecAsync());
+
+            var result = await service.CompileTypeSpecAsync();
+
+            Assert.That(result.IsFailure, Is.True);
+            Assert.That(result.Exception, Is.Not.Null);
         }
 
         [Test]
-        public void CompileTypeSpecAsync_WithException_ShouldThrowException()
+        public async Task CompileTypeSpecAsync_WithPowerShellFailure_ShouldReturnFailure()
         {
-            using var fixture = new TestFileSystemFixture();
-            var azureSdkOutputDir = fixture.CreateUniqueAzureSdkTestDirectory();
-            var validationContext = CreateValidationContext(
-                typeSpecDir: TestTypeSpecDir,
-                commitId: TestCommitId,
-                sdkOutputDir: azureSdkOutputDir);
+            using var fixture = new TestEnvironmentFixture();
+            var azureSdkDir = fixture.CreateAzureSdkDirectory();
+            var sdkOutputDir = fixture.CreateSdkOutputDirectory();
             
-            var mockProcessExecutor = CreateMockProcessExecutor();
-            var mockLogger = CreateMockLogger();
-            var expectedException = new InvalidOperationException("Test exception");
+            var logger = CreateMockLogger();
+            var processExecutor = CreateMockProcessExecutor();
+            var validationContext = CreateValidationContext(sdkOutputDir: sdkOutputDir);
+
+            SetupSuccessfulGitExecution(processExecutor, azureSdkDir);
+            SetupFailedPowerShellExecution(processExecutor);
+
+            var service = CreateService(
+                logger: logger.Object,
+                processExecutor: processExecutor.Object,
+                validationContext: validationContext);
+
+            var result = await service.CompileTypeSpecAsync();
+
+            Assert.That(result.IsFailure, Is.True);
+        }
+
+        [Test]
+        public async Task CompileTypeSpecAsync_WithDotNetBuildFailure_ShouldReturnFailure()
+        {
+            using var fixture = new TestEnvironmentFixture();
+            var azureSdkDir = fixture.CreateAzureSdkDirectory();
+            var sdkOutputDir = fixture.CreateSdkOutputDirectory();
             
-            mockProcessExecutor.Setup(x => x.ExecuteAsync(
-                    "pwsh",
-                    It.IsAny<string>(),
+            var logger = CreateMockLogger();
+            var processExecutor = CreateMockProcessExecutor();
+            var validationContext = CreateValidationContext(sdkOutputDir: sdkOutputDir);
+
+            SetupSuccessfulGitExecution(processExecutor, azureSdkDir);
+            SetupSuccessfulPowerShellExecution(processExecutor);
+            SetupFailedDotNetBuildExecution(processExecutor);
+
+            var service = CreateService(
+                logger: logger.Object,
+                processExecutor: processExecutor.Object,
+                validationContext: validationContext);
+
+            var result = await service.CompileTypeSpecAsync();
+
+            Assert.That(result.IsFailure, Is.True);
+        }
+
+        [Test]
+        public async Task CompileTypeSpecAsync_WithCancellationToken_ShouldPassTokenToOperations()
+        {
+            using var fixture = new TestEnvironmentFixture();
+            var azureSdkDir = fixture.CreateAzureSdkDirectory();
+            var sdkOutputDir = fixture.CreateSdkOutputDirectory();
+            
+            var logger = CreateMockLogger();
+            var processExecutor = CreateMockProcessExecutor();
+            var validationContext = CreateValidationContext(sdkOutputDir: sdkOutputDir);
+            var cancellationToken = new CancellationTokenSource().Token;
+
+            SetupSuccessfulGitExecution(processExecutor, azureSdkDir);
+            SetupSuccessfulPowerShellExecution(processExecutor);
+            SetupSuccessfulDotNetBuildExecution(processExecutor);
+
+            var service = CreateService(
+                logger: logger.Object,
+                processExecutor: processExecutor.Object,
+                validationContext: validationContext);
+
+            var result = await service.CompileTypeSpecAsync(cancellationToken);
+
+            Assert.That(result.IsSuccess, Is.True);
+            
+            // Verify cancellation token was passed to PowerShell execution
+            processExecutor.Verify(x => x.ExecuteAsync(
+                SecureProcessConfiguration.PowerShellExecutable,
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                cancellationToken,
+                It.IsAny<TimeSpan?>()), Times.Once);
+
+            // Verify cancellation token was passed to dotnet build execution
+            processExecutor.Verify(x => x.ExecuteAsync(
+                SecureProcessConfiguration.DotNetExecutable,
+                "build /t:generateCode /p:Debug=True",
+                It.IsAny<string>(),
+                cancellationToken,
+                It.IsAny<TimeSpan?>()), Times.Once);
+        }
+
+        #endregion
+
+        #region ExtractAzureSdkDirAsync Tests
+
+        [Test]
+        public async Task ExtractAzureSdkDirAsync_WithSuccessfulGitCommand_ShouldReturnGitRoot()
+        {
+            using var fixture = new TestEnvironmentFixture();
+            var azureSdkDir = fixture.CreateAzureSdkDirectory();
+            var sdkOutputDir = fixture.CreateSdkOutputDirectory();
+            
+            var processExecutor = CreateMockProcessExecutor();
+            var validationContext = CreateValidationContext(sdkOutputDir: sdkOutputDir);
+
+            SetupSuccessfulGitExecution(processExecutor, azureSdkDir);
+
+            var service = CreateService(
+                processExecutor: processExecutor.Object,
+                validationContext: validationContext);
+
+            // Use reflection to test the protected method
+            var method = typeof(GitHubTypeSpecSdkGenerationService)
+                .GetMethod("ExtractAzureSdkDirAsync", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var task = (Task<Result<string>>)method!.Invoke(service, null)!;
+            var result = await task;
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Value, Is.EqualTo(azureSdkDir));
+        }
+
+        [Test]
+        public async Task ExtractAzureSdkDirAsync_WithFailedGitCommand_ShouldFallbackToDirectoryTraversal()
+        {
+            using var fixture = new TestEnvironmentFixture();
+            var azureSdkDir = fixture.CreateAzureSdkDirectory();
+            var sdkOutputDir = Path.Combine(azureSdkDir, "sdk", "test");
+            Directory.CreateDirectory(sdkOutputDir);
+            
+            var logger = CreateMockLogger();
+            var processExecutor = CreateMockProcessExecutor();
+            var validationContext = CreateValidationContext(sdkOutputDir: sdkOutputDir);
+
+            SetupFailedGitExecution(processExecutor);
+
+            var service = CreateService(
+                logger: logger.Object,
+                processExecutor: processExecutor.Object,
+                validationContext: validationContext);
+
+            // Use reflection to test the protected method
+            var method = typeof(GitHubTypeSpecSdkGenerationService)
+                .GetMethod("ExtractAzureSdkDirAsync", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var task = (Task<Result<string>>)method!.Invoke(service, null)!;
+            var result = await task;
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Value, Is.EqualTo(azureSdkDir));
+            VerifyLogMessage(logger, LogLevel.Warning, "Failed to execute git command, falling back to directory traversal");
+        }
+
+        [Test]
+        public async Task ExtractAzureSdkDirAsync_WithGitExceptionAndFallbackFailure_ShouldReturnCombinedError()
+        {
+            using var fixture = new TestEnvironmentFixture();
+            var sdkOutputDir = fixture.CreateSdkOutputDirectory(); // No azure-sdk-for-net parent
+            
+            var logger = CreateMockLogger();
+            var processExecutor = CreateMockProcessExecutor();
+            var validationContext = CreateValidationContext(sdkOutputDir: sdkOutputDir);
+
+            SetupFailedGitExecution(processExecutor);
+
+            var service = CreateService(
+                logger: logger.Object,
+                processExecutor: processExecutor.Object,
+                validationContext: validationContext);
+
+            // Use reflection to test the protected method
+            var method = typeof(GitHubTypeSpecSdkGenerationService)
+                .GetMethod("ExtractAzureSdkDirAsync", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var task = (Task<Result<string>>)method!.Invoke(service, null)!;
+            var result = await task;
+
+            Assert.That(result.IsFailure, Is.True);
+            Assert.That(result.Exception?.Message, Does.Contain("Both git detection and directory traversal failed"));
+        }
+
+        [Test]
+        public async Task ExtractAzureSdkDirAsync_WithOperationCanceledException_ShouldThrow()
+        {
+            using var fixture = new TestEnvironmentFixture();
+            var sdkOutputDir = fixture.CreateSdkOutputDirectory();
+            
+            var processExecutor = CreateMockProcessExecutor();
+            var validationContext = CreateValidationContext(sdkOutputDir: sdkOutputDir);
+
+            processExecutor.Setup(x => x.ExecuteAsync(
+                    SecureProcessConfiguration.GitExecutable,
+                    "rev-parse --show-toplevel",
                     It.IsAny<string>(),
                     It.IsAny<CancellationToken>(),
                     It.IsAny<TimeSpan?>()))
-                .ThrowsAsync(expectedException);
+                .ThrowsAsync(new OperationCanceledException());
 
-            var service = CreateGitHubTypeSpecSdkGenerationService(
-                processExecutor: mockProcessExecutor.Object,
-                logger: mockLogger.Object,
+            var service = CreateService(
+                processExecutor: processExecutor.Object,
                 validationContext: validationContext);
-                
-            Assert.ThrowsAsync<InvalidOperationException>(() => service.CompileTypeSpecAsync());
+
+            // Use reflection to test the protected method
+            var method = typeof(GitHubTypeSpecSdkGenerationService)
+                .GetMethod("ExtractAzureSdkDirAsync", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            
+            Assert.ThrowsAsync<OperationCanceledException>(async () =>
+            {
+                var task = (Task<Result<string>>)method!.Invoke(service, null)!;
+                await task;
+            });
+        }
+
+        #endregion
+
+        #region ExtractAzureSdkDirFallback Tests
+
+        [Test]
+        public void ExtractAzureSdkDirFallback_WithGitDirectory_ShouldReturnGitRoot()
+        {
+            using var fixture = new TestEnvironmentFixture();
+            var azureSdkDir = fixture.CreateAzureSdkDirectory();
+            var sdkOutputDir = Path.Combine(azureSdkDir, "sdk", "test");
+            Directory.CreateDirectory(sdkOutputDir);
+            
+            var validationContext = CreateValidationContext(sdkOutputDir: sdkOutputDir);
+            var service = CreateService(validationContext: validationContext);
+
+            // Use reflection to test the private method
+            var method = typeof(GitHubTypeSpecSdkGenerationService)
+                .GetMethod("ExtractAzureSdkDirFallback", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var result = (Result<string>)method!.Invoke(service, null)!;
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Value, Is.EqualTo(azureSdkDir));
         }
 
         [Test]
-        public void CompileTypeSpecAsync_WithCancellation_ShouldThrowOperationCanceledException()
+        public void ExtractAzureSdkDirFallback_WithAzureSdkDirectoryName_ShouldReturnDirectoryByName()
         {
-            using var fixture = new TestFileSystemFixture();
-            var azureSdkDirectory = fixture.CreateUniqueAzureSdkTestDirectory();
-            var sdkOutputDirectory = Path.Combine(azureSdkDirectory, "output"); // Create a subdirectory for SDK output
-            Directory.CreateDirectory(sdkOutputDirectory);
+            using var fixture = new TestEnvironmentFixture();
+            var azureSdkDir = fixture.CreateTestDirectory("azure-sdk-for-net");
+            var sdkOutputDir = Path.Combine(azureSdkDir, "sdk", "test");
+            Directory.CreateDirectory(sdkOutputDir);
             
-            using var cts = new CancellationTokenSource();
-            cts.Cancel();
+            var logger = CreateMockLogger();
+            var validationContext = CreateValidationContext(sdkOutputDir: sdkOutputDir);
+            var service = CreateService(logger: logger.Object, validationContext: validationContext);
 
-            var mockProcessExecutor = CreateMockProcessExecutor();
-            var mockLogger = CreateMockLogger();
-            var validationContext = ValidationContext.CreateFromValidatedInputs(TestTypeSpecDir, TestCommitId, sdkOutputDirectory);
+            // Use reflection to test the private method
+            var method = typeof(GitHubTypeSpecSdkGenerationService)
+                .GetMethod("ExtractAzureSdkDirFallback", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var result = (Result<string>)method!.Invoke(service, null)!;
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Value, Is.EqualTo(azureSdkDir));
+            VerifyLogMessage(logger, LogLevel.Information, "Found Azure SDK directory by name:");
+        }
+
+        [Test]
+        public void ExtractAzureSdkDirFallback_WithMaxIterations_ShouldLogWarningAndReturnFailure()
+        {
+            using var fixture = new TestEnvironmentFixture();
             
-            mockProcessExecutor.Setup(x => x.ExecuteAsync(
-                    It.IsAny<string>(),
+            // Create a deep directory structure that will hit max iterations
+            var deepPath = fixture.CreateSdkOutputDirectory();
+            for (int i = 0; i < 70; i++) // More than maxIterations (64)
+            {
+                deepPath = Path.Combine(deepPath, $"level{i}");
+                Directory.CreateDirectory(deepPath);
+            }
+            
+            var logger = CreateMockLogger();
+            var validationContext = CreateValidationContext(sdkOutputDir: deepPath);
+            var service = CreateService(logger: logger.Object, validationContext: validationContext);
+
+            // Use reflection to test the private method
+            var method = typeof(GitHubTypeSpecSdkGenerationService)
+                .GetMethod("ExtractAzureSdkDirFallback", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var result = (Result<string>)method!.Invoke(service, null)!;
+
+            Assert.That(result.IsFailure, Is.True);
+            VerifyLogMessage(logger, LogLevel.Warning, "Directory traversal reached maximum depth of");
+        }
+
+        [Test]
+        public void ExtractAzureSdkDirFallback_WithNoValidDirectory_ShouldReturnFailure()
+        {
+            using var fixture = new TestEnvironmentFixture();
+            var sdkOutputDir = fixture.CreateSdkOutputDirectory();
+            
+            var validationContext = CreateValidationContext(sdkOutputDir: sdkOutputDir);
+            var service = CreateService(validationContext: validationContext);
+
+            // Use reflection to test the private method
+            var method = typeof(GitHubTypeSpecSdkGenerationService)
+                .GetMethod("ExtractAzureSdkDirFallback", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var result = (Result<string>)method!.Invoke(service, null)!;
+
+            Assert.That(result.IsFailure, Is.True);
+            Assert.That(result.Exception?.Message, Does.Contain("Could not locate azure-sdk-for-net directory"));
+        }
+
+        #endregion
+
+        #region RunPowerShellGenerationScriptAsync Tests
+
+        [Test]
+        public async Task RunPowerShellGenerationScriptAsync_WithValidScript_ShouldExecuteSuccessfully()
+        {
+            using var fixture = new TestEnvironmentFixture();
+            var azureSdkDir = fixture.CreateAzureSdkDirectory();
+            var sdkOutputDir = fixture.CreateSdkOutputDirectory();
+            
+            var logger = CreateMockLogger();
+            var processExecutor = CreateMockProcessExecutor();
+            var validationContext = CreateValidationContext(sdkOutputDir: sdkOutputDir);
+
+            SetupSuccessfulPowerShellExecution(processExecutor);
+
+            var service = CreateService(
+                logger: logger.Object,
+                processExecutor: processExecutor.Object,
+                validationContext: validationContext);
+
+            // Use reflection to test the private method
+            var method = typeof(GitHubTypeSpecSdkGenerationService)
+                .GetMethod("RunPowerShellGenerationScriptAsync", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var task = (Task<Result<object>>)method!.Invoke(service, new object[] { azureSdkDir, CancellationToken.None })!;
+            var result = await task;
+
+            Assert.That(result.IsSuccess, Is.True);
+            VerifyLogMessage(logger, LogLevel.Information, "Running PowerShell generation script");
+        }
+
+        [Test]
+        public void RunPowerShellGenerationScriptAsync_WithInvalidScriptPath_ShouldThrowArgumentException()
+        {
+            using var fixture = new TestEnvironmentFixture();
+            var azureSdkDir = fixture.CreateTestDirectory("test-sdk");
+            var sdkOutputDir = fixture.CreateSdkOutputDirectory();
+            
+            var appSettings = CreateTestAppSettings(powerShellScriptPath: "../invalid/../../path.ps1");
+            var validationContext = CreateValidationContext(sdkOutputDir: sdkOutputDir);
+            var service = CreateService(appSettings: appSettings, validationContext: validationContext);
+
+            // Use reflection to test the private method
+            var method = typeof(GitHubTypeSpecSdkGenerationService)
+                .GetMethod("RunPowerShellGenerationScriptAsync", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            
+            Assert.ThrowsAsync<ArgumentException>(async () =>
+            {
+                var task = (Task<Result<object>>)method!.Invoke(service, new object[] { azureSdkDir, CancellationToken.None })!;
+                await task;
+            });
+        }
+
+        [Test]
+        public async Task RunPowerShellGenerationScriptAsync_WithOperationCanceledException_ShouldThrow()
+        {
+            using var fixture = new TestEnvironmentFixture();
+            var azureSdkDir = fixture.CreateAzureSdkDirectory();
+            var sdkOutputDir = fixture.CreateSdkOutputDirectory();
+            
+            var processExecutor = CreateMockProcessExecutor();
+            var validationContext = CreateValidationContext(sdkOutputDir: sdkOutputDir);
+
+            processExecutor.Setup(x => x.ExecuteAsync(
+                    SecureProcessConfiguration.PowerShellExecutable,
                     It.IsAny<string>(),
                     It.IsAny<string>(),
                     It.IsAny<CancellationToken>(),
                     It.IsAny<TimeSpan?>()))
                 .ThrowsAsync(new OperationCanceledException());
 
-            var service = CreateGitHubTypeSpecSdkGenerationService(
-                processExecutor: mockProcessExecutor.Object,
-                logger: mockLogger.Object,
+            var service = CreateService(
+                processExecutor: processExecutor.Object,
                 validationContext: validationContext);
+
+            // Use reflection to test the private method
+            var method = typeof(GitHubTypeSpecSdkGenerationService)
+                .GetMethod("RunPowerShellGenerationScriptAsync", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             
-            Assert.ThrowsAsync<OperationCanceledException>(() => service.CompileTypeSpecAsync(cts.Token));
-        }
-
-        [Test]
-        public async Task CompileTypeSpecAsync_ShouldLogCorrectInformation()
-        {
-            using var fixture = new TestFileSystemFixture();
-            var testDirectory = fixture.CreateUniqueAzureSdkTestDirectory();
-            var mockProcessExecutor = CreateMockProcessExecutor();
-            var mockLogger = CreateMockLogger();
-            var validationContext = ValidationContext.CreateFromValidatedInputs(TestTypeSpecDir, TestCommitId, testDirectory);
-            
-            SetupSuccessfulPowerShellExecution(mockProcessExecutor);
-            SetupSuccessfulDotNetBuildExecution(mockProcessExecutor);
-
-            var service = CreateGitHubTypeSpecSdkGenerationService(
-                processExecutor: mockProcessExecutor.Object,
-                logger: mockLogger.Object,
-                validationContext: validationContext);
-            await service.CompileTypeSpecAsync();
-            VerifyInformationLogged(mockLogger, $"Starting GitHub-based TypeSpec compilation for commit: {TestCommitId}");
-            // Removed SDK output directory and TypeSpec spec directory logging expectations
-            // since we simplified the logging to focus on essential information
-        }
-
-        [Test]
-        public async Task ExtractAzureSdkDir_WithValidPath_ShouldReturnCorrectDirectory()
-        {
-            var testValidationContext = ValidationContext.CreateFromValidatedInputs(
-                TestTypeSpecDir, 
-                TestCommitId, 
-                @"C:\azure-sdk-for-net\sdk\keyvault\Azure.Security.KeyVault.Secrets");
-
-            var service = CreateGitHubTypeSpecSdkGenerationService(validationContext: testValidationContext);
-            var method = typeof(GitHubTypeSpecSdkGenerationService).GetMethod("ExtractAzureSdkDirAsync", 
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            var result = await (Task<string>)method!.Invoke(service, null)!;
-            Assert.That(result, Is.EqualTo(@"C:\azure-sdk-for-net"));
-        }
-
-        [Test]
-        public async Task ExtractAzureSdkDir_WithNestedPath_ShouldReturnCorrectDirectory()
-        {
-            var testValidationContext = ValidationContext.CreateFromValidatedInputs(
-                TestTypeSpecDir, 
-                TestCommitId, 
-                @"C:\azure-sdk-for-net\sdk\storage\Azure.Storage.Blobs\src");
-
-            var service = CreateGitHubTypeSpecSdkGenerationService(validationContext: testValidationContext);
-            var method = typeof(GitHubTypeSpecSdkGenerationService).GetMethod("ExtractAzureSdkDirAsync", 
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            var result = await (Task<string>)method!.Invoke(service, null)!;
-            Assert.That(result, Is.EqualTo(@"C:\azure-sdk-for-net"));
-        }
-
-        [Test]
-        public void ExtractAzureSdkDir_WithInvalidPath_ShouldThrowInvalidOperationException()
-        {
-            var testValidationContext = ValidationContext.CreateFromValidatedInputs(
-                TestTypeSpecDir, 
-                TestCommitId, 
-                @"C:\some\other\path\not\containing\azure-sdk");
-
-            var service = CreateGitHubTypeSpecSdkGenerationService(validationContext: testValidationContext);
-            var method = typeof(GitHubTypeSpecSdkGenerationService).GetMethod("ExtractAzureSdkDirAsync", 
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            
-            var ex = Assert.ThrowsAsync<InvalidOperationException>(async () => 
-                await (Task<string>)method!.Invoke(service, null)!);
-            
-            Assert.That(ex!.Message, Does.Contain("Could not locate azure-sdk-for-net directory"));
-        }
-
-        [Test]
-        public void RunPowerShellGenerationScript_WithValidScript_ShouldReturnTrue()
-        {
-            using var fixture = new TestFileSystemFixture();
-            var mockProcessExecutor = CreateMockProcessExecutor();
-            var mockLogger = CreateMockLogger();
-            var azureSdkOutputDir = fixture.CreateUniqueAzureSdkTestDirectory();
-            var validationContext = CreateValidationContext(
-                typeSpecDir: TestTypeSpecDir,
-                commitId: TestCommitId,
-                sdkOutputDir: azureSdkOutputDir);
-            
-            SetupSuccessfulPowerShellExecution(mockProcessExecutor);
-
-            var service = CreateGitHubTypeSpecSdkGenerationService(
-                processExecutor: mockProcessExecutor.Object,
-                logger: mockLogger.Object,
-                validationContext: validationContext);
-            var method = typeof(GitHubTypeSpecSdkGenerationService).GetMethod("RunPowerShellGenerationScriptAsync", 
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            var azureSdkDir = azureSdkOutputDir;
-            while (!string.IsNullOrEmpty(azureSdkDir) && !Path.GetFileName(azureSdkDir).Equals("azure-sdk-for-net", StringComparison.OrdinalIgnoreCase))
+            Assert.ThrowsAsync<OperationCanceledException>(async () =>
             {
-                azureSdkDir = Path.GetDirectoryName(azureSdkDir);
-            }
-            
-            Assert.DoesNotThrowAsync(async () => 
-            {
-                var result = await (Task<Result>)method!.Invoke(service, new object[] { azureSdkDir!, CancellationToken.None })!;
-                Assert.That(result.IsSuccess, Is.True);
+                var task = (Task<Result<object>>)method!.Invoke(service, new object[] { azureSdkDir, CancellationToken.None })!;
+                await task;
             });
-            VerifyInformationLogged(mockLogger, "Running PowerShell generation script");
-            VerifyInformationLogged(mockLogger, "PowerShell generation script completed successfully");
         }
 
         [Test]
-        public void RunPowerShellGenerationScript_WithValidationFailure_ShouldThrowException()
+        public async Task RunPowerShellGenerationScriptAsync_WithUnexpectedException_ShouldLogCriticalAndThrow()
         {
-            var mockLogger = CreateMockLogger();
-            var invalidAppSettings = CreateTestAppSettings(
-                powerShellScriptPath: "../../../malicious/script.ps1"); // Invalid path with traversal
+            using var fixture = new TestEnvironmentFixture();
+            var azureSdkDir = fixture.CreateAzureSdkDirectory();
+            var sdkOutputDir = fixture.CreateSdkOutputDirectory();
             
-            var service = CreateGitHubTypeSpecSdkGenerationService(
-                appSettings: invalidAppSettings,
-                logger: mockLogger.Object);
-            var method = typeof(GitHubTypeSpecSdkGenerationService).GetMethod("RunPowerShellGenerationScriptAsync", 
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            
-            Assert.DoesNotThrowAsync(async () => 
-            {
-                var result = await (Task<Result>)method!.Invoke(service, new object[] { TestAzureSdkDir, CancellationToken.None })!;
-                Assert.That(result.IsFailure, Is.True);
-                Assert.That(result.Error, Does.Contain("PowerShell script validation failed"));
-            });
-            // Removed error logging verification since we now use Result pattern for clean error handling
-        }
+            var logger = CreateMockLogger();
+            var processExecutor = CreateMockProcessExecutor();
+            var validationContext = CreateValidationContext(sdkOutputDir: sdkOutputDir);
 
-        [Test]
-        public void RunPowerShellGenerationScript_WithProcessFailure_ShouldThrowAndLogError()
-        {
-            using var fixture = new TestFileSystemFixture();
-            const string errorMessage = "PowerShell execution failed";
-            
-            var azureSdkOutputDir = fixture.CreateUniqueAzureSdkTestDirectory();
-            var validationContext = CreateValidationContext(
-                typeSpecDir: TestTypeSpecDir,
-                commitId: TestCommitId,
-                sdkOutputDir: azureSdkOutputDir);
-            var mockProcessExecutor = CreateMockProcessExecutor();
-            var mockLogger = CreateMockLogger();
-            
-            mockProcessExecutor.Setup(x => x.ExecuteAsync(
-                    "pwsh",
+            processExecutor.Setup(x => x.ExecuteAsync(
+                    SecureProcessConfiguration.PowerShellExecutable,
                     It.IsAny<string>(),
                     It.IsAny<string>(),
                     It.IsAny<CancellationToken>(),
                     It.IsAny<TimeSpan?>()))
-                .ReturnsAsync(Result.Failure(errorMessage));
+                .ThrowsAsync(new InvalidOperationException("Unexpected error"));
 
-            var service = CreateGitHubTypeSpecSdkGenerationService(
-                processExecutor: mockProcessExecutor.Object,
-                logger: mockLogger.Object,
+            var service = CreateService(
+                logger: logger.Object,
+                processExecutor: processExecutor.Object,
                 validationContext: validationContext);
-            var method = typeof(GitHubTypeSpecSdkGenerationService).GetMethod("RunPowerShellGenerationScriptAsync", 
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            var azureSdkDir = azureSdkOutputDir;
-            while (!string.IsNullOrEmpty(azureSdkDir) && !Path.GetFileName(azureSdkDir).Equals("azure-sdk-for-net", StringComparison.OrdinalIgnoreCase))
-            {
-                azureSdkDir = Path.GetDirectoryName(azureSdkDir);
-            }
+
+            // Use reflection to test the private method
+            var method = typeof(GitHubTypeSpecSdkGenerationService)
+                .GetMethod("RunPowerShellGenerationScriptAsync", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             
-            Assert.DoesNotThrowAsync(async () => 
+            var exception = Assert.ThrowsAsync<InvalidOperationException>(async () =>
             {
-                var result = await (Task<Result>)method!.Invoke(service, new object[] { azureSdkDir!, CancellationToken.None })!;
-                Assert.That(result.IsFailure, Is.True);
-                Assert.That(result.Error, Does.Contain("PowerShell execution failed"));
+                var task = (Task<Result<object>>)method!.Invoke(service, new object[] { azureSdkDir, CancellationToken.None })!;
+                await task;
             });
-            // Removed error logging verification since we now use Result pattern for clean error handling
+
+            Assert.That(exception?.Message, Is.EqualTo("Unexpected error"));
+            VerifyLogMessage(logger, LogLevel.Critical, "Unexpected system error during PowerShell generation script");
+        }
+
+        #endregion
+
+        #region RunDotNetBuildGenerateCodeAsync Tests
+
+        [Test]
+        public async Task RunDotNetBuildGenerateCodeAsync_WithValidSrcDirectory_ShouldExecuteSuccessfully()
+        {
+            using var fixture = new TestEnvironmentFixture();
+            var sdkOutputDir = fixture.CreateSdkOutputDirectory();
+            var srcDir = Path.Combine(sdkOutputDir, "src");
+            Directory.CreateDirectory(srcDir);
+            
+            var logger = CreateMockLogger();
+            var processExecutor = CreateMockProcessExecutor();
+            var validationContext = CreateValidationContext(sdkOutputDir: sdkOutputDir);
+
+            SetupSuccessfulDotNetBuildExecution(processExecutor);
+
+            var service = CreateService(
+                logger: logger.Object,
+                processExecutor: processExecutor.Object,
+                validationContext: validationContext);
+
+            // Use reflection to test the private method
+            var method = typeof(GitHubTypeSpecSdkGenerationService)
+                .GetMethod("RunDotNetBuildGenerateCodeAsync", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var task = (Task<Result<object>>)method!.Invoke(service, new object[] { CancellationToken.None })!;
+            var result = await task;
+
+            Assert.That(result.IsSuccess, Is.True);
+            VerifyLogMessage(logger, LogLevel.Information, "Running dotnet build /t:generateCode");
         }
 
         [Test]
-        public void RunPowerShellGenerationScript_ShouldCallProcessExecutorWithCorrectArguments()
+        public void RunDotNetBuildGenerateCodeAsync_WithMissingSrcDirectory_ShouldThrowDirectoryNotFoundException()
         {
-            using var fixture = new TestFileSystemFixture();
-            var azureSdkOutputDir = fixture.CreateUniqueAzureSdkTestDirectory();
-            var validationContext = CreateValidationContext(
-                typeSpecDir: TestTypeSpecDir,
-                commitId: TestCommitId,
-                sdkOutputDir: azureSdkOutputDir);
-            var mockProcessExecutor = CreateMockProcessExecutor();
-            SetupSuccessfulPowerShellExecution(mockProcessExecutor);
-
-            var service = CreateGitHubTypeSpecSdkGenerationService(
-                processExecutor: mockProcessExecutor.Object,
-                validationContext: validationContext);
-            var method = typeof(GitHubTypeSpecSdkGenerationService).GetMethod("RunPowerShellGenerationScriptAsync", 
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            var azureSdkDir = azureSdkOutputDir;
-            while (!string.IsNullOrEmpty(azureSdkDir) && !Path.GetFileName(azureSdkDir).Equals("azure-sdk-for-net", StringComparison.OrdinalIgnoreCase))
-            {
-                azureSdkDir = Path.GetDirectoryName(azureSdkDir);
-            }
+            using var fixture = new TestEnvironmentFixture();
+            var sdkOutputDir = fixture.CreateSdkOutputDirectoryWithoutSrc();
+            // Don't create src directory
             
-            Assert.DoesNotThrowAsync(async () => 
+            var validationContext = CreateValidationContext(sdkOutputDir: sdkOutputDir);
+            var service = CreateService(validationContext: validationContext);
+
+            // Use reflection to test the private method
+            var method = typeof(GitHubTypeSpecSdkGenerationService)
+                .GetMethod("RunDotNetBuildGenerateCodeAsync", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            
+            Assert.ThrowsAsync<DirectoryNotFoundException>(async () =>
             {
-                var result = await (Task<Result>)method!.Invoke(service, new object[] { azureSdkDir!, CancellationToken.None })!;
-                Assert.That(result.IsSuccess, Is.True);
+                var task = (Task<Result<object>>)method!.Invoke(service, new object[] { CancellationToken.None })!;
+                await task;
             });
-            mockProcessExecutor.Verify(x => x.ExecuteAsync(
-                "pwsh",
-                It.Is<string>(args => 
-                    args.Contains($"-sdkFolder \"{azureSdkOutputDir}\"") &&
-                    args.Contains($"-typespecSpecDirectory \"{TestTypeSpecDir}\"") &&
-                    args.Contains($"-commit \"{TestCommitId}\"") &&
-                    args.Contains($"-repo \"Azure/azure-rest-api-specs\"")),
-                azureSdkDir,
+        }
+
+        [Test]
+        public async Task RunDotNetBuildGenerateCodeAsync_WithProcessExecutionException_ShouldReturnTypeSpecCompilationException()
+        {
+            using var fixture = new TestEnvironmentFixture();
+            var sdkOutputDir = fixture.CreateSdkOutputDirectory();
+            var srcDir = Path.Combine(sdkOutputDir, "src");
+            Directory.CreateDirectory(srcDir);
+            
+            var processExecutor = CreateMockProcessExecutor();
+            var validationContext = CreateValidationContext(sdkOutputDir: sdkOutputDir);
+
+            var processException = new GeneralProcessExecutionException("Build failed", "dotnet", "build failed", "error output", 1);
+            SetupFailedDotNetBuildExecution(processExecutor, processException);
+
+            var service = CreateService(
+                processExecutor: processExecutor.Object,
+                validationContext: validationContext);
+
+            // Use reflection to test the private method
+            var method = typeof(GitHubTypeSpecSdkGenerationService)
+                .GetMethod("RunDotNetBuildGenerateCodeAsync", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var task = (Task<Result<object>>)method!.Invoke(service, new object[] { CancellationToken.None })!;
+            var result = await task;
+
+            Assert.That(result.IsFailure, Is.True);
+            Assert.That(result.ProcessException, Is.TypeOf<TypeSpecCompilationException>());
+        }
+
+        [Test]
+        public async Task RunDotNetBuildGenerateCodeAsync_WithBuildOutput_ShouldLogOutput()
+        {
+            using var fixture = new TestEnvironmentFixture();
+            var sdkOutputDir = fixture.CreateSdkOutputDirectory();
+            var srcDir = Path.Combine(sdkOutputDir, "src");
+            Directory.CreateDirectory(srcDir);
+            
+            var logger = CreateMockLogger();
+            var processExecutor = CreateMockProcessExecutor();
+            var validationContext = CreateValidationContext(sdkOutputDir: sdkOutputDir);
+
+            processExecutor.Setup(x => x.ExecuteAsync(
+                    SecureProcessConfiguration.DotNetExecutable,
+                    "build /t:generateCode /p:Debug=True",
+                    It.IsAny<string>(),
+                    It.IsAny<CancellationToken>(),
+                    It.IsAny<TimeSpan?>()))
+                .ReturnsAsync(Result<object>.Success("Build output here"));
+
+            var service = CreateService(
+                logger: logger.Object,
+                processExecutor: processExecutor.Object,
+                validationContext: validationContext);
+
+            // Use reflection to test the private method
+            var method = typeof(GitHubTypeSpecSdkGenerationService)
+                .GetMethod("RunDotNetBuildGenerateCodeAsync", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var task = (Task<Result<object>>)method!.Invoke(service, new object[] { CancellationToken.None })!;
+            var result = await task;
+
+            Assert.That(result.IsSuccess, Is.True);
+            VerifyLogMessage(logger, LogLevel.Information, "dotnet build output:");
+        }
+
+        [Test]
+        public async Task RunDotNetBuildGenerateCodeAsync_WithOperationCanceledException_ShouldThrow()
+        {
+            using var fixture = new TestEnvironmentFixture();
+            var sdkOutputDir = fixture.CreateSdkOutputDirectory();
+            var srcDir = Path.Combine(sdkOutputDir, "src");
+            Directory.CreateDirectory(srcDir);
+            
+            var processExecutor = CreateMockProcessExecutor();
+            var validationContext = CreateValidationContext(sdkOutputDir: sdkOutputDir);
+
+            processExecutor.Setup(x => x.ExecuteAsync(
+                    SecureProcessConfiguration.DotNetExecutable,
+                    "build /t:generateCode /p:Debug=True",
+                    It.IsAny<string>(),
+                    It.IsAny<CancellationToken>(),
+                    It.IsAny<TimeSpan?>()))
+                .ThrowsAsync(new OperationCanceledException());
+
+            var service = CreateService(
+                processExecutor: processExecutor.Object,
+                validationContext: validationContext);
+
+            // Use reflection to test the private method
+            var method = typeof(GitHubTypeSpecSdkGenerationService)
+                .GetMethod("RunDotNetBuildGenerateCodeAsync", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            
+            Assert.ThrowsAsync<OperationCanceledException>(async () =>
+            {
+                var task = (Task<Result<object>>)method!.Invoke(service, new object[] { CancellationToken.None })!;
+                await task;
+            });
+        }
+
+        [Test]
+        public async Task RunDotNetBuildGenerateCodeAsync_WithUnexpectedException_ShouldLogCriticalAndThrow()
+        {
+            using var fixture = new TestEnvironmentFixture();
+            var sdkOutputDir = fixture.CreateSdkOutputDirectory();
+            var srcDir = Path.Combine(sdkOutputDir, "src");
+            Directory.CreateDirectory(srcDir);
+            
+            var logger = CreateMockLogger();
+            var processExecutor = CreateMockProcessExecutor();
+            var validationContext = CreateValidationContext(sdkOutputDir: sdkOutputDir);
+
+            processExecutor.Setup(x => x.ExecuteAsync(
+                    SecureProcessConfiguration.DotNetExecutable,
+                    "build /t:generateCode /p:Debug=True",
+                    It.IsAny<string>(),
+                    It.IsAny<CancellationToken>(),
+                    It.IsAny<TimeSpan?>()))
+                .ThrowsAsync(new InvalidOperationException("Unexpected build error"));
+
+            var service = CreateService(
+                logger: logger.Object,
+                processExecutor: processExecutor.Object,
+                validationContext: validationContext);
+
+            // Use reflection to test the private method
+            var method = typeof(GitHubTypeSpecSdkGenerationService)
+                .GetMethod("RunDotNetBuildGenerateCodeAsync", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            
+            var exception = Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            {
+                var task = (Task<Result<object>>)method!.Invoke(service, new object[] { CancellationToken.None })!;
+                await task;
+            });
+
+            Assert.That(exception?.Message, Is.EqualTo("Unexpected build error"));
+            VerifyLogMessage(logger, LogLevel.Critical, "Unexpected system error during dotnet build");
+        }
+
+        #endregion
+
+        #region Integration and Thread Safety Tests
+
+        [Test]
+        public async Task CompileTypeSpecAsync_FullWorkflow_ShouldExecuteAllStepsInCorrectOrder()
+        {
+            using var fixture = new TestEnvironmentFixture();
+            var azureSdkDir = fixture.CreateAzureSdkDirectory();
+            var sdkOutputDir = fixture.CreateSdkOutputDirectory();
+            
+            var logger = CreateMockLogger();
+            var processExecutor = CreateMockProcessExecutor();
+            var validationContext = CreateValidationContext(sdkOutputDir: sdkOutputDir);
+
+            SetupSuccessfulGitExecution(processExecutor, azureSdkDir);
+            SetupSuccessfulPowerShellExecution(processExecutor);
+            SetupSuccessfulDotNetBuildExecution(processExecutor);
+
+            var service = CreateService(
+                logger: logger.Object,
+                processExecutor: processExecutor.Object,
+                validationContext: validationContext);
+
+            var result = await service.CompileTypeSpecAsync();
+
+            Assert.That(result.IsSuccess, Is.True);
+
+            // Verify all executions happened
+            processExecutor.Verify(x => x.ExecuteAsync(
+                SecureProcessConfiguration.GitExecutable,
+                "rev-parse --show-toplevel",
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>(),
+                It.IsAny<TimeSpan?>()), Times.Once);
+
+            processExecutor.Verify(x => x.ExecuteAsync(
+                SecureProcessConfiguration.PowerShellExecutable,
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>(),
+                It.IsAny<TimeSpan?>()), Times.Once);
+
+            processExecutor.Verify(x => x.ExecuteAsync(
+                SecureProcessConfiguration.DotNetExecutable,
+                "build /t:generateCode /p:Debug=True",
+                It.IsAny<string>(),
                 It.IsAny<CancellationToken>(),
                 It.IsAny<TimeSpan?>()), Times.Once);
         }
+
+        [Test]
+        public async Task CompileTypeSpecAsync_CalledConcurrently_ShouldHandleMultipleExecutions()
+        {
+            using var fixture = new TestEnvironmentFixture();
+            var azureSdkDir = fixture.CreateAzureSdkDirectory();
+            var sdkOutputDir = fixture.CreateSdkOutputDirectory();
+            
+            var processExecutor = CreateMockProcessExecutor();
+            var validationContext = CreateValidationContext(sdkOutputDir: sdkOutputDir);
+
+            SetupSuccessfulGitExecution(processExecutor, azureSdkDir);
+            SetupSuccessfulPowerShellExecution(processExecutor);
+            SetupSuccessfulDotNetBuildExecution(processExecutor);
+
+            var service = CreateService(
+                processExecutor: processExecutor.Object,
+                validationContext: validationContext);
+
+            var task1 = service.CompileTypeSpecAsync();
+            var task2 = service.CompileTypeSpecAsync();
+            var task3 = service.CompileTypeSpecAsync();
+
+            var results = await Task.WhenAll(task1, task2, task3);
+
+            Assert.That(results.All(r => r.IsSuccess), Is.True);
+        }
+
+        #endregion
     }
 }

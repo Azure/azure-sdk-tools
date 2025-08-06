@@ -1,4 +1,5 @@
 ﻿using System.CommandLine;
+using System.Linq;
 using Azure;
 using Azure.AI.Agents.Persistent;
 using Azure.Core;
@@ -6,6 +7,7 @@ using Azure.Identity;
 using Azure.Tools.GeneratorAgent.Authentication;
 using Azure.Tools.GeneratorAgent.Configuration;
 using Azure.Tools.GeneratorAgent.Security;
+using Azure.Tools.GeneratorAgent.Exceptions;
 using Azure.Tools.ErrorAnalyzers;
 using Microsoft.Extensions.Logging;
 
@@ -86,10 +88,13 @@ namespace Azure.Tools.GeneratorAgent
                 // Step 1: Create AppSettings
                 ILogger<AppSettings> appSettingsLogger = LoggerFactory.CreateLogger<AppSettings>();
                 AppSettings appSettings = ToolConfig.CreateAppSettings(appSettingsLogger);
-
-
-                // Step 2: Create SDK Generation Service and ErrorFixer Agent
                 ProcessExecutor processExecutor = new ProcessExecutor(LoggerFactory.CreateLogger<ProcessExecutor>());
+
+                // Step 2: Create and Initialize ErrorFixer Agent
+                ErrorFixerAgent agent = CreateErrorFixerAgent(appSettings);
+                string threadId = await agent.InitializeAgentEnvironmentAsync(typespecdir!, cancellationToken).ConfigureAwait(false);
+
+                // Step 3: Compile Typespec 
                 ISdkGenerationService sdkGenerationService = SdkGenerationServiceFactory.CreateSdkGenerationService(
                     typespecdir,
                     commitId,
@@ -97,37 +102,23 @@ namespace Azure.Tools.GeneratorAgent
                     appSettings,
                     LoggerFactory,
                     processExecutor);
+                Result<object> compileResult = await sdkGenerationService.CompileTypeSpecAsync(cancellationToken).ConfigureAwait(false);
 
-                ErrorFixerAgent agent = CreateErrorFixerAgent(appSettings);
-
-                // Step 3: Initialize Agent Environment with TypeSpec files
-                string threadId = await agent.InitializeAgentEnvironmentAsync(typespecdir!, cancellationToken).ConfigureAwait(false);
-
-                // Step 4: Compile Typespec 
-                await sdkGenerationService.CompileTypeSpecAsync(cancellationToken).ConfigureAwait(false);
-
-                // Step 5: Compile Generated SDK
-                BuildErrorAnalyzer errorAnalyzer = new BuildErrorAnalyzer(LoggerFactory.CreateLogger<BuildErrorAnalyzer>());
+                // Step 4: Compile Generated SDK
                 SdkBuildService sdkBuildService = new SdkBuildService(
                     LoggerFactory.CreateLogger<SdkBuildService>(), 
                     processExecutor, 
-                    errorAnalyzer, 
                     sdkdir);
-                SdkBuildResult buildResult = await sdkBuildService.BuildSdkAsync(cancellationToken).ConfigureAwait(false);
+                Result<object> buildResult = await sdkBuildService.BuildSdkAsync(cancellationToken).ConfigureAwait(false);
 
-                // Step 6: Parse build errors and get fixes
-                List<RuleError> errors = errorAnalyzer.ParseBuildOutput(buildResult.Output);                
-                if (errors.Count > 0)
-                {
-                    IEnumerable<Fix> fixes = errorAnalyzer.GetFixes(errors);
-                }
-
-                // Step 7: Ask Agent to Fix Errors
-                await using (agent)
-                {
-                    await agent.FixCodeAsync(cancellationToken).ConfigureAwait(false);
-                }
+                // Step 5: Analyze all errors and get fixes
+                BuildErrorAnalyzer analyzer = new BuildErrorAnalyzer(LoggerFactory.CreateLogger<BuildErrorAnalyzer>());
+                List<Fix> allFixes = analyzer.AnalyzeAndGetFixes(compileResult, buildResult);
                 
+                // Step 6:                     
+                // TODO: Send fixes to ErrorFixerAgent
+                // await agent.ProcessFixesAsync(allFixes, threadId, cancellationToken);
+
                 return ExitCodeSuccess;
             }
             catch (OperationCanceledException)

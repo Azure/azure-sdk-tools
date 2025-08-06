@@ -2,8 +2,9 @@ using Microsoft.Extensions.Logging;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Text;
+using System.Security;
 using Azure.Tools.GeneratorAgent.Security;
+using Azure.Tools.GeneratorAgent.Exceptions;
 
 namespace Azure.Tools.GeneratorAgent
 {
@@ -17,7 +18,7 @@ namespace Azure.Tools.GeneratorAgent
             Logger = logger;
         }
 
-        public virtual async Task<Result> ExecuteAsync(
+        public virtual async Task<Result<object>> ExecuteAsync(
             string command,
             string arguments,
             string? workingDir,
@@ -28,7 +29,7 @@ namespace Azure.Tools.GeneratorAgent
 
             if (!SecureProcessConfiguration.IsCommandAllowed(command))
             {
-                return Result.Failure($"Command '{command}' is not in the allowed commands list");
+                throw new UnauthorizedAccessException($"Command '{command}' is not in the allowed commands list");
             }
 
             if (!string.IsNullOrEmpty(workingDir))
@@ -36,7 +37,7 @@ namespace Azure.Tools.GeneratorAgent
                 Result<string> workingDirValidation = InputValidator.ValidateWorkingDirectory(workingDir);
                 if (workingDirValidation.IsFailure)
                 {
-                    return Result.Failure($"Working directory '{workingDir}' failed security validation: {workingDirValidation.Error}");
+                    throw new SecurityException($"Working directory validation failed: {workingDirValidation.Exception?.Message}");
                 }
             }
 
@@ -62,30 +63,37 @@ namespace Azure.Tools.GeneratorAgent
 
                 LogExecutionResult(success, process.ExitCode, command, error);
 
-                return success 
-                    ? Result.Success(output.TrimEnd()) 
-                    : Result.Failure($"Process failed with exit code {process.ExitCode}: {error.TrimEnd()}", output.TrimEnd());
+                if (!success)
+                {
+                    return Result<object>.Failure(
+                        new GeneralProcessExecutionException($"Process failed with exit code {process.ExitCode}", 
+                            command, 
+                            output, 
+                            error,
+                            process.ExitCode));
+                }
+
+                return Result<object>.Success(output.TrimEnd());
             }
             catch (Win32Exception ex) when (ex.NativeErrorCode == 2)
             {
-                return LogAndReturnError("Command not found", command, ex);
+                Logger.LogError(ex, "Command not found: {Command}", command);
+                return Result<object>.Failure(ex);
             }
             catch (Win32Exception ex)
             {
-                return LogAndReturnError("Win32 error starting process", command, ex);
+                Logger.LogError(ex, "Win32 error starting process: {Command}", command);
+                return Result<object>.Failure(ex);
             }
             catch (InvalidOperationException ex)
             {
-                return LogAndReturnError("Invalid operation starting process", command, ex);
+                Logger.LogError(ex, "Invalid operation starting process: {Command}", command);
+                return Result<object>.Failure(ex);
             }
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                Logger.LogInformation("Command execution was cancelled: {Command}", command);
-                return Result.Failure("Operation was cancelled");
-            }
-            catch (Exception ex)
-            {
-                return LogAndReturnError("Unexpected error executing command", command, ex);
+                Logger.LogError(ex, "Unexpected error executing command: {Command}", command);
+                return Result<object>.Failure(ex);
             }
         }
 
@@ -128,7 +136,7 @@ namespace Azure.Tools.GeneratorAgent
             }
         }
 
-        private async Task<Result> HandleTimeoutAsync(
+        private async Task<Result<object>> HandleTimeoutAsync(
             Process process,
             Task<string> outputTask,
             Task<string> errorTask,
@@ -165,29 +173,26 @@ namespace Azure.Tools.GeneratorAgent
                 Logger.LogWarning(ex, "Failed to capture partial output from timed-out process");
             }
 
-            string timeoutError = $"Process timed out after {timeout.TotalMilliseconds}ms";
-            string combinedError = string.IsNullOrEmpty(partialError) ? timeoutError : $"{timeoutError}. Partial error output: {partialError}";
+            string timeoutMessage = $"Process timed out after {timeout.TotalMilliseconds}ms";
+            if (!string.IsNullOrEmpty(partialError))
+            {
+                timeoutMessage += $". Partial error output: {partialError}";
+            }
 
-            return Result.Failure(combinedError, partialOutput);
+            return Result<object>.Failure(new TimeoutException(timeoutMessage));
         }
 
         private void LogExecutionResult(bool success, int exitCode, string command, string error)
         {
             if (success)
             {
-                Logger.LogDebug("Command succeeded. Command: {Command}", command);
+                Logger.LogDebug("Command {Command} succeeded", command);
             }
             else
             {
-                Logger.LogError("Command failed with exit code {ExitCode}. Command: {Command}. Error: {Error}",
-                    exitCode, command, error);
+                Logger.LogError("Command {Command} failed with exit code {ExitCode}",
+                    command, exitCode);
             }
-        }
-
-        private Result LogAndReturnError(string errorMessage, string command, Exception ex)
-        {
-            Logger.LogError(ex, "{ErrorMessage}: {Command}", errorMessage, command);
-            return Result.Failure(ex.Message);
         }
     }
 }

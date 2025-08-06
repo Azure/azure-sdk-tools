@@ -14,18 +14,23 @@ namespace Azure.Tools.GeneratorAgent.Tests
     [TestFixture]
     public class ErrorFixerAgentTests
     {
-        private static AppSettings CreateTestAppSettings(
+        private AppSettings CreateTestAppSettings(
             string model = "test-model",
-            string agentName = "test-agent",
+            string agentName = "test-agent", 
             string agentInstructions = "test instructions",
             string projectEndpoint = "https://test.example.com")
         {
             var configMock = new Mock<IConfiguration>();
+            var mockLogger = new Mock<ILogger<AppSettings>>();
             
-            // Make test data unique to avoid conflicts between tests
-            var uniqueId = Guid.NewGuid().ToString("N")[..8]; // Use first 8 chars of GUID for uniqueness
-            var uniqueModel = $"{model}-{uniqueId}";
-            var uniqueAgentName = $"{agentName}-{uniqueId}";
+            var testId = Guid.NewGuid().ToString("N")[..8];
+            var uniqueModel = $"{model}-{testId}";
+            var uniqueAgentName = $"{agentName}-{testId}";
+            
+
+            var defaultSection = new Mock<IConfigurationSection>();
+            defaultSection.Setup(s => s.Value).Returns((string?)null);
+            configMock.Setup(c => c.GetSection(It.IsAny<string>())).Returns(defaultSection.Object);
             
             var modelSection = new Mock<IConfigurationSection>();
             modelSection.Setup(s => s.Value).Returns(uniqueModel);
@@ -43,11 +48,9 @@ namespace Azure.Tools.GeneratorAgent.Tests
             endpointSection.Setup(s => s.Value).Returns(projectEndpoint);
             configMock.Setup(c => c.GetSection("AzureSettings:ProjectEndpoint")).Returns(endpointSection.Object);
 
-            var mockAppSettingsLogger = Mock.Of<ILogger<AppSettings>>();
-            return new AppSettings(configMock.Object, mockAppSettingsLogger);
+            return new AppSettings(configMock.Object, mockLogger.Object);
         }
 
-        // For tests that need ErrorFixerAgent, we'll create a derived class that overrides CreateAgent
         private class TestableErrorFixerAgent : ErrorFixerAgent
         {
             private readonly PersistentAgent MockAgent;
@@ -65,23 +68,20 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 return MockAgent;
             }
 
-            // Make some methods testable
             public async Task<string> TestInitializeAgentEnvironmentAsync(string typeSpecDir, CancellationToken ct = default)
                 => await InitializeAgentEnvironmentAsync(typeSpecDir, ct);
 
             public async ValueTask TestDisposeAsync() => await DisposeAsync();
         }
 
-        private static Mock<PersistentAgent> CreateAgentMock(string agentId = "test-agent-id")
+        private Mock<PersistentAgent> CreateAgentMock(string agentId = "test-agent-id")
         {
-            var agentMock = new Mock<PersistentAgent>();
-            // Note: Cannot setup Id and Name properties because they are non-overridable
-            // The mock will return default values for these properties
+            var agentMock = new Mock<PersistentAgent>(MockBehavior.Loose);
             agentMock.SetupAllProperties();
             return agentMock;
         }
 
-        private static ErrorFixerAgent CreateErrorFixerAgent(
+        private ErrorFixerAgent CreateErrorFixerAgent(
             AppSettings? appSettings = null,
             ILogger<ErrorFixerAgent>? logger = null,
             PersistentAgentsClient? client = null)
@@ -93,7 +93,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 mockAgent);
         }
 
-        private static TestableErrorFixerAgent CreateTestableErrorFixerAgent(
+        private TestableErrorFixerAgent CreateTestableErrorFixerAgent(
             AppSettings? appSettings = null,
             ILogger<ErrorFixerAgent>? logger = null,
             Mock<PersistentAgentsClient>? mockClient = null)
@@ -105,8 +105,6 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 mockAgent,
                 mockClient);
         }
-
-        #region Constructor Tests
 
         [Test]
         public void Constructor_WithValidParameters_ShouldNotThrow()
@@ -153,10 +151,6 @@ namespace Azure.Tools.GeneratorAgent.Tests
             Assert.Throws<ArgumentNullException>(() => new ErrorFixerAgent(appSettings, logger, null!));
         }
 
-        #endregion
-
-        #region FixCodeAsync Tests
-
         [Test]
         public void FixCodeAsync_ShouldNotThrow()
         {
@@ -182,10 +176,6 @@ namespace Azure.Tools.GeneratorAgent.Tests
             // Assert - No exception should be thrown
             Assert.Pass("FixCodeAsync completed successfully");
         }
-
-        #endregion
-
-        #region InitializeAgentEnvironmentAsync Tests
 
         [Test]
         public void InitializeAgentEnvironmentAsync_WithNonExistentDirectory_ShouldThrowDirectoryNotFoundException()
@@ -223,10 +213,6 @@ namespace Azure.Tools.GeneratorAgent.Tests
             }
         }
 
-        #endregion
-
-        #region CreateAgent Tests
-
         [Test]
         public void CreateAgent_WithValidSettings_ShouldReturnAgent()
         {
@@ -236,8 +222,6 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var mockAdministration = new Mock<PersistentAgentsAdministrationClient>();
             var mockAgent = CreateAgentMock().Object;
             
-            // Setup the Administration property - though it can't be mocked directly,
-            // we can test the behavior by verifying the agent creation logic
             var agent = new TestableErrorFixerAgent(appSettings, NullLogger<ErrorFixerAgent>.Instance, mockAgent, mockClient);
 
             // Act
@@ -247,10 +231,6 @@ namespace Azure.Tools.GeneratorAgent.Tests
             Assert.That(createdAgent, Is.Not.Null);
             Assert.That(createdAgent, Is.EqualTo(mockAgent));
         }
-
-        #endregion
-
-        #region DisposeAsync Tests
 
         [Test]
         public async Task DisposeAsync_WhenAgentNotCreated_ShouldNotThrow()
@@ -283,20 +263,13 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var mockLogger = new Mock<ILogger<ErrorFixerAgent>>();
             var agent = CreateTestableErrorFixerAgent(logger: mockLogger.Object);
             
-            // Force agent creation by accessing the CreateAgent method
             _ = agent.GetType().GetMethod("CreateAgent", BindingFlags.NonPublic | BindingFlags.Instance)?.Invoke(agent, null);
 
             // Act
             await agent.TestDisposeAsync();
 
-            // Assert - Verify the agent was accessed (which means cleanup was attempted)
-            // Since we can't easily mock the complex Azure SDK methods, we just verify no exceptions
             Assert.Pass("Dispose completed without exceptions");
         }
-
-        #endregion
-
-        #region Lazy Agent Property Tests
 
         [Test]
         public void Agent_Property_WhenAccessedMultipleTimes_ShouldReturnSameInstance()
@@ -304,7 +277,6 @@ namespace Azure.Tools.GeneratorAgent.Tests
             // Arrange
             var agent = CreateTestableErrorFixerAgent();
             
-            // Use reflection to access the Agent property multiple times
             var agentProperty = agent.GetType().BaseType?.GetField("Agent", BindingFlags.NonPublic | BindingFlags.Instance);
             var lazyAgent = agentProperty?.GetValue(agent) as Lazy<PersistentAgent>;
 
@@ -317,10 +289,6 @@ namespace Azure.Tools.GeneratorAgent.Tests
             Assert.That(secondAccess, Is.Not.Null);
             Assert.That(firstAccess, Is.EqualTo(secondAccess), "Lazy<T> should return the same instance on multiple accesses");
         }
-
-        #endregion
-
-        #region Error Handling Tests
 
         [Test]
         public void Constructor_InitializesAllFields()
@@ -345,10 +313,6 @@ namespace Azure.Tools.GeneratorAgent.Tests
             });
         }
 
-        #endregion
-
-        #region Configuration Tests
-
         [Test]
         public void Constructor_WithDifferentAppSettings_ShouldUseCorrectValues()
         {
@@ -368,7 +332,6 @@ namespace Azure.Tools.GeneratorAgent.Tests
             // Assert
             Assert.That(agent, Is.Not.Null);
             
-            // Verify the settings are accessible through the private field
             var appSettingsField = agent.GetType().BaseType?.GetField("AppSettings", BindingFlags.NonPublic | BindingFlags.Instance);
             var retrievedSettings = appSettingsField?.GetValue(agent) as AppSettings;
             
@@ -380,14 +343,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
             Assert.That(retrievedSettings.AgentInstructions, Is.EqualTo("custom instructions"));
         }
 
-        #endregion
-
-        #region Helper Methods
-
-        /// <summary>
-        /// Safely cleans up a directory with retry logic to handle file locks and ensure test isolation
-        /// </summary>
-        private static void CleanupDirectory(string directoryPath)
+        private void CleanupDirectory(string directoryPath)
         {
             if (!Directory.Exists(directoryPath))
                 return;
@@ -412,6 +368,5 @@ namespace Azure.Tools.GeneratorAgent.Tests
             }
         }
 
-        #endregion
     }
 }

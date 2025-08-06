@@ -1,7 +1,9 @@
 using Microsoft.Extensions.Logging;
 using Azure.Tools.GeneratorAgent.Configuration;
 using Azure.Tools.GeneratorAgent.Security;
+using Azure.Tools.GeneratorAgent.Exceptions;
 using System.Runtime.InteropServices;
+using System.Security;
 
 namespace Azure.Tools.GeneratorAgent
 {
@@ -32,33 +34,32 @@ namespace Azure.Tools.GeneratorAgent
             SdkDir = validationContext.ValidatedSdkDir;
         }
 
-        public async Task CompileTypeSpecAsync(CancellationToken cancellationToken = default)
+        public async Task<Result<object>> CompileTypeSpecAsync(CancellationToken cancellationToken = default)
         {
-            Logger.LogInformation("\n Starting TypeSpec compilation for project: {ProjectPath} \n", TypespecDir);
+            Logger.LogInformation("Starting TypeSpec compilation for project: {ProjectPath}", TypespecDir);
 
-            // Step 1: Install dependencies
-            Result installResult = await InstallTypeSpecDependencies(cancellationToken);
+            Result<object> installResult = await InstallTypeSpecDependencies(cancellationToken);
             if (installResult.IsFailure)
             {
-                throw new InvalidOperationException($"Failed to install TypeSpec dependencies: {installResult.Error}");
+                return installResult;
             }
 
-            // Step 2: Compile TypeSpec
-            Result compileResult = await CompileTypeSpec(cancellationToken);
+            Result<object> compileResult = await CompileTypeSpec(cancellationToken);
             if (compileResult.IsFailure)
             {
-                // TODO: Send compileResult.Error to AI for analysis
-                throw new InvalidOperationException($"Failed to compile TypeSpec: {compileResult.Error}");
+                return compileResult;
             }
 
-            Logger.LogInformation("\n TypeSpec compilation completed successfully \n");
+            Logger.LogInformation("TypeSpec compilation completed successfully");
+            return Result<object>.Success("TypeSpec compilation completed successfully");
         }
         
-        private async Task<Result> InstallTypeSpecDependencies(CancellationToken cancellationToken)
+        private async Task<Result<object>> InstallTypeSpecDependencies(CancellationToken cancellationToken)
         {
-            Logger.LogInformation("Installing TypeSpec dependencies globally....\n");
+            Logger.LogInformation("Installing TypeSpec dependencies globally");
 
             string arguments;
+            
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 arguments = $"-Command \"npm install --global {AppSettings.TypespecEmitterPackage}\"";
@@ -71,40 +72,31 @@ namespace Azure.Tools.GeneratorAgent
             Result<string> argValidation = InputValidator.ValidateProcessArguments(arguments);
             if (argValidation.IsFailure)
             {
-                return Result.Failure($"Process arguments validation failed: {argValidation.Error}");
+                throw new ArgumentException($"Process arguments validation failed: {argValidation.Exception?.Message}");
             }
 
             string workingDirectory = Path.GetTempPath();
 
             try
             {
-                Result result = await ProcessExecutor.ExecuteAsync(
+                Result<object> result = await ProcessExecutor.ExecuteAsync(
                     SecureProcessConfiguration.NpmExecutable,
-                    argValidation.Value,
+                    argValidation.Value!,
                     workingDirectory,
                     cancellationToken).ConfigureAwait(false);
 
-                if (result.IsFailure)
-                {
-                    return Result.Failure(result.Error);
-                }
-
-                Logger.LogInformation("TypeSpec dependencies installed globally successfully..\n");
-                return Result.Success();
+                return result;
             }
-            catch (OperationCanceledException)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
+                Logger.LogCritical(ex, "Unexpected system error during TypeSpec dependency installation");
                 throw;
-            }
-            catch (Exception ex)
-            {
-                return Result.Failure(ex.Message, ex);
             }
         }
 
-        private async Task<Result> CompileTypeSpec(CancellationToken cancellationToken)
+        private async Task<Result<object>> CompileTypeSpec(CancellationToken cancellationToken)
         {
-            Logger.LogInformation("Compiling TypeSpec project...\n");
+            Logger.LogInformation("Compiling TypeSpec project");
 
             string tspOutputPath = Path.Combine(SdkDir);
 
@@ -121,32 +113,34 @@ namespace Azure.Tools.GeneratorAgent
             Result<string> argValidation = InputValidator.ValidateProcessArguments(arguments);
             if (argValidation.IsFailure)
             {
-                return Result.Failure($"Process arguments validation failed: {argValidation.Error}");
+                throw new ArgumentException($"Process arguments validation failed: {argValidation.Exception?.Message}");
             }
 
             try
             {
-                Result result = await ProcessExecutor.ExecuteAsync(
+                Result<object> result = await ProcessExecutor.ExecuteAsync(
                     SecureProcessConfiguration.NpxExecutable,
-                    argValidation.Value,
+                    argValidation.Value!,
                     TypespecDir,
                     cancellationToken).ConfigureAwait(false);
 
-                if (result.IsFailure)
+                if (result.IsFailure && result.ProcessException != null)
                 {
-                    return Result.Failure(result.Error);
+                    return Result<object>.Failure(
+                        new TypeSpecCompilationException(
+                            result.ProcessException.Command,
+                            result.ProcessException.Output,
+                            result.ProcessException.Error,
+                            result.ProcessException.ExitCode ?? -1,
+                            result.ProcessException));
                 }
 
-                Logger.LogInformation("TypeSpec compilation completed \n");
-                return Result.Success();
+                return result;
             }
-            catch (OperationCanceledException)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
+                Logger.LogCritical(ex, "Unexpected system error during TypeSpec compilation");
                 throw;
-            }
-            catch (Exception ex)
-            {
-                return Result.Failure(ex.Message, ex);
             }
         }
     }

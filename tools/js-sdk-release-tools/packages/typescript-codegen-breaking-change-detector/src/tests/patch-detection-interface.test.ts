@@ -191,14 +191,6 @@ describe('detect interface', () => {
       expect(diffPairs.length).toBe(0);
     });
 
-    test('detect property refactoring to nested object', async () => {
-      const baselineApiView = `export interface Target { prop1: string; prop2: string; }`;
-      const currentApiView = `export interface Nested { prop1: string; prop2: string; } export interface Target { props: Nested; }`;
-      const astContext = await createTestAstContext(baselineApiView, currentApiView);
-      const diffPairs = patchInterface('Target', astContext, AssignDirection.CurrentToBaseline);
-      expect(diffPairs.length).toBe(0);
-    });
-
     test('change classic property name', async () => {
       const baselineApiView = `export interface TestInterface { prop: string; }`;
       const currentApiView = `export interface TestInterface { prop2: string; }`;
@@ -471,6 +463,138 @@ describe('detect interface', () => {
       expect(diffPairs[0].location).toBe(DiffLocation.Signature_ParameterList);
       expect(diffPairs[0].reasons).toBe(DiffReasons.CountChanged);
       expect(diffPairs[0].target?.name).toBe('prop');
+    });
+  });
+
+  describe('detect property refactoring to nested object', () => {
+    test('detect basic property refactoring with exact match', async () => {
+      // Test basic refactoring with various property types and modifiers
+      const baselineApiView = `export interface Target { 
+        prop1: string; 
+        prop2?: number; 
+        readonly prop3: boolean;
+        prop4: string | number;
+        prop5: string;
+      }`;
+      const currentApiView = `export interface Nested { 
+        prop1: string; 
+        prop2?: number; 
+        readonly prop3: boolean;
+        prop4: string | number;
+        prop5: string;
+        prop6: boolean; // additional property in nested object
+      } export interface Target { props: Nested; }`;
+      const astContext = await createTestAstContext(baselineApiView, currentApiView);
+      const diffPairs = patchInterface('Target', astContext, AssignDirection.CurrentToBaseline);
+      expect(diffPairs.length).toBe(0);
+    });
+
+    test('detect property refactoring with type aliases', async () => {
+      const baselineApiView = `export interface Target { prop1: string; prop2: number; }`;
+      const currentApiView = `
+        export type StringType = string;
+        export type NumberType = number;
+        export interface Nested { prop1: StringType; prop2: NumberType; } 
+        export interface Target { props: Nested; }`;
+      const astContext = await createTestAstContext(baselineApiView, currentApiView);
+      const diffPairs = patchInterface('Target', astContext, AssignDirection.CurrentToBaseline);
+      expect(diffPairs.length).toBe(0);
+    });
+
+    test('detect property refactoring with partial match - should not filter', async () => {
+      const baselineApiView = `export interface Target { prop1: string; prop2: string; prop3: number; }`;
+      const currentApiView = `export interface Nested { prop1: string; prop2: string; } export interface Target { props: Nested; }`;
+      const astContext = await createTestAstContext(baselineApiView, currentApiView);
+      const diffPairs = patchInterface('Target', astContext, AssignDirection.CurrentToBaseline);
+      // Should have 4 diffs: 3 removed (prop1, prop2, prop3) + 1 added (props)
+      expect(diffPairs.length).toBe(4);
+      expect(diffPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
+      expect(diffPairs[0].location).toBe(DiffLocation.Property);
+      expect(diffPairs[0].reasons).toBe(DiffReasons.Removed);
+      expect(diffPairs[0].target?.name).toBe('prop1');
+      expect(diffPairs[1].assignDirection).toBe(AssignDirection.CurrentToBaseline);
+      expect(diffPairs[1].location).toBe(DiffLocation.Property);
+      expect(diffPairs[1].reasons).toBe(DiffReasons.Removed);
+      expect(diffPairs[1].target?.name).toBe('prop2');
+      expect(diffPairs[2].assignDirection).toBe(AssignDirection.CurrentToBaseline);
+      expect(diffPairs[2].location).toBe(DiffLocation.Property);
+      expect(diffPairs[2].reasons).toBe(DiffReasons.Removed);
+      expect(diffPairs[2].target?.name).toBe('prop3');
+      expect(diffPairs[3].assignDirection).toBe(AssignDirection.CurrentToBaseline);
+      expect(diffPairs[3].location).toBe(DiffLocation.Property);
+      expect(diffPairs[3].reasons).toBe(DiffReasons.Added);
+      expect(diffPairs[3].source?.name).toBe('props');
+    });
+
+    test('detect property refactoring with different types - should not filter', async () => {
+      const baselineApiView = `export interface Target { prop1: string; prop2: number; }`;
+      const currentApiView = `export interface Nested { prop1: string; prop2: string; } export interface Target { props: Nested; }`;
+      const astContext = await createTestAstContext(baselineApiView, currentApiView);
+      const diffPairs = patchInterface('Target', astContext, AssignDirection.CurrentToBaseline);
+      // Should have 3 diffs: 2 removed + 1 added (types don't match exactly)
+      expect(diffPairs.length).toBe(3);
+      expect(diffPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
+      expect(diffPairs[0].location).toBe(DiffLocation.Property);
+      expect(diffPairs[0].reasons).toBe(DiffReasons.Removed);
+      expect(diffPairs[0].target?.name).toBe('prop1');
+      expect(diffPairs[1].assignDirection).toBe(AssignDirection.CurrentToBaseline);
+      expect(diffPairs[1].location).toBe(DiffLocation.Property);
+      expect(diffPairs[1].reasons).toBe(DiffReasons.Removed);
+      expect(diffPairs[1].target?.name).toBe('prop2');
+      expect(diffPairs[2].assignDirection).toBe(AssignDirection.CurrentToBaseline);
+      expect(diffPairs[2].location).toBe(DiffLocation.Property);
+      expect(diffPairs[2].reasons).toBe(DiffReasons.Added);
+      expect(diffPairs[2].source?.name).toBe('props');
+    });
+
+    test('detect complex property refactoring with multiple nested levels', async () => {
+      const baselineApiView = `export interface Target { 
+        name: string; 
+        age: number; 
+        street: string; 
+        city: string; 
+        zipCode: string; 
+      }`;
+      const currentApiView = `
+        export interface Address { street: string; city: string; zipCode: string; }
+        export interface Person { name: string; age: number; }
+        export interface Target { 
+          person: Person;
+          address: Address;
+        }`;
+      const astContext = await createTestAstContext(baselineApiView, currentApiView);
+      const diffPairs = patchInterface('Target', astContext, AssignDirection.CurrentToBaseline);
+      // Current implementation doesn't support multiple partial refactorings
+      // Each added property only contains some of the removed properties
+      expect(diffPairs.length).toBe(7); // 5 removed + 2 added
+      expect(diffPairs[0].assignDirection).toBe(AssignDirection.CurrentToBaseline);
+      expect(diffPairs[0].location).toBe(DiffLocation.Property);
+      expect(diffPairs[0].reasons).toBe(DiffReasons.Removed);
+      expect(diffPairs[0].target?.name).toBe('name');
+      expect(diffPairs[1].assignDirection).toBe(AssignDirection.CurrentToBaseline);
+      expect(diffPairs[1].location).toBe(DiffLocation.Property);
+      expect(diffPairs[1].reasons).toBe(DiffReasons.Removed);
+      expect(diffPairs[1].target?.name).toBe('age');
+      expect(diffPairs[2].assignDirection).toBe(AssignDirection.CurrentToBaseline);
+      expect(diffPairs[2].location).toBe(DiffLocation.Property);
+      expect(diffPairs[2].reasons).toBe(DiffReasons.Removed);
+      expect(diffPairs[2].target?.name).toBe('street');
+      expect(diffPairs[3].assignDirection).toBe(AssignDirection.CurrentToBaseline);
+      expect(diffPairs[3].location).toBe(DiffLocation.Property);
+      expect(diffPairs[3].reasons).toBe(DiffReasons.Removed);
+      expect(diffPairs[3].target?.name).toBe('city');
+      expect(diffPairs[4].assignDirection).toBe(AssignDirection.CurrentToBaseline);
+      expect(diffPairs[4].location).toBe(DiffLocation.Property);
+      expect(diffPairs[4].reasons).toBe(DiffReasons.Removed);
+      expect(diffPairs[4].target?.name).toBe('zipCode');
+      expect(diffPairs[5].assignDirection).toBe(AssignDirection.CurrentToBaseline);
+      expect(diffPairs[5].location).toBe(DiffLocation.Property);
+      expect(diffPairs[5].reasons).toBe(DiffReasons.Added);
+      expect(diffPairs[5].source?.name).toBe('person');
+      expect(diffPairs[6].assignDirection).toBe(AssignDirection.CurrentToBaseline);
+      expect(diffPairs[6].location).toBe(DiffLocation.Property);
+      expect(diffPairs[6].reasons).toBe(DiffReasons.Added);
+      expect(diffPairs[6].source?.name).toBe('address');
     });
   });
 });

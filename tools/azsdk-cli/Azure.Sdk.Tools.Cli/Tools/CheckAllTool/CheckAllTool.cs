@@ -8,6 +8,7 @@ using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Helpers;
 using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
@@ -21,15 +22,18 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
     {
         private readonly ILogger<CheckAllTool> logger;
         private readonly IOutputService output;
+        private readonly IGitHelper gitHelper;
 
         private readonly Option<string> projectPathOption = new(["--project-path", "-p"], "Path to the project directory to check") { IsRequired = true };
 
         public CheckAllTool(
             ILogger<CheckAllTool> logger, 
-            IOutputService output) : base()
+            IOutputService output,
+            IGitHelper gitHelper) : base()
         {
             this.logger = logger;
             this.output = output;
+            this.gitHelper = gitHelper;
             CommandHierarchy = [SharedCommandGroups.Checks];
         }
 
@@ -48,7 +52,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                 var projectPath = ctx.ParseResult.GetValueForOption(projectPathOption);
                 var result = await RunAllChecks(projectPath);
 
-                output.Output(result);
+                // Convert IOperationResult to DefaultCommandResponse for output
+                var response = new DefaultCommandResponse
+                {
+                    Message = result.ExitCode == 0 ? "All checks completed successfully" : "Some checks failed",
+                    Duration = 0,
+                    Result = result
+                };
+
+                output.Output(response);
                 ctx.ExitCode = ExitCode;
             }
             catch (Exception ex)
@@ -64,7 +76,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
         }
 
         [McpServerTool(Name = "All"), Description("Run all validation checks for SDK projects. Provide absolute path to project root as param.")]
-        public async Task<DefaultCommandResponse> RunAllChecks(string projectPath)
+        public async Task<IOperationResult> RunAllChecks(string projectPath)
         {
             try
             {
@@ -73,10 +85,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                 if (!Directory.Exists(projectPath))
                 {
                     SetFailure(1);
-                    return new DefaultCommandResponse
-                    {
-                        ResponseError = $"Project path does not exist: {projectPath}"
-                    };
+                    return new FailureResult(1, "", $"Project path does not exist: {projectPath}");
                 }
 
                 var results = new List<IOperationResult>();
@@ -102,31 +111,33 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                     SetFailure(1);
                 }
 
-                return new DefaultCommandResponse
-                {
-                    Message = overallSuccess ? "All checks completed successfully" : "Some checks failed",
-                    Duration = 0, // Since IOperationResult doesn't have Duration, we'll set to 0 or calculate differently
-                    Result = results
-                };
+                var message = overallSuccess ? "All checks completed successfully" : "Some checks failed";
+                var combinedOutput = string.Join("\n", results.Select(r => r.Output));
+                
+                return overallSuccess 
+                    ? new SuccessResult(0, combinedOutput) 
+                    : new FailureResult(1, combinedOutput, message);
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Unhandled exception while running checks");
                 SetFailure(1);
-                return new DefaultCommandResponse
-                {
-                    ResponseError = $"Unhandled exception: {ex.Message}"
-                };
+                return new FailureResult(1, "", $"Unhandled exception: {ex.Message}");
             }
         }
 
-        private async Task<IOperationResult> RunChangelogValidation(string projectPath)
-        {
-            logger.LogInformation("Running changelog validation...");
-            // TODO: Implement actual changelog validation logic
-            await Task.Delay(100); // Simulate work
-            return new SuccessResult(0, "Changelog validation completed successfully");
-        }
+    private async Task<IOperationResult> RunChangelogValidation(string projectPath)
+    {
+        logger.LogInformation("Running changelog validation...");
+        
+        // Use the actual ChangelogValidationTool instead of stub implementation
+        var changelogValidationTool = new ChangelogValidationTool(
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<ChangelogValidationTool>.Instance,
+            output,
+            gitHelper);
+        
+        return await changelogValidationTool.RunChangelogValidation(projectPath);
+    }
 
     }
 }

@@ -1,5 +1,5 @@
 import { BlobServiceClient, ContainerClient } from '@azure/storage-blob';
-import { DefaultAzureCredential } from '@azure/identity';
+import { ChainedTokenCredential, DefaultAzureCredential, AzureCliCredential, EnvironmentCredential, ManagedIdentityCredential } from '@azure/identity';
 
 /**
  * Azure Storage service for managing blob operations
@@ -14,13 +14,18 @@ export class StorageService {
         if (!storageAccountName) {
             throw new Error('AZURE_STORAGE_ACCOUNT_NAME environment variable is required');
         }
-        
+
         this.containerName = process.env.STORAGE_KNOWLEDGE_CONTAINER || 'knowledge';
-        
-        // Use Managed Identity for authentication (Azure best practice)
-        const credential = new DefaultAzureCredential();
+
+        // Use ChainedTokenCredential for better fallback options
+        const credential = new ChainedTokenCredential(
+            new ManagedIdentityCredential(),
+            new EnvironmentCredential(),
+            new AzureCliCredential()
+        );
+
         const accountUrl = `https://${storageAccountName}.blob.core.windows.net`;
-        
+
         this.blobServiceClient = new BlobServiceClient(accountUrl, credential);
     }
     
@@ -109,18 +114,6 @@ export class StorageService {
             return deletedCount;
         } catch (error) {
             throw new Error(`Failed to delete expired blobs: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        }
-    }
-    
-    /**
-     * Ensure container exists
-     */
-    async ensureContainer(containerName: string): Promise<void> {
-        try {
-            const containerClient = this.blobServiceClient.getContainerClient(containerName);
-            await containerClient.createIfNotExists();
-        } catch (error) {
-            throw new Error(`Failed to create container ${containerName}: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
     

@@ -188,7 +188,12 @@ async function processDailySyncKnowledge(context: InvocationContext): Promise<vo
             }
             
             // Process files in source directory
-            await processSourceDirectory(sourceDir, source, targetDir, context);
+            try {
+                await processSourceDirectory(sourceDir, source, targetDir, context);
+            } catch (error) {
+                context.error(`Error processing source directory: ${error}`);
+                throw error;
+            }
         }
         
         // Upload files to blob storage
@@ -357,7 +362,9 @@ async function setupDocumentationRepositories(docsDir: string, context: Invocati
         {
             name: 'Azure API Guidelines',
             url: 'https://github.com/microsoft/api-guidelines.git',
-            path: 'api-guidelines'
+            path: 'api-guidelines',
+            branch: 'vNext',
+            sparseCheckout: ['azure'],
         },
         {
             name: 'Azure Resource Provider Contract',
@@ -380,7 +387,9 @@ async function setupDocumentationRepositories(docsDir: string, context: Invocati
         {
             name: 'Azure SDK',
             url: 'https://github.com/Azure/azure-sdk.git',
-            path: 'azure-sdk'
+            path: 'azure-sdk',
+            branch: 'main',
+            sparseCheckout: ['docs'],
         }
     ] as RepositoryConfig[];
     
@@ -455,6 +464,7 @@ async function processSourceDirectory(
                     processMarkdownFile(fullPath, source, targetDir, sourceDir);
                 } catch (error) {
                     context.error(`Error processing file ${fullPath}:`, error);
+                    throw error;
                 }
             }
         }
@@ -629,7 +639,7 @@ function processMarkdownFile(
     
     if (!processed.filename) {
         // If no filename was found in frontmatter, generate one from file path
-        const relativePath = path.relative(source.path, filePath);
+        const relativePath = path.relative(sourceDir, filePath);
         processed.filename = relativePath.replace(/[/\\]/g, '#');
         
         if (source.folder === 'azure-sdk-guidelines') {
@@ -723,11 +733,8 @@ async function uploadFilesToBlobStorage(tempDocsDir: string, sources: Documentat
         const storageService = new StorageService();
         const containerName = process.env.STORAGE_KNOWLEDGE_CONTAINER || 'knowledge';
         
-        // Ensure container exists
-        await storageService.ensureContainer(containerName);
-        
         const currentFiles: string[] = [];
-        
+        let uploadedCount = 0;
         for (const source of sources) {
             const targetDir = path.join(tempDocsDir, source.folder);
             
@@ -750,43 +757,15 @@ async function uploadFilesToBlobStorage(tempDocsDir: string, sources: Documentat
                             fileName = fileName.toLowerCase().replace(/\s+/g, '-');
                         }
                         const blobPath = path.join(source.folder, fileName);
+                        const content = fs.readFileSync(fullPath);
+                        storageService.putBlob(containerName, blobPath, content);
+                        uploadedCount++;
                         currentFiles.push(blobPath);
                     }
                 }
             }
             
             walkTargetDirectory(targetDir);
-        }
-        
-        context.log(`Uploading ${currentFiles.length} files to blob storage...`);
-        
-        let uploadedCount = 0;
-        for (const blobPath of currentFiles) {
-            try {
-                // Find the source file by reconstructing path
-                let fullPath = '';
-                for (const source of sources) {
-                    const fileName = path.basename(blobPath);
-                    const candidatePath = path.join(tempDocsDir, source.folder, fileName);
-                    if (fs.existsSync(candidatePath)) {
-                        fullPath = candidatePath;
-                        break;
-                    }
-                }
-                
-                if (fullPath && fs.existsSync(fullPath)) {
-                    const content = fs.readFileSync(fullPath);
-                    await storageService.putBlob(containerName, blobPath, content);
-                    uploadedCount++;
-                    
-                    if (uploadedCount % 10 === 0) {
-                        context.log(`Uploaded ${uploadedCount}/${currentFiles.length} files`);
-                    }
-                }
-            } catch (error) {
-                context.error(`Error uploading file ${blobPath}:`, error);
-                // Continue with other files
-            }
         }
         
         context.log(`Successfully uploaded ${uploadedCount} files to blob storage`);

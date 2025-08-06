@@ -12,6 +12,13 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         string formatCodeownersEntry(string path, string serviceLabel, List<string> serviceOwners, List<string> sourceOwners);
         (int StartLine, int EndLine) findBlock(string currentContent, string serviceCategory);
         string CreateBranchName(string prefix, string identifier);
+        
+        // New owner manipulation helper methods
+        string NormalizeUsername(string username);
+        bool ContainsOwner(List<string> existingOwners, string newOwner);
+        void AddUniqueOwners(List<string> targetList, List<CodeOwnerValidationResult> ownersToAdd);
+        void RemoveOwners(List<string> targetList, List<string> ownersToRemove);
+        List<string> ReplaceEntryInLines(List<string> lines, CodeownersEntry targetEntry);
     }
 
     public class CodeOwnerHelper : ICodeOwnerHelper
@@ -306,6 +313,57 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 .Replace("_", "-")
                 .Trim('-')
                 .ToLowerInvariant();
+        }
+
+        // New owner manipulation helper methods
+        public string NormalizeUsername(string username)
+        {
+            return username.TrimStart('@');
+        }
+
+        public bool ContainsOwner(List<string> existingOwners, string newOwner)
+        {
+            var normalizedNewOwner = NormalizeUsername(newOwner);
+            return existingOwners.Any(existing => NormalizeUsername(existing).Equals(normalizedNewOwner, StringComparison.OrdinalIgnoreCase));
+        }
+
+        public void AddUniqueOwners(List<string> targetList, List<CodeOwnerValidationResult> ownersToAdd)
+        {
+            foreach (var owner in ownersToAdd)
+            {
+                if (!ContainsOwner(targetList, owner.Username))
+                {
+                    targetList.Add(owner.Username);
+                }
+            }
+        }
+
+        public void RemoveOwners(List<string> targetList, List<string> ownersToRemove)
+        {
+            var normalizedOwnersToRemove = ownersToRemove.Select(NormalizeUsername).ToList();
+            targetList.RemoveAll(owner => normalizedOwnersToRemove.Contains(NormalizeUsername(owner)));
+        }
+
+        public List<string> ReplaceEntryInLines(List<string> lines, CodeownersEntry targetEntry)
+        {
+            var modifiedLines = new List<string>(lines);
+
+            // Generate the new formatted entry
+            var formattedCodeownersEntry = formatCodeownersEntry(
+                targetEntry.PathExpression,
+                targetEntry.ServiceLabels[0],
+                targetEntry.ServiceOwners,
+                targetEntry.SourceOwners);
+
+            // Remove the old entry lines
+            int originalEntryLineCount = targetEntry.endLine - targetEntry.startLine + 1;
+            modifiedLines.RemoveRange(targetEntry.startLine, originalEntryLineCount);
+
+            // Insert the new formatted entry at the same position
+            var entryLines = formattedCodeownersEntry.Split('\n');
+            modifiedLines.InsertRange(targetEntry.startLine, entryLines);
+
+            return modifiedLines;
         }
     }
 

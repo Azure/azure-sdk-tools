@@ -90,10 +90,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                                   .ReturnsAsync(validationResult);
 
             // Act
-            var result = await codeownerTools.ValidateCodeOwnerEntryForService("dotnet", "Service Bus");
+            var result = await codeownerTools.ValidateCodeOwnerEntryForService("azure-sdk-for-net", "Service Bus");
 
             // Assert
-            Assert.That(result.Message, Does.Contain("Successfully found codeowners"));
+            Assert.That(result.Message, Does.Contain("Successfully found and validated codeowners."));
             Assert.That(result.Repository, Is.EqualTo("azure-sdk-for-net"));
         }
 
@@ -105,43 +105,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
 
             // Assert
             Assert.That(result.Message, Does.Contain("Must provide a service label or a repository path"));
-        }
-
-        #endregion
-
-        #region ValidateCodeOwnersConcurrently Tests
-
-        [Test]
-        public async Task ValidateCodeOwnersConcurrently_ValidOwners_ReturnsResults()
-        {
-            // Arrange
-            var owners = new List<string> { "@user1", "@user2" };
-            var validationResult = new CodeOwnerValidationResult
-            {
-                Username = "user1",
-                IsValidCodeOwner = true
-            };
-            mockCodeOwnerValidator.Setup(x => x.ValidateCodeOwnerAsync(It.IsAny<string>(), false))
-                                  .ReturnsAsync(validationResult);
-
-            // Act
-            var result = await codeownerTools.ValidateCodeOwnersConcurrently(owners);
-
-            // Assert
-            Assert.That(result.Count, Is.EqualTo(2));
-        }
-
-        [Test]
-        public async Task ValidateCodeOwnersConcurrently_EmptyList_ReturnsEmptyResults()
-        {
-            // Arrange
-            var owners = new List<string>();
-
-            // Act
-            var result = await codeownerTools.ValidateCodeOwnersConcurrently(owners);
-
-            // Assert
-            Assert.That(result.Count, Is.EqualTo(0));
         }
 
         #endregion

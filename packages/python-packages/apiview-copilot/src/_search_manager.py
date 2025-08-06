@@ -1,24 +1,31 @@
-from collections import deque
+# -------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for
+# license information.
+# --------------------------------------------------------------------------
+
+"""
+Module for managing search operations in APIView Copilot.
+"""
+
 import copy
 import os
-from typing import List, Dict, Optional
+from collections import deque
+from typing import Dict, List, Optional
 
-from azure.cosmos import CosmosClient
 from azure.search.documents import SearchClient, SearchItemPaged
-from azure.search.documents.models import (
-    VectorizableTextQuery,
-    QueryType,
-    QueryAnswerType,
-    QueryAnswerResult,
-    QueryCaptionType,
-    SemanticErrorMode,
-)
 from azure.search.documents.indexes import SearchIndexerClient
-
+from azure.search.documents.models import (
+    QueryAnswerResult,
+    QueryAnswerType,
+    QueryCaptionType,
+    QueryType,
+    SemanticErrorMode,
+    VectorizableTextQuery,
+)
 from src._credential import get_credential
-from src._models import Guideline, Example, Memory
-from src._database_manager import get_database_manager, ContainerNames
-
+from src._database_manager import ContainerNames, get_database_manager
+from src._models import Example, Guideline, Memory
 
 if "APPSETTING_WEBSITE_SITE_NAME" not in os.environ:
     # running on dev machine, loadenv
@@ -222,6 +229,7 @@ class ContextItem:
         self.is_exception = getattr(item, "is_exception", None)
         self.examples = []
         self.score = score
+        self.normalized_score = None  # Will be set after normalization
         for ex_id in getattr(item, "related_examples", []):
             example = copy.deepcopy(examples.get(ex_id)) if examples else None
             if example is not None:
@@ -264,7 +272,7 @@ class ContextItem:
         markdown += f"## {self.title}\n\n"
 
         if self.is_exception:
-            markdown += f"**THIS IS AN EXCEPTION TO ESTABLISHED GUIDELINES**\n\n"
+            markdown += "**THIS IS AN EXCEPTION TO ESTABLISHED GUIDELINES**\n\n"
 
         markdown += f"{self.content}\n\n"
 
@@ -291,6 +299,7 @@ class ContextItem:
 
 
 class SearchManager:
+    """Manages search operations using Azure Search."""
 
     def __init__(self, *, language: str, include_general_guidelines: bool = False):
         self.language = language
@@ -347,18 +356,21 @@ class SearchManager:
         return SearchResult(result)
 
     def search_guidelines(self, query: str, *, top: int = 20) -> SearchResult:
+        """Searches for guidelines in the Azure Search index."""
         filter = "kind eq 'guidelines'"
         if self.filter_expression:
             filter = f"({filter}) and ({self.filter_expression})"
         return self._search(query, filter=filter, top=top)
 
     def search_examples(self, query: str, *, top: int = 20) -> SearchResult:
+        """Searches for examples in the Azure Search index."""
         filter = "kind eq 'examples'"
         if self.filter_expression:
             filter = f"({filter}) and ({self.filter_expression})"
         return self._search(query, filter=filter, top=top)
 
     def search_api_view_comments(self, query: str, *, top: int = 20) -> SearchResult:
+        """Searches for APIView comments in the Azure Search index."""
         filter = "kind eq 'memories'"
         if self.filter_expression:
             filter = f"({filter}) and ({self.filter_expression})"
@@ -514,9 +526,9 @@ class SearchManager:
         """
         Reindex one or more Azure Search indexers. If container_names is None, reindex all known indexers.
         """
-        INDEXED_CONTAINERS = [x for x in ContainerNames.values() if x not in ["review-jobs"]]
+        indexed_containers = [x for x in ContainerNames.values() if x not in ["review-jobs"]]
         if not container_names:
-            indexers_to_run = [f"{name}-indexer" for name in INDEXED_CONTAINERS]
+            indexers_to_run = [f"{name}-indexer" for name in indexed_containers]
         else:
             # Map container names to indexer names (simple mapping: container_name + '-indexer')
             indexers_to_run = [f"{name}-indexer" for name in container_names]

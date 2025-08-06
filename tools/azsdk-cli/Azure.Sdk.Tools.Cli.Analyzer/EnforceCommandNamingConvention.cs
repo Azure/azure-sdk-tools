@@ -11,10 +11,19 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
     public class EnforceCommandNamingConventionAnalyzer : DiagnosticAnalyzer
     {
         public const string Id = "MCP003";
-        private static readonly DiagnosticDescriptor Rule = new DiagnosticDescriptor(
+        private static readonly DiagnosticDescriptor CommandRule = new DiagnosticDescriptor(
             Id,
             "CLI command names must follow kebab-case convention",
             "Command name '{0}' must follow kebab-case convention (lowercase letters, numbers, and hyphens only)",
+            "Naming",
+            DiagnosticSeverity.Error,
+            isEnabledByDefault: true);
+
+        public const string OptionId = "MCP006";
+        private static readonly DiagnosticDescriptor OptionRule = new DiagnosticDescriptor(
+            OptionId,
+            "CLI option names must follow kebab-case convention",
+            "Option name '{0}' must follow kebab-case convention (lowercase letters, numbers, and hyphens only)",
             "Naming",
             DiagnosticSeverity.Error,
             isEnabledByDefault: true);
@@ -23,7 +32,7 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
         private static readonly Regex KebabCasePattern = new Regex(@"^[a-z0-9]+(-[a-z0-9]+)*$", RegexOptions.Compiled);
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
-            => ImmutableArray.Create(Rule);
+            => ImmutableArray.Create(CommandRule, OptionRule);
 
         public override void Initialize(AnalysisContext context)
         {
@@ -36,13 +45,21 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
         {
             var objectCreation = (ObjectCreationExpressionSyntax)context.Node;
 
-            // Check if this is a Command constructor
             var typeInfo = context.SemanticModel.GetTypeInfo(objectCreation);
-            if (typeInfo.Type?.Name != "Command")
-            {
-                return;
-            }
+            var typeName = typeInfo.Type?.Name;
 
+            if (typeName == "Command")
+            {
+                AnalyzeCommandNaming(context, objectCreation);
+            }
+            else if (typeName == "Option")
+            {
+                AnalyzeOptionNaming(context, objectCreation);
+            }
+        }
+
+        private static void AnalyzeCommandNaming(SyntaxNodeAnalysisContext context, ObjectCreationExpressionSyntax objectCreation)
+        {
             // Get the first argument (command name)
             if (objectCreation.ArgumentList?.Arguments.Count > 0)
             {
@@ -58,10 +75,81 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
                     if (!KebabCasePattern.IsMatch(commandName))
                     {
                         context.ReportDiagnostic(Diagnostic.Create(
-                            Rule,
+                            CommandRule,
                             literal.GetLocation(),
                             commandName));
                     }
+                }
+            }
+        }
+
+        private static void AnalyzeOptionNaming(SyntaxNodeAnalysisContext context, ObjectCreationExpressionSyntax objectCreation)
+        {
+            // Get the first argument (option names array)
+            if (objectCreation.ArgumentList?.Arguments.Count > 0)
+            {
+                var firstArgument = objectCreation.ArgumentList.Arguments[0];
+                
+                // Check if the argument is an array creation expression or collection expression
+                if (firstArgument.Expression is ArrayCreationExpressionSyntax arrayCreation)
+                {
+                    AnalyzeArrayCreationExpression(context, arrayCreation.Initializer);
+                }
+                else if (firstArgument.Expression is ImplicitArrayCreationExpressionSyntax implicitArray)
+                {
+                    AnalyzeArrayCreationExpression(context, implicitArray.Initializer);
+                }
+                else if (firstArgument.Expression is CollectionExpressionSyntax collectionExpression)
+                {
+                    AnalyzeCollectionExpression(context, collectionExpression);
+                }
+            }
+        }
+
+        private static void AnalyzeArrayCreationExpression(SyntaxNodeAnalysisContext context, InitializerExpressionSyntax initializer)
+        {
+            if (initializer?.Expressions == null) return;
+
+            foreach (var expression in initializer.Expressions)
+            {
+                if (expression is LiteralExpressionSyntax literal &&
+                    literal.Token.IsKind(SyntaxKind.StringLiteralToken))
+                {
+                    ValidateOptionName(context, literal);
+                }
+            }
+        }
+
+        private static void AnalyzeCollectionExpression(SyntaxNodeAnalysisContext context, CollectionExpressionSyntax collectionExpression)
+        {
+            foreach (var element in collectionExpression.Elements)
+            {
+                if (element is ExpressionElementSyntax expressionElement &&
+                    expressionElement.Expression is LiteralExpressionSyntax literal &&
+                    literal.Token.IsKind(SyntaxKind.StringLiteralToken))
+                {
+                    ValidateOptionName(context, literal);
+                }
+            }
+        }
+
+        private static void ValidateOptionName(SyntaxNodeAnalysisContext context, LiteralExpressionSyntax literal)
+        {
+            var optionName = literal.Token.ValueText;
+            
+            // Only validate long options (starting with --), skip short options like -p
+            if (optionName.StartsWith("--"))
+            {
+                // Remove the -- prefix for validation
+                var nameWithoutPrefix = optionName.Substring(2);
+                
+                // Validate kebab-case convention
+                if (!KebabCasePattern.IsMatch(nameWithoutPrefix))
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(
+                        OptionRule,
+                        literal.GetLocation(),
+                        optionName));
                 }
             }
         }

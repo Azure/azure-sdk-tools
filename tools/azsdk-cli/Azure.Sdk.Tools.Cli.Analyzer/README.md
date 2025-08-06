@@ -173,6 +173,19 @@ Enforces kebab-case naming for CLI commands.
 - `new Command("hello_world", "description")` - snake_case
 - `new Command("hello-World", "description")` - mixed case
 
+### MCP006 - CLI Option Naming Convention
+Enforces kebab-case naming for CLI option names (only validates long options starting with `--`).
+
+**Valid examples:**
+- `new Option<string>(["--log-id"], "description")`
+- `new Option<string>(["--project", "-p"], "description")` - kebab-case with short option
+- `new Option<string>(["-v"], "description")` - short option only (not validated)
+
+**Invalid examples:**
+- `new Option<string>(["--logId"], "description")` - camelCase
+- `new Option<string>(["--project_name"], "description")` - snake_case
+- `new Option<string>(["--ProjectName"], "description")` - PascalCase
+
 ### MCP004 - Missing MCP Server Tool Name
 Enforces that McpServerTool attributes specify a Name property.
 
@@ -213,6 +226,7 @@ To enable the analyzers for a specific file (recommended for new files), remove 
 #pragma warning enable MCP003 // CLI command names must follow kebab-case convention
 #pragma warning enable MCP004 // McpServerTool attribute must specify a Name property  
 #pragma warning enable MCP005 // McpServerTool Name must follow snake_case convention
+#pragma warning enable MCP006 // CLI option names must follow kebab-case convention
 ```
 
 ### Disabling Analyzers for Existing Code
@@ -223,6 +237,7 @@ For existing files during migration, you can disable specific analyzers:
 #pragma warning disable MCP003 // CLI command names must follow kebab-case convention
 #pragma warning disable MCP004 // McpServerTool attribute must specify a Name property  
 #pragma warning disable MCP005 // McpServerTool Name must follow snake_case convention
+#pragma warning disable MCP006 // CLI option names must follow kebab-case convention
 ```
 
 ### Project-wide Enablement
@@ -230,7 +245,7 @@ For existing files during migration, you can disable specific analyzers:
 When ready to enforce project-wide, remove the warnings from the main `.csproj` file:
 
 ```xml
-<!-- In Azure.Sdk.Tools.Cli.csproj, remove MCP003;MCP004;MCP005 from NoWarn -->
+<!-- In Azure.Sdk.Tools.Cli.csproj, remove MCP003;MCP004;MCP005;MCP006 from NoWarn -->
 <PropertyGroup>
   <NoWarn>ASP0000;CS8603;CS8618;CS8625;CS8604</NoWarn> 
 </PropertyGroup>

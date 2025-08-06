@@ -600,14 +600,21 @@ namespace Azure.Sdk.Tools.Cli.Tools
             var validServiceOwnersCount = validatedServiceOwners.Count(owner => owner.IsValidCodeOwner);
             var validSourceOwnersCount = validatedSourceOwners.Count(owner => owner.IsValidCodeOwner);
 
+            var validationErrors = new List<string>();
+            
             if (validServiceOwnersCount < 2)
             {
-                throw new InvalidOperationException($"Modified entry must have at least 2 valid service owners. Current count: {validServiceOwnersCount}");
+                validationErrors.Add($"Modified entry must have at least 2 valid service owners. Current count: {validServiceOwnersCount}");
             }
 
             if (validSourceOwnersCount < 2)
             {
-                throw new InvalidOperationException($"Modified entry must have at least 2 valid source owners. Current count: {validSourceOwnersCount}");
+                validationErrors.Add($"Modified entry must have at least 2 valid source owners. Current count: {validSourceOwnersCount}");
+            }
+
+            if (validationErrors.Any())
+            {
+                throw new InvalidOperationException(string.Join(" ", validationErrors));
             }
 
             // Generate the new formatted entry for both adding and removing

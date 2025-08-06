@@ -17,146 +17,75 @@ namespace Azure.Tools.GeneratorAgent
             Logger = logger;
         }
 
-        public virtual async Task<(bool Success, string Output, string Error)> ExecuteAsync(
+        public virtual async Task<Result> ExecuteAsync(
             string command,
             string arguments,
             string? workingDir,
             CancellationToken cancellationToken,
             TimeSpan? timeout = null)
         {
-            if (string.IsNullOrWhiteSpace(command))
-            {
-                Logger.LogError("Security violation: Attempted to execute null or empty command");
-                throw new ArgumentException("Command cannot be null or empty", nameof(command));
-            }
+            ArgumentException.ThrowIfNullOrWhiteSpace(command);
 
             if (!SecureProcessConfiguration.IsCommandAllowed(command))
             {
-                Logger.LogError("Security violation: Attempted to execute unauthorized command: {Command}", command);
-                throw new UnauthorizedAccessException($"Command '{command}' is not in the allowed commands list");
+                return Result.Failure($"Command '{command}' is not in the allowed commands list");
             }
 
             if (!string.IsNullOrEmpty(workingDir))
             {
-                ValidationResult workingDirValidation = InputValidator.ValidateWorkingDirectory(workingDir);
-                if (!workingDirValidation.IsValid)
+                Result<string> workingDirValidation = InputValidator.ValidateWorkingDirectory(workingDir);
+                if (workingDirValidation.IsFailure)
                 {
-                    Logger.LogError("Security violation: Invalid working directory: {WorkingDirectory} - {Error}", 
-                        workingDir, workingDirValidation.ErrorMessage);
-                    throw new UnauthorizedAccessException($"Working directory '{workingDir}' failed security validation: {workingDirValidation.ErrorMessage}");
+                    return Result.Failure($"Working directory '{workingDir}' failed security validation: {workingDirValidation.Error}");
                 }
             }
 
             arguments ??= string.Empty;
 
-            Logger.LogInformation("Executing validated command: {Command} with args: {Arguments} in directory: {WorkingDirectory}", 
-                command, 
-                arguments.Length > 100 ? arguments.Substring(0, 100) + "..." : arguments,
-                workingDir ?? Environment.CurrentDirectory);
-
             try
             {
                 using Process process = CreateProcess(command, arguments, workingDir);
-
                 process.Start();
 
                 Task<string> outputTask = process.StandardOutput.ReadToEndAsync();
                 Task<string> errorTask = process.StandardError.ReadToEndAsync();
 
-                if (timeout.HasValue)
+                bool timedOut = await WaitForProcessWithTimeoutAsync(process, timeout, cancellationToken);
+                if (timedOut)
                 {
-                    using CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                    cts.CancelAfter(timeout.Value);
-
-                    try
-                    {
-                        await process.WaitForExitAsync(cts.Token).ConfigureAwait(false);
-                    }
-                    catch (OperationCanceledException) when (cts.Token.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
-                    {
-                        Logger.LogError("Process timed out after {Timeout}ms: {Command}", timeout.Value.TotalMilliseconds, command);
-
-                        try
-                        {
-                            // Kill entire process tree on Windows to ensure child processes are also terminated
-                            process.Kill(entireProcessTree: RuntimeInformation.IsOSPlatform(OSPlatform.Windows));
-                        }
-                        catch (Exception killEx)
-                        {
-                            Logger.LogWarning(killEx, "Failed to kill timed-out process");
-                        }
-
-                        string partialOutput = string.Empty;
-                        string partialError = string.Empty;
-                        
-                        try
-                        {
-                            if (outputTask.IsCompleted)
-                            {
-                                partialOutput = await outputTask.ConfigureAwait(false);
-                            }
-                            if (errorTask.IsCompleted)
-                            {
-                                partialError = await errorTask.ConfigureAwait(false);
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            Logger.LogWarning(ex, "Failed to capture partial output from timed-out process");
-                        }
-
-                        string timeoutError = $"Process timed out after {timeout.Value.TotalMilliseconds}ms";
-                        string combinedError = string.IsNullOrEmpty(partialError) ? timeoutError : $"{timeoutError}. Partial error output: {partialError}";
-                        
-                        return (false, partialOutput.TrimEnd(), combinedError);
-                    }
-                }
-                else
-                {
-                    await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+                    return await HandleTimeoutAsync(process, outputTask, errorTask, timeout!.Value, command);
                 }
 
                 string output = await outputTask.ConfigureAwait(false);
                 string error = await errorTask.ConfigureAwait(false);
-
                 bool success = process.ExitCode == 0;
-                
-                if (!success)
-                {
-                    Logger.LogError("Command failed with exit code {ExitCode}. Command: {Command}. Error: {Error}",
-                        process.ExitCode, command, error);
-                }
-                else
-                {
-                    Logger.LogDebug("Command succeeded. Command: {Command}", command);
-                }
 
-                return (success, output.TrimEnd(), error.TrimEnd());
+                LogExecutionResult(success, process.ExitCode, command, error);
+
+                return success 
+                    ? Result.Success(output.TrimEnd()) 
+                    : Result.Failure($"Process failed with exit code {process.ExitCode}: {error.TrimEnd()}", output.TrimEnd());
             }
             catch (Win32Exception ex) when (ex.NativeErrorCode == 2)
             {
-                Logger.LogError("Command not found: {Command}", command);
-                return (false, string.Empty, "Command not found");
+                return LogAndReturnError("Command not found", command, ex);
             }
             catch (Win32Exception ex)
             {
-                Logger.LogError(ex, "Win32 error starting process: {Command}", command);
-                return (false, string.Empty, ex.Message);
+                return LogAndReturnError("Win32 error starting process", command, ex);
             }
             catch (InvalidOperationException ex)
             {
-                Logger.LogError(ex, "Invalid operation starting process: {Command}", command);
-                return (false, string.Empty, ex.Message);
+                return LogAndReturnError("Invalid operation starting process", command, ex);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
                 Logger.LogInformation("Command execution was cancelled: {Command}", command);
-                return (false, string.Empty, "Operation was cancelled");
+                return Result.Failure("Operation was cancelled");
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Unexpected error executing command: {Command}", command);
-                return (false, string.Empty, ex.Message);
+                return LogAndReturnError("Unexpected error executing command", command, ex);
             }
         }
 
@@ -175,6 +104,90 @@ namespace Azure.Tools.GeneratorAgent
                     CreateNoWindow = true
                 }
             };
+        }
+
+        private async Task<bool> WaitForProcessWithTimeoutAsync(Process process, TimeSpan? timeout, CancellationToken cancellationToken)
+        {
+            if (!timeout.HasValue)
+            {
+                await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+                return false;
+            }
+
+            using CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            cts.CancelAfter(timeout.Value);
+
+            try
+            {
+                await process.WaitForExitAsync(cts.Token).ConfigureAwait(false);
+                return false;
+            }
+            catch (OperationCanceledException) when (cts.Token.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
+            {
+                return true;
+            }
+        }
+
+        private async Task<Result> HandleTimeoutAsync(
+            Process process,
+            Task<string> outputTask,
+            Task<string> errorTask,
+            TimeSpan timeout,
+            string command)
+        {
+            Logger.LogError("Process timed out after {Timeout}ms: {Command}", timeout.TotalMilliseconds, command);
+
+            try
+            {
+                process.Kill(entireProcessTree: RuntimeInformation.IsOSPlatform(OSPlatform.Windows));
+            }
+            catch (Exception killEx)
+            {
+                Logger.LogWarning(killEx, "Failed to kill timed-out process");
+            }
+
+            string partialOutput = string.Empty;
+            string partialError = string.Empty;
+
+            try
+            {
+                if (outputTask.IsCompleted)
+                {
+                    partialOutput = await outputTask.ConfigureAwait(false);
+                }
+                if (errorTask.IsCompleted)
+                {
+                    partialError = await errorTask.ConfigureAwait(false);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "Failed to capture partial output from timed-out process");
+            }
+
+            string timeoutError = $"Process timed out after {timeout.TotalMilliseconds}ms";
+            string combinedError = string.IsNullOrEmpty(partialError) ? timeoutError : $"{timeoutError}. Partial error output: {partialError}";
+
+            return Result.Failure(combinedError, partialOutput);
+        }
+
+        private void LogExecutionResult(bool success, int exitCode, string command, string error)
+        {
+            if (success)
+            {
+                Logger.LogDebug("Command succeeded. Command: {Command}", command);
+            }
+            else
+            {
+                Logger.LogError("Command failed with exit code {ExitCode}. Command: {Command}. Error: {Error}",
+                    exitCode, command, error);
+            }
+        }
+
+        private Result LogAndReturnError(string errorMessage, string command, Exception ex)
+        {
+            Logger.LogError(ex, "{ErrorMessage}: {Command}", errorMessage, command);
+            return Result.Failure(ex.Message);
         }
     }
 }

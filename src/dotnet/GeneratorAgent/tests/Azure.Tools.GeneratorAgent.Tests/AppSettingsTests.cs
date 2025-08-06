@@ -23,15 +23,15 @@ namespace Azure.Tools.GeneratorAgent.Tests.Configuration
 
         private static AppSettings CreateAppSettings(IConfiguration? configuration = null)
         {
-            var mockLogger = new Mock<ILogger<AppSettings>>();
-            return new AppSettings(configuration ?? CreateConfigurationMock().Object, mockLogger.Object);
+            var mockLogger = Mock.Of<ILogger<AppSettings>>();
+            return new AppSettings(configuration ?? CreateConfigurationMock().Object, mockLogger);
         }
 
         [Test]
         public void Constructor_WithNullConfiguration_ThrowsArgumentNullException()
         {
-            var mockLogger = new Mock<ILogger<AppSettings>>();
-            var ex = Assert.Throws<ArgumentNullException>(() => new AppSettings(null!, mockLogger.Object));
+            var mockLogger = Mock.Of<ILogger<AppSettings>>();
+            var ex = Assert.Throws<ArgumentNullException>(() => new AppSettings(null!, mockLogger));
             Assert.That(ex?.ParamName, Is.EqualTo("configuration"));
         }
 

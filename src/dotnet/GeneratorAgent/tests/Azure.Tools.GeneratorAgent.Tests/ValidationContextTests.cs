@@ -15,12 +15,9 @@ namespace Azure.Tools.GeneratorAgent.Tests.Configuration
         private sealed class TestEnvironmentFixture : IDisposable
         {
             private readonly List<string> _createdDirectories = new();
-            private readonly Mock<ILogger> _mockInputValidatorLogger;
 
             public TestEnvironmentFixture()
             {
-                _mockInputValidatorLogger = new Mock<ILogger>();
-                InputValidator.SetLogger(_mockInputValidatorLogger.Object);
             }
 
             public Mock<ILogger> CreateMockLogger()
@@ -143,12 +140,13 @@ namespace Azure.Tools.GeneratorAgent.Tests.Configuration
             var outputPath = fixture.CreateTempDirectory("validation-test-output");
             var mockLogger = fixture.CreateMockLogger();
 
-            var context = ValidationContext.ValidateAndCreate(typeSpecPath, commitId, outputPath, mockLogger.Object);
+            var context = ValidationContext.TryValidateAndCreate(typeSpecPath, commitId, outputPath, mockLogger.Object);
 
-            Assert.That(context, Is.Not.Null);
-            Assert.That(context.ValidatedTypeSpecDir, Is.EqualTo(Path.GetFullPath(typeSpecPath)));
-            Assert.That(context.ValidatedCommitId, Is.EqualTo(string.Empty));
-            Assert.That(context.ValidatedSdkDir, Is.EqualTo(Path.GetFullPath(outputPath)));
+            Assert.That(context.IsSuccess, Is.True);
+            Assert.That(context.Value, Is.Not.Null);
+            Assert.That(context.Value.ValidatedTypeSpecDir, Is.EqualTo(Path.GetFullPath(typeSpecPath)));
+            Assert.That(context.Value.ValidatedCommitId, Is.EqualTo(string.Empty));
+            Assert.That(context.Value.ValidatedSdkDir, Is.EqualTo(Path.GetFullPath(outputPath)));
         }
 
         [Test]
@@ -161,16 +159,17 @@ namespace Azure.Tools.GeneratorAgent.Tests.Configuration
             var outputPath = fixture.CreateTempDirectory("validation-test-github-output");
             var mockLogger = fixture.CreateMockLogger();
 
-            var context = ValidationContext.ValidateAndCreate(typeSpecPath, commitId, outputPath, mockLogger.Object);
+            var context = ValidationContext.TryValidateAndCreate(typeSpecPath, commitId, outputPath, mockLogger.Object);
 
-            Assert.That(context, Is.Not.Null);
-            Assert.That(context.ValidatedTypeSpecDir, Is.EqualTo(typeSpecPath));
-            Assert.That(context.ValidatedCommitId, Is.EqualTo(commitId));
-            Assert.That(context.ValidatedSdkDir, Is.EqualTo(Path.GetFullPath(outputPath)));
+            Assert.That(context.IsSuccess, Is.True);
+            Assert.That(context.Value, Is.Not.Null);
+            Assert.That(context.Value.ValidatedTypeSpecDir, Is.EqualTo(typeSpecPath));
+            Assert.That(context.Value.ValidatedCommitId, Is.EqualTo(commitId));
+            Assert.That(context.Value.ValidatedSdkDir, Is.EqualTo(Path.GetFullPath(outputPath)));
         }
 
         [Test]
-        public void ValidateAndCreate_WithInvalidTypeSpecPath_ShouldThrowArgumentException()
+        public void ValidateAndCreate_WithInvalidTypeSpecPath_ShouldReturnFailure()
         {
             using var fixture = new TestEnvironmentFixture();
             
@@ -179,15 +178,14 @@ namespace Azure.Tools.GeneratorAgent.Tests.Configuration
             var outputPath = fixture.CreateTempDirectory("validation-test-invalid-output");
             var mockLogger = fixture.CreateMockLogger();
 
-            var ex = Assert.Throws<ArgumentException>(() =>
-                ValidationContext.ValidateAndCreate(invalidTypeSpecPath, commitId, outputPath, mockLogger.Object));
+            var result = ValidationContext.TryValidateAndCreate(invalidTypeSpecPath, commitId, outputPath, mockLogger.Object);
 
-            Assert.That(ex!.ParamName, Is.EqualTo("typespecPath"));
-            Assert.That(ex.Message, Does.Contain("TypeSpec path validation failed"));
+            Assert.That(result.IsFailure, Is.True);
+            Assert.That(result.Error, Does.Contain("TypeSpec path validation failed"));
         }
 
         [Test]
-        public void ValidateAndCreate_WithInvalidCommitId_ShouldThrowArgumentException()
+        public void ValidateAndCreate_WithInvalidCommitId_ShouldReturnFailure()
         {
             using var fixture = new TestEnvironmentFixture();
             
@@ -196,15 +194,14 @@ namespace Azure.Tools.GeneratorAgent.Tests.Configuration
             var outputPath = fixture.CreateTempDirectory("validation-test-commit-output");
             var mockLogger = fixture.CreateMockLogger();
 
-            var ex = Assert.Throws<ArgumentException>(() =>
-                ValidationContext.ValidateAndCreate(typeSpecPath, invalidCommitId, outputPath, mockLogger.Object));
+            var result = ValidationContext.TryValidateAndCreate(typeSpecPath, invalidCommitId, outputPath, mockLogger.Object);
 
-            Assert.That(ex!.ParamName, Is.EqualTo("commitId"));
-            Assert.That(ex.Message, Does.Contain("Commit ID validation failed"));
+            Assert.That(result.IsFailure, Is.True);
+            Assert.That(result.Error, Does.Contain("Commit ID validation failed"));
         }
 
         [Test]
-        public void ValidateAndCreate_WithInvalidOutputPath_ShouldThrowArgumentException()
+        public void ValidateAndCreate_WithInvalidOutputPath_ShouldReturnFailure()
         {
             using var fixture = new TestEnvironmentFixture();
             
@@ -213,11 +210,10 @@ namespace Azure.Tools.GeneratorAgent.Tests.Configuration
             var invalidOutputPath = fixture.CreateInvalidOutputPath();
             var mockLogger = fixture.CreateMockLogger();
 
-            var ex = Assert.Throws<ArgumentException>(() =>
-                ValidationContext.ValidateAndCreate(typeSpecPath, commitId, invalidOutputPath, mockLogger.Object));
+            var result = ValidationContext.TryValidateAndCreate(typeSpecPath, commitId, invalidOutputPath, mockLogger.Object);
 
-            Assert.That(ex!.ParamName, Is.EqualTo("sdkOutputPath"));
-            Assert.That(ex.Message, Does.Contain("SDK output path validation failed"));
+            Assert.That(result.IsFailure, Is.True);
+            Assert.That(result.Error, Does.Contain("SDK output path validation failed"));
         }
 
         [Test]
@@ -230,16 +226,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Configuration
             var outputPath = fixture.CreateTempDirectory("validation-test-logging-output");
             var mockLogger = fixture.CreateMockLogger();
 
-            ValidationContext.ValidateAndCreate(typeSpecPath, commitId, outputPath, mockLogger.Object);
-
-            mockLogger.Verify(
-                x => x.Log(
-                    LogLevel.Information,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Starting input validation")),
-                    It.IsAny<Exception>(),
-                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-                Times.Once);
+            ValidationContext.TryValidateAndCreate(typeSpecPath, commitId, outputPath, mockLogger.Object);
 
             mockLogger.Verify(
                 x => x.Log(
@@ -261,11 +248,11 @@ namespace Azure.Tools.GeneratorAgent.Tests.Configuration
             var outputPath = fixture.CreateTempDirectory("validation-test-null-logger-output");
 
             Assert.Throws<ArgumentNullException>(() =>
-                ValidationContext.ValidateAndCreate(typeSpecPath, commitId, outputPath, null!));
+                ValidationContext.TryValidateAndCreate(typeSpecPath, commitId, outputPath, null!));
         }
 
         [Test]
-        public void ValidateAndCreate_WithMissingTypeSpecFiles_ShouldThrowArgumentException()
+        public void ValidateAndCreate_WithMissingTypeSpecFiles_ShouldReturnFailure()
         {
             using var fixture = new TestEnvironmentFixture();
             
@@ -274,11 +261,13 @@ namespace Azure.Tools.GeneratorAgent.Tests.Configuration
             var outputPath = fixture.CreateTempDirectory("validation-test-empty-output");
             var mockLogger = fixture.CreateMockLogger();
 
-            var ex = Assert.Throws<ArgumentException>(() =>
-                ValidationContext.ValidateAndCreate(emptyTypeSpecPath, commitId, outputPath, mockLogger.Object));
+            var result = ValidationContext.TryValidateAndCreate(emptyTypeSpecPath, commitId, outputPath, mockLogger.Object);
 
-            Assert.That(ex!.ParamName, Is.EqualTo("typespecPath"));
-            Assert.That(ex.Message, Does.Contain("No .tsp or .yaml files found"));
+            Assert.That(result.IsFailure, Is.True);
+
+            
+            Assert.That(result.Error, Does.Contain("No .tsp or .yaml files found"));
         }
     }
 }
+

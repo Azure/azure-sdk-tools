@@ -102,7 +102,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             Assert.Multiple(() =>
             {
-                Assert.That(result.Success, Is.True);
+                Assert.That(result.IsSuccess, Is.True);
                 Assert.That(result.Output.Trim(), Is.EqualTo(expectedOutput));
                 Assert.That(result.Error, Is.Empty);
             });
@@ -126,9 +126,9 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             Assert.Multiple(() =>
             {
-                Assert.That(result.Success, Is.False);
+                Assert.That(result.IsSuccess, Is.False);
                 Assert.That(result.Output, Is.Empty);
-                Assert.That(result.Error, Is.Empty);
+                Assert.That(result.Error, Is.Not.Empty);
             });
         }
 
@@ -141,7 +141,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var arguments = fixture.CreateEchoArguments();
             var workingDir = fixture.CreateValidWorkingDirectory();
 
-            var exception = Assert.ThrowsAsync<ArgumentException>(async () =>
+            var exception = Assert.ThrowsAsync<ArgumentNullException>(async () =>
                 await executor.ExecuteAsync(
                     null!,
                     arguments,
@@ -204,7 +204,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 workingDir,
                 fixture.CancellationToken);
 
-            Assert.That(result.Success, Is.True);
+            Assert.That(result.IsSuccess, Is.True);
         }
 
         [Test]
@@ -225,7 +225,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 fixture.CancellationToken,
                 timeout);
 
-            Assert.That(result.Success, Is.True);
+            Assert.That(result.IsSuccess, Is.True);
         }
 
         [Test]
@@ -248,7 +248,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             Assert.Multiple(() =>
             {
-                Assert.That(result.Success, Is.False);
+                Assert.That(result.IsSuccess, Is.False);
                 Assert.That(result.Error, Does.Contain("timed out"));
             });
         }
@@ -272,13 +272,13 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             Assert.Multiple(() =>
             {
-                Assert.That(result.Success, Is.False);
+                Assert.That(result.IsSuccess, Is.False);
                 Assert.That(result.Error, Is.EqualTo("Operation was cancelled"));
             });
         }
 
         [Test]
-        public void ExecuteAsync_WithNonexistentCommand_ReturnsCommandNotFoundError()
+        public async Task ExecuteAsync_WithNonexistentCommand_ReturnsCommandNotFoundError()
         {
             using var fixture = new TestEnvironmentFixture();
             
@@ -287,13 +287,16 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var arguments = fixture.CreateEchoArguments();
             var workingDir = fixture.CreateValidWorkingDirectory();
 
-            Assert.ThrowsAsync<UnauthorizedAccessException>(async () =>
+            var result = await executor.ExecuteAsync(
+                nonExistentCommand,
+                arguments,
+                workingDir,
+                fixture.CancellationToken);
+
+            Assert.Multiple(() =>
             {
-                await executor.ExecuteAsync(
-                    nonExistentCommand,
-                    arguments,
-                    workingDir,
-                    fixture.CancellationToken);
+                Assert.That(result.IsSuccess, Is.False);
+                Assert.That(result.Error, Is.Not.Empty);
             });
         }
 
@@ -397,7 +400,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             Assert.Multiple(() =>
             {
-                Assert.That(result.Success, Is.True);
+                Assert.That(result.IsSuccess, Is.True);
                 Assert.That(result.Output, Does.Contain("Line1"));
                 Assert.That(result.Output, Does.Contain("Line2"));
                 Assert.That(result.Output, Does.Contain("Line3"));
@@ -405,7 +408,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         }
 
         [Test]
-        public void ExecuteAsync_WithInvalidWorkingDirectory_HandlesGracefully()
+        public async Task ExecuteAsync_WithInvalidWorkingDirectory_HandlesGracefully()
         {
             using var fixture = new TestEnvironmentFixture();
             
@@ -414,13 +417,16 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var command = fixture.CreateValidCommand();
             var arguments = fixture.CreateEchoArguments();
             
-            Assert.ThrowsAsync<UnauthorizedAccessException>(async () =>
+            var result = await executor.ExecuteAsync(
+                command,
+                arguments,
+                invalidDir,
+                fixture.CancellationToken);
+
+            Assert.Multiple(() =>
             {
-                await executor.ExecuteAsync(
-                    command,
-                    arguments,
-                    invalidDir,
-                    fixture.CancellationToken);
+                Assert.That(result.IsSuccess, Is.False);
+                Assert.That(result.Error, Is.Not.Empty);
             });
         }
 
@@ -439,7 +445,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 null!,
                 fixture.CancellationToken);
 
-            Assert.That(result.Success, Is.True);
+            Assert.That(result.IsSuccess, Is.True);
         }
     }
 }

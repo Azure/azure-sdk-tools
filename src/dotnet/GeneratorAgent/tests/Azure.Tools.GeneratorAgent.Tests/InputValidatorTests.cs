@@ -19,7 +19,6 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             public TestEnvironmentFixture()
             {
                 _mockLogger = new Mock<ILogger>();
-                InputValidator.SetLogger(_mockLogger.Object);
             }
 
             public Mock<ILogger> Logger => _mockLogger;
@@ -59,8 +58,8 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             using var fixture = new TestEnvironmentFixture();
             var result = InputValidator.ValidateDirTraversal(null);
 
-            Assert.That(result.IsValid, Is.False);
-            Assert.That(result.ErrorMessage, Is.EqualTo("path cannot be null or empty"));
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Error, Is.EqualTo("path cannot be null or empty"));
         }
 
         [Test]
@@ -69,8 +68,8 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             using var fixture = new TestEnvironmentFixture();
             var result = InputValidator.ValidateDirTraversal("");
 
-            Assert.That(result.IsValid, Is.False);
-            Assert.That(result.ErrorMessage, Is.EqualTo("path cannot be null or empty"));
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Error, Is.EqualTo("path cannot be null or empty"));
         }
 
         [Test]
@@ -79,8 +78,8 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             using var fixture = new TestEnvironmentFixture();
             var result = InputValidator.ValidateDirTraversal("   ");
 
-            Assert.That(result.IsValid, Is.False);
-            Assert.That(result.ErrorMessage, Is.EqualTo("path cannot be null or empty"));
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Error, Is.EqualTo("path cannot be null or empty"));
         }
 
         [Test]
@@ -89,7 +88,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             using var fixture = new TestEnvironmentFixture();
             var result = InputValidator.ValidateDirTraversal("~/malicious");
 
-            Assert.That(result.IsValid, Is.True);
+            Assert.That(result.IsSuccess, Is.True);
             Assert.That(result.Value, Is.EqualTo("~/malicious"));
         }
 
@@ -110,7 +109,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             {
                 var result = InputValidator.ValidateDirTraversal(path);
 
-                Assert.That(result.IsValid, Is.True, $"Path '{path}' should be valid");
+                Assert.That(result.IsSuccess, Is.True, $"Path '{path}' should be valid");
                 Assert.That(result.Value, Is.EqualTo(path));
             }
         }
@@ -133,7 +132,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             {
                 var result = InputValidator.ValidateDirTraversal(path);
 
-                Assert.That(result.IsValid, Is.True, $"Path '{path}' should be valid");
+                Assert.That(result.IsSuccess, Is.True, $"Path '{path}' should be valid");
                 Assert.That(result.Value, Is.EqualTo(path));
             }
         }
@@ -144,7 +143,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             using var fixture = new TestEnvironmentFixture();
             var result = InputValidator.ValidateDirTraversal("../malicious", "custom path type");
 
-            Assert.That(result.IsValid, Is.True);
+            Assert.That(result.IsSuccess, Is.True);
             Assert.That(result.Value, Is.EqualTo("../malicious"));
         }
 
@@ -155,8 +154,8 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             using var fixture = new TestEnvironmentFixture();
             var result = InputValidator.ValidateTypeSpecDir(null);
 
-            Assert.That(result.IsValid, Is.False);
-            Assert.That(result.ErrorMessage, Is.EqualTo("TypeSpec path cannot be null or empty"));
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Error, Is.EqualTo("TypeSpec path cannot be null or empty"));
         }
 
         [Test]
@@ -165,8 +164,8 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             using var fixture = new TestEnvironmentFixture();
             var result = InputValidator.ValidateTypeSpecDir("");
 
-            Assert.That(result.IsValid, Is.False);
-            Assert.That(result.ErrorMessage, Is.EqualTo("TypeSpec path cannot be null or empty"));
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Error, Is.EqualTo("TypeSpec path cannot be null or empty"));
         }
 
         [Test]
@@ -175,8 +174,8 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             using var fixture = new TestEnvironmentFixture();
             var result = InputValidator.ValidateTypeSpecDir("../../../malicious");
 
-            Assert.That(result.IsValid, Is.False);
-            Assert.That(result.ErrorMessage, Does.Contain("TypeSpec directory not found"));
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Error, Does.Contain("TypeSpec directory not found"));
         }
 
         [Test]
@@ -189,7 +188,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
 
             var result = InputValidator.ValidateTypeSpecDir(validPath, isLocalPath: true);
 
-            Assert.That(result.IsValid, Is.True);
+            Assert.That(result.IsSuccess, Is.True);
             Assert.That(result.Value, Is.EqualTo(validPath));
         }
 
@@ -199,7 +198,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             using var fixture = new TestEnvironmentFixture();
             var result = InputValidator.ValidateTypeSpecDir("specs/data-plane", isLocalPath: false);
 
-            Assert.That(result.IsValid, Is.True);
+            Assert.That(result.IsSuccess, Is.True);
             Assert.That(result.Value, Is.EqualTo("specs/data-plane"));
         }
 
@@ -211,8 +210,8 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
 
             var result = InputValidator.ValidateTypeSpecDir(nonExistentPath, isLocalPath: true);
 
-            Assert.That(result.IsValid, Is.False);
-            Assert.That(result.ErrorMessage, Does.Contain("TypeSpec directory not found"));
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Error, Does.Contain("TypeSpec directory not found"));
         }
 
         [Test]
@@ -226,8 +225,8 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
 
             var result = InputValidator.ValidateTypeSpecDir(filePath, isLocalPath: true);
 
-            Assert.That(result.IsValid, Is.False);
-            Assert.That(result.ErrorMessage, Does.Contain("TypeSpec directory not found"));
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Error, Does.Contain("TypeSpec directory not found"));
         }
 
         [Test]
@@ -243,10 +242,10 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
 
             var result = InputValidator.ValidateTypeSpecDir(testDir, isLocalPath: true);
 
-            Assert.That(result.IsValid, Is.False);
-            Assert.That(result.ErrorMessage, Does.Contain("Directory contains non-TypeSpec files"));
-            Assert.That(result.ErrorMessage, Does.Contain("readme.txt"));
-            Assert.That(result.ErrorMessage, Does.Contain("script.js"));
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Error, Does.Contain("Directory contains non-TypeSpec files"));
+            Assert.That(result.Error, Does.Contain("readme.txt"));
+            Assert.That(result.Error, Does.Contain("script.js"));
         }
 
         [Test]
@@ -258,8 +257,8 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
 
             var result = InputValidator.ValidateTypeSpecDir(testDir, isLocalPath: true);
 
-            Assert.That(result.IsValid, Is.False);
-            Assert.That(result.ErrorMessage, Does.Contain("No .tsp or .yaml files found in directory"));
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Error, Does.Contain("No .tsp or .yaml files found in directory"));
         }
 
         [Test]
@@ -268,8 +267,8 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             using var fixture = new TestEnvironmentFixture();
             var result = InputValidator.ValidateTypeSpecDir("/invalid/path", isLocalPath: false);
 
-            Assert.That(result.IsValid, Is.False);
-            Assert.That(result.ErrorMessage, Is.EqualTo("Repository path cannot start with / or \\"));
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Error, Is.EqualTo("Repository path cannot start with / or \\"));
         }
 
         [Test]
@@ -278,8 +277,8 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             using var fixture = new TestEnvironmentFixture();
             var result = InputValidator.ValidateTypeSpecDir("\\invalid\\path", isLocalPath: false);
 
-            Assert.That(result.IsValid, Is.False);
-            Assert.That(result.ErrorMessage, Is.EqualTo("Repository path cannot start with / or \\"));
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Error, Is.EqualTo("Repository path cannot start with / or \\"));
         }
 
         [Test]
@@ -289,10 +288,10 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             var result1 = InputValidator.ValidateTypeSpecDir("specs//data-plane", isLocalPath: false);
             var result2 = InputValidator.ValidateTypeSpecDir("specs\\\\data-plane", isLocalPath: false);
 
-            Assert.That(result1.IsValid, Is.False);
-            Assert.That(result1.ErrorMessage, Is.EqualTo("Repository path contains invalid double separators"));
-            Assert.That(result2.IsValid, Is.False);
-            Assert.That(result2.ErrorMessage, Is.EqualTo("Repository path contains invalid double separators"));
+            Assert.That(result1.IsSuccess, Is.False);
+            Assert.That(result1.Error, Is.EqualTo("Repository path contains invalid double separators"));
+            Assert.That(result2.IsSuccess, Is.False);
+            Assert.That(result2.Error, Is.EqualTo("Repository path contains invalid double separators"));
         }
 
         [Test]
@@ -301,7 +300,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             using var fixture = new TestEnvironmentFixture();
             var result = InputValidator.ValidateTypeSpecDir("specs\\data-plane", isLocalPath: false);
 
-            Assert.That(result.IsValid, Is.True);
+            Assert.That(result.IsSuccess, Is.True);
             Assert.That(result.Value, Is.EqualTo("specs/data-plane"));
         }
 
@@ -312,7 +311,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             using var fixture = new TestEnvironmentFixture();
             var result = InputValidator.ValidateCommitId(null);
 
-            Assert.That(result.IsValid, Is.True);
+            Assert.That(result.IsSuccess, Is.True);
             Assert.That(result.Value, Is.EqualTo(string.Empty));
         }
 
@@ -322,7 +321,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             using var fixture = new TestEnvironmentFixture();
             var result = InputValidator.ValidateCommitId("");
 
-            Assert.That(result.IsValid, Is.True);
+            Assert.That(result.IsSuccess, Is.True);
             Assert.That(result.Value, Is.EqualTo(string.Empty));
         }
 
@@ -332,7 +331,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             using var fixture = new TestEnvironmentFixture();
             var result = InputValidator.ValidateCommitId("   ");
 
-            Assert.That(result.IsValid, Is.True);
+            Assert.That(result.IsSuccess, Is.True);
             Assert.That(result.Value, Is.EqualTo(string.Empty));
         }
 
@@ -353,7 +352,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             {
                 var result = InputValidator.ValidateCommitId(commitId);
 
-                Assert.That(result.IsValid, Is.True, $"Commit ID '{commitId}' should be valid");
+                Assert.That(result.IsSuccess, Is.True, $"Commit ID '{commitId}' should be valid");
                 Assert.That(result.Value, Is.EqualTo(commitId));
             }
         }
@@ -376,8 +375,8 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             {
                 var result = InputValidator.ValidateCommitId(commitId);
 
-                Assert.That(result.IsValid, Is.False, $"Commit ID '{commitId}' should be invalid");
-                Assert.That(result.ErrorMessage, Does.Contain("Commit ID must be 6-40 hexadecimal characters"));
+                Assert.That(result.IsSuccess, Is.False, $"Commit ID '{commitId}' should be invalid");
+                Assert.That(result.Error, Does.Contain("Commit ID must be 6-40 hexadecimal characters"));
             }
         }
 
@@ -387,8 +386,8 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             using var fixture = new TestEnvironmentFixture();
             var result = InputValidator.ValidateOutputDirectory(null);
 
-            Assert.That(result.IsValid, Is.False);
-            Assert.That(result.ErrorMessage, Is.EqualTo("Output directory path cannot be null or empty"));
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Error, Is.EqualTo("Output directory path cannot be null or empty"));
         }
 
         [Test]
@@ -397,8 +396,8 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             using var fixture = new TestEnvironmentFixture();
             var result = InputValidator.ValidateOutputDirectory("");
 
-            Assert.That(result.IsValid, Is.False);
-            Assert.That(result.ErrorMessage, Is.EqualTo("Output directory path cannot be null or empty"));
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Error, Is.EqualTo("Output directory path cannot be null or empty"));
         }
 
         [Test]
@@ -409,8 +408,8 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             
             var result = InputValidator.ValidateOutputDirectory(nonExistentParent);
 
-            Assert.That(result.IsValid, Is.False);
-            Assert.That(result.ErrorMessage, Does.Contain("Parent directory does not exist"));
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Error, Does.Contain("Parent directory does not exist"));
         }
 
         [Test]
@@ -422,7 +421,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
 
             var result = InputValidator.ValidateOutputDirectory(validPath);
 
-            Assert.That(result.IsValid, Is.True);
+            Assert.That(result.IsSuccess, Is.True);
             Assert.That(result.Value, Is.EqualTo(validPath));
         }
 
@@ -434,7 +433,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
 
             var result = InputValidator.ValidateOutputDirectory(nonExistentPath);
 
-            Assert.That(result.IsValid, Is.True);
+            Assert.That(result.IsSuccess, Is.True);
             Assert.That(result.Value, Is.EqualTo(nonExistentPath));
         }
 
@@ -447,8 +446,8 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
 
             var result = InputValidator.ValidatePowerShellScriptPath(null!, azureSdkPath);
 
-            Assert.That(result.IsValid, Is.False);
-            Assert.That(result.ErrorMessage, Is.EqualTo("PowerShell script path cannot be null or empty"));
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Error, Is.EqualTo("PowerShell script path cannot be null or empty"));
         }
 
         [Test]
@@ -459,8 +458,8 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
 
             var result = InputValidator.ValidatePowerShellScriptPath("", azureSdkPath);
 
-            Assert.That(result.IsValid, Is.False);
-            Assert.That(result.ErrorMessage, Is.EqualTo("PowerShell script path cannot be null or empty"));
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Error, Is.EqualTo("PowerShell script path cannot be null or empty"));
         }
 
         [Test]
@@ -471,8 +470,8 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
 
             var result = InputValidator.ValidatePowerShellScriptPath("script.bat", azureSdkPath);
 
-            Assert.That(result.IsValid, Is.False);
-            Assert.That(result.ErrorMessage, Is.EqualTo("PowerShell script must have .ps1 extension"));
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Error, Is.EqualTo("PowerShell script must have .ps1 extension"));
         }
 
         [Test]
@@ -488,7 +487,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
 
             var result = InputValidator.ValidatePowerShellScriptPath("scripts/test.ps1", azureSdkPath);
 
-            Assert.That(result.IsValid, Is.True);
+            Assert.That(result.IsSuccess, Is.True);
             Assert.That(result.Value, Is.EqualTo(Path.Combine(azureSdkPath, "scripts/test.ps1")));
         }
 
@@ -502,8 +501,8 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
 
             var result = InputValidator.ValidatePowerShellScriptPath(scriptPath, azureSdkPath);
 
-            Assert.That(result.IsValid, Is.False);
-            Assert.That(result.ErrorMessage, Does.Contain("PowerShell script not found"));
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Error, Does.Contain("PowerShell script not found"));
         }
 
         [Test]
@@ -515,8 +514,8 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
 
             var result = InputValidator.ValidatePowerShellScriptPath(scriptPath, azureSdkPath);
 
-            Assert.That(result.IsValid, Is.False);
-            Assert.That(result.ErrorMessage, Does.Contain("PowerShell script not found"));
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Error, Does.Contain("PowerShell script not found"));
         }
 
 
@@ -525,7 +524,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
         {
             var result = InputValidator.ValidateProcessArguments(null!);
 
-            Assert.That(result.IsValid, Is.True);
+            Assert.That(result.IsSuccess, Is.True);
             Assert.That(result.Value, Is.EqualTo(string.Empty));
         }
 
@@ -534,7 +533,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
         {
             var result = InputValidator.ValidateProcessArguments("");
 
-            Assert.That(result.IsValid, Is.True);
+            Assert.That(result.IsSuccess, Is.True);
             Assert.That(result.Value, Is.EqualTo(""));
         }
 
@@ -553,7 +552,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             {
                 var result = InputValidator.ValidateProcessArguments(args);
 
-                Assert.That(result.IsValid, Is.True, $"Arguments '{args}' should be valid");
+                Assert.That(result.IsSuccess, Is.True, $"Arguments '{args}' should be valid");
                 Assert.That(result.Value, Is.EqualTo(args));
             }
         }
@@ -575,8 +574,8 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             {
                 var result = InputValidator.ValidateProcessArguments(args);
 
-                Assert.That(result.IsValid, Is.False, $"Arguments '{args}' should be invalid");
-                Assert.That(result.ErrorMessage, Does.Contain("Arguments contain command separator:"));
+                Assert.That(result.IsSuccess, Is.False, $"Arguments '{args}' should be invalid");
+                Assert.That(result.Error, Does.Contain("Arguments contain command separator:"));
             }
         }
 
@@ -594,8 +593,8 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
                 var testArg = $"safe-command {separator} other-arg";
                 var result = InputValidator.ValidateProcessArguments(testArg);
 
-                Assert.That(result.IsValid, Is.False, $"Separator '{separator}' should be detected as dangerous");
-                Assert.That(result.ErrorMessage, Does.Contain($"Arguments contain command separator: {separator}"));
+                Assert.That(result.IsSuccess, Is.False, $"Separator '{separator}' should be detected as dangerous");
+                Assert.That(result.Error, Does.Contain($"Arguments contain command separator: {separator}"));
             }
         }
 
@@ -614,8 +613,8 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             {
                 var result = InputValidator.ValidateProcessArguments(args);
 
-                Assert.That(result.IsValid, Is.False, $"Arguments '{args}' should be invalid (case insensitive)");
-                Assert.That(result.ErrorMessage, Does.Contain("Arguments contain command separator:"));
+                Assert.That(result.IsSuccess, Is.False, $"Arguments '{args}' should be invalid (case insensitive)");
+                Assert.That(result.Error, Does.Contain("Arguments contain command separator:"));
             }
         }
 
@@ -625,7 +624,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             using var fixture = new TestEnvironmentFixture();
             var result = InputValidator.ValidateWorkingDirectory(null);
 
-            Assert.That(result.IsValid, Is.True);
+            Assert.That(result.IsSuccess, Is.True);
             Assert.That(result.Value, Is.EqualTo(Directory.GetCurrentDirectory()));
         }
 
@@ -635,7 +634,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             using var fixture = new TestEnvironmentFixture();
             var result = InputValidator.ValidateWorkingDirectory("");
 
-            Assert.That(result.IsValid, Is.True);
+            Assert.That(result.IsSuccess, Is.True);
             Assert.That(result.Value, Is.EqualTo(Directory.GetCurrentDirectory()));
         }
 
@@ -645,8 +644,8 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             using var fixture = new TestEnvironmentFixture();
             var result = InputValidator.ValidateWorkingDirectory("../../../malicious");
 
-            Assert.That(result.IsValid, Is.False);
-            Assert.That(result.ErrorMessage, Does.Contain("Working directory does not exist").Or.Contains("Invalid working directory path"));
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Error, Does.Contain("Working directory does not exist").Or.Contains("Invalid working directory path"));
         }
 
         [Test]
@@ -658,7 +657,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
 
             var result = InputValidator.ValidateWorkingDirectory(validPath);
 
-            Assert.That(result.IsValid, Is.True);
+            Assert.That(result.IsSuccess, Is.True);
             Assert.That(result.Value, Is.EqualTo(validPath));
         }
 
@@ -670,22 +669,8 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
 
             var result = InputValidator.ValidateWorkingDirectory(nonExistentDir);
 
-            Assert.That(result.IsValid, Is.False);
-            Assert.That(result.ErrorMessage, Does.Contain("Working directory does not exist"));
-        }
-
-        [Test]
-        public void SetLogger_WithNullLogger_ShouldThrowArgumentNullException()
-        {
-            Assert.Throws<ArgumentNullException>(() => InputValidator.SetLogger(null!));
-        }
-
-        [Test]
-        public void SetLogger_WithValidLogger_ShouldNotThrow()
-        {
-            var logger = new Mock<ILogger>().Object;
-
-            Assert.DoesNotThrow(() => InputValidator.SetLogger(logger));
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Error, Does.Contain("Working directory does not exist"));
         }
 
         [Test]
@@ -696,8 +681,8 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
 
             var result = InputValidator.ValidateTypeSpecDir(invalidPath, isLocalPath: true);
 
-            Assert.That(result.IsValid, Is.False);
-            Assert.That(result.ErrorMessage, Does.Contain("TypeSpec directory not found").Or.Contains("Invalid path format"));
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Error, Does.Contain("TypeSpec directory not found").Or.Contains("Invalid path format"));
         }
 
         [Test]
@@ -708,8 +693,8 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
 
             var result = InputValidator.ValidateOutputDirectory(invalidPath);
 
-            Assert.That(result.IsValid, Is.False);
-            Assert.That(result.ErrorMessage, Does.Contain("Parent directory does not exist").Or.Contains("Invalid path format"));
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Error, Does.Contain("Parent directory does not exist").Or.Contains("Invalid path format"));
         }
     }
 }

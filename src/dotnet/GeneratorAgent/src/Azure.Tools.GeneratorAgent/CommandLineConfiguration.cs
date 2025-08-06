@@ -61,26 +61,15 @@ namespace Azure.Tools.GeneratorAgent
 
         internal int ValidateInput(string? typespecDir, string? commitId, string sdkDir)
         {
-            try
+            Result<ValidationContext> result = ValidationContext.TryValidateAndCreate(typespecDir, commitId, sdkDir, Logger);
+            
+            if (result.IsFailure)
             {
-                ValidationContext validationContext = ValidationContext.ValidateAndCreate(typespecDir, commitId, sdkDir, Logger);
-
-                Logger.LogInformation("All input validation completed successfully");
-                return ExitCodeSuccess;
+                Logger.LogError("Input validation failed: {Error}", result.Error);
+                return ExitCodeFailure;
             }
-            catch (ArgumentException ex)
-            {
-                Logger.LogError("Input validation failed: {Error}", ex.Message);
-            }
-            catch (InvalidOperationException ex)
-            {
-                Logger.LogError("Configuration validation failed: {Error}", ex.Message);
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Unexpected error during input validation");
-            }
-            return ExitCodeFailure;
+            
+            return ExitCodeSuccess;
         } 
     }
 }

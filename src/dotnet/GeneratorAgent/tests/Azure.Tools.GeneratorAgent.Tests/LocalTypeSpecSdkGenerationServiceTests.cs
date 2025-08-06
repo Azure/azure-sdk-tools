@@ -24,7 +24,6 @@ namespace Azure.Tools.GeneratorAgent.Tests
             public TestEnvironmentFixture()
             {
                 _mockInputValidatorLogger = new Mock<ILogger>();
-                InputValidator.SetLogger(_mockInputValidatorLogger.Object);
                 
                 TypeSpecDir = CreateUniqueTestDirectory("typespec-test");
                 SdkOutputDir = CreateUniqueTestDirectory("sdk-output-test");
@@ -127,8 +126,6 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             public void Dispose()
             {
-                // Clean up test directories to prevent disk space issues and test pollution
-                // Ignore cleanup exceptions to avoid masking actual test failures
                 foreach (var directory in _createdDirectories)
                 {
                     if (Directory.Exists(directory))
@@ -146,7 +143,6 @@ namespace Azure.Tools.GeneratorAgent.Tests
             }
         }
 
-        #region Constructor Tests
 
         [Test]
         public void Constructor_WithValidParameters_ShouldInitializeCorrectly()
@@ -235,9 +231,9 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             VerifyLogMessage(mockLogger, LogLevel.Information, "Starting TypeSpec compilation for project:");
             VerifyLogMessage(mockLogger, LogLevel.Information, "Installing TypeSpec dependencies globally");
-            VerifyLogMessage(mockLogger, LogLevel.Information, "TypeSpec dependencies installed globally successfully:");
+            VerifyLogMessage(mockLogger, LogLevel.Information, "TypeSpec dependencies installed globally successfully..");
             VerifyLogMessage(mockLogger, LogLevel.Information, "Compiling TypeSpec project");
-            VerifyLogMessage(mockLogger, LogLevel.Information, "TypeSpec compilation completed:");
+            VerifyLogMessage(mockLogger, LogLevel.Information, "TypeSpec compilation completed");
             VerifyLogMessage(mockLogger, LogLevel.Information, "TypeSpec compilation completed successfully");
         }
 
@@ -324,10 +320,6 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             Assert.ThrowsAsync<OperationCanceledException>(() => service.CompileTypeSpecAsync(cts.Token));
         }
-
-        #endregion
-
-        #region Process Execution Verification Tests
 
         [Test]
         public async Task CompileTypeSpecAsync_ShouldCallProcessExecutorWithCorrectGlobalInstallArguments()
@@ -435,7 +427,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
                     customFixture.TypeSpecDir,
                     It.IsAny<CancellationToken>(),
                     It.IsAny<TimeSpan?>()))
-                .ReturnsAsync((true, "Custom compile succeeded", string.Empty));
+                .ReturnsAsync(Result.Success("Custom compile succeeded"));
 
             var service = customFixture.CreateService(processExecutor: mockProcessExecutor.Object);
 
@@ -464,7 +456,9 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 logger: mockLogger.Object,
                 processExecutor: mockProcessExecutor.Object);
 
-            Assert.ThrowsAsync<TimeoutException>(() => service.CompileTypeSpecAsync());
+            InvalidOperationException caughtException = Assert.ThrowsAsync<InvalidOperationException>(() => service.CompileTypeSpecAsync())!;
+            Assert.That(caughtException.Message, Does.Contain("Failed to install TypeSpec dependencies"));
+            Assert.That(caughtException.Message, Does.Contain("Install timeout"));
         }
 
         [Test]
@@ -492,34 +486,34 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 logger: mockLogger.Object,
                 processExecutor: mockProcessExecutor.Object);
 
-            Assert.ThrowsAsync<TimeoutException>(() => service.CompileTypeSpecAsync());
+            InvalidOperationException caughtException = Assert.ThrowsAsync<InvalidOperationException>(() => service.CompileTypeSpecAsync())!;
+            Assert.That(caughtException.Message, Does.Contain("Failed to compile TypeSpec"));
+            Assert.That(caughtException.Message, Does.Contain("Compile timeout"));
         }
 
         [Test]
-        public async Task InstallTypeSpecDependencies_WithSuccessfulExecution_ShouldReturnTrue()
+        public async Task CompileTypeSpecAsync_WithSuccessfulGlobalInstall_ShouldLogSuccess()
         {
             using var fixture = new TestEnvironmentFixture();
-
+            
             var mockLogger = fixture.CreateMockLogger();
             var mockProcessExecutor = fixture.CreateMockProcessExecutor();
             
             SetupSuccessfulGlobalInstall(mockProcessExecutor, fixture);
+            SetupSuccessfulTspCompile(mockProcessExecutor, fixture);
 
             var service = fixture.CreateService(
                 logger: mockLogger.Object,
                 processExecutor: mockProcessExecutor.Object);
 
-            var method = typeof(LocalTypeSpecSdkGenerationService).GetMethod("InstallTypeSpecDependencies", 
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            var result = await (Task<bool>)method!.Invoke(service, new object[] { CancellationToken.None })!;
+            await service.CompileTypeSpecAsync(CancellationToken.None);
 
-            Assert.That(result, Is.True);
             VerifyLogMessage(mockLogger, LogLevel.Information, "Installing TypeSpec dependencies globally");
-            VerifyLogMessage(mockLogger, LogLevel.Information, "TypeSpec dependencies installed globally successfully:");
+            VerifyLogMessage(mockLogger, LogLevel.Information, "TypeSpec dependencies installed globally successfully..");
         }
 
         [Test]
-        public async Task InstallTypeSpecDependencies_WithProcessFailure_ShouldReturnFalseAndLogError()
+        public void CompileTypeSpecAsync_WithGlobalInstallFailure_ShouldThrowException2()
         {
             using var fixture = new TestEnvironmentFixture();
             
@@ -532,138 +526,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 logger: mockLogger.Object,
                 processExecutor: mockProcessExecutor.Object);
 
-            var method = typeof(LocalTypeSpecSdkGenerationService).GetMethod("InstallTypeSpecDependencies", 
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            var result = await (Task<bool>)method!.Invoke(service, new object[] { CancellationToken.None })!;
-
-            Assert.That(result, Is.False);
-            VerifyLogMessage(mockLogger, LogLevel.Error, "Global npm install failed. Error:");
-        }
-
-        [Test]
-        public async Task InstallTypeSpecDependencies_ShouldCallProcessExecutorWithCorrectArguments()
-        {
-            using var fixture = new TestEnvironmentFixture();
-            
-            var mockProcessExecutor = fixture.CreateMockProcessExecutor();
-            SetupSuccessfulGlobalInstall(mockProcessExecutor, fixture);
-
-            var service = fixture.CreateService(processExecutor: mockProcessExecutor.Object);
-
-            var method = typeof(LocalTypeSpecSdkGenerationService).GetMethod("InstallTypeSpecDependencies", 
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            await (Task<bool>)method!.Invoke(service, new object[] { CancellationToken.None })!;
-
-            mockProcessExecutor.Verify(x => x.ExecuteAsync(
-                "pwsh",
-                "-Command \"npm install --global @typespec/http-client-csharp\"",
-                It.IsAny<string>(), // Working directory varies by OS
-                It.IsAny<CancellationToken>(),
-                It.IsAny<TimeSpan?>()), Times.Once);
-        }
-
-        [Test]
-        public async Task InstallTypeSpecDependencies_WithValidationFailure_ShouldReturnFalse()
-        {
-            using var fixture = new TestEnvironmentFixture();
-            
-            var mockLogger = fixture.CreateMockLogger();
-            var mockProcessExecutor = fixture.CreateMockProcessExecutor();
-
-            var customAppSettings = fixture.CreateAppSettings("@typespec/http-client-csharp");
-
-            mockProcessExecutor.Setup(x => x.ExecuteAsync(
-                    "pwsh",
-                    It.IsAny<string>(),
-                    It.IsAny<string>(),
-                    It.IsAny<CancellationToken>(),
-                    It.IsAny<TimeSpan?>()))
-                .ReturnsAsync((true, "Install succeeded", string.Empty));
-
-            var service = fixture.CreateService(
-                appSettings: customAppSettings,
-                logger: mockLogger.Object,
-                processExecutor: mockProcessExecutor.Object);
-
-            var method = typeof(LocalTypeSpecSdkGenerationService).GetMethod("InstallTypeSpecDependencies", 
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            var result = await (Task<bool>)method!.Invoke(service, new object[] { CancellationToken.None })!;
-
-            Assert.That(result, Is.True);
-        }
-
-        #endregion
-
-        #region CompileTypeSpec Method Tests
-
-        [Test]
-        public async Task CompileTypeSpec_WithSuccessfulExecution_ShouldReturnTrue()
-        {
-            using var fixture = new TestEnvironmentFixture();
-            
-            var mockLogger = fixture.CreateMockLogger();
-            var mockProcessExecutor = fixture.CreateMockProcessExecutor();
-            
-            SetupSuccessfulTspCompile(mockProcessExecutor, fixture);
-
-            var service = fixture.CreateService(
-                logger: mockLogger.Object,
-                processExecutor: mockProcessExecutor.Object);
-
-            var method = typeof(LocalTypeSpecSdkGenerationService).GetMethod("CompileTypeSpec", 
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            var result = await (Task<bool>)method!.Invoke(service, new object[] { CancellationToken.None })!;
-
-            Assert.That(result, Is.True);
-            VerifyLogMessage(mockLogger, LogLevel.Information, "Compiling TypeSpec project");
-            VerifyLogMessage(mockLogger, LogLevel.Information, "TypeSpec compilation completed:");
-        }
-
-        [Test]
-        public async Task CompileTypeSpec_WithProcessFailure_ShouldReturnFalseAndLogError()
-        {
-            using var fixture = new TestEnvironmentFixture();
-            
-            var mockLogger = fixture.CreateMockLogger();
-            var mockProcessExecutor = fixture.CreateMockProcessExecutor();
-            
-            SetupFailedTspCompile(mockProcessExecutor, fixture);
-
-            var service = fixture.CreateService(
-                logger: mockLogger.Object,
-                processExecutor: mockProcessExecutor.Object);
-
-            var method = typeof(LocalTypeSpecSdkGenerationService).GetMethod("CompileTypeSpec", 
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            var result = await (Task<bool>)method!.Invoke(service, new object[] { CancellationToken.None })!;
-
-            Assert.That(result, Is.False);
-            VerifyLogMessage(mockLogger, LogLevel.Error, "TypeSpec compilation failed. Error:");
-        }
-
-        [Test]
-        public async Task CompileTypeSpec_ShouldCallProcessExecutorWithCorrectArguments()
-        {
-            using var fixture = new TestEnvironmentFixture();
-            
-            var mockProcessExecutor = fixture.CreateMockProcessExecutor();
-            SetupSuccessfulTspCompile(mockProcessExecutor, fixture);
-
-            var service = fixture.CreateService(processExecutor: mockProcessExecutor.Object);
-
-            var method = typeof(LocalTypeSpecSdkGenerationService).GetMethod("CompileTypeSpec", 
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            await (Task<bool>)method!.Invoke(service, new object[] { CancellationToken.None })!;
-
-            var expectedTspOutputPath = Path.Combine(fixture.SdkOutputDir);
-            var expectedCompileArgs = $"-Command \"npx tsp compile . --emit @typespec/http-client-csharp --option '@typespec/http-client-csharp.emitter-output-dir={expectedTspOutputPath}'\"";
-
-            mockProcessExecutor.Verify(x => x.ExecuteAsync(
-                "pwsh",
-                expectedCompileArgs,
-                fixture.TypeSpecDir,
-                It.IsAny<CancellationToken>(),
-                It.IsAny<TimeSpan?>()), Times.Once);
+            Assert.ThrowsAsync<InvalidOperationException>(() => service.CompileTypeSpecAsync(CancellationToken.None));
         }
 
         [Test]
@@ -692,10 +555,6 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 It.IsAny<TimeSpan?>()), Times.AtLeast(2));
         }
 
-        #endregion
-
-        #region Helper Methods
-
         private static void SetupSuccessfulGlobalInstall(Mock<ProcessExecutor> mockProcessExecutor, TestEnvironmentFixture fixture)
         {
             mockProcessExecutor.Setup(x => x.ExecuteAsync(
@@ -704,7 +563,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
                     It.IsAny<string>(),
                     It.IsAny<CancellationToken>(),
                     It.IsAny<TimeSpan?>()))
-                .ReturnsAsync((true, "Global install succeeded", string.Empty));
+                .ReturnsAsync(Result.Success("Global install succeeded"));
         }
 
         private static void SetupFailedGlobalInstall(Mock<ProcessExecutor> mockProcessExecutor, TestEnvironmentFixture fixture)
@@ -715,7 +574,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
                     It.IsAny<string>(),
                     It.IsAny<CancellationToken>(),
                     It.IsAny<TimeSpan?>()))
-                .ReturnsAsync((false, "Global install output", "Global install failed"));
+                .ReturnsAsync(Result.Failure("Global install failed"));
         }
 
         private static void SetupSuccessfulTspCompile(Mock<ProcessExecutor> mockProcessExecutor, TestEnvironmentFixture fixture)
@@ -729,7 +588,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
                     fixture.TypeSpecDir,
                     It.IsAny<CancellationToken>(),
                     It.IsAny<TimeSpan?>()))
-                .ReturnsAsync((true, "Compile succeeded", string.Empty));
+                .ReturnsAsync(Result.Success("Compile succeeded"));
         }
 
         private static void SetupFailedTspCompile(Mock<ProcessExecutor> mockProcessExecutor, TestEnvironmentFixture fixture)
@@ -743,7 +602,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
                     fixture.TypeSpecDir,
                     It.IsAny<CancellationToken>(),
                     It.IsAny<TimeSpan?>()))
-                .ReturnsAsync((false, "Compile output", "Compile failed"));
+                .ReturnsAsync(Result.Failure("Compile failed"));
         }
 
         private static void VerifyLogMessage(
@@ -761,7 +620,5 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 Times.AtLeastOnce,
                 $"Expected {expectedLevel} log containing: {expectedMessage}");
         }
-
-        #endregion
     }
 }

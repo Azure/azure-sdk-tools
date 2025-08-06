@@ -390,42 +390,17 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 var formattedCodeownersEntry = codeownerHelper.formatCodeownersEntry(response.path, response.serviceLabel, serviceOwners, sourceOwners);
                 var modifiedCodeownersContent = codeownerHelper.addCodeownersEntryAtIndex(content, formattedCodeownersEntry, insertionIndex);
 
-                // Step 3: Use existing branch or create new one, then update file.
-                List<string> resultMessages = new();
-
-                var branchName = "";
-
-                // Check if we have a working branch from SDK generation
-                if (!string.IsNullOrEmpty(workingBranch) && await githubService.GetBranchAsync("Azure", response.fullRepoName, workingBranch))
-                {
-                    // Reuse the existing branch from SDK generation
-                    branchName = workingBranch;
-                    var createBranchInfo = $"Using existing branch: {branchName}";
-                    resultMessages.Add(createBranchInfo);
-                }
-                else
-                {
-                    // Create a new branch only if no working branch exists
-                    branchName = codeownerHelper.CreateBranchName("add-codeowner-entry", response.path ?? response.serviceLabel);
-                    var createBranchInfo = await githubService.CreateBranchAsync("Azure", response.fullRepoName, branchName);
-                    resultMessages.Add($"Created branch: {branchName} - Status: {createBranchInfo}"); 
-                }
-
-                await githubService.UpdateFileAsync("Azure", response.fullRepoName, ".github/CODEOWNERS", $"Add codeowner entry for {response.path ?? response.serviceLabel}", modifiedCodeownersContent, sha, branchName);
-
-                // Step 4: Handle PR creation or update existing PR
-                var existingPR = await githubService.GetPullRequestForBranchAsync("Azure", response.fullRepoName, branchName);
-                if (existingPR != null)
-                {
-                    // PR already exists - the file update will automatically be added to it
-                    resultMessages.Add($"Codeowner changes added to existing PR #{existingPR.Number}: {existingPR.HtmlUrl}");
-                }
-                else
-                {
-                    // No existing PR - create a new one if needed
-                    var prInfoList = await githubService.CreatePullRequestAsync(response.fullRepoName, "Azure", "main", branchName, $"Add codeowner entry for {response.path ?? response.serviceLabel}", $"Add codeowner entry for {response.path ?? response.serviceLabel}", true);
-                    resultMessages.AddRange(prInfoList);
-                }
+                // Step 3: Create branch, update file, and handle PR
+                var resultMessages = await CreateCodeownerPR(
+                    response.fullRepoName,                             // Full repository name
+                    modifiedCodeownersContent,                         // Modified content
+                    sha,                                               // SHA of the file to update
+                    $"Add codeowner entry for {response.serviceLabel ?? response.path}", // Commit message
+                    $"Add codeowner entry for {response.serviceLabel ?? response.path}", // PR title
+                    $"Add codeowner entry for {response.serviceLabel ?? response.path}", // PR description
+                    "add-codeowner-entry",                             // Branch prefix for the action
+                    response.serviceLabel ?? response.path,            // Identifier for the PR
+                    workingBranch);
 
                 return string.Join("\n", resultMessages);
             }
@@ -495,48 +470,20 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
                 var modifiedContent = await ModifyCodeownersEntryLines(lines, targetEntry, response.serviceOwners, response.sourceOwners, isAdding);
 
-                // Step 5: Branch management and file update
-                List<string> resultMessages = new();
-
-                var branchName = "";
-
-                // Check if we have a working branch from SDK generation
-                if (!string.IsNullOrEmpty(workingBranch) && await githubService.GetBranchAsync("Azure", response.fullRepoName, workingBranch))
-                {
-                    // Reuse the existing branch from SDK generation
-                    branchName = workingBranch;
-                    resultMessages.Add($"Using existing branch: {branchName}");
-                }
-                else
-                {
-                    // Create a new branch only if no working branch exists
-                    var actionType = isAdding ? "add-codeowner-alias" : "remove-codeowner-alias";
-                    branchName = codeownerHelper.CreateBranchName(actionType, targetEntry.PathExpression ?? serviceLabel);
-                    var createBranchResult = await githubService.CreateBranchAsync("Azure", response.fullRepoName, branchName);
-                    resultMessages.Add($"Created branch: {branchName} - Status: {createBranchResult}");
-                }
-
-                // Update file
+                // Step 5: Create branch, update file, and handle PR
                 var actionDescription = isAdding ? "Add codeowner aliases for" : "Remove codeowner aliases for";
-                await githubService.UpdateFileAsync("Azure", response.fullRepoName, ".github/CODEOWNERS",
-                    $"{actionDescription} {targetEntry.PathExpression ?? serviceLabel}",
-                    string.Join('\n', modifiedContent), sha, branchName);
-
-                // Step 6: Handle PR creation or update existing PR
-                var existingPR = await githubService.GetPullRequestForBranchAsync("Azure", response.fullRepoName, branchName);
-                if (existingPR != null)
-                {
-                    // PR already exists - the file update will automatically be added to it
-                    resultMessages.Add($"Codeowner changes added to existing PR #{existingPR.Number}: {existingPR.HtmlUrl}");
-                }
-                else
-                {
-                    // No existing PR - create a new one if needed
-                    var prInfoList = await githubService.CreatePullRequestAsync(response.fullRepoName, "Azure", "main", branchName,
-                        $"{actionDescription} {targetEntry.PathExpression ?? serviceLabel}",
-                        $"{actionDescription} {targetEntry.PathExpression ?? serviceLabel}", true);
-                    resultMessages.AddRange(prInfoList);
-                }
+                var actionType = isAdding ? "add-codeowner-alias" : "remove-codeowner-alias";
+                
+                var resultMessages = await CreateCodeownerPR(
+                    response.fullRepoName,                                  // Full repository name
+                    string.Join('\n', modifiedContent),                     // Modified content
+                    sha,                                                    // SHA of the file to update 
+                    $"{actionDescription} {targetEntry.ServiceLabel ?? targetEntry.PathExpression}", // Commit message
+                    $"{actionDescription} {targetEntry.ServiceLabel ?? targetEntry.PathExpression}", // PR title
+                    $"{actionDescription} {targetEntry.ServiceLabel ?? targetEntry.PathExpression}", // PR description
+                    actionType,                                             // Branch prefix for the action
+                    targetEntry.ServiceLabel ?? targetEntry.PathExpression, // Identifier for the PR
+                    workingBranch);
 
                 return string.Join("\n", resultMessages);
             }
@@ -545,6 +492,54 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 logger.LogError(ex, "Error in UpdateCodeowners");
                 return $"Error: {ex.Message}";
             }
+        }
+
+        private async Task<List<string>> CreateCodeownerPR(
+            string fullRepoName,
+            string modifiedContent,
+            string sha,
+            string commitMessage,
+            string prTitle,
+            string prDescription,
+            string branchPrefix,
+            string identifier,
+            string workingBranch = null)
+        {
+            List<string> resultMessages = new();
+            var branchName = "";
+
+            // Check if we have a working branch from SDK generation
+            if (!string.IsNullOrEmpty(workingBranch) && await githubService.GetBranchAsync("Azure", fullRepoName, workingBranch))
+            {
+                branchName = workingBranch;
+                resultMessages.Add($"Using existing branch: {branchName}");
+            }
+            else
+            {
+                // Create a new branch only if no working branch exists
+                branchName = codeownerHelper.CreateBranchName(branchPrefix, identifier);
+                var createBranchResult = await githubService.CreateBranchAsync("Azure", fullRepoName, branchName);
+                resultMessages.Add($"Created branch: {branchName} - Status: {createBranchResult}");
+            }
+
+            // Update file
+            await githubService.UpdateFileAsync("Azure", fullRepoName, ".github/CODEOWNERS", commitMessage, modifiedContent, sha, branchName);
+
+            // Handle PR creation or update existing PR
+            var existingPR = await githubService.GetPullRequestForBranchAsync("Azure", fullRepoName, branchName);
+            if (existingPR != null)
+            {
+                // PR already exists - the file update will automatically be added to it
+                resultMessages.Add($"Codeowner changes added to existing PR #{existingPR.Number}: {existingPR.HtmlUrl}");
+            }
+            else
+            {
+                // No existing PR - create a new one if needed
+                var prInfoList = await githubService.CreatePullRequestAsync(fullRepoName, "Azure", "main", branchName, prTitle, prDescription, true);
+                resultMessages.AddRange(prInfoList);
+            }
+
+            return resultMessages;
         }
 
         private async Task<List<string>> ModifyCodeownersEntryLines(

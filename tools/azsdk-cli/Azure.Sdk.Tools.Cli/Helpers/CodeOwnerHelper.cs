@@ -120,10 +120,6 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                     {
                         index = 0;
                     }
-                    else
-                    {
-                        index--;
-                    }
                 }
             }
             return (codeownersEntries, index);
@@ -229,45 +225,51 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             var (serviceLabel1, PRLabel1) = GetPrimaryLabel(entry1);
             var (serviceLabel2, PRLabel2) = GetPrimaryLabel(entry2);
 
-            // First priority: Compare by service label
-            if (!string.IsNullOrEmpty(serviceLabel1) && !string.IsNullOrEmpty(serviceLabel2))
-            {
-                return string.Equals(serviceLabel1.Replace("%", "").Trim(), serviceLabel2.Replace("%", "").Trim(), StringComparison.OrdinalIgnoreCase);
-            }
-
-            // Second priority: Compare service label to PR label
-            if (!string.IsNullOrEmpty(serviceLabel1) && !string.IsNullOrEmpty(PRLabel2))
-            {
-                return string.Equals(serviceLabel1.Replace("%", "").Trim(), PRLabel2.Replace("%", "").Trim(), StringComparison.OrdinalIgnoreCase);
-            }
-
-            if (!string.IsNullOrEmpty(PRLabel1) && !string.IsNullOrEmpty(serviceLabel2))
-            {
-                return string.Equals(PRLabel1.Replace("%", "").Trim(), serviceLabel2.Replace("%", "").Trim(), StringComparison.OrdinalIgnoreCase);
-            }
-
-            // Third priority: Compare by path
-            if (!string.IsNullOrEmpty(path1) && !string.IsNullOrEmpty(path2))
-            {
-                var dir1 = ExtractDirectoryName(path1);
-                var dir2 = ExtractDirectoryName(path2);
-
-                return string.Equals(dir1, dir2, StringComparison.OrdinalIgnoreCase);
-            }
-
-            // Fourth priority: Compare path to service label (for cases where one has path, other has service label)
+            // 1: Compare paths to service labels
             if (!string.IsNullOrEmpty(path1) && !string.IsNullOrEmpty(serviceLabel2))
             {
                 var dirName = ExtractDirectoryName(path1);
-                return serviceLabel2.Contains(dirName, StringComparison.OrdinalIgnoreCase) ||
-                       dirName.Contains(serviceLabel2.Replace("%", "").Trim(), StringComparison.OrdinalIgnoreCase);
+                if (serviceLabel2.Contains(dirName, StringComparison.OrdinalIgnoreCase) ||
+                    dirName.Contains(serviceLabel2.Replace("%", "").Trim(), StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
             }
 
             if (!string.IsNullOrEmpty(path2) && !string.IsNullOrEmpty(serviceLabel1))
             {
                 var dirName = ExtractDirectoryName(path2);
-                return serviceLabel1.Contains(dirName, StringComparison.OrdinalIgnoreCase) ||
-                       dirName.Contains(serviceLabel1.Replace("%", "").Trim(), StringComparison.OrdinalIgnoreCase);
+                if (serviceLabel1.Contains(dirName, StringComparison.OrdinalIgnoreCase) ||
+                    dirName.Contains(serviceLabel1.Replace("%", "").Trim(), StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            // 2: Compare service label to PR label
+            if (!string.IsNullOrEmpty(serviceLabel1) && !string.IsNullOrEmpty(PRLabel2))
+            {
+                if (string.Equals(serviceLabel1.Replace("%", "").Trim(), PRLabel2.Replace("%", "").Trim(), StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(PRLabel1) && !string.IsNullOrEmpty(serviceLabel2))
+            {
+                if (string.Equals(PRLabel1.Replace("%", "").Trim(), serviceLabel2.Replace("%", "").Trim(), StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            // 3: Compare by service label
+            if (!string.IsNullOrEmpty(serviceLabel1) && !string.IsNullOrEmpty(serviceLabel2))
+            {
+                if (string.Equals(serviceLabel1.Replace("%", "").Trim(), serviceLabel2.Replace("%", "").Trim(), StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
             }
 
             return false;

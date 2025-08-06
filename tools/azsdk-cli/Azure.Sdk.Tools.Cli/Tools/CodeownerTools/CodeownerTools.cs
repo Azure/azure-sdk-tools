@@ -28,7 +28,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
     {
         private static ConcurrentDictionary<string, CodeOwnerValidationResult> codeOwnerValidationCache = new ConcurrentDictionary<string, CodeOwnerValidationResult>();
         private static readonly string mgmtPlaneCategory = "# Management Plane SDKs";
-        private static readonly string dataPlaneCategory = "# Client SDKs";
+        private static readonly string dataPlaneCategory = "# Client Libraries";
         private static readonly Dictionary<string, (string RepoName, string ServiceCategory)> azureRepositories = new()
         {
             { "dotnet", ("azure-sdk-for-net", "# ######## Services ########") },
@@ -179,9 +179,9 @@ namespace Azure.Sdk.Tools.Cli.Tools
                         validateRepoPath);
                     output.Output(validateResult);
                     return;
-                // case mockToolCommandName:
-                //     await MockTool();
-                //     return;
+                case mockToolCommandName:
+                    await MockTool();
+                    return;
                 default:
                     SetFailure();
                     output.OutputError($"Unknown command: '{command}'");
@@ -805,70 +805,164 @@ namespace Azure.Sdk.Tools.Cli.Tools
             public List<string> ValidationMessages { get; set; }
         }
 
-        // [McpServerTool(Name = "mocktool"), Description("Does mock stuff.")]
-        // public async Task MockTool()
-        // {
-        //     try
-        //     {
-        //         var fileContent = await githubService.GetContentsAsync("Azure", "azure-sdk-for-net", ".github/CODEOWNERS");
+        [McpServerTool(Name = "mocktool"), Description("Does mock stuff.")]
+        public async Task MockTool()
+        {
+            /*try
+            {
+                // Create three CodeownersEntry objects for the specified entries
+                var selfHelpEntry = new CodeownersEntry
+                {
+                    PathExpression = "/sdk/selfhelp/Azure.ResourceManager.*\/",
+                    PRLabels = new List<string> { "%Self Help" },
+                    SourceOwners = new List<string> { "@ArcturusZhang", "@ArthurMa1978" },
+                    ServiceLabels = new List<string>(),
+                    ServiceOwners = new List<string>(),
+                    AzureSdkOwners = new List<string>(),
+                    startLine = 1135,
+                    endLine = 1136
+                };
 
-        //         if (fileContent == null || fileContent.Count == 0)
-        //         {
-        //             logger.LogError("Could not retrieve CODEOWNERS file");
-        //             return;
-        //         }
+                var serviceFabricPathEntry = new CodeownersEntry
+                {
+                    PathExpression = "/sdk/servicefabric/Azure.ResourceManager.*\/",
+                    PRLabels = new List<string> { "%Service Fabric" },
+                    SourceOwners = new List<string> { "@QingChenmsft", "@vaishnavk", "@juhacket" },
+                    ServiceLabels = new List<string>(),
+                    ServiceOwners = new List<string>(),
+                    AzureSdkOwners = new List<string>(),
+                    startLine = 1138,
+                    endLine = 1139
+                };
 
-        //         var content = fileContent[0].Content;
-        //         var (startLine, endLine) = codeownerHelper.findBlock(content, "# ######## Services ########");
-        //         logger.LogInformation($"start = {startLine}, end = {endLine}");
+                var serviceFabricServiceEntry = new CodeownersEntry
+                {
+                    PathExpression = "",
+                    PRLabels = new List<string>(),
+                    SourceOwners = new List<string>(),
+                    ServiceLabels = new List<string> { "%Service Fabric" },
+                    ServiceOwners = new List<string> { "@QingChenmsft", "@vaishnavk", "@juhacket" },
+                    AzureSdkOwners = new List<string>(),
+                    startLine = 1141,
+                    endLine = 1142
+                };
 
-        //         var codeownersUrl = $"https://raw.githubusercontent.com/Azure/azure-sdk-for-net/main/.github/CODEOWNERS";
-        //         var codeownersEntries = CodeownersParser.ParseCodeownersFile(codeownersUrl, startLine : startLine, endLine : endLine);
+                List<CodeownersEntry> codeownersEntries = new() { selfHelpEntry, serviceFabricPathEntry, serviceFabricServiceEntry };
 
-        //         for (int i = 0; i < codeownersEntries.Count; i++)
-        //         {
-        //             (codeownersEntries, i) = codeownerHelper.mergeCodeownerEntries(codeownersEntries, i);
-        //         }
+                // Log the entries for verification
+                logger.LogInformation($"Created Self Help entry: {selfHelpEntry.PathExpression} with PR label: {string.Join(", ", selfHelpEntry.PRLabels)}");
+                logger.LogInformation($"Created Service Fabric path entry: {serviceFabricPathEntry.PathExpression} with PR label: {string.Join(", ", serviceFabricPathEntry.PRLabels)}");
+                logger.LogInformation($"Created Service Fabric service entry with service label: {string.Join(", ", serviceFabricServiceEntry.ServiceLabels)}\n");
 
-        //         // Create our custom comparer and sort the entries
-        //         var comparer = new CodeownersEntryPathComparer();
-        //         var sortedEntries = codeownersEntries.OrderBy(entry => entry, comparer).ToList();
+                for (int i = 0; i < codeownersEntries.Count; i++)
+                {
+                    (codeownersEntries, i) = codeownerHelper.mergeCodeownerEntries(codeownersEntries, i);
+                }
 
-        //         // Write the sorted entries to a new file
-        //         var outputPath = "./Tools/CodeownerTools/CODEOWNER_EDITED";
-        //         var outputLines = new List<string>();
+                for (int i = 0; i < codeownersEntries.Count; i++)
+                {
+                    logger.LogInformation(codeownersEntries[i].FormatCodeownersEntry());
+                }
+            }
+            catch (Exception ex)
+            {
+                return;
+            }*/
 
-        //         var lines = content.Split('\n');
+            try
+            {
+                var fileContent = await githubService.GetContentsAsync("Azure", "azure-sdk-for-net", ".github/CODEOWNERS");
 
-        //         for (int i = 0; i < startLine + 2; i++)
-        //         {
-        //             outputLines.Add(lines[i]);
-        //         }
+                if (fileContent == null || fileContent.Count == 0)
+                {
+                    logger.LogError("Could not retrieve CODEOWNERS file");
+                    return;
+                }
 
-        //         foreach (var entry in sortedEntries)
-        //         {
-        //             var formattedEntry = entry.FormatCodeownersEntry();
-        //             if (!string.IsNullOrWhiteSpace(formattedEntry))
-        //             {
-        //                 outputLines.Add(formattedEntry);
-        //                 outputLines.Add("");
-        //             }
-        //         }
+                var content = fileContent[0].Content;
+                var (startLine, endLine) = codeownerHelper.findBlock(content, "# ######## Services ########");
+                logger.LogInformation($"start = {startLine}, end = {endLine}");
 
-        //         for (int i = endLine; i < lines.Length; i++)
-        //         {
-        //             outputLines.Add(lines[i]);
-        //         }
+                var codeownersUrl = $"https://raw.githubusercontent.com/Azure/azure-sdk-for-net/main/.github/CODEOWNERS";
+                var codeownersEntries = CodeownersParser.ParseCodeownersFile(codeownersUrl, startLine: startLine, endLine: endLine);
 
-        //         // Write all lines to the file
-        //         await File.WriteAllLinesAsync(outputPath, outputLines);
+                for (int i = 0; i < codeownersEntries.Count; i++)
+                {
+                    (codeownersEntries, i) = codeownerHelper.mergeCodeownerEntries(codeownersEntries, i);
+                }
 
-        //         logger.LogInformation($"Successfully wrote {sortedEntries.Count} sorted entries to {outputPath}");
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         logger.LogInformation($"Error: {ex}");
-        //     }
-        // }
+                // Create our custom comparer and sort the entries
+                var comparer = new CodeownersEntryPathComparer();
+                var sortedEntries = codeownersEntries.OrderBy(entry => entry, comparer).ToList();
+
+                var (mstartLine, mendLine) = codeownerHelper.findBlock(content, "# ######## Management Plane ########");
+                logger.LogInformation($"start = {mstartLine}, end = {mendLine}");
+
+                var mcodeownersEntries = CodeownersParser.ParseCodeownersFile(codeownersUrl, startLine: mstartLine, endLine: mendLine);
+
+                for (int i = 0; i < mcodeownersEntries.Count; i++)
+                {
+                    (mcodeownersEntries, i) = codeownerHelper.mergeCodeownerEntries(mcodeownersEntries, i);
+                }
+
+                // Create our custom comparer and sort the entries
+                var msortedEntries = mcodeownersEntries.OrderBy(entry => entry, comparer).ToList();
+
+                // Write the sorted entries to a new file
+                var outputPath = "./Tools/CodeownerTools/CODEOWNER_EDITED";
+                var outputLines = new List<string>();
+
+                var lines = content.Split('\n');
+
+                // Add everything before the Services section
+                for (int i = 0; i < startLine + 2; i++)
+                {
+                    outputLines.Add(lines[i]);
+                }
+
+                // Add sorted Services entries
+                foreach (var entry in sortedEntries)
+                {
+                    var formattedEntry = entry.FormatCodeownersEntry();
+                    if (!string.IsNullOrWhiteSpace(formattedEntry))
+                    {
+                        outputLines.Add(formattedEntry);
+                        outputLines.Add("");
+                    }
+                }
+
+                // Add everything between Services section end and Management Plane section start
+                for (int i = endLine; i < mstartLine + 2; i++)
+                {
+                    outputLines.Add(lines[i]);
+                }
+
+                // Add sorted Management Plane entries
+                foreach (var entry in msortedEntries)
+                {
+                    var formattedEntry = entry.FormatCodeownersEntry();
+                    if (!string.IsNullOrWhiteSpace(formattedEntry))
+                    {
+                        outputLines.Add(formattedEntry);
+                        outputLines.Add("");
+                    }
+                }
+
+                // Add everything after the Management Plane section
+                for (int i = mendLine; i < lines.Length; i++)
+                {
+                    outputLines.Add(lines[i]);
+                }
+
+                // Write all lines to the file
+                await File.WriteAllLinesAsync(outputPath, outputLines);
+
+                logger.LogInformation($"Successfully wrote {sortedEntries.Count} sorted services entries and {msortedEntries.Count} sorted management plane entries to {outputPath}");
+            }
+            catch (Exception ex)
+            {
+                logger.LogInformation($"Error: {ex}");
+            }
+        }
     }
 }

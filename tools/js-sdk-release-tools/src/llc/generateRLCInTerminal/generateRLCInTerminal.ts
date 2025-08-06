@@ -40,7 +40,7 @@ export async function buildGeneratedCodes(sdkrepo: string, packagePath: string, 
         logger.info(`Start to build '${packageName}', except for tests and samples, which may be written manually`);
         // To build generated codes except test and sample, we need to change tsconfig.json.
         changeConfigOfTestAndSample(packagePath, ChangeModel.Change, SdkType.Rlc);
-        execSync(`pnpm build --filter ${packageName}`, {stdio: 'inherit'});
+        execSync(`pnpm build --filter ${packageName}...`, {stdio: 'inherit'});
         changeConfigOfTestAndSample(packagePath, ChangeModel.Revert, SdkType.Rlc);
         shell.cd(packagePath);
         logger.info(`Start to Generate changelog.`);

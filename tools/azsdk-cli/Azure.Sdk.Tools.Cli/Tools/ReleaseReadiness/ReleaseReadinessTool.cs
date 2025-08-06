@@ -25,7 +25,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
         public override Command GetCommand()
         {
-            var command = new Command("releaseReadiness", "Checks release readiness of a SDK package.") { packageNameOpt, languageOpt };
+            var command = new Command("release-readiness", "Checks release readiness of a SDK package.") { packageNameOpt, languageOpt };
             command.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
             return command;
         }

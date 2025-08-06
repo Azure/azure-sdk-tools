@@ -410,9 +410,9 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     repo,                                              // Repository name
                     string.Join('\n', modifiedContent),                     // Modified content
                     sha,                                                    // SHA of the file to update 
-                    $"{actionDescription} {targetEntry.ServiceLabels.FirstOrDefault() ?? targetEntry.PathExpression}", // Description for commit message, PR title, and description
+                    $"{actionDescription} {targetEntry.ServiceLabels?.FirstOrDefault() ?? targetEntry.PathExpression}", // Description for commit message, PR title, and description
                     actionType,                                             // Branch prefix for the action
-                    targetEntry.ServiceLabels.FirstOrDefault() ?? targetEntry.PathExpression, // Identifier for the PR
+                    targetEntry.ServiceLabels?.FirstOrDefault() ?? targetEntry.PathExpression, // Identifier for the PR
                     workingBranch);
 
                 return string.Join("\n", resultMessages);

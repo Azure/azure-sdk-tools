@@ -121,7 +121,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public async Task DependencyCheckFixTool_WithValidPath_ReturnsSuccessfulResult()
         {
             // Arrange
-            var fixTool = new DependencyCheckFixTool(_mockDependencyCheckFixLogger.Object);
+            var fixTool = new DependencyCheckFixTool(_mockDependencyCheckFixLogger.Object, _mockOutputService.Object);
 
             // Act
             var result = await fixTool.FixDependencyCheckValidation(_testProjectPath);
@@ -136,7 +136,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public async Task ChangelogValidationFixTool_WithValidPath_ReturnsFailureResult()
         {
             // Arrange
-            var fixTool = new ChangelogValidationFixTool(_mockChangelogValidationFixLogger.Object);
+            var fixTool = new ChangelogValidationFixTool(_mockChangelogValidationFixLogger.Object, _mockOutputService.Object);
 
             // Act - Using empty temp directory will cause tool to fail (no CHANGELOG.md)
             var result = await fixTool.FixChangelogValidation(_testProjectPath);
@@ -158,7 +158,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public async Task ChangelogValidationFixTool_WithChangelogFile_ReturnsSuccessfulResult()
         {
             // Arrange
-            var fixTool = new ChangelogValidationFixTool(_mockChangelogValidationFixLogger.Object);
+            var fixTool = new ChangelogValidationFixTool(_mockChangelogValidationFixLogger.Object, _mockOutputService.Object);
             var changelogPath = Path.Combine(_testProjectPath, "CHANGELOG.md");
             await File.WriteAllTextAsync(changelogPath, "# Changelog\n\n## 1.0.0\n\n- Initial release\n");
 

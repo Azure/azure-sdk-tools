@@ -3,6 +3,9 @@ parameters:
   type: string
   default: '3.10'
 
+pool:
+  name: '1ESHostedPool'
+
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
   parameters:

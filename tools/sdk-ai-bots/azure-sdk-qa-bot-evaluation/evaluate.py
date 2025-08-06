@@ -16,7 +16,7 @@ async def process_file(input_file: str, output_file: str, is_bot: bool) -> None:
     bot_service_endpoint = os.environ.get("BOT_SERVICE_ENDPOINT", None) 
     api_url = f"{bot_service_endpoint}/completion" if bot_service_endpoint is not None else "http://localhost:8088/completion"
     start_time = time.time()
-    outputFile = open("output/"+output_file, 'a', encoding='utf-8')
+    outputFile = open(output_file, 'a', encoding='utf-8')
     with open(input_file, "r", encoding="utf-8") as f:
         for line in f:
             record = json.loads(line)
@@ -86,7 +86,8 @@ async def prepare_dataset(testdata_dir: str, file_prefix: str = None, is_bot: bo
         return None
     
     current_date = datetime.now().strftime("%Y_%m_%d")
-    output_file = f"collected_qa_{current_date}.jsonl"
+    output_file_name = f"collected_qa_{current_date}.jsonl"
+    output_file = os.path.join(output_dir.absolute(), output_file_name)
     print(f"📄 Output file will be: {output_file}")
 
     

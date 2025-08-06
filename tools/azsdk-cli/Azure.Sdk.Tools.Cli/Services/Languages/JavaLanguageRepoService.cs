@@ -13,7 +13,7 @@ public class JavaLanguageRepoService : LanguageRepoService
     {
     }
 
-    public override async Task<IOperationResult> AnalyzeDependenciesAsync()
+    public override async Task<ICLICheckResponse> AnalyzeDependenciesAsync()
     {
         try
         {
@@ -40,7 +40,7 @@ public class JavaLanguageRepoService : LanguageRepoService
         }
     }
 
-    public override async Task<IOperationResult> FormatCodeAsync()
+    public override async Task<ICLICheckResponse> FormatCodeAsync()
     {
         try
         {
@@ -67,7 +67,7 @@ public class JavaLanguageRepoService : LanguageRepoService
         }
     }
 
-    public override async Task<IOperationResult> LintCodeAsync()
+    public override async Task<ICLICheckResponse> LintCodeAsync()
     {
         try
         {
@@ -94,7 +94,7 @@ public class JavaLanguageRepoService : LanguageRepoService
         }
     }
 
-    public override async Task<IOperationResult> RunTestsAsync()
+    public override async Task<ICLICheckResponse> RunTestsAsync()
     {
         try
         {
@@ -121,7 +121,7 @@ public class JavaLanguageRepoService : LanguageRepoService
         }
     }
 
-    public override async Task<IOperationResult> BuildProjectAsync()
+    public override async Task<ICLICheckResponse> BuildProjectAsync()
     {
         try
         {
@@ -151,7 +151,7 @@ public class JavaLanguageRepoService : LanguageRepoService
     /// <summary>
     /// Try to run a Maven command and return the result.
     /// </summary>
-    private async Task<IOperationResult> TryRunMavenCommand(string arguments)
+    private async Task<ICLICheckResponse> TryRunMavenCommand(string arguments)
     {
         try
         {
@@ -159,14 +159,14 @@ public class JavaLanguageRepoService : LanguageRepoService
         }
         catch
         {
-            return new FailureResult(1, "Maven command failed or mvn not found", "Maven not available");
+            return new FailureCLICheckResponse(1, "Maven command failed or mvn not found", "Maven not available");
         }
     }
 
     /// <summary>
     /// Try to run a Gradle command and return the result.
     /// </summary>
-    private async Task<IOperationResult> TryRunGradleCommand(string arguments)
+    private async Task<ICLICheckResponse> TryRunGradleCommand(string arguments)
     {
         try
         {
@@ -181,14 +181,14 @@ public class JavaLanguageRepoService : LanguageRepoService
         }
         catch
         {
-            return new FailureResult(1, "Gradle command failed or gradle not found", "Gradle not available");
+            return new FailureCLICheckResponse(1, "Gradle command failed or gradle not found", "Gradle not available");
         }
     }
 
     /// <summary>
     /// Helper method to run command line tools asynchronously.
     /// </summary>
-    private async Task<IOperationResult> RunCommandAsync(string fileName, string arguments)
+    private async Task<ICLICheckResponse> RunCommandAsync(string fileName, string arguments)
     {
         using var process = new Process();
         process.StartInfo.FileName = fileName;
@@ -225,11 +225,11 @@ public class JavaLanguageRepoService : LanguageRepoService
 
         if (process.ExitCode == 0)
         {
-            return new SuccessResult(process.ExitCode, output);
+            return new SuccessCLICheckResponse(process.ExitCode, output);
         }
         else
         {
-            return new FailureResult(process.ExitCode, output, error);
+            return new FailureCLICheckResponse(process.ExitCode, output, error);
         }
     }
 }

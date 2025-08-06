@@ -63,7 +63,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
         }
 
         [McpServerTool(Name = "RunDependencyCheck"), Description("Run dependency check for SDK projects. Provide absolute path to project root as param.")]
-        public async Task<IOperationResult> RunDependencyCheck(string projectPath)
+        public async Task<ICLICheckResponse> RunDependencyCheck(string projectPath)
         {
             try
             {
@@ -72,12 +72,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                 if (!Directory.Exists(projectPath))
                 {
                     SetFailure(1);
-                    return new FailureResult(1, "", $"Project path does not exist: {projectPath}");
+                    return new FailureCLICheckResponse(1, "", $"Project path does not exist: {projectPath}");
                 }
 
                 // Use LanguageRepoService to detect language and run appropriate dependency analysis
                 var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-                IOperationResult result;
+                ICLICheckResponse result;
                 
                 try
                 {
@@ -100,10 +100,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                     logger.LogError(ex, "Error during language-specific dependency analysis");
                     SetFailure(1);
                     
-                    result = new FailureResult(1, $"Error during dependency analysis: {ex.Message}");
+                    result = new FailureCLICheckResponse(1, $"Error during dependency analysis: {ex.Message}");
                 }
 
-                return new SuccessResult(result.ExitCode, System.Text.Json.JsonSerializer.Serialize(new
+                return new SuccessCLICheckResponse(result.ExitCode, System.Text.Json.JsonSerializer.Serialize(new
                 {
                     Message = result.Output ?? "Dependency check completed",
                     Duration = stopwatch.ElapsedMilliseconds,
@@ -114,7 +114,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
             {
                 logger.LogError(ex, "Unhandled exception while running dependency check");
                 SetFailure(1);
-                return new FailureResult(1, "", $"Unhandled exception: {ex.Message}");
+                return new FailureCLICheckResponse(1, "", $"Unhandled exception: {ex.Message}");
             }
         }
     }

@@ -13,7 +13,7 @@ public class JavaScriptLanguageRepoService : LanguageRepoService
     {
     }
 
-    public override async Task<IOperationResult> AnalyzeDependenciesAsync()
+    public override async Task<ICLICheckResponse> AnalyzeDependenciesAsync()
     {
         try
         {
@@ -37,7 +37,7 @@ public class JavaScriptLanguageRepoService : LanguageRepoService
         }
     }
 
-    public override async Task<IOperationResult> FormatCodeAsync()
+    public override async Task<ICLICheckResponse> FormatCodeAsync()
     {
         try
         {
@@ -61,7 +61,7 @@ public class JavaScriptLanguageRepoService : LanguageRepoService
         }
     }
 
-    public override async Task<IOperationResult> LintCodeAsync()
+    public override async Task<ICLICheckResponse> LintCodeAsync()
     {
         try
         {
@@ -85,7 +85,7 @@ public class JavaScriptLanguageRepoService : LanguageRepoService
         }
     }
 
-    public override async Task<IOperationResult> RunTestsAsync()
+    public override async Task<ICLICheckResponse> RunTestsAsync()
     {
         try
         {
@@ -109,7 +109,7 @@ public class JavaScriptLanguageRepoService : LanguageRepoService
         }
     }
 
-    public override async Task<IOperationResult> BuildProjectAsync()
+    public override async Task<ICLICheckResponse> BuildProjectAsync()
     {
         try
         {

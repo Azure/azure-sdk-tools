@@ -52,7 +52,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                 var projectPath = ctx.ParseResult.GetValueForOption(projectPathOption);
                 var result = await RunAllChecks(projectPath);
 
-                // Convert IOperationResult to DefaultCommandResponse for output
+                // Convert ICLICheckResponse to DefaultCommandResponse for output
                 var response = new DefaultCommandResponse
                 {
                     Message = result.ExitCode == 0 ? "All checks completed successfully" : "Some checks failed",
@@ -76,7 +76,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
         }
 
         [McpServerTool(Name = "All"), Description("Run all validation checks for SDK projects. Provide absolute path to project root as param.")]
-        public async Task<IOperationResult> RunAllChecks(string projectPath)
+        public async Task<ICLICheckResponse> RunAllChecks(string projectPath)
         {
             try
             {
@@ -85,10 +85,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                 if (!Directory.Exists(projectPath))
                 {
                     SetFailure(1);
-                    return new FailureResult(1, "", $"Project path does not exist: {projectPath}");
+                    return new FailureCLICheckResponse(1, "", $"Project path does not exist: {projectPath}");
                 }
 
-                var results = new List<IOperationResult>();
+                var results = new List<ICLICheckResponse>();
                 var overallSuccess = true;
 
                 // Create DependencyCheckTool instance for dependency checking
@@ -115,18 +115,18 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                 var combinedOutput = string.Join("\n", results.Select(r => r.Output));
                 
                 return overallSuccess 
-                    ? new SuccessResult(0, combinedOutput) 
-                    : new FailureResult(1, combinedOutput, message);
+                    ? new SuccessCLICheckResponse(0, combinedOutput) 
+                    : new FailureCLICheckResponse(1, combinedOutput, message);
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Unhandled exception while running checks");
                 SetFailure(1);
-                return new FailureResult(1, "", $"Unhandled exception: {ex.Message}");
+                return new FailureCLICheckResponse(1, "", $"Unhandled exception: {ex.Message}");
             }
         }
 
-    private async Task<IOperationResult> RunChangelogValidation(string projectPath)
+    private async Task<ICLICheckResponse> RunChangelogValidation(string projectPath)
     {
         logger.LogInformation("Running changelog validation...");
         

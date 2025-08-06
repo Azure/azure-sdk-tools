@@ -13,7 +13,7 @@ public class GoLanguageRepoService : LanguageRepoService
     {
     }
 
-    public override async Task<IOperationResult> AnalyzeDependenciesAsync()
+    public override async Task<ICLICheckResponse> AnalyzeDependenciesAsync()
     {
         try
         {
@@ -26,7 +26,7 @@ public class GoLanguageRepoService : LanguageRepoService
             }
             else
             {
-                var errorMessage = result is FailureResult failure ? failure.Error : "";
+                var errorMessage = result is FailureCLICheckResponse failure ? failure.Error : "";
                 return CreateFailureResponse($"Dependency analysis failed with exit code {result.ExitCode}.\n{errorMessage}");
             }
         }
@@ -38,7 +38,7 @@ public class GoLanguageRepoService : LanguageRepoService
         }
     }
 
-    public override async Task<IOperationResult> FormatCodeAsync()
+    public override async Task<ICLICheckResponse> FormatCodeAsync()
     {
         try
         {
@@ -51,7 +51,7 @@ public class GoLanguageRepoService : LanguageRepoService
             }
             else
             {
-                var errorMessage = result is FailureResult failure ? failure.Error : "";
+                var errorMessage = result is FailureCLICheckResponse failure ? failure.Error : "";
                 return CreateFailureResponse($"Code formatting failed with exit code {result.ExitCode}.\n{errorMessage}");
             }
         }
@@ -63,7 +63,7 @@ public class GoLanguageRepoService : LanguageRepoService
         }
     }
 
-    public override async Task<IOperationResult> LintCodeAsync()
+    public override async Task<ICLICheckResponse> LintCodeAsync()
     {
         try
         {
@@ -87,7 +87,7 @@ public class GoLanguageRepoService : LanguageRepoService
         }
     }
 
-    public override async Task<IOperationResult> RunTestsAsync()
+    public override async Task<ICLICheckResponse> RunTestsAsync()
     {
         try
         {
@@ -111,7 +111,7 @@ public class GoLanguageRepoService : LanguageRepoService
         }
     }
 
-    public override async Task<IOperationResult> BuildProjectAsync()
+    public override async Task<ICLICheckResponse> BuildProjectAsync()
     {
         try
         {
@@ -124,7 +124,7 @@ public class GoLanguageRepoService : LanguageRepoService
             }
             else
             {
-                var errorMessage = result is FailureResult failure ? failure.Error : "";
+                var errorMessage = result is FailureCLICheckResponse failure ? failure.Error : "";
                 return CreateFailureResponse($"Project build failed with exit code {result.ExitCode}.\n{errorMessage}");
             }
         }
@@ -139,7 +139,7 @@ public class GoLanguageRepoService : LanguageRepoService
     /// <summary>
     /// Helper method to run command line tools asynchronously.
     /// </summary>
-    private async Task<IOperationResult> RunCommandAsync(string fileName, string arguments)
+    private async Task<ICLICheckResponse> RunCommandAsync(string fileName, string arguments)
     {
         using var process = new Process();
         process.StartInfo.FileName = fileName;
@@ -176,11 +176,11 @@ public class GoLanguageRepoService : LanguageRepoService
 
         if (process.ExitCode == 0)
         {
-            return new SuccessResult(process.ExitCode, output);
+            return new SuccessCLICheckResponse(process.ExitCode, output);
         }
         else
         {
-            return new FailureResult(process.ExitCode, output, error);
+            return new FailureCLICheckResponse(process.ExitCode, output, error);
         }
     }
 }

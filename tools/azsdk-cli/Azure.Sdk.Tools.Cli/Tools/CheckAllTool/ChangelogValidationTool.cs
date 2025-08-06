@@ -69,7 +69,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
         }
 
         [McpServerTool(Name = "RunChangelogValidation"), Description("Run changelog validation for SDK projects. Provide absolute path to project root as param.")]
-        public async Task<IOperationResult> RunChangelogValidation(string projectPath)
+        public async Task<ICLICheckResponse> RunChangelogValidation(string projectPath)
         {
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             
@@ -80,7 +80,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                 if (!Directory.Exists(projectPath))
                 {
                     SetFailure(1);
-                    return new FailureResult(1, "", $"Project path does not exist: {projectPath}");
+                    return new FailureCLICheckResponse(1, "", $"Project path does not exist: {projectPath}");
                 }
 
                 // Find the SDK repository root by looking for common repository indicators
@@ -89,7 +89,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                 if (string.IsNullOrEmpty(projectRepoRoot))
                 {
                     SetFailure(1);
-                    return new FailureResult(1, "", $"Could not find repository root from project path: {projectPath}");
+                    return new FailureCLICheckResponse(1, "", $"Could not find repository root from project path: {projectPath}");
                 }
 
                 // Construct the path to the PowerShell script in the SDK repository
@@ -99,7 +99,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                 if (!File.Exists(scriptPath))
                 {
                     SetFailure(1);
-                    return new FailureResult(1, "", $"PowerShell script not found at expected location: {scriptPath}");
+                    return new FailureCLICheckResponse(1, "", $"PowerShell script not found at expected location: {scriptPath}");
                 }
 
                 // Execute the PowerShell script
@@ -108,7 +108,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
 
                 if (result.Success)
                 {
-                    return new SuccessResult(0, System.Text.Json.JsonSerializer.Serialize(new
+                    return new SuccessCLICheckResponse(0, System.Text.Json.JsonSerializer.Serialize(new
                     {
                         Message = "Changelog validation completed successfully",
                         Duration = (int)stopwatch.ElapsedMilliseconds
@@ -117,7 +117,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                 else
                 {
                     SetFailure(1);
-                    return new FailureResult(1, "", result.ErrorMessage);
+                    return new FailureCLICheckResponse(1, "", result.ErrorMessage);
                 }
             }
             catch (Exception ex)
@@ -125,7 +125,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                 logger.LogError(ex, "Unhandled exception while running changelog validation");
                 stopwatch.Stop();
                 SetFailure(1);
-                return new FailureResult(1, "", $"Unhandled exception: {ex.Message}");
+                return new FailureCLICheckResponse(1, "", $"Unhandled exception: {ex.Message}");
             }
         }
 

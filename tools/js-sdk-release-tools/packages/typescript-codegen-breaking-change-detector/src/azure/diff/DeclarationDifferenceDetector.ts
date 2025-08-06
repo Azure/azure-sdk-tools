@@ -273,7 +273,7 @@ export class DeclarationDifferenceDetector {
           const removedPropName = removedProp.target?.name;
           if (!removedPropName) return false;
 
-          const matchingProp = addedPropTypeProperties.find((p: any) => p.getName() === removedPropName);
+          const matchingProp = addedPropTypeProperties.find((p: Symbol) => p.getName() === removedPropName);
           if (!matchingProp) return false;
 
           // Find the original removed property to compare types

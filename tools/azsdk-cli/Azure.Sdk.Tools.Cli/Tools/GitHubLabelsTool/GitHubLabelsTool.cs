@@ -95,7 +95,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 logger.LogError(ex, "Error occurred while checking service label: {serviceLabel}", serviceLabel);
                 return new ServiceLabelResponse
                 {
-                    ResponseError = $"Error occurred while checking service label: {serviceLabel}",
+                    ResponseError = $"Error occurred while checking service label: {serviceLabel}: {ex.Message}",
                 };
             }
         }

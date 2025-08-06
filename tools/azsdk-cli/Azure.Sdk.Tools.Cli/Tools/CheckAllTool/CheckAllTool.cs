@@ -94,7 +94,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                 // Create DependencyCheckTool instance for dependency checking
                 var dependencyCheckTool = new DependencyCheckTool(
                     Microsoft.Extensions.Logging.Abstractions.NullLogger<DependencyCheckTool>.Instance,
-                    output);
+                    output,
+                    gitHelper);
                 
                 var dependencyCheckResult = await dependencyCheckTool.RunDependencyCheck(projectPath);
                 

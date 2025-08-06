@@ -9,6 +9,7 @@ using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Helpers;
 using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
@@ -22,13 +23,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
     {
         private readonly ILogger<DependencyCheckTool> logger;
         private readonly IOutputService output;
+        private readonly IGitHelper gitHelper;
 
         private readonly Option<string> projectPathOption = new(["--project-path", "-p"], "Path to the project directory to check") { IsRequired = true };
 
-        public DependencyCheckTool(ILogger<DependencyCheckTool> logger, IOutputService output) : base()
+        public DependencyCheckTool(ILogger<DependencyCheckTool> logger, IOutputService output, IGitHelper gitHelper) : base()
         {
             this.logger = logger;
             this.output = output;
+            this.gitHelper = gitHelper;
             CommandHierarchy = [SharedCommandGroups.Checks];
         }
 
@@ -81,8 +84,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                 
                 try
                 {
+                    // Discover the repository root from the project path
+                    logger.LogInformation($"Discovering repository root from project path: {projectPath}");
+                    var repoRootPath = gitHelper.DiscoverRepoRoot(projectPath);
+                    logger.LogInformation($"Discovered repository root: {repoRootPath}");
+                    
                     // Create language service using factory (detects language automatically)
-                    var languageService = LanguageRepoServiceFactory.CreateService(projectPath);
+                    logger.LogInformation($"Creating language service for repository at: {repoRootPath}");
+                    var languageService = LanguageRepoServiceFactory.CreateService(repoRootPath, logger);
                     logger.LogInformation($"Created language service: {languageService.GetType().Name}");
                     
                     // Call AnalyzeDependencies method

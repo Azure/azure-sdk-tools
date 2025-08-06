@@ -10,11 +10,11 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// </summary>
 public class PythonLanguageRepoService : LanguageRepoService
 {
-    private readonly ILogger<PythonLanguageRepoService> _logger;
+    private readonly ILogger _logger;
 
-    public PythonLanguageRepoService(string repositoryPath, ILogger<PythonLanguageRepoService> logger) : base(repositoryPath)
+    public PythonLanguageRepoService(string repositoryPath, ILogger? logger = null) : base(repositoryPath)
     {
-        _logger = logger;
+        _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance;
     }
 
     public override async Task<ICLICheckResponse> AnalyzeDependenciesAsync()

@@ -20,7 +20,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspTool
     {
 
         // commands
-        private const string convertSwaggerCommandName = "convert-swagger";
+        private const string ConvertSwaggerCommandName = "convert-swagger";
 
         private readonly Option<string> outputDirectoryArg = new("--output-directory", "The output directory for the generated TypeSpec project. This directory must already exist and be empty.");
 
@@ -34,7 +34,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspTool
 
             var subCommands = new[]
             {
-                new Command(convertSwaggerCommandName, "Convert an existing Azure service swagger definition to a TypeSpec project") {
+                new Command(ConvertSwaggerCommandName, "Convert an existing Azure service swagger definition to a TypeSpec project") {
                     swaggerReadmeArg,
                     outputDirectoryArg,
                     isArmOption,
@@ -57,7 +57,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TspTool
 
             switch (command)
             {
-                case convertSwaggerCommandName:
+                case ConvertSwaggerCommandName:
                     await HandleConvertCommand(ctx, ct);
                     return 0;
                 default:

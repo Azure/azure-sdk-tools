@@ -486,7 +486,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                                 { "ConfigPath", $"{typespecProjectRoot}/tspconfig.yaml" },
                                 { "ApiVersion", apiVersion },
                                 { "sdkReleaseType", sdkReleaseType },
-                                { "SkipPullRequestCreation", "false" }
+                                { "CreatePullRequest", "true" }
                             }
             });
 

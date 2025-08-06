@@ -43,7 +43,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.HelloWorldTool
             await Task.CompletedTask;
         }
 
-        [McpServerTool(Name = "hello-world-fail"), Description("Echoes the message back to the client with a failure")]
+        [McpServerTool(Name = "hello_world_fail"), Description("Echoes the message back to the client with a failure")]
         public DefaultCommandResponse EchoFail(string message)
         {
             try
@@ -68,7 +68,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.HelloWorldTool
         }
 
 
-        [McpServerTool(Name = "hello-world"), Description("Echoes the message back to the client")]
+        [McpServerTool(Name = "hello_world"), Description("Echoes the message back to the client")]
         public DefaultCommandResponse EchoSuccess(string message)
         {
             try

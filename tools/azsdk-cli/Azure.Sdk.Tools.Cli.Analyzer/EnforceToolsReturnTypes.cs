@@ -38,24 +38,34 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
             // Get method symbol
             var methodSymbol = semanticModel.GetDeclaredSymbol(methodDeclaration) as IMethodSymbol;
             if (methodSymbol == null)
+            {
                 return;
+            }
 
             // Only analyze public non-static methods
             if (!methodSymbol.DeclaredAccessibility.HasFlag(Accessibility.Public) || methodSymbol.IsStatic)
+            {
                 return;
+            }
 
             // Only analyze methods in classes within Azure.Sdk.Tools.Cli.Tools namespace
             var containingType = methodSymbol.ContainingType;
             if (containingType?.ContainingNamespace == null)
+            {
                 return;
+            }
 
             var namespaceName = containingType.ContainingNamespace.ToDisplayString();
             if (!namespaceName.StartsWith("Azure.Sdk.Tools.Cli.Tools"))
+            {
                 return;
+            }
 
             // Exclude abstract methods and virtual methods that are likely from base classes
             if (methodSymbol.IsAbstract || methodSymbol.IsVirtual || methodSymbol.IsOverride)
+            {
                 return;
+            }
 
             // Exclude specific framework methods by name
             if (methodSymbol.Name == "GetCommand" || methodSymbol.Name == "HandleCommand")

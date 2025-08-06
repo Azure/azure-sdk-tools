@@ -75,7 +75,9 @@ async def prepare_dataset(testdata_dir: str, file_prefix: str = None, is_bot: bo
     """
     print("📁 Preparing dataset...")
     data_dir = Path(testdata_dir)
-    output_dir = Path("output")
+    script_directory = os.path.dirname(os.path.abspath(__file__))
+    print("Script directory:", script_directory)
+    output_dir = os.path.join(script_directory, "output")
     output_dir.mkdir(exist_ok=True)
     
     print(f"📂 Data directory: {data_dir.absolute()}")
@@ -86,7 +88,7 @@ async def prepare_dataset(testdata_dir: str, file_prefix: str = None, is_bot: bo
         return None
     
     current_date = datetime.now().strftime("%Y_%m_%d")
-    output_file_name = f"collected_qa_{current_date}.jsonl"
+    output_file_name = f"{file_prefix}_{current_date}.jsonl" if file_prefix else f"collected_qa_{current_date}.jsonl"
     output_file = os.path.join(output_dir.absolute(), output_file_name)
     print(f"📄 Output file will be: {output_file}")
 
@@ -148,8 +150,13 @@ if __name__ == "__main__":
     model_config: dict[str, str] = {
         "azure_endpoint": os.environ["AZURE_OPENAI_ENDPOINT"],
         "api_key": os.environ["AZURE_OPENAI_API_KEY"],
-        "azure_deployment": "gpt-4o",
-        "api_version": "2025-03-01-preview",
+        "azure_deployment": os.environ["AZURE_EVALUATION_MODEL_NAME"],
+        "api_version": os.environ["AZURE_API_VERSION"],
+    }
+    azure_ai_project = {
+        "subscription_id": os.environ["AZURE_SUBSCRIPTION_ID"],
+        "resource_group_name": os.environ["AZURE_FOUNDRY_RESOURCE_GROUP"],
+        "project_name": os.environ["AZURE_FOUNDRY_PROJECT_NAME"],
     }
     try: 
         print("📊 Preparing dataset...")
@@ -171,7 +178,7 @@ if __name__ == "__main__":
                 }
             },
             # Optionally provide your Azure AI Foundry project information to track your evaluation results in your project portal
-            azure_ai_project = azure_ai_project_endpoint,
+            azure_ai_project = azure_ai_project,
             # Optionally provide an output path to dump a json of metric summary, row level data and metric and Azure AI project URL
             output_path="./evalresults.json"
         )

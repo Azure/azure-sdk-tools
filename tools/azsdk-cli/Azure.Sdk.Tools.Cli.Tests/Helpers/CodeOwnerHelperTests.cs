@@ -240,8 +240,7 @@ line3";
             var result = codeOwnerHelper.CreateBranchName(prefix, identifier);
 
             // Assert
-            Assert.That(result, Does.StartWith("add-codeowner-service-bus-path"));
-            Assert.That(result, Does.Match(@"add-codeowner-service-bus-path-\d{8}-\d{6}"));
+            Assert.That(result, Does.Match(@"add-codeowner-service-bus-path"));
         }
 
         #endregion

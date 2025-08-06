@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
 {
@@ -15,7 +16,34 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
             if (x == null) return -1;
             if (y == null) return 1;
 
-            // First, compare by service label
+            // FIRST PRIORITY: Prioritize ** wildcards at the very top globally
+            string pathX = x.PathExpression ?? string.Empty;
+            string pathY = y.PathExpression ?? string.Empty;
+            
+            bool xHasDoubleWildcard = pathX.Contains("**");
+            bool yHasDoubleWildcard = pathY.Contains("**");
+
+            if (xHasDoubleWildcard && !yHasDoubleWildcard)
+            {
+                return -1; // x (with **) comes before y (without **)
+            }
+            if (!xHasDoubleWildcard && yHasDoubleWildcard)
+            {
+                return 1; // y (with **) comes before x (without **)
+            }
+
+            // If both have ** wildcards, sort by path first (natural alphabetical order handles specificity)
+            // e.g., "/**/" comes before "/**/*Management*/" comes before "/**/Azure.ResourceManager*/"
+            if (xHasDoubleWildcard && yHasDoubleWildcard)
+            {
+                int pathComparison = string.Compare(pathX, pathY, StringComparison.Ordinal);
+                if (pathComparison != 0)
+                {
+                    return pathComparison;
+                }
+            }
+
+            // Second, compare by service label
             int serviceLabelComparison = CompareByServiceLabel(x, y);
             if (serviceLabelComparison != 0)
             {
@@ -23,8 +51,6 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
             }
 
             // If service labels are the same (or both empty), compare by path
-            string pathX = x.PathExpression ?? string.Empty;
-            string pathY = y.PathExpression ?? string.Empty;
 
             // Normalize paths by removing leading slashes for comparison
             pathX = pathX.TrimStart('/');
@@ -32,13 +58,23 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
             pathY = pathY.TrimStart('/');
             pathY = pathY.TrimEnd('/');
 
-            // If both paths are empty or whitespace, they're equal at this point
+            // Handle cases where one has a path and the other doesn't
+            if (string.IsNullOrWhiteSpace(pathX) && !string.IsNullOrWhiteSpace(pathY))
+            {
+                return 1; // y has path, x doesn't - y comes first (path-based entries before service-label-only entries)
+            }
+            if (!string.IsNullOrWhiteSpace(pathX) && string.IsNullOrWhiteSpace(pathY))
+            {
+                return -1; // x has path, y doesn't - x comes first (path-based entries before service-label-only entries)
+            }
+            
+            // If both paths are empty or whitespace, they're equal at this level
             if (string.IsNullOrWhiteSpace(pathX) && string.IsNullOrWhiteSpace(pathY))
             {
                 return 0;
             }
 
-            // Handle parent/child path relationships
+            // Both paths exist, handle parent/child path relationships first
             // Ensure parent paths come before their subpaths
             if (!string.IsNullOrWhiteSpace(pathX) && !string.IsNullOrWhiteSpace(pathY))
             {
@@ -53,25 +89,40 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
                 }
             }
 
-            // Both paths exist and neither is a parent of the other, compare alphabetically
+            // Do alphabetical comparison of paths
             int alphabeticalComparison = string.Compare(pathX, pathY, StringComparison.Ordinal);
 
-            // If paths are different alphabetically, return that comparison
+            // Before returning the alphabetical comparison, check for simple wildcard cases
+            // Handle cases like "sdk/storage*" vs "sdk/storage"
             if (alphabeticalComparison != 0)
             {
+                bool xHasWildcard = x.ContainsWildcard;
+                bool yHasWildcard = y.ContainsWildcard;
+
+                // Simple check: if one path ends with * and matches the other path, prioritize the wildcard
+                if (xHasWildcard && !yHasWildcard && pathX.EndsWith("*") && pathX.TrimEnd('*') == pathY)
+                {
+                    return -1; // x (with wildcard) comes before y (without wildcard)
+                }
+                if (!xHasWildcard && yHasWildcard && pathY.EndsWith("*") && pathY.TrimEnd('*') == pathX)
+                {
+                    return 1; // y (with wildcard) comes before x (without wildcard)
+                }
+
+                // Otherwise, use alphabetical comparison
                 return alphabeticalComparison;
             }
 
             // If paths are the same alphabetically, prioritize wildcard paths
-            // (this handles cases like "sdk/path/service*" vs "sdk/path/service")
-            bool xHasWildcard = x.ContainsWildcard;
-            bool yHasWildcard = y.ContainsWildcard;
+            // (this handles cases where paths are identical but one has additional wildcards)
+            bool xHasWildcardSame = x.ContainsWildcard;
+            bool yHasWildcardSame = y.ContainsWildcard;
 
-            if (xHasWildcard && !yHasWildcard)
+            if (xHasWildcardSame && !yHasWildcardSame)
             {
                 return -1; // x (with wildcard) comes before y (without wildcard)
             }
-            if (!xHasWildcard && yHasWildcard)
+            if (!xHasWildcardSame && yHasWildcardSame)
             {
                 return 1; // y (with wildcard) comes before x (without wildcard)
             }
@@ -123,7 +174,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
                 var serviceLabel = entry.ServiceLabels[0].TrimStart('%').Trim();
                 if (!string.IsNullOrEmpty(serviceLabel))
                 {
-                    return ExtractBaseServiceName(serviceLabel);
+                    return serviceLabel;
                 }
             }
 
@@ -133,30 +184,11 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
                 var prLabel = entry.PRLabels[0].TrimStart('%').Trim();
                 if (!string.IsNullOrEmpty(prLabel))
                 {
-                    return ExtractBaseServiceName(prLabel);
+                    return prLabel;
                 }
             }
 
             return string.Empty;
-        }
-
-        /// <summary>
-        /// Extract the base service name from a label. For hierarchical services like "Communication - Call Automation",
-        /// this returns "Communication". For simple services like "Storage", this returns "Storage".
-        /// </summary>
-        private string ExtractBaseServiceName(string label)
-        {
-            if (string.IsNullOrEmpty(label))
-                return string.Empty;
-
-            // For hierarchical services separated by " - ", take the first part
-            var dashIndex = label.IndexOf(" - ");
-            if (dashIndex > 0)
-            {
-                return label.Substring(0, dashIndex).Trim();
-            }
-
-            return label.Trim();
         }
     }
 }

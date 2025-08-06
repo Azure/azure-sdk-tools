@@ -177,7 +177,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 logger.LogInformation($"Service label '{label}' pull request created successfully. Result: {string.Join(", ", result)}");
 
                 // Extract the pull request URL from the result
-                var pullRequestUrl = ExtractPullRequestUrl(result);
+                var pullRequestUrl = result.Url;
 
                 return new ServiceLabelResponse
                 {
@@ -198,23 +198,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     ResponseError = ex.Message
                 };
             }
-        }
-
-        private static string? ExtractPullRequestUrl(List<string> responses)
-        {
-            // Look for a response containing "Pull request URL:"
-            foreach (var response in responses)
-            {
-                if (response.Contains("Pull request URL:"))
-                {
-                    var urlStart = response.IndexOf("https://github.com");
-                    if (urlStart >= 0)
-                    {
-                        return response.Substring(urlStart).Trim();
-                    }
-                }
-            }
-            return null;
         }
     }
 }

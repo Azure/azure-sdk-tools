@@ -44,7 +44,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
             return Task.FromResult($"https://github.com/{owner}/{repoName}");
         }
 
-        public Task<List<string>> CreatePullRequestAsync(string repoName, string repoOwner, string baseBranch, string headBranch, string title, string body, bool draft = true)
+        public Task<PullRequestResult> CreatePullRequestAsync(string repoName, string repoOwner, string baseBranch, string headBranch, string title, string body, bool draft = true)
         {
             throw new NotImplementedException();
         }

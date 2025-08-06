@@ -13,6 +13,12 @@ namespace Azure.Sdk.Tools.Cli.Services
         AlreadyExists,
     }
 
+    public class PullRequestResult
+    {
+        public string Url { get; set; }
+        public List<string> Messages { get; set; }
+    }
+
 public class GitConnection
     {
         private GitHubClient? _gitHubClient; // Backing field for the property
@@ -80,7 +86,7 @@ public class GitConnection
         public Task<List<String>> GetPullRequestChecksAsync(int pullRequestNumber, string repoName, string repoOwner);
         public Task<PullRequest> GetPullRequestAsync(string repoOwner, string repoName, int pullRequestNumber);
         public Task<string> GetGitHubParentRepoUrlAsync(string owner, string repoName);
-        public Task<List<string>> CreatePullRequestAsync(string repoName, string repoOwner, string baseBranch, string headBranch, string title, string body, bool draft = true);
+        public Task<PullRequestResult> CreatePullRequestAsync(string repoName, string repoOwner, string baseBranch, string headBranch, string title, string body, bool draft = true);
         public Task<List<string>> GetPullRequestCommentsAsync(string repoOwner, string repoName, int pullRequestNumber);
         public Task<PullRequest?> GetPullRequestForBranchAsync(string repoOwner, string repoName, string remoteBranch);
         public Task<Issue> GetIssueAsync(string repoOwner, string repoName, int issueNumber);
@@ -139,50 +145,51 @@ public class GitConnection
             return comparison?.MergeBaseCommit != null;
         }
 
-        public async Task<List<string>> CreatePullRequestAsync(string repoName, string repoOwner, string baseBranch, string headBranch, string title, string body, bool draft = true)
+        public async Task<PullRequestResult> CreatePullRequestAsync(string repoName, string repoOwner, string baseBranch, string headBranch, string title, string body, bool draft = true)
         {
-            var responseList = new List<string>();
+            var response = new PullRequestResult();
             // Check if a pull request already exists for the branch
             try
             {
                 var pr = await GetPullRequestForBranchAsync(repoOwner, repoName, headBranch);
                 if (pr != null)
                 {
-                    responseList.Add($"Pull request already exists for branch {headBranch} in repository {repoOwner}/{repoName}. Pull request URL: {pr.HtmlUrl}");
-                    return responseList;
+                    response.Messages.Add($"Pull request already exists for branch {headBranch} in repository {repoOwner}/{repoName}");
+                    response.Url = pr.HtmlUrl;
+                    return response;
                 }
-                responseList.Add($"No pull request found for branch {headBranch} in repository {repoOwner}/{repoName}. Proceeding to create a new pull request.");
+                response.Messages.Add($"No pull request found for branch {headBranch} in repository {repoOwner}/{repoName}. Proceeding to create a new pull request.");
             }
             catch (Exception ex)
             {
                 logger.LogError(ex.Message);
-                responseList.Add($"Failed to check for existing pull request for the branch. Error: {ex.Message}");
-                return responseList;
+                response.Messages.Add($"Failed to check for existing pull request for the branch. Error: {ex.Message}");
+                return response;
             }
 
             // Check mergeability of the branches
             try
             {
-                responseList.Add($"Checking if changes are mergeable to {baseBranch} branch in repository [{repoOwner}/{repoName}]...");
+                response.Messages.Add($"Checking if changes are mergeable to {baseBranch} branch in repository [{repoOwner}/{repoName}]...");
                 var isMergeable = await IsDiffMergeableAsync(repoOwner, repoName, baseBranch, headBranch);
                 if (!isMergeable)
                 {
-                    responseList.Add($"Changes from [{repoOwner}] are not mergeable to {baseBranch} branch in repository [{repoOwner}/{repoName}]. Please resolve the conflicts and try again.");
-                    responseList.Add($"By default, target branch in main. If you are trying to create a pull request to a different branch, please specify the target branch and try again.");
-                    return responseList;
+                    response.Messages.Add($"Changes from [{repoOwner}] are not mergeable to {baseBranch} branch in repository [{repoOwner}/{repoName}]. Please resolve the conflicts and try again.");
+                    response.Messages.Add($"By default, target branch in main. If you are trying to create a pull request to a different branch, please specify the target branch and try again.");
+                    return response;
                 }
             }
             catch (Exception ex)
             {
-                responseList.Add($"Failed to check if changes are mergeable to {baseBranch} branch in repository [{repoOwner}/{repoName}]. Error: {ex.Message}");
-                return responseList;
+                response.Messages.Add($"Failed to check if changes are mergeable to {baseBranch} branch in repository [{repoOwner}/{repoName}]. Error: {ex.Message}");
+                return response;
             }
 
             // Create the pull request
             PullRequest? createdPullRequest = null;
             try
             {
-                responseList.Add($"Changes are mergeable. Proceeding to create pull request for changes in {headBranch}.");
+                response.Messages.Add($"Changes are mergeable. Proceeding to create pull request for changes in {headBranch}.");
                 var pullRequest = new NewPullRequest(title, headBranch, baseBranch)
                 {
                     Body = body,
@@ -192,24 +199,26 @@ public class GitConnection
                 createdPullRequest = await gitHubClient.PullRequest.Create(repoOwner, repoName, pullRequest);
                 if (createdPullRequest == null)
                 {
-                    responseList.Add($"Failed to create pull request for changes in {headBranch}.");
-                    return responseList;
+                    response.Messages.Add($"Failed to create pull request for changes in {headBranch}.");
+                    return response;
                 }
 
                 if (draft)
                 {
-                    responseList.Add($"Pull request created successfully as draft PR. Pull request URL: {createdPullRequest.HtmlUrl}");
-                    responseList.Add("Once you have successfully generated the SDK transition the PR to review ready.");
+                    response.Messages.Add($"Pull request created successfully as draft PR.");
+                    response.Url = createdPullRequest.HtmlUrl;
+                    response.Messages.Add("Once you have successfully generated the SDK transition the PR to review ready.");
                 }
                 else
                 {
-                    responseList.Add($"Pull request created successfully. Pull request URL: {createdPullRequest.HtmlUrl}");
+                    response.Messages.Add($"Pull request created successfully.");
+                    response.Url = createdPullRequest.HtmlUrl;
                 }
             }
             catch (Exception ex)
             {
-                responseList.Add($"Failed to create pull request. Error: {ex.Message}");
-                return responseList;
+                response.Messages.Add($"Failed to create pull request. Error: {ex.Message}");
+                return response;
             }
 
             try
@@ -219,9 +228,9 @@ public class GitConnection
             }
             catch (Exception ex)
             {
-                responseList.Add($"Failed to add label '{CreatedByCopilotLabel}' to the pull request. Error: {ex.Message}");
+                response.Messages.Add($"Failed to add label '{CreatedByCopilotLabel}' to the pull request. Error: {ex.Message}");
             }
-            return responseList;
+            return response;
         }
 
         public async Task<List<string>> GetPullRequestCommentsAsync(string repoOwner, string repoName, int pullRequestNumber)

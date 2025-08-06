@@ -1,11 +1,9 @@
 using System.CommandLine;
 using System.CommandLine.Builder;
 using System.CommandLine.Parsing;
-using Azure.AI.OpenAI;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
-using Microsoft.Extensions.Azure;
 
 namespace Azure.Sdk.Tools.Cli;
 
@@ -76,26 +74,6 @@ public class Program
         {
             throw new ArgumentException($"Invalid output format '{outputFormat}'. Supported formats are: plain, json");
         }
-        
-
-        builder.Services.AddAzureClients(clientBuilder =>
-        {
-            var service = new AzureService();
-            clientBuilder.UseCredential(service.GetCredential());
-
-            // Azure OpenAI client does not, for some reason, have an
-            // in-package facade for this, so register manually.
-            clientBuilder.AddClient<AzureOpenAIClient, AzureOpenAIClientOptions>(
-                (options, credential, _) =>
-                {
-                    var endpointEnvVar = Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT");
-                    var ep = string.IsNullOrWhiteSpace(endpointEnvVar) ?
-                        "https://openai-shared.openai.azure.com"
-                        : endpointEnvVar;
-
-                    return new AzureOpenAIClient(new Uri(ep), credential, options);
-                });
-        });
 
         builder.WebHost.ConfigureKestrel(options =>
         {
@@ -106,8 +84,8 @@ public class Program
 
         builder.Services
             .AddMcpServer()
-            .WithStdioServerTransport()
-            .WithTools(toolTypes);
+                    .WithStdioServerTransport()
+                    .WithTools(toolTypes);
 
         return builder;
     }

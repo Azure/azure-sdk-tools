@@ -19,6 +19,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(HostServerTool),
             typeof(PipelineAnalysisTool),
             typeof(PipelineTestsTool),
+            typeof(QuokkaTool),
             typeof(ReleasePlanTool),
             typeof(ReleaseReadinessTool),
             typeof(SdkReleaseTool),

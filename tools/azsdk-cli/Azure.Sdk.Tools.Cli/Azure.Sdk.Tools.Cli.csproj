@@ -38,4 +38,7 @@
     <ProjectReference Include="../Azure.Sdk.Tools.Cli.Analyzer/Azure.Sdk.Tools.Cli.Analyzer.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="Images/quokka.ansi" />
+  </ItemGroup>
 </Project>

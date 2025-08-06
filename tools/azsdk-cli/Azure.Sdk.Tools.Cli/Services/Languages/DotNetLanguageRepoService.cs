@@ -32,7 +32,7 @@ public class DotNetLanguageRepoService : LanguageRepoService
         catch (Exception ex)
         {
             return CreateCookbookResponse(
-                "https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-list-package", 
+                "https://docs.microsoft.com/dotnet/core/tools/dotnet-list-package", 
                 $"Failed to run dependency analysis. Ensure dotnet CLI is installed. Error: {ex.Message}");
         }
     }
@@ -56,7 +56,7 @@ public class DotNetLanguageRepoService : LanguageRepoService
         catch (Exception ex)
         {
             return CreateCookbookResponse(
-                "https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-format", 
+                "https://docs.microsoft.com/dotnet/core/tools/dotnet-format", 
                 $"Failed to run code formatting. Ensure dotnet CLI is installed. Error: {ex.Message}");
         }
     }
@@ -80,7 +80,7 @@ public class DotNetLanguageRepoService : LanguageRepoService
         catch (Exception ex)
         {
             return CreateCookbookResponse(
-                "https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-build", 
+                "https://docs.microsoft.com/dotnet/core/tools/dotnet-build", 
                 $"Failed to run linting. Ensure dotnet CLI is installed. Error: {ex.Message}");
         }
     }
@@ -104,7 +104,7 @@ public class DotNetLanguageRepoService : LanguageRepoService
         catch (Exception ex)
         {
             return CreateCookbookResponse(
-                "https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-test", 
+                "https://docs.microsoft.com/dotnet/core/tools/dotnet-test", 
                 $"Failed to run tests. Ensure dotnet CLI is installed. Error: {ex.Message}");
         }
     }
@@ -128,7 +128,7 @@ public class DotNetLanguageRepoService : LanguageRepoService
         catch (Exception ex)
         {
             return CreateCookbookResponse(
-                "https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-build", 
+                "https://docs.microsoft.com/dotnet/core/tools/dotnet-build", 
                 $"Failed to build project. Ensure dotnet CLI is installed. Error: {ex.Message}");
         }
     }

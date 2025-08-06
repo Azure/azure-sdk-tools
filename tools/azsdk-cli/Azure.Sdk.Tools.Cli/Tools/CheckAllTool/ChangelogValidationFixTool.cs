@@ -20,22 +20,43 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
     public class ChangelogValidationFixTool : MCPTool
     {
         private readonly ILogger<ChangelogValidationFixTool> logger;
+        private readonly IOutputService output;
+        private readonly Option<string> projectPathOption = new(["--project-path", "-p"], "Path to the project directory to check") { IsRequired = true };
 
-        public ChangelogValidationFixTool(ILogger<ChangelogValidationFixTool> logger) : base()
+        public ChangelogValidationFixTool(ILogger<ChangelogValidationFixTool> logger, IOutputService output) : base()
         {
             this.logger = logger;
+            this.output = output;
         }
 
         public override Command GetCommand()
         {
-            // MCP-only tool - no CLI command
-            return null!;
+            Command command = new("changelogValidationFix", "Return changelog validation fix prompt for SDK projects");
+            command.AddOption(projectPathOption);
+            command.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
+            return command;
         }
 
-        public override Task HandleCommand(InvocationContext ctx, CancellationToken ct)
+        public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
         {
-            // MCP-only tool - no CLI command handling
-            throw new NotImplementedException("This tool is available only through MCP server interface");
+            try
+            {
+                var projectPath = ctx.ParseResult.GetValueForOption(projectPathOption);
+                var result = await FixChangelogValidation(projectPath);
+
+                output.Output(result);
+                ctx.ExitCode = ExitCode;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error occurred while running changelog validation fix");
+                SetFailure(1);
+                output.Output(new DefaultCommandResponse
+                {
+                    ResponseError = $"Error occurred while running changelog validation fix: {ex.Message}"
+                });
+                ctx.ExitCode = ExitCode;
+            }
         }
 
         [McpServerTool(Name = "FixChangelogValidation"), Description("Fix changelog format violations in SDK projects. Provide absolute path to project root as param.")]

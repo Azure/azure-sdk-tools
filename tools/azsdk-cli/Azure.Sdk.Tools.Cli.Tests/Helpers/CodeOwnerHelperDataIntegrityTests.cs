@@ -256,10 +256,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         #region Path Count Validation Tests
 
         [Test]
-        public void ValidatePathCounts_OriginalVsProcessed_ShouldMatch()
+        [TestCase(4, 4)] // Standard case
+        [TestCase(1, 1)] // Single entry case  
+        [TestCase(0, 0)] // Empty case
+        [TestCase(10, 10)] // Larger set case
+        public void TestValidatePathCounts_OriginalVsProcessed_ShouldMatch(int entryCount, int expectedCount)
         {
-            // Arrange - A representative sample of the actual CODEOWNERS entries
-            var realWorldEntries = CreateRealWorldSampleEntries();
+            // Arrange - Create the specified number of entries
+            var realWorldEntries = CreateTestEntries(entryCount);
 
             // Act
             var processedEntries = ProcessEntriesWithoutLoss(realWorldEntries);
@@ -268,41 +272,39 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             var originalPathCount = realWorldEntries.Count(e => !string.IsNullOrWhiteSpace(e.PathExpression));
             var processedPathCount = processedEntries.Count(e => !string.IsNullOrWhiteSpace(e.PathExpression));
 
-            Assert.That(processedPathCount, Is.EqualTo(originalPathCount), 
+            Assert.That(processedPathCount, Is.EqualTo(expectedCount), 
                 $"Path count should be preserved: original={originalPathCount}, processed={processedPathCount}");
         }
 
         [Test]
-        public void ValidateSpecificPaths_KnownProblematicPaths_ShouldBePreserved()
+        [TestCase("/sdk/ai/Azure.AI.Inference")]
+        [TestCase("/sdk/communication/Azure.Communication.CallingServer/")]
+        [TestCase("/sdk/communication/Azure.Communication.Chat/")]
+        [TestCase("/sdk/eventgrid/Microsoft.Azure.WebJobs.Extensions.EventGrid/")]
+        [TestCase("/sdk/storage/Azure.Storage.*/")]
+        [TestCase("/sdk/storagesync/")]
+        [TestCase("/sdk/monitor/Azure.Monitor.Ingestion/")]
+        [TestCase("/sdk/selfhelp/Azure.ResourceManager.SelfHelp/")]
+        [TestCase("/sdk/servicefabric/Azure.ResourceManager.ServiceFabric/")]
+        public void TestValidateSpecificPaths_KnownProblematicPaths_ShouldBePreserved(string problematicPath)
         {
-            // Arrange - Test the specific paths that were reported as missing
-            var knownProblematicPaths = new[]
+            // Arrange
+            var entries = new List<CodeownersEntry>
             {
-                "/sdk/ai/Azure.AI.Inference",
-                "/sdk/communication/Azure.Communication.CallingServer/",
-                "/sdk/communication/Azure.Communication.Chat/",
-                "/sdk/eventgrid/Microsoft.Azure.WebJobs.Extensions.EventGrid/",
-                "/sdk/storage/Azure.Storage.*/",
-                "/sdk/storagesync/",
-                "/sdk/monitor/Azure.Monitor.Ingestion/"
+                new CodeownersEntry
+                {
+                    PathExpression = problematicPath,
+                    PRLabels = new List<string> { "%TestLabel" },
+                    SourceOwners = new List<string> { "@test-owner" }
+                }
             };
-
-            var entries = knownProblematicPaths.Select(path => new CodeownersEntry
-            {
-                PathExpression = path,
-                PRLabels = new List<string> { "%TestLabel" },
-                SourceOwners = new List<string> { "@test-owner" }
-            }).ToList();
 
             // Act
             var processedEntries = ProcessEntriesWithoutLoss(entries);
 
             // Assert
-            foreach (var originalPath in knownProblematicPaths)
-            {
-                var preserved = processedEntries.Any(e => e.PathExpression == originalPath);
-                Assert.That(preserved, Is.True, $"Problematic path '{originalPath}' should be preserved");
-            }
+            var preserved = processedEntries.Any(e => e.PathExpression == problematicPath);
+            Assert.That(preserved, Is.True, $"Problematic path '{problematicPath}' should be preserved");
         }
 
         #endregion
@@ -318,6 +320,24 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             // For now, this just returns the original entries to simulate proper preservation
             // In the actual fix, this would contain the corrected merging logic that preserves individual paths
             return new List<CodeownersEntry>(entries);
+        }
+
+        /// <summary>
+        /// Creates a specified number of test entries for testing
+        /// </summary>
+        private List<CodeownersEntry> CreateTestEntries(int count)
+        {
+            var entries = new List<CodeownersEntry>();
+            for (int i = 0; i < count; i++)
+            {
+                entries.Add(new CodeownersEntry
+                {
+                    PathExpression = $"/sdk/test{i}/",
+                    PRLabels = new List<string> { $"%Test{i}" },
+                    SourceOwners = new List<string> { $"@test-owner{i}" }
+                });
+            }
+            return entries;
         }
 
         /// <summary>

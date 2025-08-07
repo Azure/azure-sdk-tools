@@ -75,26 +75,42 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         }
 
         [Test]
-        public void Compare_GlobalCatchAllWithSameSpecificity_SortedAlphabetically()
+        [TestCase("/**/*Alpha*/", "%Alpha", "/**/*Beta*/", "%Beta", -1)] // Alpha comes before Beta
+        [TestCase("/**/*Management*/", "%Mgmt", "/**/*Alpha*/", "%Alpha", 1)] // Management comes after Alpha
+        [TestCase("/sdk/ai/", "%AI", "/sdk/batch/", "%Batch", -1)] // AI comes before Batch
+        [TestCase("/sdk/storage/", "%Storage", "/sdk/communication/", "%Communication", 1)] // Storage comes after Communication
+        [TestCase("/sdk/storage*", "%Storage", "/sdk/storage", "%Storage", -1)] // Wildcard comes before exact
+        public void TestCompare_AlphabeticalOrdering(string path1, string label1, string path2, string label2, int expectedSign)
         {
             // Arrange
-            var entryB = new CodeownersEntry
+            var entry1 = new CodeownersEntry
             {
-                PathExpression = "/**/*Beta*/",
-                PRLabels = new List<string> { "%Beta" }
+                PathExpression = path1,
+                PRLabels = new List<string> { label1 }
             };
 
-            var entryA = new CodeownersEntry
+            var entry2 = new CodeownersEntry
             {
-                PathExpression = "/**/*Alpha*/",
-                PRLabels = new List<string> { "%Alpha" }
+                PathExpression = path2,
+                PRLabels = new List<string> { label2 }
             };
 
             // Act
-            var result = comparer.Compare(entryA, entryB);
+            var result = comparer.Compare(entry1, entry2);
 
             // Assert
-            Assert.That(result, Is.LessThan(0), "Alpha should come before Beta alphabetically");
+            if (expectedSign < 0)
+            {
+                Assert.That(result, Is.LessThan(0), $"{path1} should come before {path2}");
+            }
+            else if (expectedSign > 0)
+            {
+                Assert.That(result, Is.GreaterThan(0), $"{path1} should come after {path2}");
+            }
+            else
+            {
+                Assert.That(result, Is.EqualTo(0), $"{path1} should be equal to {path2}");
+            }
         }
 
         #endregion
@@ -216,52 +232,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
 
             // Assert
             Assert.That(result, Is.LessThan(0), "Parent path should come before child path");
-        }
-
-        [Test]
-        public void Compare_SamePathDifferentWildcards_WildcardComesFirst()
-        {
-            // Arrange
-            var wildcardPath = new CodeownersEntry
-            {
-                PathExpression = "/sdk/storage*",
-                PRLabels = new List<string> { "%Storage" }
-            };
-
-            var exactPath = new CodeownersEntry
-            {
-                PathExpression = "/sdk/storage",
-                PRLabels = new List<string> { "%Storage" }
-            };
-
-            // Act
-            var result = comparer.Compare(wildcardPath, exactPath);
-
-            // Assert
-            Assert.That(result, Is.LessThan(0), "Wildcard path should come before exact path");
-        }
-
-        [Test]
-        public void Compare_DifferentPaths_SortedAlphabetically()
-        {
-            // Arrange
-            var pathA = new CodeownersEntry
-            {
-                PathExpression = "/sdk/ai/",
-                PRLabels = new List<string> { "%AI" }
-            };
-
-            var pathB = new CodeownersEntry
-            {
-                PathExpression = "/sdk/batch/",
-                PRLabels = new List<string> { "%Batch" }
-            };
-
-            // Act
-            var result = comparer.Compare(pathA, pathB);
-
-            // Assert
-            Assert.That(result, Is.LessThan(0), "ai should come before batch alphabetically");
         }
 
         #endregion

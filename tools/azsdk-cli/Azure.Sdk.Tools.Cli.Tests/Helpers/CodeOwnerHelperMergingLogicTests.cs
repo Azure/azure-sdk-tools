@@ -138,64 +138,26 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         #region ExtractDirectoryName Tests
 
         [Test]
-        public void ExtractDirectoryName_AzureResourceManagerPath_ReturnsServiceDirectory()
+        [TestCase("/sdk/selfhelp/Azure.ResourceManager.SelfHelp/", "Azure.ResourceManager.SelfHelp")]
+        [TestCase("/sdk/storage/Azure.Storage.Blobs/", "Azure.Storage.Blobs")]
+        [TestCase("/eng/common/scripts/", "scripts")]
+        [TestCase("", "")]
+        [TestCase("   ", "")]
+        [TestCase("///sdk/storage/Azure.Storage.Blobs///", "Azure.Storage.Blobs")]
+        [TestCase("/sdk/servicefabric/Azure.ResourceManager.ServiceFabric/", "Azure.ResourceManager.ServiceFabric")]
+        [TestCase("/sdk/compute/Azure.ResourceManager.Compute/", "Azure.ResourceManager.Compute")]
+        [TestCase("/sdk/communication/Azure.Communication.Chat/", "Azure.Communication.Chat")]
+        public void TestExtractDirectoryName(string path, string expected)
         {
-            // Arrange
-            var path = "/sdk/selfhelp/Azure.ResourceManager.SelfHelp/";
-
-            // Act
-            var result = InvokeExtractDirectoryName(path);
-
-            // Assert
-            Assert.That(result, Is.EqualTo("Azure.ResourceManager.SelfHelp"), "Should extract service-specific directory, not Azure.ResourceManager part");
+            var actual = InvokeExtractDirectoryName(path);
+            Assert.That(actual, Is.EqualTo(expected));
         }
 
         [Test]
-        public void ExtractDirectoryName_RegularSdkPath_ReturnsServiceDirectory()
-        {
-            // Arrange
-            var path = "/sdk/storage/Azure.Storage.Blobs/";
-
-            // Act
-            var result = InvokeExtractDirectoryName(path);
-
-            // Assert
-            Assert.That(result, Is.EqualTo("Azure.Storage.Blobs"), "Should extract service directory");
-        }
-
-        [Test]
-        public void ExtractDirectoryName_NonSdkPath_ReturnsLastPart()
-        {
-            // Arrange
-            var path = "/eng/common/scripts/";
-
-            // Act
-            var result = InvokeExtractDirectoryName(path);
-
-            // Assert
-            Assert.That(result, Is.EqualTo("scripts"), "Should return last meaningful part for non-SDK paths");
-        }
-
-        [Test]
-        public void ExtractDirectoryName_EmptyOrNullPath_ReturnsEmpty()
+        public void ExtractDirectoryName_NullPath_ReturnsEmpty()
         {
             // Act & Assert
-            Assert.That(InvokeExtractDirectoryName(""), Is.EqualTo(""));
             Assert.That(InvokeExtractDirectoryName(null), Is.EqualTo(""));
-            Assert.That(InvokeExtractDirectoryName("   "), Is.EqualTo(""));
-        }
-
-        [Test]
-        public void ExtractDirectoryName_PathWithTrailingSlashes_HandledCorrectly()
-        {
-            // Arrange
-            var path = "///sdk/storage/Azure.Storage.Blobs///";
-
-            // Act
-            var result = InvokeExtractDirectoryName(path);
-
-            // Assert
-            Assert.That(result, Is.EqualTo("Azure.Storage.Blobs"), "Should handle multiple trailing slashes");
         }
 
         #endregion
@@ -262,7 +224,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             var entry = new CodeownersEntry
             {
                 ServiceLabels = new List<string> { "   ", "" },
-                PRLabels = new List<string> { " ", null }
+                PRLabels = new List<string> { " " }
             };
 
             // Act

@@ -1,5 +1,9 @@
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.CodeownersUtils.Parsing;
+using NUnit.Framework;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Helpers
 
@@ -109,40 +113,22 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         #region addCodeownersEntryAtIndex Tests
 
         [Test]
-        public void AddCodeownersEntryAtIndex_ValidIndex_InsertsAtCorrectPosition()
+        [TestCase("line1\nline2\nline3", "new entry", 1, new[] { "line1", "new entry", "line2", "line3" })]
+        [TestCase("line1\nline2", "new entry", -1, new[] { "line1", "line2", "new entry" })]
+        [TestCase("line1\nline2", "new entry", 0, new[] { "new entry", "line1", "line2" })]
+        [TestCase("line1\nline2", "new entry", 2, new[] { "line1", "line2", "new entry" })]
+        [TestCase("", "new entry", 0, new[] { "new entry", "" })]
+        [TestCase("single line", "new entry", 0, new[] { "new entry", "single line" })]
+        public void TestAddCodeownersEntryAtIndex(string content, string entry, int index, string[] expectedLines)
         {
-            // Arrange
-            var content = "line1\nline2\nline3";
-            var entry = "new entry";
-            var index = 1;
-
-            // Act
             var result = codeOwnerHelper.addCodeownersEntryAtIndex(content, entry, index);
-
-            // Assert
             var lines = result.Split('\n');
-            Assert.That(lines.Length, Is.EqualTo(4));
-            Assert.That(lines[0], Is.EqualTo("line1"));
-            Assert.That(lines[1], Is.EqualTo("new entry"));
-            Assert.That(lines[2], Is.EqualTo("line2"));
-            Assert.That(lines[3], Is.EqualTo("line3"));
-        }
-
-        [Test]
-        public void AddCodeownersEntryAtIndex_InvalidIndex_AppendsEntry()
-        {
-            // Arrange
-            var content = "line1\nline2";
-            var entry = "new entry";
-            var index = -1;
-
-            // Act
-            var result = codeOwnerHelper.addCodeownersEntryAtIndex(content, entry, index);
-
-            // Assert
-            var lines = result.Split('\n');
-            Assert.That(lines.Length, Is.EqualTo(3));
-            Assert.That(lines[2], Is.EqualTo("new entry"));
+            
+            Assert.That(lines.Length, Is.EqualTo(expectedLines.Length));
+            for (int i = 0; i < expectedLines.Length; i++)
+            {
+                Assert.That(lines[i], Is.EqualTo(expectedLines[i]));
+            }
         }
 
         #endregion
@@ -230,17 +216,17 @@ line3";
         #region CreateBranchName Tests
 
         [Test]
-        public void CreateBranchName_ValidInputs_ReturnsFormattedName()
+        [TestCase("add-codeowner", "Service Bus/path", "add-codeowner-service-bus-path")]
+        [TestCase("update-entry", "Storage", "update-entry-storage")]
+        [TestCase("fix-codeowners", "Communication - Chat", "fix-codeowners-communication-chat")]
+        [TestCase("test-branch", "Azure.Storage.Blobs", "test-branch-azure-storage-blobs")]
+        [TestCase("", "Service", "service")]
+        [TestCase("prefix", "", "prefix")]
+        [TestCase("add", "Special@Chars!", "add-specialchars")]
+        public void TestCreateBranchName(string prefix, string identifier, string expected)
         {
-            // Arrange
-            var prefix = "add-codeowner";
-            var identifier = "Service Bus/path";
-
-            // Act
-            var result = codeOwnerHelper.CreateBranchName(prefix, identifier);
-
-            // Assert
-            Assert.That(result, Does.Match(@"add-codeowner-service-bus-path"));
+            var actual = codeOwnerHelper.CreateBranchName(prefix, identifier);
+            Assert.That(actual, Does.Match($"{expected}"));
         }
 
         #endregion
@@ -248,29 +234,21 @@ line3";
         #region NormalizeIdentifier Tests
 
         [Test]
-        public void NormalizeIdentifier_SpecialCharacters_ReplacesWithDashes()
+        [TestCase("Test Service_Name/Path - Another", "test-service-name-path-another")]
+        [TestCase("", "")]
+        [TestCase("   ", "")]
+        [TestCase("Storage@Special!Chars", "storagespecialchars")]
+        [TestCase("Service Bus", "service-bus")]
+        [TestCase("Communication - Chat", "communication-chat")]
+        [TestCase("Azure.Storage.Blobs", "azure-storage-blobs")]
+        [TestCase("Multiple   Spaces", "multiple---spaces")]
+        [TestCase("123Numbers456", "123numbers456")]
+        [TestCase("Path/With/Slashes", "path-with-slashes")]
+        [TestCase("Under_Score_Text", "under-score-text")]
+        public void TestNormalizeIdentifier(string input, string expected)
         {
-            // Arrange
-            var input = "Test Service_Name/Path - Another";
-
-            // Act
-            var result = codeOwnerHelper.NormalizeIdentifier(input);
-
-            // Assert
-            Assert.That(result, Is.EqualTo("test-service-name-path-another"));
-        }
-
-        [Test]
-        public void NormalizeIdentifier_EmptyString_ReturnsEmpty()
-        {
-            // Arrange
-            var input = "";
-
-            // Act
-            var result = codeOwnerHelper.NormalizeIdentifier(input);
-
-            // Assert
-            Assert.That(result, Is.EqualTo(""));
+            var actual = codeOwnerHelper.NormalizeIdentifier(input);
+            Assert.That(actual, Is.EqualTo(expected));
         }
 
         #endregion

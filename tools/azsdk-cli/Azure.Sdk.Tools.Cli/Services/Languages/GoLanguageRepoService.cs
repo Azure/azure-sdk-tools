@@ -42,7 +42,7 @@ public class GoLanguageRepoService : LanguageRepoService
 
     #endregion
 
-    public override async Task<ICLICheckResponse> AnalyzeDependenciesAsync()
+    public override async Task<ICLICheckResponse> AnalyzeDependenciesAsync(CancellationToken ct = default)
     {
         try
         {

@@ -20,7 +20,7 @@ public class PythonLanguageRepoService : LanguageRepoService
         _gitHelper = gitHelper ?? throw new ArgumentNullException(nameof(gitHelper));
     }
 
-    public override async Task<ICLICheckResponse> AnalyzeDependenciesAsync()
+    public override async Task<ICLICheckResponse> AnalyzeDependenciesAsync(CancellationToken ct = default)
     {
         try
         {
@@ -48,7 +48,7 @@ public class PythonLanguageRepoService : LanguageRepoService
             
             _logger.LogInformation("Executing command: {Command} {Arguments}", command, arguments);
             
-            var result = await RunCommandAsync(command, arguments);
+            var result = await RunCommandAsync(command, arguments, ct);
             
             if (result.ExitCode == 0)
             {
@@ -74,7 +74,7 @@ public class PythonLanguageRepoService : LanguageRepoService
     /// <summary>
     /// Helper method to run command line tools asynchronously.
     /// </summary>
-    private async Task<ICLICheckResponse> RunCommandAsync(string fileName, string arguments)
+    private async Task<ICLICheckResponse> RunCommandAsync(string fileName, string arguments, CancellationToken ct)
     {
         using var process = new Process();
         process.StartInfo.FileName = fileName;
@@ -104,7 +104,7 @@ public class PythonLanguageRepoService : LanguageRepoService
         process.BeginOutputReadLine();
         process.BeginErrorReadLine();
 
-        await process.WaitForExitAsync();
+    await process.WaitForExitAsync(ct);
 
         var output = outputBuilder.ToString();
         var error = errorBuilder.ToString();

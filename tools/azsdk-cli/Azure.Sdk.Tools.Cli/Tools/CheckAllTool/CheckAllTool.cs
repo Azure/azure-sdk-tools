@@ -50,7 +50,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
             try
             {
                 var packagePath = ctx.ParseResult.GetValueForOption(packagePathOption);
-                var result = await RunAllChecks(packagePath);
+                var result = await RunAllChecks(packagePath, ct);
 
                 // Convert ICLICheckResponse to DefaultCommandResponse for output
                 var response = new DefaultCommandResponse
@@ -76,7 +76,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
         }
 
         [McpServerTool(Name = "All"), Description("Run all validation checks for SDK packages. Provide absolute path to package root as param.")]
-        public async Task<ICLICheckResponse> RunAllChecks(string packagePath)
+    public async Task<ICLICheckResponse> RunAllChecks(string packagePath, CancellationToken ct)
         {
             try
             {
@@ -97,7 +97,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                     output,
                     gitHelper);
                 
-                var dependencyCheckResult = await dependencyCheckTool.RunDependencyCheck(packagePath);
+                var dependencyCheckResult = await dependencyCheckTool.RunDependencyCheck(packagePath, ct);
                 
                 results.Add(dependencyCheckResult);
                 if (dependencyCheckResult.ExitCode != 0) overallSuccess = false;
@@ -126,6 +126,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                 return new FailureCLICheckResponse(1, "", $"Unhandled exception: {ex.Message}");
             }
         }
+
+        // Back-compat overload for callers/tests that don't pass a CancellationToken
+        public Task<ICLICheckResponse> RunAllChecks(string packagePath)
+            => RunAllChecks(packagePath, ct: default);
 
     private async Task<ICLICheckResponse> RunChangelogValidation(string packagePath)
     {

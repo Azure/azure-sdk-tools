@@ -93,7 +93,7 @@ public class GitConnection
         public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path);
         public Task UpdateFileAsync(string owner, string repoName, string path, string message, string content, string sha, string branch);
         public Task<CreateBranchStatus> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranchName = "main");
-        public Task<bool> GetBranchAsync(string repoOwner, string repoName, string branchName);
+        public Task<bool> IsExistingBranchAsync(string repoOwner, string repoName, string branchName);
         public Task<string> GetFileContentsAsync(string repoOwner, string repoName, string path);
     }
 
@@ -333,6 +333,11 @@ public class GitConnection
         {
             try
             {
+                if (branch.Equals("main", StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidOperationException("Direct updates to main branch are not allowed for safety reasons. Please use a feature branch instead.");
+                }
+
                 var updateRequest = new UpdateFileRequest(message, content, sha, branch);
                 await gitHubClient.Repository.Content.UpdateFile(owner, repoName, path, updateRequest);
             }
@@ -352,7 +357,7 @@ public class GitConnection
         {
             try
             {
-                var branchExists = await GetBranchAsync(repoOwner, repoName, branchName);
+                var branchExists = await IsExistingBranchAsync(repoOwner, repoName, branchName);
                 if (branchExists)
                 {
                     return CreateBranchStatus.AlreadyExists;
@@ -374,7 +379,7 @@ public class GitConnection
             }
         }
 
-        public async Task<bool> GetBranchAsync(string repoOwner, string repoName, string branchName)
+        public async Task<bool> IsExistingBranchAsync(string repoOwner, string repoName, string branchName)
         {
             try
             {

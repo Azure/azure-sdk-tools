@@ -75,7 +75,7 @@ public class GoLanguageRepoService : LanguageRepoService
     {
         try
         {
-            var (output, exitCode) = await RunCommandAsync(new() { FileName = linterName, ArgumentList = { "./..." }, WorkingDirectory = _packagePath });
+            var (output, exitCode) = await RunCommandAsync(new() { FileName = linterName, ArgumentList = { "run" }, WorkingDirectory = _packagePath });
             return CreateResponse(nameof(LintCodeAsync), exitCode, output);
         }
         catch (Exception ex)

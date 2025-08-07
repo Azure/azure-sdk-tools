@@ -1,61 +1,138 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using Azure.Sdk.Tools.Cli.Services;
+using System.Threading.Tasks; // added for async SetUp
 
 namespace Azure.Sdk.Tools.Cli.Tests.Services
 {
     internal class GoLanguageRepoServiceTests
     {
-        [Test]
-        public async Task TestGoLanguageRepoService()
-        {
-            // Check if "go" is in the system PATH
-            var goProgram = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "go.exe" : "go";
-            var paths = Environment.GetEnvironmentVariable("PATH")?.Split(Path.PathSeparator) ?? Array.Empty<string>();
-            bool found = paths.Any(p => File.Exists(Path.Combine(p, goProgram)));
+        private string GoPackageDir { get; set; }
+        private string GoProgram => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "go.exe" : "go";
 
+        private GoLanguageRepoService LangService { get; set; }
+
+        [OneTimeSetUp]
+        public void OneTimeSetUp()
+        {
+            var paths = Environment.GetEnvironmentVariable("PATH")?.Split(Path.PathSeparator) ?? Array.Empty<string>();
+            bool found = paths.Any(p => File.Exists(Path.Combine(p, GoProgram)));
             if (!found)
             {
-                Assert.Ignore($"No go tooling in path, can't run Go language specific language tests");
+                Assert.Ignore("No go tooling in path, can't run Go language specific language tests");
             }
+        }
 
-            // create a minimal go project in a temp directory
-            var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-            Directory.CreateDirectory(tempDir);
-            var cwd = Directory.GetCurrentDirectory();
+        [SetUp]
+        public async Task SetUp()
+        {
+            GoPackageDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(GoPackageDir);
 
-            try
+            LangService = new GoLanguageRepoService(GoPackageDir);
+
+            var resp = await LangService.CreateEmptyPackage("untitleddotloop");
+            Assert.That(resp.ExitCode, Is.EqualTo(0));
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            if (!string.IsNullOrEmpty(GoPackageDir) && Directory.Exists(GoPackageDir))
             {
-                // TODO: is this what we're expecting as a precondition?
-                Directory.SetCurrentDirectory(tempDir);
-
-                var langService = new GoLanguageRepoService(".");
-
-                // Run 'go mod init' in the temp directory
-                var result = await langService.CreateEmptyPackage("untitleddotloop");
-                Assert.That(result.ExitCode, Is.EqualTo(0));
-
-                result = await langService.AnalyzeDependenciesAsync();
-                Assert.That(result.ExitCode, Is.EqualTo(0));
-
-                // TODO: actually check that things are happening :)
-            }
-            finally
-            {
-                Directory.SetCurrentDirectory(cwd);
                 try
                 {
-                    Directory.Delete(tempDir, true);
+                    Directory.Delete(GoPackageDir, true);
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("Failed to cleanup temp directory {0}: {1}", tempDir, ex);
+                    Console.WriteLine("Failed to cleanup temp directory {0}: {1}", GoPackageDir, ex);
                 }
             }
+        }
+
+        [Test]
+        public async Task TestGoLanguageRepoServiceBasic()
+        {
+            await File.WriteAllTextAsync(Path.Combine(GoPackageDir, "main.go"), """
+                package main
+
+                import (
+                    "github.com/Azure/azure-sdk-for-go/sdk/messaging/azservicebus"      // an unused dep we're going to remove
+                    "github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+                )                
+
+                func main() {
+                    cred, err := azidentity.NewDefaultAzureCredential(nil)
+
+                    if cred == nil || err == nil {
+                        panic("No!")
+                    }
+                }
+                """);
+
+            await Process.Start(new ProcessStartInfo() { FileName = GoProgram, ArgumentList = { "get", "github.com/Azure/azure-sdk-for-go/sdk/azidentity@v1.10.0" }, WorkingDirectory = GoPackageDir })!.WaitForExitAsync();
+
+            var resp = await LangService.AnalyzeDependenciesAsync();
+            Assert.That(resp.ExitCode, Is.EqualTo(0));
+
+            var identityLine = File.ReadAllLines(Path.Join(GoPackageDir, "go.mod")).Where(line => line.Contains("azidentity")).Select(line => line.Trim()).First();
+            Assert.That(identityLine, Is.Not.EqualTo("github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.10.0"));
+
+            resp = await LangService.FormatCodeAsync();
+            Assert.That(File.ReadAllText(Path.Join(GoPackageDir, "main.go")), Does.Not.Contain("azservicebus"));
+
+            resp = await LangService.BuildProjectAsync();
+            Assert.That(resp.ExitCode, Is.EqualTo(0));
+
+            resp = await LangService.LintCodeAsync();
+            Assert.That(resp.ExitCode, Is.EqualTo(0));
+        }
+
+        [Test]
+        public async Task TestGoLanguageRepoServiceCompileErrors()
+        {
+            await File.WriteAllTextAsync(Path.Combine(GoPackageDir, "main.go"), """
+                package main
+
+                import (
+                )                
+
+                func main() {
+                    syntax error
+                }
+                """);
+
+            var resp = await LangService.BuildProjectAsync();
+            Assert.Multiple(() =>
+            {
+                Assert.That(resp.ExitCode, Is.EqualTo(1));
+                Console.WriteLine($"Output = {resp.Output}");
+                Assert.That(resp.Output, Does.Contain("syntax error: unexpected name error at end of statement"));
+            });
+        }
+
+        [Test]
+        public async Task TestGoLanguageRepoServiceLintErrors()
+        {
+            await File.WriteAllTextAsync(Path.Combine(GoPackageDir, "main.go"), """
+                package main
+
+                import (
+                )                
+
+                func unusedFunc() {}
+
+                func main() {                    
+                }
+                """);
+
+            var resp = await LangService.LintCodeAsync();
+            Assert.Multiple(() =>
+            {
+                Assert.That(resp.ExitCode, Is.EqualTo(1));
+                Assert.That(resp.Output, Does.Contain("func `unusedFunc` is unused (unused)"));
+            });
         }
     }
 }

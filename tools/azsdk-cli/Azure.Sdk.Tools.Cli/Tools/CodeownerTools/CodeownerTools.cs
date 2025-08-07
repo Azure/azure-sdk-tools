@@ -298,8 +298,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
                 // Step 1: Get contents.
-                var content = response.fileContent.Content;
-                var sha = response.fileContent.Sha;
+                var content = response.fileContent;
+                var sha = response.Sha;
 
                 if (content.Contains(response.path))
                 {
@@ -366,8 +366,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
                 // Step 1: Get contents.
-                var content = response.fileContent.Content;
-                var sha = response.fileContent.Sha;
+                var content = response.fileContent;
+                var sha = response.Sha;
 
                 // Step 2: Find the service category block
                 var (startLine, endLine) = codeownerHelper.findBlock(content, standardServiceCategory);
@@ -658,24 +658,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
             else
             {
-                response.fileContent = fileContent[0];
+                response.fileContent = fileContent[0].Content;
+                response.Sha = fileContent[0].Sha;
             }
 
             response.codeownersUrl = $"https://raw.githubusercontent.com/Azure/{repo}/main/.github/CODEOWNERS";
             response.ValidationMessages = resultMessages;
 
             return response;
-        }
-        public class CodeownerWorkflowResponse
-        {
-            public string path { get; set; }
-            public string serviceLabel { get; set; }
-            public List<CodeOwnerValidationResult> serviceOwners { get; set; }
-            public List<CodeOwnerValidationResult> sourceOwners { get; set; }
-            public bool isMgmtPlane { get; set; }
-            public string codeownersUrl { get; set; }
-            public RepositoryContent fileContent { get; set; }
-            public List<string> ValidationMessages { get; set; }
         }
     }
 }

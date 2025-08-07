@@ -378,6 +378,19 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         public string Message { get; set; } = "";
         public List<CodeOwnerValidationResult> CodeOwners { get; set; } = new();
     }
+    
+    public class CodeownerWorkflowResponse
+        {
+            public string path { get; set; }
+            public string serviceLabel { get; set; }
+            public List<CodeOwnerValidationResult> serviceOwners { get; set; }
+            public List<CodeOwnerValidationResult> sourceOwners { get; set; }
+            public bool isMgmtPlane { get; set; }
+            public string codeownersUrl { get; set; }
+            public string fileContent { get; set; }
+            public string Sha { get; set; }
+            public List<string> ValidationMessages { get; set; }
+        }
 
     public class CodeOwnerValidationResult
     {
@@ -407,7 +420,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                     result.Add($"  - {org.Key}: {org.Value}");
                 }
             }
-            
+
             return string.Join("\n", result);
         }
     }

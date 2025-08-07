@@ -469,7 +469,8 @@ export class ReviewPageComponent implements OnInit {
 
   handleApiRevisionApprovalEmitter(value: boolean) {
     if (value) {
-      this.apiRevisionsService.toggleAPIRevisionApproval(this.reviewId!, this.activeApiRevisionId!).pipe(take(1)).subscribe({
+      const approvalState = !this.activeAPIRevision?.approvers.includes(this.userProfile?.userName!);
+      this.apiRevisionsService.toggleAPIRevisionApproval(this.reviewId!, this.activeApiRevisionId!, approvalState).pipe(take(1)).subscribe({
         next: (apiRevision: APIRevision) => {
           this.activeAPIRevision = apiRevision;
           const activeAPIRevisionIndex = this.apiRevisions.findIndex(x => x.id === this.activeAPIRevision!.id);
@@ -481,7 +482,7 @@ export class ReviewPageComponent implements OnInit {
 
   handleReviewApprovalEmitter(value: boolean) {
     if (value) {
-      this.reviewsService.toggleReviewApproval(this.reviewId!, this.activeApiRevisionId!).pipe(take(1)).subscribe({
+      this.reviewsService.toggleReviewApproval(this.reviewId!, this.activeApiRevisionId!, true).pipe(take(1)).subscribe({
         next: (review: Review) => {
           this.review = review;
         }

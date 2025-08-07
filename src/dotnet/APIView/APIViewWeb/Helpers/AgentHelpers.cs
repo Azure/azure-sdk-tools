@@ -19,7 +19,8 @@ public class AgentHelpers
         Dictionary<string, int> elementIdToLineNumber = activeCodeLines
             .Select((elementId, lineNumber) => new { elementId.lineId, lineNumber })
             .Where(x => !string.IsNullOrEmpty(x.lineId))
-            .ToDictionary(x => x.lineId, x => x.lineNumber + 1);
+            .GroupBy(x => x.lineId)
+            .ToDictionary(g => g.Key, g => g.First().lineNumber + 1);
 
         return (from comment in comments
             where comment.ElementId != null

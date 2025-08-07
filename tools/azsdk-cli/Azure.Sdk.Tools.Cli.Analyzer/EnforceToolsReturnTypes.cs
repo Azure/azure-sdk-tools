@@ -17,7 +17,7 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
             "Tool methods must return Response types, built-in value types, or string",
             "Method '{0}' in Tools namespace must return a class implementing Response, a built-in value type, or string. Current return type: '{1}'.",
             "Design",
-            DiagnosticSeverity.Error,
+            DiagnosticSeverity.Warning,
             isEnabledByDefault: true);
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
@@ -104,18 +104,6 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
                 if (namedType.IsGenericType && 
                     (namedType.ConstructedFrom?.ToDisplayString() == "System.Threading.Tasks.Task<T>" ||
                      namedType.Name == "Task" && namedType.ContainingNamespace?.ToDisplayString() == "System.Threading.Tasks"))
-                {
-                    if (namedType.TypeArguments.Length > 0)
-                    {
-                        innerType = namedType.TypeArguments[0];
-                        return true;
-                    }
-                }
-
-                // Check for ValueTask<T>
-                if (namedType.IsGenericType && 
-                    (namedType.ConstructedFrom?.ToDisplayString() == "System.Threading.Tasks.ValueTask<T>" ||
-                     namedType.Name == "ValueTask" && namedType.ContainingNamespace?.ToDisplayString() == "System.Threading.Tasks"))
                 {
                     if (namedType.TypeArguments.Length > 0)
                     {

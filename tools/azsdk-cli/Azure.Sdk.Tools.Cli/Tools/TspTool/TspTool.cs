@@ -51,18 +51,19 @@ namespace Azure.Sdk.Tools.Cli.Tools
             return tspCommand;
         }
 
-        public override async Task<int> HandleCommand(InvocationContext ctx, CancellationToken ct)
+        public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
         {
+            await Task.CompletedTask;
             var command = ctx.ParseResult.CommandResult.Command.Name;
-
             switch (command)
             {
                 case ConvertSwaggerCommandName:
                     HandleConvertCommand(ctx, ct);
-                    return ctx.ExitCode;
+                    return;
                 default:
                     logger.LogError($"Unknown command: {command}");
-                    return 1;
+                    SetFailure();
+                    return;
             }
         }
 

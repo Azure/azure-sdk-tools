@@ -109,30 +109,6 @@ public class DotNetLanguageRepoService : LanguageRepoService
         }
     }
 
-    public override async Task<ICLICheckResponse> BuildProjectAsync()
-    {
-        try
-        {
-            // Run dotnet build
-            var result = await RunCommandAsync("dotnet", "build --configuration Release");
-            
-            if (result.ExitCode == 0)
-            {
-                return CreateSuccessResponse($"Project build completed successfully.\n{result.Output}");
-            }
-            else
-            {
-                return CreateFailureResponse($"Project build failed with exit code {result.ExitCode}.\n{result.Error}");
-            }
-        }
-        catch (Exception ex)
-        {
-            return CreateCookbookResponse(
-                "https://docs.microsoft.com/dotnet/core/tools/dotnet-build", 
-                $"Failed to build project. Ensure dotnet CLI is installed. Error: {ex.Message}");
-        }
-    }
-
     /// <summary>
     /// Helper method to run command line tools asynchronously.
     /// </summary>

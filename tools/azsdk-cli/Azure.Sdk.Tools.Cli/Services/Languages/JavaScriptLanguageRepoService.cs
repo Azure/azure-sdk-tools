@@ -109,30 +109,6 @@ public class JavaScriptLanguageRepoService : LanguageRepoService
         }
     }
 
-    public override async Task<ICLICheckResponse> BuildProjectAsync()
-    {
-        try
-        {
-            // Run npm run build
-            var result = await RunCommandAsync("npm", "run build");
-            
-            if (result.ExitCode == 0)
-            {
-                return CreateSuccessResponse($"Project build completed successfully.\n{result.Output}");
-            }
-            else
-            {
-                return CreateFailureResponse($"Project build failed with exit code {result.ExitCode}.\n{result.Error}");
-            }
-        }
-        catch (Exception ex)
-        {
-            return CreateCookbookResponse(
-                "https://docs.npmjs.com/cli/v10/commands/npm-run-script", 
-                $"Failed to build project. Ensure build script is configured in package.json. Error: {ex.Message}");
-        }
-    }
-
     /// <summary>
     /// Helper method to run command line tools asynchronously.
     /// </summary>

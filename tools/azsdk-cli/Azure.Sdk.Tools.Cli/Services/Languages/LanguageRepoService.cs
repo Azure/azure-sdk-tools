@@ -33,12 +33,6 @@ public interface ILanguageRepoService
     /// </summary>
     /// <returns>CLI check response containing success/failure status and response message</returns>
     Task<ICLICheckResponse> RunTestsAsync();
-
-    /// <summary>
-    /// Build/compile the project for the target language.
-    /// </summary>
-    /// <returns>CLI check response containing success/failure status and response message</returns>
-    Task<ICLICheckResponse> BuildProjectAsync();
 }
 
 /// <summary>
@@ -111,12 +105,6 @@ public class LanguageRepoService : ILanguageRepoService
     {
         await Task.CompletedTask;
         return CreateFailureResponse("RunTests not implemented for this language");
-    }
-
-    public virtual async Task<ICLICheckResponse> BuildProjectAsync()
-    {
-        await Task.CompletedTask;
-        return CreateFailureResponse("BuildProject not implemented for this language");
     }
 
     protected ICLICheckResponse CreateResponse(string prefix, int exitCode, string output)

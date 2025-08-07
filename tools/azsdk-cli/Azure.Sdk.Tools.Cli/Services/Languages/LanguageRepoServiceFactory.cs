@@ -37,7 +37,7 @@ public class LanguageRepoServiceFactory
 
         return detectedLanguage switch
         {
-            "python" => new PythonLanguageRepoService(packagePath, logger),
+            "python" => new PythonLanguageRepoService(packagePath, gitHelper, logger),
             "javascript" => new JavaScriptLanguageRepoService(packagePath),
             "dotnet" => new DotNetLanguageRepoService(packagePath),
             "go" => new GoLanguageRepoService(packagePath),

@@ -121,33 +121,6 @@ public class JavaLanguageRepoService : LanguageRepoService
         }
     }
 
-    public override async Task<ICLICheckResponse> BuildProjectAsync()
-    {
-        try
-        {
-            // Try Maven compile first, then Gradle
-            var mavenResult = await TryRunMavenCommand("compile");
-            if (mavenResult.ExitCode == 0)
-            {
-                return CreateSuccessResponse($"Project build completed successfully using Maven.\n{mavenResult.Output}");
-            }
-
-            var gradleResult = await TryRunGradleCommand("build");
-            if (gradleResult.ExitCode == 0)
-            {
-                return CreateSuccessResponse($"Project build completed successfully using Gradle.\n{gradleResult.Output}");
-            }
-
-            return CreateFailureResponse($"Project build failed with both Maven and Gradle.\nMaven: {mavenResult.Output}\nGradle: {gradleResult.Output}");
-        }
-        catch (Exception ex)
-        {
-            return CreateCookbookResponse(
-                "https://maven.apache.org/guides/getting-started/maven-in-five-minutes.html", 
-                $"Failed to build project. Ensure Maven or Gradle is installed. Error: {ex.Message}");
-        }
-    }
-
     /// <summary>
     /// Try to run a Maven command and return the result.
     /// </summary>

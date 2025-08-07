@@ -19,7 +19,7 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
             "McpServerTool attribute must specify a Name property",
             "McpServerTool attribute must include Name property with snake_case convention",
             "Naming",
-            DiagnosticSeverity.Error,
+            DiagnosticSeverity.Warning,
             isEnabledByDefault: true);
 
         private static readonly DiagnosticDescriptor InvalidNamingRule = new DiagnosticDescriptor(
@@ -27,7 +27,7 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
             "McpServerTool Name must follow snake_case convention",
             "McpServerTool Name '{0}' must follow snake_case convention (lowercase letters, numbers, and underscores only)",
             "Naming",
-            DiagnosticSeverity.Error,
+            DiagnosticSeverity.Warning,
             isEnabledByDefault: true);
 
         // Snake-case pattern: lowercase letters/numbers, separated by underscores, no consecutive underscores

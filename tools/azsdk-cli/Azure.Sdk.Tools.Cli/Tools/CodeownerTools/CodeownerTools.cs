@@ -29,6 +29,10 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private static readonly string standardServiceCategory = "# Client Libraries";
         private static readonly string standardManagementCategory = "# Management Libraries";
 
+        // URL constants
+        private const string azureWriteTeamsBlobUrl = "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/azure-sdk-write-teams-blob";
+        private const string githubRawContentBaseUrl = "https://raw.githubusercontent.com";
+
         // Command names
         private const string addCodeownersEntryCommandName = "add-codeowners-entry";
         private const string updateCodeownersCommandName = "update-codeowners";
@@ -168,8 +172,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     return (false, null, null, "Must provide a service label or a repository path.");
                 }
 
-                var codeownersUrl = $"https://raw.githubusercontent.com/Azure/{repoName}/main/.github/CODEOWNERS";
-                var codeownersEntries = CodeownersParser.ParseCodeownersFile(codeownersUrl, "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/azure-sdk-write-teams-blob");
+                var codeownersUrl = $"{githubRawContentBaseUrl}/Azure/{repoName}/main/.github/CODEOWNERS";
+                var codeownersEntries = CodeownersParser.ParseCodeownersFile(codeownersUrl, azureWriteTeamsBlobUrl);
                 var matchingEntries = codeownerHelper.FindMatchingEntries(codeownersEntries, serviceLabel, repoPath);
 
                 return (true, matchingEntries, repoName, null);
@@ -209,24 +213,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                         }
                     }
 
-                    // Validate codeowners sequentially 
-                    var codeOwners = new List<CodeOwnerValidationResult>();
-                    
-                    foreach (var owner in uniqueOwners)
-                    {
-                        var username = owner.TrimStart('@');
-                        
-                        if (codeOwnerValidationCache.TryGetValue(username, out var cachedResult))
-                        {
-                            codeOwners.Add(cachedResult);
-                        }
-                        else
-                        {
-                            var result = await ValidateCodeOwnerWithCaching(username);
-                            codeOwners.Add(result);
-                        }
-                    }
-
+                    var codeOwners = await ValidateOwners(uniqueOwners.Select(owner => owner.TrimStart('@')));
                     response.CodeOwners = codeOwners;
                     response.Message += "Successfully found and validated codeowners.";
                     response.Repository = repoName ?? string.Empty;
@@ -244,23 +231,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 response.Message += $"Error processing repository: {ex.Message}";
                 return response;
             }
-        }
-
-        private async Task<CodeOwnerValidationResult> ValidateCodeOwnerWithCaching(string username)
-        {
-            var result = await codeOwnerValidator.ValidateCodeOwnerAsync(username, verbose: false);
-
-            if (string.IsNullOrEmpty(result.Username))
-            {
-                result.Username = username;
-            }
-
-            if (!codeOwnerValidationCache.ContainsKey(username))
-            {
-                codeOwnerValidationCache[username] = result;
-            }
-
-            return result;
         }
 
         [McpServerTool(Name = "AddCodeownerEntry"), Description("Adds a codeowner entry for a given service label or path for a repo.")]
@@ -317,7 +287,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     (startLine, endLine) = codeownerHelper.findBlock(content, standardServiceCategory);
                 }
 
-                var codeownersEntries = CodeownersParser.ParseCodeownersFile(response.codeownersUrl, "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/azure-sdk-write-teams-blob", startLine, endLine);
+                var codeownersEntries = CodeownersParser.ParseCodeownersFile(response.codeownersUrl, azureWriteTeamsBlobUrl, startLine, endLine);
 
                 var insertionIndex = codeownerHelper.findAlphabeticalInsertionPoint(codeownersEntries, response.path, response.serviceLabel);
 
@@ -373,7 +343,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 var (startLine, endLine) = codeownerHelper.findBlock(content, standardServiceCategory);
 
                 // Step 3: Parse entries within the block to find the specific entry to modify
-                var codeownersEntries = CodeownersParser.ParseCodeownersFile(response.codeownersUrl, "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/azure-sdk-write-teams-blob", startLine, endLine);
+                var codeownersEntries = CodeownersParser.ParseCodeownersFile(response.codeownersUrl, azureWriteTeamsBlobUrl, startLine, endLine);
                 for (int i = 0; i < codeownersEntries.Count; i++)
                 {
                     (codeownersEntries, i) = codeownerHelper.mergeCodeownerEntries(codeownersEntries, i);
@@ -509,7 +479,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
                 else
                 {
-                    var result = await ValidateCodeOwnerWithCaching(username);
+                    var result = await codeOwnerValidator.ValidateCodeOwnerAsync(username, verbose: false);
+                    
+                    if (string.IsNullOrEmpty(result.Username))
+                    {
+                        result.Username = username;
+                    }
+                    
+                    codeOwnerValidationCache[username] = result;
                     validatedOwners.Add(result);
                 }
             }
@@ -661,7 +638,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 response.fileContent = fileContent[0];
             }
 
-            response.codeownersUrl = $"https://raw.githubusercontent.com/Azure/{repo}/main/.github/CODEOWNERS";
+            response.codeownersUrl = $"{githubRawContentBaseUrl}/Azure/{repo}/main/.github/CODEOWNERS";
             response.ValidationMessages = resultMessages;
 
             return response;

@@ -11,6 +11,7 @@ using Azure.Sdk.Tools.CodeownersUtils.Parsing;
 using Octokit;
 using Azure.Sdk.Tools.CodeownersUtils.Utils;
 using Microsoft.TeamFoundation.Common;
+using Azure.Sdk.Tools.Cli.Configuration;
 
 namespace Azure.Sdk.Tools.Cli.Tools
 {
@@ -172,7 +173,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     return (false, null, null, "Must provide a service label or a repository path.");
                 }
 
-                var codeownersUrl = $"{githubRawContentBaseUrl}/Azure/{repoName}/main/.github/CODEOWNERS";
+                var codeownersUrl = $"{githubRawContentBaseUrl}/{Constants.AZURE_OWNER_PATH}/{repoName}/main/.github/CODEOWNERS";
                 var codeownersEntries = CodeownersParser.ParseCodeownersFile(codeownersUrl, azureWriteTeamsBlobUrl);
                 var matchingEntries = codeownerHelper.FindMatchingEntries(codeownersEntries, serviceLabel, repoPath);
 
@@ -407,7 +408,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             var branchName = "";
 
             // Check if we have a working branch from SDK generation
-            if (!string.IsNullOrEmpty(workingBranch) && await githubService.GetBranchAsync("Azure", repo, workingBranch))
+            if (!string.IsNullOrEmpty(workingBranch) && await githubService.GetBranchAsync(Constants.AZURE_OWNER_PATH, repo, workingBranch))
             {
                 branchName = workingBranch;
                 resultMessages.Add($"Using existing branch: {branchName}");
@@ -416,15 +417,15 @@ namespace Azure.Sdk.Tools.Cli.Tools
             {
                 // Create a new branch only if no working branch exists
                 branchName = codeownerHelper.CreateBranchName(branchPrefix, identifier);
-                var createBranchResult = await githubService.CreateBranchAsync("Azure", repo, branchName);
+                var createBranchResult = await githubService.CreateBranchAsync(Constants.AZURE_OWNER_PATH, repo, branchName);
                 resultMessages.Add($"Created branch: {branchName} - Status: {createBranchResult}");
             }
 
             // Update file
-            await githubService.UpdateFileAsync("Azure", repo, ".github/CODEOWNERS", description, modifiedContent, sha, branchName);
+            await githubService.UpdateFileAsync(Constants.AZURE_OWNER_PATH, repo, ".github/CODEOWNERS", description, modifiedContent, sha, branchName);
 
             // Handle PR creation or update existing PR
-            var existingPR = await githubService.GetPullRequestForBranchAsync("Azure", repo, branchName);
+            var existingPR = await githubService.GetPullRequestForBranchAsync(Constants.AZURE_OWNER_PATH, repo, branchName);
             if (existingPR != null)
             {
                 // PR already exists - the file update will automatically be added to it
@@ -433,7 +434,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             else
             {
                 // No existing PR - create a new one if needed
-                var prInfoList = await githubService.CreatePullRequestAsync(repo, "Azure", "main", branchName, description, description, true);
+                var prInfoList = await githubService.CreatePullRequestAsync(repo, Constants.AZURE_OWNER_PATH, "main", branchName, description, description, true);
                 resultMessages.AddRange(prInfoList);
             }
 
@@ -566,7 +567,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
 
             // Get common labels file.
-            var csvContent = await githubService.GetContentsAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv");
+            var csvContent = await githubService.GetContentsAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, Constants.AZURE_COMMON_LABELS_PATH);
             if (csvContent == null || csvContent.Count == 0)
             {
                 resultMessages.Add("Could not retrieve common labels file.");
@@ -580,7 +581,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     var serviceLabelValidationResults = labelHelper.CheckServiceLabel(csvContent[0].Content, inputServiceLabel);
                     if (serviceLabelValidationResults != LabelHelper.ServiceLabelStatus.Exists)
                     {
-                        var pullRequests = await githubService.SearchPullRequestsByTitleAsync("Azure", "azure-sdk-tools", "Service Label");
+                        var pullRequests = await githubService.SearchPullRequestsByTitleAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, "Service Label");
 
                         if (!labelHelper.CheckServiceLabelInReview(pullRequests, inputServiceLabel))
                         {
@@ -627,11 +628,11 @@ namespace Azure.Sdk.Tools.Cli.Tools
             response.isMgmtPlane = typespecHelper.IsTypeSpecProjectForMgmtPlane(typeSpecProjectRoot);
 
             // Get CODEOWNERS file contents.
-            var fileContent = await githubService.GetContentsAsync("Azure", repo, ".github/CODEOWNERS");
+            var fileContent = await githubService.GetContentsAsync(Constants.AZURE_OWNER_PATH, repo, ".github/CODEOWNERS");
 
             if (fileContent == null || fileContent.Count == 0)
             {
-                resultMessages.Add($"Could not retrieve CODEOWNERS file with repository path 'Azure/{repo}/.github/CODEOWNERS'");
+                resultMessages.Add($"Could not retrieve CODEOWNERS file with repository path '{Constants.AZURE_OWNER_PATH}/{repo}/.github/CODEOWNERS'");
             }
             else
             {
@@ -639,7 +640,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 response.Sha = fileContent[0].Sha;
             }
 
-            response.codeownersUrl = $"{githubRawContentBaseUrl}/Azure/{repo}/main/.github/CODEOWNERS";
+            response.codeownersUrl = $"{githubRawContentBaseUrl}/{Constants.AZURE_OWNER_PATH}/{repo}/main/.github/CODEOWNERS";
             response.ValidationMessages = resultMessages;
 
             return response;

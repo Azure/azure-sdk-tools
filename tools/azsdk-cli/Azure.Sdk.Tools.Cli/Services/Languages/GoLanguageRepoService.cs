@@ -49,7 +49,7 @@ public class GoLanguageRepoService : LanguageRepoService
             var (output, exitCode) = await RunCommandsAsync([
                 new() { FileName = compilerName, ArgumentList = { "get", "-u", "all" }, WorkingDirectory = _packagePath  },   // update all the dependencies to the latest first
                 new() { FileName = compilerName, ArgumentList = { "mod", "tidy" }, WorkingDirectory = _packagePath  }         // now tidy, to cleanup any deps that aren't needed.
-            ]);
+            ], false, ct);
 
             return CreateResponse(nameof(AnalyzeDependenciesAsync), exitCode, output);
         }

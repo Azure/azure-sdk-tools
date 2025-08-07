@@ -24,6 +24,7 @@ interface DocumentationSource {
     folder: string;
     name?: string;
     fileNameLowerCase?: boolean;
+    ignoredPaths?: string[];
 }
 
 // Configuration for repository setup
@@ -31,7 +32,7 @@ interface RepositoryConfig {
     name: string;
     url: string;
     path: string;
-    branch?: string;
+    branch: string;
     sparseCheckout?: string[];
     authType?: 'public' | 'token' | 'ssh';
     sshHost?: string;
@@ -78,6 +79,7 @@ const documentationSources: DocumentationSource[] = [
     {
         path: "docs/azure-sdk",
         folder: "azure-sdk-guidelines",
+        ignoredPaths: ["docs/redirects"]
     },
     {
         path: "docs/typespec/packages/http-specs/specs/generated",
@@ -335,28 +337,33 @@ async function setupDocumentationRepositories(docsDir: string, context: Invocati
             name: 'TypeSpec',
             url: 'https://github.com/microsoft/typespec.git',
             path: 'typespec',
+            branch: 'main',
             sparseCheckout: ['website/src/content/docs/docs', 'packages/http-specs/specs']
         },
         {
             name: 'TypeSpec Azure',
             url: 'https://github.com/Azure/typespec-azure.git',
             path: 'typespec-azure',
+            branch: 'main',
             sparseCheckout: ['website/src/content/docs/docs', 'packages/azure-http-specs/specs']
         },
         {
             name: 'Azure REST API Specs Wiki',
             url: 'https://github.com/Azure/azure-rest-api-specs.wiki.git',
-            path: 'azure-rest-api-specs.wiki'
+            path: 'azure-rest-api-specs.wiki',
+            branch: 'master'
         },
         {
             name: 'Azure SDK for Python Wiki',
             url: 'https://github.com/Azure/azure-sdk-for-python.wiki.git',
-            path: 'azure-sdk-for-python.wiki'
+            path: 'azure-sdk-for-python.wiki',
+            branch: 'master'
         },
         {
             name: 'Azure SDK for Python',
             url: 'https://github.com/Azure/azure-sdk-for-python.git',
             path: 'azure-sdk-for-python',
+            branch: 'main',
             sparseCheckout: ['doc']
         },
         {
@@ -419,8 +426,8 @@ async function setupDocumentationRepositories(docsDir: string, context: Invocati
                     
                     const sparseCheckoutFile = path.join(repoPath, '.git/info/sparse-checkout');
                     fs.writeFileSync(sparseCheckoutFile, repo.sparseCheckout.join('\n'));
-                    
-                    execSync('git checkout main || git checkout master', { stdio: 'pipe', env: process.env });
+
+                    execSync(`git checkout ${repo.branch}`, { stdio: 'pipe', env: process.env });
                 } else {
                     execSync(`git clone ${cloneUrl} ${repo.path}`, { stdio: 'pipe', env: process.env });
                 }
@@ -454,7 +461,12 @@ async function processSourceDirectory(
                 walkDirectory(fullPath);
             } else if (entry.name.endsWith('.md') || entry.name.endsWith('.mdx')) {
                 const relativePath = path.relative(sourceDir, fullPath);
-                
+
+                // Skip ignored paths
+                if (source.ignoredPaths && source.ignoredPaths.some(p => relativePath.startsWith(p))) {
+                    continue;
+                }
+
                 // Skip reference files and release notes
                 if (relativePath.startsWith('reference') || entry.name.startsWith('release-')) {
                     continue;
@@ -758,7 +770,7 @@ async function uploadFilesToBlobStorage(tempDocsDir: string, sources: Documentat
                         }
                         const blobPath = path.join(source.folder, fileName);
                         const content = fs.readFileSync(fullPath);
-                        storageService.putBlob(containerName, blobPath, content);
+                        storageService.putBlob(context, containerName, blobPath, content);
                         uploadedCount++;
                         currentFiles.push(blobPath);
                     }
@@ -786,7 +798,7 @@ async function cleanupExpiredBlobs(currentFiles: string[], context: InvocationCo
         
         context.log('Cleaning up expired blobs...');
         
-        const deletedCount = await storageService.deleteExpiredBlobs(containerName, currentFiles);
+        const deletedCount = await storageService.deleteExpiredBlobs(context, containerName, currentFiles);
         
         context.log(`Cleaned up ${deletedCount} expired blobs`);
     } catch (error) {

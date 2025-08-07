@@ -1,3 +1,4 @@
+import { InvocationContext} from '@azure/functions';
 import { BlobServiceClient, ContainerClient } from '@azure/storage-blob';
 import { ChainedTokenCredential, DefaultAzureCredential, AzureCliCredential, EnvironmentCredential, ManagedIdentityCredential } from '@azure/identity';
 
@@ -32,7 +33,7 @@ export class StorageService {
     /**
      * Upload content to blob storage
      */
-    async putBlob(containerName: string, blobPath: string, content: Buffer | string): Promise<void> {
+    async putBlob(context: InvocationContext, containerName: string, blobPath: string, content: Buffer | string): Promise<void> {
         try {
             const containerClient = this.blobServiceClient.getContainerClient(containerName);
             const blockBlobClient = containerClient.getBlockBlobClient(blobPath);
@@ -44,7 +45,7 @@ export class StorageService {
             };
             
             await blockBlobClient.upload(content, Buffer.byteLength(content.toString()), uploadOptions);
-            console.log(`Uploaded ${blobPath} to blob storage`);
+            context.log(`Uploaded ${blobPath} to blob storage`);
         } catch (error) {
             throw new Error(`Failed to upload blob ${blobPath}: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
@@ -73,7 +74,7 @@ export class StorageService {
     /**
      * Delete a blob from storage (soft delete using metadata)
      */
-    async deleteBlob(containerName: string, blobPath: string): Promise<void> {
+    async deleteBlob(context: InvocationContext, containerName: string, blobPath: string): Promise<void> {
         try {
             const containerClient = this.blobServiceClient.getContainerClient(containerName);
             const blockBlobClient = containerClient.getBlockBlobClient(blobPath);
@@ -83,7 +84,7 @@ export class StorageService {
                 IsDeleted: 'true'
             });
             
-            console.log(`Deleted blob ${blobPath}`);
+            context.log(`Deleted blob ${blobPath}`);
         } catch (error) {
             throw new Error(`Failed to delete blob ${blobPath}: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
@@ -92,7 +93,7 @@ export class StorageService {
     /**
      * Delete multiple blobs that are not in the current files list
      */
-    async deleteExpiredBlobs(containerName: string, currentFiles: string[]): Promise<number> {
+    async deleteExpiredBlobs(context: InvocationContext, containerName: string, currentFiles: string[]): Promise<number> {
         try {
             const allBlobs = await this.listBlobs(containerName);
             const currentFileSet = new Set(currentFiles);
@@ -106,7 +107,7 @@ export class StorageService {
                 
                 // Delete if not in current files
                 if (!currentFileSet.has(blobPath)) {
-                    await this.deleteBlob(containerName, blobPath);
+                    await this.deleteBlob(context, containerName, blobPath);
                     deletedCount++;
                 }
             }

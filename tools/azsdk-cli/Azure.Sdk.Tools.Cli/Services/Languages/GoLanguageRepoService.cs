@@ -38,14 +38,14 @@ public class GoLanguageRepoService : LanguageRepoService
         }
     }
 
-    public override async Task<ICLICheckResponse> AnalyzeDependenciesAsync()
+    public override async Task<ICLICheckResponse> AnalyzeDependenciesAsync(CancellationToken ct = default)
     {
         try
         {
             var (output, exitCode) = await RunCommandsAsync([
                 new() { FileName = compilerName, ArgumentList = { "get", "-u", "all" } },   // update all the dependencies to the latest first
                 new() { FileName = compilerName, ArgumentList = { "mod", "tidy" } }         // now tidy, to cleanup any deps that aren't needed.
-            ]);
+            ], ct);
 
             return CreateResponse(nameof(AnalyzeDependenciesAsync), exitCode, output);
         }

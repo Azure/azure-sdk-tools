@@ -14,7 +14,7 @@ public interface ILanguageRepoService
     /// Perform dependency analysis for the target language.
     /// </summary>
     /// <returns>CLI check response containing success/failure status and response message</returns>
-    Task<ICLICheckResponse> AnalyzeDependenciesAsync();
+    Task<ICLICheckResponse> AnalyzeDependenciesAsync(CancellationToken ct);
 
     /// <summary>
     /// Format code for the target language.
@@ -83,7 +83,7 @@ public class LanguageRepoService : ILanguageRepoService
         return new CookbookCLICheckResponse(exitCode, message, cookbookReference);
     }
 
-    public virtual async Task<ICLICheckResponse> AnalyzeDependenciesAsync()
+    public virtual async Task<ICLICheckResponse> AnalyzeDependenciesAsync(CancellationToken ct)
     {
         await Task.CompletedTask;
         return CreateFailureResponse("AnalyzeDependencies not implemented for this language");

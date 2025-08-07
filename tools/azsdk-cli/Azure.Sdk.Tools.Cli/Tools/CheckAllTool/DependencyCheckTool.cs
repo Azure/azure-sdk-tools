@@ -43,12 +43,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
             return command;
         }
 
-        public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
+    public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
         {
             try
             {
                 var packagePath = ctx.ParseResult.GetValueForOption(packagePathOption);
-                var result = await RunDependencyCheck(packagePath);
+    var result = await RunDependencyCheck(packagePath, ct);
 
                 output.Output(result);
                 ctx.ExitCode = ExitCode;
@@ -66,7 +66,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
         }
 
         [McpServerTool(Name = "RunDependencyCheck"), Description("Run dependency check for SDK packages. Provide absolute path to package root as param.")]
-        public async Task<ICLICheckResponse> RunDependencyCheck(string packagePath)
+    public async Task<ICLICheckResponse> RunDependencyCheck(string packagePath, CancellationToken ct)
         {
             try
             {
@@ -88,7 +88,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                     logger.LogInformation($"Created language service: {languageService.GetType().Name}");
                     
                     // Call AnalyzeDependencies method
-                    result = await languageService.AnalyzeDependenciesAsync();
+                    result = await languageService.AnalyzeDependenciesAsync(ct);
                     stopwatch.Stop();
                     
                     if (result.ExitCode != 0)
@@ -127,5 +127,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                 return new FailureCLICheckResponse(1, "", $"Unhandled exception: {ex.Message}");
             }
         }
+
+        // Back-compat overload for callers/tests that don't pass a CancellationToken
+        public Task<ICLICheckResponse> RunDependencyCheck(string packagePath)
+            => RunDependencyCheck(packagePath, ct: default);
     }
 }

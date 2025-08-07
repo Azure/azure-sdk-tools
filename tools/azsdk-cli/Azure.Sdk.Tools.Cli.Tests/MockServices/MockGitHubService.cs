@@ -14,7 +14,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
             throw new NotImplementedException();
         }
 
-        public Task<bool> GetBranchAsync(string repoOwner, string repoName, string branchName)
+        public Task<bool> IsExistingBranchAsync(string repoOwner, string repoName, string branchName)
         {
             throw new NotImplementedException();
         }

@@ -9,5 +9,8 @@ public static class Constants
     public const string AZURE_SDK_DEVOPS_PUBLIC_PROJECT = "public";
     public const string AZURE_SDK_DEVOPS_INTERNAL_PROJECT = "internal";
     public const string AZURE_SDK_DEVOPS_RELEASE_PROJECT = "release";
-    public const string SERVICE_LABELS_COLOR_CODE = "e99695";
+
+    public const string AZURE_OWNER_PATH = "Azure";
+    public const string AZURE_SDK_TOOLS_PATH = "azure-sdk-tools";
+    public const string AZURE_COMMON_LABELS_PATH = "/tools/github/data/common-labels.csv";
 }

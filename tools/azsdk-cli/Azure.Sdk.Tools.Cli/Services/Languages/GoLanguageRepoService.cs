@@ -84,7 +84,7 @@ public class GoLanguageRepoService : LanguageRepoService
     /// Helper method to run command line tools asynchronously.
     /// </summary>
     /// <param name="psi">ProcessStartInfo for the process. NOTE: this parameter is modified.</param>
-    private async Task<(string Output, int ExitCode)> RunCommandAsync(ProcessStartInfo psi, CancellationToken ct = null)
+    private async Task<(string Output, int ExitCode)> RunCommandAsync(ProcessStartInfo psi, CancellationToken ct = default)
     {
         using var process = new Process()
         {

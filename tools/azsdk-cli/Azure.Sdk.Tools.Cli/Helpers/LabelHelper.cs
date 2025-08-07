@@ -6,6 +6,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 {
     public static class LabelHelper
     {
+        public const string SERVICE_LABELS_COLOR_CODE = "e99695";
 
         public enum ServiceLabelStatus
         {
@@ -25,24 +26,31 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                     continue;
                 }
 
-                var commaIndices = line.Split(",");
+                var columns = line.Split(",");
 
-                if (commaIndices.Length < 2)
+                if (columns.Length <= 2)
                 {
-                    continue; // Skip lines that don't have at least 2 elements
+                    continue; // Skip lines that don't have at least 3 columns
                 }
 
                 // Label is the first part (before first comma)
-                var label = commaIndices[0].Trim();
+                var label = columns[0].Trim();
                 
                 // Color is the last part (after last comma)
-                var color = commaIndices[commaIndices.Length - 1].Trim();
+                var color = columns[columns.Length - 1].Trim();
                 
                 // Check if this is the service we're looking for
                 if (label.Equals(serviceName, StringComparison.OrdinalIgnoreCase))
                 {
                     // Check if it's a service label by color code
-                    return color.Equals(Constants.SERVICE_LABELS_COLOR_CODE, StringComparison.OrdinalIgnoreCase) ? ServiceLabelStatus.Exists : ServiceLabelStatus.NotAServiceLabel;
+                    if (color.Equals(SERVICE_LABELS_COLOR_CODE, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return ServiceLabelStatus.Exists;
+                    }
+                    else
+                    {
+                        return ServiceLabelStatus.NotAServiceLabel;
+                    }
                 }
             }
 
@@ -56,7 +64,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 .Where(line => !string.IsNullOrWhiteSpace(line))
                 .ToList();
 
-            var newServiceLabel = $"{serviceLabel},,{Constants.SERVICE_LABELS_COLOR_CODE}";
+            var newServiceLabel = $"{serviceLabel},,{SERVICE_LABELS_COLOR_CODE}";
 
             bool inserted = false;
             for (int i = 0; i < lines.Count; i++)

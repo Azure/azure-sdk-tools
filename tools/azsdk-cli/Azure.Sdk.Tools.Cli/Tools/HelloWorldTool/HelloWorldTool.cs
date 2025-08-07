@@ -8,7 +8,7 @@ using Azure.Sdk.Tools.Cli.Contract;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Models;
 
-namespace Azure.Sdk.Tools.Cli.Tools.HelloWorldTool
+namespace Azure.Sdk.Tools.Cli.Tools
 {
     #if DEBUG
     [McpServerToolType, Description("Echoes the message back to the client")]

@@ -17,7 +17,7 @@ async def process_file(input_file: str, output_file: str, is_bot: bool) -> None:
     """Process a single input file"""
     print(f"Processing file: {input_file}")
     
-    azure_openai_api_key = os.environ["AZURE_OPENAI_API_KEY"]
+    azure_openai_api_key = os.environ["BOT_AGENT_API_KEY"]
     bot_service_endpoint = os.environ.get("BOT_SERVICE_ENDPOINT", None) 
     api_url = f"{bot_service_endpoint}/completion" if bot_service_endpoint is not None else "http://localhost:8088/completion"
     start_time = time.time()
@@ -25,7 +25,7 @@ async def process_file(input_file: str, output_file: str, is_bot: bool) -> None:
     with open(input_file, "r", encoding="utf-8") as f:
         for line in f:
             record = json.loads(line)
-            print(record)
+            # print(record)
             if is_bot:
                 try:
                     api_response = await call_bot_api(record["query"], api_url, azure_openai_api_key)
@@ -226,7 +226,7 @@ if __name__ == "__main__":
 
     args.is_bot = args.is_bot.lower() in ('true', '1', 'yes', 'on')
     args.is_cli = args.is_cli.lower() in ('true', '1', 'yes', 'on')
-    args.skip_data_process = args.is_cli.lower() in ('true', '1', 'yes')
+    args.skip_data_process = args.skip_data_process.lower() in ('true', '1', 'yes')
 
     
     script_directory = os.path.dirname(os.path.abspath(__file__))

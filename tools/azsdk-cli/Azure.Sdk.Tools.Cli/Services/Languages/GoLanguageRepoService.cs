@@ -42,8 +42,11 @@ public class GoLanguageRepoService : LanguageRepoService
     {
         try
         {
-            // TODO: I think we should run _two_ commands here - go get -u all, and then go mod tidy.
-            var (output, exitCode) = await RunCommandAsync(new() { FileName = compilerName, ArgumentList = { "mod", "tidy" } });
+            var (output, exitCode) = await RunCommandsAsync([
+                new() { FileName = compilerName, ArgumentList = { "get", "-u", "all" } },   // update all the dependencies to the latest first
+                new() { FileName = compilerName, ArgumentList = { "mod", "tidy" } }         // now tidy, to cleanup any deps that aren't needed.
+            ]);
+
             return CreateResponse(nameof(AnalyzeDependenciesAsync), exitCode, output);
         }
         catch (Exception ex)
@@ -51,7 +54,6 @@ public class GoLanguageRepoService : LanguageRepoService
             return CreateFailureResponse($"{nameof(AnalyzeDependenciesAsync)} failed with an exception\n{ex}");
         }
     }
-
     public override async Task<ICLICheckResponse> FormatCodeAsync()
     {
         try
@@ -103,6 +105,32 @@ public class GoLanguageRepoService : LanguageRepoService
         {
             return CreateFailureResponse($"{nameof(BuildProjectAsync)} failed with an exception: {ex}");
         }
+    }
+
+    /// <summary>
+    /// Runs multiple commands using <see cref="RunCommandAsync"/>. It returns after the first command that returns a non-zero exit code.
+    /// </summary>
+    /// <param name="psis">A collection of <see cref="ProcessStartInfo"/> objects representing the commands to run.</param>
+    /// <param name="ct">Optional <see cref="CancellationToken"/> to cancel the operation.</param>
+    /// <returns>A tuple containing the combined output of all commands, and the exit code of the last command run.</returns>
+    private static async Task<(string Output, int ExitCode)> RunCommandsAsync(IEnumerable<ProcessStartInfo> psis, CancellationToken ct = default)
+    {
+        var allOutput = new StringBuilder();
+        var lastExitCode = 0;
+
+        foreach (var psi in psis)
+        {
+            var (output, exitCode) = await RunCommandAsync(psi, true, ct);
+            allOutput.Append(output);
+
+            if (exitCode != 0)
+            {
+                lastExitCode = exitCode;
+                break;
+            }
+        }
+
+        return (allOutput.ToString(), lastExitCode);
     }
 
     /// <summary>
@@ -177,7 +205,7 @@ public class GoLanguageRepoService : LanguageRepoService
                 // Quote arguments with spaces or special characters
                 if (arg.Contains(' ') || arg.Contains('"'))
                 {
-                    builder.Append(" \"").Append(arg.Replace("\"", "\\\"")).Append("\"");
+                    builder.Append(" \"").Append(arg.Replace("\"", "\\\"")).Append('"');
                 }
                 else
                 {

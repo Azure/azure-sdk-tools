@@ -334,7 +334,7 @@ public class GitConnection
             try
             {
                 var updateRequest = new UpdateFileRequest(message, content, sha, branch);
-                var result = await gitHubClient.Repository.Content.UpdateFile(owner, repoName, path, updateRequest);
+                await gitHubClient.Repository.Content.UpdateFile(owner, repoName, path, updateRequest);
             }
             catch (NotFoundException ex)
             {

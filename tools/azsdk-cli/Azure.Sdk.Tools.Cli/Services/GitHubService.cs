@@ -93,7 +93,7 @@ public class GitConnection
         public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path);
         public Task UpdateFileAsync(string owner, string repoName, string path, string message, string content, string sha, string branch);
         public Task<CreateBranchStatus> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranchName = "main");
-        public Task<RepositoryContent> GetContentsSingleAsync(IReadOnlyList<RepositoryContent> contents);
+        public  Task<RepositoryContent> GetContentsSingleAsync(string owner, string repoName, string path);
         public Task<bool> IsExistingBranchAsync(string repoOwner, string repoName, string branchName);
     }
 
@@ -315,12 +315,7 @@ public class GitConnection
         {
             try
             {
-                var contents = await gitHubClient.Repository.Content.GetAllContents(owner, repoName, path);
-                if (contents == null || contents.Count == 0)
-                {
-                    throw new InvalidOperationException($"Could not retrieve '{path}' file content");
-                }
-                return contents;
+                return await gitHubClient.Repository.Content.GetAllContents(owner, repoName, path);
             }
             catch (NotFoundException)
             {
@@ -402,11 +397,16 @@ public class GitConnection
             }
         }
 
-        public async Task<RepositoryContent> GetContentsSingleAsync(IReadOnlyList<RepositoryContent> contents)
+        public async Task<RepositoryContent> GetContentsSingleAsync(string owner, string repoName, string path)
         {
+            var contents = await GetContentsAsync(owner, repoName, path);
+            if (contents == null || contents.Count == 0)
+            {
+                throw new InvalidOperationException($"Could not retrieve '{path}' file content");
+            }
             if (string.IsNullOrEmpty(contents[0].Content))
             {
-                throw new InvalidOperationException($"file is empty");
+                throw new InvalidOperationException($"'{path}' file is empty");
             }
             return contents[0];
         }

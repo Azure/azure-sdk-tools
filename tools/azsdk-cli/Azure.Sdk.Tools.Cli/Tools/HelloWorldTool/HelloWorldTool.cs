@@ -67,7 +67,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.HelloWorldTool
             }
         }
 
-
         [McpServerTool(Name = "hello-world"), Description("Echoes the message back to the client")]
         public DefaultCommandResponse EchoSuccess(string message)
         {

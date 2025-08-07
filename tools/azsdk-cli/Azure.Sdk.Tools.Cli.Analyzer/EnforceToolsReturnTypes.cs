@@ -142,6 +142,7 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
 
         private static bool IsBuiltInValueTypeOrString(ITypeSymbol type)
         {
+            // Check for primitive types by SpecialType
             switch (type.SpecialType)
             {
                 case SpecialType.System_Boolean:
@@ -154,13 +155,11 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
                 case SpecialType.System_UInt32:
                 case SpecialType.System_Int64:
                 case SpecialType.System_UInt64:
-                case SpecialType.System_Decimal:
                 case SpecialType.System_Single:
                 case SpecialType.System_Double:
-                case SpecialType.System_String:
                 case SpecialType.System_IntPtr:
                 case SpecialType.System_UIntPtr:
-                case SpecialType.System_DateTime:
+                case SpecialType.System_String:
                     return true;
                 default:
                     return false;

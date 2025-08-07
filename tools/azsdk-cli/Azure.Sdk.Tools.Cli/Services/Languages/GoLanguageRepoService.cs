@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text;
 using Azure.Sdk.Tools.Cli.Models;
 
 namespace Azure.Sdk.Tools.Cli.Services;
@@ -17,24 +18,12 @@ public class GoLanguageRepoService : LanguageRepoService
     {
         try
         {
-            // Run go mod tidy for dependency analysis
-            var result = await RunCommandAsync("go", "mod tidy");
-            
-            if (result.ExitCode == 0)
-            {
-                return CreateSuccessResponse($"D ependency analysis completed successfully.\n{result.Output}");
-            }
-            else
-            {
-                var errorMessage = result is FailureCLICheckResponse failure ? failure.Error : "";
-                return CreateFailureResponse($"Dependency analysis failed with exit code {result.ExitCode}.\n{errorMessage}");
-            }
+            var (output, exitCode) = await RunCommandAsync(new() { FileName = "go", ArgumentList = { "mod", "tidy" } });
+            return CreateResponse(nameof(AnalyzeDependenciesAsync), exitCode, output);
         }
         catch (Exception ex)
         {
-            return CreateCookbookResponse(
-                "https://go.dev/ref/mod#go-mod-tidy", 
-                $"Failed to run dependency analysis. Ensure go is installed. Error: {ex.Message}");
+            return CreateFailureResponse($"{nameof(AnalyzeDependenciesAsync)} failed with an exception\n{ex}");
         }
     }
 
@@ -42,24 +31,12 @@ public class GoLanguageRepoService : LanguageRepoService
     {
         try
         {
-            // Run gofmt for code formatting
-            var result = await RunCommandAsync("gofmt", "-w .");
-            
-            if (result.ExitCode == 0)
-            {
-                return CreateSuccessResponse($"Code formatting completed successfully.\n{result.Output}");
-            }
-            else
-            {
-                var errorMessage = result is FailureCLICheckResponse failure ? failure.Error : "";
-                return CreateFailureResponse($"Code formatting failed with exit code {result.ExitCode}.\n{errorMessage}");
-            }
+            var (output, exitCode) = await RunCommandAsync(new() { FileName = "gofmt", ArgumentList = { "-w" } });
+            return CreateResponse(nameof(FormatCodeAsync), exitCode, output);
         }
         catch (Exception ex)
         {
-            return CreateCookbookResponse(
-                "https://pkg.go.dev/cmd/gofmt", 
-                $"Failed to run code formatting. Ensure go is installed. Error: {ex.Message}");
+            return CreateFailureResponse($"{nameof(FormatCodeAsync)} failed with an exception: {ex}");
         }
     }
 
@@ -67,23 +44,12 @@ public class GoLanguageRepoService : LanguageRepoService
     {
         try
         {
-            // Run go vet for linting
-            var result = await RunCommandAsync("go", "vet ./...");
-            
-            if (result.ExitCode == 0)
-            {
-                return CreateSuccessResponse($"Linting completed successfully.\n{result.Output}");
-            }
-            else
-            {
-                return CreateFailureResponse($"Linting found issues.\n{result.Output}");
-            }
+            var (output, exitCode) = await RunCommandAsync(new() { FileName = "golangci-lint", ArgumentList = { "./..." } });
+            return CreateResponse(nameof(LintCodeAsync), exitCode, output);
         }
         catch (Exception ex)
         {
-            return CreateCookbookResponse(
-                "https://pkg.go.dev/cmd/vet", 
-                $"Failed to run linting. Ensure go is installed. Error: {ex.Message}");
+            return CreateFailureResponse($"{nameof(LintCodeAsync)} failed with an exception: {ex}");
         }
     }
 
@@ -91,23 +57,12 @@ public class GoLanguageRepoService : LanguageRepoService
     {
         try
         {
-            // Run go test
-            var result = await RunCommandAsync("go", "test ./...");
-            
-            if (result.ExitCode == 0)
-            {
-                return CreateSuccessResponse($"Tests passed successfully.\n{result.Output}");
-            }
-            else
-            {
-                return CreateFailureResponse($"Tests failed with exit code {result.ExitCode}.\n{result.Output}");
-            }
+            var (output, exitCode) = await RunCommandAsync(new() { FileName = "go", ArgumentList = { "test", "-v", "-timeout", "1h", "./..." } });
+            return CreateResponse(nameof(RunTestsAsync), exitCode, output);
         }
         catch (Exception ex)
         {
-            return CreateCookbookResponse(
-                "https://pkg.go.dev/cmd/go#hdr-Test_packages", 
-                $"Failed to run tests. Ensure go is installed. Error: {ex.Message}");
+            return CreateFailureResponse($"{nameof(RunTestsAsync)} failed with an exception: {ex}");
         }
     }
 
@@ -115,72 +70,57 @@ public class GoLanguageRepoService : LanguageRepoService
     {
         try
         {
-            // Run go build
-            var result = await RunCommandAsync("go", "build ./...");
-            
-            if (result.ExitCode == 0)
-            {
-                return CreateSuccessResponse($"Project build completed successfully.\n{result.Output}");
-            }
-            else
-            {
-                var errorMessage = result is FailureCLICheckResponse failure ? failure.Error : "";
-                return CreateFailureResponse($"Project build failed with exit code {result.ExitCode}.\n{errorMessage}");
-            }
+            // does this need to ensure that tests _also_ build, or is it okay to assume that RunTestsAsync() will always be called?
+            var (output, exitCode) = await RunCommandAsync(new() { FileName = "go", ArgumentList = { "build" } });
+            return CreateResponse(nameof(BuildProjectAsync), exitCode, output);
         }
         catch (Exception ex)
         {
-            return CreateCookbookResponse(
-                "https://pkg.go.dev/cmd/go#hdr-Compile_packages_and_dependencies", 
-                $"Failed to build project. Ensure go is installed. Error: {ex.Message}");
+            return CreateFailureResponse($"{nameof(BuildProjectAsync)} failed with an exception: {ex}");
         }
     }
 
     /// <summary>
     /// Helper method to run command line tools asynchronously.
     /// </summary>
-    private async Task<ICLICheckResponse> RunCommandAsync(string fileName, string arguments)
+    /// <param name="psi">ProcessStartInfo for the process. NOTE: this parameter is modified.</param>
+    private async Task<(string Output, int ExitCode)> RunCommandAsync(ProcessStartInfo psi, CancellationToken ct = null)
     {
-        using var process = new Process();
-        process.StartInfo.FileName = fileName;
-        process.StartInfo.Arguments = arguments;
-        process.StartInfo.WorkingDirectory = _repositoryPath;
-        process.StartInfo.UseShellExecute = false;
-        process.StartInfo.RedirectStandardOutput = true;
-        process.StartInfo.RedirectStandardError = true;
-        process.StartInfo.CreateNoWindow = true;
+        using var process = new Process()
+        {
+            StartInfo = psi,
+        };
 
-        var outputBuilder = new System.Text.StringBuilder();
-        var errorBuilder = new System.Text.StringBuilder();
+        var outputBuilder = new StringBuilder();
 
         process.OutputDataReceived += (sender, e) =>
         {
             if (e.Data != null)
-                outputBuilder.AppendLine(e.Data);
+            {
+                lock (outputBuilder)
+                {
+                    outputBuilder.AppendLine(e.Data);
+                }
+            }
         };
 
         process.ErrorDataReceived += (sender, e) =>
         {
             if (e.Data != null)
-                errorBuilder.AppendLine(e.Data);
+            {
+                lock (outputBuilder)
+                {
+                    outputBuilder.AppendLine(e.Data);
+                }
+            }
         };
 
         process.Start();
         process.BeginOutputReadLine();
         process.BeginErrorReadLine();
 
-        await process.WaitForExitAsync();
+        await process.WaitForExitAsync(ct);
 
-        var output = outputBuilder.ToString();
-        var error = errorBuilder.ToString();
-
-        if (process.ExitCode == 0)
-        {
-            return new SuccessCLICheckResponse(process.ExitCode, output);
-        }
-        else
-        {
-            return new FailureCLICheckResponse(process.ExitCode, output, error);
-        }
+        return (outputBuilder.ToString(), process.ExitCode);
     }
 }

@@ -118,4 +118,16 @@ public class LanguageRepoService : ILanguageRepoService
         await Task.CompletedTask;
         return CreateFailureResponse("BuildProject not implemented for this language");
     }
+
+    protected ICLICheckResponse CreateResponse(string prefix, int exitCode, string output)
+    {
+        if (exitCode == 0)
+        {
+            return CreateSuccessResponse($"{prefix} completed successfully.{Environment.NewLine}{output}");
+        }
+        else
+        {
+            return CreateFailureResponse($"{prefix} failed with exit code {exitCode}.{Environment.NewLine}{output}");
+        }
+    }
 }

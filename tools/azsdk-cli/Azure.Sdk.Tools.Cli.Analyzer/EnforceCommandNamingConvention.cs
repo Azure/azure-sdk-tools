@@ -16,7 +16,7 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
             "CLI command names must follow kebab-case convention",
             "Command name '{0}' must follow kebab-case convention (lowercase letters, numbers, and hyphens only)",
             "Naming",
-            DiagnosticSeverity.Error,
+            DiagnosticSeverity.Warning,
             isEnabledByDefault: true);
 
         public const string OptionId = "MCP006";
@@ -25,7 +25,7 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
             "CLI option names must follow kebab-case convention",
             "Option name '{0}' must follow kebab-case convention (lowercase letters, numbers, and hyphens only)",
             "Naming",
-            DiagnosticSeverity.Error,
+            DiagnosticSeverity.Warning,
             isEnabledByDefault: true);
 
         // Kebab-case pattern: lowercase letters/numbers, separated by hyphens, no consecutive hyphens

@@ -15,6 +15,9 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         public string GetMergeBaseCommitSha(string path, string targetBranch);
         public string DiscoverRepoRoot(string path);
         public string GetRepoName(string path);
+        public int? ParsePullRequestNumberFromUrl(string prUrl);
+        public string? ParseRepoOwnerFromUrl(string prUrl);
+        public string? ParseRepoNameFromUrl(string prUrl);
     }
     public class GitHelper(IGitHubService gitHubService, ILogger<GitHelper> logger) : IGitHelper
     {
@@ -107,6 +110,29 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         {
             var repoRoot = DiscoverRepoRoot(path);
             return new DirectoryInfo(repoRoot).Name ?? throw new InvalidOperationException($"Unable to determine repository name for path: {path}");
+        }
+
+        // Static helpers for parsing PR details from GitHub PR URLs
+        public int? ParsePullRequestNumberFromUrl(string prUrl)
+        {
+            var match = System.Text.RegularExpressions.Regex.Match(prUrl, @"github\.com\/[^\/]+\/[^\/]+\/pull\/(\d+)");
+            if (match.Success && int.TryParse(match.Groups[1].Value, out int prNumber))
+            {
+                return prNumber;
+            }
+            return null;
+        }
+
+        public string? ParseRepoOwnerFromUrl(string prUrl)
+        {
+            var match = System.Text.RegularExpressions.Regex.Match(prUrl, @"github\.com\/([^\/]+)\/[^\/]+\/pull\/\d+");
+            return match.Success ? match.Groups[1].Value : null;
+        }
+
+        public string? ParseRepoNameFromUrl(string prUrl)
+        {
+            var match = System.Text.RegularExpressions.Regex.Match(prUrl, @"github\.com\/[^\/]+\/([^\/]+)\/pull\/\d+");
+            return match.Success ? match.Groups[1].Value : null;
         }
     }
 }

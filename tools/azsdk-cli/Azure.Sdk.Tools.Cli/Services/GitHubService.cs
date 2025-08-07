@@ -15,8 +15,8 @@ namespace Azure.Sdk.Tools.Cli.Services
 
     public class PullRequestResult
     {
-        public string Url { get; set; }
-        public List<string> Messages { get; set; }
+        public string Url { get; set; } = string.Empty;
+        public List<string> Messages { get; set; } = new();
     }
 
 public class GitConnection
@@ -94,7 +94,7 @@ public class GitConnection
         public Task UpdateFileAsync(string owner, string repoName, string path, string message, string content, string sha, string branch);
         public Task<CreateBranchStatus> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranchName = "main");
         public Task<bool> GetBranchAsync(string repoOwner, string repoName, string branchName);
-        public Task<string> GetFileContentsAsync(string repoOwner, string repoName, string path);
+        public Task<string> GetContentsSingleAsync(string repoOwner, string repoName, string path);
     }
 
     public class GitHubService : GitConnection, IGitHubService
@@ -209,7 +209,7 @@ public class GitConnection
                     response.Url = createdPullRequest.HtmlUrl;
                     response.Messages.Add("Once you have successfully generated the SDK transition the PR to review ready.");
                 }
-                
+
                 response.Messages.Add($"Pull request created successfully.");
                 response.Url = createdPullRequest.HtmlUrl;
             }
@@ -315,7 +315,12 @@ public class GitConnection
         {
             try
             {
-                return await gitHubClient.Repository.Content.GetAllContents(owner, repoName, path);
+                var contents = await gitHubClient.Repository.Content.GetAllContents(owner, repoName, path);
+                if (contents == null || contents.Count == 0)
+                {
+                    throw new InvalidOperationException($"Could not retrieve '{path}' file content");
+                }
+                return contents;
             }
             catch (NotFoundException)
             {
@@ -392,19 +397,17 @@ public class GitConnection
             }
         }
 
-        public async Task<string> GetFileContentsAsync(string owner, string repoName, string path)
+        public async Task<string> GetContentsSingleAsync(string owner, string repoName, string path)
         {
             var contents = await GetContentsAsync(owner, repoName, path);
-            if (contents == null || contents.Count == 0)
+            var repositoryContent = contents[0].Content;
+
+            if (string.IsNullOrEmpty(repositoryContent))
             {
-                throw new InvalidOperationException("Could not retrieve common-labels.csv file");
+                throw new InvalidOperationException($"'{path}' file is empty");
             }
-            var csvContent = contents[0].Content;
-            if (string.IsNullOrEmpty(csvContent))
-            {
-                throw new InvalidOperationException("common-labels.csv file is empty");
-            }
-            return csvContent;
+
+            return repositoryContent;
         }
     }
 }

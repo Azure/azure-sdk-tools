@@ -78,7 +78,7 @@ async def prepare_dataset(testdata_dir: str, file_prefix: str = None, is_bot: bo
     data_dir = Path(testdata_dir)
     script_directory = os.path.dirname(os.path.abspath(__file__))
     print("Script directory:", script_directory)
-    output_dir = os.path.join(script_directory, "output")
+    output_dir = Path(os.path.join(script_directory, "output"))
     output_dir.mkdir(exist_ok=True)
     
     print(f"📂 Data directory: {data_dir.absolute()}")

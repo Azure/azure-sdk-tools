@@ -12,6 +12,7 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
+using Azure.Sdk.Tools.Cli.Configuration;
 
 
 namespace Azure.Sdk.Tools.Cli.Tools
@@ -104,7 +105,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         {
             logger.LogInformation($"Checking service label: {serviceLabel}");
 
-            var csvContent = await githubService.GetFileContentsAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv");
+            var csvContent = await githubService.GetFileContentsAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, Constants.AZURE_COMMON_LABELS_PATH);
 
             var result = labelHelper.CheckServiceLabel(csvContent, serviceLabel);
 
@@ -140,7 +141,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     };
                 }
 
-                var branchResult = await githubService.CreateBranchAsync("Azure", "azure-sdk-tools", $"add_service_label_{normalizedLabel}", "main");
+                var branchResult = await githubService.CreateBranchAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, $"add_service_label_{normalizedLabel}", "main");
                 logger.LogInformation($"Branch creation result: {branchResult}");
 
                 // If branch already exists, return early with the compare URL
@@ -157,17 +158,17 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 logger.LogInformation($"Creating new service label: {label}. Documentation link: {link}");
 
                 // Update the common-labels.csv file
-                var csvContent = await githubService.GetContentsAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv");
-                var csvContentString = await githubService.GetFileContentsAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv");
+                var csvContent = await githubService.GetContentsAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, Constants.AZURE_COMMON_LABELS_PATH);
+                var csvContentString = await githubService.GetFileContentsAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, Constants.AZURE_COMMON_LABELS_PATH);
 
                 var updatedFile = labelHelper.CreateServiceLabel(csvContentString, label); // Contains updated CSV content with the new service label added
 
-                await githubService.UpdateFileAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv", $"Adding {label}", updatedFile, csvContent.First().Sha, $"add_service_label_{normalizedLabel}");
+                await githubService.UpdateFileAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, Constants.AZURE_COMMON_LABELS_PATH, $"Adding {label}", updatedFile, csvContent.First().Sha, $"add_service_label_{normalizedLabel}");
 
                 // Create the pull request
                 var result = await githubService.CreatePullRequestAsync(
-                    repoName: "azure-sdk-tools",
-                    repoOwner: "Azure",
+                    repoName: Constants.AZURE_SDK_TOOLS_PATH,
+                    repoOwner: Constants.AZURE_OWNER_PATH,
                     baseBranch: "main",
                     headBranch: $"add_service_label_{normalizedLabel}",
                     title: $"Add service label: {label}",

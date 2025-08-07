@@ -29,6 +29,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(SpecWorkflowTool),
             typeof(SpecValidationTools),
             typeof(TestAnalysisTool),
+            typeof(TypeSpecTool),
             #if DEBUG
             // only add this tool in debug mode
             typeof(HelloWorldTool),

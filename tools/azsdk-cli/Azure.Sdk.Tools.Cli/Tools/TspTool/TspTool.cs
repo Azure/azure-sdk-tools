@@ -58,7 +58,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             switch (command)
             {
                 case ConvertSwaggerCommandName:
-                    await HandleConvertCommand(ctx, ct);
+                    HandleConvertCommand(ctx, ct);
                     return ctx.ExitCode;
                 default:
                     logger.LogError($"Unknown command: {command}");
@@ -66,7 +66,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        private Task HandleConvertCommand(InvocationContext ctx, CancellationToken ct)
+        private void HandleConvertCommand(InvocationContext ctx, CancellationToken ct)
         {
             var swaggerReadme = ctx.ParseResult.GetValueForOption(swaggerReadmeArg);
             var outputDirectory = ctx.ParseResult.GetValueForOption(outputDirectoryArg);
@@ -76,10 +76,9 @@ namespace Azure.Sdk.Tools.Cli.Tools
             TspToolResponse result = ConvertSwagger(swaggerReadme, outputDirectory, isArm, fullyCompatible);
             ctx.ExitCode = ExitCode;
             output.Output(result);
-            return Task.CompletedTask;
         }
 
-        [McpServerTool(Name = "ConvertSwaggerToTypeSpec"), Description(@"Converts an existing Azure service swagger definition to a TypeSpec project.
+        [McpServerTool(Name = "convert_swagger_to_typespec"), Description(@"Converts an existing Azure service swagger definition to a TypeSpec project.
         Pass in the `pathToSwaggerReadme` which is the path to the swagger README file.
         Pass in the `outputDirectory` where the TypeSpec project should be created. This must be an existing empty directory.
         Pass in `isAzureResourceManagement` to indicate whether the swagger is for an Azure Resource Management (ARM) API.

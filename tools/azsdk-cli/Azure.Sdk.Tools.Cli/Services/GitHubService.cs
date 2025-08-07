@@ -93,7 +93,7 @@ public class GitConnection
         public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path);
         public Task UpdateFileAsync(string owner, string repoName, string path, string message, string content, string sha, string branch);
         public Task<CreateBranchStatus> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranchName = "main");
-        public  Task<RepositoryContent> GetContentsSingleAsync(string owner, string repoName, string path);
+        public Task<RepositoryContent> GetContentsSingleAsync(string owner, string repoName, string path);
         public Task<bool> IsExistingBranchAsync(string repoOwner, string repoName, string branchName);
     }
 

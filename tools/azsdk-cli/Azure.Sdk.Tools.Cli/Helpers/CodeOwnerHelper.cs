@@ -380,17 +380,17 @@ namespace Azure.Sdk.Tools.Cli.Helpers
     }
     
     public class CodeownerWorkflowResponse
-        {
-            public string path { get; set; }
-            public string serviceLabel { get; set; }
-            public List<CodeOwnerValidationResult> serviceOwners { get; set; }
-            public List<CodeOwnerValidationResult> sourceOwners { get; set; }
-            public bool isMgmtPlane { get; set; }
-            public string codeownersUrl { get; set; }
-            public string fileContent { get; set; }
-            public string Sha { get; set; }
-            public List<string> ValidationMessages { get; set; }
-        }
+    {
+        public string path { get; set; }
+        public string serviceLabel { get; set; }
+        public List<CodeOwnerValidationResult> serviceOwners { get; set; }
+        public List<CodeOwnerValidationResult> sourceOwners { get; set; }
+        public bool isMgmtPlane { get; set; }
+        public string codeownersUrl { get; set; }
+        public string fileContent { get; set; }
+        public string Sha { get; set; }
+        public List<string> ValidationMessages { get; set; }
+    }
 
     public class CodeOwnerValidationResult
     {

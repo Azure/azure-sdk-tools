@@ -173,7 +173,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     return (false, null, null, "Must provide a service label or a repository path.");
                 }
 
-                var codeownersUrl = $"{githubRawContentBaseUrl}/{Constants.AZURE_OWNER_PATH}/{repoName}/main/.github/CODEOWNERS";
+                var codeownersUrl = $"{githubRawContentBaseUrl}/{Constants.AZURE_OWNER_PATH}/{repoName}/main/{Constants.AZURE_CODEOWNERS_PATH}";
                 var codeownersEntries = CodeownersParser.ParseCodeownersFile(codeownersUrl, azureWriteTeamsBlobUrl);
                 var matchingEntries = codeownerHelper.FindMatchingEntries(codeownersEntries, serviceLabel, repoPath);
 
@@ -422,7 +422,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
 
             // Update file
-            await githubService.UpdateFileAsync(Constants.AZURE_OWNER_PATH, repo, ".github/CODEOWNERS", description, modifiedContent, sha, branchName);
+            await githubService.UpdateFileAsync(Constants.AZURE_OWNER_PATH, repo, Constants.AZURE_CODEOWNERS_PATH, description, modifiedContent, sha, branchName);
 
             // Handle PR creation or update existing PR
             var existingPR = await githubService.GetPullRequestForBranchAsync(Constants.AZURE_OWNER_PATH, repo, branchName);
@@ -505,15 +505,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
             var validationErrors = new List<string>();
 
-            if (validServiceOwnersCount < 2)
-            {
-                validationErrors.Add($"Modified entry must have at least 2 valid service owners. Current count: {validServiceOwnersCount}.");
-            }
-
-            if (validSourceOwnersCount < 2)
-            {
-                validationErrors.Add($"Modified entry must have at least 2 valid source owners. Current count: {validSourceOwnersCount}.");
-            }
+            if (!string.IsNullOrEmpty(targetEntry.ServiceLabels.FirstOrDefault()) && validServiceOwnersCount < 2)
+                {
+                    validationErrors.Add("There must be at least two valid service owners.");
+                }
+                if (!string.IsNullOrEmpty(targetEntry.PathExpression) && validSourceOwnersCount < 2)
+                {
+                    validationErrors.Add("There must be at least two valid source owners.");
+                }
 
             if (validationErrors.Any())
             {
@@ -628,11 +627,11 @@ namespace Azure.Sdk.Tools.Cli.Tools
             response.isMgmtPlane = typespecHelper.IsTypeSpecProjectForMgmtPlane(typeSpecProjectRoot);
 
             // Get CODEOWNERS file contents.
-            var fileContent = await githubService.GetContentsAsync(Constants.AZURE_OWNER_PATH, repo, ".github/CODEOWNERS");
+            var fileContent = await githubService.GetContentsAsync(Constants.AZURE_OWNER_PATH, repo, Constants.AZURE_CODEOWNERS_PATH);
 
             if (fileContent == null || fileContent.Count == 0)
             {
-                resultMessages.Add($"Could not retrieve CODEOWNERS file with repository path '{Constants.AZURE_OWNER_PATH}/{repo}/.github/CODEOWNERS'");
+                resultMessages.Add($"Could not retrieve CODEOWNERS file with repository path '{Constants.AZURE_OWNER_PATH}/{repo}/{Constants.AZURE_CODEOWNERS_PATH}'");
             }
             else
             {
@@ -640,7 +639,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 response.Sha = fileContent[0].Sha;
             }
 
-            response.codeownersUrl = $"{githubRawContentBaseUrl}/{Constants.AZURE_OWNER_PATH}/{repo}/main/.github/CODEOWNERS";
+            response.codeownersUrl = $"{githubRawContentBaseUrl}/{Constants.AZURE_OWNER_PATH}/{repo}/main/{Constants.AZURE_CODEOWNERS_PATH}";
             response.ValidationMessages = resultMessages;
 
             return response;

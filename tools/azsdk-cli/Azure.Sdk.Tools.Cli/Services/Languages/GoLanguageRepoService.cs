@@ -25,10 +25,24 @@ public class GoLanguageRepoService : LanguageRepoService
         }
     }
 
+    public async Task<ICLICheckResponse> CreateEmptyPackage(string moduleName)
+    {
+        try
+        {
+            var (output, exitCode) = await RunCommandAsync(new() { FileName = compilerName, ArgumentList = { "mod", "init", moduleName } });
+            return CreateResponse(nameof(CreateEmptyPackage), exitCode, output);
+        }
+        catch (Exception ex)
+        {
+            return CreateFailureResponse($"{nameof(CreateEmptyPackage)} failed with an exception\n{ex}");
+        }
+    }
+
     public override async Task<ICLICheckResponse> AnalyzeDependenciesAsync()
     {
         try
         {
+            // TODO: I think we should run _two_ commands here - go get -u all, and then go mod tidy.
             var (output, exitCode) = await RunCommandAsync(new() { FileName = compilerName, ArgumentList = { "mod", "tidy" } });
             return CreateResponse(nameof(AnalyzeDependenciesAsync), exitCode, output);
         }

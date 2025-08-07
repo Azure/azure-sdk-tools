@@ -22,7 +22,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
     public class GitHubLabelsTool(
         ILogger<GitHubLabelsTool> logger,
         IOutputService output,
-        ILabelHelper labelHelper,
         IGitHubService githubService
     ) : MCPTool
     {
@@ -101,13 +100,13 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        public async Task<LabelHelper.ServiceLabelStatus> getServiceLabelInfo(string serviceLabel)
+        private async Task<LabelHelper.ServiceLabelStatus> getServiceLabelInfo(string serviceLabel)
         {
             logger.LogInformation($"Checking service label: {serviceLabel}");
 
             var csvContent = await githubService.GetFileContentsAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, Constants.AZURE_COMMON_LABELS_PATH);
 
-            var result = labelHelper.CheckServiceLabel(csvContent, serviceLabel);
+            var result = LabelHelper.CheckServiceLabel(csvContent, serviceLabel);
 
             return result;
         }
@@ -117,7 +116,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         {
             try
             {
-                var normalizedLabel = labelHelper.NormalizeLabel(label);
+                var normalizedLabel = LabelHelper.NormalizeLabel(label);
 
                 var checkResult = await getServiceLabelInfo(normalizedLabel);
 
@@ -161,7 +160,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 var csvContent = await githubService.GetContentsAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, Constants.AZURE_COMMON_LABELS_PATH);
                 var csvContentString = await githubService.GetFileContentsAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, Constants.AZURE_COMMON_LABELS_PATH);
 
-                var updatedFile = labelHelper.CreateServiceLabel(csvContentString, label); // Contains updated CSV content with the new service label added
+                var updatedFile = LabelHelper.CreateServiceLabel(csvContentString, label); // Contains updated CSV content with the new service label added
 
                 await githubService.UpdateFileAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, Constants.AZURE_COMMON_LABELS_PATH, $"Adding {label}", updatedFile, csvContent.First().Sha, $"add_service_label_{normalizedLabel}");
 

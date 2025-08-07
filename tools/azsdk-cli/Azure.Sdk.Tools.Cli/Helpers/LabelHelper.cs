@@ -4,14 +4,7 @@ using System.Text;
 
 namespace Azure.Sdk.Tools.Cli.Helpers
 {
-    public interface ILabelHelper
-    {
-        public LabelHelper.ServiceLabelStatus CheckServiceLabel(string csvContent, string serviceName);
-        public string CreateServiceLabel(string csvContent, string serviceLabel);
-        public string NormalizeLabel(string label);
-    }
-
-    public class LabelHelper(ILogger<LabelHelper> logger) : ILabelHelper
+    public static class LabelHelper
     {
         public const string SERVICE_LABELS_COLOR_CODE = "e99695";
 
@@ -22,7 +15,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             NotAServiceLabel
         }
 
-        public ServiceLabelStatus CheckServiceLabel(string csvContent, string serviceName)
+        public static ServiceLabelStatus CheckServiceLabel(string csvContent, string serviceName)
         {
             using var reader = new StringReader(csvContent);
             string? line;
@@ -64,7 +57,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             return ServiceLabelStatus.DoesNotExist;
         }
 
-        public string CreateServiceLabel(string csvContent, string serviceLabel)
+        public static string CreateServiceLabel(string csvContent, string serviceLabel)
         {
             // Filter out empty or whitespace-only lines
             List<string> lines = csvContent.Split("\n")
@@ -93,7 +86,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             return string.Join("\n", lines);
         }
 
-        public string NormalizeLabel(string label)
+        public static string NormalizeLabel(string label)
         {
             var normalizedLabel = label
                     .Replace(" - ", "-")

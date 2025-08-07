@@ -209,11 +209,9 @@ public class GitConnection
                     response.Url = createdPullRequest.HtmlUrl;
                     response.Messages.Add("Once you have successfully generated the SDK transition the PR to review ready.");
                 }
-                else
-                {
-                    response.Messages.Add($"Pull request created successfully.");
-                    response.Url = createdPullRequest.HtmlUrl;
-                }
+                
+                response.Messages.Add($"Pull request created successfully.");
+                response.Url = createdPullRequest.HtmlUrl;
             }
             catch (Exception ex)
             {
@@ -336,7 +334,7 @@ public class GitConnection
             try
             {
                 var updateRequest = new UpdateFileRequest(message, content, sha, branch);
-                var result = await gitHubClient.Repository.Content.UpdateFile(owner, repoName, path, updateRequest);
+                await gitHubClient.Repository.Content.UpdateFile(owner, repoName, path, updateRequest);
             }
             catch (NotFoundException ex)
             {

@@ -80,6 +80,7 @@ class ApiViewReviewMode:
     DIFF = "diff"
 
 
+# pylint: disable=too-many-instance-attributes
 class ApiViewReview:
     """Class representing an APIView review."""
 

@@ -2,4 +2,4 @@
 max-line-length=120
 
 [MESSAGES CONTROL]
-disable=broad-exception-caught,redefined-builtin
+disable=R,C,broad-exception-caught,redefined-builtin

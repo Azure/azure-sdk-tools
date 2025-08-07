@@ -1,4 +1,5 @@
 {
+  "pylint.enabled": true,
   "editor.defaultFormatter": "ms-python.black-formatter",
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {

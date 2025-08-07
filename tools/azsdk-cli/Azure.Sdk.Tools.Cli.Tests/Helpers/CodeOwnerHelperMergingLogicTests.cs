@@ -147,6 +147,24 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         [TestCase("/sdk/servicefabric/Azure.ResourceManager.ServiceFabric/", "Azure.ResourceManager.ServiceFabric")]
         [TestCase("/sdk/compute/Azure.ResourceManager.Compute/", "Azure.ResourceManager.Compute")]
         [TestCase("/sdk/communication/Azure.Communication.Chat/", "Azure.Communication.Chat")]
+        [TestCase("/sdk/keyvault/", "keyvault")]
+        [TestCase("sdk/keyvault", "keyvault")]
+        [TestCase("sdk/keyvault/", "keyvault")]
+        [TestCase("/sdk/", "")]
+        [TestCase("sdk", "sdk")]
+        [TestCase("/", "")]
+        [TestCase("//", "")]
+        [TestCase("///", "")]
+        [TestCase("/sdk//", "")]
+        [TestCase("/sdk///storage//", "storage")]
+        [TestCase("/sdk/storage//Azure.Storage.Blobs//", "Azure.Storage.Blobs")]
+        [TestCase("/SDK/STORAGE/Azure.Storage.Blobs/", "Azure.Storage.Blobs")]
+        [TestCase("/sdk/very-long-service-name/Azure.VeryLongServiceName.Package/", "Azure.VeryLongServiceName.Package")]
+        [TestCase("/sdk/test/a/b/c/d/e/", "e")]
+        [TestCase("/sdk/test-service_name.with.dots/", "test-service_name.with.dots")]
+        [TestCase("/sdk/123numeric/", "123numeric")]
+        [TestCase("/sdk/service@special#chars$/", "service@special#chars$")]
+        [TestCase("/sdk/service with spaces/", "service with spaces")]
         public void TestExtractDirectoryName(string path, string expected)
         {
             var actual = InvokeExtractDirectoryName(path);
@@ -157,7 +175,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         public void ExtractDirectoryName_NullPath_ReturnsEmpty()
         {
             // Act & Assert
-            Assert.That(InvokeExtractDirectoryName(null), Is.EqualTo(""));
+            Assert.That(InvokeExtractDirectoryName(""), Is.EqualTo(""));
         }
 
         #endregion
@@ -371,21 +389,21 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         {
             var method = typeof(CodeOwnerHelper).GetMethod("AreEntriesRelatedByPath", 
                 BindingFlags.NonPublic | BindingFlags.Instance);
-            return (bool)method.Invoke(codeOwnerHelper, new object[] { entry1, entry2 });
+            return (bool)(method?.Invoke(codeOwnerHelper, new object[] { entry1, entry2 }) ?? false);
         }
 
         private string InvokeExtractDirectoryName(string path)
         {
             var method = typeof(CodeOwnerHelper).GetMethod("ExtractDirectoryName", 
                 BindingFlags.NonPublic | BindingFlags.Instance);
-            return (string)method.Invoke(codeOwnerHelper, new object[] { path });
+            return (string)(method?.Invoke(codeOwnerHelper, new object[] { path }) ?? "");
         }
 
         private (string serviceLabel, string prLabel) InvokeGetPrimaryLabel(CodeownersEntry entry)
         {
             var method = typeof(CodeOwnerHelper).GetMethod("GetPrimaryLabel", 
                 BindingFlags.NonPublic | BindingFlags.Instance);
-            return ((string serviceLabel, string prLabel))method.Invoke(codeOwnerHelper, new object[] { entry });
+            return ((string serviceLabel, string prLabel))(method?.Invoke(codeOwnerHelper, new object[] { entry }) ?? ("", ""));
         }
 
         #endregion

@@ -9,17 +9,15 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         List<string> ExtractUniqueOwners(CodeownersEntry entry);
         int findAlphabeticalInsertionPoint(List<CodeownersEntry> codeownersEntries, string path = null, string serviceLabel = null);
         public (List<CodeownersEntry>, int) mergeCodeownerEntries(List<CodeownersEntry> codeownersEntries, int index);
-        string addCodeownersEntryAtIndex(string codeownersContent, string codeownersEntry, int index);
-        string formatCodeownersEntry(string path, string serviceLabel, List<string> serviceOwners, List<string> sourceOwners);
+        string addCodeownersEntryAtIndex(string codeownersContent, CodeownersEntry codeownersEntry, int index, bool codeownersEntryExists);
+        string formatCodeownersEntry(CodeownersEntry codeownersEntry);
         (int StartLine, int EndLine) findBlock(string currentContent, string serviceCategory);
         string CreateBranchName(string prefix, string identifier);
         
         // New owner manipulation helper methods
-        string NormalizeUsername(string username);
-        bool ContainsOwner(List<string> existingOwners, string newOwner);
-        void AddUniqueOwners(List<string> targetList, List<CodeOwnerValidationResult> ownersToAdd);
-        void RemoveOwners(List<string> targetList, List<string> ownersToRemove);
-        List<string> ReplaceEntryInLines(List<string> lines, CodeownersEntry targetEntry);
+        List<string> AddUniqueOwners(List<string> existingOwners, List<string> ownersToAdd);
+        List<string> RemoveOwners(List<string> existingOwners, List<string> ownersToRemove);
+        List<string> ReplaceEntryInLines(string lines, CodeownersEntry targetEntry);
     }
 
     public class CodeOwnerHelper : ICodeOwnerHelper
@@ -133,31 +131,38 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             return (codeownersEntries, index);
         }
 
-        public string addCodeownersEntryAtIndex(string codeownersContent, string codeownersEntry, int index)
+        public string addCodeownersEntryAtIndex(string codeownersContent, CodeownersEntry codeownersEntry, int index, bool codeownersEntryExists)
         {
             var lines = codeownersContent.Split('\n').ToList();
 
+            if (codeownersEntryExists)
+            {
+                return string.Join('\n', ReplaceEntryInLines(codeownersContent, codeownersEntry));
+            }
+
             if (index >= 0 && index <= lines.Count)
             {
-                lines.Insert(index, codeownersEntry);
+                lines.Insert(index, formatCodeownersEntry(codeownersEntry));
             }
             else
             {
-                lines.Add(codeownersEntry);
+                lines.Add(formatCodeownersEntry(codeownersEntry));
             }
 
             return string.Join('\n', lines);
         }
 
-        public string formatCodeownersEntry(
-            string path,
-            string serviceLabel,
-            List<string> serviceOwners,
-            List<string> sourceOwners)
+        public string formatCodeownersEntry(CodeownersEntry codeownersEntry)
         {
             var lines = new List<string>();
 
             bool addSeperationLine = false;
+
+            string path = codeownersEntry.PathExpression ?? string.Empty;
+            string serviceLabel = codeownersEntry.ServiceLabels.FirstOrDefault() ?? string.Empty;
+            List<string> serviceOwners = codeownersEntry.ServiceOwners ?? new List<string>();
+            List<string> sourceOwners = codeownersEntry.SourceOwners ?? new List<string>();
+            List<string> azureSDKOwners = codeownersEntry.AzureSdkOwners ?? new List<string>();
 
             // Add PRLabel if serviceLabel is provided
             if (!string.IsNullOrEmpty(serviceLabel))
@@ -184,6 +189,13 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             if (!string.IsNullOrEmpty(serviceLabel))
             {
                 lines.Add($"# ServiceLabel: %{serviceLabel}");
+            }
+
+            // Add AzureSDKOwners if provided
+            if (azureSDKOwners != null && azureSDKOwners.Count > 0)
+            {
+                var azureSDKOwnersString = string.Join(" ", azureSDKOwners.Select(owner => owner.StartsWith("@") ? owner : $"@{owner}"));
+                lines.Add($"# AzureSdkOwners: {azureSDKOwnersString}");
             }
 
             // Add ServiceOwners if provided
@@ -318,45 +330,40 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             return Regex.Replace(input, @"[^a-zA-Z0-9\-]", "");
         }
 
-        // New owner manipulation helper methods
-        public string NormalizeUsername(string username)
-        {
-            return username.TrimStart('@');
-        }
-
-        public bool ContainsOwner(List<string> existingOwners, string newOwner)
-        {
-            var normalizedNewOwner = NormalizeUsername(newOwner);
-            return existingOwners.Any(existing => NormalizeUsername(existing).Equals(normalizedNewOwner, StringComparison.OrdinalIgnoreCase));
-        }
-
-        public void AddUniqueOwners(List<string> targetList, List<CodeOwnerValidationResult> ownersToAdd)
+        public List<string> AddUniqueOwners(List<string> existingOwners, List<string> ownersToAdd)
         {
             foreach (var owner in ownersToAdd)
             {
-                if (!ContainsOwner(targetList, owner.Username))
+                var normalizedOwner = owner.Trim('@');
+                var ownerWithAt = $"@{normalizedOwner}";
+                if (!existingOwners.Contains(ownerWithAt))
                 {
-                    targetList.Add(owner.Username);
+                    existingOwners.Add(ownerWithAt);
                 }
             }
+            return existingOwners;
         }
 
-        public void RemoveOwners(List<string> targetList, List<string> ownersToRemove)
+        public List<string> RemoveOwners(List<string> existingOwners, List<string> ownersToRemove)
         {
-            var normalizedOwnersToRemove = ownersToRemove.Select(NormalizeUsername).ToList();
-            targetList.RemoveAll(owner => normalizedOwnersToRemove.Contains(NormalizeUsername(owner)));
+            foreach (var ownerToRemove in ownersToRemove)
+            {
+                var normalizedOwner = ownerToRemove.Trim('@');
+                var ownerWithAt = $"@{normalizedOwner}";
+                if (existingOwners.Contains(ownerWithAt))
+                {
+                    existingOwners.Remove(ownerWithAt);
+                }
+            }
+            return existingOwners;
         }
 
-        public List<string> ReplaceEntryInLines(List<string> lines, CodeownersEntry targetEntry)
+        public List<string> ReplaceEntryInLines(string lines, CodeownersEntry targetEntry)
         {
-            var modifiedLines = new List<string>(lines);
+            var modifiedLines = lines.Split('\n').ToList();
 
             // Generate the new formatted entry
-            var formattedCodeownersEntry = formatCodeownersEntry(
-                targetEntry.PathExpression,
-                targetEntry.ServiceLabels[0],
-                targetEntry.ServiceOwners,
-                targetEntry.SourceOwners);
+            var formattedCodeownersEntry = formatCodeownersEntry(targetEntry);
 
             // Remove the old entry lines
             int originalEntryLineCount = targetEntry.endLine - targetEntry.startLine + 1;
@@ -377,19 +384,6 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         public string Status { get; set; } = "";
         public string Message { get; set; } = "";
         public List<CodeOwnerValidationResult> CodeOwners { get; set; } = new();
-    }
-    
-    public class CodeownerWorkflowResponse
-    {
-        public string path { get; set; }
-        public string serviceLabel { get; set; }
-        public List<CodeOwnerValidationResult> serviceOwners { get; set; }
-        public List<CodeOwnerValidationResult> sourceOwners { get; set; }
-        public bool isMgmtPlane { get; set; }
-        public string codeownersUrl { get; set; }
-        public string fileContent { get; set; }
-        public string Sha { get; set; }
-        public List<string> ValidationMessages { get; set; }
     }
 
     public class CodeOwnerValidationResult

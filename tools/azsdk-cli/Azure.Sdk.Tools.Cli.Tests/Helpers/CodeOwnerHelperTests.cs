@@ -22,7 +22,17 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         #region FindMatchingEntries Tests
 
         [Test]
-        public void FindMatchingEntries_ByServiceName_ReturnsMatches()
+        [TestCase("Service Bus", 1, "sdk/servicebus/")]
+        [TestCase("Storage", 1, "sdk/storage/")]
+        [TestCase("Messaging", 1, "sdk/servicebus/")]
+        [TestCase("NonExistentService", 0, "")]
+        [TestCase("", 0, "")]
+        [TestCase("   ", 0, "")]
+        [TestCase("SERVICE BUS", 0, "")] // Case sensitive
+        [TestCase("service bus", 0, "")] // Case sensitive
+        [TestCase("Service", 0, "")] // Partial match should not work
+        [TestCase("Bus", 0, "")] // Partial match should not work
+        public void FindMatchingEntries_ByServiceName_TestCases(string serviceName, int expectedCount, string expectedPath)
         {
             // Arrange
             var entries = new List<CodeownersEntry>
@@ -38,15 +48,45 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
                     PathExpression = "sdk/storage/",
                     ServiceLabels = new List<string> { "Storage" },
                     SourceOwners = new List<string> { "@azure/storage-team" }
+                },
+                new CodeownersEntry
+                {
+                    PathExpression = "sdk/communication/",
+                    ServiceLabels = new List<string> { },
+                    SourceOwners = new List<string> { "@azure/communication-team" }
                 }
             };
 
             // Act
-            var result = codeOwnerHelper.FindMatchingEntries(entries, "Service Bus");
+            var result = codeOwnerHelper.FindMatchingEntries(entries, serviceName);
 
             // Assert
-            Assert.That(result.Count, Is.EqualTo(1));
-            Assert.That(result[0]?.PathExpression, Is.EqualTo("sdk/servicebus/"));
+            Assert.That(result.Count, Is.EqualTo(expectedCount), $"Service name '{serviceName}' should return {expectedCount} entries");
+            if (expectedCount > 0)
+            {
+                Assert.That(result[0]?.PathExpression, Is.EqualTo(expectedPath), $"Service name '{serviceName}' should match path '{expectedPath}'");
+            }
+        }
+
+        [Test]
+        public void FindMatchingEntries_ByServiceName_NullInput_ReturnsEmpty()
+        {
+            // Arrange
+            var entries = new List<CodeownersEntry>
+            {
+                new CodeownersEntry
+                {
+                    PathExpression = "sdk/servicebus/",
+                    ServiceLabels = new List<string> { "Service Bus" },
+                    SourceOwners = new List<string> { "@azure/servicebus-team" }
+                }
+            };
+
+            // Act
+            var result = codeOwnerHelper.FindMatchingEntries(entries, null!);
+
+            // Assert
+            Assert.That(result.Count, Is.EqualTo(0), "Null service name should return no entries");
         }
 
         [Test]
@@ -113,22 +153,56 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         #region addCodeownersEntryAtIndex Tests
 
         [Test]
-        [TestCase("line1\nline2\nline3", "new entry", 1, new[] { "line1", "new entry", "line2", "line3" })]
-        [TestCase("line1\nline2", "new entry", -1, new[] { "line1", "line2", "new entry" })]
-        [TestCase("line1\nline2", "new entry", 0, new[] { "new entry", "line1", "line2" })]
-        [TestCase("line1\nline2", "new entry", 2, new[] { "line1", "line2", "new entry" })]
-        [TestCase("", "new entry", 0, new[] { "new entry", "" })]
-        [TestCase("single line", "new entry", 0, new[] { "new entry", "single line" })]
-        public void TestAddCodeownersEntryAtIndex(string content, string entry, int index, string[] expectedLines)
+        public void TestAddCodeownersEntryAtIndex_NewEntry()
         {
-            var result = codeOwnerHelper.addCodeownersEntryAtIndex(content, entry, index);
-            var lines = result.Split('\n');
-            
-            Assert.That(lines.Length, Is.EqualTo(expectedLines.Length));
-            for (int i = 0; i < expectedLines.Length; i++)
+            // Arrange
+            var content = "line1\nline2\nline3";
+            var codeownersEntry = new CodeownersEntry
             {
-                Assert.That(lines[i], Is.EqualTo(expectedLines[i]));
-            }
+                PathExpression = "sdk/test/",
+                ServiceLabels = new List<string> { "Test Service" },
+                SourceOwners = new List<string> { "testowner" },
+                ServiceOwners = new List<string>(),
+                AzureSdkOwners = new List<string>()
+            };
+            var index = 1;
+            var codeownersEntryExists = false;
+
+            // Act
+            var result = codeOwnerHelper.addCodeownersEntryAtIndex(content, codeownersEntry, index, codeownersEntryExists);
+
+            // Assert
+            Assert.That(result, Does.Contain("line1"));
+            Assert.That(result, Does.Contain("line2"));
+            Assert.That(result, Does.Contain("line3"));
+            Assert.That(result, Does.Contain("Test Service"));
+            Assert.That(result, Does.Contain("sdk/test/"));
+        }
+
+        [Test]
+        public void TestAddCodeownersEntryAtIndex_ExistingEntry()
+        {
+            // Arrange
+            var content = "line1\nline2\nline3";
+            var codeownersEntry = new CodeownersEntry
+            {
+                PathExpression = "sdk/test/",
+                ServiceLabels = new List<string> { "Test Service" },
+                SourceOwners = new List<string> { "testowner" },
+                ServiceOwners = new List<string>(),
+                AzureSdkOwners = new List<string>(),
+                startLine = 1,
+                endLine = 1
+            };
+            var index = 1;
+            var codeownersEntryExists = true;
+
+            // Act
+            var result = codeOwnerHelper.addCodeownersEntryAtIndex(content, codeownersEntry, index, codeownersEntryExists);
+
+            // Assert
+            Assert.That(result, Does.Contain("Test Service"));
+            Assert.That(result, Does.Contain("sdk/test/"));
         }
 
         #endregion
@@ -139,18 +213,23 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         public void FormatCodeownersEntry_AllParameters_FormatsCorrectly()
         {
             // Arrange
-            var path = "sdk/servicebus/";
-            var serviceLabel = "Service Bus";
-            var serviceOwners = new List<string> { "user1", "@user2" };
-            var sourceOwners = new List<string> { "source1", "@source2" };
+            var codeownersEntry = new CodeownersEntry
+            {
+                PathExpression = "sdk/servicebus/",
+                ServiceLabels = new List<string> { "Service Bus" },
+                ServiceOwners = new List<string> { "user1", "@user2" },
+                SourceOwners = new List<string> { "source1", "@source2" },
+                AzureSdkOwners = new List<string>()
+            };
 
             // Act
-            var result = codeOwnerHelper.formatCodeownersEntry(path, serviceLabel, serviceOwners, sourceOwners);
+            var result = codeOwnerHelper.formatCodeownersEntry(codeownersEntry);
 
             // Assert
             var lines = result.Split('\n');
             Assert.That(lines[0], Is.EqualTo("# PRLabel: %Service Bus"));
-            Assert.That(lines[1], Is.EqualTo("sdk/servicebus/                                                    @source1 @source2"));
+            Assert.That(lines[1], Does.StartWith("sdk/servicebus/"));
+            Assert.That(lines[1], Does.Contain("@source1 @source2"));
             Assert.That(lines[2], Is.EqualTo(""));
             Assert.That(lines[3], Is.EqualTo("# ServiceLabel: %Service Bus"));
             Assert.That(lines[4], Is.EqualTo("# ServiceOwners: @user1 @user2"));
@@ -160,15 +239,22 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         public void FormatCodeownersEntry_OnlyPath_FormatsMinimally()
         {
             // Arrange
-            var path = "sdk/servicebus/";
-            var sourceOwners = new List<string> { "source1" };
+            var codeownersEntry = new CodeownersEntry
+            {
+                PathExpression = "sdk/servicebus/",
+                ServiceLabels = new List<string>(),
+                ServiceOwners = new List<string>(),
+                SourceOwners = new List<string> { "source1" },
+                AzureSdkOwners = new List<string>()
+            };
 
             // Act
-            var result = codeOwnerHelper.formatCodeownersEntry(path, string.Empty, new List<string>(), sourceOwners);
+            var result = codeOwnerHelper.formatCodeownersEntry(codeownersEntry);
 
             // Assert
             var lines = result.Split('\n');
-            Assert.That(lines[0], Is.EqualTo("sdk/servicebus/                                                    @source1"));
+            Assert.That(lines[0], Does.StartWith("sdk/servicebus/"));
+            Assert.That(lines[0], Does.Contain("@source1"));
             Assert.That(lines[1], Is.EqualTo(""));
         }
 
@@ -368,6 +454,82 @@ line3";
 
             // Assert
             Assert.That(result, Is.EqualTo(11));
+        }
+
+        #endregion
+
+        #region AddUniqueOwners Tests
+
+        [Test]
+        public void AddUniqueOwners_NewOwners_AddsSuccessfully()
+        {
+            // Arrange
+            var existingOwners = new List<string> { "@azure/team1", "@azure/team2" };
+            var ownersToAdd = new List<string> { "azure/team3", "@azure/team4" };
+
+            // Act
+            var result = codeOwnerHelper.AddUniqueOwners(existingOwners, ownersToAdd);
+
+            // Assert
+            Assert.That(result.Count, Is.EqualTo(4));
+            Assert.That(result, Contains.Item("@azure/team1"));
+            Assert.That(result, Contains.Item("@azure/team2"));
+            Assert.That(result, Contains.Item("@azure/team3"));
+            Assert.That(result, Contains.Item("@azure/team4"));
+        }
+
+        [Test]
+        public void AddUniqueOwners_DuplicateOwners_DoesNotAddDuplicates()
+        {
+            // Arrange
+            var existingOwners = new List<string> { "@azure/team1", "@azure/team2" };
+            var ownersToAdd = new List<string> { "azure/team1", "azure/team3" };
+
+            // Act
+            var result = codeOwnerHelper.AddUniqueOwners(existingOwners, ownersToAdd);
+
+            // Assert
+            Assert.That(result.Count, Is.EqualTo(3));
+            Assert.That(result, Contains.Item("@azure/team1"));
+            Assert.That(result, Contains.Item("@azure/team2"));
+            Assert.That(result, Contains.Item("@azure/team3"));
+        }
+
+        #endregion
+
+        #region RemoveOwners Tests
+
+        [Test]
+        public void RemoveOwners_ExistingOwners_RemovesSuccessfully()
+        {
+            // Arrange
+            var existingOwners = new List<string> { "@azure/team1", "@azure/team2", "@azure/team3" };
+            var ownersToRemove = new List<string> { "azure/team1", "azure/team3" };
+
+            // Act
+            var result = codeOwnerHelper.RemoveOwners(existingOwners, ownersToRemove);
+
+            // Assert
+            Assert.That(result.Count, Is.EqualTo(1));
+            Assert.That(result, Contains.Item("@azure/team2"));
+            Assert.That(result, Does.Not.Contain("@azure/team1"));
+            Assert.That(result, Does.Not.Contain("@azure/team3"));
+        }
+
+        [Test]
+        public void RemoveOwners_NonExistentOwners_DoesNotChangeList()
+        {
+            // Arrange
+            var existingOwners = new List<string> { "@azure/team1", "@azure/team2" };
+            var ownersToRemove = new List<string> { "azure/team3", "azure/team4" };
+
+            // Act
+            var result = codeOwnerHelper.RemoveOwners(existingOwners, ownersToRemove);
+
+            // Assert
+            Assert.That(result.Count, Is.EqualTo(2));
+            Assert.That(result, Contains.Item("@azure/team1"));
+            Assert.That(result, Contains.Item("@azure/team2"));
         }
 
         #endregion

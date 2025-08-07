@@ -29,7 +29,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
                 if (commaIndices.Length < 2)
                 {
-                    continue; // Skip lines that don't have at least 2 commas
+                    continue; // Skip lines that don't have at least 2 elements
                 }
 
                 // Label is the first part (before first comma)

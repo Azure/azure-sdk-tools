@@ -79,6 +79,7 @@ public class GitConnection
         public Task<PullRequest?> GetPullRequestForBranchAsync(string repoOwner, string repoName, string remoteBranch);
         public Task<Issue> GetIssueAsync(string repoOwner, string repoName, int issueNumber);
         public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path);
+        public Task UpdatePullRequestDescriptionAsync(string repoOwner, string repoName, int pullRequestNumber, string newDescription);
     }
 
     public class GitHubService : GitConnection, IGitHubService
@@ -102,6 +103,17 @@ public class GitConnection
             var pullRequest = await gitHubClient.PullRequest.Get(repoOwner, repoName, pullRequestNumber);
             return pullRequest;
         }        
+        public async Task UpdatePullRequestDescriptionAsync(string repoOwner, string repoName, int pullRequestNumber, string title, string body, string state)
+        {
+            // This method now accepts title, body, and state directly, so caller must fetch the PR first if needed.
+            var update = new PullRequestUpdate
+            {
+                Title = title,
+                Body = body,
+                State = state
+            };
+            await gitHubClient.PullRequest.Update(repoOwner, repoName, pullRequestNumber, update);
+        }
 
         public async Task<string> GetGitHubParentRepoUrlAsync(string owner, string repoName)
         {

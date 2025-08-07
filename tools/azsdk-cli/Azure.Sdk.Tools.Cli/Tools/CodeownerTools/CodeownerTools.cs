@@ -161,32 +161,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        /// <summary>
-        /// Helper method to find matching entries in CODEOWNERS file for a given service or path
-        /// </summary>
-        private (bool success, List<CodeownersEntry?>? matchingEntries, string? fullRepoName, string? errorMessage) FindCodeownersEntries(string repoName, string? serviceLabel = null, string? repoPath = null)
-        {
-            try
-            {
-                if (string.IsNullOrEmpty(serviceLabel) && string.IsNullOrEmpty(repoPath))
-                {
-                    return (false, null, null, "Must provide a service label or a repository path.");
-                }
-
-                var codeownersUrl = $"{githubRawContentBaseUrl}/{Constants.AZURE_OWNER_PATH}/{repoName}/main/{Constants.AZURE_CODEOWNERS_PATH}";
-                var codeownersEntries = CodeownersParser.ParseCodeownersFile(codeownersUrl, azureWriteTeamsBlobUrl);
-                var matchingEntries = codeownerHelper.FindMatchingEntries(codeownersEntries, serviceLabel, repoPath);
-
-                return (true, matchingEntries, repoName, null);
-            }
-            catch (Exception ex)
-            {
-                var errorMessage = $"Error finding service in CODEOWNERS file. Error {ex}";
-                logger.LogError(errorMessage);
-                return (false, null, null, errorMessage);
-            }
-        }
-
         [McpServerTool(Name = "ValidateCodeOwnerEntryForService"), Description("Validates code owners in a specific repository for a given service or repo path.")]
         public async Task<ServiceCodeOwnerResult> ValidateCodeOwnerEntryForService(string repoName, string? serviceLabel = null, string? repoPath = null)
         {
@@ -194,14 +168,30 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
             try
             {
-                var (success, matchingEntries, fullRepoName, errorMessage) = FindCodeownersEntries(repoName, serviceLabel, repoPath);
-
-                if (!success)
+                if (string.IsNullOrEmpty(serviceLabel) && string.IsNullOrEmpty(repoPath))
                 {
-                    response.Message += errorMessage ?? "Unknown error occurred";
+                    response.Message += "Must provide a service label or a repository path.";
                     return response;
                 }
 
+                List<CodeownersEntry?>? matchingEntries;
+
+                // Find Codeowners Entries
+                try
+                {
+                    var codeownersUrl = $"{githubRawContentBaseUrl}/{Constants.AZURE_OWNER_PATH}/{repoName}/main/{Constants.AZURE_CODEOWNERS_PATH}";
+                    var codeownersEntries = CodeownersParser.ParseCodeownersFile(codeownersUrl, azureWriteTeamsBlobUrl);
+                    matchingEntries = codeownerHelper.FindMatchingEntries(codeownersEntries, serviceLabel, repoPath);
+                }
+                catch (Exception ex)
+                {
+                    var errorMessage = $"Error finding service in CODEOWNERS file. Error {ex}";
+                    logger.LogError(errorMessage);
+                    response.Message += errorMessage;
+                    return response;
+                }
+
+                // Validate Owners
                 if (matchingEntries != null && matchingEntries.Count > 0)
                 {
                     var uniqueOwners = new HashSet<string>();

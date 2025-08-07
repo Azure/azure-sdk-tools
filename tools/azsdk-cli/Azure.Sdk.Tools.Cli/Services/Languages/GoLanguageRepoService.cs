@@ -93,6 +93,20 @@ public class GoLanguageRepoService : LanguageRepoService
         }
     }
 
+    public async Task<ICLICheckResponse> BuildProjectAsync()
+    {
+        try
+        {
+            // does this need to ensure that tests _also_ build, or is it okay to assume that RunTestsAsync() will always be called?
+            var (output, exitCode) = await RunCommandAsync(new() { FileName = "go", ArgumentList = { "build" } });
+            return CreateResponse(nameof(BuildProjectAsync), exitCode, output);
+        }
+        catch (Exception ex)
+        {
+            return CreateFailureResponse($"{nameof(BuildProjectAsync)} failed with an exception: {ex}");
+        }
+    }
+
     /// <summary>
     /// Runs multiple commands using <see cref="RunCommandAsync"/>. It returns after the first command that returns a non-zero exit code.
     /// </summary>

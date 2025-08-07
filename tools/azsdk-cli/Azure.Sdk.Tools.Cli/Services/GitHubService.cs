@@ -79,7 +79,8 @@ public class GitConnection
         public Task<PullRequest?> GetPullRequestForBranchAsync(string repoOwner, string repoName, string remoteBranch);
         public Task<Issue> GetIssueAsync(string repoOwner, string repoName, int issueNumber);
         public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path);
-        public Task UpdatePullRequestDescriptionAsync(string repoOwner, string repoName, int pullRequestNumber, string newDescription);
+        public Task UpdatePullRequestAsync(string repoOwner, string repoName, int pullRequestNumber, string title, string body, ItemState state);
+        public Task AddReleasePlanInfoInSdkAsync(string repoOwner, string repoName, int prNumber, string releasePlanLink, string specPrLink, string workItemLink);
     }
 
     public class GitHubService : GitConnection, IGitHubService
@@ -103,7 +104,7 @@ public class GitConnection
             var pullRequest = await gitHubClient.PullRequest.Get(repoOwner, repoName, pullRequestNumber);
             return pullRequest;
         }        
-        public async Task UpdatePullRequestDescriptionAsync(string repoOwner, string repoName, int pullRequestNumber, string title, string body, string state)
+        public async Task UpdatePullRequestAsync(string repoOwner, string repoName, int pullRequestNumber, string title, string body, ItemState state)
         {
             // This method now accepts title, body, and state directly, so caller must fetch the PR first if needed.
             var update = new PullRequestUpdate
@@ -322,6 +323,39 @@ public class GitConnection
                 logger.LogError(ex, $"Error fetching contents from {owner}/{repoName}/{path}");
                 throw;
             }
+        }
+
+        /// <summary>
+        /// Appends release plan and spec PR links to the body of a pull request and updates the PR on GitHub.
+        /// </summary>
+        /// <param name="repoOwner">The owner of the repository.</param>
+        /// <param name="repoName">The name of the repository.</param>
+        /// <param name="prNumber">The pull request number.</param>
+        /// <param name="releasePlanLink">The link to the release plan.</param>
+        /// <param name="specPrLink">The link to the spec pull request.</param>
+        public async Task AddReleasePlanInfoInSdkAsync(string repoOwner, string repoName, int prNumber, string releasePlanLink, string specPrLink, string workItemLink)
+        {
+            var pr = await GetPullRequestAsync(repoOwner, repoName, prNumber);
+            if (pr == null)
+            {
+                logger.LogError($"Failed to fetch pull request {repoOwner}/{repoName}#{prNumber}");
+                return;
+            }
+
+            var links = $"Release Plan: {releasePlanLink}";
+            if (!string.IsNullOrEmpty(workItemLink))
+            {
+                links += $"\nWork Item Link: {workItemLink}";
+            }
+            if (!string.IsNullOrEmpty(specPrLink))
+            {
+                links += $"\nSpec Pull Request: {specPrLink}";
+            }
+            
+            var appendedBody = string.IsNullOrWhiteSpace(pr.Body)
+                ? links
+                : $"{pr.Body}\n{links}";
+            await UpdatePullRequestAsync(repoOwner, repoName, prNumber, pr.Title, appendedBody, pr.State.Value);
         }
     }
 }

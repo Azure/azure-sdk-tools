@@ -93,7 +93,7 @@ public class GitConnection
         public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path);
         public Task UpdateFileAsync(string owner, string repoName, string path, string message, string content, string sha, string branch);
         public Task<CreateBranchStatus> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranchName = "main");
-        public Task<string> GetContentsSingleAsync(string repoOwner, string repoName, string path);
+        public Task<RepositoryContent> GetContentsSingleAsync(IReadOnlyList<RepositoryContent> contents);
         public Task<bool> IsExistingBranchAsync(string repoOwner, string repoName, string branchName);
     }
 
@@ -402,17 +402,13 @@ public class GitConnection
             }
         }
 
-        public async Task<string> GetContentsSingleAsync(string owner, string repoName, string path)
+        public async Task<RepositoryContent> GetContentsSingleAsync(IReadOnlyList<RepositoryContent> contents)
         {
-            var contents = await GetContentsAsync(owner, repoName, path);
-            var fileContent = contents[0].Content;
-
-            if (string.IsNullOrEmpty(fileContent))
+            if (string.IsNullOrEmpty(contents[0].Content))
             {
-                throw new InvalidOperationException($"'{path}' file is empty");
+                throw new InvalidOperationException($"file is empty");
             }
-
-            return fileContent;
+            return contents[0];
         }
     }
 }

@@ -107,7 +107,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
             throw new NotImplementedException();
         }
 
-        public Task<string> GetContentsSingleAsync(string repoOwner, string repoName, string path)
+        public Task<RepositoryContent> GetContentsSingleAsync(IReadOnlyList<RepositoryContent> contents)
         {
             throw new NotImplementedException();
         }

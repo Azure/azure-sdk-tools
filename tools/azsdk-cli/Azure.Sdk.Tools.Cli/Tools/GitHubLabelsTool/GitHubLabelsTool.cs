@@ -104,9 +104,10 @@ namespace Azure.Sdk.Tools.Cli.Tools
         {
             logger.LogInformation($"Checking service label: {serviceLabel}");
 
-            var csvContent = await githubService.GetContentsSingleAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, Constants.AZURE_COMMON_LABELS_PATH);
+            var csvContents = await githubService.GetContentsAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, Constants.AZURE_COMMON_LABELS_PATH);
+            var csvSingleContent = await githubService.GetContentsSingleAsync(csvContents);
 
-            var result = LabelHelper.CheckServiceLabel(csvContent, serviceLabel);
+            var result = LabelHelper.CheckServiceLabel(csvSingleContent.Content, serviceLabel);
 
             return result;
         }
@@ -156,13 +157,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
                 logger.LogInformation($"Creating new service label: {label}. Documentation link: {link}");
 
+
                 // Update the common-labels.csv file
                 var csvContent = await githubService.GetContentsAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, Constants.AZURE_COMMON_LABELS_PATH);
-                var csvContentString = await githubService.GetContentsSingleAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, Constants.AZURE_COMMON_LABELS_PATH);
+                var csvSingleContent = await githubService.GetContentsSingleAsync(csvContent);
 
-                var updatedFile = LabelHelper.CreateServiceLabel(csvContentString, label); // Contains updated CSV content with the new service label added
+                var updatedFile = LabelHelper.CreateServiceLabel(csvSingleContent.Content, label); // Contains updated CSV content with the new service label added
 
-                await githubService.UpdateFileAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, Constants.AZURE_COMMON_LABELS_PATH, $"Adding {label}", updatedFile, csvContent.First().Sha, $"add_service_label_{normalizedLabel}");
+                await githubService.UpdateFileAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, Constants.AZURE_COMMON_LABELS_PATH, $"Adding {label}", updatedFile, csvSingleContent.Sha, $"add_service_label_{normalizedLabel}");
 
                 // Create the pull request
                 var result = await githubService.CreatePullRequestAsync(

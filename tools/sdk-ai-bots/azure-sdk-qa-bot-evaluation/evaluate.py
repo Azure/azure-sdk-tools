@@ -3,11 +3,15 @@ from datetime import datetime
 import json
 import os
 from pathlib import Path
+import pathlib
 import time
 from typing import Any, Dict
 from azure.ai.evaluation import evaluate, SimilarityEvaluator, GroundednessEvaluator
 import aiohttp
-from azure.identity import AzurePipelinesCredential, DefaultAzureCredential
+from azure.identity import AzurePipelinesCredential, DefaultAzureCredential, AzureCliCredential
+from tabulate import tabulate
+import argparse
+from dotenv import load_dotenv
 
 async def process_file(input_file: str, output_file: str, is_bot: bool) -> None:
     """Process a single input file"""
@@ -116,8 +120,97 @@ async def prepare_dataset(testdata_dir: str, file_prefix: str = None, is_bot: bo
     print("Processing complete. Results written to output directory.")
     return output_file
 
+def calculate_overall_score(row: dict[str, Any]) -> float:
+    """Calculate weighted score based on various metrics."""
+    # calculate the overall score when there are multiple metrics.
+    return 0.5
+
+def record_run_result(result: dict[str, Any]) -> list[dict[str, Any]]:
+    run_result = []
+    total_score = 0
+
+    for row in result["rows"]:
+        score = calculate_overall_score(row)
+        total_score += score
+        # rules = [rule["rule_ids"] for rule in json.loads(row["inputs.response"])["comments"]]
+        # rule_ids.update(*rules)
+
+        run_result.append(
+            {
+                "testcase": "test-case-name",
+                "similarity": row["outputs.similarity.similarity"],
+                "gpt_similarity": row["outputs.similarity.gpt_similarity"],
+                "similarity_threshold": row["outputs.similarity.similarity_threshold"],
+                "similarity_result": row["outputs.similarity.similarity_result"],
+                "overall_score": score,
+            }
+        )
+
+    average_score = total_score / len(result["rows"])
+    run_result.append({"average_score": average_score, "total_evals": len(result["rows"])})
+    return run_result
+
+def format_terminal_diff(new: float, old: float, format_str: str = ".1f", reverse: bool = False) -> str:
+    """Format difference with ANSI colors for terminal output."""
+
+    diff = new - old
+    if diff > 0:
+        if reverse:
+            return f" (\033[31m+{diff:{format_str}}\033[0m)"  # Red
+        return f" (\033[32m+{diff:{format_str}}\033[0m)"  # Green
+    elif diff < 0:
+        if reverse:
+            return f" (\033[32m{diff:{format_str}}\033[0m)"  # Green
+        return f" (\033[31m{diff:{format_str}}\033[0m)"  # Red
+    return f" ({diff:{format_str}})"
+
+def output_table(baseline_results: dict[str, Any], eval_results: list[dict[str, Any]], file_name: str) -> None:
+    headers = [
+        "Test Case",
+        "Score",
+        "Similarity",
+        "Similarity Result"
+    ]
+    terminal_rows = []
+
+    for result in eval_results[:-1]:  # Skip summary object
+        testcase = result["testcase"]
+        score = result["overall_score"]
+        sim = result["similarity"]
+        sim_result = result["similarity_result"]
+        terminal_row = [testcase]
+        values = [
+            f"{score:.1f}",
+            f"{sim:.1f}",
+            f"{sim_result}"
+        ]
+        terminal_row.extend(values)
+        terminal_rows.append(terminal_row)
+
+    print("====================================================")
+    print(f"\n\n✨ {file_name} results:\n")
+    print(tabulate(terminal_rows, headers, tablefmt="simple"))
+    if baseline_results:
+        print(
+            f"\n{file_name} average score: {eval_results[-1]['average_score']} {format_terminal_diff(eval_results[-1]['average_score'], baseline_results['average_score'])}\n\n"
+        )
+
+def show_results(args: argparse.Namespace, all_results: dict[str, Any]) -> None:
+    """Display results in a table format."""
+    for name, test_results in all_results.items():
+        baseline_results = {}
+        baseline_path = pathlib.Path(__file__).parent / "results" / name[:-1]
+
+        if baseline_path.exists():
+            with open(baseline_path, "r") as f:
+                baseline_data = json.load(f)
+                for result in baseline_data[:-1]:  # Skip summary
+                    baseline_results[result["testcase"]] = result
+                baseline_results["average_score"] = baseline_data[-1]["average_score"]
+
+        output_table(baseline_results, test_results, name)
+
 if __name__ == "__main__":
-    import argparse
 
     print("🚀 Starting evaluation ...")
 
@@ -127,10 +220,13 @@ if __name__ == "__main__":
     parser.add_argument("--prefix", type=str, help="Process only files starting with this prefix")
     parser.add_argument("--is_bot", type=str, default="True", help="Use bot API for processing Q&A pairs (True/False)")
     parser.add_argument("--is_cli", type=str, default="True", help="Run in CI/CD pipeline (True/False)")
+    parser.add_argument("--evaluation_name", type=str, help="the name of evaluation")
+    parser.add_argument("--skip_data_process", type=str, default="False", help="skip to pre-process the test data")
     args = parser.parse_args()
 
     args.is_bot = args.is_bot.lower() in ('true', '1', 'yes', 'on')
     args.is_cli = args.is_cli.lower() in ('true', '1', 'yes', 'on')
+    args.skip_data_process = args.is_cli.lower() in ('true', '1', 'yes')
 
     
     script_directory = os.path.dirname(os.path.abspath(__file__))
@@ -146,6 +242,7 @@ if __name__ == "__main__":
     
     print(f"test folder: {args.test_folder}")
     # Required environment variables
+    load_dotenv()
     azure_ai_project_endpoint = os.environ["AZURE_AI_PROJECT_ENDPOINT"]
     print(f"📋 Using project endpoint: {azure_ai_project_endpoint}")
     model_config: dict[str, str] = {
@@ -162,9 +259,9 @@ if __name__ == "__main__":
     try: 
         print("📊 Preparing dataset...")
         if args.is_cli:
-            service_connection_id = os.environ["AZURESUBSCRIPTION_SERVICE_CONNECTION_ID"]
-            client_id = os.environ["AZURESUBSCRIPTION_CLIENT_ID"]
-            tenant_id = os.environ["AZURESUBSCRIPTION_TENANT_ID"]
+            service_connection_id = os.environ["AZURE_SUBSCRIPTION_SERVICE_CONNECTION_ID"]
+            client_id = os.environ["AZURE_SUBSCRIPTION_CLIENT_ID"]
+            tenant_id = os.environ["AZURE_SUBSCRIPTION_TENANT_ID"]
             system_access_token = os.environ["SYSTEM_ACCESSTOKEN"]
             kwargs = {
                 "credential": AzurePipelinesCredential(
@@ -176,15 +273,18 @@ if __name__ == "__main__":
             }
         else:
             kwargs = {
-                "credential": DefaultAzureCredential()
+                # run in local, use Azure Cli Credential, make sure you already run `az login`
+                "credential": AzureCliCredential()
             }
         
+        run_results = []
         output_file = asyncio.run(prepare_dataset(args.test_folder, args.prefix, args.is_bot))
         result = evaluate(
             data=output_file,
             evaluators={
                 "similarity": SimilarityEvaluator(model_config=model_config) 
             },
+            evaluation_name=args.evaluation_name if args.evaluation_name else os.path.splitext(os.path.basename(output_file))[0],
             # column mapping
             evaluator_config={
                 "similarity": {
@@ -197,13 +297,17 @@ if __name__ == "__main__":
                 }
             },
             # Optionally provide your Azure AI Foundry project information to track your evaluation results in your project portal
-            azure_ai_project = azure_ai_project,
+            azure_ai_project = azure_ai_project_endpoint,
             # Optionally provide an output path to dump a json of metric summary, row level data and metric and Azure AI project URL
             output_path="./evalresults.json",
             **kwargs
         )
         print("✅ Evaluation completed. Results:", result)
+        run_result = record_run_result(result)
+        run_results = run_results + run_result
     except Exception as e:
         print(f"❌ Error occurred: {str(e)}")
         import traceback
         traceback.print_exc()
+    
+    show_results(args, {"test": run_results})

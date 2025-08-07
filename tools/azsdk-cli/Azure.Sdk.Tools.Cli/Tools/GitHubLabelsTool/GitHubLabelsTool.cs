@@ -21,7 +21,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
     public class GitHubLabelsTool(
         ILogger<GitHubLabelsTool> logger,
         IOutputService output,
-        ILabelHelper labelHelper,
         IGitHubService githubService
     ) : MCPTool
     {
@@ -106,7 +105,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
             var csvContent = await githubService.GetFileContentsAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv");
 
-            var result = labelHelper.CheckServiceLabel(csvContent, serviceLabel);
+            var result = LabelHelper.CheckServiceLabel(csvContent, serviceLabel);
 
             return result;
         }
@@ -116,7 +115,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         {
             try
             {
-                var normalizedLabel = labelHelper.NormalizeLabel(label);
+                var normalizedLabel = LabelHelper.NormalizeLabel(label);
 
                 var checkResult = await getServiceLabelInfo(normalizedLabel);
 
@@ -160,7 +159,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 var csvContent = await githubService.GetContentsAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv");
                 var csvContentString = await githubService.GetFileContentsAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv");
 
-                var updatedFile = labelHelper.CreateServiceLabel(csvContentString, label); // Contains updated CSV content with the new service label added
+                var updatedFile = LabelHelper.CreateServiceLabel(csvContentString, label); // Contains updated CSV content with the new service label added
 
                 await githubService.UpdateFileAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv", $"Adding {label}", updatedFile, csvContent.First().Sha, $"add_service_label_{normalizedLabel}");
 

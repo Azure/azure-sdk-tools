@@ -7,14 +7,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers;
 
 internal class LabelHelperTests
 {
-    private ILabelHelper labelHelper;
-
-    [SetUp]
-    public void Setup()
-    {
-        labelHelper = new LabelHelper(new TestLogger<LabelHelper>());
-    }
-
     [Test]
     [TestCase("TestService,Description,e99695\nAnotherService,Description2,e99695", "TestService", LabelHelper.ServiceLabelStatus.Exists)]
     [TestCase("TestService,Description,e99695\r\nAnotherService,Description2,e99695\nThirdService,Description3,e99695", "AnotherService", LabelHelper.ServiceLabelStatus.Exists)]
@@ -26,7 +18,7 @@ internal class LabelHelperTests
     [TestCase("TestService,Description\nAnotherService,Description2,e99695", "AnotherService", LabelHelper.ServiceLabelStatus.Exists)]
     public void TestCheckServiceLabel(string csvContent, string serviceLabel, LabelHelper.ServiceLabelStatus expected)
     {
-        var actual = labelHelper.CheckServiceLabel(csvContent, serviceLabel);
+        var actual = LabelHelper.CheckServiceLabel(csvContent, serviceLabel);
         Assert.That(actual, Is.EqualTo(expected));
     }
 
@@ -42,7 +34,7 @@ internal class LabelHelperTests
     [TestCase("AAA,,e99695\n   \nZZZ,,e99695", "BBB", "AAA,,e99695\nBBB,,e99695\nZZZ,,e99695")] // Test for whitespace line handling
     public void TestCreateServiceLabel(string csvContent, string serviceLabel, string expected)
     {
-        var actual = labelHelper.CreateServiceLabel(csvContent, serviceLabel);
+        var actual = LabelHelper.CreateServiceLabel(csvContent, serviceLabel);
         Assert.That(actual, Is.EqualTo(expected));
     }
 
@@ -55,7 +47,7 @@ internal class LabelHelperTests
     [TestCase("  -Test Service-  ", "test-service")]
     public void TestNormalizeLabel(string input, string expected)
     {
-        var actual = labelHelper.NormalizeLabel(input);
+        var actual = LabelHelper.NormalizeLabel(input);
         Assert.That(actual, Is.EqualTo(expected));
     }
 }

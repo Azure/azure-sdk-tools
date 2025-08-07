@@ -405,14 +405,14 @@ public class GitConnection
         public async Task<string> GetContentsSingleAsync(string owner, string repoName, string path)
         {
             var contents = await GetContentsAsync(owner, repoName, path);
-            var repositoryContent = contents[0].Content;
+            var fileContent = contents[0].Content;
 
-            if (string.IsNullOrEmpty(repositoryContent))
+            if (string.IsNullOrEmpty(fileContent))
             {
                 throw new InvalidOperationException($"'{path}' file is empty");
             }
 
-            return repositoryContent;
+            return fileContent;
         }
     }
 }

@@ -226,7 +226,7 @@ if __name__ == "__main__":
 
     args.is_bot = args.is_bot.lower() in ('true', '1', 'yes', 'on')
     args.is_cli = args.is_cli.lower() in ('true', '1', 'yes', 'on')
-    args.skip_data_process = args.is_cli.lower() in ('true', '1', 'yes')
+    args.skip_data_process = args.skip_data_process.lower() in ('true', '1', 'yes')
 
     
     script_directory = os.path.dirname(os.path.abspath(__file__))

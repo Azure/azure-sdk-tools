@@ -99,7 +99,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        public async Task<LabelHelper.ServiceLabelStatus> getServiceLabelInfo(string serviceLabel)
+        private async Task<LabelHelper.ServiceLabelStatus> getServiceLabelInfo(string serviceLabel)
         {
             logger.LogInformation($"Checking service label: {serviceLabel}");
 

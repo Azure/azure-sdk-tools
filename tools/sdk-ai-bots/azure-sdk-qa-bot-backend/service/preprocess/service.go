@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"html"
 	"io"
 	"log"
 	"net/http"
@@ -18,6 +19,60 @@ type PreprocessService struct{}
 
 func NewPreprocessService() *PreprocessService {
 	return &PreprocessService{}
+}
+
+// DecodeHTMLContent decodes HTML-encoded content including Unicode escape sequences
+func (s *PreprocessService) DecodeHTMLContent(input string) string {
+	// First decode HTML entities like &nbsp;, &lt;, etc.
+	decoded := html.UnescapeString(input)
+
+	// Then decode Unicode escape sequences like \u003c, \u0026, etc.
+	decoded = strings.ReplaceAll(decoded, "\\u003c", "<")
+	decoded = strings.ReplaceAll(decoded, "\\u003e", ">")
+	decoded = strings.ReplaceAll(decoded, "\\u0026", "&")
+	decoded = strings.ReplaceAll(decoded, "\\u0027", "'")
+	decoded = strings.ReplaceAll(decoded, "\\u0022", "\"")
+	decoded = strings.ReplaceAll(decoded, "\\u002f", "/")
+	decoded = strings.ReplaceAll(decoded, "\\u003d", "=")
+	decoded = strings.ReplaceAll(decoded, "\\u0020", " ")
+	decoded = strings.ReplaceAll(decoded, "\\u00a0", " ") // Non-breaking space to regular space
+	decoded = strings.ReplaceAll(decoded, "\\u000a", "\n")
+	decoded = strings.ReplaceAll(decoded, "\\u000d", "\r")
+	decoded = strings.ReplaceAll(decoded, "\\u0009", "\t")
+
+	// Handle other common Unicode escapes using a more general approach
+	re := regexp.MustCompile(`\\u([0-9a-fA-F]{4})`)
+	decoded = re.ReplaceAllStringFunc(decoded, func(match string) string {
+		var r rune
+		if _, err := fmt.Sscanf(match, "\\u%04x", &r); err == nil {
+			return string(r)
+		}
+		return match // Return original if parsing fails
+	})
+
+	return decoded
+}
+
+// CleanHTMLTags removes HTML tags from the content while preserving the text
+func (s *PreprocessService) CleanHTMLTags(input string) string {
+	// Remove HTML tags but keep the text content
+	re := regexp.MustCompile(`<[^>]*>`)
+	cleaned := re.ReplaceAllString(input, "")
+
+	// Clean up extra whitespace and newlines
+	cleaned = regexp.MustCompile(`\s+`).ReplaceAllString(cleaned, " ")
+	cleaned = strings.TrimSpace(cleaned)
+
+	return cleaned
+}
+
+// PreprocessHTMLContent handles HTML-encoded content by decoding and cleaning it
+func (s *PreprocessService) PreprocessHTMLContent(input string) string {
+	// First decode HTML entities and Unicode escapes
+	decoded := s.DecodeHTMLContent(input)
+
+	log.Printf("HTML preprocessed: %s", decoded)
+	return decoded
 }
 
 type PreprocessRequest struct {

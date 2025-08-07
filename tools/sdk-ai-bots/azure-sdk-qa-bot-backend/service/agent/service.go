@@ -243,21 +243,57 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 		req.Message.Content = req.Message.Content[:config.AOAI_CHAT_MAX_TOKENS]
 	}
 
+	// Preprocess HTML content if it contains HTML entities or tags
+	preprocessService := preprocess.NewPreprocessService()
+	if strings.Contains(req.Message.Content, "\\u003c") || strings.Contains(req.Message.Content, "&lt;") || strings.Contains(req.Message.Content, "<") {
+		log.Printf("Detected HTML content, preprocessing...")
+		req.Message.Content = preprocessService.PreprocessHTMLContent(req.Message.Content)
+	}
+
 	// This is a conversation in progress.
 	// NOTE: all llmMessages, regardless of role, count against token usage for this API.
 	llmMessages := []azopenai.ChatRequestMessageClassification{}
 	reasoningModelMessages := []azopenai.ChatRequestMessageClassification{}
 
+	// process history messages
+	for _, message := range req.History {
+		// Preprocess HTML content in history messages
+		content := message.Content
+		if strings.Contains(content, "\\u003c") || strings.Contains(content, "&lt;") || strings.Contains(content, "<") {
+			log.Printf("Detected HTML content in history message, preprocessing...")
+			content = preprocessService.PreprocessHTMLContent(content)
+		}
+
+		if message.Role == model.Role_Assistant {
+			msg := &azopenai.ChatRequestAssistantMessage{Content: azopenai.NewChatRequestAssistantMessageContent(content)}
+			llmMessages = append(llmMessages, msg)
+			reasoningModelMessages = append(reasoningModelMessages, msg)
+		}
+		if message.Role == model.Role_User {
+			msg := &azopenai.ChatRequestUserMessage{Content: azopenai.NewChatRequestUserMessageContent(content), Name: processName(message.Name)}
+			llmMessages = append(llmMessages, msg)
+			reasoningModelMessages = append(reasoningModelMessages, msg)
+		}
+	}
+
 	// process additional info(image, link)
 	if len(req.AdditionalInfos) > 0 {
 		for _, info := range req.AdditionalInfos {
 			if info.Type == model.AdditionalInfoType_Link {
-				if len(info.Content) > config.AOAI_CHAT_MAX_TOKENS {
+				content := info.Content
+				if len(content) > config.AOAI_CHAT_MAX_TOKENS {
 					log.Printf("Link content is too long, truncating to %d characters", config.AOAI_CHAT_MAX_TOKENS)
-					info.Content = info.Content[:config.AOAI_CHAT_MAX_TOKENS]
+					content = content[:config.AOAI_CHAT_MAX_TOKENS]
 				}
-				msg := &azopenai.ChatRequestUserMessage{
-					Content: azopenai.NewChatRequestUserMessageContent(fmt.Sprintf("Link URL: %s\nLink Content: %s", info.Link, info.Content)),
+				var msg *azopenai.ChatRequestUserMessage
+				if strings.Contains(content, "graph.microsoft.com") {
+					msg = &azopenai.ChatRequestUserMessage{
+						Content: azopenai.NewChatRequestUserMessageContent(fmt.Sprintf("Image URL: %s\nImage Content: %s", info.Link, content)),
+					}
+				} else {
+					msg = &azopenai.ChatRequestUserMessage{
+						Content: azopenai.NewChatRequestUserMessageContent(fmt.Sprintf("Link URL: %s\nLink Content: %s", info.Link, content)),
+					}
 				}
 				llmMessages = append(llmMessages, msg)
 				reasoningModelMessages = append(reasoningModelMessages, msg)
@@ -280,20 +316,6 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 					),
 				})
 			}
-		}
-	}
-
-	// process history messages
-	for _, message := range req.History {
-		if message.Role == model.Role_Assistant {
-			msg := &azopenai.ChatRequestAssistantMessage{Content: azopenai.NewChatRequestAssistantMessageContent(message.Content)}
-			llmMessages = append(llmMessages, msg)
-			reasoningModelMessages = append(reasoningModelMessages, msg)
-		}
-		if message.Role == model.Role_User {
-			msg := &azopenai.ChatRequestUserMessage{Content: azopenai.NewChatRequestUserMessageContent(message.Content), Name: processName(message.Name)}
-			llmMessages = append(llmMessages, msg)
-			reasoningModelMessages = append(reasoningModelMessages, msg)
 		}
 	}
 
@@ -455,7 +477,7 @@ func (s *CompletionService) buildPrompt(intension *model.IntensionResult, chunks
 	for i, chunk := range chunks {
 		tokenCnt += len(chunk)
 		if tokenCnt > config.AOAI_CHAT_CONTEXT_MAX_TOKENS {
-			log.Printf("Chunks exceed max token limit, truncating to %d tokens", config.AOAI_CHAT_CONTEXT_MAX_TOKENS)
+			log.Printf("%v chunks has exceed max token limit, truncating to %d tokens", i+1, config.AOAI_CHAT_CONTEXT_MAX_TOKENS)
 			chunks = chunks[:i+1] // truncate the chunks to the current index
 			break
 		}
@@ -686,11 +708,11 @@ func (s *CompletionService) mergeAndProcessSearchResults(req *model.CompletionRe
 
 	// Add agentic chunks with high priority (they were specifically found by AI reasoning)
 	topK := 10
-	highReleventTopK := 3
+	highReleventTopK := 2
 	if len(agenticChunks) > topK {
 		agenticChunks = agenticChunks[:topK] // Limit to TopK results
 	}
-	for i, chunk := range agenticChunks {
+	for _, chunk := range agenticChunks {
 		// Skip if we've already seen this chunk content
 		chunkKey := fmt.Sprintf("%s|%s", chunk.Title, chunk.Chunk)
 		if processedChunks[chunkKey] {
@@ -700,11 +722,6 @@ func (s *CompletionService) mergeAndProcessSearchResults(req *model.CompletionRe
 			continue
 		}
 		processedChunks[chunkKey] = true
-		if i < highReleventTopK {
-			needCompleteFiles = append(needCompleteFiles, chunk)
-			processedFiles[chunk.Title] = true
-			continue
-		}
 		if strings.HasPrefix(chunk.ContextID, "static") {
 			needCompleteChunks = append(needCompleteChunks, chunk)
 			continue
@@ -712,6 +729,7 @@ func (s *CompletionService) mergeAndProcessSearchResults(req *model.CompletionRe
 		log.Printf("Agentic searched chunk: %+v", chunk)
 		allChunks = append(allChunks, chunk)
 	}
+	completeFileMaxCnt := 5
 
 	// Add knowledge search results with scoring based on relevance
 	for i, result := range knowledgeResults {
@@ -737,17 +755,17 @@ func (s *CompletionService) mergeAndProcessSearchResults(req *model.CompletionRe
 			needCompleteChunks = append(needCompleteChunks, result)
 			continue
 		}
-		if result.RerankScore >= model.RerankScoreRelevanceThreshold {
+		if len(needCompleteFiles) < completeFileMaxCnt && result.RerankScore >= model.RerankScoreRelevanceThreshold {
 			needCompleteFiles = append(needCompleteFiles, result)
 			processedFiles[result.Title] = true
 			continue
 		}
-		if i < highReleventTopK {
+		if len(needCompleteFiles) < completeFileMaxCnt && i < highReleventTopK {
 			needCompleteFiles = append(needCompleteFiles, result)
 			processedFiles[result.Title] = true
 			continue
 		}
-		if i > 0 && knowledgeResults[i-1] != knowledgeResults[i] {
+		if len(needCompleteFiles) < completeFileMaxCnt && i > 0 && knowledgeResults[i-1] != knowledgeResults[i] {
 			needCompleteFiles = append(needCompleteFiles, result)
 			processedFiles[result.Title] = true
 			continue
@@ -801,7 +819,7 @@ func (s *CompletionService) mergeAndProcessSearchResults(req *model.CompletionRe
 	}
 
 	log.Printf("Search merge summary: %d agentic + %d knowledge → %d completed docs + %d chunks",
-		len(agenticChunks), len(knowledgeResults), len(needCompleteChunks), len(allChunks))
+		len(agenticChunks), len(knowledgeResults), len(needCompleteFiles), len(allChunks))
 	log.Printf("Merge and processing took: %v", time.Since(mergeStart))
 	return result
 }

@@ -12,7 +12,7 @@ public class PythonLanguageRepoService : LanguageRepoService
 {
     private readonly ILogger _logger;
 
-    public PythonLanguageRepoService(string repositoryPath, ILogger? logger = null) : base(repositoryPath)
+    public PythonLanguageRepoService(string packagePath, ILogger? logger = null) : base(packagePath)
     {
         _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance;
     }
@@ -21,7 +21,7 @@ public class PythonLanguageRepoService : LanguageRepoService
     {
         try
         {
-            _logger.LogInformation($"Starting dependency analysis for Python project at: {_repositoryPath}");
+            _logger.LogInformation($"Starting dependency analysis for Python project at: {_packagePath}");
             
             // Run tox for dependency analysis
             var command = "tox";
@@ -57,7 +57,7 @@ public class PythonLanguageRepoService : LanguageRepoService
     {
         try
         {
-            _logger.LogInformation("Starting code formatting for Python project at: {RepositoryPath}", _repositoryPath);
+            _logger.LogInformation("Starting code formatting for Python project at: {PackagePath}", _packagePath);
             
             // Run black for code formatting
             var result = await RunCommandAsync("black", ".");
@@ -87,7 +87,7 @@ public class PythonLanguageRepoService : LanguageRepoService
     {
         try
         {
-            _logger.LogInformation("Starting linting for Python project at: {RepositoryPath}", _repositoryPath);
+            _logger.LogInformation("Starting linting for Python project at: {RepositoryPath}", _packagePath);
             
             // Run flake8 for linting
             var result = await RunCommandAsync("flake8", ".");
@@ -116,7 +116,7 @@ public class PythonLanguageRepoService : LanguageRepoService
     {
         try
         {
-            _logger.LogInformation("Starting tests for Python project at: {RepositoryPath}", _repositoryPath);
+            _logger.LogInformation("Starting tests for Python project at: {RepositoryPath}", _packagePath);
             
             // Run pytest
             var result = await RunCommandAsync("pytest", "--verbose");
@@ -145,7 +145,7 @@ public class PythonLanguageRepoService : LanguageRepoService
     {
         try
         {
-            _logger.LogInformation("Starting project build for Python project at: {RepositoryPath}", _repositoryPath);
+            _logger.LogInformation("Starting project build for Python project at: {RepositoryPath}", _packagePath);
             
             // Run pip install in development mode
             var result = await RunCommandAsync("pip", "install -e .");
@@ -179,7 +179,7 @@ public class PythonLanguageRepoService : LanguageRepoService
         using var process = new Process();
         process.StartInfo.FileName = fileName;
         process.StartInfo.Arguments = arguments;
-        process.StartInfo.WorkingDirectory = _repositoryPath;
+        process.StartInfo.WorkingDirectory = _packagePath;
         process.StartInfo.UseShellExecute = false;
         process.StartInfo.RedirectStandardOutput = true;
         process.StartInfo.RedirectStandardError = true;

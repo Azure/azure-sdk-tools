@@ -1,6 +1,7 @@
 using System.IO;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Azure.Sdk.Tools.Cli.Helpers;
 
 namespace Azure.Sdk.Tools.Cli.Services;
 
@@ -13,28 +14,35 @@ public class LanguageRepoServiceFactory
     /// <summary>
     /// Creates the appropriate language repository service based on the detected language.
     /// </summary>
-    /// <param name="repositoryPath">Absolute path to the repository root</param>
+    /// <param name="packagePath">Absolute path to the package directory</param>
+    /// <param name="gitHelper">Git helper instance for repository operations</param>
     /// <param name="logger">Optional logger instance for diagnostics</param>
     /// <returns>Language-specific repository service</returns>
-    public static ILanguageRepoService CreateService(string repositoryPath, ILogger? logger = null)
+    public static ILanguageRepoService CreateService(string packagePath, IGitHelper gitHelper, ILogger? logger = null)
     {
-        logger.LogInformation($"Create service for repository at: {repositoryPath}");
-        if (string.IsNullOrWhiteSpace(repositoryPath))
-            throw new ArgumentException("Repository path cannot be null or empty", nameof(repositoryPath));
+        logger?.LogInformation($"Create service for package at: {packagePath}");
+        if (string.IsNullOrWhiteSpace(packagePath))
+            throw new ArgumentException("Package path cannot be null or empty", nameof(packagePath));
 
-        if (!Directory.Exists(repositoryPath))
-            throw new DirectoryNotFoundException($"Repository path does not exist: {repositoryPath}");
+        if (!Directory.Exists(packagePath))
+            throw new DirectoryNotFoundException($"Package path does not exist: {packagePath}");
 
-        var detectedLanguage = DetectLanguage(repositoryPath, logger);
+        // Discover the repository root from the project path
+        var repoRootPath = gitHelper.DiscoverRepoRoot(packagePath);
+        logger?.LogInformation($"Discovered repository root: {repoRootPath}");
+        
+        // Create language service using factory (detects language automatically)
+        logger?.LogInformation($"Creating language service for repository at: {repoRootPath}");
+        var detectedLanguage = DetectLanguage(repoRootPath, logger);
 
         return detectedLanguage switch
         {
-            "python" => new PythonLanguageRepoService(repositoryPath, logger),
-            "javascript" => new JavaScriptLanguageRepoService(repositoryPath),
-            "dotnet" => new DotNetLanguageRepoService(repositoryPath),
-            "go" => new GoLanguageRepoService(repositoryPath),
-            "java" => new JavaLanguageRepoService(repositoryPath),
-            _ => new LanguageRepoService(repositoryPath) // Base implementation for unsupported languages
+            "python" => new PythonLanguageRepoService(packagePath, logger),
+            "javascript" => new JavaScriptLanguageRepoService(packagePath),
+            "dotnet" => new DotNetLanguageRepoService(packagePath),
+            "go" => new GoLanguageRepoService(packagePath),
+            "java" => new JavaLanguageRepoService(packagePath),
+            _ => new LanguageRepoService(packagePath) // Base implementation for unsupported languages
         };
     }
 
@@ -49,7 +57,7 @@ public class LanguageRepoServiceFactory
     {        
         // First, try to detect from eng/scripts/Language-Settings.ps1 as mentioned in the gist
         var languageSettingsPath = Path.Combine(repositoryPath, "eng", "scripts", "Language-Settings.ps1");
-        logger.LogInformation($"Language settings path {languageSettingsPath}");
+        logger?.LogInformation($"Language settings path {languageSettingsPath}");
         if (File.Exists(languageSettingsPath))
         {
             logger?.LogDebug("Found Language-Settings.ps1 file at: {LanguageSettingsPath}", languageSettingsPath);
@@ -72,8 +80,8 @@ public class LanguageRepoServiceFactory
                 if (content.Contains("dotnet", StringComparison.OrdinalIgnoreCase) ||
                     content.Contains(".net", StringComparison.OrdinalIgnoreCase))
                 {
-                    logger?.LogInformation("Detected language: csharp from Language-Settings.ps1");
-                    return "csharp";
+                    logger?.LogInformation("Detected language: dotnet from Language-Settings.ps1");
+                    return "dotnet";
                 }
                 if (content.Contains("java", StringComparison.OrdinalIgnoreCase))
                 {
@@ -101,7 +109,9 @@ public class LanguageRepoServiceFactory
         
         logger?.LogWarning("Could not detect repository language, returning 'unknown'");
         return "unknown";
-    }    /// <summary>
+    }
+    
+    /// <summary>
     /// Gets a list of all supported languages.
     /// </summary>
     /// <returns>Array of supported language strings</returns>

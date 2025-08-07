@@ -9,7 +9,7 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// </summary>
 public class DotNetLanguageRepoService : LanguageRepoService
 {
-    public DotNetLanguageRepoService(string repositoryPath) : base(repositoryPath)
+    public DotNetLanguageRepoService(string packagePath) : base(packagePath)
     {
     }
 
@@ -141,7 +141,7 @@ public class DotNetLanguageRepoService : LanguageRepoService
         using var process = new Process();
         process.StartInfo.FileName = fileName;
         process.StartInfo.Arguments = arguments;
-        process.StartInfo.WorkingDirectory = _repositoryPath;
+        process.StartInfo.WorkingDirectory = _packagePath;
         process.StartInfo.UseShellExecute = false;
         process.StartInfo.RedirectStandardOutput = true;
         process.StartInfo.RedirectStandardError = true;

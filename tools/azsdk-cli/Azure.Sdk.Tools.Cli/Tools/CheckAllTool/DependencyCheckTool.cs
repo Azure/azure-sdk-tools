@@ -84,14 +84,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                 
                 try
                 {
-                    // Discover the repository root from the project path
-                    logger.LogInformation($"Discovering repository root from project path: {packagePath}");
-                    var repoRootPath = gitHelper.DiscoverRepoRoot(packagePath);
-                    logger.LogInformation($"Discovered repository root: {repoRootPath}");
-                    
-                    // Create language service using factory (detects language automatically)
-                    logger.LogInformation($"Creating language service for repository at: {repoRootPath}");
-                    var languageService = LanguageRepoServiceFactory.CreateService(repoRootPath, logger);
+                    var languageService = LanguageRepoServiceFactory.CreateService(packagePath, gitHelper, logger);
                     logger.LogInformation($"Created language service: {languageService.GetType().Name}");
                     
                     // Call AnalyzeDependencies method

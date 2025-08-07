@@ -15,7 +15,7 @@ public class GoLanguageRepoService : LanguageRepoService
     private readonly string formatterName = "gofmt";
     private readonly string linterName = "golangci-lint";
 
-    public GoLanguageRepoService(string repositoryPath) : base(repositoryPath)
+    public GoLanguageRepoService(string packagePath) : base(packagePath)
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {

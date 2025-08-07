@@ -9,7 +9,7 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// </summary>
 public class JavaLanguageRepoService : LanguageRepoService
 {
-    public JavaLanguageRepoService(string repositoryPath) : base(repositoryPath)
+    public JavaLanguageRepoService(string packagePath) : base(packagePath)
     {
     }
 
@@ -193,7 +193,7 @@ public class JavaLanguageRepoService : LanguageRepoService
         using var process = new Process();
         process.StartInfo.FileName = fileName;
         process.StartInfo.Arguments = arguments;
-        process.StartInfo.WorkingDirectory = _repositoryPath;
+        process.StartInfo.WorkingDirectory = _packagePath;
         process.StartInfo.UseShellExecute = false;
         process.StartInfo.RedirectStandardOutput = true;
         process.StartInfo.RedirectStandardError = true;

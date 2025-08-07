@@ -47,11 +47,11 @@ public interface ILanguageRepoService
 /// </summary>
 public class LanguageRepoService : ILanguageRepoService
 {
-    protected readonly string _repositoryPath;
+    protected readonly string _packagePath;
 
-    public LanguageRepoService(string repositoryPath)
+    public LanguageRepoService(string packagePath)
     {
-        _repositoryPath = repositoryPath ?? throw new ArgumentNullException(nameof(repositoryPath));
+        _packagePath = packagePath ?? throw new ArgumentNullException(nameof(packagePath));
     }
 
     /// <summary>

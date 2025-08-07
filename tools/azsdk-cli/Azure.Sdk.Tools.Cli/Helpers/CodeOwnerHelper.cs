@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.CodeownersUtils.Parsing;
 
 namespace Azure.Sdk.Tools.Cli.Helpers
@@ -306,13 +307,15 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
         public string NormalizeIdentifier(string input)
         {
-            return input
+            input = input
                 .Replace(" - ", "-")
                 .Replace(" ", "-")
                 .Replace("/", "-")
                 .Replace("_", "-")
+                .Replace(".", "-")
                 .Trim('-')
                 .ToLowerInvariant();
+            return Regex.Replace(input, @"[^a-zA-Z0-9\-]", "");
         }
 
         // New owner manipulation helper methods

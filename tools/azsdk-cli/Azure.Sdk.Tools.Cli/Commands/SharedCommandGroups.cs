@@ -37,5 +37,11 @@ namespace Azure.Sdk.Tools.Cli.Commands
             Description: "Log processing commands",
             Options: []
         );
+
+        public static readonly CommandGroup Example = new(
+            Verb: "example",
+            Description: "Example tool demonstrating framework features",
+            Options: []
+        );
     }
 }

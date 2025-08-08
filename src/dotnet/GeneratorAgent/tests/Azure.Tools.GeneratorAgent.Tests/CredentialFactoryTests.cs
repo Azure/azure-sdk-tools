@@ -161,10 +161,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Authentication
             Assert.DoesNotThrow(() => factory.CreateCredential(RuntimeEnvironment.DevOpsPipeline, options));
         }
 
-        // NOTE: These tests modify global environment variables and may cause issues in parallel execution
-        // Consider using dependency injection or configuration abstraction instead of direct environment variable access
         [Test]
-        [NonParallelizable] // Prevent parallel execution due to environment variable mutation
         public void CreateCredential_LocalDevelopment_RespectsEnvironmentVariables()
         {
             var factory = CreateCredentialFactory();
@@ -187,7 +184,6 @@ namespace Azure.Tools.GeneratorAgent.Tests.Authentication
         }
 
         [Test]
-        [NonParallelizable] // Prevent parallel execution due to environment variable mutation
         public void CreateCredential_LocalDevelopment_WithoutEnvironmentVariables_StillWorks()
         {
             var factory = CreateCredentialFactory();

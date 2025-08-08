@@ -8,14 +8,28 @@ namespace Azure.Tools.GeneratorAgent
     /// </summary>
     internal static class SdkGenerationServiceFactory
     {
-        private static void ValidateCommonParameters(AppSettings appSettings, ILoggerFactory loggerFactory, ProcessExecutor processExecutor)
+        public static ISdkGenerationService CreateSdkGenerationService(
+            string? typeSpecDir,
+            string? commitId,
+            string sdkDir,
+            AppSettings appSettings,
+            ILoggerFactory loggerFactory,
+            ProcessExecutor processExecutor)
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(sdkDir);
             ArgumentNullException.ThrowIfNull(appSettings);
             ArgumentNullException.ThrowIfNull(loggerFactory);
             ArgumentNullException.ThrowIfNull(processExecutor);
+
+            if (string.IsNullOrWhiteSpace(commitId))
+            {
+                return CreateForLocalPath(typeSpecDir!, sdkDir, appSettings, loggerFactory, processExecutor);
+            }
+            
+            return CreateForGitHubCommit(commitId, typeSpecDir!, sdkDir, appSettings, loggerFactory, processExecutor);
         }
 
-        public static ISdkGenerationService CreateForLocalPath(
+        private static ISdkGenerationService CreateForLocalPath(
             string typeSpecDir,
             string sdkDir,
             AppSettings appSettings,
@@ -23,12 +37,10 @@ namespace Azure.Tools.GeneratorAgent
             ProcessExecutor processExecutor)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(typeSpecDir);
-            ArgumentException.ThrowIfNullOrWhiteSpace(sdkDir);
-            ValidateCommonParameters(appSettings, loggerFactory, processExecutor);
 
             ValidationContext validationContext = ValidationContext.CreateFromValidatedInputs(
                 typeSpecDir, 
-                string.Empty, // commitId not used for local path
+                string.Empty,
                 sdkDir);
 
             return new LocalTypeSpecSdkGenerationService(
@@ -38,7 +50,7 @@ namespace Azure.Tools.GeneratorAgent
                 validationContext);
         }
 
-        public static ISdkGenerationService CreateForGitHubCommit(
+        private static ISdkGenerationService CreateForGitHubCommit(
             string commitId,
             string typespecSpecDirectory,
             string sdkOutputDirectory,
@@ -46,13 +58,8 @@ namespace Azure.Tools.GeneratorAgent
             ILoggerFactory loggerFactory,
             ProcessExecutor processExecutor)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(commitId);
             ArgumentException.ThrowIfNullOrWhiteSpace(typespecSpecDirectory);
-            ArgumentException.ThrowIfNullOrWhiteSpace(sdkOutputDirectory);
-            ValidateCommonParameters(appSettings, loggerFactory, processExecutor);
 
-            // Note: Validation is already done in CommandLineConfiguration.ValidateInput()
-            // No need to re-validate here - inputs are trusted at this point
             ValidationContext validationContext = ValidationContext.CreateFromValidatedInputs(
                 typespecSpecDirectory, 
                 commitId, 

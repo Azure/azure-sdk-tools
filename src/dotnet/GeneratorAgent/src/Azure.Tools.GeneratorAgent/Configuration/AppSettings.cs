@@ -23,6 +23,26 @@ namespace Azure.Tools.GeneratorAgent.Configuration
         public string Model => Configuration.GetSection("AzureSettings:Model").Value ?? "gpt-4o";
         public string AgentName => Configuration.GetSection("AzureSettings:AgentName").Value ?? "AZC Fixer";
         public string AgentInstructions => Configuration.GetSection("AzureSettings:AgentInstructions").Value ?? "";
+
+        // Timeout and polling configurations
+        public TimeSpan IndexingMaxWaitTime => TimeSpan.FromSeconds(
+            int.Parse(Configuration.GetSection("AzureSettings:IndexingMaxWaitTimeSeconds").Value ?? "180"));
+        public TimeSpan IndexingPollingInterval => TimeSpan.FromSeconds(
+            int.Parse(Configuration.GetSection("AzureSettings:IndexingPollingIntervalSeconds").Value ?? "5"));
+        
+        // Concurrency settings
+        public int MaxConcurrentUploads => 
+            int.Parse(Configuration.GetSection("AzureSettings:MaxConcurrentUploads").Value ?? "10");
+        
+        // Indexing batch processing settings
+        public int IndexingStatusBatchSize => 
+            int.Parse(Configuration.GetSection("AzureSettings:IndexingStatusBatchSize").Value ?? "10");
+        public int MaxPendingFilesToShowInDebug => 
+            int.Parse(Configuration.GetSection("AzureSettings:MaxPendingFilesToShowInDebug").Value ?? "3");
+        
+        // Vector store settings
+        public TimeSpan VectorStoreReadyWaitTime => TimeSpan.FromMilliseconds(
+            int.Parse(Configuration.GetSection("AzureSettings:VectorStoreReadyWaitTimeMs").Value ?? "5000"));
         
         public string TypespecEmitterPackage => "@typespec/http-client-csharp";
         public string TypeSpecDirectoryName => "@typespec";

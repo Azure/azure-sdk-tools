@@ -1,0 +1,96 @@
+{
+  "type": "json_schema",
+  "json_schema": {
+    "name": "conversation_parsing_result",
+    "strict": true,
+    "schema": {
+      "type": "object",
+      "properties": {
+        "guideline_ids": {
+          "type": "array",
+          "description": "List of guideline IDs that are relevant to the conversation, if any.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "memory": {
+          "$ref": "#/definitions/Memory"
+        }
+      },
+      "required": ["guideline_ids", "memory"],
+      "additionalProperties": false,
+      "definitions": {
+        "Example": {
+          "type": "object",
+          "properties": {
+            "content": {
+              "type": "string",
+              "description": "Code snippet demonstrating the example."
+            },
+            "id": {
+              "type": "string",
+              "description": "Unique identifier for the example."
+            },
+            "title": {
+              "type": "string",
+              "description": "Short descriptive title of the example."
+            },
+            "example_type": {
+              "type": "string",
+              "description": "Whether this example is 'good' or 'bad'.",
+              "enum": ["good", "bad"]
+            }
+          },
+          "required": ["id", "content", "title", "example_type"],
+          "additionalProperties": false
+        },
+        "Memory": {
+          "type": "object",
+          "properties": {
+            "content": {
+              "type": "string",
+              "description": "Memory content."
+            },
+            "id": {
+              "type": "string",
+              "description": "Unique identifier for the memory."
+            },
+            "title": {
+              "type": "string",
+              "description": "Short descriptive title of the memory."
+            },
+            "language": {
+              "type": "string",
+              "description": "Programming language (e.g. 'python'), if this memory is specific to a language."
+            },
+            "service": {
+              "type": "string",
+              "description": "Service name (e.g., 'Storage Blob') if this memory is specific to a service, or empty if it is generally applicable."
+            },
+            "is_exception": {
+              "type": "boolean",
+              "description": "Identifies whether this memory describes an exception to established policies or is a reinforcement of them."
+            },
+            "related_examples": {
+              "type": "array",
+              "description": "Array of example objects relevant to this memory.",
+              "items": {
+                "$ref": "#/definitions/Example"
+              }
+            }
+          },
+          "required": [
+            "content",
+            "id",
+            "title",
+            "language",
+            "service",
+            "is_exception",
+            "related_examples"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  }
+}

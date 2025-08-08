@@ -8,6 +8,7 @@ using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Helpers;
 using ModelContextProtocol.Server;
 using OpenAI.Chat;
 
@@ -23,6 +24,7 @@ public class ExampleTool : MCPTool
     private const string GitHubSubCommand = "github";
     private const string AISubCommand = "ai";
     private const string ErrorSubCommand = "error";
+    private const string ProcessSubCommand = "process";
 
     // Dependencies injected via constructor
     private readonly ILogger<ExampleTool> logger;
@@ -31,22 +33,32 @@ public class ExampleTool : MCPTool
     private readonly IDevOpsService devOpsService;
     private readonly IGitHubService gitHubService;
     private readonly AzureOpenAIClient openAIClient;
+    private readonly IProcessHelper processHelper;
 
     // CLI Options and Arguments
     private readonly Argument<string> aiInputArg = new(
         name: "chat-prompt",
         description: "Chat prompt surrounded with quotes"
-    ) { Arity = ArgumentArity.ExactlyOne };
+    )
+    { Arity = ArgumentArity.ExactlyOne };
 
     private readonly Argument<string> packageArgument = new(
         name: "package",
         description: "Package name"
-    ) { Arity = ArgumentArity.ExactlyOne };
+    )
+    { Arity = ArgumentArity.ExactlyOne };
 
     private readonly Argument<string> errorInputArg = new(
         name: "error-input",
         description: "Error type to simulate, can be argument, timeout, notfound, or any user input"
-    ) { Arity = ArgumentArity.ExactlyOne };
+    )
+    { Arity = ArgumentArity.ExactlyOne };
+
+    private readonly Argument<string> processSleepArg = new(
+        name: "sleep",
+        description: "How many seconds to sleep"
+    )
+    { Arity = ArgumentArity.ExactlyOne };
 
     private readonly Option<string> tenantOption = new(["--tenant", "-t"], "Tenant ID");
     private readonly Option<string> languageOption = new(["--language", "-l"], "Programming language of the repository");
@@ -60,6 +72,7 @@ public class ExampleTool : MCPTool
         IAzureService azureService,
         IDevOpsService devOpsService,
         IGitHubService gitHubService,
+        IProcessHelper processHelper,
         AzureOpenAIClient openAIClient
     ) : base()
     {
@@ -69,6 +82,7 @@ public class ExampleTool : MCPTool
         this.devOpsService = devOpsService;
         this.gitHubService = gitHubService;
         this.openAIClient = openAIClient;
+        this.processHelper = processHelper;
 
         // Set command hierarchy - results in: azsdk example
         CommandHierarchy = [
@@ -106,11 +120,17 @@ public class ExampleTool : MCPTool
         errorCmd.AddOption(forceFailureOption);
         errorCmd.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
 
+        // Process execution example sub-command
+        var processCmd = new Command(ProcessSubCommand, "Demonstrate spawning an external process (echo)");
+        processCmd.AddArgument(processSleepArg);
+        processCmd.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
+
         parentCommand.Add(azureCmd);
         parentCommand.Add(devopsCmd);
         parentCommand.Add(githubCmd);
         parentCommand.Add(aiCmd);
         parentCommand.Add(errorCmd);
+        parentCommand.Add(processCmd);
 
         return parentCommand;
     }
@@ -126,6 +146,7 @@ public class ExampleTool : MCPTool
             GitHubSubCommand => await DemonstrateGitHubService(ct),
             AISubCommand => await DemonstrateAIService(ctx.ParseResult.GetValueForArgument(aiInputArg), ct),
             ErrorSubCommand => await DemonstrateErrorHandling(ctx.ParseResult.GetValueForArgument(errorInputArg), ctx.ParseResult.GetValueForOption(forceFailureOption), ct),
+            ProcessSubCommand => await DemonstrateProcessExecution(ctx.ParseResult.GetValueForArgument(processSleepArg), ct),
             _ => new ExampleServiceResponse { ResponseError = $"Unknown command: {commandName}" }
         };
 
@@ -316,6 +337,52 @@ public class ExampleTool : MCPTool
             return new DefaultCommandResponse
             {
                 ResponseError = $"Demonstrated error handling: {ex.GetType().Name}: {ex.Message}"
+            };
+        }
+    }
+
+    [McpServerTool(Name = "example_process_execution"), Description("Demonstrates running an external process (sleep) and capturing output")]
+    public async Task<ExampleServiceResponse> DemonstrateProcessExecution(string time, CancellationToken ct = default)
+    {
+        try
+        {
+            // Trigger process timeout or normal sleep depending on whether value > 2
+            var timespan = TimeSpan.FromSeconds(2);
+            var process = processHelper.CreateForCrossPlatform("sleep", [time], "timeout", ["/t", time], Environment.CurrentDirectory);
+            var result = await process.RunProcess(timespan, ct);
+            var trimmed = (result.Output ?? string.Empty).Trim();
+
+            if (result.ExitCode != 0)
+            {
+                SetFailure(result.ExitCode);
+                return new ExampleServiceResponse
+                {
+                    ResponseErrors = [
+                        $"Sleep example failed to run process",
+                        result.Output
+                    ]
+                };
+            }
+
+            return new ExampleServiceResponse
+            {
+                ServiceName = "Process",
+                Operation = "RunSleep",
+                Result = trimmed,
+                Details = new Dictionary<string, string>
+                {
+                    ["exit_code"] = result.ExitCode.ToString(),
+                    ["raw_output"] = result.Output  ?? string.Empty
+                }
+            };
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error demonstrating process execution for sleep: {time}", time);
+            SetFailure();
+            return new ExampleServiceResponse
+            {
+                ResponseError = $"Failed to execute process: {ex.Message}"
             };
         }
     }

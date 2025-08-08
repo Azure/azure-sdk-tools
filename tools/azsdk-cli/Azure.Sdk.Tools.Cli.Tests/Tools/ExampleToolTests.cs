@@ -1,34 +1,37 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using Azure.Core;
+using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tests.MockServices;
+using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools;
 using Microsoft.Extensions.Logging;
 using Moq;
+using NUnit.Framework.Internal;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools;
 
 internal class ExampleToolTests
 {
     private ExampleTool tool;
-    private Mock<ILogger<ExampleTool>>? mockLogger;
     private Mock<IOutputService>? mockOutput;
     private Mock<IAzureService>? mockAzureService;
     private Mock<IDevOpsService>? mockDevOpsService;
     private MockGitHubService? mockGitHubService;
+    private Mock<IProcessHelper>? mockProcessHelper;
 
     [SetUp]
     public void Setup()
     {
         // Create mock services
-        mockLogger = new Mock<ILogger<ExampleTool>>();
         mockOutput = new Mock<IOutputService>();
         mockAzureService = new Mock<IAzureService>();
         mockDevOpsService = new Mock<IDevOpsService>();
         mockGitHubService = new MockGitHubService();
+        mockProcessHelper = new Mock<IProcessHelper>();
 
         // Set up Azure service mock to return a mock credential
         var mockCredential = new Mock<TokenCredential>();
@@ -47,11 +50,12 @@ internal class ExampleToolTests
 
         // Create the tool instance
         tool = new ExampleTool(
-            mockLogger.Object,
+            new TestLogger<ExampleTool>(),
             mockOutput.Object,
             mockAzureService.Object,
             mockDevOpsService.Object,
             mockGitHubService,
+            mockProcessHelper.Object,
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             null
 #pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
@@ -147,7 +151,7 @@ internal class ExampleToolTests
 
         Assert.That(command.Name, Is.EqualTo("demo"));
         Assert.That(command.Description, Does.Contain("Comprehensive demonstration"));
-        Assert.That(command.Subcommands.Count, Is.EqualTo(5));
+        Assert.That(command.Subcommands.Count, Is.EqualTo(6));
 
         var subCommandNames = command.Subcommands.Select(sc => sc.Name).ToList();
         Assert.That(subCommandNames, Does.Contain("azure"));
@@ -155,6 +159,7 @@ internal class ExampleToolTests
         Assert.That(subCommandNames, Does.Contain("github"));
         Assert.That(subCommandNames, Does.Contain("ai"));
         Assert.That(subCommandNames, Does.Contain("error"));
+        Assert.That(subCommandNames, Does.Contain("process"));
     }
 
     [Test]
@@ -191,5 +196,46 @@ internal class ExampleToolTests
         Assert.That(result.ServiceName, Is.EqualTo("Azure Authentication"));
 
         mockAzureService!.Verify(x => x.GetCredential(null), Times.Once);
+    }
+
+    [Test]
+    public async Task DemonstrateProcessExecution_Success()
+    {
+        mockProcessHelper!.Setup(p => p.CreateForCrossPlatform("sleep", It.IsAny<string[]>(), "timeout", It.IsAny<string[]>(), It.IsAny<string>()))
+            .Returns(mockProcessHelper.Object);
+        mockProcessHelper!.Setup(p => p.RunProcess(It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessResult
+            {
+                ExitCode = 0,
+                Output = ""
+            });
+
+        var result = await tool.DemonstrateProcessExecution("5");
+
+        Assert.That(result.ResponseError, Is.Null);
+        Assert.That(result.ServiceName, Is.EqualTo("Process"));
+        Assert.That(result.Operation, Is.EqualTo("RunSleep"));
+        Assert.That(result.Result, Is.Empty);
+        Assert.That(result.Details, Is.Not.Null);
+        Assert.That(result.Details!["exit_code"], Is.EqualTo("0"));
+    }
+
+    [Test]
+    public async Task DemonstrateProcessExecution_Failure()
+    {
+        mockProcessHelper!.Setup(p => p.CreateForCrossPlatform("sleep", It.IsAny<string[]>(), "timeout", It.IsAny<string[]>(), It.IsAny<string>()))
+            .Returns(mockProcessHelper.Object);
+        mockProcessHelper!.Setup(p => p.RunProcess(It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessResult
+            {
+                ExitCode = 1,
+                Output = "Process failed" + Environment.NewLine,
+            });
+
+        var result = await tool.DemonstrateProcessExecution("failcase");
+
+        Assert.That(result.ResponseErrors, Is.Not.Empty);
+        Assert.That(result.ResponseErrors[0], Does.Contain("Sleep example failed"));
+        Assert.That(result.ResponseErrors[1], Does.Contain("Process failed"));
     }
 }

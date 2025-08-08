@@ -535,16 +535,12 @@ func (s *CompletionService) getLLMResult(messages []azopenai.ChatRequestMessageC
 					"additionalProperties": false,
 				},
 			},
-			"category": map[string]interface{}{
-				"type":        "string",
-				"description": "the category of user's question(eg: typespec synax, typespec migration, ci-failure and so on)",
-			},
 			"reasoning_progress": map[string]interface{}{
 				"type":        "string",
 				"description": "output your reasoning progress of generating the answer",
 			},
 		},
-		"required":             []string{"has_result", "answer", "references", "category", "reasoning_progress"},
+		"required":             []string{"has_result", "answer", "references", "reasoning_progress"},
 		"additionalProperties": false,
 	}
 
@@ -765,7 +761,7 @@ func (s *CompletionService) mergeAndProcessSearchResults(req *model.CompletionRe
 			processedFiles[result.Title] = true
 			continue
 		}
-		if len(needCompleteFiles) < completeFileMaxCnt && i > 0 && knowledgeResults[i-1] != knowledgeResults[i] {
+		if len(needCompleteFiles) < completeFileMaxCnt && i > 0 && knowledgeResults[i-1].ContextID != knowledgeResults[i].ContextID {
 			needCompleteFiles = append(needCompleteFiles, result)
 			processedFiles[result.Title] = true
 			continue
@@ -818,8 +814,8 @@ func (s *CompletionService) mergeAndProcessSearchResults(req *model.CompletionRe
 		result = append(result, content)
 	}
 
-	log.Printf("Search merge summary: %d agentic + %d knowledge → %d completed docs + %d chunks",
-		len(agenticChunks), len(knowledgeResults), len(needCompleteFiles), len(allChunks))
+	log.Printf("Search merge summary: %d agentic + %d knowledge → %d completed docs + %d q&a + %d chunks",
+		len(agenticChunks), len(knowledgeResults), len(files), len(needCompleteChunks), len(allChunks))
 	log.Printf("Merge and processing took: %v", time.Since(mergeStart))
 	return result
 }

@@ -227,8 +227,8 @@ public class ComplexTool(ILogger<ComplexTool> logger, IOutputService output) : M
         scmd2.AddOption(fooOption, barOption);
         scmd2.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
 
-        parentCommand.Add(analyzeCommand);
-        parentCommand.Add(processCommand);
+        parentCommand.Add(scmd1);
+        parentCommand.Add(scmd2);
 
         return parentCommand;
     }

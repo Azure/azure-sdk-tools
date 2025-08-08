@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 using Azure.AI.OpenAI;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Microagents;
 using Microsoft.Extensions.Azure;
 
 namespace Azure.Sdk.Tools.Cli.Services
@@ -28,6 +29,9 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ITypeSpecHelper, TypeSpecHelper>();
             services.AddSingleton<ISpecPullRequestHelper, SpecPullRequestHelper>();
             services.AddSingleton<IUserHelper, UserHelper>();
+
+            services.AddSingleton<IMicroagentHostService, MicroagentHostService>();
+            services.AddSingleton<ITestRunnerService, JavaScriptTestRunnerService>();
 
             services.AddAzureClients(clientBuilder =>
             {

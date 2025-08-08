@@ -340,12 +340,16 @@ public class YourResponseType : Response
 
     public override string ToString()
     {
-        List<string> output = new() {
-            $"Result: {Result}",
-            $"Message: {Message}"
-        };
-        var formatted = string.Join(Environment.NewLine, output);
-        return ToString(formatted); // Calls base method to include formatting of error properties
+        var output = new StringBuilder();
+        if (!string.IsNullOrEmpty(Message))
+        {
+            output.AppendLine($"Message: {Message}");
+        }
+        if (Result != null)
+        {
+            output.AppendLine($"Result: {Result?.ToString() ?? "null"}");
+        }
+        return ToString(output);
     }
 }
 ```

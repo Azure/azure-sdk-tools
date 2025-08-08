@@ -1,5 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+using System.Text;
 using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models;
@@ -13,6 +14,11 @@ public class Response
     [JsonPropertyName("response_errors")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public List<string> ResponseErrors { get; set; }
+
+    protected string ToString(StringBuilder value)
+    {
+        return ToString(value.ToString());
+    }
 
     protected string ToString(string value)
     {

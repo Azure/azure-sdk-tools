@@ -33,9 +33,9 @@ public class ExampleTool : MCPTool
     private readonly AzureOpenAIClient openAIClient;
 
     // CLI Options and Arguments
-    private readonly Argument<string> inputArg = new Argument<string>(
-        name: "input",
-        description: "Input parameter for demonstration (e.g., repository name, work item ID, etc.)"
+    private readonly Argument<string> errorInputArg = new Argument<string>(
+        name: "error-input",
+        description: "Error type to simulate, can be argument, timeout, notfound, or any user input"
     ) { Arity = ArgumentArity.ExactlyOne };
 
     private readonly Argument<string> packageArgument = new(
@@ -94,14 +94,14 @@ public class ExampleTool : MCPTool
 
         // AI service example sub-command
         var aiCmd = new Command(AISubCommand, "Demonstrate AI service integration");
-        aiCmd.AddArgument(inputArg);
+        aiCmd.AddArgument(errorInputArg);
         aiCmd.AddOption(promptOption);
         aiCmd.AddOption(verboseOption);
         aiCmd.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
 
         // Error handling example sub-command
         var errorCmd = new Command(ErrorSubCommand, "Demonstrate error handling patterns");
-        errorCmd.AddArgument(inputArg);
+        errorCmd.AddArgument(errorInputArg);
         errorCmd.AddOption(forceFailureOption);
         errorCmd.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
 
@@ -117,7 +117,7 @@ public class ExampleTool : MCPTool
     public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
     {
         var commandName = ctx.ParseResult.CommandResult.Command.Name;
-        var input = ctx.ParseResult.GetValueForArgument(inputArg);
+        var input = ctx.ParseResult.GetValueForArgument(errorInputArg);
         var verbose = ctx.ParseResult.GetValueForOption(verboseOption);
 
         try

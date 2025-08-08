@@ -3,9 +3,6 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
-using Microsoft.Graph.Drives.Item.Items.Item.GetActivitiesByInterval;
-using Microsoft.Graph.Models.TermStore;
-
 namespace Azure.Sdk.Tools.Cli.Helpers
 {
     public interface IProcessHelper

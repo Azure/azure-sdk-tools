@@ -12,7 +12,7 @@ using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Helpers;
 using ModelContextProtocol.Server;
 
-namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
+namespace Azure.Sdk.Tools.Cli.Tools
 {
     /// <summary>
     /// This tool runs dependency check for SDK projects.

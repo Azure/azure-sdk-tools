@@ -91,13 +91,17 @@ public class PythonLanguageRepoService : LanguageRepoService
         process.OutputDataReceived += (sender, e) =>
         {
             if (e.Data != null)
+            {
                 outputBuilder.AppendLine(e.Data);
+            }
         };
 
         process.ErrorDataReceived += (sender, e) =>
         {
             if (e.Data != null)
+            {
                 errorBuilder.AppendLine(e.Data);
+            }
         };
 
         process.Start();

@@ -22,10 +22,14 @@ public class LanguageRepoServiceFactory
     {
         logger?.LogInformation($"Create service for package at: {packagePath}");
         if (string.IsNullOrWhiteSpace(packagePath))
+        {
             throw new ArgumentException("Package path cannot be null or empty", nameof(packagePath));
+        }
 
         if (!Directory.Exists(packagePath))
+        {
             throw new DirectoryNotFoundException($"Package path does not exist: {packagePath}");
+        }
 
         // Discover the repository root from the project path
         var repoRootPath = gitHelper.DiscoverRepoRoot(packagePath);

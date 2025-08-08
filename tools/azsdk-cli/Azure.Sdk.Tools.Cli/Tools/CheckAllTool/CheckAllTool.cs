@@ -11,14 +11,14 @@ using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Helpers;
 using ModelContextProtocol.Server;
 
-namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
+namespace Azure.Sdk.Tools.Cli.Tools
 {
     /// <summary>
     /// This tool runs all the check/validation tools at once to provide comprehensive validation.
     /// </summary>
     [Description("Run all validation checks for SDK projects")]
     [McpServerToolType]
-    public class CheckAllTool : MCPTool
+    public partial class CheckAllTool : MCPTool
     {
         private readonly ILogger<CheckAllTool> logger;
         private readonly IOutputService output;
@@ -26,16 +26,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
 
         private readonly Option<string> packagePathOption = new(["--package-path", "-p"], "Path to the package directory to check") { IsRequired = true };
 
-        public CheckAllTool(
-            ILogger<CheckAllTool> logger, 
-            IOutputService output,
-            IGitHelper gitHelper) : base()
-        {
-            this.logger = logger;
-            this.output = output;
-            this.gitHelper = gitHelper;
-            CommandHierarchy = [SharedCommandGroups.Checks];
-        }
 
         public override Command GetCommand()
         {
@@ -49,33 +39,43 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
         {
             try
             {
-                var packagePath = ctx.ParseResult.GetValueForOption(packagePathOption);
+                var pr = ctx.ParseResult;
+                var packagePath = pr.GetValueForOption(packagePathOption);
                 var result = await RunAllChecks(packagePath, ct);
 
-                // Convert ICLICheckResponse to DefaultCommandResponse for output
-                var response = new DefaultCommandResponse
+                if (result.ExitCode != 0)
                 {
-                    Message = result.ExitCode == 0 ? "All checks completed successfully" : "Some checks failed",
-                    Duration = 0,
-                    Result = result
-                };
-
-                output.Output(response);
-                ctx.ExitCode = ExitCode;
+                    var details = string.IsNullOrWhiteSpace(result.Output) ? string.Empty : $"\nDetails:\n{result.Output}";
+                    output.OutputError($"Some checks failed.{details}");
+                    ctx.ExitCode = 1;
+                }
+                else
+                {
+                    output.Output("All checks completed successfully");
+                }
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error occurred while running checks");
-                SetFailure(1);
-                output.Output(new DefaultCommandResponse
-                {
-                    ResponseError = $"Error occurred while running checks: {ex.Message}"
-                });
-                ctx.ExitCode = ExitCode;
+                output.OutputError($"CheckAllTool threw an exception: {ex}");
+                ctx.ExitCode = 1;
             }
         }
 
-        [McpServerTool(Name = "All"), Description("Run all validation checks for SDK packages. Provide absolute path to package root as param.")]
+        public CheckAllTool(
+            ILogger<CheckAllTool> logger, 
+            IOutputService output,
+            IGitHelper gitHelper) : base()
+        {
+            this.logger = logger;
+            this.output = output;
+            this.gitHelper = gitHelper;
+            CommandHierarchy = [SharedCommandGroups.Checks];
+        }
+
+        
+
+        [McpServerTool(Name = "RunAllCLIChecks"), Description("Run all validation checks for SDK packages. Provide absolute path to package root as param.")]
     public async Task<ICLICheckResponse> RunAllChecks(string packagePath, CancellationToken ct)
         {
             try
@@ -100,11 +100,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.CheckAllTool
                 var dependencyCheckResult = await dependencyCheckTool.RunDependencyCheck(packagePath, ct);
                 
                 results.Add(dependencyCheckResult);
-                if (dependencyCheckResult.ExitCode != 0) overallSuccess = false;
+                if (dependencyCheckResult.ExitCode != 0)
+                {
+                    overallSuccess = false;
+                }
 
                 var changelogValidationResult = await RunChangelogValidation(packagePath);
                 results.Add(changelogValidationResult);
-                if (changelogValidationResult.ExitCode != 0) overallSuccess = false;
+                if (changelogValidationResult.ExitCode != 0)
+                {
+                    overallSuccess = false;
+                }
 
 
                 if (!overallSuccess)

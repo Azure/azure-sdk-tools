@@ -18,7 +18,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         // Dependencies
         private readonly ILogger<HelloWorldTool> logger;
         private readonly IOutputService output;
-        
+
         private Argument<string> _inputArg = new Argument<string>(
             name: "input",
             description: "The text to echo back"
@@ -33,7 +33,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         {
             this.logger = logger;
             this.output = output;
-            
+
             // Set command hierarchy - results in: azsdk example hello-world
             CommandHierarchy = [
                 SharedCommandGroups.Example

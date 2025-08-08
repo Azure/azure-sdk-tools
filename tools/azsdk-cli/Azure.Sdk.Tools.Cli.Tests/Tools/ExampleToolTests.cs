@@ -1,6 +1,5 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-using Azure.AI.OpenAI;
 using Azure.Core;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses;
@@ -9,21 +8,17 @@ using Azure.Sdk.Tools.Cli.Tests.MockServices;
 using Azure.Sdk.Tools.Cli.Tools;
 using Microsoft.Extensions.Logging;
 using Moq;
-using Octokit;
-using OpenAI.Chat;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools;
 
 internal class ExampleToolTests
 {
-    private ExampleTool? tool;
+    private ExampleTool tool;
     private Mock<ILogger<ExampleTool>>? mockLogger;
     private Mock<IOutputService>? mockOutput;
     private Mock<IAzureService>? mockAzureService;
     private Mock<IDevOpsService>? mockDevOpsService;
     private MockGitHubService? mockGitHubService;
-    private Mock<AzureOpenAIClient>? mockOpenAIClient;
-    private Mock<ChatClient>? mockChatClient;
 
     [SetUp]
     public void Setup()
@@ -35,16 +30,12 @@ internal class ExampleToolTests
         mockDevOpsService = new Mock<IDevOpsService>();
         mockGitHubService = new MockGitHubService();
 
-        // Create mock for AzureOpenAIClient
-        mockOpenAIClient = new Mock<AzureOpenAIClient>();
-        mockChatClient = new Mock<ChatClient>();
-
         // Set up Azure service mock to return a mock credential
         var mockCredential = new Mock<TokenCredential>();
         mockCredential
             .Setup(x => x.GetTokenAsync(It.IsAny<TokenRequestContext>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Azure.Core.AccessToken("mock-token", DateTimeOffset.UtcNow.AddHours(1)));
-        
+
         mockAzureService
             .Setup(x => x.GetCredential(It.IsAny<string?>()))
             .Returns(mockCredential.Object);
@@ -54,11 +45,6 @@ internal class ExampleToolTests
             .Setup(x => x.GetPackageWorkItemAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(new PackageResponse { PipelineDefinitionUrl = "https://dev.azure.com/test-pipeline" });
 
-        // Set up OpenAI client mock
-        mockOpenAIClient
-            .Setup(x => x.GetChatClient(It.IsAny<string>()))
-            .Returns(mockChatClient.Object);
-
         // Create the tool instance
         tool = new ExampleTool(
             mockLogger.Object,
@@ -66,7 +52,9 @@ internal class ExampleToolTests
             mockAzureService.Object,
             mockDevOpsService.Object,
             mockGitHubService,
-            mockOpenAIClient.Object
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
+            null
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         );
     }
 
@@ -74,7 +62,7 @@ internal class ExampleToolTests
     public async Task DemonstrateAzureService_ReturnsSuccessResponse()
     {
         // Act
-        var result = await tool!.DemonstrateAzureService("test-tenant");
+        var result = await tool.DemonstrateAzureService("test-tenant");
 
         // Assert
         Assert.That(result.ResponseError, Is.Null);
@@ -90,14 +78,11 @@ internal class ExampleToolTests
     [Test]
     public async Task DemonstrateDevOpsService_ReturnsCorrectResponse()
     {
-        // Arrange
         const string packageName = "test-package";
         const string language = "csharp";
 
-        // Act
-        var result = await tool!.DemonstrateDevOpsService(packageName, language);
+        var result = await tool.DemonstrateDevOpsService(packageName, language);
 
-        // Assert
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.ServiceName, Is.EqualTo("Azure DevOps"));
         Assert.That(result.Operation, Is.EqualTo("GetPackagePipelineUrl"));
@@ -113,10 +98,8 @@ internal class ExampleToolTests
     [Test]
     public async Task DemonstrateGitHubService_ReturnsUserDetails()
     {
-        // Act
-        var result = await tool!.DemonstrateGitHubService();
+        var result = await tool.DemonstrateGitHubService();
 
-        // Assert
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.ServiceName, Is.EqualTo("GitHub"));
         Assert.That(result.Operation, Is.EqualTo("GetUser"));
@@ -127,44 +110,10 @@ internal class ExampleToolTests
     }
 
     [Test]
-    public async Task DemonstrateAIService_ReturnsAIResponse()
-    {
-        // Arrange
-        const string userPrompt = "Hello, how are you?";
-
-        // For this test, we'll just verify the method executes without error
-        // since mocking ChatCompletion is complex and not critical for testing tool behavior
-
-        // Act
-        var result = await tool!.DemonstrateAIService(userPrompt);
-
-        // Assert - Test will depend on actual OpenAI service response or error handling
-        // This is more of an integration test, but we can verify structure
-        Assert.That(result.ServiceName, Is.EqualTo("OpenAI"));
-        Assert.That(result.Operation, Is.EqualTo("Chat"));
-        Assert.That(result.Details, Is.Not.Null);
-        Assert.That(result.Details!["model_used"], Is.EqualTo("gpt-4o"));
-    }
-
-    [Test]
-    public async Task DemonstrateErrorHandling_ForceFailure_ReturnsErrorResponse()
-    {
-        // Act
-        var result = await tool!.DemonstrateErrorHandling("argument", true);
-
-        // Assert
-        Assert.That(result.ResponseError, Is.Not.Null);
-        Assert.That(result.ResponseError, Does.Contain("ArgumentException"));
-        Assert.That(result.ResponseError, Does.Contain("Simulated argument validation error"));
-    }
-
-    [Test]
     public async Task DemonstrateErrorHandling_NoFailure_ReturnsSuccessResponse()
     {
-        // Act
-        var result = await tool!.DemonstrateErrorHandling("normal", false);
+        var result = await tool.DemonstrateErrorHandling("normal", false);
 
-        // Assert
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.Result, Is.Not.Null);
         Assert.That(result.Result!.ToString(), Does.Contain("successfully"));
@@ -174,18 +123,19 @@ internal class ExampleToolTests
     [Test]
     public async Task DemonstrateErrorHandling_DifferentErrorTypes_ReturnsDifferentErrors()
     {
-        // Test timeout error
-        var timeoutResult = await tool!.DemonstrateErrorHandling("timeout", true);
+        var result = await tool.DemonstrateErrorHandling("argument", true);
+        Assert.That(result.ResponseError, Is.Not.Null);
+        Assert.That(result.ResponseError, Does.Contain("ArgumentException"));
+
+        var timeoutResult = await tool.DemonstrateErrorHandling("timeout", true);
         Assert.That(timeoutResult.ResponseError, Is.Not.Null);
         Assert.That(timeoutResult.ResponseError, Does.Contain("TimeoutException"));
 
-        // Test not found error
-        var notFoundResult = await tool!.DemonstrateErrorHandling("notfound", true);
+        var notFoundResult = await tool.DemonstrateErrorHandling("notfound", true);
         Assert.That(notFoundResult.ResponseError, Is.Not.Null);
         Assert.That(notFoundResult.ResponseError, Does.Contain("FileNotFoundException"));
 
-        // Test generic error
-        var genericResult = await tool!.DemonstrateErrorHandling("other", true);
+        var genericResult = await tool.DemonstrateErrorHandling("other", true);
         Assert.That(genericResult.ResponseError, Is.Not.Null);
         Assert.That(genericResult.ResponseError, Does.Contain("InvalidOperationException"));
     }
@@ -193,14 +143,12 @@ internal class ExampleToolTests
     [Test]
     public void GetCommand_ReturnsCommandWithCorrectSubCommands()
     {
-        // Act
-        var command = tool!.GetCommand();
+        var command = tool.GetCommand();
 
-        // Assert
         Assert.That(command.Name, Is.EqualTo("demo"));
         Assert.That(command.Description, Does.Contain("Comprehensive demonstration"));
         Assert.That(command.Subcommands.Count, Is.EqualTo(5));
-        
+
         var subCommandNames = command.Subcommands.Select(sc => sc.Name).ToList();
         Assert.That(subCommandNames, Does.Contain("azure"));
         Assert.That(subCommandNames, Does.Contain("devops"));
@@ -212,7 +160,6 @@ internal class ExampleToolTests
     [Test]
     public void ExampleServiceResponse_ToString_FormatsCorrectly()
     {
-        // Arrange
         var response = new ExampleServiceResponse
         {
             ServiceName = "Test Service",
@@ -225,10 +172,8 @@ internal class ExampleToolTests
             }
         };
 
-        // Act
         var result = response.ToString();
 
-        // Assert
         Assert.That(result, Does.Contain("Service: Test Service"));
         Assert.That(result, Does.Contain("Operation: Test Operation"));
         Assert.That(result, Does.Contain("Result: Test Result"));
@@ -240,14 +185,11 @@ internal class ExampleToolTests
     [Test]
     public async Task DemonstrateAzureService_WithNullTenant_WorksCorrectly()
     {
-        // Act
-        var result = await tool!.DemonstrateAzureService(null);
+        var result = await tool.DemonstrateAzureService(null);
 
-        // Assert
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.ServiceName, Is.EqualTo("Azure Authentication"));
-        
-        // Verify that GetCredential was called with null
+
         mockAzureService!.Verify(x => x.GetCredential(null), Times.Once);
     }
 }

@@ -15,3 +15,7 @@ $OutFileName = $FileName -replace ".api.json", "_js.json"
 $OutFilePath = Join-Path -Path $OutPath $OutFileName
 Write-Host "Converting api-extractor file $($SourcePath) to APIview code file $($OutFilePath)"
 node $parserPath $SourcePath $OutFilePath
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "Failed to generate APIView token file. Node.js command failed with exit code: $LASTEXITCODE"
+    exit $LASTEXITCODE
+}

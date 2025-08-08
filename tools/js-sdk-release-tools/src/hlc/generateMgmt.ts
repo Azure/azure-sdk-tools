@@ -129,17 +129,17 @@ export async function generateMgmt(options: {
                 logger.info(`Start to run command: 'node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose'.`);
                 execSync(`node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose`, {stdio: 'inherit'});
             } else {
-                logger.info(`Start to run command: 'pnpm update'.`);
+                logger.info(`Start to run command: 'pnpm install'.`);
                 execSync('pnpm install', {stdio: 'inherit'});
                                 
-                logger.info(`Start to run command: 'pnpm build --filter ${packageName}', that builds generated codes, except test and sample, which may be written manually.`);
-                execSync(`pnpm build --filter ${packageName}`, {stdio: 'inherit'});
+                logger.info(`Start to run command: 'pnpm build --filter ${packageName}...', that builds generated codes, except test and sample, which may be written manually.`);
+                execSync(`pnpm build --filter ${packageName}...`, {stdio: 'inherit'});
                 logger.info('Start to generate changelog and bump version...');
                 if (!options.skipGeneration) {
                     changelog = await generateChangelogAndBumpVersion(changedPackageDirectory, options);
                 }
-                logger.info(`Start to run command: 'pnpm pack ' under ${packagePath}.`);
-                execSync(`pnpm pack `, {stdio: 'inherit', cwd: packagePath});
+                logger.info(`Start to run command: 'pnpm run --filter ${packageJson.name}... pack'.`);
+                execSync(`pnpm run --filter ${packageJson.name}... pack`, {stdio: 'inherit'});
             }
             
             await updateSnippets(packagePath);

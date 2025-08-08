@@ -2,6 +2,7 @@
 
 ## Version 0.3.21 (Unreleased)
 Fixed a bug where the LineId for the kwarg marker was the same as the function LineId.
+Fixed an issue with Model base class inherited methods being shown.
 
 ## Version 0.3.20 (2025-07-28)
 Added a feature to distinguish handwritten code from generated code by applying specific CSS to handwritten lines.

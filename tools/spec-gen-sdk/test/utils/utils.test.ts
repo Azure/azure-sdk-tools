@@ -1,6 +1,6 @@
-import { parseSemverVersionString } from '../src/utils/parseSemverVersionString';
-import { removeAnsiEscapeCodes, diffStringArrays, extractPathFromSpecConfig } from '../src/utils/utils';
-import { findMarkdownCodeBlocks, findSwaggerToSDKConfiguration } from '../src/utils/readme';
+import { parseSemverVersionString } from '../../src/utils/parseSemverVersionString';
+import { removeAnsiEscapeCodes, diffStringArrays, extractPathFromSpecConfig } from '../../src/utils/utils';
+import { findMarkdownCodeBlocks, findSwaggerToSDKConfiguration } from '../../src/utils/readme';
 import * as path from 'node:path';
 import * as fs from 'node:fs';
 import { describe, it, expect } from 'vitest';
@@ -208,7 +208,7 @@ describe('test diffStringArrays between breakingchanges from generate script and
 
 describe('find SDK Swagger Config from readme.md', () => {
   const rootPath = process.cwd();
-  const readmeMdPath = path.join(rootPath, './test/test.readme.md');
+  const readmeMdPath = path.join(rootPath, './test/fixtures/test.readme.md');
   const readmeContent = fs.readFileSync(readmeMdPath).toString();
   it('test findMarkdownCodeBlocks from readme.md', () => {
     const blockContent = findMarkdownCodeBlocks(readmeContent);

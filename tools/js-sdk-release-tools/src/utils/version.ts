@@ -70,8 +70,8 @@ export function getNextBetaVersion(npmViewResult: Record<string, unknown> | unde
         return betaDate > nextDate ? betaVersion : nextVersion;
     }
     
-    // If dates can't be compared, prefer nextVersion as default
-    return nextVersion;
+    // If dates can't be compared, prefer betaVersion as default
+    return betaVersion;
 }
 
 // NOTE: The latest tag used to contains beta version when there's the sdk is not GA.

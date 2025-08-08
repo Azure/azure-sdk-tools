@@ -68,15 +68,15 @@ describe("Get next beta version from beta and next tags", () => {
         {
             betaVersion: "1.0.0-beta.1",
             betaVersionDate: "2025-06-01T07:07:56.529Z",
-            nextVersion: "1.0.0-next.1",
+            nextVersion: "1.0.0-beta.2",
             nextVersionDate: "2025-06-20T09:13:48.079Z",
-            expectedVersion: "1.0.0-next.1" // next is more recent
+            expectedVersion: "1.0.0-beta.2" // next is more recent
         },
         // When both beta and next tags exist, and beta is more recent
         {
             betaVersion: "1.0.0-beta.2",
             betaVersionDate: "2025-06-20T09:13:48.079Z",
-            nextVersion: "1.0.0-next.1",
+            nextVersion: "1.0.0-beta.1",
             nextVersionDate: "2025-06-01T07:07:56.529Z",
             expectedVersion: "1.0.0-beta.2" // beta is more recent
         },
@@ -90,9 +90,9 @@ describe("Get next beta version from beta and next tags", () => {
         // When only next tag exists
         {
             betaVersion: undefined,
-            nextVersion: "1.0.0-next.1",
+            nextVersion: "1.0.0-beta.1",
             nextVersionDate: "2025-06-01T07:07:56.529Z",
-            expectedVersion: "1.0.0-next.1" // only next exists
+            expectedVersion: "1.0.0-beta.1" // only next exists
         },
         // When neither beta nor next tag exists
         {
@@ -100,11 +100,11 @@ describe("Get next beta version from beta and next tags", () => {
             nextVersion: undefined,
             expectedVersion: undefined // neither exists
         },
-        // When dates are not available, default to next
+        // When dates are not available, default to beta
         {
             betaVersion: "1.0.0-beta.1",
-            nextVersion: "1.0.0-next.1",
-            expectedVersion: "1.0.0-next.1" // no dates, default to next
+            nextVersion: "1.0.0-beta.2",
+            expectedVersion: "1.0.0-beta.1" // no dates, default to beta
         }
     ];
 

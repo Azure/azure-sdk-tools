@@ -24,7 +24,8 @@ namespace Azure.Sdk.Tools.Cli.Helpers
     {
         private readonly ILogger<GitHelper> logger = logger;
         private readonly IGitHubService gitHubService = gitHubService;
-
+        private static readonly System.Text.RegularExpressions.Regex GitHubPrUrlRegex = 
+            new(@"^https?:\/\/github\.com\/([^\/]+)\/([^\/]+)\/pull\/(\d+)", System.Text.RegularExpressions.RegexOptions.Compiled);
 
         public string GetMergeBaseCommitSha(string path, string targetBranchName)
         {
@@ -113,11 +114,10 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             return new DirectoryInfo(repoRoot).Name ?? throw new InvalidOperationException($"Unable to determine repository name for path: {path}");
         }
 
-        // Static helpers for parsing PR details from GitHub PR URLs
         public int ParsePullRequestNumberFromUrl(string prUrl)
         {
-            var match = System.Text.RegularExpressions.Regex.Match(prUrl, @"github\.com\/[^\/]+\/[^\/]+\/pull\/(\d+)");
-            if (match.Success && int.TryParse(match.Groups[1].Value, out int prNumber))
+            var match = GitHubPrUrlRegex.Match(prUrl);
+            if (match.Success && int.TryParse(match.Groups[3].Value, out int prNumber))
             {
                 return prNumber;
             }
@@ -127,20 +127,19 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
         public string ParseRepoOwnerFromUrl(string prUrl)
         {
-            var match = System.Text.RegularExpressions.Regex.Match(prUrl, @"github\.com\/([^\/]+)\/[^\/]+\/pull\/\d+");
+            var match = GitHubPrUrlRegex.Match(prUrl);
             return match.Success ? match.Groups[1].Value : throw new InvalidOperationException($"Unable to parse repo owner from URL: {prUrl}.");
         }
 
         public string ParseRepoNameFromUrl(string prUrl)
         {
-            var match = System.Text.RegularExpressions.Regex.Match(prUrl, @"github\.com\/[^\/]+\/([^\/]+)\/pull\/\d+");
-            return match.Success ? match.Groups[1].Value : throw new InvalidOperationException($"Unable to parse repo name from URL: {prUrl}.");
+            var match = GitHubPrUrlRegex.Match(prUrl);
+            return match.Success ? match.Groups[2].Value : throw new InvalidOperationException($"Unable to parse repo name from URL: {prUrl}.");
         }
 
         public bool IsPullRequestUrl(string url)
         {
-            // Regex: ^https?:\/\/github\.com\/[^\/]+\/[^\/]+\/pull\/\d+
-            return System.Text.RegularExpressions.Regex.IsMatch(url ?? string.Empty, @"^https?:\/\/github\.com\/[^\/]+\/[^\/]+\/pull\/\d+");
+            return GitHubPrUrlRegex.IsMatch(url ?? string.Empty);
         }
     }
 }

@@ -259,9 +259,9 @@ if __name__ == "__main__":
     try: 
         print("📊 Preparing dataset...")
         if args.is_cli:
-            service_connection_id = os.environ["AZURE_SUBSCRIPTION_SERVICE_CONNECTION_ID"]
-            client_id = os.environ["AZURE_SUBSCRIPTION_CLIENT_ID"]
-            tenant_id = os.environ["AZURE_SUBSCRIPTION_TENANT_ID"]
+            service_connection_id = os.environ["AZURESUBSCRIPTION_SERVICE_CONNECTION_ID"]
+            client_id = os.environ["AZURESUBSCRIPTION_CLIENT_ID"]
+            tenant_id = os.environ["AZURESUBSCRIPTION_TENANT_ID"]
             system_access_token = os.environ["SYSTEM_ACCESSTOKEN"]
             kwargs = {
                 "credential": AzurePipelinesCredential(

@@ -4,96 +4,21 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { StorageService } from '../services/StorageService';
 import { SpectorCaseProcessor } from '../services/SpectorCaseProcessor';
+import { ConfigurationLoader, DocumentationSource, RepositoryConfig } from '../services/ConfigurationLoader';
 
 /**
  * Daily sync knowledge function that processes documentation from various repositories
  * and uploads processed content to blob storage for the Azure SDK QA Bot.
  * 
  * This function:
- * 1. Clones/updates multiple documentation repositories
- * 2. Processes markdown files to extract content
- * 3. Uploads processed content to Azure Blob Storage
- * 4. Cleans up temporary files
+ * 1. Loads configuration from knowledge-config.json
+ * 2. Clones/updates multiple documentation repositories
+ * 3. Processes markdown files to extract content
+ * 4. Uploads processed content to Azure Blob Storage
+ * 5. Cleans up temporary files
  * 
  * Triggered daily via timer or manually via HTTP request
  */
-
-// Configuration for documentation sources
-interface DocumentationSource {
-    path: string;
-    folder: string;
-    name?: string;
-    fileNameLowerCase?: boolean;
-    ignoredPaths?: string[];
-}
-
-// Configuration for repository setup
-interface RepositoryConfig {
-    name: string;
-    url: string;
-    path: string;
-    branch: string;
-    sparseCheckout?: string[];
-    authType?: 'public' | 'token' | 'ssh';
-    sshHost?: string;
-    token?: string;
-}
-
-const documentationSources: DocumentationSource[] = [
-    {
-        path: "docs/typespec/website/src/content/docs/docs",
-        folder: "typespec_docs",
-        name: "TypeSpec",
-        fileNameLowerCase: true,
-    },
-    {
-        path: "docs/typespec-azure/website/src/content/docs/docs",
-        folder: "typespec_azure_docs",
-        name: "TypeSpec Azure",
-        fileNameLowerCase: true,
-    },
-    {
-        path: "docs/azure-rest-api-specs.wiki",
-        folder: "azure_rest_api_specs_wiki",
-    },
-    {
-        path: "docs/azure-sdk-for-python.wiki",
-        folder: "azure_sdk_for_python_wiki",
-    },
-    {
-        path: "docs/azure-sdk-for-python/doc",
-        folder: "azure_sdk_for_python_docs",
-    },
-    {
-        path: "docs/api-guidelines",
-        folder: "azure_api_guidelines",
-    },
-    {
-        path: "docs/resource-provider-contract",
-        folder: "azure_resource_manager_rpc",
-    },
-    {
-        path: "docs/azure-sdk-docs-eng.ms",
-        folder: "azure-sdk-docs-eng",
-    },
-    {
-        path: "docs/azure-sdk",
-        folder: "azure-sdk-guidelines",
-        ignoredPaths: ["docs/redirects"]
-    },
-    {
-        path: "docs/typespec/packages/http-specs/specs/generated",
-        folder: "typespec_http_specs",
-        name: "TypeSpec HTTP Spector Cases",
-        fileNameLowerCase: true,
-    },
-    {
-        path: "docs/typespec-azure/packages/azure-http-specs/specs/generated",
-        folder: "typespec_azure_http_specs",
-        name: "TypeSpec Azure HTTP Spector Cases",
-        fileNameLowerCase: true,
-    },
-];
 
 /**
  * Timer-triggered function that runs daily to sync knowledge base
@@ -149,6 +74,10 @@ async function processDailySyncKnowledge(context: InvocationContext): Promise<vo
     const tempDocsDir = path.join(workingDir, 'temp_docs');
     
     try {
+        // Load configuration
+        context.log('Loading knowledge configuration...');
+        const documentationSources = ConfigurationLoader.getDocumentationSources(context);
+        
         // Create working directories
         if (fs.existsSync(workingDir)) {
             fs.rmSync(workingDir, { recursive: true, force: true });
@@ -332,73 +261,8 @@ async function setupDocumentationRepositories(docsDir: string, context: Invocati
     // Setup SSH configuration first
     await setupSSHConfig(context);
     
-    const repositories = [
-        {
-            name: 'TypeSpec',
-            url: 'https://github.com/microsoft/typespec.git',
-            path: 'typespec',
-            branch: 'main',
-            sparseCheckout: ['website/src/content/docs/docs', 'packages/http-specs/specs']
-        },
-        {
-            name: 'TypeSpec Azure',
-            url: 'https://github.com/Azure/typespec-azure.git',
-            path: 'typespec-azure',
-            branch: 'main',
-            sparseCheckout: ['website/src/content/docs/docs', 'packages/azure-http-specs/specs']
-        },
-        {
-            name: 'Azure REST API Specs Wiki',
-            url: 'https://github.com/Azure/azure-rest-api-specs.wiki.git',
-            path: 'azure-rest-api-specs.wiki',
-            branch: 'master'
-        },
-        {
-            name: 'Azure SDK for Python Wiki',
-            url: 'https://github.com/Azure/azure-sdk-for-python.wiki.git',
-            path: 'azure-sdk-for-python.wiki',
-            branch: 'master'
-        },
-        {
-            name: 'Azure SDK for Python',
-            url: 'https://github.com/Azure/azure-sdk-for-python.git',
-            path: 'azure-sdk-for-python',
-            branch: 'main',
-            sparseCheckout: ['doc']
-        },
-        {
-            name: 'Azure API Guidelines',
-            url: 'https://github.com/microsoft/api-guidelines.git',
-            path: 'api-guidelines',
-            branch: 'vNext',
-            sparseCheckout: ['azure'],
-        },
-        {
-            name: 'Azure Resource Provider Contract',
-            url: 'git@github-microsoft:cloud-and-ai-microsoft/resource-provider-contract.git',
-            path: 'resource-provider-contract',
-            branch: 'master',
-            sparseCheckout: ['v1.0'],
-            authType: 'ssh',
-            sshHost: 'github-microsoft'
-        },
-        {
-            name: 'Azure SDK Engineering System',
-            url: 'https://dev.azure.com/azure-sdk/internal/_git/azure-sdk-docs-eng.ms',
-            path: 'azure-sdk-docs-eng.ms',
-            branch: 'main',
-            sparseCheckout: ['docs'],
-            authType: 'token',
-            token: process.env.AZURE_SDK_ENG_HUB_TOKEN
-        },
-        {
-            name: 'Azure SDK',
-            url: 'https://github.com/Azure/azure-sdk.git',
-            path: 'azure-sdk',
-            branch: 'main',
-            sparseCheckout: ['docs'],
-        }
-    ] as RepositoryConfig[];
+    // Load repository configurations from the config file
+    const repositories = ConfigurationLoader.getRepositoryConfigs(context);
     
     for (const repo of repositories) {
         try {

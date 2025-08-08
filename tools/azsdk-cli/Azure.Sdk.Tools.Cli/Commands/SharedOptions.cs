@@ -8,6 +8,9 @@ namespace Azure.Sdk.Tools.Cli.Commands
     public static class SharedOptions
     {
         public static readonly List<Type> ToolsList = [
+            typeof(CheckAllTool),
+            typeof(DependencyCheckTool),
+            typeof(ChangelogValidationTool),
             typeof(CleanupTool),
             typeof(DownloadPromptsTool),
             typeof(LogAnalysisTool),

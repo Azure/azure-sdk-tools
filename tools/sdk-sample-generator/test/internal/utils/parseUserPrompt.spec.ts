@@ -3,7 +3,6 @@ import { parseUserPrompt } from "../../../genaisrc/src/parseUserPrompt.ts";
 import { vol } from "memfs";
 import { vi } from "vitest";
 
-// Mock the fs module to use memfs
 vi.mock("node:fs/promises", async () => {
     const memfs = await import("memfs");
     return memfs.fs.promises;

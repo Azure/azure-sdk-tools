@@ -24,14 +24,16 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private readonly ILogger<DependencyCheckTool> logger;
         private readonly IOutputService output;
         private readonly IGitHelper gitHelper;
+        private readonly IProcessHelper processHelper;
 
         private readonly Option<string> packagePathOption = new(["--package-path", "-p"], "Path to the package directory to check") { IsRequired = true };
 
-        public DependencyCheckTool(ILogger<DependencyCheckTool> logger, IOutputService output, IGitHelper gitHelper) : base()
+        public DependencyCheckTool(ILogger<DependencyCheckTool> logger, IOutputService output, IGitHelper gitHelper, IProcessHelper processHelper) : base()
         {
             this.logger = logger;
             this.output = output;
             this.gitHelper = gitHelper;
+            this.processHelper = processHelper;
             CommandHierarchy = [SharedCommandGroups.Checks];
         }
 
@@ -53,7 +55,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         }
 
     [McpServerTool(Name = "RunDependencyCheck"), Description("Run dependency check for SDK packages. Provide absolute path to package root as param.")]
-    public async Task<ICLICheckResponse> RunDependencyCheck(string packagePath, CancellationToken ct)
+    public async Task<CLICheckResponse> RunDependencyCheck(string packagePath, CancellationToken ct)
         {
             try
             {
@@ -67,11 +69,11 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
                 // Use LanguageRepoService to detect language and run appropriate dependency analysis
                 var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-                ICLICheckResponse result;
+                CLICheckResponse result;
                 
                 try
                 {
-                    var languageService = LanguageRepoServiceFactory.CreateService(packagePath, gitHelper, logger);
+                    var languageService = LanguageRepoServiceFactory.CreateService(packagePath, processHelper, gitHelper, logger);
                     logger.LogInformation($"Created language service: {languageService.GetType().Name}");
                     
                     // Call AnalyzeDependencies method
@@ -116,7 +118,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         }
 
         // Back-compat overload for callers/tests that don't pass a CancellationToken
-        public Task<ICLICheckResponse> RunDependencyCheck(string packagePath)
+        public Task<CLICheckResponse> RunDependencyCheck(string packagePath)
             => RunDependencyCheck(packagePath, ct: default);
     }
 }

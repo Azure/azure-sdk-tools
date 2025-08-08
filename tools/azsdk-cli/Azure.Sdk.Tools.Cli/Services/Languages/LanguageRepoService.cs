@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Helpers;
 
 namespace Azure.Sdk.Tools.Cli.Services;
 
@@ -14,25 +15,25 @@ public interface ILanguageRepoService
     /// Perform dependency analysis for the target language.
     /// </summary>
     /// <returns>CLI check response containing success/failure status and response message</returns>
-    Task<ICLICheckResponse> AnalyzeDependenciesAsync(CancellationToken ct);
+    Task<CLICheckResponse> AnalyzeDependenciesAsync(CancellationToken ct);
 
     /// <summary>
     /// Format code for the target language.
     /// </summary>
     /// <returns>CLI check response containing success/failure status and response message</returns>
-    Task<ICLICheckResponse> FormatCodeAsync();
+    Task<CLICheckResponse> FormatCodeAsync();
 
     /// <summary>
     /// Run linting/static analysis for the target language.
     /// </summary>
     /// <returns>CLI check response containing success/failure status and response message</returns>
-    Task<ICLICheckResponse> LintCodeAsync();
+    Task<CLICheckResponse> LintCodeAsync();
 
     /// <summary>
     /// Run tests for the target language.
     /// </summary>
     /// <returns>CLI check response containing success/failure status and response message</returns>
-    Task<ICLICheckResponse> RunTestsAsync();
+    Task<CLICheckResponse> RunTestsAsync();
 }
 
 /// <summary>
@@ -42,80 +43,47 @@ public interface ILanguageRepoService
 public class LanguageRepoService : ILanguageRepoService
 {
     protected readonly string _packagePath;
+    protected readonly IProcessHelper _processHelper;
 
-    public LanguageRepoService(string packagePath)
+    public LanguageRepoService(string packagePath, IProcessHelper processHelper)
     {
         _packagePath = packagePath ?? throw new ArgumentNullException(nameof(packagePath));
+        _processHelper = processHelper ?? throw new ArgumentNullException(nameof(processHelper));
     }
 
     /// <summary>
-    /// Creates a success response.
+    /// Creates a response from a ProcessResult.
     /// </summary>
-    /// <param name="message">Success message</param>
-    /// <param name="exitCode">Exit code (default: 0 for success)</param>
-    /// <returns>SuccessCLICheckResponse with success status and response</returns>
-    protected static SuccessCLICheckResponse CreateSuccessResponse(string message, int exitCode = 0)
+    /// <param name="result">The process result</param>
+    /// <returns>Success or failure response based on exit code</returns>
+    protected static CLICheckResponse CreateResponseFromProcessResult(ProcessResult result)
     {
-        return new SuccessCLICheckResponse(exitCode, message);
+        return result.ExitCode == 0
+            ? new SuccessCLICheckResponse(result.ExitCode, result.Output)
+            : new FailureCLICheckResponse(result.ExitCode, result.Output, "Process failed");
     }
 
-    /// <summary>
-    /// Creates a failure response.
-    /// </summary>
-    /// <param name="message">Failure message</param>
-    /// <param name="exitCode">Exit code (default: 1 for failure)</param>
-    /// <param name="error">Additional error details</param>
-    /// <returns>FailureCLICheckResponse with failure status and response</returns>
-    protected static FailureCLICheckResponse CreateFailureResponse(string message, int exitCode = 1, string error = "")
-    {
-        return new FailureCLICheckResponse(exitCode, message, error);
-    }
-
-    /// <summary>
-    /// Creates a cookbook response.
-    /// </summary>
-    /// <param name="cookbookReference">Reference to cookbook or documentation</param>
-    /// <param name="message">Additional response message</param>
-    /// <param name="exitCode">Exit code (default: 0 for success)</param>
-    /// <returns>CookbookCLICheckResponse with cookbook reference and response</returns>
-    protected static CookbookCLICheckResponse CreateCookbookResponse(string cookbookReference, string message, int exitCode = 0)
-    {
-        return new CookbookCLICheckResponse(exitCode, message, cookbookReference);
-    }
-
-    public virtual async Task<ICLICheckResponse> AnalyzeDependenciesAsync(CancellationToken ct)
+    public virtual async Task<CLICheckResponse> AnalyzeDependenciesAsync(CancellationToken ct)
     {
         await Task.CompletedTask;
-        return CreateFailureResponse("AnalyzeDependencies not implemented for this language");
+        return new FailureCLICheckResponse(1, "AnalyzeDependencies not implemented for this language");
     }
 
-    public virtual async Task<ICLICheckResponse> FormatCodeAsync()
+    public virtual async Task<CLICheckResponse> FormatCodeAsync()
     {
         await Task.CompletedTask;
-        return CreateFailureResponse("FormatCode not implemented for this language");
+        return new FailureCLICheckResponse(1, "FormatCode not implemented for this language");
     }
 
-    public virtual async Task<ICLICheckResponse> LintCodeAsync()
+    public virtual async Task<CLICheckResponse> LintCodeAsync()
     {
         await Task.CompletedTask;
-        return CreateFailureResponse("LintCode not implemented for this language");
+        return new FailureCLICheckResponse(1, "LintCode not implemented for this language");
     }
 
-    public virtual async Task<ICLICheckResponse> RunTestsAsync()
+    public virtual async Task<CLICheckResponse> RunTestsAsync()
     {
         await Task.CompletedTask;
-        return CreateFailureResponse("RunTests not implemented for this language");
-    }
-
-    protected ICLICheckResponse CreateResponse(string prefix, int exitCode, string output)
-    {
-        if (exitCode == 0)
-        {
-            return CreateSuccessResponse($"{prefix} completed successfully.{Environment.NewLine}{output}");
-        }
-        else
-        {
-            return CreateFailureResponse($"{prefix} failed with exit code {exitCode}.{Environment.NewLine}{output}");
-        }
+        return new FailureCLICheckResponse(1, "RunTests not implemented for this language");
     }
 }

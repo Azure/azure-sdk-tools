@@ -15,10 +15,11 @@ public class LanguageRepoServiceFactory
     /// Creates the appropriate language repository service based on the detected language.
     /// </summary>
     /// <param name="packagePath">Absolute path to the package directory</param>
+    /// <param name="processHelper">Process helper for running commands</param>
     /// <param name="gitHelper">Git helper instance for repository operations</param>
     /// <param name="logger">Optional logger instance for diagnostics</param>
     /// <returns>Language-specific repository service</returns>
-    public static ILanguageRepoService CreateService(string packagePath, IGitHelper gitHelper, ILogger? logger = null)
+    public static ILanguageRepoService CreateService(string packagePath, IProcessHelper processHelper, IGitHelper gitHelper, ILogger? logger = null)
     {
         logger?.LogInformation($"Create service for package at: {packagePath}");
         if (string.IsNullOrWhiteSpace(packagePath))
@@ -41,12 +42,12 @@ public class LanguageRepoServiceFactory
 
         return detectedLanguage switch
         {
-            "python" => new PythonLanguageRepoService(packagePath, gitHelper, logger),
-            "javascript" => new JavaScriptLanguageRepoService(packagePath),
-            "dotnet" => new DotNetLanguageRepoService(packagePath),
-            "go" => new GoLanguageRepoService(packagePath),
-            "java" => new JavaLanguageRepoService(packagePath),
-            _ => new LanguageRepoService(packagePath) // Base implementation for unsupported languages
+            "python" => new PythonLanguageRepoService(packagePath, processHelper, gitHelper, logger),
+            "javascript" => new JavaScriptLanguageRepoService(packagePath, processHelper),
+            "dotnet" => new DotNetLanguageRepoService(packagePath, processHelper),
+            "go" => new GoLanguageRepoService(packagePath, processHelper),
+            "java" => new JavaLanguageRepoService(packagePath, processHelper),
+            _ => new LanguageRepoService(packagePath, processHelper) // Base implementation for unsupported languages
         };
     }
 

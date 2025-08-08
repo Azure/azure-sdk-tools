@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Helpers;
 
 namespace Azure.Sdk.Tools.Cli.Services;
 
@@ -9,60 +10,52 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// </summary>
 public class JavaLanguageRepoService : LanguageRepoService
 {
-    public JavaLanguageRepoService(string packagePath) : base(packagePath)
+    public JavaLanguageRepoService(string packagePath, IProcessHelper processHelper) 
+        : base(packagePath, processHelper)
     {
     }
 
-
-    /// <summary>
-    /// Helper method to run command line tools asynchronously.
-    /// </summary>
-    private async Task<ICLICheckResponse> RunCommandAsync(string fileName, string arguments)
+    public override async Task<CLICheckResponse> AnalyzeDependenciesAsync(CancellationToken ct)
     {
-        using var process = new Process();
-        process.StartInfo.FileName = fileName;
-        process.StartInfo.Arguments = arguments;
-        process.StartInfo.WorkingDirectory = _packagePath;
-        process.StartInfo.UseShellExecute = false;
-        process.StartInfo.RedirectStandardOutput = true;
-        process.StartInfo.RedirectStandardError = true;
-        process.StartInfo.CreateNoWindow = true;
-
-        var outputBuilder = new System.Text.StringBuilder();
-        var errorBuilder = new System.Text.StringBuilder();
-
-        process.OutputDataReceived += (sender, e) =>
+        await Task.CompletedTask;
+        
+        // Try Maven first
+        if (File.Exists(Path.Combine(_packagePath, "pom.xml")))
         {
-            if (e.Data != null)
-            {
-                outputBuilder.AppendLine(e.Data);
-            }
-        };
-
-        process.ErrorDataReceived += (sender, e) =>
-        {
-            if (e.Data != null)
-            {
-                errorBuilder.AppendLine(e.Data);
-            }
-        };
-
-        process.Start();
-        process.BeginOutputReadLine();
-        process.BeginErrorReadLine();
-
-        await process.WaitForExitAsync();
-
-        var output = outputBuilder.ToString();
-        var error = errorBuilder.ToString();
-
-        if (process.ExitCode == 0)
-        {
-            return new SuccessCLICheckResponse(process.ExitCode, output);
+            var result = _processHelper.RunProcess("mvn", new[] { "dependency:analyze" }, _packagePath);
+            return CreateResponseFromProcessResult(result);
         }
-        else
+        
+        // Try Gradle
+        if (File.Exists(Path.Combine(_packagePath, "build.gradle")) || 
+            File.Exists(Path.Combine(_packagePath, "build.gradle.kts")))
         {
-            return new FailureCLICheckResponse(process.ExitCode, output, error);
+            var result = _processHelper.RunProcess("./gradlew", new[] { "dependencies" }, _packagePath);
+            return CreateResponseFromProcessResult(result);
         }
+        
+        return new FailureCLICheckResponse(1, "No Maven (pom.xml) or Gradle (build.gradle) build file found");
+    }
+
+    public override async Task<CLICheckResponse> RunTestsAsync()
+    {
+        await Task.CompletedTask;
+        
+        // Try Maven first
+        if (File.Exists(Path.Combine(_packagePath, "pom.xml")))
+        {
+            var result = _processHelper.RunProcess("mvn", new[] { "test" }, _packagePath);
+            return CreateResponseFromProcessResult(result);
+        }
+        
+        // Try Gradle
+        if (File.Exists(Path.Combine(_packagePath, "build.gradle")) || 
+            File.Exists(Path.Combine(_packagePath, "build.gradle.kts")))
+        {
+            var result = _processHelper.RunProcess("./gradlew", new[] { "test" }, _packagePath);
+            return CreateResponseFromProcessResult(result);
+        }
+        
+        return new FailureCLICheckResponse(1, "No Maven (pom.xml) or Gradle (build.gradle) build file found");
     }
 }

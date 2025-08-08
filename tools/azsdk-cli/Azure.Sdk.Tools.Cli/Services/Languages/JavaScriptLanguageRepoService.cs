@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Helpers;
 
 namespace Azure.Sdk.Tools.Cli.Services;
 
@@ -9,49 +10,36 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// </summary>
 public class JavaScriptLanguageRepoService : LanguageRepoService
 {
-    public JavaScriptLanguageRepoService(string packagePath) : base(packagePath)
+    public JavaScriptLanguageRepoService(string packagePath, IProcessHelper processHelper) 
+        : base(packagePath, processHelper)
     {
     }
 
-    /// <summary>
-    /// Helper method to run command line tools asynchronously.
-    /// </summary>
-    private async Task<(int ExitCode, string Output, string Error)> RunCommandAsync(string fileName, string arguments)
+    public override async Task<CLICheckResponse> AnalyzeDependenciesAsync(CancellationToken ct)
     {
-        using var process = new Process();
-        process.StartInfo.FileName = fileName;
-        process.StartInfo.Arguments = arguments;
-        process.StartInfo.WorkingDirectory = _packagePath;
-        process.StartInfo.UseShellExecute = false;
-        process.StartInfo.RedirectStandardOutput = true;
-        process.StartInfo.RedirectStandardError = true;
-        process.StartInfo.CreateNoWindow = true;
+        await Task.CompletedTask;
+        var result = _processHelper.RunProcess("npm", new[] { "audit" }, _packagePath);
+        return CreateResponseFromProcessResult(result);
+    }
 
-        var outputBuilder = new System.Text.StringBuilder();
-        var errorBuilder = new System.Text.StringBuilder();
+    public override async Task<CLICheckResponse> FormatCodeAsync()
+    {
+        await Task.CompletedTask;
+        var result = _processHelper.RunProcess("npx", new[] { "prettier", "--write", "." }, _packagePath);
+        return CreateResponseFromProcessResult(result);
+    }
 
-        process.OutputDataReceived += (sender, e) =>
-        {
-            if (e.Data != null)
-            {
-                outputBuilder.AppendLine(e.Data);
-            }
-        };
+    public override async Task<CLICheckResponse> LintCodeAsync()
+    {
+        await Task.CompletedTask;
+        var result = _processHelper.RunProcess("npx", new[] { "eslint", "." }, _packagePath);
+        return CreateResponseFromProcessResult(result);
+    }
 
-        process.ErrorDataReceived += (sender, e) =>
-        {
-            if (e.Data != null)
-            {
-                errorBuilder.AppendLine(e.Data);
-            }
-        };
-
-        process.Start();
-        process.BeginOutputReadLine();
-        process.BeginErrorReadLine();
-
-        await process.WaitForExitAsync();
-
-        return (process.ExitCode, outputBuilder.ToString(), errorBuilder.ToString());
+    public override async Task<CLICheckResponse> RunTestsAsync()
+    {
+        await Task.CompletedTask;
+        var result = _processHelper.RunProcess("npm", new[] { "test" }, _packagePath);
+        return CreateResponseFromProcessResult(result);
     }
 }

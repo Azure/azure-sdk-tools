@@ -23,6 +23,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private readonly ILogger<CheckAllTool> logger;
         private readonly IOutputService output;
         private readonly IGitHelper gitHelper;
+        private readonly IProcessHelper processHelper;
 
         private readonly Option<string> packagePathOption = new(["--package-path", "-p"], "Path to the package directory to check") { IsRequired = true };
 
@@ -47,18 +48,20 @@ namespace Azure.Sdk.Tools.Cli.Tools
         public CheckAllTool(
             ILogger<CheckAllTool> logger, 
             IOutputService output,
-            IGitHelper gitHelper) : base()
+            IGitHelper gitHelper,
+            IProcessHelper processHelper) : base()
         {
             this.logger = logger;
             this.output = output;
             this.gitHelper = gitHelper;
+            this.processHelper = processHelper;
             CommandHierarchy = [SharedCommandGroups.Checks];
         }
 
         
 
         [McpServerTool(Name = "RunAllCLIChecks"), Description("Run all validation checks for SDK packages. Provide absolute path to package root as param.")]
-    public async Task<ICLICheckResponse> RunAllChecks(string packagePath, CancellationToken ct)
+    public async Task<CLICheckResponse> RunAllChecks(string packagePath, CancellationToken ct)
         {
             try
             {
@@ -70,14 +73,15 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     return new FailureCLICheckResponse(1, "", $"Package path does not exist: {packagePath}");
                 }
 
-                var results = new List<ICLICheckResponse>();
+                var results = new List<CLICheckResponse>();
                 var overallSuccess = true;
 
                 // Create DependencyCheckTool instance for dependency checking
                 var dependencyCheckTool = new DependencyCheckTool(
                     Microsoft.Extensions.Logging.Abstractions.NullLogger<DependencyCheckTool>.Instance,
                     output,
-                    gitHelper);
+                    gitHelper,
+                    processHelper);
                 
                 var dependencyCheckResult = await dependencyCheckTool.RunDependencyCheck(packagePath, ct);
                 
@@ -113,10 +117,10 @@ namespace Azure.Sdk.Tools.Cli.Tools
         }
 
         // Back-compat overload for callers/tests that don't pass a CancellationToken
-        public Task<ICLICheckResponse> RunAllChecks(string packagePath)
+        public Task<CLICheckResponse> RunAllChecks(string packagePath)
             => RunAllChecks(packagePath, ct: default);
 
-    private async Task<ICLICheckResponse> RunChangelogValidation(string packagePath)
+    private async Task<CLICheckResponse> RunChangelogValidation(string packagePath)
     {
         logger.LogInformation("Running changelog validation...");
         

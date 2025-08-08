@@ -3,9 +3,9 @@ using System.Text.Json.Serialization;
 namespace Azure.Sdk.Tools.Cli.Models;
 
 /// <summary>
-/// Class for CLI check responses with exit code and output.
+/// Base class for CLI check responses with exit code and output.
 /// </summary>
-public class ICLICheckResponse: Response
+public class CLICheckResponse: Response
 {
     [JsonPropertyName("exit_code")]
     public int ExitCode { get; set;}
@@ -17,7 +17,7 @@ public class ICLICheckResponse: Response
 /// <summary>
 /// CLI check response for cookbook/documentation reference responses.
 /// </summary>
-public class CookbookCLICheckResponse : ICLICheckResponse
+public class CookbookCLICheckResponse : CLICheckResponse
 {
     [JsonPropertyName("cookbook_reference")]
     public string CookbookReference { get; set;}
@@ -38,7 +38,7 @@ public class CookbookCLICheckResponse : ICLICheckResponse
 /// <summary>
 /// CLI check response for successful operations.
 /// </summary>
-public class SuccessCLICheckResponse : ICLICheckResponse
+public class SuccessCLICheckResponse : CLICheckResponse
 {
     public SuccessCLICheckResponse(int exitCode, string output)
     {
@@ -55,7 +55,7 @@ public class SuccessCLICheckResponse : ICLICheckResponse
 /// <summary>
 /// CLI check response for failed operations.
 /// </summary>
-public class FailureCLICheckResponse : ICLICheckResponse
+public class FailureCLICheckResponse : CLICheckResponse
 {
     [JsonPropertyName("error")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]

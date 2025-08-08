@@ -56,7 +56,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         }
 
         [McpServerTool(Name = "RunChangelogValidation"), Description("Run changelog validation for SDK packages. Provide absolute path to package root as param.")]
-        public async Task<ICLICheckResponse> RunChangelogValidation(string packagePath)
+        public async Task<CLICheckResponse> RunChangelogValidation(string packagePath)
         {
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             

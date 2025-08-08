@@ -3,38 +3,32 @@ parameters:
   type: string
   default: '3.10'
 
-pool:
-  name: '1ESHostedPool'
-
-extends:
-  template: /eng/pipelines/templates/stages/1es-redirect.yml
-  parameters:
-    stages:
-      - stage: 'evaluation'
-        jobs:
-          - job: 'evaluation'
-            displayName: 'evaluation'
-            steps:
-              - template: /eng/pipelines/templates/steps/use-python-version.yml
-                parameters:
-                  versionSpec: '${{ parameters.PythonVersion }}'
-              - script: |
-                  python --version
-                displayName: 'check python'
-              - task: GoTool@0
-                inputs:
-                  version: '1.24'
-                displayName: 'install go'
-              - script: |
-                  go version
-                displayName: 'check go'
-              - script: |
-                  cd $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend
-                  ./run.sh start
-                displayName: 'start backend AI agent service'
-                workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
-              - script: |
-                  pip install -r requirements.txt
-                  python evaluate.py
-                displayName: 'Run Evals'
-                workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
+stages:
+  - stage: 'evaluation'
+    jobs:
+      - job: 'evaluation'
+        displayName: 'evaluation'
+        steps:
+          - template: /eng/pipelines/templates/steps/use-python-version.yml
+            parameters:
+              versionSpec: '${{ parameters.PythonVersion }}'
+          - script: |
+              python --version
+            displayName: 'check python'
+          - task: GoTool@0
+            inputs:
+              version: '1.24'
+            displayName: 'install go'
+          - script: |
+              go version
+            displayName: 'check go'
+          - script: |
+              cd $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend
+              ./run.sh start
+            displayName: 'start backend AI agent service'
+            workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
+          - script: |
+              pip install -r requirements.txt
+              python evaluate.py
+            displayName: 'Run Evals'
+            workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation

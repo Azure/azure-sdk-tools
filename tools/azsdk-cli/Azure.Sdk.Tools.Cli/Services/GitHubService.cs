@@ -80,7 +80,7 @@ public class GitConnection
         public Task<Issue> GetIssueAsync(string repoOwner, string repoName, int issueNumber);
         public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path);
         public Task UpdatePullRequestAsync(string repoOwner, string repoName, int pullRequestNumber, string title, string body, ItemState state);
-        public Task AddReleasePlanInfoInSdkAsync(string repoOwner, string repoName, int prNumber, string releasePlanLink, string specPrLink, string workItemLink);
+        public Task AddReleasePlanInfoInSdkAsync(string repoOwner, string repoName, int prNumber, string releasePlanLink, string specPrLink, string workItemLink, string apiVersion);
     }
 
     public class GitHubService : GitConnection, IGitHubService
@@ -333,7 +333,7 @@ public class GitConnection
         /// <param name="prNumber">The pull request number.</param>
         /// <param name="releasePlanLink">The link to the release plan.</param>
         /// <param name="specPrLink">The link to the spec pull request.</param>
-        public async Task AddReleasePlanInfoInSdkAsync(string repoOwner, string repoName, int prNumber, string releasePlanLink, string specPrLink, string workItemLink)
+        public async Task AddReleasePlanInfoInSdkAsync(string repoOwner, string repoName, int prNumber, string releasePlanLink, string specPrLink, string workItemLink, string apiVersion)
         {
             var pr = await GetPullRequestAsync(repoOwner, repoName, prNumber);
             if (pr == null)
@@ -351,8 +351,19 @@ public class GitConnection
             {
                 links += $"\nSpec Pull Request: {specPrLink}";
             }
-            
-            var appendedBody = string.IsNullOrWhiteSpace(pr.Body)
+            if(!string.IsNullOrEmpty(apiVersion))
+            {
+                links += $"\nSpec API version: {apiVersion}";
+            }
+
+            // Check if the PR body already contains the release plan/spec PR info
+            if (!string.IsNullOrEmpty(pr.Body) && pr.Body.Contains(links))
+            {
+                logger.LogInformation($"PR {repoOwner}/{repoName}#{prNumber} already contains release plan/spec PR info. Skipping update.");
+                return;
+            }
+
+            var appendedBody = string.IsNullOrEmpty(pr.Body)
                 ? links
                 : $"{pr.Body}\n{links}";
             await UpdatePullRequestAsync(repoOwner, repoName, prNumber, pr.Title, appendedBody, pr.State.Value);

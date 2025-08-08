@@ -389,8 +389,19 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     return $"SDK generation pipeline did not succeed. Status: {pipeline.Result?.ToString()}. For more details: {DevOpsService.GetPipelineUrl(buildId)}";
                 }
 
-                var data = await devopsService.GetSDKPullRequestFromPipelineRunAsync(buildId, language, workItemId);
-                return data;
+                var pr = await devopsService.GetSDKPullRequestFromPipelineRunAsync(buildId, language, workItemId);
+
+                if (gitHelper.IsPullRequestUrl(pr))
+                {
+                    var repoOwner = gitHelper.ParseRepoOwnerFromUrl(pr);
+                    var repoName = gitHelper.ParseRepoNameFromUrl(pr);
+                    var prNumber = gitHelper.ParsePullRequestNumberFromUrl(pr);
+                    var releasePlan = await devopsService.GetReleasePlanAsync(pr);
+
+                    await githubService.AddReleasePlanInfoInSdkAsync(repoOwner, repoName, prNumber, releasePlan.ReleasePlanLink, releasePlan.ActiveSpecPullRequest, releasePlan.WorkItemUrl, releasePlan.SpecAPIVersion);
+                }
+
+                return pr;
             }
             catch (Exception ex)
             {

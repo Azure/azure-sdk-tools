@@ -17,6 +17,8 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         public string GetRepoName(string path);
         public int ParsePullRequestNumberFromUrl(string prUrl);
         public string ParseRepoOwnerFromUrl(string prUrl);
+        public string ParseRepoNameFromUrl(string prUrl);
+        public bool IsPullRequestUrl(string url);
     }
     public class GitHelper(IGitHubService gitHubService, ILogger<GitHelper> logger) : IGitHelper
     {
@@ -127,6 +129,18 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         {
             var match = System.Text.RegularExpressions.Regex.Match(prUrl, @"github\.com\/([^\/]+)\/[^\/]+\/pull\/\d+");
             return match.Success ? match.Groups[1].Value : throw new InvalidOperationException($"Unable to parse repo owner from URL: {prUrl}.");
+        }
+
+        public string ParseRepoNameFromUrl(string prUrl)
+        {
+            var match = System.Text.RegularExpressions.Regex.Match(prUrl, @"github\.com\/[^\/]+\/([^\/]+)\/pull\/\d+");
+            return match.Success ? match.Groups[1].Value : throw new InvalidOperationException($"Unable to parse repo name from URL: {prUrl}.");
+        }
+
+        public bool IsPullRequestUrl(string url)
+        {
+            // Regex: ^https?:\/\/github\.com\/[^\/]+\/[^\/]+\/pull\/\d+
+            return System.Text.RegularExpressions.Regex.IsMatch(url ?? string.Empty, @"^https?:\/\/github\.com\/[^\/]+\/[^\/]+\/pull\/\d+");
         }
     }
 }

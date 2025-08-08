@@ -1,6 +1,7 @@
 import { getUniqueDirName, getWorkspaceFiles } from "./src/utils.ts";
 import { generateOrLoadIdeas as generateOrLoadSampleIdeas } from "./src/generateIdeas.ts";
 import { selectSampleIdeas } from "./src/getFinalIdeasList.ts";
+import { parseUserPrompt } from "./src/parseUserPrompt.ts";
 import { appEnvPaths } from "./src/paths.ts";
 import type { Language } from "./src/types.ts";
 import { run } from "./src/run.ts";
@@ -81,6 +82,12 @@ script({
         "A comma-separated list of extra files or folders to include in the specification passed to the model.",
       required: false,
     },
+    "user-prompt": {
+      type: "string",
+      description:
+        "Path to a markdown file containing a user prompt. If provided, skips idea generation and uses the prompt as the sample idea.",
+      required: false,
+    },
   },
   system: [
     "system",
@@ -107,6 +114,7 @@ const restApiPath = env.vars["rest-api"];
 const samplesLocation = env.vars["out"] as string | undefined;
 const samplesCount = env.vars["samples-count"] as number;
 const extraFiles = env.vars["extra-files"] as string | undefined;
+const userPromptPath = env.vars["user-prompt"] as string | undefined;
 const clientDist = env.vars["client-dist"] as string | undefined;
 const pkgName = env.vars["client-dist-name"] as string | undefined;
 
@@ -153,19 +161,29 @@ const selectedLanguages = (
 
 const cacheFolder = path.join(appEnvPaths.cache, getUniqueDirName());
 
-const sampleIdeas = await generateOrLoadSampleIdeas({
-  model: ideasModel,
-  spec: restApiFiles.length > 0 ? restApiFiles : clientApiFiles,
-  samplesCount: samplesCount,
-  useIdeasCache,
-  cacheFolder,
-});
+// Generate or load sample ideas, or use user-provided prompt
+let selectedSampleIdeas;
 
-const selectedSampleIdeas = await selectSampleIdeas({
-  sampleIdeas,
-  samplesCount,
-  interactive,
-});
+if (userPromptPath) {
+  // User provided a prompt file, skip idea generation
+  const userSampleIdea = await parseUserPrompt(userPromptPath);
+  selectedSampleIdeas = [userSampleIdea];
+} else {
+  // Standard flow: generate or load ideas, then select them
+  const sampleIdeas = await generateOrLoadSampleIdeas({
+    model: ideasModel,
+    spec: restApiFiles.length > 0 ? restApiFiles : clientApiFiles,
+    samplesCount: samplesCount,
+    useIdeasCache,
+    cacheFolder,
+  });
+
+  selectedSampleIdeas = await selectSampleIdeas({
+    sampleIdeas,
+    samplesCount,
+    interactive,
+  });
+}
 
 if (selectedLanguages.length === 1) {
   const language = selectedLanguages[0];

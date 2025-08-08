@@ -170,20 +170,52 @@ Select sample ideas interactively before code generation.
 
 You can customize the generation by passing any combination of the following parameters:
 
-- `--rest-api=<path>`: Path to REST API spec
-- `--client-api=<path>`: Path to client API spec
-- `--language=<TypeScript|Python|Go|curl>`
-- `--samples-count=<number>`
-- `--ideas-model=<model>`
-- `--coding-model=<model>`
-- `--reviewing-model=<model>`
-- `--skip-review=<true|false>`
-- `--out=<output-folder>`
-- `--client-dist=<path-to-client-dist>`
-- `--client-dist-name=<name>`
-- `--interactive=<true|false>`
-- `--use-ideas-cache=<true|false>`
-- `--extra-files=<comma-separated-list>`
+- `rest-api=<path>`: Path to REST API spec
+- `client-api=<path>`: Path to client API spec
+- `language=<TypeScript|Python|Go|curl>`
+- `samples-count=<number>`
+- `ideas-model=<model>`
+- `coding-model=<model>`
+- `reviewing-model=<model>`
+- `skip-review=<true|false>`
+- `out=<output-folder>`
+- `client-dist=<path-to-client-dist>`
+- `client-dist-name=<name>`
+- `interactive=<true|false>`
+- `use-ideas-cache=<true|false>`
+- `extra-files=<comma-separated-list>`
+- `user-prompt=<path-to-markdown-file>`
+
+### Using a Custom User Prompt
+
+You can skip the idea generation phase and provide your own sample requirements by using a markdown file:
+
+```sh
+npx genaiscript run generate --apply-edits --vars \
+  client-api=.artifacts/azure-sdk-for-js/sdk/storage/storage-blob/review \
+  language=TypeScript \
+  user-prompt=example-user-prompt.md \
+  out=.artifacts/generated-samples
+```
+
+Create a markdown file (e.g., `my-sample-idea.md`) with your requirements:
+
+```markdown
+# Azure Storage Blob Upload Sample
+
+Create a sample that demonstrates how to upload a file to Azure Blob Storage.
+
+The sample should:
+- Authenticate using DefaultAzureCredential
+- Create a blob container if it doesn't exist
+- Upload a local file to the blob container
+- Include proper error handling
+```
+
+When `--user-prompt` is provided, the tool will:
+- Skip the automatic idea generation phase
+- Use your markdown content as the sample specification
+- Generate code directly based on your requirements
 
 ---
 

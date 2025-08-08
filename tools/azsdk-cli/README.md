@@ -340,4 +340,4 @@ New tools can be created with copilot chat/agent:
 Help me create a new tool using #new-tool.md as a reference
 ```
 
-Or manually, see [Tools/README.md](./docs/new-tool.md) for more details.
+Or manually, see [docs/new-tool.md](./docs/new-tool.md) for more details.

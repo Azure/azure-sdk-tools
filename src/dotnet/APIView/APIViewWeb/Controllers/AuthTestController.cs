@@ -111,6 +111,7 @@ public class AuthTestController : ControllerBase
         });
     }
 
+#if DEBUG
     /// <summary>
     ///     Debug endpoint to test JWT token parsing - no authorization required
     /// </summary>
@@ -142,6 +143,7 @@ public class AuthTestController : ControllerBase
             Environment = "Development"
         });
     }
+#endif
 
     private string GetAuthenticationMethod()
     {

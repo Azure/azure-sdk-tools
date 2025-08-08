@@ -53,28 +53,27 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
         public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
         {
-            await Task.CompletedTask;
             var command = ctx.ParseResult.CommandResult.Command.Name;
             switch (command)
             {
                 case ConvertSwaggerCommandName:
-                    HandleConvertCommand(ctx, ct);
+                    await HandleConvertCommand(ctx, ct);
                     return;
                 default:
-                    logger.LogError($"Unknown command: {command}");
                     SetFailure();
+                    output.Output($"Unknown command: {command}");
                     return;
             }
         }
 
-        private void HandleConvertCommand(InvocationContext ctx, CancellationToken ct)
+        private async Task HandleConvertCommand(InvocationContext ctx, CancellationToken ct)
         {
             var swaggerReadme = ctx.ParseResult.GetValueForOption(swaggerReadmeArg);
             var outputDirectory = ctx.ParseResult.GetValueForOption(outputDirectoryArg);
             var isArm = ctx.ParseResult.GetValueForOption(isArmOption);
             var fullyCompatible = ctx.ParseResult.GetValueForOption(fullyCompatibleOption);
 
-            TspToolResponse result = ConvertSwagger(swaggerReadme, outputDirectory, isArm, fullyCompatible);
+            TspToolResponse result = await ConvertSwagger(swaggerReadme, outputDirectory, isArm, fullyCompatible, ct);
             ctx.ExitCode = ExitCode;
             output.Output(result);
         }
@@ -88,7 +87,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         It is recommended not to set this to `true` so that the converted TypeSpec project
         leverages TypeSpec built-in libraries with standard patterns and templates.
         Returns path to the created project.")]
-        public TspToolResponse ConvertSwagger(string pathToSwaggerReadme, string outputDirectory, bool? isAzureResourceManagement = null, bool? fullyCompatible = null)
+        public async Task<TspToolResponse> ConvertSwagger(string pathToSwaggerReadme, string outputDirectory, bool? isAzureResourceManagement, bool? fullyCompatible, CancellationToken ct)
         {
             try
             {
@@ -120,7 +119,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
                 var fullOutputDir = Path.GetFullPath(outputDirectory.Trim());
-                return RunTspClient(fullPathToSwaggerReadme, fullOutputDir, isAzureResourceManagement ?? false, fullyCompatible ?? false);
+                return await RunTspClient(fullPathToSwaggerReadme, fullOutputDir, isAzureResourceManagement ?? false, fullyCompatible ?? false, ct);
             }
             catch (Exception ex)
             {
@@ -156,7 +155,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             return null; // Validation passed
         }
 
-        private TspToolResponse RunTspClient(string pathToSwaggerReadme, string outputDirectory, bool isAzureResourceManagement, bool fullyCompatible)
+        private async Task<TspToolResponse> RunTspClient(string pathToSwaggerReadme, string outputDirectory, bool isAzureResourceManagement, bool fullyCompatible, CancellationToken ct)
         {
             var cmd = npxHelper.CreateCommand();
             cmd.Package = "@azure-tools/typespec-client-generator-cli";
@@ -173,7 +172,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 cmd.AddArgs("--fully-compatible");
             }
 
-            var result = cmd.Run();
+            var result = await cmd.Run(ct);
             if (result.ExitCode != 0)
             {
                 SetFailure();

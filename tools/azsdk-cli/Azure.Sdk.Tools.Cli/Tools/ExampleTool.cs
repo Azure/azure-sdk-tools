@@ -13,10 +13,10 @@ using OpenAI.Chat;
 
 namespace Azure.Sdk.Tools.Cli.Tools;
 
+#if DEBUG
 [McpServerToolType, Description("Example tool demonstrating various framework features and service integrations")]
 public class ExampleTool : MCPTool
 {
-    #if DEBUG
     // Sub-command constants
     private const string AzureSubCommand = "azure";
     private const string DevOpsSubCommand = "devops";
@@ -319,5 +319,5 @@ public class ExampleTool : MCPTool
             };
         }
     }
-    #endif
 }
+#endif

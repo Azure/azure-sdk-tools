@@ -5,6 +5,7 @@ using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tools;
 using Moq;
 using Azure.Sdk.Tools.Cli.Helpers;
+using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools
 {
@@ -31,7 +32,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         }
 
         [Test]
-        public void ConvertSwagger_WithInvalidFileExtension_ShouldReturnError()
+        public async Task ConvertSwagger_WithInvalidFileExtension_ShouldReturnError()
         {
             // Arrange
             var npxHelper = new Mock<INpxHelper>().Object;
@@ -40,7 +41,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var tool = new TypeSpecTool(npxHelper, logger, outputService);
 
             // Act
-            var result = tool.ConvertSwagger("swagger.json", @"C:\temp", false, false);
+            var result = await tool.ConvertSwagger("swagger.json", @"C:\temp", false, false, CancellationToken.None);
 
             // Assert
             Assert.That(result.IsSuccessful, Is.False);
@@ -48,7 +49,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         }
 
         [Test]
-        public void ConvertSwagger_WithNonExistentFile_ShouldReturnError()
+        public async Task ConvertSwagger_WithNonExistentFile_ShouldReturnError()
         {
             // Arrange
             var npxHelper = new Mock<INpxHelper>().Object;
@@ -57,7 +58,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var tool = new TypeSpecTool(npxHelper, logger, outputService);
 
             // Act
-            var result = tool.ConvertSwagger(@"C:\nonexistent\readme.md", @"C:\temp", false, false);
+            var result = await tool.ConvertSwagger(@"C:\nonexistent\readme.md", @"C:\temp", false, false, CancellationToken.None);
 
             // Assert
             Assert.That(result.IsSuccessful, Is.False);

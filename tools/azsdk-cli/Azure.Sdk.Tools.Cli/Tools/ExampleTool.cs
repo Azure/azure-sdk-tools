@@ -29,18 +29,22 @@ public class ExampleTool : MCPTool
     private readonly IAzureService azureService;
     private readonly IDevOpsService devOpsService;
     private readonly IGitHubService gitHubService;
-    private readonly IAzureAgentServiceFactory agentServiceFactory;
     private readonly AzureOpenAIClient openAIClient;
 
     // CLI Options and Arguments
-    private readonly Argument<string> errorInputArg = new Argument<string>(
-        name: "error-input",
-        description: "Error type to simulate, can be argument, timeout, notfound, or any user input"
+    private readonly Argument<string> aiInputArg = new(
+        name: "chat-prompt",
+        description: "Chat prompt surrounded with quotes"
     ) { Arity = ArgumentArity.ExactlyOne };
 
     private readonly Argument<string> packageArgument = new(
         name: "package",
         description: "Package name"
+    ) { Arity = ArgumentArity.ExactlyOne };
+
+    private readonly Argument<string> errorInputArg = new(
+        name: "error-input",
+        description: "Error type to simulate, can be argument, timeout, notfound, or any user input"
     ) { Arity = ArgumentArity.ExactlyOne };
 
     private readonly Option<string> tenantOption = new(["--tenant", "-t"], "Tenant ID");
@@ -55,7 +59,6 @@ public class ExampleTool : MCPTool
         IAzureService azureService,
         IDevOpsService devOpsService,
         IGitHubService gitHubService,
-        IAzureAgentServiceFactory agentServiceFactory,
         AzureOpenAIClient openAIClient
     ) : base()
     {
@@ -64,7 +67,6 @@ public class ExampleTool : MCPTool
         this.azureService = azureService;
         this.devOpsService = devOpsService;
         this.gitHubService = gitHubService;
-        this.agentServiceFactory = agentServiceFactory;
         this.openAIClient = openAIClient;
 
         // Set command hierarchy - results in: azsdk example
@@ -94,9 +96,7 @@ public class ExampleTool : MCPTool
 
         // AI service example sub-command
         var aiCmd = new Command(AISubCommand, "Demonstrate AI service integration");
-        aiCmd.AddArgument(errorInputArg);
-        aiCmd.AddOption(promptOption);
-        aiCmd.AddOption(verboseOption);
+        aiCmd.AddArgument(aiInputArg);
         aiCmd.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
 
         // Error handling example sub-command
@@ -117,8 +117,6 @@ public class ExampleTool : MCPTool
     public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
     {
         var commandName = ctx.ParseResult.CommandResult.Command.Name;
-        var input = ctx.ParseResult.GetValueForArgument(errorInputArg);
-        var verbose = ctx.ParseResult.GetValueForOption(verboseOption);
 
         try
         {
@@ -127,8 +125,8 @@ public class ExampleTool : MCPTool
                 AzureSubCommand => await DemonstrateAzureService(ctx.ParseResult.GetValueForOption(tenantOption), ct),
                 DevOpsSubCommand => await DemonstrateDevOpsService(ctx.ParseResult.GetValueForArgument(packageArgument), ctx.ParseResult.GetValueForOption(languageOption), ct),
                 GitHubSubCommand => await DemonstrateGitHubService(ct),
-                AISubCommand => await DemonstrateAIService(input, ctx.ParseResult.GetValueForOption(promptOption), verbose, ct),
-                ErrorSubCommand => await DemonstrateErrorHandling(input, ctx.ParseResult.GetValueForOption(forceFailureOption), ct),
+                AISubCommand => await DemonstrateAIService(ctx.ParseResult.GetValueForArgument(aiInputArg), ct),
+                ErrorSubCommand => await DemonstrateErrorHandling(ctx.ParseResult.GetValueForArgument(errorInputArg), ctx.ParseResult.GetValueForOption(forceFailureOption), ct),
                 _ => throw new InvalidOperationException($"Unknown command: {commandName}")
             };
 
@@ -137,7 +135,7 @@ public class ExampleTool : MCPTool
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error executing example command {Command} with input {Input}", commandName, input);
+            logger.LogError(ex, "Error executing example command {Command}", commandName);
             ctx.ExitCode = 1;
             output.Output($"Error: {ex.Message}");
         }
@@ -246,50 +244,41 @@ public class ExampleTool : MCPTool
     }
 
     [McpServerTool(Name = "example_ai_service"), Description("Demonstrates AI service integration using Azure OpenAI")]
-    public async Task<ExampleAIResponse> DemonstrateAIService(string userPrompt, string? customPrompt = null, bool verbose = false, CancellationToken ct = default)
+    public async Task<ExampleServiceResponse> DemonstrateAIService(string userPrompt, CancellationToken ct = default)
     {
+        var model = "gpt-4o";
+
         try
         {
-            if (verbose) logger.LogInformation("Starting AI service demonstration with prompt: {UserPrompt}", userPrompt);
-
-            // Use custom prompt or create a simple demonstration prompt
-            var prompt = customPrompt ?? $"You are a helpful assistant. Please respond to this user input: {userPrompt}";
-
-            if (verbose) logger.LogInformation("Sending request to Azure OpenAI");
+            Dictionary<string, string> details = new()
+            {
+                ["model_used"] = model
+            };
 
             // Get ChatClient from AzureOpenAIClient
-            var chatClient = openAIClient.GetChatClient("gpt-4"); // This would typically come from configuration
+            var chatClient = openAIClient.GetChatClient(model);
 
             var messages = new ChatMessage[]
             {
-                new SystemChatMessage("You are a helpful assistant for the Azure SDK CLI tool demonstration."),
-                new UserChatMessage(prompt)
+                new SystemChatMessage("You are a helpful assistant."),
+                new UserChatMessage(userPrompt)
             };
 
             var response = await chatClient.CompleteChatAsync(messages, cancellationToken: ct);
 
-            // Token usage information would be available if needed
-            var tokenUsage = new Dictionary<string, int>
+            return new ExampleServiceResponse
             {
-                ["demo_mode"] = 1, // Placeholder - actual usage would depend on available properties
-                ["model_used"] = 1
-            };
-
-            if (verbose) logger.LogInformation("AI service demonstration completed successfully");
-
-            return new ExampleAIResponse
-            {
-                Prompt = userPrompt,
-                ResponseText = response.Value.Content[0].Text,
-                Model = "gpt-4",
-                TokenUsage = tokenUsage
+                ServiceName = "OpenAI",
+                Operation = "Chat",
+                Result = response.Value.Content[0].Text,
+                Details = details
             };
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error demonstrating AI service with prompt: {UserPrompt}", userPrompt);
+            logger.LogError(ex, "Error demonstrating AI service using model {Model} with prompt: {UserPrompt}", model, userPrompt);
             SetFailure();
-            return new ExampleAIResponse
+            return new ExampleServiceResponse
             {
                 ResponseError = $"Failed to demonstrate AI service: {ex.Message}"
             };

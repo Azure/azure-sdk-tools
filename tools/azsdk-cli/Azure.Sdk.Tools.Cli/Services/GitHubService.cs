@@ -343,23 +343,14 @@ public class GitConnection
             }
 
             var links = $"Release Plan: {releasePlanLink}";
-            if (!string.IsNullOrEmpty(workItemLink))
-            {
-                links += $"\nWork Item Link: {workItemLink}";
-            }
-            if (!string.IsNullOrEmpty(specPrLink))
-            {
-                links += $"\nSpec Pull Request: {specPrLink}";
-            }
-            if(!string.IsNullOrEmpty(apiVersion))
-            {
-                links += $"\nSpec API version: {apiVersion}";
-            }
+            links += $"\nWork Item Link: {workItemLink}";
+            links += $"\nSpec Pull Request: {specPrLink}";
+            links += $"\nSpec API version: {apiVersion}";
 
-            // Check if the PR body already contains the release plan/spec PR info
-            if (!string.IsNullOrEmpty(pr.Body) && pr.Body.Contains(links))
+            // Check if the PR body already contains the release plan link (main indicator)
+            if (!string.IsNullOrEmpty(pr.Body) && pr.Body.Contains(links, StringComparison.OrdinalIgnoreCase))
             {
-                logger.LogInformation($"PR {repoOwner}/{repoName}#{prNumber} already contains release plan/spec PR info. Skipping update.");
+                logger.LogInformation($"PR {repoOwner}/{repoName}#{prNumber} already contains release plan info. Skipping update.");
                 return;
             }
 

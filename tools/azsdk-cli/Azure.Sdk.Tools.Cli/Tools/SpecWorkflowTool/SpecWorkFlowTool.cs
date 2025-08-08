@@ -464,13 +464,9 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
                 await devopsService.AddSdkInfoInReleasePlanAsync(releasePlan.WorkItemId, language, "", parsedLink);
 
-                // Get PR details from URL
                 var repoOwner = gitHelper.ParseRepoOwnerFromUrl(parsedLink);
                 var prNumber = gitHelper.ParsePullRequestNumberFromUrl(parsedLink);
-                var releasePlanLink = releasePlan.ReleasePlanLink;
-                var specPrLink = releasePlan.ActiveSpecPullRequest;
-                var workItemLink = releasePlan.WorkItemUrl;
-                await githubService.AddReleasePlanInfoInSdkAsync(repoOwner, repoName, prNumber, releasePlanLink, specPrLink, workItemLink);
+                await githubService.AddReleasePlanInfoInSdkAsync(repoOwner, repoName, prNumber, releasePlan.ReleasePlanLink, releasePlan.ActiveSpecPullRequest, releasePlan.WorkItemUrl, releasePlan.SpecAPIVersion);
 
                 return $"Successfully linked pull request to release plan {releasePlan.ReleasePlanId}, work item id {releasePlan.WorkItemId}, and updated PR description.";
             }

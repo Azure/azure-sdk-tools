@@ -64,7 +64,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
             throw new NotImplementedException();
         }
 
-        public Task AddReleasePlanInfoInSdkAsync(string repoOwner, string repoName, int prNumber, string releasePlanLink, string specPrLink, string workItemLink)
+        public Task AddReleasePlanInfoInSdkAsync(string repoOwner, string repoName, int prNumber, string releasePlanLink, string specPrLink, string workItemLink, string apiVersion)
         {
             throw new NotImplementedException();
         }

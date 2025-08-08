@@ -161,15 +161,12 @@ const selectedLanguages = (
 
 const cacheFolder = path.join(appEnvPaths.cache, getUniqueDirName());
 
-// Generate or load sample ideas, or use user-provided prompt
 let selectedSampleIdeas;
 
 if (userPromptPath) {
-  // User provided a prompt file, skip idea generation
   const userSampleIdea = await parseUserPrompt(userPromptPath);
   selectedSampleIdeas = [userSampleIdea];
 } else {
-  // Standard flow: generate or load ideas, then select them
   const sampleIdeas = await generateOrLoadSampleIdeas({
     model: ideasModel,
     spec: restApiFiles.length > 0 ? restApiFiles : clientApiFiles,

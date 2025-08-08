@@ -83,7 +83,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 lines.Add(newServiceLabel);
             }
 
-            return string.Join("\n", lines);
+            return string.Join("\n", lines) + "\n";
         }
 
         public static string NormalizeLabel(string label)

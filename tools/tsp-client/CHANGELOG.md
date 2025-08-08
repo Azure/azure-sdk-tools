@@ -1,5 +1,9 @@
 # Release
 
+## 2025-08-05 - 0.27.0
+
+- Support multiple emitter language repositories through a global `tspclientconfig.yaml` file checked in under `<repo root>/eng`. If this file is added to a language repository the default emitter used for a library might change based on the emitters configured in their tspconfig.yaml and the order of emitters listed in the `tspclientconfig.yaml` file.
+
 ## 2025-07-29 - 0.26.1
 
 - Support an `--update-if-exists` flag when using `tsp-client init`. This flag will update the tsp-location.yaml file based on new inputs to the command and keep any other existing config in the file.

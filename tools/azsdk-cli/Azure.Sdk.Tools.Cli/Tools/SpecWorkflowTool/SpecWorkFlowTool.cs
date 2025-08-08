@@ -70,7 +70,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     response.Details.Add("Work item ID is required to check if release plan is ready for SDK generation.");
                     return response;
                 }
-                
+
                 var releasePlan = await devopsService.GetReleasePlanForWorkItemAsync(workItemId);
 
                 var sdkInfoList = releasePlan?.SDKInfo;
@@ -170,9 +170,13 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 {
                     response.Details.Add($"Pull request is not found in {REPO_OWNER}/{PUBLIC_SPECS_REPO} for your TypeSpec changes.");
                     if (pullRequestNumber == 0)
+                    {
                         response.Details.Add("Do you have a pull request created for your TypeSpec changes? If not, make TypeSpec changes for your API specification and create a pull request.");
+                    }
                     else
+                    {
                         response.Details.Add($"Pull request {pullRequestNumber} is not valid. Please provide a valid pull request number to check the status.");
+                    }
                     return response;
                 }
 
@@ -309,7 +313,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         [McpServerTool, Description("Get SDK generation pipeline or release pipeline details and status for a given pipeline build ID")]
         public async Task<string> GetPipelineRunStatus(int buildId)
         {
-                
+
             try
             {
                 var response = new GenericResponse();
@@ -443,7 +447,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 {
                     return $"Invalid pull request link. Provide a pull request link in SDK repo {repoName}";
                 }
-                
+
                 // Add PR to release plan
                 var releasePlan = workItemId == 0 ? await devopsService.GetReleasePlanAsync(releasePlanId) : await devopsService.GetReleasePlanForWorkItemAsync(workItemId);
                 if (releasePlan == null || releasePlan.WorkItemId == 0)

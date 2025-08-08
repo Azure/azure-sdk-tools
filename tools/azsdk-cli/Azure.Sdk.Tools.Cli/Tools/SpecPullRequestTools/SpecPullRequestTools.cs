@@ -142,8 +142,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     logger.LogInformation("Repo name: {repoName}, Head repo owner: {headRepoOwner}, Head branch name: {headBranchName}, Head branch ref: {headBranch}", repoName, headRepoOwner, headBranchName, headBranch);
                     logger.LogInformation("Creating pull request in {targetRepoOwner}:{repoName}", targetRepoOwner, repoName);
                     //Create pull request
-                    var createResponseList = await gitHubService.CreatePullRequestAsync(repoName, targetRepoOwner, targetBranch, headBranch, title, description, draft);
-                    results.AddRange(createResponseList);
+                    var createResponse = await gitHubService.CreatePullRequestAsync(repoName, targetRepoOwner, targetBranch, headBranch, title, description, draft);
+                    results.AddRange(createResponse.Messages);
                     return results;
                 }
                 catch (Exception ex)

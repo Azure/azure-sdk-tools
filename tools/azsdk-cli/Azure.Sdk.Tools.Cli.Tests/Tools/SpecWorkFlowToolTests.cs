@@ -188,7 +188,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 .Returns("specification/testcontoso/Contoso.Management");
             mockTypeSpecHelper.Setup(x => x.IsValidTypeSpecProjectPath(It.IsAny<string>()))
                 .Returns(true);
-            var labels = new List<Octokit.Label>
+            var labels = new List<Label>
             {
                new Label(1, "", SpecWorkflowTool.ARM_SIGN_OFF_LABEL, "", "", "", false)
             };

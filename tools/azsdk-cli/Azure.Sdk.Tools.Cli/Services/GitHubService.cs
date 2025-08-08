@@ -351,7 +351,7 @@ public class GitConnection
             {
                 links += $"\nSpec Pull Request: {specPrLink}";
             }
-            if(!string.IsNullOrEmpty(apiVersion))
+            if (!string.IsNullOrEmpty(apiVersion))
             {
                 links += $"\nSpec API version: {apiVersion}";
             }

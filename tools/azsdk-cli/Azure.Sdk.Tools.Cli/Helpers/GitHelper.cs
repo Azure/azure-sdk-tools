@@ -21,7 +21,6 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         private readonly ILogger<GitHelper> logger = logger;
         private readonly IGitHubService gitHubService = gitHubService;
 
-
         public string GetMergeBaseCommitSha(string path, string targetBranchName)
         {
             using (var repo = new Repository(path))

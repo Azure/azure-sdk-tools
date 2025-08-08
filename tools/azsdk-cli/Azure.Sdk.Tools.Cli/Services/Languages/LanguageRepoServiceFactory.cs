@@ -45,7 +45,7 @@ public class LanguageRepoServiceFactory
             "python" => new PythonLanguageRepoService(packagePath, processHelper, gitHelper, logger),
             "javascript" => new JavaScriptLanguageRepoService(packagePath, processHelper),
             "dotnet" => new DotNetLanguageRepoService(packagePath, processHelper),
-            "go" => new GoLanguageRepoService(packagePath, processHelper),
+            "go" => new GoLanguageRepoService(packagePath, processHelper, logger as ILogger<GoLanguageRepoService>),
             "java" => new JavaLanguageRepoService(packagePath, processHelper),
             _ => new LanguageRepoService(packagePath, processHelper) // Base implementation for unsupported languages
         };

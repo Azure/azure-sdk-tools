@@ -48,9 +48,13 @@ public class LanguageRepoService : ILanguageRepoService
     public LanguageRepoService(string packagePath, IProcessHelper processHelper)
     {
         if (string.IsNullOrEmpty(packagePath))
+        {
             throw new ArgumentException("Package path cannot be null or empty", nameof(packagePath));
+        }
         if (processHelper == null)
+        {
             throw new ArgumentNullException(nameof(processHelper));
+        }
             
         _packagePath = packagePath;
         _processHelper = processHelper;

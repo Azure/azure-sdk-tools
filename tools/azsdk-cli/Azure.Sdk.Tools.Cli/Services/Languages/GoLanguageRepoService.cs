@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
+using Microsoft.Extensions.Logging;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Helpers;
 
@@ -12,13 +13,16 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// </summary>
 public class GoLanguageRepoService : LanguageRepoService
 {
+    private readonly ILogger<GoLanguageRepoService> _logger;
     private readonly string compilerName = "go";
     private readonly string formatterName = "goimports";
     private readonly string linterName = "golangci-lint";
 
-    public GoLanguageRepoService(string packagePath, IProcessHelper processHelper) 
+    public GoLanguageRepoService(string packagePath, IProcessHelper processHelper, ILogger<GoLanguageRepoService>? logger = null) 
         : base(packagePath, processHelper)
     {
+        _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<GoLanguageRepoService>.Instance;
+        
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
             compilerName = "go.exe";
@@ -39,6 +43,7 @@ public class GoLanguageRepoService : LanguageRepoService
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(CreateEmptyPackage));
             return new FailureCLICheckResponse(1, $"{nameof(CreateEmptyPackage)} failed with an exception", ex.Message);
         }
     }
@@ -63,6 +68,7 @@ public class GoLanguageRepoService : LanguageRepoService
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(AnalyzeDependenciesAsync));
             return new FailureCLICheckResponse(1, $"{nameof(AnalyzeDependenciesAsync)} failed with an exception", ex.Message);
         }
     }
@@ -76,6 +82,7 @@ public class GoLanguageRepoService : LanguageRepoService
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(FormatCodeAsync));
             return new FailureCLICheckResponse(1, $"{nameof(FormatCodeAsync)} failed with an exception", ex.Message);
         }
     }
@@ -90,6 +97,7 @@ public class GoLanguageRepoService : LanguageRepoService
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(LintCodeAsync));
             return new FailureCLICheckResponse(1, $"{nameof(LintCodeAsync)} failed with an exception", ex.Message);
         }
     }
@@ -104,6 +112,7 @@ public class GoLanguageRepoService : LanguageRepoService
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(RunTestsAsync));
             return new FailureCLICheckResponse(1, $"{nameof(RunTestsAsync)} failed with an exception", ex.Message);
         }
     }
@@ -118,6 +127,7 @@ public class GoLanguageRepoService : LanguageRepoService
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(BuildProjectAsync));
             return new FailureCLICheckResponse(1, $"{nameof(BuildProjectAsync)} failed with an exception", ex.Message);
         }
     }

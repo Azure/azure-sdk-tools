@@ -111,7 +111,7 @@ namespace Azure.Tools.GeneratorAgent
 
                 // Read the .tsp file content and upload as .txt since .tsp is not supported
                 string content = await File.ReadAllTextAsync(filePath, ct);
-                using var contentStream = new MemoryStream(Encoding.UTF8.GetBytes(content));
+                using MemoryStream contentStream = new MemoryStream(Encoding.UTF8.GetBytes(content));
                 
                 Response<PersistentAgentFileInfo>? uploaded = await Client.Files.UploadFileAsync(
                     contentStream,
@@ -151,19 +151,19 @@ namespace Azure.Tools.GeneratorAgent
             const int batchSize = 10;
             while (stopwatch.Elapsed < maxWaitTime)
             {
-                var results = new List<(string FileId, PersistentAgentFileInfo? File)>();
+                List<(string FileId, PersistentAgentFileInfo? File)> results = new List<(string FileId, PersistentAgentFileInfo? File)>();
                 
                 for (int i = 0; i < uploadedFilesIds.Count; i += batchSize)
                 {
-                    var batch = uploadedFilesIds.Skip(i).Take(batchSize);
-                    var checkTasks = batch.Select(fileId => CheckFileStatusAsync(fileId, ct));
-                    var batchResults = await Task.WhenAll(checkTasks);
+                    IEnumerable<string> batch = uploadedFilesIds.Skip(i).Take(batchSize);
+                    IEnumerable<Task<(string FileId, PersistentAgentFileInfo? File)>> checkTasks = batch.Select(fileId => CheckFileStatusAsync(fileId, ct));
+                    (string FileId, PersistentAgentFileInfo? File)[] batchResults = await Task.WhenAll(checkTasks);
                     results.AddRange(batchResults);
                 }
                 
                 bool allIndexed = true;
                 List<string>? pendingFiles = Logger.IsEnabled(LogLevel.Debug) ? new List<string>() : null;
-                var currentStatusCounts = Logger.IsEnabled(LogLevel.Information) ? new Dictionary<string, int>() : null;
+                Dictionary<string, int>? currentStatusCounts = Logger.IsEnabled(LogLevel.Information) ? new Dictionary<string, int>() : null;
                 
                 foreach ((string FileId, PersistentAgentFileInfo? File) result in results)
                 {

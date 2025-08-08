@@ -98,12 +98,13 @@ namespace Azure.Tools.GeneratorAgent
                 return new List<RuleError>();
             }
 
-            List<RuleError> errors = new List<RuleError>();
-            
             MatchCollection matches = ErrorRegex.Matches(combinedOutput);
             Logger.LogDebug("Found {MatchCount} potential error matches using pattern", matches.Count);
             
             // TODO: Implement LLM-based error message parsing as a fallback
+
+            HashSet<(string type, string message)> seenErrors = new HashSet<(string type, string message)>();
+            List<RuleError> errors = new List<RuleError>();
 
             foreach (Match match in matches)
             {
@@ -112,11 +113,17 @@ namespace Azure.Tools.GeneratorAgent
                     string errorType = match.Groups[1].Value.Trim();
                     string errorMessage = match.Groups[2].Value.Trim();
 
-                    // Skip if we couldn't extract meaningful data
                     if (string.IsNullOrWhiteSpace(errorType) || string.IsNullOrWhiteSpace(errorMessage))
                     {
                         continue;
                     }
+
+                    (string type, string message) errorKey = (errorType, errorMessage);
+                    if (seenErrors.Contains(errorKey))
+                    {
+                        continue;
+                    }
+                    seenErrors.Add(errorKey);
 
                     try
                     {
@@ -131,23 +138,20 @@ namespace Azure.Tools.GeneratorAgent
                 }
             }
 
-            // Remove duplicates based on both type and message
-            return errors
-                .GroupBy(e => new { e.type, e.message })
-                .Select(g => g.First())
-                .ToList();
+            return errors;
         }
         
         /// <summary>
-        /// Takes List&lt;RuleError&gt; and calls ErrorAnalyzers.GetFixes method
+        /// Takes IEnumerable&lt;RuleError&gt; and calls ErrorAnalyzers.GetFixes method
         /// </summary>
-        public IEnumerable<Fix> GetFixes(List<RuleError> errors)
+        public IEnumerable<Fix> GetFixes(IEnumerable<RuleError> errors)
         {
             ArgumentNullException.ThrowIfNull(errors);
             try
             {
-                IEnumerable<Fix> fixes = ErrorAnalyzerService.GetFixes(errors);
-                Logger.LogInformation("Generated fixes for {ErrorCount} errors", errors.Count);
+                List<RuleError> errorList = errors as List<RuleError> ?? errors.ToList();
+                IEnumerable<Fix> fixes = ErrorAnalyzerService.GetFixes(errorList);
+                Logger.LogInformation("Generated fixes for {ErrorCount} errors", errorList.Count);
                 return fixes;
             }
             catch (Exception ex)

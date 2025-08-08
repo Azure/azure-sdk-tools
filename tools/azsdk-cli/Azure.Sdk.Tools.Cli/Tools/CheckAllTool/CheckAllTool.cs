@@ -37,29 +37,11 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
         public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
         {
-            try
-            {
-                var pr = ctx.ParseResult;
-                var packagePath = pr.GetValueForOption(packagePathOption);
-                var result = await RunAllChecks(packagePath, ct);
-
-                if (result.ExitCode != 0)
-                {
-                    var details = string.IsNullOrWhiteSpace(result.Output) ? string.Empty : $"\nDetails:\n{result.Output}";
-                    output.OutputError($"Some checks failed.{details}");
-                    ctx.ExitCode = 1;
-                }
-                else
-                {
-                    output.Output("All checks completed successfully");
-                }
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Error occurred while running checks");
-                output.OutputError($"CheckAllTool threw an exception: {ex}");
-                ctx.ExitCode = 1;
-            }
+            var pr = ctx.ParseResult;
+            var packagePath = pr.GetValueForOption(packagePathOption);
+            var result = await RunAllChecks(packagePath, ct);
+            output.Output(result);
+            ctx.ExitCode = ExitCode;
         }
 
         public CheckAllTool(
@@ -113,10 +95,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
 
-                if (!overallSuccess)
-                {
-                    SetFailure(1);
-                }
+                if (!overallSuccess) { SetFailure(1); }
 
                 var message = overallSuccess ? "All checks completed successfully" : "Some checks failed";
                 var combinedOutput = string.Join("\n", results.Select(r => r.Output));

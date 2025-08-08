@@ -48,24 +48,11 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
         public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
         {
-            try
-            {
-                var packagePath = ctx.ParseResult.GetValueForOption(packagePathOption);
-                var result = await RunChangelogValidation(packagePath);
+            var packagePath = ctx.ParseResult.GetValueForOption(packagePathOption);
+            var result = await RunChangelogValidation(packagePath);
 
-                output.Output(result);
-                ctx.ExitCode = ExitCode;
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Error occurred while running changelog validation");
-                SetFailure(1);
-                output.Output(new DefaultCommandResponse
-                {
-                    ResponseError = $"Error occurred while running changelog validation: {ex.Message}"
-                });
-                ctx.ExitCode = ExitCode;
-            }
+            output.Output(result);
+            ctx.ExitCode = ExitCode;
         }
 
         [McpServerTool(Name = "RunChangelogValidation"), Description("Run changelog validation for SDK packages. Provide absolute path to package root as param.")]

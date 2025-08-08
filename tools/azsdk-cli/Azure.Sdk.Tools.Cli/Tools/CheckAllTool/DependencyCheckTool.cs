@@ -45,27 +45,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
     public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
         {
-            try
-            {
-                var packagePath = ctx.ParseResult.GetValueForOption(packagePathOption);
-    var result = await RunDependencyCheck(packagePath, ct);
+            var packagePath = ctx.ParseResult.GetValueForOption(packagePathOption);
+            var result = await RunDependencyCheck(packagePath, ct);
 
-                output.Output(result);
-                ctx.ExitCode = ExitCode;
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Error occurred while running dependency check");
-                SetFailure(1);
-                output.Output(new DefaultCommandResponse
-                {
-                    ResponseError = $"Error occurred while running dependency check: {ex.Message}"
-                });
-                ctx.ExitCode = ExitCode;
-            }
+            output.Output(result);
+            ctx.ExitCode = ExitCode;
         }
 
-        [McpServerTool(Name = "RunDependencyCheck"), Description("Run dependency check for SDK packages. Provide absolute path to package root as param.")]
+    [McpServerTool(Name = "RunDependencyCheck"), Description("Run dependency check for SDK packages. Provide absolute path to package root as param.")]
     public async Task<ICLICheckResponse> RunDependencyCheck(string packagePath, CancellationToken ct)
         {
             try

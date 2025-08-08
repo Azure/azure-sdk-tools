@@ -513,10 +513,27 @@ internal class YourToolTests
 - **Provide clear descriptions** for LLM agents
 - **Design parameters for LLM consumption** - clear names and simple parameter types. Be wary of optional parameters that the LLM might eagerly come up with values for.
 
-### 5. Performance
+### 5. Command Design Guidelines
+
+- **Use consistent naming**: Commands should follow existing patterns
+- **Use kebab-casing**: CLI commands and options should use kebab-case (lowercase and hyphenated)
+- **Provide helpful descriptions**: Both for CLI help and MCP discovery
+- **Design for both interfaces**: Consider how commands work via CLI and MCP.
+    In some cases it makes sense to differ implementations for CLI and MCP mode. A good rule of thumb is that all
+    high level scenarios should be invokable from either context.
+- **Handle sub-commands properly**: Use command hierarchy and proper routing
+
+### 6. Performance
 - **Use async/await properly** for I/O operations
 - **Respect cancellation tokens** in long-running operations
 - **Dispose resources properly** using `using` statements or try/finally
+
+### 7. Namespace and Organization Rules
+
+- **Correct namespace**: `Azure.Sdk.Tools.Cli.Tools`
+- **File organization**: Group related tools in sub-directories, but keep flat namespace
+- **Tool registration**: Always add to `SharedOptions.ToolsList`
+- **Dependency patterns**: Use constructor injection, avoid static dependencies
 
 ## Common Patterns and Anti-patterns
 
@@ -594,22 +611,3 @@ catch (Exception ex)
     return new Response { ResponseError = ex.Message }; // Missing SetFailure()
 }
 ```
-
-### Namespace and Organization Rules
-
-- **Correct namespace**: `Azure.Sdk.Tools.Cli.Tools`
-- **File organization**: Group related tools in sub-directories, but keep flat namespace
-- **Tool registration**: Always add to `SharedOptions.ToolsList`
-- **Dependency patterns**: Use constructor injection, avoid static dependencies
-
-### Command Design Guidelines
-
-- **Use consistent naming**: Commands should follow existing patterns
-- **Use kebab-casing**: CLI commands and options should use kebab-case (lowercase and hyphenated)
-- **Provide helpful descriptions**: Both for CLI help and MCP discovery
-- **Design for both interfaces**: Consider how commands work via CLI and MCP.
-    In some cases it makes sense to differ implementations for CLI and MCP mode. A good rule of thumb is that all
-    high level scenarios should be invokable from either context.
-- **Handle sub-commands properly**: Use command hierarchy and proper routing
-
-This guide should provide everything needed to create new tools that integrate seamlessly with the azsdk-cli project architecture and patterns.

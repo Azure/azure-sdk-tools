@@ -16,12 +16,12 @@ channels:
 
   #  dev
   - name: Azure SDK QA bot for TypeSpec Testing
-    id: 19:rMhMrxg7UjfwZmVoSeVvWvNQIfT_G6ds8napsytWqzw1@thread.tacv2  
+    id: 19:rMhMrxg7UjfwZmVoSeVvWvNQIfT_G6ds8napsytWqzw1@thread.tacv2
     endpoint: https://azuresdkbot-preview-d5bugqfmc3bjh6ef.eastasia-01.azurewebsites.net
     tenant: azure_sdk_qa_bot
 
   - name: Azure SDK QA bot for Python Testing  🐍
-    id: 19:8551c70d67864a04b843151a256e109a@thread.tacv2  
+    id: 19:8551c70d67864a04b843151a256e109a@thread.tacv2
     endpoint: https://azuresdkbot-preview-d5bugqfmc3bjh6ef.eastasia-01.azurewebsites.net
     tenant: python_channel_qa_bot
 

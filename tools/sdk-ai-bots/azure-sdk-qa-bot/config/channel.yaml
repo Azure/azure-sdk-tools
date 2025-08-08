@@ -3,6 +3,7 @@ default:
   endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
 
 channels:
+  # production
   - name: TypeSpec Discussion
     id: 19:906c1efbbec54dc8949ac736633e6bdf@thread.skype
     tenant: azure_sdk_qa_bot
@@ -12,6 +13,12 @@ channels:
     id: 19:b97d98e6d22c41e0970a1150b484d935@thread.skype
     tenant: python_channel_qa_bot
     endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  #  dev
+  - name: Azure SDK QA bot for TypeSpec Testing
+    id: 19:rMhMrxg7UjfwZmVoSeVvWvNQIfT_G6ds8napsytWqzw1@thread.tacv2  
+    endpoint: https://azuresdkbot-preview-d5bugqfmc3bjh6ef.eastasia-01.azurewebsites.net
+    tenant: azure_sdk_qa_bot
 
   - name: Azure SDK QA bot for Python Testing  🐍
     id: 19:8551c70d67864a04b843151a256e109a@thread.tacv2  
@@ -23,12 +30,24 @@ channels:
     endpoint: https://azuresdkbot-preview-d5bugqfmc3bjh6ef.eastasia-01.azurewebsites.net
     tenant: azure_sdk_onboarding
 
-  - name: wanl - python
-    id: 19:9810c64acb4746fc93350c694aaf3d2b@thread.tacv2
-    endpoint: https://azuresdkbot-preview-d5bugqfmc3bjh6ef.eastasia-01.azurewebsites.net
-    tenant: python_channel_qa_bot
+  # dev internal
+  - name: Azure SDK QA Bot - Demo
+    id: 19:3iefzURPmxhDZJJTtwePbdO1EdI5T0hfK9UFK_59Sbk1@thread.tacv2
+    endpoint: https://azuresdkbot-azuresdkbot-dev-czhxctdndmfdb5hq.eastasia-01.azurewebsites.net
+    tenant: azure_sdk_qa_bot
 
   - name: Azure SDK QA Bot - Demo - Python
     id: 19:f876c6910f4048aa81f172300e0f7104@thread.tacv2
     endpoint: https://azuresdkbot-azuresdkbot-dev-czhxctdndmfdb5hq.eastasia-01.azurewebsites.net
+    tenant: python_channel_qa_bot
+
+  - name: Azure SDK QA Bot - Auto Reply - Test
+    id: 19:ec68117574c248dab2f02af89c980797@thread.tacv2
+    endpoint: https://azuresdkbot-azuresdkbot-dev-czhxctdndmfdb5hq.eastasia-01.azurewebsites.net
+    tenant: azure_sdk_qa_bot
+
+  # wanl
+  - name: wanl - python
+    id: 19:9810c64acb4746fc93350c694aaf3d2b@thread.tacv2
+    endpoint: https://azuresdkbot-preview-d5bugqfmc3bjh6ef.eastasia-01.azurewebsites.net
     tenant: python_channel_qa_bot

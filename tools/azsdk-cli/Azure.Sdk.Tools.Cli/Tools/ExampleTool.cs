@@ -38,8 +38,13 @@ public class ExampleTool : MCPTool
         description: "Input parameter for demonstration (e.g., repository name, work item ID, etc.)"
     ) { Arity = ArgumentArity.ExactlyOne };
 
-    private readonly Option<string> repoOption = new(["--repo", "-r"], "Repository name (owner/repo format)");
-    private readonly Option<int> itemIdOption = new(["--item-id", "-i"], "Item ID (work item, issue, PR number)");
+    private readonly Argument<string> packageArgument = new(
+        name: "package",
+        description: "Package name"
+    ) { Arity = ArgumentArity.ExactlyOne };
+
+    private readonly Option<string> tenantOption = new(["--tenant", "-t"], "Tenant ID");
+    private readonly Option<string> languageOption = new(["--language", "-l"], "Programming language of the repository");
     private readonly Option<string> promptOption = new(["--prompt", "-p"], "AI prompt text");
     private readonly Option<bool> forceFailureOption = new(["--force-failure", "-f"], () => false, "Force an error for demonstration");
     private readonly Option<bool> verboseOption = new(["--verbose", "-v"], () => false, "Enable verbose logging");
@@ -74,23 +79,17 @@ public class ExampleTool : MCPTool
 
         // Azure service example sub-command
         var azureCmd = new Command(AzureSubCommand, "Demonstrate Azure service integration");
-        azureCmd.AddArgument(inputArg);
-        azureCmd.AddOption(verboseOption);
+        azureCmd.AddOption(tenantOption);
         azureCmd.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
 
         // DevOps service example sub-command
         var devopsCmd = new Command(DevOpsSubCommand, "Demonstrate DevOps service integration");
-        devopsCmd.AddArgument(inputArg);
-        devopsCmd.AddOption(itemIdOption);
-        devopsCmd.AddOption(verboseOption);
+        devopsCmd.AddArgument(packageArgument);
+        devopsCmd.AddOption(languageOption);
         devopsCmd.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
 
         // GitHub service example sub-command
         var githubCmd = new Command(GitHubSubCommand, "Demonstrate GitHub service integration");
-        githubCmd.AddArgument(inputArg);
-        githubCmd.AddOption(repoOption);
-        githubCmd.AddOption(itemIdOption);
-        githubCmd.AddOption(verboseOption);
         githubCmd.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
 
         // AI service example sub-command
@@ -125,9 +124,9 @@ public class ExampleTool : MCPTool
         {
             object result = commandName switch
             {
-                AzureSubCommand => await DemonstrateAzureService(input, verbose, ct),
-                DevOpsSubCommand => await DemonstrateDevOpsService(input, ctx.ParseResult.GetValueForOption(itemIdOption), verbose, ct),
-                GitHubSubCommand => await DemonstrateGitHubService(input, ctx.ParseResult.GetValueForOption(repoOption), ctx.ParseResult.GetValueForOption(itemIdOption), verbose, ct),
+                AzureSubCommand => await DemonstrateAzureService(ctx.ParseResult.GetValueForOption(tenantOption), ct),
+                DevOpsSubCommand => await DemonstrateDevOpsService(ctx.ParseResult.GetValueForArgument(packageArgument), ctx.ParseResult.GetValueForOption(languageOption), ct),
+                GitHubSubCommand => await DemonstrateGitHubService(ct),
                 AISubCommand => await DemonstrateAIService(input, ctx.ParseResult.GetValueForOption(promptOption), verbose, ct),
                 ErrorSubCommand => await DemonstrateErrorHandling(input, ctx.ParseResult.GetValueForOption(forceFailureOption), ct),
                 _ => throw new InvalidOperationException($"Unknown command: {commandName}")
@@ -145,21 +144,14 @@ public class ExampleTool : MCPTool
     }
 
     [McpServerTool(Name = "example_azure_service"), Description("Demonstrates Azure service integration")]
-    public async Task<ExampleServiceResponse> DemonstrateAzureService(string tenantInfo = "default", bool verbose = false, CancellationToken ct = default)
+    public async Task<ExampleServiceResponse> DemonstrateAzureService(string? tenantId = null, CancellationToken ct = default)
     {
         try
         {
-            if (verbose) logger.LogInformation("Starting Azure service demonstration with input: {TenantInfo}", tenantInfo);
-
-            // Demonstrate Azure service usage
-            var credential = azureService.GetCredential();
-
-            if (verbose) logger.LogInformation("Successfully obtained Azure credentials");
+            var credential = azureService.GetCredential(tenantId);
 
             // Get token for demonstration (but don't log the actual token)
-            var tokenResult = await credential.GetTokenAsync(
-                new Azure.Core.TokenRequestContext(new[] { "https://management.azure.com/.default" }),
-                ct);
+            var tokenResult = await credential.GetTokenAsync(new Azure.Core.TokenRequestContext(["https://management.azure.com/.default"]), ct);
 
             var details = new Dictionary<string, string>
             {
@@ -167,8 +159,6 @@ public class ExampleTool : MCPTool
                 ["token_expires"] = tokenResult.ExpiresOn.ToString("yyyy-MM-dd HH:mm:ss UTC"),
                 ["has_token"] = (!string.IsNullOrEmpty(tokenResult.Token)).ToString()
             };
-
-            if (verbose) logger.LogInformation("Azure credential details retrieved successfully");
 
             return new ExampleServiceResponse
             {
@@ -180,7 +170,7 @@ public class ExampleTool : MCPTool
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error demonstrating Azure service with input: {TenantInfo}", tenantInfo);
+            logger.LogError(ex, "Error demonstrating Azure service with input");
             SetFailure();
             return new ExampleServiceResponse
             {
@@ -190,49 +180,29 @@ public class ExampleTool : MCPTool
     }
 
     [McpServerTool(Name = "example_devops_service"), Description("Demonstrates DevOps service integration")]
-    public async Task<ExampleServiceResponse> DemonstrateDevOpsService(string projectInfo, int? workItemId = null, bool verbose = false, CancellationToken ct = default)
+    public async Task<ExampleServiceResponse> DemonstrateDevOpsService(string packageName, string language, CancellationToken ct = default)
     {
         try
         {
-            if (verbose) logger.LogInformation("Starting DevOps service demonstration with project: {ProjectInfo}, workItem: {WorkItemId}", projectInfo, workItemId);
-
             var details = new Dictionary<string, string>
             {
-                ["project_info"] = projectInfo,
-                ["service_type"] = "Azure DevOps",
-                ["demo_mode"] = "true"
+                ["service_type"] = "Azure DevOps"
             };
 
-            // Note: In a real scenario, you might call devOpsService methods like:
-            // var releasePlan = await devOpsService.GetReleasePlanAsync(workItemId.Value);
-            // But for demonstration, we'll simulate the response
-
-            if (workItemId.HasValue)
-            {
-                details["work_item_id"] = workItemId.Value.ToString();
-                details["simulated_operation"] = "GetReleasePlan";
-                if (verbose) logger.LogInformation("Simulating work item retrieval for ID: {WorkItemId}", workItemId.Value);
-            }
-            else
-            {
-                details["simulated_operation"] = "ListProjects";
-                if (verbose) logger.LogInformation("Simulating project information retrieval");
-            }
-
-            // Add a small delay to simulate async work
-            await Task.Delay(50, ct);
+            var pkg = await devOpsService.GetPackageWorkItemAsync(packageName, language);
+            details["package_pipeline_url"] = pkg.PipelineDefinitionUrl;
 
             return new ExampleServiceResponse
             {
                 ServiceName = "Azure DevOps",
-                Operation = details["simulated_operation"],
-                Result = $"Successfully demonstrated DevOps service integration for project: {projectInfo}",
+                Operation = "GetPackagePipelineUrl",
+                Result = $"Found package pipeline",
                 Details = details
             };
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error demonstrating DevOps service with project: {ProjectInfo}, workItem: {WorkItemId}", projectInfo, workItemId);
+            logger.LogError(ex, "Error demonstrating DevOps service with package: {PackageName}, language: {Language}", packageName, language);
             SetFailure();
             return new ExampleServiceResponse
             {
@@ -242,80 +212,31 @@ public class ExampleTool : MCPTool
     }
 
     [McpServerTool(Name = "example_github_service"), Description("Demonstrates GitHub service integration")]
-    public async Task<ExampleServiceResponse> DemonstrateGitHubService(string operation, string? repository = null, int? itemId = null, bool verbose = false, CancellationToken ct = default)
+    public async Task<ExampleServiceResponse> DemonstrateGitHubService(CancellationToken ct = default)
     {
         try
         {
-            if (verbose) logger.LogInformation("Starting GitHub service demonstration with operation: {Operation}, repo: {Repository}, itemId: {ItemId}", operation, repository, itemId);
-
-            var details = new Dictionary<string, string>
+            Dictionary<string, string> details = new()
             {
-                ["operation"] = operation,
                 ["service_type"] = "GitHub API",
             };
 
-            string result;
-
-            switch (operation.ToLower())
-            {
-                case "user":
-                    var user = await gitHubService.GetGitUserDetailsAsync();
-                    details["user_login"] = user.Login;
-                    details["user_id"] = user.Id.ToString();
-                    result = $"Retrieved user details: {user.Login} (ID: {user.Id})";
-                    break;
-
-                case "pullrequest":
-                case "pr":
-                    if (string.IsNullOrEmpty(repository) || !itemId.HasValue)
-                    {
-                        throw new ArgumentException("Repository and item ID are required for pull request operations");
-                    }
-                    var repoParts = repository.Split('/');
-                    if (repoParts.Length != 2)
-                    {
-                        throw new ArgumentException("Repository must be in format 'owner/repo'");
-                    }
-                    var pr = await gitHubService.GetPullRequestAsync(repoParts[0], repoParts[1], itemId.Value);
-                    details["pr_title"] = pr.Title;
-                    details["pr_state"] = pr.State.ToString();
-                    details["pr_url"] = pr.HtmlUrl;
-                    result = $"Retrieved PR #{itemId.Value}: {pr.Title} ({pr.State})";
-                    break;
-
-                case "issue":
-                    if (string.IsNullOrEmpty(repository) || !itemId.HasValue)
-                    {
-                        throw new ArgumentException("Repository and item ID are required for issue operations");
-                    }
-                    repoParts = repository.Split('/');
-                    if (repoParts.Length != 2)
-                    {
-                        throw new ArgumentException("Repository must be in format 'owner/repo'");
-                    }
-                    var issue = await gitHubService.GetIssueAsync(repoParts[0], repoParts[1], itemId.Value);
-                    details["issue_title"] = issue.Title;
-                    details["issue_state"] = issue.State.ToString();
-                    result = $"Retrieved Issue #{itemId.Value}: {issue.Title} ({issue.State})";
-                    break;
-
-                default:
-                    throw new ArgumentException($"Unknown operation: {operation}. Supported: user, pullrequest, issue");
-            }
-
-            if (verbose) logger.LogInformation("GitHub service demonstration completed successfully");
+            var user = await gitHubService.GetGitUserDetailsAsync();
+            details["user_login"] = user.Login;
+            details["user_id"] = user.Id.ToString();
+            var result = $"Retrieved user details: {user.Login} (ID: {user.Id})";
 
             return new ExampleServiceResponse
             {
                 ServiceName = "GitHub",
-                Operation = operation,
+                Operation = "GetUser",
                 Result = result,
                 Details = details
             };
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error demonstrating GitHub service with operation: {Operation}, repo: {Repository}, itemId: {ItemId}", operation, repository, itemId);
+            logger.LogError(ex, "Error demonstrating GitHub service");
             SetFailure();
             return new ExampleServiceResponse
             {
@@ -338,7 +259,7 @@ public class ExampleTool : MCPTool
 
             // Get ChatClient from AzureOpenAIClient
             var chatClient = openAIClient.GetChatClient("gpt-4"); // This would typically come from configuration
-            
+
             var messages = new ChatMessage[]
             {
                 new SystemChatMessage("You are a helpful assistant for the Azure SDK CLI tool demonstration."),
@@ -346,7 +267,7 @@ public class ExampleTool : MCPTool
             };
 
             var response = await chatClient.CompleteChatAsync(messages, cancellationToken: ct);
-            
+
             // Token usage information would be available if needed
             var tokenUsage = new Dictionary<string, int>
             {

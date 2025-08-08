@@ -15,17 +15,11 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         public string GetMergeBaseCommitSha(string path, string targetBranch);
         public string DiscoverRepoRoot(string path);
         public string GetRepoName(string path);
-        public int ParsePullRequestNumberFromUrl(string prUrl);
-        public string ParseRepoOwnerFromUrl(string prUrl);
-        public string ParseRepoNameFromUrl(string prUrl);
-        public bool IsPullRequestUrl(string url);
     }
     public class GitHelper(IGitHubService gitHubService, ILogger<GitHelper> logger) : IGitHelper
     {
         private readonly ILogger<GitHelper> logger = logger;
         private readonly IGitHubService gitHubService = gitHubService;
-        private static readonly System.Text.RegularExpressions.Regex GitHubPrUrlRegex = 
-            new(@"^https?:\/\/github\.com\/([^\/]+)\/([^\/]+)\/pull\/(\d+)", System.Text.RegularExpressions.RegexOptions.Compiled);
 
         public string GetMergeBaseCommitSha(string path, string targetBranchName)
         {
@@ -112,34 +106,6 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         {
             var repoRoot = DiscoverRepoRoot(path);
             return new DirectoryInfo(repoRoot).Name ?? throw new InvalidOperationException($"Unable to determine repository name for path: {path}");
-        }
-
-        public int ParsePullRequestNumberFromUrl(string prUrl)
-        {
-            var match = GitHubPrUrlRegex.Match(prUrl);
-            if (match.Success && int.TryParse(match.Groups[3].Value, out int prNumber))
-            {
-                return prNumber;
-            }
-
-            throw new InvalidOperationException($"Unable to parse pull request number from URL: {prUrl}.");
-        }
-
-        public string ParseRepoOwnerFromUrl(string prUrl)
-        {
-            var match = GitHubPrUrlRegex.Match(prUrl);
-            return match.Success ? match.Groups[1].Value : throw new InvalidOperationException($"Unable to parse repo owner from URL: {prUrl}.");
-        }
-
-        public string ParseRepoNameFromUrl(string prUrl)
-        {
-            var match = GitHubPrUrlRegex.Match(prUrl);
-            return match.Success ? match.Groups[2].Value : throw new InvalidOperationException($"Unable to parse repo name from URL: {prUrl}.");
-        }
-
-        public bool IsPullRequestUrl(string url)
-        {
-            return GitHubPrUrlRegex.IsMatch(url ?? string.Empty);
         }
     }
 }

@@ -27,6 +27,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
         public static readonly string ARM_SIGN_OFF_LABEL = "ARMSignedOff";
         public static readonly string API_STEWARDSHIP_APPROVAL = "APIStewardshipBoard-SignedOff";
         private static readonly string DEFAULT_BRANCH = "main";
+        private static readonly System.Text.RegularExpressions.Regex GITHUB_PR_URL_REGEX = 
+            new(@"^https?:\/\/github\.com\/([^\/]+)\/([^\/]+)\/pull\/(\d+)", System.Text.RegularExpressions.RegexOptions.Compiled);
 
         public static readonly HashSet<string> SUPPORTED_LANGUAGES = new()
         {
@@ -391,13 +393,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
                 var pr = await devopsService.GetSDKPullRequestFromPipelineRunAsync(buildId, language, workItemId);
 
-                if (gitHelper.IsPullRequestUrl(pr))
+                // Parse PR URL components and update PR description if valid
+                var prUrlMatch = GITHUB_PR_URL_REGEX.Match(pr);
+                if (prUrlMatch.Success)
                 {
-                    var repoOwner = gitHelper.ParseRepoOwnerFromUrl(pr);
-                    var repoName = gitHelper.ParseRepoNameFromUrl(pr);
-                    var prNumber = gitHelper.ParsePullRequestNumberFromUrl(pr);
+                    var repoOwner = prUrlMatch.Groups[1].Value;
+                    var repoName = prUrlMatch.Groups[2].Value;
+                    var prNumber = int.Parse(prUrlMatch.Groups[3].Value);
                     var releasePlan = await devopsService.GetReleasePlanAsync(pr);
-
                     await AddReleasePlanInfoInSdkAsync(repoOwner, repoName, prNumber, releasePlan.ReleasePlanLink, releasePlan.ActiveSpecPullRequest, releasePlan.WorkItemUrl, releasePlan.SpecAPIVersion);
                 }
 
@@ -464,9 +467,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
                 await devopsService.AddSdkInfoInReleasePlanAsync(releasePlan.WorkItemId, language, "", parsedLink);
 
-                var repoOwner = gitHelper.ParseRepoOwnerFromUrl(parsedLink);
-                var prNumber = gitHelper.ParsePullRequestNumberFromUrl(parsedLink);
-                await AddReleasePlanInfoInSdkAsync(repoOwner, repoName, prNumber, releasePlan.ReleasePlanLink, releasePlan.ActiveSpecPullRequest, releasePlan.WorkItemUrl, releasePlan.SpecAPIVersion);
+                // Parse PR URL components and update PR description if valid
+                var prUrlMatch = GITHUB_PR_URL_REGEX.Match(parsedLink);
+                if (prUrlMatch.Success)
+                {
+                    var repoOwner = prUrlMatch.Groups[1].Value;
+                    var prNumber = int.Parse(prUrlMatch.Groups[3].Value);
+                    await AddReleasePlanInfoInSdkAsync(repoOwner, repoName, prNumber, releasePlan.ReleasePlanLink, releasePlan.ActiveSpecPullRequest, releasePlan.WorkItemUrl, releasePlan.SpecAPIVersion);
+                }
 
                 return $"Successfully linked pull request to release plan {releasePlan.ReleasePlanId}, work item id {releasePlan.WorkItemId}, and updated PR description.";
             }

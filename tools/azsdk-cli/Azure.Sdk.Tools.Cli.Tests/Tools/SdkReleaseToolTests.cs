@@ -1,8 +1,7 @@
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
-using Azure.Sdk.Tools.Cli.Tools.SdkRelease;
-using Azure.Sdk.Tools.Cli.Tools.ReleaseReadiness;
+using Azure.Sdk.Tools.Cli.Tools;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Moq;
 
@@ -93,7 +92,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 Assert.That(result.ReleaseStatusDetails, Does.Contain("Release pipeline triggered successfully for package 'azure-template'"));
                 Assert.That(result.ReleasePipelineRunUrl, Is.EqualTo("https://dev.azure.com/azure-sdk/internal/_build/results?buildId=1"));
             });
-           
+
         }
 
         [Test]

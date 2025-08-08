@@ -1,11 +1,14 @@
 import { joinPaths, normalizeSlashes } from "@typespec/compiler";
 import { randomUUID } from "node:crypto";
-import { access, constants, mkdir, writeFile } from "node:fs/promises";
+import { access, constants, mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Logger } from "./log.js";
 import { TspLocation } from "./typespec.js";
 import { normalizeDirectory, readTspLocation } from "./fs.js";
+import { parse as parseYaml } from "yaml";
+
+const defaultTspClientConfigPath = joinPaths("eng", "tspclientconfig.yaml");
 
 export function formatAdditionalDirectories(additionalDirectories?: string[]): string {
   let additionalDirOutput = "\n";
@@ -115,12 +118,12 @@ export async function updateExistingTspLocation(
 
     // Define the properties that can be updated
     const updatableProperties: (keyof TspLocation)[] = [
-      'repo',
-      'commit', 
-      'directory',
-      'entrypointFile',
-      'additionalDirectories',
-      'emitterPackageJsonPath'
+      "repo",
+      "commit",
+      "directory",
+      "entrypointFile",
+      "additionalDirectories",
+      "emitterPackageJsonPath",
     ];
 
     // Update each property if it has a valid value
@@ -135,5 +138,22 @@ export async function updateExistingTspLocation(
   } catch (error) {
     Logger.debug(`Will create a new tsp-location.yaml. Error reading tsp-location.yaml: ${error}`);
     return tspLocationData;
+  }
+}
+
+export interface TspClientConfig {
+  supportedEmitters?: Array<{ name: string; path: string }>;
+}
+
+export async function parseTspClientRepoConfig(
+  repoRoot: string,
+): Promise<TspClientConfig | undefined> {
+  const configPath = joinPaths(repoRoot, defaultTspClientConfigPath);
+  try {
+    const data = await readFile(configPath, "utf8");
+    return parseYaml(data) as TspClientConfig;
+  } catch (err) {
+    Logger.debug(`Did not find a tspclientconfig.yaml at ${configPath}. Error: ${err}`);
+    return undefined;
   }
 }

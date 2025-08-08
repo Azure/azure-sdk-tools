@@ -135,4 +135,5 @@ export interface DeclarationDifferenceDetectorOptions {
     OptionalToRequiredAsBreakingChange: boolean;
     ReadonlyToMutableAsBreakingChange: boolean;
     MutableToReadonlyAsBreakingChange: boolean;
+    ConcretTypeToAnyAsBreakingChange: boolean;
 }

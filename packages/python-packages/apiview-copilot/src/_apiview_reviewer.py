@@ -1,24 +1,35 @@
+# -------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for
+# license information.
+# --------------------------------------------------------------------------
+
+"""
+Module for the APIView Copilot API review functionality.
+"""
+
 import concurrent.futures
 import datetime
 import json
 import logging
 import os
+import signal
+import sys
+import threading
+import uuid
+from time import time
+from typing import List, Optional
+
 import prompty
 import prompty.azure_beta
-import signal
-import threading
-from time import time
-from typing import Optional, List
 import yaml
-import uuid
-import sys
 
-from ._credential import in_ci, get_credential
+from ._credential import get_credential, in_ci
 from ._diff import create_diff_with_line_numbers
-from ._models import ReviewResult, Comment, ExistingComment
+from ._models import Comment, ExistingComment, ReviewResult
+from ._retry import retry_with_backoff
 from ._search_manager import SearchManager
 from ._sectioned_document import SectionedDocument
-from ._retry import retry_with_backoff
 from ._utils import get_language_pretty_name, get_prompt_path
 
 # Set up package root for log and metadata paths
@@ -62,13 +73,16 @@ if "APPSETTING_WEBSITE_SITE_NAME" not in os.environ:
 CREDENTIAL = get_credential()
 
 
-# create enum for the ReviewMode
 class ApiViewReviewMode:
+    """Enumeration for APIView review modes."""
+
     FULL = "full"
     DIFF = "diff"
 
 
+# pylint: disable=too-many-instance-attributes
 class ApiViewReview:
+    """Class representing an APIView review."""
 
     def __init__(
         self,
@@ -109,28 +123,35 @@ class ApiViewReview:
         self.debug_log = debug_log
         self._isatty = sys.stdout.isatty()
 
-        # Wrap logger to always prepend job_id
         class JobLogger:
-            def __init__(self, logger, job_id):
-                self._logger = logger
+            """Logger wrapper to prepend job_id to all log messages."""
+
+            def __init__(self, inner_logger, job_id):
+                self._logger = inner_logger
                 self._job_id = job_id
 
             def debug(self, msg, *args, **kwargs):
+                """Log a debug message with job_id prefix."""
                 self._logger.debug(f"[{self._job_id}] {msg}", *args, **kwargs)
 
             def info(self, msg, *args, **kwargs):
+                """Log an info message with job_id prefix."""
                 self._logger.info(f"[{self._job_id}] {msg}", *args, **kwargs)
 
             def warning(self, msg, *args, **kwargs):
+                """Log a warning message with job_id prefix."""
                 self._logger.warning(f"[{self._job_id}] {msg}", *args, **kwargs)
 
             def error(self, msg, *args, **kwargs):
+                """Log an error message with job_id prefix."""
                 self._logger.error(f"[{self._job_id}] {msg}", *args, **kwargs)
 
             def critical(self, msg, *args, **kwargs):
+                """Log a critical message with job_id prefix."""
                 self._logger.critical(f"[{self._job_id}] {msg}", *args, **kwargs)
 
             def exception(self, msg, *args, **kwargs):
+                """Log an exception message with job_id prefix."""
                 self._logger.exception(f"[{self._job_id}] {msg}", *args, **kwargs)
 
         self.logger = JobLogger(logger, self.job_id)
@@ -293,7 +314,7 @@ class ApiViewReview:
         if is_main_thread:
             original_handler = signal.getsignal(signal.SIGINT)
 
-            def keyboard_interrupt_handler(signalnum, frame):
+            def keyboard_interrupt_handler():
                 self._print_message("\n\nCancellation requested! Terminating process...")
                 cancel_event.set()
                 os._exit(1)
@@ -433,7 +454,8 @@ class ApiViewReview:
 
     def _judge_generic_comments(self):
         """
-        Judge generic comments by running the judge prompt on each comment, separating into keep and discard lists, reporting counts, and dumping to debug log if enabled.
+        Judge generic comments by running the judge prompt on each comment, separating into keep
+        and discard lists, reporting counts, and dumping to debug log if enabled.
         """
         judge_prompt_file = "generic_comment_judge.prompty"
         judge_prompt_path = get_prompt_path(folder="api_review", filename=judge_prompt_file)
@@ -473,7 +495,7 @@ class ApiViewReview:
                         f"Error judging comment at index {idx}: Invalid JSON response: {repr(response)} | {str(je)}"
                     )
                     continue
-                if response_json.get("is_valid") == True:
+                if response_json.get("is_valid") is True:
                     keep_results.append(response_json)
                 else:
                     discard_results.append(response_json)
@@ -485,6 +507,7 @@ class ApiViewReview:
 
         # Report summary
         self._print_message(
+            # pylint: disable=line-too-long
             f"Judging completed. Kept {len(keep_results)} generic comments. Discarded {len(discard_results)} generic comments."
         )
 
@@ -496,7 +519,7 @@ class ApiViewReview:
                 # combine the comment and result info
                 comment_dict = self.results.comments[result["idx"]].model_dump()
                 comment = {**comment_dict, **result}
-                if result.get("is_valid") == True:
+                if result.get("is_valid") is True:
                     keep_comments.append(comment)
                 else:
                     discard_comments.append(comment)
@@ -683,6 +706,7 @@ class ApiViewReview:
         ]
         final_comment_count = len(self.results.comments)
         self._print_message(
+            # pylint: disable=line-too-long
             f"Filtered preexisting comments. KEEP: {final_comment_count}, DISCARD: {initial_comment_count - final_comment_count}."
         )
 
@@ -733,7 +757,9 @@ class ApiViewReview:
             description=f"prompt {os.path.basename(prompt_path)}",
         )
 
+    # pylint: disable=too-many-locals
     def run(self) -> ReviewResult:
+        """Execute the APIView review process."""
         try:
             self._print_message(f"Generating {get_language_pretty_name(self.language)} review {self.job_id}")
             self.logger.info(f"Generating review {self.job_id} for language={self.language}")
@@ -791,11 +817,12 @@ class ApiViewReview:
 
             overall_end_time = time()
             self._print_message(
+                # pylint: disable=line-too-long
                 f"Review {self.job_id} generated in {overall_end_time - overall_start_time:.2f} seconds. Found {len(results.comments)} comments"
             )
 
             if self.semantic_search_failed:
-                self._print_message(f"WARN: Semantic search failed for some chunks (see error.log).")
+                self._print_message("WARN: Semantic search failed for some chunks (see error.log).")
 
             return results
         finally:
@@ -830,7 +857,7 @@ class ApiViewReview:
             context = self.search.build_context(results.results)
             return context
         except Exception as e:
-            logger.error(f"Error retrieving context: {type(e).__name__}: {e}", exc_info=True)
+            logger.error("Error retrieving context: %s: %s", type(e).__name__, e, exc_info=True)
             return None
 
     def _retrieve_guidelines_as_context(self) -> List[object] | None:
@@ -844,7 +871,7 @@ class ApiViewReview:
             context = self.search.build_context(self.search.language_guidelines.results)
             return context
         except Exception as e:
-            logger.error(f"Error retrieving guidelines: {type(e).__name__}: {e}", exc_info=True)
+            logger.error("Error retrieving guidelines: %s: %s", type(e).__name__, e, exc_info=True)
             return None
 
     def _load_generic_metadata(self):
@@ -859,7 +886,7 @@ class ApiViewReview:
             return {"custom_rules": ""}
 
         # Load the YAML file
-        with open(yaml_file, "r") as f:
+        with open(yaml_file, "r", encoding="utf-8") as f:
             yaml_data = yaml.safe_load(f)
 
         custom_rules_yaml = yaml_data.get("custom_rules", "")
@@ -881,7 +908,7 @@ class ApiViewReview:
             return {"exceptions": "None"}
 
         # Load the YAML file
-        with open(yaml_file, "r") as f:
+        with open(yaml_file, "r", encoding="utf-8") as f:
             yaml_data = yaml.safe_load(f)
 
         exceptions_yaml = yaml_data.get("exceptions", None)

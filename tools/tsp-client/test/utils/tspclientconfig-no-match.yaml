@@ -1,0 +1,5 @@
+supportedEmitters:
+  - name: "@azure-tools/typespec-rust"
+    path: "tools/tsp-client/test/utils/alternate-emitter-package.json"
+  - name: "@azure-tools/typespec-foo"
+    path: "eng/emitter-package-go.json"

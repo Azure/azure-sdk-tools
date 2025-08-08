@@ -17,6 +17,7 @@ This project is the primary integration point for all `azure-sdk` provided [MCP]
       * [Release](#release)
    * [Project Structure and Information](#project-structure-and-information)
       * [Directory Structure](#directory-structure)
+      * [Architecture Diagram](#architecture-diagram)
       * [Pipelines](#pipelines)
    * [Design Guidelines](#design-guidelines)
    * [Adding a New Tool](#adding-a-new-tool)
@@ -210,6 +211,107 @@ This project is both a [System.CommandLine](https://learn.microsoft.com/en-us/do
 - *Azure.Sdk.Tools.Cli.Analyzer* - Compilation addons to enforce conventions
     - Enforce all tools handled by try/catch
     - Enforce tool inclusion in service registration for dependency injector
+
+### Architecture Diagram
+
+```mermaid
+graph TB
+    %% External Interfaces
+    CLI[CLI Mode<br/>azsdk command]
+    MCP[MCP Server Mode<br/>VS Code, Coding Agent Integration]
+    
+    %% Main Entry Point
+    Program[Program.cs<br/>Main Entry Point]
+    
+    %% Core Components
+    WebApp[ASP.NET Core<br/>WebApplication]
+    CommandFactory[CommandFactory<br/>Command Registration]
+
+    %% Services Layer
+    OutputService[OutputService<br/>Plain/JSON/MCP Output]
+    
+    %% External Services
+    subgraph ExternalServices[External Services]
+        ExternalServiceList[Az, GitHub, DevOps, etc]
+    end
+    
+    %% Helper Classes
+    subgraph Helpers[Helper Classes]
+        HelperClasses[Git, TypeSpec, Logs, etc]
+    end
+    
+    %% MCP Tools with two layers, minimal arrows inside
+    subgraph MCPTools[MCP Tools]
+        direction TB
+        %% top: base tool contract (internal representation)
+        MCPToolInner[MCPTool<br/>Base Tool Contract]
+        CommandGroup[CommandGroup Hierarchy]
+        %% second row: actual tools horizontally
+        subgraph ToolRow[ ]
+            direction LR
+            DevExperienceTools[Dev Experience]
+            SpecTools[TypeSpecs]
+            PipelineTools[Pipeline logs and tests]
+            EtcTools[Etc.]
+            %% invisible chain to force horizontal layout
+            DevExperienceTools --- SpecTools --- PipelineTools --- EtcTools
+        end
+        %% keep visual hierarchy but no arrows from inner to tools
+    end
+
+    %% Data Models
+    subgraph Models[Data Models]
+        DataModelList[MCP Tool/CLI Responses]
+    end
+    
+    %% Flow Connections
+    CLI --> Program
+    MCP --> Program
+    
+    Program --> WebApp
+    Program --> CommandFactory
+    
+    CommandFactory --> MCPTools
+    MCPTools --> Helpers
+    MCPTools --> ExternalServices
+    MCPTools --> Models
+    MCPTools --> OutputService
+
+    %% Configuration
+    subgraph Config[Configuration]
+        MCPConfig[.vscode/mcp.json<br/>VS Code Integration]
+        GitHubConfig[github coding agent mcp config]
+    end
+    
+    %% Build Artifacts
+    subgraph Artifacts[Build Artifacts]
+        NuGet[NuGet Packages<br/>azsdk.*.nupkg]
+        Binary[Linux/Windows/Mac<br/>azsdk executable]
+    end
+
+    Artifacts --> CLI
+    Artifacts --> MCP
+
+    %% Styling
+    classDef entryPoint fill:#e1f5fe
+    classDef core fill:#f3e5f5
+    classDef tools fill:#e8f5e8
+    classDef services fill:#fff3e0
+    classDef external fill:#ffebee
+    classDef config fill:#f1f8e9
+
+    class CLI,MCP entryPoint
+    class Program,WebApp,CommandFactory core
+    class DevExperienceTools,SpecTools,PipelineTools,EtcTools tools
+    class OutputService services
+    class ExternalServiceList,HelperClasses external
+    class MCPConfig,GitHubConfig config
+
+    %% hide the dummy horizontal links inside the inner tool row
+    linkStyle 0 stroke-width:0;
+    linkStyle 1 stroke-width:0;
+    linkStyle 2 stroke-width:0;
+```
 
 ### Pipelines
 

@@ -30,13 +30,19 @@ public class ExampleServiceResponse : Response
         var output = new List<string>();
 
         if (!string.IsNullOrEmpty(ServiceName))
+        {
             output.Add($"Service: {ServiceName}");
+        }
 
         if (!string.IsNullOrEmpty(Operation))
+        {
             output.Add($"Operation: {Operation}");
+        }
 
         if (!string.IsNullOrEmpty(Result))
+        {
             output.Add($"Result: {Result}");
+        }
 
         if (Details?.Any() == true)
         {

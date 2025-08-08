@@ -40,9 +40,8 @@ The question must be classified into one of these categories:
 Respond with a JSON object using this structure (no markdown formatting needed):
 {
   "question": string,    // The rewritten standalone question
-  "category": string,    // Must be one of the categories
   "scope": string        // Must be one of the intent scopes or unknown
-  "category": string     // Must be one of the intent category or unknown
+  "category": string     // Must be one of the intent categories or unknown
   ......
 }
 

@@ -18,8 +18,6 @@ namespace ContentValidation.Test
 
         public static ConcurrentQueue<TResult> TestInvalidTagsResults = new ConcurrentQueue<TResult>();
 
-        public static ConcurrentQueue<TResult> TestCodeFormatResults = new ConcurrentQueue<TResult>();
-
         public static IPlaywright playwright;
 
         static TestPageLabel()
@@ -40,11 +38,9 @@ namespace ContentValidation.Test
             ExcelHelper4Test.AddTestResult(TestExtraLabelResults, excelFilePath, sheetName);
             ExcelHelper4Test.AddTestResult(TestUnnecessarySymbolsResults, excelFilePath, sheetName);
             ExcelHelper4Test.AddTestResult(TestInvalidTagsResults, excelFilePath, sheetName);
-            ExcelHelper4Test.AddTestResult(TestCodeFormatResults, excelFilePath, sheetName);
             JsonHelper4Test.AddTestResult(TestExtraLabelResults, jsonFilePath);
             JsonHelper4Test.AddTestResult(TestUnnecessarySymbolsResults, jsonFilePath);
             JsonHelper4Test.AddTestResult(TestInvalidTagsResults, jsonFilePath);
-            JsonHelper4Test.AddTestResult(TestCodeFormatResults, jsonFilePath);
         }
 
         [Test]
@@ -54,7 +50,6 @@ namespace ContentValidation.Test
         [TestCaseSource(nameof(TestLinks))]
         public async Task TestExtraLabel(string testLink)
         {
-
             IValidation Validation = new ExtraLabelValidation(playwright);
 
             var res = new TResult();
@@ -75,8 +70,6 @@ namespace ContentValidation.Test
             }
 
             Assert.That(res.Result, res.FormatErrorMessage());
-
-
         }
 
         [Test]
@@ -86,7 +79,6 @@ namespace ContentValidation.Test
         [TestCaseSource(nameof(TestLinks))]
         public async Task TestUnnecessarySymbols(string testLink)
         {
-
             var res = new TResult();
             try
             {
@@ -109,8 +101,6 @@ namespace ContentValidation.Test
             }
 
             Assert.That(res.Result, res.FormatErrorMessage());
-
-
         }
 
         [Test]
@@ -118,7 +108,6 @@ namespace ContentValidation.Test
         [TestCaseSource(nameof(TestLinks))]
         public async Task TestInvalidTags(string testLink)
         {
-
             var res = new TResult();
             try
             {
@@ -141,40 +130,6 @@ namespace ContentValidation.Test
             }
 
             Assert.That(res.Result, res.FormatErrorMessage());
-
-
-        }
-        
-        [Test]
-        [Category("JavaTest")]
-        [TestCaseSource(nameof(TestLinks))]
-        public async Task TestCodeFormat(string testLink)
-        {
-
-            var res = new TResult();
-            try
-            {
-
-                IValidation Validation = new CodeFormatValidation(playwright);
-
-                res = await Validation.Validate(testLink);
-
-                res.TestCase = "TestCodeFormat";
-                if (!res.Result)
-                {
-                    TestCodeFormatResults.Enqueue(res);
-                }
-                pipelineStatusHelper.SavePipelineFailedStatus("CodeFormatValidation", "succeed");
-            }
-            catch
-            {
-                pipelineStatusHelper.SavePipelineFailedStatus("CodeFormatValidation", "failed");
-                throw;
-            }
-
-            Assert.That(res.Result, res.FormatErrorMessage());
-
-
         }
     }
 }

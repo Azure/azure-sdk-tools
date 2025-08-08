@@ -1,0 +1,126 @@
+name: Run switched packages content validation for javascript
+trigger: none
+
+parameters:
+- name: packages
+  displayName: |
+      Comma-delimited list of packages to test against (by default, 'all' to run all). Example: 'azure-storage-queue, azure-search-documents'
+  type: string
+  default: 'all'
+
+- name: maxParallel
+  displayName: |
+      Maximum number of parallel jobs to run (by default, 2). Example: 10
+  type: number
+  default: 2
+
+stages:
+- stage: ContentValidationTesting
+  jobs:
+  - ${{ if ne(parameters.packages, 'all') }}:
+      - job: content_validation
+        displayName: Content Validation Matrix
+        strategy:
+          matrix:
+            ${{ each pkg in split(parameters.packages, ',') }}:
+              ${{ trim(pkg) }}:
+                packageName: ${{ trim(pkg) }}
+          maxParallel: ${{ parameters.maxParallel }}
+        variables:
+          PackageName: $(packageName)
+        pool:
+          vmImage: ubuntu-latest
+        steps:
+        - template: /eng/pipelines/common/content-validation-for-javascript.yml
+          parameters:
+            packageName: $(PackageName)
+
+  - ${{ if eq(parameters.packages, 'all') }}:
+    - template: /eng/pipelines/javascript/run-all-packages.yml
+      parameters:
+        maxParallel: ${{ parameters.maxParallel }}
+
+## Need to confirm, disabled for now
+# - stage: TotalIssuesSummary
+#   condition: always()
+#   jobs:
+#   - job: Maintain_Total_Issues_List
+#     displayName: Maintain_Total_Issues_List
+#     pool:
+#       vmImage: ubuntu-latest
+#     steps:
+#     - task: DownloadPipelineArtifact@2
+#       displayName: Download The Last Artifact history-issues-summary
+#       inputs:
+#         buildType: 'specific'
+#         project: '$(System.TeamProject)'
+#         pipeline: '$(System.DefinitionName)'
+#         buildVersionToDownload: 'latestFromBranch'
+#         allowPartiallySucceededBuilds: true
+#         allowFailedBuilds: true
+#         branchName: 'refs/heads/main'
+#         artifactName: 'issues-summary'
+#         downloadPath: '$(System.DefaultWorkingDirectory)/Artifacts'
+#       continueOnError: true
+
+#     - task: DownloadPipelineArtifact@2
+#       displayName: Download The Current Artifact 
+#       inputs:
+#         buildType: 'current'
+#         downloadPath: '$(System.DefaultWorkingDirectory)/Artifacts'
+
+#     - task: DotNetCoreCLI@2
+#       displayName: Build issuer helper project
+#       inputs:
+#         command: 'build'
+#         projects: 'IssuerHelper/IssuerHelper.csproj'
+
+#     - script: |
+#         organization=$(System.CollectionUri)
+#         project=$(System.TeamProject)
+#         buildId=$(Build.BuildId)
+  
+#         pipelineUrl="${organization}${project}/_build/results?buildId=${buildId}"
+  
+#         echo "##vso[task.setvariable variable=pipelineUrl;]$pipelineUrl"
+#       displayName: Get the current pipeline url
+
+#     - task: DotNetCoreCLI@2
+#       displayName: Summary Total Issues of all packages
+#       env:
+#         PackageName: ${{ parameters.packages }}
+#         PipelineRunLink: $(pipelineUrl)
+#         GitHubPat: $(GITHUB_PAT)
+#         Language: 'JavaScript'
+#         GitHubOwner: $(GITHUB_OWNER)
+#         GitHubRepo: $(GITHUB_REPO)
+#       inputs:
+#         command: 'run'
+#         workingDirectory: '$(System.DefaultWorkingDirectory)/IssuerHelper'
+
+#     - task: PublishPipelineArtifact@1
+#       displayName: "Upload pipeline test data"
+#       inputs:
+#         targetPath: $(System.DefaultWorkingDirectory)/Reports
+#         artifactName: issues-summary
+#         publishLocation: "pipeline"
+
+#     - task: Bash@3
+#       displayName: 'Set Script Executable'
+#       inputs:
+#         targetType: 'inline'
+#         script: |
+#           chmod +x $(System.DefaultWorkingDirectory)/eng/scripts/push-pipeline-result-markdown.sh
+
+#     - task: Bash@3
+#       displayName: 'Push commit about current pipeline status'
+#       inputs:
+#         targetType: 'filePath'
+#         filePath: '$(System.DefaultWorkingDirectory)/eng/scripts/push-pipeline-result-markdown.sh'
+#         arguments: >-
+#           $(GITHUB_PAT)
+#           $(GITHUB_OWNER)
+#           $(GITHUB_REPO)
+#           $(GIT_USER_NAME)
+#           $(GIT_USER_EMAIL)
+#           'JavaScript'

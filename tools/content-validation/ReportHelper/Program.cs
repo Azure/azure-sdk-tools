@@ -85,13 +85,13 @@ namespace ReportHelper
                 string differentSheetName = "DiffSheet";
                 ExcelHelper4Test.AddTestResult(differentList, excelFileName, differentSheetName);
 
-                // Update github issues
-                await GithubHelper.CreateOrUpdateGitHubIssue(owner, repo, githubToken, HostPackageName, language);
+                // Update github issues. Need to confirm, disabled first.
+                // await GithubHelper.CreateOrUpdateGitHubIssue(owner, repo, githubToken, HostPackageName, language);
             }
             else if (newDataList.Count != 0)
             {
-                // Create github issues
-                await GithubHelper.CreateOrUpdateGitHubIssue(owner, repo, githubToken, HostPackageName, language);
+                // Create github issues. Need to confirm, disabled first.
+                // await GithubHelper.CreateOrUpdateGitHubIssue(owner, repo, githubToken, HostPackageName, language);
 
             }
             else

@@ -1,4 +1,5 @@
 using Moq;
+using Azure.Sdk.Tools.Cli.Helpers;
 using System.CommandLine;
 using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Models;

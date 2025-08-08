@@ -2,6 +2,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using NUnit.Framework;
 using Azure.Sdk.Tools.Cli.Services;
@@ -31,7 +32,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             _mockDependencyCheckLogger = new Mock<ILogger<DependencyCheckTool>>();
             _mockChangelogValidationLogger = new Mock<ILogger<ChangelogValidationTool>>();
 
-            _checkAllTool = new CheckAllTool(_mockLogger.Object, _mockOutputService.Object, _mockGitHelper.Object);
+            _checkAllTool = new CheckAllTool(_mockLogger.Object, _mockOutputService.Object, _mockGitHelper.Object, new ProcessHelper(NullLogger<ProcessHelper>.Instance));
             
             // Create a temporary test directory
             _testProjectPath = Path.Combine(Path.GetTempPath(), "CheckAllToolTest");

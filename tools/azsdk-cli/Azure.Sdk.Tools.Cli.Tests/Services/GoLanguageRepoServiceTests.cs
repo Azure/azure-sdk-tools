@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using Microsoft.Extensions.Logging.Abstractions;
+using Azure.Sdk.Tools.Cli.Helpers;
 using System.Runtime.InteropServices;
 using Azure.Sdk.Tools.Cli.Services;
 using System.Threading.Tasks; // added for async SetUp
@@ -29,7 +31,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             GoPackageDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(GoPackageDir);
 
-            LangService = new GoLanguageRepoService(GoPackageDir);
+            LangService = new GoLanguageRepoService(GoPackageDir, new ProcessHelper(NullLogger<ProcessHelper>.Instance));
 
             var resp = await LangService.CreateEmptyPackage("untitleddotloop");
             Assert.That(resp.ExitCode, Is.EqualTo(0));

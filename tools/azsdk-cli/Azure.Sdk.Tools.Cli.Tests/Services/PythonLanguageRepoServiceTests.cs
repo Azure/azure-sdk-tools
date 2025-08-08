@@ -1,6 +1,7 @@
 #nullable disable
 
 using System;
+using Microsoft.Extensions.Logging.Abstractions;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -61,7 +62,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         public void Constructor_WithValidParameters_SetsPropertiesCorrectly()
         {
             // Act
-            _pythonService = new PythonLanguageRepoService(_testPackagePath, _mockGitHelper.Object, _mockLogger.Object);
+            _pythonService = new PythonLanguageRepoService(_testPackagePath, new ProcessHelper(NullLogger<ProcessHelper>.Instance), _mockGitHelper.Object, _mockLogger.Object);
 
             // Assert
             Assert.IsNotNull(_pythonService);
@@ -73,7 +74,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         {
             // Act & Assert
             var ex = Assert.Throws<ArgumentNullException>(() => 
-                new PythonLanguageRepoService(_testPackagePath, null, _mockLogger.Object));
+                new PythonLanguageRepoService(_testPackagePath, new ProcessHelper(NullLogger<ProcessHelper>.Instance), null, _mockLogger.Object));
             
             Assert.That(ex.ParamName, Is.EqualTo("gitHelper"));
         }
@@ -83,14 +84,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         {
             // Act & Assert - Should not throw, uses NullLogger internally
             Assert.DoesNotThrow(() => 
-                new PythonLanguageRepoService(_testPackagePath, _mockGitHelper.Object, null));
+                new PythonLanguageRepoService(_testPackagePath, new ProcessHelper(NullLogger<ProcessHelper>.Instance), _mockGitHelper.Object, null));
         }
 
         [Test]
         public async Task AnalyzeDependenciesAsync_WithMissingToxConfig_ReturnsFailureResponse()
         {
             // Arrange
-            _pythonService = new PythonLanguageRepoService(_testPackagePath, _mockGitHelper.Object, _mockLogger.Object);
+            _pythonService = new PythonLanguageRepoService(_testPackagePath, new ProcessHelper(NullLogger<ProcessHelper>.Instance), _mockGitHelper.Object, _mockLogger.Object);
             
             // Act
             var result = await _pythonService.AnalyzeDependenciesAsync();
@@ -126,7 +127,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Directory.CreateDirectory(Path.GetDirectoryName(toxConfigPath));
             await File.WriteAllTextAsync(toxConfigPath, "[tox]\nenvlist = mindependency\n");
             
-            _pythonService = new PythonLanguageRepoService(_testPackagePath, _mockGitHelper.Object, _mockLogger.Object);
+            _pythonService = new PythonLanguageRepoService(_testPackagePath, new ProcessHelper(NullLogger<ProcessHelper>.Instance), _mockGitHelper.Object, _mockLogger.Object);
 
             // Act
             var result = await _pythonService.AnalyzeDependenciesAsync();
@@ -143,7 +144,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Directory.CreateDirectory(Path.GetDirectoryName(toxConfigPath));
             await File.WriteAllTextAsync(toxConfigPath, "[tox]\nenvlist = mindependency\n");
             
-            _pythonService = new PythonLanguageRepoService(_testPackagePath, _mockGitHelper.Object, _mockLogger.Object);
+            _pythonService = new PythonLanguageRepoService(_testPackagePath, new ProcessHelper(NullLogger<ProcessHelper>.Instance), _mockGitHelper.Object, _mockLogger.Object);
 
             // Act
             var result = await _pythonService.AnalyzeDependenciesAsync();
@@ -185,7 +186,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Directory.CreateDirectory(Path.GetDirectoryName(toxConfigPath));
             await File.WriteAllTextAsync(toxConfigPath, "[tox]\nenvlist = mindependency\n");
             
-            _pythonService = new PythonLanguageRepoService(_testPackagePath, _mockGitHelper.Object, _mockLogger.Object);
+            _pythonService = new PythonLanguageRepoService(_testPackagePath, new ProcessHelper(NullLogger<ProcessHelper>.Instance), _mockGitHelper.Object, _mockLogger.Object);
             
             using var cts = new CancellationTokenSource();
             cts.Cancel(); // Cancel immediately to test cancellation
@@ -205,7 +206,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _mockGitHelper.Setup(g => g.DiscoverRepoRoot(It.IsAny<string>()))
                          .Throws(new DirectoryNotFoundException("Repository root not found"));
             
-            _pythonService = new PythonLanguageRepoService(_testPackagePath, _mockGitHelper.Object, _mockLogger.Object);
+            _pythonService = new PythonLanguageRepoService(_testPackagePath, new ProcessHelper(NullLogger<ProcessHelper>.Instance), _mockGitHelper.Object, _mockLogger.Object);
 
             // Act
             var result = await _pythonService.AnalyzeDependenciesAsync();
@@ -227,7 +228,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _mockGitHelper.Setup(g => g.DiscoverRepoRoot(It.IsAny<string>()))
                          .Throws(new InvalidOperationException("Unexpected error"));
             
-            _pythonService = new PythonLanguageRepoService(_testPackagePath, _mockGitHelper.Object, _mockLogger.Object);
+            _pythonService = new PythonLanguageRepoService(_testPackagePath, new ProcessHelper(NullLogger<ProcessHelper>.Instance), _mockGitHelper.Object, _mockLogger.Object);
 
             // Act
             var result = await _pythonService.AnalyzeDependenciesAsync();
@@ -250,7 +251,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _mockGitHelper.Setup(g => g.DiscoverRepoRoot(It.IsAny<string>()))
                          .Throws(expectedException);
             
-            _pythonService = new PythonLanguageRepoService(_testPackagePath, _mockGitHelper.Object, _mockLogger.Object);
+            _pythonService = new PythonLanguageRepoService(_testPackagePath, new ProcessHelper(NullLogger<ProcessHelper>.Instance), _mockGitHelper.Object, _mockLogger.Object);
 
             // Act
             await _pythonService.AnalyzeDependenciesAsync();
@@ -274,7 +275,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Directory.CreateDirectory(Path.GetDirectoryName(toxConfigPath));
             await File.WriteAllTextAsync(toxConfigPath, "[tox]\nenvlist = mindependency\n");
             
-            _pythonService = new PythonLanguageRepoService(_testPackagePath, _mockGitHelper.Object, _mockLogger.Object);
+            _pythonService = new PythonLanguageRepoService(_testPackagePath, new ProcessHelper(NullLogger<ProcessHelper>.Instance), _mockGitHelper.Object, _mockLogger.Object);
 
             // Act
             var result = await _pythonService.AnalyzeDependenciesAsync();
@@ -304,7 +305,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         {
             // Arrange
             var nonExistentPath = Path.Combine(Path.GetTempPath(), "NonExistent", Guid.NewGuid().ToString("N"));
-            _pythonService = new PythonLanguageRepoService(nonExistentPath, _mockGitHelper.Object, _mockLogger.Object);
+            _pythonService = new PythonLanguageRepoService(nonExistentPath, new ProcessHelper(NullLogger<ProcessHelper>.Instance), _mockGitHelper.Object, _mockLogger.Object);
 
             // Act
             var result = await _pythonService.AnalyzeDependenciesAsync();
@@ -319,7 +320,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         public void PythonLanguageRepoService_InheritsFromLanguageRepoService()
         {
             // Arrange & Act
-            _pythonService = new PythonLanguageRepoService(_testPackagePath, _mockGitHelper.Object, _mockLogger.Object);
+            _pythonService = new PythonLanguageRepoService(_testPackagePath, new ProcessHelper(NullLogger<ProcessHelper>.Instance), _mockGitHelper.Object, _mockLogger.Object);
 
             // Assert
             Assert.IsInstanceOf<LanguageRepoService>(_pythonService);
@@ -334,7 +335,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Directory.CreateDirectory(Path.GetDirectoryName(toxConfigPath));
             await File.WriteAllTextAsync(toxConfigPath, "[tox]\nenvlist = mindependency\n");
             
-            _pythonService = new PythonLanguageRepoService(_testPackagePath, _mockGitHelper.Object, _mockLogger.Object);
+            _pythonService = new PythonLanguageRepoService(_testPackagePath, new ProcessHelper(NullLogger<ProcessHelper>.Instance), _mockGitHelper.Object, _mockLogger.Object);
 
             // Act
             var result = await _pythonService.AnalyzeDependenciesAsync();

@@ -16,8 +16,6 @@ stages:
               python --version
             displayName: 'check python'
           - task: GoTool@0
-            inputs:
-              version: '1.24'
             displayName: 'install go'
           - script: |
               go version

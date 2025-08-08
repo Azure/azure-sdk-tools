@@ -31,7 +31,7 @@ stages:
           - task: AzureCLI@2
             displayName: 'Run Evas in AzureCLI@2'
             inputs:
-              azureSubscription: azure-sdk-tests-playground
+              azureSubscription: 'Azure'
               scriptType: bash
               scriptLocation: inlineScript
               inlineScript: |

@@ -10,50 +10,22 @@ Help me create a new tool using #new-tool.md as a reference
 
 ## Table of Contents
 
-* [New Tool Development Guide](#new-tool-development-guide)
-   * [Table of Contents](#table-of-contents)
    * [Tool Architecture Overview](#tool-architecture-overview)
-      * [Tool Structure Components](#tool-structure-components)
    * [Step-by-Step Implementation Guide](#step-by-step-implementation-guide)
-      * [Step 1: Determine Tool Placement and Naming](#step-1-determine-tool-placement-and-naming)
-      * [Step 2: Define Command Group and Structure](#step-2-define-command-group-and-structure)
-      * [Step 3: Plan CLI Arguments and Options](#step-3-plan-cli-arguments-and-options)
-      * [Step 4: Design MCP Methods](#step-4-design-mcp-methods)
-      * [Step 5: Identify Dependencies](#step-5-identify-dependencies)
    * [Code Examples and Templates](#code-examples-and-templates)
-      * [Basic Tool Template](#basic-tool-template)
-      * [Complex Tool Example (Multiple Sub-commands)](#complex-tool-example-multiple-sub-commands)
    * [Dependency Injection](#dependency-injection)
-      * [Common Service Dependencies](#common-service-dependencies)
-      * [Service Usage Guidelines](#service-usage-guidelines)
-      * [Dependency Guidelines](#dependency-guidelines)
    * [Response Handling](#response-handling)
-      * [Response Class Requirements](#response-class-requirements)
-      * [Response Class Template](#response-class-template)
-      * [Error Handling Patterns](#error-handling-patterns)
    * [Registration and Testing](#registration-and-testing)
-      * [Register Your Tool](#register-your-tool)
-      * [Testing Your Tool](#testing-your-tool)
-      * [Example Integration Test](#example-integration-test)
    * [Required Tool Conventions](#required-tool-conventions)
-      * [1. Error Handling](#1-error-handling)
-      * [2. Logging](#2-logging)
-      * [3. Output](#3-output)
-      * [4. MCP Server Integration](#4-mcp-server-integration)
-      * [5. Performance](#5-performance)
    * [Common Patterns and Anti-patterns](#common-patterns-and-anti-patterns)
-      * [✅ Good Patterns](#-good-patterns)
-      * [❌ Anti-patterns to Avoid](#-anti-patterns-to-avoid)
-      * [Namespace and Organization Rules](#namespace-and-organization-rules)
-      * [Command Design Guidelines](#command-design-guidelines)
 
 ## Tool Architecture Overview
 
 All tools in the azsdk-cli project follow a consistent architecture:
 
-- **Base Class**: All tools inherit from `MCPTool` (defined in `Azure.Sdk.Tools.Cli.Contract`)
+- **Base Class**: All tools inherit from `MCPTool` (defined in [`Azure.Sdk.Tools.Cli.Contract`](../Azure.Sdk.Tools.Cli.Contract/))
 - **Namespace**: Tools should be in namespace `Azure.Sdk.Tools.Cli.Tools`
-- **Location**: Tool files are organized under `Azure.Sdk.Tools.Cli/Tools/` in logical groupings
+- **Location**: Tool files are organized under [`Azure.Sdk.Tools.Cli/Tools/`](../Azure.Sdk.Tools.Cli/Tools/) in logical groupings
 - **Attributes**: Tools are decorated with `[McpServerToolType]` for discovery
 - **Dual Interface**: Tools support both CLI commands and MCP server methods
 
@@ -77,12 +49,12 @@ All tools in the azsdk-cli project follow a consistent architecture:
 
 **Naming Conventions:**
 - **Class Name**: `{FunctionalName}Tool` (e.g., `LogAnalysisTool`, `PipelineAnalysisTool`)
-- **File Location**: `Tools/{Category}/{ToolName}.cs` or `Tools/{ToolName}.cs`
+- **File Location**: [`Tools/{Category}/{ToolName}.cs`](../Azure.Sdk.Tools.Cli/Tools/) or [`Tools/{ToolName}.cs`](../Azure.Sdk.Tools.Cli/Tools/)
 - **Namespace**: Always `Azure.Sdk.Tools.Cli.Tools` (not nested namespaces)
 
 ### Step 2: Define Command Group and Structure
 
-**Command Groups** (defined in `SharedCommandGroups.cs`):
+**Command Groups** (defined in [`SharedCommandGroups.cs`](../Azure.Sdk.Tools.Cli/Commands/SharedCommandGroups.cs)):
 - `AzurePipelines` - Azure DevOps pipeline operations (`azsdk azp`)
 - `EngSys` - Engineering system commands (`azsdk eng`)
 - `Generators` - File generation commands (`azsdk generators`)
@@ -105,7 +77,7 @@ CommandHierarchy = [ SharedCommandGroups.EngSys, SharedCommandGroups.Cleanup ];
 - **Options**: Optional flags and parameters with default values
 - **Sub-commands**: Does your tool need multiple operations?
 
-**Shared Options** (refer to `SharedOptions.cs`) for options used broadly across commands
+**Shared Options** (refer to [`SharedOptions.cs`](../Azure.Sdk.Tools.Cli/Commands/SharedOptions.cs)) for options used broadly across commands
 
 ### Step 4: Design MCP Methods
 
@@ -126,11 +98,11 @@ CommandHierarchy = [ SharedCommandGroups.EngSys, SharedCommandGroups.Cleanup ];
 
 ## Code Examples and Templates
 
-A working example of multiple tool types and usage of services can be found at [ExampleTool.cs](../Azure.Sdk.Tools.Cli/Tools/ExampleTool.cs)
+A working example of multiple tool types and usage of services can be found at [`ExampleTool.cs`](../Azure.Sdk.Tools.Cli/Tools/ExampleTool.cs)
 
 ### Basic Tool Template
 
-In `Azure.Sdk.Cli.Tools.Cli/Tools/YourToolCategory/YourTool.cs`:
+In [`Azure.Sdk.Cli.Tools.Cli/Tools/YourToolCategory/YourTool.cs`](../Azure.Sdk.Tools.Cli/Tools/):
 
 ```csharp
 // Copyright (c) Microsoft Corporation.
@@ -354,7 +326,7 @@ serialize or stringify correctly if `ToString()` is not overridden.
 
 ### Response Class Template
 
-To define a response class, add to `Azure.Sdk.Tools.Cli/Models/Responses/`:
+To define a response class, add to [`Azure.Sdk.Tools.Cli/Models/Responses/`](../Azure.Sdk.Tools.Cli/Models/Responses/):
 
 ```csharp
 // Copyright (c) Microsoft Corporation.
@@ -448,7 +420,7 @@ if (errors.Any())
 
 ### Register Your Tool
 
-Add your tool to the `SharedOptions.ToolsList` in `Commands/SharedOptions.cs`:
+Add your tool to the `SharedOptions.ToolsList` in [`Commands/SharedOptions.cs`](../Azure.Sdk.Tools.Cli/Commands/SharedOptions.cs):
 
 ```csharp
 public static readonly List<Type> ToolsList = [
@@ -460,29 +432,29 @@ public static readonly List<Type> ToolsList = [
 
 ### Testing Your Tool
 
-From `[repo root]/tools/azsdk-cli`
+From [`[repo root]/tools/azsdk-cli`](../)
 
-1. **Build the project**:
-   ```
-   dotnet build
-   ```
+**Build the project**:
+```
+dotnet build
+```
 
-2. **Test CLI functionality**:
-   ```
-   dotnet run --project Azure.Sdk.Tools.Cli -- yourgroup yourcommand --help
-   dotnet run --project Azure.Sdk.Tools.Cli -- yourgroup yourcommand input-value --param value
-   ```
+**Test CLI functionality**:
+```
+dotnet run --project Azure.Sdk.Tools.Cli -- yourgroup yourcommand --help
+dotnet run --project Azure.Sdk.Tools.Cli -- yourgroup yourcommand input-value --param value
+```
 
-3. **Test MCP functionality**:
+**Test MCP functionality**:
 
 Start the MCP server in your MCP client and run the tool via `#my-tool-name some args here`
 
-See [mcp quick start docs](/../azsdk-cli/Azure.Sdk.Tools.Cli/README.md#1-mcp-server-mode)
+See [mcp quick start docs](../Azure.Sdk.Tools.Cli/README.md#1-mcp-server-mode)
 
-4. **Run unit tests**:
-   ```
-   dotnet test
-   ```
+**Run unit tests**:
+```
+dotnet test
+```
 
 ### Example Integration Test
 

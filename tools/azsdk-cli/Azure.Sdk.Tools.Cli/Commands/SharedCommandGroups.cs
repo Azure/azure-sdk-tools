@@ -1,7 +1,4 @@
 using Azure.Sdk.Tools.Cli.Contract;
-using System.CommandLine;
-using System.CommandLine.Parsing;
-
 
 namespace Azure.Sdk.Tools.Cli.Commands
 {
@@ -38,10 +35,12 @@ namespace Azure.Sdk.Tools.Cli.Commands
             Options: []
         );
 
+        #if DEBUG
         public static readonly CommandGroup Example = new(
             Verb: "example",
             Description: "Example tool demonstrating framework features",
             Options: []
         );
+        #endif
     }
 }

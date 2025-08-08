@@ -121,7 +121,7 @@ Run directly as a command-line tool:
 
 ```bash
 dotnet run --project Azure.Sdk.Tools.Cli -- --help
-dotnet run --project Azure.Sdk.Tools.Cli -- hello-world foobar
+dotnet run --project Azure.Sdk.Tools.Cli -- example hello-world foobar
 dotnet run --project Azure.Sdk.Tools.Cli -- release-plan get --work-item-id YOUR_WORK_ITEM_ID
 ```
 

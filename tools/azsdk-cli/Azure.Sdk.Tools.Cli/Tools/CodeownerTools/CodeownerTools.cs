@@ -257,10 +257,15 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
                 // Validate the modified/created Entry
-                await ValidateMinimumOwnerRequirements(updatedEntry.ServiceOwners, updatedEntry.SourceOwners, updatedEntry.ServiceLabels.FirstOrDefault(), updatedEntry.PathExpression);
+                var (validationErrors, codeownerValidationResults) = await ValidateMinimumOwnerRequirements(updatedEntry);
+                if (validationErrors.Any())
+                {
+                    var codeownerValidationResultMessage = string.Join("; ", codeownerValidationResults.Select(r => $"{r.Username}: {(r.IsValidCodeOwner ? "Valid" : "Invalid")}"));
+                    throw new Exception($"{validationErrors}. Validation results: {codeownerValidationResults}");
+                }
 
                 // Modify the file
-                var insertionIndex = codeownerHelper.findAlphabeticalInsertionPoint(codeownersEntries, path, serviceLabel);
+                    var insertionIndex = codeownerHelper.findAlphabeticalInsertionPoint(codeownersEntries, path, serviceLabel);
                 var modifiedCodeownersContent = codeownerHelper.addCodeownersEntryAtIndex(codeownersContent, updatedEntry, insertionIndex, codeownersEntryExists);
 
                 // Create Branch, Update File, and Handle PR.
@@ -291,15 +296,19 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
             try
             {
-                if (string.IsNullOrEmpty(serviceLabel) && string.IsNullOrEmpty(repoPath))
+                if (string.IsNullOrEmpty(repoName))
                 {
-                    response.Message += "Must provide a service label or a repository path.";
-                    return response;
+                    throw new Exception("Must provide a repository name. Ex. azure-sdk-for-dotnet");
                 }
 
-                List<CodeownersEntry?>? matchingEntries;
+                serviceLabel = serviceLabel?.Trim();
+                repoPath = repoPath?.Trim();
+                if (string.IsNullOrEmpty(serviceLabel) && string.IsNullOrEmpty(repoPath))
+                {
+                    throw new Exception("Must provide a service label or a repository path.");
+                }
 
-                // Find Codeowners Entries
+                List<CodeownersEntry> matchingEntries;
                 try
                 {
                     var codeownersUrl = $"{githubRawContentBaseUrl}/{Constants.AZURE_OWNER_PATH}/{repoName}/main/{Constants.AZURE_CODEOWNERS_PATH}";
@@ -308,29 +317,31 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
                 catch (Exception ex)
                 {
-                    var errorMessage = $"Error finding service in CODEOWNERS file. Error {ex}";
-                    logger.LogError(errorMessage);
-                    response.Message += errorMessage;
+                    response.Message += $"Error finding service in CODEOWNERS file. Error {ex}";
                     return response;
                 }
 
                 // Validate Owners
                 if (matchingEntries != null && matchingEntries.Count > 0)
                 {
-                    var uniqueOwners = new HashSet<string>();
+                    string? validationErrors = null;
+                    List<CodeOwnerValidationResult>? codeownerValidationResults = null;
                     foreach (var matchingEntry in matchingEntries)
                     {
-                        var owners = codeownerHelper.ExtractUniqueOwners(matchingEntry);
-                        foreach (var owner in owners)
-                        {
-                            uniqueOwners.Add(owner);
-                        }
+                        var validationResponse = await ValidateMinimumOwnerRequirements(matchingEntry);
+                        validationErrors += validationResponse.validationErrors;
+                        codeownerValidationResults?.AddRange(validationResponse.codeownerValidationResults);
                     }
 
-                    var codeOwners = await ValidateOwners(uniqueOwners.Select(owner => owner.TrimStart('@')));
-                    response.CodeOwners = codeOwners;
-                    response.Message += "Successfully found and validated codeowners.";
-                    response.Repository = repoName ?? string.Empty;
+                    if (!string.IsNullOrEmpty(validationErrors))
+                    {
+                        response.Message = validationErrors ?? string.Empty;
+                    }
+                    else
+                    {
+                        response.Message = "Validation passed: minimum code owner requirements are met.";
+                    }
+                    response.CodeOwners = codeownerValidationResults ?? new List<CodeOwnerValidationResult>() { };
                     return response;
                 }
                 else
@@ -341,7 +352,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error processing repository {repo}", repoName);
                 response.Message += $"Error processing repository: {ex.Message}";
                 return response;
             }
@@ -421,29 +431,44 @@ namespace Azure.Sdk.Tools.Cli.Tools
             return validatedOwners;
         }
 
-        private async Task ValidateMinimumOwnerRequirements(List<string> serviceOwners, List<string> sourceOwners, string serviceLabel, string path)
+        private async Task<(string validationErrors, List<CodeOwnerValidationResult> codeownerValidationResults)> ValidateMinimumOwnerRequirements(CodeownersEntry codeownersEntry)
         {
-            var validatedServiceOwners = await ValidateOwners(serviceOwners);
-            var validatedSourceOwners = await ValidateOwners(sourceOwners);
+            var validatedServiceOwners = await ValidateOwners(codeownersEntry.ServiceOwners);
+            var validatedSourceOwners = await ValidateOwners(codeownersEntry.SourceOwners);
+            var validatedAzureSdkOwners = await ValidateOwners(codeownersEntry.AzureSdkOwners);
 
             var validServiceOwnersCount = validatedServiceOwners.Count(owner => owner.IsValidCodeOwner);
             var validSourceOwnersCount = validatedSourceOwners.Count(owner => owner.IsValidCodeOwner);
+            var validAzureSdkOwnersCount = validatedAzureSdkOwners.Count(owner => owner.IsValidCodeOwner);
 
             var validationErrors = new List<string>();
 
-            if (!string.IsNullOrEmpty(serviceLabel) && validServiceOwnersCount < 2)
+            if (!string.IsNullOrEmpty(codeownersEntry.ServiceLabels.FirstOrDefault()))
+            {
+                if (validServiceOwnersCount < 2)
                 {
                     validationErrors.Add("There must be at least two valid service owners.");
                 }
-                if (!string.IsNullOrEmpty(path) && validSourceOwnersCount < 2)
+                if (validAzureSdkOwnersCount < 2)
                 {
-                    validationErrors.Add("There must be at least two valid source owners.");
+                    validationErrors.Add("There must be at least two valid azure sdk owners.");
                 }
+            }
+            if (!string.IsNullOrEmpty(codeownersEntry.PathExpression) && validSourceOwnersCount < 2)
+            {
+                validationErrors.Add("There must be at least two valid source owners.");
+            }
+
+            var allValidationResults = new List<CodeOwnerValidationResult>();
+            allValidationResults.AddRange(validatedServiceOwners);
+            allValidationResults.AddRange(validatedSourceOwners);
+            allValidationResults.AddRange(validatedAzureSdkOwners);
 
             if (validationErrors.Any())
             {
-                throw new InvalidOperationException(string.Join(" ", validationErrors));
+                return (string.Join(" ", validationErrors), allValidationResults);
             }
+            return ("", allValidationResults);
         }
     }
 }

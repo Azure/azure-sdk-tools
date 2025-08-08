@@ -293,9 +293,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
 
             mockCodeOwnerHelper.Setup(x => x.FindMatchingEntries(It.IsAny<List<CodeownersEntry>>(), serviceLabel, repoPath))
                               .Returns(entries.Cast<CodeownersEntry?>().ToList());
-            
-            mockCodeOwnerHelper.Setup(x => x.ExtractUniqueOwners(It.IsAny<CodeownersEntry>()))
-                              .Returns(new List<string> { "@azure/servicebus-team" });
 
             var validationResult = new CodeOwnerValidationResult
             {
@@ -311,7 +308,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
 
             // Assert
             Assert.That(result.Message, Does.Contain("Successfully found and validated codeowners"));
-            Assert.That(result.Repository, Is.EqualTo(repoName));
         }
 
         [Test]
@@ -333,9 +329,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
 
             mockCodeOwnerHelper.Setup(x => x.FindMatchingEntries(It.IsAny<List<CodeownersEntry>>(), serviceLabel, repoPath))
                               .Returns(entries.Cast<CodeownersEntry?>().ToList());
-            
-            mockCodeOwnerHelper.Setup(x => x.ExtractUniqueOwners(It.IsAny<CodeownersEntry>()))
-                              .Returns(new List<string> { "@azure/servicebus-team" });
 
             var validationResult = new CodeOwnerValidationResult
             {
@@ -351,13 +344,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
 
             // Assert
             Assert.That(result.Message, Does.Contain("Successfully found and validated codeowners"));
-            Assert.That(result.Repository, Is.EqualTo(repoName));
         }
 
         [Test]
         [TestCase("azure-sdk-for-net", "", "", "Must provide a service label or a repository path")]
-        [TestCase("", "", "", "Must provide a service label or a repository path")]
-        [TestCase("", "Service Bus", "", "Must provide a service label or a repository path")]
+        [TestCase("", "", "", "Must provide a repository name")]
+        [TestCase("", "Service Bus", "", "Must provide a repository name")]
         public async Task ValidateCodeOwnerEntryForService_InvalidInputs(string repoName, string serviceLabel, string repoPath, string expectedError)
         {
             // Act
@@ -380,8 +372,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         [Test]
         [TestCase("NonExistentService")]
         [TestCase("Invalid Service")]
-        [TestCase("")]
-        [TestCase("   ")]
         [TestCase("Service@#$%")]
         public async Task ValidateCodeOwnerEntryForService_ServiceNotFound(string serviceLabel)
         {
@@ -394,6 +384,18 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
 
             // Assert
             Assert.That(result.Message, Does.Contain($"Service label '{serviceLabel}' or Repo Path '' not found"));
+        }
+
+        [Test]
+        [TestCase("")]
+        [TestCase("   ")]
+        public async Task ValidateCodeOwnerEntryForService_EmptyServiceLabel_ReturnsValidationError(string serviceLabel)
+        {
+            // Act
+            var result = await codeownerTools.ValidateCodeOwnerEntryForService("azure-sdk-for-net", serviceLabel);
+
+            // Assert
+            Assert.That(result.Message, Does.Contain("Must provide a service label or a repository path"));
         }
 
         #endregion
@@ -433,7 +435,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var result = await codeownerTools.ValidateCodeOwnerEntryForService("azure-sdk-for-net", "Service Bus");
 
             // Assert
-            Assert.That(result.Message, Does.Contain("Error processing repository"));
+            Assert.That(result.Message, Does.Contain("Error finding service in CODEOWNERS file"));
             Assert.That(result.Message, Does.Contain("Parser error"));
         }
 

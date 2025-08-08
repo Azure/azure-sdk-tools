@@ -28,8 +28,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         [TestCase("NonExistentService", 0, "")]
         [TestCase("", 0, "")]
         [TestCase("   ", 0, "")]
-        [TestCase("SERVICE BUS", 0, "")] // Case sensitive
-        [TestCase("service bus", 0, "")] // Case sensitive
+        [TestCase("SERVICE BUS", 1, "sdk/servicebus/")] // Case insensitive exact match
+        [TestCase("service bus", 1, "sdk/servicebus/")] // Case insensitive exact match
+        [TestCase("ServiceBus", 1, "sdk/servicebus/")] // Space insensitive exact match
+        [TestCase("SERVICEBUS", 1, "sdk/servicebus/")] // Case and space insensitive exact match
         [TestCase("Service", 0, "")] // Partial match should not work
         [TestCase("Bus", 0, "")] // Partial match should not work
         public void FindMatchingEntries_ByServiceName_TestCases(string serviceName, int expectedCount, string expectedPath)
@@ -104,45 +106,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
 
             // Act
             var result = codeOwnerHelper.FindMatchingEntries(entries, "nonexistent");
-
-            // Assert
-            Assert.That(result.Count, Is.EqualTo(0));
-        }
-
-        #endregion
-
-        #region ExtractUniqueOwners Tests
-
-        [Test]
-        public void ExtractUniqueOwners_AllOwnerTypes_ReturnsUniqueList()
-        {
-            // Arrange
-            var entry = new CodeownersEntry
-            {
-                SourceOwners = new List<string> { "@user1", "@user2" },
-                ServiceOwners = new List<string> { "@user2", "@user3" },
-                AzureSdkOwners = new List<string> { "@user3", "@user4" }
-            };
-
-            // Act
-            var result = codeOwnerHelper.ExtractUniqueOwners(entry);
-
-            // Assert
-            Assert.That(result.Count, Is.EqualTo(4));
-            Assert.That(result, Contains.Item("@user1"));
-            Assert.That(result, Contains.Item("@user2"));
-            Assert.That(result, Contains.Item("@user3"));
-            Assert.That(result, Contains.Item("@user4"));
-        }
-
-        [Test]
-        public void ExtractUniqueOwners_EmptyLists_ReturnsEmptyList()
-        {
-            // Arrange
-            var entry = new CodeownersEntry();
-
-            // Act
-            var result = codeOwnerHelper.ExtractUniqueOwners(entry);
 
             // Assert
             Assert.That(result.Count, Is.EqualTo(0));

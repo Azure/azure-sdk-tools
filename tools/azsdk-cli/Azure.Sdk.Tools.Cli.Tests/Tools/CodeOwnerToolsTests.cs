@@ -63,10 +63,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             mockCodeOwnerHelper.Setup(x => x.FindMatchingEntries(It.IsAny<List<CodeownersEntry>>(), "Service Bus", It.IsAny<string>()))
                               .Returns(entries.Cast<CodeownersEntry?>().ToList());
             
-            // Mock ExtractUniqueOwners to return owners
-            mockCodeOwnerHelper.Setup(x => x.ExtractUniqueOwners(It.IsAny<CodeownersEntry>()))
-                              .Returns(new List<string> { "@azure/servicebus-team" });
-
             // Mock the ValidateCodeOwnersConcurrently method to return valid results
             var validationResults = new List<CodeOwnerValidationResult>
             {
@@ -94,7 +90,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
 
             // Assert
             Assert.That(result.Message, Does.Contain("Successfully found and validated codeowners."));
-            Assert.That(result.Repository, Is.EqualTo("azure-sdk-for-net"));
         }
 
         [Test]

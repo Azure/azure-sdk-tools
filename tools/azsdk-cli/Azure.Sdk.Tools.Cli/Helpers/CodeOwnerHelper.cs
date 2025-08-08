@@ -5,8 +5,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 {
     public interface ICodeOwnerHelper
     {
-        List<CodeownersEntry?> FindMatchingEntries(IList<CodeownersEntry> entries, string serviceName = null, string repoPath = null);
-        List<string> ExtractUniqueOwners(CodeownersEntry entry);
+        List<CodeownersEntry> FindMatchingEntries(IList<CodeownersEntry> entries, string serviceName = null, string repoPath = null);
         int findAlphabeticalInsertionPoint(List<CodeownersEntry> codeownersEntries, string path = null, string serviceLabel = null);
         public (List<CodeownersEntry>, int) mergeCodeownerEntries(List<CodeownersEntry> codeownersEntries, int index);
         string addCodeownersEntryAtIndex(string codeownersContent, CodeownersEntry codeownersEntry, int index, bool codeownersEntryExists);
@@ -22,46 +21,40 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
     public class CodeOwnerHelper : ICodeOwnerHelper
     {
-        public List<CodeownersEntry?> FindMatchingEntries(IList<CodeownersEntry> entries, string serviceName = null, string repoPath = null)
+        public List<CodeownersEntry> FindMatchingEntries(IList<CodeownersEntry> entries, string serviceName = null, string repoPath = null)
         {
             var codeownersEntries = new List<CodeownersEntry>();
             foreach (var entry in entries)
             {
-                // Check if service matches by ServiceLabels
-                if (!string.IsNullOrEmpty(serviceName) && entry.ServiceLabels?.Any(label => label.Contains(serviceName, StringComparison.OrdinalIgnoreCase)) == true)
-                    codeownersEntries.Add(entry);
-
-                // Check if service matches by PRLabels  
-                if (!string.IsNullOrEmpty(serviceName) && entry.PRLabels?.Any(label => label.Contains(serviceName, StringComparison.OrdinalIgnoreCase)) == true)
-                    codeownersEntries.Add(entry);
-
-                // Check if service matches by PathExpression
-                if (!string.IsNullOrEmpty(serviceName) && entry.PathExpression?.Contains(serviceName, StringComparison.OrdinalIgnoreCase) == true)
-                    codeownersEntries.Add(entry);
-
-                if (!string.IsNullOrEmpty(repoPath) && entry.PathExpression?.Contains(repoPath, StringComparison.OrdinalIgnoreCase) == true)
-                    codeownersEntries.Add(entry);
-
-                // Check if service matches by any owner team names
+                // If serviceName is provided, match by ServiceLabels or PRLabels (exact match, case and space insensitive)
                 if (!string.IsNullOrEmpty(serviceName))
                 {
-                    var allOwners = ExtractUniqueOwners(entry);
-                    if (allOwners.Any(owner => owner.Contains(serviceName, StringComparison.OrdinalIgnoreCase)))
+                    // Check ServiceLabels for exact match
+                    if (entry.ServiceLabels?.Any(label => NormalizeForComparison(label).Equals(NormalizeForComparison(serviceName), StringComparison.OrdinalIgnoreCase)) == true)
+                    {
                         codeownersEntries.Add(entry);
+                    }
+                    // Check PRLabels for exact match
+                    else if (entry.PRLabels?.Any(label => NormalizeForComparison(label).Equals(NormalizeForComparison(serviceName), StringComparison.OrdinalIgnoreCase)) == true)
+                    {
+                        codeownersEntries.Add(entry);
+                    }
+                }
+
+                // If repoPath is provided, match by PathExpression (contains match for paths - this is intentional)
+                if (!string.IsNullOrEmpty(repoPath) && entry.PathExpression?.Contains(repoPath, StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    codeownersEntries.Add(entry);
                 }
             }
 
-            return codeownersEntries.Cast<CodeownersEntry?>().ToList();
+            return codeownersEntries.Cast<CodeownersEntry>().ToList();
         }
 
-        public List<string> ExtractUniqueOwners(CodeownersEntry entry)
+        private string NormalizeForComparison(string input)
         {
-            var allOwners = new List<string>();
-            if (entry.SourceOwners?.Any() == true) allOwners.AddRange(entry.SourceOwners);
-            if (entry.ServiceOwners?.Any() == true) allOwners.AddRange(entry.ServiceOwners);
-            if (entry.AzureSdkOwners?.Any() == true) allOwners.AddRange(entry.AzureSdkOwners);
-
-            return allOwners.Where(o => !string.IsNullOrEmpty(o)).Distinct().ToList();
+            if (string.IsNullOrEmpty(input)) return string.Empty;
+            return input.Replace(" ", "").Replace("%", "").Trim();
         }
 
         public int findAlphabeticalInsertionPoint(List<CodeownersEntry> codeownersEntries, string path = null, string serviceLabel = null)
@@ -380,8 +373,6 @@ namespace Azure.Sdk.Tools.Cli.Helpers
     // Data models - moved from CodeOwnerTools for better organization
     public class ServiceCodeOwnerResult
     {
-        public string Repository { get; set; } = "";
-        public string Status { get; set; } = "";
         public string Message { get; set; } = "";
         public List<CodeOwnerValidationResult> CodeOwners { get; set; } = new();
     }

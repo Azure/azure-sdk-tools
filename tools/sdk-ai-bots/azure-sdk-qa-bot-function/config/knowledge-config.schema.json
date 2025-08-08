@@ -98,10 +98,6 @@
       "type": "object",
       "description": "Documentation path configuration",
       "properties": {
-        "name": {
-          "type": "string",
-          "description": "Unique name for the documentation path"
-        },
         "description": {
           "type": "string",
           "description": "Human-readable description of the documentation path"
@@ -125,9 +121,14 @@
           "items": {
             "type": "string"
           }
+        },
+        "relativeByRepoPath": {
+          "type": "boolean",
+          "description": "Whether paths are relative to the repository root",
+          "default": false
         }
       },
-      "required": ["name", "description"],
+      "required": ["description", "folder"],
       "additionalProperties": false
     }
   }

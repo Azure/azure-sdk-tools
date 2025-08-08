@@ -401,7 +401,7 @@ async function createReleaseNotesIndex(
     
     // Create index content
     const indexTitle = `# ${source.folder} - Recent Version Release Notes\n`;
-    const description = `This contains latest release version and changes of ${source.name || source.folder}\n\n`;
+    const description = `This contains latest release version and changes of ${source.folder}\n\n`;
     let content = indexTitle + description;
     
     // Add content from each release note file

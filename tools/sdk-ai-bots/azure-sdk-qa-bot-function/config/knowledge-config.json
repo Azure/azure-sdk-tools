@@ -11,14 +11,12 @@
       },
       "paths": [
         {
-          "name": "typespec_docs",
           "path": "website/src/content/docs/docs",
           "description": "TypeSpec documentation for API design",
           "folder": "typespec_docs",
           "fileNameLowerCase": true
         },
         {
-          "name": "typespec_http_specs",
           "description": "TypeSpec HTTP specification test cases",
           "path": "packages/http-specs/specs/generated",
           "folder": "typespec_http_specs",
@@ -34,14 +32,12 @@
       },
       "paths": [
         {
-          "name": "typespec_azure_docs",
           "path": "website/src/content/docs/docs",
           "description": "TypeSpec Azure-specific documentation",
           "folder": "typespec_azure_docs",
           "fileNameLowerCase": true
         },
         {
-          "name": "typespec_azure_http_specs",
           "description": "TypeSpec Azure HTTP specification test cases",
           "path": "packages/azure-http-specs/specs/generated",
           "folder": "typespec_azure_http_specs",
@@ -57,7 +53,6 @@
       },
       "paths": [
         {
-          "name": "azure_rest_api_specs_wiki",
           "description": "Wiki documentation for Azure REST API specifications",
           "folder": "azure_rest_api_specs_wiki"
         }
@@ -71,7 +66,6 @@
       },
       "paths": [
         {
-          "name": "azure_sdk_for_python_docs",
           "description": "Wiki documentation for Azure SDK for Python specifications",
           "path": "doc",
           "folder": "azure_sdk_for_python_docs"
@@ -87,7 +81,6 @@
       },
       "paths": [
         {
-          "name": "azure_sdk_for_python_wiki",
           "description": "Wiki documentation for Azure SDK for Python",
           "folder": "azure_sdk_for_python_wiki"
         }
@@ -102,10 +95,10 @@
       },
       "paths": [
         {
-          "name": "azure_api_guidelines",
           "description": "Microsoft API design guidelines for Azure",
           "path": "azure",
-          "folder": "azure_api_guidelines"
+          "folder": "azure_api_guidelines",
+          "relativeByRepoPath": true
         }
       ]
     },
@@ -119,10 +112,10 @@
       },
       "paths": [
         {
-          "name": "azure_resource_manager_rpc",
           "description": "Azure Resource Manager resource provider contract documentation",
           "path": "v1.0",
-          "folder": "azure_resource_manager_rpc"
+          "folder": "azure_resource_manager_rpc",
+          "relativeByRepoPath": true
         }
       ]
     },
@@ -135,10 +128,10 @@
       },
       "paths": [
         {
-          "name": "azure-sdk-docs-eng",
           "description": "Internal Azure SDK engineering documentation",
           "path": "docs",
-          "folder": "azure-sdk-docs-eng"
+          "folder": "azure-sdk-docs-eng",
+          "relativeByRepoPath": true
         }
       ]
     },
@@ -150,7 +143,6 @@
       },
       "paths": [
         {
-          "name": "azure-sdk-guidelines",
           "description": "General Azure SDK guidelines and best practices",
           "path": "docs",
           "folder": "azure-sdk-guidelines",

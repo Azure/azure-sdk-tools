@@ -12,6 +12,7 @@ export interface DocumentationPath {
     folder?: string;
     fileNameLowerCase?: boolean;
     ignoredPaths?: string[];
+    relativeByRepoPath?: boolean;
 }
 
 export interface Repository {
@@ -41,7 +42,6 @@ export interface KnowledgeConfig {
 export interface DocumentationSource {
     path: string;
     folder: string;
-    name?: string;
     fileNameLowerCase?: boolean;
     ignoredPaths?: string[];
 }
@@ -102,9 +102,8 @@ export class ConfigurationLoader {
             
             for (const docPath of source.paths) {
                 sources.push({
-                    path: docPath.path ? `docs/${repoPath}/${docPath.path}` : `docs/${repoPath}`,
-                    folder: docPath.folder || docPath.name.toLowerCase().replace(/[^a-z0-9]/g, '_'),
-                    name: docPath.name,
+                    path: (docPath.relativeByRepoPath || docPath.path === undefined) ? `docs/${repoPath}` : `docs/${repoPath}/${docPath.path}`,
+                    folder: docPath.folder,
                     fileNameLowerCase: docPath.fileNameLowerCase,
                     ignoredPaths: docPath.ignoredPaths
                 });
@@ -201,16 +200,7 @@ export class ConfigurationLoader {
         
         for (const docPath of paths) {
             if (docPath.path) {
-                // Add the path and ensure we get all necessary parent directories
-                const pathParts = docPath.path.split('/');
-                let currentPath = '';
-                
-                for (const part of pathParts) {
-                    currentPath = currentPath ? `${currentPath}/${part}` : part;
-                    if (!sparseCheckout.includes(currentPath)) {
-                        sparseCheckout.push(currentPath);
-                    }
-                }
+                sparseCheckout.push(docPath.path);
             }
         }
         

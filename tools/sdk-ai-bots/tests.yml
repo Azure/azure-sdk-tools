@@ -21,10 +21,9 @@ stages:
               go version
             displayName: 'check go'
           - script: |
-              cd $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend
               ./run.sh start
             displayName: 'start backend AI agent service'
-            workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
+            workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots
           - script: |
               pip install -r requirements.txt
               python evaluate.py

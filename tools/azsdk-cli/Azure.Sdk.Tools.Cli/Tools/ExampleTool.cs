@@ -119,27 +119,18 @@ public class ExampleTool : MCPTool
     {
         var commandName = ctx.ParseResult.CommandResult.Command.Name;
 
-        try
+        object result = commandName switch
         {
-            object result = commandName switch
-            {
-                AzureSubCommand => await DemonstrateAzureService(ctx.ParseResult.GetValueForOption(tenantOption), ct),
-                DevOpsSubCommand => await DemonstrateDevOpsService(ctx.ParseResult.GetValueForArgument(packageArgument), ctx.ParseResult.GetValueForOption(languageOption), ct),
-                GitHubSubCommand => await DemonstrateGitHubService(ct),
-                AISubCommand => await DemonstrateAIService(ctx.ParseResult.GetValueForArgument(aiInputArg), ct),
-                ErrorSubCommand => await DemonstrateErrorHandling(ctx.ParseResult.GetValueForArgument(errorInputArg), ctx.ParseResult.GetValueForOption(forceFailureOption), ct),
-                _ => throw new InvalidOperationException($"Unknown command: {commandName}")
-            };
+            AzureSubCommand => await DemonstrateAzureService(ctx.ParseResult.GetValueForOption(tenantOption), ct),
+            DevOpsSubCommand => await DemonstrateDevOpsService(ctx.ParseResult.GetValueForArgument(packageArgument), ctx.ParseResult.GetValueForOption(languageOption), ct),
+            GitHubSubCommand => await DemonstrateGitHubService(ct),
+            AISubCommand => await DemonstrateAIService(ctx.ParseResult.GetValueForArgument(aiInputArg), ct),
+            ErrorSubCommand => await DemonstrateErrorHandling(ctx.ParseResult.GetValueForArgument(errorInputArg), ctx.ParseResult.GetValueForOption(forceFailureOption), ct),
+            _ => new ExampleServiceResponse { ResponseError = $"Unknown command: {commandName}" }
+        };
 
-            ctx.ExitCode = ExitCode;
-            output.Output(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error executing example command {Command}", commandName);
-            ctx.ExitCode = 1;
-            output.Output($"Error: {ex.Message}");
-        }
+        ctx.ExitCode = ExitCode;
+        output.Output(result);
     }
 
     [McpServerTool(Name = "example_azure_service"), Description("Demonstrates Azure service integration")]

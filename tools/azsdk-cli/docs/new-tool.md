@@ -2,16 +2,50 @@
 
 This guide provides comprehensive instructions for creating new Tool classes in the `azsdk-cli` project. These tools serve dual purposes: they can be invoked via the command-line interface (CLI) and exposed through the Model Context Protocol (MCP) server for LLM coding agents.
 
+New tools can be created with copilot chat/agent:
+
+```
+Help me create a new tool using #new-tool.md as a reference
+```
+
 ## Table of Contents
 
-1. [Tool Architecture Overview](#tool-architecture-overview)
-2. [Step-by-Step Implementation Guide](#step-by-step-implementation-guide)
-3. [Code Examples and Templates](#code-examples-and-templates)
-4. [Dependency Injection](#dependency-injection)
-5. [Response Handling](#response-handling)
-6. [Registration and Testing](#registration-and-testing)
-7. [Best Practices](#best-practices)
-8. [Common Patterns and Anti-patterns](#common-patterns-and-anti-patterns)
+* [New Tool Development Guide](#new-tool-development-guide)
+   * [Table of Contents](#table-of-contents)
+   * [Tool Architecture Overview](#tool-architecture-overview)
+      * [Tool Structure Components](#tool-structure-components)
+   * [Step-by-Step Implementation Guide](#step-by-step-implementation-guide)
+      * [Step 1: Determine Tool Placement and Naming](#step-1-determine-tool-placement-and-naming)
+      * [Step 2: Define Command Group and Structure](#step-2-define-command-group-and-structure)
+      * [Step 3: Plan CLI Arguments and Options](#step-3-plan-cli-arguments-and-options)
+      * [Step 4: Design MCP Methods](#step-4-design-mcp-methods)
+      * [Step 5: Identify Dependencies](#step-5-identify-dependencies)
+   * [Code Examples and Templates](#code-examples-and-templates)
+      * [Basic Tool Template](#basic-tool-template)
+      * [Complex Tool Example (Multiple Sub-commands)](#complex-tool-example-multiple-sub-commands)
+   * [Dependency Injection](#dependency-injection)
+      * [Common Service Dependencies](#common-service-dependencies)
+      * [Service Usage Guidelines](#service-usage-guidelines)
+      * [Dependency Guidelines](#dependency-guidelines)
+   * [Response Handling](#response-handling)
+      * [Response Class Requirements](#response-class-requirements)
+      * [Response Class Template](#response-class-template)
+      * [Error Handling Patterns](#error-handling-patterns)
+   * [Registration and Testing](#registration-and-testing)
+      * [Register Your Tool](#register-your-tool)
+      * [Testing Your Tool](#testing-your-tool)
+      * [Example Integration Test](#example-integration-test)
+   * [Required Tool Conventions](#required-tool-conventions)
+      * [1. Error Handling](#1-error-handling)
+      * [2. Logging](#2-logging)
+      * [3. Output](#3-output)
+      * [4. MCP Server Integration](#4-mcp-server-integration)
+      * [5. Performance](#5-performance)
+   * [Common Patterns and Anti-patterns](#common-patterns-and-anti-patterns)
+      * [✅ Good Patterns](#-good-patterns)
+      * [❌ Anti-patterns to Avoid](#-anti-patterns-to-avoid)
+      * [Namespace and Organization Rules](#namespace-and-organization-rules)
+      * [Command Design Guidelines](#command-design-guidelines)
 
 ## Tool Architecture Overview
 
@@ -91,6 +125,8 @@ CommandHierarchy = [ SharedCommandGroups.EngSys, SharedCommandGroups.Cleanup ];
 - Custom service interfaces for your tool's specific needs
 
 ## Code Examples and Templates
+
+A working example of multiple tool types and usage of services can be found at [ExampleTool.cs](../Azure.Sdk.Tools.Cli/Tools/ExampleTool.cs)
 
 ### Basic Tool Template
 

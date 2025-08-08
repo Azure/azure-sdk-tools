@@ -398,7 +398,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     var prNumber = gitHelper.ParsePullRequestNumberFromUrl(pr);
                     var releasePlan = await devopsService.GetReleasePlanAsync(pr);
 
-                    await githubService.AddReleasePlanInfoInSdkAsync(repoOwner, repoName, prNumber, releasePlan.ReleasePlanLink, releasePlan.ActiveSpecPullRequest, releasePlan.WorkItemUrl, releasePlan.SpecAPIVersion);
+                    await AddReleasePlanInfoInSdkAsync(repoOwner, repoName, prNumber, releasePlan.ReleasePlanLink, releasePlan.ActiveSpecPullRequest, releasePlan.WorkItemUrl, releasePlan.SpecAPIVersion);
                 }
 
                 return pr;
@@ -466,7 +466,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
                 var repoOwner = gitHelper.ParseRepoOwnerFromUrl(parsedLink);
                 var prNumber = gitHelper.ParsePullRequestNumberFromUrl(parsedLink);
-                await githubService.AddReleasePlanInfoInSdkAsync(repoOwner, repoName, prNumber, releasePlan.ReleasePlanLink, releasePlan.ActiveSpecPullRequest, releasePlan.WorkItemUrl, releasePlan.SpecAPIVersion);
+                await AddReleasePlanInfoInSdkAsync(repoOwner, repoName, prNumber, releasePlan.ReleasePlanLink, releasePlan.ActiveSpecPullRequest, releasePlan.WorkItemUrl, releasePlan.SpecAPIVersion);
 
                 return $"Successfully linked pull request to release plan {releasePlan.ReleasePlanId}, work item id {releasePlan.WorkItemId}, and updated PR description.";
             }
@@ -475,6 +475,36 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 SetFailure();
                 return $"Failed to link SDK pull request to release plan work item, Error: {ex.Message}";
             }
+        }
+        
+        public async Task<string> AddReleasePlanInfoInSdkAsync(string repoOwner, string repoName, int prNumber, string releasePlanLink, string specPrLink, string workItemLink, string apiVersion)
+        {
+            var pr = await githubService.GetPullRequestAsync(repoOwner, repoName, prNumber);
+            if (pr == null)
+            {
+                return $"Failed to fetch pull request {repoOwner}/{repoName}#{prNumber}";
+            }
+            
+            // Check if the PR body already contains the release plan link (main indicator)
+            var header = "## Release Plan Details";
+            if (!string.IsNullOrEmpty(pr.Body) && pr.Body.Contains(header, StringComparison.OrdinalIgnoreCase))
+            {
+                return $"PR {repoOwner}/{repoName}#{prNumber} already contains release plan info. Skipping update.";
+            }
+
+            var links = $"{header}";
+            links += $"\n- Release Plan: {releasePlanLink}";
+            links += $"\n- Work Item Link: {workItemLink}";
+            links += $"\n- Spec Pull Request: {specPrLink}";
+            links += $"\n- Spec API version: {apiVersion}";
+
+            var appendedBody = string.IsNullOrEmpty(pr.Body)
+                ? links
+                : $"{pr.Body}\n{links}";
+
+            await githubService.UpdatePullRequestAsync(repoOwner, repoName, prNumber, pr.Title, appendedBody, pr.State.Value);
+
+            return $"Successfully added release plan information to PR {repoOwner}/{repoName}#{prNumber}";
         }
 
         public override Command GetCommand()

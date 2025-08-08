@@ -64,11 +64,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
             throw new NotImplementedException();
         }
 
-        public Task AddReleasePlanInfoInSdkAsync(string repoOwner, string repoName, int prNumber, string releasePlanLink, string specPrLink, string workItemLink, string apiVersion)
-        {
-            throw new NotImplementedException();
-        }
-
         public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path)
         {
             // Handle specific test scenarios

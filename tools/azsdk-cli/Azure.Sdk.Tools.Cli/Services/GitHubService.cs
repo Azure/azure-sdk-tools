@@ -80,7 +80,6 @@ public class GitConnection
         public Task<Issue> GetIssueAsync(string repoOwner, string repoName, int issueNumber);
         public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path);
         public Task UpdatePullRequestAsync(string repoOwner, string repoName, int pullRequestNumber, string title, string body, ItemState state);
-        public Task AddReleasePlanInfoInSdkAsync(string repoOwner, string repoName, int prNumber, string releasePlanLink, string specPrLink, string workItemLink, string apiVersion);
     }
 
     public class GitHubService : GitConnection, IGitHubService
@@ -323,41 +322,6 @@ public class GitConnection
                 logger.LogError(ex, $"Error fetching contents from {owner}/{repoName}/{path}");
                 throw;
             }
-        }
-
-        /// <summary>
-        /// Appends release plan and spec PR links to the body of a pull request and updates the PR on GitHub.
-        /// </summary>
-        /// <param name="repoOwner">The owner of the repository.</param>
-        /// <param name="repoName">The name of the repository.</param>
-        /// <param name="prNumber">The pull request number.</param>
-        /// <param name="releasePlanLink">The link to the release plan.</param>
-        /// <param name="specPrLink">The link to the spec pull request.</param>
-        public async Task AddReleasePlanInfoInSdkAsync(string repoOwner, string repoName, int prNumber, string releasePlanLink, string specPrLink, string workItemLink, string apiVersion)
-        {
-            var pr = await GetPullRequestAsync(repoOwner, repoName, prNumber);
-            if (pr == null)
-            {
-                logger.LogError($"Failed to fetch pull request {repoOwner}/{repoName}#{prNumber}");
-                return;
-            }
-
-            var links = $"Release Plan: {releasePlanLink}";
-            links += $"\nWork Item Link: {workItemLink}";
-            links += $"\nSpec Pull Request: {specPrLink}";
-            links += $"\nSpec API version: {apiVersion}";
-
-            // Check if the PR body already contains the release plan link (main indicator)
-            if (!string.IsNullOrEmpty(pr.Body) && pr.Body.Contains(links, StringComparison.OrdinalIgnoreCase))
-            {
-                logger.LogInformation($"PR {repoOwner}/{repoName}#{prNumber} already contains release plan info. Skipping update.");
-                return;
-            }
-
-            var appendedBody = string.IsNullOrEmpty(pr.Body)
-                ? links
-                : $"{pr.Body}\n{links}";
-            await UpdatePullRequestAsync(repoOwner, repoName, prNumber, pr.Title, appendedBody, pr.State.Value);
         }
     }
 }

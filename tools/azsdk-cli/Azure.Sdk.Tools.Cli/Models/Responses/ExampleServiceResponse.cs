@@ -1,5 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+using System.Text;
 using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models;
@@ -27,33 +28,32 @@ public class ExampleServiceResponse : Response
 
     public override string ToString()
     {
-        var output = new List<string>();
+        var sb = new StringBuilder();
 
         if (!string.IsNullOrEmpty(ServiceName))
         {
-            output.Add($"Service: {ServiceName}");
+            sb.AppendLine($"Service: {ServiceName}");
         }
 
         if (!string.IsNullOrEmpty(Operation))
         {
-            output.Add($"Operation: {Operation}");
+            sb.AppendLine($"Operation: {Operation}");
         }
 
         if (!string.IsNullOrEmpty(Result))
         {
-            output.Add($"Result: {Result}");
+            sb.AppendLine($"Result: {Result}");
         }
 
         if (Details?.Any() == true)
         {
-            output.Add("Details:");
+            sb.AppendLine("Details:");
             foreach (var detail in Details)
             {
-                output.Add($"  {detail.Key}: {detail.Value}");
+                sb.AppendLine($"  {detail.Key}: {detail.Value}");
             }
         }
 
-        var formatted = string.Join(Environment.NewLine, output);
-        return ToString(formatted); // Calls base method to include error formatting
+        return ToString(sb); // Calls base method to include error formatting
     }
 }

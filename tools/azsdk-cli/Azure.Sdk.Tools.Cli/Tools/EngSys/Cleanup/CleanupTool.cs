@@ -54,7 +54,7 @@ public class CleanupTool: MCPTool
         await CleanupAgents(projectEndpoint, ct);
     }
 
-    [McpServerTool, Description("Clean up AI agents in an AI foundry project. Leave projectEndpoint empty if not specified")]
+    [McpServerTool(Name = "azsdk-cleanup-ai-agents"), Description("Clean up AI agents in an AI foundry project. Leave projectEndpoint empty if not specified")]
     public async Task CleanupAgents(string? projectEndpoint = null, CancellationToken ct = default)
     {
         try

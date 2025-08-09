@@ -17,7 +17,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 {
     [Description("Release Plan Tool type that contains tools to connect to Azure DevOps to get release plan work item")]
     [McpServerToolType]
-    public partial class ReleasePlanTool(IDevOpsService devOpsService, ITypeSpecHelper typeSpecHelper, ILogger<ReleasePlanTool> logger, IOutputService output, IUserHelper userHelper, IGitHubService githubService) : MCPTool
+    public partial class ReleasePlanTool(IDevOpsService devOpsService, ITypeSpecHelper typeSpecHelper, ILogger<ReleasePlanTool> logger, IOutputService output, IUserHelper userHelper, IGitHubService githubService, IEnvironmentHelper environmentHelper) : MCPTool
     {
         //Namespace approval repo details
         private const string namespaceApprovalRepoName = "azure-sdk";
@@ -203,6 +203,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
             {
                 sdkReleaseType = sdkReleaseType?.ToLower() ?? "";
                 await ValidateCreateReleasePlanInputAsync(typeSpecProjectPath, serviceTreeId, productTreeId, specPullRequestUrl, sdkReleaseType);
+
+                // Check environment variable to determine if this should be a test release plan
+                var isAgentTesting = environmentHelper.GetBooleanVariable("AZSDKTOOLS_AGENT_TESTING", false);
+                if (isAgentTesting)
+                {
+                    isTestReleasePlan = true;
+                    logger.LogInformation("AZSDKTOOLS_AGENT_TESTING environment variable is set to true, creating test release plan");
+                }
 
                 var specType = typeSpecHelper.IsValidTypeSpecProjectPath(typeSpecProjectPath) ? "TypeSpec" : "OpenAPI";
                 var isMgmt = typeSpecHelper.IsTypeSpecProjectForMgmtPlane(typeSpecProjectPath); 

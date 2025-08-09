@@ -84,7 +84,7 @@ public class LogAnalysisTool : MCPTool
         }
     }
 
-    [McpServerTool, Description("Analyzes a log file for errors and issues")]
+    [McpServerTool(Name = "azsdk-analyze-log-file"), Description("Analyzes a log file for errors and issues")]
     public async Task<LogAnalysisResponse> AnalyzeLogFile(string filePath, bool fullSearch = false, List<string> customKeywords = null, int contextLines = -1)
     {
         try

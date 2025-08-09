@@ -79,7 +79,7 @@ public class PipelineTestsTool : MCPTool
         buildClient = connection.GetClient<BuildHttpClient>();
     }
 
-    [McpServerTool, Description("Downloads artifacts intended for LLM analysis from a pipeline run")]
+    [McpServerTool(Name = "azsdk-get-test-results"), Description("Downloads artifacts intended for LLM analysis from a pipeline run")]
     public async Task<ObjectCommandResponse> GetPipelineLlmArtifacts(int buildId)
     {
         string project = "";

@@ -449,7 +449,7 @@ public class PipelineAnalysisTool : MCPTool
         }
     }
 
-    [McpServerTool, Description("Analyze azure pipeline for failures. Set analyzeWithAgent to false unless requested otherwise by the user")]
+    [McpServerTool(Name = "azsdk-analyze-pipeline"), Description("Analyze azure pipeline for failures. Set analyzeWithAgent to false unless requested otherwise by the user")]
     public async Task<AnalyzePipelineResponse> AnalyzePipeline(int buildId, bool analyzeWithAgent, CancellationToken ct)
     {
         try

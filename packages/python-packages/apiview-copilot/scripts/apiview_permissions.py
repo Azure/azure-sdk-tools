@@ -1,13 +1,13 @@
 import argparse
 from uuid import uuid4
 import requests
-from azure.identity import DefaultAzureCredential
+from azure.identity import AzurePipelinesCredential, DefaultAzureCredential
 from azure.mgmt.authorization import AuthorizationManagementClient
 from azure.mgmt.cosmosdb import CosmosDBManagementClient
 
 
 def get_current_user_object_id():
-    credential = DefaultAzureCredential()
+    credential = AzurePipelinesCredential()
     token = credential.get_token("https://graph.microsoft.com/.default")
     headers = {"Authorization": f"Bearer {token.token}"}
     resp = requests.get("https://graph.microsoft.com/v1.0/me", headers=headers)
@@ -26,7 +26,7 @@ def main():
     subscription_id = "a18897a6-7e44-457d-9260-f2854c0aca42"
 
     # Auth
-    credential = DefaultAzureCredential()
+    credential = AzurePipelinesCredential()
     auth_client = AuthorizationManagementClient(credential, subscription_id)
     cosmos_client = CosmosDBManagementClient(credential, subscription_id)
 

@@ -43,7 +43,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private readonly Option<string> repoNameOpt = new(["--repo-name"], () => "azure-rest-api-specs", "GitHub repo name") { IsRequired = false };
 
 
-        [McpServerTool(Name = "azsdk-connect-to-github"), Description("Connect to GitHub using personal access token.")]
+        [McpServerTool(Name = "azsdk-get-github-user-details"), Description("Connect to GitHub using personal access token.")]
         public async Task<string> GetGitHubUserDetails()
         {
             try

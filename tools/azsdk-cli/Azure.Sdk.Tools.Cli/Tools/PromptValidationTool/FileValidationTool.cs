@@ -43,7 +43,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             output.Output(result);
         }
 
-        [McpServerTool(Name = "azsdk-validate-files"), Description("Validates whether the current workspace has all the files from a source repository (defaults to Azure/azure-rest-api-specs)")]
+        [McpServerTool(Name = "azsdk-validate-workspace-files"), Description("Validates whether the current workspace has all the files from a source repository (defaults to Azure/azure-rest-api-specs)")]
         public async Task<ValidationResponse> ValidateWorkspaceFiles(
             string sourceRepoOwner,
             string sourceRepoName, 

@@ -51,7 +51,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private static partial Regex NameSpaceIssueUrlRegex();
 
 
-        [McpServerTool(Name = "azsdk-get-release-plan-for-pull-request"), Description("Get release plan for API spec pull request. This tool should be used only if work item Id is unknown.")]
+        [McpServerTool(Name = "azsdk-get-release-plan-for-spec-pr"), Description("Get release plan for API spec pull request. This tool should be used only if work item Id is unknown.")]
         public async Task<string> GetReleasePlanForPullRequest(string pullRequestLink)
         {
             try

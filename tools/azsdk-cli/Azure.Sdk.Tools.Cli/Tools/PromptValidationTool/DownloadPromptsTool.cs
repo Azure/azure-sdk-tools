@@ -50,7 +50,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             output.Output(result);
         }
 
-        [McpServerTool(Name = "azsdk-download-files-from-github"), Description("Downloads files from a GitHub repository to a local directory, or from provided file paths")]
+        [McpServerTool(Name = "azsdk-download-prompts"), Description("Downloads files from a GitHub repository to a local directory, or from provided file paths")]
         public async Task<DownloadResponse> DownloadPrompts(
             string sourceRepoOwner, 
             string sourceRepoName, 

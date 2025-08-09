@@ -49,6 +49,8 @@ extends:
                     # Verify the context
                     az account show --query '{subscription:name,tenant:tenantId}'
 
+                    python packages/python-packages/apiview-copilot/scripts/apiview_permissions.py
+
                     python packages/python-packages/apiview-copilot/evals/online.py
 
                     exit $?

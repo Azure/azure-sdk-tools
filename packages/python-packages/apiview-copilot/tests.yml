@@ -44,7 +44,7 @@ extends:
                   scriptLocation: inlineScript
                   inlineScript: |
                     # Login using service principal (handled automatically by Azure DevOps)
-                    az account set --subscription "faa080af-c1d8-40ad-9cce-e1a450ca5b57"
+                    az account set --subscription "a18897a6-7e44-457d-9260-f2854c0aca42"
 
                     # Verify the context
                     az account show --query '{subscription:name,tenant:tenantId}'

@@ -89,22 +89,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             // Handle common string representations of true/false
             var normalizedValue = value.Trim().ToLowerInvariant();
             var isTrue = normalizedValue is "1" or "yes" or "on" or "enabled";
-            var isFalse = normalizedValue is "0" or "no" or "off" or "disabled";
-
-            if (isTrue)
-            {
-                logger.LogDebug("Environment variable {VariableName} interpreted as true: {Value}", name, value);
-                return true;
-            }
-
-            if (isFalse)
-            {
-                logger.LogDebug("Environment variable {VariableName} interpreted as false: {Value}", name, value);
-                return false;
-            }
-
-            logger.LogWarning("Environment variable {VariableName} has invalid boolean value '{Value}', returning false", name, value);
-            return false;
+            return isTrue;
         }
 
         public string GetStringVariable(string name, string defaultValue = "")

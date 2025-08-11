@@ -121,7 +121,7 @@ class ClassNode(NodeEntityBase):
             return (
                 function_module
                 and function_module.startswith(self.pkg_root_namespace)
-                and not function_module.endswith("_model_base")
+                and not (function_module.endswith("_model_base") or function_module.endswith("model_base"))
             )
         return False
 

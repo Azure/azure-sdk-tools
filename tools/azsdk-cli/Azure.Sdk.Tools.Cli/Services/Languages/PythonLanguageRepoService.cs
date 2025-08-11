@@ -14,10 +14,10 @@ public class PythonLanguageRepoService : LanguageRepoService
     private readonly ILogger _logger;
     private readonly IGitHelper _gitHelper;
 
-    public PythonLanguageRepoService(string packagePath, IProcessHelper processHelper, IGitHelper gitHelper, ILogger? logger = null) 
+    public PythonLanguageRepoService(string packagePath, IProcessHelper processHelper, IGitHelper gitHelper, ILogger logger) 
         : base(packagePath, processHelper)
     {
-        _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance;
+        _logger = logger;
         _gitHelper = gitHelper ?? throw new ArgumentNullException(nameof(gitHelper));
     }
 

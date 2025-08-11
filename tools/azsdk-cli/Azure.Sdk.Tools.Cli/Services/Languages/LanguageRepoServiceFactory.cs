@@ -17,11 +17,11 @@ public class LanguageRepoServiceFactory
     /// <param name="packagePath">Absolute path to the package directory</param>
     /// <param name="processHelper">Process helper for running commands</param>
     /// <param name="gitHelper">Git helper instance for repository operations</param>
-    /// <param name="logger">Optional logger instance for diagnostics</param>
+    /// <param name="logger">Logger instance for diagnostics</param>
     /// <returns>Language-specific repository service</returns>
-    public static ILanguageRepoService CreateService(string packagePath, IProcessHelper processHelper, IGitHelper gitHelper, ILogger? logger = null)
+    public static ILanguageRepoService CreateService(string packagePath, IProcessHelper processHelper, IGitHelper gitHelper, ILogger logger)
     {
-        logger?.LogInformation($"Create service for package at: {packagePath}");
+        logger.LogInformation($"Create service for package at: {packagePath}");
         if (string.IsNullOrWhiteSpace(packagePath))
         {
             throw new ArgumentException("Package path cannot be null or empty", nameof(packagePath));
@@ -34,10 +34,10 @@ public class LanguageRepoServiceFactory
 
         // Discover the repository root from the project path
         var repoRootPath = gitHelper.DiscoverRepoRoot(packagePath);
-        logger?.LogInformation($"Discovered repository root: {repoRootPath}");
+        logger.LogInformation($"Discovered repository root: {repoRootPath}");
         
         // Create language service using factory (detects language automatically)
-        logger?.LogInformation($"Creating language service for repository at: {repoRootPath}");
+        logger.LogInformation($"Creating language service for repository at: {repoRootPath}");
         var detectedLanguage = DetectLanguage(repoRootPath, logger);
 
         return detectedLanguage switch
@@ -56,16 +56,16 @@ public class LanguageRepoServiceFactory
     /// First checks for Language-Settings.ps1 as mentioned in the gist, then falls back to file-based detection.
     /// </summary>
     /// <param name="repositoryPath">Path to the repository root</param>
-    /// <param name="logger">Optional logger instance for diagnostics</param>
+    /// <param name="logger">Logger instance for diagnostics</param>
     /// <returns>Detected language string</returns>
-    public static string DetectLanguage(string repositoryPath, ILogger? logger = null)
+    public static string DetectLanguage(string repositoryPath, ILogger logger)
     {        
         // First, try to detect from eng/scripts/Language-Settings.ps1 as mentioned in the gist
         var languageSettingsPath = Path.Combine(repositoryPath, "eng", "scripts", "Language-Settings.ps1");
-        logger?.LogInformation($"Language settings path {languageSettingsPath}");
+        logger.LogInformation($"Language settings path {languageSettingsPath}");
         if (File.Exists(languageSettingsPath))
         {
-            logger?.LogDebug("Found Language-Settings.ps1 file at: {LanguageSettingsPath}", languageSettingsPath);
+            logger.LogDebug("Found Language-Settings.ps1 file at: {LanguageSettingsPath}", languageSettingsPath);
             try
             {
                 var content = File.ReadAllText(languageSettingsPath);
@@ -73,46 +73,46 @@ public class LanguageRepoServiceFactory
                 // Look for language indicators in the PowerShell file
                 if (content.Contains("python", StringComparison.OrdinalIgnoreCase))
                 {
-                    logger?.LogInformation("Detected language: python from Language-Settings.ps1");
+                    logger.LogInformation("Detected language: python from Language-Settings.ps1");
                     return "python";
                 }
                 if (content.Contains("javascript", StringComparison.OrdinalIgnoreCase) ||
                     content.Contains("js", StringComparison.OrdinalIgnoreCase))
                 {
-                    logger?.LogInformation("Detected language: javascript from Language-Settings.ps1");
+                    logger.LogInformation("Detected language: javascript from Language-Settings.ps1");
                     return "javascript";
                 }
                 if (content.Contains("dotnet", StringComparison.OrdinalIgnoreCase) ||
                     content.Contains(".net", StringComparison.OrdinalIgnoreCase))
                 {
-                    logger?.LogInformation("Detected language: dotnet from Language-Settings.ps1");
+                    logger.LogInformation("Detected language: dotnet from Language-Settings.ps1");
                     return "dotnet";
                 }
                 if (content.Contains("java", StringComparison.OrdinalIgnoreCase))
                 {
-                    logger?.LogInformation("Detected language: java from Language-Settings.ps1");
+                    logger.LogInformation("Detected language: java from Language-Settings.ps1");
                     return "java";
                 }
                 if (content.Contains("go", StringComparison.OrdinalIgnoreCase))
                 {
-                    logger?.LogInformation("Detected language: go from Language-Settings.ps1");
+                    logger.LogInformation("Detected language: go from Language-Settings.ps1");
                     return "go";
                 }
 
-                logger?.LogWarning("No recognized language found in Language-Settings.ps1");
+                logger.LogWarning("No recognized language found in Language-Settings.ps1");
             }
             catch (Exception ex)
             {
-                logger?.LogWarning(ex, "Failed to read Language-Settings.ps1 file, falling back to file-based detection");
+                logger.LogWarning(ex, "Failed to read Language-Settings.ps1 file, falling back to file-based detection");
                 // Fall through to file-based detection if reading the settings file fails
             }
         }
         else
         {
-            logger?.LogDebug("Language-Settings.ps1 not found, language detection unsuccessful");
+            logger.LogDebug("Language-Settings.ps1 not found, language detection unsuccessful");
         }
         
-        logger?.LogWarning("Could not detect repository language, returning 'unknown'");
+        logger.LogWarning("Could not detect repository language, returning 'unknown'");
         return "unknown";
     }
     

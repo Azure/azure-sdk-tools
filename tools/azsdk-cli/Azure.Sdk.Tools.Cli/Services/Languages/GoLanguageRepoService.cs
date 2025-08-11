@@ -18,10 +18,10 @@ public class GoLanguageRepoService : LanguageRepoService
     private readonly string formatterName = "goimports";
     private readonly string linterName = "golangci-lint";
 
-    public GoLanguageRepoService(string packagePath, IProcessHelper processHelper, ILogger<GoLanguageRepoService>? logger = null) 
+    public GoLanguageRepoService(string packagePath, IProcessHelper processHelper, ILogger<GoLanguageRepoService> logger) 
         : base(packagePath, processHelper)
     {
-        _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<GoLanguageRepoService>.Instance;
+        _logger = logger;
         
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {

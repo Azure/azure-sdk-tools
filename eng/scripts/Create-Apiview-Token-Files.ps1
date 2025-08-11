@@ -13,6 +13,7 @@ param (
   [string]$ParserPath = ""
 )
 
+$ErrorActionPreference = "Stop"
 
 Write-Host "Review Details Json: $($ReviewDetailsJson)"
 $reviews = ConvertFrom-Json $ReviewDetailsJson
@@ -37,21 +38,25 @@ if ($reviews -ne $null)
         }
 
         $reviewGenScriptPath = Join-Path $PSScriptRoot $ApiviewGenScript
-        if ($ParserPath -eq "")
-        {
-            &($reviewGenScriptPath) -SourcePath $codeDir/$($r.FileName) -OutPath $CodeFilePath
-            if ($LASTEXITCODE -ne 0) {
-                Write-Error "APIView token generation failed for Review ID: $($r.ReviewID), Revision ID: $($r.RevisionID)"
-                exit $LASTEXITCODE
+        
+        try {
+            if ($ParserPath -eq "")
+            {
+                &($reviewGenScriptPath) -SourcePath $codeDir/$($r.FileName) -OutPath $CodeFilePath
+                if ($LASTEXITCODE -ne 0) {
+                    throw "APIView token generation script failed with exit code: $LASTEXITCODE"
+                }
             }
-        }
-        else
-        {
-            &($reviewGenScriptPath) -SourcePath $codeDir/$($r.FileName) -OutPath $CodeFilePath -ParserPath $ParserPath
-            if ($LASTEXITCODE -ne 0) {
-                Write-Error "APIView token generation failed for Review ID: $($r.ReviewID), Revision ID: $($r.RevisionID)"
-                exit $LASTEXITCODE
+            else
+            {
+                &($reviewGenScriptPath) -SourcePath $codeDir/$($r.FileName) -OutPath $CodeFilePath -ParserPath $ParserPath
+                if ($LASTEXITCODE -ne 0) {
+                    throw "APIView token generation script failed with exit code: $LASTEXITCODE"
+                }
             }
+        } catch {
+            Write-Error "APIView token generation failed for Review ID: $($r.ReviewID), Revision ID: $($r.RevisionID). Error: $_"
+            exit 1
         }
     }
 }

@@ -59,12 +59,12 @@ namespace Azure.Sdk.Tools.Cli.Tools
             this.gitHelper = gitHelper;
             this.processHelper = processHelper;
             this.languageRepoServiceFactory = languageRepoServiceFactory;
-            CommandHierarchy = [SharedCommandGroups.Checks];
+            CommandHierarchy = [SharedCommandGroups.Package, SharedCommandGroups.RunChecks];
         }
 
         
 
-        [McpServerTool(Name = "RunAllCLIChecks"), Description("Run all validation checks for SDK packages. Provide absolute path to package root as param.")]
+        [McpServerTool(Name = "azsdk_package_run_all_checks"), Description("Run all validation checks for SDK packages. Provide absolute path to package root as param.")]
     public async Task<CLICheckResponse> RunAllChecks(string packagePath, CancellationToken ct)
         {
             try

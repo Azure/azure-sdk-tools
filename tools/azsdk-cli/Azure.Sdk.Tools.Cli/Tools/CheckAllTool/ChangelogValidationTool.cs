@@ -36,7 +36,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             this.output = output;
             this.gitHelper = gitHelper;
             this.processHelper = processHelper;
-            CommandHierarchy = [SharedCommandGroups.Checks];
+            CommandHierarchy = [SharedCommandGroups.Package, SharedCommandGroups.RunChecks];
         }
 
         public override Command GetCommand()
@@ -56,7 +56,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             output.Output(result);
         }
 
-        [McpServerTool(Name = "RunChangelogValidation"), Description("Run changelog validation for SDK packages. Provide absolute path to package root as param.")]
+        [McpServerTool(Name = "azsdk_package_run_changelog_validation"), Description("Run changelog validation for SDK packages. Provide absolute path to package root as param.")]
         public CLICheckResponse RunChangelogValidation(string packagePath)
         {
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();

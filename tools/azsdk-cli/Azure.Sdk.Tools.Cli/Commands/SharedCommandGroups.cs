@@ -35,9 +35,15 @@ namespace Azure.Sdk.Tools.Cli.Commands
             Options: []
         );
 
-        public static readonly CommandGroup Checks = new(
-            Verb: "checks",
-            Description: "Run validation and check tools",
+        public static readonly CommandGroup Package = new(
+            Verb: "package",
+            Description: "Package management and validation commands",
+            Options: []
+        );
+
+        public static readonly CommandGroup RunChecks = new(
+            Verb: "run-checks",
+            Description: "Run various validation checks",
             Options: []
         );
         #if DEBUG

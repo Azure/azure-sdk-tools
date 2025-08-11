@@ -36,7 +36,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             this.gitHelper = gitHelper;
             this.processHelper = processHelper;
             this.languageRepoServiceFactory = languageRepoServiceFactory;
-            CommandHierarchy = [SharedCommandGroups.Checks];
+            CommandHierarchy = [SharedCommandGroups.Package, SharedCommandGroups.RunChecks];
         }
 
         public override Command GetCommand()
@@ -56,7 +56,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             output.Output(result);
         }
 
-    [McpServerTool(Name = "RunDependencyCheck"), Description("Run dependency check for SDK packages. Provide absolute path to package root as param.")]
+    [McpServerTool(Name = "azsdk_package_run_dependency_check"), Description("Run dependency check for SDK packages. Provide absolute path to package root as param.")]
     public async Task<CLICheckResponse> RunDependencyCheck(string packagePath, CancellationToken ct)
         {
             try

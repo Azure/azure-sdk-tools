@@ -79,7 +79,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         }
 
         [Test]
-        public void GetBooleanVariable_WithInvalidValue_ReturnsDefault()
+        public void GetBooleanVariable_WithInvalidValue_ReturnsFalse()
         {
             // Arrange
             Environment.SetEnvironmentVariable("AZSDKTOOLS_TEST_BOOLEAN", "invalid");
@@ -89,7 +89,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             var result = newHelper.GetBooleanVariable("AZSDKTOOLS_TEST_BOOLEAN", true);
 
             // Assert
-            Assert.That(result, Is.True); // Should return the default value
+            Assert.That(result, Is.False); // Should return false for invalid values
         }
 
         [Test]

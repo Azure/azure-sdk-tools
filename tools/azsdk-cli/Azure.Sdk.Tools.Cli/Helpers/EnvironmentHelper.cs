@@ -103,8 +103,8 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 return false;
             }
 
-            logger.LogWarning("Environment variable {VariableName} has invalid boolean value '{Value}', using default: {DefaultValue}", name, value, defaultValue);
-            return defaultValue;
+            logger.LogWarning("Environment variable {VariableName} has invalid boolean value '{Value}', returning false", name, value);
+            return false;
         }
 
         public string GetStringVariable(string name, string defaultValue = "")

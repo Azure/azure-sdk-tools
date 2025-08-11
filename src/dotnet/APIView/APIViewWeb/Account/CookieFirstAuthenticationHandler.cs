@@ -1,9 +1,12 @@
 using System;
 using System.Linq;
+using System.Net.Http;
+using System.Security.Claims;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -27,16 +30,25 @@ public class CookieOrBearerAuthenticationHandler : AuthenticationHandler<Authent
         }
 
         string authHeader = Request.Headers["Authorization"].FirstOrDefault();
-
-        if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+        if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
         {
-            AuthenticateResult jwtResult = await Context.AuthenticateAsync("Bearer");
-            if (jwtResult.Succeeded)
+            return AuthenticateResult.NoResult();
+        }
+
+        string token = authHeader.Substring("Bearer ".Length).Trim();
+        if (AuthenticationValidator.IsGitHubToken(token))
+        {
+            var httpClientFactory = Context.RequestServices.GetRequiredService<IHttpClientFactory>();
+            using var httpClient = httpClientFactory.CreateClient();
+            ClaimsPrincipal user = await AuthenticationValidator.ValidateGitHubTokenAsync(token, httpClient);
+            if (user != null)
             {
-                return jwtResult;
+                var ticket = new AuthenticationTicket(user, "GitHubToken");
+                return AuthenticateResult.Success(ticket);
             }
         }
 
-        return AuthenticateResult.NoResult();
+        AuthenticateResult azureJwtResult = await Context.AuthenticateAsync("Bearer");
+        return azureJwtResult.Succeeded ? azureJwtResult : AuthenticateResult.NoResult();
     }
 }

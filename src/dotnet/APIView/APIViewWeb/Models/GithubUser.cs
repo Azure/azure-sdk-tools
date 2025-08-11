@@ -1,15 +1,31 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace APIViewWeb.Models
 {
     public class GithubUser
     {
+        [JsonProperty(PropertyName = "id")]
+        [JsonPropertyName("id")]
+        public int Id { get; set; }
+        
         [JsonProperty(PropertyName = "login")]
+        [JsonPropertyName("login")]
         public string Login { get; set; }
+        
+        [JsonProperty(PropertyName = "name")]
+        [JsonPropertyName("name")]
+        public string Name { get; set; }
+        
         [JsonProperty(PropertyName = "avatar_url")]
+        [JsonPropertyName("avatar_url")]
         public string AvatarUrl { get; set; }
+        
+        [JsonProperty(PropertyName = "html_url")]
+        [JsonPropertyName("html_url")]
+        public string HtmlUrl { get; set; }
 
         public override bool Equals(object obj)
         {
@@ -22,5 +38,10 @@ namespace APIViewWeb.Models
         {
             return this.Login.GetHashCode();
         }
+    }
+
+    public class GitHubOrganization
+    {
+        public string Login { get; set; } = "";
     }
 }

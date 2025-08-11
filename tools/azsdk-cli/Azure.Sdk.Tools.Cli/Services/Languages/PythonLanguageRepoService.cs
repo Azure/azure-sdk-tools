@@ -18,7 +18,7 @@ public class PythonLanguageRepoService : LanguageRepoService
         : base(packagePath, processHelper)
     {
         _logger = logger;
-        _gitHelper = gitHelper ?? throw new ArgumentNullException(nameof(gitHelper));
+        _gitHelper = gitHelper;
     }
 
     public override async Task<CLICheckResponse> AnalyzeDependenciesAsync(CancellationToken ct = default)

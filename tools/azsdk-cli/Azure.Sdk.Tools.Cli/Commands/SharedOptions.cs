@@ -11,6 +11,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(CheckAllTool),
             typeof(DependencyCheckTool),
             typeof(ChangelogValidationTool),
+            typeof(UnifiedCheckTool),
             typeof(CleanupTool),
             typeof(DownloadPromptsTool),
             typeof(LogAnalysisTool),

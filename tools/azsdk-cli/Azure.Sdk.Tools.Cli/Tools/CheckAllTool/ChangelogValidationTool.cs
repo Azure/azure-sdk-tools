@@ -51,8 +51,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
             var packagePath = ctx.ParseResult.GetValueForOption(packagePathOption);
             var result = await RunChangelogValidation(packagePath);
 
-            output.Output(result);
             ctx.ExitCode = ExitCode;
+            output.Output(result);
         }
 
         [McpServerTool(Name = "RunChangelogValidation"), Description("Run changelog validation for SDK packages. Provide absolute path to package root as param.")]

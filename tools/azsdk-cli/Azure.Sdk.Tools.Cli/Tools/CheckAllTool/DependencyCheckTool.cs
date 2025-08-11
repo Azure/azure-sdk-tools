@@ -50,8 +50,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
             var packagePath = ctx.ParseResult.GetValueForOption(packagePathOption);
             var result = await RunDependencyCheck(packagePath, ct);
 
-            output.Output(result);
             ctx.ExitCode = ExitCode;
+            output.Output(result);
         }
 
     [McpServerTool(Name = "RunDependencyCheck"), Description("Run dependency check for SDK packages. Provide absolute path to package root as param.")]

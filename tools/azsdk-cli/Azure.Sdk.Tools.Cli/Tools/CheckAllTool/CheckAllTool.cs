@@ -41,8 +41,9 @@ namespace Azure.Sdk.Tools.Cli.Tools
             var pr = ctx.ParseResult;
             var packagePath = pr.GetValueForOption(packagePathOption);
             var result = await RunAllChecks(packagePath, ct);
-            output.Output(result);
+
             ctx.ExitCode = ExitCode;
+            output.Output(result);
         }
 
         public CheckAllTool(

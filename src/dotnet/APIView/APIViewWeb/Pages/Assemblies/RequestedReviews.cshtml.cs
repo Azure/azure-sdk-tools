@@ -154,8 +154,9 @@ namespace APIViewWeb.Pages.Assemblies
             {
                 Console.WriteLine($"[NAMESPACE_PERF] RequestedReviews - User {userId} is not configured as approver, skipping namespace approvals");
             }
+            var step4Elapsed = step4Stopwatch.ElapsedMilliseconds;
             step4Stopwatch.Stop();
-            Console.WriteLine($"[NAMESPACE_PERF] RequestedReviews - Step 4 (Get namespace approvals) took: {step4Stopwatch.ElapsedMilliseconds}ms");
+            Console.WriteLine($"[NAMESPACE_PERF] RequestedReviews - Step 4 (Get namespace approvals) took: {step4Elapsed}ms");
             
             // Step 5: Merge namespace approval reviews with assigned reviews
             var step5Stopwatch = System.Diagnostics.Stopwatch.StartNew();
@@ -210,11 +211,11 @@ namespace APIViewWeb.Pages.Assemblies
                     batchReviewStopwatch.Stop();
                     Console.WriteLine($"[NAMESPACE_PERF] RequestedReviews - Batch fetch {reviewIds.Count} parent reviews took: {batchReviewStopwatch.ElapsedMilliseconds}ms");
                     
-                    foreach (var (reviewId, review) in reviewResults)
+                    foreach (var (rid, review) in reviewResults)
                     {
                         if (review != null)
                         {
-                            reviews[reviewId] = review;
+                            reviews[rid] = review;
                         }
                     }
                 }
@@ -285,11 +286,11 @@ namespace APIViewWeb.Pages.Assemblies
             ApprovedAPIRevisions = approvedAPIRevs;
             NamespaceApprovalRequestedAPIRevisions = namespaceApprovalAPIRevs;
             
-            // Step 8: Always populate reviews without namespace approval for the 4th tab
+            // Step 8: Disabled - Reviews without namespace approval tab is commented out
             var step8Stopwatch = System.Diagnostics.Stopwatch.StartNew();
-            ReviewsWithoutNamespaceApproval = await GetReviewsWithoutNamespaceApproval();
+            ReviewsWithoutNamespaceApproval = new List<APIRevisionListItemModel>();
             step8Stopwatch.Stop();
-            Console.WriteLine($"[NAMESPACE_PERF] RequestedReviews - Step 8 (Get reviews without namespace) took: {step8Stopwatch.ElapsedMilliseconds}ms");
+            Console.WriteLine($"[NAMESPACE_PERF] RequestedReviews - Step 8 (Disabled) took: {step8Stopwatch.ElapsedMilliseconds}ms");
             
             ApprovedAPIRevisions.OrderByDescending(r => r.ChangeHistory.First(c => c.ChangeAction == APIRevisionChangeAction.Approved).ChangedOn);
 
@@ -338,117 +339,9 @@ namespace APIViewWeb.Pages.Assemblies
         /// </summary>
         private async Task<List<APIRevisionListItemModel>> GetReviewsWithoutNamespaceApproval()
         {
-            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-            var userId = User.GetGitHubLogin();
-            var cacheKey = $"reviews_without_namespace_{userId}";
-            
-            // Check cache first - 5 minute cache for performance
-            if (_cache.TryGetValue(cacheKey, out List<APIRevisionListItemModel> cachedResults))
-            {
-                stopwatch.Stop();
-                Console.WriteLine($"[NAMESPACE_PERF] GetReviewsWithoutNamespaceApproval - Cache hit, took: {stopwatch.ElapsedMilliseconds}ms, returned {cachedResults.Count} reviews");
-                return cachedResults;
-            }
-
-            var reviewsWithoutNamespace = new List<APIRevisionListItemModel>();
-
-            try
-            {
-                // 10 second timeout for this complex operation
-                using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10)))
-                {
-                    // Define SDK languages that we want to show for proactive review
-                    var sdkLanguages = new HashSet<string> { "C#", "Java", "Python", "Go", "JavaScript" };
-                    
-                    // Step 8a: Get reviews for SDK languages that don't have namespace approval requested
-                    var step8aStopwatch = System.Diagnostics.Stopwatch.StartNew();
-                    var (allReviews, _, _, _, _, _) = await _reviewManager.GetPagedReviewListAsync(
-                        search: new string[] { }, // No search filter
-                        languages: sdkLanguages, // Only SDK languages
-                        isClosed: false, // Only open reviews
-                        isApproved: false, // Only unapproved reviews
-                        offset: 0,
-                        limit: 15, // Reduced from 25 to 15 for better performance
-                        orderBy: "created"
-                    );
-                    step8aStopwatch.Stop();
-                    Console.WriteLine($"[NAMESPACE_PERF] GetReviewsWithoutNamespaceApproval - Step 8a (Get paged reviews) took: {step8aStopwatch.ElapsedMilliseconds}ms, found {allReviews.Count()} reviews");
-
-                    // Filter for reviews that do NOT have namespace approval requested (status is NotStarted)
-                    var reviewsWithoutNamespaceRequested = allReviews.Where(r => r.NamespaceReviewStatus == NamespaceReviewStatus.NotStarted).ToList();
-                    Console.WriteLine($"[NAMESPACE_PERF] GetReviewsWithoutNamespaceApproval - Filtered to {reviewsWithoutNamespaceRequested.Count} reviews without namespace approval");
-
-                    if (reviewsWithoutNamespaceRequested.Any())
-                    {
-                        // Step 8b: OPTIMIZED - Batch fetch all API revisions for multiple reviews at once
-                        var step8bStopwatch = System.Diagnostics.Stopwatch.StartNew();
-                        
-                        // Extract all review IDs
-                        var reviewIds = reviewsWithoutNamespaceRequested.Select(r => r.Id).ToList();
-                        
-                        // Use Task.WhenAll to fetch all API revisions in parallel (limited to 4 concurrent calls)
-                        var semaphore = new SemaphoreSlim(4); // Limit to 4 concurrent database calls
-                        var revisionTasks = reviewIds.Select(async reviewId =>
-                        {
-                            await semaphore.WaitAsync(cts.Token);
-                            try
-                            {
-                                var apiRevisions = await _apiRevisionsManager.GetAPIRevisionsAsync(reviewId);
-                                var latestRevision = apiRevisions?.OrderByDescending(r => r.CreatedOn).FirstOrDefault();
-                                return (reviewId, latestRevision);
-                            }
-                            catch (Exception)
-                            {
-                                return (reviewId, (APIRevisionListItemModel)null);
-                            }
-                            finally
-                            {
-                                semaphore.Release();
-                            }
-                        });
-
-                        var revisionResults = await Task.WhenAll(revisionTasks);
-                        
-                        // Filter and add valid results
-                        foreach (var (reviewId, latestRevision) in revisionResults)
-                        {
-                            if (latestRevision != null && !latestRevision.IsApproved)
-                            {
-                                reviewsWithoutNamespace.Add(latestRevision);
-                            }
-                        }
-                        
-                        step8bStopwatch.Stop();
-                        Console.WriteLine($"[NAMESPACE_PERF] GetReviewsWithoutNamespaceApproval - Step 8b (Batch fetch revisions) took: {step8bStopwatch.ElapsedMilliseconds}ms, processed {reviewIds.Count} reviews");
-                    }
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                Console.WriteLine($"[NAMESPACE_PERF] GetReviewsWithoutNamespaceApproval - Operation timed out");
-            }
-            catch (InvalidOperationException ex) when (ex.Message.Contains("DefaultTempDataSerializer"))
-            {
-                Console.WriteLine($"[NAMESPACE_PERF] GetReviewsWithoutNamespaceApproval - TempData serialization error: {ex.Message}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[NAMESPACE_PERF] GetReviewsWithoutNamespaceApproval - Unexpected error: {ex.Message}");
-            }
-
-            // Cache the results for 5 minutes to improve performance
-            var cacheOptions = new MemoryCacheEntryOptions
-            {
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5),
-                SlidingExpiration = TimeSpan.FromMinutes(2), // Extend cache if accessed within 2 minutes
-                Priority = CacheItemPriority.Normal
-            };
-            _cache.Set(cacheKey, reviewsWithoutNamespace, cacheOptions);
-            
-            stopwatch.Stop();
-            Console.WriteLine($"[NAMESPACE_PERF] GetReviewsWithoutNamespaceApproval - Cache miss, total time: {stopwatch.ElapsedMilliseconds}ms, returned {reviewsWithoutNamespace.Count} reviews");
-            
-            return reviewsWithoutNamespace;
+            // Disabled with UI; retain method for future use without being invoked
+            await Task.CompletedTask;
+            return new List<APIRevisionListItemModel>();
         }
     }
 }

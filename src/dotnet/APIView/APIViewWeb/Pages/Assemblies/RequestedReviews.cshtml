@@ -39,6 +39,7 @@
                     }
                 </a>
             </li>
+            @* BEGIN: Reviews without namespace approval tab commented out
             <li class="nav-item" role="presentation">
                 <a class="nav-link" id="reviews-without-namespace-tab" data-toggle="tab" href="#reviews-without-namespace" role="tab" aria-controls="reviews-without-namespace" aria-selected="false">
                     Reviews without namespace approval
@@ -48,6 +49,7 @@
                     }
                 </a>
             </li>
+            END *@
         </ul>
 
         <!-- Tab Content -->
@@ -318,75 +320,7 @@
                 </div>
             </div>
 
-            <!-- Reviews without namespace approval Tab -->
-            <div class="tab-pane fade" id="reviews-without-namespace" role="tabpanel" aria-labelledby="reviews-without-namespace-tab">
-                <div class="col-12 p-0 border rounded table-responsive shadow-sm">
-                    <table id="reviews-without-namespace-table" class="table table-sm table-hover m-0" style="width:100%">
-                        <thead>
-                            <tr>
-                                <th scope="col" class="pl-4">Name</th>
-                                <th scope="col" class="border-left pl-3">CreatedBy</th>
-                                <th scope="col" class="border-left pl-3">Last Updated</th>
-                                <th scope="col" class="border-left pl-3">Type</th>
-                                <th scope="col" class="border-left pl-3">Created on</th>
-                                <th scope="col" class="border-left pl-3">Language</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @if (Model.ReviewsWithoutNamespaceApproval.Any())
-                            {
-                                @foreach (var apiRevision in Model.ReviewsWithoutNamespaceApproval)
-                                {
-                                    var truncationIndex = @Math.Min(apiRevision.PackageName.Length, 100);
-                                    <tr class="package-data-row">
-                                        <td class="align-middle pl-4 pt-0 pb-0">
-                                            @if (apiRevision.Language != null)
-                                            {
-                                                string iconClassName = "icon-" + PageModelHelpers.GetLanguageCssSafeName(@apiRevision.Language);
-                                                @* Only add language variant if it's not empty, default, or none (which don't have CSS classes) *@
-                                                var languageVariant = apiRevision.Files.FirstOrDefault().LanguageVariant;
-                                                @if (!string.IsNullOrEmpty(languageVariant) && 
-                                                     !languageVariant.Equals("default", StringComparison.OrdinalIgnoreCase) &&
-                                                     !languageVariant.Equals("none", StringComparison.OrdinalIgnoreCase))
-                                                {
-                                                    iconClassName += "-" + languageVariant.ToLower();
-                                                }
-                                                <span role="img" class="mx-1 icon icon-language @iconClassName" aria-label="@apiRevision.Language @languageVariant"></span>
-                                            }
-                                            <a class="review-name align-middle" asp-page="./Review" asp-route-id="@apiRevision.ReviewId">@apiRevision.PackageName.Substring(0, @truncationIndex)</a>
-                                            @if (apiRevision.IsApproved == true)
-                                            {
-                                                <i class="fas fa-check-circle text-success ml-2"></i>
-                                            }
-                                        </td>
-                                        <td class="align-middle border-left pl-3">
-                                            <a username="@apiRevision.CreatedBy">@apiRevision.CreatedBy</a>
-                                        </td>
-                                        <td class="align-middle border-left pl-3">
-                                            <span data-placement="left" data-toggle="tooltip" title="@apiRevision.LastUpdatedOn" date="@apiRevision.LastUpdatedOn.ToLocalTime()"></span>
-                                        </td>
-                                        <td class="align-middle border-left pl-3">
-                                            <span>@apiRevision.APIRevisionType.ToString()</span>
-                                        </td>
-                                        <td class="align-middle border-left pl-3">
-                                            <span data-placement="left" data-toggle="tooltip" title="@apiRevision.CreatedOn" date="@apiRevision.CreatedOn.ToLocalTime()"></span>
-                                        </td>
-                                        <td class="align-middle border-left pl-3">
-                                            <span>@apiRevision.Language</span>
-                                        </td>
-                                    </tr>
-                                }
-                            }
-                            else 
-                            {
-                                <tr class="package-data-row">
-                                    <td colspan="6">No SDK reviews found without namespace approval.</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            @* Reviews without namespace approval tab removed *@
         </div>
     </div>
 </div>

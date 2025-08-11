@@ -897,25 +897,17 @@ namespace APIViewWeb.Managers
         /// <returns>List of API revisions that have pending namespace approval requests</returns>
         public async Task<List<APIRevisionListItemModel>> GetPendingNamespaceApprovalsBatchAsync(ClaimsPrincipal user, int limit = 100)
         {
-            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             var userId = user.GetGitHubLogin();
             var pendingApprovals = new List<APIRevisionListItemModel>();
 
             try
             {
-                _telemetryClient.TrackTrace($"[NAMESPACE_PERF] Starting optimized GetPendingNamespaceApprovalsBatchAsync for user: {userId}, limit: {limit}");
-
-                // Add timeout protection to prevent hanging
                 using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30)))
                 {
-                    var step1Stopwatch = System.Diagnostics.Stopwatch.StartNew();
                     // Get all reviews that have namespace approval requests with single optimized query
                     var sdkLanguages = new[] { "C#", "Java", "Python", "Go", "JavaScript" };
                     var allNamespaceReviews = await _reviewsRepository.GetPendingNamespaceApprovalReviewsAsync(sdkLanguages);
-                    step1Stopwatch.Stop();
-                    _telemetryClient.TrackTrace($"[NAMESPACE_PERF] Step 1 - Optimized database query took: {step1Stopwatch.ElapsedMilliseconds}ms, found {allNamespaceReviews.Count()} reviews");
 
-                    var step2Stopwatch = System.Diagnostics.Stopwatch.StartNew();
                     // For each review, get the API revisions and find the one we can display
                     foreach (var review in allNamespaceReviews.Take(limit))
                     {
@@ -934,47 +926,29 @@ namespace APIViewWeb.Managers
                                 latestRevision.NamespaceApprovalRequestedOn = review.NamespaceApprovalRequestedOn;
                                 
                                 pendingApprovals.Add(latestRevision);
-                                _telemetryClient.TrackTrace($"[NAMESPACE_PERF] Added revision {latestRevision.Id} for review {review.Id} ({review.Language} - {review.PackageName})");
-                            }
-                            else
-                            {
-                                _telemetryClient.TrackTrace($"[NAMESPACE_PERF] No API revisions found for review {review.Id} ({review.Language} - {review.PackageName})");
                             }
                         }
-                        catch (Exception ex)
+                        catch (Exception)
                         {
-                            _telemetryClient.TrackTrace($"[NAMESPACE_PERF] Error processing review {review.Id}: {ex.Message}");
                             // Continue with other reviews
                         }
                     }
-                    step2Stopwatch.Stop();
-                    _telemetryClient.TrackTrace($"[NAMESPACE_PERF] Step 2 - Process reviews and get API revisions took: {step2Stopwatch.ElapsedMilliseconds}ms, processed {pendingApprovals.Count} revisions");
 
-                    var step3Stopwatch = System.Diagnostics.Stopwatch.StartNew();
-                    // Just sort by NamespaceApprovalRequestedOn without grouping to show all individual SDK reviews
+                    // Sort to show all individual SDK reviews by request time
                     var sortedApprovals = pendingApprovals
                         .OrderByDescending(r => r.NamespaceApprovalRequestedOn)
                         .ToList();
-                    step3Stopwatch.Stop();
-                    _telemetryClient.TrackTrace($"[NAMESPACE_PERF] Step 3 - Sorting took: {step3Stopwatch.ElapsedMilliseconds}ms, final result: {sortedApprovals.Count} individual reviews");
-
-                    stopwatch.Stop();
-                    _telemetryClient.TrackTrace($"[NAMESPACE_PERF] TOTAL optimized GetPendingNamespaceApprovalsBatchAsync took: {stopwatch.ElapsedMilliseconds}ms for user: {userId}");
 
                     return sortedApprovals;
                 }
             }
             catch (OperationCanceledException)
             {
-                stopwatch.Stop();
-                _telemetryClient.TrackTrace($"[NAMESPACE_PERF] TIMEOUT in GetPendingNamespaceApprovalsBatchAsync after {stopwatch.ElapsedMilliseconds}ms for user: {userId}");
                 // Return empty list on timeout to prevent infinite loading
                 return new List<APIRevisionListItemModel>();
             }
             catch (Exception ex)
             {
-                stopwatch.Stop();
-                _telemetryClient.TrackTrace($"[NAMESPACE_PERF] ERROR in GetPendingNamespaceApprovalsBatchAsync after {stopwatch.ElapsedMilliseconds}ms: {ex.Message}");
                 _telemetryClient.TrackException(ex);
                 // Return empty list on error to be safe
                 return new List<APIRevisionListItemModel>();

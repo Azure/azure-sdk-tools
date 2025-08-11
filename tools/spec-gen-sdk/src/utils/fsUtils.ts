@@ -1,6 +1,5 @@
 import path from 'path';
 import fs from 'fs';
-import { any } from './arrays';
 import { WorkflowContext } from '../types/Workflow';
 import { toolError } from './messageUtils';
 

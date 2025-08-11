@@ -54,7 +54,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             output.Output(result);
         }
 
-        [McpServerTool(Name = "azsdk_package_run_changelog_validation"), Description("Run changelog validation for SDK packages. Provide absolute path to package root as param.")]
+        [McpServerTool(Name = "azsdk_package_run_check_changelog_validation"), Description("Run changelog validation for SDK packages. Provide absolute path to package root as param.")]
         public async Task<CLICheckResponse> RunChangelogValidation(string packagePath)
         {
             try
@@ -76,6 +76,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 if (result.ExitCode != 0)
                 {
                     SetFailure(1);
+                    return new FailureCLICheckResponse(result.ExitCode, result.Output, "Changelog validation failed");
                 }
 
                 return result;

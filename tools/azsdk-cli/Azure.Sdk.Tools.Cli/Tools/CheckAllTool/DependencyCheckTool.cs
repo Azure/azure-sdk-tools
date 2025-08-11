@@ -52,7 +52,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             output.Output(result);
         }
 
-    [McpServerTool(Name = "azsdk_package_run_dependency_check"), Description("Run dependency check for SDK packages. Provide absolute path to package root as param.")]
+    [McpServerTool(Name = "azsdk_package_run_check_dependency_check"), Description("Run dependency check for SDK packages. Provide absolute path to package root as param.")]
     public async Task<CLICheckResponse> RunDependencyCheck(string packagePath, CancellationToken ct)
         {
             try
@@ -74,6 +74,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 if (result.ExitCode != 0)
                 {
                     SetFailure(1);
+                    return new FailureCLICheckResponse(result.ExitCode, result.Output, "Dependency check failed");
                 }
 
                 return result;

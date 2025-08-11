@@ -233,7 +233,8 @@ describe.sequential("Verify commands", () => {
     }
   });
 
-  it("Update example sdk & pass commit", async () => {
+  // TODO: unskip after updates have been merged to upstream tspconfig.yaml files
+  it.skip("Update example sdk & pass commit", async () => {
     try {
       const args = {
         "output-dir": joinPaths(
@@ -241,8 +242,6 @@ describe.sequential("Verify commands", () => {
           "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest",
         ),
         commit: "45924e49834c4e01c0713e6b7ca21f94be17e396",
-        "local-spec-repo":
-          "./test/examples/specification/contosowidgetmanager/Contoso.WidgetManager",
       };
       await updateCommand(args);
     } catch (error) {
@@ -327,7 +326,7 @@ describe.sequential("Verify commands", () => {
     } catch (error: any) {
       assert.fail("Failed to init. Error: " + error);
     }
-  }, 300000);
+  });
 
   it("Init with --update-if-exists", async () => {
     try {

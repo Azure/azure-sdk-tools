@@ -97,6 +97,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             Assert.That(result.ExitCode, Is.EqualTo(1));
             Assert.IsTrue(result is FailureCLICheckResponse);
             var failureResult = result as FailureCLICheckResponse;
+            Assert.IsNotNull(failureResult);
             Assert.IsTrue(failureResult.Error.Contains("Package path does not exist"));
         }
 

@@ -31,9 +31,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             GoPackageDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(GoPackageDir);
 
-            LangService = new GoLanguageRepoService(GoPackageDir, new ProcessHelper(NullLogger<ProcessHelper>.Instance), NullLogger<GoLanguageRepoService>.Instance);
+            LangService = new GoLanguageRepoService(new ProcessHelper(NullLogger<ProcessHelper>.Instance), NullLogger<GoLanguageRepoService>.Instance);
 
-            var resp = await LangService.CreateEmptyPackage("untitleddotloop");
+            var resp = await LangService.CreateEmptyPackage(GoPackageDir, "untitleddotloop");
             Assert.That(resp.ExitCode, Is.EqualTo(0));
         }
 
@@ -75,19 +75,19 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
             await Process.Start(new ProcessStartInfo() { FileName = GoProgram, ArgumentList = { "get", "github.com/Azure/azure-sdk-for-go/sdk/azidentity@v1.10.0" }, WorkingDirectory = GoPackageDir })!.WaitForExitAsync();
 
-            var resp = await LangService.AnalyzeDependenciesAsync();
+            var resp = await LangService.AnalyzeDependenciesAsync(GoPackageDir);
             Assert.That(resp.ExitCode, Is.EqualTo(0));
 
             var identityLine = File.ReadAllLines(Path.Join(GoPackageDir, "go.mod")).Where(line => line.Contains("azidentity")).Select(line => line.Trim()).First();
             Assert.That(identityLine, Is.Not.EqualTo("github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.10.0"));
 
-            resp = await LangService.FormatCodeAsync();
+            resp = await LangService.FormatCodeAsync(GoPackageDir);
             Assert.That(File.ReadAllText(Path.Join(GoPackageDir, "main.go")), Does.Not.Contain("azservicebus"));
 
-            resp = await LangService.BuildProjectAsync();
+            resp = await LangService.BuildProjectAsync(GoPackageDir);
             Assert.That(resp.ExitCode, Is.EqualTo(0));
 
-            resp = await LangService.LintCodeAsync();
+            resp = await LangService.LintCodeAsync(GoPackageDir);
             Assert.That(resp.ExitCode, Is.EqualTo(0));
         }
 
@@ -105,7 +105,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 }
                 """);
 
-            var resp = await LangService.BuildProjectAsync();
+            var resp = await LangService.BuildProjectAsync(GoPackageDir);
             Assert.Multiple(() =>
             {
                 Assert.That(resp.ExitCode, Is.EqualTo(1));
@@ -129,7 +129,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 }
                 """);
 
-            var resp = await LangService.LintCodeAsync();
+            var resp = await LangService.LintCodeAsync(GoPackageDir);
             Assert.Multiple(() =>
             {
                 Assert.That(resp.ExitCode, Is.EqualTo(1));

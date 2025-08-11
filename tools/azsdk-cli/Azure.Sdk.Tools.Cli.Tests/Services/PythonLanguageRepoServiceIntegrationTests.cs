@@ -20,7 +20,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
     [TestFixture]
     public class PythonLanguageRepoServiceIntegrationTests
     {
-        private Mock<ILogger> _mockLogger;
+        private Mock<ILogger<PythonLanguageRepoService>> _mockLogger;
         private Mock<IGitHelper> _mockGitHelper;
         private string _tempProjectDir;
         private string _tempRepoDir;
@@ -28,7 +28,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         [SetUp]
         public void Setup()
         {
-            _mockLogger = new Mock<ILogger>();
+            _mockLogger = new Mock<ILogger<PythonLanguageRepoService>>();
             _mockGitHelper = new Mock<IGitHelper>();
             
             // Create temporary test directories
@@ -80,10 +80,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             // Arrange - Create a minimal Python project structure
             await CreateMinimalPythonProject();
             
-            var pythonService = new PythonLanguageRepoService(_tempProjectDir, new ProcessHelper(NullLogger<ProcessHelper>.Instance), _mockGitHelper.Object, _mockLogger.Object);
+            var pythonService = new PythonLanguageRepoService(new ProcessHelper(NullLogger<ProcessHelper>.Instance), _mockGitHelper.Object, _mockLogger.Object);
 
             // Act
-            var result = await pythonService.AnalyzeDependenciesAsync();
+            var result = await pythonService.AnalyzeDependenciesAsync(_tempProjectDir);
 
             // Assert
             Assert.IsNotNull(result);
@@ -115,10 +115,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             await CreateMalformedToxConfig();
             await CreateMinimalPythonProject();
             
-            var pythonService = new PythonLanguageRepoService(_tempProjectDir, new ProcessHelper(NullLogger<ProcessHelper>.Instance), _mockGitHelper.Object, _mockLogger.Object);
+            var pythonService = new PythonLanguageRepoService(new ProcessHelper(NullLogger<ProcessHelper>.Instance), _mockGitHelper.Object, _mockLogger.Object);
 
             // Act
-            var result = await pythonService.AnalyzeDependenciesAsync();
+            var result = await pythonService.AnalyzeDependenciesAsync(_tempProjectDir);
 
             // Assert
             Assert.IsNotNull(result);
@@ -140,10 +140,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             await CreateValidMinimalToxConfig();
             await CreateMinimalPythonProject();
             
-            var pythonService = new PythonLanguageRepoService(_tempProjectDir, new ProcessHelper(NullLogger<ProcessHelper>.Instance), _mockGitHelper.Object, _mockLogger.Object);
+            var pythonService = new PythonLanguageRepoService(new ProcessHelper(NullLogger<ProcessHelper>.Instance), _mockGitHelper.Object, _mockLogger.Object);
 
             // Act
-            var result = await pythonService.AnalyzeDependenciesAsync();
+            var result = await pythonService.AnalyzeDependenciesAsync(_tempProjectDir);
 
             // Assert
             Assert.IsNotNull(result);

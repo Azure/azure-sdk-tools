@@ -274,11 +274,11 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 var actionType = isAdding ? "add-codeowner-alias" : "remove-codeowner-alias";
 
                 var resultMessages = await CreateCodeownerPR(
-                    repo,                                              // Repository name
+                    repo,                                                             // Repository name
                     string.Join('\n', modifiedCodeownersContent),                     // Modified content
                     codeownersSha,                                                    // SHA of the file to update 
                     $"{actionDescription} {updatedEntry.ServiceLabels?.FirstOrDefault() ?? updatedEntry.PathExpression}", // Description for commit message, PR title, and description
-                    actionType,                                             // Branch prefix for the action
+                    actionType,                                                       // Branch prefix for the action
                     updatedEntry.ServiceLabels?.FirstOrDefault() ?? updatedEntry.PathExpression, // Identifier for the PR
                     workingBranch);
 

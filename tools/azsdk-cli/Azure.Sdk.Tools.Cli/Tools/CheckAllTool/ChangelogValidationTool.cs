@@ -90,14 +90,12 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     return new FailureCLICheckResponse(1, "", $"PowerShell script not found at expected location: {scriptPath}");
                 }
 
-                // Execute the PowerShell script using ProcessHelper
-                var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-                var command = isWindows ? "cmd.exe" : "pwsh";
-                var args = isWindows 
-                    ? new[] { "/C", "pwsh", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", scriptPath, "-PackageName", Path.GetFileName(packagePath) }
-                    : new[] { "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", scriptPath, "-PackageName", Path.GetFileName(packagePath) };
+                var command = "pwsh";
+                var args = new[] { "-File", scriptPath, "-PackageName", Path.GetFileName(packagePath) };
 
-                var processResult = processHelper.RunProcess(command, args, packagePath);
+                // Use a longer timeout for changelog validation - 5 minutes should be sufficient
+                var timeoutMs = 300_000; // 5 minutes
+                var processResult = processHelper.RunProcess(command, args, packagePath, timeoutMs);
                 stopwatch.Stop();
 
                 if (processResult.ExitCode == 0)

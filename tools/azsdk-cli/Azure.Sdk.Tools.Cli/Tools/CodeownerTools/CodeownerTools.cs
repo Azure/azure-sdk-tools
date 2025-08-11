@@ -207,17 +207,19 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 CodeownersEntry? updatedEntry = null;
                 if (!string.IsNullOrEmpty(path))
                 {
-                    // get the first entry that matches if no one get null. Then compare the path of the entry with the given path 
+                    // Find the first codeowners entry that matches the specified path exactly (case-insensitive)
                     updatedEntry = codeownersEntries.FirstOrDefault(entry =>
-                        entry.PathExpression?.Equals(path, StringComparison.OrdinalIgnoreCase) == true);
+                        entry.PathExpression?.Equals(path, StringComparison.OrdinalIgnoreCase));
                 }
                 else if (!string.IsNullOrEmpty(serviceLabel))
-                {   // search for service label in the service labels of the entries
+                {
+                    // Find the codeowners entry that contains the specified service label (case-insensitive)
                     updatedEntry = codeownersEntries.FirstOrDefault(entry =>
-                        entry.ServiceLabels?.Any(label => label.Equals(serviceLabel, StringComparison.OrdinalIgnoreCase)) == true);
+                        entry.ServiceLabels?.Any(label => label.Equals(serviceLabel, StringComparison.OrdinalIgnoreCase)));
                 }
 
                 var codeownersEntryExists = false;
+
                 // If the Entry exists
                 if (updatedEntry != null)
                 {

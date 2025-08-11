@@ -18,7 +18,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
     /// Additional edge case and behavior tests for PythonLanguageRepoService
     /// </summary>
     [TestFixture]
-    public class PythonLanguageRepoServiceEdgeCaseTests
+    public class PythonLanguageRepoServiceTests
     {
         private Mock<ILogger<PythonLanguageRepoService>> _mockLogger;
         private Mock<IGitHelper> _mockGitHelper;
@@ -31,8 +31,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _mockLogger = new Mock<ILogger<PythonLanguageRepoService>>();
             _mockGitHelper = new Mock<IGitHelper>();
             
-            _testPackagePath = Path.Combine(Path.GetTempPath(), "PythonEdgeCaseTest_Package", Guid.NewGuid().ToString("N"));
-            _testRepoRoot = Path.Combine(Path.GetTempPath(), "PythonEdgeCaseTest_Repo", Guid.NewGuid().ToString("N"));
+            _testPackagePath = Path.Combine(Path.GetTempPath(), "PythonTest_Package", Guid.NewGuid().ToString("N"));
+            _testRepoRoot = Path.Combine(Path.GetTempPath(), "PythonTest_Repo", Guid.NewGuid().ToString("N"));
             
             Directory.CreateDirectory(_testPackagePath);
             Directory.CreateDirectory(_testRepoRoot);

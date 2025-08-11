@@ -31,7 +31,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             GoPackageDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(GoPackageDir);
 
-            LangService = new GoLanguageRepoService(GoPackageDir, new ProcessHelper(NullLogger<ProcessHelper>.Instance));
+            LangService = new GoLanguageRepoService(GoPackageDir, new ProcessHelper(NullLogger<ProcessHelper>.Instance), NullLogger<GoLanguageRepoService>.Instance);
 
             var resp = await LangService.CreateEmptyPackage("untitleddotloop");
             Assert.That(resp.ExitCode, Is.EqualTo(0));

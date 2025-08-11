@@ -1,4 +1,5 @@
 using System.IO;
+using System.Linq;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Azure.Sdk.Tools.Cli.Helpers;
@@ -52,62 +53,63 @@ public class LanguageRepoServiceFactory
     }
 
     /// <summary>
-    /// Detects the primary language of a repository based on file patterns and configuration files.
-    /// First checks for Language-Settings.ps1, then falls back to file-based detection.
+    /// Detects the primary language of a repository based on the README.md header.
+    /// Looks for patterns like "Azure SDK for .NET", "Azure SDK for Python", etc.
     /// </summary>
     /// <param name="repositoryPath">Path to the repository root</param>
     /// <param name="logger">Logger instance for diagnostics</param>
     /// <returns>Detected language string</returns>
     public static string DetectLanguage(string repositoryPath, ILogger logger)
     {        
-        // First, try to detect from eng/scripts/Language-Settings.ps1
-        var languageSettingsPath = Path.Combine(repositoryPath, "eng", "scripts", "Language-Settings.ps1");
-        logger.LogInformation($"Language settings path {languageSettingsPath}");
-        if (!File.Exists(languageSettingsPath))
+        // Try to detect from README.md header at repository root
+        var readmePath = Path.Combine(repositoryPath, "README.md");
+        logger.LogInformation($"README path: {readmePath}");
+        if (!File.Exists(readmePath))
         {
-            logger.LogDebug("Language-Settings.ps1 not found, language detection unsuccessful");
+            logger.LogDebug("README.md not found, language detection unsuccessful");
             return "unknown";
         }
 
-        logger.LogDebug("Found Language-Settings.ps1 file at: {LanguageSettingsPath}", languageSettingsPath);
+        logger.LogDebug("Found README.md file at: {ReadmePath}", readmePath);
         try
         {
-            var content = File.ReadAllText(languageSettingsPath);
+            var content = File.ReadAllText(readmePath);
 
-            // Look for language indicators in the PowerShell file
-            if (content.Contains("python", StringComparison.OrdinalIgnoreCase))
+            // Look for "Azure SDK for X" pattern in the first line of README
+            var firstLine = content.Split('\n').FirstOrDefault()?.Trim().ToLowerInvariant() ?? "";
+
+            // Extract the language from the first line
+            if (firstLine.Contains("python"))
             {
-                logger.LogInformation("Detected language: python from Language-Settings.ps1");
+                logger.LogInformation("Detected language: python from README.md header");
                 return "python";
             }
-            if (content.Contains("javascript", StringComparison.OrdinalIgnoreCase) ||
-                content.Contains("js", StringComparison.OrdinalIgnoreCase))
+            if (firstLine.Contains("javascript"))
             {
-                logger.LogInformation("Detected language: javascript from Language-Settings.ps1");
+                logger.LogInformation("Detected language: javascript from README.md header");
                 return "javascript";
             }
-            if (content.Contains("dotnet", StringComparison.OrdinalIgnoreCase) ||
-                content.Contains(".net", StringComparison.OrdinalIgnoreCase))
+            if (firstLine.Contains(".net"))
             {
-                logger.LogInformation("Detected language: dotnet from Language-Settings.ps1");
+                logger.LogInformation("Detected language: dotnet from README.md header");
                 return "dotnet";
             }
-            if (content.Contains("java", StringComparison.OrdinalIgnoreCase))
+            if (firstLine.Contains("java"))
             {
-                logger.LogInformation("Detected language: java from Language-Settings.ps1");
+                logger.LogInformation("Detected language: java from README.md header");
                 return "java";
             }
-            if (content.Contains("go", StringComparison.OrdinalIgnoreCase))
+            if (firstLine.Contains("go"))
             {
-                logger.LogInformation("Detected language: go from Language-Settings.ps1");
+                logger.LogInformation("Detected language: go from README.md header");
                 return "go";
             }
 
-            logger.LogWarning("No recognized language found in Language-Settings.ps1");
+            logger.LogWarning("No recognized language found in README.md header");
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Failed to read Language-Settings.ps1 file");
+            logger.LogWarning(ex, "Failed to read README.md file");
             return "unknown";
         }
         return "unknown";

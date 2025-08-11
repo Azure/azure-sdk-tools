@@ -25,8 +25,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private readonly IOutputService output;
         private readonly ILanguageRepoServiceFactory languageRepoServiceFactory;
 
-        private readonly Option<string> packagePathOption = new(["--package-path", "-p"], "Path to the package directory to check") { IsRequired = true };
-
         public DependencyCheckTool(ILogger<DependencyCheckTool> logger, IOutputService output, ILanguageRepoServiceFactory languageRepoServiceFactory) : base()
         {
             this.logger = logger;
@@ -38,14 +36,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
         public override Command GetCommand()
         {
             Command command = new("dependency-check", "Run dependency check for SDK projects");
-            command.AddOption(packagePathOption);
+            command.AddOption(SharedOptions.PackagePath);
             command.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
             return command;
         }
 
     public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
         {
-            var packagePath = ctx.ParseResult.GetValueForOption(packagePathOption);
+            var packagePath = ctx.ParseResult.GetValueForOption(SharedOptions.PackagePath);
             var result = await RunDependencyCheck(packagePath, ct);
 
             ctx.ExitCode = ExitCode;

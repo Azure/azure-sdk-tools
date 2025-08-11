@@ -24,13 +24,11 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private readonly IOutputService output;
         private readonly ILanguageRepoServiceFactory languageRepoServiceFactory;
 
-        private readonly Option<string> packagePathOption = new(["--package-path", "-p"], "Path to the package directory to check") { IsRequired = true };
-
 
         public override Command GetCommand()
         {
             Command command = new("all", "Run all validation checks for SDK projects");
-            command.AddOption(packagePathOption);
+            command.AddOption(SharedOptions.PackagePath);
             command.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
             return command;
         }
@@ -38,7 +36,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
         {
             var pr = ctx.ParseResult;
-            var packagePath = pr.GetValueForOption(packagePathOption);
+            var packagePath = pr.GetValueForOption(SharedOptions.PackagePath);
             var result = await RunAllChecks(packagePath, ct);
 
             ctx.ExitCode = ExitCode;

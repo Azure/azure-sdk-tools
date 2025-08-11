@@ -133,7 +133,7 @@ export async function initCommand(argv: any) {
   } else if (await doesFileExist(tspConfig)) {
     isUrl = false;
   }
-  const tspLocationData: TspLocation = {
+  let tspLocationData: TspLocation = {
     directory: "",
     commit: "",
     repo: "",
@@ -193,20 +193,20 @@ export async function initCommand(argv: any) {
       tspLocationData = await updateExistingTspLocation(tspLocationData, newPackageDir);
     }
     argv["legacyBehavior"] =
-      !configYaml?.options?.[emitter]?.["emitter-output-dir"] &&
-      configYaml?.options?.[emitter]?.["package-dir"]
+      !configYaml?.options?.[emitterData.emitter]?.["emitter-output-dir"] &&
+      configYaml?.options?.[emitterData.emitter]?.["package-dir"]
         ? true
         : false;
 
     if (argv["legacyBehavior"]) {
       Logger.warn(
-        `Please update your tspconfig.yaml to include the "emitter-output-dir" option under the "${emitter}" emitter options. "package-dir" support is deprecated and will be removed in future versions.`,
+        `Please update your tspconfig.yaml to include the "emitter-output-dir" option under the "${emitterData.emitter}" emitter options. "package-dir" support is deprecated and will be removed in future versions.`,
       );
       outputDir = await createNewPackageDirAndTspLocation(
         outputDir,
-        getServiceDir(configYaml, emitter),
+        getServiceDir(configYaml, emitterData.emitter),
         tspLocationData,
-        configYaml?.options?.[emitter]?.["package-dir"],
+        configYaml?.options?.[emitterData.emitter]?.["package-dir"],
       );
     }
     Logger.debug(`Removing sparse-checkout directory ${cloneDir}`);
@@ -268,13 +268,13 @@ export async function initCommand(argv: any) {
     }
     if (argv["legacyBehavior"]) {
       Logger.warn(
-        `Please update your tspconfig.yaml to include the "emitter-output-dir" option under the "${emitter}" emitter options. "package-dir" support is deprecated and will be removed in future versions.`,
+        `Please update your tspconfig.yaml to include the "emitter-output-dir" option under the "${emitterData.emitter}" emitter options. "package-dir" support is deprecated and will be removed in future versions.`,
       );
       outputDir = await createNewPackageDirAndTspLocation(
         outputDir,
-        getServiceDir(configYaml, emitter),
+        getServiceDir(configYaml, emitterData.emitter),
         tspLocationData,
-        configYaml?.options?.[emitter]?.["package-dir"],
+        configYaml?.options?.[emitterData.emitter]?.["package-dir"],
       );
     }
   }

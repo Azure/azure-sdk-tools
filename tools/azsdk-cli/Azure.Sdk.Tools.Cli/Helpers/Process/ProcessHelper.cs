@@ -139,13 +139,6 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 {
                     await process.WaitForExitAsync(linkedCts.Token);
                 }
-                catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested)
-                {
-                    output.AppendLine();
-                    output.AppendLine($"Process '{command}' timed out after {timeout.TotalMilliseconds}ms");
-                    logger.LogError("Process '{command}' timed out after {timeout}ms", command, timeout.TotalMilliseconds);
-                    return new ProcessResult { Output = output.ToString(), ExitCode = 124 };
-                }
                 catch (Exception ex)
                 {
                     logger.LogError(ex, "Process '{command}' failed", command);

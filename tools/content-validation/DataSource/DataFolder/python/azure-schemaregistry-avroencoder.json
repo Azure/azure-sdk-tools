@@ -1,0 +1,18 @@
+[
+  {
+    "version": "view=azure-python",
+    "url": [
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/schema-registry?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/schemaregistry-avroencoder-readme?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-schemaregistry-avroencoder/azure.schemaregistry.encoder.avroencoder?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-schemaregistry-avroencoder/azure.schemaregistry.encoder.avroencoder.aio?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-schemaregistry-avroencoder/azure.schemaregistry.encoder.avroencoder.aio.avroencoder?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-schemaregistry-avroencoder/azure.schemaregistry.encoder.avroencoder.avroencoder?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-schemaregistry-avroencoder/azure.schemaregistry.encoder.avroencoder.invalidcontenterror?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-schemaregistry-avroencoder/azure.schemaregistry.encoder.avroencoder.invalidschemaerror?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-schemaregistry-avroencoder/azure.schemaregistry.encoder.avroencoder.messagecontent?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-schemaregistry-avroencoder/azure.schemaregistry.encoder.avroencoder.messagetype?view=azure-python\u0026branch=main"
+    ]
+  }
+]

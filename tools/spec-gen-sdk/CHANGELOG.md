@@ -1,6 +1,12 @@
 # Release
-## 2025-07-01 - 0.9.0
 
+## 2025-08-05 - 0.9.1
+
+- Support SDK breaking change flagging for V2 folder structure by detecting management plane TypeSpec projects containing 'resource-manager' in the path
+
+## 2025-07-25 - 0.9.0
+
+- Added 'generateFromTypeSpec' property to ExecutionReport
 - Restructure code directory and add unit test in test/ folder
 
 ## 2025-06-03 - 0.8.1

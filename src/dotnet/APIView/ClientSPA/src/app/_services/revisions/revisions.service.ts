@@ -120,11 +120,12 @@ export class APIRevisionsService {
     });
   }
 
-  toggleAPIRevisionApproval(reviewId: string, apiRevisionId: string) : Observable<APIRevision> {
+  toggleAPIRevisionApproval(reviewId: string, apiRevisionId: string, approve: boolean) : Observable<APIRevision> {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
     });
-    return this.http.post<APIRevision>(this.baseUrl + `/${reviewId}/${apiRevisionId}`, {},
+
+    return this.http.post<APIRevision>(this.baseUrl + `/${reviewId}/${apiRevisionId}`, { approve: approve },
     { 
       headers: headers,
       withCredentials: true,

@@ -121,11 +121,18 @@ namespace APIViewWeb.LeanControllers
         /// </summary>
         /// <param name="reviewId"></param>
         /// <param name="apiRevisionId"></param>
+        /// <param name="approvalRequest"></param>
         /// <returns></returns>
         [HttpPost("{reviewId}/{apiRevisionId}", Name = "ToggleReviewApproval")]
-        public async Task<ActionResult> ToggleReviewApprovalAsync(string reviewId, string apiRevisionId)
+        public async Task<ActionResult> ToggleReviewApprovalAsync(string reviewId, string apiRevisionId, [FromBody] ApprovalRequest approvalRequest)
         {
-            var updatedReview = await _reviewManager.ToggleReviewApprovalAsync(User, reviewId, apiRevisionId);
+            ReviewListItemModel currentReview = await _reviewManager.GetReviewAsync(User, reviewId);
+            if (currentReview.IsApproved == approvalRequest.Approve)
+            {
+                return new LeanJsonResult(currentReview, StatusCodes.Status200OK);
+            }
+
+            ReviewListItemModel updatedReview = await _reviewManager.ToggleReviewApprovalAsync(User, reviewId, apiRevisionId);
             await _signalRHubContext.Clients.All.SendAsync("ReviewUpdated", updatedReview);
             return new LeanJsonResult(updatedReview, StatusCodes.Status200OK);
         }

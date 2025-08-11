@@ -1,0 +1,28 @@
+[
+  {
+    "version": "view=azure-python",
+    "url": [
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/schema-registry?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/schemaregistry-readme?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-schemaregistry/azure.schemaregistry?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-schemaregistry/azure.schemaregistry.aio?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-schemaregistry/azure.schemaregistry.aio.schemaregistryclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-schemaregistry/azure.schemaregistry.encoder?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-schemaregistry/azure.schemaregistry.encoder.jsonencoder?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-schemaregistry/azure.schemaregistry.encoder.jsonencoder.aio?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-schemaregistry/azure.schemaregistry.encoder.jsonencoder.aio.jsonschemaencoder?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-schemaregistry/azure.schemaregistry.encoder.jsonencoder.invalidcontenterror?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-schemaregistry/azure.schemaregistry.encoder.jsonencoder.jsonschemaencoder?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-schemaregistry/azure.schemaregistry.models?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-schemaregistry/azure.schemaregistry.inboundmessagecontent?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-schemaregistry/azure.schemaregistry.messagecontent?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-schemaregistry/azure.schemaregistry.outboundmessagecontent?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-schemaregistry/azure.schemaregistry.schema?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-schemaregistry/azure.schemaregistry.schemacontentvalidate?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-schemaregistry/azure.schemaregistry.schemaproperties?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-schemaregistry/azure.schemaregistry.schemaregistryclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-schemaregistry/azure.schemaregistry.schemaformat?view=azure-python\u0026branch=main"
+    ]
+  }
+]

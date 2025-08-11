@@ -1,8 +1,8 @@
 import { parseSemverVersionString } from '../src/utils/parseSemverVersionString';
 import { removeAnsiEscapeCodes, diffStringArrays, extractPathFromSpecConfig } from '../src/utils/utils';
 import { findMarkdownCodeBlocks, findSwaggerToSDKConfiguration } from '../src/utils/readme';
-import path from 'path';
-import fs from 'fs';
+import * as path from 'node:path';
+import * as fs from 'node:fs';
 import { describe, it, expect } from 'vitest';
 
 // To invoke these tests, run `npm run test-utils` from the "private/openapi-sdk-automation" directory.

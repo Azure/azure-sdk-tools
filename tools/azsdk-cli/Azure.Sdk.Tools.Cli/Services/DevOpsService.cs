@@ -40,8 +40,17 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
 
             var credential = azureService.GetCredential();
-            _token = credential.GetToken(new TokenRequestContext([Constants.AZURE_DEVOPS_TOKEN_SCOPE]), CancellationToken.None);
-
+            try
+            {
+                _token = credential.GetToken(new TokenRequestContext([Constants.AZURE_DEVOPS_TOKEN_SCOPE]), CancellationToken.None);
+            }
+            catch
+            {
+                credential = new InteractiveBrowserCredential(new InteractiveBrowserCredentialOptions { TenantId = null });
+                // Retry with interactive browser credential if the initial credential fails
+                _token = credential.GetToken(new TokenRequestContext([Constants.AZURE_DEVOPS_TOKEN_SCOPE]), CancellationToken.None);
+            }
+            // If we still don't have a token, throw an exception
             if (_token == null)
             {
                 throw new Exception("Failed to get devops access token. " +
@@ -105,7 +114,9 @@ namespace Azure.Sdk.Tools.Cli.Services
             logger.LogInformation($"Fetching release plan work with id {workItemId}");
             var workItem = await connection.GetWorkItemClient().GetWorkItemAsync(workItemId, expand: WorkItemExpand.All);
             if (workItem?.Id == null)
+            {
                 throw new InvalidOperationException($"Work item {workItemId} not found.");
+            }
             var releasePlan = await MapWorkItemToReleasePlanAsync(workItem);
             releasePlan.WorkItemUrl = workItem.Url;
             releasePlan.WorkItemId = workItem?.Id ?? 0;
@@ -210,14 +221,20 @@ namespace Azure.Sdk.Tools.Cli.Services
                     {
                         var parent = workItem.Relations.FirstOrDefault(w => w.Rel.Equals("System.LinkTypes.Hierarchy-Reverse"));
                         if (parent == null)
+                        {
                             continue;
+                        }
                         // Get parent work item and make sure it is release plan work item
                         var parentWorkItemId = int.Parse(parent.Url.Split('/').Last());
                         var parentWorkItem = await connection.GetWorkItemClient().GetWorkItemAsync(parentWorkItemId);
                         if (parentWorkItem == null || !parentWorkItem.Fields.TryGetValue("System.WorkItemType", out Object? parentType))
+                        {
                             continue;
+                        }
                         if (parentType.Equals("Release Plan"))
+                        {
                             return await MapWorkItemToReleasePlanAsync(parentWorkItem);
+                        }
                     }
                 }
                 return null;
@@ -260,7 +277,9 @@ namespace Azure.Sdk.Tools.Cli.Services
                 // Link API spec as child of release plan
                 await LinkWorkItemAsChildAsync(releasePlanWorkItemId, apiSpecWorkItem.Url);
                 if (releasePlanWorkItem != null)
+                {
                     return releasePlanWorkItem;
+                }
 
                 throw new Exception("Failed to create API spec work item");
             }
@@ -270,9 +289,13 @@ namespace Azure.Sdk.Tools.Cli.Services
                 logger.LogError(errorMessage);
                 // Delete created work items if both release plan and API spec work items were not created and linked
                 if (releasePlanWorkItemId != 0)
+                {
                     await workItemClient.DeleteWorkItemAsync(releasePlanWorkItemId);
+                }
                 if (apiSpecWorkItemId != 0)
+                {
                     await workItemClient.DeleteWorkItemAsync(apiSpecWorkItemId);
+                }
                 throw new Exception(errorMessage);
             }
         }
@@ -294,7 +317,9 @@ namespace Azure.Sdk.Tools.Cli.Services
                 foreach (var pr in releasePlan.SpecPullRequests)
                 {
                     if (sb.Length > 0)
+                    {
                         sb.Append("<br>");
+                    }
                     sb.Append($"<a href=\"{pr}\">{pr}</a>");
                 }
                 var prLinks = sb.ToString();
@@ -500,7 +525,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                  { "ConfigPath", $"{typespecProjectRoot}/tspconfig.yaml" },
                  { "ApiVersion", apiVersion },
                  { "SdkReleaseType", sdkReleaseType },
-                 { "SkipPullRequestCreation", "false" }
+                 { "CreatePullRequest", "true" }
             };
             var build = await RunPipelineAsync(pipelineDefinitionId, templateParams, branchRef);
             var pipelineRunUrl = GetPipelineUrl(build.Id);
@@ -717,7 +742,9 @@ namespace Azure.Sdk.Tools.Cli.Services
                 var childWorkItemId = int.Parse(relation.Url.Split('/').Last());
                 var childWorkItem = await connection.GetWorkItemClient().GetWorkItemAsync(childWorkItemId);
                 if (childWorkItem == null || !childWorkItem.Fields.TryGetValue("System.WorkItemType", out Object? workItemType))
+                {
                     continue;
+                }
                 if (workItemType.Equals("API Spec"))
                 {
                     return childWorkItem;
@@ -949,6 +976,11 @@ namespace Azure.Sdk.Tools.Cli.Services
             using var httpClient = new HttpClient();
             var artifactsUrl = $"{Constants.AZURE_SDK_DEVOPS_BASE_URL}/{project}/_apis/build/builds/{buildId}/artifacts?api-version=7.1-preview.5";
             var artifactsResponse = await httpClient.GetAsync(artifactsUrl);
+            // Devops will return a sign-in html page if the user is not authorized
+            if (artifactsResponse.StatusCode == System.Net.HttpStatusCode.NonAuthoritativeInformation)
+            {
+                throw new Exception($"Not authorized to get artifacts from {artifactsUrl}");
+            }
             artifactsResponse.EnsureSuccessStatusCode();
             var artifactsJson = await artifactsResponse.Content.ReadAsStringAsync();
             using var doc = JsonDocument.Parse(artifactsJson);

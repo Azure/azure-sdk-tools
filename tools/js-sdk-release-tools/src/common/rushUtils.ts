@@ -44,9 +44,20 @@ async function packPackage(packageDirectory: string, packageName: string, rushxS
     if (isRushRepo(sdkRepoRoot)) {
         await runCommand('node', [rushxScript, 'pack'], { ...runCommandOptions, cwd }, false);
     } else {
-        await runCommand('pnpm', ['pack'], { ...runCommandOptions, cwd }, false);
+        await runCommand('pnpm', ['run', '--filter', `${packageName}...`, 'pack'], { ...runCommandOptions, cwd }, false);
     }
     logger.info(`Pack '${packageName}' successfully.`);
+}
+
+async function ensurePnpmInstalled() {
+  try {
+    await runCommand('pnpm', ['--version'], runCommandOptions, false);
+    logger.info('pnpm is already installed.');
+  } catch (error) {
+    logger.info('pnpm not found. Installing...');
+    await runCommand('npm', ['install', '-g', 'pnpm'], runCommandOptions);
+    logger.info('pnpm installed successfully.');
+  }
 }
 
 async function addApiViewInfo(
@@ -63,12 +74,26 @@ async function addApiViewInfo(
     } else if (packageName.startsWith('@azure-rest/')) {
         actualPackageName = packageName.substring('@azure-rest/'.length);
     }
-    const expectedApiViewFileName = `${actualPackageName}-node.api.json`;
-    const apiViewPathPattern = posix.join(packageDirectory, 'temp', '**', expectedApiViewFileName);
-    const apiViews = await glob(apiViewPathPattern);
-    if (!apiViews || apiViews.length === 0) throw new Error(`Failed to get API views in '${apiViewPathPattern}'. cwd: ${process.cwd()}`);
-    if (apiViews && apiViews.length > 1) throw new Error(`Failed to get exactly one API view: ${apiViews}.`);
-    packageResult.apiViewArtifact = relative(sdkRoot, apiViews[0]);
+    // Try both possible API view file name formats
+    const nodeApiViewFileName = `${actualPackageName}-node.api.json`;
+    const standardApiViewFileName = `${actualPackageName}.api.json`;
+    const nodeApiViewPattern = posix.join(packageDirectory, 'temp', '**', nodeApiViewFileName);
+    const standardApiViewPattern = posix.join(packageDirectory, 'temp', '**', standardApiViewFileName);
+    
+    // Search for both possible API view file name formats simultaneously
+    const [nodeApiViews, standardApiViews] = await Promise.all([
+        glob(nodeApiViewPattern),
+        glob(standardApiViewPattern)
+    ]);
+    const apiViews = [...nodeApiViews, ...standardApiViews];
+
+    if (!nodeApiViews.length && !standardApiViews.length) {
+        throw new Error(`Failed to find any API view files matching '${nodeApiViewPattern}' or '${standardApiViewPattern}'. cwd: ${process.cwd()}`);
+    }
+    
+    const selectedApiView = nodeApiViews.length > 0 ? nodeApiViews[0] : standardApiViews[0];
+    
+    packageResult.apiViewArtifact = relative(sdkRoot, selectedApiView);
     const content = (await readFile(apiViews[0], { encoding: 'utf-8' })).toString();
     const name = basename(apiViews[0]);
     return { content, name };
@@ -104,12 +129,13 @@ export async function buildPackage(
         logger.info(`Start to build package '${name}'.`);
         await runCommand('node', [rushScript, 'build', '-t', name, '--verbose'], runCommandOptions);
     } else {
+        await ensurePnpmInstalled();
         logger.info(`Start to pnpm install.`);
         await runCommand(`pnpm`, ['install'], runCommandOptions, false);
         logger.info(`Pnpm install successfully.`);
 
         logger.info(`Start to build package '${name}'.`);
-        await runCommand('pnpm', ['build', '--filter', name], runCommandOptions);
+        await runCommand('pnpm', ['build', '--filter', `${name}...`], runCommandOptions);
     }
 
     const apiViewContext = await addApiViewInfo(packageDirectory, options.sdkRepoRoot, name, packageResult);

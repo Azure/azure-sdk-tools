@@ -1,0 +1,41 @@
+[
+  {
+    "version": "view=azure-python",
+    "url": [
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/communication?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/communication-chat-readme?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-chat/azure.communication.chat?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-chat/azure.communication.chat.aio?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-chat/azure.communication.chat.aio.chatclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-chat/azure.communication.chat.aio.chatthreadclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-chat/azure.communication.chat.aio.communicationtokencredential?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-chat/azure.communication.chat.chatattachment?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-chat/azure.communication.chat.chatclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-chat/azure.communication.chat.chaterror?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-chat/azure.communication.chat.chatmessage?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-chat/azure.communication.chat.chatmessagecontent?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-chat/azure.communication.chat.chatmessagereadreceipt?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-chat/azure.communication.chat.chatparticipant?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-chat/azure.communication.chat.chatthreadclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-chat/azure.communication.chat.chatthreaditem?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-chat/azure.communication.chat.chatthreadproperties?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-chat/azure.communication.chat.communicationidentifier?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-chat/azure.communication.chat.communicationtokencredential?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-chat/azure.communication.chat.communicationuseridentifier?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-chat/azure.communication.chat.communicationuserproperties?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-chat/azure.communication.chat.createchatthreadresult?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-chat/azure.communication.chat.microsoftteamsappidentifier?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-chat/azure.communication.chat.microsoftteamsappproperties?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-chat/azure.communication.chat.microsoftteamsuseridentifier?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-chat/azure.communication.chat.microsoftteamsuserproperties?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-chat/azure.communication.chat.phonenumberidentifier?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-chat/azure.communication.chat.phonenumberproperties?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-chat/azure.communication.chat.sendchatmessageresult?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-chat/azure.communication.chat.unknownidentifier?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-chat/azure.communication.chat.chatattachmenttype?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-chat/azure.communication.chat.chatmessagetype?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-chat/azure.communication.chat.communicationidentifierkind?view=azure-python\u0026branch=main"
+    ]
+  }
+]

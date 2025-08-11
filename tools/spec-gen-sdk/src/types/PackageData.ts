@@ -1,4 +1,4 @@
-import * as path from 'path';
+import * as path from 'node:path';
 import { PackageResult } from './GenerateOutput';
 import { WorkflowContext } from './Workflow';
 import { repoKeyToString } from '../utils/repo';
@@ -165,7 +165,7 @@ export const getPackageData = (context: WorkflowContext, result: PackageResult, 
 
   // same logic as src/utils/utils.ts/removeDuplicatesFromRelatedFiles
   const typespecProjectIsManagementPlane = result.typespecProject && result.typespecProject.every(
-    item => item.endsWith('.Management')
+    item => (item.endsWith('.Management') || item.includes('resource-manager'))
   );
 
   const isDataPlane = !(readmeMdIsManagementPlane || typespecProjectIsManagementPlane);

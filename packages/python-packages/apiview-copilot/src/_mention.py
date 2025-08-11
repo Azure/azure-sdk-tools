@@ -1,14 +1,23 @@
+# -------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for
+# license information.
+# --------------------------------------------------------------------------
+
+"""
+Module for handling @mention requests in APIView Copilot.
+"""
+
 import json
 import os
-import prompty
-import prompty.azure
 import uuid
 
+import prompty
+import prompty.azure
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
-
 from src._database_manager import get_database_manager
+from src._models import Example, Guideline, Memory
 from src._search_manager import SearchManager
-from src._models import Memory, Example, Guideline
 from src._utils import get_prompt_path
 
 
@@ -39,9 +48,9 @@ def handle_mention_request(*, comments: list[str], language: str, package_name: 
         results = _execute_plan(plan=plan)
         return _summarize_results(results)
     elif action_results.get("recommendation") == "no_action":
-        return f"No action required: {action_results.get("reasoning")}"
+        return f"No action required: {action_results.get('reasoning')}"
     else:
-        return f"Something went wrong!"
+        return "Something went wrong!"
 
 
 def _parse_conversation_action(
@@ -107,7 +116,7 @@ def _execute_plan(*, plan: dict):
         # ensure the new memory ID is propagated to the example IDs
         example.id = example.id.replace(old_memory_id, memory_id)
         example.memory_ids = [memory_id]
-        memory.related_examples.append(example.id)
+        memory.related_examples.append(example.id)  # pylint: disable=no-member
 
     guidelines = []
     for guideline_id in guideline_ids:
@@ -117,8 +126,8 @@ def _execute_plan(*, plan: dict):
             if guideline_id.startswith(prefix):
                 guideline_id = guideline_id[len(prefix) :]
             guideline = Guideline(**db_manager.guidelines.get(guideline_id))
-            guideline.related_memories.append(memory_id)
-            memory.related_guidelines.append(guideline_id)
+            guideline.related_memories.append(memory_id)  # pylint: disable=no-member
+            memory.related_guidelines.append(guideline_id)  # pylint: disable=no-member
             guidelines.append(guideline)
         except CosmosResourceNotFoundError:
             continue  # Guideline not found, skip it

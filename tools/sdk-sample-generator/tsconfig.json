@@ -1,0 +1,11 @@
+{
+  "references": [
+    {
+      "path": "./tsconfig.genai.json"
+    },
+    {
+      "path": "./tsconfig.test.json"
+    }
+  ],
+  "files": []
+}

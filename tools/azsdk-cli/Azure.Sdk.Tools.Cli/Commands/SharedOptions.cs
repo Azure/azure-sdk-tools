@@ -2,10 +2,6 @@ using System.CommandLine;
 using System.CommandLine.Parsing;
 using System.IO.Enumeration;
 using Azure.Sdk.Tools.Cli.Tools;
-using Azure.Sdk.Tools.Cli.Tools.HelloWorldTool;
-using Azure.Sdk.Tools.Cli.Tools.HostServer;
-using Azure.Sdk.Tools.Cli.Tools.SdkRelease;
-using Azure.Sdk.Tools.Cli.Tools.ReleaseReadiness;
 
 namespace Azure.Sdk.Tools.Cli.Commands
 {
@@ -19,6 +15,8 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(HostServerTool),
             typeof(PipelineAnalysisTool),
             typeof(PipelineTestsTool),
+            typeof(QuokkaTool),
+            typeof(ReadMeGeneratorTool),
             typeof(ReleasePlanTool),
             typeof(ReleaseReadinessTool),
             typeof(SdkReleaseTool),
@@ -27,8 +25,11 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(SpecWorkflowTool),
             typeof(SpecValidationTools),
             typeof(TestAnalysisTool),
+            typeof(TypeSpecTool),
+
             #if DEBUG
-            // only add this tool in debug mode
+            // only add these tools in debug mode
+            typeof(ExampleTool),
             typeof(HelloWorldTool),
             #endif
         ];

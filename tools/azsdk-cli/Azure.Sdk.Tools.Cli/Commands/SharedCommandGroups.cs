@@ -1,7 +1,4 @@
 using Azure.Sdk.Tools.Cli.Contract;
-using System.CommandLine;
-using System.CommandLine.Parsing;
-
 
 namespace Azure.Sdk.Tools.Cli.Commands
 {
@@ -20,6 +17,12 @@ namespace Azure.Sdk.Tools.Cli.Commands
             Options: []
         );
 
+        public static readonly CommandGroup Generators = new(
+            Verb: "generators",
+            Description: "Commands that generate files",
+            Options: []
+        );
+
         public static readonly CommandGroup Cleanup = new(
             Verb: "cleanup",
             Description: "Cleanup commands",
@@ -31,5 +34,13 @@ namespace Azure.Sdk.Tools.Cli.Commands
             Description: "Log processing commands",
             Options: []
         );
+
+        #if DEBUG
+        public static readonly CommandGroup Example = new(
+            Verb: "example",
+            Description: "Example tool demonstrating framework features",
+            Options: []
+        );
+        #endif
     }
 }

@@ -1,0 +1,53 @@
+parameters:
+  - name: REPO
+    type: string
+    default: "Azure/azure-sdk-for-net"
+  - name: CLONE_LOCATION
+    type: string
+    default: "$(Agent.BuildDirectory)/net_repo"
+
+steps:
+  - task: UseDotNet@2
+    displayName: "Install .NET 8"
+    retryCountOnTaskFailure: 3
+    inputs:
+      version: "8.x"
+
+  - task: UseDotNet@2
+    displayName: "Install .NET 7"
+    retryCountOnTaskFailure: 3
+    inputs:
+      version: "7.x"
+
+  - task: UseDotNet@2
+    displayName: "Install .NET 6"
+    retryCountOnTaskFailure: 3
+    inputs:
+      version: "6.x"
+
+  - template: /eng/pipelines/templates/steps/install-dotnet.yml
+
+  - pwsh: |
+      git clone https://github.com/${{ parameters.REPO }} ${{ parameters.CLONE_LOCATION }} --depth 1
+    displayName: Clone Repo
+
+  - template: /eng/pipelines/templates/steps/test-proxy-local-tool.yml
+    parameters:
+      runProxy: true
+      rootFolder: ${{ parameters.CLONE_LOCATION }}
+
+  - pwsh: |
+      dotnet test --framework net9.0
+    displayName: 'Invoke Tests .NET 9'
+    workingDirectory: ${{ parameters.CLONE_LOCATION }}/sdk/core/Azure.Core.TestFramework
+    env:
+      PROXY_MANUAL_START: "true"
+      PROXY_DEBUG_MODE: "true"
+
+  - pwsh: |
+      dotnet test --framework net8.0
+    displayName: 'Invoke Tests .NET 8'
+    workingDirectory: ${{ parameters.CLONE_LOCATION }}/sdk/core/Azure.Core.TestFramework
+    env:
+      PROXY_MANUAL_START: "true"
+      PROXY_DEBUG_MODE: "true"

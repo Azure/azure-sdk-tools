@@ -83,7 +83,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             {
                 logger.LogError(ex, "Unhandled exception while running dependency check");
                 SetFailure(1);
-                return new FailureCLICheckResponse(1, "", $"Unhandled exception: {ex.Message}");
+                return new FailureCLICheckResponse(1, ex.ToString(), "Unhandled exception while running dependency check");
             }
         }
 

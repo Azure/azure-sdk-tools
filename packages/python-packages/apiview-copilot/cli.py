@@ -666,7 +666,7 @@ def get_apiview_comments(review_id: str, environment: str = "production", use_ap
             response = requests.get(
                 endpoint,
                 headers={"Content-Type": "application/json",
-                        "Authorization": f"Bearer {token.token}"}
+                        "Authorization": f"Bearer {token.token}"},
                 timeout=30,
             )
 

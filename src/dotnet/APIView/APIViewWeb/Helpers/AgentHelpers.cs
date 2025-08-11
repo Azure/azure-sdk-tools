@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using APIView;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Models;
 
@@ -12,14 +13,19 @@ public class AgentHelpers
     private static readonly Regex azureSdkAgentTag = new Regex($@"(^|\s)@{Regex.Escape(ApiViewConstants.AzureSdkBotName)}\b",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-    public static List<ApiViewAgentComment> BuildCommentsForAgent(IEnumerable<CommentItemModel> comments,
-        RenderedCodeFile codeFile)
+    private static Dictionary<string, int> BuildElementIdToLineNumberMapping(RenderedCodeFile codeFile)
     {
         var activeCodeLines = codeFile.CodeFile.GetApiLines(skipDocs: true);
-        Dictionary<string, int> elementIdToLineNumber = activeCodeLines
+        return activeCodeLines
             .Select((elementId, lineNumber) => new { elementId.lineId, lineNumber })
             .Where(x => !string.IsNullOrEmpty(x.lineId))
             .ToDictionary(x => x.lineId, x => x.lineNumber + 1);
+    }
+
+    public static List<ApiViewAgentComment> BuildCommentsForAgent(IEnumerable<CommentItemModel> comments,
+        RenderedCodeFile codeFile)
+    {
+        Dictionary<string, int> elementIdToLineNumber = BuildElementIdToLineNumberMapping(codeFile);
 
         return (from comment in comments
             where comment.ElementId != null
@@ -31,6 +37,20 @@ public class AgentHelpers
                 Downvotes = comment.Downvotes.Count,
                 CreatedBy = comment.CreatedBy,
                 CommentText = comment.CommentText,
+            }).ToList();
+    }
+
+    public static List<ApiViewAgentComment> BuildDiagnosticsForAgent(IEnumerable<CodeDiagnostic> diagnostics,
+        RenderedCodeFile codeFile)
+    {
+        Dictionary<string, int> elementIdToLineNumber = BuildElementIdToLineNumberMapping(codeFile);
+
+        return (from diagnostic in diagnostics
+                where diagnostic.TargetId != null
+            select new ApiViewAgentComment
+            {
+                LineNumber = elementIdToLineNumber.TryGetValue(diagnostic.TargetId, out int id) ? id : -1,
+                CommentText = diagnostic.Text,
             }).ToList();
     }
 

@@ -19,6 +19,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
     public class TypeSpecTool(INpxHelper npxHelper, ILogger<TypeSpecTool> logger, IOutputService output) : MCPTool
     {
 
+        // This is the template registry URL used by the TypeSpec compiler's init command.
         private const string AzureTemplatesUrl = "https://aka.ms/typespec/azure-init";
 
         // commands
@@ -281,9 +282,10 @@ namespace Azure.Sdk.Tools.Cli.Tools
             var cmd = npxHelper.CreateCommand();
             cmd.Package = "@typespec/compiler";
             cmd.Cwd = Environment.CurrentDirectory;
-            cmd.AddArgs("tsp", "init", "--template", template, "--project-name", serviceNamespace, "--args", $"ServiceNamespace={serviceNamespace}", "--output-dir", outputDirectory, "--no-prompt");
-            // Positional arguments
-            cmd.AddArgs(AzureTemplatesUrl);
+            cmd.AddArgs("tsp", "init", "--no-prompt");
+            cmd.AddArgs("--project-name", serviceNamespace, "--args", $"ServiceNamespace={serviceNamespace}");
+            cmd.AddArgs("--output-dir", outputDirectory);
+            cmd.AddArgs("--template", template, AzureTemplatesUrl);
 
             var result = cmd.Run();
             if (result.ExitCode != 0)

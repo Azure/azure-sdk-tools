@@ -18,8 +18,8 @@ public class GoLanguageRepoService : LanguageRepoService
     private readonly string formatterName = "goimports";
     private readonly string linterName = "golangci-lint";
 
-    public GoLanguageRepoService(string packagePath, IProcessHelper processHelper, ILogger<GoLanguageRepoService> logger) 
-        : base(packagePath, processHelper)
+    public GoLanguageRepoService(IProcessHelper processHelper, ILogger<GoLanguageRepoService> logger) 
+        : base(processHelper)
     {
         _logger = logger;
         
@@ -33,12 +33,12 @@ public class GoLanguageRepoService : LanguageRepoService
 
     #region Go specific functions, not part of the LanguageRepoService
 
-    public async Task<CLICheckResponse> CreateEmptyPackage(string moduleName)
+    public async Task<CLICheckResponse> CreateEmptyPackage(string packagePath, string moduleName)
     {
         try
         {
             await Task.CompletedTask;
-            var result = _processHelper.RunProcess(compilerName, new[] { "mod", "init", moduleName }, _packagePath);
+            var result = _processHelper.RunProcess(compilerName, new[] { "mod", "init", moduleName }, packagePath);
             return CreateResponseFromProcessResult(result);
         }
         catch (Exception ex)
@@ -50,20 +50,20 @@ public class GoLanguageRepoService : LanguageRepoService
 
     #endregion
 
-    public override async Task<CLICheckResponse> AnalyzeDependenciesAsync(CancellationToken ct = default)
+    public override async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct = default)
     {
         try
         {
             await Task.CompletedTask;
             // Update all dependencies to the latest first
-            var updateResult = _processHelper.RunProcess(compilerName, new[] { "get", "-u", "all" }, _packagePath);
+            var updateResult = _processHelper.RunProcess(compilerName, new[] { "get", "-u", "all" }, packagePath);
             if (updateResult.ExitCode != 0)
             {
                 return CreateResponseFromProcessResult(updateResult);
             }
             
             // Now tidy, to cleanup any deps that aren't needed
-            var tidyResult = _processHelper.RunProcess(compilerName, new[] { "mod", "tidy" }, _packagePath);
+            var tidyResult = _processHelper.RunProcess(compilerName, new[] { "mod", "tidy" }, packagePath);
             return CreateResponseFromProcessResult(tidyResult);
         }
         catch (Exception ex)
@@ -72,12 +72,12 @@ public class GoLanguageRepoService : LanguageRepoService
             return new FailureCLICheckResponse(1, $"{nameof(AnalyzeDependenciesAsync)} failed with an exception", ex.Message);
         }
     }
-    public override async Task<CLICheckResponse> FormatCodeAsync()
+    public override async Task<CLICheckResponse> FormatCodeAsync(string packagePath)
     {
         try
         {
             await Task.CompletedTask;
-            var result = _processHelper.RunProcess(formatterName, new[] { "-w", "." }, _packagePath);
+            var result = _processHelper.RunProcess(formatterName, new[] { "-w", "." }, packagePath);
             return CreateResponseFromProcessResult(result);
         }
         catch (Exception ex)
@@ -87,12 +87,12 @@ public class GoLanguageRepoService : LanguageRepoService
         }
     }
 
-    public override async Task<CLICheckResponse> LintCodeAsync()
+    public override async Task<CLICheckResponse> LintCodeAsync(string packagePath)
     {
         try
         {
             await Task.CompletedTask;
-            var result = _processHelper.RunProcess(linterName, new[] { "run" }, _packagePath);
+            var result = _processHelper.RunProcess(linterName, new[] { "run" }, packagePath);
             return CreateResponseFromProcessResult(result);
         }
         catch (Exception ex)
@@ -102,12 +102,12 @@ public class GoLanguageRepoService : LanguageRepoService
         }
     }
 
-    public override async Task<CLICheckResponse> RunTestsAsync()
+    public override async Task<CLICheckResponse> RunTestsAsync(string packagePath)
     {
         try
         {
             await Task.CompletedTask;
-            var result = _processHelper.RunProcess(compilerName, new[] { "test", "-v", "-timeout", "1h", "./..." }, _packagePath);
+            var result = _processHelper.RunProcess(compilerName, new[] { "test", "-v", "-timeout", "1h", "./..." }, packagePath);
             return CreateResponseFromProcessResult(result);
         }
         catch (Exception ex)
@@ -117,12 +117,12 @@ public class GoLanguageRepoService : LanguageRepoService
         }
     }
 
-    public async Task<CLICheckResponse> BuildProjectAsync()
+    public async Task<CLICheckResponse> BuildProjectAsync(string packagePath)
     {
         try
         {
             await Task.CompletedTask;
-            var result = _processHelper.RunProcess(compilerName, new[] { "build" }, _packagePath);
+            var result = _processHelper.RunProcess(compilerName, new[] { "build" }, packagePath);
             return CreateResponseFromProcessResult(result);
         }
         catch (Exception ex)

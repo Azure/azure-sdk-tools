@@ -10,36 +10,36 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// </summary>
 public class DotNetLanguageRepoService : LanguageRepoService
 {
-    public DotNetLanguageRepoService(string packagePath, IProcessHelper processHelper) 
-        : base(packagePath, processHelper)
+    public DotNetLanguageRepoService(IProcessHelper processHelper) 
+        : base(processHelper)
     {
     }
 
-    public override async Task<CLICheckResponse> AnalyzeDependenciesAsync(CancellationToken ct)
+    public override async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct)
     {
         await Task.CompletedTask;
-        var result = _processHelper.RunProcess("dotnet", new[] { "restore" }, _packagePath);
+        var result = _processHelper.RunProcess("dotnet", new[] { "restore" }, packagePath);
         return CreateResponseFromProcessResult(result);
     }
 
-    public override async Task<CLICheckResponse> FormatCodeAsync()
+    public override async Task<CLICheckResponse> FormatCodeAsync(string packagePath)
     {
         await Task.CompletedTask;
-        var result = _processHelper.RunProcess("dotnet", new[] { "format" }, _packagePath);
+        var result = _processHelper.RunProcess("dotnet", new[] { "format" }, packagePath);
         return CreateResponseFromProcessResult(result);
     }
 
-    public override async Task<CLICheckResponse> LintCodeAsync()
+    public override async Task<CLICheckResponse> LintCodeAsync(string packagePath)
     {
         await Task.CompletedTask;
-        var result = _processHelper.RunProcess("dotnet", new[] { "build", "--verbosity", "normal" }, _packagePath);
+        var result = _processHelper.RunProcess("dotnet", new[] { "build", "--verbosity", "normal" }, packagePath);
         return CreateResponseFromProcessResult(result);
     }
 
-    public override async Task<CLICheckResponse> RunTestsAsync()
+    public override async Task<CLICheckResponse> RunTestsAsync(string packagePath)
     {
         await Task.CompletedTask;
-        var result = _processHelper.RunProcess("dotnet", new[] { "test" }, _packagePath);
+        var result = _processHelper.RunProcess("dotnet", new[] { "test" }, packagePath);
         return CreateResponseFromProcessResult(result);
     }
 }

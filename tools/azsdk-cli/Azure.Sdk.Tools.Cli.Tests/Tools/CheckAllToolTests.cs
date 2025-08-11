@@ -20,6 +20,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         private Mock<IGitHelper> _mockGitHelper;
         private Mock<ILogger<DependencyCheckTool>> _mockDependencyCheckLogger;
         private Mock<ILogger<ChangelogValidationTool>> _mockChangelogValidationLogger;
+        private Mock<ILanguageRepoServiceFactory> _mockLanguageRepoServiceFactory;
         private CheckAllTool _checkAllTool;
         private string _testProjectPath;
 
@@ -31,8 +32,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             _mockGitHelper = new Mock<IGitHelper>();
             _mockDependencyCheckLogger = new Mock<ILogger<DependencyCheckTool>>();
             _mockChangelogValidationLogger = new Mock<ILogger<ChangelogValidationTool>>();
+            _mockLanguageRepoServiceFactory = new Mock<ILanguageRepoServiceFactory>();
 
-            _checkAllTool = new CheckAllTool(_mockLogger.Object, _mockOutputService.Object, _mockGitHelper.Object, new ProcessHelper(NullLogger<ProcessHelper>.Instance));
+            _checkAllTool = new CheckAllTool(_mockLogger.Object, _mockOutputService.Object, _mockGitHelper.Object, new ProcessHelper(NullLogger<ProcessHelper>.Instance), _mockLanguageRepoServiceFactory.Object);
             
             // Create a temporary test directory
             _testProjectPath = Path.Combine(Path.GetTempPath(), "CheckAllToolTest");

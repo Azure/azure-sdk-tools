@@ -11,24 +11,24 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// </summary>
 public class PythonLanguageRepoService : LanguageRepoService
 {
-    private readonly ILogger _logger;
+    private readonly ILogger<PythonLanguageRepoService> _logger;
     private readonly IGitHelper _gitHelper;
 
-    public PythonLanguageRepoService(string packagePath, IProcessHelper processHelper, IGitHelper gitHelper, ILogger logger) 
-        : base(packagePath, processHelper)
+    public PythonLanguageRepoService(IProcessHelper processHelper, IGitHelper gitHelper, ILogger<PythonLanguageRepoService> logger) 
+        : base(processHelper)
     {
         _logger = logger;
         _gitHelper = gitHelper;
     }
 
-    public override async Task<CLICheckResponse> AnalyzeDependenciesAsync(CancellationToken ct = default)
+    public override async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation($"Starting dependency analysis for Python project at: {_packagePath}");
+            _logger.LogInformation($"Starting dependency analysis for Python project at: {packagePath}");
             
             // Find the repository root from the package path using GitHelper
-            var repoRoot = _gitHelper.DiscoverRepoRoot(_packagePath);
+            var repoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
             _logger.LogInformation("Found repository root at: {RepoRoot}", repoRoot);
             
             // Construct path to tox.ini from repository root
@@ -49,7 +49,7 @@ public class PythonLanguageRepoService : LanguageRepoService
             
             _logger.LogInformation("Executing command: {Command} {Arguments}", command, string.Join(" ", args));
             
-            var result = _processHelper.RunProcess(command, args, _packagePath);
+            var result = _processHelper.RunProcess(command, args, packagePath);
             
             if (result.ExitCode == 0)
             {

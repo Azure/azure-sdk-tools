@@ -24,6 +24,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private readonly IOutputService output;
         private readonly IGitHelper gitHelper;
         private readonly IProcessHelper processHelper;
+        private readonly ILanguageRepoServiceFactory languageRepoServiceFactory;
 
         private readonly Option<string> packagePathOption = new(["--package-path", "-p"], "Path to the package directory to check") { IsRequired = true };
 
@@ -50,12 +51,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
             ILogger<CheckAllTool> logger, 
             IOutputService output,
             IGitHelper gitHelper,
-            IProcessHelper processHelper) : base()
+            IProcessHelper processHelper,
+            ILanguageRepoServiceFactory languageRepoServiceFactory) : base()
         {
             this.logger = logger;
             this.output = output;
             this.gitHelper = gitHelper;
             this.processHelper = processHelper;
+            this.languageRepoServiceFactory = languageRepoServiceFactory;
             CommandHierarchy = [SharedCommandGroups.Checks];
         }
 
@@ -82,7 +85,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     Microsoft.Extensions.Logging.Abstractions.NullLogger<DependencyCheckTool>.Instance,
                     output,
                     gitHelper,
-                    processHelper);
+                    processHelper,
+                    languageRepoServiceFactory);
                 
                 var dependencyCheckResult = await dependencyCheckTool.RunDependencyCheck(packagePath, ct);
                 

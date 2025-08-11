@@ -10,36 +10,36 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// </summary>
 public class JavaScriptLanguageRepoService : LanguageRepoService
 {
-    public JavaScriptLanguageRepoService(string packagePath, IProcessHelper processHelper) 
-        : base(packagePath, processHelper)
+    public JavaScriptLanguageRepoService(IProcessHelper processHelper) 
+        : base(processHelper)
     {
     }
 
-    public override async Task<CLICheckResponse> AnalyzeDependenciesAsync(CancellationToken ct)
+    public override async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct)
     {
         await Task.CompletedTask;
-        var result = _processHelper.RunProcess("npm", new[] { "audit" }, _packagePath);
+        var result = _processHelper.RunProcess("npm", new[] { "audit" }, packagePath);
         return CreateResponseFromProcessResult(result);
     }
 
-    public override async Task<CLICheckResponse> FormatCodeAsync()
+    public override async Task<CLICheckResponse> FormatCodeAsync(string packagePath)
     {
         await Task.CompletedTask;
-        var result = _processHelper.RunProcess("npx", new[] { "prettier", "--write", "." }, _packagePath);
+        var result = _processHelper.RunProcess("npx", new[] { "prettier", "--write", "." }, packagePath);
         return CreateResponseFromProcessResult(result);
     }
 
-    public override async Task<CLICheckResponse> LintCodeAsync()
+    public override async Task<CLICheckResponse> LintCodeAsync(string packagePath)
     {
         await Task.CompletedTask;
-        var result = _processHelper.RunProcess("npx", new[] { "eslint", "." }, _packagePath);
+        var result = _processHelper.RunProcess("npx", new[] { "eslint", "." }, packagePath);
         return CreateResponseFromProcessResult(result);
     }
 
-    public override async Task<CLICheckResponse> RunTestsAsync()
+    public override async Task<CLICheckResponse> RunTestsAsync(string packagePath)
     {
         await Task.CompletedTask;
-        var result = _processHelper.RunProcess("npm", new[] { "test" }, _packagePath);
+        var result = _processHelper.RunProcess("npm", new[] { "test" }, packagePath);
         return CreateResponseFromProcessResult(result);
     }
 }

@@ -3,6 +3,7 @@
 using Azure.AI.OpenAI;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Microsoft.Extensions.Azure;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -21,6 +22,14 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IGitHubService, GitHubService>();
             services.AddSingleton<IDevOpsConnection, DevOpsConnection>();
             services.AddSingleton<ILanguageRepoServiceFactory, LanguageRepoServiceFactory>();
+
+            // Register language services directly - now possible since no runtime dependencies in constructor
+            services.AddSingleton<LanguageRepoService>();
+            services.AddSingleton<PythonLanguageRepoService>();
+            services.AddSingleton<JavaScriptLanguageRepoService>();
+            services.AddSingleton<DotNetLanguageRepoService>();
+            services.AddSingleton<GoLanguageRepoService>();
+            services.AddSingleton<JavaLanguageRepoService>();
 
             // Helper classes
             services.AddSingleton<ILogAnalysisHelper, LogAnalysisHelper>();

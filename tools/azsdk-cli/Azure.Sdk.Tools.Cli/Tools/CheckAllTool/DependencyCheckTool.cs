@@ -25,15 +25,17 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private readonly IOutputService output;
         private readonly IGitHelper gitHelper;
         private readonly IProcessHelper processHelper;
+        private readonly ILanguageRepoServiceFactory languageRepoServiceFactory;
 
         private readonly Option<string> packagePathOption = new(["--package-path", "-p"], "Path to the package directory to check") { IsRequired = true };
 
-        public DependencyCheckTool(ILogger<DependencyCheckTool> logger, IOutputService output, IGitHelper gitHelper, IProcessHelper processHelper) : base()
+        public DependencyCheckTool(ILogger<DependencyCheckTool> logger, IOutputService output, IGitHelper gitHelper, IProcessHelper processHelper, ILanguageRepoServiceFactory languageRepoServiceFactory) : base()
         {
             this.logger = logger;
             this.output = output;
             this.gitHelper = gitHelper;
             this.processHelper = processHelper;
+            this.languageRepoServiceFactory = languageRepoServiceFactory;
             CommandHierarchy = [SharedCommandGroups.Checks];
         }
 
@@ -73,11 +75,11 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 
                 try
                 {
-                    var languageService = LanguageRepoServiceFactory.CreateService(packagePath, processHelper, gitHelper, logger);
+                    var languageService = languageRepoServiceFactory.CreateService(packagePath, processHelper, gitHelper, logger);
                     logger.LogInformation($"Created language service: {languageService.GetType().Name}");
                     
                     // Call AnalyzeDependencies method
-                    result = await languageService.AnalyzeDependenciesAsync(ct);
+                    result = await languageService.AnalyzeDependenciesAsync(packagePath, ct);
                     stopwatch.Stop();
                     
                     if (result.ExitCode != 0)

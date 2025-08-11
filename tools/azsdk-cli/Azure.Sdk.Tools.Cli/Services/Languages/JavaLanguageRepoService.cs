@@ -10,49 +10,49 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// </summary>
 public class JavaLanguageRepoService : LanguageRepoService
 {
-    public JavaLanguageRepoService(string packagePath, IProcessHelper processHelper) 
-        : base(packagePath, processHelper)
+    public JavaLanguageRepoService(IProcessHelper processHelper) 
+        : base(processHelper)
     {
     }
 
-    public override async Task<CLICheckResponse> AnalyzeDependenciesAsync(CancellationToken ct)
+    public override async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct)
     {
         await Task.CompletedTask;
         
         // Try Maven first
-        if (File.Exists(Path.Combine(_packagePath, "pom.xml")))
+        if (File.Exists(Path.Combine(packagePath, "pom.xml")))
         {
-            var result = _processHelper.RunProcess("mvn", new[] { "dependency:analyze" }, _packagePath);
+            var result = _processHelper.RunProcess("mvn", new[] { "dependency:analyze" }, packagePath);
             return CreateResponseFromProcessResult(result);
         }
         
         // Try Gradle
-        if (File.Exists(Path.Combine(_packagePath, "build.gradle")) || 
-            File.Exists(Path.Combine(_packagePath, "build.gradle.kts")))
+        if (File.Exists(Path.Combine(packagePath, "build.gradle")) || 
+            File.Exists(Path.Combine(packagePath, "build.gradle.kts")))
         {
-            var result = _processHelper.RunProcess("./gradlew", new[] { "dependencies" }, _packagePath);
+            var result = _processHelper.RunProcess("./gradlew", new[] { "dependencies" }, packagePath);
             return CreateResponseFromProcessResult(result);
         }
         
         return new FailureCLICheckResponse(1, "No Maven (pom.xml) or Gradle (build.gradle) build file found");
     }
 
-    public override async Task<CLICheckResponse> RunTestsAsync()
+    public override async Task<CLICheckResponse> RunTestsAsync(string packagePath)
     {
         await Task.CompletedTask;
         
         // Try Maven first
-        if (File.Exists(Path.Combine(_packagePath, "pom.xml")))
+        if (File.Exists(Path.Combine(packagePath, "pom.xml")))
         {
-            var result = _processHelper.RunProcess("mvn", new[] { "test" }, _packagePath);
+            var result = _processHelper.RunProcess("mvn", new[] { "test" }, packagePath);
             return CreateResponseFromProcessResult(result);
         }
         
         // Try Gradle
-        if (File.Exists(Path.Combine(_packagePath, "build.gradle")) || 
-            File.Exists(Path.Combine(_packagePath, "build.gradle.kts")))
+        if (File.Exists(Path.Combine(packagePath, "build.gradle")) || 
+            File.Exists(Path.Combine(packagePath, "build.gradle.kts")))
         {
-            var result = _processHelper.RunProcess("./gradlew", new[] { "test" }, _packagePath);
+            var result = _processHelper.RunProcess("./gradlew", new[] { "test" }, packagePath);
             return CreateResponseFromProcessResult(result);
         }
         

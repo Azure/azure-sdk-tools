@@ -48,8 +48,8 @@ public class PythonLanguageRepoService : LanguageRepoService
             var args = new[] { "run", "-e", "mindependency", "-c", toxConfigPath, "--root", "." };
             
             _logger.LogInformation("Executing command: {Command} {Arguments}", command, string.Join(" ", args));
-            
-            var result = _processHelper.RunProcess(command, args, packagePath);
+            var timeoutMs = 300_000; // 5 minutes
+            var result = _processHelper.RunProcess(command, args, packagePath, timeoutMs);
             
             if (result.ExitCode == 0)
             {

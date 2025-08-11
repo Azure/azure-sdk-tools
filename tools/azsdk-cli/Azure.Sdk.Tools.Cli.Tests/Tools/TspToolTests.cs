@@ -78,7 +78,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var outputService = new Mock<IOutputService>().Object;
             var tool = new TypeSpecTool(npxHelper, logger, outputService);
 
-            var result = tool.InitTypeSpecProject(outputDirectory: @"C:\temp", template: "invalid-template", serviceNamespace: "MyService");
+            var result = tool.InitTypeSpecProject(outputDirectory: "never-used", template: "invalid-template", serviceNamespace: "MyService");
 
             Assert.Multiple(() =>
             {
@@ -96,7 +96,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var outputService = new Mock<IOutputService>().Object;
             var tool = new TypeSpecTool(npxHelper, logger, outputService);
 
-            var result = tool.InitTypeSpecProject(outputDirectory: @"C:\temp", template: "azure-core", serviceNamespace: "");
+            var result = tool.InitTypeSpecProject(outputDirectory: "never-used", template: "azure-core", serviceNamespace: "");
 
             Assert.Multiple(() =>
             {
@@ -113,7 +113,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var outputService = new Mock<IOutputService>().Object;
             var tool = new TypeSpecTool(npxHelper, logger, outputService);
 
-            var result = tool.InitTypeSpecProject(outputDirectory: @"C:\nonexistent", template: "azure-core", serviceNamespace: "MyService");
+            var result = tool.InitTypeSpecProject(outputDirectory: Path.Combine(Path.GetTempPath(), $"test-nonexistent-{Guid.NewGuid()}"), template: "azure-core", serviceNamespace: "MyService");
 
             Assert.Multiple(() =>
             {

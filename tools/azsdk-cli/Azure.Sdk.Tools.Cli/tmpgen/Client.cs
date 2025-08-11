@@ -1,0 +1,1 @@
+public class Client { public string GetFoo(int bar) => bar.ToString(); }

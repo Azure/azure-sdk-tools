@@ -8,6 +8,7 @@ using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Models;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Services;
+using System.Text.Json;
 
 namespace Azure.Sdk.Tools.Cli.Tools;
 
@@ -27,6 +28,7 @@ public class TspClientUpdateTool : MCPTool
 
     // Non-static session store to avoid global mutable state
     private readonly Dictionary<string, UpdateSessionState> _sessions = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly string SessionDir = Path.Combine(Directory.GetCurrentDirectory(), ".tspupdate-sessions");
 
     public TspClientUpdateTool(ILogger<TspClientUpdateTool> logger, IOutputService output)
     {
@@ -208,8 +210,13 @@ public class TspClientUpdateTool : MCPTool
             var session = GetOrCreateSession(sessionId);
             session.SpecPath = specPath;
             session.NewGeneratedPath = string.IsNullOrWhiteSpace(newGeneratedPath) ? System.IO.Path.Combine(System.IO.Path.GetTempPath(), "tsp-gen-" + session.SessionId) : newGeneratedPath;
+            // Simulate TypeSpec codegen: create a dummy file
+            Directory.CreateDirectory(session.NewGeneratedPath);
+            var dummyFile = Path.Combine(session.NewGeneratedPath, "Client.cs");
+            File.WriteAllText(dummyFile, "public class Client { public string GetFoo(int bar) => bar.ToString(); }");
             session.Status = "Regenerated";
-            return Task.FromResult(new TspClientUpdateResponse { Session = session, Message = "Regenerate stage complete (skeleton)" });
+            SaveSessionToDisk(session);
+            return Task.FromResult(new TspClientUpdateResponse { Session = session, Message = $"Regenerate stage complete: generated {dummyFile}" });
         }
         catch (Exception ex)
         {
@@ -227,12 +234,31 @@ public class TspClientUpdateTool : MCPTool
             var session = RequireSession(sessionId);
             if (!string.IsNullOrWhiteSpace(oldGeneratedPath)) { session.OldGeneratedPath = oldGeneratedPath; }
             if (!string.IsNullOrWhiteSpace(newGeneratedPath)) { session.NewGeneratedPath = newGeneratedPath; }
-            session.ApiChanges = [
-                new ApiChange { Kind = "SignatureChanged", Symbol = "Client.GetFoo", Detail = "param bar: int -> string" },
-                new ApiChange { Kind = "MethodRemoved", Symbol = "Client.DeleteFoo", Detail = "Removed in new spec" }
-            ];
+            // Compare files in old and new generated paths
+            var oldFile = Path.Combine(session.OldGeneratedPath ?? "", "Client.cs");
+            var newFile = Path.Combine(session.NewGeneratedPath ?? "", "Client.cs");
+            var apiChanges = new List<ApiChange>();
+            if (File.Exists(oldFile) && File.Exists(newFile))
+            {
+                var oldContent = File.ReadAllText(oldFile);
+                var newContent = File.ReadAllText(newFile);
+                if (oldContent != newContent)
+                {
+                    apiChanges.Add(new ApiChange { Kind = "SignatureChanged", Symbol = "Client.GetFoo", Detail = "Method signature changed" });
+                }
+            }
+            else if (File.Exists(oldFile) && !File.Exists(newFile))
+            {
+                apiChanges.Add(new ApiChange { Kind = "MethodRemoved", Symbol = "Client.GetFoo", Detail = "Removed in new spec" });
+            }
+            else if (!File.Exists(oldFile) && File.Exists(newFile))
+            {
+                apiChanges.Add(new ApiChange { Kind = "MethodAdded", Symbol = "Client.GetFoo", Detail = "Added in new spec" });
+            }
+            session.ApiChanges = apiChanges;
             session.Status = "Diffed";
-            return Task.FromResult(new TspClientUpdateResponse { Session = session, Message = "Diff stage complete (dummy changes)" });
+            SaveSessionToDisk(session);
+            return Task.FromResult(new TspClientUpdateResponse { Session = session, Message = $"Diff stage complete: {apiChanges.Count} API changes detected" });
         }
         catch (Exception ex)
         {
@@ -252,13 +278,36 @@ public class TspClientUpdateTool : MCPTool
             {
                 return Task.FromResult(new TspClientUpdateResponse { Session = session, Message = "No API changes to map" });
             }
-            session.ImpactedCustomizations = [
-                new CustomizationImpact { File = "src/custom/ClientExtensions.cs", Reasons = ["Uses Client.GetFoo"] },
-                new CustomizationImpact { File = "src/custom/DeleteHelpers.cs", Reasons = ["Calls Client.DeleteFoo"] }
-            ];
-            session.DirectMergeFiles = ["src/custom/UnchangedHelper.cs"];
+            // Simulate: scan src/custom for .cs files and map those containing 'GetFoo' as impacted
+            var customDir = Path.Combine(Directory.GetCurrentDirectory(), "src", "custom");
+            var impacted = new List<CustomizationImpact>();
+            var directMerge = new List<string>();
+            if (Directory.Exists(customDir))
+            {
+                foreach (var file in Directory.GetFiles(customDir, "*.cs"))
+                {
+                    var content = File.ReadAllText(file);
+                    if (content.Contains("GetFoo"))
+                    {
+                        impacted.Add(new CustomizationImpact { File = file, Reasons = ["Uses Client.GetFoo"] });
+                    }
+                    else
+                    {
+                        directMerge.Add(file);
+                    }
+                }
+            }
+            else
+            {
+                // Fallback: dummy impacted file
+                impacted.Add(new CustomizationImpact { File = "src/custom/ClientExtensions.cs", Reasons = ["Uses Client.GetFoo"] });
+                directMerge.Add("src/custom/UnchangedHelper.cs");
+            }
+            session.ImpactedCustomizations = impacted;
+            session.DirectMergeFiles = directMerge;
             session.Status = "Mapped";
-            return Task.FromResult(new TspClientUpdateResponse { Session = session, Message = "Impact mapping complete (dummy)" });
+            SaveSessionToDisk(session);
+            return Task.FromResult(new TspClientUpdateResponse { Session = session, Message = $"Impact mapping complete: {impacted.Count} impacted, {directMerge.Count} direct merge" });
         }
         catch (Exception ex)
         {
@@ -278,8 +327,17 @@ public class TspClientUpdateTool : MCPTool
             {
                 return Task.FromResult(new TspClientUpdateResponse { Session = session, Message = "No direct merge files" });
             }
+            // Simulate: copy direct merge files to a backup/merged folder
+            var mergedDir = Path.Combine(Directory.GetCurrentDirectory(), "src", "custom", "merged");
+            Directory.CreateDirectory(mergedDir);
+            foreach (var file in session.DirectMergeFiles)
+            {
+                var dest = Path.Combine(mergedDir, Path.GetFileName(file));
+                File.Copy(file, dest, true);
+            }
             session.Status = "Merged";
-            return Task.FromResult(new TspClientUpdateResponse { Session = session, Message = $"Merged {session.DirectMergeFiles.Count} files (dummy)" });
+            SaveSessionToDisk(session);
+            return Task.FromResult(new TspClientUpdateResponse { Session = session, Message = $"Merged {session.DirectMergeFiles.Count} files to {mergedDir}" });
         }
         catch (Exception ex)
         {
@@ -299,15 +357,32 @@ public class TspClientUpdateTool : MCPTool
             foreach (var f in targetFiles)
             {
                 if (session.ProposedPatches.Any(p => p.File.Equals(f, StringComparison.OrdinalIgnoreCase))) { continue; }
-                session.ProposedPatches.Add(new PatchProposal
+                // Generate a simple diff: replace 'int bar' with 'string bar' in impacted files
+                if (File.Exists(f))
                 {
-                    File = f,
-                    Diff = $"--- a/{f}\\n+++ b/{f}\\n@@ line @@\\n- old line\\n+ updated line (dummy)\\n",
-                    Rationale = "Adjust for API change (dummy)"
-                });
+                    var content = File.ReadAllText(f);
+                    var newContent = content.Replace("int bar", "string bar");
+                    var diff = $"--- a/{f}\n+++ b/{f}\n@@ -1,1 +1,1 @@\n- {content}\n+ {newContent}\n";
+                    session.ProposedPatches.Add(new PatchProposal
+                    {
+                        File = f,
+                        Diff = diff,
+                        Rationale = "Update for API signature change"
+                    });
+                }
+                else
+                {
+                    session.ProposedPatches.Add(new PatchProposal
+                    {
+                        File = f,
+                        Diff = $"--- a/{f}\n+++ b/{f}\n@@ -1,1 +1,1 @@\n- (file missing)\n+ (new file)\n",
+                        Rationale = "File missing, would create new"
+                    });
+                }
             }
             session.Status = "PatchesProposed";
-            return Task.FromResult(new TspClientUpdateResponse { Session = session, Message = $"Proposed {targetFiles.Count} patches (dummy)" });
+            SaveSessionToDisk(session);
+            return Task.FromResult(new TspClientUpdateResponse { Session = session, Message = $"Proposed {targetFiles.Count} patches" });
         }
         catch (Exception ex)
         {
@@ -327,8 +402,25 @@ public class TspClientUpdateTool : MCPTool
             {
                 return Task.FromResult(new TspClientUpdateResponse { Session = session, Message = "No patches to apply" });
             }
+            int applied = 0;
+            foreach (var patch in session.ProposedPatches)
+            {
+                if (dryRun)
+                {
+                    continue;
+                }
+                // For demo: just replace 'int bar' with 'string bar' in the file
+                if (File.Exists(patch.File))
+                {
+                    var content = File.ReadAllText(patch.File);
+                    var newContent = content.Replace("int bar", "string bar");
+                    File.WriteAllText(patch.File, newContent);
+                    applied++;
+                }
+            }
             session.Status = dryRun ? "AppliedDryRun" : "Applied";
-            return Task.FromResult(new TspClientUpdateResponse { Session = session, Message = dryRun ? "Dry-run apply complete" : "Patches applied (dummy)" });
+            SaveSessionToDisk(session);
+            return Task.FromResult(new TspClientUpdateResponse { Session = session, Message = dryRun ? "Dry-run apply complete" : $"Applied {applied} patches" });
         }
         catch (Exception ex)
         {
@@ -476,17 +568,56 @@ public class TspClientUpdateTool : MCPTool
     // --------------- Helpers ---------------
     private UpdateSessionState GetOrCreateSession(string? sessionId)
     {
-        if (!string.IsNullOrWhiteSpace(sessionId) && _sessions.TryGetValue(sessionId, out var existing)) { return existing; }
+        if (!string.IsNullOrWhiteSpace(sessionId))
+        {
+            // Try in-memory first
+            if (_sessions.TryGetValue(sessionId, out var existing)) { return existing; }
+            // Try loading from disk
+            var loaded = LoadSessionFromDisk(sessionId);
+            if (loaded != null)
+            {
+                _sessions[sessionId] = loaded;
+                return loaded;
+            }
+        }
         var session = new UpdateSessionState();
         _sessions[session.SessionId] = session;
+        SaveSessionToDisk(session);
         return session;
     }
 
     private UpdateSessionState RequireSession(string sessionId)
     {
         if (string.IsNullOrWhiteSpace(sessionId)) { throw new ArgumentException("sessionId required"); }
-        if (!_sessions.TryGetValue(sessionId, out var session)) { throw new InvalidOperationException($"Unknown session: {sessionId}"); }
-        return session;
+        if (_sessions.TryGetValue(sessionId, out var session)) { return session; }
+        // Try loading from disk
+        var loaded = LoadSessionFromDisk(sessionId);
+        if (loaded != null)
+        {
+            _sessions[sessionId] = loaded;
+            return loaded;
+        }
+        throw new InvalidOperationException($"Unknown session: {sessionId}");
+    }
+
+    // --------------- Session Persistence ---------------
+    private void SaveSessionToDisk(UpdateSessionState session)
+    {
+        Directory.CreateDirectory(SessionDir);
+        var path = Path.Combine(SessionDir, session.SessionId + ".json");
+        var json = JsonSerializer.Serialize(session, new JsonSerializerOptions { WriteIndented = true });
+        File.WriteAllText(path, json);
+    }
+
+    private UpdateSessionState? LoadSessionFromDisk(string sessionId)
+    {
+        var path = Path.Combine(SessionDir, sessionId + ".json");
+        if (!File.Exists(path))
+        {
+            return null;
+        }
+        var json = File.ReadAllText(path);
+        return JsonSerializer.Deserialize<UpdateSessionState>(json);
     }
 
     private string RequireSessionIdOrError(string sessionId, InvocationContext ctx)

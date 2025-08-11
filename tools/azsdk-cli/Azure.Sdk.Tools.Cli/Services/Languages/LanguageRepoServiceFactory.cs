@@ -53,66 +53,63 @@ public class LanguageRepoServiceFactory
 
     /// <summary>
     /// Detects the primary language of a repository based on file patterns and configuration files.
-    /// First checks for Language-Settings.ps1 as mentioned in the gist, then falls back to file-based detection.
+    /// First checks for Language-Settings.ps1, then falls back to file-based detection.
     /// </summary>
     /// <param name="repositoryPath">Path to the repository root</param>
     /// <param name="logger">Logger instance for diagnostics</param>
     /// <returns>Detected language string</returns>
     public static string DetectLanguage(string repositoryPath, ILogger logger)
     {        
-        // First, try to detect from eng/scripts/Language-Settings.ps1 as mentioned in the gist
+        // First, try to detect from eng/scripts/Language-Settings.ps1
         var languageSettingsPath = Path.Combine(repositoryPath, "eng", "scripts", "Language-Settings.ps1");
         logger.LogInformation($"Language settings path {languageSettingsPath}");
-        if (File.Exists(languageSettingsPath))
-        {
-            logger.LogDebug("Found Language-Settings.ps1 file at: {LanguageSettingsPath}", languageSettingsPath);
-            try
-            {
-                var content = File.ReadAllText(languageSettingsPath);
-
-                // Look for language indicators in the PowerShell file
-                if (content.Contains("python", StringComparison.OrdinalIgnoreCase))
-                {
-                    logger.LogInformation("Detected language: python from Language-Settings.ps1");
-                    return "python";
-                }
-                if (content.Contains("javascript", StringComparison.OrdinalIgnoreCase) ||
-                    content.Contains("js", StringComparison.OrdinalIgnoreCase))
-                {
-                    logger.LogInformation("Detected language: javascript from Language-Settings.ps1");
-                    return "javascript";
-                }
-                if (content.Contains("dotnet", StringComparison.OrdinalIgnoreCase) ||
-                    content.Contains(".net", StringComparison.OrdinalIgnoreCase))
-                {
-                    logger.LogInformation("Detected language: dotnet from Language-Settings.ps1");
-                    return "dotnet";
-                }
-                if (content.Contains("java", StringComparison.OrdinalIgnoreCase))
-                {
-                    logger.LogInformation("Detected language: java from Language-Settings.ps1");
-                    return "java";
-                }
-                if (content.Contains("go", StringComparison.OrdinalIgnoreCase))
-                {
-                    logger.LogInformation("Detected language: go from Language-Settings.ps1");
-                    return "go";
-                }
-
-                logger.LogWarning("No recognized language found in Language-Settings.ps1");
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "Failed to read Language-Settings.ps1 file, falling back to file-based detection");
-                // Fall through to file-based detection if reading the settings file fails
-            }
-        }
-        else
+        if (!File.Exists(languageSettingsPath))
         {
             logger.LogDebug("Language-Settings.ps1 not found, language detection unsuccessful");
+            return "unknown";
         }
-        
-        logger.LogWarning("Could not detect repository language, returning 'unknown'");
+
+        logger.LogDebug("Found Language-Settings.ps1 file at: {LanguageSettingsPath}", languageSettingsPath);
+        try
+        {
+            var content = File.ReadAllText(languageSettingsPath);
+
+            // Look for language indicators in the PowerShell file
+            if (content.Contains("python", StringComparison.OrdinalIgnoreCase))
+            {
+                logger.LogInformation("Detected language: python from Language-Settings.ps1");
+                return "python";
+            }
+            if (content.Contains("javascript", StringComparison.OrdinalIgnoreCase) ||
+                content.Contains("js", StringComparison.OrdinalIgnoreCase))
+            {
+                logger.LogInformation("Detected language: javascript from Language-Settings.ps1");
+                return "javascript";
+            }
+            if (content.Contains("dotnet", StringComparison.OrdinalIgnoreCase) ||
+                content.Contains(".net", StringComparison.OrdinalIgnoreCase))
+            {
+                logger.LogInformation("Detected language: dotnet from Language-Settings.ps1");
+                return "dotnet";
+            }
+            if (content.Contains("java", StringComparison.OrdinalIgnoreCase))
+            {
+                logger.LogInformation("Detected language: java from Language-Settings.ps1");
+                return "java";
+            }
+            if (content.Contains("go", StringComparison.OrdinalIgnoreCase))
+            {
+                logger.LogInformation("Detected language: go from Language-Settings.ps1");
+                return "go";
+            }
+
+            logger.LogWarning("No recognized language found in Language-Settings.ps1");
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to read Language-Settings.ps1 file");
+            return "unknown";
+        }
         return "unknown";
     }
     

@@ -98,7 +98,7 @@ export async function compileTsp({
   additionalEmitterOptions?: string;
   saveInputs?: boolean;
   trace?: string[];
-}): Promise<{success: boolean, emitterOutputDir?: string, exampleCmd: string}> {
+}): Promise<{ success: boolean; emitterOutputDir?: string; exampleCmd: string }> {
   const parsedEntrypoint = getDirectoryPath(resolvedMainFilePath);
   const { compile, NodeHost, resolveCompilerOptions, formatDiagnostic } =
     await importTsp(parsedEntrypoint);
@@ -115,8 +115,8 @@ export async function compileTsp({
   }
   const overrideOptions: Record<string, Record<string, string>> = {
     [emitterPackage]: {
-        "save-inputs": saveInputs ? "true" : "false",
-        ...emitterOverrideOptions
+      "save-inputs": saveInputs ? "true" : "false",
+      ...emitterOverrideOptions,
     },
   };
 
@@ -145,10 +145,16 @@ export async function compileTsp({
     .join(" ");
 
   const exampleCmd = `npx tsp compile ${resolvedMainFilePath} --emit ${emitterPackage} ${cliOptions}`;
-  const compileResult: {success: boolean, emitterOutputDir?: string, exampleCmd: string} = {success: false, emitterOutputDir, exampleCmd};
+  const compileResult: { success: boolean; emitterOutputDir?: string; exampleCmd: string } = {
+    success: false,
+    emitterOutputDir,
+    exampleCmd,
+  };
   if (!emitterOutputDir) {
     // TODO: Once we have fully switched to emitter-output-dir, we can make this an error and immediately return the compileResult.
-    Logger.warn(`Missing emitter-output-dir in ${emitterPackage} options of tspconfig.yaml. Soon tsp-client will deprecate "package-dir" in favor of "emitter-output-dir".`);
+    Logger.warn(
+      `Missing emitter-output-dir in ${emitterPackage} options of tspconfig.yaml. Soon tsp-client will deprecate "package-dir" in favor of "emitter-output-dir".`,
+    );
   }
   if (diagnostics.length > 0) {
     let errorDiagnostic = false;

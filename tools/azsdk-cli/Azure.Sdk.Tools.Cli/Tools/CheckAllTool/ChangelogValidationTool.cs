@@ -13,6 +13,7 @@ using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Configuration;
 using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools
@@ -81,7 +82,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
                 // Construct the path to the PowerShell script in the SDK repository
                 // The script should be in the package's repository root, not relative to this tool's location
-                var scriptPath = Path.Combine(packageRepoRoot, "eng", "common", "scripts", "Verify-ChangeLog.ps1");
+                var scriptPath = Path.Combine(packageRepoRoot, Constants.ENG_COMMON_SCRIPTS_PATH, "Verify-ChangeLog.ps1");
                 
                 if (!File.Exists(scriptPath))
                 {

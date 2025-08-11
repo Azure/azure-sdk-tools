@@ -9,4 +9,8 @@ public static class Constants
     public const string AZURE_SDK_DEVOPS_PUBLIC_PROJECT = "public";
     public const string AZURE_SDK_DEVOPS_INTERNAL_PROJECT = "internal";
     public const string AZURE_SDK_DEVOPS_RELEASE_PROJECT = "release";
+
+    // Path constants for SDK repository structure
+    public const string ENG_COMMON_PATH = "eng/common";
+    public const string ENG_COMMON_SCRIPTS_PATH = "eng/common/scripts";
 }

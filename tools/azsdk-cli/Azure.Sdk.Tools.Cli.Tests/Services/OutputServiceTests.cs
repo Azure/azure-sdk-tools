@@ -1,5 +1,4 @@
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Services;

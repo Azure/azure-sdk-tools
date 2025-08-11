@@ -59,8 +59,8 @@ public class LanguageRepoService : ILanguageRepoService
 
     public LanguageRepoService(IProcessHelper processHelper, IGitHelper gitHelper)
     {
-        _processHelper = processHelper ?? throw new ArgumentNullException(nameof(processHelper));
-        _gitHelper = gitHelper ?? throw new ArgumentNullException(nameof(gitHelper));
+        _processHelper = processHelper;
+        _gitHelper = gitHelper;
     }
 
     /// <summary>

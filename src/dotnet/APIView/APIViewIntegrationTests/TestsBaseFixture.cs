@@ -103,9 +103,8 @@ namespace APIViewIntegrationTests
                 .ReturnsAsync(AuthorizationResult.Success);
 
             var telemetryClient = new Mock<TelemetryClient>();
-            var userProfileCacheMock = new Mock<UserProfileCache>(Mock.Of<ILogger<UserProfileCache>>(), Mock.Of<IMemoryCache>(), Mock.Of<IUserProfileManager>());
 
-            var notificationManager = new NotificationManager(_config, ReviewRepository, APIRevisionRepository, cosmosUserProfileRepository, userProfileCacheMock.Object, telemetryClient.Object);
+            var notificationManager = new NotificationManager(_config, ReviewRepository, APIRevisionRepository, cosmosUserProfileRepository, telemetryClient.Object);
 
             var devopsArtifactRepositoryMoq = new Mock<IDevopsArtifactRepository>();
             devopsArtifactRepositoryMoq.Setup(_ => _.DownloadPackageArtifact(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
@@ -118,12 +117,8 @@ namespace APIViewIntegrationTests
             var options = new Mock<IOptions<OrganizationOptions>>();
 
             CommentsManager = new CommentsManager(
-                 apiRevisionsManager: APIRevisionManager, authorizationService: authorizationServiceMoq.Object, 
-                 commentsRepository: CommentRepository, reviewRepository: ReviewRepository,
-                 notificationManager: notificationManager, codeFileRepository: BlobCodeFileRepository,
-                 signalRHubContext: signalRHubContextMoq.Object, httpClientFactory: null,
-                 userProfileCache: null, configuration: _config, options: options.Object,
-                 backgroundTaskQueue: null, logger: null);
+                 authorizationService: authorizationServiceMoq.Object, commentsRepository: CommentRepository,
+                 notificationManager: notificationManager, options: options.Object);
 
             CodeFileManager = new CodeFileManager(
                 languageServices: languageService, codeFileRepository: BlobCodeFileRepository,
@@ -139,9 +134,8 @@ namespace APIViewIntegrationTests
             ReviewManager = new ReviewManager(
                 authorizationService: authorizationServiceMoq.Object, reviewsRepository: ReviewRepository,
                 apiRevisionsManager: APIRevisionManager, commentManager: CommentsManager, codeFileRepository: BlobCodeFileRepository,
-                commentsRepository: CommentRepository, signalRHubContext: signalRHubContextMoq.Object, languageServices: languageService, 
-                telemetryClient: telemetryClient.Object, codeFileManager: CodeFileManager, configuration: _config, 
-                httpClientFactory: null, pollingJobQueueManager: null, notificationManager: notificationManager);
+                commentsRepository: CommentRepository, languageServices: languageService, signalRHubContext: signalRHubContextMoq.Object,
+                telemetryClient: telemetryClient.Object, codeFileManager: CodeFileManager);
 
             TestDataPath = _config["TestPkgPath"];
         }

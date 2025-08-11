@@ -3,11 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using APIViewWeb.LeanModels;
-using APIViewWeb.Managers;
-using APIViewWeb.Repositories;
-using Microsoft.ApplicationInsights;
-using Microsoft.Extensions.Logging;
-using Moq;
 using Xunit;
 
 namespace APIViewUnitTests
@@ -17,19 +12,12 @@ namespace APIViewUnitTests
         [Fact]
         public void IsSDKLanguage_Returns_True_For_Supported_Languages()
         {
-            // Test all five supported SDK languages
+            // Test five supported SDK languages (case-sensitive per implementation)
             Assert.True(IsSDKLanguageStatic("C#"));
             Assert.True(IsSDKLanguageStatic("Java"));
             Assert.True(IsSDKLanguageStatic("Python"));
             Assert.True(IsSDKLanguageStatic("Go"));
             Assert.True(IsSDKLanguageStatic("JavaScript"));
-            
-            // Test case insensitivity
-            Assert.True(IsSDKLanguageStatic("c#"));
-            Assert.True(IsSDKLanguageStatic("java"));
-            Assert.True(IsSDKLanguageStatic("python"));
-            Assert.True(IsSDKLanguageStatic("go"));
-            Assert.True(IsSDKLanguageStatic("javascript"));
         }
 
         [Fact]
@@ -42,19 +30,9 @@ namespace APIViewUnitTests
             Assert.False(IsSDKLanguageStatic("Unknown"));
             Assert.False(IsSDKLanguageStatic(""));
             Assert.False(IsSDKLanguageStatic(null));
-        }
-
-        [Theory]
-        [InlineData("azure.storage.blobs", "azure.storage")]
-        [InlineData("contoso.widget", "contoso")]
-        [InlineData("microsoft.graph.users", "microsoft.graph")]
-        [InlineData("simple", "simple")]
-        [InlineData("", "")]
-        [InlineData(null, "")]
-        public void ExtractPackageBaseName_Returns_Expected_Result(string packageName, string expected)
-        {
-            var result = ExtractPackageBaseNameStatic(packageName);
-            Assert.Equal(expected, result);
+            // Case-insensitive names should be false (implementation is case-sensitive)
+            Assert.False(IsSDKLanguageStatic("c#"));
+            Assert.False(IsSDKLanguageStatic("java"));
         }
 
         [Fact]
@@ -63,10 +41,10 @@ namespace APIViewUnitTests
             // Arrange
             var reviews = new List<ReviewListItemModel>
             {
-                CreateReview("contoso.widget", "C#", true),     // Approved SDK
-                CreateReview("contoso.widget", "Java", true),   // Approved SDK
-                CreateReview("contoso.widget", "Python", true), // Approved SDK
-                CreateReview("contoso.widget", "TypeSpec", false) // TypeSpec (not checked)
+                CreateReview("contoso.widget", "C#", true),
+                CreateReview("contoso.widget", "Java", true),
+                CreateReview("contoso.widget", "Python", true),
+                CreateReview("contoso.widget", "TypeSpec", false)
             };
 
             // Act
@@ -82,10 +60,10 @@ namespace APIViewUnitTests
             // Arrange
             var reviews = new List<ReviewListItemModel>
             {
-                CreateReview("contoso.widget", "C#", true),     // Approved SDK
-                CreateReview("contoso.widget", "Java", false),  // Not approved SDK
-                CreateReview("contoso.widget", "Python", true), // Approved SDK
-                CreateReview("contoso.widget", "TypeSpec", false) // TypeSpec (not checked)
+                CreateReview("contoso.widget", "C#", true),
+                CreateReview("contoso.widget", "Java", false),
+                CreateReview("contoso.widget", "Python", true),
+                CreateReview("contoso.widget", "TypeSpec", false)
             };
 
             // Act
@@ -96,20 +74,20 @@ namespace APIViewUnitTests
         }
 
         [Fact]
-        public void AreAllRelatedSDKReviewsApproved_Returns_True_When_No_SDK_Reviews_Exist()
+        public void AreAllRelatedSDKReviewsApproved_Returns_False_When_No_SDK_Reviews_Exist()
         {
             // Arrange
             var reviews = new List<ReviewListItemModel>
             {
-                CreateReview("contoso.widget", "TypeSpec", false), // TypeSpec only
-                CreateReview("contoso.widget", "Swagger", false)   // Swagger only
+                CreateReview("contoso.widget", "TypeSpec", false),
+                CreateReview("contoso.widget", "Swagger", false)
             };
 
             // Act
             var result = AreAllRelatedSDKReviewsApprovedStatic(reviews, "contoso");
 
             // Assert
-            Assert.True(result); // No SDK reviews to check, so return true
+            Assert.False(result); // No SDK reviews exist, so return false
         }
 
         [Fact]
@@ -118,17 +96,17 @@ namespace APIViewUnitTests
             // Arrange
             var reviews = new List<ReviewListItemModel>
             {
-                CreateReview("contoso.widget", "C#", true),      // Target package - approved
-                CreateReview("contoso.other", "Java", false),    // Different package - ignored
+                CreateReview("contoso.widget", "C#", true),      // Target base - approved
+                CreateReview("contoso.other", "Java", false),    // Same base - NOT approved -> should fail
                 CreateReview("different.widget", "Python", false), // Different base - ignored
-                CreateReview("contoso.widget", "TypeSpec", false)  // TypeSpec (not checked)
+                CreateReview("contoso.widget", "TypeSpec", false)  // TypeSpec - ignored
             };
 
             // Act
             var result = AreAllRelatedSDKReviewsApprovedStatic(reviews, "contoso");
 
             // Assert
-            Assert.True(result); // Only one SDK review for contoso.* and it's approved
+            Assert.False(result);
         }
 
         private static ReviewListItemModel CreateReview(string packageName, string language, bool isApproved)
@@ -141,37 +119,27 @@ namespace APIViewUnitTests
             };
         }
 
-        // Static helper methods that mirror the private methods in ReviewManager
+        // Static helper methods mirroring latest ReviewManager logic
         private static bool IsSDKLanguageStatic(string language)
         {
-            if (string.IsNullOrEmpty(language)) return false;
-
-            var supportedSDKLanguages = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            {
-                "C#", "Java", "Python", "Go", "JavaScript"
-            };
-
-            return supportedSDKLanguages.Contains(language);
-        }
-
-        private static string ExtractPackageBaseNameStatic(string packageName)
-        {
-            if (string.IsNullOrEmpty(packageName)) return string.Empty;
-
-            var parts = packageName.Split('.');
-            return parts.Length > 1 ? parts[0] : packageName;
+            var sdkLanguages = new[] { "C#", "Java", "Python", "Go", "JavaScript" };
+            return !string.IsNullOrEmpty(language) && sdkLanguages.Contains(language);
         }
 
         private static bool AreAllRelatedSDKReviewsApprovedStatic(IEnumerable<ReviewListItemModel> allReviews, string packageBaseName)
         {
+            var baseLower = (packageBaseName ?? string.Empty).ToLower();
+            var sdkLanguages = new HashSet<string>(new[] { "C#", "Java", "Python", "Go", "JavaScript" });
+
             var relatedSDKReviews = allReviews
-                .Where(r => IsSDKLanguageStatic(r.Language))
-                .Where(r => ExtractPackageBaseNameStatic(r.PackageName).Equals(packageBaseName, StringComparison.OrdinalIgnoreCase))
+                .Where(r => r != null && !string.IsNullOrEmpty(r.PackageName))
+                .Where(r => sdkLanguages.Contains(r.Language))
+                .Where(r => r.PackageName.ToLower().StartsWith(baseLower))
                 .ToList();
 
-            // If no SDK reviews exist, consider it as "all approved"
+            // If no SDK reviews exist, consider it as "not approved"
             if (!relatedSDKReviews.Any())
-                return true;
+                return false;
 
             return relatedSDKReviews.All(r => r.IsApproved);
         }

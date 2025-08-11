@@ -12,7 +12,7 @@ var CommonKeywordReplaceMap = map[string]string{
 	"swagger":      "Open API",
 }
 
-const RerankScoreLowRelevanceThreshold = 1.5
+const RerankScoreLowRelevanceThreshold = 2
 const RerankScoreMediumRelevanceThreshold = 2
-const RerankScoreRelevanceThreshold = 3
+const RerankScoreRelevanceThreshold = 2.7
 const RerankScoreHighRelevanceThreshold = 4

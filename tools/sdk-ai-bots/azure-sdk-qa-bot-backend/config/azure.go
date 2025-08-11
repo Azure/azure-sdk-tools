@@ -30,7 +30,7 @@ const (
 	AI_SEARCH_AGENT                = "azure-sdk-agent"
 	STORAGE_BASE_URL               = "https://typespechelper4storage.blob.core.windows.net"
 	STORAGE_KNOWLEDGE_CONTAINER    = "knowledge"
-	STORAGE_FEEDBACK_CONTAINER     = "feedback"
+	STORAGE_FEEDBACK_CONTAINER     = "feedback-v2"
 )
 
 func InitOpenAIClient() {

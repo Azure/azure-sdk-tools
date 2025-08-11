@@ -3,6 +3,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
+
 namespace Azure.Sdk.Tools.Cli.Helpers
 {
     public interface IProcessHelper
@@ -82,16 +83,18 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             using var timeoutCts = new CancellationTokenSource(timeout);
             using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutCts.Token);
 
+            var rootCommand = command;
+
             var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
             if (isWindows)
             {
                 args = ["/C", command, .. args];
-                command = "cmd.exe";
+                rootCommand = "cmd.exe";
             }
 
             var processStartInfo = new ProcessStartInfo
             {
-                FileName = command,
+                FileName = rootCommand,
                 WorkingDirectory = workingDirectory,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -126,7 +129,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                     }
                 };
 
-                logger.LogDebug("Running command: {command} {args} in {workingDirectory}", command, string.Join(" ", args), workingDirectory);
+                logger.LogInformation("Running command: {command} {args} in {workingDirectory}", rootCommand, string.Join(" ", args), workingDirectory);
 
                 process.Start();
                 process.BeginOutputReadLine();
@@ -145,17 +148,11 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 }
                 catch (Exception ex)
                 {
-                    output.AppendLine();
-                    output.AppendLine($"Process '{command}' failed with exception: {ex.Message}");
                     logger.LogError(ex, "Process '{command}' failed", command);
                     return new ProcessResult { Output = output.ToString(), ExitCode = 1 };
                 }
 
                 exitCode = process.ExitCode;
-                if (process.ExitCode != 0)
-                {
-                    output.AppendLine($"Process '{command}' failed with exit code {process.ExitCode}");
-                }
             }
 
             return new ProcessResult { Output = output.ToString() ?? "", ExitCode = exitCode };

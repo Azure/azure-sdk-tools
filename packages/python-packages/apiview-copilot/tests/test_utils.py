@@ -1,10 +1,19 @@
+# -------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for
+# license information.
+# --------------------------------------------------------------------------
+
+# pylint: disable=missing-class-docstring,missing-function-docstring
+
+"""
+Test cases for utility functions in APIView Copilot.
+"""
+
 import os
+
 import pytest
 from src._utils import get_prompt_path
-
-# You may need to adjust PACKAGE_ROOT and prompts folder for your test environment
-PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-PROMPTS_FOLDER = os.path.join(PACKAGE_ROOT, "prompts")
 
 
 def test_get_prompt_path_valid_no_suffix():

@@ -1,9 +1,21 @@
+# -------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for
+# license information.
+# --------------------------------------------------------------------------
+
+"""
+Plugin for performing API reviews using the ApiViewReview class.
+"""
+
 import json
+
 from semantic_kernel.functions import kernel_function
-from src._apiview_reviewer import ApiViewReview, ApiViewReviewMode
+from src._apiview_reviewer import ApiViewReview
 
 
 class ApiReviewPlugin:
+    """Plugin for API review operations."""
 
     @kernel_function(description="Perform an API review on a single API.")
     async def review_api(self, *, language: str, target: str):

@@ -44,9 +44,20 @@ async function packPackage(packageDirectory: string, packageName: string, rushxS
     if (isRushRepo(sdkRepoRoot)) {
         await runCommand('node', [rushxScript, 'pack'], { ...runCommandOptions, cwd }, false);
     } else {
-        await runCommand('pnpm', ['pack'], { ...runCommandOptions, cwd }, false);
+        await runCommand('pnpm', ['run', '--filter', `${packageName}...`, 'pack'], { ...runCommandOptions, cwd }, false);
     }
     logger.info(`Pack '${packageName}' successfully.`);
+}
+
+async function ensurePnpmInstalled() {
+  try {
+    await runCommand('pnpm', ['--version'], runCommandOptions, false);
+    logger.info('pnpm is already installed.');
+  } catch (error) {
+    logger.info('pnpm not found. Installing...');
+    await runCommand('npm', ['install', '-g', 'pnpm'], runCommandOptions);
+    logger.info('pnpm installed successfully.');
+  }
 }
 
 async function addApiViewInfo(
@@ -118,12 +129,13 @@ export async function buildPackage(
         logger.info(`Start to build package '${name}'.`);
         await runCommand('node', [rushScript, 'build', '-t', name, '--verbose'], runCommandOptions);
     } else {
+        await ensurePnpmInstalled();
         logger.info(`Start to pnpm install.`);
         await runCommand(`pnpm`, ['install'], runCommandOptions, false);
         logger.info(`Pnpm install successfully.`);
 
         logger.info(`Start to build package '${name}'.`);
-        await runCommand('pnpm', ['build', '--filter', name], runCommandOptions);
+        await runCommand('pnpm', ['build', '--filter', `${name}...`], runCommandOptions);
     }
 
     const apiViewContext = await addApiViewInfo(packageDirectory, options.sdkRepoRoot, name, packageResult);

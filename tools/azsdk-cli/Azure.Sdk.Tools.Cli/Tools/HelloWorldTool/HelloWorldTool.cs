@@ -3,17 +3,22 @@
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.ComponentModel;
+using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Contract;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Models;
 
-namespace Azure.Sdk.Tools.Cli.Tools.HelloWorldTool
+namespace Azure.Sdk.Tools.Cli.Tools
 {
     #if DEBUG
-    [McpServerToolType, Description("Echoes the message back to the client")]
-    public class HelloWorldTool(ILogger<HelloWorldTool> logger, IOutputService output) : MCPTool
+    [McpServerToolType, Description("Simple echo tool for testing and demonstration purposes")]
+    public class HelloWorldTool : MCPTool
     {
+        // Dependencies
+        private readonly ILogger<HelloWorldTool> logger;
+        private readonly IOutputService output;
+
         private Argument<string> _inputArg = new Argument<string>(
             name: "input",
             description: "The text to echo back"
@@ -24,9 +29,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.HelloWorldTool
 
         private readonly Option<bool> failOpt = new(["--fail"], () => false, "Force failure");
 
+        public HelloWorldTool(ILogger<HelloWorldTool> logger, IOutputService output) : base()
+        {
+            this.logger = logger;
+            this.output = output;
+
+            // Set command hierarchy - results in: azsdk example hello-world
+            CommandHierarchy = [
+                SharedCommandGroups.Example
+            ];
+        }
+
         public override Command GetCommand()
         {
-            Command command = new("hello-world", "Tests echoing a message back to the client");
+            Command command = new("hello-world", "Simple echo tool for testing framework features");
             command.AddArgument(_inputArg);
             command.AddOption(failOpt);
             command.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
@@ -66,7 +82,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.HelloWorldTool
                 };
             }
         }
-
 
         [McpServerTool(Name = "hello-world"), Description("Echoes the message back to the client")]
         public DefaultCommandResponse EchoSuccess(string message)

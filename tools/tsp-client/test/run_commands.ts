@@ -85,7 +85,6 @@ async function main() {
     mgmtSpecLink,
   ]);
 
-
   await unlink(join(repoRoot, "eng/emitter-package.json"));
   console.log("emitter-package.json ---------------> deleted successfully");
   await unlink(join(repoRoot, "eng/emitter-package-lock.json"));

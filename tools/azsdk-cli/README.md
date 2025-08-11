@@ -17,6 +17,7 @@ This project is the primary integration point for all `azure-sdk` provided [MCP]
       * [Release](#release)
    * [Project Structure and Information](#project-structure-and-information)
       * [Directory Structure](#directory-structure)
+      * [Architecture Diagram](#architecture-diagram)
       * [Pipelines](#pipelines)
    * [Design Guidelines](#design-guidelines)
    * [Adding a New Tool](#adding-a-new-tool)
@@ -211,6 +212,107 @@ This project is both a [System.CommandLine](https://learn.microsoft.com/en-us/do
     - Enforce all tools handled by try/catch
     - Enforce tool inclusion in service registration for dependency injector
 
+### Architecture Diagram
+
+```mermaid
+graph TB
+    %% External Interfaces
+    CLI[CLI Mode<br/>azsdk command]
+    MCP[MCP Server Mode<br/>VS Code, Coding Agent Integration]
+
+    %% Main Entry Point
+    Program[Program.cs<br/>Main Entry Point]
+
+    %% Core Components
+    WebApp[ASP.NET Core<br/>WebApplication]
+    CommandFactory[CommandFactory<br/>Command Registration]
+
+    %% Services Layer
+    OutputService[OutputService<br/>Plain/JSON/MCP Output]
+
+    %% External Services
+    subgraph ExternalServices[External Services]
+        ExternalServiceList[Az, GitHub, DevOps, etc]
+    end
+
+    %% Helper Classes
+    subgraph Helpers[Helper Classes]
+        HelperClasses[Git, TypeSpec, Logs, etc]
+    end
+
+    %% MCP Tools with two layers, minimal arrows inside
+    subgraph MCPTools[MCP Tools]
+        direction TB
+        %% top: base tool contract (internal representation)
+        MCPToolInner[MCPTool<br/>Base Tool Contract]
+        CommandGroup[CommandGroup Hierarchy]
+        %% second row: actual tools horizontally
+        subgraph ToolRow[ ]
+            direction LR
+            DevExperienceTools[Dev Experience]
+            SpecTools[TypeSpecs]
+            PipelineTools[Pipeline logs and tests]
+            EtcTools[Etc.]
+            %% invisible chain to force horizontal layout
+            DevExperienceTools --- SpecTools --- PipelineTools --- EtcTools
+        end
+        %% keep visual hierarchy but no arrows from inner to tools
+    end
+
+    %% Data Models
+    subgraph Models[Data Models]
+        DataModelList[MCP Tool/CLI Responses]
+    end
+
+    %% Flow Connections
+    CLI --> Program
+    MCP --> Program
+
+    Program --> WebApp
+    Program --> CommandFactory
+
+    CommandFactory --> MCPTools
+    MCPTools --> Helpers
+    MCPTools --> ExternalServices
+    MCPTools --> Models
+    MCPTools --> OutputService
+
+    %% Configuration
+    subgraph Config[Configuration]
+        MCPConfig[.vscode/mcp.json<br/>VS Code Integration]
+        GitHubConfig[github coding agent mcp config]
+    end
+
+    %% Build Artifacts
+    subgraph Artifacts[Build Artifacts]
+        NuGet[NuGet Packages<br/>azsdk.*.nupkg]
+        Binary[Linux/Windows/Mac<br/>azsdk executable]
+    end
+
+    Artifacts --> CLI
+    Artifacts --> MCP
+
+    %% Styling
+    classDef entryPoint fill:#e1f5fe
+    classDef core fill:#f3e5f5
+    classDef tools fill:#e8f5e8
+    classDef services fill:#fff3e0
+    classDef external fill:#ffebee
+    classDef config fill:#f1f8e9
+
+    class CLI,MCP entryPoint
+    class Program,WebApp,CommandFactory core
+    class DevExperienceTools,SpecTools,PipelineTools,EtcTools tools
+    class OutputService services
+    class ExternalServiceList,HelperClasses external
+    class MCPConfig,GitHubConfig config
+
+    %% hide the dummy horizontal links inside the inner tool row
+    linkStyle 0 stroke-width:0;
+    linkStyle 1 stroke-width:0;
+    linkStyle 2 stroke-width:0;
+```
+
 ### Pipelines
 
 Public CI - https://dev.azure.com/azure-sdk/public/_build?definitionId=7677
@@ -230,57 +332,12 @@ Release - https://dev.azure.com/azure-sdk/internal/_build?definitionId=7684
 
 ## Adding a New Tool
 
-Tool classes are the core of the azure sdk app and implement CLI commands or MCP server tools. To add a new tool start with the following:
+Tool classes are the core of the azure sdk app and implement CLI commands or MCP server tools.
 
-- Determine the right directory and tool class name under `Azure.Sdk.Tools.Cli/Tools`
-- Reference or copy from the [hello world tool](Azure.Sdk.Tools.Cli/Tools/HelloWorldTool/HelloWorldTool.cs) for an example.
-- See [Tools/README.md](./Azure.Sdk.Tools.Cli/Tools/README.md) for more details
+New tools can be created with copilot chat/agent:
 
-Each tool class should implement a `GetCommand()` method and a `HandleCommand(...)` method. These allow the tools to be called from CLI mode.
-Some exceptions may apply on a case by case basis for tool classes where we implement MCP mode but not CLI mode and vice versa.
-
-```csharp
-public override Command GetCommand()
-{
-    Command command = new("example", "An example CLI command");
-    command.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
-    return command;
-}
-
-public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
-{
-    var result = await SomeMethod();
-    ctx.ExitCode = ExitCode;
-    output.Output(result);
-}
+```
+Help me create a new tool using #new-tool.md as a reference
 ```
 
-Additionally, the tool class and any methods that will be included in the MCP server tools list must have the MCP attributes:
-
-```csharp
-[McpServerToolType, Description("Example tool")]
-public class ExampleTool(ILogger<ExampleTool> logger, IOutputService output) : MCPTool
-{
-    [McpServerTool(Name = "example-1"), Description("Example tool call 1")]
-    public DefaultCommandResponse Success(string message)
-    {
-        try
-        {
-            return new()
-            {
-                Message = "success"
-            }
-        }
-        catch (Exception ex)
-        {
-            SetFailure(1);
-            return new()
-            {
-                ResponseError = $"failure: {ex.Message}"
-            }
-        }
-    }
-}
-```
-
-**Rather than bubbling up exceptions, all `McpServerTool` methods must handle failures and format them into its response object. This allows tools to be interoperable between CLI and MCP mode.**
+Or manually, see [docs/new-tool.md](./docs/new-tool.md) for more details.

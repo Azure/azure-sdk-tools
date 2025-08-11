@@ -47,10 +47,11 @@ Respond with a JSON object using this structure (no markdown formatting needed):
 
 ## Examples
 
-Original: "How do I get my service ready for SDK onboarding?"
+Original: "How do I migrate ARM swagger spec to TypeSpec?"
 Response:
 {
-  "question": "What are the requirements and prerequisites to get my Azure service ready for SDK onboarding?",
-  "category": "service-onboarding",
+  "question": "How do I migrate Azure Resource Manager (ARM) swagger specifications to TypeSpec?",
+  "category": "TypeSpec Migration",
+  "scope": "branded"
   ......
 }

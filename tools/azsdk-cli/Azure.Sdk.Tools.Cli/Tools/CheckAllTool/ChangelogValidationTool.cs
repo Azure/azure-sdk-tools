@@ -4,9 +4,7 @@
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Contract;
@@ -28,14 +26,16 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private readonly ILogger<ChangelogValidationTool> logger;
         private readonly IOutputService output;
         private readonly IGitHelper gitHelper;
+        private readonly IProcessHelper processHelper;
 
         private readonly Option<string> packagePathOption = new(["--package-path", "-p"], "Path to the package directory to check") { IsRequired = true };
 
-        public ChangelogValidationTool(ILogger<ChangelogValidationTool> logger, IOutputService output, IGitHelper gitHelper) : base()
+        public ChangelogValidationTool(ILogger<ChangelogValidationTool> logger, IOutputService output, IGitHelper gitHelper, IProcessHelper processHelper) : base()
         {
             this.logger = logger;
             this.output = output;
             this.gitHelper = gitHelper;
+            this.processHelper = processHelper;
             CommandHierarchy = [SharedCommandGroups.Checks];
         }
 
@@ -50,14 +50,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
         public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
         {
             var packagePath = ctx.ParseResult.GetValueForOption(packagePathOption);
-            var result = await RunChangelogValidation(packagePath);
+            var result = RunChangelogValidation(packagePath);
 
             ctx.ExitCode = ExitCode;
             output.Output(result);
         }
 
         [McpServerTool(Name = "RunChangelogValidation"), Description("Run changelog validation for SDK packages. Provide absolute path to package root as param.")]
-        public async Task<CLICheckResponse> RunChangelogValidation(string packagePath)
+        public CLICheckResponse RunChangelogValidation(string packagePath)
         {
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             
@@ -90,22 +90,29 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     return new FailureCLICheckResponse(1, "", $"PowerShell script not found at expected location: {scriptPath}");
                 }
 
-                // Execute the PowerShell script
-                var result = await ExecuteChangelogValidationScript(scriptPath, packagePath);
+                // Execute the PowerShell script using ProcessHelper
+                var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+                var command = isWindows ? "cmd.exe" : "pwsh";
+                var args = isWindows 
+                    ? new[] { "/C", "pwsh", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", scriptPath, "-PackageName", Path.GetFileName(packagePath) }
+                    : new[] { "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", scriptPath, "-PackageName", Path.GetFileName(packagePath) };
+
+                var processResult = processHelper.RunProcess(command, args, packagePath);
                 stopwatch.Stop();
 
-                if (result.Success)
+                if (processResult.ExitCode == 0)
                 {
                     return new SuccessCLICheckResponse(0, System.Text.Json.JsonSerializer.Serialize(new
                     {
                         Message = "Changelog validation completed successfully",
-                        Duration = (int)stopwatch.ElapsedMilliseconds
+                        Duration = (int)stopwatch.ElapsedMilliseconds,
+                        Output = processResult.Output
                     }));
                 }
                 else
                 {
                     SetFailure(1);
-                    return new FailureCLICheckResponse(1, "", result.ErrorMessage);
+                    return new FailureCLICheckResponse(1, processResult.Output, $"Changelog validation failed with exit code {processResult.ExitCode}");
                 }
             }
             catch (Exception ex)
@@ -114,95 +121,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 stopwatch.Stop();
                 SetFailure(1);
                 return new FailureCLICheckResponse(1, "", $"Unhandled exception: {ex.Message}");
-            }
-        }
-
-        /// <summary>
-        /// Executes the PowerShell changelog validation script
-        /// </summary>
-        /// <param name="scriptPath">Path to the PowerShell script</param>
-        /// <param name="packagePath">Path to the package directory</param>
-        /// <returns>Validation result</returns>
-        private async Task<(bool Success, string ErrorMessage, List<string> Details)> ExecuteChangelogValidationScript(string scriptPath, string packagePath)
-        {
-            var details = new List<string>();
-            
-            try
-            {
-                // Handle cross-platform execution
-                var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-                var fileName = isWindows ? "cmd.exe" : "pwsh";
-                var arguments = isWindows 
-                    ? $"/C pwsh -NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -PackageName \"{Path.GetFileName(packagePath)}\""
-                    : $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -PackageName \"{Path.GetFileName(packagePath)}\"";
-
-                var processStartInfo = new ProcessStartInfo
-                {
-                    FileName = fileName,
-                    Arguments = arguments,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    RedirectStandardInput = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    WorkingDirectory = packagePath
-                };
-
-                using var process = new System.Diagnostics.Process();
-                process.StartInfo = processStartInfo;
-
-                logger.LogDebug($"Executing PowerShell command: {processStartInfo.FileName} {processStartInfo.Arguments}");
-
-                var outputBuilder = new System.Text.StringBuilder();
-                var errorBuilder = new System.Text.StringBuilder();
-
-                process.OutputDataReceived += (sender, e) =>
-                {
-                    if (!string.IsNullOrEmpty(e.Data))
-                    {
-                        outputBuilder.AppendLine(e.Data);
-                        details.Add($"Output: {e.Data}");
-                        logger.LogDebug($"PowerShell Output: {e.Data}");
-                    }
-                };
-
-                process.ErrorDataReceived += (sender, e) =>
-                {
-                    if (!string.IsNullOrEmpty(e.Data))
-                    {
-                        errorBuilder.AppendLine(e.Data);
-                        details.Add($"Error: {e.Data}");
-                        logger.LogWarning($"PowerShell Error: {e.Data}");
-                    }
-                };
-
-                process.Start();
-                process.BeginOutputReadLine();
-                process.BeginErrorReadLine();
-
-                await process.WaitForExitAsync();
-
-                var exitCode = process.ExitCode;
-                var output = outputBuilder.ToString().Trim();
-                var error = errorBuilder.ToString().Trim();
-
-                if (exitCode == 0)
-                {
-                    return (true, string.Empty, details);
-                }
-                else
-                {
-                    var errorMessage = !string.IsNullOrEmpty(error) ? error : 
-                                     !string.IsNullOrEmpty(output) ? output : 
-                                     $"PowerShell script exited with code {exitCode}";
-                    return (false, errorMessage, details);
-                }
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Failed to execute PowerShell script");
-                details.Add($"Exception: {ex.Message}");
-                return (false, $"Failed to execute PowerShell script: {ex.Message}", details);
             }
         }
     }

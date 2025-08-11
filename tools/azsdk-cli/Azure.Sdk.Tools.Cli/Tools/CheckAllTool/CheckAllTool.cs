@@ -92,7 +92,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     overallSuccess = false;
                 }
 
-                var changelogValidationResult = await RunChangelogValidation(packagePath);
+                var changelogValidationResult = RunChangelogValidation(packagePath);
                 results.Add(changelogValidationResult);
                 if (changelogValidationResult.ExitCode != 0)
                 {
@@ -121,17 +121,17 @@ namespace Azure.Sdk.Tools.Cli.Tools
         public Task<CLICheckResponse> RunAllChecks(string packagePath)
             => RunAllChecks(packagePath, ct: default);
 
-    private async Task<CLICheckResponse> RunChangelogValidation(string packagePath)
+    private CLICheckResponse RunChangelogValidation(string packagePath)
     {
         logger.LogInformation("Running changelog validation...");
         
-        // Use the actual ChangelogValidationTool instead of stub implementation
         var changelogValidationTool = new ChangelogValidationTool(
             Microsoft.Extensions.Logging.Abstractions.NullLogger<ChangelogValidationTool>.Instance,
             output,
-            gitHelper);
+            gitHelper,
+            processHelper);
         
-        return await changelogValidationTool.RunChangelogValidation(packagePath);
+        return changelogValidationTool.RunChangelogValidation(packagePath);
     }
 
     }

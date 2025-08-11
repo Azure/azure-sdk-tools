@@ -475,7 +475,11 @@ func (s *CompletionService) buildPrompt(intension *model.IntensionResult, chunks
 	// make sure the tokens of chunks limited in 100000 tokens
 	tokenCnt := 0
 	for i, chunk := range chunks {
-		tokenCnt += len(chunk)
+		if len(chunk) > config.AOAI_CHAT_MAX_TOKENS {
+			log.Printf("Chunk %d is too long, truncating to %d characters", i+1, config.AOAI_CHAT_MAX_TOKENS)
+			chunks[i] = chunk[:config.AOAI_CHAT_MAX_TOKENS]
+		}
+		tokenCnt += len(chunks[i])
 		if tokenCnt > config.AOAI_CHAT_CONTEXT_MAX_TOKENS {
 			log.Printf("%v chunks has exceed max token limit, truncating to %d tokens", i+1, config.AOAI_CHAT_CONTEXT_MAX_TOKENS)
 			chunks = chunks[:i+1] // truncate the chunks to the current index
@@ -769,10 +773,6 @@ func (s *CompletionService) mergeAndProcessSearchResults(req *model.CompletionRe
 		allChunks = append(allChunks, result)
 	}
 
-	if len(allChunks) > *req.TopK {
-		allChunks = allChunks[:*req.TopK] // Limit to TopK results
-	}
-
 	searchClient := search.NewSearchClient()
 
 	// Prepare chunks for completion
@@ -784,6 +784,7 @@ func (s *CompletionService) mergeAndProcessSearchResults(req *model.CompletionRe
 			Header1:   result.Header1,
 		})
 	}
+	completedFilesCnt := len(files)
 	files = append(files, needCompleteChunks...)
 
 	// Complete chunks in parallel
@@ -812,10 +813,11 @@ func (s *CompletionService) mergeAndProcessSearchResults(req *model.CompletionRe
 	for _, chunk := range allChunks {
 		content := processChunk(chunk)
 		result = append(result, content)
+		log.Printf("- Normal chunks: %s/%s#%s#%s#%s", chunk.ContextID, chunk.Title, chunk.Header1, chunk.Header2, chunk.Header3)
 	}
 
 	log.Printf("Search merge summary: %d agentic + %d knowledge → %d completed docs + %d q&a + %d chunks",
-		len(agenticChunks), len(knowledgeResults), len(files), len(needCompleteChunks), len(allChunks))
+		len(agenticChunks), len(knowledgeResults), completedFilesCnt, len(needCompleteChunks), len(allChunks))
 	log.Printf("Merge and processing took: %v", time.Since(mergeStart))
 	return result
 }

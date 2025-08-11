@@ -4,6 +4,7 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using System.Runtime.InteropServices;
 using Azure.Sdk.Tools.Cli.Services;
 using System.Threading.Tasks; // added for async SetUp
+using Moq;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Services
 {
@@ -31,7 +32,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             GoPackageDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(GoPackageDir);
 
-            LangService = new GoLanguageRepoService(new ProcessHelper(NullLogger<ProcessHelper>.Instance), NullLogger<GoLanguageRepoService>.Instance);
+            var mockGitHubService = new Mock<IGitHubService>();
+            var gitHelper = new GitHelper(mockGitHubService.Object, NullLogger<GitHelper>.Instance);
+            LangService = new GoLanguageRepoService(new ProcessHelper(NullLogger<ProcessHelper>.Instance), gitHelper, NullLogger<GoLanguageRepoService>.Instance);
 
             var resp = await LangService.CreateEmptyPackage(GoPackageDir, "untitleddotloop");
             Assert.That(resp.ExitCode, Is.EqualTo(0));

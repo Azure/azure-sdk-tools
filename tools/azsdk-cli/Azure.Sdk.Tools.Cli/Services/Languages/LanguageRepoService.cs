@@ -39,6 +39,13 @@ public interface ILanguageRepoService
     /// <param name="packagePath">Absolute path to the package directory</param>
     /// <returns>CLI check response containing success/failure status and response message</returns>
     Task<CLICheckResponse> RunTestsAsync(string packagePath);
+
+    /// <summary>
+    /// Validate changelog for the target language.
+    /// </summary>
+    /// <param name="packagePath">Absolute path to the package directory</param>
+    /// <returns>CLI check response containing success/failure status and response message</returns>
+    Task<CLICheckResponse> ValidateChangelogAsync(string packagePath);
 }
 
 /// <summary>
@@ -48,10 +55,12 @@ public interface ILanguageRepoService
 public class LanguageRepoService : ILanguageRepoService
 {
     protected readonly IProcessHelper _processHelper;
+    protected readonly IGitHelper _gitHelper;
 
-    public LanguageRepoService(IProcessHelper processHelper)
+    public LanguageRepoService(IProcessHelper processHelper, IGitHelper gitHelper)
     {
         _processHelper = processHelper ?? throw new ArgumentNullException(nameof(processHelper));
+        _gitHelper = gitHelper ?? throw new ArgumentNullException(nameof(gitHelper));
     }
 
     /// <summary>
@@ -88,5 +97,75 @@ public class LanguageRepoService : ILanguageRepoService
     {
         await Task.CompletedTask;
         return new FailureCLICheckResponse(1, "RunTests not implemented for this language");
+    }
+
+    public virtual async Task<CLICheckResponse> ValidateChangelogAsync(string packagePath)
+    {
+        return await ValidateChangelogCommonAsync(packagePath);
+    }
+
+    /// <summary>
+    /// Common changelog validation implementation that works for most Azure SDK languages.
+    /// Uses the PowerShell script from eng/common/scripts/Verify-ChangeLog.ps1.
+    /// </summary>
+    /// <param name="packagePath">Absolute path to the package directory</param>
+    /// <returns>CLI check response containing success/failure status and response message</returns>
+    protected async Task<CLICheckResponse> ValidateChangelogCommonAsync(string packagePath)
+    {
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        
+        try
+        {
+            if (!Directory.Exists(packagePath))
+            {
+                return new FailureCLICheckResponse(1, "", $"Package path does not exist: {packagePath}");
+            }
+
+            // Find the SDK repository root by looking for common repository indicators
+            var packageRepoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
+            if (string.IsNullOrEmpty(packageRepoRoot))
+            {
+                return new FailureCLICheckResponse(1, "", $"Could not find repository root from package path: {packagePath}");
+            }
+
+            // Construct the path to the PowerShell script in the SDK repository
+            var scriptPath = Path.Combine(packageRepoRoot, "eng", "common", "scripts", "Verify-ChangeLog.ps1");
+            
+            if (!File.Exists(scriptPath))
+            {
+                return new FailureCLICheckResponse(1, "", $"PowerShell script not found at expected location: {scriptPath}");
+            }
+
+            var command = "pwsh";
+            var args = new[] { "-File", scriptPath, "-PackageName", Path.GetFileName(packagePath) };
+
+            // Use a longer timeout for changelog validation - 5 minutes should be sufficient
+            var timeoutMs = 300_000; // 5 minutes
+            var processResult = _processHelper.RunProcess(command, args, packagePath, timeoutMs);
+            stopwatch.Stop();
+
+            if (processResult.ExitCode == 0)
+            {
+                return new SuccessCLICheckResponse(0, System.Text.Json.JsonSerializer.Serialize(new
+                {
+                    Message = "Changelog validation completed successfully",
+                    Duration = (int)stopwatch.ElapsedMilliseconds,
+                    Output = processResult.Output
+                }));
+            }
+            else
+            {
+                return new FailureCLICheckResponse(1, processResult.Output, $"Changelog validation failed with exit code {processResult.ExitCode}");
+            }
+        }
+        catch (Exception ex)
+        {
+            stopwatch.Stop();
+            return new FailureCLICheckResponse(1, "", $"Unhandled exception: {ex.Message}");
+        }
+        finally
+        {
+            await Task.CompletedTask; // Make this async for consistency
+        }
     }
 }

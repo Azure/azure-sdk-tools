@@ -22,8 +22,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
     {
         private readonly ILogger<CheckAllTool> logger;
         private readonly IOutputService output;
-        private readonly IGitHelper gitHelper;
-        private readonly IProcessHelper processHelper;
         private readonly ILanguageRepoServiceFactory languageRepoServiceFactory;
 
         private readonly Option<string> packagePathOption = new(["--package-path", "-p"], "Path to the package directory to check") { IsRequired = true };
@@ -50,14 +48,10 @@ namespace Azure.Sdk.Tools.Cli.Tools
         public CheckAllTool(
             ILogger<CheckAllTool> logger, 
             IOutputService output,
-            IGitHelper gitHelper,
-            IProcessHelper processHelper,
             ILanguageRepoServiceFactory languageRepoServiceFactory) : base()
         {
             this.logger = logger;
             this.output = output;
-            this.gitHelper = gitHelper;
-            this.processHelper = processHelper;
             this.languageRepoServiceFactory = languageRepoServiceFactory;
             CommandHierarchy = [SharedCommandGroups.Package, SharedCommandGroups.RunChecks];
         }
@@ -80,29 +74,25 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 var results = new List<CLICheckResponse>();
                 var overallSuccess = true;
 
-                // Create DependencyCheckTool instance for dependency checking
-                var dependencyCheckTool = new DependencyCheckTool(
-                    Microsoft.Extensions.Logging.Abstractions.NullLogger<DependencyCheckTool>.Instance,
-                    output,
-                    gitHelper,
-                    processHelper,
-                    languageRepoServiceFactory);
-                
-                var dependencyCheckResult = await dependencyCheckTool.RunDependencyCheck(packagePath, ct);
-                
+                // Create language service to run checks instead of instantiating tools directly
+                var languageService = languageRepoServiceFactory.CreateService(packagePath);
+                logger.LogInformation($"Created language service: {languageService.GetType().Name}");
+
+                // Run dependency check using language service
+                var dependencyCheckResult = await languageService.AnalyzeDependenciesAsync(packagePath, ct);
                 results.Add(dependencyCheckResult);
                 if (dependencyCheckResult.ExitCode != 0)
                 {
                     overallSuccess = false;
                 }
 
-                var changelogValidationResult = RunChangelogValidation(packagePath);
+                // Run changelog validation using language service
+                var changelogValidationResult = await languageService.ValidateChangelogAsync(packagePath);
                 results.Add(changelogValidationResult);
                 if (changelogValidationResult.ExitCode != 0)
                 {
                     overallSuccess = false;
                 }
-
 
                 if (!overallSuccess) { SetFailure(1); }
 
@@ -124,19 +114,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
         // Back-compat overload for callers/tests that don't pass a CancellationToken
         public Task<CLICheckResponse> RunAllChecks(string packagePath)
             => RunAllChecks(packagePath, ct: default);
-
-    private CLICheckResponse RunChangelogValidation(string packagePath)
-    {
-        logger.LogInformation("Running changelog validation...");
-        
-        var changelogValidationTool = new ChangelogValidationTool(
-            Microsoft.Extensions.Logging.Abstractions.NullLogger<ChangelogValidationTool>.Instance,
-            output,
-            gitHelper,
-            processHelper);
-        
-        return changelogValidationTool.RunChangelogValidation(packagePath);
-    }
 
     }
 }

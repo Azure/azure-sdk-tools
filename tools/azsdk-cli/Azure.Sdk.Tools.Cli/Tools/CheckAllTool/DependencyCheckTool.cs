@@ -23,18 +23,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
     {
         private readonly ILogger<DependencyCheckTool> logger;
         private readonly IOutputService output;
-        private readonly IGitHelper gitHelper;
-        private readonly IProcessHelper processHelper;
         private readonly ILanguageRepoServiceFactory languageRepoServiceFactory;
 
         private readonly Option<string> packagePathOption = new(["--package-path", "-p"], "Path to the package directory to check") { IsRequired = true };
 
-        public DependencyCheckTool(ILogger<DependencyCheckTool> logger, IOutputService output, IGitHelper gitHelper, IProcessHelper processHelper, ILanguageRepoServiceFactory languageRepoServiceFactory) : base()
+        public DependencyCheckTool(ILogger<DependencyCheckTool> logger, IOutputService output, ILanguageRepoServiceFactory languageRepoServiceFactory) : base()
         {
             this.logger = logger;
             this.output = output;
-            this.gitHelper = gitHelper;
-            this.processHelper = processHelper;
             this.languageRepoServiceFactory = languageRepoServiceFactory;
             CommandHierarchy = [SharedCommandGroups.Package, SharedCommandGroups.RunChecks];
         }
@@ -69,47 +65,18 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     return new FailureCLICheckResponse(1, "", $"Package path does not exist: {packagePath}");
                 }
 
-                // Use LanguageRepoService to detect language and run appropriate dependency analysis
-                var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-                CLICheckResponse result;
+                // Create language service and run dependency analysis
+                var languageService = languageRepoServiceFactory.CreateService(packagePath);
+                logger.LogInformation($"Created language service: {languageService.GetType().Name}");
                 
-                try
+                var result = await languageService.AnalyzeDependenciesAsync(packagePath, ct);
+                
+                if (result.ExitCode != 0)
                 {
-                    var languageService = languageRepoServiceFactory.CreateService(packagePath, processHelper, gitHelper, logger);
-                    logger.LogInformation($"Created language service: {languageService.GetType().Name}");
-                    
-                    // Call AnalyzeDependencies method
-                    result = await languageService.AnalyzeDependenciesAsync(packagePath, ct);
-                    stopwatch.Stop();
-                    
-                    if (result.ExitCode != 0)
-                    {
-                        SetFailure(1);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    stopwatch.Stop();
-                    logger.LogError(ex, "Error during language-specific dependency analysis");
                     SetFailure(1);
-                    
-                    result = new FailureCLICheckResponse(1, $"Error during dependency analysis: {ex.Message}");
                 }
 
-                // Create response with timing information, preserving the actual result type
-                var responseData = new
-                {
-                    Message = result.Output ?? "Dependency check completed",
-                    Duration = stopwatch.ElapsedMilliseconds,
-                    OriginalOutput = result.Output
-                };
-                
-                string serializedResponse = System.Text.Json.JsonSerializer.Serialize(responseData);
-                
-                // Return appropriate response type based on the actual result
-                return result.ExitCode == 0 
-                    ? new SuccessCLICheckResponse(result.ExitCode, serializedResponse)
-                    : new FailureCLICheckResponse(result.ExitCode, serializedResponse, result is FailureCLICheckResponse failure ? failure.Error : "Check failed");
+                return result;
             }
             catch (Exception ex)
             {

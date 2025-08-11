@@ -12,13 +12,11 @@ namespace Azure.Sdk.Tools.Cli.Services;
 public class PythonLanguageRepoService : LanguageRepoService
 {
     private readonly ILogger<PythonLanguageRepoService> _logger;
-    private readonly IGitHelper _gitHelper;
 
     public PythonLanguageRepoService(IProcessHelper processHelper, IGitHelper gitHelper, ILogger<PythonLanguageRepoService> logger) 
-        : base(processHelper)
+        : base(processHelper, gitHelper)
     {
         _logger = logger;
-        _gitHelper = gitHelper;
     }
 
     public override async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct = default)

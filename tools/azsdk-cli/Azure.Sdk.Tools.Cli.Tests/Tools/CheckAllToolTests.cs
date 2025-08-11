@@ -34,7 +34,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             _mockChangelogValidationLogger = new Mock<ILogger<ChangelogValidationTool>>();
             _mockLanguageRepoServiceFactory = new Mock<ILanguageRepoServiceFactory>();
 
-            _checkAllTool = new CheckAllTool(_mockLogger.Object, _mockOutputService.Object, _mockGitHelper.Object, new ProcessHelper(NullLogger<ProcessHelper>.Instance), _mockLanguageRepoServiceFactory.Object);
+            _checkAllTool = new CheckAllTool(_mockLogger.Object, _mockOutputService.Object, _mockLanguageRepoServiceFactory.Object);
             
             // Create a temporary test directory
             _testProjectPath = Path.Combine(Path.GetTempPath(), "CheckAllToolTest");

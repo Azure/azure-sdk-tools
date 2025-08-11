@@ -18,8 +18,8 @@ public class GoLanguageRepoService : LanguageRepoService
     private readonly string formatterName = "goimports";
     private readonly string linterName = "golangci-lint";
 
-    public GoLanguageRepoService(IProcessHelper processHelper, ILogger<GoLanguageRepoService> logger) 
-        : base(processHelper)
+    public GoLanguageRepoService(IProcessHelper processHelper, IGitHelper gitHelper, ILogger<GoLanguageRepoService> logger) 
+        : base(processHelper, gitHelper)
     {
         _logger = logger;
         

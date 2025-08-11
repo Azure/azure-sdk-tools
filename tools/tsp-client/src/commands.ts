@@ -39,10 +39,7 @@ async function createNewPackageDirAndTspLocation(
   tspLocationData: TspLocation,
   packageDir: string,
 ): Promise<string> {
-  let newPackageDir = joinPaths(outputDir, packageDir.replace("{service-dir}", serviceDir));
-  if (!newPackageDir.includes(serviceDir)) {
-    newPackageDir = joinPaths(outputDir, serviceDir, packageDir);
-  }
+  const newPackageDir = joinPaths(outputDir, serviceDir, packageDir);
   await mkdir(newPackageDir, { recursive: true });
   await writeTspLocationYaml(tspLocationData, newPackageDir);
   return newPackageDir;
@@ -192,13 +189,13 @@ export async function initCommand(argv: any) {
       Logger.debug(`Trying to read existing tsp-location.yaml at ${newPackageDir}`);
       tspLocationData = await updateExistingTspLocation(tspLocationData, newPackageDir);
     }
-    argv["legacyBehavior"] =
+    argv["legacyPathResolution"] =
       !configYaml?.options?.[emitterData.emitter]?.["emitter-output-dir"] &&
       configYaml?.options?.[emitterData.emitter]?.["package-dir"]
         ? true
         : false;
 
-    if (argv["legacyBehavior"]) {
+    if (argv["legacyPathResolution"]) {
       Logger.warn(
         `Please update your tspconfig.yaml to include the "emitter-output-dir" option under the "${emitterData.emitter}" emitter options. "package-dir" support is deprecated and will be removed in future versions.`,
       );
@@ -266,7 +263,13 @@ export async function initCommand(argv: any) {
       Logger.debug(`Trying to read existing tsp-location.yaml at ${newPackageDir}`);
       tspLocationData = await updateExistingTspLocation(tspLocationData, newPackageDir);
     }
-    if (argv["legacyBehavior"]) {
+    argv["legacyPathResolution"] =
+      !configYaml?.options?.[emitterData.emitter]?.["emitter-output-dir"] &&
+      configYaml?.options?.[emitterData.emitter]?.["package-dir"]
+        ? true
+        : false;
+
+    if (argv["legacyPathResolution"]) {
       Logger.warn(
         `Please update your tspconfig.yaml to include the "emitter-output-dir" option under the "${emitterData.emitter}" emitter options. "package-dir" support is deprecated and will be removed in future versions.`,
       );
@@ -280,20 +283,18 @@ export async function initCommand(argv: any) {
   }
 
   if (!skipSyncAndGenerate) {
-    if (argv["legacyBehavior"]) {
-      // update argv in case anything changed and call into sync and generate
-      argv["output-dir"] = outputDir;
-      if (!isUrl) {
-        // If the local spec repo is provided, we need to update the local-spec-repo argument for syncing as well
-        argv["local-spec-repo"] = tspConfig;
-      }
-      await syncCommand(argv);
+    // update argv in case anything changed and call into sync and generate
+    argv["output-dir"] = outputDir;
+    if (!isUrl) {
+      // If the local spec repo is provided, we need to update the local-spec-repo argument for syncing as well
+      argv["local-spec-repo"] = tspConfig;
     }
+    await syncCommand(argv);
     await generateCommand(argv);
   }
   return outputDir;
 }
-
+// TODO we'd need to have a resolved emitter-output-dir to use as the output-dir here. Ask tim for info on how to do this.
 export async function syncCommand(argv: any) {
   let outputDir = argv["output-dir"];
   let localSpecRepo = argv["local-spec-repo"];

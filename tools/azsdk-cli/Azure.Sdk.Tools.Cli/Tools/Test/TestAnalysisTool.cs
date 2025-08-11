@@ -58,7 +58,7 @@ public class TestAnalysisTool(ITestHelper testHelper, IOutputService output, ILo
         return;
     }
 
-    [McpServerTool(Name = "azsdk-get-failed-test-cases"), Description("Get titles of failed test cases from a TRX file")]
+    [McpServerTool(Name = "azsdk_get_failed_test_cases"), Description("Get titles of failed test cases from a TRX file")]
     public async Task<List<FailedTestRunResponse>> GetFailedTestCases(string trxFilePath)
     {
         try
@@ -74,7 +74,7 @@ public class TestAnalysisTool(ITestHelper testHelper, IOutputService output, ILo
         }
     }
 
-    [McpServerTool(Name = "azsdk-get-failed-test-case-data"), Description("Get details for a failed test from a TRX file")]
+    [McpServerTool(Name = "azsdk_get_failed_test_case_data"), Description("Get details for a failed test from a TRX file")]
     public async Task<FailedTestRunResponse> GetFailedTestCaseData(string trxFilePath, string testCaseTitle)
     {
         try
@@ -102,7 +102,7 @@ public class TestAnalysisTool(ITestHelper testHelper, IOutputService output, ILo
         }
     }
 
-    [McpServerTool(Name = "azsdk-get-failed-test-run-data"), Description("Get failed test run data from a TRX file")]
+    [McpServerTool(Name = "azsdk_get_failed_test_run_data"), Description("Get failed test run data from a TRX file")]
     public async Task<List<FailedTestRunResponse>> GetFailedTestRunDataFromTrx(string trxFilePath)
     {
         try

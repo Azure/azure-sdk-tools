@@ -40,7 +40,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             output.Output(result);
         }
 
-        [McpServerTool(Name = "azsdk-check-package-release-readiness"), Description("Checks if SDK package is ready to release (release readiness). This includes checking pipeline status, apiview status, change log status, and namespace approval status.")]
+        [McpServerTool(Name = "azsdk_check_package_release_readiness"), Description("Checks if SDK package is ready to release (release readiness). This includes checking pipeline status, apiview status, change log status, and namespace approval status.")]
         public async Task<PackageResponse> CheckPackageReleaseReadinessAsync(string packageName, string language)
         {
             try

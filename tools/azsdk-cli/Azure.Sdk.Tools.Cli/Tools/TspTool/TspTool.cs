@@ -79,7 +79,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             output.Output(result);
         }
 
-        [McpServerTool(Name = "azsdk-convert-swagger-to-typespec"), Description(@"Converts an existing Azure service swagger definition to a TypeSpec project.
+        [McpServerTool(Name = "azsdk_convert_swagger_to_typespec"), Description(@"Converts an existing Azure service swagger definition to a TypeSpec project.
         Pass in the `pathToSwaggerReadme` which is the path to the swagger README file.
         Pass in the `outputDirectory` where the TypeSpec project should be created. This must be an existing empty directory.
         Pass in `isAzureResourceManagement` to indicate whether the swagger is for an Azure Resource Management (ARM) API.

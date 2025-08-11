@@ -20,7 +20,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
     public class CodeownerTools(
         IGitHubService githubService,
         IOutputService output,
-        ILogger<CodeownerTools> logger,
         ITypeSpecHelper typespecHelper,
         ICodeOwnerHelper codeownerHelper,
         ICodeOwnerValidatorHelper codeOwnerValidator,
@@ -141,14 +140,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
             try
             {
                 // Validate atleast Service Label or Path.
-                if (string.IsNullOrEmpty(serviceLabel) && string.IsNullOrEmpty(path))
+                if (string.IsNullOrWhiteSpace(serviceLabel) && string.IsNullOrWhiteSpace(path))
                 {
                     throw new Exception($"Service label: {serviceLabel} and Path: {path} are both invalid. Atleast one must be valid");
                 }
                 // Check if it's management plane.
                 var isMgmtPlane = typespecHelper.IsTypeSpecProjectForMgmtPlane(typeSpecProjectRoot);
 
-// Get file contents. THIS WILL LIKELY BE CHANGED AS LABELS PR HAS MODIFICATIONS TO HOW THIS METHOD IS CALLED AND USED
+                // Get file contents. THIS WILL LIKELY BE CHANGED AS LABELS PR HAS MODIFICATIONS TO HOW THIS METHOD IS CALLED AND USED
                 var codeownersFileContent = await githubService.GetContentsAsync(Constants.AZURE_OWNER_PATH, repo, Constants.AZURE_CODEOWNERS_PATH);
                 if (codeownersFileContent == null || codeownersFileContent.Count == 0)
                 {
@@ -181,7 +180,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     {
                         var pullRequests = await githubService.SearchPullRequestsByTitleAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, "Service Label");
 
-                        if (!labelHelper.CheckServiceLabelInReview(pullRequests, serviceLabel))
+                        if (!labelHelper.CheckServiceLabelInReview(pullRequests, serviceLabel) && string.IsNullOrEmpty(path))
                         {
                             throw new Exception($"Service label: {serviceLabel} is invalid.");
                         }
@@ -240,7 +239,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 if (updatedEntry == null)
                 {
                     // Only check if path already exists when adding new entry.
-                    if (codeownersContent?.Contains(path) == true)
+                    if (!string.IsNullOrEmpty(path) && codeownersContent?.Contains(path) == true)
                     {
                         throw new Exception($"{path} already exists in the CODEOWNERS file.");
                     }
@@ -261,17 +260,17 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 if (validationErrors.Any())
                 {
                     var codeownerValidationResultMessage = string.Join("; ", codeownerValidationResults.Select(r => $"{r.Username}: {(r.IsValidCodeOwner ? "Valid" : "Invalid")}"));
-                    throw new Exception($"{validationErrors}. Validation results: {codeownerValidationResults}");
+                    throw new Exception($"{validationErrors} Validation results: {codeownerValidationResults}");
                 }
 
                 // Modify the file
-                    var insertionIndex = codeownerHelper.findAlphabeticalInsertionPoint(codeownersEntries, path, serviceLabel);
+                var insertionIndex = codeownerHelper.findAlphabeticalInsertionPoint(codeownersEntries, path, serviceLabel);
                 var modifiedCodeownersContent = codeownerHelper.addCodeownersEntryAtIndex(codeownersContent, updatedEntry, insertionIndex, codeownersEntryExists);
 
                 // Create Branch, Update File, and Handle PR.
                 var actionDescription = isAdding ? "Add codeowner aliases for" : "Remove codeowner aliases for";
                 var actionType = isAdding ? "add-codeowner-alias" : "remove-codeowner-alias";
-                
+
                 var resultMessages = await CreateCodeownerPR(
                     repo,                                              // Repository name
                     string.Join('\n', modifiedCodeownersContent),                     // Modified content
@@ -298,7 +297,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             {
                 if (string.IsNullOrEmpty(repoName))
                 {
-                    throw new Exception("Must provide a repository name. Ex. azure-sdk-for-dotnet");
+                    throw new Exception("Must provide a repository name. Ex. azure-sdk-for-net");
                 }
 
                 serviceLabel = serviceLabel?.Trim();
@@ -379,7 +378,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             {
                 // Create a new branch only if no working branch exists
                 branchName = codeownerHelper.CreateBranchName(branchPrefix, identifier);
-                var createBranchResult = await githubService.CreateBranchAsync(Constants.AZURE_OWNER_PATH, repo, branchName);
+                var createBranchResult = await githubService.CreateBranchAsync(Constants.AZURE_OWNER_PATH, repo, branchName, "main");
                 resultMessages.Add($"Created branch: {branchName} - Status: {createBranchResult}");
             }
 
@@ -406,7 +405,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private async Task<List<CodeOwnerValidationResult>> ValidateOwners(IEnumerable<string> owners)
         {
             var validatedOwners = new List<CodeOwnerValidationResult>();
-            
+
             foreach (var owner in owners)
             {
                 var username = owner.TrimStart('@');
@@ -417,17 +416,17 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 else
                 {
                     var result = await codeOwnerValidator.ValidateCodeOwnerAsync(username, verbose: false);
-                    
+
                     if (string.IsNullOrEmpty(result.Username))
                     {
                         result.Username = username;
                     }
-                    
+
                     codeOwnerValidationCache[username] = result;
                     validatedOwners.Add(result);
                 }
             }
-            
+
             return validatedOwners;
         }
 
@@ -439,20 +438,12 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
             var validServiceOwnersCount = validatedServiceOwners.Count(owner => owner.IsValidCodeOwner);
             var validSourceOwnersCount = validatedSourceOwners.Count(owner => owner.IsValidCodeOwner);
-            var validAzureSdkOwnersCount = validatedAzureSdkOwners.Count(owner => owner.IsValidCodeOwner);
 
             var validationErrors = new List<string>();
 
-            if (!string.IsNullOrEmpty(codeownersEntry.ServiceLabels.FirstOrDefault()))
+            if (!string.IsNullOrEmpty(codeownersEntry.ServiceLabels.FirstOrDefault()) && validServiceOwnersCount < 2)
             {
-                if (validServiceOwnersCount < 2)
-                {
-                    validationErrors.Add("There must be at least two valid service owners.");
-                }
-                if (validAzureSdkOwnersCount < 2)
-                {
-                    validationErrors.Add("There must be at least two valid azure sdk owners.");
-                }
+                validationErrors.Add("There must be at least two valid service owners.");
             }
             if (!string.IsNullOrEmpty(codeownersEntry.PathExpression) && validSourceOwnersCount < 2)
             {

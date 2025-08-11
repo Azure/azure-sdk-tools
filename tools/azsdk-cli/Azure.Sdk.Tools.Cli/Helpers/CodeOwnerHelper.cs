@@ -212,8 +212,16 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             {
                 if (lines[i].Trim().Equals(serviceCategory))
                 {
-                    startLine = i;
-                    i++;
+                    if (lines[i + 1].Trim().EndsWith("#"))
+                    {
+                        i++;
+                        startLine = i;
+                    }
+                    else
+                    {
+                        startLine = i;
+                        i++;
+                    }
                 }
                 else if (startLine != -1 && lines[i].Trim().EndsWith("#"))
                 {

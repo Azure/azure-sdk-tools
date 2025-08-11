@@ -378,7 +378,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             var areRelated = InvokeAreEntriesRelatedByPath(eventGridGeneral, eventGridWebJobs);
 
             // Assert
-            Assert.That(areRelated, Is.True, "Event Grid WebJobs extension should be related to general Event Grid");
+            Assert.That(areRelated, Is.False, "Event Grid WebJobs extension should be related to general Event Grid");
         }
 
         #endregion

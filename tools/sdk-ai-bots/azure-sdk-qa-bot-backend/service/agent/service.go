@@ -351,8 +351,8 @@ func (s *CompletionService) buildQueryForSearch(req *model.CompletionReq, messag
 		log.Printf("ERROR: %s", err)
 	} else if intentResult != nil {
 		if len(req.Sources) == 0 {
-			if intentResult.Category == model.QuestionCategory_Unbranded {
-				req.Sources = []model.Source{model.Source_TypeSpec}
+			if intentResult.Scope == model.QuestionScope_Unbranded {
+				req.Sources = []model.Source{model.Source_TypeSpec, model.Source_TypeSpecHttpSpecs}
 			} else {
 				req.Sources = []model.Source{model.Source_TypeSpec, model.Source_TypeSpecAzure, model.Source_AzureRestAPISpec}
 			}

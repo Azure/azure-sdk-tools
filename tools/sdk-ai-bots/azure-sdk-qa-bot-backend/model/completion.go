@@ -86,16 +86,17 @@ type CompletionResp struct {
 	ReasoningProgress *string          `json:"reasoning_progress,omitempty" jsonschema:"omitempty,description=The reasoning progress of generating the answer"`
 }
 
-type QuestionCategory string
+type QuestionScope string
 
 const (
-	QuestionCategory_Unknown   QuestionCategory = "unknown"
-	QuestionCategory_Branded   QuestionCategory = "branded"
-	QuestionCategory_Unbranded QuestionCategory = "unbranded"
+	QuestionScope_Unknown   QuestionScope = "unknown"
+	QuestionScope_Branded   QuestionScope = "branded"
+	QuestionScope_Unbranded QuestionScope = "unbranded"
 )
 
 type IntensionResult struct {
-	Question string           `json:"question" jsonschema:"required,description=The question to ask the agent"`
-	Category QuestionCategory `json:"category" jsonschema:"required,description=The category of the question"`
-	SpecType string           `json:"spec_type,omitempty" jsonschema:"omitempty,description=The type of the spec, such as typespec, azure rest api, etc."`
+	Question string        `json:"question" jsonschema:"required,description=The question to ask the agent"`
+	Category string        `json:"category" jsonschema:"required,description=The category of the question"`
+	SpecType string        `json:"spec_type,omitempty" jsonschema:"omitempty,description=The type of the spec, such as typespec, azure rest api, etc."`
+	Scope    QuestionScope `json:"scope,omitempty" jsonschema:"omitempty,description=The scope of the question"`
 }

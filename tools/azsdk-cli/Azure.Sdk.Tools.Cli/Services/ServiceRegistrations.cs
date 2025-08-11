@@ -20,6 +20,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IDevOpsService, DevOpsService>();
             services.AddSingleton<IGitHubService, GitHubService>();
             services.AddSingleton<IDevOpsConnection, DevOpsConnection>();
+            services.AddSingleton<ILanguageRepoServiceFactory, LanguageRepoServiceFactory>();
 
             // Helper classes
             services.AddSingleton<ILogAnalysisHelper, LogAnalysisHelper>();

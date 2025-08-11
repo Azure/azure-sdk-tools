@@ -33,23 +33,23 @@ namespace Azure.ClientSdk.Analyzers.ModelName
         protected override Diagnostic GetDiagnostic(INamedTypeSymbol typeSymbol, string suffix, SymbolAnalysisContext context)
         {
             var name = typeSymbol.Name;
-            var suggestedName = GetSuggestedName(name, suffix);
-            var additionalMessage = $"Suggest to rename it to {suggestedName} or any other appropriate name.";
+            var suggestedName = GetSuggestedName(name, suffix, typeSymbol);
+            var additionalMessage = $"We suggest renaming it to {suggestedName} or another name with this suffix.";
             return Diagnostic.Create(Descriptors.AZC0030, context.Symbol.Locations[0],
                 new Dictionary<string, string> { { "SuggestedName", suggestedName } }.ToImmutableDictionary(), name, suffix, additionalMessage);
         }
 
-        private string GetSuggestedName(string originalName, string suffix)
+        private string GetSuggestedName(string originalName, string suffix, INamedTypeSymbol typeSymbol)
         {
             var nameWithoutSuffix = originalName.Substring(0, originalName.Length - suffix.Length);
             return suffix switch
             {
-                "Request" or "Requests" => $"'{nameWithoutSuffix}Content'",
-                "Parameter" or "Parameters" => $"'{nameWithoutSuffix}Content' or '{nameWithoutSuffix}Patch'",
-                "Option" => $"'{nameWithoutSuffix}Config'",
-                "Response" => $"'{nameWithoutSuffix}Result'",
-                "Responses" => $"'{nameWithoutSuffix}Results'",
-                "Collection" => $"'{nameWithoutSuffix}Group' or '{nameWithoutSuffix}List'",
+                "Request" or "Requests" => NamingSuggestionHelper.GetNamespacedSuggestion(originalName, typeSymbol, "Content"),
+                "Parameter" or "Parameters" => NamingSuggestionHelper.GetNamespacedSuggestion(originalName, typeSymbol, "Content", "Patch"),
+                "Option" => NamingSuggestionHelper.GetNamespacedSuggestion(originalName, typeSymbol, "Config"),
+                "Response" => NamingSuggestionHelper.GetNamespacedSuggestion(originalName, typeSymbol, "Result"),
+                "Responses" => NamingSuggestionHelper.GetNamespacedSuggestion(originalName, typeSymbol, "Results"),
+                "Collection" => NamingSuggestionHelper.GetNamespacedSuggestion(originalName, typeSymbol, "Group", "List"),
                 _ => nameWithoutSuffix,
             };
         }

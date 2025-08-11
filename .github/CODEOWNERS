@@ -28,7 +28,6 @@
 # Eng Sys Tools
 ###########
 /tools/                                 @azure/azure-sdk-eng
-/tools/azsdk-cli/                       @benbp @scbedd @praveenkuttappan @maririos
 /tools/azure-rest-api-specs-examples-automation/ @weidongxu-microsoft
 /tools/codeowners-utils/                @weshaggard
 /tools/fxlister/                        @KrzysztofCwalina
@@ -41,12 +40,17 @@
 /tools/perf-automation/**/*Rust*.cs     @heaths @LarryOsterman @RickWinter
 /tools/pipeline-generator/              @weshaggard @benbp
 /tools/pipeline-witness/                @hallipr
-/tools/sdk-ai-bots/                     @raych1
+/tools/sdk-sample-generator             @deyaaeldeen
 /tools/sdk-testgen/                     @lirenhe @tadelesh
 /tools/spec-gen-sdk/                    @raych1 @chidozieononiwu
 /tools/test-proxy/                      @scbedd @mikeharder @benbp
-/tools/tsp-client/                      @catalinaperalta
+/tools/tsp-client/                      @catalinaperalta @timotheeguerin
 /tools/typespec-bump-deps/              @weidongxu-microsoft
+/tools/content-validation/              @xiangyan99 @zedy-wj
+/tools/perf-regression-finder/          @sa7936 @m-redding @jsquire
+
+# PRLabel: %azsdk-cli
+/tools/azsdk-cli/                       @benbp @scbedd @praveenkuttappan @smw-ms @Jeo02 @maririos @richardpark-msft
 
 ###########
 # Stress
@@ -58,14 +62,14 @@
 # .NET Client Tools
 ###########
 /src/dotnet/                            @azure/azsdknet @jsquire
-/src/dotnet/APIView/                    @chidozieononiwu @praveenkuttappan @helen229
+/src/dotnet/APIView/                    @tjprescott @AlitzelMendez @helen229 @praveenkuttappan @chidozieononiwu
 /tools/net-changelog-gen-mgmt           @ArthurMa1978 @ArcturusZhang
 /tools/snippet-generator/               @Azure/azsdknet @jsquire
 
 ###########
 # APIView parsers
 ###########
-/tools/apiview/                           @chidozieononiwu @praveenkuttappan @helen229
+/tools/apiview/                           @tjprescott @AlitzelMendez @helen229 @praveenkuttappan @chidozieononiwu
 /tools/apiview/emitters/typespec-apiview/ @tjprescott
 /tools/apiview/parsers/cpp-api-parser/    @LarryOsterman
 /tools/apiview/parsers/csharp-api-parser/ @azure/azsdknet @jsquire

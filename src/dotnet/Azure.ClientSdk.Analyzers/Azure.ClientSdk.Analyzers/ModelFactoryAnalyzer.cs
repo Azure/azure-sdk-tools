@@ -18,6 +18,7 @@ namespace Azure.ClientSdk.Analyzers
 
         private const string AzureNamespace = "Azure";
         private const string SystemClientModelNamespace = "System.ClientModel";
+        private const string SystemNamespace = "System";
         private const string PageableTypeName = "Pageable";
         private const string AsyncPageableTypeName = "AsyncPageable";
         private const string ResponseTypeName = "Response";
@@ -46,8 +47,14 @@ namespace Azure.ClientSdk.Analyzers
             var modelFactoryMethods = new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default);
 
             // Find all client classes and extract output models from their methods
+            // Only process types defined in the current source tree (not dependencies)
             foreach (var namedType in GetAllTypes(context.Compilation.GlobalNamespace))
             {
+                if (!SymbolEqualityComparer.Default.Equals(namedType.ContainingAssembly, context.Compilation.Assembly))
+                {
+                    continue;
+                }
+
                 if (IsClientType(namedType))
                 {
                     ExtractOutputModelsFromClientType(namedType, outputModels);
@@ -100,7 +107,9 @@ namespace Azure.ClientSdk.Analyzers
                 {
                     // Skip property accessors as they are not client methods
                     if (method.AssociatedSymbol is IPropertySymbol)
+                    {
                         continue;
+                    }
 
                     var outputModel = ExtractOutputModelFromReturnType(method.ReturnType);
                     if (outputModel != null)
@@ -115,8 +124,8 @@ namespace Azure.ClientSdk.Analyzers
         {
             foreach (var member in factoryType.GetMembers())
             {
-                if (member is IMethodSymbol method && 
-                    method.DeclaredAccessibility == Accessibility.Public && 
+                if (member is IMethodSymbol method &&
+                    method.DeclaredAccessibility == Accessibility.Public &&
                     method.IsStatic)
                 {
                     // Add the return type of the factory method
@@ -130,8 +139,8 @@ namespace Azure.ClientSdk.Analyzers
             ITypeSymbol unwrappedType = returnType;
 
             // Unwrap Task<T>
-            if (returnType is INamedTypeSymbol namedType && 
-                namedType.IsGenericType && 
+            if (returnType is INamedTypeSymbol namedType &&
+                namedType.IsGenericType &&
                 namedType.Name == TaskTypeName)
             {
                 unwrappedType = namedType.TypeArguments.FirstOrDefault();
@@ -168,6 +177,16 @@ namespace Azure.ClientSdk.Analyzers
 
         private static bool IsUserDefinedModelType(ITypeSymbol typeSymbol)
         {
+            // Filter out System types, unless defined in System.ClientModel
+            var containingNamespace = typeSymbol.ContainingNamespace?.ToString() ?? string.Empty;
+
+            if (containingNamespace == SystemNamespace || containingNamespace.StartsWith($"{SystemNamespace}.")
+                && containingNamespace != SystemClientModelNamespace
+                && (!containingNamespace.StartsWith($"{SystemClientModelNamespace}.")))
+            {
+                return false;
+            }
+
             // Filter out built-in types
             if (typeSymbol.SpecialType != SpecialType.None)
             {
@@ -186,7 +205,7 @@ namespace Azure.ClientSdk.Analyzers
                 return false;
             }
 
-            // Filter out types that can be easily instantiated (have public constructors with all properties settable)  
+            // Filter out types that can be easily instantiated (have public constructors with all properties settable)
             if (CanBeConstructedUsingPublicApis(typeSymbol))
             {
                 return false;
@@ -240,7 +259,7 @@ namespace Azure.ClientSdk.Analyzers
                 foreach (var property in propertiesNeedingConstructor)
                 {
                     // Check if this constructor has a parameter that can set this property
-                    bool hasMatchingParameter = constructor.Parameters.Any(p => 
+                    bool hasMatchingParameter = constructor.Parameters.Any(p =>
                         string.Equals(p.Name, property.Name, StringComparison.OrdinalIgnoreCase) ||
                         string.Equals(p.Name, property.Name.Substring(0, 1).ToLower() + property.Name.Substring(1), StringComparison.Ordinal));
 

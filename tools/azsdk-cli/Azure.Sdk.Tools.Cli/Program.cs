@@ -75,12 +75,17 @@ public class Program
             throw new ArgumentException($"Invalid output format '{outputFormat}'. Supported formats are: plain, json");
         }
 
+        builder.WebHost.ConfigureKestrel(options =>
+        {
+            options.Listen(System.Net.IPAddress.Loopback, 0); // 0 = dynamic port
+        });
+
         var toolTypes = SharedOptions.GetFilteredToolTypes(args);
 
         builder.Services
             .AddMcpServer()
-            .WithStdioServerTransport()
-            .WithTools(toolTypes);
+                    .WithStdioServerTransport()
+                    .WithTools(toolTypes);
 
         return builder;
     }

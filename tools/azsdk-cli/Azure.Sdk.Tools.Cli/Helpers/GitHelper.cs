@@ -13,6 +13,8 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         public Uri GetRepoRemoteUri(string path);
         public string GetBranchName(string path);
         public string GetMergeBaseCommitSha(string path, string targetBranch);
+        public string DiscoverRepoRoot(string path);
+        public string GetRepoName(string path);
     }
     public class GitHelper(IGitHubService gitHubService, ILogger<GitHelper> logger) : IGitHelper
     {
@@ -86,5 +88,25 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
             throw new InvalidOperationException("Unable to determine repository owner.");
         }        
+
+        public string DiscoverRepoRoot(string path)
+        {
+            var repoPath = Repository.Discover(path);
+            if (string.IsNullOrEmpty(repoPath))
+            {
+                throw new InvalidOperationException($"No git repository found at or above the path: {path}");
+            }
+            
+            // Repository.Discover returns the path to .git directory
+            // The repository root is the parent directory of .git
+            var gitDir = new DirectoryInfo(repoPath);
+            return gitDir.Parent?.FullName ?? throw new InvalidOperationException("Unable to determine repository root");
+        }
+
+        public string GetRepoName(string path)
+        {
+            var repoRoot = DiscoverRepoRoot(path);
+            return new DirectoryInfo(repoRoot).Name ?? throw new InvalidOperationException($"Unable to determine repository name for path: {path}");
+        }
     }
 }

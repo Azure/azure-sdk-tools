@@ -17,12 +17,12 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
-        node-version: [18, 20]
+        node-version: [20, 22]
         exclude:
           - os: ubuntu-latest
-            node-version: 20
+            node-version: 22
           - os: windows-latest
-            node-version: 18
+            node-version: 20
 
     runs-on: ${{ matrix.os }}
 
@@ -56,5 +56,9 @@ jobs:
         working-directory: tools/tsp-client
 
       - run: npm run test
+        shell: pwsh
+        working-directory: tools/tsp-client
+      
+      - run: npm run format:check
         shell: pwsh
         working-directory: tools/tsp-client

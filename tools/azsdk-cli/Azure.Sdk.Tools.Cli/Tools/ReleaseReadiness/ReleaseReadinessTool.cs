@@ -11,7 +11,7 @@ using Azure.Sdk.Tools.Cli.Services;
 using Microsoft.TeamFoundation.Build.WebApi;
 using ModelContextProtocol.Server;
 
-namespace Azure.Sdk.Tools.Cli.Tools.ReleaseReadiness
+namespace Azure.Sdk.Tools.Cli.Tools
 {
     [Description("This class contains an MCP tool that checks the release readiness status of a package")]
     [McpServerToolType]
@@ -40,7 +40,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleaseReadiness
             output.Output(result);
         }
 
-        [McpServerTool(Name = "CheckPackageReleaseReadiness"), Description("Checks the release readiness status of a specified SDK package for a language. This includes checking pipeline status, apiview status, change log status and namespace approval status.")]
+        [McpServerTool(Name = "CheckPackageReleaseReadiness"), Description("Checks if SDK package is ready to release (release readiness). This includes checking pipeline status, apiview status, change log status, and namespace approval status.")]
         public async Task<PackageResponse> CheckPackageReleaseReadinessAsync(string packageName, string language)
         {
             try
@@ -91,7 +91,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleaseReadiness
                 // Check if API view is approved if stable version for data plane or .NET
                 if ((isDataPlanePackage || language.Equals(".NET")) && !isPreviewRelease)
                 {
-                    
+
                     if (!package.IsApiViewApproved)
                     {
                         package.IsPackageReady = false;
@@ -114,7 +114,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleaseReadiness
                 // Package release readiness status
                 if (package.IsPackageReady)
                 {
-                    package.PackageReadinessDetails = $"Package '{packageName}' is ready for release. Queue a release pipeline run using the link {package.PipelineDefinitionUrl} to release the package.";                    
+                    package.PackageReadinessDetails = $"Package '{packageName}' is ready for release. Queue a release pipeline run using the link {package.PipelineDefinitionUrl} to release the package.";
                 }
                 else
                 {

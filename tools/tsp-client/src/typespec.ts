@@ -53,7 +53,7 @@ export async function discoverEntrypointFile(
   const files = await readdir(srcDir, { recursive: true });
 
   function findEntrypoint(name: string): string | undefined {
-    return files.find((file) => file.endsWith(name)) ?? undefined;
+    return files.find((file) => file === name) ?? undefined;
   }
   if (specifiedEntrypointFile) {
     entryTsp = findEntrypoint(specifiedEntrypointFile);
@@ -108,7 +108,7 @@ export async function compileTsp({
   if (additionalEmitterOptions) {
     additionalEmitterOptions.split(";").forEach((option) => {
       const [key, value] = option.split("=");
-      if (key && value) {
+      if (key && value !== undefined) {
         emitterOverrideOptions[key] = tryParseEmitterOptionAsObject(value);
       }
     });

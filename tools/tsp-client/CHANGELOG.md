@@ -1,8 +1,30 @@
 # Release
 
-## UNRELEASED - 0.23.0
+## 2025-08-05 - 0.27.0
+
+- Support multiple emitter language repositories through a global `tspclientconfig.yaml` file checked in under `<repo root>/eng`. If this file is added to a language repository the default emitter used for a library might change based on the emitters configured in their tspconfig.yaml and the order of emitters listed in the `tspclientconfig.yaml` file.
+
+## 2025-07-29 - 0.26.1
+
+- Support an `--update-if-exists` flag when using `tsp-client init`. This flag will update the tsp-location.yaml file based on new inputs to the command and keep any other existing config in the file.
+
+## 2025-07-21 - 0.26.0
+
+- Fix bug when discovering entrypoint files to only accept `main.tsp` or `client.tsp` unless otherwise specified in tsp-location.yaml.
+
+## 2025-07-09 - 0.25.0
+
+- Extend dependency retention in `generate-config-files` command to include regular dependencies, not just devDependencies.
+- Support empty value in `--emitter-options` option.
+
+## 2025-07-03 - 0.24.0
+
+- Forward manually pinned dependencies in emitter-package.json when using the `generate-config-files` command.
+
+## 2025-06-25 - 0.23.0
 
 - Removed `tsp-client compare` command.
+- Log npm package versions after install.
 
 ## 2025-06-13 - 0.22.0
 

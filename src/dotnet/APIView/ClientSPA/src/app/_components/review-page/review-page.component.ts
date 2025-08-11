@@ -1,5 +1,6 @@
 import { ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
+import { Title } from '@angular/platform-browser';
 import { MenuItem, TreeNode } from 'primeng/api';
 import { Observable, Subject, take, takeUntil } from 'rxjs';
 import { CodeLineRowNavigationDirection, getLanguageCssSafeName } from 'src/app/_helpers/common-helpers';
@@ -84,7 +85,7 @@ export class ReviewPageComponent implements OnInit {
   constructor(private route: ActivatedRoute, private router: Router, private apiRevisionsService: APIRevisionsService,
     private reviewsService: ReviewsService, private workerService: WorkerService, private changeDetectorRef: ChangeDetectorRef,
     private userProfileService: UserProfileService, private commentsService: CommentsService, private signalRService: SignalRService,
-    private samplesRevisionService: SamplesRevisionService) {}
+    private samplesRevisionService: SamplesRevisionService, private titleService: Title) {}
 
   ngOnInit() {
     this.reviewId = this.route.snapshot.paramMap.get(REVIEW_ID_ROUTE_PARAM);
@@ -140,9 +141,9 @@ export class ReviewPageComponent implements OnInit {
         tooltip: 'Conversations',
         badge: (this.numberOfActiveConversation > 0) ? this.numberOfActiveConversation.toString() : undefined,
         command: () => { 
-          if (this.getLoadingStatus() === 'completed') {
-            this.conversationSidePanel = !this.conversationSidePanel;
-          }
+            if (this.getLoadingStatus() === 'completed') {
+              this.conversationSidePanel = !this.conversationSidePanel;
+            }
           }
       },
       {
@@ -251,6 +252,7 @@ export class ReviewPageComponent implements OnInit {
         next: (review: Review) => {
           this.review = review;
           this.updateLoadingStateBasedOnReviewDeletionStatus();
+          this.updatePageTitle();
         }
       });
   }
@@ -467,7 +469,8 @@ export class ReviewPageComponent implements OnInit {
 
   handleApiRevisionApprovalEmitter(value: boolean) {
     if (value) {
-      this.apiRevisionsService.toggleAPIRevisionApproval(this.reviewId!, this.activeApiRevisionId!).pipe(take(1)).subscribe({
+      const approvalState = !this.activeAPIRevision?.approvers.includes(this.userProfile?.userName!);
+      this.apiRevisionsService.toggleAPIRevisionApproval(this.reviewId!, this.activeApiRevisionId!, approvalState).pipe(take(1)).subscribe({
         next: (apiRevision: APIRevision) => {
           this.activeAPIRevision = apiRevision;
           const activeAPIRevisionIndex = this.apiRevisions.findIndex(x => x.id === this.activeAPIRevision!.id);
@@ -479,7 +482,7 @@ export class ReviewPageComponent implements OnInit {
 
   handleReviewApprovalEmitter(value: boolean) {
     if (value) {
-      this.reviewsService.toggleReviewApproval(this.reviewId!, this.activeApiRevisionId!).pipe(take(1)).subscribe({
+      this.reviewsService.toggleReviewApproval(this.reviewId!, this.activeApiRevisionId!, true).pipe(take(1)).subscribe({
         next: (review: Review) => {
           this.review = review;
         }
@@ -599,6 +602,14 @@ export class ReviewPageComponent implements OnInit {
       return true;
     }
     return false;
+  }
+
+  updatePageTitle() {
+    if (this.review?.packageName) {
+      this.titleService.setTitle(this.review.packageName);
+    } else {
+      this.titleService.setTitle('APIView');
+    }
   }
   
   ngOnDestroy() {

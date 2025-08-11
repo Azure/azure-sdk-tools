@@ -6,7 +6,7 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 using Azure.Sdk.Tools.Cli.Commands;
 
-namespace Azure.Sdk.Tools.Cli.Tools.HostServer
+namespace Azure.Sdk.Tools.Cli.Tools
 {
     public class HostServerTool : MCPTool
     {
@@ -19,8 +19,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.HostServer
 
         public override Command GetCommand()
         {
-            Command command = new Command("start");
-
+            Command command = new Command("start", "Starts the MCP server (stdio mode)");
             command.SetHandler(async ctx =>
             {
                 ctx.ExitCode = await HandleCommand(ctx, ctx.GetCancellationToken());

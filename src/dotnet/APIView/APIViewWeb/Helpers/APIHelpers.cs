@@ -129,6 +129,7 @@ namespace APIViewWeb.Helpers
             if (!string.IsNullOrEmpty(_locationUrl))
             {
                 response.Headers["Location"] = _locationUrl;
+                response.Headers.Append("Access-Control-Expose-Headers", "Location");
             }
 
             var serializedValue = JsonSerializer.Serialize(Value, _serializerOptions);

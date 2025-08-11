@@ -41,3 +41,4 @@ jobs:
           azure-sdk-for-python:
           azure-sdk-for-rust:
           autorest.csharp:
+          openapi-diff:

@@ -258,17 +258,23 @@ export async function generateRLCInPipeline(options: {
                         
             logger.info(`Start to build '${packageName}', except for tests and samples, which may be written manually.`);
             // To build generated codes except test and sample, we need to change tsconfig.json.
-            execSync(`pnpm build --filter ${packageName}`, {stdio: 'inherit'});
-            logger.info(`Start to run command 'pnpm pack ' under ${packagePath}.`);
-            execSync(`pnpm pack `, {stdio: 'inherit',cwd: packagePath});
+            execSync(`pnpm build --filter ${packageName}...`, {stdio: 'inherit'});
+            logger.info(`Start to run command 'pnpm run --filter ${packageJson.name}... pack'.`);
+            execSync(`pnpm run --filter ${packageJson.name}... pack`, {stdio: 'inherit'});
         }
 
         await updateSnippets(packagePath);
         
         if (!options.skipGeneration) {
+            const getChangelogItems = () => {
+                const categories = changelog?.changelogItems.breakingChanges.keys();
+                if (!categories) return [];
+                const items = [...categories].sort().flatMap(cat => changelog?.changelogItems.breakingChanges.get(cat) ?? []);
+                return items;
+            };
             const changelog = await generateChangelogAndBumpVersion(relativePackagePath, options);
-            outputPackageInfo.changelog.breakingChangeItems = changelog?.getBreakingChangeItems() ?? [];
-            outputPackageInfo.changelog.content = changelog?.displayChangeLog() ?? '';
+            outputPackageInfo.changelog.breakingChangeItems = getChangelogItems();
+            outputPackageInfo.changelog.content = changelog?.content ?? '';
             outputPackageInfo.changelog.hasBreakingChange = changelog?.hasBreakingChange ?? false;
         }
         if (options.outputJson && options.runningEnvironment !== undefined && outputPackageInfo !== undefined) {

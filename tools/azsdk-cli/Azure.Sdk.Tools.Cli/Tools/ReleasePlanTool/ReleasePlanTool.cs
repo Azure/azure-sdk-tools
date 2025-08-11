@@ -27,17 +27,18 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private const string getReleasePlanDetailsCommandName = "get";
         private const string createReleasePlanCommandName = "create";
         private const string linkNamespaceApprovalIssueCommandName = "link-namespace-approval";
+        private const string sdkBotEmail = "azuresdk@microsoft.com";
 
         // Options
         private readonly Option<int> releasePlanNumberOpt = new(["--release-plan-id",], "Release Plan ID") { IsRequired = false };
         private readonly Option<int> workItemIdOpt = new(["--work-item-id", "-w"], "Work Item ID") { IsRequired = false };
         private readonly Option<string> typeSpecProjectPathOpt = new(["--typespec-path"], "Path to TypeSpec project") { IsRequired = true };
-        private readonly Option<string> targetReleaseOpt = new(["--release-month"], "SDK release target month(Month YYYY)");
-        private readonly Option<string> serviceTreeIdOpt = new(["--service-tree"], "Service tree ID");
-        private readonly Option<string> productTreeIdOpt = new(["--product"], "Product service tree ID");
-        private readonly Option<string> apiVersionOpt = new(["--api-version"], "API version");
-        private readonly Option<string> pullRequestOpt = new(["--pull-request"], "Api spec pull request URL");
-        private readonly Option<string> sdkReleaseTypeOpt = new(["--sdk-type"], "SDK release type: beta or preview");
+        private readonly Option<string> targetReleaseOpt = new(["--release-month"], "SDK release target month(Month YYYY)") { IsRequired = true };
+        private readonly Option<string> serviceTreeIdOpt = new(["--service-tree"], "Service tree ID") { IsRequired = true };
+        private readonly Option<string> productTreeIdOpt = new(["--product"], "Product service tree ID") { IsRequired = true };
+        private readonly Option<string> apiVersionOpt = new(["--api-version"], "API version") { IsRequired = true };
+        private readonly Option<string> pullRequestOpt = new(["--pull-request"], "Api spec pull request URL") { IsRequired = true };
+        private readonly Option<string> sdkReleaseTypeOpt = new(["--sdk-type"], "SDK release type: beta or preview") { IsRequired = true };
         private readonly Option<bool> isTestReleasePlanOpt = new(["--test-release"], () => false, "Create release plan in test environment") { IsRequired = false };
         private readonly Option<string> userEmailOpt = new(["--user-email"], "User email for release plan creation") { IsRequired = false };
         private readonly Option<string> namespaceApprovalIssueOpt = new Option<string>(["--namespace-approval-issue"], "Namespace approval issue URL") { IsRequired = true };
@@ -70,7 +71,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
         public override Command GetCommand()
         {
-            Command command = new("release-plan");
+            Command command = new("release-plan", "Manage release plans in AzureDevops");
             var subCommands = new[]
             {
                 new Command(getReleasePlanDetailsCommandName, "Get release plan details") {workItemIdOpt, releasePlanNumberOpt},
@@ -110,7 +111,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     var isTestReleasePlan = commandParser.GetValueForOption(isTestReleasePlanOpt);
                     var userEmail = commandParser.GetValueForOption(userEmailOpt);
                     var releasePlan = await CreateReleasePlan(typeSpecProjectPath, targetReleaseMonthYear, serviceTreeId, productTreeId, specApiVersion, specPullRequestUrl, sdkReleaseType, userEmail: userEmail, isTestReleasePlan: isTestReleasePlan);
-                    output.Output($"Release plan created: {releasePlan}");
+                    output.Output($"Release plan created: {JsonSerializer.Serialize(releasePlan)}");
                     return;
 
                 case linkNamespaceApprovalIssueCommandName:
@@ -146,43 +147,80 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
+        private async Task ValidateCreateReleasePlanInputAsync(string typeSpecProjectPath, string serviceTreeId, string productTreeId, string specPullRequestUrl, string sdkReleaseType)
+        {
+            // Check for existing release plan for the given pull request URL.
+            if (string.IsNullOrEmpty(specPullRequestUrl))
+            {
+                throw new Exception("API spec pull request URL is required to create a release plan.");
+            }
+
+            logger.LogInformation("Checking for existing release plan for pull request URL: {specPullRequestUrl}", specPullRequestUrl);
+            var existingReleasePlan = await devOpsService.GetReleasePlanAsync(specPullRequestUrl);
+            if (existingReleasePlan != null && existingReleasePlan.WorkItemId > 0)
+            {
+                throw new Exception($"Release plan already exists for the pull request: {specPullRequestUrl}. Work item Id: {existingReleasePlan.WorkItemId}");
+            }
+
+            if (string.IsNullOrEmpty(typeSpecProjectPath))
+            {
+                throw new Exception("TypeSpec project path is empty. Cannot create a release plan without a TypeSpec project root path");
+            }
+
+            var supportedReleaseTypes = new[] { "beta", "stable" };
+            if (!supportedReleaseTypes.Contains(sdkReleaseType))
+            {
+                throw new Exception($"Invalid SDK release type. Supported release types are: {string.Join(", ", supportedReleaseTypes)}");
+            }
+
+            var repoRoot = typeSpecHelper.GetSpecRepoRootPath(typeSpecProjectPath);
+
+            // Ensure a release plan is created only if the API specs pull request is in a public repository.
+            if (!typeSpecHelper.IsRepoPathForPublicSpecRepo(repoRoot))
+            {
+                throw new Exception("""
+                    SDK generation and release require the API specs pull request to be in the public azure-rest-api-specs repository.
+                    Please create a pull request in the public Azure/azure-rest-api-specs repository to move your specs changes to public.
+                    A release plan cannot be created for SDK generation using a pull request in a private repository.
+                    """);
+            }
+
+            if (!Guid.TryParse(serviceTreeId, out _))
+            {
+                throw new Exception($"Service tree ID '{serviceTreeId}' is not a valid GUID.");
+            }
+
+            if (!Guid.TryParse(productTreeId, out _))
+            {
+                throw new Exception($"Product tree ID '{productTreeId}' is not a valid GUID.");
+            }
+        }
+
         [McpServerTool, Description("Create Release Plan work item.")]
         public async Task<string> CreateReleasePlan(string typeSpecProjectPath, string targetReleaseMonthYear, string serviceTreeId, string productTreeId, string specApiVersion, string specPullRequestUrl, string sdkReleaseType, string userEmail = "", bool isTestReleasePlan = false)
         {
             try
             {
-                if (string.IsNullOrEmpty(typeSpecProjectPath))
-                {
-                    throw new Exception("TypeSpec project path is empty. Cannot create a release plan without a TypeSpec project root path");
-                }
+                sdkReleaseType = sdkReleaseType?.ToLower() ?? "";
+                await ValidateCreateReleasePlanInputAsync(typeSpecProjectPath, serviceTreeId, productTreeId, specPullRequestUrl, sdkReleaseType);
 
                 var specType = typeSpecHelper.IsValidTypeSpecProjectPath(typeSpecProjectPath) ? "TypeSpec" : "OpenAPI";
-                var isMgmt = typeSpecHelper.IsTypeSpecProjectForMgmtPlane(typeSpecProjectPath);
-                var repoRoot = typeSpecHelper.GetSpecRepoRootPath(typeSpecProjectPath);
+                var isMgmt = typeSpecHelper.IsTypeSpecProjectForMgmtPlane(typeSpecProjectPath); 
 
-                // Ensure a release plan is created only if the API specs pull request is in a public repository.
-                if (!typeSpecHelper.IsRepoPathForPublicSpecRepo(repoRoot))
+                logger.LogInformation("Attempting to retrieve current user email.");
+
+                var email = await userHelper.GetUserEmail();
+                if (email != sdkBotEmail)
                 {
-                    return """
-                        SDK generation and release require the API specs pull request to be in the public azure-rest-api-specs repository.
-                        Please create a pull request in the public Azure/azure-rest-api-specs repository to move your specs changes to public.
-                        A release plan cannot be created for SDK generation using a pull request in a private repository.
-                        """;
+                    userEmail = email;
+                    logger.LogInformation("Using current user email to submit release plan: {userEmail}", userEmail);
+                }
+                else if (string.IsNullOrEmpty(userEmail))
+                {
+                    throw new InvalidOperationException("Cannot create release plan using SDK bot email. Please provide a valid user email address.");
                 }
 
-                sdkReleaseType = sdkReleaseType?.ToLower() ?? "";
-                var supportedReleaseTypes = new[] { "beta", "stable" };
-                if (!supportedReleaseTypes.Contains(sdkReleaseType))
-                {
-                    return $"Invalid SDK release type. Supported release types are: {string.Join(", ", supportedReleaseTypes)}";
-                }
-
-                if (string.IsNullOrEmpty(userEmail))
-                {
-                    logger.LogInformation("User email not provided. Attempting to retrieve current user email.");
-                    userEmail = await userHelper.GetUserEmail();
-                    logger.LogInformation("User email not provided. Using current user email to submit release plan: {userEmail}", userEmail);
-                }
+                logger.LogInformation("User email for release plan submission: {userEmail}", userEmail);
 
                 var releasePlan = new ReleasePlan
                 {

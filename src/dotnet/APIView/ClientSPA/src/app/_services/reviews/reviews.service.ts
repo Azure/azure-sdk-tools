@@ -99,11 +99,12 @@ export class ReviewsService {
     );
   }
 
-  toggleReviewApproval(reviewId: string, apiRevisionId: string) : Observable<Review> {
+  toggleReviewApproval(reviewId: string, apiRevisionId: string, approve: boolean) : Observable<Review> {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
     });
-    return this.http.post<Review>(this.baseUrl + `/${reviewId}/${apiRevisionId}`, {},
+    
+    return this.http.post<Review>(this.baseUrl + `/${reviewId}/${apiRevisionId}`, { approve: approve },
     { 
       headers: headers,
       withCredentials: true,

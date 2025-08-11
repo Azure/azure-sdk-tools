@@ -1,8 +1,10 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using APIViewWeb.LeanModels;
 
 namespace APIViewWeb.Models
 {
@@ -39,13 +41,29 @@ namespace APIViewWeb.Models
         public string JobId { get; set; }
     }
 
-    public class CommentModelForCopilot
+    public class AIReviewJobCompletedModel
     {
-        [JsonPropertyName("line_no")]
-        public int LineNumber { get; set; }
-        [JsonPropertyName("author")]
-        public string Author { get; set; }
-        [JsonPropertyName("comment")]
-        public string CommentText { get; set; }
+        [JsonPropertyName("reviewId")]
+        public string ReviewId { get; set; }
+        [JsonPropertyName("apirevisionId")]
+        public string APIRevisionId { get; set; }
+        [JsonPropertyName("status")]
+        public string Status { get; set; }
+        [JsonPropertyName("details")]
+        public string Details { get; set; }
+        [JsonPropertyName("createdBy")]
+        public string CreatedBy { get; set; }
+        [JsonPropertyName("jobId")]
+        public string JobId { get; set; }
+        [JsonPropertyName("noOfGeneratedComments")]
+        public int NoOfGeneratedComment { get; set; }
+    }
+
+    public class AIReviewJobInfoModel
+    {
+        public string JobId { get; set; }
+        public APIRevisionListItemModel APIRevision { get; set; }
+        public List<(string lineText, string lineId)> CodeLines { get; set; }
+        public string CreatedBy { get; set; }
     }
 }

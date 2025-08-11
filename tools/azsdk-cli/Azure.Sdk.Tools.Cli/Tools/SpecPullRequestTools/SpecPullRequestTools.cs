@@ -33,8 +33,10 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
         // Options
         private readonly Option<string> typeSpecProjectPathOpt = new(["--typespec-project"], "Path to typespec project") { IsRequired = true };
+        private readonly Option<string> repoPathOpt = new(["--repo-path"], "Path to repository root") { IsRequired = true };
         private readonly Option<string> titleOpt = new(["--title"], "Title for the pull request") { IsRequired = true };
         private readonly Option<string> descriptionOpt = new(["--description"], "Description for the pull request") { IsRequired = true };
+        private readonly Option<bool> draftOpt = new(["--draft"], () => true, "Create pull request as draft (default: true)");
         private readonly Option<string> targetBranchOpt = new(["--target-branch"], () => "main", "Target branch for the pull request") { IsRequired = false };
         private readonly Option<int> pullRequestNumberOpt = new(["--pr"], "Pull request number") { IsRequired = true };
         private readonly Option<string> repoOwnerOpt = new(["--repo-owner"], () => "Azure", "GitHub repo owner") { IsRequired = false };
@@ -112,15 +114,16 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        [McpServerTool, Description("Create pull request for spec changes. Provide title, description and absolute path to TypeSpec project root as params. Creates a pull request for committed changes in the current branch.")]
-        public async Task<List<string>> CreatePullRequest(string title, string description, string typeSpecProjectPath, string targetBranch = "main")
+        [McpServerTool, Description("Create pull request for repository changes. Provide title, description and path to repository root. Creates a pull request for committed changes in the current branch.")]
+        public async Task<List<string>> CreatePullRequest(string title, string description, string repoPath, string targetBranch = "main", bool draft = true)
         {
             try
             {
                 List<string> results = [];
                 try
                 {
-                    var repoRootPath = typeSpecHelper.GetSpecRepoRootPath(typeSpecProjectPath);
+                    // Discover the repository root from the provided path
+                    var repoRootPath = gitHelper.DiscoverRepoRoot(repoPath);
                     var headBranchName = gitHelper.GetBranchName(repoRootPath);
                     if (string.IsNullOrEmpty(headBranchName) || headBranchName.Equals("main"))
                     {
@@ -131,12 +134,15 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
                     //Get repo details like target owner, head owner, repo name
                     var headRepoOwner = await gitHelper.GetRepoOwnerNameAsync(repoRootPath, false);
+                    var targetRepoOwner = await gitHelper.GetRepoOwnerNameAsync(repoRootPath, true);
+                    var repoName = gitHelper.GetRepoName(repoRootPath);
 
                     var headBranch = $"{headRepoOwner}:{headBranchName}";
-                    logger.LogInformation($"Repo name: {REPO_NAME}, Head repo owner: {headRepoOwner}, Head branch name: {headBranchName}, Head branch ref: {headBranch}");
-                    logger.LogInformation($"Creating pull request in {REPO_OWNER}:{REPO_NAME}");
+                    logger.LogInformation($"Repo name: {repoName}, Head repo owner: {headRepoOwner}, Head branch name: {headBranchName}, Head branch ref: {headBranch}");
+                    logger.LogInformation("Repo name: {repoName}, Head repo owner: {headRepoOwner}, Head branch name: {headBranchName}, Head branch ref: {headBranch}", repoName, headRepoOwner, headBranchName, headBranch);
+                    logger.LogInformation("Creating pull request in {targetRepoOwner}:{repoName}", targetRepoOwner, repoName);
                     //Create pull request
-                    var createResponseList = await gitHubService.CreatePullRequestAsync(REPO_NAME, REPO_OWNER, targetBranch, headBranch, title, description);
+                    var createResponseList = await gitHubService.CreatePullRequestAsync(repoName, targetRepoOwner, targetBranch, headBranch, title, description, draft);
                     results.AddRange(createResponseList);
                     return results;
                 }
@@ -210,11 +216,11 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
         public override Command GetCommand()
         {
-            var command = new Command("spec-pr");
+            var command = new Command("spec-pr", "Pull request tools");
             var subCommands = new[] {
                 new Command(checkIfSpecInPublicRepoCommandName, "Check if API spec is in public repo") { typeSpecProjectPathOpt },
                 new Command(getPullRequestForCurrentBranchCommandName, "Get pull request for current branch") { typeSpecProjectPathOpt },
-                new Command(createPullRequestCommandName, "Create pull request") { titleOpt, descriptionOpt, typeSpecProjectPathOpt, targetBranchOpt },
+                new Command(createPullRequestCommandName, "Create pull request") { titleOpt, descriptionOpt, repoPathOpt, targetBranchOpt, draftOpt },
                 new Command(getPullRequestCommandName, "Get pull request details") { pullRequestNumberOpt, repoOwnerOpt, repoNameOpt }
             };
 
@@ -243,9 +249,10 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 case createPullRequestCommandName:
                     var title = commandParser.GetValueForOption(titleOpt);
                     var description = commandParser.GetValueForOption(descriptionOpt);
-                    var typeSpecProject = commandParser.GetValueForOption(typeSpecProjectPathOpt);
+                    var repoPath = commandParser.GetValueForOption(repoPathOpt);
                     var targetBranch = commandParser.GetValueForOption(targetBranchOpt);
-                    var createPullRequestResponse = await CreatePullRequest(title, description, typeSpecProject, targetBranch);
+                    var draft = commandParser.GetValueForOption(draftOpt);
+                    var createPullRequestResponse = await CreatePullRequest(title, description, repoPath, targetBranch, draft);
                     logger.LogInformation("Create pull request response: {createPullRequestResponse}", createPullRequestResponse);
                     return 0;
                 case getPullRequestCommandName:

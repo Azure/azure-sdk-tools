@@ -141,13 +141,17 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 process.OutputDataReceived += (sender, args) =>
                 {
                     if (args.Data != null)
+                    {
                         output.AppendLine(args.Data);
+                    }
                 };
 
                 process.ErrorDataReceived += (sender, args) =>
                 {
                     if (args.Data != null)
+                    {
                         output.AppendLine(args.Data);
+                    }
                 };
                 process.Start();
                 process.BeginOutputReadLine();

@@ -12,3 +12,28 @@
     padding-top: 0px;
     padding-bottom: 0px;
 }
+
+:host ::ng-deep {
+    .notifications-sidebar {
+        width: min(350px, 25dvw);
+    }
+
+    .notifications-filter-button .p-selectbutton {
+        display: flex;
+        justify-content: space-between;
+    }
+    
+    .notifications-filter-button .p-selectbutton .p-button {
+        flex-grow: 1;
+        text-align: center;
+        background-color: transparent;
+        border: 1px solid var(--link-color);
+        color: var(--link-color);
+        font-size: 0.85rem;
+    }
+
+    .notifications-filter-button .p-selectbutton .p-button.p-highlight {
+        color: var(--primary-btn-color);
+        background-color: var(--link-color);
+    }
+}

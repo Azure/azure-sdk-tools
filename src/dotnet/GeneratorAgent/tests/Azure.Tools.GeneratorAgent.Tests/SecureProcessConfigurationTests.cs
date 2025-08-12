@@ -75,7 +75,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
         {
             var allowedCommands = SecureProcessConfiguration.AllowedCommands;
 
-            Assert.That(allowedCommands.Count, Is.EqualTo(9));
+            Assert.That(allowedCommands.Count, Is.EqualTo(10));
         }
 
         [Test]
@@ -87,6 +87,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             Assert.That(SecureProcessConfiguration.IsCommandAllowed("npx"), Is.True);
             Assert.That(SecureProcessConfiguration.IsCommandAllowed("dotnet"), Is.True);
             Assert.That(SecureProcessConfiguration.IsCommandAllowed("git"), Is.True);
+            Assert.That(SecureProcessConfiguration.IsCommandAllowed("bash"), Is.True);
         }
 
         [Test]
@@ -94,7 +95,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
         {
             Assert.That(SecureProcessConfiguration.IsCommandAllowed("malicious"), Is.False);
             Assert.That(SecureProcessConfiguration.IsCommandAllowed("cmd"), Is.False);
-            Assert.That(SecureProcessConfiguration.IsCommandAllowed("bash"), Is.False);
+            Assert.That(SecureProcessConfiguration.IsCommandAllowed("rm"), Is.False);
             Assert.That(SecureProcessConfiguration.IsCommandAllowed("sh"), Is.False);
         }
 

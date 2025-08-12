@@ -1,10 +1,7 @@
+using System.Text;
 using Azure.AI.Agents.Persistent;
 using Azure.Tools.GeneratorAgent.Configuration;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
-using System.Text;
-using System.Text.Json.Serialization;
-using System.Linq;
 
 namespace Azure.Tools.GeneratorAgent
 {
@@ -62,14 +59,18 @@ namespace Azure.Tools.GeneratorAgent
             await Task.CompletedTask.ConfigureAwait(false);
         }
 
-        public async Task<string> InitializeAgentEnvironmentAsync(string typeSpecDir, CancellationToken ct = default)
+        public async Task<string> InitializeAgentEnvironmentAsync(
+            Dictionary<string, string> typeSpecFiles, 
+            CancellationToken ct = default)
         {
-            List<string> uploadedFilesIds = await UploadTspAsync(typeSpecDir, ct);
-            if (uploadedFilesIds.Count == 0)
-                throw new InvalidOperationException("No TypeSpec files (*.tsp) found in the directory. Cannot proceed with AZC error fixing.");
+            IEnumerable<string> uploadedFilesIds = await UploadTspFromMemoryAsync(typeSpecFiles, ct);
+            List<string> uploadedFilesList = uploadedFilesIds.ToList(); // Materialize once for multiple usage
+            
+            if (uploadedFilesList.Count == 0)
+                throw new InvalidOperationException("No TypeSpec files provided. Cannot proceed with AZC error fixing.");
 
-            await WaitForIndexingAsync(uploadedFilesIds, ct);
-            string vectorStoreId = await CreateVectorStoreAsync(uploadedFilesIds, ct);
+            await WaitForIndexingAsync(uploadedFilesList, ct);
+            string vectorStoreId = await CreateVectorStoreAsync(uploadedFilesList, ct);
             await UpdateAgentVectorStoreAsync(vectorStoreId, ct);
 
             PersistentAgentThread thread = await Client.Threads.CreateThreadAsync(cancellationToken: ct);
@@ -78,16 +79,23 @@ namespace Azure.Tools.GeneratorAgent
             return thread.Id;
         }
 
-        private async Task<List<string>> UploadTspAsync(string typeSpecDir, CancellationToken ct)
+        private async Task<IEnumerable<string>> UploadTspFromMemoryAsync(
+            Dictionary<string, string> typeSpecFiles, 
+            CancellationToken ct)
         {
-            string[] tspFiles = Directory.GetFiles(typeSpecDir, "*.tsp", SearchOption.AllDirectories);
+            // Filter TypeSpec-related files
+            var relevantFiles = typeSpecFiles.Where(kvp => 
+                kvp.Key.EndsWith(".tsp", StringComparison.OrdinalIgnoreCase) ||
+                kvp.Key.EndsWith(".yaml", StringComparison.OrdinalIgnoreCase) ||
+                kvp.Key.EndsWith(".yml", StringComparison.OrdinalIgnoreCase) ||
+                kvp.Key.EndsWith(".json", StringComparison.OrdinalIgnoreCase));
 
-            IEnumerable<Task<string?>> uploadTasks = tspFiles.Select(async file =>
+            IEnumerable<Task<string?>> uploadTasks = relevantFiles.Select(async file =>
             {
                 await ConcurrencyLimiter.WaitAsync(ct);
                 try
                 {
-                    return await UploadSingleFileAsync(file, ct);
+                    return await UploadSingleFileFromMemoryAsync(file.Key, file.Value, ct);
                 }
                 finally
                 {
@@ -96,21 +104,22 @@ namespace Azure.Tools.GeneratorAgent
             });
 
             string?[] results = await Task.WhenAll(uploadTasks);
-            List<string> uploadedFilesIds = results.Where(id => !string.IsNullOrEmpty(id)).Select(id => id!).ToList();
+            IEnumerable<string> uploadedFilesIds = results.Where(id => !string.IsNullOrEmpty(id)).Select(id => id!);
 
-            Logger.LogInformation("Successfully uploaded {Count}/{Total} TypeSpec files as text files", uploadedFilesIds.Count, tspFiles.Length);
+            Logger.LogInformation("Successfully uploaded TypeSpec files from memory");
             return uploadedFilesIds;
         }
 
-        private async Task<string?> UploadSingleFileAsync(string filePath, CancellationToken ct)
+        private async Task<string?> UploadSingleFileFromMemoryAsync(
+            string fileName, 
+            string content, 
+            CancellationToken ct)
         {
             try
             {
-                string fileName = Path.GetFileNameWithoutExtension(filePath);
-                string txtFileName = $"{fileName}.txt";
+                string fileNameWithoutExt = Path.GetFileNameWithoutExtension(fileName);
+                string txtFileName = $"{fileNameWithoutExt}.txt";
 
-                // Read the .tsp file content and upload as .txt since .tsp is not supported
-                string content = await File.ReadAllTextAsync(filePath, ct);
                 using MemoryStream contentStream = new MemoryStream(Encoding.UTF8.GetBytes(content));
                 
                 Response<PersistentAgentFileInfo>? uploaded = await Client.Files.UploadFileAsync(
@@ -122,19 +131,19 @@ namespace Azure.Tools.GeneratorAgent
 
                 if (uploaded?.Value?.Id != null)
                 {
-                    Logger.LogDebug("Uploaded TypeSpec file as text: {OriginalFile} -> {FileName} -> {FileId}",
-                        Path.GetFileName(filePath), txtFileName, uploaded.Value.Id);
+                    Logger.LogDebug("Uploaded TypeSpec file from memory: {FileName} -> {FileId}",
+                        fileName, uploaded.Value.Id);
                     return uploaded.Value.Id;
                 }
                 else
                 {
-                    Logger.LogWarning("Failed to upload file: {FileName}", fileName);
+                    Logger.LogWarning("Failed to upload file from memory: {FileName}", fileName);
                     return null;
                 }
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Error uploading file: {FilePath}", filePath);
+                Logger.LogError(ex, "Error uploading file from memory: {FileName}", fileName);
                 return null;
             }
         }

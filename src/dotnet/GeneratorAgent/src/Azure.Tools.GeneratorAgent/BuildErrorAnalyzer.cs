@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text.RegularExpressions;
 using Azure.Tools.ErrorAnalyzers;
 using Azure.Tools.ErrorAnalyzers.ClientRuleAnalyzers;
@@ -17,8 +14,9 @@ namespace Azure.Tools.GeneratorAgent
     internal class BuildErrorAnalyzer
     {
         // Regular expression to match error patterns.
+        // Example: "error CS0103: The name 'InvalidVariable' does not exist in the current context [/path/to/file.cs]"
         private static readonly Regex ErrorRegex = new(@"error\s+([A-Z]+\d+):\s*(.+?)(?=\s*\[|$)", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.Compiled);
-        
+
         private readonly ILogger<BuildErrorAnalyzer> Logger;
 
         /// <summary>
@@ -149,9 +147,8 @@ namespace Azure.Tools.GeneratorAgent
             ArgumentNullException.ThrowIfNull(errors);
             try
             {
-                List<RuleError> errorList = errors as List<RuleError> ?? errors.ToList();
-                IEnumerable<Fix> fixes = ErrorAnalyzerService.GetFixes(errorList);
-                Logger.LogInformation("Generated fixes for {ErrorCount} errors", errorList.Count);
+                IEnumerable<Fix> fixes = ErrorAnalyzerService.GetFixes(errors);
+                Logger.LogInformation("Generated fixes for errors");
                 return fixes;
             }
             catch (Exception ex)

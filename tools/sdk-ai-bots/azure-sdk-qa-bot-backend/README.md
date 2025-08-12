@@ -77,7 +77,7 @@ Additional features include:
 ## API Usage
 
 ### Completion Endpoint
-The main endpoint for querying the bot is `/completion`. [Here](test\api_test.rest) is an example of how to use it.
+The main endpoint for querying the bot is `/completion`. [Here](test/api_test.rest) is an example of how to use it
 
 The API_KEY could found in the [keyvalut](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/faa080af-c1d8-40ad-9cce-e1a450ca5b57/resourceGroups/typespec_helper/providers/Microsoft.KeyVault/vaults/azuresdkqabotea/secrets)
 

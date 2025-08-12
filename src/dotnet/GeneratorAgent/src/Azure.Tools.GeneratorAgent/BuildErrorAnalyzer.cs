@@ -14,7 +14,8 @@ namespace Azure.Tools.GeneratorAgent
     internal class BuildErrorAnalyzer
     {
         // Regular expression to match error patterns.
-        // Example: "error CS0103: The name 'InvalidVariable' does not exist in the current context [/path/to/file.cs]"
+        // Matches strings like "error CS0103: The name 'InvalidVariable' does not exist in the current context [/path/to/file.cs]" into groups: "error (CS0103): (The name 'InvalidVariable' does not exist in the current context) [/path/to/file.cs]"
+
         private static readonly Regex ErrorRegex = new(@"error\s+([A-Z]+\d+):\s*(.+?)(?=\s*\[|$)", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.Compiled);
 
         private readonly ILogger<BuildErrorAnalyzer> Logger;

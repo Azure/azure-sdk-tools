@@ -10,13 +10,13 @@ using NUnit.Framework;
 namespace Azure.Tools.GeneratorAgent.Tests
 {
     [TestFixture]
-    public class GitHubFilesRetreiveServiceTests
+    public class GitHubFilesServiceTests
     {
         #region Helper Methods
 
-        private static Mock<ILogger<GitHubFilesRetreiveService>> CreateMockLogger()
+        private static Mock<ILogger<GitHubFilesService>> CreateMockLogger()
         {
-            return new Mock<ILogger<GitHubFilesRetreiveService>>();
+            return new Mock<ILogger<GitHubFilesService>>();
         }
 
         private static AppSettings CreateAppSettings()
@@ -56,14 +56,14 @@ namespace Azure.Tools.GeneratorAgent.Tests
             return new Mock<HttpMessageHandler>();
         }
 
-        private static TestableGitHubFilesRetreiveService CreateTestableService(
+        private static TestableGitHubFilesService CreateTestableService(
             AppSettings? appSettings = null,
-            Mock<ILogger<GitHubFilesRetreiveService>>? mockLogger = null,
+            Mock<ILogger<GitHubFilesService>>? mockLogger = null,
             ValidationContext? validationContext = null,
             HttpClient? httpClient = null)
         {
             var mockHandler = CreateMockHttpMessageHandler();
-            return new TestableGitHubFilesRetreiveService(
+            return new TestableGitHubFilesService(
                 appSettings ?? CreateAppSettings(),
                 (mockLogger ?? CreateMockLogger()).Object,
                 validationContext ?? CreateValidationContext(),
@@ -261,7 +261,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         }
 
         private static void VerifyLogMessage(
-            Mock<ILogger<GitHubFilesRetreiveService>> mockLogger,
+            Mock<ILogger<GitHubFilesService>> mockLogger,
             LogLevel expectedLevel,
             string expectedMessage,
             Times? times = null)
@@ -287,10 +287,12 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var appSettings = CreateAppSettings();
             var mockLogger = CreateMockLogger();
             var validationContext = CreateValidationContext();
+            var httpClient = new HttpClient();
 
             // Act & Assert
-            using var service = new GitHubFilesRetreiveService(appSettings, mockLogger.Object, validationContext);
+            var service = new GitHubFilesService(appSettings, mockLogger.Object, validationContext, httpClient);
             Assert.That(service, Is.Not.Null);
+            httpClient.Dispose();
         }
 
         [Test]
@@ -299,11 +301,13 @@ namespace Azure.Tools.GeneratorAgent.Tests
             // Arrange
             var mockLogger = CreateMockLogger();
             var validationContext = CreateValidationContext();
+            var httpClient = new HttpClient();
 
             // Act & Assert
-            var exception = Assert.Throws<ArgumentNullException>(() => 
-                new GitHubFilesRetreiveService(null!, mockLogger.Object, validationContext));
+            var exception = Assert.Throws<ArgumentNullException>(() =>
+                new GitHubFilesService(null!, mockLogger.Object, validationContext, httpClient));
             Assert.That(exception!.ParamName, Is.EqualTo("appSettings"));
+            httpClient.Dispose();
         }
 
         [Test]
@@ -312,11 +316,13 @@ namespace Azure.Tools.GeneratorAgent.Tests
             // Arrange
             var appSettings = CreateAppSettings();
             var validationContext = CreateValidationContext();
+            var httpClient = new HttpClient();
 
             // Act & Assert
-            var exception = Assert.Throws<ArgumentNullException>(() => 
-                new GitHubFilesRetreiveService(appSettings, null!, validationContext));
+            var exception = Assert.Throws<ArgumentNullException>(() =>
+                new GitHubFilesService(appSettings, null!, validationContext, httpClient));
             Assert.That(exception!.ParamName, Is.EqualTo("logger"));
+            httpClient.Dispose();
         }
 
         [Test]
@@ -325,11 +331,13 @@ namespace Azure.Tools.GeneratorAgent.Tests
             // Arrange
             var appSettings = CreateAppSettings();
             var mockLogger = CreateMockLogger();
+            var httpClient = new HttpClient();
 
             // Act & Assert
-            var exception = Assert.Throws<ArgumentNullException>(() => 
-                new GitHubFilesRetreiveService(appSettings, mockLogger.Object, null!));
+            var exception = Assert.Throws<ArgumentNullException>(() =>
+                new GitHubFilesService(appSettings, mockLogger.Object, null!, httpClient));
             Assert.That(exception!.ParamName, Is.EqualTo("validationContext"));
+            httpClient.Dispose();
         }
 
         #endregion
@@ -359,7 +367,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 Assert.That(result.Value["test.tsp"], Is.EqualTo("model Test {}"));
             });
 
-            service.Dispose();
+
         }
 
         [Test]
@@ -377,7 +385,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 await service.GetTypeSpecFilesAsync());
             Assert.That(exception!.Message, Does.Contain("GitHub API request failed: NotFound Not Found"));
 
-            service.Dispose();
+
         }
 
         [Test]
@@ -395,7 +403,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 await service.GetTypeSpecFilesAsync());
             Assert.That(exception!.Message, Does.Contain("is an invalid start of a value"));
 
-            service.Dispose();
+
         }
 
         [Test]
@@ -413,7 +421,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 await service.GetTypeSpecFilesAsync());
             Assert.That(exception!.Message, Does.Contain("No valid .tsp files found with download URLs"));
 
-            service.Dispose();
+
         }
 
         [Test]
@@ -440,7 +448,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 Assert.That(result.Value.ContainsKey("file2.tsp"), Is.True);
             });
 
-            service.Dispose();
+
         }
 
         [Test]
@@ -466,7 +474,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
             Assert.ThrowsAsync<OperationCanceledException>(async () => 
                 await service.GetTypeSpecFilesAsync(cts.Token));
 
-            service.Dispose();
+
         }
 
         [Test]
@@ -492,7 +500,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 Assert.That(result.Value.ContainsKey("readme.md"), Is.False);
             });
 
-            service.Dispose();
+
         }
 
         [Test]
@@ -519,7 +527,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 Assert.That(result.Value.ContainsKey("file2.tsp"), Is.False);
             });
 
-            service.Dispose();
+
         }
 
         [Test]
@@ -546,7 +554,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 Assert.That(result.Value.ContainsKey("file2.tsp"), Is.False);
             });
 
-            service.Dispose();
+
         }
 
         [Test]
@@ -575,7 +583,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
             // Verify critical logging
             VerifyLogMessage(mockLogger, LogLevel.Critical, "Unexpected error while fetching TypeSpec files");
 
-            service.Dispose();
+
         }
 
         #endregion
@@ -589,7 +597,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var service = CreateTestableService();
 
             // Act & Assert
-            Assert.DoesNotThrow(() => service.Dispose());
+
         }
 
         [Test]
@@ -601,8 +609,8 @@ namespace Azure.Tools.GeneratorAgent.Tests
             // Act & Assert
             Assert.DoesNotThrow(() =>
             {
-                service.Dispose();
-                service.Dispose();
+
+
             });
         }
 
@@ -611,40 +619,19 @@ namespace Azure.Tools.GeneratorAgent.Tests
         #region Testable Service Class
 
         /// <summary>
-        /// Testable version of GitHubFilesRetreiveService that allows HttpClient injection
+        /// Testable version of GitHubFilesService that allows HttpClient injection
         /// </summary>
-        private class TestableGitHubFilesRetreiveService : GitHubFilesRetreiveService
+        private class TestableGitHubFilesService : GitHubFilesService
         {
-            private readonly HttpClient _injectedHttpClient;
-
-            public TestableGitHubFilesRetreiveService(
+            public TestableGitHubFilesService(
                 AppSettings appSettings,
-                ILogger<GitHubFilesRetreiveService> logger,
+                ILogger<GitHubFilesService> logger,
                 ValidationContext validationContext,
-                HttpClient httpClient) : base(appSettings, logger, validationContext)
+                HttpClient httpClient) : base(appSettings, logger, validationContext, httpClient)
             {
-                _injectedHttpClient = httpClient;
-                
-                // Replace the HttpClient using reflection to maintain encapsulation
-                var httpClientField = typeof(GitHubFilesRetreiveService).GetField("HttpClient", 
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                
-                if (httpClientField != null)
-                {
-                    // Dispose the original HttpClient
-                    var originalHttpClient = (HttpClient?)httpClientField.GetValue(this);
-                    originalHttpClient?.Dispose();
-                    
-                    // Set the mock HttpClient
-                    httpClientField.SetValue(this, _injectedHttpClient);
-                }
             }
 
-            public new void Dispose()
-            {
-                _injectedHttpClient?.Dispose();
-                base.Dispose();
-            }
+            // No longer need Dispose method since GitHubFilesService doesn't implement IDisposable
         }
 
         #endregion

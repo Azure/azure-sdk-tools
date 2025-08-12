@@ -6,29 +6,37 @@ namespace Azure.Tools.GeneratorAgent
     /// <summary>
     /// Service responsible for retrieving TypeSpec files from various sources (local or GitHub).
     /// </summary>
-    internal class TypeSpecFileService : IDisposable
+    internal class TypeSpecFileService
     {
         private readonly AppSettings AppSettings;
         private readonly ILogger<TypeSpecFileService> Logger;
         private readonly ILoggerFactory LoggerFactory;
+        private readonly HttpClient HttpClient;
         private readonly ValidationContext ValidationContext;
-        private GitHubFilesRetreiveService? GitHubService;
+        private readonly Func<ValidationContext, GitHubFilesService> GitHubServiceFactory;
+        private GitHubFilesService? GitHubService;
 
         public TypeSpecFileService(
             AppSettings appSettings,
             ILogger<TypeSpecFileService> logger,
             ILoggerFactory loggerFactory,
-            ValidationContext validationContext)
+            HttpClient httpClient,
+            ValidationContext validationContext,
+            Func<ValidationContext, GitHubFilesService> gitHubServiceFactory)
         {
             ArgumentNullException.ThrowIfNull(appSettings);
             ArgumentNullException.ThrowIfNull(logger);
             ArgumentNullException.ThrowIfNull(loggerFactory);
+            ArgumentNullException.ThrowIfNull(httpClient);
             ArgumentNullException.ThrowIfNull(validationContext);
+            ArgumentNullException.ThrowIfNull(gitHubServiceFactory);
 
             AppSettings = appSettings;
             Logger = logger;
             LoggerFactory = loggerFactory;
+            HttpClient = httpClient;
             ValidationContext = validationContext;
+            GitHubServiceFactory = gitHubServiceFactory;
         }
 
         /// <summary>
@@ -88,10 +96,7 @@ namespace Azure.Tools.GeneratorAgent
 
             try
             {
-                GitHubService = new GitHubFilesRetreiveService(
-                    AppSettings, 
-                    LoggerFactory.CreateLogger<GitHubFilesRetreiveService>(), 
-                    ValidationContext);
+                GitHubService = GitHubServiceFactory(ValidationContext);
 
                 Result<Dictionary<string, string>> result = await GitHubService.GetTypeSpecFilesAsync(cancellationToken);
 
@@ -108,11 +113,6 @@ namespace Azure.Tools.GeneratorAgent
                     ValidationContext.ValidatedTypeSpecDir, ValidationContext.ValidatedCommitId);
                 throw;
             }
-        }
-
-        public void Dispose()
-        {
-            GitHubService?.Dispose();
         }
     }
 }

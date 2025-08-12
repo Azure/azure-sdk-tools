@@ -67,7 +67,9 @@ namespace Azure.Tools.GeneratorAgent
             List<string> uploadedFilesList = uploadedFilesIds.ToList(); // Materialize once for multiple usage
             
             if (uploadedFilesList.Count == 0)
+            {
                 throw new InvalidOperationException("No TypeSpec files provided. Cannot proceed with AZC error fixing.");
+            }
 
             await WaitForIndexingAsync(uploadedFilesList, ct);
             string vectorStoreId = await CreateVectorStoreAsync(uploadedFilesList, ct);
@@ -83,25 +85,12 @@ namespace Azure.Tools.GeneratorAgent
             Dictionary<string, string> typeSpecFiles, 
             CancellationToken ct)
         {
-            // Filter TypeSpec-related files
+            // Filter TypeSpec files
             var relevantFiles = typeSpecFiles.Where(kvp => 
-                kvp.Key.EndsWith(".tsp", StringComparison.OrdinalIgnoreCase) ||
-                kvp.Key.EndsWith(".yaml", StringComparison.OrdinalIgnoreCase) ||
-                kvp.Key.EndsWith(".yml", StringComparison.OrdinalIgnoreCase) ||
-                kvp.Key.EndsWith(".json", StringComparison.OrdinalIgnoreCase));
+                kvp.Key.EndsWith(".tsp", StringComparison.OrdinalIgnoreCase));
 
-            IEnumerable<Task<string?>> uploadTasks = relevantFiles.Select(async file =>
-            {
-                await ConcurrencyLimiter.WaitAsync(ct);
-                try
-                {
-                    return await UploadSingleFileFromMemoryAsync(file.Key, file.Value, ct);
-                }
-                finally
-                {
-                    ConcurrencyLimiter.Release();
-                }
-            });
+            IEnumerable<Task<string?>> uploadTasks = relevantFiles.Select(file =>
+                UploadSingleFileFromMemoryAsync(file.Key, file.Value, ct));
 
             string?[] results = await Task.WhenAll(uploadTasks);
             IEnumerable<string> uploadedFilesIds = results.Where(id => !string.IsNullOrEmpty(id)).Select(id => id!);
@@ -117,8 +106,7 @@ namespace Azure.Tools.GeneratorAgent
         {
             try
             {
-                string fileNameWithoutExt = Path.GetFileNameWithoutExtension(fileName);
-                string txtFileName = $"{fileNameWithoutExt}.txt";
+                string txtFileName = Path.ChangeExtension(fileName, "txt");
 
                 using MemoryStream contentStream = new MemoryStream(Encoding.UTF8.GetBytes(content));
                 
@@ -370,6 +358,8 @@ namespace Azure.Tools.GeneratorAgent
                     Logger.LogError(ex, "Error deleting agents during disposal");
                 }
             }
+
+            ConcurrencyLimiter?.Dispose();
         }
     }
 }

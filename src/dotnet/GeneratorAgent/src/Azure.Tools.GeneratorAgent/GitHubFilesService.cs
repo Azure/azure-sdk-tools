@@ -8,9 +8,9 @@ namespace Azure.Tools.GeneratorAgent
     /// <summary>
     /// TypeSpec file service for GitHub repository access using GitHub API for fast file retrieval.
     /// </summary>
-    internal class GitHubFilesRetreiveService : IDisposable
+    internal class GitHubFilesService
     {
-        private readonly ILogger<GitHubFilesRetreiveService> Logger;
+        private readonly ILogger<GitHubFilesService> Logger;
         private readonly AppSettings AppSettings;
         private readonly HttpClient HttpClient;
         private readonly string CommitId;
@@ -23,14 +23,16 @@ namespace Azure.Tools.GeneratorAgent
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
         };
 
-        public GitHubFilesRetreiveService(
+        public GitHubFilesService(
             AppSettings appSettings,
-            ILogger<GitHubFilesRetreiveService> logger,
-            ValidationContext validationContext)
+            ILogger<GitHubFilesService> logger,
+            ValidationContext validationContext,
+            HttpClient httpClient)
         {
             ArgumentNullException.ThrowIfNull(appSettings);
             ArgumentNullException.ThrowIfNull(logger);
             ArgumentNullException.ThrowIfNull(validationContext);
+            ArgumentNullException.ThrowIfNull(httpClient);
 
             AppSettings = appSettings;
             Logger = logger;
@@ -38,19 +40,19 @@ namespace Azure.Tools.GeneratorAgent
             CommitId = validationContext.ValidatedCommitId;
             TypespecSpecDir = validationContext.ValidatedTypeSpecDir;
 
-            // Initialize HttpClient with User-Agent header and timeout for GitHub API
-            HttpClient = new HttpClient
-            {
-                Timeout = TimeSpan.FromMinutes(2) // Reasonable timeout for file downloads
-            };
-            HttpClient.DefaultRequestHeaders.Add("User-Agent", "AzureSDK-TypeSpecGenerator/1.0");
+            HttpClient = httpClient;
+            
+            // Log GitHub authentication status
+            bool hasAuthHeader = httpClient.DefaultRequestHeaders.Authorization != null;
+            Logger.LogInformation("GitHub API client initialized. Authentication: {AuthStatus}", 
+                hasAuthHeader ? "Configured" : "Not configured - using rate-limited access");
         }
 
         public async Task<Result<Dictionary<string, string>>> GetTypeSpecFilesAsync(CancellationToken cancellationToken = default)
         {
             try
             {
-                Result<Dictionary<string, string>> apiResult = await FetchTypeSpecFilesViaApiAsync(cancellationToken);
+                Result<Dictionary<string, string>> apiResult = await FetchTypeSpecFilesViaApiAsync(cancellationToken).ConfigureAwait(false);
                 return apiResult;
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
@@ -69,8 +71,10 @@ namespace Azure.Tools.GeneratorAgent
                 string apiUrl = $"https://api.github.com/repos/{AppSettings.AzureSpecRepository}/contents/{TypespecSpecDir}?ref={CommitId}";
 
                 HttpResponseMessage response = await HttpClient.GetAsync(apiUrl, cancellationToken).ConfigureAwait(false);
+                
                 if (!response.IsSuccessStatusCode)
                 {
+                    string errorContent = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
                     Logger.LogWarning("GitHub API request failed: {StatusCode} {ReasonPhrase}", 
                         response.StatusCode, response.ReasonPhrase);
                     throw new HttpRequestException($"GitHub API request failed: {response.StatusCode} {response.ReasonPhrase}");
@@ -86,17 +90,15 @@ namespace Azure.Tools.GeneratorAgent
 
                 Dictionary<string, string> typeSpecFiles = new(contents.Length);
 
-                IEnumerable<GitHubContent> tspFiles = contents.Where(c => 
-                    string.Equals(c.Type, "file", StringComparison.Ordinal) && 
-                    c.Name.EndsWith(".tsp", StringComparison.OrdinalIgnoreCase));
+                IEnumerable<GitHubContent> tspFiles = contents
+                    .Where(c => string.Equals(c.Type, "file", StringComparison.Ordinal) && 
+                               c.Name.EndsWith(".tsp", StringComparison.OrdinalIgnoreCase) &&
+                               !string.IsNullOrEmpty(c.DownloadUrl));
 
-                // Download each .tsp file content in parallel
-                Task<(string FileName, string Content)>[] downloadTasks = tspFiles
-                    .Where(tspFile => !string.IsNullOrEmpty(tspFile.DownloadUrl))
-                    .Select(tspFile => DownloadFileContentAsync(tspFile.Name, tspFile.DownloadUrl!, cancellationToken))
-                    .ToArray();
+                IEnumerable<Task<(string FileName, string Content)>> downloadTasks = tspFiles
+                    .Select(tspFile => DownloadFileContentAsync(tspFile.Name, tspFile.DownloadUrl, cancellationToken));
 
-                if (downloadTasks.Length == 0)
+                if (!downloadTasks.Any())
                 {
                     Logger.LogWarning("No valid .tsp files found with download URLs");
                     throw new InvalidOperationException("No valid .tsp files found with download URLs");
@@ -111,6 +113,10 @@ namespace Azure.Tools.GeneratorAgent
                         typeSpecFiles[fileName] = content;
                         Logger.LogDebug("Downloaded file: {FileName} ({Size} characters)", fileName, content.Length);
                     }
+                    else
+                    {
+                        Logger.LogWarning("Failed to download content for file: {FileName}", fileName);
+                    }
                 }
 
                 return Result<Dictionary<string, string>>.Success(typeSpecFiles);
@@ -122,8 +128,14 @@ namespace Azure.Tools.GeneratorAgent
             }
         }
 
-        private async Task<(string FileName, string Content)> DownloadFileContentAsync(string fileName, string downloadUrl, CancellationToken cancellationToken)
+        private async Task<(string FileName, string Content)> DownloadFileContentAsync(string fileName, string? downloadUrl, CancellationToken cancellationToken)
         {
+            if (string.IsNullOrEmpty(downloadUrl))
+            {
+                Logger.LogWarning("Download URL is null or empty for file {FileName}", fileName);
+                return (fileName, string.Empty);
+            }
+
             try
             {
                 HttpResponseMessage response = await HttpClient.GetAsync(downloadUrl, cancellationToken).ConfigureAwait(false);
@@ -133,20 +145,15 @@ namespace Azure.Tools.GeneratorAgent
                     return (fileName, content);
                 }
 
-                Logger.LogWarning("Failed to download file {FileName}: {StatusCode} {ReasonPhrase}", 
-                    fileName, response.StatusCode, response.ReasonPhrase);
+                Logger.LogWarning("Failed to download file {FileName} from {Url}: {StatusCode} {ReasonPhrase}", 
+                    fileName, downloadUrl, response.StatusCode, response.ReasonPhrase);
                 return (fileName, string.Empty);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                Logger.LogCritical(ex, "Error downloading file {FileName}", fileName);
+                Logger.LogCritical(ex, "Error downloading file {FileName} from {Url}", fileName, downloadUrl);
                 return (fileName, string.Empty);
             }
-        }
-
-        public void Dispose()
-        {
-            HttpClient?.Dispose();
         }
     }
 }

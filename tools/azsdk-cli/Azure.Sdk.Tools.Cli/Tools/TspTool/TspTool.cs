@@ -128,13 +128,22 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
         private async Task HandleInitCommand(InvocationContext ctx, CancellationToken ct)
         {
-            var outputDirectory = ctx.ParseResult.GetValueForOption(outputDirectoryArg);
-            var template = ctx.ParseResult.GetValueForOption(templateArg);
-            var serviceNamespace = ctx.ParseResult.GetValueForOption(serviceNamespaceArg);
+            try
+            {
+                var outputDirectory = ctx.ParseResult.GetValueForOption(outputDirectoryArg);
+                var template = ctx.ParseResult.GetValueForOption(templateArg);
+                var serviceNamespace = ctx.ParseResult.GetValueForOption(serviceNamespaceArg);
 
-            TspToolResponse result = await InitTypeSpecProject(outputDirectory: outputDirectory, template: TemplateEnumToString(template), serviceNamespace: serviceNamespace, ct);
-            ctx.ExitCode = ExitCode;
-            output.Output(result);
+                TspToolResponse result = await InitTypeSpecProject(outputDirectory: outputDirectory, template: TemplateEnumToString(template), serviceNamespace: serviceNamespace, ct);
+                ctx.ExitCode = ExitCode;
+                output.Output(result);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error initializing TypeSpec project");
+                SetFailure();
+                ctx.ExitCode = ExitCode;
+            }
         }
 
         [McpServerTool(Name = "convert_swagger_to_typespec"), Description(@"Converts an existing Azure service swagger definition to a TypeSpec project.

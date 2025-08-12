@@ -13,31 +13,27 @@ using Azure.Sdk.Tools.Cli.Helpers;
 namespace Azure.Sdk.Tools.Cli.Tests.Tools
 {
     [TestFixture]
-    public class CheckAllToolTests
+    public class PackageCheckToolTests
     {
-        private Mock<ILogger<CheckAllTool>> _mockLogger;
+        private Mock<ILogger<PackageCheckTool>> _mockLogger;
         private Mock<IOutputService> _mockOutputService;
         private Mock<IGitHelper> _mockGitHelper;
-        private Mock<ILogger<DependencyCheckTool>> _mockDependencyCheckLogger;
-        private Mock<ILogger<ChangelogValidationTool>> _mockChangelogValidationLogger;
         private Mock<ILanguageRepoServiceFactory> _mockLanguageRepoServiceFactory;
-        private CheckAllTool _checkAllTool;
+        private PackageCheckTool _packageCheckTool;
         private string _testProjectPath;
 
         [SetUp]
         public void Setup()
         {
-            _mockLogger = new Mock<ILogger<CheckAllTool>>();
+            _mockLogger = new Mock<ILogger<PackageCheckTool>>();
             _mockOutputService = new Mock<IOutputService>();
             _mockGitHelper = new Mock<IGitHelper>();
-            _mockDependencyCheckLogger = new Mock<ILogger<DependencyCheckTool>>();
-            _mockChangelogValidationLogger = new Mock<ILogger<ChangelogValidationTool>>();
             _mockLanguageRepoServiceFactory = new Mock<ILanguageRepoServiceFactory>();
 
-            _checkAllTool = new CheckAllTool(_mockLogger.Object, _mockOutputService.Object, _mockLanguageRepoServiceFactory.Object);
+            _packageCheckTool = new PackageCheckTool(_mockLogger.Object, _mockOutputService.Object, _mockLanguageRepoServiceFactory.Object);
             
             // Create a temporary test directory
-            _testProjectPath = Path.Combine(Path.GetTempPath(), "CheckAllToolTest");
+            _testProjectPath = Path.Combine(Path.GetTempPath(), "PackageCheckToolTest");
             if (Directory.Exists(_testProjectPath))
             {
                 Directory.Delete(_testProjectPath, true);
@@ -55,10 +51,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         }
 
         [Test]
-        public async Task RunAllChecks_WithValidPath_ReturnsFailureResult()
+        public async Task RunPackageCheck_WithAllChecks_ReturnsFailureResult()
         {
             // Act - Using empty temp directory will cause dependency check to fail
-            var result = await _checkAllTool.RunAllChecks(_testProjectPath);
+            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, "all");
 
             // Assert
             Assert.IsNotNull(result);
@@ -67,14 +63,50 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         }
 
         [Test]
-        public async Task RunAllChecks_WithProjectFile_ReturnsPartialSuccess()
+        public async Task RunPackageCheck_WithChangelogCheck_ReturnsResult()
+        {
+            // Act
+            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, "changelog");
+
+            // Assert
+            Assert.IsNotNull(result);
+            // Changelog check may succeed or fail depending on directory contents
+            Assert.That(result.ExitCode, Is.GreaterThanOrEqualTo(0));
+        }
+
+        [Test]
+        public async Task RunPackageCheck_WithDependencyCheck_ReturnsResult()
+        {
+            // Act
+            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, "dependency");
+
+            // Assert
+            Assert.IsNotNull(result);
+            // Dependency check may succeed or fail depending on directory contents
+            Assert.That(result.ExitCode, Is.GreaterThanOrEqualTo(0));
+        }
+
+        [Test]
+        public async Task RunPackageCheck_WithInvalidCheckType_ReturnsError()
+        {
+            // Act
+            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, "invalid");
+
+            // Assert
+            Assert.IsNotNull(result);
+            Assert.That(result.ExitCode, Is.EqualTo(1));
+            Assert.IsTrue(result.ResponseError.Contains("Unknown check type"));
+        }
+
+        [Test]
+        public async Task RunPackageCheck_WithProjectFile_ReturnsPartialSuccess()
         {
             // Arrange - Create a basic project file to trigger language detection
             var projectFilePath = Path.Combine(_testProjectPath, "test.csproj");
             await File.WriteAllTextAsync(projectFilePath, "<Project Sdk=\"Microsoft.NET.Sdk\"></Project>");
 
             // Act - This will still fail because dotnet commands won't work properly, but test structure is better
-            var result = await _checkAllTool.RunAllChecks(_testProjectPath);
+            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, "all");
 
             // Assert
             Assert.IsNotNull(result);
@@ -84,13 +116,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         }
 
         [Test]
-        public async Task RunAllChecks_WithInvalidPath_ReturnsErrorResult()
+        public async Task RunPackageCheck_WithInvalidPath_ReturnsErrorResult()
         {
             // Arrange
             string invalidPath = "/tmp/nonexistent-path-12345";
 
             // Act
-            var result = await _checkAllTool.RunAllChecks(invalidPath);
+            var result = await _packageCheckTool.RunPackageCheck(invalidPath, "all");
 
             // Assert
             Assert.IsNotNull(result);
@@ -100,10 +132,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         }
 
         [Test]
-        public async Task RunAllChecks_WithValidPath_RunsAllChecks()
+        public async Task RunPackageCheck_WithValidPath_RunsAllChecks()
         {
             // Act
-            var result = await _checkAllTool.RunAllChecks(_testProjectPath);
+            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, "all");
 
             // Assert
             Assert.IsNotNull(result);

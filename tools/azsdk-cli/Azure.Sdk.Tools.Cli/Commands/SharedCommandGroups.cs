@@ -41,11 +41,6 @@ namespace Azure.Sdk.Tools.Cli.Commands
             Options: []
         );
 
-        public static readonly CommandGroup RunChecks = new(
-            Verb: "run-checks",
-            Description: "Run various validation checks",
-            Options: []
-        );
         #if DEBUG
         public static readonly CommandGroup Example = new(
             Verb: "example",

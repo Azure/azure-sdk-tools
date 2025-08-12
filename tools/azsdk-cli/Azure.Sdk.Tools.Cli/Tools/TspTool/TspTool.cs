@@ -11,21 +11,7 @@ using Azure.Sdk.Tools.Cli.Helpers;
 
 namespace Azure.Sdk.Tools.Cli.Tools
 {
-    /// <summary>
-    /// Represents the available TypeSpec project templates
-    /// </summary>
-    public enum TemplateEnum
-    {
-        /// <summary>
-        /// Azure Core template for data-plane services
-        /// </summary>
-        AzureCore,
 
-        /// <summary>
-        /// Azure ARM template for resource-manager services
-        /// </summary>
-        AzureArm
-    }
 
     /// <summary>
     /// This tool provides functionality for initializing TypeSpec projects and converting existing Azure service swagger definitions to TypeSpec projects.
@@ -34,6 +20,21 @@ namespace Azure.Sdk.Tools.Cli.Tools
     [McpServerToolType, Description("Tools for initializing TypeSpec projects and converting existing Azure service swagger definitions to TypeSpec projects.")]
     public class TypeSpecTool(INpxHelper npxHelper, ILogger<TypeSpecTool> logger, IOutputService output) : MCPTool
     {
+        /// <summary>
+        /// Represents the available TypeSpec project templates
+        /// </summary>
+        private enum TemplateEnum
+        {
+            /// <summary>
+            /// Azure Core template for data-plane services
+            /// </summary>
+            AzureCore,
+
+            /// <summary>
+            /// Azure ARM template for resource-manager services
+            /// </summary>
+            AzureArm
+        }
 
         // This is the template registry URL used by the TypeSpec compiler's init command.
         private const string AzureTemplatesUrl = "https://aka.ms/typespec/azure-init";

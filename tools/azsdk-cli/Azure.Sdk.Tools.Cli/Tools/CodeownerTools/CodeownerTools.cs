@@ -105,7 +105,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                         pathValue ?? "",
                         serviceLabelValue ?? "",
                         serviceOwnersValue?.ToList() ?? new List<string>(),
-                        sourceOwnersValue.ToList() ?? new List<string>(),
+                        sourceOwnersValue?.ToList() ?? new List<string>(),
                         isAddingValue,
                         workingBranchValue ?? "");
                     output.Output(addResult);

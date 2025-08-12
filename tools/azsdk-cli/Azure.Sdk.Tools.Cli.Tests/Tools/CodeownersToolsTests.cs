@@ -11,9 +11,9 @@ using Azure.Sdk.Tools.CodeownersUtils.Parsing;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
-using CodeownerToolsType = Azure.Sdk.Tools.Cli.Tools.CodeownerTools;
+using CodeownersToolsType = Azure.Sdk.Tools.Cli.Tools.CodeownersTools;
 
-namespace Azure.Sdk.Tools.Cli.Tests.CodeownerToolsSuite
+namespace Azure.Sdk.Tools.Cli.Tests.CodeownersToolsSuite
 {
     // Minimal fake IReadOnlyList to satisfy Count > 0 for GetContentsAsync without constructing RepositoryContent
     internal sealed class FakeRepoContentList : IReadOnlyList<Octokit.RepositoryContent>
@@ -33,15 +33,15 @@ namespace Azure.Sdk.Tools.Cli.Tests.CodeownerToolsSuite
     }
 
     [TestFixture]
-    internal class CodeownerToolsTests
+    internal class CodeownersToolsTests
     {
         // Added fields initialized per-test in SetUp
-        private CodeownerToolsType sut = null!;
+        private CodeownersToolsType sut = null!;
         private Mock<IGitHubService> gh = null!;
         private Mock<IOutputService> output = null!;
         private Mock<ITypeSpecHelper> typespec = null!;
-        private ICodeOwnerHelper helper = null!;
-        private Mock<ICodeOwnerValidatorHelper> validator = null!;
+        private ICodeownersHelper helper = null!;
+        private Mock<ICodeownersValidatorHelper> validator = null!;
 
         [SetUp]
         public void SetUp()
@@ -49,23 +49,23 @@ namespace Azure.Sdk.Tools.Cli.Tests.CodeownerToolsSuite
             sut = CreateSut(out gh, out output, out typespec, out helper, out validator);
         }
 
-        private static CodeownerToolsType CreateSut(
+        private static CodeownersToolsType CreateSut(
             out Mock<IGitHubService> gh,
             out Mock<IOutputService> output,
             out Mock<ITypeSpecHelper> typespec,
-            out ICodeOwnerHelper helper,
-            out Mock<ICodeOwnerValidatorHelper> validator)
+            out ICodeownersHelper helper,
+            out Mock<ICodeownersValidatorHelper> validator)
         {
             gh = new Mock<IGitHubService>(MockBehavior.Strict);
             output = new Mock<IOutputService>(MockBehavior.Loose);
             typespec = new Mock<ITypeSpecHelper>(MockBehavior.Strict);
-            helper = new CodeOwnerHelper();
-            validator = new Mock<ICodeOwnerValidatorHelper>(MockBehavior.Strict);
+            helper = new CodeownersHelper();
+            validator = new Mock<ICodeownersValidatorHelper>(MockBehavior.Strict);
 
             // Default behaviors that are commonly used
             typespec.Setup(t => t.IsTypeSpecProjectForMgmtPlane(It.IsAny<string>())).Returns(false);
 
-            return new CodeownerToolsType(gh.Object, output.Object, typespec.Object, helper, validator.Object);
+            return new CodeownersToolsType(gh.Object, output.Object, typespec.Object, helper, validator.Object);
         }
 
         private static MethodInfo GetPrivateMethod(object sut, string name)
@@ -76,10 +76,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.CodeownerToolsSuite
 
         private static void ClearValidationCache()
         {
-            var toolsType = typeof(CodeownerToolsType);
-            var field = toolsType.GetField("codeOwnerValidationCache", BindingFlags.Static | BindingFlags.NonPublic);
+            var toolsType = typeof(CodeownersToolsType);
+            var field = toolsType.GetField("codeownersValidationCache", BindingFlags.Static | BindingFlags.NonPublic);
             Assert.That(field, Is.Not.Null, "Validation cache field not found");
-            field!.SetValue(null, new Dictionary<string, CodeOwnerValidationResult>());
+            field!.SetValue(null, new Dictionary<string, CodeownersValidationResult>());
         }
 
         private static List<Octokit.RepositoryContent> BuildLabelsContent(string csvPlainText)
@@ -137,7 +137,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.CodeownerToolsSuite
             var names = cmd.Subcommands.Select(c => c.Name).ToArray();
 
             Assert.That(names, Does.Contain("update-codeowners"));
-            Assert.That(names, Does.Contain("validate-codeowner-entry"));
+            Assert.That(names, Does.Contain("validate-codeowners-entry"));
         }
 
         [Test]
@@ -223,12 +223,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.CodeownerToolsSuite
 
         [TestCase("feature/codeowners-change", true)]
         [TestCase(null, false)]
-        public async Task CreateCodeownerPR_CreatesOrUsesBranch_AndCreatesDraftPR(string? workingBranch, bool existingBranch)
+        public async Task CreateCodeownersPR_CreatesOrUsesBranch_AndCreatesDraftPR(string? workingBranch, bool existingBranch)
         {
             var sut = this.sut;
 
             // Prepare private invoker
-            var method = GetPrivateMethod(sut, "CreateCodeownerPR");
+            var method = GetPrivateMethod(sut, "CreateCodeownersPR");
 
             // Set up GH interactions
             if (workingBranch != null)
@@ -308,7 +308,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.CodeownerToolsSuite
             // Validator: usernames starting with "ok" are valid, others invalid
             validator
                 .Setup(v => v.ValidateCodeOwnerAsync(It.IsAny<string>(), It.IsAny<bool>()))
-                .ReturnsAsync((string username, bool _) => new CodeOwnerValidationResult
+                .ReturnsAsync((string username, bool _) => new CodeownersValidationResult
                 {
                     Username = username,
                     IsValidCodeOwner = username.StartsWith("ok"),
@@ -327,7 +327,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.CodeownerToolsSuite
             };
 
             var method = GetPrivateMethod(sut, "ValidateMinimumOwnerRequirements");
-            var task = (Task<(string, List<CodeOwnerValidationResult>)>)method.Invoke(sut, new object?[] { entry })!;
+            var task = (Task<(string, List<CodeownersValidationResult>)>)method.Invoke(sut, new object?[] { entry })!;
             var (errors, results) = await task;
 
             if (string.IsNullOrEmpty(expectedErrorContains))
@@ -349,20 +349,20 @@ namespace Azure.Sdk.Tools.Cli.Tests.CodeownerToolsSuite
         {
             var sut = this.sut;
 
-            var missingRepo = await sut.ValidateCodeOwnerEntryForService("");
+            var missingRepo = await sut.ValidateCodeownersEntryForService("");
             Assert.That(missingRepo.Message, Does.StartWith("Error processing repository:"));
             Assert.That(missingRepo.Message, Does.Contain("Must provide a repository name"));
 
-            var missingBoth = await sut.ValidateCodeOwnerEntryForService("azure-sdk-for-net");
+            var missingBoth = await sut.ValidateCodeownersEntryForService("azure-sdk-for-net");
             Assert.That(missingBoth.Message, Does.StartWith("Error processing repository:"));
             Assert.That(missingBoth.Message, Does.Contain("Must provide a service label or a repository path."));
         }
 
         [Test]
-        public async Task CreateCodeownerPR_WorkingBranchProvidedButMissing_CreatesNewBranch()
+        public async Task CreateCodeownersPR_WorkingBranchProvidedButMissing_CreatesNewBranch()
         {
             var sut = this.sut;
-            var method = GetPrivateMethod(sut, "CreateCodeownerPR");
+            var method = GetPrivateMethod(sut, "CreateCodeownersPR");
 
             // workingBranch provided but not found
             gh.Setup(g => g.IsExistingBranchAsync(Constants.AZURE_OWNER_PATH, "azure-sdk-for-net", "feature/missing"))
@@ -407,7 +407,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.CodeownerToolsSuite
                 .ReturnsAsync((string username, bool _) =>
                 {
                     callCounts[username] = callCounts.TryGetValue(username, out var n) ? n + 1 : 1;
-                    return new CodeOwnerValidationResult
+                    return new CodeownersValidationResult
                     {
                         Username = username,
                         IsValidCodeOwner = true,
@@ -426,11 +426,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.CodeownerToolsSuite
             };
 
             var method = GetPrivateMethod(sut, "ValidateMinimumOwnerRequirements");
-            var t1 = (Task<(string, List<CodeOwnerValidationResult>)>)method.Invoke(sut, new object?[] { entry })!;
+            var t1 = (Task<(string, List<CodeownersValidationResult>)>)method.Invoke(sut, new object?[] { entry })!;
             _ = await t1;
 
             // Second invocation with same users should hit cache
-            var t2 = (Task<(string, List<CodeOwnerValidationResult>)>)method.Invoke(sut, new object?[] { entry })!;
+            var t2 = (Task<(string, List<CodeownersValidationResult>)>)method.Invoke(sut, new object?[] { entry })!;
             _ = await t2;
 
             Assert.That(callCounts.TryGetValue("ok1", out var c1) ? c1 : 0, Is.EqualTo(1), "ok1 should be validated only once due to cache");
@@ -438,13 +438,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.CodeownerToolsSuite
         }
 
         [Test]
-        public async Task ValidateCodeOwnerEntryForService_ParserError_IsSurfaced()
+        public async Task ValidateCodeownersEntryForService_ParserError_IsSurfaced()
         {
             var sut = this.sut;
             // Make every owner valid to ensure any later validation would pass if reached
             validator
                 .Setup(v => v.ValidateCodeOwnerAsync(It.IsAny<string>(), It.IsAny<bool>()))
-                .ReturnsAsync((string username, bool _) => new CodeOwnerValidationResult
+                .ReturnsAsync((string username, bool _) => new CodeownersValidationResult
                 {
                     Username = username,
                     IsValidCodeOwner = true,
@@ -452,7 +452,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.CodeownerToolsSuite
                 });
 
             // Use a definitely non-existent repo to force parser failure
-            var result = await sut.ValidateCodeOwnerEntryForService("not-a-real-repo-xyz-123", serviceLabel: "Any", repoPath: null);
+            var result = await sut.ValidateCodeownersEntryForService("not-a-real-repo-xyz-123", serviceLabel: "Any", repoPath: null);
 
             Assert.That(result.Message, Does.Contain("Error finding service in CODEOWNERS file."));
         }
@@ -465,7 +465,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.CodeownerToolsSuite
             // All owners considered valid by the validator; this isolates validation aggregation in the method
             validator
                 .Setup(v => v.ValidateCodeOwnerAsync(It.IsAny<string>(), It.IsAny<bool>()))
-                .ReturnsAsync((string username, bool _) => new CodeOwnerValidationResult
+                .ReturnsAsync((string username, bool _) => new CodeownersValidationResult
                 {
                     Username = username,
                     IsValidCodeOwner = true,
@@ -473,7 +473,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.CodeownerToolsSuite
                 });
 
             // Choose a common repo path that exists in azure-sdk-for-net
-            var result = await sut.ValidateCodeOwnerEntryForService(
+            var result = await sut.ValidateCodeownersEntryForService(
                 repoName: "azure-sdk-for-net",
                 serviceLabel: null,
                 repoPath: "sdk/storage/");
@@ -510,7 +510,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.CodeownerToolsSuite
 
             // Owners valid
             validator.Setup(v => v.ValidateCodeOwnerAsync(It.IsAny<string>(), It.IsAny<bool>()))
-                     .ReturnsAsync((string username, bool _) => new CodeOwnerValidationResult
+                     .ReturnsAsync((string username, bool _) => new CodeownersValidationResult
                      {
                          Username = username,
                          IsValidCodeOwner = true,
@@ -569,7 +569,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.CodeownerToolsSuite
 
             // Validator: ok* valid
             validator.Setup(v => v.ValidateCodeOwnerAsync(It.IsAny<string>(), It.IsAny<bool>()))
-                     .ReturnsAsync((string username, bool _) => new CodeOwnerValidationResult
+                     .ReturnsAsync((string username, bool _) => new CodeownersValidationResult
                      {
                          Username = username,
                          IsValidCodeOwner = username.StartsWith("ok"),
@@ -625,7 +625,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.CodeownerToolsSuite
               .ReturnsAsync(labelsContent.FirstOrDefault()!);
 
             validator.Setup(v => v.ValidateCodeOwnerAsync(It.IsAny<string>(), It.IsAny<bool>()))
-                     .ReturnsAsync(new CodeOwnerValidationResult { Username = "ok", IsValidCodeOwner = true, HasWritePermission = true });
+                     .ReturnsAsync(new CodeownersValidationResult { Username = "ok", IsValidCodeOwner = true, HasWritePermission = true });
 
             gh.Setup(g => g.IsExistingBranchAsync(Constants.AZURE_OWNER_PATH, repoName, It.IsAny<string>())).ReturnsAsync(false);
             gh.Setup(g => g.CreateBranchAsync(Constants.AZURE_OWNER_PATH, repoName, It.IsAny<string>(), "main")).ReturnsAsync(CreateBranchStatus.Created);
@@ -682,7 +682,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.CodeownerToolsSuite
 
             // Owners valid
             validator.Setup(v => v.ValidateCodeOwnerAsync(It.IsAny<string>(), It.IsAny<bool>()))
-                     .ReturnsAsync(new CodeOwnerValidationResult { Username = "ok", IsValidCodeOwner = true, HasWritePermission = true });
+                     .ReturnsAsync(new CodeownersValidationResult { Username = "ok", IsValidCodeOwner = true, HasWritePermission = true });
 
             // Branch/PR flow proceeds
             gh.Setup(g => g.IsExistingBranchAsync(Constants.AZURE_OWNER_PATH, repoName, It.IsAny<string>())).ReturnsAsync(false);

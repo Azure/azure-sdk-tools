@@ -18,14 +18,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
 {
     [Description("Tool that validates and manipulates codeowners files.")]
     [McpServerToolType]
-    public class CodeownerTools(
+    public class CodeownersTools(
         IGitHubService githubService,
         IOutputService output,
         ITypeSpecHelper typespecHelper,
-        ICodeOwnerHelper codeownerHelper,
-        ICodeOwnerValidatorHelper codeOwnerValidator) : MCPTool
+        ICodeownersHelper codeownersHelper,
+        ICodeownersValidatorHelper codeownersValidator) : MCPTool
     {
-        private static Dictionary<string, CodeOwnerValidationResult> codeOwnerValidationCache = new Dictionary<string, CodeOwnerValidationResult>();
+        private static Dictionary<string, CodeownersValidationResult> codeownersValidationCache = new Dictionary<string, CodeownersValidationResult>();
         private static readonly string standardServiceCategory = "# Client Libraries";
         private static readonly string standardManagementCategory = "# Management Libraries";
 
@@ -35,7 +35,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
         // Command names
         private const string updateCodeownersCommandName = "update-codeowners";
-        private const string validateCodeOwnerEntryCommandName = "validate-codeowner-entry";
+        private const string validateCodeownersEntryCommandName = "validate-codeowners-entry";
 
         // Core command options
         private readonly Option<string> repoOption = new(["--repo", "-r"], "The repository name") { IsRequired = true };
@@ -50,7 +50,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
         public override Command GetCommand()
         {
-            var command = new Command("codeowner-tools", "A tool to validate and modify codeowners.");
+            var command = new Command("codeowners-tools", "A tool to validate and modify codeowners.");
             var subCommands = new[]
             {
                 new Command(updateCodeownersCommandName, "Update codeowners in a repository")
@@ -64,7 +64,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     isAddingOption,
                     workingBranchOption
                 },
-                new Command(validateCodeOwnerEntryCommandName, "Validate code owners for an existing service entry")
+                new Command(validateCodeownersEntryCommandName, "Validate codeowners for an existing service entry")
                 {
                     repoOption,
                     serviceLabelOption,
@@ -108,12 +108,12 @@ namespace Azure.Sdk.Tools.Cli.Tools
                         workingBranchValue ?? "");
                     output.Output(addResult);
                     return;
-                case validateCodeOwnerEntryCommandName:
+                case validateCodeownersEntryCommandName:
                     var validateRepo = commandParser.GetValueForOption(repoOption);
                     var validateServiceLabel = commandParser.GetValueForOption(serviceLabelOption);
                     var validateRepoPath = commandParser.GetValueForOption(pathOptionOptional);
 
-                    var validateResult = await ValidateCodeOwnerEntryForService(
+                    var validateResult = await ValidateCodeownersEntryForService(
                         validateRepo ?? "",
                         validateServiceLabel,
                         validateRepoPath);
@@ -148,7 +148,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 var isMgmtPlane = typespecHelper.IsTypeSpecProjectForMgmtPlane(typeSpecProjectRoot);
 
                 // Normalize service path
-                path = codeownerHelper.NormalizePath(path);
+                path = codeownersHelper.NormalizePath(path);
 
                 // Get labels file contents.
                 var labelsFileContent = await githubService.GetContentsSingleAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, Constants.AZURE_COMMON_LABELS_PATH);
@@ -209,26 +209,26 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 var (startLine, endLine) = (-1, -1);
                 if (isMgmtPlane)
                 {
-                    (startLine, endLine) = codeownerHelper.findBlock(codeownersContent, standardManagementCategory);
+                    (startLine, endLine) = codeownersHelper.findBlock(codeownersContent, standardManagementCategory);
                 }
                 else
                 {
-                    (startLine, endLine) = codeownerHelper.findBlock(codeownersContent, standardServiceCategory);
+                    (startLine, endLine) = codeownersHelper.findBlock(codeownersContent, standardServiceCategory);
                 }
 
                 var codeownersEntries = CodeownersParser.ParseCodeownersFile(codeownersUrl, azureWriteTeamsBlobUrl, startLine, endLine);
                 for (int i = 0; i < codeownersEntries.Count; i++)
                 {
-                    (codeownersEntries, i) = codeownerHelper.mergeCodeownerEntries(codeownersEntries, i);
+                    (codeownersEntries, i) = codeownersHelper.mergeCodeownerEntries(codeownersEntries, i);
                 }
 
                 CodeownersEntry? updatedEntry = null;
                 if (!string.IsNullOrEmpty(path))
                 {
-                    var comparablePath = codeownerHelper.ExtractDirectoryName(path);
+                    var comparablePath = codeownersHelper.ExtractDirectoryName(path);
                     // get the first entry that matches if no one get null. Then compare the path of the entry with the given path 
                     updatedEntry = codeownersEntries.FirstOrDefault(entry =>
-                        codeownerHelper.ExtractDirectoryName(entry.PathExpression).Equals(comparablePath, StringComparison.OrdinalIgnoreCase) == true);
+                        codeownersHelper.ExtractDirectoryName(entry.PathExpression).Equals(comparablePath, StringComparison.OrdinalIgnoreCase) == true);
                 }
                 else if (!string.IsNullOrEmpty(serviceLabel))
                 {
@@ -246,13 +246,13 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     // Update target entry with new codeowners
                     if (isAdding)
                     {
-                        updatedEntry.ServiceOwners = codeownerHelper.AddUniqueOwners(updatedEntry.ServiceOwners, serviceOwners);
-                        updatedEntry.SourceOwners = codeownerHelper.AddUniqueOwners(updatedEntry.SourceOwners, sourceOwners);
+                        updatedEntry.ServiceOwners = codeownersHelper.AddUniqueOwners(updatedEntry.ServiceOwners, serviceOwners);
+                        updatedEntry.SourceOwners = codeownersHelper.AddUniqueOwners(updatedEntry.SourceOwners, sourceOwners);
                     }
                     else
                     {
-                        updatedEntry.ServiceOwners = codeownerHelper.RemoveOwners(updatedEntry.ServiceOwners, serviceOwners);
-                        updatedEntry.SourceOwners = codeownerHelper.RemoveOwners(updatedEntry.SourceOwners, sourceOwners);
+                        updatedEntry.ServiceOwners = codeownersHelper.RemoveOwners(updatedEntry.ServiceOwners, serviceOwners);
+                        updatedEntry.SourceOwners = codeownersHelper.RemoveOwners(updatedEntry.SourceOwners, sourceOwners);
                     }
                 }
                 else if (updatedEntry == null)
@@ -274,16 +274,16 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
                 // Validate the modified/created Entry
-                var (validationErrors, codeownerValidationResults) = await ValidateMinimumOwnerRequirements(updatedEntry);
-                var codeownerValidationResultMessage = string.Join("; ", codeownerValidationResults.Select(r => $"{r.Username}: {(r.IsValidCodeOwner ? "Valid" : "Invalid")}"));
+                var (validationErrors, codeownersValidationResults) = await ValidateMinimumOwnerRequirements(updatedEntry);
+                var codeownersValidationResultMessage = string.Join("; ", codeownersValidationResults.Select(r => $"{r.Username}: {(r.IsValidCodeOwner ? "Valid" : "Invalid")}"));
                 if (validationErrors.Any())
                 {
-                    throw new Exception($"{validationErrors} Validation results: {codeownerValidationResultMessage}");
+                    throw new Exception($"{validationErrors} Validation results: {codeownersValidationResultMessage}");
                 }
 
                 // Modify the file
-                var updatedEntryWithLines = codeownerHelper.findAlphabeticalInsertionPoint(codeownersEntries, updatedEntry);
-                var modifiedCodeownersContent = codeownerHelper.addCodeownersEntryAtIndex(codeownersContent, updatedEntry, updatedEntryWithLines.startLine, codeownersEntryExists);
+                var updatedEntryWithLines = codeownersHelper.findAlphabeticalInsertionPoint(codeownersEntries, updatedEntry);
+                var modifiedCodeownersContent = codeownersHelper.addCodeownersEntryAtIndex(codeownersContent, updatedEntry, updatedEntryWithLines.startLine, codeownersEntryExists);
 
                 // Create Branch, Update File, and Handle PR.
                 var actionDescription = isAdding ? "Add codeowner aliases for" : "Remove codeowner aliases for";
@@ -298,7 +298,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 var identifier = !string.IsNullOrWhiteSpace(updatedEntry.ServiceLabels?.FirstOrDefault())
                     ? updatedEntry.ServiceLabels.FirstOrDefault()
                     : updatedEntry.PathExpression;
-                var resultMessages = await CreateCodeownerPR(
+                var resultMessages = await CreateCodeownersPR(
                     repo,                                                             // Repository name
                     string.Join('\n', modifiedCodeownersContent),                     // Modified content
                     codeownersSha,                                                    // SHA of the file to update 
@@ -307,7 +307,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     identifier, // Identifier for the PR
                     workingBranch);
 
-                return string.Join("\n", resultMessages.Concat(new[] { codeownerValidationResultMessage }));
+                return string.Join("\n", resultMessages.Concat(new[] { codeownersValidationResultMessage }));
             }
             catch (Exception ex)
             {
@@ -315,7 +315,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        private async Task<List<string>> CreateCodeownerPR(
+        private async Task<List<string>> CreateCodeownersPR(
             string repo,
             string modifiedContent,
             string sha,
@@ -336,7 +336,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             else
             {
                 // Create a new branch only if no working branch exists
-                branchName = codeownerHelper.CreateBranchName(branchPrefix, identifier);
+                branchName = codeownersHelper.CreateBranchName(branchPrefix, identifier);
                 var createBranchResult = await githubService.CreateBranchAsync(Constants.AZURE_OWNER_PATH, repo, branchName, "main");
                 resultMessages.Add($"Created branch: {branchName} - Status: {createBranchResult}");
             }
@@ -348,7 +348,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             // Use codeownersSha in UpdateFileAsync
             await githubService.UpdateFileAsync(Constants.AZURE_OWNER_PATH, repo, Constants.AZURE_CODEOWNERS_PATH, description, modifiedContent, codeownersSha, branchName);
 
-            var prInfoList = await githubService.CreatePullRequestAsync(repo, Constants.AZURE_OWNER_PATH, "main", branchName, "[CODEOWNERS] " + description, description);
+            var prInfoList = await githubService.CreatePullRequestAsync(repo, Constants.AZURE_OWNER_PATH, "main", branchName, "[CODEOWNERS] " + description, description, true);
             if (prInfoList != null)
             {
                 resultMessages.Add($"URL: {prInfoList.Url}");
@@ -362,10 +362,10 @@ namespace Azure.Sdk.Tools.Cli.Tools
             return resultMessages;
         }
 
-        [McpServerTool(Name = "ValidateCodeOwnerEntryForService"), Description("Validates code owners in a specific repository for a given service or repo path.")]
-        public async Task<ServiceCodeOwnerResult> ValidateCodeOwnerEntryForService(string repoName, string? serviceLabel = null, string? repoPath = null)
+        [McpServerTool(Name = "ValidateCodeownersEntryForService"), Description("Validates codeowners in a specific repository for a given service or repo path.")]
+        public async Task<ServiceCodeownersResult> ValidateCodeownersEntryForService(string repoName, string? serviceLabel = null, string? repoPath = null)
         {
-            ServiceCodeOwnerResult response = new() { };
+            ServiceCodeownersResult response = new() { };
 
             try
             {
@@ -386,7 +386,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 {
                     var codeownersUrl = $"{githubRawContentBaseUrl}/{Constants.AZURE_OWNER_PATH}/{repoName}/main/{Constants.AZURE_CODEOWNERS_PATH}";
                     var codeownersEntries = CodeownersParser.ParseCodeownersFile(codeownersUrl, azureWriteTeamsBlobUrl);
-                    matchingEntries = codeownerHelper.FindMatchingEntries(codeownersEntries, serviceLabel, repoPath);
+                    matchingEntries = codeownersHelper.FindMatchingEntries(codeownersEntries, serviceLabel, repoPath);
                 }
                 catch (Exception ex)
                 {
@@ -398,12 +398,12 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 if (matchingEntries != null && matchingEntries.Count > 0)
                 {
                     string? validationErrors = null;
-                    List<CodeOwnerValidationResult>? codeownerValidationResults = null;
+                    List<CodeownersValidationResult>? codeownersValidationResults = null;
                     foreach (var matchingEntry in matchingEntries)
                     {
                         var validationResponse = await ValidateMinimumOwnerRequirements(matchingEntry);
                         validationErrors += validationResponse.validationErrors;
-                        codeownerValidationResults?.AddRange(validationResponse.codeownerValidationResults);
+                        codeownersValidationResults?.AddRange(validationResponse.codeownersValidationResults);
                     }
 
                     if (!string.IsNullOrEmpty(validationErrors))
@@ -414,7 +414,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     {
                         response.Message = "Validation passed: minimum code owner requirements are met.";
                     }
-                    response.CodeOwners = codeownerValidationResults ?? new List<CodeOwnerValidationResult>() { };
+                    response.CodeOwners = codeownersValidationResults ?? new List<CodeownersValidationResult>() { };
                     return response;
                 }
                 else
@@ -430,27 +430,27 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        private async Task<List<CodeOwnerValidationResult>> ValidateOwners(IEnumerable<string> owners)
+        private async Task<List<CodeownersValidationResult>> ValidateOwners(IEnumerable<string> owners)
         {
-            var validatedOwners = new List<CodeOwnerValidationResult>();
+            var validatedOwners = new List<CodeownersValidationResult>();
 
             foreach (var owner in owners)
             {
                 var username = owner.TrimStart('@');
-                if (codeOwnerValidationCache.TryGetValue(username, out var cachedResult))
+                if (codeownersValidationCache.TryGetValue(username, out var cachedResult))
                 {
                     validatedOwners.Add(cachedResult);
                 }
                 else
                 {
-                    var result = await codeOwnerValidator.ValidateCodeOwnerAsync(username, verbose: false);
+                    var result = await codeownersValidator.ValidateCodeOwnerAsync(username, verbose: false);
 
                     if (string.IsNullOrEmpty(result.Username))
                     {
                         result.Username = username;
                     }
 
-                    codeOwnerValidationCache[username] = result;
+                    codeownersValidationCache[username] = result;
                     validatedOwners.Add(result);
                 }
             }
@@ -458,7 +458,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             return validatedOwners;
         }
 
-        private async Task<(string validationErrors, List<CodeOwnerValidationResult> codeownerValidationResults)> ValidateMinimumOwnerRequirements(CodeownersEntry codeownersEntry)
+        private async Task<(string validationErrors, List<CodeownersValidationResult> codeownersValidationResults)> ValidateMinimumOwnerRequirements(CodeownersEntry codeownersEntry)
         {
             var validatedServiceOwners = await ValidateOwners(codeownersEntry.ServiceOwners);
             var validatedSourceOwners = await ValidateOwners(codeownersEntry.SourceOwners);
@@ -478,7 +478,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 validationErrors.Add("There must be at least two valid source owners.");
             }
 
-            var allValidationResults = new List<CodeOwnerValidationResult>();
+            var allValidationResults = new List<CodeownersValidationResult>();
             allValidationResults.AddRange(validatedServiceOwners);
             allValidationResults.AddRange(validatedSourceOwners);
             allValidationResults.AddRange(validatedAzureSdkOwners);

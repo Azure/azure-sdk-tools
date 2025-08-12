@@ -4,7 +4,7 @@ using Azure.Sdk.Tools.CodeownersUtils.Parsing;
 
 namespace Azure.Sdk.Tools.Cli.Helpers
 {
-    public interface ICodeOwnerHelper
+    public interface ICodeownersHelper
     {
         List<CodeownersEntry> FindMatchingEntries(IList<CodeownersEntry> entries, string serviceName = null, string repoPath = null);
         public string NormalizePath(string path);
@@ -22,7 +22,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         List<string> ReplaceEntryInLines(string lines, CodeownersEntry targetEntry);
     }
 
-    public class CodeOwnerHelper : ICodeOwnerHelper
+    public class CodeownersHelper : ICodeownersHelper
     {
         public List<CodeownersEntry> FindMatchingEntries(IList<CodeownersEntry> entries, string serviceName = null, string repoPath = null)
         {

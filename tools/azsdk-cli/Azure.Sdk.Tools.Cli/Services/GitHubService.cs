@@ -15,7 +15,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
     public class PullRequestResult
     {
-        public string Url { get; set; }
+        public string Url { get; set; } = string.Empty;
         public List<string> Messages { get; set; } = new List<string>();
     }
 

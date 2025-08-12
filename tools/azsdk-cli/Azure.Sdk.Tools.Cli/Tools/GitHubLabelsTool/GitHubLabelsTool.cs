@@ -102,28 +102,20 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
         private async Task<LabelHelper.ServiceLabelStatus> getServiceLabelInfo(string serviceLabel)
         {
-            try
+            var csvContents = await githubService.GetContentsSingleAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, Constants.AZURE_COMMON_LABELS_PATH);
+
+            var result = LabelHelper.CheckServiceLabel(csvContents.Content, serviceLabel);
+            if (result == LabelHelper.ServiceLabelStatus.Exists)
             {
-                var csvContent = await githubService.GetContentsSingleAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, Constants.AZURE_COMMON_LABELS_PATH);
-
-                var result = LabelHelper.CheckServiceLabel(csvContent.Content, serviceLabel);
-                if (result == LabelHelper.ServiceLabelStatus.Exists)
-                {
-                    return result;
-                }
-
-                var pullRequests = await githubService.SearchPullRequestsByTitleAsync("Azure", "azure-sdk-tools", "Service Label");
-                if (LabelHelper.CheckServiceLabelInReview(pullRequests, serviceLabel))
-                {
-                    return LabelHelper.ServiceLabelStatus.InReview;
-                }
                 return result;
             }
-            catch (Exception ex)
+
+            var pullRequests = await githubService.SearchPullRequestsByTitleAsync("Azure", "azure-sdk-tools", "Service Label");
+            if (LabelHelper.CheckServiceLabelInReview(pullRequests, serviceLabel))
             {
-                logger.LogError(ex, "Error occurred while checking service label: {serviceLabel}", serviceLabel);
-                throw;
+                return LabelHelper.ServiceLabelStatus.InReview;
             }
+            return result;
         }
 
         [McpServerTool(Name = "CreateServiceLabel"), Description("Creates a pull request to add a new service label")]

@@ -39,20 +39,20 @@ public class LanguageRepoServiceFactory : ILanguageRepoServiceFactory
     public ILanguageRepoService CreateService(string packagePath, IProcessHelper processHelper, IGitHelper gitHelper, ILogger logger)
     {
         // Use the existing logic but with provided dependencies
-        return CreateServiceInternal(packagePath, processHelper, gitHelper, logger);
+        return GetServiceInternal(packagePath, processHelper, gitHelper, logger);
     }
 
     /// <summary>
-    /// Creates the appropriate language repository service based on the detected language.
+    /// Gets the appropriate language repository service based on the detected language.
     /// </summary>
     /// <param name="packagePath">Absolute path to the package directory</param>
     /// <returns>Language-specific repository service</returns>
     public ILanguageRepoService CreateService(string packagePath)
     {
-        return CreateServiceInternal(packagePath, _processHelper, _gitHelper, _logger);
+        return GetServiceInternal(packagePath, _processHelper, _gitHelper, _logger);
     }
 
-    private ILanguageRepoService CreateServiceInternal(string packagePath, IProcessHelper processHelper, IGitHelper gitHelper, ILogger logger)
+    private ILanguageRepoService GetServiceInternal(string packagePath, IProcessHelper processHelper, IGitHelper gitHelper, ILogger logger)
     {
         logger.LogInformation($"Create service for package at: {packagePath}");
         if (string.IsNullOrWhiteSpace(packagePath))

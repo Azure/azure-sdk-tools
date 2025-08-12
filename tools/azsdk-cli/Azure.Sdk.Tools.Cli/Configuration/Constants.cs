@@ -1,3 +1,5 @@
+using System.IO;
+
 namespace Azure.Sdk.Tools.Cli.Configuration;
 
 public static class Constants
@@ -10,7 +12,6 @@ public static class Constants
     public const string AZURE_SDK_DEVOPS_INTERNAL_PROJECT = "internal";
     public const string AZURE_SDK_DEVOPS_RELEASE_PROJECT = "release";
 
-    // Path constants for SDK repository structure
-    public const string ENG_COMMON_PATH = "eng/common";
-    public const string ENG_COMMON_SCRIPTS_PATH = "eng/common/scripts";
+    public static readonly string ENG_COMMON_PATH = Path.Join("eng", "common");
+    public static readonly string ENG_COMMON_SCRIPTS_PATH = Path.Join("eng", "common", "scripts");
 }

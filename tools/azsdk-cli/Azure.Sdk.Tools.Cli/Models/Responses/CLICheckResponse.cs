@@ -50,18 +50,3 @@ public class CookbookCLICheckResponse : CLICheckResponse
     }
 }
 
-/// <summary>
-/// CLI check response for successful operations.
-/// </summary>
-public class SuccessCLICheckResponse : CLICheckResponse
-{
-    public SuccessCLICheckResponse(int exitCode, string output) : base(exitCode, output)
-    {
-    }
-
-    public override string ToString()
-    {
-        return ToString(Output);
-    }
-}
-

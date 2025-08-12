@@ -71,7 +71,7 @@ public class LanguageRepoService : ILanguageRepoService
     protected static CLICheckResponse CreateResponseFromProcessResult(ProcessResult result)
     {
         return result.ExitCode == 0
-            ? new SuccessCLICheckResponse(result.ExitCode, result.Output)
+            ? new CLICheckResponse(result.ExitCode, result.Output)
             : new CLICheckResponse(result.ExitCode, result.Output, "Process failed");
     }
 
@@ -146,7 +146,7 @@ public class LanguageRepoService : ILanguageRepoService
 
             if (processResult.ExitCode == 0)
             {
-                return new SuccessCLICheckResponse(0, System.Text.Json.JsonSerializer.Serialize(new
+                return new CLICheckResponse(0, System.Text.Json.JsonSerializer.Serialize(new
                 {
                     Message = "Changelog validation completed successfully",
                     Duration = (int)stopwatch.ElapsedMilliseconds,

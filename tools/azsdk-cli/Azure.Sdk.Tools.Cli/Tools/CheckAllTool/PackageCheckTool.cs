@@ -88,6 +88,10 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
                 // Create language service
                 var languageService = languageRepoServiceFactory.CreateService(packagePath);
+                if (languageService == null)
+                {
+                    return new CLICheckResponse(1, "", $"Unable to determine language for package at: {packagePath}");
+                }
                 logger.LogInformation($"Created language service: {languageService.GetType().Name}");
 
                 return normalizedCheckName switch
@@ -138,7 +142,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             var combinedOutput = string.Join("\n", results.Select(r => r.Output));
             
             return overallSuccess 
-                ? new SuccessCLICheckResponse(0, combinedOutput) 
+                ? new CLICheckResponse(0, combinedOutput) 
                 : new CLICheckResponse(1, combinedOutput, message);
         }
 

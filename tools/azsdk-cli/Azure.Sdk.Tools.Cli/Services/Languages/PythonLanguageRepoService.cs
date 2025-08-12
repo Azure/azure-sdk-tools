@@ -52,7 +52,7 @@ public class PythonLanguageRepoService : LanguageRepoService
             if (result.ExitCode == 0)
             {
                 _logger.LogInformation("Dependency analysis completed successfully with exit code 0");
-                return new SuccessCLICheckResponse(result.ExitCode, result.Output);
+                return new CLICheckResponse(result.ExitCode, result.Output);
             }
             else
             {

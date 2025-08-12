@@ -131,7 +131,7 @@ public class GitConnection
 
         public async Task<PullRequest?> GetPullRequestForBranchAsync(string repoOwner, string repoName, string remoteBranch)
         {
-            logger.LogInformation("Searching for pull request in repository {repoOwner}/{repoName} for branch {remoteBranch}");
+            logger.LogInformation($"Searching for pull request in repository {repoOwner}/{repoName} for branch {remoteBranch}");
             var pullRequests = await gitHubClient.PullRequest.GetAllForRepository(repoOwner, repoName);
             return pullRequests?.FirstOrDefault(pr => pr.Head?.Label != null && pr.Head.Label.Equals(remoteBranch, StringComparison.InvariantCultureIgnoreCase));
         }
@@ -140,7 +140,7 @@ public class GitConnection
         {
             logger.LogInformation("Comparing the head branch against target branch");
             var comparison = await gitHubClient.Repository.Commit.Compare(targetRepoOwner, repoName, baseBranch, headBranch);
-            logger.LogInformation("Comparison: {comparison.Status}");
+            logger.LogInformation($"Comparison: {comparison.Status}");
             return comparison?.MergeBaseCommit != null;
         }
 
@@ -318,7 +318,7 @@ public class GitConnection
             }
             catch (NotFoundException)
             {
-                logger.LogInformation("Path {path} not found in {owner}/{repoName}");
+                logger.LogInformation($"Path {path} not found in {owner}/{repoName}");
                 return null;
             }
             catch (Exception ex)

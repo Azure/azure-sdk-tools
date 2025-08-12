@@ -70,7 +70,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             if(findForkParent) {
                 // Check if the repo is a fork and get the parent repo
                 var parentRepoUrl = await gitHubService.GetGitHubParentRepoUrlAsync(repoOwner, repoName);
-                logger.LogDebug("Parent repo URL: {parentRepoUrl}");
+                logger.LogDebug($"Parent repo URL: {parentRepoUrl}");
                 if (!string.IsNullOrEmpty(parentRepoUrl))
                 {
                     var parentSegments = new Uri(parentRepoUrl).Segments;

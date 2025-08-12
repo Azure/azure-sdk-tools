@@ -111,7 +111,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
         public async Task<ReleasePlan> GetReleasePlanForWorkItemAsync(int workItemId)
         {
-            logger.LogInformation("Fetching release plan work with id {workItemId}");
+            logger.LogInformation($"Fetching release plan work with id {workItemId}");
             var workItem = await connection.GetWorkItemClient().GetWorkItemAsync(workItemId, expand: WorkItemExpand.All);
             if (workItem?.Id == null)
             {

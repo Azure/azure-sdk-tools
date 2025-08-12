@@ -12,6 +12,22 @@ using Azure.Sdk.Tools.Cli.Helpers;
 namespace Azure.Sdk.Tools.Cli.Tools
 {
     /// <summary>
+    /// Represents the available TypeSpec project templates
+    /// </summary>
+    public enum TemplateEnum
+    {
+        /// <summary>
+        /// Azure Core template for data-plane services
+        /// </summary>
+        AzureCore,
+
+        /// <summary>
+        /// Azure ARM template for resource-manager services
+        /// </summary>
+        AzureArm
+    }
+
+    /// <summary>
     /// This tool provides functionality for initializing TypeSpec projects and converting existing Azure service swagger definitions to TypeSpec projects.
     /// Use this tool to onboard to TypeSpec for new services or convert existing services.
     /// </summary>
@@ -26,11 +42,24 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private const string ConvertSwaggerCommandName = "convert-swagger";
         private const string InitCommandName = "init";
 
+        /// <summary>
+        /// Converts a TemplateEnum value to its corresponding string representation
+        /// </summary>
+        private static string TemplateEnumToString(TemplateEnum template)
+        {
+            return template switch
+            {
+                TemplateEnum.AzureCore => "azure-core",
+                TemplateEnum.AzureArm => "azure-arm",
+                _ => throw new ArgumentOutOfRangeException(nameof(template), template, "Invalid template enum value")
+            };
+        }
+
         // Shared command options
         private readonly Option<string> outputDirectoryArg = new("--output-directory", "The output directory for the generated TypeSpec project. This directory must already exist and be empty.") { IsRequired = true };
 
         // Init command options
-        private readonly Option<string> templateArg = new("--template", "The template to use for the TypeSpec project. Valid values are: azure-core (for data-plane services), azure-arm (for resource-manager services)") { IsRequired = true };
+        private readonly Option<TemplateEnum> templateArg = new("--template", "The template to use for the TypeSpec project. Use AzureArm for resource management services, or AzureCore for data plane services.") { IsRequired = true };
         private readonly Option<string> serviceNamespaceArg = new("--service-namespace", "The namespace of the service you are creating. This should be in Pascal case and represent the service's namespace.") { IsRequired = true };
 
         // ConvertSwagger command options
@@ -103,7 +132,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             var template = ctx.ParseResult.GetValueForOption(templateArg);
             var serviceNamespace = ctx.ParseResult.GetValueForOption(serviceNamespaceArg);
 
-            TspToolResponse result = await InitTypeSpecProject(outputDirectory: outputDirectory, template: template, serviceNamespace: serviceNamespace, ct);
+            TspToolResponse result = await InitTypeSpecProject(outputDirectory: outputDirectory, template: TemplateEnumToString(template), serviceNamespace: serviceNamespace, ct);
             ctx.ExitCode = ExitCode;
             output.Output(result);
         }

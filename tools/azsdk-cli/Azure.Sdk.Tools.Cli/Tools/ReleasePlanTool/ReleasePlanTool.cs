@@ -51,7 +51,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private static partial Regex NameSpaceIssueUrlRegex();
 
 
-        [McpServerTool, Description("Get release plan for API spec pull request. This tool should be used only if work item Id is unknown.")]
+        [McpServerTool(Name = "azsdk_get_release_plan_for_spec_pr"), Description("Get release plan for API spec pull request. This tool should be used only if work item Id is unknown.")]
         public async Task<string> GetReleasePlanForPullRequest(string pullRequestLink)
         {
             try
@@ -126,7 +126,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        [McpServerTool, Description("Get Release Plan: Get release plan work item details for a given work item id or release plan Id.")]
+        [McpServerTool(Name = "azsdk_get_release_plan"), Description("Get Release Plan: Get release plan work item details for a given work item id or release plan Id.")]
         public async Task<string> GetReleasePlan(int workItem = 0, int releasePlanId = 0)
         {
             try
@@ -196,7 +196,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        [McpServerTool, Description("Create Release Plan work item.")]
+        [McpServerTool(Name = "azsdk_create_release_plan"), Description("Create Release Plan work item.")]
         public async Task<string> CreateReleasePlan(string typeSpecProjectPath, string targetReleaseMonthYear, string serviceTreeId, string productTreeId, string specApiVersion, string specPullRequestUrl, string sdkReleaseType, string userEmail = "", bool isTestReleasePlan = false)
         {
             try
@@ -263,7 +263,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        [McpServerTool, Description("Update the SDK details in the release plan work item. This tool is called to update SDK language and package name in the release plan work item." +
+        [McpServerTool(Name = "azsdk_update_sdk_details_in_release_plan"), Description("Update the SDK details in the release plan work item. This tool is called to update SDK language and package name in the release plan work item." +
             " sdkDetails parameter is a JSON of list of SDKInfo and each SDKInfo contains Language and PackageName as properties.")]
         public async Task<string> UpdateSDKDetailsInReleasePlan(int releasePlanWorkItemId, string sdkDetails)
         {
@@ -316,7 +316,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        [McpServerTool, Description("Link package namespace approval issue to release plan(required only for management plan). This requires GitHub issue URL for the namespace approval request and release plan work item id.")]
+        [McpServerTool(Name = "azsdk_link_namespace_approval_issue"), Description("Link package namespace approval issue to release plan(required only for management plan). This requires GitHub issue URL for the namespace approval request and release plan work item id.")]
         public async Task<string> LinkNamespaceApprovalIssue(int releasePlanWorkItemId, string namespaceApprovalIssue)
         {
             try

@@ -133,7 +133,7 @@ public class ExampleTool : MCPTool
         output.Output(result);
     }
 
-    [McpServerTool(Name = "example_azure_service"), Description("Demonstrates Azure service integration")]
+    [McpServerTool(Name = "azsdk_example_azure_service"), Description("Demonstrates Azure service integration")]
     public async Task<ExampleServiceResponse> DemonstrateAzureService(string? tenantId = null, CancellationToken ct = default)
     {
         try
@@ -169,7 +169,7 @@ public class ExampleTool : MCPTool
         }
     }
 
-    [McpServerTool(Name = "example_devops_service"), Description("Demonstrates DevOps service integration")]
+    [McpServerTool(Name = "azsdk_example_devops_service"), Description("Demonstrates DevOps service integration")]
     public async Task<ExampleServiceResponse> DemonstrateDevOpsService(string packageName, string language, CancellationToken ct = default)
     {
         try
@@ -201,7 +201,7 @@ public class ExampleTool : MCPTool
         }
     }
 
-    [McpServerTool(Name = "example_github_service"), Description("Demonstrates GitHub service integration")]
+    [McpServerTool(Name = "azsdk_example_github_service"), Description("Demonstrates GitHub service integration")]
     public async Task<ExampleServiceResponse> DemonstrateGitHubService(CancellationToken ct = default)
     {
         try
@@ -235,7 +235,7 @@ public class ExampleTool : MCPTool
         }
     }
 
-    [McpServerTool(Name = "example_ai_service"), Description("Demonstrates AI service integration using Azure OpenAI")]
+    [McpServerTool(Name = "azsdk_example_ai_service"), Description("Demonstrates AI service integration using Azure OpenAI")]
     public async Task<ExampleServiceResponse> DemonstrateAIService(string userPrompt, CancellationToken ct = default)
     {
         var model = "gpt-4o";
@@ -277,7 +277,7 @@ public class ExampleTool : MCPTool
         }
     }
 
-    [McpServerTool(Name = "example_error_handling"), Description("Demonstrates error handling patterns in tools")]
+    [McpServerTool(Name = "azsdk_example_error_handling"), Description("Demonstrates error handling patterns in tools")]
     public async Task<DefaultCommandResponse> DemonstrateErrorHandling(string scenario, bool forceFailure = false, CancellationToken ct = default)
     {
         try

@@ -98,7 +98,7 @@ export async function compileTsp({
   additionalEmitterOptions?: string;
   saveInputs?: boolean;
   trace?: string[];
-}): Promise<{ success: boolean; emitterOutputDir?: string; exampleCmd: string }> {
+}): Promise<{ success: boolean; exampleCmd: string }> {
   const parsedEntrypoint = getDirectoryPath(resolvedMainFilePath);
   const { compile, NodeHost, resolveCompilerOptions, formatDiagnostic } =
     await importTsp(parsedEntrypoint);

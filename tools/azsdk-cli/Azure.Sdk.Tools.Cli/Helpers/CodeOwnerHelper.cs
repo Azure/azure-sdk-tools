@@ -93,7 +93,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 {
                     int insertionLine = codeownersEntries[i].startLine;
                     codeownersEntry.startLine = insertionLine;
-                    codeownersEntry.endLine = insertionLine; // Set endLine same as startLine for new entries
+                    codeownersEntry.endLine = insertionLine;
                     return codeownersEntry;
                 }
 
@@ -104,15 +104,16 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             if (codeownersEntries.Count > 0)
             {
                 var lastEntry = codeownersEntries[codeownersEntries.Count - 1];
-                int insertionLine = lastEntry.endLine + 1;
+                // Add 1 to move past the last entry, plus 1 more for spacing between entries
+                int insertionLine = lastEntry.endLine + 2;
                 codeownersEntry.startLine = insertionLine;
-                codeownersEntry.endLine = insertionLine; // Set endLine same as startLine for new entries
+                codeownersEntry.endLine = insertionLine;
                 return codeownersEntry;
             }
 
             // If the list is empty, start at line 1
             codeownersEntry.startLine = 1;
-            codeownersEntry.endLine = 1; // Set endLine same as startLine for new entries
+            codeownersEntry.endLine = 1;
             return codeownersEntry;
         }
 
@@ -158,26 +159,34 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 return string.Join('\n', ReplaceEntryInLines(codeownersContent, codeownersEntry));
             }
 
+            var formattedEntry = formatCodeownersEntry(codeownersEntry);
+
             if (index >= 0 && index <= lines.Count)
             {
-                var formattedEntry = formatCodeownersEntry(codeownersEntry);
-                
-                // If inserting between entries (not at the end), add spacing after the new entry
-                bool isInsertingBetweenEntries = index < lines.Count && 
-                                               index > 0 && 
-                                               !string.IsNullOrWhiteSpace(lines[index].Trim());
+                // Ensure we have proper spacing before inserting
+                if (index > 0 && index < lines.Count && !string.IsNullOrWhiteSpace(lines[index - 1]))
+                {
+                    // Insert a blank line before the new entry if the previous line isn't blank
+                    lines.Insert(index, "");
+                    index++; // Adjust index since we inserted a blank line
+                }
                 
                 lines.Insert(index, formattedEntry);
                 
-                // Add blank line after the new entry if inserting between entries
-                if (isInsertingBetweenEntries)
+                // Ensure we have proper spacing after inserting
+                if (index + 1 < lines.Count && !string.IsNullOrWhiteSpace(lines[index + 1]))
                 {
-                    //lines.Insert(index + 1, "");
+                    lines.Insert(index + 1, "");
                 }
             }
             else
             {
-                lines.Add(formatCodeownersEntry(codeownersEntry));
+                // If adding at the end, ensure proper spacing
+                if (lines.Count > 0 && !string.IsNullOrWhiteSpace(lines[lines.Count - 1]))
+                {
+                    lines.Add("");
+                }
+                lines.Add(formattedEntry);
             }
 
             return string.Join('\n', lines);
@@ -206,7 +215,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             }
             
             // Add PRLabel if serviceLabel is provided (for backward compatibility)
-            else if (!string.IsNullOrEmpty(serviceLabel))
+            else if (!string.IsNullOrEmpty(serviceLabel) && !string.IsNullOrEmpty(path))
             {
                 addSeperationLine = true;
                 lines.Add($"# PRLabel: %{serviceLabel}");
@@ -215,10 +224,6 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             // Add the path and source owners line
             if (!string.IsNullOrEmpty(path) && sourceOwners != null && sourceOwners.Count > 0)
             {
-                if (!addSeperationLine)
-                {
-                    lines.Add("");  // Add empty string, not "\n"
-                }
                 addSeperationLine = true;
                 var formattedSourceOwners = sourceOwners.Select(owner => owner.StartsWith("@") ? owner : $"@{owner}");
                 var pathLine = $"{path}".PadRight(67) + $"{string.Join(" ", formattedSourceOwners)}";
@@ -249,9 +254,6 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 var serviceOwnersString = string.Join(" ", serviceOwners.Select(owner => owner.StartsWith("@") ? owner : $"@{owner}"));
                 lines.Add($"# ServiceOwners: {serviceOwnersString}");
             }
-            
-            // Add a blank line at the end to separate entries
-            lines.Add("");
             
             var formattedCodeownersEntry = string.Join("\n", lines);
             return formattedCodeownersEntry;

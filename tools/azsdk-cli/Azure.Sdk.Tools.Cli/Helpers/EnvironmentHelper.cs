@@ -59,7 +59,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                         logger.LogDebug("Cached environment variable: {VariableName} = {Value}", variableName, value);
                     }
                 }
-                logger.LogInformation("Cached {Count} AZSDKTOOLS_ environment variables", cachedVariables.Count);
+                logger.LogDebug("Cached {Count} AZSDKTOOLS_ environment variables", cachedVariables.Count);
             }
             catch (Exception ex)
             {

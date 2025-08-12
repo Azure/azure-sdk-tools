@@ -68,6 +68,7 @@ export function tryCreateLastestStableNpmViewFromGithub(NpmViewParameters: NpmVi
     } = NpmViewParameters;
     let sdkFilePath = "";
     const targetFilePath = file === "CHANGELOG.md" ? path.join(npmPackagePath, file) : getApiReviewPath(npmPackagePath);
+    logger.info(`targetFilePath: ${targetFilePath}`);
     const tag = `${packageName}_${version}`;
     const defaultContent = "```ts\n```";
     logger.info(`Start to get and clone ${npmPackagePath} from latest ${packageName} release tag.`);
@@ -87,6 +88,7 @@ export function tryCreateLastestStableNpmViewFromGithub(NpmViewParameters: NpmVi
         if (file === "CHANGELOG.md") {
             sdkFilePath = relative(sdkRootPath, path.join(packageFolderPath, file)).replace(/\\/g, "/");
             // For CHANGELOG.md, use sdkFilePath directly
+            logger.info(`Start to get ${file} from ${sdkFilePath} at tag ${tag}.`);
             const gitCommand = `git --no-pager show ${tag}:${sdkFilePath}`;
             const changelogContent = shell.exec(gitCommand, { silent: true }).stdout;
             if (!changelogContent.trim()) {

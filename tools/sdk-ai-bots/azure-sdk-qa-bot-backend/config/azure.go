@@ -31,6 +31,7 @@ const (
 	STORAGE_BASE_URL               = "https://typespechelper4storage.blob.core.windows.net"
 	STORAGE_KNOWLEDGE_CONTAINER    = "knowledge"
 	STORAGE_FEEDBACK_CONTAINER     = "feedback-v2"
+	STORAGE_RECORDS_CONTAINER      = "records"
 )
 
 func InitOpenAIClient() {

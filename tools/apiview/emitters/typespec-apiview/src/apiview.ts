@@ -268,9 +268,14 @@ export class ApiView {
   }
 
   private indent() {
-    // enure no trailing space at the end of the line
-    const lastToken = this.currentLine.Tokens[this.currentLine.Tokens.length - 1];
-    lastToken.HasSuffixSpace = false;
+    // ensure no trailing space at the end of the line
+    try {
+      const lastToken = this.currentLine.Tokens[this.currentLine.Tokens.length - 1];
+      lastToken.HasSuffixSpace = false;
+    } catch (e) {
+      // no tokens, so nothing to do
+      return;
+    }
 
     if (this.currentParent) {
       this.currentParent.Children.push(this.currentLine);
@@ -289,7 +294,7 @@ export class ApiView {
 
   private deindent() {
     if (!this.currentParent) {
-      throw new Error("Cannot deindent without an indent.");
+      return;
     }
     // Ensure that the last line before the deindent has no blank lines
     const lastChild = this.currentParent.Children.pop();

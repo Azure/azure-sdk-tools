@@ -1,7 +1,5 @@
-using System.Threading.Tasks;
 using APIViewWeb.Helpers;
 using APIViewWeb.Managers;
-using APIViewWeb.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;

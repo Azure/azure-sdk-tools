@@ -1,0 +1,939 @@
+pub mod azure_storage_blob {
+	pub use crate::clients::BlobClient 
+	pub use crate::clients::BlobContainerClient 
+	pub use crate::clients::BlobServiceClient 
+	pub use crate::generated::clients::BlobClientOptions 
+	pub use crate::generated::clients::BlobContainerClientOptions 
+	pub use crate::generated::clients::BlobServiceClientOptions 
+	pub use crate::generated::models::BlobClientDeleteOptions 
+	pub use crate::generated::models::BlobClientDownloadOptions 
+	pub use crate::generated::models::BlobClientGetPropertiesOptions 
+	pub use crate::generated::models::BlobClientSetMetadataOptions 
+	pub use crate::generated::models::BlobClientSetPropertiesOptions 
+	pub use crate::generated::models::BlobClientSetTierOptions 
+	pub use crate::generated::models::BlobContainerClientCreateOptions 
+	pub use crate::generated::models::BlobContainerClientDeleteOptions 
+	pub use crate::generated::models::BlobContainerClientGetPropertiesOptions 
+	pub use crate::generated::models::BlobContainerClientSetMetadataOptions 
+	pub use crate::generated::models::BlobServiceClientGetPropertiesOptions 
+	pub use crate::generated::models::BlockBlobClientCommitBlockListOptions 
+	pub use crate::generated::models::BlockBlobClientGetBlockListOptions 
+	pub use crate::generated::models::BlockBlobClientStageBlockOptions 
+	pub use crate::generated::models::BlockBlobClientUploadOptions 
+} 
+pub mod azure_storage_blob::clients {
+	pub use blob_client::BlobClient 
+	pub use blob_container_client::BlobContainerClient 
+	pub use blob_service_client::BlobServiceClient 
+} 
+pub mod azure_storage_blob::models {
+	pub use crate::generated::models::AccessTier 
+	pub use crate::generated::models::ArchiveStatus 
+	pub use crate::generated::models::BlobClientDownloadResult 
+	pub use crate::generated::models::BlobClientDownloadResultHeaders 
+	pub use crate::generated::models::BlobClientGetPropertiesResult 
+	pub use crate::generated::models::BlobClientGetPropertiesResultHeaders 
+	pub use crate::generated::models::BlobContainerClientGetPropertiesResult 
+	pub use crate::generated::models::BlobContainerClientGetPropertiesResultHeaders 
+	pub use crate::generated::models::BlobImmutabilityPolicyMode 
+	pub use crate::generated::models::BlobType 
+	pub use crate::generated::models::BlockBlobClientCommitBlockListResult 
+	pub use crate::generated::models::BlockBlobClientStageBlockResult 
+	pub use crate::generated::models::BlockBlobClientUploadResult 
+	pub use crate::generated::models::BlockList 
+	pub use crate::generated::models::BlockListType 
+	pub use crate::generated::models::BlockLookupList 
+	pub use crate::generated::models::CopyStatus 
+	pub use crate::generated::models::LeaseState 
+	pub use crate::generated::models::LeaseStatus 
+	pub use crate::generated::models::PublicAccessType 
+	pub use crate::generated::models::RehydratePriority 
+	pub use crate::generated::models::StorageServiceProperties 
+} 
+/* Internal module re-exports */ 
+pub mod crate::clients {
+	pub struct BlobClient {} 
+	impl BlobClient { 
+		pub fn new(endpoint: &str, container_name: String, blob_name: String, credential: Arc<(dyn TokenCredential)>, options: Option<BlobClientOptions>) -> Result<Self> {}
+		pub fn endpoint(&self) -> &Url {}
+		pub fn container_name(&self) -> &str {}
+		pub fn blob_name(&self) -> &str {}
+		pub async fn get_properties(&self, options: Option<BlobClientGetPropertiesOptions>) -> Result<Response<BlobClientGetPropertiesResult>> {}
+		pub async fn set_properties(&self, options: Option<BlobClientSetPropertiesOptions>) -> Result<Response<()>> {}
+		pub async fn download(&self, options: Option<BlobClientDownloadOptions>) -> Result<Response<BlobClientDownloadResult>> {}
+		pub async fn upload(&self, data: RequestContent<Bytes>, overwrite: bool, content_length: u64, options: Option<BlockBlobClientUploadOptions>) -> Result<Response<BlockBlobClientUploadResult>> {}
+		pub async fn set_metadata(&self, options: Option<BlobClientSetMetadataOptions>) -> Result<Response<()>> {}
+		pub async fn delete(&self, options: Option<BlobClientDeleteOptions>) -> Result<Response<()>> {}
+		pub async fn commit_block_list(&self, blocks: RequestContent<BlockLookupList>, options: Option<BlockBlobClientCommitBlockListOptions>) -> Result<Response<BlockBlobClientCommitBlockListResult>> {}
+		pub async fn stage_block(&self, block_id: Vec<u8>, content_length: u64, body: RequestContent<Bytes>, options: Option<BlockBlobClientStageBlockOptions>) -> Result<Response<BlockBlobClientStageBlockResult>> {}
+		pub async fn get_block_list(&self, list_type: BlockListType, options: Option<BlockBlobClientGetBlockListOptions>) -> Result<Response<BlockList>> {}
+		pub async fn set_tier(&self, tier: AccessTier, options: Option<BlobClientSetTierOptions>) -> Result<Response<()>> {}
+	} 
+} 
+pub mod crate::clients {
+	pub struct BlobContainerClient {} 
+	impl BlobContainerClient { 
+		pub fn new(endpoint: &str, container_name: String, credential: Arc<(dyn TokenCredential)>, options: Option<BlobContainerClientOptions>) -> Result<Self> {}
+		pub fn blob_client(&self, blob_name: String, options: Option<BlobClientOptions>) -> Result<BlobClient> {}
+		pub fn endpoint(&self) -> &Url {}
+		pub fn container_name(&self) -> &str {}
+		pub async fn create_container(&self, options: Option<BlobContainerClientCreateOptions>) -> Result<Response<()>> {}
+		pub async fn set_metadata(&self, options: Option<BlobContainerClientSetMetadataOptions>) -> Result<Response<()>> {}
+		pub async fn delete_container(&self, options: Option<BlobContainerClientDeleteOptions>) -> Result<Response<()>> {}
+		pub async fn get_properties(&self, options: Option<BlobContainerClientGetPropertiesOptions>) -> Result<Response<BlobContainerClientGetPropertiesResult>> {}
+	} 
+} 
+pub mod crate::clients {
+	pub struct BlobServiceClient {} 
+	impl BlobServiceClient { 
+		pub fn new(endpoint: &str, credential: Arc<(dyn TokenCredential)>, options: Option<BlobServiceClientOptions>) -> Result<Self> {}
+		pub fn blob_container_client(&self, container_name: String, options: Option<BlobContainerClientOptions>) -> Result<BlobContainerClient> {}
+		pub fn endpoint(&self) -> &Url {}
+		pub async fn get_properties(&self, options: Option<BlobServiceClientGetPropertiesOptions>) -> Result<Response<StorageServiceProperties>> {}
+	} 
+} 
+pub mod crate::generated::clients {
+	#[derive(Clone, Debug)] 
+
+	pub struct BlobClientOptions {
+		pub client_options: azure_core::http::ClientOptions
+		pub version: String
+	} 
+	impl Default for BlobClientOptions { 
+		pub fn default() -> Self {}
+	} 
+} 
+pub mod crate::generated::clients {
+	#[derive(Clone, Debug)] 
+
+	pub struct BlobContainerClientOptions {
+		pub client_options: azure_core::http::ClientOptions
+		pub version: String
+	} 
+	impl Default for BlobContainerClientOptions { 
+		pub fn default() -> Self {}
+	} 
+} 
+pub mod crate::generated::clients {
+	#[derive(Clone, Debug)] 
+
+	pub struct BlobServiceClientOptions {
+		pub client_options: azure_core::http::ClientOptions
+		pub version: String
+	} 
+	impl Default for BlobServiceClientOptions { 
+		pub fn default() -> Self {}
+	} 
+} 
+pub mod crate::generated::models {
+	#[derive(Clone, Default, Debug)] 
+
+	pub struct BlobClientDeleteOptions <'a>{
+		pub blob_delete_type: Option<super::BlobDeleteType>
+		pub client_request_id: Option<String>
+		pub delete_snapshots: Option<super::DeleteSnapshotsOptionType>
+		pub if_match: Option<String>
+		pub if_modified_since: Option<time::OffsetDateTime>
+		pub if_none_match: Option<String>
+		pub if_tags: Option<String>
+		pub if_unmodified_since: Option<time::OffsetDateTime>
+		pub lease_id: Option<String>
+		pub method_options: azure_core::http::ClientMethodOptions
+		pub snapshot: Option<String>
+		pub timeout: Option<i32>
+		pub version_id: Option<String>
+	} 
+} 
+pub mod crate::generated::models {
+	#[derive(Clone, Default, Debug)] 
+
+	pub struct BlobClientDownloadOptions <'a>{
+		pub client_request_id: Option<String>
+		pub encryption_algorithm: Option<super::EncryptionAlgorithmType>
+		pub encryption_key: Option<String>
+		pub encryption_key_sha256: Option<String>
+		pub if_match: Option<String>
+		pub if_modified_since: Option<time::OffsetDateTime>
+		pub if_none_match: Option<String>
+		pub if_tags: Option<String>
+		pub if_unmodified_since: Option<time::OffsetDateTime>
+		pub lease_id: Option<String>
+		pub method_options: azure_core::http::ClientMethodOptions
+		pub range: Option<String>
+		pub range_get_content_crc64: Option<bool>
+		pub range_get_content_md5: Option<bool>
+		pub snapshot: Option<String>
+		pub timeout: Option<i32>
+		pub version_id: Option<String>
+	} 
+} 
+pub mod crate::generated::models {
+	#[derive(Clone, Default, Debug)] 
+
+	pub struct BlobClientGetPropertiesOptions <'a>{
+		pub client_request_id: Option<String>
+		pub encryption_algorithm: Option<super::EncryptionAlgorithmType>
+		pub encryption_key: Option<String>
+		pub encryption_key_sha256: Option<String>
+		pub if_match: Option<String>
+		pub if_modified_since: Option<time::OffsetDateTime>
+		pub if_none_match: Option<String>
+		pub if_tags: Option<String>
+		pub if_unmodified_since: Option<time::OffsetDateTime>
+		pub lease_id: Option<String>
+		pub method_options: azure_core::http::ClientMethodOptions
+		pub snapshot: Option<String>
+		pub timeout: Option<i32>
+		pub version_id: Option<String>
+	} 
+} 
+pub mod crate::generated::models {
+	#[derive(Clone, Default, Debug)] 
+
+	pub struct BlobClientSetMetadataOptions <'a>{
+		pub client_request_id: Option<String>
+		pub encryption_algorithm: Option<super::EncryptionAlgorithmType>
+		pub encryption_key: Option<String>
+		pub encryption_key_sha256: Option<String>
+		pub encryption_scope: Option<String>
+		pub if_match: Option<String>
+		pub if_modified_since: Option<time::OffsetDateTime>
+		pub if_none_match: Option<String>
+		pub if_tags: Option<String>
+		pub if_unmodified_since: Option<time::OffsetDateTime>
+		pub lease_id: Option<String>
+		pub metadata: Option<std::collections::HashMap<String, String>>
+		pub method_options: azure_core::http::ClientMethodOptions
+		pub timeout: Option<i32>
+	} 
+} 
+pub mod crate::generated::models {
+	#[derive(Clone, Default, Debug)] 
+
+	pub struct BlobClientSetPropertiesOptions <'a>{
+		pub blob_cache_control: Option<String>
+		pub blob_content_disposition: Option<String>
+		pub blob_content_encoding: Option<String>
+		pub blob_content_language: Option<String>
+		pub blob_content_md5: Option<Vec<u8>>
+		pub blob_content_type: Option<String>
+		pub client_request_id: Option<String>
+		pub if_match: Option<String>
+		pub if_modified_since: Option<time::OffsetDateTime>
+		pub if_none_match: Option<String>
+		pub if_tags: Option<String>
+		pub if_unmodified_since: Option<time::OffsetDateTime>
+		pub lease_id: Option<String>
+		pub method_options: azure_core::http::ClientMethodOptions
+		pub timeout: Option<i32>
+	} 
+} 
+pub mod crate::generated::models {
+	#[derive(Clone, Default, Debug)] 
+
+	pub struct BlobClientSetTierOptions <'a>{
+		pub client_request_id: Option<String>
+		pub if_tags: Option<String>
+		pub lease_id: Option<String>
+		pub method_options: azure_core::http::ClientMethodOptions
+		pub rehydrate_priority: Option<super::RehydratePriority>
+		pub snapshot: Option<String>
+		pub timeout: Option<i32>
+		pub version_id: Option<String>
+	} 
+} 
+pub mod crate::generated::models {
+	#[derive(Clone, Default, Debug)] 
+
+	pub struct BlobContainerClientCreateOptions <'a>{
+		pub access: Option<super::PublicAccessType>
+		pub client_request_id: Option<String>
+		pub default_encryption_scope: Option<String>
+		pub metadata: Option<std::collections::HashMap<String, String>>
+		pub method_options: azure_core::http::ClientMethodOptions
+		pub prevent_encryption_scope_override: Option<bool>
+		pub timeout: Option<i32>
+	} 
+} 
+pub mod crate::generated::models {
+	#[derive(Clone, Default, Debug)] 
+
+	pub struct BlobContainerClientDeleteOptions <'a>{
+		pub client_request_id: Option<String>
+		pub if_modified_since: Option<time::OffsetDateTime>
+		pub if_unmodified_since: Option<time::OffsetDateTime>
+		pub lease_id: Option<String>
+		pub method_options: azure_core::http::ClientMethodOptions
+		pub timeout: Option<i32>
+	} 
+} 
+pub mod crate::generated::models {
+	#[derive(Clone, Default, Debug)] 
+
+	pub struct BlobContainerClientGetPropertiesOptions <'a>{
+		pub client_request_id: Option<String>
+		pub lease_id: Option<String>
+		pub method_options: azure_core::http::ClientMethodOptions
+		pub timeout: Option<i32>
+	} 
+} 
+pub mod crate::generated::models {
+	#[derive(Clone, Default, Debug)] 
+
+	pub struct BlobContainerClientSetMetadataOptions <'a>{
+		pub client_request_id: Option<String>
+		pub if_modified_since: Option<time::OffsetDateTime>
+		pub lease_id: Option<String>
+		pub metadata: Option<std::collections::HashMap<String, String>>
+		pub method_options: azure_core::http::ClientMethodOptions
+		pub timeout: Option<i32>
+	} 
+} 
+pub mod crate::generated::models {
+	#[derive(Clone, Default, Debug)] 
+
+	pub struct BlobServiceClientGetPropertiesOptions <'a>{
+		pub client_request_id: Option<String>
+		pub method_options: azure_core::http::ClientMethodOptions
+		pub timeout: Option<i32>
+	} 
+} 
+pub mod crate::generated::models {
+	#[derive(Clone, Default, Debug)] 
+
+	pub struct BlockBlobClientCommitBlockListOptions <'a>{
+		pub blob_cache_control: Option<String>
+		pub blob_content_disposition: Option<String>
+		pub blob_content_encoding: Option<String>
+		pub blob_content_language: Option<String>
+		pub blob_content_md5: Option<Vec<u8>>
+		pub blob_content_type: Option<String>
+		pub blob_tags_string: Option<String>
+		pub client_request_id: Option<String>
+		pub encryption_algorithm: Option<super::EncryptionAlgorithmType>
+		pub encryption_key: Option<String>
+		pub encryption_key_sha256: Option<String>
+		pub encryption_scope: Option<String>
+		pub if_match: Option<String>
+		pub if_modified_since: Option<time::OffsetDateTime>
+		pub if_none_match: Option<String>
+		pub if_tags: Option<String>
+		pub if_unmodified_since: Option<time::OffsetDateTime>
+		pub immutability_policy_expiry: Option<time::OffsetDateTime>
+		pub immutability_policy_mode: Option<super::BlobImmutabilityPolicyMode>
+		pub lease_id: Option<String>
+		pub legal_hold: Option<bool>
+		pub metadata: Option<std::collections::HashMap<String, String>>
+		pub method_options: azure_core::http::ClientMethodOptions
+		pub tier: Option<super::AccessTier>
+		pub timeout: Option<i32>
+		pub transactional_content_crc64: Option<String>
+		pub transactional_content_md5: Option<String>
+	} 
+} 
+pub mod crate::generated::models {
+	#[derive(Clone, Default, Debug)] 
+
+	pub struct BlockBlobClientGetBlockListOptions <'a>{
+		pub client_request_id: Option<String>
+		pub if_tags: Option<String>
+		pub lease_id: Option<String>
+		pub method_options: azure_core::http::ClientMethodOptions
+		pub snapshot: Option<String>
+		pub timeout: Option<i32>
+	} 
+} 
+pub mod crate::generated::models {
+	#[derive(Clone, Default, Debug)] 
+
+	pub struct BlockBlobClientStageBlockOptions <'a>{
+		pub client_request_id: Option<String>
+		pub encryption_algorithm: Option<super::EncryptionAlgorithmType>
+		pub encryption_key: Option<String>
+		pub encryption_key_sha256: Option<String>
+		pub encryption_scope: Option<String>
+		pub lease_id: Option<String>
+		pub method_options: azure_core::http::ClientMethodOptions
+		pub timeout: Option<i32>
+		pub transactional_content_crc64: Option<String>
+		pub transactional_content_md5: Option<String>
+	} 
+} 
+pub mod crate::generated::models {
+	#[derive(Clone, Default, Debug)] 
+
+	pub struct BlockBlobClientUploadOptions <'a>{
+		pub blob_cache_control: Option<String>
+		pub blob_content_disposition: Option<String>
+		pub blob_content_encoding: Option<String>
+		pub blob_content_language: Option<String>
+		pub blob_content_md5: Option<Vec<u8>>
+		pub blob_content_type: Option<String>
+		pub blob_tags_string: Option<String>
+		pub client_request_id: Option<String>
+		pub encryption_algorithm: Option<super::EncryptionAlgorithmType>
+		pub encryption_key: Option<String>
+		pub encryption_key_sha256: Option<String>
+		pub encryption_scope: Option<String>
+		pub if_match: Option<String>
+		pub if_modified_since: Option<time::OffsetDateTime>
+		pub if_none_match: Option<String>
+		pub if_tags: Option<String>
+		pub if_unmodified_since: Option<time::OffsetDateTime>
+		pub immutability_policy_expiry: Option<time::OffsetDateTime>
+		pub immutability_policy_mode: Option<super::BlobImmutabilityPolicyMode>
+		pub lease_id: Option<String>
+		pub legal_hold: Option<bool>
+		pub metadata: Option<std::collections::HashMap<String, String>>
+		pub method_options: azure_core::http::ClientMethodOptions
+		pub tier: Option<super::AccessTier>
+		pub timeout: Option<i32>
+		pub transactional_content_crc64: Option<String>
+		pub transactional_content_md5: Option<String>
+	} 
+} 
+pub mod blob_client {
+	pub struct BlobClient {} 
+	impl BlobClient { 
+		pub fn new(endpoint: &str, container_name: String, blob_name: String, credential: Arc<(dyn TokenCredential)>, options: Option<BlobClientOptions>) -> Result<Self> {}
+		pub fn endpoint(&self) -> &Url {}
+		pub fn container_name(&self) -> &str {}
+		pub fn blob_name(&self) -> &str {}
+		pub async fn get_properties(&self, options: Option<BlobClientGetPropertiesOptions>) -> Result<Response<BlobClientGetPropertiesResult>> {}
+		pub async fn set_properties(&self, options: Option<BlobClientSetPropertiesOptions>) -> Result<Response<()>> {}
+		pub async fn download(&self, options: Option<BlobClientDownloadOptions>) -> Result<Response<BlobClientDownloadResult>> {}
+		pub async fn upload(&self, data: RequestContent<Bytes>, overwrite: bool, content_length: u64, options: Option<BlockBlobClientUploadOptions>) -> Result<Response<BlockBlobClientUploadResult>> {}
+		pub async fn set_metadata(&self, options: Option<BlobClientSetMetadataOptions>) -> Result<Response<()>> {}
+		pub async fn delete(&self, options: Option<BlobClientDeleteOptions>) -> Result<Response<()>> {}
+		pub async fn commit_block_list(&self, blocks: RequestContent<BlockLookupList>, options: Option<BlockBlobClientCommitBlockListOptions>) -> Result<Response<BlockBlobClientCommitBlockListResult>> {}
+		pub async fn stage_block(&self, block_id: Vec<u8>, content_length: u64, body: RequestContent<Bytes>, options: Option<BlockBlobClientStageBlockOptions>) -> Result<Response<BlockBlobClientStageBlockResult>> {}
+		pub async fn get_block_list(&self, list_type: BlockListType, options: Option<BlockBlobClientGetBlockListOptions>) -> Result<Response<BlockList>> {}
+		pub async fn set_tier(&self, tier: AccessTier, options: Option<BlobClientSetTierOptions>) -> Result<Response<()>> {}
+	} 
+} 
+pub mod blob_container_client {
+	pub struct BlobContainerClient {} 
+	impl BlobContainerClient { 
+		pub fn new(endpoint: &str, container_name: String, credential: Arc<(dyn TokenCredential)>, options: Option<BlobContainerClientOptions>) -> Result<Self> {}
+		pub fn blob_client(&self, blob_name: String, options: Option<BlobClientOptions>) -> Result<BlobClient> {}
+		pub fn endpoint(&self) -> &Url {}
+		pub fn container_name(&self) -> &str {}
+		pub async fn create_container(&self, options: Option<BlobContainerClientCreateOptions>) -> Result<Response<()>> {}
+		pub async fn set_metadata(&self, options: Option<BlobContainerClientSetMetadataOptions>) -> Result<Response<()>> {}
+		pub async fn delete_container(&self, options: Option<BlobContainerClientDeleteOptions>) -> Result<Response<()>> {}
+		pub async fn get_properties(&self, options: Option<BlobContainerClientGetPropertiesOptions>) -> Result<Response<BlobContainerClientGetPropertiesResult>> {}
+	} 
+} 
+pub mod blob_service_client {
+	pub struct BlobServiceClient {} 
+	impl BlobServiceClient { 
+		pub fn new(endpoint: &str, credential: Arc<(dyn TokenCredential)>, options: Option<BlobServiceClientOptions>) -> Result<Self> {}
+		pub fn blob_container_client(&self, container_name: String, options: Option<BlobContainerClientOptions>) -> Result<BlobContainerClient> {}
+		pub fn endpoint(&self) -> &Url {}
+		pub async fn get_properties(&self, options: Option<BlobServiceClientGetPropertiesOptions>) -> Result<Response<StorageServiceProperties>> {}
+	} 
+} 
+pub mod crate::generated::models {
+	#[derive(Debug, StructuralPartialEq, PartialEq, Eq, Clone)] 
+
+	pub enum AccessTier { 
+		Archive,
+		Cold,
+		Cool,
+		Hot,
+		P10,
+		P15,
+		P20,
+		P30,
+		P4,
+		P40,
+		P50,
+		P6,
+		P60,
+		P70,
+		P80,
+		Premium,
+		UnknownValue,
+	} 
+	impl<'a> From<&'a AccessTier> for &'a str { 
+		pub fn from(e: &'a AccessTier) -> Self {}
+	} 
+	impl FromStr for AccessTier { 
+		type Err = Infallible; 
+		pub fn from_str(s: &str) -> ::core::result::Result<Self, Self::std::str::FromStr::Err> {}
+	} 
+	impl AsRef<str> for AccessTier { 
+		pub fn as_ref(&self) -> &str {}
+	} 
+	impl Display for AccessTier { 
+		pub fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {}
+	} 
+	impl<'de> Deserialize for AccessTier { 
+		pub fn deserialize<D>(deserializer: D) -> ::core::result::Result<Self, D::Error> where D: serde::Deserializer {}
+		pub fn deserialize_in_place; // provided trait method
+	} 
+	impl Serialize for AccessTier { 
+		pub fn serialize<S>(&self, s: S) -> ::core::result::Result<S::Ok, S::Error> where S: serde::Serializer {}
+	} 
+} 
+pub mod crate::generated::models {
+	#[derive(Debug, StructuralPartialEq, PartialEq, Eq, Clone)] 
+
+	pub enum ArchiveStatus { 
+		RehydratePendingToCold,
+		RehydratePendingToCool,
+		RehydratePendingToHot,
+		UnknownValue,
+	} 
+	impl<'a> From<&'a ArchiveStatus> for &'a str { 
+		pub fn from(e: &'a ArchiveStatus) -> Self {}
+	} 
+	impl FromStr for ArchiveStatus { 
+		type Err = Infallible; 
+		pub fn from_str(s: &str) -> ::core::result::Result<Self, Self::std::str::FromStr::Err> {}
+	} 
+	impl AsRef<str> for ArchiveStatus { 
+		pub fn as_ref(&self) -> &str {}
+	} 
+	impl Display for ArchiveStatus { 
+		pub fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {}
+	} 
+	impl<'de> Deserialize for ArchiveStatus { 
+		pub fn deserialize<D>(deserializer: D) -> ::core::result::Result<Self, D::Error> where D: serde::Deserializer {}
+		pub fn deserialize_in_place; // provided trait method
+	} 
+	impl Serialize for ArchiveStatus { 
+		pub fn serialize<S>(&self, s: S) -> ::core::result::Result<S::Ok, S::Error> where S: serde::Serializer {}
+	} 
+} 
+pub mod crate::generated::models {
+	#[derive(Debug)] 
+
+	pub struct BlobClientDownloadResult {} 
+} 
+pub mod crate::generated::models {
+	pub trait BlobClientDownloadResultHeaders: private::Sealed { 
+		pub fn accept_ranges(&self) -> Result<Option<String>>;
+		pub fn cache_control(&self) -> Result<Option<String>>;
+		pub fn content_disposition(&self) -> Result<Option<String>>;
+		pub fn content_encoding(&self) -> Result<Option<String>>;
+		pub fn content_language(&self) -> Result<Option<String>>;
+		pub fn content_length(&self) -> Result<Option<u64>>;
+		pub fn content_md5(&self) -> Result<Option<String>>;
+		pub fn content_range(&self) -> Result<Option<String>>;
+		pub fn last_modified(&self) -> Result<Option<OffsetDateTime>>;
+		pub fn etag(&self) -> Result<Option<String>>;
+		pub fn blob_committed_block_count(&self) -> Result<Option<i32>>;
+		pub fn blob_content_md5(&self) -> Result<Option<Vec<u8>>>;
+		pub fn is_sealed(&self) -> Result<Option<bool>>;
+		pub fn blob_sequence_number(&self) -> Result<Option<i64>>;
+		pub fn blob_type(&self) -> Result<Option<BlobType>>;
+		pub fn content_crc64(&self) -> Result<Option<String>>;
+		pub fn copy_completion_time(&self) -> Result<Option<OffsetDateTime>>;
+		pub fn copy_id(&self) -> Result<Option<String>>;
+		pub fn copy_progress(&self) -> Result<Option<String>>;
+		pub fn copy_source(&self) -> Result<Option<String>>;
+		pub fn copy_status(&self) -> Result<Option<CopyStatus>>;
+		pub fn copy_status_description(&self) -> Result<Option<String>>;
+		pub fn creation_time(&self) -> Result<Option<OffsetDateTime>>;
+		pub fn encryption_key_sha256(&self) -> Result<Option<String>>;
+		pub fn encryption_scope(&self) -> Result<Option<String>>;
+		pub fn immutability_policy_mode(&self) -> Result<Option<BlobImmutabilityPolicyMode>>;
+		pub fn immutability_policy_expires_on(&self) -> Result<Option<OffsetDateTime>>;
+		pub fn is_current_version(&self) -> Result<Option<bool>>;
+		pub fn last_accessed(&self) -> Result<Option<OffsetDateTime>>;
+		pub fn duration(&self) -> Result<Option<i32>>;
+		pub fn lease_state(&self) -> Result<Option<LeaseState>>;
+		pub fn lease_status(&self) -> Result<Option<LeaseStatus>>;
+		pub fn legal_hold(&self) -> Result<Option<bool>>;
+		pub fn metadata(&self) -> Result<HashMap<String, String>>;
+		pub fn object_replication_rules(&self) -> Result<HashMap<String, String>>;
+		pub fn object_replication_policy_id(&self) -> Result<Option<String>>;
+		pub fn is_server_encrypted(&self) -> Result<Option<bool>>;
+		pub fn tag_count(&self) -> Result<Option<i64>>;
+		pub fn version_id(&self) -> Result<Option<String>>;
+	} 
+} 
+pub mod crate::generated::models {
+	#[derive(Debug)] 
+
+	pub struct BlobClientGetPropertiesResult {} 
+} 
+pub mod crate::generated::models {
+	pub trait BlobClientGetPropertiesResultHeaders: private::Sealed { 
+		pub fn cache_control(&self) -> Result<Option<String>>;
+		pub fn content_disposition(&self) -> Result<Option<String>>;
+		pub fn content_encoding(&self) -> Result<Option<String>>;
+		pub fn content_language(&self) -> Result<Option<String>>;
+		pub fn content_length(&self) -> Result<Option<u64>>;
+		pub fn content_md5(&self) -> Result<Option<String>>;
+		pub fn last_modified(&self) -> Result<Option<OffsetDateTime>>;
+		pub fn etag(&self) -> Result<Option<String>>;
+		pub fn tier(&self) -> Result<Option<AccessTier>>;
+		pub fn access_tier_change_time(&self) -> Result<Option<OffsetDateTime>>;
+		pub fn access_tier_inferred(&self) -> Result<Option<bool>>;
+		pub fn archive_status(&self) -> Result<Option<ArchiveStatus>>;
+		pub fn blob_committed_block_count(&self) -> Result<Option<i32>>;
+		pub fn is_sealed(&self) -> Result<Option<bool>>;
+		pub fn blob_sequence_number(&self) -> Result<Option<i64>>;
+		pub fn blob_type(&self) -> Result<Option<BlobType>>;
+		pub fn copy_completion_time(&self) -> Result<Option<OffsetDateTime>>;
+		pub fn destination_snapshot(&self) -> Result<Option<String>>;
+		pub fn copy_id(&self) -> Result<Option<String>>;
+		pub fn copy_progress(&self) -> Result<Option<String>>;
+		pub fn copy_source(&self) -> Result<Option<String>>;
+		pub fn copy_status(&self) -> Result<Option<CopyStatus>>;
+		pub fn copy_status_description(&self) -> Result<Option<String>>;
+		pub fn creation_time(&self) -> Result<Option<OffsetDateTime>>;
+		pub fn encryption_key_sha256(&self) -> Result<Option<String>>;
+		pub fn encryption_scope(&self) -> Result<Option<String>>;
+		pub fn expires_on(&self) -> Result<Option<OffsetDateTime>>;
+		pub fn immutability_policy_mode(&self) -> Result<Option<BlobImmutabilityPolicyMode>>;
+		pub fn immutability_policy_expires_on(&self) -> Result<Option<OffsetDateTime>>;
+		pub fn is_incremental_copy(&self) -> Result<Option<bool>>;
+		pub fn is_current_version(&self) -> Result<Option<bool>>;
+		pub fn last_accessed(&self) -> Result<Option<OffsetDateTime>>;
+		pub fn duration(&self) -> Result<Option<i32>>;
+		pub fn lease_state(&self) -> Result<Option<LeaseState>>;
+		pub fn lease_status(&self) -> Result<Option<LeaseStatus>>;
+		pub fn legal_hold(&self) -> Result<Option<bool>>;
+		pub fn metadata(&self) -> Result<HashMap<String, String>>;
+		pub fn object_replication_rules(&self) -> Result<HashMap<String, String>>;
+		pub fn object_replication_policy_id(&self) -> Result<Option<String>>;
+		pub fn rehydrate_priority(&self) -> Result<Option<RehydratePriority>>;
+		pub fn is_server_encrypted(&self) -> Result<Option<bool>>;
+		pub fn tag_count(&self) -> Result<Option<i64>>;
+		pub fn version_id(&self) -> Result<Option<String>>;
+	} 
+} 
+pub mod crate::generated::models {
+	#[derive(Debug)] 
+
+	pub struct BlobContainerClientGetPropertiesResult {} 
+} 
+pub mod crate::generated::models {
+	pub trait BlobContainerClientGetPropertiesResultHeaders: private::Sealed { 
+		pub fn last_modified(&self) -> Result<Option<OffsetDateTime>>;
+		pub fn etag(&self) -> Result<Option<String>>;
+		pub fn access(&self) -> Result<Option<PublicAccessType>>;
+		pub fn default_encryption_scope(&self) -> Result<Option<String>>;
+		pub fn prevent_encryption_scope_override(&self) -> Result<Option<bool>>;
+		pub fn has_immutability_policy(&self) -> Result<Option<bool>>;
+		pub fn has_legal_hold(&self) -> Result<Option<bool>>;
+		pub fn is_immutable_storage_with_versioning_enabled(&self) -> Result<Option<bool>>;
+		pub fn duration(&self) -> Result<Option<i32>>;
+		pub fn lease_state(&self) -> Result<Option<LeaseState>>;
+		pub fn lease_status(&self) -> Result<Option<LeaseStatus>>;
+		pub fn metadata(&self) -> Result<HashMap<String, String>>;
+	} 
+} 
+pub mod crate::generated::models {
+	#[derive(Debug, StructuralPartialEq, PartialEq, Eq, Clone)] 
+
+	pub enum BlobImmutabilityPolicyMode { 
+		Locked,
+		Mutable,
+		Unlocked,
+		UnknownValue,
+	} 
+	impl<'a> From<&'a BlobImmutabilityPolicyMode> for &'a str { 
+		pub fn from(e: &'a BlobImmutabilityPolicyMode) -> Self {}
+	} 
+	impl FromStr for BlobImmutabilityPolicyMode { 
+		type Err = Infallible; 
+		pub fn from_str(s: &str) -> ::core::result::Result<Self, Self::std::str::FromStr::Err> {}
+	} 
+	impl AsRef<str> for BlobImmutabilityPolicyMode { 
+		pub fn as_ref(&self) -> &str {}
+	} 
+	impl Display for BlobImmutabilityPolicyMode { 
+		pub fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {}
+	} 
+	impl<'de> Deserialize for BlobImmutabilityPolicyMode { 
+		pub fn deserialize<D>(deserializer: D) -> ::core::result::Result<Self, D::Error> where D: serde::Deserializer {}
+		pub fn deserialize_in_place; // provided trait method
+	} 
+	impl Serialize for BlobImmutabilityPolicyMode { 
+		pub fn serialize<S>(&self, s: S) -> ::core::result::Result<S::Ok, S::Error> where S: serde::Serializer {}
+	} 
+} 
+pub mod crate::generated::models {
+	#[derive(Debug, StructuralPartialEq, PartialEq, Eq, Clone)] 
+
+	pub enum BlobType { 
+		AppendBlob,
+		BlockBlob,
+		PageBlob,
+		UnknownValue,
+	} 
+	impl<'a> From<&'a BlobType> for &'a str { 
+		pub fn from(e: &'a BlobType) -> Self {}
+	} 
+	impl FromStr for BlobType { 
+		type Err = Infallible; 
+		pub fn from_str(s: &str) -> ::core::result::Result<Self, Self::std::str::FromStr::Err> {}
+	} 
+	impl AsRef<str> for BlobType { 
+		pub fn as_ref(&self) -> &str {}
+	} 
+	impl Display for BlobType { 
+		pub fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {}
+	} 
+	impl<'de> Deserialize for BlobType { 
+		pub fn deserialize<D>(deserializer: D) -> ::core::result::Result<Self, D::Error> where D: serde::Deserializer {}
+		pub fn deserialize_in_place; // provided trait method
+	} 
+	impl Serialize for BlobType { 
+		pub fn serialize<S>(&self, s: S) -> ::core::result::Result<S::Ok, S::Error> where S: serde::Serializer {}
+	} 
+} 
+pub mod crate::generated::models {
+	#[derive(Debug)] 
+
+	pub struct BlockBlobClientCommitBlockListResult {} 
+} 
+pub mod crate::generated::models {
+	#[derive(Debug)] 
+
+	pub struct BlockBlobClientStageBlockResult {} 
+} 
+pub mod crate::generated::models {
+	#[derive(Debug)] 
+
+	pub struct BlockBlobClientUploadResult {} 
+} 
+pub mod crate::generated::models {
+	#[derive(Clone, Default, Deserialize, Debug, Serialize, Model)] 
+
+	pub struct BlockList {
+		pub committed_blocks: Vec<Block>
+		pub uncommitted_blocks: Vec<Block>
+	} 
+} 
+pub mod crate::generated::models {
+	#[derive(Debug, StructuralPartialEq, PartialEq, Eq, Clone)] 
+
+	pub enum BlockListType { 
+		All,
+		Committed,
+		Uncommitted,
+		UnknownValue,
+	} 
+	impl<'a> From<&'a BlockListType> for &'a str { 
+		pub fn from(e: &'a BlockListType) -> Self {}
+	} 
+	impl FromStr for BlockListType { 
+		type Err = Infallible; 
+		pub fn from_str(s: &str) -> ::core::result::Result<Self, Self::std::str::FromStr::Err> {}
+	} 
+	impl AsRef<str> for BlockListType { 
+		pub fn as_ref(&self) -> &str {}
+	} 
+	impl Display for BlockListType { 
+		pub fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {}
+	} 
+	impl<'de> Deserialize for BlockListType { 
+		pub fn deserialize<D>(deserializer: D) -> ::core::result::Result<Self, D::Error> where D: serde::Deserializer {}
+		pub fn deserialize_in_place; // provided trait method
+	} 
+	impl Serialize for BlockListType { 
+		pub fn serialize<S>(&self, s: S) -> ::core::result::Result<S::Ok, S::Error> where S: serde::Serializer {}
+	} 
+} 
+pub mod crate::generated::models {
+	#[derive(Clone, Default, Deserialize, Debug, Serialize, Model)] 
+
+	pub struct BlockLookupList {
+		pub committed: Vec<Vec<u8>>
+		pub latest: Vec<Vec<u8>>
+		pub uncommitted: Vec<Vec<u8>>
+	} 
+	impl TryFrom<BlockLookupList> for azure_core::http::RequestContent<super::BlockLookupList> { 
+		type Error = Error; 
+		pub fn try_from(value: BlockLookupList) -> Result<Self> {}
+	} 
+} 
+pub mod crate::generated::models {
+	#[derive(Debug, StructuralPartialEq, PartialEq, Eq, Clone)] 
+
+	pub enum CopyStatus { 
+		Aborted,
+		Failed,
+		Pending,
+		Success,
+		UnknownValue,
+	} 
+	impl<'a> From<&'a CopyStatus> for &'a str { 
+		pub fn from(e: &'a CopyStatus) -> Self {}
+	} 
+	impl FromStr for CopyStatus { 
+		type Err = Infallible; 
+		pub fn from_str(s: &str) -> ::core::result::Result<Self, Self::std::str::FromStr::Err> {}
+	} 
+	impl AsRef<str> for CopyStatus { 
+		pub fn as_ref(&self) -> &str {}
+	} 
+	impl Display for CopyStatus { 
+		pub fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {}
+	} 
+	impl<'de> Deserialize for CopyStatus { 
+		pub fn deserialize<D>(deserializer: D) -> ::core::result::Result<Self, D::Error> where D: serde::Deserializer {}
+		pub fn deserialize_in_place; // provided trait method
+	} 
+	impl Serialize for CopyStatus { 
+		pub fn serialize<S>(&self, s: S) -> ::core::result::Result<S::Ok, S::Error> where S: serde::Serializer {}
+	} 
+} 
+pub mod crate::generated::models {
+	#[derive(Debug, StructuralPartialEq, PartialEq, Eq, Clone)] 
+
+	pub enum LeaseState { 
+		Available,
+		Breaking,
+		Broken,
+		Expired,
+		Leased,
+		UnknownValue,
+	} 
+	impl<'a> From<&'a LeaseState> for &'a str { 
+		pub fn from(e: &'a LeaseState) -> Self {}
+	} 
+	impl FromStr for LeaseState { 
+		type Err = Infallible; 
+		pub fn from_str(s: &str) -> ::core::result::Result<Self, Self::std::str::FromStr::Err> {}
+	} 
+	impl AsRef<str> for LeaseState { 
+		pub fn as_ref(&self) -> &str {}
+	} 
+	impl Display for LeaseState { 
+		pub fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {}
+	} 
+	impl<'de> Deserialize for LeaseState { 
+		pub fn deserialize<D>(deserializer: D) -> ::core::result::Result<Self, D::Error> where D: serde::Deserializer {}
+		pub fn deserialize_in_place; // provided trait method
+	} 
+	impl Serialize for LeaseState { 
+		pub fn serialize<S>(&self, s: S) -> ::core::result::Result<S::Ok, S::Error> where S: serde::Serializer {}
+	} 
+} 
+pub mod crate::generated::models {
+	#[derive(Debug, StructuralPartialEq, PartialEq, Eq, Clone)] 
+
+	pub enum LeaseStatus { 
+		Locked,
+		Unlocked,
+		UnknownValue,
+	} 
+	impl<'a> From<&'a LeaseStatus> for &'a str { 
+		pub fn from(e: &'a LeaseStatus) -> Self {}
+	} 
+	impl FromStr for LeaseStatus { 
+		type Err = Infallible; 
+		pub fn from_str(s: &str) -> ::core::result::Result<Self, Self::std::str::FromStr::Err> {}
+	} 
+	impl AsRef<str> for LeaseStatus { 
+		pub fn as_ref(&self) -> &str {}
+	} 
+	impl Display for LeaseStatus { 
+		pub fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {}
+	} 
+	impl<'de> Deserialize for LeaseStatus { 
+		pub fn deserialize<D>(deserializer: D) -> ::core::result::Result<Self, D::Error> where D: serde::Deserializer {}
+		pub fn deserialize_in_place; // provided trait method
+	} 
+	impl Serialize for LeaseStatus { 
+		pub fn serialize<S>(&self, s: S) -> ::core::result::Result<S::Ok, S::Error> where S: serde::Serializer {}
+	} 
+} 
+pub mod crate::generated::models {
+	#[derive(Debug, StructuralPartialEq, PartialEq, Eq, Clone)] 
+
+	pub enum PublicAccessType { 
+		Blob,
+		Container,
+		UnknownValue,
+	} 
+	impl<'a> From<&'a PublicAccessType> for &'a str { 
+		pub fn from(e: &'a PublicAccessType) -> Self {}
+	} 
+	impl FromStr for PublicAccessType { 
+		type Err = Infallible; 
+		pub fn from_str(s: &str) -> ::core::result::Result<Self, Self::std::str::FromStr::Err> {}
+	} 
+	impl AsRef<str> for PublicAccessType { 
+		pub fn as_ref(&self) -> &str {}
+	} 
+	impl Display for PublicAccessType { 
+		pub fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {}
+	} 
+	impl<'de> Deserialize for PublicAccessType { 
+		pub fn deserialize<D>(deserializer: D) -> ::core::result::Result<Self, D::Error> where D: serde::Deserializer {}
+		pub fn deserialize_in_place; // provided trait method
+	} 
+	impl Serialize for PublicAccessType { 
+		pub fn serialize<S>(&self, s: S) -> ::core::result::Result<S::Ok, S::Error> where S: serde::Serializer {}
+	} 
+} 
+pub mod crate::generated::models {
+	#[derive(Debug, StructuralPartialEq, PartialEq, Eq, Clone)] 
+
+	pub enum RehydratePriority { 
+		High,
+		Standard,
+		UnknownValue,
+	} 
+	impl<'a> From<&'a RehydratePriority> for &'a str { 
+		pub fn from(e: &'a RehydratePriority) -> Self {}
+	} 
+	impl FromStr for RehydratePriority { 
+		type Err = Infallible; 
+		pub fn from_str(s: &str) -> ::core::result::Result<Self, Self::std::str::FromStr::Err> {}
+	} 
+	impl AsRef<str> for RehydratePriority { 
+		pub fn as_ref(&self) -> &str {}
+	} 
+	impl Display for RehydratePriority { 
+		pub fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {}
+	} 
+	impl<'de> Deserialize for RehydratePriority { 
+		pub fn deserialize<D>(deserializer: D) -> ::core::result::Result<Self, D::Error> where D: serde::Deserializer {}
+		pub fn deserialize_in_place; // provided trait method
+	} 
+	impl Serialize for RehydratePriority { 
+		pub fn serialize<S>(&self, s: S) -> ::core::result::Result<S::Ok, S::Error> where S: serde::Serializer {}
+	} 
+} 
+pub mod crate::generated::models {
+	#[derive(Clone, Default, Deserialize, Debug, Serialize, Model)] 
+
+	pub struct StorageServiceProperties {
+		pub cors: Vec<CorsRule>
+		pub default_service_version: Option<String>
+		pub delete_retention_policy: Option<RetentionPolicy>
+		pub hour_metrics: Option<Metrics>
+		pub logging: Option<Logging>
+		pub minute_metrics: Option<Metrics>
+		pub static_website: Option<StaticWebsite>
+	} 
+} 
+/* External module re-exports */ 
+/* External items */ 
+pub struct alloc::string::String 
+pub struct alloc::sync::Arc 
+pub struct alloc::vec::Vec 
+pub struct bytes::bytes::Bytes 
+pub struct core::fmt::Formatter 
+pub struct std::collections::hash::map::HashMap 
+pub struct time::offset_date_time::OffsetDateTime 
+pub struct typespec_client_core::http::options::ClientMethodOptions 
+pub struct typespec_client_core::http::options::ClientOptions 
+pub struct typespec_client_core::http::request::RequestContent 
+pub struct typespec_client_core::http::response::Response 
+pub struct typespec::error::Error 
+pub struct url::Url 
+pub enum core::convert::Infallible 
+pub enum core::option::Option 
+pub enum core::result::Result 
+pub type_alias core::fmt::Result 
+pub type_alias typespec::error::Result 
+/* End */ 

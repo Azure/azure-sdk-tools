@@ -27,8 +27,8 @@ jobs:
 - job: 'Build'
 
   pool:
-    name: azsdk-pool-mms-ubuntu-2204-general
-    vmImage: ubuntu-22.04
+    name: azsdk-pool
+    demands: ImageOverride -equals ubuntu-24.04
 
   steps:
   - task: UsePythonVersion@0
@@ -37,7 +37,7 @@ jobs:
       versionSpec: 3.6
 
   - script: |
-     python -m pip install setuptools 
+     python -m pip install setuptools
      python -m pip install wheel twine readme-renderer[md]
     displayName: 'Prep Environment'
 
@@ -53,7 +53,7 @@ jobs:
       SourceFolder: '$(Build.SourcesDirectory)'
       Contents: 'scripts/**/*.py'
       TargetFolder: '$(Build.ArtifactStagingDirectory)/sdk-tools'
-  
+
   - task: ArchiveFiles@2
     displayName: 'Archive files for GitHub release'
     inputs:
@@ -72,12 +72,12 @@ jobs:
     displayName: 'Component Detection'
 
 - job: 'Test'
-  
+
   dependsOn: 'Build'
 
   pool:
-    name: azsdk-pool-mms-ubuntu-2204-general
-    vmImage: ubuntu-22.04
+    name: azsdk-pool
+    demands: ImageOverride -equals ubuntu-24.04
 
   steps:
 
@@ -87,7 +87,7 @@ jobs:
       versionSpec: 3.6
 
   - script: |
-      python -m pip install setuptools 
+      python -m pip install setuptools
       python -m pip install wheel twine readme-renderer[md]
 
       cd $(Build.SourcesDirectory)

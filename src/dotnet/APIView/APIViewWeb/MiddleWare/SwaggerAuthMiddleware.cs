@@ -8,12 +8,10 @@ namespace APIViewWeb.MiddleWare
     public class SwaggerAuthMiddleware
     {
         private readonly RequestDelegate _next;
-        private readonly IConfiguration _config;
 
-        public SwaggerAuthMiddleware(RequestDelegate next, IConfiguration config)
+        public SwaggerAuthMiddleware(RequestDelegate next)
         {
             _next = next;
-            _config = config;
         }
         public async Task InvokeAsync(HttpContext context)
         {

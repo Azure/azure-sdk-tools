@@ -4,7 +4,7 @@ import { Datasource, IDatasource, SizeStrategy } from 'ngx-ui-scroll';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CodeLineRowNavigationDirection, convertRowOfTokensToString, isDiffRow } from 'src/app/_helpers/common-helpers';
+import { CodeLineRowNavigationDirection, convertRowOfTokensToString, DIFF_ADDED, DIFF_REMOVED, isDiffRow } from 'src/app/_helpers/common-helpers';
 import { SCROLL_TO_NODE_QUERY_PARAM } from 'src/app/_helpers/router-helpers';
 import { CodePanelData, CodePanelRowData, CodePanelRowDatatype } from 'src/app/_models/codePanelModels';
 import { StructuredToken } from 'src/app/_models/structuredToken';
@@ -40,6 +40,7 @@ export class CodePanelComponent implements OnChanges{
   @Input() loadFailedMessage : string | undefined;
   @Input() codeLineSearchText: string | undefined;
   @Input() codeLineSearchInfo: CodeLineSearchInfo | undefined = undefined;
+  @Input() preferredApprovers : string[] = [];
 
   @Output() hasActiveConversationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() codeLineSearchInfoEmitter : EventEmitter<CodeLineSearchInfo> = new EventEmitter<CodeLineSearchInfo>();
@@ -590,6 +591,15 @@ export class CodePanelComponent implements OnChanges{
     });
   }
 
+  handleCommentDownvoteActionEmitter(commentUpdates: CommentUpdatesDto){
+    commentUpdates.reviewId = this.reviewId!;
+    this.commentsService.toggleCommentDownVote(this.reviewId!, commentUpdates.commentId!).pipe(take(1)).subscribe({
+      next: () => {
+        this.signalRService.pushCommentUpdates(commentUpdates);
+      }
+    });
+  }
+
   handleRealTimeCommentUpdates() {
     this.signalRService.onCommentUpdates().pipe(takeUntil(this.destroy$)).subscribe({
       next: (commentUpdates: CommentUpdatesDto) => {
@@ -620,6 +630,9 @@ export class CodePanelComponent implements OnChanges{
               break;
             case CommentThreadUpdateAction.CommentUpVoteToggled:
               this.toggleCommentUpVote(commentUpdates);
+              break;
+            case CommentThreadUpdateAction.CommentDownVoteToggled:
+              this.toggleCommentDownVote(commentUpdates);
               break;
             case CommentThreadUpdateAction.CommentDeleted:
               this.deleteCommentFromCommentThread(commentUpdates);
@@ -654,7 +667,7 @@ export class CodePanelComponent implements OnChanges{
       this.scrollToNode(navigateToRow.nodeIdHashed);
     }
     else {
-      this.messageService.add({ severity: 'info', icon: 'bi bi-info-circle', detail: 'No more active comments threads to navigate to.', key: 'bl', life: 3000 });
+      this.messageService.add({ severity: 'info', icon: 'bi bi-info-circle', summary: 'Comment Navigation', detail: 'No more active comments threads to navigate to.', key: 'bc', life: 3000 });
     }
   }
 
@@ -677,15 +690,29 @@ export class CodePanelComponent implements OnChanges{
       this.scrollToNode(navigateToRow.nodeIdHashed);
     }
     else {
-      this.messageService.add({ severity: 'info', icon: 'bi bi-info-circle', detail: 'No more diffs to navigate to.', key: 'bl', life: 3000 });
+      this.messageService.add({ severity: 'info', icon: 'bi bi-info-circle', summary: 'Diff Navigation', detail: 'No more diffs to navigate to.', key: 'bc', life: 3000 });
     }
   }
 
-  copyReviewTextToClipBoard() {
+  copyReviewTextToClipBoard(isDiffView: boolean) {
     const reviewText : string [] = [];
     this.codePanelRowData.forEach((row) => {
       if (row.rowOfTokens && row.rowOfTokens.length > 0) {
         let codeLineText = convertRowOfTokensToString(row.rowOfTokens);
+        if (isDiffView) {
+          switch (row.diffKind) {
+            case DIFF_ADDED:
+              codeLineText = `+ ${codeLineText}`;
+              break; 
+            case DIFF_REMOVED:
+              codeLineText = `- ${codeLineText}`;
+              break;
+            default :
+              codeLineText = `  ${codeLineText}`;
+              break;
+          }
+        }
+
         if (row.indent && row.indent > 0) {
           codeLineText = '\t'.repeat(row.indent - 1) + codeLineText;
         }
@@ -1039,6 +1066,24 @@ export class CodePanelComponent implements OnChanges{
         comment.upvotes.splice(comment.upvotes.indexOf(this.userProfile?.userName!), 1);
       } else {
         comment.upvotes.push(this.userProfile?.userName!);
+        if (comment.downvotes.includes(this.userProfile?.userName!)) {
+          comment.downvotes.splice(comment.downvotes.indexOf(this.userProfile?.userName!), 1);
+        }
+      }
+      this.updateItemInScroller(this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup!]);
+    }
+  }
+
+  private toggleCommentDownVote(data: CommentUpdatesDto) {
+    const comment = this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup!].comments.find(c => c.id === data.commentId);
+    if (comment) {
+      if (comment.downvotes.includes(this.userProfile?.userName!)) {
+        comment.downvotes.splice(comment.downvotes.indexOf(this.userProfile?.userName!), 1);
+      } else {
+        comment.downvotes.push(this.userProfile?.userName!);
+        if (comment.upvotes.includes(this.userProfile?.userName!)) {
+          comment.upvotes.splice(comment.upvotes.indexOf(this.userProfile?.userName!), 1);
+        }
       }
       this.updateItemInScroller(this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup!]);
     }

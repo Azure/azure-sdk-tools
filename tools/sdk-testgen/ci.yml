@@ -41,8 +41,8 @@ extends:
           - job: BuildTestModeler
             displayName: "Build autorest/testmodeler"
             pool:
-              name: azsdk-pool-mms-ubuntu-2204-general
-              vmImage: ubuntu-22.04
+              name: azsdk-pool
+              image: ubuntu-24.04
               os: linux
             steps:
               - template: /eng/common/pipelines/templates/steps/verify-path-length.yml
@@ -50,7 +50,7 @@ extends:
                   SourceDirectory: 'tools/sdk-testgen'
               - task: NodeTool@0
                 inputs:
-                  versionSpec: "18.x"
+                  versionSpec: "20.x"
                 displayName: "Install Node.js"
               - task: GoTool@0
                 inputs:

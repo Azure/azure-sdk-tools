@@ -20,7 +20,7 @@
     "strictNullChecks": true,
     "noUnusedLocals": true,
     "types": [
-      "node", "jest"
+      "node", "vitest/globals"
     ],
   },
   "include": ["./src/**/*.ts"],

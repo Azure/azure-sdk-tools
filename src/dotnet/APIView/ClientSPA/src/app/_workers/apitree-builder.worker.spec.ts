@@ -5,7 +5,6 @@ import { CodePanelRowData } from "../_models/codePanelModels";
 import { ReviewPageWorkerMessageDirective } from "../_models/insertCodePanelRowDataMessage";
 
 import contentWithDiffNodes from "./test-data/content-with-diff-nodes.json";
-import contentWithDiffInOnlyDocs from "./test-data/content-with-diff-in-only-docs.json";
 import contentWithActiveOnly from "./test-data/content-with-active-revision-only.json";
 import contentWithFullDiff from "./test-data/content-with-diff-full-style.json";
 import contentWithAddedOnly from "./test-data/content-with-only-added-diff.json";
@@ -54,99 +53,6 @@ describe('API Tree Builder', () => {
       };
 
       const jsonString = JSON.stringify(contentWithDiffNodes);
-      const encoder = new TextEncoder();
-      const arrayBuffer = encoder.encode(jsonString).buffer;
-  
-      apiTreeBuilder.postMessage(apiTreeBuilderData);
-      apiTreeBuilder.postMessage(arrayBuffer);
-    });
-
-    it('should only show nodes with diff', (done) => {
-      apiTreeBuilder.onmessage = ({ data }) => {
-        if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodePanelRowData) {
-          const codePanelRowData = data.payload as CodePanelRowData[];
-          expect(codePanelRowData.length).toBe(24);
-          const linesWithDiff = codePanelRowData.filter(row => row.diffKind === 'removed' || row.diffKind === 'added');
-          expect(linesWithDiff.length).toBe(6);
-        }
-        done();
-      };
-  
-      apiTreeBuilder.onerror = (error) => {
-        done.fail(error.message);
-      };
-  
-      const apiTreeBuilderData : ApiTreeBuilderData = {
-        diffStyle: 'nodes',
-        showDocumentation: false,
-        showComments: true,
-        showSystemComments: true,
-        showHiddenApis: false
-      };
-  
-      const jsonString = JSON.stringify(contentWithDiffNodes);
-      const encoder = new TextEncoder();
-      const arrayBuffer = encoder.encode(jsonString).buffer;
-  
-      apiTreeBuilder.postMessage(apiTreeBuilderData);
-      apiTreeBuilder.postMessage(arrayBuffer);
-    });
-
-    it ('should show doc diff when doc is enabled', (done) => {
-      apiTreeBuilder.onmessage = ({ data }) => {
-        if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodePanelRowData) {
-          const codePanelRowData = data.payload as CodePanelRowData[];
-          expect(codePanelRowData.length).toBe(174);
-          const linesWithDiff = codePanelRowData.filter(row => row.diffKind === 'removed' || row.diffKind === 'added');
-          expect(linesWithDiff.length).toBe(152);
-        }
-        done();
-      };
-  
-      apiTreeBuilder.onerror = (error) => {
-        done.fail(error.message);
-      };
-  
-      const apiTreeBuilderData : ApiTreeBuilderData = {
-        diffStyle: 'nodes',
-        showDocumentation: true,
-        showComments: true,
-        showSystemComments: true,
-        showHiddenApis: false
-      };
-  
-      const jsonString = JSON.stringify(contentWithDiffInOnlyDocs);
-      const encoder = new TextEncoder();
-      const arrayBuffer = encoder.encode(jsonString).buffer;
-  
-      apiTreeBuilder.postMessage(apiTreeBuilderData);
-      apiTreeBuilder.postMessage(arrayBuffer);
-    });
-
-    it ('should not show node with diff in only docs when doc is not enabled', (done) =>{
-      apiTreeBuilder.onmessage = ({ data }) => {
-        if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodePanelRowData) {
-          const codePanelRowData = data.payload as CodePanelRowData[];
-          expect(codePanelRowData.length).toBe(5);
-          const linesWithDiff = codePanelRowData.filter(row => row.diffKind === 'removed' || row.diffKind === 'added');
-          expect(linesWithDiff.length).toBe(2);
-        }
-        done();
-      };
-  
-      apiTreeBuilder.onerror = (error) => {
-        done.fail(error.message);
-      };
-  
-      const apiTreeBuilderData : ApiTreeBuilderData = {
-        diffStyle: 'nodes',
-        showDocumentation: false,
-        showComments: true,
-        showSystemComments: true,
-        showHiddenApis: false
-      };
-  
-      const jsonString = JSON.stringify(contentWithDiffInOnlyDocs);
       const encoder = new TextEncoder();
       const arrayBuffer = encoder.encode(jsonString).buffer;
   
@@ -215,7 +121,6 @@ describe('API Tree Builder', () => {
       apiTreeBuilder.postMessage(apiTreeBuilderData);
       apiTreeBuilder.postMessage(arrayBuffer);
     });
-
 
     it('test diff lines in full diff without docs', (done) => {
       apiTreeBuilder.onmessage = ({ data }) => {
@@ -296,36 +201,6 @@ describe('API Tree Builder', () => {
   
       const apiTreeBuilderData : ApiTreeBuilderData = {
         diffStyle: 'trees',
-        showDocumentation: false,
-        showComments: false,
-        showSystemComments: false,
-        showHiddenApis: false
-      };
-
-      const jsonString = JSON.stringify(contentWithFullDiff);
-      const encoder = new TextEncoder();
-      const arrayBuffer = encoder.encode(jsonString).buffer;
-  
-      apiTreeBuilder.postMessage(apiTreeBuilderData);
-      apiTreeBuilder.postMessage(arrayBuffer);
-    });
-    it('test diff lines in node style diff without docs', (done) => {
-      apiTreeBuilder.onmessage = ({ data }) => {
-        if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodePanelRowData) {
-          const codePanelRowData = data.payload as CodePanelRowData[];
-          expect(codePanelRowData.length).toBe(21);
-          const linesWithDiff = codePanelRowData.filter(row => row.diffKind === 'removed' || row.diffKind === 'added');
-          expect(linesWithDiff.length).toBe(9);
-        }
-        done();
-      };
-
-      apiTreeBuilder.onerror = (error) => {
-        done.fail(error.message);
-      };
-  
-      const apiTreeBuilderData : ApiTreeBuilderData = {
-        diffStyle: 'nodes',
         showDocumentation: false,
         showComments: false,
         showSystemComments: false,

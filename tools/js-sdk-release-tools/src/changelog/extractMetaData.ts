@@ -1,9 +1,9 @@
 import * as openapiToolsCommon from "@azure-tools/openapi-tools-common";
 import { FunctionDeclaration, TypescriptParser } from "parse-ts-to-ast";
 import { ClassDeclaration, EnumDeclaration, InterfaceDeclaration, TypeAliasDeclaration } from "parse-ts-to-ast";
-import { changelogGenerator } from "./changelogGenerator";
-import { logger } from "../utils/logger";
-import { SDKType } from "../common/types";
+import { changelogGenerator } from "./changelogGenerator.js";
+import { logger } from "../utils/logger.js";
+import { SDKType } from "../common/types.js";
 import { createAstContext } from "typescript-codegen-breaking-change-detector";
 import { mkdirp, remove } from "fs-extra";
 
@@ -74,7 +74,7 @@ export const extractExportAndGenerateChangelog = async (mdFilePathOld: string, m
     
     try {
         await mkdirp('./tmp-patch');
-        const astContext = await createAstContext(mdFilePathOld, mdFilePathNew, './tmp-patch');
+        const astContext = await createAstContext({path: mdFilePathOld}, {path: mdFilePathNew}, './tmp-patch');
         const changeLog = changelogGenerator(metaDataOld, metaDataNew, oldSdkType, newSdkType, astContext);
         logger.info('Generated changelog successfully:');
         logger.info(changeLog.displayChangeLog());

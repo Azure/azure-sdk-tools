@@ -1,21 +1,23 @@
-import {logger} from "../utils/logger";
+import {logger} from "../utils/logger.js";
 import {execSync} from "child_process";
 
 import fs from "fs";
 import * as path from "path";
-import {getChangedCiYmlFilesInSpecificFolder, getChangedPackageDirectory} from "../utils/git";
-import {generateChangelogAndBumpVersion} from "../common/changlog/automaticGenerateChangeLogAndBumpVersion";
-import {Changelog} from "../changelog/changelogGenerator";
-import {changeRushJson} from "../utils/changeRushJson";
-import {modifyOrGenerateCiYml} from "../utils/changeCiYaml";
-import {changeConfigOfTestAndSample, ChangeModel, SdkType} from "../utils/changeConfigOfTestAndSample";
-import {changeReadmeMd} from "./utils/changeReadmeMd";
-import {RunningEnvironment} from "../utils/runningEnvironment";
-import {getOutputPackageInfo} from "../utils/getOutputPackageInfo";
-import {getReleaseTool} from "./utils/getReleaseTool";
-import { addApiViewInfo } from "../utils/addApiViewInfo";
-import { defaultChildProcessTimeout } from '../common/utils'
-import { migratePackage } from "../common/migration";
+import {getChangedCiYmlFilesInSpecificFolder, getChangedPackageDirectory} from "../utils/git.js";
+import {generateChangelogAndBumpVersion} from "../common/changelog/automaticGenerateChangeLogAndBumpVersion.js";
+import {Changelog} from "../changelog/changelogGenerator.js";
+import {changeRushJson} from "../utils/changeRushJson.js";
+import {modifyOrGenerateCiYml} from "../utils/changeCiYaml.js";
+import {changeConfigOfTestAndSample, ChangeModel, SdkType} from "../utils/changeConfigOfTestAndSample.js";
+import {changeReadmeMd} from "./utils/changeReadmeMd.js";
+import {RunningEnvironment} from "../utils/runningEnvironment.js";
+import {getOutputPackageInfo} from "../utils/getOutputPackageInfo.js";
+import {getReleaseTool} from "./utils/getReleaseTool.js";
+import { addApiViewInfo } from "../utils/addApiViewInfo.js";
+import { defaultChildProcessTimeout } from '../common/utils.js'
+import { isRushRepo } from "../common/rushUtils.js";
+import { updateSnippets } from "../common/devToolUtils.js";
+import { ChangelogResult } from "../changelog/v2/ChangelogGenerator.js";
 
 export async function generateMgmt(options: {
     sdkRepo: string,
@@ -30,13 +32,21 @@ export async function generateMgmt(options: {
     downloadUrlPrefix?: string;
     skipGeneration?: boolean,
     runningEnvironment?: RunningEnvironment;
+    apiVersion: string | undefined;
+    sdkReleaseType: string | undefined;
 }) {
     logger.info(`Start to generate SDK from '${options.readmeMd}'.`);
     let cmd = '';
     if (!options.skipGeneration) {
+        if(options.apiVersion && options.apiVersion !== '') {
+            // for high level client, we will build a tag for the package
+            logger.warn(`The specified api-version ${options.apiVersion} is going to apply to swagger.`);
+            options.tag = `package-${options.apiVersion}`;
+        }
+
         cmd = `autorest --version=3.9.7 --typescript --modelerfour.lenient-model-deduplication --azure-arm --head-as-boolean=true --license-header=MICROSOFT_MIT_NO_VERSION --generate-test --typescript-sdks-folder=${options.sdkRepo} ${path.join(options.swaggerRepo, options.readmeMd)}`;
 
-        if (options.tag) {
+        if (options.tag && options.tag !== '') {
             cmd += ` --tag=${options.tag}`;
         }
 
@@ -68,8 +78,9 @@ export async function generateMgmt(options: {
             const packageName = packageJson.name;
 
             if (!options.skipGeneration) {
-                changeRushJson(options.sdkRepo, packageJson.name, changedPackageDirectory, 'management');
-
+                if (isRushRepo(options.sdkRepo)) {
+                    changeRushJson(options.sdkRepo, packageJson.name, changedPackageDirectory, 'management');
+                }
                 // change configuration to skip build test, sample
                 changeConfigOfTestAndSample(packagePath, ChangeModel.Change, SdkType.Hlc);
 
@@ -104,21 +115,35 @@ export async function generateMgmt(options: {
                     outputPackageInfo.path.push(file);
                 }
             }
-
-            logger.info(`Start to run command: 'rush update'.`);
-            execSync('node common/scripts/install-run-rush.js update', {stdio: 'inherit'});
-            
-            await migratePackage(packagePath);
-            
-            logger.info(`Start to run command: 'rush build -t ${packageName}', that builds generated codes, except test and sample, which may be written manually.`);
-            execSync(`node common/scripts/install-run-rush.js build -t ${packageName}`, {stdio: 'inherit'});
-            logger.info('Start to generate changelog and bump version...');
-            let changelog: Changelog | undefined;
-            if (!options.skipGeneration) {
-                changelog = await generateChangelogAndBumpVersion(changedPackageDirectory);
+            let changelog: ChangelogResult | undefined;
+            if (isRushRepo(options.sdkRepo)) {
+                logger.info(`Start to run command: 'rush update'.`);
+                execSync('node common/scripts/install-run-rush.js update', {stdio: 'inherit'});
+        
+                logger.info(`Start to run command: 'rush build -t ${packageName}', that builds generated codes, except test and sample, which may be written manually.`);
+                execSync(`node common/scripts/install-run-rush.js build -t ${packageName}`, {stdio: 'inherit'});
+                logger.info('Start to generate changelog and bump version...');
+                if (!options.skipGeneration) {
+                    changelog = await generateChangelogAndBumpVersion(changedPackageDirectory, options);
+                }
+                logger.info(`Start to run command: 'node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose'.`);
+                execSync(`node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose`, {stdio: 'inherit'});
+            } else {
+                logger.info(`Start to run command: 'pnpm install'.`);
+                execSync('pnpm install', {stdio: 'inherit'});
+                                
+                logger.info(`Start to run command: 'pnpm build --filter ${packageName}...', that builds generated codes, except test and sample, which may be written manually.`);
+                execSync(`pnpm build --filter ${packageName}...`, {stdio: 'inherit'});
+                logger.info('Start to generate changelog and bump version...');
+                if (!options.skipGeneration) {
+                    changelog = await generateChangelogAndBumpVersion(changedPackageDirectory, options);
+                }
+                logger.info(`Start to run command: 'pnpm run --filter ${packageJson.name}... pack'.`);
+                execSync(`pnpm run --filter ${packageJson.name}... pack`, {stdio: 'inherit'});
             }
-            logger.info(`Start to run command: 'node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose'.`);
-            execSync(`node common/scripts/install-run-rush.js pack --to ${packageJson.name} --verbose`, {stdio: 'inherit'});
+            
+            await updateSnippets(packagePath);
+
             if (!options.skipGeneration) {
                 changeReadmeMd(packagePath);
             }
@@ -127,8 +152,8 @@ export async function generateMgmt(options: {
             if (options.outputJson && options.runningEnvironment !== undefined && outputPackageInfo !== undefined) {
                 if (changelog) {
                     outputPackageInfo.changelog.hasBreakingChange = changelog.hasBreakingChange;
-                    outputPackageInfo.changelog.content = changelog.displayChangeLog();
-                    const breakingChangeItems = changelog.getBreakingChangeItems();
+                    outputPackageInfo.changelog.content = changelog.content;
+                    const breakingChangeItems = changelog.breakingChangeItems;
                     if (!!breakingChangeItems && breakingChangeItems.length > 0) {
                         outputPackageInfo.changelog['breakingChangeItems'] = breakingChangeItems;
                     } else {

@@ -1,0 +1,195 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+using Azure.Core;
+using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.Responses;
+using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Tests.MockServices;
+using Azure.Sdk.Tools.Cli.Tools;
+using Microsoft.Extensions.Logging;
+using Moq;
+
+namespace Azure.Sdk.Tools.Cli.Tests.Tools;
+
+internal class ExampleToolTests
+{
+    private ExampleTool tool;
+    private Mock<ILogger<ExampleTool>>? mockLogger;
+    private Mock<IOutputService>? mockOutput;
+    private Mock<IAzureService>? mockAzureService;
+    private Mock<IDevOpsService>? mockDevOpsService;
+    private MockGitHubService? mockGitHubService;
+
+    [SetUp]
+    public void Setup()
+    {
+        // Create mock services
+        mockLogger = new Mock<ILogger<ExampleTool>>();
+        mockOutput = new Mock<IOutputService>();
+        mockAzureService = new Mock<IAzureService>();
+        mockDevOpsService = new Mock<IDevOpsService>();
+        mockGitHubService = new MockGitHubService();
+
+        // Set up Azure service mock to return a mock credential
+        var mockCredential = new Mock<TokenCredential>();
+        mockCredential
+            .Setup(x => x.GetTokenAsync(It.IsAny<TokenRequestContext>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Azure.Core.AccessToken("mock-token", DateTimeOffset.UtcNow.AddHours(1)));
+
+        mockAzureService
+            .Setup(x => x.GetCredential(It.IsAny<string?>()))
+            .Returns(mockCredential.Object);
+
+        // Set up DevOps service mock
+        mockDevOpsService
+            .Setup(x => x.GetPackageWorkItemAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(new PackageResponse { PipelineDefinitionUrl = "https://dev.azure.com/test-pipeline" });
+
+        // Create the tool instance
+        tool = new ExampleTool(
+            mockLogger.Object,
+            mockOutput.Object,
+            mockAzureService.Object,
+            mockDevOpsService.Object,
+            mockGitHubService,
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
+            null
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+        );
+    }
+
+    [Test]
+    public async Task DemonstrateAzureService_ReturnsSuccessResponse()
+    {
+        // Act
+        var result = await tool.DemonstrateAzureService("test-tenant");
+
+        // Assert
+        Assert.That(result.ResponseError, Is.Null);
+        Assert.That(result.ServiceName, Is.EqualTo("Azure Authentication"));
+        Assert.That(result.Operation, Is.EqualTo("GetCredential"));
+        Assert.That(result.Result, Does.Contain("Successfully obtained Azure credentials"));
+        Assert.That(result.Details, Is.Not.Null);
+        Assert.That(result.Details!.ContainsKey("credential_type"), Is.True);
+        Assert.That(result.Details.ContainsKey("token_expires"), Is.True);
+        Assert.That(result.Details.ContainsKey("has_token"), Is.True);
+    }
+
+    [Test]
+    public async Task DemonstrateDevOpsService_ReturnsCorrectResponse()
+    {
+        const string packageName = "test-package";
+        const string language = "csharp";
+
+        var result = await tool.DemonstrateDevOpsService(packageName, language);
+
+        Assert.That(result.ResponseError, Is.Null);
+        Assert.That(result.ServiceName, Is.EqualTo("Azure DevOps"));
+        Assert.That(result.Operation, Is.EqualTo("GetPackagePipelineUrl"));
+        Assert.That(result.Result, Does.Contain("Found package pipeline"));
+        Assert.That(result.Details, Is.Not.Null);
+        Assert.That(result.Details!["service_type"], Is.EqualTo("Azure DevOps"));
+        Assert.That(result.Details["package_pipeline_url"], Is.EqualTo("https://dev.azure.com/test-pipeline"));
+
+        // Verify the service was called with correct parameters
+        mockDevOpsService!.Verify(x => x.GetPackageWorkItemAsync(packageName, language, It.IsAny<string>()), Times.Once);
+    }
+
+    [Test]
+    public async Task DemonstrateGitHubService_ReturnsUserDetails()
+    {
+        var result = await tool.DemonstrateGitHubService();
+
+        Assert.That(result.ResponseError, Is.Null);
+        Assert.That(result.ServiceName, Is.EqualTo("GitHub"));
+        Assert.That(result.Operation, Is.EqualTo("GetUser"));
+        Assert.That(result.Details, Is.Not.Null);
+        Assert.That(result.Details!.ContainsKey("user_login"), Is.True);
+        Assert.That(result.Details.ContainsKey("user_id"), Is.True);
+        Assert.That(result.Result, Does.Contain("Retrieved user details"));
+    }
+
+    [Test]
+    public async Task DemonstrateErrorHandling_NoFailure_ReturnsSuccessResponse()
+    {
+        var result = await tool.DemonstrateErrorHandling("normal", false);
+
+        Assert.That(result.ResponseError, Is.Null);
+        Assert.That(result.Result, Is.Not.Null);
+        Assert.That(result.Result!.ToString(), Does.Contain("successfully"));
+        Assert.That(result.Result.ToString(), Does.Contain("normal"));
+    }
+
+    [Test]
+    public async Task DemonstrateErrorHandling_DifferentErrorTypes_ReturnsDifferentErrors()
+    {
+        var result = await tool.DemonstrateErrorHandling("argument", true);
+        Assert.That(result.ResponseError, Is.Not.Null);
+        Assert.That(result.ResponseError, Does.Contain("ArgumentException"));
+
+        var timeoutResult = await tool.DemonstrateErrorHandling("timeout", true);
+        Assert.That(timeoutResult.ResponseError, Is.Not.Null);
+        Assert.That(timeoutResult.ResponseError, Does.Contain("TimeoutException"));
+
+        var notFoundResult = await tool.DemonstrateErrorHandling("notfound", true);
+        Assert.That(notFoundResult.ResponseError, Is.Not.Null);
+        Assert.That(notFoundResult.ResponseError, Does.Contain("FileNotFoundException"));
+
+        var genericResult = await tool.DemonstrateErrorHandling("other", true);
+        Assert.That(genericResult.ResponseError, Is.Not.Null);
+        Assert.That(genericResult.ResponseError, Does.Contain("InvalidOperationException"));
+    }
+
+    [Test]
+    public void GetCommand_ReturnsCommandWithCorrectSubCommands()
+    {
+        var command = tool.GetCommand();
+
+        Assert.That(command.Name, Is.EqualTo("demo"));
+        Assert.That(command.Description, Does.Contain("Comprehensive demonstration"));
+        Assert.That(command.Subcommands.Count, Is.EqualTo(5));
+
+        var subCommandNames = command.Subcommands.Select(sc => sc.Name).ToList();
+        Assert.That(subCommandNames, Does.Contain("azure"));
+        Assert.That(subCommandNames, Does.Contain("devops"));
+        Assert.That(subCommandNames, Does.Contain("github"));
+        Assert.That(subCommandNames, Does.Contain("ai"));
+        Assert.That(subCommandNames, Does.Contain("error"));
+    }
+
+    [Test]
+    public void ExampleServiceResponse_ToString_FormatsCorrectly()
+    {
+        var response = new ExampleServiceResponse
+        {
+            ServiceName = "Test Service",
+            Operation = "Test Operation",
+            Result = "Test Result",
+            Details = new Dictionary<string, string>
+            {
+                ["key1"] = "value1",
+                ["key2"] = "value2"
+            }
+        };
+
+        var result = response.ToString();
+
+        Assert.That(result, Does.Contain("Service: Test Service"));
+        Assert.That(result, Does.Contain("Operation: Test Operation"));
+        Assert.That(result, Does.Contain("Result: Test Result"));
+        Assert.That(result, Does.Contain("Details:"));
+        Assert.That(result, Does.Contain("key1: value1"));
+        Assert.That(result, Does.Contain("key2: value2"));
+    }
+
+    [Test]
+    public async Task DemonstrateAzureService_WithNullTenant_WorksCorrectly()
+    {
+        var result = await tool.DemonstrateAzureService(null);
+
+        Assert.That(result.ResponseError, Is.Null);
+        Assert.That(result.ServiceName, Is.EqualTo("Azure Authentication"));
+
+        mockAzureService!.Verify(x => x.GetCredential(null), Times.Once);
+    }
+}

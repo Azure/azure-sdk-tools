@@ -1,12 +1,13 @@
 import logging
 
+_LOGGER = logging.getLogger(__name__)
 
 # test_error_level_not_logged
 def function1():
     try:  # @
         add = 1 + 2
     except Exception as e:
-        logging.ERROR(str(e))  # @
+        _LOGGER.error(e)  # @
         raise
 
 
@@ -15,7 +16,7 @@ def function2():
     try:  # @
         add = 1 + 2
     except Exception as e:
-        logging.warning(str(e))  # @
+        logging.warning(e)  # @
         raise
 
 
@@ -52,7 +53,7 @@ def function6():
     except Exception as e:
         raise
     except OtherException as x:
-        logging.error(str(x))  # @
+        logging.error(x)  # @
         raise
 
 
@@ -67,8 +68,8 @@ def function7():
         elif Exception != BaseException:
             logging.error(f"System shutting down due to error: {e}.")
             return False
-        logging.error(f"Unexpected error occurred: {e}")  # @
-        raise SystemError("Uh oh!") from e
+        _LOGGER.error(f"Unexpected error occurred: {e}")  # @
+        raise
 
 
 # test_branch_exceptions_logged

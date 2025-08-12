@@ -27,19 +27,40 @@ namespace APIViewWeb.Helpers
 
         public static string MapLanguageAlias(string language)
         {
-            if (language.Equals("net") || language.Equals(".NET"))
+            if (language.Equals("net", StringComparison.OrdinalIgnoreCase) || language.Equals(".NET", StringComparison.OrdinalIgnoreCase))
                 return "C#";
 
-            if (language.Equals("cpp"))
+            if (language.Equals("cpp", StringComparison.OrdinalIgnoreCase))
                 return "C++";
 
-            if (language.Equals("js"))
+            if (language.Equals("js", StringComparison.OrdinalIgnoreCase))
                 return "JavaScript";
 
-            if (language.Equals("Cadl"))
+            if (language.Equals("Cadl", StringComparison.OrdinalIgnoreCase))
                 return "TypeSpec";
 
-            return language;
+            return SupportedLanguages.Where(lang => lang.Equals(language, StringComparison.OrdinalIgnoreCase)).FirstOrDefault() ?? language;
+        }
+
+        public static string GetLanguageAliasForCopilotService(string language)
+        {
+            switch (language)
+            {
+                case "C":
+                    return "clang";
+                case "C#":
+                    return "dotnet";
+                case "C++":
+                    return "cpp";
+                case "JavaScript":
+                    return "typescript";
+                case "Swift":
+                    return "ios";
+                case "Go":
+                    return "golang";
+                default:
+                    return language.ToLower();
+            }
         }
 
         public static string GetLanguageFromRepoName(string repoName)

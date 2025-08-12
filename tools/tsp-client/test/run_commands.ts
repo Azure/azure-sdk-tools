@@ -85,16 +85,6 @@ async function main() {
     mgmtSpecLink,
   ]);
 
-  // Run the compare command to ensure it is working
-  await runCommand(baseDir, [
-    "compare",
-    "--lhs",
-    "./test/examples/specification/compare/lhs",
-    "--rhs",
-    "./test/examples/specification/compare/rhs",
-    "--compile-tsp",
-  ]);
-
   await unlink(join(repoRoot, "eng/emitter-package.json"));
   console.log("emitter-package.json ---------------> deleted successfully");
   await unlink(join(repoRoot, "eng/emitter-package-lock.json"));

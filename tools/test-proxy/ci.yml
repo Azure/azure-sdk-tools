@@ -26,11 +26,12 @@ extends:
   parameters:
     ToolDirectory: tools/test-proxy
     ReleaseBinaries: true
+    SkipReleaseStage: false
     StandaloneExeMatrix:
-    - rid: osx-x64
+    - rid: osx-arm64
       framework: net8.0
       assembly: Azure.Sdk.Tools.TestProxy
-    - rid: osx-arm64
+    - rid: osx-x64
       framework: net8.0
       assembly: Azure.Sdk.Tools.TestProxy
     - rid: win-x64

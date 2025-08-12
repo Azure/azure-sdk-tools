@@ -43,10 +43,13 @@ async function initProcessDataAndWriteTspLocation(
   outputDir: string,
   repoRoot: string,
   tspConfigPath: string,
-  tspclientGlobalConfig: TspClientConfig | undefined,
   tspLocationData: TspLocation,
   argv: any,
 ): Promise<string> {
+  // Read the global tspclientconfig.yaml if it exists, otherwise tspclientGlobalConfigData will be undefined.
+  const tspclientGlobalConfigData = await parseTspClientRepoConfig(repoRoot);
+
+  // Read tspconfig.yaml contents
   let data;
   try {
     data = await readFile(tspConfigPath, "utf8");
@@ -58,7 +61,7 @@ async function initProcessDataAndWriteTspLocation(
   }
   const tspConfigData = parseYaml(data);
 
-  // Finish processing tsp-location.yaml data
+  // Finish processing tsp-location.yaml data using the tspconfig.yaml contents
   tspLocationData.additionalDirectories =
     tspConfigData?.options?.["@azure-tools/typespec-client-generator-cli"]?.[
       "additionalDirectories"
@@ -68,7 +71,7 @@ async function initProcessDataAndWriteTspLocation(
   const emitterData = await getEmitter(
     repoRoot,
     tspConfigData,
-    tspclientGlobalConfig,
+    tspclientGlobalConfigData,
     emitterPackageOverride,
   );
   if (emitterData.path) {
@@ -187,9 +190,6 @@ export async function initCommand(argv: any) {
 
   const repoRoot = await getRepoRoot(outputDir);
 
-  // Read the global tspclientconfig.yaml if it exists, otherwise tspclientGlobalConfig will be undefined.
-  const tspclientGlobalConfigData = await parseTspClientRepoConfig(repoRoot);
-
   let isUrl = true;
   if (argv["local-spec-repo"]) {
     const localSpecRepo = argv["local-spec-repo"];
@@ -227,7 +227,6 @@ export async function initCommand(argv: any) {
       outputDir,
       repoRoot,
       joinPaths(cloneDir, tspConfigPath),
-      tspclientGlobalConfigData,
       tspLocationData,
       argv,
     );
@@ -253,7 +252,6 @@ export async function initCommand(argv: any) {
       outputDir,
       repoRoot,
       tspConfigPath,
-      tspclientGlobalConfigData,
       tspLocationData,
       argv,
     );
@@ -272,7 +270,6 @@ export async function initCommand(argv: any) {
   return outputDir;
 }
 
-// TODO we'd need to have a resolved emitter-output-dir to use as the output-dir here. Ask tim for info on how to do this.
 export async function syncCommand(argv: any) {
   let outputDir = argv["output-dir"];
   let localSpecRepo = argv["local-spec-repo"];

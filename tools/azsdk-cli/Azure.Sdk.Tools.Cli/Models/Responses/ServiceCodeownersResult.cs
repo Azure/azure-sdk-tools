@@ -2,13 +2,13 @@ using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models.Responses;
 
-public class ServiceCodeOwnerResult : Response
+public class ServiceCodeownersResult : Response
 {
     [JsonPropertyName("message")]
     public string Message { get; set; } = "";
 
     [JsonPropertyName("code_owners")]
-    public List<CodeOwnerValidationResult> CodeOwners { get; set; } = new();
+    public List<CodeownersValidationResult> CodeOwners { get; set; } = new();
 
     public override string ToString()
     {

@@ -15,7 +15,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
     public class PullRequestResult
     {
-        public string Url { get; set; }
+        public string Url { get; set; } = string.Empty;
         public List<string> Messages { get; set; } = new List<string>();
     }
 
@@ -135,7 +135,6 @@ public class GitConnection
             logger.LogInformation($"Getting all pull request for {repoOwner}/{repoName}");
             var pullRequests = await gitHubClient.PullRequest.GetAllForRepository(repoOwner, repoName);
             logger.LogInformation($"Branch name: {remoteBranch}");
-            //return pullRequests?.FirstOrDefault(pr => pr.Head?.Label != null && pr.Head.Label.Equals(remoteBranch, StringComparison.InvariantCultureIgnoreCase));
             return pullRequests?.FirstOrDefault(pr => pr.Head?.Ref != null && pr.Head.Ref.Equals(remoteBranch, StringComparison.InvariantCultureIgnoreCase));
         }
 

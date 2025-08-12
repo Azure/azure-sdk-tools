@@ -43,7 +43,32 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
                 }
             }
 
-            // Second, compare by service label
+            // SECOND PRIORITY: Handle catch-all patterns (like /sdk/) that should appear at the top of their sections
+            bool xIsCatchAll = IsCatchAllPattern(pathX);
+            bool yIsCatchAll = IsCatchAllPattern(pathY);
+
+            if (xIsCatchAll && !yIsCatchAll)
+            {
+                return -1; // x (catch-all) comes before y (non-catch-all)
+            }
+            if (!xIsCatchAll && yIsCatchAll)
+            {
+                return 1; // y (catch-all) comes before x (non-catch-all)
+            }
+
+            // If both are catch-all patterns, sort them by path length (shorter = more general)
+            if (xIsCatchAll && yIsCatchAll)
+            {
+                int lengthComparison = pathX.Length.CompareTo(pathY.Length);
+                if (lengthComparison != 0)
+                {
+                    return lengthComparison;
+                }
+                // If same length, sort alphabetically
+                return string.Compare(pathX, pathY, StringComparison.Ordinal);
+            }
+
+            // Third, compare by service label
             int serviceLabelComparison = CompareByServiceLabel(x, y);
             if (serviceLabelComparison != 0)
             {
@@ -200,6 +225,30 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
             }
 
             return string.Empty;
+        }
+
+        /// <summary>
+        /// Determines if a path is a catch-all pattern that should appear at the beginning of a section.
+        /// Catch-all patterns are simple directory paths like "/sdk/" that don't contain wildcards
+        /// but serve as fallback patterns for entire directory trees.
+        /// </summary>
+        private bool IsCatchAllPattern(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return false;
+            }
+
+            // Normalize path by removing leading/trailing slashes
+            string normalizedPath = path.Trim('/');
+            
+            // A catch-all pattern is a single directory name without subdirectories or wildcards
+            // Examples: "/sdk/" -> "sdk", "/core/" -> "core"
+            // Not catch-all: "/sdk/storage/", "/sdk/*", "/**/"
+            return !string.IsNullOrEmpty(normalizedPath) && 
+                   !normalizedPath.Contains('/') && 
+                   !normalizedPath.Contains('*') && 
+                   !normalizedPath.Contains('?');
         }
     }
 }

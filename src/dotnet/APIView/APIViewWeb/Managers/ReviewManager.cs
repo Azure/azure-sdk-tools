@@ -12,6 +12,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using ApiView;
+using APIView;
 using APIViewWeb.Helpers;
 using APIViewWeb.Hubs;
 using APIViewWeb.LeanModels;
@@ -342,9 +343,10 @@ namespace APIViewWeb.Managers
             var activeApiRevision = await _apiRevisionsManager.GetAPIRevisionAsync(apiRevisionId: activeApiRevisionId);
             var reviewComments = await _commentManager.GetCommentsAsync(reviewId: reviewId, commentType: CommentType.APIRevision);
             var activeCodeFile = await _codeFileRepository.GetCodeFileAsync(activeApiRevision, false);
-            List<ApiViewAgentComment> existingCommentInfo = AgentHelpers.BuildCommentsForAgent(comments: reviewComments, codeFile: activeCodeFile);
+            List<ApiViewAgentComment> existingCommentInfo = AgentHelpers.BuildCommentsForAgent(reviewComments, activeCodeFile);
             var activeCodeLines = activeCodeFile.CodeFile.GetApiLines(skipDocs: true);
             var activeApiOutline = activeCodeFile.CodeFile.GetApiOutlineText();
+            List<ApiViewAgentComment> diagnostics = AgentHelpers.BuildDiagnosticsForAgent(activeCodeFile.CodeFile.Diagnostics.ToList(), activeCodeFile);
 
             var copilotEndpoint = _configuration["CopilotServiceEndpoint"];
             var startUrl = $"{copilotEndpoint}/api-review/start";
@@ -354,7 +356,8 @@ namespace APIViewWeb.Managers
                 { "language", LanguageServiceHelpers.GetLanguageAliasForCopilotService(activeApiRevision.Language) },
                 { "target", String.Join("\\n", activeCodeLines.Select(item => item.lineText.Trim())) },
                 { "outline", activeApiOutline },
-                { "comments", existingCommentInfo }
+                { "comments", existingCommentInfo },
+                { "diagnostics", diagnostics }
             };
 
             if (!String.IsNullOrEmpty(diffApiRevisionId))

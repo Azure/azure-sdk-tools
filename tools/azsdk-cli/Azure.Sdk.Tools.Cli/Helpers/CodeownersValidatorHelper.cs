@@ -7,7 +7,7 @@ using Octokit;
 
 namespace Azure.Sdk.Tools.Cli.Helpers
 {
-    public interface ICodeOwnerValidatorHelper
+    public interface ICodeownersValidatorHelper
     {
         /// <summary>
         /// Validates if a GitHub user meets the requirements to be an Azure SDK code owner.
@@ -15,7 +15,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         /// <param name="username">The GitHub username to validate</param>
         /// <param name="verbose">Whether to include verbose output</param>
         /// <returns>Validation result with detailed information</returns>
-        Task<CodeOwnerValidationResult> ValidateCodeOwnerAsync(string username, bool verbose = false);
+        Task<CodeownersValidationResult> ValidateCodeOwnerAsync(string username, bool verbose = false);
     }
 
     /// <summary>
@@ -23,10 +23,10 @@ namespace Azure.Sdk.Tools.Cli.Helpers
     /// This is a C# replacement for the Validate-AzsdkCodeOwner.ps1 PowerShell script.
     /// </summary>
     [Description("Validates GitHub users for Azure SDK code owner requirements")]
-    public class CodeOwnerValidatorHelper : ICodeOwnerValidatorHelper
+    public class CodeownersValidatorHelper : ICodeownersValidatorHelper
     {
         private readonly IGitHubService githubService;
-        private readonly ILogger<CodeOwnerValidatorHelper> logger;
+        private readonly ILogger<CodeownersValidatorHelper> logger;
 
         private static readonly HashSet<string> RequiredOrganizations = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -34,7 +34,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             "Azure"
         };
 
-        public CodeOwnerValidatorHelper(IGitHubService _githubService, ILogger<CodeOwnerValidatorHelper> _logger)
+        public CodeownersValidatorHelper(IGitHubService _githubService, ILogger<CodeownersValidatorHelper> _logger)
         {
             githubService = _githubService;
             logger = _logger;
@@ -45,9 +45,9 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         /// </summary>
         /// <param name="username">The GitHub username to validate</param>
         /// <returns>Validation result with detailed information</returns>
-        public async Task<CodeOwnerValidationResult> ValidateCodeOwnerAsync(string username, bool verbose = false)
+        public async Task<CodeownersValidationResult> ValidateCodeOwnerAsync(string username, bool verbose = false)
         {
-            var result = new CodeOwnerValidationResult
+            var result = new CodeownersValidationResult
             {
                 Username = username,
                 Organizations = new Dictionary<string, bool>(),
@@ -107,7 +107,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         /// <summary>
         /// Validates the user's organization memberships (Microsoft and Azure only).
         /// </summary>
-        private async Task<bool> ValidateOrganizationsAsync(string username, CodeOwnerValidationResult result)
+        private async Task<bool> ValidateOrganizationsAsync(string username, CodeownersValidationResult result)
         {
             try
             {

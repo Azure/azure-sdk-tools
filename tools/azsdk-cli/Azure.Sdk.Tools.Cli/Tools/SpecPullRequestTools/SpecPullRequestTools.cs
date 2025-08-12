@@ -83,7 +83,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             try
             {
                 var repoRootPath = typeSpecHelper.GetSpecRepoRootPath(typeSpecProjectPath);
-                logger.LogInformation($"GitHub repo root path: {repoRootPath}");
+                logger.LogInformation("GitHub repo root path: {repoRootPath}");
                 if (string.IsNullOrEmpty(repoRootPath))
                 {
                     return output.Format("Failed to get repo root path. Please make sure to select the TypeSpec project path.");

@@ -51,15 +51,15 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     if (!IsTypeSpecValidationExecutablePresent(specRepoRootPath))
                     {
                         // Run npm ci
-                        logger.LogInformation("Running npm ci");
+                        logger.LogInformation("Installing dependencies with npm ci");
                         RunNpmCi(specRepoRootPath);
-                        logger.LogInformation("Completed running npm ci");
+                        logger.LogInformation("Dependencies installation completed");
                     }
 
                     //Run TypeSpec validation
-                    logger.LogInformation("Running npx tsv to run the validation");
+                    logger.LogInformation("Starting TypeSpec validation");
                     ValidateTypeSpec(typeSpecProjectRootPath, specRepoRootPath, validationResults);
-                    logger.LogInformation("Completed running TypeSpec validation");
+                    logger.LogInformation("TypeSpec validation completed");
                 }
                 catch (Exception ex)
                 {

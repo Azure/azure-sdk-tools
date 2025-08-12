@@ -52,6 +52,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             output.Output(result);
         }
 
+        [McpServerTool(Name = "azsdk_package_run_check_changelog_validation"), Description("Run changelog validation for SDK packages. Provide absolute path to package root as param.")]
         public async Task<CLICheckResponse> RunChangelogValidation(string packagePath)
         {
             try

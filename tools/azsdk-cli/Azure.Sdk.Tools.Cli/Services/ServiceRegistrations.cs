@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 using Azure.AI.OpenAI;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Tools;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -41,9 +40,6 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ITypeSpecHelper, TypeSpecHelper>();
             services.AddSingleton<ISpecPullRequestHelper, SpecPullRequestHelper>();
             services.AddSingleton<IUserHelper, UserHelper>();
-
-            // Tools
-            services.AddSingleton<UnifiedCheckTool>();
 
             services.AddAzureClients(clientBuilder =>
             {

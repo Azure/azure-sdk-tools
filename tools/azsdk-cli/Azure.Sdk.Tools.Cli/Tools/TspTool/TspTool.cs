@@ -70,6 +70,17 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
         public override Command GetCommand()
         {
+
+            // Add validator to serviceNamespaceArg
+            serviceNamespaceArg.AddValidator(result =>
+            {
+                var value = result.GetValueOrDefault<string>();
+                if (string.IsNullOrWhiteSpace(value))
+                {
+                    result.ErrorMessage = "The service namespace cannot be empty or whitespace.";
+                }
+            });
+
             var tspCommand = new Command("tsp", "Tools for initializing TypeSpec projects and converting existing Azure service swagger definitions to TypeSpec projects");
 
             var subCommands = new[]
@@ -304,7 +315,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
 
             var tspClientCt = CancellationTokenSource.CreateLinkedTokenSource(ct);
-            tspClientCt.CancelAfter(TimeSpan.FromMinutes(2)); // Set a timeout for the initialization
+            tspClientCt.CancelAfter(TimeSpan.FromMinutes(2)); // Set a timeout for the conversion
 
             var result = await cmd.RunAsync(tspClientCt.Token);
             if (result.ExitCode != 0)

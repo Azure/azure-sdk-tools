@@ -214,12 +214,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
                         codeownerHelper.ExtractDirectoryName(entry.PathExpression).Equals(comparablePath, StringComparison.OrdinalIgnoreCase) == true);
                 }
                 else if (!string.IsNullOrEmpty(serviceLabel))
-                {   // search for service label in the service labels of the entries
+                {
+                    // Find the codeowners entry that contains the specified service label (case-insensitive)
                     updatedEntry = codeownersEntries.FirstOrDefault(entry =>
-                        entry.ServiceLabels?.Any(label => label.Equals(serviceLabel, StringComparison.OrdinalIgnoreCase)) == true);
+                        entry.ServiceLabels.Any(label => label.Equals(serviceLabel, StringComparison.OrdinalIgnoreCase)));
                 }
 
                 var codeownersEntryExists = false;
+
                 // If the Entry exists
                 if (updatedEntry != null)
                 {
@@ -275,7 +277,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     ? updatedEntry.ServiceLabels.FirstOrDefault()
                     : updatedEntry.PathExpression;
                 var resultMessages = await CreateCodeownerPR(
-                    repo,                                              // Repository name
+                    repo,                                                             // Repository name
                     string.Join('\n', modifiedCodeownersContent),                     // Modified content
                     codeownersSha,                                                    // SHA of the file to update 
                     $"{actionDescription} {identifier}", // Description for commit message, PR title, and description
@@ -392,16 +394,16 @@ namespace Azure.Sdk.Tools.Cli.Tools
             // Use codeownersSha in UpdateFileAsync
             await githubService.UpdateFileAsync(Constants.AZURE_OWNER_PATH, repo, Constants.AZURE_CODEOWNERS_PATH, description, modifiedContent, codeownersSha, branchName);
 
-            var prInfoList = await githubService.CreatePullRequestAsync(repo, Constants.AZURE_OWNER_PATH, "main", branchName, description, description, true);
-            if (prInfoList != null)
-            {
-                resultMessages.Add($"URL: {prInfoList.Url}");
-                resultMessages.AddRange(prInfoList.Messages);
-            }
-            else
-            {
-                resultMessages.Add("Error: Failed to create pull request. No PR info returned.");
-            }
+            // var prInfoList = await githubService.CreatePullRequestAsync(repo, Constants.AZURE_OWNER_PATH, "main", branchName, description, description, true);
+            // if (prInfoList != null)
+            // {
+            //     resultMessages.Add($"URL: {prInfoList.Url}");
+            //     resultMessages.AddRange(prInfoList.Messages);
+            // }
+            // else
+            // {
+            //     resultMessages.Add("Error: Failed to create pull request. No PR info returned.");
+            // }
 
             return resultMessages;
         }

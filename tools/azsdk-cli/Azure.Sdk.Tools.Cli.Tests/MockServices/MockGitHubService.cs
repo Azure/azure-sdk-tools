@@ -9,6 +9,19 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
 {
     public class MockGitHubService : IGitHubService
     {
+        public Task<CreateBranchStatus> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranchName = "main")
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> IsExistingBranchAsync(string repoOwner, string repoName, string branchName)
+        {
+            // For testing purposes, assume main and develop branches exist
+            var existingBranches = new[] { "main", "master", "develop" };
+            return Task.FromResult(existingBranches.Contains(branchName));
+        }
+
+
         public Task<User> GetGitUserDetailsAsync()
         {
             // Create a simple mock user - we'll use reflection to set properties if needed
@@ -33,7 +46,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
             return Task.FromResult($"https://github.com/{owner}/{repoName}");
         }
 
-        public Task<List<string>> CreatePullRequestAsync(string repoName, string repoOwner, string baseBranch, string headBranch, string title, string body, bool draft = true)
+        public Task<PullRequestResult> CreatePullRequestAsync(string repoName, string repoOwner, string baseBranch, string headBranch, string title, string body, bool draft = true)
         {
             throw new NotImplementedException();
         }
@@ -53,13 +66,18 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
             throw new NotImplementedException();
         }
 
+        public Task<IReadOnlyList<PullRequest?>> SearchPullRequestsByTitleAsync(string repoOwner, string repoName, string titleSearchTerm, ItemState? state = ItemState.Open)
+        {
+            throw new NotImplementedException();
+        }
+
         public Task<Issue> GetIssueAsync(string repoOwner, string repoName, int issueNumber)
         {
             var issue = CreateMockIssue(repoOwner, repoName, issueNumber);
             return Task.FromResult(issue);
         }
 
-        public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path)
+        public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path, string branch = null)
         {
             // Handle specific test scenarios
             if (path == "non-existent-path")
@@ -83,42 +101,29 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
             // Default: Return mock directory listing for .github/prompts or similar paths
             var contents = new List<RepositoryContent>
             {
-                CreateMockRepositoryContent("README.md", ".github/prompts/README.md", "test"), 
-                CreateMockRepositoryContent("prompt1.md", ".github/prompts/prompt1.md", "test"), 
-                CreateMockRepositoryContent("prompt2.md", ".github/prompts/prompt2.md", "test")  
+                CreateMockRepositoryContent("README.md", ".github/prompts/README.md", "test"),
+                CreateMockRepositoryContent("prompt1.md", ".github/prompts/prompt1.md", "test"),
+                CreateMockRepositoryContent("prompt2.md", ".github/prompts/prompt2.md", "test")
             };
 
             return Task.FromResult<IReadOnlyList<RepositoryContent>?>(contents.AsReadOnly());
+        }
+
+        public Task<RepositoryContent> GetContentsSingleAsync(string owner, string repoName, string path)
+        {
+            var fileName = System.IO.Path.GetFileName(path);
+            var content = CreateMockRepositoryContent(fileName, path, "dGVzdCBjb250ZW50"); // "test content" in base64
+            return Task.FromResult(content);
         }
 
         public Task UpdateFileAsync(string owner, string repoName, string path, string message, string content, string sha, string branch)
         {
             throw new NotImplementedException();
         }
-        
-        public Task<CreateBranchStatus> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranchName = "main")
+
+        public Task<string> GetFileContentsAsync(string repoOwner, string repoName, string path)
         {
             throw new NotImplementedException();
-        }
-
-        public Task<bool> GetBranchAsync(string repoOwner, string repoName, string branchName)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<IReadOnlyList<PullRequest?>> SearchPullRequestsByTitleAsync(string repoOwner, string repoName, string titleSearchTerm, ItemState? state = null)
-        {
-            // Create mock pull requests for testing
-            var mockPullRequests = new List<PullRequest?>();
-
-            // Add a mock pull request that matches the title search term
-            if (titleSearchTerm.Contains("Service Label") || titleSearchTerm.Contains("Test"))
-            {
-                var mockPr = CreateMockPullRequest(repoOwner, repoName, 123);
-                mockPullRequests.Add(mockPr);
-            }
-
-            return Task.FromResult<IReadOnlyList<PullRequest?>>(mockPullRequests.AsReadOnly());
         }
 
         private RepositoryContent CreateMockRepositoryContent(string name, string path, string encodedContent)
@@ -132,7 +137,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
                 downloadUrl: $"https://raw.githubusercontent.com/testowner/testrepo/main/{path}",
                 url: $"https://api.github.com/repos/testowner/testrepo/contents/{path}",
                 htmlUrl: $"https://github.com/testowner/testrepo/blob/main/{path}",
-                gitUrl: null, 
+                gitUrl: null,
                 encoding: "base64",
                 encodedContent: encodedContent,
                 target: null,

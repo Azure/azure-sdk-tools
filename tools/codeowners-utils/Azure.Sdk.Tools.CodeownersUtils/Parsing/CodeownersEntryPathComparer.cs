@@ -52,83 +52,94 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
 
             // If service labels are the same (or both empty), compare by path
 
-            // Normalize paths by removing leading slashes for comparison
-            pathX = pathX.TrimStart('/');
-            pathX = pathX.TrimEnd('/');
-            pathY = pathY.TrimStart('/');
-            pathY = pathY.TrimEnd('/');
+            // Normalize paths by removing leading/trailing slashes for comparison
+            string normalizedPathX = pathX.Trim('/');
+            string normalizedPathY = pathY.Trim('/');
 
-            // Handle cases where one has a path and the other doesn't
-            if (string.IsNullOrWhiteSpace(pathX) && !string.IsNullOrWhiteSpace(pathY))
+            // Handle empty path cases
+            if (string.IsNullOrWhiteSpace(normalizedPathX) && !string.IsNullOrWhiteSpace(normalizedPathY))
             {
-                return 1; // y has path, x doesn't - y comes first (path-based entries before service-label-only entries)
+                return 1; // y has path, x doesn't - y comes first
             }
-            if (!string.IsNullOrWhiteSpace(pathX) && string.IsNullOrWhiteSpace(pathY))
+            if (!string.IsNullOrWhiteSpace(normalizedPathX) && string.IsNullOrWhiteSpace(normalizedPathY))
             {
-                return -1; // x has path, y doesn't - x comes first (path-based entries before service-label-only entries)
+                return -1; // x has path, y doesn't - x comes first
             }
             
-            // If both paths are empty or whitespace, they're equal at this level
-            if (string.IsNullOrWhiteSpace(pathX) && string.IsNullOrWhiteSpace(pathY))
+            // If both paths are empty, they're equal at this level
+            if (string.IsNullOrWhiteSpace(normalizedPathX) && string.IsNullOrWhiteSpace(normalizedPathY))
             {
                 return 0;
             }
 
-            // Both paths exist, handle parent/child path relationships first
-            // Ensure parent paths come before their subpaths
-            if (!string.IsNullOrWhiteSpace(pathX) && !string.IsNullOrWhiteSpace(pathY))
+            // Handle parent/child path relationships - ensure parent paths come before their subpaths
+            if (!string.IsNullOrWhiteSpace(normalizedPathX) && !string.IsNullOrWhiteSpace(normalizedPathY))
             {
                 // Check if one path is a parent of the other
-                if (pathY.StartsWith(pathX + "/", StringComparison.Ordinal))
+                if (normalizedPathY.StartsWith(normalizedPathX + "/", StringComparison.Ordinal))
                 {
                     return -1; // pathX is parent of pathY, so pathX comes first
                 }
-                if (pathX.StartsWith(pathY + "/", StringComparison.Ordinal))
+                if (normalizedPathX.StartsWith(normalizedPathY + "/", StringComparison.Ordinal))
                 {
                     return 1; // pathY is parent of pathX, so pathY comes first
                 }
             }
 
             // Do alphabetical comparison of paths
-            int alphabeticalComparison = string.Compare(pathX, pathY, StringComparison.Ordinal);
+            int alphabeticalComparison = string.Compare(normalizedPathX, normalizedPathY, StringComparison.Ordinal);
 
-            // Before returning the alphabetical comparison, check for simple wildcard cases
-            // Handle cases like "sdk/storage*" vs "sdk/storage"
+            // Handle wildcard precedence for similar paths
             if (alphabeticalComparison != 0)
             {
-                bool xHasWildcard = x.ContainsWildcard;
-                bool yHasWildcard = y.ContainsWildcard;
-
-                // Simple check: if one path ends with * and matches the other path, prioritize the wildcard
-                if (xHasWildcard && !yHasWildcard && pathX.EndsWith("*") && pathX.TrimEnd('*') == pathY)
+                // Check for simple wildcard cases like "sdk/storage*" vs "sdk/storage"
+                if (HandleSimpleWildcardCase(x, y, normalizedPathX, normalizedPathY, out int wildcardResult))
                 {
-                    return -1; // x (with wildcard) comes before y (without wildcard)
+                    return wildcardResult;
                 }
-                if (!xHasWildcard && yHasWildcard && pathY.EndsWith("*") && pathY.TrimEnd('*') == pathX)
-                {
-                    return 1; // y (with wildcard) comes before x (without wildcard)
-                }
-
-                // Otherwise, use alphabetical comparison
+                
                 return alphabeticalComparison;
             }
 
-            // If paths are the same alphabetically, prioritize wildcard paths
-            // (this handles cases where paths are identical but one has additional wildcards)
-            bool xHasWildcardSame = x.ContainsWildcard;
-            bool yHasWildcardSame = y.ContainsWildcard;
+            // If paths are identical alphabetically, prioritize wildcard paths
+            bool xHasWildcard = x.ContainsWildcard;
+            bool yHasWildcard = y.ContainsWildcard;
 
-            if (xHasWildcardSame && !yHasWildcardSame)
+            if (xHasWildcard && !yHasWildcard)
             {
                 return -1; // x (with wildcard) comes before y (without wildcard)
             }
-            if (!xHasWildcardSame && yHasWildcardSame)
+            if (!xHasWildcard && yHasWildcard)
             {
                 return 1; // y (with wildcard) comes before x (without wildcard)
             }
 
             // If both have wildcards or both don't have wildcards, they're equal
             return 0;
+        }
+
+        /// <summary>
+        /// Handle simple wildcard cases where one path ends with * and matches the other path.
+        /// </summary>
+        private bool HandleSimpleWildcardCase(CodeownersEntry x, CodeownersEntry y, string pathX, string pathY, out int result)
+        {
+            result = 0;
+            bool xHasWildcard = x.ContainsWildcard;
+            bool yHasWildcard = y.ContainsWildcard;
+
+            // Simple check: if one path ends with * and matches the other path, prioritize the wildcard
+            if (xHasWildcard && !yHasWildcard && pathX.EndsWith("*") && pathX.TrimEnd('*') == pathY)
+            {
+                result = -1; // x (with wildcard) comes before y (without wildcard)
+                return true;
+            }
+            if (!xHasWildcard && yHasWildcard && pathY.EndsWith("*") && pathY.TrimEnd('*') == pathX)
+            {
+                result = 1; // y (with wildcard) comes before x (without wildcard)
+                return true;
+            }
+
+            return false;
         }
 
         /// <summary>

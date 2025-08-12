@@ -36,7 +36,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             };
 
             // Act
-            var result = InvokeAreEntriesRelatedByPath(entry1, entry2);
+            var method = typeof(CodeOwnerHelper).GetMethod("AreEntriesRelated", BindingFlags.NonPublic | BindingFlags.Instance);
+            var result = (bool)(method?.Invoke(codeOwnerHelper, new object[] { entry1, entry2 }) ?? false);
 
             // Assert
             Assert.That(result, Is.True, "Entries with same service label should be related");
@@ -167,7 +168,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         [TestCase("/sdk/service with spaces/", "service with spaces")]
         public void TestExtractDirectoryName(string path, string expected)
         {
-            var actual = InvokeExtractDirectoryName(path);
+            var actual = codeOwnerHelper.ExtractDirectoryName(path);
             Assert.That(actual, Is.EqualTo(expected));
         }
 
@@ -175,7 +176,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         public void ExtractDirectoryName_NullPath_ReturnsEmpty()
         {
             // Act & Assert
-            Assert.That(InvokeExtractDirectoryName(""), Is.EqualTo(""));
+            Assert.That(codeOwnerHelper.ExtractDirectoryName(""), Is.EqualTo(""));
         }
 
         #endregion
@@ -350,7 +351,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             foreach (var (path, expectedDirectory) in testCases)
             {
                 // Act
-                var result = InvokeExtractDirectoryName(path);
+                var result = codeOwnerHelper.ExtractDirectoryName(path);
 
                 // Assert
                 Assert.That(result, Is.EqualTo(expectedDirectory), 
@@ -387,16 +388,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
 
         private bool InvokeAreEntriesRelatedByPath(CodeownersEntry entry1, CodeownersEntry entry2)
         {
-            var method = typeof(CodeOwnerHelper).GetMethod("AreEntriesRelatedByPath", 
+            var method = typeof(CodeOwnerHelper).GetMethod("AreEntriesRelated", 
                 BindingFlags.NonPublic | BindingFlags.Instance);
             return (bool)(method?.Invoke(codeOwnerHelper, new object[] { entry1, entry2 }) ?? false);
-        }
-
-        private string InvokeExtractDirectoryName(string path)
-        {
-            var method = typeof(CodeOwnerHelper).GetMethod("ExtractDirectoryName", 
-                BindingFlags.NonPublic | BindingFlags.Instance);
-            return (string)(method?.Invoke(codeOwnerHelper, new object[] { path }) ?? "");
         }
 
         private (string serviceLabel, string prLabel) InvokeGetPrimaryLabel(CodeownersEntry entry)

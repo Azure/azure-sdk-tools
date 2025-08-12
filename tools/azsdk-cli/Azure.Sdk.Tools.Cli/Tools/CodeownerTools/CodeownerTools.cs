@@ -12,6 +12,7 @@ using Octokit;
 using Azure.Sdk.Tools.CodeownersUtils.Utils;
 using Microsoft.TeamFoundation.Common;
 using Azure.Sdk.Tools.Cli.Configuration;
+using Azure.Sdk.Tools.Cli.Models.Responses;
 
 namespace Azure.Sdk.Tools.Cli.Tools
 {
@@ -22,8 +23,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         IOutputService output,
         ITypeSpecHelper typespecHelper,
         ICodeOwnerHelper codeownerHelper,
-        ICodeOwnerValidatorHelper codeOwnerValidator,
-        ILabelHelper labelHelper) : MCPTool
+        ICodeOwnerValidatorHelper codeOwnerValidator) : MCPTool
     {
         private static Dictionary<string, CodeOwnerValidationResult> codeOwnerValidationCache = new Dictionary<string, CodeOwnerValidationResult>();
         private static readonly string standardServiceCategory = "# Client Libraries";
@@ -43,9 +43,9 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private readonly Option<string> pathOptionOptional = new(["--path", "-p"], "The repository path to check/validate");
         private readonly Option<string> serviceLabelOption = new(["--service-label", "-sl"], "The service label");
         private readonly Option<string[]> serviceOwnersOption = new(["--service-owners", "-so"], "The service owners (space-separated)");
-        private readonly Option<string[]> sourceOwnersOption = new(["--source-owners", "-sro"], "The source owners (space-separated)") { IsRequired = true };
+        private readonly Option<string[]> sourceOwnersOption = new(["--source-owners", "-sro"], "The source owners (space-separated)");
         private readonly Option<string> typeSpecProjectPathOption = new(["--typespec-project"], "Path to typespec project") { IsRequired = true };
-        private readonly Option<bool> isAddingOption = new(["--is-adding", "-ia"], "Whether to add (true) or remove (false) owners") { IsRequired = true };
+        private readonly Option<bool> isAddingOption = new(["--is-adding", "-ia"], "Whether to add (true) or remove (false) owners");
         private readonly Option<string> workingBranchOption = new(["--working-branch", "-wb"], "The existing branch to add changes to (from SDK generation)");
 
         public override Command GetCommand()
@@ -70,6 +70,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     serviceLabelOption,
                     pathOptionOptional
                 },
+                new Command("mock-tool", "mock tool")
+                {},
             };
 
             foreach (var subCommand in subCommands)
@@ -119,6 +121,9 @@ namespace Azure.Sdk.Tools.Cli.Tools
                         validateRepoPath);
                     output.Output(validateResult);
                     return;
+                case "mock-tool":
+                    await MockTool();
+                    return;
                 default:
                     SetFailure();
                     output.OutputError($"Unknown command: '{command}'");
@@ -165,22 +170,18 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 var labelsContent = labelsFileContent.FirstOrDefault()?.Content;
                 var labelsSha = labelsFileContent.FirstOrDefault()?.Sha;
 
-                // Validate service path
-                if (!string.IsNullOrEmpty(path))
-                {
-                    path = path.Trim('/');
-                    path = $"/{path}/";
-                }
+                // Normalize service path
+                path = codeownerHelper.NormalizePath(path);
 
                 // Validate service label
                 if (!string.IsNullOrEmpty(serviceLabel))
                 {
-                    var serviceLabelValidationResults = labelHelper.CheckServiceLabel(labelsContent, serviceLabel);
+                    var serviceLabelValidationResults = LabelHelper.CheckServiceLabel(labelsContent, serviceLabel);
                     if (serviceLabelValidationResults != LabelHelper.ServiceLabelStatus.Exists)
                     {
                         var pullRequests = await githubService.SearchPullRequestsByTitleAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, "Service Label");
 
-                        if (!labelHelper.CheckServiceLabelInReview(pullRequests, serviceLabel) && string.IsNullOrEmpty(path))
+                        if (!LabelHelper.CheckServiceLabelInReview(pullRequests, serviceLabel) && string.IsNullOrEmpty(path))
                         {
                             throw new Exception($"Service label: {serviceLabel} is invalid.");
                         }
@@ -207,9 +208,10 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 CodeownersEntry? updatedEntry = null;
                 if (!string.IsNullOrEmpty(path))
                 {
+                    var comparablePath = codeownerHelper.ExtractDirectoryName(path);
                     // get the first entry that matches if no one get null. Then compare the path of the entry with the given path 
                     updatedEntry = codeownersEntries.FirstOrDefault(entry =>
-                        entry.PathExpression?.Equals(path, StringComparison.OrdinalIgnoreCase) == true);
+                        codeownerHelper.ExtractDirectoryName(entry.PathExpression).Equals(comparablePath, StringComparison.OrdinalIgnoreCase) == true);
                 }
                 else if (!string.IsNullOrEmpty(serviceLabel))
                 {   // search for service label in the service labels of the entries
@@ -234,16 +236,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
                         updatedEntry.SourceOwners = codeownerHelper.RemoveOwners(updatedEntry.SourceOwners, sourceOwners);
                     }
                 }
-
-                // Else (Entry doesn't exist)
-                if (updatedEntry == null)
+                else if (updatedEntry == null)
                 {
-                    // Only check if path already exists when adding new entry.
-                    if (!string.IsNullOrEmpty(path) && codeownersContent?.Contains(path) == true)
-                    {
-                        throw new Exception($"{path} already exists in the CODEOWNERS file.");
-                    }
-
                     codeownersEntryExists = false;
                     updatedEntry = new CodeownersEntry()
                     {
@@ -260,24 +254,33 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 if (validationErrors.Any())
                 {
                     var codeownerValidationResultMessage = string.Join("; ", codeownerValidationResults.Select(r => $"{r.Username}: {(r.IsValidCodeOwner ? "Valid" : "Invalid")}"));
-                    throw new Exception($"{validationErrors} Validation results: {codeownerValidationResults}");
+                    throw new Exception($"{validationErrors} Validation results: {codeownerValidationResultMessage}");
                 }
 
                 // Modify the file
-                var insertionIndex = codeownerHelper.findAlphabeticalInsertionPoint(codeownersEntries, path, serviceLabel);
-                var modifiedCodeownersContent = codeownerHelper.addCodeownersEntryAtIndex(codeownersContent, updatedEntry, insertionIndex, codeownersEntryExists);
+                var updatedEntryWithLines = codeownerHelper.findAlphabeticalInsertionPoint(codeownersEntries, updatedEntry);
+                var modifiedCodeownersContent = codeownerHelper.addCodeownersEntryAtIndex(codeownersContent, updatedEntry, updatedEntry.startLine, codeownersEntryExists);
 
                 // Create Branch, Update File, and Handle PR.
                 var actionDescription = isAdding ? "Add codeowner aliases for" : "Remove codeowner aliases for";
                 var actionType = isAdding ? "add-codeowner-alias" : "remove-codeowner-alias";
 
+                if (!codeownersEntryExists)
+                {
+                    actionDescription = "Add codeowner entry for";
+                    actionType = "add-codeowner-entry";
+                }
+
+                var identifier = !string.IsNullOrWhiteSpace(updatedEntry.ServiceLabels?.FirstOrDefault())
+                    ? updatedEntry.ServiceLabels.FirstOrDefault()
+                    : updatedEntry.PathExpression;
                 var resultMessages = await CreateCodeownerPR(
                     repo,                                              // Repository name
                     string.Join('\n', modifiedCodeownersContent),                     // Modified content
                     codeownersSha,                                                    // SHA of the file to update 
-                    $"{actionDescription} {updatedEntry.ServiceLabels?.FirstOrDefault() ?? updatedEntry.PathExpression}", // Description for commit message, PR title, and description
+                    $"{actionDescription} {identifier}", // Description for commit message, PR title, and description
                     actionType,                                             // Branch prefix for the action
-                    updatedEntry.ServiceLabels?.FirstOrDefault() ?? updatedEntry.PathExpression, // Identifier for the PR
+                    identifier, // Identifier for the PR
                     workingBranch);
 
                 return string.Join("\n", resultMessages);
@@ -369,7 +372,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             var branchName = "";
 
             // Check if we have a working branch from SDK generation
-            if (!string.IsNullOrEmpty(workingBranch) && await githubService.GetBranchAsync(Constants.AZURE_OWNER_PATH, repo, workingBranch))
+            if (!string.IsNullOrEmpty(workingBranch) && await githubService.IsExistingBranchAsync(Constants.AZURE_OWNER_PATH, repo, workingBranch))
             {
                 branchName = workingBranch;
                 resultMessages.Add($"Using existing branch: {branchName}");
@@ -382,21 +385,22 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 resultMessages.Add($"Created branch: {branchName} - Status: {createBranchResult}");
             }
 
-            // Update file
-            await githubService.UpdateFileAsync(Constants.AZURE_OWNER_PATH, repo, Constants.AZURE_CODEOWNERS_PATH, description, modifiedContent, sha, branchName);
+            // After branchName is set
+            var codeownersFileContent = await githubService.GetContentsAsync(Constants.AZURE_OWNER_PATH, repo, Constants.AZURE_CODEOWNERS_PATH, branchName);
+            var codeownersSha = codeownersFileContent.FirstOrDefault()?.Sha;
 
-            // Handle PR creation or update existing PR
-            var existingPR = await githubService.GetPullRequestForBranchAsync(Constants.AZURE_OWNER_PATH, repo, branchName);
-            if (existingPR != null)
+            // Use codeownersSha in UpdateFileAsync
+            await githubService.UpdateFileAsync(Constants.AZURE_OWNER_PATH, repo, Constants.AZURE_CODEOWNERS_PATH, description, modifiedContent, codeownersSha, branchName);
+
+            var prInfoList = await githubService.CreatePullRequestAsync(repo, Constants.AZURE_OWNER_PATH, "main", branchName, description, description, true);
+            if (prInfoList != null)
             {
-                // PR already exists - the file update will automatically be added to it
-                resultMessages.Add($"Codeowner changes added to existing PR #{existingPR.Number}: {existingPR.HtmlUrl}");
+                resultMessages.Add($"URL: {prInfoList.Url}");
+                resultMessages.AddRange(prInfoList.Messages);
             }
             else
             {
-                // No existing PR - create a new one if needed
-                var prInfoList = await githubService.CreatePullRequestAsync(repo, Constants.AZURE_OWNER_PATH, "main", branchName, description, description, true);
-                resultMessages.AddRange(prInfoList);
+                resultMessages.Add("Error: Failed to create pull request. No PR info returned.");
             }
 
             return resultMessages;
@@ -460,6 +464,137 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 return (string.Join(" ", validationErrors), allValidationResults);
             }
             return ("", allValidationResults);
+        }
+
+        [McpServerTool(Name = "mock-tool"), Description("Does mock stuff.")]
+        public async Task MockTool()
+        {
+            try
+            {
+                // Example: Fetch immediate team info from Microsoft Open Source Management Portal API
+                // using var httpClient = new System.Net.Http.HttpClient();
+                // var searchTerm = "ReilleyMilne"; // Hardcoded for demonstration
+                // var apiUrl = $"https://repos.opensource.microsoft.com/people?q={searchTerm}";
+                // logger.LogInformation($"Fetching immediate team info for {searchTerm} from {apiUrl}");
+                // try
+                // {
+                //     var response = await httpClient.GetAsync(apiUrl);
+                //     response.EnsureSuccessStatusCode();
+                //     var json = await response.Content.ReadAsStringAsync();
+                //     logger.LogInformation($"API response: {json}");
+                // }
+                // catch (Exception ex)
+                // {
+                //     logger.LogError($"Error fetching immediate team info: {ex.Message}");
+                // }
+                // return;
+
+                // var codeownersPath = @"C:\\Code\\azure-sdk-tools\\tools\\azsdk-cli\\Azure.Sdk.Tools.Cli\\Tools\\CodeownerTools\\CODEOWNER_EDITED2";
+                // if (!File.Exists(codeownersPath))
+                // {
+                //     logger.LogError($"Local CODEOWNER_EDITED not found: {codeownersPath}");
+                //     return;
+                // }
+
+                // var content = await File.ReadAllTextAsync(codeownersPath);
+                // var (startLine, endLine) = codeownerHelper.findBlock(content, "# ######## Services ########");
+                // logger.LogInformation($"start = {startLine}, end = {endLine}");
+
+                // var codeownersUrl = codeownersPath;
+
+                var codeownersPath = @"C:\\Code\\azure-sdk-tools\\tools\\azsdk-cli\\Azure.Sdk.Tools.Cli\\Tools\\CodeownerTools\\CODEOWNERS";
+                if (!File.Exists(codeownersPath))
+                {
+                    // logger.LogError($"Local CODEOWNERS file not found: {codeownersPath}");
+                    return;
+                }
+
+                var content = await File.ReadAllTextAsync(codeownersPath);
+                var (startLine, endLine) = codeownerHelper.findBlock(content, "# Client SDKs");
+                // logger.LogInformation($"start = {startLine}, end = {endLine}");
+
+                var codeownersEntries = CodeownersParser.ParseCodeownersFile(codeownersPath, startLine: startLine, endLine: endLine);
+
+                for (int i = 0; i < codeownersEntries.Count; i++)
+                {
+                    (codeownersEntries, i) = codeownerHelper.mergeCodeownerEntries(codeownersEntries, i);
+                }
+
+                // Create our custom comparer and sort the entries
+                var comparer = new CodeownersEntryPathComparer();
+                var sortedEntries = codeownersEntries.OrderBy(entry => entry, comparer).ToList();
+
+                // var (mstartLine, mendLine) = codeownerHelper.findBlock(content, "# ######## Management Plane ########");
+                // logger.LogInformation($"start = {mstartLine}, end = {mendLine}");
+
+                // var mcodeownersEntries = CodeownersParser.ParseCodeownersFile(codeownersUrl, startLine: mstartLine, endLine: mendLine);
+
+                // for (int i = 0; i < mcodeownersEntries.Count; i++)
+                // {
+                //     (mcodeownersEntries, i) = codeownerHelper.mergeCodeownerEntries(mcodeownersEntries, i);
+                // }
+
+                // // Create our custom comparer and sort the entries
+                // var msortedEntries = mcodeownersEntries.OrderBy(entry => entry, comparer).ToList();
+
+                // Write the sorted entries to a new file
+                var outputPath = "./Tools/CodeownerTools/CODEOWNER_EDITED";
+                var outputLines = new List<string>();
+
+                var lines = content.Split('\n');
+
+                // Add everything before the Services section
+                for (int i = 0; i < startLine + 2; i++)
+                {
+                    outputLines.Add(lines[i]);
+                }
+
+                // Add sorted Services entries
+                foreach (var entry in sortedEntries)
+                {
+                    var formattedEntry = codeownerHelper.formatCodeownersEntry(entry);
+                    if (!string.IsNullOrWhiteSpace(formattedEntry))
+                    {
+                        outputLines.Add(formattedEntry);
+                    }
+                }
+
+                for (int i = endLine; i < lines.Length; i++)
+                {
+                    outputLines.Add(lines[i]);
+                }
+
+                // // Add everything between Services section end and Management Plane section start
+                // for (int i = endLine; i < mstartLine + 2; i++)
+                // {
+                //     outputLines.Add(lines[i]);
+                // }
+
+                // // Add sorted Management Plane entries
+                // foreach (var entry in msortedEntries)
+                // {
+                //     var formattedEntry = codeownerHelper.formatCodeownersEntry(entry);
+                //     if (!string.IsNullOrWhiteSpace(formattedEntry))
+                //     {
+                //         outputLines.Add(formattedEntry);
+                //         outputLines.Add("");
+                //     }
+                // }
+
+                // // Add everything after the Management Plane section
+                // for (int i = mendLine; i < lines.Length; i++)
+                // {
+                //     outputLines.Add(lines[i]);
+                // }
+
+                // Write all lines to the file
+                await File.WriteAllLinesAsync(outputPath, outputLines);
+                // logger.LogInformation($"Successfully wrote {sortedEntries.Count} sorted services entries and {msortedEntries.Count} sorted management plane entries to {outputPath}");
+            }
+            catch (Exception ex)
+            {
+                // logger.LogInformation($"Error: {ex}");
+            }
         }
     }
 }

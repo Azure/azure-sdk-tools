@@ -5,28 +5,26 @@ using System.CommandLine.Invocation;
 using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Contract;
+using Azure.Sdk.Tools.Cli.Helpers;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Models.Responses;
 using System.Text;
-using CsvHelper;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
+using Azure.Sdk.Tools.Cli.Configuration;
 
 
 namespace Azure.Sdk.Tools.Cli.Tools
 {
 
-    [McpServerToolType, Description("Tools for working with GitHub service labels from the Azure SDK Tools common-labels.csv")]
+    [McpServerToolType, Description("Tools for working with GitHub labels for services")]
     public class GitHubLabelsTool(
         ILogger<GitHubLabelsTool> logger,
         IOutputService output,
-        ILabelHelper labelHelper,
         IGitHubService githubService
     ) : MCPTool
     {
-        private const string serviceLabelColorCode = "e99695"; // color code for service labels in common-labels.csv
-
         //command names
         private const string checkServiceLabelCommandName = "check-service-label";
         private const string createServiceLabelCommandName = "create-service-label";
@@ -68,8 +66,9 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 case createServiceLabelCommandName:
                     var proposedServiceLabel = commandParser.GetValueForOption(serviceLabelOpt);
                     var documentationLink = commandParser.GetValueForOption(documentationLinkOpt);
-                    var createdPRLink = await CreateServiceLabel(proposedServiceLabel, documentationLink ?? ""); // Should probably just return the created PR link.
-                    output.Output($"Create service label result: {createdPRLink}");
+                    var createdPRResult = await CreateServiceLabel(proposedServiceLabel, documentationLink ?? "");
+                    ctx.ExitCode = ExitCode;
+                    output.Output(createdPRResult);
                     return;
                 default:
                     SetFailure();
@@ -78,46 +77,43 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        [McpServerTool(Name = "CheckServiceLabel"), Description("Checks if a service label exists in the common-labels.csv and returns its details if found.")]
-        public async Task<string> CheckServiceLabel(string serviceLabel)
+        [McpServerTool(Name = "CheckServiceLabel"), Description("Checks if a service label exists and returns its details")]
+        public async Task<ServiceLabelResponse> CheckServiceLabel(string serviceLabel)
         {
             try
             {
-                return (await getServiceLabelInfo(serviceLabel)).ToString();
+                var labelStatus = (await getServiceLabelInfo(serviceLabel)).ToString();
+                return new ServiceLabelResponse
+                {
+                    Status = labelStatus,
+                    Label = serviceLabel
+                };
             }
             catch (Exception ex)
             {
+                SetFailure();
                 logger.LogError(ex, "Error occurred while checking service label: {serviceLabel}", serviceLabel);
-                return $"Error occurred while checking service label '{serviceLabel}': {ex.Message}";
-            }            
+                return new ServiceLabelResponse
+                {
+                    ResponseError = $"Error occurred while checking service label: {serviceLabel}: {ex.Message}",
+                };
+            }
         }
 
-        public async Task<LabelHelper.ServiceLabelStatus> getServiceLabelInfo(string serviceLabel)
+        private async Task<LabelHelper.ServiceLabelStatus> getServiceLabelInfo(string serviceLabel)
         {
             try
             {
-                var contents = await githubService.GetContentsAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv");
-                if (contents == null || contents.Count == 0)
-                {
-                    // TODO: SetFailure()?
-                    throw new InvalidOperationException("Could not retrieve common-labels.csv file");
-                }
+                var csvContent = await githubService.GetContentsSingleAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, Constants.AZURE_COMMON_LABELS_PATH);
 
-                // Get the first (and should be only) file content
-                var csvContent = contents[0].Content;
-                if (string.IsNullOrEmpty(csvContent))
-                {
-                    throw new InvalidOperationException("common-labels.csv file is empty");
-                }
-
-                var result = labelHelper.CheckServiceLabel(csvContent, serviceLabel);
+                var result = LabelHelper.CheckServiceLabel(csvContent.Content, serviceLabel);
                 if (result == LabelHelper.ServiceLabelStatus.Exists)
                 {
                     return result;
                 }
 
                 var pullRequests = await githubService.SearchPullRequestsByTitleAsync("Azure", "azure-sdk-tools", "Service Label");
-                if (labelHelper.CheckServiceLabelInReview(pullRequests, serviceLabel))
+                if (LabelHelper.CheckServiceLabelInReview(pullRequests, serviceLabel))
                 {
                     return LabelHelper.ServiceLabelStatus.InReview;
                 }
@@ -130,71 +126,92 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        [McpServerTool(Name = "CreateServiceLabel"), Description("Creates a pull request to add a new service label to the common-labels.csv.")]
-        public async Task<string> CreateServiceLabel(string label, string link)
+        [McpServerTool(Name = "CreateServiceLabel"), Description("Creates a pull request to add a new service label")]
+        public async Task<ServiceLabelResponse> CreateServiceLabel(string label, string link)
         {
             try
             {
-                var normalizedLabel = labelHelper.NormalizeLabel(label);
+                var normalizedLabel = LabelHelper.NormalizeLabel(label);
 
                 var checkResult = await getServiceLabelInfo(normalizedLabel);
 
                 // Create a new branch
                 if (checkResult == LabelHelper.ServiceLabelStatus.Exists)
                 {
-                    return $"Service label '{label}' already exists.";
-                }
-                else if (checkResult == LabelHelper.ServiceLabelStatus.InReview)
-                {
-                    return $"Service label '{label}' currently has an open PR.";
+                    logger.LogInformation($"Service label '{label}' already exists. No action taken.");
+                    return new ServiceLabelResponse
+                    {
+                        Status = "AlreadyExists",
+                        Label = label
+                    };
                 }
                 else if (checkResult == LabelHelper.ServiceLabelStatus.NotAServiceLabel)
                 {
                     logger.LogWarning($"Label '{label}' exists but is not a service label. No action taken.");
-                    return $"Label '{label}' exists but is not a service label. Try a different label.";
+                    return new ServiceLabelResponse
+                    {
+                        Status = "NotAServiceLabel",
+                        Label = label,
+                    };
                 }
 
-                var branchResult = await githubService.CreateBranchAsync("Azure", "azure-sdk-tools", $"add_service_label_{normalizedLabel}", "main");
+                var branchResult = await githubService.CreateBranchAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, $"add_service_label_{normalizedLabel}", "main");
+                logger.LogInformation($"Branch creation result: {branchResult}");
 
                 // If branch already exists, return early with the compare URL
                 if (branchResult == CreateBranchStatus.AlreadyExists)
                 {
-                    return $"Branch 'add_service_label_{normalizedLabel}' already exists. Compare URL: https://github.com/Azure/azure-sdk-tools/compare/main...add_service_label_{normalizedLabel}";
+                    return new ServiceLabelResponse
+                    {
+                        Status = "BranchExists",
+                        Label = label,
+                        PullRequestUrl = $"https://github.com/Azure/azure-sdk-tools/compare/main...add_service_label_{normalizedLabel}"
+                    };
                 }
+
+                logger.LogInformation($"Creating new service label: {label}. Documentation link: {link}");
 
                 // Update the common-labels.csv file
-                var csvContent = await githubService.GetContentsAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv");
+                var csvContent = await githubService.GetContentsAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, Constants.AZURE_COMMON_LABELS_PATH);
+                var csvContentString = await githubService.GetContentsSingleAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, Constants.AZURE_COMMON_LABELS_PATH);
 
-                if (csvContent == null || csvContent.Count == 0)
-                {
-                    throw new InvalidOperationException("Could not retrieve common-labels.csv file");
-                }
+                var updatedFile = LabelHelper.CreateServiceLabel(csvContentString.Content, label); // Contains updated CSV content with the new service label added
 
-                var csvContentString = csvContent[0].Content;
-
-                var updatedFile = labelHelper.CreateServiceLabel(csvContentString, label); // Contains updated CSV content with the new service label added
-
-                await githubService.UpdateFileAsync("Azure", "azure-sdk-tools", "tools/github/data/common-labels.csv", $"Adding {label}", updatedFile, csvContent.First().Sha, $"add_service_label_{normalizedLabel}");
+                await githubService.UpdateFileAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, Constants.AZURE_COMMON_LABELS_PATH, $"Adding {label}", updatedFile, csvContent.First().Sha, $"add_service_label_{normalizedLabel}");
 
                 // Create the pull request
                 var result = await githubService.CreatePullRequestAsync(
-                    repoName: "azure-sdk-tools",
-                    repoOwner: "Azure",
+                    repoName: Constants.AZURE_SDK_TOOLS_PATH,
+                    repoOwner: Constants.AZURE_OWNER_PATH,
                     baseBranch: "main",
                     headBranch: $"add_service_label_{normalizedLabel}",
                     title: $"Add service label: {label}",
-                    body: $"This PR adds the service label '{label}' to the repository. Documentation link: {link}",
-                    draft: true
+                    body: $"This PR adds the service label '{label}' to the repository. Documentation link: {link}"
                 );
 
-                return $"Service label '{label}' pull request created successfully. PR Info: {string.Join(", ", result)}";
+                logger.LogInformation($"Service label '{label}' pull request created successfully. Result: {string.Join(", ", result)}");
+
+                // Extract the pull request URL from the result
+                var pullRequestUrl = result.Url;
+
+                return new ServiceLabelResponse
+                {
+                    Status = "Success",
+                    Label = label,
+                    PullRequestUrl = pullRequestUrl
+                };
             }
             catch (Exception ex)
             {
                 SetFailure();
                 logger.LogError(ex, $"Failed to create pull request for service label '{label}': {ex.Message}");
 
-                return  $"Failed to create pull request for service label '{label}'. Error: {ex.Message}";
+                return new ServiceLabelResponse
+                {
+                    Status = "Failed",
+                    Label = label,
+                    ResponseError = ex.Message
+                };
             }
         }
     }

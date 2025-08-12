@@ -1,34 +1,12 @@
+using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Services;
 using System.Text;
-using CsvHelper;
-using CsvHelper.Configuration;
 
 namespace Azure.Sdk.Tools.Cli.Helpers
 {
-    public interface ILabelHelper
+    public static class LabelHelper
     {
-        public LabelHelper.ServiceLabelStatus CheckServiceLabel(string csvContent, string serviceName);
-        public string CreateServiceLabel(string csvContent, string serviceLabel);
-        public string NormalizeLabel(string label);
-        public bool CheckServiceLabelInReview(IReadOnlyList<Octokit.PullRequest?> pullRequests, string serviceLabel);
-    }
-
-    public class LabelHelper(ILogger<LabelHelper> logger) : ILabelHelper
-    {
-        internal const string ServiceLabelColorCode = "e99695"; // color code for service labels in common-labels.csv
-
-        public static IList<LabelData> GetLabelsFromCsv(string csvContent)
-        {
-            using var reader = new StringReader(csvContent);
-            using var csvReader = new CsvReader(reader, config);
-            return csvReader.GetRecords<LabelData>().ToList();
-        }
-
-        private static CsvConfiguration config = new CsvConfiguration(System.Globalization.CultureInfo.InvariantCulture)
-        {
-            HasHeaderRecord = false,
-            NewLine = "\n",
-        };
+        public const string SERVICE_LABELS_COLOR_CODE = "e99695";
 
         public enum ServiceLabelStatus
         {
@@ -38,38 +16,54 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             InReview
         }
 
-        public ServiceLabelStatus CheckServiceLabel(string csvContent, string serviceName)
+        public static ServiceLabelStatus CheckServiceLabel(string csvContent, string serviceName)
         {
-            var records = GetLabelsFromCsv(csvContent);
-
-            foreach (var record in records)
+            using var reader = new StringReader(csvContent);
+            string? line;
+            while ((line = reader.ReadLine()) != null)
             {
-                if (record.Name.Equals(serviceName, StringComparison.OrdinalIgnoreCase))
+                if (string.IsNullOrWhiteSpace(line))
                 {
-                    if (record.Color.Equals(ServiceLabelColorCode, StringComparison.OrdinalIgnoreCase))
+                    continue;
+                }
+
+                var columns = line.Split(",");
+
+                if (columns.Length <= 2)
+                {
+                    continue; // Skip lines that don't have at least 3 columns
+                }
+
+                // Label is the first part (before first comma)
+                var label = columns[0].Trim();
+                
+                // Color is the last part (after last comma)
+                var color = columns[columns.Length - 1].Trim();
+                
+                // Check if this is the service we're looking for
+                if (label.Equals(serviceName, StringComparison.OrdinalIgnoreCase))
+                {
+                    // Check if it's a service label by color code
+                    if (color.Equals(SERVICE_LABELS_COLOR_CODE, StringComparison.OrdinalIgnoreCase))
                     {
-                        logger.LogInformation($"Service label '{serviceName}' exists in common-labels.csv.");
                         return ServiceLabelStatus.Exists;
                     }
                     else
                     {
-                        logger.LogWarning($"Label '{serviceName}' exists but is not a service label.");
                         return ServiceLabelStatus.NotAServiceLabel;
                     }
                 }
-
             }
 
             return ServiceLabelStatus.DoesNotExist;
         }
 
-        public bool CheckServiceLabelInReview(IReadOnlyList<Octokit.PullRequest?> pullRequests, string serviceLabel)
+        public static bool CheckServiceLabelInReview(IReadOnlyList<Octokit.PullRequest?> pullRequests, string serviceLabel)
         {
             try
             {
                 if (pullRequests == null || !pullRequests.Any())
                 {
-                    logger.LogInformation("No pull request found for service labels");
                     return false;
                 }
 
@@ -81,33 +75,44 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                     }
                 }
 
-                logger.LogInformation($"No pull requests found for {serviceLabel}.");
                 return false;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                logger.LogError($"Error retrieving pull requests: {ex.Message}");
                 return false;
             }
         }
 
-        public string CreateServiceLabel(string csvContent, string serviceLabel)
+        public static string CreateServiceLabel(string csvContent, string serviceLabel)
         {
-            IList<LabelData> records;
+            // Filter out empty or whitespace-only lines
+            List<string> lines = csvContent.Split("\n")
+                .Where(line => !string.IsNullOrWhiteSpace(line))
+                .ToList();
 
-            records = GetLabelsFromCsv(csvContent);
+            var newServiceLabel = $"{serviceLabel},,{SERVICE_LABELS_COLOR_CODE}";
 
-            var newRecords = records
-                .Append(new LabelData { Name = serviceLabel, Description = "", Color = ServiceLabelColorCode })
-                .OrderBy(label => label.Name, StringComparer.Ordinal);
+            bool inserted = false;
+            for (int i = 0; i < lines.Count; i++)
+            {
+                if (string.Compare(newServiceLabel, lines[i], StringComparison.Ordinal) < 0)
+                {
+                    lines.Insert(i, newServiceLabel);
+                    inserted = true;
+                    break;
+                }
+            }
 
-            using var writer = new StringWriter();
-            using var csvWriter = new CsvWriter(writer, config);
-            csvWriter.WriteRecords(newRecords);
-            return writer.ToString();
+            // If not inserted yet, add at the end
+            if (!inserted)
+            {
+                lines.Add(newServiceLabel);
+            }
+
+            return string.Join("\n", lines);
         }
 
-        public string NormalizeLabel(string label)
+        public static string NormalizeLabel(string label)
         {
             var normalizedLabel = label
                     .Replace(" - ", "-")
@@ -118,12 +123,5 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                     .ToLowerInvariant();
             return normalizedLabel;
         }
-    }
-
-    public class LabelData
-    {
-        public string Name { get; set; }
-        public string Description { get; set; }
-        public string Color { get; set; }
     }
 }

@@ -2,6 +2,7 @@ using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Models;
 using Microsoft.Extensions.Logging;
+using Azure.Sdk.Tools.Cli.Models.Responses;
 using Octokit;
 
 namespace Azure.Sdk.Tools.Cli.Helpers

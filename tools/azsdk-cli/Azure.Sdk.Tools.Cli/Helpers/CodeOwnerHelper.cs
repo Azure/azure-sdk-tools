@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.CodeownersUtils.Parsing;
 
 namespace Azure.Sdk.Tools.Cli.Helpers
@@ -6,11 +7,13 @@ namespace Azure.Sdk.Tools.Cli.Helpers
     public interface ICodeOwnerHelper
     {
         List<CodeownersEntry> FindMatchingEntries(IList<CodeownersEntry> entries, string serviceName = null, string repoPath = null);
-        int findAlphabeticalInsertionPoint(List<CodeownersEntry> codeownersEntries, string path = null, string serviceLabel = null);
+        public string NormalizePath(string path);
+        CodeownersEntry findAlphabeticalInsertionPoint(List<CodeownersEntry> codeownersEntries, CodeownersEntry codeownersEntry);
         public (List<CodeownersEntry>, int) mergeCodeownerEntries(List<CodeownersEntry> codeownersEntries, int index);
         string addCodeownersEntryAtIndex(string codeownersContent, CodeownersEntry codeownersEntry, int index, bool codeownersEntryExists);
         string formatCodeownersEntry(CodeownersEntry codeownersEntry);
         (int StartLine, int EndLine) findBlock(string currentContent, string serviceCategory);
+        public string ExtractDirectoryName(string path);
         string CreateBranchName(string prefix, string identifier);
         
         // New owner manipulation helper methods
@@ -30,12 +33,12 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 if (!string.IsNullOrEmpty(serviceName))
                 {
                     // Check ServiceLabels for exact match
-                    if (entry.ServiceLabels?.Any(label => NormalizeForComparison(label).Equals(NormalizeForComparison(serviceName), StringComparison.OrdinalIgnoreCase)) == true)
+                    if (entry.ServiceLabels?.Any(label => NormalizeLabel(label).Equals(NormalizeLabel(serviceName), StringComparison.OrdinalIgnoreCase)) == true)
                     {
                         codeownersEntries.Add(entry);
                     }
                     // Check PRLabels for exact match
-                    else if (entry.PRLabels?.Any(label => NormalizeForComparison(label).Equals(NormalizeForComparison(serviceName), StringComparison.OrdinalIgnoreCase)) == true)
+                    else if (entry.PRLabels?.Any(label => NormalizeLabel(label).Equals(NormalizeLabel(serviceName), StringComparison.OrdinalIgnoreCase)) == true)
                     {
                         codeownersEntries.Add(entry);
                     }
@@ -51,31 +54,47 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             return codeownersEntries.Cast<CodeownersEntry>().ToList();
         }
 
-        private string NormalizeForComparison(string input)
+        private string NormalizeLabel(string input)
         {
-            if (string.IsNullOrEmpty(input)) return string.Empty;
+            if (string.IsNullOrEmpty(input))
+            {
+                return string.Empty;
+            }
             return input.Replace(" ", "").Replace("%", "").Trim();
         }
 
-        public int findAlphabeticalInsertionPoint(List<CodeownersEntry> codeownersEntries, string path = null, string serviceLabel = null)
+        public string NormalizePath(string path)
         {
-            var newEntry = new CodeownersEntry
+            if (string.IsNullOrWhiteSpace(path))
             {
-                PathExpression = path ?? string.Empty,
-                ServiceLabels = !string.IsNullOrEmpty(serviceLabel) ? new List<string> { serviceLabel } : new List<string>()
-            };
+                return string.Empty;
+            }
 
+            path = path.Trim('/');
+            if (!path.StartsWith("sdk/", StringComparison.OrdinalIgnoreCase))
+            {
+                path = "sdk/" + path;
+            }
+            path = $"/{path}/";
+            return path;
+        }
+
+        public CodeownersEntry findAlphabeticalInsertionPoint(List<CodeownersEntry> codeownersEntries, CodeownersEntry codeownersEntry)
+        {
             var comparer = new CodeownersEntryPathComparer();
 
             // Find the first entry that should come after our new entry
             for (int i = 0; i < codeownersEntries.Count; i++)
             {
-                int comparison = comparer.Compare(codeownersEntries[i], newEntry);
+                int comparison = comparer.Compare(codeownersEntries[i], codeownersEntry);
 
                 // If the current entry should come after our new entry, insert before it
                 if (comparison > 0)
                 {
-                    return codeownersEntries[i].startLine;
+                    int insertionLine = codeownersEntries[i].startLine;
+                    codeownersEntry.startLine = insertionLine;
+                    codeownersEntry.endLine = insertionLine; // Set endLine same as startLine for new entries
+                    return codeownersEntry;
                 }
 
                 (codeownersEntries, i) = mergeCodeownerEntries(codeownersEntries, i);
@@ -85,10 +104,16 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             if (codeownersEntries.Count > 0)
             {
                 var lastEntry = codeownersEntries[codeownersEntries.Count - 1];
-                return lastEntry.endLine + 1;
+                int insertionLine = lastEntry.endLine + 1;
+                codeownersEntry.startLine = insertionLine;
+                codeownersEntry.endLine = insertionLine; // Set endLine same as startLine for new entries
+                return codeownersEntry;
             }
 
-            return 1;
+            // If the list is empty, start at line 1
+            codeownersEntry.startLine = 1;
+            codeownersEntry.endLine = 1; // Set endLine same as startLine for new entries
+            return codeownersEntry;
         }
 
         public (List<CodeownersEntry>, int) mergeCodeownerEntries(List<CodeownersEntry> codeownersEntries, int index)
@@ -98,7 +123,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 var codeownersEntry = codeownersEntries[index];
                 var nextCodeownersEntry = codeownersEntries[index + 1];
 
-                if (AreEntriesRelatedByPath(codeownersEntry, nextCodeownersEntry))
+                if (AreEntriesRelated(codeownersEntry, nextCodeownersEntry))
                 {
                     var mergedEntry = new CodeownersEntry
                     {
@@ -135,7 +160,20 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
             if (index >= 0 && index <= lines.Count)
             {
-                lines.Insert(index, formatCodeownersEntry(codeownersEntry));
+                var formattedEntry = formatCodeownersEntry(codeownersEntry);
+                
+                // If inserting between entries (not at the end), add spacing after the new entry
+                bool isInsertingBetweenEntries = index < lines.Count && 
+                                               index > 0 && 
+                                               !string.IsNullOrWhiteSpace(lines[index].Trim());
+                
+                lines.Insert(index, formattedEntry);
+                
+                // Add blank line after the new entry if inserting between entries
+                if (isInsertingBetweenEntries)
+                {
+                    //lines.Insert(index + 1, "");
+                }
             }
             else
             {
@@ -156,9 +194,19 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             List<string> serviceOwners = codeownersEntry.ServiceOwners ?? new List<string>();
             List<string> sourceOwners = codeownersEntry.SourceOwners ?? new List<string>();
             List<string> azureSDKOwners = codeownersEntry.AzureSdkOwners ?? new List<string>();
-
-            // Add PRLabel if serviceLabel is provided
-            if (!string.IsNullOrEmpty(serviceLabel))
+            
+            // Add all PRLabels first
+            if (codeownersEntry.PRLabels != null && codeownersEntry.PRLabels.Any())
+            {
+                foreach (var prLabel in codeownersEntry.PRLabels.Where(label => !string.IsNullOrWhiteSpace(label)))
+                {
+                    lines.Add($"# PRLabel: %{prLabel}");
+                }
+                addSeperationLine = true;
+            }
+            
+            // Add PRLabel if serviceLabel is provided (for backward compatibility)
+            else if (!string.IsNullOrEmpty(serviceLabel))
             {
                 addSeperationLine = true;
                 lines.Add($"# PRLabel: %{serviceLabel}");
@@ -167,6 +215,10 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             // Add the path and source owners line
             if (!string.IsNullOrEmpty(path) && sourceOwners != null && sourceOwners.Count > 0)
             {
+                if (!addSeperationLine)
+                {
+                    lines.Add("");  // Add empty string, not "\n"
+                }
                 addSeperationLine = true;
                 var formattedSourceOwners = sourceOwners.Select(owner => owner.StartsWith("@") ? owner : $"@{owner}");
                 var pathLine = $"{path}".PadRight(67) + $"{string.Join(" ", formattedSourceOwners)}";
@@ -197,8 +249,11 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 var serviceOwnersString = string.Join(" ", serviceOwners.Select(owner => owner.StartsWith("@") ? owner : $"@{owner}"));
                 lines.Add($"# ServiceOwners: {serviceOwnersString}");
             }
+            
+            // Add a blank line at the end to separate entries
+            lines.Add("");
+            
             var formattedCodeownersEntry = string.Join("\n", lines);
-            formattedCodeownersEntry += "\n";
             return formattedCodeownersEntry;
         }
 
@@ -239,7 +294,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             return (0, lines.Length - 1);
         }
 
-        private bool AreEntriesRelatedByPath(CodeownersEntry entry1, CodeownersEntry entry2)
+        private bool AreEntriesRelated(CodeownersEntry entry1, CodeownersEntry entry2)
         {
             var path1 = entry1.PathExpression?.Trim();
             var path2 = entry2.PathExpression?.Trim();
@@ -303,9 +358,12 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             return (serviceLabel, PRLabel);
         }
 
-        private string ExtractDirectoryName(string path)
+        public string ExtractDirectoryName(string path)
         {
-            if (string.IsNullOrEmpty(path)) return string.Empty;
+            if (string.IsNullOrEmpty(path))
+            {
+                return string.Empty;
+            }
 
             var parts = path.Trim('/').Split('/');
 
@@ -368,6 +426,23 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
             // Remove the old entry lines
             int originalEntryLineCount = targetEntry.endLine - targetEntry.startLine + 1;
+            
+            // Ensure we have a valid range
+            if (originalEntryLineCount <= 0)
+            {
+                throw new InvalidOperationException($"Invalid entry line range: startLine={targetEntry.startLine}, endLine={targetEntry.endLine}");
+            }
+            
+            if (targetEntry.startLine < 0 || targetEntry.startLine >= modifiedLines.Count)
+            {
+                throw new InvalidOperationException($"Invalid startLine: {targetEntry.startLine}, total lines: {modifiedLines.Count}");
+            }
+            
+            if (targetEntry.startLine + originalEntryLineCount > modifiedLines.Count)
+            {
+                originalEntryLineCount = modifiedLines.Count - targetEntry.startLine;
+            }
+            
             modifiedLines.RemoveRange(targetEntry.startLine, originalEntryLineCount);
 
             // Insert the new formatted entry at the same position
@@ -375,46 +450,6 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             modifiedLines.InsertRange(targetEntry.startLine, entryLines);
 
             return modifiedLines;
-        }
-    }
-
-    // Data models - moved from CodeOwnerTools for better organization
-    public class ServiceCodeOwnerResult
-    {
-        public string Message { get; set; } = "";
-        public List<CodeOwnerValidationResult> CodeOwners { get; set; } = new();
-    }
-
-    public class CodeOwnerValidationResult
-    {
-        public string Username { get; set; } = "";
-        public string Status { get; set; } = "";
-        public string Message { get; set; } = "";
-        public bool IsValidCodeOwner { get; set; }
-        public bool HasWritePermission { get; set; }
-        public Dictionary<string, bool> Organizations { get; set; } = new();
-
-        public override string ToString()
-        {
-            var result = new List<string>
-            {
-                $"Username: {Username}",
-                $"IsValid: {IsValidCodeOwner}",
-                $"HasWritePermission: {HasWritePermission}",
-                $"Status: {Status}",
-                $"Message: {Message ?? "None"}"
-            };
-
-            if (Organizations?.Any() == true)
-            {
-                result.Add($"Organizations:");
-                foreach (var org in Organizations)
-                {
-                    result.Add($"  - {org.Key}: {org.Value}");
-                }
-            }
-
-            return string.Join("\n", result);
         }
     }
 }

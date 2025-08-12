@@ -30,7 +30,6 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ITypeSpecHelper, TypeSpecHelper>();
             services.AddSingleton<ISpecPullRequestHelper, SpecPullRequestHelper>();
             services.AddSingleton<IUserHelper, UserHelper>();
-            services.AddSingleton<ILabelHelper, LabelHelper>();
             services.AddSingleton<ICodeOwnerHelper, CodeOwnerHelper>();
             services.AddSingleton<ICodeOwnerValidatorHelper, CodeOwnerValidatorHelper>();
 

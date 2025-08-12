@@ -216,9 +216,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
 
             // Assert
             var lines = result.Split('\n');
-            Assert.That(lines[0], Does.StartWith("sdk/servicebus/"));
-            Assert.That(lines[0], Does.Contain("@source1"));
-            Assert.That(lines[1], Is.EqualTo(""));
+            Assert.That(lines[0], Is.EqualTo(""));
+            Assert.That(lines[1], Does.StartWith("sdk/servicebus/"));
+            Assert.That(lines[1], Does.Contain("@source1"));
+            Assert.That(lines[2], Is.EqualTo(""));
         }
 
         #endregion
@@ -309,12 +310,13 @@ line3";
         {
             // Arrange
             var entries = new List<CodeownersEntry>();
+            var newEntry = new CodeownersEntry { PathExpression = "sdk/test/" };
 
             // Act
-            var result = codeOwnerHelper.findAlphabeticalInsertionPoint(entries, "sdk/test/");
+            var result = codeOwnerHelper.findAlphabeticalInsertionPoint(entries, newEntry);
 
             // Assert
-            Assert.That(result, Is.EqualTo(1));
+            Assert.That(result.startLine, Is.EqualTo(1));
         }
 
         [Test]
@@ -330,12 +332,13 @@ line3";
                     endLine = 7
                 }
             };
+            var newEntry = new CodeownersEntry { PathExpression = "sdk/identity/" };
 
             // Act
-            var result = codeOwnerHelper.findAlphabeticalInsertionPoint(entries, "sdk/identity/");
+            var result = codeOwnerHelper.findAlphabeticalInsertionPoint(entries, newEntry);
 
             // Assert
-            Assert.That(result, Is.EqualTo(5)); // Should insert before storage
+            Assert.That(result.startLine, Is.EqualTo(5)); // Should insert before storage
         }
 
         [Test]
@@ -351,12 +354,13 @@ line3";
                     endLine = 7
                 }
             };
+            var newEntry = new CodeownersEntry { PathExpression = "sdk/storage/" };
 
             // Act
-            var result = codeOwnerHelper.findAlphabeticalInsertionPoint(entries, "sdk/storage/");
+            var result = codeOwnerHelper.findAlphabeticalInsertionPoint(entries, newEntry);
 
             // Assert
-            Assert.That(result, Is.EqualTo(8)); // Should insert after identity (endLine + 1)
+            Assert.That(result.startLine, Is.EqualTo(8)); // Should insert after identity (endLine + 1)
         }
 
         [Test]
@@ -378,12 +382,13 @@ line3";
                     endLine = 12
                 }
             };
+            var newEntry = new CodeownersEntry { ServiceLabels = new List<string> { "Service Bus" } };
 
             // Act
-            var result = codeOwnerHelper.findAlphabeticalInsertionPoint(entries, serviceLabel: "Service Bus");
+            var result = codeOwnerHelper.findAlphabeticalInsertionPoint(entries, newEntry);
 
             // Assert
-            Assert.That(result, Is.EqualTo(10));
+            Assert.That(result.startLine, Is.EqualTo(10));
         }
 
         [Test]
@@ -411,12 +416,13 @@ line3";
                         endLine = 13
                     }
                 };
+            var newEntry = new CodeownersEntry { ServiceLabels = new List<string> { "Service Bus" } };
 
             // Act
-            var result = codeOwnerHelper.findAlphabeticalInsertionPoint(entries, serviceLabel: "Service Bus");
+            var result = codeOwnerHelper.findAlphabeticalInsertionPoint(entries, newEntry);
 
             // Assert
-            Assert.That(result, Is.EqualTo(11));
+            Assert.That(result.startLine, Is.EqualTo(11));
         }
 
         #endregion

@@ -39,6 +39,24 @@ import { sortOpenAPIDocument } from "@azure-tools/typespec-autorest";
 
 const defaultRelativeEmitterPackageJsonPath = joinPaths("eng", "emitter-package.json");
 
+/**
+ * Initializes client library directory and writes the tsp-location.yaml file by processing tspconfig.yaml data.
+ *
+ * This function reads and processes the tspconfig.yaml file, resolves emitter configuration,
+ * determines the output directory based on emitter settings, and creates the tsp-location.yaml
+ * file in the appropriate location. It handles both new installations and updates to existing
+ * configurations when the update-if-exists flag is set.
+ *
+ * @param outputDir - The base output directory where the generated files should be placed
+ * @param repoRoot - The root directory of the repository containing the project
+ * @param tspConfigPath - The path to the tspconfig.yaml file to process
+ * @param tspLocationData - tsp-location.yaml data containing repository, commit, and directory information
+ * @param argv - Command line arguments object containing various options including:
+ *   - update-if-exists: If true, updates existing tsp-location.yaml while preserving existing data
+ *   - emitter-package-json-path: Optional path to override the default emitter package.json location
+ * @returns Promise that resolves to the final package directory path where tsp-location.yaml was written
+ * @throws Error if tspconfig.yaml cannot be read, is empty, or if required emitter configuration is missing
+ */
 async function initProcessDataAndWriteTspLocation(
   outputDir: string,
   repoRoot: string,

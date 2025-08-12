@@ -14,7 +14,6 @@ using APIViewWeb.Helpers;
 using APIViewWeb.HostedServices;
 using APIViewWeb.Hubs;
 using APIViewWeb.LeanModels;
-using APIViewWeb.Managers;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
@@ -27,26 +26,24 @@ using Xunit;
 
 namespace APIViewUnitTests
 {
-    public class CopilotPollingBackgroundHostedServiceTests : IAsyncLifetime
+    public class CopilotPollingBackgroundHostedServiceTests
     {
-        private readonly Mock<IPollingJobQueueManager> _mockPollingJobQueueManager;
         private readonly Mock<IAPIRevisionsManager> _mockApiRevisionsManager;
         private readonly Mock<ICosmosCommentsRepository> _mockCommentsRepository;
         private readonly Mock<IHubContext<SignalRHub>> _mockSignalRHubContext;
-        private readonly Mock<ILogger<CopilotPollingBackgroundHostedService>> _mockLogger;
+        private readonly Mock<ILogger<CopilotJobProcessor>> _mockLogger;
         private readonly Mock<HttpMessageHandler> _mockHttpMessageHandler;
         private readonly Mock<IConfiguration> _mockConfiguration;
         private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
         private readonly HttpClient _httpClient;
-        private CopilotPollingBackgroundHostedService _service;
+        private readonly CopilotJobProcessor _processor;
 
         public CopilotPollingBackgroundHostedServiceTests()
         {
-            _mockPollingJobQueueManager = new Mock<IPollingJobQueueManager>();
             _mockApiRevisionsManager = new Mock<IAPIRevisionsManager>();
             _mockCommentsRepository = new Mock<ICosmosCommentsRepository>();
             _mockSignalRHubContext = new Mock<IHubContext<SignalRHub>>();
-            _mockLogger = new Mock<ILogger<CopilotPollingBackgroundHostedService>>();
+            _mockLogger = new Mock<ILogger<CopilotJobProcessor>>();
             _mockHttpMessageHandler = new Mock<HttpMessageHandler>();
 
             _mockConfiguration = new Mock<IConfiguration>();
@@ -58,12 +55,12 @@ namespace APIViewUnitTests
             _mockHttpClientFactory
                 .Setup(f => f.CreateClient(It.IsAny<string>()))
                 .Returns(_httpClient);
-        }
 
-        private CopilotPollingBackgroundHostedService CreateService()
-        {
-            return new CopilotPollingBackgroundHostedService(
-                _mockPollingJobQueueManager.Object,
+            // Setup SignalR mock
+            var mockClientProxy = new Mock<IClientProxy>();
+            _mockSignalRHubContext.Setup(x => x.Clients.All).Returns(mockClientProxy.Object);
+
+            _processor = new CopilotJobProcessor(
                 _mockConfiguration.Object,
                 _mockHttpClientFactory.Object,
                 _mockApiRevisionsManager.Object,
@@ -72,47 +69,11 @@ namespace APIViewUnitTests
                 _mockLogger.Object);
         }
 
-        public async Task InitializeAsync()
-        {
-            ResetAllMocks();
-            _service = CreateService();
-            await Task.CompletedTask;
-        }
-
-        public async Task DisposeAsync()
-        {
-            if (_service != null)
-            {
-                try
-                {
-                    await _service.StopAsync(CancellationToken.None);
-                }
-                catch
-                {
-                    // Swallow exceptions during disposal to prevent masking test failures
-                }
-                _service.Dispose();
-                _service = null;
-            }
-            await Task.CompletedTask;
-        }
-
-        private void ResetAllMocks()
-        {
-            _mockPollingJobQueueManager.Reset();
-            _mockApiRevisionsManager.Reset();
-            _mockCommentsRepository.Reset();
-            _mockSignalRHubContext.Reset();
-            _mockLogger.Reset();
-            _mockHttpMessageHandler.Reset();
-        }
-
-        [Theory(Skip = "https://github.com/Azure/azure-sdk-tools/issues/11249")]
-        [InlineData("Success", true, false)]
-        [InlineData("Error", false, false)]
-        [InlineData("Success", false, true)]
-        public async Task ExecuteAsync_DifferentScenarios_HandlesCorrectly(
-            string responseStatus, bool shouldProcessComments, bool throwHttpException)
+        [Theory]
+        [InlineData("Success", true)]
+        [InlineData("Error", false)]
+        public async Task ProcessJobAsync_DifferentScenarios_HandlesCorrectly(
+            string responseStatus, bool shouldProcessComments)
         {
             AIReviewJobInfoModel jobInfo = CreateTestJobInfo();
             var pollResponse = new AIReviewJobPolledResponseModel
@@ -122,7 +83,17 @@ namespace APIViewUnitTests
                 Comments = CreateSuccessfulPollResponse().Comments
             };
 
-            await ExecuteTestScenario(jobInfo, pollResponse, throwHttpException);
+            SetupHttpClientForSuccessfulPolling(pollResponse);
+
+            if (responseStatus == "Error")
+            {
+                var exception = await Assert.ThrowsAsync<Exception>(() => _processor.ProcessJobAsync(jobInfo));
+                Assert.Equal("Analysis failed", exception.Message);
+            }
+            else
+            {
+                await _processor.ProcessJobAsync(jobInfo);
+            }
 
             if (shouldProcessComments)
             {
@@ -137,19 +108,15 @@ namespace APIViewUnitTests
 
             _mockApiRevisionsManager.Verify(x => x.UpdateAPIRevisionAsync(
                 It.Is<APIRevisionListItemModel>(api => !api.CopilotReviewInProgress)), Times.AtLeastOnce);
-
-            if (throwHttpException)
-            {
-                VerifyErrorLogged();
-            }
         }
 
-        [Theory(Skip = "https://github.com/Azure/azure-sdk-tools/issues/11249")]
+        [Theory]
         [InlineData("summary", 1, "FIRST_ROW")]
         [InlineData("summary", 2, "line-2")]
         [InlineData("any", 2, "line-2")]
-        public async Task ExecuteAsync_CommentTypes_FormatsCorrectly(string commentType, int lineNo, string expectedElementId)
+        public async Task ProcessJobAsync_CommentTypes_FormatsCorrectly(string commentType, int lineNo, string expectedElementId)
         {
+            // Arrange
             List<(string lineText, string lineId)> codeLinesList = new()
             {
                 (string.Empty, null),
@@ -161,12 +128,29 @@ namespace APIViewUnitTests
                 ? CreateSummaryComment(lineNo)
                 : CreateCommentWithSuggestions(lineNo);
 
-            CommentItemModel capturedComment = await ProcessCommentAndGetText(comment, CreateTestJobInfo(codeLinesList));
+            var jobInfo = CreateTestJobInfo(codeLinesList);
+            var pollResponse = new AIReviewJobPolledResponseModel
+            {
+                Status = "Success",
+                Details = "Review completed successfully",
+                Comments = [comment]
+            };
+
+            SetupHttpClientForSuccessfulPolling(pollResponse);
+
+            CommentItemModel capturedComment = null;
+            _mockCommentsRepository.Setup(x => x.UpsertCommentAsync(It.IsAny<CommentItemModel>()))
+                .Callback<CommentItemModel>(c => capturedComment = c)
+                .Returns(Task.CompletedTask);
+
+            await _processor.ProcessJobAsync(jobInfo);
+
+            Assert.NotNull(capturedComment);
             Assert.Equal(expectedElementId, capturedComment.ElementId);
         }
 
-        [Fact(Skip = "https://github.com/Azure/azure-sdk-tools/issues/11249")]
-        public async Task ExecuteAsync_CommentTypes_NotSummary_NotElementId_Skipped()
+        [Fact]
+        public async Task ProcessJobAsync_CommentTypes_NotSummary_NotElementId_Skipped()
         {
             List<(string lineText, string lineId)> codeLinesList =
             [
@@ -176,7 +160,6 @@ namespace APIViewUnitTests
             ];
 
             var comment = CreateCommentWithSuggestions(1);
-
             var jobInfo = CreateTestJobInfo(codeLinesList);
             var pollResponse = new AIReviewJobPolledResponseModel
             {
@@ -185,33 +168,38 @@ namespace APIViewUnitTests
                 Comments = [comment]
             };
 
-            SetupJobProcessing(jobInfo, pollResponse);
-            SetupSignalRMock();
+            SetupHttpClientForSuccessfulPolling(pollResponse);
 
-            var revisionUpdateCompleted = new TaskCompletionSource<bool>();
-            _mockApiRevisionsManager.Setup(x => x.UpdateAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()))
-                .Callback<APIRevisionListItemModel>(_ => revisionUpdateCompleted.SetResult(true))
-                .Returns(Task.CompletedTask);
-
-            using var cancellationTokenSource = new CancellationTokenSource();
-            cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(10));
-
-            await _service.StartAsync(cancellationTokenSource.Token);
-            
-            await revisionUpdateCompleted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await _processor.ProcessJobAsync(jobInfo);
 
             _mockCommentsRepository.Verify(x => x.UpsertCommentAsync(It.IsAny<CommentItemModel>()), Times.Never);
         }
 
-        [Theory(Skip = "https://github.com/Azure/azure-sdk-tools/issues/11249")]
+        [Theory]
         [InlineData(true, new[] { "dotnet-client-design", "dotnet-naming-conventions" })]
         [InlineData(false, new string[0])]
-        public async Task ExecuteAsync_GuidelinesHandling_FormatsCorrectly(bool shouldIncludeGuidelines,
+        public async Task ProcessJobAsync_GuidelinesHandling_FormatsCorrectly(bool shouldIncludeGuidelines,
             string[] ruleIds)
         {
             AIReviewComment comment = CreateAIReviewComment(ruleIds.ToList());
-            
-            CommentItemModel capturedComment = await ProcessCommentAndGetText(comment);
+            var jobInfo = CreateTestJobInfo();
+            var pollResponse = new AIReviewJobPolledResponseModel
+            {
+                Status = "Success",
+                Details = "Review completed successfully",
+                Comments = [comment]
+            };
+
+            SetupHttpClientForSuccessfulPolling(pollResponse);
+
+            CommentItemModel capturedComment = null;
+            _mockCommentsRepository.Setup(x => x.UpsertCommentAsync(It.IsAny<CommentItemModel>()))
+                .Callback<CommentItemModel>(c => capturedComment = c)
+                .Returns(Task.CompletedTask);
+
+            await _processor.ProcessJobAsync(jobInfo);
+
+            Assert.NotNull(capturedComment);
             string commentText = capturedComment.CommentText;
 
             if (shouldIncludeGuidelines)
@@ -230,6 +218,25 @@ namespace APIViewUnitTests
 
             Assert.Contains("Test comment", commentText);
             Assert.Contains("Suggestion : `Test suggestion`", commentText);
+        }
+
+        [Fact]
+        public async Task ProcessJobAsync_HttpException_HandlesCorrectly()
+        {
+            AIReviewJobInfoModel jobInfo = CreateTestJobInfo();
+
+            _mockHttpMessageHandler.Protected()
+                .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ThrowsAsync(new HttpRequestException("Network error"));
+
+            var exception = await Assert.ThrowsAsync<HttpRequestException>(() => _processor.ProcessJobAsync(jobInfo));
+            Assert.Equal("Network error", exception.Message);
+
+            _mockApiRevisionsManager.Verify(x => x.UpdateAPIRevisionAsync(
+                It.Is<APIRevisionListItemModel>(api => !api.CopilotReviewInProgress)), Times.AtLeastOnce);
+
+            VerifyErrorLogged();
         }
 
         private AIReviewJobInfoModel CreateTestJobInfo(List<(string lineText, string lineId)> codeLinesList = null)
@@ -287,45 +294,6 @@ namespace APIViewUnitTests
                 .ReturnsAsync(httpResponseMessage);
         }
 
-        private async Task ExecuteTestScenario(AIReviewJobInfoModel jobInfo,
-            AIReviewJobPolledResponseModel pollResponse, bool throwHttpException = false)
-        {
-            SetupJobProcessing(jobInfo, pollResponse);
-
-            if (throwHttpException)
-            {
-                _mockHttpMessageHandler.Protected()
-                    .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(),
-                        ItExpr.IsAny<CancellationToken>())
-                    .ThrowsAsync(new HttpRequestException("Network error"));
-            }
-
-            SetupSignalRMock();
-
-            var revisionUpdateCompleted = new TaskCompletionSource<bool>();
-            _mockApiRevisionsManager.Setup(x => x.UpdateAPIRevisionAsync(It.IsAny<APIRevisionListItemModel>()))
-                .Callback<APIRevisionListItemModel>(_ => 
-                {
-                    if (!revisionUpdateCompleted.Task.IsCompleted)
-                        revisionUpdateCompleted.SetResult(true);
-                })
-                .Returns(Task.CompletedTask);
-
-            using var cancellationTokenSource = new CancellationTokenSource();
-            cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(10));
-            await _service.StartAsync(cancellationTokenSource.Token);
-            
-            await revisionUpdateCompleted.Task.WaitAsync(TimeSpan.FromSeconds(5));
-            
-            cancellationTokenSource.Cancel();
-        }
-
-        private void SetupSignalRMock()
-        {
-            var mockClientProxy = new Mock<IClientProxy>();
-            _mockSignalRHubContext.Setup(x => x.Clients.All).Returns(mockClientProxy.Object);
-        }
-
         private void VerifySignalRCalled()
         {
             _mockSignalRHubContext.Verify(x => x.Clients.All.SendCoreAsync("ReceiveAIReviewUpdates",
@@ -337,23 +305,9 @@ namespace APIViewUnitTests
             _mockLogger.Verify(x => x.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Error while polling Copilot job")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Error while processing Copilot job")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.AtLeastOnce);
-        }
-
-        private void SetupJobProcessing(AIReviewJobInfoModel jobInfo, AIReviewJobPolledResponseModel pollResponse)
-        {
-            _mockPollingJobQueueManager.Setup(x => x.TryDequeue(out jobInfo))
-                .Returns(true)
-                .Callback(() =>
-                {
-                    AIReviewJobInfoModel nullJob = null;
-                    _mockPollingJobQueueManager.Setup(x => x.TryDequeue(out nullJob))
-                        .Returns(false);
-                });
-
-            SetupHttpClientForSuccessfulPolling(pollResponse);
         }
 
         private AIReviewComment CreateAIReviewComment(List<string> ruleIds)
@@ -369,44 +323,6 @@ namespace APIViewUnitTests
             };
         }
 
-        private async Task<CommentItemModel> ProcessCommentAndGetText(AIReviewComment comment, AIReviewJobInfoModel reviewJobInfo = null)
-        {
-            var jobInfo = reviewJobInfo ?? CreateTestJobInfo();
-            var pollResponse = new AIReviewJobPolledResponseModel
-            {
-                Status = "Success",
-                Details = "Review completed successfully",
-                Comments = [comment]
-            };
-
-            SetupJobProcessing(jobInfo, pollResponse);
-            SetupSignalRMock();
-
-            CommentItemModel capturedComment = null;
-            var commentCaptured = new TaskCompletionSource<bool>();
-            
-            _mockCommentsRepository.Setup(x => x.UpsertCommentAsync(It.IsAny<CommentItemModel>()))
-                .Callback<CommentItemModel>(c => 
-                {
-                    capturedComment = c;
-                    if (!commentCaptured.Task.IsCompleted)
-                        commentCaptured.SetResult(true);
-                })
-                .Returns(Task.CompletedTask);
-
-            using var cancellationTokenSource = new CancellationTokenSource();
-            cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(10));
-
-            await _service.StartAsync(cancellationTokenSource.Token);
-            
-            await commentCaptured.Task.WaitAsync(TimeSpan.FromSeconds(5));
-
-            cancellationTokenSource.Cancel();
-
-            Assert.NotNull(capturedComment);
-            return capturedComment;
-        }
-
         private AIReviewComment CreateCommentWithSuggestions(int lineNo = 1)
         {
             return new AIReviewComment
@@ -420,7 +336,7 @@ namespace APIViewUnitTests
             };
         }
 
-        private AIReviewComment CreateSummaryComment(int lineNo =3)
+        private AIReviewComment CreateSummaryComment(int lineNo = 3)
         {
             return new AIReviewComment
             {

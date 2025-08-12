@@ -16,9 +16,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
 
         public Task<bool> IsExistingBranchAsync(string repoOwner, string repoName, string branchName)
         {
-            // For testing purposes, assume main and develop branches exist
-            var existingBranches = new[] { "main", "master", "develop" };
-            return Task.FromResult(existingBranches.Contains(branchName));
+            throw new NotImplementedException();
         }
 
 
@@ -109,19 +107,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
             return Task.FromResult<IReadOnlyList<RepositoryContent>?>(contents.AsReadOnly());
         }
 
-        public Task<RepositoryContent> GetContentsSingleAsync(string owner, string repoName, string path)
-        {
-            var fileName = System.IO.Path.GetFileName(path);
-            var content = CreateMockRepositoryContent(fileName, path, "dGVzdCBjb250ZW50"); // "test content" in base64
-            return Task.FromResult(content);
-        }
-
         public Task UpdateFileAsync(string owner, string repoName, string path, string message, string content, string sha, string branch)
         {
             throw new NotImplementedException();
         }
 
-        public Task<string> GetFileContentsAsync(string repoOwner, string repoName, string path)
+        public Task<RepositoryContent> GetContentsSingleAsync(string owner, string repoName, string path)
         {
             throw new NotImplementedException();
         }

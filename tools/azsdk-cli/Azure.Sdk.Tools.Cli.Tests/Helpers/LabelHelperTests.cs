@@ -23,15 +23,15 @@ internal class LabelHelperTests
     }
 
     [Test]
-    [TestCase("AAA,,e99695\nCCC,,e99695\nZZZ,,e99695", "BBB", "AAA,,e99695\nBBB,,e99695\nCCC,,e99695\nZZZ,,e99695")]
-    [TestCase("BBB,,e99695\nCCC,,e99695\nZZZ,,e99695", "AAA", "AAA,,e99695\nBBB,,e99695\nCCC,,e99695\nZZZ,,e99695")]
-    [TestCase("AAA,,e99695\nBBB,,e99695\nCCC,,e99695", "ZZZ", "AAA,,e99695\nBBB,,e99695\nCCC,,e99695\nZZZ,,e99695")]
-    [TestCase("", "TestService", "TestService,,e99695")]
-    [TestCase("AAA,,e99695", "BBB", "AAA,,e99695\nBBB,,e99695")]
-    [TestCase("AAA,,e99695\r\nCCC,,e99695", "BBB", "AAA,,e99695\r\nBBB,,e99695\nCCC,,e99695")]
-    [TestCase("AAA,,e99695\nCCC,,e99695\nZZZ,,e99695", "CCC", "AAA,,e99695\nCCC,,e99695\nCCC,,e99695\nZZZ,,e99695")]
-    [TestCase("AAA,,e99695\n\nZZZ,,e99695", "BBB", "AAA,,e99695\nBBB,,e99695\nZZZ,,e99695")] // Test for empty line handling
-    [TestCase("AAA,,e99695\n   \nZZZ,,e99695", "BBB", "AAA,,e99695\nBBB,,e99695\nZZZ,,e99695")] // Test for whitespace line handling
+    [TestCase("AAA,,e99695\nCCC,,e99695\nZZZ,,e99695", "BBB", "AAA,,e99695\nBBB,,e99695\nCCC,,e99695\nZZZ,,e99695\n")]
+    [TestCase("BBB,,e99695\nCCC,,e99695\nZZZ,,e99695", "AAA", "AAA,,e99695\nBBB,,e99695\nCCC,,e99695\nZZZ,,e99695\n")]
+    [TestCase("AAA,,e99695\nBBB,,e99695\nCCC,,e99695", "ZZZ", "AAA,,e99695\nBBB,,e99695\nCCC,,e99695\nZZZ,,e99695\n")]
+    [TestCase("", "TestService", "TestService,,e99695\n")]
+    [TestCase("AAA,,e99695", "BBB", "AAA,,e99695\nBBB,,e99695\n")]
+    [TestCase("AAA,,e99695\r\nCCC,,e99695", "BBB", "AAA,,e99695\r\nBBB,,e99695\nCCC,,e99695\n")]
+    [TestCase("AAA,,e99695\nCCC,,e99695\nZZZ,,e99695", "CCC", "AAA,,e99695\nCCC,,e99695\nCCC,,e99695\nZZZ,,e99695\n")]
+    [TestCase("AAA,,e99695\n\nZZZ,,e99695", "BBB", "AAA,,e99695\nBBB,,e99695\nZZZ,,e99695\n")] // Test for empty line handling
+    [TestCase("AAA,,e99695\n   \nZZZ,,e99695", "BBB", "AAA,,e99695\nBBB,,e99695\nZZZ,,e99695\n")] // Test for whitespace line handling
     public void TestCreateServiceLabel(string csvContent, string serviceLabel, string expected)
     {
         var actual = LabelHelper.CreateServiceLabel(csvContent, serviceLabel);

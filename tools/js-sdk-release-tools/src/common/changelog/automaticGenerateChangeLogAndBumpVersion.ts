@@ -106,13 +106,14 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string,
                     const nextDate = getversionDate(npmViewResult, nextVersion);
                     if (latestDate && nextDate && latestDate <= nextDate) {
                         const nextChangelogPath = path.join(packageFolderPath, 'changelog-temp', 'next', 'package', 'CHANGELOG.md');
+                        const nextNPMPackageRoot = path.join(packageFolderPath, 'changelog-temp', 'next', 'package');
                         const latestNextChangelog: NpmViewParameters = {
                             file: "CHANGELOG.md",
                             version: nextVersion,
                             packageName: packageName,
                             packageFolderPath: packageFolderPath,
                             sdkRootPath: jsSdkRepoPath,
-                            npmPackagePath: npmPackageRoot,
+                            npmPackagePath: nextNPMPackageRoot,
                         }
                         originalChangeLogContent = tryReadNpmPackageChangelog(nextChangelogPath, latestNextChangelog);
                         logger.info('Keep previous preview changelog.');

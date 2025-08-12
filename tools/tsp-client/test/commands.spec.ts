@@ -16,7 +16,7 @@ import { readTspLocation, removeDirectory } from "../src/fs.js";
 import { doesFileExist } from "../src/network.js";
 import { TspLocation } from "../src/typespec.js";
 import { writeTspLocationYaml } from "../src/utils.js";
-import { dirname } from "node:path";
+import { dirname, resolve } from "node:path";
 
 describe.sequential("Verify commands", () => {
   let repoRoot;
@@ -322,6 +322,28 @@ describe.sequential("Verify commands", () => {
       const tspLocation = await readTspLocation(outputDir);
       assert.equal(tspLocation.commit, "<replace with your value>");
       assert.equal(tspLocation.repo, "<replace with your value>");
+      await removeDirectory(joinPaths(cwd(), "./test/examples/init/sdk"));
+    } catch (error: any) {
+      assert.fail("Failed to init. Error: " + error);
+    }
+  });
+
+  it("Init with legacy package path resolution", async () => {
+    try {
+      const args = {
+        "output-dir": joinPaths(cwd(), "./test/examples/init/"),
+        "tsp-config": joinPaths(
+          cwd(),
+          "./test/examples/specification/contosowidgetmanager-legacy-package-dir/Contoso.WidgetManager/",
+        ),
+      };
+      const outputDir = await initCommand(args);
+      assert.equal(
+        outputDir,
+        resolve(
+          joinPaths(cwd(), "./test/examples/init/", "sdk/legacypath", "contosowidgetmanager-rest"),
+        ),
+      );
       await removeDirectory(joinPaths(cwd(), "./test/examples/init/sdk"));
     } catch (error: any) {
       assert.fail("Failed to init. Error: " + error);

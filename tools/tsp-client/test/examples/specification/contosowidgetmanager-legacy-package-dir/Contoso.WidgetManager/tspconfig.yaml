@@ -1,6 +1,6 @@
 parameters:
   "service-dir":
-    default: "sdk/contosowidgetmanager"
+    default: "sdk/legacypath"
 emit:
   - "@azure-tools/typespec-autorest"
 linter:
@@ -44,4 +44,4 @@ options:
     slice-elements-byval: true
   "@azure-tools/typespec-client-generator-cli":
     "additionalDirectories":
-      - "tools/tsp-client/test/examples/specification/contosowidgetmanager/Contoso.WidgetManager.Shared/"
+      - "tools/tsp-client/test/examples/specification/contosowidgetmanager-legacy-package-dir/Contoso.WidgetManager.Shared/"

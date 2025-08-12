@@ -39,7 +39,7 @@ import { sortOpenAPIDocument } from "@azure-tools/typespec-autorest";
 
 const defaultRelativeEmitterPackageJsonPath = joinPaths("eng", "emitter-package.json");
 
-async function initProcessPathAndWriteTspLocation(
+async function initProcessDataAndWriteTspLocation(
   outputDir: string,
   repoRoot: string,
   tspConfigPath: string,
@@ -98,10 +98,8 @@ async function initProcessPathAndWriteTspLocation(
       `Please update your tspconfig.yaml to include the "emitter-output-dir" option under the "${emitterData.emitter}" emitter options. "package-dir" support is deprecated and will be removed in future versions.`,
     );
     // If no emitter-output-dir is specified, fall back to the legacy package-dir path resolution for the new package directory
-    newPackageDir = joinPaths(
-      outputDir,
-      getServiceDir(tspConfigData, emitterData.emitter),
-      packageDir!,
+    newPackageDir = resolve(
+      joinPaths(outputDir, getServiceDir(tspConfigData, emitterData.emitter), packageDir!),
     );
   } else {
     throw new Error(
@@ -225,7 +223,7 @@ export async function initCommand(argv: any) {
     tspLocationData.commit = resolvedConfigUrl.commit;
     tspLocationData.repo = resolvedConfigUrl.repo;
 
-    outputDir = await initProcessPathAndWriteTspLocation(
+    outputDir = await initProcessDataAndWriteTspLocation(
       outputDir,
       repoRoot,
       joinPaths(cloneDir, tspConfigPath),
@@ -251,7 +249,7 @@ export async function initCommand(argv: any) {
     tspLocationData.commit = argv["commit"] ?? "<replace with your value>";
     tspLocationData.repo = argv["repo"] ?? "<replace with your value>";
 
-    outputDir = await initProcessPathAndWriteTspLocation(
+    outputDir = await initProcessDataAndWriteTspLocation(
       outputDir,
       repoRoot,
       tspConfigPath,

@@ -136,7 +136,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             Assert.IsNotNull(result);
             Assert.That(result.ExitCode, Is.EqualTo(1));
             Assert.IsTrue(!string.IsNullOrEmpty(result.ResponseError));
-            Assert.IsTrue(result.ResponseError.Contains("Package path does not exist"));
+            Assert.IsTrue(result.ResponseError?.Contains("Package path does not exist"));
         }
 
         [Test]

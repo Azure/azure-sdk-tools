@@ -146,12 +146,4 @@ public class LanguageRepoServiceFactory : ILanguageRepoServiceFactory
         return "unknown";
     }
     
-    /// <summary>
-    /// Gets a list of all supported languages.
-    /// </summary>
-    /// <returns>Array of supported language strings</returns>
-    public string[] GetSupportedLanguages()
-    {
-        return new[] { "python", "javascript", "dotnet", "go", "java" };
-    }
 }

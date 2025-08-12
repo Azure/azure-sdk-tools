@@ -32,9 +32,4 @@ public interface ILanguageRepoServiceFactory
     /// <returns>Detected language string</returns>
     string DetectLanguage(string repositoryPath);
 
-    /// <summary>
-    /// Gets a list of all supported languages.
-    /// </summary>
-    /// <returns>Array of supported language strings</returns>
-    string[] GetSupportedLanguages();
 }

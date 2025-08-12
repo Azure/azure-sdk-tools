@@ -91,65 +91,45 @@ public class LanguageRepoServiceFactory : ILanguageRepoServiceFactory
     }
 
     /// <summary>
-    /// Detects the primary language of a repository based on the README.md header.
-    /// Looks for patterns like "Azure SDK for .NET", "Azure SDK for Python", etc.
+    /// Detects the primary language of a repository based on the repository root directory name.
+    /// Looks for patterns like "azure-sdk-for-python", "azure-sdk-for-java", etc.
     /// </summary>
     /// <param name="repositoryPath">Path to the repository root</param>
     /// <returns>Detected language string</returns>
     public string DetectLanguage(string repositoryPath)
     {        
-        // Try to detect from README.md header at repository root
-        var readmePath = Path.Combine(repositoryPath, "README.md");
-        _logger.LogInformation($"README path: {readmePath}");
-        if (!File.Exists(readmePath))
+        // Get the repository name from the directory path
+        var repoName = Path.GetFileName(repositoryPath?.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar))?.ToLowerInvariant() ?? "";
+        _logger.LogInformation($"Repository name: {repoName}");
+
+        // Extract the language from the repository name
+        if (repoName.Contains("azure-sdk-for-python"))
         {
-            _logger.LogDebug("README.md not found, language detection unsuccessful");
-            return "unknown";
+            _logger.LogInformation("Detected language: python from repository name");
+            return "python";
+        }
+        if (repoName.Contains("azure-sdk-for-js"))
+        {
+            _logger.LogInformation("Detected language: javascript from repository name");
+            return "javascript";
+        }
+        if (repoName.Contains("azure-sdk-for-net"))
+        {
+            _logger.LogInformation("Detected language: dotnet from repository name");
+            return "dotnet";
+        }
+        if (repoName.Contains("azure-sdk-for-java"))
+        {
+            _logger.LogInformation("Detected language: java from repository name");
+            return "java";
+        }
+        if (repoName.Contains("azure-sdk-for-go"))
+        {
+            _logger.LogInformation("Detected language: go from repository name");
+            return "go";
         }
 
-        _logger.LogDebug("Found README.md file at: {ReadmePath}", readmePath);
-        try
-        {
-            var content = File.ReadAllText(readmePath);
-
-            // Look for "Azure SDK for X" pattern in the first line of README
-            var firstLine = content.Split('\n').FirstOrDefault()?.Trim().ToLowerInvariant() ?? "";
-
-            // Extract the language from the first line
-            if (firstLine.Contains("python"))
-            {
-                _logger.LogInformation("Detected language: python from README.md header");
-                return "python";
-            }
-            if (firstLine.Contains("javascript"))
-            {
-                _logger.LogInformation("Detected language: javascript from README.md header");
-                return "javascript";
-            }
-            if (firstLine.Contains(".net"))
-            {
-                _logger.LogInformation("Detected language: dotnet from README.md header");
-                return "dotnet";
-            }
-            if (firstLine.Contains("java"))
-            {
-                _logger.LogInformation("Detected language: java from README.md header");
-                return "java";
-            }
-            if (firstLine.Contains("go"))
-            {
-                _logger.LogInformation("Detected language: go from README.md header");
-                return "go";
-            }
-
-            _logger.LogWarning("No recognized language found in README.md header");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to read README.md file");
-            return "unknown";
-        }
-        
+        _logger.LogWarning("No recognized language found in repository name: {RepoName}", repoName);
         return "unknown";
     }
     

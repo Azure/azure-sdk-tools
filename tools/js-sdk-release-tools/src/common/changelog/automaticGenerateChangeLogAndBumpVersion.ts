@@ -36,7 +36,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string,
     const packageName = getNpmPackageName(packageFolderPath);
     const npmViewResult = await tryGetNpmView(packageName);
     const stableVersion = npmViewResult ? getLatestStableVersion(npmViewResult) : undefined;
-    const nextVersion = getNextBetaVersion(npmViewResult);
+    const nextVersion = getNextBetaVersion(npmViewResult);    
 
     if (!npmViewResult || (!!stableVersion && isBetaVersion(stableVersion) && isStableRelease)) {
         logger.info(`Package ${packageName} is first ${!npmViewResult ? ' ' : ' stable'} release, start to generate changelogs and set version for first ${!npmViewResult ? ' ' : ' stable'} release.`);
@@ -98,6 +98,7 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string,
                 }
                 let originalChangeLogContent = tryReadNpmPackageChangelog(changelogPath, lastStableChangelog);
                 if (nextVersion) {
+                    logger.info(`Next version is ${nextVersion}, start to prepare next version package.`);
                     extractNextVersionPackage(packageFolderPath, packageName, nextVersion);
                     logger.info("Created next folder successfully.")
 

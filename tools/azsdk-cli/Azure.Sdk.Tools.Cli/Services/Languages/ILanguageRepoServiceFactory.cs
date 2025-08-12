@@ -16,6 +16,9 @@ public interface ILanguageRepoServiceFactory
     /// <param name="gitHelper">Git helper instance for repository operations</param>
     /// <param name="logger">Logger instance for diagnostics</param>
     /// <returns>Language-specific repository service</returns>
+    /// <exception cref="ArgumentException">Thrown when packagePath is null or empty</exception>
+    /// <exception cref="DirectoryNotFoundException">Thrown when packagePath does not exist</exception>
+    /// <exception cref="NotSupportedException">Thrown when the detected language is not supported</exception>
     ILanguageRepoService CreateService(string packagePath, IProcessHelper processHelper, IGitHelper gitHelper, ILogger logger);
 
     /// <summary>
@@ -23,6 +26,9 @@ public interface ILanguageRepoServiceFactory
     /// </summary>
     /// <param name="packagePath">Absolute path to the package directory</param>
     /// <returns>Language-specific repository service</returns>
+    /// <exception cref="ArgumentException">Thrown when packagePath is null or empty</exception>
+    /// <exception cref="DirectoryNotFoundException">Thrown when packagePath does not exist</exception>
+    /// <exception cref="NotSupportedException">Thrown when the detected language is not supported</exception>
     ILanguageRepoService CreateService(string packagePath);
 
     /// <summary>

@@ -87,12 +87,33 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 var normalizedCheckName = checkName?.ToLowerInvariant() ?? "";
 
                 // Create language service
-                var languageService = languageRepoServiceFactory.CreateService(packagePath);
-                if (languageService == null)
+                ILanguageRepoService languageService;
+                try
                 {
-                    return new CLICheckResponse(1, "", $"Unable to determine language for package at: {packagePath}");
+                    languageService = languageRepoServiceFactory.CreateService(packagePath);
+                    logger.LogInformation($"Created language service: {languageService.GetType().Name}");
                 }
-                logger.LogInformation($"Created language service: {languageService.GetType().Name}");
+                catch (ArgumentException ex)
+                {
+                    SetFailure(1);
+                    return new CLICheckResponse(1, "", $"Invalid package path: {ex.Message}");
+                }
+                catch (DirectoryNotFoundException ex)
+                {
+                    SetFailure(1);
+                    return new CLICheckResponse(1, "", $"Package directory not found: {ex.Message}");
+                }
+                catch (NotSupportedException ex)
+                {
+                    SetFailure(1);
+                    return new CLICheckResponse(1, "", $"Unsupported language: {ex.Message}");
+                }
+                catch (Exception ex)
+                {
+                    SetFailure(1);
+                    logger.LogError(ex, "Failed to create language service");
+                    return new CLICheckResponse(1, "", $"Unable to determine language for package at: {packagePath}. Error: {ex.Message}");
+                }
 
                 return normalizedCheckName switch
                 {

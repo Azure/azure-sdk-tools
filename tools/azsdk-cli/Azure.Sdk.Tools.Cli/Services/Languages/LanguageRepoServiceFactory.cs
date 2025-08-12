@@ -36,6 +36,9 @@ public class LanguageRepoServiceFactory : ILanguageRepoServiceFactory
     /// <param name="gitHelper">Git helper instance for repository operations</param>
     /// <param name="logger">Logger instance for diagnostics</param>
     /// <returns>Language-specific repository service</returns>
+    /// <exception cref="ArgumentException">Thrown when packagePath is null or empty</exception>
+    /// <exception cref="DirectoryNotFoundException">Thrown when packagePath does not exist</exception>
+    /// <exception cref="NotSupportedException">Thrown when the detected language is not supported</exception>
     public ILanguageRepoService CreateService(string packagePath, IProcessHelper processHelper, IGitHelper gitHelper, ILogger logger)
     {
         // Use the existing logic but with provided dependencies
@@ -47,6 +50,9 @@ public class LanguageRepoServiceFactory : ILanguageRepoServiceFactory
     /// </summary>
     /// <param name="packagePath">Absolute path to the package directory</param>
     /// <returns>Language-specific repository service</returns>
+    /// <exception cref="ArgumentException">Thrown when packagePath is null or empty</exception>
+    /// <exception cref="DirectoryNotFoundException">Thrown when packagePath does not exist</exception>
+    /// <exception cref="NotSupportedException">Thrown when the detected language is not supported</exception>
     public ILanguageRepoService CreateService(string packagePath)
     {
         return GetServiceInternal(packagePath, _processHelper, _gitHelper, _logger);
@@ -80,7 +86,7 @@ public class LanguageRepoServiceFactory : ILanguageRepoServiceFactory
             "dotnet" => _serviceProvider.GetRequiredService<DotNetLanguageRepoService>(),
             "go" => _serviceProvider.GetRequiredService<GoLanguageRepoService>(),
             "java" => _serviceProvider.GetRequiredService<JavaLanguageRepoService>(),
-            _ => _serviceProvider.GetRequiredService<LanguageRepoService>()
+            _ => throw new NotSupportedException($"Language '{detectedLanguage}' is not supported. Supported languages are: python, javascript, dotnet, go, java")
         };
     }
 
@@ -143,6 +149,7 @@ public class LanguageRepoServiceFactory : ILanguageRepoServiceFactory
             _logger.LogWarning(ex, "Failed to read README.md file");
             return "unknown";
         }
+        
         return "unknown";
     }
     

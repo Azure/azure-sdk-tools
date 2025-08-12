@@ -28,10 +28,10 @@ public class AgentHelpers
         Dictionary<string, int> elementIdToLineNumber = BuildElementIdToLineNumberMapping(codeFile);
 
         return (from comment in comments
-            where comment.ElementId != null
+            where comment.ElementId != null && elementIdToLineNumber.ContainsKey(comment.ElementId)
             select new ApiViewAgentComment
             {
-                LineNumber = elementIdToLineNumber.TryGetValue(comment.ElementId, out int id) ? id : -1,
+                LineNumber = elementIdToLineNumber[comment.ElementId],
                 CreatedOn = comment.CreatedOn,
                 Upvotes = comment.Upvotes.Count,
                 Downvotes = comment.Downvotes.Count,
@@ -46,10 +46,10 @@ public class AgentHelpers
         Dictionary<string, int> elementIdToLineNumber = BuildElementIdToLineNumberMapping(codeFile);
 
         return (from diagnostic in diagnostics
-                where diagnostic.TargetId != null
+                where diagnostic.TargetId != null && elementIdToLineNumber.ContainsKey(diagnostic.TargetId)
             select new ApiViewAgentComment
             {
-                LineNumber = elementIdToLineNumber.TryGetValue(diagnostic.TargetId, out int id) ? id : -1,
+                LineNumber = elementIdToLineNumber[diagnostic.TargetId],
                 CommentText = diagnostic.Text,
             }).ToList();
     }

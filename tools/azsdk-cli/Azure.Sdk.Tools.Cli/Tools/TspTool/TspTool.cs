@@ -73,10 +73,10 @@ namespace Azure.Sdk.Tools.Cli.Tools
             switch (command)
             {
                 case ConvertSwaggerCommandName:
-                    HandleConvertCommand(ctx, ct);
+                    await HandleConvertCommand(ctx, ct);
                     return;
                 case InitCommandName:
-                    HandleInitCommand(ctx, ct);
+                    await HandleInitCommand(ctx, ct);
                     return;
                 default:
                     logger.LogError($"Unknown command: {command}");
@@ -85,25 +85,25 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        private void HandleConvertCommand(InvocationContext ctx, CancellationToken ct)
+        private async Task HandleConvertCommand(InvocationContext ctx, CancellationToken ct)
         {
             var swaggerReadme = ctx.ParseResult.GetValueForOption(swaggerReadmeArg);
             var outputDirectory = ctx.ParseResult.GetValueForOption(outputDirectoryArg);
             var isArm = ctx.ParseResult.GetValueForOption(isArmOption);
             var fullyCompatible = ctx.ParseResult.GetValueForOption(fullyCompatibleOption);
 
-            TspToolResponse result = ConvertSwagger(swaggerReadme, outputDirectory, isArm, fullyCompatible);
+            TspToolResponse result = await ConvertSwagger(swaggerReadme, outputDirectory, isArm, fullyCompatible, ct);
             ctx.ExitCode = ExitCode;
             output.Output(result);
         }
 
-        private void HandleInitCommand(InvocationContext ctx, CancellationToken ct)
+        private async Task HandleInitCommand(InvocationContext ctx, CancellationToken ct)
         {
             var outputDirectory = ctx.ParseResult.GetValueForOption(outputDirectoryArg);
             var template = ctx.ParseResult.GetValueForOption(templateArg);
             var serviceNamespace = ctx.ParseResult.GetValueForOption(serviceNamespaceArg);
 
-            TspToolResponse result = InitTypeSpecProject(outputDirectory: outputDirectory, template: template, serviceNamespace: serviceNamespace);
+            TspToolResponse result = await InitTypeSpecProject(outputDirectory: outputDirectory, template: template, serviceNamespace: serviceNamespace, ct);
             ctx.ExitCode = ExitCode;
             output.Output(result);
         }
@@ -117,7 +117,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         It is recommended not to set this to `true` so that the converted TypeSpec project
         leverages TypeSpec built-in libraries with standard patterns and templates.
         Returns path to the created project.")]
-        public TspToolResponse ConvertSwagger(string pathToSwaggerReadme, string outputDirectory, bool? isAzureResourceManagement = null, bool? fullyCompatible = null)
+        public async Task<TspToolResponse> ConvertSwagger(string pathToSwaggerReadme, string outputDirectory, bool? isAzureResourceManagement = null, bool? fullyCompatible = null, CancellationToken ct = default)
         {
             try
             {
@@ -149,7 +149,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
                 var fullOutputDir = Path.GetFullPath(outputDirectory.Trim());
-                return RunTspClient(fullPathToSwaggerReadme, fullOutputDir, isAzureResourceManagement ?? false, fullyCompatible ?? false);
+                return await RunTspClientAsync(fullPathToSwaggerReadme, fullOutputDir, isAzureResourceManagement ?? false, fullyCompatible ?? false, ct);
             }
             catch (Exception ex)
             {
@@ -167,7 +167,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         Pass in the `serviceNamespace` to use, which is the namespace of the service you are creating. Should be Pascal case. Exclude the 'Microsoft.' prefix for ARM services.
         Pass in the `outputDirectory` where the project should be created. This must be an existing empty directory.
         Returns the path to the created project.")]
-        public TspToolResponse InitTypeSpecProject(string outputDirectory, string template, string serviceNamespace)
+        public async Task<TspToolResponse> InitTypeSpecProject(string outputDirectory, string template, string serviceNamespace, CancellationToken ct = default)
         {
             try
             {
@@ -207,7 +207,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
                 var fullOutputDir = Path.GetFullPath(outputDirectory.Trim());
-                return RunTspInit(outputDirectory: fullOutputDir, template: template, serviceNamespace: serviceNamespace);
+                return await RunTspInitAsync(outputDirectory: fullOutputDir, template: template, serviceNamespace: serviceNamespace, ct);
             }
             catch (Exception ex)
             {
@@ -243,7 +243,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             return null; // Validation passed
         }
 
-        private TspToolResponse RunTspClient(string pathToSwaggerReadme, string outputDirectory, bool isAzureResourceManagement, bool fullyCompatible)
+        private async Task<TspToolResponse> RunTspClientAsync(string pathToSwaggerReadme, string outputDirectory, bool isAzureResourceManagement, bool fullyCompatible, CancellationToken ct)
         {
             var cmd = npxHelper.CreateCommand();
             cmd.Package = "@azure-tools/typespec-client-generator-cli";
@@ -260,7 +260,10 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 cmd.AddArgs("--fully-compatible");
             }
 
-            var result = cmd.Run();
+            var tspClientCt = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            tspClientCt.CancelAfter(TimeSpan.FromMinutes(2)); // Set a timeout for the initialization
+
+            var result = await cmd.RunAsync(tspClientCt.Token);
             if (result.ExitCode != 0)
             {
                 SetFailure();
@@ -277,7 +280,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             };
         }
 
-        private TspToolResponse RunTspInit(string outputDirectory, string template, string serviceNamespace)
+        private async Task<TspToolResponse> RunTspInitAsync(string outputDirectory, string template, string serviceNamespace, CancellationToken ct)
         {
             var cmd = npxHelper.CreateCommand();
             cmd.Package = "@typespec/compiler";
@@ -287,7 +290,10 @@ namespace Azure.Sdk.Tools.Cli.Tools
             cmd.AddArgs("--output-dir", outputDirectory);
             cmd.AddArgs("--template", template, AzureTemplatesUrl);
 
-            var result = cmd.Run();
+            var tspInitCt = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            tspInitCt.CancelAfter(TimeSpan.FromMinutes(2)); // Set a timeout for the initialization
+
+            var result = await cmd.RunAsync(tspInitCt.Token);
             if (result.ExitCode != 0)
             {
                 SetFailure();

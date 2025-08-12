@@ -72,31 +72,31 @@ public class LanguageRepoService : ILanguageRepoService
     {
         return result.ExitCode == 0
             ? new SuccessCLICheckResponse(result.ExitCode, result.Output)
-            : new FailureCLICheckResponse(result.ExitCode, result.Output, "Process failed");
+            : new CLICheckResponse(result.ExitCode, result.Output, "Process failed");
     }
 
     public virtual async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct)
     {
         await Task.CompletedTask;
-        return new FailureCLICheckResponse(1, "AnalyzeDependencies not implemented for this language");
+        return new CLICheckResponse(1, "", "AnalyzeDependencies not implemented for this language");
     }
 
     public virtual async Task<CLICheckResponse> FormatCodeAsync(string packagePath)
     {
         await Task.CompletedTask;
-        return new FailureCLICheckResponse(1, "FormatCode not implemented for this language");
+        return new CLICheckResponse(1, "", "FormatCode not implemented for this language");
     }
 
     public virtual async Task<CLICheckResponse> LintCodeAsync(string packagePath)
     {
         await Task.CompletedTask;
-        return new FailureCLICheckResponse(1, "LintCode not implemented for this language");
+        return new CLICheckResponse(1, "", "LintCode not implemented for this language");
     }
 
     public virtual async Task<CLICheckResponse> RunTestsAsync(string packagePath)
     {
         await Task.CompletedTask;
-        return new FailureCLICheckResponse(1, "RunTests not implemented for this language");
+        return new CLICheckResponse(1, "", "RunTests not implemented for this language");
     }
 
     public virtual async Task<CLICheckResponse> ValidateChangelogAsync(string packagePath)
@@ -118,14 +118,14 @@ public class LanguageRepoService : ILanguageRepoService
         {
             if (!Directory.Exists(packagePath))
             {
-                return new FailureCLICheckResponse(1, "", $"Package path does not exist: {packagePath}");
+                return new CLICheckResponse(1, "", $"Package path does not exist: {packagePath}");
             }
 
             // Find the SDK repository root by looking for common repository indicators
             var packageRepoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
             if (string.IsNullOrEmpty(packageRepoRoot))
             {
-                return new FailureCLICheckResponse(1, "", $"Could not find repository root from package path: {packagePath}");
+                return new CLICheckResponse(1, "", $"Could not find repository root from package path: {packagePath}");
             }
 
             // Construct the path to the PowerShell script in the SDK repository
@@ -133,7 +133,7 @@ public class LanguageRepoService : ILanguageRepoService
             
             if (!File.Exists(scriptPath))
             {
-                return new FailureCLICheckResponse(1, "", $"PowerShell script not found at expected location: {scriptPath}");
+                return new CLICheckResponse(1, "", $"PowerShell script not found at expected location: {scriptPath}");
             }
 
             var command = "pwsh";
@@ -155,13 +155,13 @@ public class LanguageRepoService : ILanguageRepoService
             }
             else
             {
-                return new FailureCLICheckResponse(1, processResult.Output, $"Changelog validation failed with exit code {processResult.ExitCode}");
+                return new CLICheckResponse(1, processResult.Output, $"Changelog validation failed with exit code {processResult.ExitCode}");
             }
         }
         catch (Exception ex)
         {
             stopwatch.Stop();
-            return new FailureCLICheckResponse(1, "", $"Unhandled exception: {ex.Message}");
+            return new CLICheckResponse(1, "", $"Unhandled exception: {ex.Message}");
         }
         finally
         {

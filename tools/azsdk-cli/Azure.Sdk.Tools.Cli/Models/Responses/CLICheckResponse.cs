@@ -12,6 +12,23 @@ public class CLICheckResponse: Response
     
     [JsonPropertyName("output")]
     public string Output { get; set;}
+
+    public CLICheckResponse() { }
+
+    public CLICheckResponse(int exitCode, string output, string error = null)
+    {
+        ExitCode = exitCode;
+        Output = output;
+        if (!string.IsNullOrEmpty(error))
+        {
+            ResponseError = error;
+        }
+    }
+
+    public override string ToString()
+    {
+        return ToString(Output);
+    }
 }
 
 /// <summary>
@@ -22,10 +39,8 @@ public class CookbookCLICheckResponse : CLICheckResponse
     [JsonPropertyName("cookbook_reference")]
     public string CookbookReference { get; set;}
 
-    public CookbookCLICheckResponse(int exitCode, string output, string cookbookReference)
+    public CookbookCLICheckResponse(int exitCode, string output, string cookbookReference) : base(exitCode, output)
     {
-        ExitCode = exitCode;
-        Output = output;
         CookbookReference = cookbookReference;
     }
 
@@ -40,10 +55,8 @@ public class CookbookCLICheckResponse : CLICheckResponse
 /// </summary>
 public class SuccessCLICheckResponse : CLICheckResponse
 {
-    public SuccessCLICheckResponse(int exitCode, string output)
+    public SuccessCLICheckResponse(int exitCode, string output) : base(exitCode, output)
     {
-        ExitCode = exitCode;
-        Output = output;
     }
 
     public override string ToString()
@@ -52,24 +65,3 @@ public class SuccessCLICheckResponse : CLICheckResponse
     }
 }
 
-/// <summary>
-/// CLI check response for failed operations.
-/// </summary>
-public class FailureCLICheckResponse : CLICheckResponse
-{
-    [JsonPropertyName("error")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public string Error { get; set;}
-
-    public FailureCLICheckResponse(int exitCode, string output, string error = "")
-    {
-        ExitCode = exitCode;
-        Output = output;
-        Error = error;
-    }
-
-    public override string ToString()
-    {
-        return ToString(Output);
-    }
-}

@@ -44,7 +44,7 @@ public class GoLanguageRepoService : LanguageRepoService
         catch (Exception ex)
         {
             _logger.LogError(ex, "{MethodName} failed with an exception", nameof(CreateEmptyPackage));
-            return new FailureCLICheckResponse(1, $"{nameof(CreateEmptyPackage)} failed with an exception", ex.Message);
+            return new CLICheckResponse(1, "", $"{nameof(CreateEmptyPackage)} failed with an exception: {ex.Message}");
         }
     }
 
@@ -69,7 +69,7 @@ public class GoLanguageRepoService : LanguageRepoService
         catch (Exception ex)
         {
             _logger.LogError(ex, "{MethodName} failed with an exception", nameof(AnalyzeDependenciesAsync));
-            return new FailureCLICheckResponse(1, $"{nameof(AnalyzeDependenciesAsync)} failed with an exception", ex.Message);
+            return new CLICheckResponse(1, "", $"{nameof(AnalyzeDependenciesAsync)} failed with an exception: {ex.Message}");
         }
     }
     public override async Task<CLICheckResponse> FormatCodeAsync(string packagePath)
@@ -83,7 +83,7 @@ public class GoLanguageRepoService : LanguageRepoService
         catch (Exception ex)
         {
             _logger.LogError(ex, "{MethodName} failed with an exception", nameof(FormatCodeAsync));
-            return new FailureCLICheckResponse(1, $"{nameof(FormatCodeAsync)} failed with an exception", ex.Message);
+            return new CLICheckResponse(1, "", $"{nameof(FormatCodeAsync)} failed with an exception: {ex.Message}");
         }
     }
 
@@ -98,7 +98,7 @@ public class GoLanguageRepoService : LanguageRepoService
         catch (Exception ex)
         {
             _logger.LogError(ex, "{MethodName} failed with an exception", nameof(LintCodeAsync));
-            return new FailureCLICheckResponse(1, $"{nameof(LintCodeAsync)} failed with an exception", ex.Message);
+            return new CLICheckResponse(1, "", $"{nameof(LintCodeAsync)} failed with an exception: {ex.Message}");
         }
     }
 
@@ -113,7 +113,7 @@ public class GoLanguageRepoService : LanguageRepoService
         catch (Exception ex)
         {
             _logger.LogError(ex, "{MethodName} failed with an exception", nameof(RunTestsAsync));
-            return new FailureCLICheckResponse(1, $"{nameof(RunTestsAsync)} failed with an exception", ex.Message);
+            return new CLICheckResponse(1, "", $"{nameof(RunTestsAsync)} failed with an exception: {ex.Message}");
         }
     }
 
@@ -128,7 +128,7 @@ public class GoLanguageRepoService : LanguageRepoService
         catch (Exception ex)
         {
             _logger.LogError(ex, "{MethodName} failed with an exception", nameof(BuildProjectAsync));
-            return new FailureCLICheckResponse(1, $"{nameof(BuildProjectAsync)} failed with an exception", ex.Message);
+            return new CLICheckResponse(1, "", $"{nameof(BuildProjectAsync)} failed with an exception: {ex.Message}");
         }
     }
 

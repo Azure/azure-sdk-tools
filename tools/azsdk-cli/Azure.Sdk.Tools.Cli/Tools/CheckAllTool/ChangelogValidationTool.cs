@@ -62,7 +62,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 if (!Directory.Exists(packagePath))
                 {
                     SetFailure(1);
-                    return new FailureCLICheckResponse(1, "", $"Package path does not exist: {packagePath}");
+                    return new CLICheckResponse(1, "", $"Package path does not exist: {packagePath}");
                 }
 
                 // Create language service and run changelog validation
@@ -74,7 +74,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 if (result.ExitCode != 0)
                 {
                     SetFailure(1);
-                    return new FailureCLICheckResponse(result.ExitCode, result.Output, "Changelog validation failed");
+                    return new CLICheckResponse(result.ExitCode, result.Output, "Changelog validation failed");
                 }
 
                 return result;
@@ -83,7 +83,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             {
                 logger.LogError(ex, "Unhandled exception while running changelog validation");
                 SetFailure(1);
-                return new FailureCLICheckResponse(1, ex.ToString(), "Unhandled exception while running changelog validation");
+                return new CLICheckResponse(1, ex.ToString(), "Unhandled exception while running changelog validation");
             }
         }
     }

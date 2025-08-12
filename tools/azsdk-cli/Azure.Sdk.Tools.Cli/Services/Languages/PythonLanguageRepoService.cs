@@ -36,7 +36,7 @@ public class PythonLanguageRepoService : LanguageRepoService
             if (!File.Exists(toxConfigPath))
             {
                 _logger.LogError("Tox configuration file not found at: {ToxConfigPath}", toxConfigPath);
-                return new FailureCLICheckResponse(1, $"Tox configuration file not found at: {toxConfigPath}");
+                return new CLICheckResponse(1, "", $"Tox configuration file not found at: {toxConfigPath}");
             }
             
             _logger.LogInformation("Using tox configuration file: {ToxConfigPath}", toxConfigPath);
@@ -57,7 +57,7 @@ public class PythonLanguageRepoService : LanguageRepoService
             else
             {
                 _logger.LogWarning("Dependency analysis failed with exit code {ExitCode}", result.ExitCode);
-                return new FailureCLICheckResponse(result.ExitCode, result.Output, "Process failed");
+                return new CLICheckResponse(result.ExitCode, result.Output, "Process failed");
             }
         }
         catch (Exception ex)

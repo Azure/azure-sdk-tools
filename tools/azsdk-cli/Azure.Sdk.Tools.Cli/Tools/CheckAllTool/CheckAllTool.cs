@@ -66,7 +66,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 if (!Directory.Exists(packagePath))
                 {
                     SetFailure(1);
-                    return new FailureCLICheckResponse(1, "", $"Package path does not exist: {packagePath}");
+                    return new CLICheckResponse(1, "", $"Package path does not exist: {packagePath}");
                 }
 
                 var results = new List<CLICheckResponse>();
@@ -99,13 +99,13 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 
                 return overallSuccess 
                     ? new SuccessCLICheckResponse(0, combinedOutput) 
-                    : new FailureCLICheckResponse(1, combinedOutput, message);
+                    : new CLICheckResponse(1, combinedOutput, message);
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Unhandled exception while running checks");
                 SetFailure(1);
-                return new FailureCLICheckResponse(1, "", $"Unhandled exception: {ex.Message}");
+                return new CLICheckResponse(1, "", $"Unhandled exception: {ex.Message}");
             }
         }
 

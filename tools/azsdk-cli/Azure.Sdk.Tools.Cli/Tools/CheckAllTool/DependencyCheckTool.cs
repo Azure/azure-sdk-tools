@@ -60,7 +60,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 if (!Directory.Exists(packagePath))
                 {
                     SetFailure(1);
-                    return new FailureCLICheckResponse(1, "", $"Package path does not exist: {packagePath}");
+                    return new CLICheckResponse(1, "", $"Package path does not exist: {packagePath}");
                 }
 
                 // Create language service and run dependency analysis
@@ -72,7 +72,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 if (result.ExitCode != 0)
                 {
                     SetFailure(1);
-                    return new FailureCLICheckResponse(result.ExitCode, result.Output, "Dependency check failed");
+                    return new CLICheckResponse(result.ExitCode, result.Output, "Dependency check failed");
                 }
 
                 return result;
@@ -81,7 +81,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             {
                 logger.LogError(ex, "Unhandled exception while running dependency check");
                 SetFailure(1);
-                return new FailureCLICheckResponse(1, ex.ToString(), "Unhandled exception while running dependency check");
+                return new CLICheckResponse(1, ex.ToString(), "Unhandled exception while running dependency check");
             }
         }
 

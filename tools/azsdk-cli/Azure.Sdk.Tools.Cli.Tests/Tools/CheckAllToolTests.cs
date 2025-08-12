@@ -62,7 +62,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
 
             // Assert
             Assert.IsNotNull(result);
-            Assert.IsTrue(result is FailureCLICheckResponse);
+            Assert.IsTrue(result.ExitCode != 0 && !string.IsNullOrEmpty(result.ResponseError));
             Assert.That(result.ExitCode, Is.EqualTo(1));
         }
 
@@ -78,7 +78,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
 
             // Assert
             Assert.IsNotNull(result);
-            Assert.IsTrue(result is SuccessCLICheckResponse || result is FailureCLICheckResponse);
+            Assert.IsTrue(result is SuccessCLICheckResponse || (result.ExitCode != 0 && !string.IsNullOrEmpty(result.ResponseError)));
             // Even with project file, dependency check will likely fail without proper dotnet setup
             Assert.That(result.ExitCode, Is.GreaterThanOrEqualTo(0));
         }
@@ -95,10 +95,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             // Assert
             Assert.IsNotNull(result);
             Assert.That(result.ExitCode, Is.EqualTo(1));
-            Assert.IsTrue(result is FailureCLICheckResponse);
-            var failureResult = result as FailureCLICheckResponse;
-            Assert.IsNotNull(failureResult);
-            Assert.IsTrue(failureResult.Error.Contains("Package path does not exist"));
+            Assert.IsTrue(!string.IsNullOrEmpty(result.ResponseError));
+            Assert.IsTrue(result.ResponseError.Contains("Package path does not exist"));
         }
 
         [Test]
@@ -109,7 +107,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
 
             // Assert
             Assert.IsNotNull(result);
-            Assert.IsTrue(result is SuccessCLICheckResponse || result is FailureCLICheckResponse);
+            Assert.IsTrue(result is SuccessCLICheckResponse || (result.ExitCode != 0));
             
             // For valid paths, we expect the checks to run even if they fail
             // Since this is a test directory without proper project structure, checks may fail

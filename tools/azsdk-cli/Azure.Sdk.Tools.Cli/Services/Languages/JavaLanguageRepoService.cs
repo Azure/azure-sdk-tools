@@ -34,7 +34,7 @@ public class JavaLanguageRepoService : LanguageRepoService
             return CreateResponseFromProcessResult(result);
         }
         
-        return new FailureCLICheckResponse(1, "No Maven (pom.xml) or Gradle (build.gradle) build file found");
+        return new CLICheckResponse(1, "", "No Maven (pom.xml) or Gradle (build.gradle) build file found");
     }
 
     public override async Task<CLICheckResponse> RunTestsAsync(string packagePath)
@@ -56,6 +56,6 @@ public class JavaLanguageRepoService : LanguageRepoService
             return CreateResponseFromProcessResult(result);
         }
         
-        return new FailureCLICheckResponse(1, "No Maven (pom.xml) or Gradle (build.gradle) build file found");
+        return new CLICheckResponse(1, "", "No Maven (pom.xml) or Gradle (build.gradle) build file found");
     }
 }

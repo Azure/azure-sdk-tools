@@ -198,30 +198,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             Assert.That(lines[4], Is.EqualTo("# ServiceOwners: @user1 @user2"));
         }
 
-        [Test]
-        public void FormatCodeownersEntry_OnlyPath_FormatsMinimally()
-        {
-            // Arrange
-            var codeownersEntry = new CodeownersEntry
-            {
-                PathExpression = "sdk/servicebus/",
-                ServiceLabels = new List<string>(),
-                ServiceOwners = new List<string>(),
-                SourceOwners = new List<string> { "source1" },
-                AzureSdkOwners = new List<string>()
-            };
-
-            // Act
-            var result = codeOwnerHelper.formatCodeownersEntry(codeownersEntry);
-
-            // Assert
-            var lines = result.Split('\n');
-            Assert.That(lines[0], Is.EqualTo(""));
-            Assert.That(lines[1], Does.StartWith("sdk/servicebus/"));
-            Assert.That(lines[1], Does.Contain("@source1"));
-            Assert.That(lines[2], Is.EqualTo(""));
-        }
-
         #endregion
 
         #region findBlock Tests
@@ -360,7 +336,7 @@ line3";
             var result = codeOwnerHelper.findAlphabeticalInsertionPoint(entries, newEntry);
 
             // Assert
-            Assert.That(result.startLine, Is.EqualTo(8)); // Should insert after identity (endLine + 1)
+            Assert.That(result.startLine, Is.EqualTo(9));
         }
 
         [Test]

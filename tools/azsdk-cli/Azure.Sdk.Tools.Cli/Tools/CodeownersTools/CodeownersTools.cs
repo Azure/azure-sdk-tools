@@ -207,14 +207,9 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
                 // Find Codeowner Entry with the validated Label or Path
                 var (startLine, endLine) = (-1, -1);
-                if (isMgmtPlane)
-                {
-                    (startLine, endLine) = codeownersHelper.findBlock(codeownersContent, standardManagementCategory);
-                }
-                else
-                {
-                    (startLine, endLine) = codeownersHelper.findBlock(codeownersContent, standardServiceCategory);
-                }
+                (startLine, endLine) = isMgmtPlane ?
+                codeownersHelper.findBlock(codeownersContent, standardManagementCategory) :
+                codeownersHelper.findBlock(codeownersContent, standardServiceCategory);
 
                 var codeownersEntries = CodeownersParser.ParseCodeownersFile(codeownersUrl, azureWriteTeamsBlobUrl, startLine, endLine);
                 for (int i = 0; i < codeownersEntries.Count; i++)
@@ -222,56 +217,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     (codeownersEntries, i) = codeownersHelper.mergeCodeownerEntries(codeownersEntries, i);
                 }
 
-                CodeownersEntry? updatedEntry = null;
-                if (!string.IsNullOrEmpty(path))
-                {
-                    var comparablePath = codeownersHelper.ExtractDirectoryName(path);
-                    // get the first entry that matches if no one get null. Then compare the path of the entry with the given path 
-                    updatedEntry = codeownersEntries.FirstOrDefault(entry =>
-                        codeownersHelper.ExtractDirectoryName(entry.PathExpression).Equals(comparablePath, StringComparison.OrdinalIgnoreCase) == true);
-                }
-                else if (!string.IsNullOrEmpty(serviceLabel))
-                {
-                    // Find the codeowners entry that contains the specified service label (case-insensitive)
-                    updatedEntry = codeownersEntries.FirstOrDefault(entry =>
-                        entry.ServiceLabels.Any(label => label.Equals(serviceLabel, StringComparison.OrdinalIgnoreCase)));
-                }
+                // Find existing codeowners entry by path or service label
+                var updatedEntry = codeownersHelper.FindMatchingEntries(codeownersEntries, path, serviceLabel);
 
                 var codeownersEntryExists = false;
 
-                // If the Entry exists
-                if (updatedEntry != null)
-                {
-                    codeownersEntryExists = true;
-                    // Update target entry with new codeowners
-                    if (isAdding)
-                    {
-                        updatedEntry.ServiceOwners = codeownersHelper.AddUniqueOwners(updatedEntry.ServiceOwners, serviceOwners);
-                        updatedEntry.SourceOwners = codeownersHelper.AddUniqueOwners(updatedEntry.SourceOwners, sourceOwners);
-                    }
-                    else
-                    {
-                        updatedEntry.ServiceOwners = codeownersHelper.RemoveOwners(updatedEntry.ServiceOwners, serviceOwners);
-                        updatedEntry.SourceOwners = codeownersHelper.RemoveOwners(updatedEntry.SourceOwners, sourceOwners);
-                    }
-                }
-                else if (updatedEntry == null)
-                {
-                    if (string.IsNullOrEmpty(serviceLabel) || string.IsNullOrEmpty(path))
-                    {
-                        throw new Exception($"When creating a new entry, both a Service Label and Path are required. Provided: serviceLabel = '{serviceLabel}', path = '{path}'");
-                    }
-
-                    codeownersEntryExists = false;
-                    updatedEntry = new CodeownersEntry()
-                    {
-                        PathExpression = path ?? string.Empty,
-                        ServiceLabels = new List<string>() { serviceLabel } ?? new List<string>(),
-                        ServiceOwners = serviceOwners ?? new List<string>(),
-                        SourceOwners = sourceOwners ?? new List<string>(),
-                        AzureSdkOwners = new List<string>()
-                    };
-                }
+                // Update or create the codeowners entry
+                (updatedEntry, codeownersEntryExists) = codeownersHelper.UpdateOrCreateCodeownersEntry(
+                    updatedEntry, path, serviceLabel, serviceOwners, sourceOwners, isAdding);
 
                 // Validate the modified/created Entry
                 var (validationErrors, codeownersValidationResults) = await ValidateMinimumOwnerRequirements(updatedEntry);
@@ -363,7 +316,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         }
 
         [McpServerTool(Name = "ValidateCodeownersEntryForService"), Description("Validates codeowners in a specific repository for a given service or repo path.")]
-        public async Task<ServiceCodeownersResult> ValidateCodeownersEntryForService(string repoName, string? serviceLabel = null, string? repoPath = null)
+        public async Task<ServiceCodeownersResult> ValidateCodeownersEntryForService(string repoName, string? serviceLabel = null, string? path = null)
         {
             ServiceCodeownersResult response = new() { };
 
@@ -375,18 +328,18 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
                 serviceLabel = serviceLabel?.Trim();
-                repoPath = repoPath?.Trim();
-                if (string.IsNullOrEmpty(serviceLabel) && string.IsNullOrEmpty(repoPath))
+                path = path?.Trim();
+                if (string.IsNullOrEmpty(serviceLabel) && string.IsNullOrEmpty(path))
                 {
                     throw new Exception("Must provide a service label or a repository path.");
                 }
 
-                List<CodeownersEntry> matchingEntries;
+                CodeownersEntry? matchingEntry;
                 try
                 {
                     var codeownersUrl = $"{githubRawContentBaseUrl}/{Constants.AZURE_OWNER_PATH}/{repoName}/main/{Constants.AZURE_CODEOWNERS_PATH}";
                     var codeownersEntries = CodeownersParser.ParseCodeownersFile(codeownersUrl, azureWriteTeamsBlobUrl);
-                    matchingEntries = codeownersHelper.FindMatchingEntries(codeownersEntries, serviceLabel, repoPath);
+                    matchingEntry = codeownersHelper.FindMatchingEntries(codeownersEntries, path, serviceLabel);
                 }
                 catch (Exception ex)
                 {
@@ -395,16 +348,11 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
                 // Validate Owners
-                if (matchingEntries != null && matchingEntries.Count > 0)
+                if (matchingEntry != null)
                 {
-                    string? validationErrors = null;
-                    List<CodeownersValidationResult>? codeownersValidationResults = null;
-                    foreach (var matchingEntry in matchingEntries)
-                    {
-                        var validationResponse = await ValidateMinimumOwnerRequirements(matchingEntry);
-                        validationErrors += validationResponse.validationErrors;
-                        codeownersValidationResults?.AddRange(validationResponse.codeownersValidationResults);
-                    }
+                    var validationResponse = await ValidateMinimumOwnerRequirements(matchingEntry);
+                    string? validationErrors = validationResponse.validationErrors;
+                    List<CodeownersValidationResult>? codeownersValidationResults = validationResponse.codeownersValidationResults;
 
                     if (!string.IsNullOrEmpty(validationErrors))
                     {
@@ -419,7 +367,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
                 else
                 {
-                    response.Message += $"Service label '{serviceLabel}' or Repo Path '{repoPath}' not found in {repoName}";
+                    response.Message += $"Service label '{serviceLabel}' or Repo Path '{path}' not found in {repoName}";
                     return response;
                 }
             }

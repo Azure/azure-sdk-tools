@@ -60,13 +60,17 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             };
 
             // Act
-            var result = codeownersHelper.FindMatchingEntries(entries, serviceName);
+            var result = codeownersHelper.FindMatchingEntries(entries, serviceLabel: serviceName);
 
             // Assert
-            Assert.That(result.Count, Is.EqualTo(expectedCount), $"Service name '{serviceName}' should return {expectedCount} entries");
-            if (expectedCount > 0)
+            if (expectedCount == 0)
             {
-                Assert.That(result[0]?.PathExpression, Is.EqualTo(expectedPath), $"Service name '{serviceName}' should match path '{expectedPath}'");
+                Assert.That(result, Is.Null, $"Service name '{serviceName}' should return no entries");
+            }
+            else
+            {
+                Assert.That(result, Is.Not.Null, $"Service name '{serviceName}' should return an entry");
+                Assert.That(result?.PathExpression, Is.EqualTo(expectedPath), $"Service name '{serviceName}' should match path '{expectedPath}'");
             }
         }
 
@@ -85,10 +89,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             };
 
             // Act
-            var result = codeownersHelper.FindMatchingEntries(entries, null!);
+            var result = codeownersHelper.FindMatchingEntries(entries, serviceLabel: null!);
 
             // Assert
-            Assert.That(result.Count, Is.EqualTo(0), "Null service name should return no entries");
+            Assert.That(result, Is.Null, "Null service name should return no entries");
         }
 
         [Test]
@@ -105,10 +109,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             };
 
             // Act
-            var result = codeownersHelper.FindMatchingEntries(entries, "nonexistent");
+            var result = codeownersHelper.FindMatchingEntries(entries, serviceLabel: "nonexistent");
 
             // Assert
-            Assert.That(result.Count, Is.EqualTo(0));
+            Assert.That(result, Is.Null);
         }
 
         #endregion

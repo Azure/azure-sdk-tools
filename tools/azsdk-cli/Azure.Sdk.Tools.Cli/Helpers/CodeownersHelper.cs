@@ -6,7 +6,14 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 {
     public interface ICodeownersHelper
     {
-        List<CodeownersEntry> FindMatchingEntries(IList<CodeownersEntry> entries, string serviceName = null, string repoPath = null);
+        CodeownersEntry? FindMatchingEntries(IList<CodeownersEntry> entries, string path = null, string serviceLabel = null);
+        (CodeownersEntry entry, bool existed) UpdateOrCreateCodeownersEntry(
+            CodeownersEntry? existingEntry,
+            string path,
+            string serviceLabel,
+            List<string> serviceOwners,
+            List<string> sourceOwners,
+            bool isAdding);
         public string NormalizePath(string path);
         CodeownersEntry findAlphabeticalInsertionPoint(List<CodeownersEntry> codeownersEntries, CodeownersEntry codeownersEntry);
         public (List<CodeownersEntry>, int) mergeCodeownerEntries(List<CodeownersEntry> codeownersEntries, int index);
@@ -24,34 +31,76 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
     public class CodeownersHelper : ICodeownersHelper
     {
-        public List<CodeownersEntry> FindMatchingEntries(IList<CodeownersEntry> entries, string serviceName = null, string repoPath = null)
+        public CodeownersEntry? FindMatchingEntries(IList<CodeownersEntry> entries, string path = null, string serviceLabel = null)
         {
             var codeownersEntries = new List<CodeownersEntry>();
             foreach (var entry in entries)
             {
-                // If serviceName is provided, match by ServiceLabels or PRLabels (exact match, case and space insensitive)
-                if (!string.IsNullOrEmpty(serviceName))
+                // If serviceLabel is provided, match by ServiceLabels or PRLabels (exact match, case and space insensitive)
+                if (!string.IsNullOrEmpty(serviceLabel))
                 {
                     // Check ServiceLabels for exact match
-                    if (entry.ServiceLabels?.Any(label => NormalizeLabel(label).Equals(NormalizeLabel(serviceName), StringComparison.OrdinalIgnoreCase)) == true)
+                    if (entry.ServiceLabels?.Any(label => NormalizeLabel(label).Equals(NormalizeLabel(serviceLabel), StringComparison.OrdinalIgnoreCase)) == true)
                     {
-                        codeownersEntries.Add(entry);
+                        return entry;
                     }
                     // Check PRLabels for exact match
-                    else if (entry.PRLabels?.Any(label => NormalizeLabel(label).Equals(NormalizeLabel(serviceName), StringComparison.OrdinalIgnoreCase)) == true)
+                    else if (entry.PRLabels?.Any(label => NormalizeLabel(label).Equals(NormalizeLabel(serviceLabel), StringComparison.OrdinalIgnoreCase)) == true)
                     {
-                        codeownersEntries.Add(entry);
+                        return entry;
                     }
                 }
 
                 // If repoPath is provided, match by PathExpression (contains match for paths - this is intentional)
-                if (!string.IsNullOrEmpty(repoPath) && entry.PathExpression?.Contains(repoPath, StringComparison.OrdinalIgnoreCase) == true)
+                if (!string.IsNullOrEmpty(path) && ExtractDirectoryName(entry.PathExpression).Contains(ExtractDirectoryName(path), StringComparison.OrdinalIgnoreCase) == true)
                 {
-                    codeownersEntries.Add(entry);
+                    return entry;
                 }
             }
+            return null;
+        }
 
-            return codeownersEntries.Cast<CodeownersEntry>().ToList();
+        public (CodeownersEntry entry, bool existed) UpdateOrCreateCodeownersEntry(
+            CodeownersEntry? existingEntry,
+            string path,
+            string serviceLabel,
+            List<string> serviceOwners,
+            List<string> sourceOwners,
+            bool isAdding)
+        {
+            if (existingEntry != null)
+            {
+                // Update existing entry with new codeowners
+                if (isAdding)
+                {
+                    existingEntry.ServiceOwners = AddUniqueOwners(existingEntry.ServiceOwners, serviceOwners);
+                    existingEntry.SourceOwners = AddUniqueOwners(existingEntry.SourceOwners, sourceOwners);
+                }
+                else
+                {
+                    existingEntry.ServiceOwners = RemoveOwners(existingEntry.ServiceOwners, serviceOwners);
+                    existingEntry.SourceOwners = RemoveOwners(existingEntry.SourceOwners, sourceOwners);
+                }
+                return (existingEntry, true);
+            }
+            else
+            {
+                // Create new entry
+                if (string.IsNullOrEmpty(serviceLabel) || string.IsNullOrEmpty(path))
+                {
+                    throw new Exception($"When creating a new entry, both a Service Label and Path are required. Provided: serviceLabel = '{serviceLabel}', path = '{path}'");
+                }
+
+                var newEntry = new CodeownersEntry()
+                {
+                    PathExpression = path ?? string.Empty,
+                    ServiceLabels = new List<string>() { serviceLabel } ?? new List<string>(),
+                    ServiceOwners = serviceOwners ?? new List<string>(),
+                    SourceOwners = sourceOwners ?? new List<string>(),
+                    AzureSdkOwners = new List<string>()
+                };
+                return (newEntry, false);
+            }
         }
 
         private string NormalizeLabel(string input)

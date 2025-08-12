@@ -452,7 +452,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.CodeownersToolsSuite
                 });
 
             // Use a definitely non-existent repo to force parser failure
-            var result = await sut.ValidateCodeownersEntryForService("not-a-real-repo-xyz-123", serviceLabel: "Any", repoPath: null);
+            var result = await sut.ValidateCodeownersEntryForService("not-a-real-repo-xyz-123", serviceLabel: "Any", path: null);
 
             Assert.That(result.Message, Does.Contain("Error finding service in CODEOWNERS file."));
         }
@@ -476,7 +476,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.CodeownersToolsSuite
             var result = await sut.ValidateCodeownersEntryForService(
                 repoName: "azure-sdk-for-net",
                 serviceLabel: null,
-                repoPath: "sdk/storage/");
+                path: "/sdk/storage/");
 
             // We expect either a pass if the entry has >=2 owners, or a descriptive validation error otherwise.
             Assert.That(

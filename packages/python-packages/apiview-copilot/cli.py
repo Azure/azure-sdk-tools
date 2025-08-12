@@ -652,16 +652,24 @@ def get_apiview_comments(review_id: str, environment: str = "production", use_ap
                 raise ValueError("When using the API, `--review-id` must be provided.")
             apiview_endpoints = {
                 "production": "https://apiview.dev",
-                "staging": "https://apiviewstaging.azurewebsites.net",
+                "staging": "https://apiviewstagingtest.com",
             }
             endpoint_root = apiview_endpoints.get(environment)
             endpoint = f"{endpoint_root}/api/Comments/{review_id}?commentType=APIRevision&isDeleted=false"
+            apiview_scopes = {
+                "production": "api://apiview/.default",
+                "staging": "api://apiviewstaging/.default",
+            }
+            credential = get_credential()
+            scope = apiview_scopes.get(environment)
+            token = credential.get_token(scope)
             response = requests.get(
                 endpoint,
-                # TODO: Fix this cookie handling
-                headers={"Content-Type": "application/json", "Cookie": "TODO"},
+                headers={"Content-Type": "application/json",
+                        "Authorization": f"Bearer {token.token}"},
                 timeout=30,
             )
+
             if response.status_code != 200:
                 print(f"Error retrieving comments: {response.status_code} - {response.text}")
                 return {}

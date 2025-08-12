@@ -15,6 +15,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         private ITypeSpecHelper typeSpecHelper;
         private IUserHelper userHelper;
         private IOutputService outputService;
+        private IEnvironmentHelper environmentHelper;
         private ReleasePlanTool releasePlanTool;
 
         [SetUp]
@@ -37,13 +38,18 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             outputServiceMock.Setup(x => x.Format(It.IsAny<object>())).Returns<object>(obj  => obj?.ToString() ?? "");
             outputService = outputServiceMock.Object;
 
+            var environmentHelperMock = new Mock<IEnvironmentHelper>();
+            environmentHelperMock.Setup(x => x.GetBooleanVariable(It.IsAny<string>(), It.IsAny<bool>())).Returns(false);
+            environmentHelper = environmentHelperMock.Object;
+
             releasePlanTool = new ReleasePlanTool(
                 devOpsService,
                 typeSpecHelper,
                 logger,
                 outputService,
                 userHelper,
-                gitHubService);
+                gitHubService,
+                environmentHelper);
         }
 
         [Test]
@@ -77,6 +83,80 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var releaseplan = await releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "12345678-1234-5678-9012-123456789012", "12345678-1234-5678-9012-123456789012", "Test version", "https://github.com/Azure/azure-rest-api-specs/pull/35446", "beta", isTestReleasePlan: true);
             Assert.IsNotNull(releaseplan);
             Assert.True(releaseplan.Contains("Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem"));
+        }
+
+        [Test]
+        public async Task Test_Create_releasePlan_with_AZSDKTOOLS_AGENT_TESTING_true_creates_test_release_plan()
+        {
+            // Arrange
+            var environmentHelperMock = new Mock<IEnvironmentHelper>();
+            environmentHelperMock.Setup(x => x.GetBooleanVariable("AZSDKTOOLS_AGENT_TESTING", false)).Returns(true);
+
+            var testReleasePlanTool = new ReleasePlanTool(
+                devOpsService,
+                typeSpecHelper,
+                logger,
+                outputService,
+                userHelper,
+                gitHubService,
+                environmentHelperMock.Object);
+
+            var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
+
+            // Act
+            var releaseplan = await testReleasePlanTool.CreateReleasePlan(
+                testCodeFilePath, 
+                "July 2025", 
+                "12345678-1234-5678-9012-123456789012", 
+                "12345678-1234-5678-9012-123456789012", 
+                "Test version", 
+                "https://github.com/Azure/azure-rest-api-specs/pull/35446", 
+                "beta", 
+                isTestReleasePlan: false); // This should be overridden to true by environment variable
+
+            // Assert
+            Assert.IsNotNull(releaseplan);
+            Assert.True(releaseplan.Contains("Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem"));
+            
+            // Verify the environment helper was called
+            environmentHelperMock.Verify(x => x.GetBooleanVariable("AZSDKTOOLS_AGENT_TESTING", false), Times.Once);
+        }
+
+        [Test]
+        public async Task Test_Create_releasePlan_with_AZSDKTOOLS_AGENT_TESTING_false_respects_parameter()
+        {
+            // Arrange
+            var environmentHelperMock = new Mock<IEnvironmentHelper>();
+            environmentHelperMock.Setup(x => x.GetBooleanVariable("AZSDKTOOLS_AGENT_TESTING", false)).Returns(false);
+
+            var testReleasePlanTool = new ReleasePlanTool(
+                devOpsService,
+                typeSpecHelper,
+                logger,
+                outputService,
+                userHelper,
+                gitHubService,
+                environmentHelperMock.Object);
+
+            var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
+
+            // Act
+            var releaseplan = await testReleasePlanTool.CreateReleasePlan(
+                testCodeFilePath, 
+                "July 2025", 
+                "12345678-1234-5678-9012-123456789012", 
+                "12345678-1234-5678-9012-123456789012", 
+                "Test version", 
+                "https://github.com/Azure/azure-rest-api-specs/pull/35446", 
+                "beta", 
+                isTestReleasePlan: false);
+
+            // Assert
+            Assert.IsNotNull(releaseplan);
+            Assert.True(releaseplan.Contains("Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem"));
+            
+            // Verify the environment helper was called
+            environmentHelperMock.Verify(x => x.GetBooleanVariable("AZSDKTOOLS_AGENT_TESTING", false), Times.Once);
         }
     }
 }

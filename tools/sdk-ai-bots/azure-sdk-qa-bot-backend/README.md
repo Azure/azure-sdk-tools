@@ -47,7 +47,7 @@ Additional features include:
    ```bash
    git clone https://github.com/wanlwanl/wanl-fork-azure-sdk-tools.git
    cd wanl-fork-azure-sdk-tools
-   git checkout azure-sdk-ai-bot
+   git checkout azure-sdk-ai-bot-dev
    cd tools/sdk-ai-bots/azure-sdk-qa-bot-backend
    ```
 
@@ -55,13 +55,16 @@ Additional features include:
    ```bash
    sudo apt install golang-go
    ```
+
 3. Install Azure Cli, reference https://learn.microsoft.com/en-us/cli/azure/install-azure-cli-windows?view=azure-cli-latest&pivots=msi
+
 4. Login toAzure:
    ```bash
    az login
    ```
-   Select subscription: Azure SDK Developer Playground
-6. Start the server:
+   **Remember Select subscription: Azure SDK Developer Playground**
+
+5. Start the server:
    ```bash
    ./run.sh start
    

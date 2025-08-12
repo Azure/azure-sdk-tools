@@ -2,6 +2,7 @@ import type { Language, TypeChecker } from "./types.ts";
 import { typecheckTypeScript } from "./typescript/typecheck.ts";
 import { typecheckPython } from "./python/typecheck.ts";
 import { typecheckGo } from "./go/typecheck.ts";
+import { typecheckDotNet } from "./dotnet/typecheck.ts";
 
 export const languages = [
     "TypeScript",
@@ -24,7 +25,7 @@ export function getToolNames(language: Language): string[] {
             return ["java", "java_typecheck"];
         case "c++":
             return ["cpp", "cpp_typecheck"];
-        case "c#":
+        case "csharp":
             return ["csharp", "csharp_typecheck"];
         case "go":
             return ["go", "go_typecheck"];
@@ -47,7 +48,7 @@ export function getFileExtension(language: Language): string {
             return "java";
         case "c++":
             return "cpp";
-        case "c#":
+        case "csharp":
             return "cs";
         case "go":
             return "go";
@@ -68,6 +69,8 @@ export function getTypechecker(language: Language): TypeChecker {
             return typecheckPython;
         case "go":
             return typecheckGo;
+        case "csharp":
+            return typecheckDotNet;
         case "curl":
             return async () => {
                 return { succeeded: true, output: "" };

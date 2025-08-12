@@ -99,6 +99,8 @@ script({
     "system.go_typecheck",
     "system.java",
     "system.java_typecheck",
+    "system.csharp",
+    "system.csharp_typecheck",
   ],
 });
 

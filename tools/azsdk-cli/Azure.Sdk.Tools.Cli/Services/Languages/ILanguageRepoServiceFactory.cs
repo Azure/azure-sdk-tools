@@ -9,7 +9,7 @@ namespace Azure.Sdk.Tools.Cli.Services;
 public interface ILanguageRepoServiceFactory
 {
     /// <summary>
-    /// Creates the appropriate language repository service based on the detected language.
+    /// Gets the appropriate language repository service based on the detected language.
     /// </summary>
     /// <param name="packagePath">Absolute path to the package directory</param>
     /// <param name="processHelper">Process helper for running commands</param>
@@ -19,17 +19,17 @@ public interface ILanguageRepoServiceFactory
     /// <exception cref="ArgumentException">Thrown when packagePath is null or empty</exception>
     /// <exception cref="DirectoryNotFoundException">Thrown when packagePath does not exist</exception>
     /// <exception cref="NotSupportedException">Thrown when the detected language is not supported</exception>
-    ILanguageRepoService CreateService(string packagePath, IProcessHelper processHelper, IGitHelper gitHelper, ILogger logger);
+    ILanguageRepoService GetService(string packagePath, IProcessHelper processHelper, IGitHelper gitHelper, ILogger logger);
 
     /// <summary>
-    /// Creates the appropriate language repository service based on the detected language.
+    /// Gets the appropriate language repository service based on the detected language.
     /// </summary>
     /// <param name="packagePath">Absolute path to the package directory</param>
     /// <returns>Language-specific repository service</returns>
     /// <exception cref="ArgumentException">Thrown when packagePath is null or empty</exception>
     /// <exception cref="DirectoryNotFoundException">Thrown when packagePath does not exist</exception>
     /// <exception cref="NotSupportedException">Thrown when the detected language is not supported</exception>
-    ILanguageRepoService CreateService(string packagePath);
+    ILanguageRepoService GetService(string packagePath);
 
     /// <summary>
     /// Detects the primary language of a repository based on the README.md header.

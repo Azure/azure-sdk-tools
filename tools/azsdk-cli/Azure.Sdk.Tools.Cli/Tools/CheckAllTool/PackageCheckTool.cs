@@ -90,7 +90,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 ILanguageRepoService languageService;
                 try
                 {
-                    languageService = languageRepoServiceFactory.CreateService(packagePath);
+                    languageService = languageRepoServiceFactory.GetService(packagePath);
                     logger.LogInformation($"Created language service: {languageService.GetType().Name}");
                 }
                 catch (ArgumentException ex)

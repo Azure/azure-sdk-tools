@@ -29,7 +29,7 @@ public class LanguageRepoServiceFactory : ILanguageRepoServiceFactory
     }
 
     /// <summary>
-    /// Creates the appropriate language repository service based on the detected language.
+    /// Gets the appropriate language repository service based on the detected language.
     /// </summary>
     /// <param name="packagePath">Absolute path to the package directory</param>
     /// <param name="processHelper">Process helper for running commands</param>
@@ -39,7 +39,7 @@ public class LanguageRepoServiceFactory : ILanguageRepoServiceFactory
     /// <exception cref="ArgumentException">Thrown when packagePath is null or empty</exception>
     /// <exception cref="DirectoryNotFoundException">Thrown when packagePath does not exist</exception>
     /// <exception cref="NotSupportedException">Thrown when the detected language is not supported</exception>
-    public ILanguageRepoService CreateService(string packagePath, IProcessHelper processHelper, IGitHelper gitHelper, ILogger logger)
+    public ILanguageRepoService GetService(string packagePath, IProcessHelper processHelper, IGitHelper gitHelper, ILogger logger)
     {
         // Use the existing logic but with provided dependencies
         return GetServiceInternal(packagePath, processHelper, gitHelper, logger);
@@ -53,7 +53,7 @@ public class LanguageRepoServiceFactory : ILanguageRepoServiceFactory
     /// <exception cref="ArgumentException">Thrown when packagePath is null or empty</exception>
     /// <exception cref="DirectoryNotFoundException">Thrown when packagePath does not exist</exception>
     /// <exception cref="NotSupportedException">Thrown when the detected language is not supported</exception>
-    public ILanguageRepoService CreateService(string packagePath)
+    public ILanguageRepoService GetService(string packagePath)
     {
         return GetServiceInternal(packagePath, _processHelper, _gitHelper, _logger);
     }

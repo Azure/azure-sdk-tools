@@ -35,12 +35,9 @@ Additional features include:
 
 ## Installation and Setup
 
-### Azure Virtual Machine Setup
-1. Create an Azure Virtual Machine[Optional]:
-   - Navigate to [Azure Portal - Virtual Machines](https://ms.portal.azure.com/#view/Microsoft_Azure_ComputeHub/ComputeHubMenuBlade/~/virtualMachinesBrowse)
-   - Create a new VM with Ubuntu (recommended)
+### Grant Resource Permissions
 
-2. Configure Required Permissions:
+1. Configure Required Permissions:
    - **Assign the following roles to your virtual machine's managed identity/your azure account**
      - [Storage Blob Data Contributor](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/faa080af-c1d8-40ad-9cce-e1a450ca5b57/resourceGroups/typespec_helper/providers/Microsoft.Storage/storageAccounts/typespechelper4storage/iamAccessControl)
      - [Key Vault Secrets User](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/faa080af-c1d8-40ad-9cce-e1a450ca5b57/resourceGroups/typespec_helper/providers/Microsoft.KeyVault/vaults/azuresdkqabotea/users)
@@ -77,23 +74,10 @@ Additional features include:
 ## API Usage
 
 ### Completion Endpoint
-The main endpoint for querying the bot is `/completion`. Here's an example of how to use it:
+The main endpoint for querying the bot is `/completion`. [Here](test\api_test.rest) is an example of how to use it.
 
 The API_KEY could found in the [keyvalut](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/faa080af-c1d8-40ad-9cce-e1a450ca5b57/resourceGroups/typespec_helper/providers/Microsoft.KeyVault/vaults/azuresdkqabotea/secrets)
 
-```bash
-curl --request POST \
-  --url http://localhost:8088/completion \
-  --header 'content-type: application/json; charset=utf8' \
-  --header 'x-api-key: API_KEY' \
-  --data '{
-    "tenant_id": "azure_sdk_qa_bot",
-    "message": {
-      "role": "user",
-      "content": "What is typespec?"
-    }
-  }'
-```
 
 ## Development
 
@@ -113,7 +97,7 @@ go test ./...
 ## Deploy
 
   ```bash
-  ./deploy.sh -t [tag] -m [prod|slot|preview(default)]
+  ./deploy.sh -t [tag] -m [slot|preview|prod]
   ```
 
 ## Contributing

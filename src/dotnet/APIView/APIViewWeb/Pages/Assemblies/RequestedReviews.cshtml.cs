@@ -89,7 +89,7 @@ namespace APIViewWeb.Pages.Assemblies
             var approvedAPIRevs = new List<APIRevisionListItemModel>();
             var namespaceApprovalAPIRevs = new List<APIRevisionListItemModel>();
 
-            var allNamespaceApprovalReviews = new List<APIRevisionListItemModel>();
+            var allNamespaceApprovalReviews = new List<ReviewListItemModel>();
             if (isConfiguredApprover)
             {
                 try 
@@ -104,14 +104,9 @@ namespace APIViewWeb.Pages.Assemblies
                 catch (Exception) { }
             }
             
-            var allReviews = APIRevisions.ToList();
+            // Store namespace approval info for these reviews
             foreach (var nsReview in allNamespaceApprovalReviews)
             {
-                if (!allReviews.Any(r => r.ReviewId == nsReview.ReviewId))
-                {
-                    allReviews.Add(nsReview);
-                }
-                
                 if (nsReview.NamespaceApprovalRequestedOn.HasValue && !string.IsNullOrEmpty(nsReview.NamespaceApprovalRequestedBy))
                 {
                     NamespaceApprovalInfo[nsReview.Id] = (
@@ -120,9 +115,11 @@ namespace APIViewWeb.Pages.Assemblies
                     );
                 }
             }
-            APIRevisions = allReviews;
 
             var reviewIds = APIRevisions.Select(r => r.ReviewId).Distinct().ToList();
+            // Add review IDs from namespace approval reviews
+            reviewIds.AddRange(allNamespaceApprovalReviews.Select(r => r.Id));
+            reviewIds = reviewIds.Distinct().ToList();
             var reviews = new Dictionary<string, ReviewListItemModel>();
             try
             {
@@ -175,7 +172,7 @@ namespace APIViewWeb.Pages.Assemblies
                 {
                     bool isRevisionNamespaceRelated = parentReview.NamespaceReviewStatus == NamespaceReviewStatus.Pending || 
                                                     !string.IsNullOrEmpty(apiRevision.NamespaceApprovalRequestId) ||
-                                                    apiRevision.IsNamespaceReviewRequested;
+                                                    (apiRevision.IsNamespaceReviewRequested ?? false);
                     
                     if (isRevisionNamespaceRelated && !parentReview.IsApproved)
                     {
@@ -183,6 +180,16 @@ namespace APIViewWeb.Pages.Assemblies
                         {
                             namespaceApprovalAPIRevs.Add(apiRevision);
                         }
+                    }
+                }
+                
+                // Also check if this revision belongs to any of the namespace approval reviews
+                var namespaceReview = allNamespaceApprovalReviews.FirstOrDefault(r => r.Id == apiRevision.ReviewId);
+                if (namespaceReview != null && !namespaceApprovalAPIRevs.Any(r => r.Id == apiRevision.Id))
+                {
+                    if (isAssignedToUser || isConfiguredApprover)
+                    {
+                        namespaceApprovalAPIRevs.Add(apiRevision);
                     }
                 }
             }

@@ -74,7 +74,7 @@ namespace APIViewWeb
             var queryStringBuilder = new StringBuilder($@"
                 SELECT * FROM Reviews r 
                 WHERE r.Language IN {languagesAsQueryStr}
-                AND r.IsNamespaceReviewRequested = true
+                AND (r.IsNamespaceReviewRequested = true)
                 AND r.IsClosed = false
                 AND r.IsApproved = false
                 AND r.IsDeleted = false

@@ -313,11 +313,11 @@ namespace APIViewWeb.Managers
         /// <param name="revisionId"></param>
         /// <param name="notes"></param>
         /// <returns></returns>
-        public async Task<ReviewListItemModel> ToggleReviewApprovalAsync(ClaimsPrincipal user, string id, string revisionId, string notes="")
+        public async Task<ReviewListItemModel> ToggleReviewApprovalAsync(ClaimsPrincipal user, string id, string revisionId, string notes = "")
         {
             ReviewListItemModel review = await _reviewsRepository.GetReviewAsync(id);
             var userId = user.GetGitHubLogin();
-            var updatedReview = await ToggleReviewApproval(user, review, notes);
+            var updatedReview = await ToggleReviewApproval(user, review);
             await _signalRHubContext.Clients.Group(userId).SendAsync("ReceiveApprovalSelf", id, revisionId, review.IsApproved);
             await _signalRHubContext.Clients.All.SendAsync("ReceiveApproval", id, revisionId, userId, review.IsApproved);
             return updatedReview;
@@ -337,7 +337,7 @@ namespace APIViewWeb.Managers
             {
                 return;
             }
-            await ToggleReviewApproval(user, review, notes);
+            await ToggleReviewApproval(user, review);
         }
 
         /// <summary>
@@ -346,9 +346,8 @@ namespace APIViewWeb.Managers
         /// <param name="user"></param>
         /// <param name="reviewId"></param>
         /// <param name="associatedReviewIds">List of review IDs for associated language reviews to update</param>
-        /// <param name="notes"></param>
         /// <returns></returns>
-        public async Task<ReviewListItemModel> RequestNamespaceReviewAsync(ClaimsPrincipal user, string reviewId,List<string> associatedReviewIds, string notes = "")
+        public async Task<ReviewListItemModel> RequestNamespaceReviewAsync(ClaimsPrincipal user, string reviewId,List<string> associatedReviewIds)
         {
             ReviewListItemModel typeSpecReview = await _reviewsRepository.GetReviewAsync(reviewId);
             
@@ -363,18 +362,15 @@ namespace APIViewWeb.Managers
             var requestedOn = DateTime.UtcNow;
             
             // Mark the TypeSpec review as namespace review requested
-            var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction<ReviewChangeHistoryModel, ReviewChangeAction>(
-                typeSpecReview.ChangeHistory, ReviewChangeAction.NamespaceReviewRequested, userId, notes);
-            typeSpecReview.ChangeHistory = changeUpdate.ChangeHistory;
             typeSpecReview.NamespaceReviewStatus = NamespaceReviewStatus.Pending;
             
             await _reviewsRepository.UpsertReviewAsync(typeSpecReview);
 
             // Send email notifications to preferred approvers
-            await _notificationManager.NotifyApproversOnNamespaceReviewRequest(user, typeSpecReview, notes);
+            await _notificationManager.NotifyApproversOnNamespaceReviewRequest(user, typeSpecReview);
 
             // Update the reviews identified by review IDs with namespace approval fields
-            await MarkAssociatedReviewsForNamespaceReview(associatedReviewIds, userId, notes, requestId, requestedOn);
+            await MarkAssociatedReviewsForNamespaceReview(associatedReviewIds, userId, requestId, requestedOn);
 
             return typeSpecReview;
         }
@@ -385,11 +381,10 @@ namespace APIViewWeb.Managers
         /// </summary>
         /// <param name="associatedReviewIds">List of review IDs to update</param>
         /// <param name="userId">User requesting the namespace review</param>
-        /// <param name="notes"></param>
         /// <param name="requestId">Unique ID for this namespace approval request</param>
         /// <param name="requestedOn">When the namespace approval was requested</param>
         /// <returns></returns>
-        private async Task MarkAssociatedReviewsForNamespaceReview(List<string> associatedReviewIds, string userId, string notes, string requestId, DateTime requestedOn)
+        private async Task MarkAssociatedReviewsForNamespaceReview(List<string> associatedReviewIds, string userId, string requestId, DateTime requestedOn)
         {
             try
             {
@@ -409,12 +404,6 @@ namespace APIViewWeb.Managers
                             review.NamespaceApprovalRequestId = requestId;
                             review.NamespaceApprovalRequestedBy = userId;
                             review.NamespaceApprovalRequestedOn = requestedOn;
-                            
-                            // Add to review change history
-                            var reviewChangeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction<ReviewChangeHistoryModel, ReviewChangeAction>(
-                                review.ChangeHistory, ReviewChangeAction.NamespaceReviewRequested, userId, 
-                                $"Namespace approval requested for associated language review");
-                            review.ChangeHistory = reviewChangeUpdate.ChangeHistory;
                             
                             // Update the review record in database
                             await _reviewsRepository.UpsertReviewAsync(review);
@@ -448,11 +437,10 @@ namespace APIViewWeb.Managers
         /// <param name="activeApiRevisionId">Current API revision ID being viewed</param>
         /// <param name="associatedApiRevisionIds">List of associated API revision IDs from frontend</param>
         /// <param name="userId"></param>
-        /// <param name="notes"></param>
         /// <param name="requestId">Unique ID for this namespace approval request</param>
         /// <param name="requestedOn">When the namespace approval was requested</param>
         /// <returns></returns>
-        private async Task MarkProvidedAPIRevisionsForNamespaceReview(string activeApiRevisionId, List<string> associatedApiRevisionIds, string userId, string notes, string requestId, DateTime requestedOn)
+        private async Task MarkProvidedAPIRevisionsForNamespaceReview(string activeApiRevisionId, List<string> associatedApiRevisionIds, string userId, string requestId, DateTime requestedOn)
         {
             try
             {
@@ -464,7 +452,7 @@ namespace APIViewWeb.Managers
                     var currentRevision = await _apiRevisionsManager.GetAPIRevisionAsync(activeApiRevisionId);
                     if (currentRevision != null)
                     {
-                        await UpdateSingleAPIRevisionWithNamespaceFields(currentRevision, requestId, userId, requestedOn, notes);
+                        await UpdateSingleAPIRevisionWithNamespaceFields(currentRevision, requestId, userId, requestedOn);
                         updatedCount++;
                     }
                 }
@@ -477,7 +465,7 @@ namespace APIViewWeb.Managers
                         var revision = await _apiRevisionsManager.GetAPIRevisionAsync(revisionId);
                         if (revision != null && IsSDKLanguageOrTypeSpec(revision.Language))
                         {
-                            await UpdateSingleAPIRevisionWithNamespaceFields(revision, requestId, userId, requestedOn, notes);
+                            await UpdateSingleAPIRevisionWithNamespaceFields(revision, requestId, userId, requestedOn);
                             updatedCount++;
                         }
                     }
@@ -506,21 +494,14 @@ namespace APIViewWeb.Managers
         /// <param name="requestId"></param>
         /// <param name="userId"></param>
         /// <param name="requestedOn"></param>
-        /// <param name="notes"></param>
         /// <returns></returns>
-        private async Task UpdateSingleAPIRevisionWithNamespaceFields(APIRevisionListItemModel revision, string requestId, string userId, DateTime requestedOn, string notes)
+        private async Task UpdateSingleAPIRevisionWithNamespaceFields(APIRevisionListItemModel revision, string requestId, string userId, DateTime requestedOn)
         {
             try
             {
                 revision.NamespaceApprovalRequestId = requestId;
                 revision.NamespaceApprovalRequestedBy = userId;
                 revision.IsNamespaceReviewRequested = true;
-                
-                // Also add to change history
-                var revisionChangeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction<APIRevisionChangeHistoryModel, APIRevisionChangeAction>(
-                    revision.ChangeHistory, APIRevisionChangeAction.NamespaceReviewRequested, userId, 
-                    $"Namespace approval requested for associated revisions");
-                revision.ChangeHistory = revisionChangeUpdate.ChangeHistory;
                 
                 await _apiRevisionsRepository.UpsertAPIRevisionAsync(revision);
                 
@@ -677,12 +658,12 @@ namespace APIViewWeb.Managers
             }
         }
 
-        private async Task<ReviewListItemModel> ToggleReviewApproval(ClaimsPrincipal user, ReviewListItemModel review, string notes)
+        private async Task<ReviewListItemModel> ToggleReviewApproval(ClaimsPrincipal user, ReviewListItemModel review)
         {
             await ManagerHelpers.AssertApprover<ReviewListItemModel>(user, review, _authorizationService);
             var userId = user.GetGitHubLogin();
             var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction<ReviewChangeHistoryModel, ReviewChangeAction>(
-                review.ChangeHistory, ReviewChangeAction.Approved, userId, notes);
+                review.ChangeHistory, ReviewChangeAction.Approved, userId, "");
             review.ChangeHistory = changeUpdate.ChangeHistory;
             review.IsApproved = changeUpdate.ChangeStatus;
             await _reviewsRepository.UpsertReviewAsync(review);
@@ -721,17 +702,6 @@ namespace APIViewWeb.Managers
                 
                 if (allSDKReviewsApproved)
                 {
-                    // Auto-approve namespace for the TypeSpec review
-                    var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction<ReviewChangeHistoryModel, ReviewChangeAction>(
-                        typeSpecReview.ChangeHistory, ReviewChangeAction.NamespaceApproved, userId, "Auto-approved: All related SDK reviews are approved");
-                    typeSpecReview.ChangeHistory = changeUpdate.ChangeHistory;
-                    typeSpecReview.IsApproved = changeUpdate.ChangeStatus;
-                    
-                    if (changeUpdate.ChangeStatus)
-                    {
-                        typeSpecReview.NamespaceReviewStatus = NamespaceReviewStatus.Approved;
-                    }
-                    
                     await _reviewsRepository.UpsertReviewAsync(typeSpecReview);
                 }
             }
@@ -894,11 +864,11 @@ namespace APIViewWeb.Managers
         /// </summary>
         /// <param name="user">Current user to check permissions</param>
         /// <param name="limit">Maximum number of results to return (default 100)</param>
-        /// <returns>List of API revisions that have pending namespace approval requests</returns>
-        public async Task<List<APIRevisionListItemModel>> GetPendingNamespaceApprovalsBatchAsync(ClaimsPrincipal user, int limit = 100)
+        /// <returns>List of reviews that have pending namespace approval requests</returns>
+        public async Task<List<ReviewListItemModel>> GetPendingNamespaceApprovalsBatchAsync(ClaimsPrincipal user, int limit = 100)
         {
             var userId = user.GetGitHubLogin();
-            var pendingApprovals = new List<APIRevisionListItemModel>();
+            var pendingApprovals = new List<ReviewListItemModel>();
 
             try
             {
@@ -908,25 +878,12 @@ namespace APIViewWeb.Managers
                     var sdkLanguages = new[] { "C#", "Java", "Python", "Go", "JavaScript" };
                     var allNamespaceReviews = await _reviewsRepository.GetPendingNamespaceApprovalReviewsAsync(sdkLanguages);
 
-                    // For each review, get the API revisions and find the one we can display
+                    // For each review, add it to the results
                     foreach (var review in allNamespaceReviews.Take(limit))
                     {
                         try
                         {
-                            // Get API revisions for this review
-                            var apiRevisions = await _apiRevisionsManager.GetAPIRevisionsAsync(review.Id);
-                            var latestRevision = apiRevisions.OrderByDescending(r => r.CreatedOn).FirstOrDefault();
-                            
-                            if (latestRevision != null)
-                            {
-                                // Copy namespace approval fields from review to API revision for display
-                                latestRevision.IsNamespaceReviewRequested = review.IsNamespaceReviewRequested;
-                                latestRevision.NamespaceApprovalRequestId = review.NamespaceApprovalRequestId;
-                                latestRevision.NamespaceApprovalRequestedBy = review.NamespaceApprovalRequestedBy;
-                                latestRevision.NamespaceApprovalRequestedOn = review.NamespaceApprovalRequestedOn;
-                                
-                                pendingApprovals.Add(latestRevision);
-                            }
+                            pendingApprovals.Add(review);
                         }
                         catch (Exception)
                         {
@@ -934,7 +891,7 @@ namespace APIViewWeb.Managers
                         }
                     }
 
-                    // Sort to show all individual SDK reviews by request time
+                    // Sort to show all reviews by request time
                     var sortedApprovals = pendingApprovals
                         .OrderByDescending(r => r.NamespaceApprovalRequestedOn)
                         .ToList();
@@ -945,13 +902,13 @@ namespace APIViewWeb.Managers
             catch (OperationCanceledException)
             {
                 // Return empty list on timeout to prevent infinite loading
-                return new List<APIRevisionListItemModel>();
+                return new List<ReviewListItemModel>();
             }
             catch (Exception ex)
             {
                 _telemetryClient.TrackException(ex);
                 // Return empty list on error to be safe
-                return new List<APIRevisionListItemModel>();
+                return new List<ReviewListItemModel>();
             }
         }
 
@@ -987,7 +944,7 @@ namespace APIViewWeb.Managers
                             var apiRevisions = await _apiRevisionsManager.GetAPIRevisionsAsync(relatedReview.Id);
                             var namespacePendingRevisions = apiRevisions.Where(r => 
                                 !string.IsNullOrEmpty(r.NamespaceApprovalRequestId) && 
-                                r.IsNamespaceReviewRequested && 
+                                (r.IsNamespaceReviewRequested ?? false) && 
                                 !r.IsDeleted).ToList();
                             
                             relatedRevisions.AddRange(namespacePendingRevisions);
@@ -1005,12 +962,6 @@ namespace APIViewWeb.Managers
                 {
                     // All related SDK revisions are approved, update status to Approved
                     typeSpecReview.NamespaceReviewStatus = NamespaceReviewStatus.Approved;
-                    
-                    // Add to change history
-                    var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction<ReviewChangeHistoryModel, ReviewChangeAction>(
-                        typeSpecReview.ChangeHistory, ReviewChangeAction.NamespaceApproved, "system", 
-                        "Auto-approved: All related SDK API revisions are approved");
-                    typeSpecReview.ChangeHistory = changeUpdate.ChangeHistory;
                     
                     await _reviewsRepository.UpsertReviewAsync(typeSpecReview);
                 }

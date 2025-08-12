@@ -22,13 +22,11 @@ namespace APIViewWeb.LeanControllers
 {
     public class RequestNamespaceReviewModel
     {
-        public string Notes { get; set; } = "";
         public List<string> AssociatedReviewIds { get; set; } = new List<string>();
     }
 
     public class ReviewsController : BaseApiController
     {
-        private readonly ILogger<ReviewsController> _logger;
         private readonly IReviewManager _reviewManager;
         private readonly IAPIRevisionsManager _apiRevisionsManager;
         private readonly ICommentsManager _commentsManager;
@@ -40,7 +38,7 @@ namespace APIViewWeb.LeanControllers
         private readonly IEnumerable<LanguageService> _languageServices;
         private readonly IWebHostEnvironment _env;
 
-        public ReviewsController(ILogger<ReviewsController> logger,
+        public ReviewsController(
             IAPIRevisionsManager reviewRevisionsManager, IReviewManager reviewManager,
             ICommentsManager commentManager, IBlobCodeFileRepository codeFileRepository,
             IConfiguration configuration, UserProfileCache userProfileCache,
@@ -48,7 +46,6 @@ namespace APIViewWeb.LeanControllers
             IHubContext<SignalRHub> signalRHub, INotificationManager notificationManager,
             IWebHostEnvironment env)
         {
-            _logger = logger;
             _apiRevisionsManager = reviewRevisionsManager;
             _reviewManager = reviewManager;
             _commentsManager = commentManager;
@@ -148,22 +145,9 @@ namespace APIViewWeb.LeanControllers
         [HttpPost("{reviewId}/requestNamespaceReview", Name = "RequestNamespaceReview")]
         public async Task<ActionResult> RequestNamespaceReviewAsync(string reviewId, [FromBody] RequestNamespaceReviewModel request)
         {
-            try
-            {
-                var notes = request?.Notes ?? "";
-                var associatedReviewIds = request?.AssociatedReviewIds ?? new List<string>();
-                _logger.LogInformation("RequestNamespaceReview called for reviewId: {ReviewId}, associatedCount: {AssociatedCount}, notes: {Notes}", 
-                    reviewId, associatedReviewIds.Count, notes);
-                var updatedReview = await _reviewManager.RequestNamespaceReviewAsync(User, reviewId, associatedReviewIds, notes);
-                await _signalRHubContext.Clients.All.SendAsync("ReviewUpdated", updatedReview);
-                _logger.LogInformation("RequestNamespaceReview completed successfully for reviewId: {ReviewId}", reviewId);
-                return new LeanJsonResult(updatedReview, StatusCodes.Status200OK);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error in RequestNamespaceReview for reviewId: {ReviewId}", reviewId);
-                return StatusCode(StatusCodes.Status500InternalServerError, new { error = ex.Message });
-            }
+            var associatedReviewIds = request?.AssociatedReviewIds ?? new List<string>();
+            var updatedReview = await _reviewManager.RequestNamespaceReviewAsync(User, reviewId, associatedReviewIds);
+            return new LeanJsonResult(updatedReview, StatusCodes.Status200OK);
         }
 
         /// <summary>

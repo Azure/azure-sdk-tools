@@ -104,7 +104,7 @@ namespace APIViewWeb.LeanModels
         public string Id { get; set; } = IdHelper.GenerateId();
         public string PackageName { get; set; }
         public string Language { get; set; }
-    }    
+    }
     
     public class ReviewListItemModel : BaseListitemModel
     {
@@ -118,9 +118,7 @@ namespace APIViewWeb.LeanModels
         public DateTime CreatedOn { get; set; }
         public DateTime LastUpdatedOn { get; set; }
         public bool IsDeleted { get; set; }
-        
-        // Namespace approval fields for performance optimization
-        public bool IsNamespaceReviewRequested { get; set; }
+        public bool? IsNamespaceReviewRequested { get; set; }
         public string NamespaceApprovalRequestId { get; set; }
         public string NamespaceApprovalRequestedBy { get; set; }
         public DateTime? NamespaceApprovalRequestedOn { get; set; }
@@ -159,8 +157,8 @@ namespace APIViewWeb.LeanModels
         public DateTime ReleasedOn { get; set; }
         public HashSet<string> ViewedBy { get; set; } = new HashSet<string>();
         
-        // Namespace approval fields for performance optimization
-        public bool IsNamespaceReviewRequested { get; set; }
+        // Namespace approval properties for API revisions
+        public bool? IsNamespaceReviewRequested { get; set; }
         public string NamespaceApprovalRequestId { get; set; }
         public string NamespaceApprovalRequestedBy { get; set; }
         public DateTime? NamespaceApprovalRequestedOn { get; set; }

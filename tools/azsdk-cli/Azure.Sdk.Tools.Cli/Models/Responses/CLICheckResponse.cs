@@ -10,15 +10,15 @@ public class CLICheckResponse: Response
     [JsonPropertyName("exit_code")]
     public int ExitCode { get; set;}
     
-    [JsonPropertyName("output")]
-    public string Output { get; set;}
+    [JsonPropertyName("check_status_details")]
+    public string CheckStatusDetails { get; set;}
 
     public CLICheckResponse() { }
 
-    public CLICheckResponse(int exitCode, string output, string error = null)
+    public CLICheckResponse(int exitCode, string checkStatusDetails, string error = null)
     {
         ExitCode = exitCode;
-        Output = output;
+        CheckStatusDetails = checkStatusDetails;
         if (!string.IsNullOrEmpty(error))
         {
             ResponseError = error;
@@ -27,7 +27,7 @@ public class CLICheckResponse: Response
 
     public override string ToString()
     {
-        return ToString(Output);
+        return ToString(CheckStatusDetails);
     }
 }
 
@@ -39,14 +39,14 @@ public class CookbookCLICheckResponse : CLICheckResponse
     [JsonPropertyName("cookbook_reference")]
     public string CookbookReference { get; set;}
 
-    public CookbookCLICheckResponse(int exitCode, string output, string cookbookReference) : base(exitCode, output)
+    public CookbookCLICheckResponse(int exitCode, string checkStatusDetails, string cookbookReference) : base(exitCode, checkStatusDetails)
     {
         CookbookReference = cookbookReference;
     }
 
     public override string ToString()
     {
-        return ToString(Output);
+        return ToString(CheckStatusDetails);
     }
 }
 

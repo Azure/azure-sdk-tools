@@ -139,7 +139,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
 
             var message = overallSuccess ? "All checks completed successfully" : "Some checks failed";
-            var combinedOutput = string.Join("\n", results.Select(r => r.Output));
+            var combinedOutput = string.Join("\n", results.Select(r => r.CheckStatusDetails));
             
             return overallSuccess 
                 ? new CLICheckResponse(0, combinedOutput) 
@@ -155,7 +155,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             if (result.ExitCode != 0)
             {
                 SetFailure(1);
-                return new CLICheckResponse(result.ExitCode, result.Output, "Changelog validation failed");
+                return new CLICheckResponse(result.ExitCode, result.CheckStatusDetails, "Changelog validation failed");
             }
 
             return result;
@@ -170,7 +170,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             if (result.ExitCode != 0)
             {
                 SetFailure(1);
-                return new CLICheckResponse(result.ExitCode, result.Output, "Dependency check failed");
+                return new CLICheckResponse(result.ExitCode, result.CheckStatusDetails, "Dependency check failed");
             }
 
             return result;

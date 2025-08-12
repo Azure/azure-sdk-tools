@@ -151,7 +151,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             
             // For valid paths, we expect the checks to run even if they fail
             // Since this is a test directory without proper project structure, checks may fail
-            Assert.IsNotNull(result.Output);
+            Assert.IsNotNull(result.CheckStatusDetails);
         }
     }
 }

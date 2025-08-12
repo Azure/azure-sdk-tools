@@ -112,8 +112,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Assert.Multiple(() =>
             {
                 Assert.That(resp.ExitCode, Is.EqualTo(1));
-                Console.WriteLine($"Output = {resp.Output}");
-                Assert.That(resp.Output, Does.Contain("syntax error: unexpected name error at end of statement"));
+                Console.WriteLine($"Output = {resp.CheckStatusDetails}");
+                Assert.That(resp.CheckStatusDetails, Does.Contain("syntax error: unexpected name error at end of statement"));
             });
         }
 
@@ -136,7 +136,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Assert.Multiple(() =>
             {
                 Assert.That(resp.ExitCode, Is.EqualTo(1));
-                Assert.That(resp.Output, Does.Contain("func `unusedFunc` is unused (unused)"));
+                Assert.That(resp.CheckStatusDetails, Does.Contain("func `unusedFunc` is unused (unused)"));
             });
         }
     }

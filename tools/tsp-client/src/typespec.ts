@@ -145,9 +145,8 @@ export async function compileTsp({
     .join(" ");
 
   const exampleCmd = `npx tsp compile ${resolvedMainFilePath} --emit ${emitterPackage} ${cliOptions}`;
-  const compileResult: { success: boolean; emitterOutputDir?: string; exampleCmd: string } = {
+  const compileResult: { success: boolean; exampleCmd: string } = {
     success: false,
-    emitterOutputDir,
     exampleCmd,
   };
   if (!emitterOutputDir) {

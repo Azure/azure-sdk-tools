@@ -91,7 +91,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 try
                 {
                     languageService = languageRepoServiceFactory.CreateService(packagePath);
-                    logger.LogInformation($"Created language service: {languageService.GetType().Name}");
+                    logger.LogDebug($"Retrieved language service: {languageService.GetType().Name}");
                 }
                 catch (ArgumentException ex)
                 {

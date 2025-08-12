@@ -38,7 +38,7 @@ namespace APIViewWeb.LeanControllers
         private readonly IEnumerable<LanguageService> _languageServices;
         private readonly IWebHostEnvironment _env;
 
-        public ReviewsController(
+        public ReviewsController(ILogger<ReviewsController> logger,
             IAPIRevisionsManager reviewRevisionsManager, IReviewManager reviewManager,
             ICommentsManager commentManager, IBlobCodeFileRepository codeFileRepository,
             IConfiguration configuration, UserProfileCache userProfileCache,

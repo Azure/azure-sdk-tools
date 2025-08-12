@@ -118,8 +118,6 @@ namespace APIViewWeb.LeanModels
         public DateTime CreatedOn { get; set; }
         public DateTime LastUpdatedOn { get; set; }
         public bool IsDeleted { get; set; }
-        public bool? IsNamespaceReviewRequested { get; set; }
-        public string NamespaceApprovalRequestId { get; set; }
         public string NamespaceApprovalRequestedBy { get; set; }
         public DateTime? NamespaceApprovalRequestedOn { get; set; }
     }
@@ -157,11 +155,8 @@ namespace APIViewWeb.LeanModels
         public DateTime ReleasedOn { get; set; }
         public HashSet<string> ViewedBy { get; set; } = new HashSet<string>();
         
-        // Namespace approval properties for API revisions
-        public bool? IsNamespaceReviewRequested { get; set; }
-        public string NamespaceApprovalRequestId { get; set; }
-        public string NamespaceApprovalRequestedBy { get; set; }
-        public DateTime? NamespaceApprovalRequestedOn { get; set; }
+        // NOTE: Namespace approval is handled at the Review level, not Revision level
+        // See ReviewListItemModel for namespace approval properties
     }
 
 

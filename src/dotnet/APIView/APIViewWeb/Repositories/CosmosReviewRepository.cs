@@ -70,15 +70,18 @@ namespace APIViewWeb
 
         public async Task<IEnumerable<ReviewListItemModel>> GetPendingNamespaceApprovalReviewsAsync(IEnumerable<string> languages)
         {
-            var languagesAsQueryStr = CosmosQueryHelpers.ArrayToQueryString(languages);
+            // Limit to 5 SDK languages: .NET, Java, JavaScript, Python, Go
+            var sdkLanguages = new[] { "C#", "Java", "JavaScript", "Python", "Go" };
+            var filteredLanguages = languages.Where(lang => sdkLanguages.Contains(lang)).Take(5);
+            
+            var languagesAsQueryStr = CosmosQueryHelpers.ArrayToQueryString(filteredLanguages);
             var queryStringBuilder = new StringBuilder($@"
                 SELECT * FROM Reviews r 
                 WHERE r.Language IN {languagesAsQueryStr}
-                AND (r.IsNamespaceReviewRequested = true)
+                AND (r.NamespaceReviewStatus = 1)
                 AND r.IsClosed = false
                 AND r.IsApproved = false
                 AND r.IsDeleted = false
-                AND IS_DEFINED(r.NamespaceApprovalRequestId)
                 AND IS_DEFINED(r.NamespaceApprovalRequestedBy)
                 AND IS_DEFINED(r.NamespaceApprovalRequestedOn)");
 

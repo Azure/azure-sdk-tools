@@ -135,7 +135,6 @@ public class GitConnection
             logger.LogInformation($"Getting all pull request for {repoOwner}/{repoName}");
             var pullRequests = await gitHubClient.PullRequest.GetAllForRepository(repoOwner, repoName);
             logger.LogInformation($"Branch name: {remoteBranch}");
-            //return pullRequests?.FirstOrDefault(pr => pr.Head?.Label != null && pr.Head.Label.Equals(remoteBranch, StringComparison.InvariantCultureIgnoreCase));
             return pullRequests?.FirstOrDefault(pr => pr.Head?.Ref != null && pr.Head.Ref.Equals(remoteBranch, StringComparison.InvariantCultureIgnoreCase));
         }
 

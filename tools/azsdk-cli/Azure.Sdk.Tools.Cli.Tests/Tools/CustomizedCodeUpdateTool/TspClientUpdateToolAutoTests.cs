@@ -42,7 +42,7 @@ public class TspClientUpdateToolAutoTests
     {
         var tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), new NullOutputService(), new[] { new MockLanguageService() });
         var regenerate = await tool.Regenerate(specPath: "placeholder.tsp", sessionId: null, newGeneratedPath: null, simulateChange: false, ct: CancellationToken.None);
-        Assert.That(regenerate.NextTool, Is.EqualTo("tsp_update_diff"));
+        Assert.That(regenerate.NextTool, Is.EqualTo("azsdk_tsp_update_diff"));
         var sid = regenerate.Session!.SessionId;
         var diff = await tool.Diff(sid, null, null, CancellationToken.None);
         // With no old generation baseline, apiChangeCount likely 0 => no next tool
@@ -54,33 +54,35 @@ public class TspClientUpdateToolAutoTests
     public async Task AutoMode_LoopTerminatesGracefully()
     {
         var tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), new NullOutputService(), new[] { new MockLanguageService() });
-        // Simulate CLI regenerate with auto: call internal regenerate then manually follow nextTool automatically similar to --auto loop
         var regen = await tool.Regenerate("placeholder2.tsp", null, null, false, CancellationToken.None);
         var current = regen;
+        var sessionId = regen.Session!.SessionId;
         int safety = 10; // prevent infinite loop
         while (!string.IsNullOrEmpty(current.NextTool) && safety-- > 0)
         {
+            TspClientUpdateResponse resp;
             switch (current.NextTool)
             {
-                case "tsp_update_diff":
-                    current = await tool.Diff(current.Session!.SessionId, null, null, CancellationToken.None);
+                case "azsdk_tsp_update_diff":
+                    resp = await tool.Diff(sessionId);
                     break;
-                case "tsp_update_map":
-                    current = await tool.Map(current.Session!.SessionId, CancellationToken.None);
+                case "azsdk_tsp_update_map":
+                    resp = await tool.Map(sessionId);
                     break;
-                case "tsp_update_merge":
-                    current = await tool.Merge(current.Session!.SessionId, CancellationToken.None);
+                case "azsdk_tsp_update_merge":
+                    resp = await tool.Merge(sessionId);
                     break;
-                case "tsp_update_propose":
-                    current = await tool.Propose(current.Session!.SessionId, string.Empty, CancellationToken.None);
+                case "azsdk_tsp_update_propose":
+                    resp = await tool.Propose(sessionId);
                     break;
-                case "tsp_update_apply":
-                    current = await tool.Apply(current.Session!.SessionId, dryRun: true, CancellationToken.None);
+                case "azsdk_tsp_update_apply":
+                    resp = await tool.Apply(sessionId, dryRun: current.Session!.LastStage == UpdateStage.PatchesProposed);
                     break;
                 default:
-                    Assert.Fail($"Unexpected next tool {current.NextTool}");
-                    break;
+                    Assert.Fail($"Unexpected nextTool {current.NextTool}");
+                    return;
             }
+            current = resp;
         }
         Assert.That(safety, Is.GreaterThan(0), "Loop did not terminate as expected");
         Assert.That(current.NextTool, Is.Null, "Should end with no further nextTool since no API changes");

@@ -110,7 +110,6 @@ async function initProcessDataAndWriteTspLocation(
       },
     });
     emitterOutputDir = options.options?.[emitterData.emitter]?.["emitter-output-dir"];
-    Logger.info(`Resolved emitter-output-dir for ${emitterData.emitter}: ${emitterOutputDir}`);
     newPackageDir = resolve(emitterOutputDir);
   } else if (packageDir) {
     // Warn that this behavior is deprecated
@@ -126,6 +125,8 @@ async function initProcessDataAndWriteTspLocation(
       `Missing emitter-output-dir in ${emitterData.emitter} options of tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`,
     );
   }
+
+  Logger.info(`The resolved package directory path is ${newPackageDir}`);
 
   if (argv["update-if-exists"]) {
     // If the update-if-exists flag is set, check if there's an existing tsp-location.yaml

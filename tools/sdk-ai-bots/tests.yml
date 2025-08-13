@@ -20,10 +20,28 @@ stages:
           - script: |
               go version
             displayName: 'check go'
+          - task: AzureCLI@2
+            inputs:
+              azureSubscription: 'azure-chat-bot-test'
+              addSpnToEnvironment: true
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                echo "##vso[task.setvariable variable=AZURE_CLIENT_ID]$servicePrincipalId"
+                echo "##vso[task.setvariable variable=AZURE_TENANT_ID]$tenantId"
+                echo "##vso[task.setvariable variable=AZURE_SUBSCRIPTION_ID]$(az account show --query id -o tsv)"
+                echo "$idToken" > "$(Agent.BuildDirectory)/id_token"
+                echo "##vso[task.setvariable variable=AZURE_FEDERATED_TOKEN_FILE]$(Agent.BuildDirectory)/id_token"
+          
           - script: |
-              ./run.sh start
+              go run main.go
             displayName: 'start backend AI agent service'
-            workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots
+            workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend
+            env:
+              AZURE_CLIENT_ID: $(AZURE_CLIENT_ID)
+              AZURE_TENANT_ID: $(AZURE_TENANT_ID)
+              AZURE_SUBSCRIPTION_ID: $(AZURE_SUBSCRIPTION_ID)
+              AZURE_FEDERATED_TOKEN_FILE: $(AZURE_FEDERATED_TOKEN_FILE)
           - script: |
               pip install -r requirements.txt
             displayName: 'install requirements'

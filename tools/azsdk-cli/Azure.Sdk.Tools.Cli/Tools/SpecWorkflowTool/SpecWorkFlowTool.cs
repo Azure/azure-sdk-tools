@@ -499,6 +499,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
 
             var linksBuilder = new StringBuilder(header);
+            linksBuilder.AppendLine();
             linksBuilder.AppendLine($"- Release Plan: {releasePlan.ReleasePlanLink}");
             linksBuilder.AppendLine($"- Work Item Link: {releasePlan.WorkItemUrl}");
             linksBuilder.AppendLine($"- Spec Pull Request: {releasePlan.ActiveSpecPullRequest}");

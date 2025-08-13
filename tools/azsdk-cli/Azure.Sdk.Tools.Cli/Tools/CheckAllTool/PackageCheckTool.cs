@@ -37,9 +37,9 @@ namespace Azure.Sdk.Tools.Cli.Tools
             Command command = new("run-checks", "Run validation checks for SDK packages");
             command.AddOption(SharedOptions.PackagePath);
             
-            var checkTypeOption = new Option<string>(
+            var checkTypeOption = new Option<PackageCheckType>(
                 "--check-type",
-                "The type of check to run: all, dependency, validation")
+                "The type of check to run")
             {
                 IsRequired = true
             };
@@ -62,7 +62,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             throw new NotImplementedException("Command handling is done in GetCommand SetHandler");
         }
 
-        private async Task HandleCommandWithOptions(string packagePath, string checkType, CancellationToken ct)
+        private async Task HandleCommandWithOptions(string packagePath, PackageCheckType checkType, CancellationToken ct)
         {          
             var result = await RunPackageCheck(packagePath, checkType, ct);
 
@@ -70,21 +70,18 @@ namespace Azure.Sdk.Tools.Cli.Tools
             output.Output(result);
         }
 
-        [McpServerTool(Name = "azsdk_package_run_check"), Description("Run validation checks for SDK packages. Provide package path and check name (all, changelog, dependency).")]
-        public async Task<CLICheckResponse> RunPackageCheck(string packagePath, string checkName, CancellationToken ct = default)
+        [McpServerTool(Name = "azsdk_package_run_check"), Description("Run validation checks for SDK packages. Provide package path and check type (All, Changelog, Dependency).")]
+        public async Task<CLICheckResponse> RunPackageCheck(string packagePath, PackageCheckType checkType, CancellationToken ct = default)
         {
             try
             {
-                logger.LogInformation($"Starting {checkName} check for package at: {packagePath}");
+                logger.LogInformation($"Starting {checkType} check for package at: {packagePath}");
                 
                 if (!Directory.Exists(packagePath))
                 {
                     SetFailure(1);
                     return new CLICheckResponse(1, "", $"Package path does not exist: {packagePath}");
                 }
-
-                // Normalize check name to lowercase for comparison
-                var normalizedCheckName = checkName?.ToLowerInvariant() ?? "";
 
                 // Create language service
                 ILanguageRepoService languageService;
@@ -115,20 +112,40 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     return new CLICheckResponse(1, "", $"Unable to determine language for package at: {packagePath}. Error: {ex.Message}");
                 }
 
-                return normalizedCheckName switch
+                return checkType switch
                 {
-                    "all" => await RunAllChecks(packagePath, languageService, ct),
-                    "changelog" => await RunChangelogValidation(packagePath, languageService),
-                    "dependency" => await RunDependencyCheck(packagePath, languageService, ct),
-                    _ => new CLICheckResponse(1, "", $"Unknown check type: {checkName}. Valid options are: all, changelog, dependency")
+                    PackageCheckType.All => await RunAllChecks(packagePath, languageService, ct),
+                    PackageCheckType.Changelog => await RunChangelogValidation(packagePath, languageService),
+                    PackageCheckType.Dependency => await RunDependencyCheck(packagePath, languageService, ct),
+                    _ => throw new ArgumentOutOfRangeException(nameof(checkType), checkType, "Unknown check type")
                 };
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Unhandled exception while running package check");
                 SetFailure(1);
-                return new CLICheckResponse(1, ex.ToString(), $"Unhandled exception while running {checkName} check");
+                return new CLICheckResponse(1, ex.ToString(), $"Unhandled exception while running {checkType} check");
             }
+        }
+
+        /// <summary>
+        /// Backward compatibility method for string-based check names.
+        /// </summary>
+        /// <param name="packagePath">Path to the package to check</param>
+        /// <param name="checkName">Name of the check to run (all, changelog, dependency)</param>
+        /// <param name="ct">Cancellation token</param>
+        /// <returns>Check response with results</returns>
+        public async Task<CLICheckResponse> RunPackageCheck(string packagePath, string checkName, CancellationToken ct = default)
+        {
+            // Parse string to enum for backward compatibility
+            if (!Enum.TryParse<PackageCheckType>(checkName, ignoreCase: true, out var checkType))
+            {
+                SetFailure(1);
+                var validOptions = string.Join(", ", Enum.GetNames<PackageCheckType>().Select(x => x.ToLowerInvariant()));
+                return new CLICheckResponse(1, "", $"Unknown check type: {checkName}. Valid options are: {validOptions}");
+            }
+            
+            return await RunPackageCheck(packagePath, checkType, ct);
         }
 
         private async Task<CLICheckResponse> RunAllChecks(string packagePath, ILanguageRepoService languageService, CancellationToken ct)
@@ -198,7 +215,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         }
 
         // Back-compat overload for callers/tests that don't pass a CancellationToken
-        public Task<CLICheckResponse> RunPackageCheck(string packagePath, string checkName)
-            => RunPackageCheck(packagePath, checkName, ct: default);
+        public Task<CLICheckResponse> RunPackageCheck(string packagePath, PackageCheckType checkType)
+            => RunPackageCheck(packagePath, checkType, ct: default);
     }
 }

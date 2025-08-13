@@ -56,7 +56,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             return command;
         }
 
-        public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
+        public override Task HandleCommand(InvocationContext ctx, CancellationToken ct)
         {
             // This method is required by the base class but not used since we handle commands directly in GetCommand
             throw new NotImplementedException("Command handling is done in GetCommand SetHandler");

@@ -19,7 +19,7 @@ public class PythonLanguageRepoService : LanguageRepoService
         _logger = logger;
     }
 
-    public override async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct = default)
+    public override Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct = default)
     {
         try
         {
@@ -36,7 +36,7 @@ public class PythonLanguageRepoService : LanguageRepoService
             if (!File.Exists(toxConfigPath))
             {
                 _logger.LogError("Tox configuration file not found at: {ToxConfigPath}", toxConfigPath);
-                return new CLICheckResponse(1, "", $"Tox configuration file not found at: {toxConfigPath}");
+                return Task.FromResult(new CLICheckResponse(1, "", $"Tox configuration file not found at: {toxConfigPath}"));
             }
             
             _logger.LogInformation("Using tox configuration file: {ToxConfigPath}", toxConfigPath);
@@ -52,18 +52,18 @@ public class PythonLanguageRepoService : LanguageRepoService
             if (result.ExitCode == 0)
             {
                 _logger.LogInformation("Dependency analysis completed successfully with exit code 0");
-                return new CLICheckResponse(result.ExitCode, result.Output);
+                return Task.FromResult(new CLICheckResponse(result.ExitCode, result.Output));
             }
             else
             {
                 _logger.LogWarning("Dependency analysis failed with exit code {ExitCode}", result.ExitCode);
-                return new CLICheckResponse(result.ExitCode, result.Output, "Process failed");
+                return Task.FromResult(new CLICheckResponse(result.ExitCode, result.Output, "Process failed"));
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Exception occurred during dependency analysis");
-            return new CookbookCLICheckResponse(0, $"Failed to run dependency analysis. Ensure tox is installed. Error: {ex.Message}", "https://docs.python.org/3/tutorial/venv.html");
+            return Task.FromResult<CLICheckResponse>(new CookbookCLICheckResponse(0, $"Failed to run dependency analysis. Ensure tox is installed. Error: {ex.Message}", "https://docs.python.org/3/tutorial/venv.html"));
         }
     }
 }

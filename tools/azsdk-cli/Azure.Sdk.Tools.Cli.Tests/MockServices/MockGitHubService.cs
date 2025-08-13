@@ -61,7 +61,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
 
         public Task UpdatePullRequestAsync(string repoOwner, string repoName, int pullRequestNumber, string title, string body, ItemState state)
         {
-            throw new NotImplementedException();
+            return Task.CompletedTask;
         }
 
         public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path)

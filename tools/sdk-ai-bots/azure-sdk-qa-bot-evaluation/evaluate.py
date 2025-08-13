@@ -138,7 +138,9 @@ async def prepare_dataset(testdata_dir: str, file_prefix: str = None, is_bot: bo
 def calculate_overall_score(row: dict[str, Any]) -> float:
     """Calculate weighted score based on various metrics."""
     # calculate the overall score when there are multiple metrics.
-    return 0.5
+    similarityWeight = 0.6
+    groundedNessWeight = 0.4
+    return (row["outputs.similarity.similarity"] * similarityWeight + row["outputs.groundedness.groundedness"] * groundedNessWeight)/5
 
 def record_run_result(result: dict[str, Any]) -> list[dict[str, Any]]:
     run_result = []
@@ -157,6 +159,10 @@ def record_run_result(result: dict[str, Any]) -> list[dict[str, Any]]:
                 "gpt_similarity": row["outputs.similarity.gpt_similarity"],
                 "similarity_threshold": row["outputs.similarity.similarity_threshold"],
                 "similarity_result": row["outputs.similarity.similarity_result"],
+                "groundedness.groundedness": row["outputs.groundedness.groundedness"],
+                "groundedness.gpt_groundedness": row["outputs.groundedness.gpt_groundedness"],
+                "groundedness.groundedness_threshold": row["outputs.groundedness.groundedness_threshold"],
+                "groundedness.groundedness_result": row["outputs.groundedness.groundedness_result"],
                 "overall_score": score,
             }
         )
@@ -279,10 +285,10 @@ if __name__ == "__main__":
         kwargs = {}
         if args.send_result:
             if args.is_cli:
-                service_connection_id = os.environ["AZURESUBSCRIPTION_SERVICE_CONNECTION_ID"]
-                client_id = os.environ["AZURESUBSCRIPTION_CLIENT_ID"]
-                tenant_id = os.environ["AZURESUBSCRIPTION_TENANT_ID"]
-                system_access_token = os.environ["SYSTEM_ACCESSTOKEN"]
+                # service_connection_id = os.environ["AZURESUBSCRIPTION_SERVICE_CONNECTION_ID"]
+                # client_id = os.environ["AZURESUBSCRIPTION_CLIENT_ID"]
+                # tenant_id = os.environ["AZURESUBSCRIPTION_TENANT_ID"]
+                # system_access_token = os.environ["SYSTEM_ACCESSTOKEN"]
 
                 # kwargs = {
                 #     "credential": AzurePipelinesCredential(
@@ -307,7 +313,8 @@ if __name__ == "__main__":
             result = evaluate(
                 data=output_file,
                 evaluators={
-                    "similarity": SimilarityEvaluator(model_config=model_config)
+                    "similarity": SimilarityEvaluator(model_config=model_config),
+                    "groundedness": GroundednessEvaluator(model_config=model_config)
                 },
                 evaluation_name=args.evaluation_name if args.evaluation_name else os.path.splitext(os.path.basename(output_file))[0],
                 # column mapping

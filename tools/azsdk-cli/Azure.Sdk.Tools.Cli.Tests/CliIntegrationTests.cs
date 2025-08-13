@@ -46,8 +46,8 @@ internal class CliIntegrationTests
 
         var expected = @"
 Message: RESPONDING TO 'HI. MY NAME IS' with SUCCESS: 0
-Result: null
-Duration: 1ms".TrimStart();
+Duration: 1ms
+".TrimStart();
 
         outputServiceMock
             .Verify(s => s.Output(It.IsAny<string>()), Times.Once);

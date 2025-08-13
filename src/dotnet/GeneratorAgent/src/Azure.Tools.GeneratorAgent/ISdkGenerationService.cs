@@ -9,9 +9,7 @@ namespace Azure.Tools.GeneratorAgent
         /// Compiles a TypeSpec project into an SDK.
         /// </summary>
         /// <param name="cancellationToken">Cancellation token</param>
-        /// <returns>A task representing the asynchronous compilation operation</returns>
-        /// <exception cref="InvalidOperationException">Thrown when configuration or validation fails</exception>
-        /// <exception cref="OperationCanceledException">Thrown when the operation is cancelled</exception>
-        Task CompileTypeSpecAsync(CancellationToken cancellationToken = default);
+        /// <returns>A Result indicating success or failure with detailed error information</returns>
+        Task<Result<object>> CompileTypeSpecAsync(CancellationToken cancellationToken = default);
     }
 }

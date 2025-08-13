@@ -391,20 +391,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     return $"SDK generation pipeline did not succeed. Status: {pipeline.Result?.ToString()}. For more details: {DevOpsService.GetPipelineUrl(buildId)}";
                 }
 
-                var pr = await devopsService.GetSDKPullRequestFromPipelineRunAsync(buildId, language, workItemId);
+                var pr = devopsService.GetSDKPullRequestFromPipelineRunAsync(buildId, language, workItemId);
 
-                // Parse PR URL components and update PR description if valid
-                var prUrlMatch = GITHUB_PR_URL_REGEX.Match(pr);
-                if (prUrlMatch.Success)
-                {
-                    var repoOwner = prUrlMatch.Groups[1].Value;
-                    var repoName = prUrlMatch.Groups[2].Value;
-                    var prNumber = int.Parse(prUrlMatch.Groups[3].Value);
-                    var releasePlan = await devopsService.GetReleasePlanAsync(pr);
-                    await AddReleasePlanInfoInSdkAsync(repoOwner, repoName, prNumber, releasePlan.ReleasePlanLink, releasePlan.ActiveSpecPullRequest, releasePlan.WorkItemUrl, releasePlan.SpecAPIVersion);
-                }
+                var releasePlan = await devopsService.GetReleasePlanAsync(pr);
+                var addReleasePlanInfoTask = AddReleasePlanInfoInSdkAsync(pr, releasePlan);
 
-                return pr;
+                await Task.WhenAll(pr, addReleasePlanInfoTask);
+
+                return pr.Result;
             }
             catch (Exception ex)
             {
@@ -465,16 +459,10 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     return $"Release plan with ID {releasePlanId} or work item ID {workItemId} is not found.";
                 }
 
-                await devopsService.AddSdkInfoInReleasePlanAsync(releasePlan.WorkItemId, language, "", parsedLink);
+                var sdkInfoInRelease = devopsService.AddSdkInfoInReleasePlanAsync(releasePlan.WorkItemId, language, "", parsedLink);
+                var releaseInfoInSdk = devopsService.AddReleaseInfoInSdkAsync(parsedLink, releasePlan);
 
-                // Parse PR URL components and update PR description if valid
-                var prUrlMatch = GITHUB_PR_URL_REGEX.Match(parsedLink);
-                if (prUrlMatch.Success)
-                {
-                    var repoOwner = prUrlMatch.Groups[1].Value;
-                    var prNumber = int.Parse(prUrlMatch.Groups[3].Value);
-                    await AddReleasePlanInfoInSdkAsync(repoOwner, repoName, prNumber, releasePlan.ReleasePlanLink, releasePlan.ActiveSpecPullRequest, releasePlan.WorkItemUrl, releasePlan.SpecAPIVersion);
-                }
+                await Task.WhenAll(sdkInfoInRelease, releaseInfoInSdk);
 
                 return $"Successfully linked pull request to release plan {releasePlan.ReleasePlanId}, work item id {releasePlan.WorkItemId}, and updated PR description.";
             }
@@ -484,35 +472,46 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 return $"Failed to link SDK pull request to release plan work item, Error: {ex.Message}";
             }
         }
-        
-        public async Task<string> AddReleasePlanInfoInSdkAsync(string repoOwner, string repoName, int prNumber, string releasePlanLink, string specPrLink, string workItemLink, string apiVersion)
+
+        public async Task AddReleasePlanInfoInSdkAsync(string pullRequestUrl, ReleasePlan releasePlan)
         {
+            // Parse PR URL to extract owner, repo, and PR number
+            var prUrlMatch = GITHUB_PR_URL_REGEX.Match(pullRequestUrl);
+            if (!prUrlMatch.Success)
+            {
+                return;
+            }
+
+            var repoOwner = prUrlMatch.Groups[1].Value;
+            var repoName = prUrlMatch.Groups[2].Value;
+            var prNumber = int.Parse(prUrlMatch.Groups[3].Value);
+
             var pr = await githubService.GetPullRequestAsync(repoOwner, repoName, prNumber);
             if (pr == null)
             {
-                return $"Failed to fetch pull request {repoOwner}/{repoName}#{prNumber}";
+                throw new InvalidOperationException($"Failed to fetch pull request {repoOwner}/{repoName}#{prNumber}");
             }
             
             // Check if the PR body already contains the release plan link (main indicator)
             var header = "## Release Plan Details";
             if (!string.IsNullOrEmpty(pr.Body) && pr.Body.Contains(header, StringComparison.OrdinalIgnoreCase))
             {
-                return $"PR {repoOwner}/{repoName}#{prNumber} already contains release plan info. Skipping update.";
+                // If already contains release plan info, just return without doing anything
+                return;
             }
 
-            var links = $"{header}";
-            links += $"\n- Release Plan: {releasePlanLink}";
-            links += $"\n- Work Item Link: {workItemLink}";
-            links += $"\n- Spec Pull Request: {specPrLink}";
-            links += $"\n- Spec API version: {apiVersion}";
+            var linksBuilder = new StringBuilder(header);
+            linksBuilder.AppendLine($"- Release Plan: {releasePlan.ReleasePlanLink}");
+            linksBuilder.AppendLine($"- Work Item Link: {releasePlan.WorkItemUrl}");
+            linksBuilder.AppendLine($"- Spec Pull Request: {releasePlan.ActiveSpecPullRequest}");
+            linksBuilder.Append($"- Spec API version: {releasePlan.SpecAPIVersion}");
 
+            var links = linksBuilder.ToString();
             var appendedBody = string.IsNullOrEmpty(pr.Body)
                 ? links
                 : $"{pr.Body}\n{links}";
 
             await githubService.UpdatePullRequestAsync(repoOwner, repoName, prNumber, pr.Title, appendedBody, pr.State.Value);
-
-            return $"Successfully added release plan information to PR {repoOwner}/{repoName}#{prNumber}";
         }
 
         public override Command GetCommand()

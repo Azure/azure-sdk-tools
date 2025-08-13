@@ -159,10 +159,10 @@ def record_run_result(result: dict[str, Any]) -> list[dict[str, Any]]:
                 "gpt_similarity": row["outputs.similarity.gpt_similarity"],
                 "similarity_threshold": row["outputs.similarity.similarity_threshold"],
                 "similarity_result": row["outputs.similarity.similarity_result"],
-                "groundedness.groundedness": row["outputs.groundedness.groundedness"],
-                "groundedness.gpt_groundedness": row["outputs.groundedness.gpt_groundedness"],
-                "groundedness.groundedness_threshold": row["outputs.groundedness.groundedness_threshold"],
-                "groundedness.groundedness_result": row["outputs.groundedness.groundedness_result"],
+                "groundedness": row["outputs.groundedness.groundedness"],
+                "gpt_groundedness": row["outputs.groundedness.gpt_groundedness"],
+                "groundedness_threshold": row["outputs.groundedness.groundedness_threshold"],
+                "groundedness_result": row["outputs.groundedness.groundedness_result"],
                 "overall_score": score,
             }
         )
@@ -188,9 +188,11 @@ def format_terminal_diff(new: float, old: float, format_str: str = ".1f", revers
 def output_table(baseline_results: dict[str, Any], eval_results: list[dict[str, Any]], file_name: str) -> None:
     headers = [
         "Test Case",
-        "Score",
         "Similarity",
-        "Similarity Result"
+        "Similarity Result",
+        "Groundedness",
+        "Groundedness Result",
+        "Score"
     ]
     terminal_rows = []
 
@@ -199,11 +201,15 @@ def output_table(baseline_results: dict[str, Any], eval_results: list[dict[str, 
         score = result["overall_score"]
         sim = result["similarity"]
         sim_result = result["similarity_result"]
+        groundedness = result['groundedness']
+        groundedness_result = result['groundedness_result']
         terminal_row = [testcase]
         values = [
-            f"{score:.1f}",
             f"{sim:.1f}",
-            f"{sim_result}"
+            f"{sim_result}",
+            f"{groundedness}",
+            f"{groundedness_result}",
+            f"{score:.1f}"
         ]
         terminal_row.extend(values)
         terminal_rows.append(terminal_row)

@@ -264,6 +264,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
             catch (Exception ex)
             {
+                SetFailure();
                 return $"Error: {ex}";
             }
         }
@@ -373,6 +374,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
             catch (Exception ex)
             {
+                SetFailure();
                 response.Message += $"Error processing repository: {ex.Message}";
                 return response;
             }

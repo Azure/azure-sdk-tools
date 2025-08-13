@@ -14,7 +14,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             List<string> serviceOwners,
             List<string> sourceOwners,
             bool isAdding);
-        public string NormalizePath(string path);
+        string NormalizePath(string path);
         CodeownersEntry findAlphabeticalInsertionPoint(List<CodeownersEntry> codeownersEntries, CodeownersEntry codeownersEntry);
         public (List<CodeownersEntry>, int) mergeCodeownerEntries(List<CodeownersEntry> codeownersEntries, int index);
         string addCodeownersEntryAtIndex(string codeownersContent, CodeownersEntry codeownersEntry, int index, bool codeownersEntryExists);
@@ -23,7 +23,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         public string ExtractDirectoryName(string path);
         string CreateBranchName(string prefix, string identifier);
         
-        // New owner manipulation helper methods
+        // Owner manipulation helper methods
         List<string> AddUniqueOwners(List<string> existingOwners, List<string> ownersToAdd);
         List<string> RemoveOwners(List<string> existingOwners, List<string> ownersToRemove);
         List<string> ReplaceEntryInLines(string lines, CodeownersEntry targetEntry);
@@ -119,7 +119,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 return string.Empty;
             }
 
-            path = path.Trim('/');
+            path = path.Trim('/').Trim();
             if (!path.StartsWith("sdk/", StringComparison.OrdinalIgnoreCase))
             {
                 path = "sdk/" + path;
@@ -205,7 +205,13 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
             if (codeownersEntryExists)
             {
-                return string.Join('\n', ReplaceEntryInLines(codeownersContent, codeownersEntry));
+                // Validate that the entry has valid line information for replacement
+                if (codeownersEntry.startLine >= 0 && codeownersEntry.endLine >= 0 &&
+                    codeownersEntry.startLine < lines.Count && codeownersEntry.endLine < lines.Count &&
+                    codeownersEntry.startLine <= codeownersEntry.endLine)
+                {
+                    return string.Join('\n', ReplaceEntryInLines(codeownersContent, codeownersEntry));   
+                }
             }
 
             var formattedEntry = formatCodeownersEntry(codeownersEntry);

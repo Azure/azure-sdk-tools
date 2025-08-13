@@ -75,7 +75,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
             return Task.FromResult(issue);
         }
 
-        public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path, string branch = null)
+        public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path, string? branch = null)
         {
             // Handle specific test scenarios
             if (path == "non-existent-path")
@@ -128,7 +128,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
                 downloadUrl: $"https://raw.githubusercontent.com/testowner/testrepo/main/{path}",
                 url: $"https://api.github.com/repos/testowner/testrepo/contents/{path}",
                 htmlUrl: $"https://github.com/testowner/testrepo/blob/main/{path}",
-                gitUrl: null,
+                gitUrl: $"https://api.github.com/repos/testowner/testrepo/git/blobs/sha{name.GetHashCode():x}",
                 encoding: "base64",
                 encodedContent: encodedContent,
                 target: null,

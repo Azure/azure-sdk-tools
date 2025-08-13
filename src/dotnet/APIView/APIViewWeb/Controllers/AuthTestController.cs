@@ -31,7 +31,7 @@ public class AuthTestController : ControllerBase
 
         return Ok(new
         {
-            Message = "Authentication successful!",
+            Message = "Combined authentication successful!",
             AuthenticationMethod = authMethod,
             UserName = userName,
             IsAuthenticated = User.Identity.IsAuthenticated,
@@ -39,6 +39,41 @@ public class AuthTestController : ControllerBase
             IsManagedIdentity = AuthenticationValidator.IsValidManagedIdentity(User),
             HasGitHubOrganization = AuthenticationValidator.HasAnyOrganizationAccess(User),
             Claims = User.Claims.Select(c => new { c.Type, c.Value }).ToArray()
+        });
+    }
+
+    /// <summary>
+    ///     Test endpoint that only allows cookie-based authentication (GitHub OAuth via browser)
+    /// </summary>
+    [HttpGet("cookie-only")]
+    [Authorize("RequireCookieAuthentication")]
+    public IActionResult TestCookieOnly()
+    {
+        return Ok(new
+        {
+            Message = "Cookie-based authentication successful!",
+            UserName = User.GetGitHubLogin(),
+            Organizations = AuthenticationValidator.GetUserOrganizations(User),
+            AuthenticationType = User.Identity.AuthenticationType,
+            IsGitHubAuthenticated = AuthenticationValidator.HasAnyOrganizationAccess(User)
+        });
+    }
+
+    /// <summary>
+    ///     Test endpoint that only allows token-based authentication (Bearer tokens)
+    /// </summary>
+    [HttpGet("token-only")]
+    [Authorize("RequireTokenAuthentication")]
+    public IActionResult TestTokenOnly()
+    {
+        return Ok(new
+        {
+            Message = "Token-based authentication successful!",
+            UserName = User.Identity.Name ?? User.GetGitHubLogin() ?? "Unknown",
+            AuthenticationType = User.Identity.AuthenticationType,
+            IsManagedIdentity = AuthenticationValidator.IsValidManagedIdentity(User),
+            HasGitHubOrganization = AuthenticationValidator.HasAnyOrganizationAccess(User),
+            TokenType = AuthenticationValidator.IsValidManagedIdentity(User) ? "Managed Identity" : "GitHub Token"
         });
     }
 

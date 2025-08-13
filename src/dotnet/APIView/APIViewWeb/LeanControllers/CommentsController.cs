@@ -32,19 +32,6 @@ namespace APIViewWeb.LeanControllers
             _notificationManager = notificationManager;
         }
 
-        /// <summary>
-        /// Retrieve comments for a review.
-        /// </summary>
-        /// <param name="reviewId"></param>
-        /// <param name="isDeleted"></param>
-        /// <param name="commentType"></param>
-        /// <returns></returns>
-        [HttpGet("{reviewId}", Name = "GetComments")]
-        public async Task<ActionResult<IEnumerable<CommentItemModel>>> GetCommentsAsync(string reviewId, bool isDeleted = false, CommentType? commentType = null)
-        {
-            var comments = await _commentsManager.GetCommentsAsync(reviewId, isDeleted, commentType);
-            return new LeanJsonResult(comments, StatusCodes.Status200OK);
-        }
 
         /// <summary>
         /// Retrieve conversation information
@@ -148,7 +135,7 @@ namespace APIViewWeb.LeanControllers
                 await _commentsManager.RequestAgentReply(User, comment, apiRevisionId);
             }
 
-            return new LeanJsonResult(comment, StatusCodes.Status201Created, Url.Action("GetComments", new { reviewId = reviewId }));
+            return new LeanJsonResult(comment, StatusCodes.Status201Created, Url.Link("GetComments", new { reviewId = reviewId }));
         }
 
         /// <summary>

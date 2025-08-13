@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
@@ -12,9 +13,9 @@ using Microsoft.Extensions.Options;
 
 namespace APIViewWeb.Account;
 
-public class CookieOrBearerAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
+public class CookieOrTokenAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
 {
-    public CookieOrBearerAuthenticationHandler(IOptionsMonitor<AuthenticationSchemeOptions> options,
+    public CookieOrTokenAuthenticationHandler(IOptionsMonitor<AuthenticationSchemeOptions> options,
         ILoggerFactory logger, UrlEncoder encoder)
         : base(options, logger, encoder)
     {
@@ -38,12 +39,12 @@ public class CookieOrBearerAuthenticationHandler : AuthenticationHandler<Authent
         string token = authHeader.Substring("Bearer ".Length).Trim();
         if (AuthenticationValidator.IsGitHubToken(token))
         {
-            var httpClientFactory = Context.RequestServices.GetRequiredService<IHttpClientFactory>();
-            using var httpClient = httpClientFactory.CreateClient();
+            IHttpClientFactory httpClientFactory = Context.RequestServices.GetRequiredService<IHttpClientFactory>();
+            using HttpClient httpClient = httpClientFactory.CreateClient();
             ClaimsPrincipal user = await AuthenticationValidator.ValidateGitHubTokenAsync(token, httpClient);
             if (user != null)
             {
-                var ticket = new AuthenticationTicket(user, "GitHubToken");
+                AuthenticationTicket ticket = new(user, "GitHubToken");
                 return AuthenticateResult.Success(ticket);
             }
         }

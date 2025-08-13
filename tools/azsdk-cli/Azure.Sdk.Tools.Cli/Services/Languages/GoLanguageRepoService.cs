@@ -35,10 +35,18 @@ public class GoLanguageRepoService : LanguageRepoService
 
     public Task<bool> CheckDependencies()
     {
-        var goExists = _processHelper.RunProcess(compilerName, ["version"], ".").ExitCode == 0;
-        var goLangCiLintExists = _processHelper.RunProcess(linterName, ["--version"], ".").ExitCode == 0;
+        try
+        {
+            var compilerExists = _processHelper.RunProcess(compilerName, ["version"], ".").ExitCode == 0;
+            var linterExists = _processHelper.RunProcess(linterName, ["--version"], ".").ExitCode == 0;
+            var formatterExists = _processHelper.RunProcess("echo", ["package main", "|", "goimports"], ".").ExitCode == 0;
 
-        return Task.FromResult(goExists && goLangCiLintExists);
+            return Task.FromResult(compilerExists && linterExists && formatterExists);
+        }
+        catch (Exception)
+        {
+            return Task.FromResult(false);
+        }
     }
 
     public async Task<CLICheckResponse> CreateEmptyPackage(string packagePath, string moduleName)

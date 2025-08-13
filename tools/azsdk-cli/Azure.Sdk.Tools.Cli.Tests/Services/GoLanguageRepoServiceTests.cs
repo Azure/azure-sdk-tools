@@ -2,7 +2,6 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
-using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
@@ -12,7 +11,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
     {
         private string GoPackageDir { get; set; }
         private static string GoProgram => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "go.exe" : "go";
-        private static string GoLangCiLintProgram => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "golangci-lint.exe" : "golangci-lint";
 
         private GoLanguageRepoService LangService { get; set; }
 
@@ -28,7 +26,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
             if (!await LangService.CheckDependencies())
             {
-                Assert.Ignore("go and golangci-lint aren't installed, can't run GoLanguageRepoServiceTests");
+                Assert.Ignore("go, golangci-lint or goimports aren't installed, can't run GoLanguageRepoServiceTests");
             }
 
             var resp = await LangService.CreateEmptyPackage(GoPackageDir, "untitleddotloop");

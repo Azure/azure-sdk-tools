@@ -33,7 +33,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             // only add these tools in debug mode
             typeof(ExampleTool),
             typeof(HelloWorldTool),
-#endif
+            #endif
         ];
 
         public static Option<string> ToolOption = new("--tools")

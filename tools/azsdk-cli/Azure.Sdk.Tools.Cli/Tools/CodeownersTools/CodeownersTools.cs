@@ -144,8 +144,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 {
                     throw new Exception($"Service label: {serviceLabel} and Path: {path} are both invalid. At least one must be valid");
                 }
-                // Check if it's management plane.
-                var isMgmtPlane = typespecHelper.IsTypeSpecProjectForMgmtPlane(typeSpecProjectRoot);
 
                 // Normalize service path
                 var normalizedPath = codeownersHelper.NormalizePath(path);
@@ -205,10 +203,9 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 var codeownersSha = codeownersFileContent.Sha;
 
                 // Find Codeowner Entry with the validated Label or Path
-                var (startLine, endLine) = (-1, -1);
-                (startLine, endLine) = isMgmtPlane ?
-                codeownersHelper.FindBlock(codeownersContent, standardManagementCategory) :
-                codeownersHelper.FindBlock(codeownersContent, standardServiceCategory);
+                var (startLine, endLine) = typespecHelper.IsTypeSpecProjectForMgmtPlane(typeSpecProjectRoot)
+                    ? codeownersHelper.FindBlock(codeownersContent, standardManagementCategory)
+                    : codeownersHelper.FindBlock(codeownersContent, standardServiceCategory);
 
                 var codeownersEntries = CodeownersParser.ParseCodeownersFile(codeownersUrl, azureWriteTeamsBlobUrl, startLine, endLine);
                 for (int i = 0; i < codeownersEntries.Count; i++)

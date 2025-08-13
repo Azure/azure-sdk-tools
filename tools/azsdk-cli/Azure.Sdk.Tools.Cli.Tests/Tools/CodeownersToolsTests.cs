@@ -159,7 +159,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.CodeownersToolsSuite
                 workingBranch: string.Empty);
 
             Assert.That(result, Does.StartWith("Error:"));
-            Assert.That(result, Does.Contain("Atleast one must be valid"));
+            Assert.That(result, Does.Contain("At least one must be valid"));
         }
 
         [Test]

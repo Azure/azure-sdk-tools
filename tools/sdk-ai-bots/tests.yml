@@ -54,7 +54,9 @@ stages:
           - script: |
               go build -o qa-bot-service
               chmod +x qa-bot-service
-              ./qa-bot-service
+              ./qa-bot-service &
+              sleep 20
+              lsof -ti:8088
             displayName: 'start backend AI agent service'
             workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend
             env:

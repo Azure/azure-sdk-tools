@@ -1,11 +1,9 @@
 using Microsoft.Extensions.Logging;
 using Azure.Tools.GeneratorAgent.Configuration;
 using Azure.Tools.GeneratorAgent.Security;
-using System;
-using System.IO;
+using Azure.Tools.GeneratorAgent.Exceptions;
 using System.Runtime.InteropServices;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Security;
 
 namespace Azure.Tools.GeneratorAgent
 {
@@ -36,122 +34,67 @@ namespace Azure.Tools.GeneratorAgent
             SdkDir = validationContext.ValidatedSdkDir;
         }
 
-        public async Task CompileTypeSpecAsync(CancellationToken cancellationToken = default)
+        public async Task<Result<object>> CompileTypeSpecAsync(CancellationToken cancellationToken = default)
         {
             Logger.LogInformation("Starting TypeSpec compilation for project: {ProjectPath}", TypespecDir);
 
-            await InstallTypeSpecDependenciesThrows(cancellationToken);
-            await CompileTypeSpecThrows(cancellationToken);
+            Result<object> installResult = await InstallTypeSpecDependencies(cancellationToken);
+            if (installResult.IsFailure)
+            {
+                return installResult;
+            }
+
+            Result<object> compileResult = await CompileTypeSpec(cancellationToken);
+            if (compileResult.IsFailure)
+            {
+                return compileResult;
+            }
 
             Logger.LogInformation("TypeSpec compilation completed successfully");
+            return Result<object>.Success("TypeSpec compilation completed successfully");
         }
-
-        protected virtual async Task<bool> InstallTypeSpecDependencies(CancellationToken cancellationToken)
+        
+        private async Task<Result<object>> InstallTypeSpecDependencies(CancellationToken cancellationToken)
         {
             Logger.LogInformation("Installing TypeSpec dependencies globally");
 
             string arguments;
+            
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                // On Windows, use PowerShell to execute npm reliably
                 arguments = $"-Command \"npm install --global {AppSettings.TypespecEmitterPackage}\"";
             }
             else
             {
-                // On Unix/Linux/macOS, use npm directly
                 arguments = $"install --global {AppSettings.TypespecEmitterPackage}";
             }
-            
-            ValidationResult argValidation = InputValidator.ValidateProcessArguments(arguments);
-            if (!argValidation.IsValid)
+
+            Result<string> argValidation = InputValidator.ValidateProcessArguments(arguments);
+            if (argValidation.IsFailure)
             {
-                Logger.LogError("Process arguments validation failed: {Error}", argValidation.ErrorMessage);
-                return false;
+                throw new ArgumentException($"Process arguments validation failed: {argValidation.Exception?.Message}");
             }
 
             string workingDirectory = Path.GetTempPath();
 
             try
             {
-                (bool success, string output, string error) = await ProcessExecutor.ExecuteAsync(
+                Result<object> result = await ProcessExecutor.ExecuteAsync(
                     SecureProcessConfiguration.NpmExecutable,
-                    argValidation.Value,
+                    argValidation.Value!,
                     workingDirectory,
                     cancellationToken).ConfigureAwait(false);
 
-                if (!success)
-                {
-                    Logger.LogError("Global npm install failed. Error: {Error}", error);
-                    return false;
-                }
-
-                Logger.LogInformation("TypeSpec dependencies installed globally successfully: {Output}", output);
-                return true;
+                return result;
             }
-            catch (OperationCanceledException)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                // Let cancellation exceptions bubble up for this protected method too
+                Logger.LogCritical(ex, "Unexpected system error during TypeSpec dependency installation");
                 throw;
             }
         }
 
-        private async Task InstallTypeSpecDependenciesThrows(CancellationToken cancellationToken)
-        {
-            Logger.LogInformation("Installing TypeSpec dependencies globally");
-
-            string arguments;
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                // On Windows, use PowerShell to execute npm reliably
-                arguments = $"-Command \"npm install --global {AppSettings.TypespecEmitterPackage}\"";
-            }
-            else
-            {
-                // On Unix/Linux/macOS, use npm directly
-                arguments = $"install --global {AppSettings.TypespecEmitterPackage}";
-            }
-            
-            ValidationResult argValidation = InputValidator.ValidateProcessArguments(arguments);
-            if (!argValidation.IsValid)
-            {
-                Logger.LogError("Process arguments validation failed: {Error}", argValidation.ErrorMessage);
-                throw new InvalidOperationException($"Process arguments validation failed: {argValidation.ErrorMessage}");
-            }
-
-            string workingDirectory = Path.GetTempPath();
-
-            try
-            {
-                (bool success, string output, string error) = await ProcessExecutor.ExecuteAsync(
-                    SecureProcessConfiguration.NpmExecutable,
-                    argValidation.Value,
-                    workingDirectory,
-                    cancellationToken).ConfigureAwait(false);
-
-                if (!success)
-                {
-                    Logger.LogError("Global npm install failed. Error: {Error}", error);
-                    throw new InvalidOperationException($"Global npm install failed: {error}");
-                }
-
-                Logger.LogInformation("TypeSpec dependencies installed globally successfully: {Output}", output);
-            }
-            catch (OperationCanceledException)
-            {
-                throw;
-            }
-            catch (TimeoutException)
-            {
-                throw;
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Unexpected error during TypeSpec dependencies installation");
-                throw new InvalidOperationException("Failed to install TypeSpec dependencies", ex);
-            }
-        }
-
-        protected virtual async Task<bool> CompileTypeSpec(CancellationToken cancellationToken)
+        private async Task<Result<object>> CompileTypeSpec(CancellationToken cancellationToken)
         {
             Logger.LogInformation("Compiling TypeSpec project");
 
@@ -167,90 +110,37 @@ namespace Azure.Tools.GeneratorAgent
                 arguments = $"tsp compile . --emit {AppSettings.TypespecEmitterPackage} --option \"{AppSettings.TypespecEmitterPackage}.emitter-output-dir={tspOutputPath}\"";
             }
             
-            ValidationResult argValidation = InputValidator.ValidateProcessArguments(arguments);
-            if (!argValidation.IsValid)
+            Result<string> argValidation = InputValidator.ValidateProcessArguments(arguments);
+            if (argValidation.IsFailure)
             {
-                Logger.LogError("Process arguments validation failed: {Error}", argValidation.ErrorMessage);
-                return false;
+                throw new ArgumentException($"Process arguments validation failed: {argValidation.Exception?.Message}");
             }
 
             try
             {
-                (bool success, string output, string error) = await ProcessExecutor.ExecuteAsync(
+                Result<object> result = await ProcessExecutor.ExecuteAsync(
                     SecureProcessConfiguration.NpxExecutable,
-                    argValidation.Value,
+                    argValidation.Value!,
                     TypespecDir,
                     cancellationToken).ConfigureAwait(false);
 
-                if (!success)
+                if (result.IsFailure && result.ProcessException != null)
                 {
-                    Logger.LogError("TypeSpec compilation failed. Error: {Error}", error);
-                    return false;
+                    return Result<object>.Failure(
+                        new TypeSpecCompilationException(
+                            result.ProcessException.Command,
+                            result.ProcessException.Output,
+                            result.ProcessException.Error,
+                            result.ProcessException.ExitCode ?? -1,
+                            result.ProcessException));
                 }
 
-                Logger.LogInformation("TypeSpec compilation completed: {Output}", output);
-                return true;
+                return result;
             }
-            catch (OperationCanceledException)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                // Let cancellation exceptions bubble up for this protected method too
+                Logger.LogCritical(ex, "Unexpected system error during TypeSpec compilation");
                 throw;
-            }
-        }
-
-        private async Task CompileTypeSpecThrows(CancellationToken cancellationToken)
-        {
-            Logger.LogInformation("Compiling TypeSpec project");
-
-            string tspOutputPath = Path.Combine(SdkDir);
-
-            string arguments;
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                arguments = $"-Command \"npx tsp compile . --emit {AppSettings.TypespecEmitterPackage} --option '{AppSettings.TypespecEmitterPackage}.emitter-output-dir={tspOutputPath}'\"";
-            }
-            else
-            {
-                arguments = $"tsp compile . --emit {AppSettings.TypespecEmitterPackage} --option \"{AppSettings.TypespecEmitterPackage}.emitter-output-dir={tspOutputPath}\"";
-            }
-            
-            ValidationResult argValidation = InputValidator.ValidateProcessArguments(arguments);
-            if (!argValidation.IsValid)
-            {
-                Logger.LogError("Process arguments validation failed: {Error}", argValidation.ErrorMessage);
-                throw new InvalidOperationException($"Process arguments validation failed: {argValidation.ErrorMessage}");
-            }
-
-            try
-            {
-                (bool success, string output, string error) = await ProcessExecutor.ExecuteAsync(
-                    SecureProcessConfiguration.NpxExecutable,
-                    argValidation.Value,
-                    TypespecDir,
-                    cancellationToken).ConfigureAwait(false);
-
-                if (!success)
-                {
-                    Logger.LogError("TypeSpec compilation failed. Error: {Error}", error);
-                    throw new InvalidOperationException($"TypeSpec compilation failed: {error}");
-                }
-
-                Logger.LogInformation("TypeSpec compilation completed: {Output}", output);
-            }
-            catch (OperationCanceledException)
-            {
-                // Let cancellation exceptions bubble up
-                throw;
-            }
-            catch (TimeoutException)
-            {
-                // Let timeout exceptions bubble up
-                throw;
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Unexpected error during TypeSpec compilation");
-                throw new InvalidOperationException("Failed to compile TypeSpec project", ex);
             }
         }
     }

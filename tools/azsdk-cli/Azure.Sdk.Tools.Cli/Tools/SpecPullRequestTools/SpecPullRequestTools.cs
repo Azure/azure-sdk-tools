@@ -43,7 +43,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private readonly Option<string> repoNameOpt = new(["--repo-name"], () => "azure-rest-api-specs", "GitHub repo name") { IsRequired = false };
 
 
-        [McpServerTool, Description("Connect to GitHub using personal access token.")]
+        [McpServerTool(Name = "azsdk_get_github_user_details"), Description("Connect to GitHub using personal access token.")]
         public async Task<string> GetGitHubUserDetails()
         {
             try
@@ -61,7 +61,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
         }
 
-        [McpServerTool, Description("Check if TypeSpec project is in public repo. Provide absolute path to TypeSpec project root as param.")]
+        [McpServerTool(Name = "azsdk_check_typespec_project_in_public_repo"), Description("Check if TypeSpec project is in public repo. Provide absolute path to TypeSpec project root as param.")]
         public string CheckIfSpecInPublicRepo(string typeSpecProjectPath)
         {
             try
@@ -77,7 +77,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        [McpServerTool, Description("Get pull request link for current branch in the repo. Provide absolute path to TypeSpec project root as param. This tool call GetPullRequest to get pull request details.")]
+        [McpServerTool(Name = "azsdk_get_pull_request_link_for_current_branch"), Description("Get pull request link for current branch in the repo. Provide absolute path to TypeSpec project root as param. This tool call GetPullRequest to get pull request details.")]
         public async Task<string> GetPullRequestForCurrentBranch(string typeSpecProjectPath)
         {
             try
@@ -114,7 +114,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        [McpServerTool, Description("Create pull request for repository changes. Provide title, description and path to repository root. Creates a pull request for committed changes in the current branch.")]
+        [McpServerTool(Name = "azsdk_create_pull_request"), Description("Create pull request for repository changes. Provide title, description and path to repository root. Creates a pull request for committed changes in the current branch.")]
         public async Task<List<string>> CreatePullRequest(string title, string description, string repoPath, string targetBranch = "main", bool draft = true)
         {
             try
@@ -142,8 +142,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     logger.LogInformation("Repo name: {repoName}, Head repo owner: {headRepoOwner}, Head branch name: {headBranchName}, Head branch ref: {headBranch}", repoName, headRepoOwner, headBranchName, headBranch);
                     logger.LogInformation("Creating pull request in {targetRepoOwner}:{repoName}", targetRepoOwner, repoName);
                     //Create pull request
-                    var createResponseList = await gitHubService.CreatePullRequestAsync(repoName, targetRepoOwner, targetBranch, headBranch, title, description, draft);
-                    results.AddRange(createResponseList);
+                    var createResponse = await gitHubService.CreatePullRequestAsync(repoName, targetRepoOwner, targetBranch, headBranch, title, description, draft);
+                    results.AddRange(createResponse.Messages);
                     return results;
                 }
                 catch (Exception ex)
@@ -172,7 +172,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         }
 
 
-        [McpServerTool, Description("This tool gets pull request details, status, comments, checks, next action details, links to APIView reviews.")]
+        [McpServerTool(Name = "azsdk_get_pull_request"), Description("This tool gets pull request details, status, comments, checks, next action details, links to APIView reviews.")]
         public async Task<string> GetPullRequest(int pullRequestNumber, string repoOwner = "Azure", string repoName = "azure-rest-api-specs")
         {
             try

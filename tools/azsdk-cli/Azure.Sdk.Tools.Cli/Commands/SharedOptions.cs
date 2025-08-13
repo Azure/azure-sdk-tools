@@ -2,21 +2,19 @@ using System.CommandLine;
 using System.CommandLine.Parsing;
 using System.IO.Enumeration;
 using Azure.Sdk.Tools.Cli.Tools;
-using Azure.Sdk.Tools.Cli.Tools.HelloWorldTool;
-using Azure.Sdk.Tools.Cli.Tools.HostServer;
-using Azure.Sdk.Tools.Cli.Tools.SdkRelease;
-using Azure.Sdk.Tools.Cli.Tools.ReleaseReadiness;
 
 namespace Azure.Sdk.Tools.Cli.Commands
 {
     public static class SharedOptions
     {
         public static readonly List<Type> ToolsList = [
+            typeof(PackageCheckTool),
             typeof(CleanupTool),
             typeof(DownloadPromptsTool),
-            typeof(LogAnalysisTool),
             typeof(FileValidationTool),
+            typeof(GitHubLabelsTool),
             typeof(HostServerTool),
+            typeof(LogAnalysisTool),
             typeof(PipelineAnalysisTool),
             typeof(PipelineTestsTool),
             typeof(QuokkaTool),
@@ -29,8 +27,11 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(SpecWorkflowTool),
             typeof(SpecValidationTools),
             typeof(TestAnalysisTool),
+            typeof(TypeSpecTool),
+
             #if DEBUG
-            // only add this tool in debug mode
+            // only add these tools in debug mode
+            typeof(ExampleTool),
             typeof(HelloWorldTool),
             #endif
         ];
@@ -51,6 +52,11 @@ namespace Azure.Sdk.Tools.Cli.Commands
         {
             Description = "Enable debug logging",
             IsRequired = false,
+        };
+
+        public static Option<string> PackagePath = new(["--package-path", "-p"], "Path to the package directory to check") 
+        { 
+            IsRequired = true 
         };
 
         public static (string, bool) GetGlobalOptionValues(string[] args)

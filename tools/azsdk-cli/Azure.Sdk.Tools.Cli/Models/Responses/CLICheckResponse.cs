@@ -1,0 +1,52 @@
+using System.Text.Json.Serialization;
+
+namespace Azure.Sdk.Tools.Cli.Models;
+
+/// <summary>
+/// Base class for CLI check responses with exit code and output.
+/// </summary>
+public class CLICheckResponse: Response
+{
+    [JsonPropertyName("exit_code")]
+    public int ExitCode { get; set;}
+    
+    [JsonPropertyName("check_status_details")]
+    public string CheckStatusDetails { get; set;}
+
+    public CLICheckResponse() { }
+
+    public CLICheckResponse(int exitCode, string checkStatusDetails, string error = null)
+    {
+        ExitCode = exitCode;
+        CheckStatusDetails = checkStatusDetails;
+        if (!string.IsNullOrEmpty(error))
+        {
+            ResponseError = error;
+        }
+    }
+
+    public override string ToString()
+    {
+        return ToString(CheckStatusDetails);
+    }
+}
+
+/// <summary>
+/// CLI check response for cookbook/documentation reference responses.
+/// </summary>
+public class CookbookCLICheckResponse : CLICheckResponse
+{
+    [JsonPropertyName("cookbook_reference")]
+    public string CookbookReference { get; set;}
+
+    public CookbookCLICheckResponse(int exitCode, string checkStatusDetails, string cookbookReference) : base(exitCode, checkStatusDetails)
+    {
+        CookbookReference = cookbookReference;
+    }
+
+    public override string ToString()
+    {
+        return ToString(CheckStatusDetails);
+    }
+}
+

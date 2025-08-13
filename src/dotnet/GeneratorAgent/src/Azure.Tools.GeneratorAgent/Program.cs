@@ -1,4 +1,5 @@
 ﻿using System.CommandLine;
+using System.Linq;
 using Azure;
 using Azure.AI.Agents.Persistent;
 using Azure.Core;
@@ -6,6 +7,8 @@ using Azure.Identity;
 using Azure.Tools.GeneratorAgent.Authentication;
 using Azure.Tools.GeneratorAgent.Configuration;
 using Azure.Tools.GeneratorAgent.Security;
+using Azure.Tools.GeneratorAgent.Exceptions;
+using Azure.Tools.ErrorAnalyzers;
 using Microsoft.Extensions.Logging;
 
 namespace Azure.Tools.GeneratorAgent
@@ -29,8 +32,6 @@ namespace Azure.Tools.GeneratorAgent
             LoggerFactory = loggerFactory;
             Logger = LoggerFactory.CreateLogger<Program>();
             CommandLineConfig = new CommandLineConfiguration(LoggerFactory.CreateLogger<CommandLineConfiguration>());
-            
-            InputValidator.SetLogger(LoggerFactory.CreateLogger("Azure.Tools.GeneratorAgent.Security.InputValidator"));
         }
 
         public static async Task<int> Main(string[] args)
@@ -80,125 +81,96 @@ namespace Azure.Tools.GeneratorAgent
             }
         }
 
-        private async Task<int> ExecuteGenerationAsync(
-            string? typespecdir,
-            string? commitId,
-            string sdkdir,
-            CancellationToken cancellationToken)
+        private async Task<int> ExecuteGenerationAsync(string? typespecdir, string? commitId, string sdkdir, CancellationToken cancellationToken)
         {
             try
             {
-                Logger.LogInformation("Starting SDK generation process");
+                // Step 1: Create AppSettings
+                ILogger<AppSettings> appSettingsLogger = LoggerFactory.CreateLogger<AppSettings>();
+                AppSettings appSettings = ToolConfig.CreateAppSettings(appSettingsLogger);
+                ProcessExecutor processExecutor = new ProcessExecutor(LoggerFactory.CreateLogger<ProcessExecutor>());
 
-                AppSettings appSettings;
-                try
-                {
-                    var appSettingsLogger = LoggerFactory.CreateLogger<AppSettings>();
-                    appSettings = ToolConfig.CreateAppSettings(appSettingsLogger);
-                }
-                catch (InvalidOperationException ex)
-                {
-                    Logger.LogError("Configuration validation failed: {Error}", ex.Message);
-                    Logger.LogError("Please check your configuration settings and try again.");
-                    return ExitCodeFailure;
-                }
+                // Step 2: Create and Initialize ErrorFixer Agent
+                ErrorFixerAgent agent = CreateErrorFixerAgent(appSettings);
+                string threadId = await agent.InitializeAgentEnvironmentAsync(typespecdir!, cancellationToken).ConfigureAwait(false);
 
-                RuntimeEnvironment environment = DetermineRuntimeEnvironment();
-                TokenCredentialOptions? credentialOptions = CreateCredentialOptions();
-
-                CredentialFactory credentialFactory = new(LoggerFactory.CreateLogger<CredentialFactory>());
-                TokenCredential credential = credentialFactory.CreateCredential(environment, credentialOptions);
-
-                ProcessExecutor processExecutor = new(LoggerFactory.CreateLogger<ProcessExecutor>());
-
-                PersistentAgentsAdministrationClient adminClient = new(
-                    new Uri(appSettings.ProjectEndpoint),
-                    credential);
-
-                ISdkGenerationService sdkGenerationService;
-                try
-                {
-                    if (string.IsNullOrWhiteSpace(commitId))
-                    {
-                        Logger.LogInformation("Using local TypeSpec SDK generation service");
-                        sdkGenerationService = SdkGenerationServiceFactory.CreateForLocalPath(typespecdir!, sdkdir, appSettings, LoggerFactory, processExecutor);
-                    }
-                    else
-                    {
-                        Logger.LogInformation("Using GitHub TypeSpec SDK generation service");
-                        sdkGenerationService = SdkGenerationServiceFactory.CreateForGitHubCommit(commitId, typespecdir!, sdkdir, appSettings, LoggerFactory, processExecutor);
-                    }
-                }
-                catch (ArgumentException ex)
-                {
-                    Logger.LogError("Invalid configuration for SDK generation: {Error}", ex.Message);
-                    Logger.LogError("Please verify your input parameters and try again.");
-                    return ExitCodeFailure;
-                }
-                catch (InvalidOperationException ex)
-                {
-                    Logger.LogError("Configuration validation failed: {Error}", ex.Message);
-                    Logger.LogError("Please check your configuration settings and try again.");
-                    return ExitCodeFailure;
-                }
-
-                Logger.LogInformation("Initializing error fixing agent");
-                await using ErrorFixerAgent agent = new(
+                // Step 3: Compile Typespec 
+                ISdkGenerationService sdkGenerationService = SdkGenerationServiceFactory.CreateSdkGenerationService(
+                    typespecdir,
+                    commitId,
+                    sdkdir,
                     appSettings,
-                    LoggerFactory.CreateLogger<ErrorFixerAgent>(),
-                    adminClient);
+                    LoggerFactory,
+                    processExecutor);
+                Result<object> compileResult = await sdkGenerationService.CompileTypeSpecAsync(cancellationToken).ConfigureAwait(false);
 
-                try
-                {
-                    await agent.FixCodeAsync(cancellationToken).ConfigureAwait(false);
-                    Logger.LogInformation("Error fixing agent completed successfully");
-                }
-                catch (InvalidOperationException ex)
-                {
-                    Logger.LogError("Error fixing agent failed to initialize: {Error}", ex.Message);
-                    Logger.LogError("Please check your Azure AI service configuration and try again.");
-                    return ExitCodeFailure;
-                }
-                catch (Azure.RequestFailedException ex) when (ex.Status == 401)
-                {
-                    Logger.LogError("Authentication failed for Azure AI service. Please check your credentials.");
-                    return ExitCodeFailure;
-                }
-                catch (Azure.RequestFailedException ex) when (ex.Status >= 500)
-                {
-                    Logger.LogError("Azure AI service is temporarily unavailable: {Error}", ex.Message);
-                    Logger.LogError("Please try again later.");
-                    return ExitCodeFailure;
-                }
-                catch (Azure.RequestFailedException ex)
-                {
-                    Logger.LogError("Azure AI service error: {Error}", ex.Message);
-                    return ExitCodeFailure;
-                }
+                // Step 4: Compile Generated SDK
+                SdkBuildService sdkBuildService = new SdkBuildService(
+                    LoggerFactory.CreateLogger<SdkBuildService>(), 
+                    processExecutor, 
+                    sdkdir);
+                Result<object> buildResult = await sdkBuildService.BuildSdkAsync(cancellationToken).ConfigureAwait(false);
 
-                Logger.LogInformation("Starting TypeSpec compilation");
-                try
-                {
-                    await sdkGenerationService.CompileTypeSpecAsync(cancellationToken).ConfigureAwait(false);
-                    Logger.LogInformation("SDK generation completed successfully");
-                    return ExitCodeSuccess;
-                }
-                catch (InvalidOperationException ex)
-                {
-                    Logger.LogError("SDK generation failed: {Error}", ex.Message);
-                    return ExitCodeFailure;
-                }
+                // Step 5: Analyze all errors and get fixes
+                BuildErrorAnalyzer analyzer = new BuildErrorAnalyzer(LoggerFactory.CreateLogger<BuildErrorAnalyzer>());
+                List<Fix> allFixes = analyzer.AnalyzeAndGetFixes(compileResult, buildResult);
+                
+                // Step 6:                     
+                // TODO: Send fixes to ErrorFixerAgent
+                // await agent.ProcessFixesAsync(allFixes, threadId, cancellationToken);
+
+                return ExitCodeSuccess;
             }
             catch (OperationCanceledException)
             {
                 Logger.LogInformation("SDK generation was cancelled");
                 return ExitCodeSuccess;
             }
+            catch (InvalidOperationException ex)
+            {
+                Logger.LogError("Operation failed: {Error}", ex.Message);
+                return ExitCodeFailure;
+            }
+            catch (ArgumentException ex)
+            {
+                Logger.LogError("Invalid configuration: {Error}", ex.Message);
+                return ExitCodeFailure;
+            }
+            catch (RequestFailedException ex) when (ex.Status == 401)
+            {
+                Logger.LogError("Authentication failed for Azure AI service. Please check your credentials.");
+                return ExitCodeFailure;
+            }
+            catch (RequestFailedException ex) when (ex.Status >= 500)
+            {
+                Logger.LogError("Azure AI service is temporarily unavailable: {Error}", ex.Message);
+                return ExitCodeFailure;
+            }
+            catch (RequestFailedException ex)
+            {
+                Logger.LogError("Azure AI service error: {Error}", ex.Message);
+                return ExitCodeFailure;
+            }
             catch (Exception ex)
             {
                 Logger.LogError(ex, "Error occurred during SDK generation");
                 return ExitCodeFailure;
             }
+        }
+
+        private ErrorFixerAgent CreateErrorFixerAgent(AppSettings appSettings)
+        {
+            RuntimeEnvironment environment = DetermineRuntimeEnvironment();
+            TokenCredentialOptions? credentialOptions = CreateCredentialOptions();
+
+            CredentialFactory credentialFactory = new CredentialFactory(LoggerFactory.CreateLogger<CredentialFactory>());
+            TokenCredential credential = credentialFactory.CreateCredential(environment, credentialOptions);
+
+            PersistentAgentsClient client = new PersistentAgentsClient(
+                appSettings.ProjectEndpoint,
+                credential);
+
+            return new ErrorFixerAgent(appSettings, LoggerFactory.CreateLogger<ErrorFixerAgent>(), client);
         }
 
         private static RuntimeEnvironment DetermineRuntimeEnvironment()

@@ -272,7 +272,7 @@ class FunctionNode(NodeEntityBase):
             for err in self.pylint_errors:
                 err.generate_tokens(self.apiview, self.namespace_id)
             param_lines = self.children
-            review_line = review_lines.create_review_line(line_id=self.namespace_id, is_handwritten=self.is_handwritten)
+            review_line = review_lines.create_review_line(is_handwritten=self.is_handwritten)
         else:
             param_lines = review_lines
 
@@ -336,6 +336,8 @@ class FunctionNode(NodeEntityBase):
                 indent = " " * 4
             review_line.add_text(f"{indent}*", has_suffix_space=False)
             review_line.add_punctuation(",")
+            # treat '*' as a param for LineId
+            review_line.add_line_marker(f"{self.namespace_id}.param(*)")
             review_line = self._reviewline_if_needed(
                 param_lines, review_line, use_multi_line
             )

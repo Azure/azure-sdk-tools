@@ -1,3 +1,15 @@
+# -------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for
+# license information.
+# --------------------------------------------------------------------------
+
+# pylint: disable=missing-class-docstring,missing-function-docstring
+
+"""
+Tests for ReviewResult class in APIView Copilot.
+"""
+
 from src._models import ReviewResult
 
 
@@ -12,6 +24,7 @@ class DummySection:
         self.lines = [DummyLine(line, i + 1) for i, line in enumerate(lines)]
 
     def idx_for_line_no(self, line_no):
+        """Find the index of the line with the given line number."""
         for idx, l in enumerate(self.lines):
             if l.line_no == line_no:
                 return idx
@@ -165,8 +178,8 @@ def test_blank_review_result_and_extend():
     rr_blank = ReviewResult()
     rr1 = ReviewResult(comments=comments1, allowed_ids=allowed_ids1, section=section1)
     rr2 = ReviewResult(comments=comments2, allowed_ids=allowed_ids2, section=section2)
-    rr_blank.comments.extend(rr1.comments)
-    rr_blank.comments.extend(rr2.comments)
+    rr_blank.comments.extend(rr1.comments)  # pylint: disable=no-member
+    rr_blank.comments.extend(rr2.comments)  # pylint: disable=no-member
 
     # Validate all comments are present and correct using a cleaner approach
     expected_comments = [

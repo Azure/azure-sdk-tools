@@ -9,6 +9,7 @@ using Azure.AI.OpenAI;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Configuration;
 using OpenAI.Chat;
 
 namespace Azure.Sdk.Tools.Cli.Tools
@@ -211,7 +212,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         /// <exception cref="Exception"></exception>
         private async Task<string> VerifyLinks(string repoPath, string readmePath, CancellationToken ct)
         {
-            var verifyLinksPs1 = Path.Join(repoPath, "eng", "common", "scripts", "Verify-Links.ps1");
+            var verifyLinksPs1 = Path.Join(repoPath, Constants.ENG_COMMON_SCRIPTS_PATH, "Verify-Links.ps1");
             var errors = new List<string>();
 
             logger.LogInformation("Running {VerifyLinksPs1} {ReadmePath}", verifyLinksPs1, readmePath);

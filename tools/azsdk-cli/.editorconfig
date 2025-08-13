@@ -1,2 +1,4 @@
+[*.cs]
 # disallow single if statements with no curly braces
-dotnet_diagnostic.SA1503.severity = error
+dotnet_diagnostic.IDE0011.severity = error
+dotnet_style_namespace_match_folder = false

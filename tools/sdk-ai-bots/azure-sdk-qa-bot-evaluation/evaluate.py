@@ -32,12 +32,13 @@ async def process_file(input_file: str, output_file: str, is_bot: bool) -> None:
                 try:
                     api_response = await call_bot_api(record["query"], api_url, azure_openai_api_key)
                     answer = api_response.get("answer", "")
+                    full_context = api_response.get("full_context", "")
                     latency = time.time() - start_time
                     processed_test_data = {
                         "query": record["query"],
                         "ground_truth": record["ground_truth"],
                         "response": answer,
-                        "context": "",
+                        "context": full_context,
                         "latency": latency,
                         "response_length": len(answer),
                         "testcase": record.get("testcase", "unknown"),
@@ -283,13 +284,16 @@ if __name__ == "__main__":
                 tenant_id = os.environ["AZURESUBSCRIPTION_TENANT_ID"]
                 system_access_token = os.environ["SYSTEM_ACCESSTOKEN"]
 
+                # kwargs = {
+                #     "credential": AzurePipelinesCredential(
+                #         service_connection_id=service_connection_id,
+                #         client_id=client_id,
+                #         tenant_id=tenant_id,
+                #         system_access_token=system_access_token,
+                #     )
+                # }
                 kwargs = {
-                    "credential": AzurePipelinesCredential(
-                        service_connection_id=service_connection_id,
-                        client_id=client_id,
-                        tenant_id=tenant_id,
-                        system_access_token=system_access_token,
-                    )
+                    "credential": DefaultAzureCredential()
                 }
             else:
                 kwargs = {
@@ -303,7 +307,7 @@ if __name__ == "__main__":
             result = evaluate(
                 data=output_file,
                 evaluators={
-                    "similarity": SimilarityEvaluator(model_config=model_config) 
+                    "similarity": SimilarityEvaluator(model_config=model_config)
                 },
                 evaluation_name=args.evaluation_name if args.evaluation_name else os.path.splitext(os.path.basename(output_file))[0],
                 # column mapping

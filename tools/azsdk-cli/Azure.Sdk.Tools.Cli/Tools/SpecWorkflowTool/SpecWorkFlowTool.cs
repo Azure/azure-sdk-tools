@@ -391,14 +391,12 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     return $"SDK generation pipeline did not succeed. Status: {pipeline.Result?.ToString()}. For more details: {DevOpsService.GetPipelineUrl(buildId)}";
                 }
 
-                var pr = devopsService.GetSDKPullRequestFromPipelineRunAsync(buildId, language, workItemId);
+                var pr = await devopsService.GetSDKPullRequestFromPipelineRunAsync(buildId, language, workItemId);
 
-                var releasePlan = await devopsService.GetReleasePlanAsync(pr);
-                var addReleasePlanInfoTask = AddReleasePlanInfoInSdkAsync(pr, releasePlan);
+                var rp = await devopsService.GetReleasePlanAsync(pr);
+                await AddReleasePlanInfoInSdkAsync(pr, rp);
 
-                await Task.WhenAll(pr, addReleasePlanInfoTask);
-
-                return pr.Result;
+                return pr;
             }
             catch (Exception ex)
             {
@@ -460,7 +458,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
                 var sdkInfoInRelease = devopsService.AddSdkInfoInReleasePlanAsync(releasePlan.WorkItemId, language, "", parsedLink);
-                var releaseInfoInSdk = devopsService.AddReleaseInfoInSdkAsync(parsedLink, releasePlan);
+                var releaseInfoInSdk = AddReleasePlanInfoInSdkAsync(parsedLink, releasePlan);
 
                 await Task.WhenAll(sdkInfoInRelease, releaseInfoInSdk);
 

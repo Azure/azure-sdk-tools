@@ -91,6 +91,7 @@ export async function compileTsp({
   additionalEmitterOptions,
   saveInputs,
   trace,
+  legacyPathResolution,
 }: {
   emitterPackage: string;
   outputPath: string;
@@ -98,6 +99,7 @@ export async function compileTsp({
   additionalEmitterOptions?: string;
   saveInputs?: boolean;
   trace?: string[];
+  legacyPathResolution?: boolean;
 }): Promise<{ success: boolean; exampleCmd: string }> {
   const parsedEntrypoint = getDirectoryPath(resolvedMainFilePath);
   const { compile, NodeHost, resolveCompilerOptions, formatDiagnostic } =
@@ -120,6 +122,9 @@ export async function compileTsp({
     },
   };
 
+  if (legacyPathResolution) {
+    overrideOptions[emitterPackage]!["emitter-output-dir"] = outputDir;
+  }
   const overrides: Partial<ResolveCompilerOptionsOptions["overrides"]> = {
     outputDir,
     emit: [emitterPackage],

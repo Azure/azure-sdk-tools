@@ -404,6 +404,19 @@ export async function generateCommand(argv: any) {
   }
   const mainFilePath = await discoverEntrypointFile(srcDir, tspLocation.entrypointFile);
   const resolvedMainFilePath = joinPaths(srcDir, mainFilePath);
+  // Read tspconfig.yaml contents
+  const tspConfigPath = joinPaths(srcDir, "tspconfig.yaml");
+  let tspConfigData;
+  try {
+    tspConfigData = parseYaml(await readFile(tspConfigPath, "utf8"));
+  } catch (err) {
+    Logger.warn(
+      `Could not read tspconfig.yaml at ${tspConfigPath}. Will use the repo root as the target output directory during compilation, this may cause unexpected behavior. Error: ${err}`,
+    );
+  }
+
+  const legacyPathResolution = !tspConfigData?.options?.[emitter]?.["emitter-output-dir"];
+
   if (skipInstall) {
     Logger.info("Skipping installation of dependencies");
   } else {
@@ -432,11 +445,12 @@ export async function generateCommand(argv: any) {
   }
   const result = await compileTsp({
     emitterPackage: emitter,
-    outputPath: outputDir,
+    outputPath: legacyPathResolution ? outputDir : await getRepoRoot(outputDir),
     resolvedMainFilePath,
     saveInputs: saveInputs,
     additionalEmitterOptions: emitterOptions,
     trace: argv["trace"],
+    legacyPathResolution: legacyPathResolution,
   });
 
   if (argv["debug"]) {

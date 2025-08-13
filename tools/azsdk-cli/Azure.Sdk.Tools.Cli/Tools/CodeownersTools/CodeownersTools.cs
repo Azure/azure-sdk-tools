@@ -148,7 +148,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 var isMgmtPlane = typespecHelper.IsTypeSpecProjectForMgmtPlane(typeSpecProjectRoot);
 
                 // Normalize service path
-                path = codeownersHelper.NormalizePath(path);
+                var normalizedPath = codeownersHelper.NormalizePath(path);
 
                 // Get labels file contents.
                 var labelsFileContent = await githubService.GetContentsSingleAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, Constants.AZURE_COMMON_LABELS_PATH);
@@ -169,7 +169,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     {
                         var labelsPullRequests = await githubService.SearchPullRequestsByTitleAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, "Service Label");
 
-                        if (!LabelHelper.CheckServiceLabelInReview(labelsPullRequests, serviceLabel) && string.IsNullOrEmpty(path))
+                        if (!LabelHelper.CheckServiceLabelInReview(labelsPullRequests, serviceLabel) && string.IsNullOrEmpty(normalizedPath))
                         {
                             throw new Exception($"Service label: {serviceLabel} is invalid.");
                         }
@@ -184,7 +184,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     {
                         if (codeownersPullRequest != null &&
                             (codeownersPullRequest.Title.Contains(serviceLabel, StringComparison.OrdinalIgnoreCase) ||
-                            codeownersPullRequest.Title.Contains(path, StringComparison.OrdinalIgnoreCase)))
+                            codeownersPullRequest.Title.Contains(normalizedPath, StringComparison.OrdinalIgnoreCase)))
                         {
                             workingBranch = codeownersPullRequest.Head.Ref;
                         }
@@ -208,23 +208,23 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 // Find Codeowner Entry with the validated Label or Path
                 var (startLine, endLine) = (-1, -1);
                 (startLine, endLine) = isMgmtPlane ?
-                codeownersHelper.findBlock(codeownersContent, standardManagementCategory) :
-                codeownersHelper.findBlock(codeownersContent, standardServiceCategory);
+                codeownersHelper.FindBlock(codeownersContent, standardManagementCategory) :
+                codeownersHelper.FindBlock(codeownersContent, standardServiceCategory);
 
                 var codeownersEntries = CodeownersParser.ParseCodeownersFile(codeownersUrl, azureWriteTeamsBlobUrl, startLine, endLine);
                 for (int i = 0; i < codeownersEntries.Count; i++)
                 {
-                    (codeownersEntries, i) = codeownersHelper.mergeCodeownerEntries(codeownersEntries, i);
+                    (codeownersEntries, i) = codeownersHelper.MergeCodeownerEntries(codeownersEntries, i);
                 }
 
                 // Find existing codeowners entry by path or service label
-                var updatedEntry = codeownersHelper.FindMatchingEntries(codeownersEntries, path, serviceLabel);
+                var updatedEntry = codeownersHelper.FindMatchingEntries(codeownersEntries, normalizedPath, serviceLabel);
 
                 var codeownersEntryExists = false;
 
                 // Update or create the codeowners entry
-                (updatedEntry, codeownersEntryExists) = codeownersHelper.UpdateOrCreateCodeownersEntry(
-                    updatedEntry, path, serviceLabel, serviceOwners, sourceOwners, isAdding);
+                (updatedEntry, codeownersEntryExists) = codeownersHelper.CreateOrUpdateCodeownersEntry(
+                    updatedEntry, normalizedPath, serviceLabel, serviceOwners, sourceOwners, isAdding);
 
                 // Validate the modified/created Entry
                 var (validationErrors, codeownersValidationResults) = await ValidateMinimumOwnerRequirements(updatedEntry);
@@ -235,8 +235,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
                 // Modify the file
-                var updatedEntryWithLines = codeownersHelper.findAlphabeticalInsertionPoint(codeownersEntries, updatedEntry);
-                var modifiedCodeownersContent = codeownersHelper.addCodeownersEntryAtIndex(codeownersContent, updatedEntry, updatedEntryWithLines.startLine, codeownersEntryExists);
+                var updatedEntryWithLines = codeownersHelper.FindAlphabeticalInsertionPoint(codeownersEntries, updatedEntry);
+                var modifiedCodeownersContent = codeownersHelper.AddCodeownersEntryAtIndex(codeownersContent, updatedEntry, updatedEntryWithLines.startLine, codeownersEntryExists);
 
                 // Create Branch, Update File, and Handle PR.
                 var actionDescription = isAdding ? "Add codeowner aliases for" : "Remove codeowner aliases for";

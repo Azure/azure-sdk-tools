@@ -22,6 +22,8 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
         /// </summary>
         /// <param name="codeownersFilePathOrUrl"></param>
         /// <param name="teamStorageURI"></param>
+        /// <param name="startLine">The starting line number to parse from (0-based index). Default is -1 which means start from the beginning.</param>
+        /// <param name="endLine">The ending line number to parse to (exclusive). Default is -1 which means parse to the end of the file.</param>
         /// <returns></returns>
         public static List<CodeownersEntry> ParseCodeownersFile(string codeownersFilePathOrUrl,
                                                                 string teamStorageURI = null,
@@ -36,6 +38,8 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
         /// Given a CODEOWNERS file as a List&gt;string&lt;, parse the Codeowners entries.
         /// <param name="codeownersFile">Codeowners file as a List&gt;string&lt;</param>
         /// <param name="teamStorageURI">The URI of the team storage data if being overridden.</param>
+        /// <param name="startLine">The starting line number to parse from (0-based index). Default is -1 which means start from the beginning.</param>
+        /// <param name="endLine">The ending line number to parse to (exclusive). Default is -1 which means parse to the end of the file.</param>
         /// <returns>List&gt;CodeownersEntry&lt;</returns>
         public static List<CodeownersEntry> ParseCodeownersEntries(List<string> codeownersFile,
                                                                    string teamStorageURI = null,

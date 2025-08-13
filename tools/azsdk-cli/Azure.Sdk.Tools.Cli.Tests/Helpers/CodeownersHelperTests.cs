@@ -136,7 +136,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             var codeownersEntryExists = false;
 
             // Act
-            var result = codeownersHelper.addCodeownersEntryAtIndex(content, codeownersEntry, index, codeownersEntryExists);
+            var result = codeownersHelper.AddCodeownersEntryAtIndex(content, codeownersEntry, index, codeownersEntryExists);
 
             // Assert
             Assert.That(result, Does.Contain("line1"));
@@ -165,7 +165,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             var codeownersEntryExists = true;
 
             // Act
-            var result = codeownersHelper.addCodeownersEntryAtIndex(content, codeownersEntry, index, codeownersEntryExists);
+            var result = codeownersHelper.AddCodeownersEntryAtIndex(content, codeownersEntry, index, codeownersEntryExists);
 
             // Assert
             Assert.That(result, Does.Contain("Test Service"));
@@ -190,7 +190,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             };
 
             // Act
-            var result = codeownersHelper.formatCodeownersEntry(codeownersEntry);
+            var result = codeownersHelper.FormatCodeownersEntry(codeownersEntry);
 
             // Assert
             var lines = result.Split('\n');
@@ -218,7 +218,7 @@ line2
 line3";
 
             // Act
-            var result = codeownersHelper.findBlock(content, "# ######## Services ########");
+            var result = codeownersHelper.FindBlock(content, "# ######## Services ########");
 
             // Assert
             Assert.That(result.StartLine, Is.EqualTo(1));
@@ -234,7 +234,7 @@ line2
 line3";
 
             // Act
-            var result = codeownersHelper.findBlock(content, "# ######## Services ########");
+            var result = codeownersHelper.FindBlock(content, "# ######## Services ########");
 
             // Assert
             Assert.That(result.StartLine, Is.EqualTo(0));
@@ -293,7 +293,7 @@ line3";
             var newEntry = new CodeownersEntry { PathExpression = "sdk/test/" };
 
             // Act
-            var result = codeownersHelper.findAlphabeticalInsertionPoint(entries, newEntry);
+            var result = codeownersHelper.FindAlphabeticalInsertionPoint(entries, newEntry);
 
             // Assert
             Assert.That(result.startLine, Is.EqualTo(1));
@@ -315,7 +315,7 @@ line3";
             var newEntry = new CodeownersEntry { PathExpression = "sdk/identity/" };
 
             // Act
-            var result = codeownersHelper.findAlphabeticalInsertionPoint(entries, newEntry);
+            var result = codeownersHelper.FindAlphabeticalInsertionPoint(entries, newEntry);
 
             // Assert
             Assert.That(result.startLine, Is.EqualTo(5)); // Should insert before storage
@@ -337,7 +337,7 @@ line3";
             var newEntry = new CodeownersEntry { PathExpression = "sdk/storage/" };
 
             // Act
-            var result = codeownersHelper.findAlphabeticalInsertionPoint(entries, newEntry);
+            var result = codeownersHelper.FindAlphabeticalInsertionPoint(entries, newEntry);
 
             // Assert
             Assert.That(result.startLine, Is.EqualTo(9));
@@ -365,7 +365,7 @@ line3";
             var newEntry = new CodeownersEntry { ServiceLabels = new List<string> { "Service Bus" } };
 
             // Act
-            var result = codeownersHelper.findAlphabeticalInsertionPoint(entries, newEntry);
+            var result = codeownersHelper.FindAlphabeticalInsertionPoint(entries, newEntry);
 
             // Assert
             Assert.That(result.startLine, Is.EqualTo(10));
@@ -399,7 +399,7 @@ line3";
             var newEntry = new CodeownersEntry { ServiceLabels = new List<string> { "Service Bus" } };
 
             // Act
-            var result = codeownersHelper.findAlphabeticalInsertionPoint(entries, newEntry);
+            var result = codeownersHelper.FindAlphabeticalInsertionPoint(entries, newEntry);
 
             // Assert
             Assert.That(result.startLine, Is.EqualTo(11));

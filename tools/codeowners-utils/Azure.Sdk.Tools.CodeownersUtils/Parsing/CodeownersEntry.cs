@@ -57,7 +57,8 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
     {
         public string PathExpression { get; set; } = "";
 
-        public bool ContainsWildcard => PathExpression.Contains('*');
+        public bool ContainsWildcard => !string.IsNullOrEmpty(PathExpression) && PathExpression.Contains('*');
+        public bool ContainsDoubleWildcard => !string.IsNullOrEmpty(PathExpression) && PathExpression.Contains("**");
 
         public List<string> SourceOwners { get; set; } = new List<string>();
 
@@ -90,7 +91,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
         {
             return string.Join(
                         Environment.NewLine,
-                        $"PathExpression:{PathExpression}, HasWildcard:{ContainsWildcard}",
+                        $"PathExpression:{PathExpression}, HasWildcard:{ContainsWildcard}, HasDoubleWildcard:{ContainsDoubleWildcard}",
                         $"SourceOwners:{string.Join(", ", SourceOwners)}",
                         $"PRLabels:{string.Join(", ", PRLabels)}",
                         $"ServiceLabels:{string.Join(", ", ServiceLabels)}",

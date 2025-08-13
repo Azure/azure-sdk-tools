@@ -20,8 +20,8 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
             string pathX = x.PathExpression ?? string.Empty;
             string pathY = y.PathExpression ?? string.Empty;
             
-            bool xHasDoubleWildcard = pathX.Contains("**");
-            bool yHasDoubleWildcard = pathY.Contains("**");
+            bool xHasDoubleWildcard = x.ContainsDoubleWildcard;
+            bool yHasDoubleWildcard = y.ContainsDoubleWildcard;
 
             if (xHasDoubleWildcard && !yHasDoubleWildcard)
             {
@@ -118,7 +118,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
             if (alphabeticalComparison != 0)
             {
                 // Check for simple wildcard cases like "sdk/storage*" vs "sdk/storage"
-                if (HandleSimpleWildcardCase(x, y, normalizedPathX, normalizedPathY, out int wildcardResult))
+                if (HandleSimpleWildcardCase(x, y, out int wildcardResult))
                 {
                     return wildcardResult;
                 }
@@ -146,11 +146,14 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
         /// <summary>
         /// Handle simple wildcard cases where one path ends with * and matches the other path.
         /// </summary>
-        private bool HandleSimpleWildcardCase(CodeownersEntry x, CodeownersEntry y, string pathX, string pathY, out int result)
+        private bool HandleSimpleWildcardCase(CodeownersEntry x, CodeownersEntry y, out int result)
         {
             result = 0;
             bool xHasWildcard = x.ContainsWildcard;
             bool yHasWildcard = y.ContainsWildcard;
+
+            string pathX = NormalizePathExpression(x.PathExpression);
+            string pathY = NormalizePathExpression(y.PathExpression);
 
             // Simple check: if one path ends with * and matches the other path, prioritize the wildcard
             if (xHasWildcard && !yHasWildcard && pathX.EndsWith("*") && pathX.TrimEnd('*') == pathY)
@@ -168,9 +171,19 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
         }
 
         /// <summary>
+        /// Normalizes a path expression by removing leading and trailing slashes.
+        /// </summary>
+        private static string NormalizePathExpression(string pathExpression)
+        {
+            return string.IsNullOrEmpty(pathExpression)
+                ? string.Empty
+                : pathExpression.Trim('/');
+        }
+
+        /// <summary>
         /// Compare two CodeownersEntry objects by their service labels.
         /// </summary>
-        private int CompareByServiceLabel(CodeownersEntry x, CodeownersEntry y)
+        private static int CompareByServiceLabel(CodeownersEntry x, CodeownersEntry y)
         {
             // Get the primary service context for each entry (service label first, then PR label)
             string primaryLabelX = GetPrimaryServiceContext(x);
@@ -202,7 +215,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
         /// individual "AI Model Inference" entries. For hierarchical services like "Communication - Call Automation",
         /// this extracts the base service name "Communication" for grouping.
         /// </summary>
-        private string GetPrimaryServiceContext(CodeownersEntry entry)
+        private static string GetPrimaryServiceContext(CodeownersEntry entry)
         {
             // First priority: Service labels
             if (entry.ServiceLabels?.Count > 0)
@@ -232,7 +245,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
         /// Catch-all patterns are simple directory paths like "/sdk/" that don't contain wildcards
         /// but serve as fallback patterns for entire directory trees.
         /// </summary>
-        private bool IsCatchAllPattern(string path)
+        private static bool IsCatchAllPattern(string path)
         {
             if (string.IsNullOrWhiteSpace(path))
             {

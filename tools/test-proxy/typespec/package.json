@@ -3,16 +3,16 @@
   "version": "0.1.0",
   "type": "module",
   "peerDependencies": {
-    "@typespec/compiler": "latest",
-    "@typespec/http": "latest",
-    "@typespec/rest": "latest",
-    "@typespec/openapi3": "latest"
+    "@typespec/compiler": "1.3.0",
+    "@typespec/http": "1.3.0",
+    "@typespec/rest": "0.73.0",
+    "@typespec/openapi3": "1.3.0"
   },
   "devDependencies": {
-    "@typespec/compiler": "latest",
-    "@typespec/http": "latest",
-    "@typespec/rest": "latest",
-    "@typespec/openapi3": "latest"
+    "@typespec/compiler": "1.3.0",
+    "@typespec/http": "1.3.0",
+    "@typespec/rest": "0.73.0",
+    "@typespec/openapi3": "1.3.0"
   },
   "private": true
 }

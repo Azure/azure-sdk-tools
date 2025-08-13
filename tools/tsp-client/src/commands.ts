@@ -68,16 +68,15 @@ async function initProcessDataAndWriteTspLocation(
   const tspclientGlobalConfigData = await parseTspClientRepoConfig(repoRoot);
 
   // Read tspconfig.yaml contents
-  let data;
+  let tspConfigData;
   try {
-    data = await readFile(tspConfigPath, "utf8");
+    tspConfigData = parseYaml(await readFile(tspConfigPath, "utf8"));
   } catch (err) {
     throw new Error(`Could not read tspconfig.yaml at ${tspConfigPath}. Error: ${err}`);
   }
-  if (!data) {
+  if (!tspConfigData) {
     throw new Error(`tspconfig.yaml is empty at ${tspConfigPath}`);
   }
-  const tspConfigData = parseYaml(data);
 
   // Finish processing tsp-location.yaml data using the tspconfig.yaml contents
   tspLocationData.additionalDirectories =
@@ -100,7 +99,7 @@ async function initProcessDataAndWriteTspLocation(
   // Check for relevant package path variables and resolve
   let emitterOutputDir = tspConfigData?.options?.[emitterData.emitter]?.["emitter-output-dir"];
   const packageDir = tspConfigData?.options?.[emitterData.emitter]?.["package-dir"];
-  let newPackageDir = outputDir;
+  let newPackageDir;
   if (emitterOutputDir) {
     const [options, _] = await resolveCompilerOptions(NodeHost, {
       cwd: process.cwd(),

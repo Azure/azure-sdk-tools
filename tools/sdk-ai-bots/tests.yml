@@ -34,9 +34,9 @@ stages:
                 echo "##vso[task.setvariable variable=AZURE_FEDERATED_TOKEN_FILE]$(Agent.BuildDirectory)/id_token"
           
           - script: |
-              az login
-              az account set --subscription "faa080af-c1d8-40ad-9cce-e1a450ca5b57"
-              go run main.go
+              go build -o qa-bot-service
+              chmod +x qa-bot-service
+              ./qa-bot-service
             displayName: 'start backend AI agent service'
             workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend
             env:

@@ -222,11 +222,13 @@ if __name__ == "__main__":
     parser.add_argument("--is_cli", type=str, default="True", help="Run in CI/CD pipeline (True/False)")
     parser.add_argument("--evaluation_name", type=str, help="the name of evaluation")
     parser.add_argument("--skip_data_process", type=str, default="False", help="skip to pre-process the test data")
+    parser.add_argument("--send_result", type=str, default="True", help="Send the evaluation result to AI foundry project")
     args = parser.parse_args()
 
     args.is_bot = args.is_bot.lower() in ('true', '1', 'yes', 'on')
     args.is_cli = args.is_cli.lower() in ('true', '1', 'yes', 'on')
     args.skip_data_process = args.skip_data_process.lower() in ('true', '1', 'yes')
+    args.send_result = args.send_result.lower() in ('true', '1', 'yes')
 
     
     script_directory = os.path.dirname(os.path.abspath(__file__))
@@ -256,28 +258,32 @@ if __name__ == "__main__":
         "resource_group_name": os.environ["AZURE_FOUNDRY_RESOURCE_GROUP"],
         "project_name": os.environ["AZURE_FOUNDRY_PROJECT_NAME"],
     }
+    run_results = []
     try: 
         print("📊 Preparing dataset...")
-        if args.is_cli:
-            service_connection_id = os.environ["AZURESUBSCRIPTION_SERVICE_CONNECTION_ID"]
-            client_id = os.environ["AZURESUBSCRIPTION_CLIENT_ID"]
-            tenant_id = os.environ["AZURESUBSCRIPTION_TENANT_ID"]
-            system_access_token = os.environ["SYSTEM_ACCESSTOKEN"]
-            kwargs = {
-                "credential": AzurePipelinesCredential(
-                    service_connection_id=service_connection_id,
-                    client_id=client_id,
-                    tenant_id=tenant_id,
-                    system_access_token=system_access_token,
-                )
-            }
-        else:
-            kwargs = {
-                # run in local, use Azure Cli Credential, make sure you already run `az login`
-                "credential": AzureCliCredential()
-            }
+        kwargs = {}
+        if args.send_result:
+            if args.is_cli:
+                service_connection_id = os.environ["AZURESUBSCRIPTION_SERVICE_CONNECTION_ID"]
+                client_id = os.environ["AZURESUBSCRIPTION_CLIENT_ID"]
+                tenant_id = os.environ["AZURESUBSCRIPTION_TENANT_ID"]
+                system_access_token = os.environ["SYSTEM_ACCESSTOKEN"]
+
+                kwargs = {
+                    "credential": AzurePipelinesCredential(
+                        service_connection_id=service_connection_id,
+                        client_id=client_id,
+                        tenant_id=tenant_id,
+                        system_access_token=system_access_token,
+                    )
+                }
+            else:
+                kwargs = {
+                    # run in local, use Azure Cli Credential, make sure you already run `az login`
+                    "credential": AzureCliCredential()
+                }
         
-        run_results = []
+        # run_results = []
         output_file = asyncio.run(prepare_dataset(args.test_folder, args.prefix, args.is_bot))
         result = evaluate(
             data=output_file,
@@ -297,7 +303,7 @@ if __name__ == "__main__":
                 }
             },
             # Optionally provide your Azure AI Foundry project information to track your evaluation results in your project portal
-            azure_ai_project = azure_ai_project_endpoint,
+            azure_ai_project = azure_ai_project_endpoint if args.send_result else None,
             # Optionally provide an output path to dump a json of metric summary, row level data and metric and Azure AI project URL
             output_path="./evalresults.json",
             **kwargs

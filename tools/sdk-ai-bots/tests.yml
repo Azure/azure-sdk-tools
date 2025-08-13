@@ -28,21 +28,10 @@ stages:
               pip install -r requirements.txt
             displayName: 'install requirements'
             workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
-          - task: AzureCLI@2
-            displayName: 'Run Evas in AzureCLI@2'
-            inputs:
-              azureSubscription: 'Azure'
-              scriptType: bash
-              scriptLocation: inlineScript
-              inlineScript: |
-                # Login using service principal (handled automatically by Azure DevOps)
-                az account set --subscription "faa080af-c1d8-40ad-9cce-e1a450ca5b57"
-
-                # Verify the context
-                az account show --query '{subscription:name,tenant:tenantId}'
-
-                python $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/evaluate.py
-                exit $?
+          - script: |
+              python evaluate.py --send_result False
+            displayName: 'Run Evas'
+            workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
             env:
               AZURE_AI_PROJECT_ENDPOINT: $(AZURE_AI_PROJECT_ENDPOINT)
               AZURE_SUBSCRIPTION_ID: $(AZURE_SUBSCRIPTION_ID)
@@ -54,6 +43,33 @@ stages:
               AZURE_COMPLETION_MODEL_NAME: $(AZURE_COMPLETION_MODEL_NAME)
               AZURE_EVALUATION_MODEL_NAME: $(AZURE_EVALUATION_MODEL_NAME)
               AZURE_API_VERSION: $(AZURE_API_VERSION)
+          
+          # - task: AzureCLI@2
+          #   displayName: 'Run Evas in AzureCLI@2'
+          #   inputs:
+          #     azureSubscription: 'azure-sdk-tests-playground'
+          #     scriptType: bash
+          #     scriptLocation: inlineScript
+          #     inlineScript: |
+          #       # Login using service principal (handled automatically by Azure DevOps)
+          #       az account set --subscription "faa080af-c1d8-40ad-9cce-e1a450ca5b57"
+
+          #       # Verify the context
+          #       az account show --query '{subscription:name,tenant:tenantId}'
+
+          #       python $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/evaluate.py
+          #       exit $?
+          #   env:
+          #     AZURE_AI_PROJECT_ENDPOINT: $(AZURE_AI_PROJECT_ENDPOINT)
+          #     AZURE_SUBSCRIPTION_ID: $(AZURE_SUBSCRIPTION_ID)
+          #     AZURE_FOUNDRY_RESOURCE_GROUP: $(AZURE_FOUNDRY_RESOURCE_GROUP)
+          #     AZURE_FOUNDRY_PROJECT_NAME: $(AZURE_FOUNDRY_PROJECT_NAME)
+          #     BOT_AGENT_API_KEY: $(BOT_AGENT_API_KEY)
+          #     AZURE_OPENAI_ENDPOINT: $(AZURE_OPENAI_ENDPOINT)
+          #     AZURE_OPENAI_API_KEY: $(AZURE_OPENAI_API_KEY)
+          #     AZURE_COMPLETION_MODEL_NAME: $(AZURE_COMPLETION_MODEL_NAME)
+          #     AZURE_EVALUATION_MODEL_NAME: $(AZURE_EVALUATION_MODEL_NAME)
+          #     AZURE_API_VERSION: $(AZURE_API_VERSION)
 
 
 

@@ -46,26 +46,24 @@ namespace Azure.Tools.GeneratorAgent.Tests
             Mock<ILogger<TypeSpecFileService>>? mockLogger = null,
             Mock<ILoggerFactory>? mockLoggerFactory = null,
             ValidationContext? validationContext = null,
-            HttpClient? httpClient = null,
-            Func<ValidationContext, GitHubFilesService>? gitHubServiceFactory = null)
+            Func<ValidationContext, GitHubFileService>? gitHubServiceFactory = null)
         {
             return new TypeSpecFileService(
                 appSettings ?? CreateAppSettings(),
                 (mockLogger ?? CreateMockLogger()).Object,
                 (mockLoggerFactory ?? CreateMockLoggerFactory()).Object,
-                httpClient ?? new HttpClient(),
                 validationContext ?? CreateLocalValidationContext("C:\\temp\\typespec", "C:\\temp\\output"),
                 gitHubServiceFactory ?? CreateMockGitHubServiceFactory());
         }
 
-        private static Func<ValidationContext, GitHubFilesService> CreateMockGitHubServiceFactory()
+        private static Func<ValidationContext, GitHubFileService> CreateMockGitHubServiceFactory()
         {
             return validationContext =>
             {
                 var appSettings = CreateAppSettings();
-                var logger = new Mock<ILogger<GitHubFilesService>>().Object;
+                var logger = new Mock<ILogger<GitHubFileService>>().Object;
                 var httpClient = new HttpClient();
-                return new GitHubFilesService(appSettings, logger, validationContext, httpClient);
+                return new GitHubFileService(appSettings, logger, validationContext, httpClient);
             };
         }
 
@@ -149,7 +147,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var gitHubServiceFactory = CreateMockGitHubServiceFactory();
 
             // Act
-            var service = new TypeSpecFileService(appSettings, mockLogger.Object, mockLoggerFactory.Object, httpClient, validationContext, gitHubServiceFactory);
+            var service = CreateService(appSettings, mockLogger, mockLoggerFactory, validationContext, gitHubServiceFactory);
 
             // Assert
             Assert.That(service, Is.Not.Null);
@@ -168,7 +166,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             // Act & Assert
             var exception = Assert.Throws<ArgumentNullException>(() => 
-                new TypeSpecFileService(null!, mockLogger.Object, mockLoggerFactory.Object, httpClient, validationContext, gitHubServiceFactory));
+                new TypeSpecFileService(null!, mockLogger.Object, mockLoggerFactory.Object, validationContext, gitHubServiceFactory));
             Assert.That(exception!.ParamName, Is.EqualTo("appSettings"));
             httpClient.Dispose();
         }
@@ -185,7 +183,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             // Act & Assert
             var exception = Assert.Throws<ArgumentNullException>(() => 
-                new TypeSpecFileService(appSettings, null!, mockLoggerFactory.Object, httpClient, validationContext, gitHubServiceFactory));
+                new TypeSpecFileService(appSettings, null!, mockLoggerFactory.Object, validationContext, gitHubServiceFactory));
             Assert.That(exception!.ParamName, Is.EqualTo("logger"));
             httpClient.Dispose();
         }
@@ -202,7 +200,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             // Act & Assert
             var exception = Assert.Throws<ArgumentNullException>(() => 
-                new TypeSpecFileService(appSettings, mockLogger.Object, null!, httpClient, validationContext, gitHubServiceFactory));
+                new TypeSpecFileService(appSettings, mockLogger.Object, null!, validationContext, gitHubServiceFactory));
             Assert.That(exception!.ParamName, Is.EqualTo("loggerFactory"));
             httpClient.Dispose();
         }
@@ -219,7 +217,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             // Act & Assert
             var exception = Assert.Throws<ArgumentNullException>(() => 
-                new TypeSpecFileService(appSettings, mockLogger.Object, mockLoggerFactory.Object, httpClient, null!, gitHubServiceFactory));
+                new TypeSpecFileService(appSettings, mockLogger.Object, mockLoggerFactory.Object, null!, gitHubServiceFactory));
             Assert.That(exception!.ParamName, Is.EqualTo("validationContext"));
             httpClient.Dispose();
         }
@@ -287,7 +285,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var httpClient = new HttpClient();
             var gitHubServiceFactory = CreateMockGitHubServiceFactory();
 
-            var service = new TypeSpecFileService(appSettings, mockLogger.Object, mockLoggerFactory.Object, httpClient, validationContext, gitHubServiceFactory);
+            var service = CreateService(appSettings, mockLogger, mockLoggerFactory, validationContext, gitHubServiceFactory);
 
             // Act & Assert - Just verify the service was created (GitHub service creation will happen on demand)
             Assert.That(service, Is.Not.Null);

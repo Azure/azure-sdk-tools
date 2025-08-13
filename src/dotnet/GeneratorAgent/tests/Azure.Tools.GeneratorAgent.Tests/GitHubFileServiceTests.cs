@@ -10,13 +10,13 @@ using NUnit.Framework;
 namespace Azure.Tools.GeneratorAgent.Tests
 {
     [TestFixture]
-    public class GitHubFilesServiceTests
+    public class GitHubFileServiceTests
     {
         #region Helper Methods
 
-        private static Mock<ILogger<GitHubFilesService>> CreateMockLogger()
+        private static Mock<ILogger<GitHubFileService>> CreateMockLogger()
         {
-            return new Mock<ILogger<GitHubFilesService>>();
+            return new Mock<ILogger<GitHubFileService>>();
         }
 
         private static AppSettings CreateAppSettings()
@@ -58,7 +58,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
         private static TestableGitHubFilesService CreateTestableService(
             AppSettings? appSettings = null,
-            Mock<ILogger<GitHubFilesService>>? mockLogger = null,
+            Mock<ILogger<GitHubFileService>>? mockLogger = null,
             ValidationContext? validationContext = null,
             HttpClient? httpClient = null)
         {
@@ -261,7 +261,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         }
 
         private static void VerifyLogMessage(
-            Mock<ILogger<GitHubFilesService>> mockLogger,
+            Mock<ILogger<GitHubFileService>> mockLogger,
             LogLevel expectedLevel,
             string expectedMessage,
             Times? times = null)
@@ -290,7 +290,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var httpClient = new HttpClient();
 
             // Act & Assert
-            var service = new GitHubFilesService(appSettings, mockLogger.Object, validationContext, httpClient);
+            var service = new GitHubFileService(appSettings, mockLogger.Object, validationContext, httpClient);
             Assert.That(service, Is.Not.Null);
             httpClient.Dispose();
         }
@@ -305,7 +305,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             // Act & Assert
             var exception = Assert.Throws<ArgumentNullException>(() =>
-                new GitHubFilesService(null!, mockLogger.Object, validationContext, httpClient));
+                new GitHubFileService(null!, mockLogger.Object, validationContext, httpClient));
             Assert.That(exception!.ParamName, Is.EqualTo("appSettings"));
             httpClient.Dispose();
         }
@@ -320,7 +320,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             // Act & Assert
             var exception = Assert.Throws<ArgumentNullException>(() =>
-                new GitHubFilesService(appSettings, null!, validationContext, httpClient));
+                new GitHubFileService(appSettings, null!, validationContext, httpClient));
             Assert.That(exception!.ParamName, Is.EqualTo("logger"));
             httpClient.Dispose();
         }
@@ -335,7 +335,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             // Act & Assert
             var exception = Assert.Throws<ArgumentNullException>(() =>
-                new GitHubFilesService(appSettings, mockLogger.Object, null!, httpClient));
+                new GitHubFileService(appSettings, mockLogger.Object, null!, httpClient));
             Assert.That(exception!.ParamName, Is.EqualTo("validationContext"));
             httpClient.Dispose();
         }
@@ -621,11 +621,11 @@ namespace Azure.Tools.GeneratorAgent.Tests
         /// <summary>
         /// Testable version of GitHubFilesService that allows HttpClient injection
         /// </summary>
-        private class TestableGitHubFilesService : GitHubFilesService
+        private class TestableGitHubFilesService : GitHubFileService
         {
             public TestableGitHubFilesService(
                 AppSettings appSettings,
-                ILogger<GitHubFilesService> logger,
+                ILogger<GitHubFileService> logger,
                 ValidationContext validationContext,
                 HttpClient httpClient) : base(appSettings, logger, validationContext, httpClient)
             {

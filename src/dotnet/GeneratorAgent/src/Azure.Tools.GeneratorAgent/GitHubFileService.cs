@@ -8,9 +8,9 @@ namespace Azure.Tools.GeneratorAgent
     /// <summary>
     /// TypeSpec file service for GitHub repository access using GitHub API for fast file retrieval.
     /// </summary>
-    internal class GitHubFilesService
+    internal class GitHubFileService
     {
-        private readonly ILogger<GitHubFilesService> Logger;
+        private readonly ILogger<GitHubFileService> Logger;
         private readonly AppSettings AppSettings;
         private readonly HttpClient HttpClient;
         private readonly string CommitId;
@@ -23,9 +23,9 @@ namespace Azure.Tools.GeneratorAgent
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
         };
 
-        public GitHubFilesService(
+        public GitHubFileService(
             AppSettings appSettings,
-            ILogger<GitHubFilesService> logger,
+            ILogger<GitHubFileService> logger,
             ValidationContext validationContext,
             HttpClient httpClient)
         {
@@ -74,8 +74,7 @@ namespace Azure.Tools.GeneratorAgent
                 
                 if (!response.IsSuccessStatusCode)
                 {
-                    string errorContent = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-                    Logger.LogWarning("GitHub API request failed: {StatusCode} {ReasonPhrase}", 
+                    Logger.LogCritical("GitHub API request failed: {StatusCode} {ReasonPhrase}", 
                         response.StatusCode, response.ReasonPhrase);
                     throw new HttpRequestException($"GitHub API request failed: {response.StatusCode} {response.ReasonPhrase}");
                 }

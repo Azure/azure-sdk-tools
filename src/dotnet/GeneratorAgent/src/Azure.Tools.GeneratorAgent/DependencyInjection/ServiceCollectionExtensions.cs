@@ -68,7 +68,7 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
         private static IServiceCollection AddHttpClientServices(this IServiceCollection services)
         {
             // Named HttpClient for GitHub API operations
-            services.AddHttpClient<GitHubFilesService>((serviceProvider, client) =>
+            services.AddHttpClient<GitHubFileService>((serviceProvider, client) =>
             {
                 client.Timeout = TimeSpan.FromMinutes(2);
                 client.DefaultRequestHeaders.UserAgent.Clear();
@@ -89,8 +89,6 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
                 }
             })
             .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler());
-
-            services.AddHttpClient();
 
             return services;
         }
@@ -115,11 +113,13 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
         /// </summary>
         private static IServiceCollection AddApplicationServices(this IServiceCollection services)
         {
-            services.AddScoped<ErrorFixerAgent>();
-            services.AddScoped<ProcessExecutor>();
-            services.AddScoped<BuildErrorAnalyzer>();
+            // All core services are stateless and can be singletons for better performance
+            services.AddSingleton<ErrorFixerAgent>();      // Thread-safe, uses threadId for isolation
+            services.AddSingleton<ProcessExecutor>();      // Stateless - just executes commands
+            services.AddSingleton<BuildErrorAnalyzer>();   // Stateless - just analyzes errors
 
-            services.AddScoped<Func<ValidationContext, ISdkGenerationService>>(provider =>
+            // Factory services create ValidationContext-dependent instances, but factories themselves are stateless
+            services.AddSingleton<Func<ValidationContext, ISdkGenerationService>>(provider =>
             {
                 return validationContext => SdkGenerationServiceFactory.CreateSdkGenerationService(
                     validationContext,
@@ -128,7 +128,7 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
                     provider.GetRequiredService<ProcessExecutor>());
             });
 
-            services.AddScoped<Func<ValidationContext, SdkBuildService>>(provider =>
+            services.AddSingleton<Func<ValidationContext, SdkBuildService>>(provider =>
             {
                 return validationContext => new SdkBuildService(
                     provider.GetRequiredService<ILogger<SdkBuildService>>(),
@@ -137,28 +137,27 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
             });
 
             // Register factory method for TypeSpecFileService that requires ValidationContext
-            services.AddScoped<Func<ValidationContext, TypeSpecFileService>>(provider =>
+            services.AddSingleton<Func<ValidationContext, TypeSpecFileService>>(provider =>
             {
                 return validationContext => new TypeSpecFileService(
                     provider.GetRequiredService<AppSettings>(),
                     provider.GetRequiredService<ILogger<TypeSpecFileService>>(),
                     provider.GetRequiredService<ILoggerFactory>(),
-                    provider.GetRequiredService<HttpClient>(),
                     validationContext,
-                    provider.GetRequiredService<Func<ValidationContext, GitHubFilesService>>());
+                    provider.GetRequiredService<Func<ValidationContext, GitHubFileService>>());
             });
 
             // Register factory method for GitHubFilesService that requires ValidationContext
-            services.AddScoped<Func<ValidationContext, GitHubFilesService>>(provider =>
+            services.AddSingleton<Func<ValidationContext, GitHubFileService>>(provider =>
             {
                 return validationContext => 
                 {
                     var httpClientFactory = provider.GetRequiredService<IHttpClientFactory>();
-                    var httpClient = httpClientFactory.CreateClient(nameof(GitHubFilesService));
+                    var httpClient = httpClientFactory.CreateClient(nameof(GitHubFileService));
                     
-                    return new GitHubFilesService(
+                    return new GitHubFileService(
                         provider.GetRequiredService<AppSettings>(),
-                        provider.GetRequiredService<ILogger<GitHubFilesService>>(),
+                        provider.GetRequiredService<ILogger<GitHubFileService>>(),
                         validationContext,
                         httpClient);
                 };

@@ -86,14 +86,11 @@ namespace Azure.Tools.GeneratorAgent
         {
             try
             {
-                // Get services from DI container
+                // Step 1: Get services from DI container
                 AppSettings appSettings = ServiceProvider.GetRequiredService<AppSettings>();
                 
-                // Create async scoped service provider for this operation
-                await using var scope = ServiceProvider.CreateAsyncScope();
-                
                 // Step 2: Get TypeSpec files (from local or GitHub)
-                var fileServiceFactory = scope.ServiceProvider.GetRequiredService<Func<ValidationContext, TypeSpecFileService>>();
+                var fileServiceFactory = ServiceProvider.GetRequiredService<Func<ValidationContext, TypeSpecFileService>>();
                 TypeSpecFileService fileService = fileServiceFactory(validationContext);
 
                 Result<Dictionary<string, string>> fileResult = await fileService.GetTypeSpecFilesAsync(cancellationToken);
@@ -107,22 +104,22 @@ namespace Azure.Tools.GeneratorAgent
 
                 Dictionary<string, string> typeSpecFiles = fileResult.Value!;
 
-                // Step 3: Initialize ErrorFixer Agent with files in memory
-                ErrorFixerAgent agent = scope.ServiceProvider.GetRequiredService<ErrorFixerAgent>();
+                // Step 3: Initialize ErrorFixer Agent with files in memory (singleton)
+                ErrorFixerAgent agent = ServiceProvider.GetRequiredService<ErrorFixerAgent>();
                 string threadId = await agent.InitializeAgentEnvironmentAsync(typeSpecFiles, cancellationToken).ConfigureAwait(false);
 
                 // Step 4: Compile Typespec 
-                var sdkServiceFactory = scope.ServiceProvider.GetRequiredService<Func<ValidationContext, ISdkGenerationService>>();
+                var sdkServiceFactory = ServiceProvider.GetRequiredService<Func<ValidationContext, ISdkGenerationService>>();
                 ISdkGenerationService sdkGenerationService = sdkServiceFactory(validationContext);
                 Result<object> compileResult = await sdkGenerationService.CompileTypeSpecAsync(cancellationToken).ConfigureAwait(false);
 
                 // Step 5: Compile Generated SDK
-                var sdkBuildServiceFactory = scope.ServiceProvider.GetRequiredService<Func<ValidationContext, SdkBuildService>>();
+                var sdkBuildServiceFactory = ServiceProvider.GetRequiredService<Func<ValidationContext, SdkBuildService>>();
                 SdkBuildService sdkBuildService = sdkBuildServiceFactory(validationContext);
                 Result<object> buildResult = await sdkBuildService.BuildSdkAsync(cancellationToken).ConfigureAwait(false);
 
-                // Step 6: Analyze all errors and get fixes
-                BuildErrorAnalyzer analyzer = scope.ServiceProvider.GetRequiredService<BuildErrorAnalyzer>();
+                // Step 6: Analyze all errors and get fixes (singleton)
+                BuildErrorAnalyzer analyzer = ServiceProvider.GetRequiredService<BuildErrorAnalyzer>();
                 List<Fix> allFixes = analyzer.AnalyzeAndGetFixes(compileResult, buildResult);
 
                 // Step 7:                     

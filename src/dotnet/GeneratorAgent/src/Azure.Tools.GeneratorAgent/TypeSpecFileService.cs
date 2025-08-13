@@ -11,30 +11,26 @@ namespace Azure.Tools.GeneratorAgent
         private readonly AppSettings AppSettings;
         private readonly ILogger<TypeSpecFileService> Logger;
         private readonly ILoggerFactory LoggerFactory;
-        private readonly HttpClient HttpClient;
         private readonly ValidationContext ValidationContext;
-        private readonly Func<ValidationContext, GitHubFilesService> GitHubServiceFactory;
-        private GitHubFilesService? GitHubService;
+        private readonly Func<ValidationContext, GitHubFileService> GitHubServiceFactory;
+        private GitHubFileService? GitHubService;
 
         public TypeSpecFileService(
             AppSettings appSettings,
             ILogger<TypeSpecFileService> logger,
             ILoggerFactory loggerFactory,
-            HttpClient httpClient,
             ValidationContext validationContext,
-            Func<ValidationContext, GitHubFilesService> gitHubServiceFactory)
+            Func<ValidationContext, GitHubFileService> gitHubServiceFactory)
         {
             ArgumentNullException.ThrowIfNull(appSettings);
             ArgumentNullException.ThrowIfNull(logger);
             ArgumentNullException.ThrowIfNull(loggerFactory);
-            ArgumentNullException.ThrowIfNull(httpClient);
             ArgumentNullException.ThrowIfNull(validationContext);
             ArgumentNullException.ThrowIfNull(gitHubServiceFactory);
 
             AppSettings = appSettings;
             Logger = logger;
             LoggerFactory = loggerFactory;
-            HttpClient = httpClient;
             ValidationContext = validationContext;
             GitHubServiceFactory = gitHubServiceFactory;
         }

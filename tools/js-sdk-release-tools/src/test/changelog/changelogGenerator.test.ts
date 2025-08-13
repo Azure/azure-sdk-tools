@@ -2161,6 +2161,53 @@ export interface Target {
             expect(actualBreakingChanges).toHaveLength(0);
         });
 
+        test('property changes without properties field should be detected', async () => {
+            const baselineApiView = `
+\`\`\`ts
+// @public
+export interface Target { 
+    prop1: string;
+    prop2?: number;
+}
+\`\`\`
+`;
+            const currentApiView = `
+\`\`\`ts
+// @public
+export interface Nested { 
+    prop1: string;
+    prop2?: number;   
+}
+
+// @public
+export interface Target { 
+    data: Nested;
+}
+\`\`\`
+`;
+            const changelogItems = await generateChangelogItems(
+                {
+                    apiView: baselineApiView,
+                    sdkType: SDKType.ModularClient,
+                },
+                {
+                    apiView: currentApiView,
+                    sdkType: SDKType.ModularClient,
+                },
+            );
+            // Verify feature changes detected (should not be ignored since no 'properties' field)
+            const actualFeatures = getActualChangelogItems(changelogItems.features);
+            expect(actualFeatures).toHaveLength(1);
+            expect(actualFeatures[0]).toBe('Added Interface Nested');
+
+            // Verify breaking changes detected (should not be ignored since no 'properties' field)  
+            const actualBreakingChanges = getActualChangelogItems(changelogItems.breakingChanges);
+            expect(actualBreakingChanges).toHaveLength(3);
+            expect(actualBreakingChanges[0]).toBe('Interface Target has a new required parameter data');
+            expect(actualBreakingChanges[1]).toBe('Interface Target no longer has parameter prop1');
+            expect(actualBreakingChanges[2]).toBe('Interface Target no longer has parameter prop2');
+        });
+
         test('property refactoring with type aliases', async () => {
             const baselineApiView = `
 \`\`\`ts
@@ -2188,60 +2235,6 @@ export interface Nested {
 // @public
 export interface Target { 
     properties: Nested; 
-}
-\`\`\`
-`;
-            const changelogItems = await generateChangelogItems(
-                {
-                    apiView: baselineApiView,
-                    sdkType: SDKType.ModularClient,
-                },
-                {
-                    apiView: currentApiView,
-                    sdkType: SDKType.ModularClient,
-                },
-            );
-            // Verify no feature changes detected (refactoring should be ignored)
-            const actualFeatures = getActualChangelogItems(changelogItems.features);
-            expect(actualFeatures).toHaveLength(0);  
-
-            // Verify no breaking changes detected (refactoring should be ignored)
-            const actualBreakingChanges = getActualChangelogItems(changelogItems.breakingChanges);
-            expect(actualBreakingChanges).toHaveLength(0);
-        });
-
-        test('complex property refactoring with multiple nested levels', async () => {
-            const baselineApiView = `
-\`\`\`ts
-// @public
-export interface Target { 
-    name: string; 
-    age: number; 
-    street: string; 
-    city: string; 
-    zipCode: string; 
-}
-\`\`\`
-`;
-            const currentApiView = `
-\`\`\`ts
-// @public
-export interface Address { 
-    street: string; 
-    city: string; 
-    zipCode: string; 
-}
-
-// @public
-export interface Person { 
-    name: string; 
-    age: number; 
-}
-
-// @public
-export interface Target { 
-    person: Person;
-    address: Address;
 }
 \`\`\`
 `;

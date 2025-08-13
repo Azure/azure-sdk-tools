@@ -155,6 +155,21 @@ export class DifferenceDetector {
   private ignorePropertyRefactoringChanges(): void {
     if (!this.result) return;
 
+    // only process interfaces that have a 'properties' property
+    const interfacesWithProperties = new Map<string, DiffPair[]>();
+    for (const [interfaceName, diffPairs] of this.result.interfaces) {
+      const currentInterface = this.context?.current.getInterface(interfaceName);
+      if (currentInterface) {
+        const currentProps = currentInterface.getProperties().map(prop => prop.getName());
+        if (currentProps.includes('properties')) {
+          interfacesWithProperties.set(interfaceName, diffPairs);
+        }
+      }
+    }
+
+    // If no interfaces have 'properties', skip the entire process
+    if (interfacesWithProperties.size === 0) return;
+
     // Collect added interfaces and type aliases
     const addedInterfaces = new Set<string>();
     const addedTypeAliases = new Set<string>();
@@ -177,7 +192,7 @@ export class DifferenceDetector {
     const typeAliasesToIgnore = new Set<string>();
     
     // Check each existing interface for property refactoring patterns
-    for (const [existingInterface, diffPairs] of this.result.interfaces) {
+    for (const [existingInterface, diffPairs] of interfacesWithProperties) {
       // Skip added interfaces and operations-related interfaces
       if (addedInterfaces.has(existingInterface) || existingInterface.endsWith('Operations')) continue;
 

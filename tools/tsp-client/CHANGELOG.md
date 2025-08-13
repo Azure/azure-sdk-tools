@@ -1,6 +1,6 @@
 # Release
 
-## 2025-08-12 - 0.28.0
+## 2025-08-13 - 0.28.0
 
 - Support `emitter-output-dir` when generating a client library. `emitter-output-dir` will be given preference over client library path parsing with the `package-dir` option under the emitter.
 - Add a warning when `package-dir` is used to explain that support for this option will be deprecated in the future.

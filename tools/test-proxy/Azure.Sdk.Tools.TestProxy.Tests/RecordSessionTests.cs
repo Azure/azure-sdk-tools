@@ -747,6 +747,52 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             ContentLengthUpdatedCorrectlyOnEmptyBody(isHeadRequest: false);
         }
 
+        [Fact]
+        public void JsonBodyCompareReportsMissingRecordWithCorrectOrder()
+        {
+            string requestBody = "{\"a\": \"meep\"}";
+            string recordBody = "{\"b\": \"meep\"}";
+            var requestBytes = Encoding.UTF8.GetBytes(requestBody);
+            var recordBytes = Encoding.UTF8.GetBytes(recordBody);
+
+            var differences = JsonComparer.CompareJson(requestBytes, recordBytes);
+            Assert.Equal(2, differences.Count);
+            Assert.Equal(".a: Missing in record JSON", differences[0]);
+            Assert.Equal(".b: Missing in request JSON", differences[1]);
+
+            requestBody = "{\"b\": \"meep\"}";
+            recordBody = "{\"a\": \"meep\"}";
+            requestBytes = Encoding.UTF8.GetBytes(requestBody);
+            recordBytes = Encoding.UTF8.GetBytes(recordBody);
+
+            differences = JsonComparer.CompareJson(requestBytes, recordBytes);
+            Assert.Equal(2, differences.Count);
+            Assert.Equal(".b: Missing in record JSON", differences[0]);
+            Assert.Equal(".a: Missing in request JSON", differences[1]);
+        }
+
+        [Fact]
+        public void JsonBodyCompareReportsMissingArrayElementWithCorrectOrder()
+        {
+            string requestBody = "{\"a\": [\"meep\"]}";
+            string recordBody = "{\"a\": [\"meep\", \"moop\"]}";
+            var requestBytes = Encoding.UTF8.GetBytes(requestBody);
+            var recordBytes = Encoding.UTF8.GetBytes(recordBody);
+
+            var differences = JsonComparer.CompareJson(requestBytes, recordBytes);
+            Assert.Single(differences);
+            Assert.Equal(".a[1]: Extra element in record JSON", differences[0]);
+
+            requestBody = "{\"a\": [\"meep\", \"moop\"]}";
+            recordBody = "{\"a\": [\"meep\"]}";
+            requestBytes = Encoding.UTF8.GetBytes(requestBody);
+            recordBytes = Encoding.UTF8.GetBytes(recordBody);
+
+            var differences2 = JsonComparer.CompareJson(requestBytes, recordBytes);
+            Assert.Single(differences2);
+            Assert.Equal(".a[1]: Extra element in request JSON", differences2[0]);
+        }
+
         private void ContentLengthUpdatedCorrectlyOnEmptyBody(bool isHeadRequest)
         {
             var sanitizer = new RecordedTestSanitizer();

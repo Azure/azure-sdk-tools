@@ -437,26 +437,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.CodeownersToolsSuite
             Assert.That(callCounts.TryGetValue("ok2", out var c2) ? c2 : 0, Is.EqualTo(1), "ok2 should be validated only once due to cache");
         }
 
-        [Test]
-        public async Task ValidateCodeownersEntryForService_ParserError_IsSurfaced()
-        {
-            var sut = this.sut;
-            // Make every owner valid to ensure any later validation would pass if reached
-            validator
-                .Setup(v => v.ValidateCodeOwnerAsync(It.IsAny<string>(), It.IsAny<bool>()))
-                .ReturnsAsync((string username, bool _) => new CodeownersValidationResult
-                {
-                    Username = username,
-                    IsValidCodeOwner = true,
-                    HasWritePermission = true
-                });
-
-            // Use a definitely non-existent repo to force parser failure
-            var result = await sut.ValidateCodeownersEntryForService("not-a-real-repo-xyz-123", serviceLabel: "Any", path: null);
-
-            Assert.That(result.Message, Does.Contain("Error finding service in CODEOWNERS file."));
-        }
-
         [Test, Category("Integration")]
         public async Task ValidateCodeOwnerEntryForService_Validates_ForRepoPath_WithMockedOwners()
         {

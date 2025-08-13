@@ -1,9 +1,11 @@
 import asyncio
+from collections import defaultdict
 from datetime import datetime
 import json
 import os
 from pathlib import Path
 import pathlib
+import re
 import time
 from typing import Any, Dict
 from azure.ai.evaluation import evaluate, SimilarityEvaluator, GroundednessEvaluator
@@ -37,7 +39,8 @@ async def process_file(input_file: str, output_file: str, is_bot: bool) -> None:
                         "response": answer,
                         "context": "",
                         "latency": latency,
-                        "response_length": len(answer)
+                        "response_length": len(answer),
+                        "testcase": record.get("testcase", "unknown"),
                     }
                     if processed_test_data:
                         outputFile.write(json.dumps(processed_test_data, ensure_ascii=False) + '\n')
@@ -107,9 +110,20 @@ async def prepare_dataset(testdata_dir: str, file_prefix: str = None, is_bot: bo
     
     if matching_files:
         print(f"Found {len(matching_files)} files matching prefix '{file_prefix}' in {data_dir}/")
-        for file_path in matching_files:
-            print(f"  - {file_path.name}")
-            await process_file(str(file_path), str(output_file), is_bot)
+        # group files
+        grouped = defaultdict(list)
+
+        for item in matching_files:
+            match = re.match(r"^([^-]+)-", item.name)
+            if match:
+                key = match.group(1)
+                grouped[key].append(item)
+        
+        for key, items in grouped.items():
+            output_file = os.path.join(output_dir.absolute(), f"{key}_{current_date}.jsonl")
+            for file_path in items:
+                print(f"  - {file_path.name}")
+                await process_file(str(file_path), str(output_file), is_bot)
     elif file_prefix:
         print(f"No files found matching prefix '{file_prefix}' in {data_dir}/")
         return None
@@ -118,7 +132,7 @@ async def prepare_dataset(testdata_dir: str, file_prefix: str = None, is_bot: bo
         return None
         
     print("Processing complete. Results written to output directory.")
-    return output_file
+    return output_dir.absolute()
 
 def calculate_overall_score(row: dict[str, Any]) -> float:
     """Calculate weighted score based on various metrics."""
@@ -137,7 +151,7 @@ def record_run_result(result: dict[str, Any]) -> list[dict[str, Any]]:
 
         run_result.append(
             {
-                "testcase": "test-case-name",
+                "testcase": row["inputs.testcase"],
                 "similarity": row["outputs.similarity.similarity"],
                 "gpt_similarity": row["outputs.similarity.gpt_similarity"],
                 "similarity_threshold": row["outputs.similarity.similarity_threshold"],
@@ -258,7 +272,7 @@ if __name__ == "__main__":
         "resource_group_name": os.environ["AZURE_FOUNDRY_RESOURCE_GROUP"],
         "project_name": os.environ["AZURE_FOUNDRY_PROJECT_NAME"],
     }
-    run_results = []
+    all_results = {}
     try: 
         print("📊 Preparing dataset...")
         kwargs = {}
@@ -283,37 +297,39 @@ if __name__ == "__main__":
                     "credential": AzureCliCredential()
                 }
         
-        # run_results = []
-        output_file = asyncio.run(prepare_dataset(args.test_folder, args.prefix, args.is_bot))
-        result = evaluate(
-            data=output_file,
-            evaluators={
-                "similarity": SimilarityEvaluator(model_config=model_config) 
-            },
-            evaluation_name=args.evaluation_name if args.evaluation_name else os.path.splitext(os.path.basename(output_file))[0],
-            # column mapping
-            evaluator_config={
-                "similarity": {
-                    "column_mapping": {
-                        "query": "${data.query}",
-                        "response": "${data.response}",
-                        "context": "${data.context}",
-                        "ground_truth": "${data.ground_truth}",
-                    } 
-                }
-            },
-            # Optionally provide your Azure AI Foundry project information to track your evaluation results in your project portal
-            azure_ai_project = azure_ai_project_endpoint if args.send_result else None,
-            # Optionally provide an output path to dump a json of metric summary, row level data and metric and Azure AI project URL
-            output_path="./evalresults.json",
-            **kwargs
-        )
-        print("✅ Evaluation completed. Results:", result)
-        run_result = record_run_result(result)
-        run_results = run_results + run_result
+        output_file_dir = asyncio.run(prepare_dataset(args.test_folder, args.prefix, args.is_bot))
+        for output_file in output_file_dir.glob("*.jsonl"):
+            run_results = []
+            result = evaluate(
+                data=output_file,
+                evaluators={
+                    "similarity": SimilarityEvaluator(model_config=model_config) 
+                },
+                evaluation_name=args.evaluation_name if args.evaluation_name else os.path.splitext(os.path.basename(output_file))[0],
+                # column mapping
+                evaluator_config={
+                    "similarity": {
+                        "column_mapping": {
+                            "query": "${data.query}",
+                            "response": "${data.response}",
+                            "context": "${data.context}",
+                            "ground_truth": "${data.ground_truth}",
+                            "testcase": "${data.testcase}"
+                        } 
+                    }
+                },
+                # Optionally provide your Azure AI Foundry project information to track your evaluation results in your project portal
+                azure_ai_project = azure_ai_project_endpoint if args.send_result else None,
+                # Optionally provide an output path to dump a json of metric summary, row level data and metric and Azure AI project URL
+                output_path="./evalresults.json",
+                **kwargs
+            )
+            print("✅ Evaluation completed. Results:", result)
+            run_result = record_run_result(result)
+            all_results[output_file.name] = run_result
     except Exception as e:
         print(f"❌ Error occurred: {str(e)}")
         import traceback
         traceback.print_exc()
     
-    show_results(args, {"test": run_results})
+    show_results(args, all_results)

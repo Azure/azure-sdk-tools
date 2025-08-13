@@ -128,26 +128,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        /// <summary>
-        /// Backward compatibility method for string-based check names.
-        /// </summary>
-        /// <param name="packagePath">Path to the package to check</param>
-        /// <param name="checkName">Name of the check to run (all, changelog, dependency)</param>
-        /// <param name="ct">Cancellation token</param>
-        /// <returns>Check response with results</returns>
-        public async Task<CLICheckResponse> RunPackageCheck(string packagePath, string checkName, CancellationToken ct = default)
-        {
-            // Parse string to enum for backward compatibility
-            if (!Enum.TryParse<PackageCheckType>(checkName, ignoreCase: true, out var checkType))
-            {
-                SetFailure(1);
-                var validOptions = string.Join(", ", Enum.GetNames<PackageCheckType>().Select(x => x.ToLowerInvariant()));
-                return new CLICheckResponse(1, "", $"Unknown check type: {checkName}. Valid options are: {validOptions}");
-            }
-            
-            return await RunPackageCheck(packagePath, checkType, ct);
-        }
-
         private async Task<CLICheckResponse> RunAllChecks(string packagePath, ILanguageRepoService languageService, CancellationToken ct)
         {
             logger.LogInformation("Running all validation checks");

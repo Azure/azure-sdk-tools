@@ -29,4 +29,3 @@ scripts/daily_sync_knowledge/temp_docs
 scripts/docs
 *.log
 .vscode/
-*.rest

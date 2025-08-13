@@ -84,6 +84,7 @@ public class UpdateSessionState
     [JsonPropertyName("impactedCustomizations")] public List<CustomizationImpact> ImpactedCustomizations { get; set; } = new();
     [JsonPropertyName("directMergeFiles")] public List<string> DirectMergeFiles { get; set; } = new();
     [JsonPropertyName("proposedPatches")] public List<PatchProposal> ProposedPatches { get; set; } = new();
+    [JsonIgnore] public Azure.Sdk.Tools.Cli.Services.Update.IUpdateLanguageService? LanguageService { get; set; } // cached, not serialized
 }
 
 public class ApiChange

@@ -444,7 +444,7 @@ export async function generateCommand(argv: any) {
   }
   const result = await compileTsp({
     emitterPackage: emitter,
-    outputPath: legacyPathResolution ? outputDir : await getRepoRoot(outputDir),
+    outputPath: outputDir,
     resolvedMainFilePath,
     saveInputs: saveInputs,
     additionalEmitterOptions: emitterOptions,

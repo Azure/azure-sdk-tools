@@ -12,9 +12,15 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
     {
         public int Compare(CodeownersEntry x, CodeownersEntry y)
         {
-            if (x == null && y == null) return 0;
-            if (x == null) return -1;
-            if (y == null) return 1;
+            if (x == null && y == null) {
+                return 0;
+            }
+            if (x == null) {
+                return -1;
+            }
+            if (y == null) {
+                return 1;
+            }
 
             // FIRST PRIORITY: Prioritize ** wildcards at the very top globally
             string pathX = x.PathExpression ?? string.Empty;

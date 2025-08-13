@@ -1,9 +1,9 @@
 using System.Diagnostics;
-using Microsoft.Extensions.Logging.Abstractions;
-using Azure.Sdk.Tools.Cli.Helpers;
 using System.Runtime.InteropServices;
+using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
-using System.Threading.Tasks; // added for async SetUp
+using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Services
@@ -11,20 +11,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
     internal class GoLanguageRepoServiceTests
     {
         private string GoPackageDir { get; set; }
-        private string GoProgram => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "go.exe" : "go";
+        private static string GoProgram => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "go.exe" : "go";
+        private static string GoLangCiLintProgram => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "golangci-lint.exe" : "golangci-lint";
 
         private GoLanguageRepoService LangService { get; set; }
-
-        [OneTimeSetUp]
-        public void OneTimeSetUp()
-        {
-            var paths = Environment.GetEnvironmentVariable("PATH")?.Split(Path.PathSeparator) ?? Array.Empty<string>();
-            bool found = paths.Any(p => File.Exists(Path.Combine(p, GoProgram)));
-            if (!found)
-            {
-                Assert.Ignore("No go tooling in path, can't run Go language specific language tests");
-            }
-        }
 
         [SetUp]
         public async Task SetUp()
@@ -35,6 +25,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             var mockGitHubService = new Mock<IGitHubService>();
             var gitHelper = new GitHelper(mockGitHubService.Object, NullLogger<GitHelper>.Instance);
             LangService = new GoLanguageRepoService(new ProcessHelper(NullLogger<ProcessHelper>.Instance), gitHelper, NullLogger<GoLanguageRepoService>.Instance);
+
+            if (!await LangService.CheckDependencies())
+            {
+                Assert.Ignore("go and golangci-lint aren't installed, can't run GoLanguageRepoServiceTests");
+            }
 
             var resp = await LangService.CreateEmptyPackage(GoPackageDir, "untitleddotloop");
             Assert.That(resp.ExitCode, Is.EqualTo(0));

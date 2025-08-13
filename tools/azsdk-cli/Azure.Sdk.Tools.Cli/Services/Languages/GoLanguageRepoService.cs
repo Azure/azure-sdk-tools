@@ -18,11 +18,11 @@ public class GoLanguageRepoService : LanguageRepoService
     private readonly string formatterName = "goimports";
     private readonly string linterName = "golangci-lint";
 
-    public GoLanguageRepoService(IProcessHelper processHelper, IGitHelper gitHelper, ILogger<GoLanguageRepoService> logger) 
+    public GoLanguageRepoService(IProcessHelper processHelper, IGitHelper gitHelper, ILogger<GoLanguageRepoService> logger)
         : base(processHelper, gitHelper)
     {
         _logger = logger;
-        
+
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
             compilerName = "go.exe";
@@ -32,6 +32,14 @@ public class GoLanguageRepoService : LanguageRepoService
     }
 
     #region Go specific functions, not part of the LanguageRepoService
+
+    public Task<bool> CheckDependencies()
+    {
+        var goExists = _processHelper.RunProcess(compilerName, ["version"], ".").ExitCode == 0;
+        var goLangCiLintExists = _processHelper.RunProcess(linterName, ["--version"], ".").ExitCode == 0;
+
+        return Task.FromResult(goExists && goLangCiLintExists);
+    }
 
     public async Task<CLICheckResponse> CreateEmptyPackage(string packagePath, string moduleName)
     {
@@ -61,7 +69,7 @@ public class GoLanguageRepoService : LanguageRepoService
             {
                 return CreateResponseFromProcessResult(updateResult);
             }
-            
+
             // Now tidy, to cleanup any deps that aren't needed
             var tidyResult = _processHelper.RunProcess(compilerName, new[] { "mod", "tidy" }, packagePath);
             return CreateResponseFromProcessResult(tidyResult);

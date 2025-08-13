@@ -2,7 +2,7 @@ import "@typespec/http";
 
 using TypeSpec.Http;
 
-@service({
+@service(#{
     title: "Test-Proxy Record/Playback server"
 })
 @server("https://localhost:5001/", "The test-proxy default URL.")

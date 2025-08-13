@@ -2138,7 +2138,7 @@ export interface Nested {
 
 // @public
 export interface Target { 
-    props: Nested; 
+    properties: Nested; 
 }
 \`\`\`
 `;
@@ -2187,7 +2187,7 @@ export interface Nested {
 
 // @public
 export interface Target { 
-    props: Nested; 
+    properties: Nested; 
 }
 \`\`\`
 `;

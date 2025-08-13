@@ -393,7 +393,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
                 var pr = await devopsService.GetSDKPullRequestFromPipelineRunAsync(buildId, language, workItemId);
 
-                var rp = await devopsService.GetReleasePlanAsync(pr);
+                var rp = await devopsService.GetReleasePlanForWorkItemAsync(workItemId);
                 await AddReleasePlanInfoInSdkAsync(pr, rp);
 
                 return pr;

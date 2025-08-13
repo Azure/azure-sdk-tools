@@ -22,8 +22,8 @@ stages:
       jobs:
       - job: BuildPackage
         pool:
-          name: azsdk-pool-mms-ubuntu-2204-general
-          vmImage: ubuntu-22.04
+          name: azsdk-pool
+          demands: ImageOverride -equals ubuntu-24.04
         steps:
           - template: /eng/pipelines/templates/steps/install-dotnet.yml
           - pwsh: |
@@ -49,20 +49,21 @@ stages:
             displayName: Publish ARM
             environment: ${{ parameters.Staging.EnvironmentName }}
             pool:
-              name: azsdk-pool-mms-ubuntu-2204-general
+              name: azsdk-pool
+              demands: ImageOverride -equals ubuntu-24.04
             strategy:
               runOnce:
                 deploy:
                   steps: ${{ parameters.StagingArmSteps }}
-                
+
         - deployment: PublishApp
           displayName: Publish App
           environment: ${{ parameters.Staging.EnvironmentName }}
           ${{ if ne(length(parameters.StagingArmSteps), 0) }}:
             dependsOn: PublishArm
           pool:
-            name: azsdk-pool-mms-ubuntu-2204-general
-            vmImage: ubuntu-22.04
+            name: azsdk-pool
+            demands: ImageOverride -equals ubuntu-24.04
           strategy:
             runOnce:
               deploy:
@@ -80,7 +81,7 @@ stages:
                     resourceGroupName: ${{ parameters.Staging.ResourceGroupName }}
                     appName: ${{ parameters.Staging.ResourceName }}
                     package: $(Pipeline.Workspace)/artifacts/${{ parameters.ToolName }}-$(Build.BuildID).zip
-                  
+
 
       - stage: Production
         dependsOn: Staging
@@ -90,20 +91,21 @@ stages:
             displayName: Publish ARM
             environment: ${{ parameters.Production.EnvironmentName }}
             pool:
-              name: azsdk-pool-mms-ubuntu-2204-general
+              name: azsdk-pool
+              demands: ImageOverride -equals ubuntu-24.04
             strategy:
               runOnce:
                 deploy:
                   steps: ${{ parameters.ProductionArmSteps }}
-        
+
         - deployment: PublishApp
           displayName: Publish App
           environment: ${{ parameters.Production.EnvironmentName }}
           ${{ if ne(length(parameters.ProductionArmSteps), 0) }}:
             dependsOn: PublishArm
           pool:
-            name: azsdk-pool-mms-ubuntu-2204-general
-            vmImage: ubuntu-22.04
+            name: azsdk-pool
+            demands: ImageOverride -equals ubuntu-24.04
           strategy:
             runOnce:
                 deploy:

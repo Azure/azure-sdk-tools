@@ -21,6 +21,7 @@ export class ConversationsComponent implements OnChanges {
   @Input() comments: CommentItemModel[] = [];
   @Input() review : Review | undefined = undefined;
   @Input() userProfile : UserProfile | undefined;
+  @Input() preferredApprovers : string[] = [];
 
   @Output() scrollToNodeEmitter : EventEmitter<string> = new EventEmitter<string>();
   @Output() numberOfActiveThreadsEmitter : EventEmitter<number> = new EventEmitter<number>();
@@ -154,6 +155,9 @@ export class ConversationsComponent implements OnChanges {
             case CommentThreadUpdateAction.CommentUpVoteToggled:
               this.toggleCommentUpVote(commentUpdates);
               break;
+            case CommentThreadUpdateAction.CommentDownVoteToggled:
+              this.toggleCommentDownVote(commentUpdates);
+              break;
             case CommentThreadUpdateAction.CommentDeleted:
               this.deleteCommentFromCommentThread(commentUpdates);
               break;
@@ -189,6 +193,15 @@ export class ConversationsComponent implements OnChanges {
   handleCommentUpvoteActionEmitter(commentUpdates: CommentUpdatesDto){
     commentUpdates.reviewId = this.review?.id!;
     this.commentsService.toggleCommentUpVote(this.review?.id!, commentUpdates.commentId!).pipe(take(1)).subscribe({
+      next: () => {
+        this.signalRService.pushCommentUpdates(commentUpdates);
+      }
+    });
+  }
+
+  handleCommentDownvoteActionEmitter(commentUpdates: CommentUpdatesDto){
+    commentUpdates.reviewId = this.review?.id!;
+    this.commentsService.toggleCommentDownVote(this.review?.id!, commentUpdates.commentId!).pipe(take(1)).subscribe({
       next: () => {
         this.signalRService.pushCommentUpdates(commentUpdates);
       }
@@ -257,6 +270,23 @@ export class ConversationsComponent implements OnChanges {
         comment.upvotes.splice(comment.upvotes.indexOf(this.userProfile?.userName!), 1);
       } else {
         comment.upvotes.push(this.userProfile?.userName!);
+        if (comment.downvotes.includes(this.userProfile?.userName!)) {
+          comment.downvotes.splice(comment.downvotes.indexOf(this.userProfile?.userName!), 1);
+        }
+      }
+    }
+  }
+
+  private toggleCommentDownVote(commentUpdates: CommentUpdatesDto) {
+    const comment = this.comments.find(c => c.id === commentUpdates.commentId)
+    if (comment) {
+      if (comment.downvotes.includes(this.userProfile?.userName!)) {
+        comment.downvotes.splice(comment.downvotes.indexOf(this.userProfile?.userName!), 1);
+      } else {
+        comment.downvotes.push(this.userProfile?.userName!);
+        if (comment.upvotes.includes(this.userProfile?.userName!)) {
+          comment.upvotes.splice(comment.upvotes.indexOf(this.userProfile?.userName!), 1);
+        }
       }
     }
   }

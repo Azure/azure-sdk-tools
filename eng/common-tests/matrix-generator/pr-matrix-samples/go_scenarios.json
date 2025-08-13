@@ -170,7 +170,7 @@
         "IsNewSdk": true,
         "ArtifactName": "sdk/template/aztemplate",
         "ReleaseStatus": "2025-03-06",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "triggeringPaths": [
@@ -199,7 +199,7 @@
         "IsNewSdk": true,
         "ArtifactName": "sdk/azcore",
         "ReleaseStatus": "Unreleased",
-        "IncludedForValidation": true,
+        "IncludedForValidation": false,
         "AdditionalValidationPackages": null,
         "ArtifactDetails": {
           "triggeringPaths": [

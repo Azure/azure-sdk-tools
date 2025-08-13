@@ -1,6 +1,6 @@
-import * as path from 'path';
+import * as path from 'node:path';
 import { PackageResult } from './GenerateOutput';
-import { WorkflowContext } from '../automation/workflow';
+import { WorkflowContext } from './Workflow';
 import { repoKeyToString } from '../utils/repo';
 import { SDKAutomationState } from '../automation/sdkAutomationState';
 import { parseSemverVersionString } from '../utils/parseSemverVersionString';
@@ -106,6 +106,7 @@ export interface SDKRepositoryPackageData {
 }
 
 export type PackageData = SDKRepositoryPackageData & {
+  serviceName?: string;
   artifactPaths: string[];
   apiViewArtifactPath?: string;
   language?: string;
@@ -164,7 +165,7 @@ export const getPackageData = (context: WorkflowContext, result: PackageResult, 
 
   // same logic as src/utils/utils.ts/removeDuplicatesFromRelatedFiles
   const typespecProjectIsManagementPlane = result.typespecProject && result.typespecProject.every(
-    item => item.endsWith('.Management')
+    item => (item.endsWith('.Management') || item.includes('resource-manager'))
   );
 
   const isDataPlane = !(readmeMdIsManagementPlane || typespecProjectIsManagementPlane);
@@ -176,7 +177,7 @@ export const getPackageData = (context: WorkflowContext, result: PackageResult, 
   let parseSuppressionLinesErrors: string[] = [];
   let sdkSuppressionFilePath: string | undefined = undefined;
 
-  const packageTSForReadmeMdKey = result.typespecProject ? result.typespecProject[0] : result.readmeMd ? `${context.config.sdkName == 'azure-sdk-for-go' ? 'specification/' : ''}${result.readmeMd[0]}` : null;
+  const packageTSForReadmeMdKey = result.typespecProject ? `${result.typespecProject[0]}/tspconfig.yaml` : result.readmeMd ? result.readmeMd[0] : null;
   const suppressionContent = packageTSForReadmeMdKey ? suppressionContentList?.get(packageTSForReadmeMdKey) : undefined;
   if ((suppressionContent !== undefined) && !isBetaMgmtSdk) {
     if (breakingChangeItems && breakingChangeItems.length > 0) {
@@ -220,6 +221,7 @@ export const getPackageData = (context: WorkflowContext, result: PackageResult, 
     breakingChangeItems,
     version: result.version,
     readmeMd: result.readmeMd,
-    typespecProject: result.typespecProject
+    typespecProject: result.typespecProject,
+    language: result.language,
   };
 };

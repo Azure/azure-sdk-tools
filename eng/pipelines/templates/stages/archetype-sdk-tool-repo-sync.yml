@@ -8,9 +8,9 @@ parameters:
 - name: DirectoryToSync
   type: string
   default: not-specified
-- name: FilePattern
-  type: string
-  default: ''
+- name: FilePatterns
+  type: object
+  default: []
 - name: BaseBranchName
   type: string
   default: $(DefaultBranch)
@@ -26,8 +26,8 @@ stages:
           displayName: Sync ${{ parameters.DirectoryToSync }} Directory
 
           pool:
-            name: azsdk-pool-mms-ubuntu-2204-general
-            vmImage: ubuntu-22.04
+            name: azsdk-pool
+            demands: ImageOverride -equals ubuntu-24.04
 
           steps:
             - template: /eng/common/pipelines/templates/steps/sparse-checkout.yml
@@ -38,8 +38,16 @@ stages:
             - pwsh: |
                 Set-PsDebug -Trace 1
                 $patchDir = "$(Build.ArtifactStagingDirectory)/patchfiles"
-                $patchfiles = git format-patch --output-directory $patchDir HEAD...origin/$(system.pullRequest.targetBranch) -- "${{ parameters.DirectoryToSync }}${{ parameters.FilePattern }}"
-                if ($patchfiles -and ($LASTEXITCODE -eq 0)) {
+                $patchFiles = @()
+
+                $filePatterns = '${{ convertToJson(parameters.FilePatterns) }}' | ConvertFrom-Json
+                if (!$filePatterns) { $filePatterns = @("*")}
+
+                foreach ($filePattern in $filePatterns) {
+                  Write-Host "Creating patch files for pattern: $filePattern"
+                  $patchFiles += git format-patch --output-directory $patchDir HEAD...origin/$(system.pullRequest.targetBranch) -- "${{ parameters.DirectoryToSync }}/$filePattern"
+                }
+                if ($patchFiles -and ($LASTEXITCODE -eq 0)) {
                   echo "##vso[task.setvariable variable=PatchFilesLocation]$patchDir"
                   echo "Setting PatchFilesLocation"
                 }
@@ -60,7 +68,7 @@ stages:
               parameters:
                 CommitMessage: "Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools repository for Tools PR $(System.PullRequest.PullRequestNumber)"
                 DirectoryToSync: ${{ parameters.DirectoryToSync }}
-                FilePattern: ${{ parameters.FilePattern }}
+                FilePatterns: ${{ parameters.FilePatterns }}
                 UpstreamBranchName: "sync-${{ parameters.DirectoryToSync }}-$(System.PullRequest.SourceBranch)-$(System.PullRequest.PullRequestNumber)"
                 BaseBranchName: $(system.pullRequest.targetBranch)
                 SkipCheckingForChanges: true
@@ -73,8 +81,8 @@ stages:
           environment: githubmerges
 
           pool:
-            name: azsdk-pool-mms-win-2022-general
-            vmImage: windows-2022
+            name: azsdk-pool
+            demands: ImageOverride -equals windows-2022
 
           strategy:
             runOnce:
@@ -143,8 +151,8 @@ stages:
           environment: githubmerges
 
           pool:
-            name: azsdk-pool-mms-win-2022-general
-            vmImage: windows-2022
+            name: azsdk-pool
+            demands: ImageOverride -equals windows-2022
 
           strategy:
             runOnce:
@@ -189,15 +197,15 @@ stages:
           displayName: Sync ${{ parameters.DirectoryToSync }} Directory
 
           pool:
-            name: azsdk-pool-mms-ubuntu-2204-general
-            vmImage: ubuntu-22.04
+            name: azsdk-pool
+            demands: ImageOverride -equals ubuntu-24.04
 
           steps:
             - template: /eng/pipelines/templates/steps/sync-directory.yml
               parameters:
                 CommitMessage: Sync ${{ parameters.DirectoryToSync }} directory with azure-sdk-tools repository
                 DirectoryToSync: ${{ parameters.DirectoryToSync }}
-                FilePattern: ${{ parameters.FilePattern }}
+                FilePatterns: ${{ parameters.FilePatterns }}
                 UpstreamBranchName: "sync-${{ parameters.DirectoryToSync }}"
                 BaseBranchName: ${{ parameters.BaseBranchName }}
                 Repos: ${{ parameters.Repos }}

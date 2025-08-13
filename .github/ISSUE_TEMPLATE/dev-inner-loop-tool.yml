@@ -1,0 +1,63 @@
+name: "🔧 Tool: [Tool Name]"
+description: Define a CLI or MCP tool that supports one or more developer activities.
+labels: ["dev inner loop"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template to define a *tool* that will support one or more inner loop developer activities. Tools should have well-defined inputs, outputs, and behavior.
+
+  - type: input
+    id: tool-name
+    attributes:
+      label: "🔧 Tool Name"
+      description: A clear name for this tool
+      placeholder: e.g. configure-recording-env
+    validations:
+      required: true
+
+  - type: textarea
+    id: tool-description
+    attributes:
+      label: "📄 What Should This Tool Do?"
+      description: Describe the tool’s purpose and how it helps complete developer activities.
+      placeholder: e.g. This tool sets up the environment for recording test runs by configuring variables and dependencies.
+    validations:
+      required: true
+
+  - type: textarea
+    id: tool-spec
+    attributes:
+      label: "📥 Inputs and 📤 Outputs"
+      description: Describe the expected inputs to the tool and the outputs it should produce.
+      placeholder: |
+        **Inputs:**
+        - Path to config file
+        - Recording mode flag
+
+        **Outputs:**
+        - Updated environment variables
+        - Log file of configured session
+    validations:
+      required: true
+
+  - type: dropdown
+    id: runtime-environment
+    attributes:
+      label: "🏗️ Execution Context"
+      description: Should this tool be implemented as both an MCP (agentic) and CLI (automatable) tool, or just an MCP tool?
+      options:
+        - MCP only
+        - Both MCP and CLI
+    validations:
+      required: true
+
+  - type: textarea
+    id: cli-command
+    attributes:
+      label: "💻 CLI Command and Flags (if applicable)"
+      description: If this tool will have a CLI component, how should it be called? What flags or options should it support?
+      placeholder: |
+        e.g. `azsdk-cli configure-recording-env --config path/to/config.json --mode record --verbose`
+    validations:
+      required: false

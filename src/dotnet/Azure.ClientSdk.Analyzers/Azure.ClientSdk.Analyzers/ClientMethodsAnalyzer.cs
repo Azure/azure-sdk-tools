@@ -290,6 +290,12 @@ namespace Azure.ClientSdk.Analyzers
                     continue;
                 }
 
+                // Skip property accessors (getters/setters) as AZC0004 should only apply to actual methods
+                if (methodSymbol.AssociatedSymbol is IPropertySymbol)
+                {
+                    continue;
+                }
+
                 if (methodSymbol.Name.EndsWith(AsyncSuffix))
                 {
                     CheckClientMethod(context, methodSymbol);

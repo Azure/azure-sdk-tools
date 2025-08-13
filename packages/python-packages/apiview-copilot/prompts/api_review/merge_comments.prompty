@@ -1,0 +1,65 @@
+---
+name: Merge Comments
+description: A prompt to merge multiple comments into a single comment.
+authors:
+  - tjprescott
+version: 1.0.0
+model:
+  api: chat
+  configuration:
+    type: azure_openai
+    azure_endpoint: ${env:AZURE_OPENAI_ENDPOINT}
+    azure_deployment: gpt-4.1
+    api_version: 2025-03-01-preview
+  parameters:
+    temperature: 0
+    top_p: 1
+    stop: []
+    frequency_penalty: 0
+    presence_penalty: 0
+    max_tokens: 16384
+    response_format: ${file:guideline_result_schema.json}
+sample:
+  comments: |
+    [{
+      "rule_ids": [
+        "python_design.html#python-models-enum-name-uppercase"
+      ],
+      "line_no": 517, 
+      "bad_code": "    tags = 'tags'",
+      "suggestion": "    TAGS = 'tags'",
+      "comment": "Enum member names must be uppercase for consistency.", 
+      "source": "guideline"
+    },
+    {
+      "rule_ids": [],
+      "line_no": 517, 
+      "bad_code": "    tags = 'tags'", 
+      "suggestion": "    TAGS = 'tags'", 
+      "comment": "Enum members should be consistently capitalized. Use 'TAGS' to align with other members.", 
+      "source": "generic"
+    }]
+  context: |
+    [{
+      "id": "python_design.html#python-models-enum-name-uppercase",
+      "category": "Enumerations",
+      "text": "DO use UPPERCASE for enum member names.\n\n```python\n\n# Yes\nclass MyGoodEnum(str, Enum):\n    ONE = 'one'\n    TWO = 'two'\n\n# No\nclass MyBadEnum(str, Enum):\n    One = 'one' # No - using PascalCased name.\n    two = 'two' # No - using all lower case name.\n\n```"
+    }]
+---
+system:
+  You are a code review assistant. Your task is to merge multiple comments into a single comment. 
+  The merged comment should be concise and clear, summarizing the key points from all the comments.
+  Ensure that the merged comment maintains the context and intent of the original comments.
+  If there are conflicting suggestions, prioritize the one based on the guidelines.
+  Use the provided context to enhance the understanding of the comments.
+  Ensure the output maintains all of the rule_ids and line numbers from the original comments.
+  Regardless of the number of input comments, the output should always be an array of one comment.
+
+user:
+  # CONTEXT
+  {{context}}
+
+  # COMMENTS
+  {{comments}}
+
+  Generate a single merged comment that summarizes the key points from all the comments.

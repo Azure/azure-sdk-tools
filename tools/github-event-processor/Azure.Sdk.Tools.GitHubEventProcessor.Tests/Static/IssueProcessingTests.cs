@@ -92,6 +92,20 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests.Static
                   false,
                   false,
                   false)]
+        // Scenario: Labels returned from AI Issue Triage Service
+        //           isMemberOfOrg and hasWriteOrAdmin both set to false.
+        // Expected: CustomerReported, Question, and only predicted labels added to the Issue
+        [TestCase(RulesConstants.InitialIssueTriage,
+                  "Tests.JsonEventPayloads/InitialIssueTriage_issue_opened_no_labels_no_assignee.json",
+                  RuleState.On,
+                  RuleState.On,
+                  "FakeLabel666", // labels returned from the AI Issue Triage Service
+                  null, // answer returned from the AI Issue Triage Service
+                  null, // answer type returned from the AI Issue Triage Service
+                  null, // owners with permission to be assigned to issues
+                  false,
+                  false,
+                  false)]
         // Scenario: No labels returned from AI Issue Triage Service
         //           isMemberOfOrg is true and hasWriteOrAdmin is false
         // Expected: Only NeedsTriage label added to the Issue

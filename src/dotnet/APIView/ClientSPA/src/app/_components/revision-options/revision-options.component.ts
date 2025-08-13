@@ -1,6 +1,6 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AUTOMATIC_ICON, getTypeClass, MANUAL_ICON, PR_ICON } from 'src/app/_helpers/common-helpers';
+import { AUTOMATIC_ICON, getTypeClass, MANUAL_ICON, PR_ICON, TREE_DIFF_STYLE } from 'src/app/_helpers/common-helpers';
 import { ACTIVE_API_REVISION_ID_QUERY_PARAM, ACTIVE_SAMPLES_REVISION_ID_QUERY_PARAM, DIFF_API_REVISION_ID_QUERY_PARAM, DIFF_STYLE_QUERY_PARAM, getQueryParams } from 'src/app/_helpers/router-helpers';
 import { AzureEngSemanticVersion } from 'src/app/_models/azureEngSemanticVersion';
 import { APIRevision } from 'src/app/_models/revision';
@@ -120,6 +120,7 @@ export class RevisionOptionsComponent implements OnChanges {
   diffApiRevisionChange(event: any) {
     let newQueryParams = getQueryParams(this.route);
     newQueryParams[DIFF_API_REVISION_ID_QUERY_PARAM] = event.value?.id;
+    newQueryParams[DIFF_STYLE_QUERY_PARAM] = TREE_DIFF_STYLE;
     this.router.navigate([], { queryParams: newQueryParams });
   }
 

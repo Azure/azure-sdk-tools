@@ -182,29 +182,10 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             return tmpPath;
         }
 
-        /// <summary>
-        /// Used to define any set of file constructs we want. This enables us to roll a target environment to point various GitStore functionalities at.
-        ///
-        /// Creates folder under the temp directory.
-        /// </summary>
-        /// <param name="assetsJsonContent">The content of the assets json, if any.</param>
-        /// <param name="sampleFiles">A set of relative paths defining what the folder structure of the test folder. Paths should be relative to the root of the newly created temp folder.
-        /// If one of the paths ends with assets.json, that path will receive the assetsJsonContent string, instead of defaulting to the root of the temp folder.</param>
-        /// <param name="ignoreEmptyAssetsJson">Normally passing string.Empty to assetsJsonContent argument will result in no assets.json being written.
-        /// Passing true to this argument will ensure that the file is still created without content.</param>
-        /// <param name="isPushTest">Whether or not the scenario being run is a push test</param>
-        /// <returns>The absolute path to the created folder.</returns>
         public static string DescribeTestFolder(Assets assets, string[] sampleFiles, string malformedJson = null, bool ignoreEmptyAssetsJson = false, bool isPushTest = false)
         {
             string localAssetsJsonContent = JsonSerializer.Serialize(assets);
-            if (null != malformedJson)
-            {
-                localAssetsJsonContent = malformedJson;
-            }
-            // the guid will be used to create a unique test folder root and, if this is a push test,
-            // it'll be used as part of the generated branch name
             var testGuid = Guid.NewGuid().ToString();
-            var tmpPath = GetTmpPath(new string[] { testGuid });
 
             // Push tests need some special setup for automation
             // 1. The AssetsReproBranch
@@ -219,6 +200,28 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
                 localAssetsJsonContent = JsonSerializer.Serialize(assets);
             }
 
+            return DescribeTestFolder(localAssetsJsonContent, testGuid, sampleFiles, malformedJson, ignoreEmptyAssetsJson, isPushTest);
+        }
+
+        /// <summary>
+        /// Used to define any set of file constructs we want. This enables us to roll a target environment to point various GitStore functionalities at.
+        ///
+        /// Creates folder under the temp directory.
+        /// </summary>
+        /// <param name="assetsJsonContent">The content of the assets json, if any.</param>
+        /// <param name="sampleFiles">A set of relative paths defining what the folder structure of the test folder. Paths should be relative to the root of the newly created temp folder.
+        /// If one of the paths ends with assets.json, that path will receive the assetsJsonContent string, instead of defaulting to the root of the temp folder.</param>
+        /// <param name="ignoreEmptyAssetsJson">Normally passing string.Empty to assetsJsonContent argument will result in no assets.json being written.
+        /// Passing true to this argument will ensure that the file is still created without content.</param>
+        /// <param name="isPushTest">Whether or not the scenario being run is a push test</param>
+        /// <returns>The absolute path to the created folder.</returns>
+        public static string DescribeTestFolder(string localAssetsJsonContent, string testGuid, string[] sampleFiles, string malformedJson = null, bool ignoreEmptyAssetsJson = false, bool isPushTest = false)
+        {
+            if (null != malformedJson)
+            {
+                localAssetsJsonContent = malformedJson;
+            }
+            var tmpPath = GetTmpPath(new string[] { testGuid });
             var testFolder = Directory.CreateDirectory(tmpPath);
             var assetsJsonPath = Path.Join(tmpPath, "assets.json");
 

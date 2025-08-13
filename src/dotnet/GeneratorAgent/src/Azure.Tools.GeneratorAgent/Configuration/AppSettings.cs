@@ -1,0 +1,48 @@
+using Microsoft.Extensions.Configuration;
+using Azure.Tools.GeneratorAgent.Security;
+using Microsoft.Extensions.Logging;
+
+namespace Azure.Tools.GeneratorAgent.Configuration
+{
+    internal class AppSettings
+    {
+        private readonly IConfiguration Configuration;
+        private readonly ILogger<AppSettings> Logger;
+
+        public AppSettings(IConfiguration configuration, ILogger<AppSettings> logger)
+        {
+            ArgumentNullException.ThrowIfNull(configuration);
+            ArgumentNullException.ThrowIfNull(logger);
+            
+            Configuration = configuration;
+            Logger = logger;
+        }
+
+        // Azure AI Settings
+        public string ProjectEndpoint => GetRequiredSetting("AzureSettings:ProjectEndpoint");
+        public string Model => Configuration.GetSection("AzureSettings:Model").Value ?? "gpt-4o";
+        public string AgentName => Configuration.GetSection("AzureSettings:AgentName").Value ?? "AZC Fixer";
+        public string AgentInstructions => Configuration.GetSection("AzureSettings:AgentInstructions").Value ?? "";
+        
+        public string TypespecEmitterPackage => "@typespec/http-client-csharp";
+        public string TypeSpecDirectoryName => "@typespec";
+        public string HttpClientCSharpDirectoryName => "http-client-csharp";
+
+        public string AzureSpecRepository => "Azure/azure-rest-api-specs";
+        public string AzureSdkDirectoryName => "azure-sdk-for-net";
+
+        // Script Paths
+        public string PowerShellScriptPath => "eng/scripts/automation/Invoke-TypeSpecDataPlaneGenerateSDKPackage.ps1";
+
+        private string GetRequiredSetting(string key)
+        {
+            string? value = Configuration.GetSection(key).Value;
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                throw new InvalidOperationException($"Required configuration setting '{key}' is missing or empty");
+            }
+            return value;
+        }
+    }
+}
+

@@ -53,7 +53,7 @@ export async function discoverEntrypointFile(
   const files = await readdir(srcDir, { recursive: true });
 
   function findEntrypoint(name: string): string | undefined {
-    return files.find((file) => file.endsWith(name)) ?? undefined;
+    return files.find((file) => file === name) ?? undefined;
   }
   if (specifiedEntrypointFile) {
     entryTsp = findEntrypoint(specifiedEntrypointFile);
@@ -72,18 +72,32 @@ export async function discoverEntrypointFile(
   return entryTsp;
 }
 
+export function tryParseEmitterOptionAsObject(value: string): object | string {
+  try {
+    const obj = JSON.parse(value);
+    if (typeof obj === "object" && obj !== null && !Array.isArray(obj)) {
+      return obj;
+    }
+  } catch {
+    // no-op
+  }
+  return value;
+}
+
 export async function compileTsp({
   emitterPackage,
   outputPath,
   resolvedMainFilePath,
   additionalEmitterOptions,
   saveInputs,
+  trace,
 }: {
   emitterPackage: string;
   outputPath: string;
   resolvedMainFilePath: string;
   additionalEmitterOptions?: string;
   saveInputs?: boolean;
+  trace?: string[];
 }): Promise<[boolean, string]> {
   const parsedEntrypoint = getDirectoryPath(resolvedMainFilePath);
   const { compile, NodeHost, resolveCompilerOptions, formatDiagnostic } =
@@ -102,8 +116,8 @@ export async function compileTsp({
   if (additionalEmitterOptions) {
     additionalEmitterOptions.split(";").forEach((option) => {
       const [key, value] = option.split("=");
-      if (key && value) {
-        emitterOverrideOptions[key] = value;
+      if (key && value !== undefined) {
+        emitterOverrideOptions[key] = tryParseEmitterOptionAsObject(value);
       }
     });
   }
@@ -111,6 +125,7 @@ export async function compileTsp({
     outputDir,
     emit: [emitterPackage],
     options: overrideOptions,
+    trace: trace,
   };
   Logger.info(`Compiling tsp using ${emitterPackage}...`);
   const [options, diagnostics] = await resolveCompilerOptions(NodeHost, {

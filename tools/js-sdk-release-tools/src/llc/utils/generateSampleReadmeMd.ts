@@ -7,8 +7,8 @@ import {
     getInputFromCommand,
     getInputFromCommandWithDefaultValue,
     getLatestCodegen
-} from "./utils";
-import { logger } from "../../utils/logger";
+} from "./utils.js";
+import { logger } from "../../utils/logger.js";
 
 async function writeReadmeMd(packageName: string, packagePath: string, options: any) {
     const sampleReadme = `# Azure Sample Readme for RLC

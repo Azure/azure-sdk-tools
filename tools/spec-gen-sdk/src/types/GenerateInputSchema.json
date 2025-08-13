@@ -17,6 +17,14 @@
       // API version to be used to generate the SDK code.
       "type": "string"
     },
+    "runMode": {
+      // Run mode when call this tool.
+      "type": "string"
+    },
+    "sdkReleaseType": {
+      // SDK release type.
+      "type": "string"
+    },
     "changedFiles": {
       // Changed file list in spec PR.
       "type": "array",
@@ -47,5 +55,5 @@
       "type": "string"
     }
   },
-  "required": ["specFolder", "headSha", "repoHttpsUrl", "changedFiles"]
+  "required": ["specFolder", "headSha", "repoHttpsUrl", "changedFiles", "runMode", "sdkReleaseType"]
 }

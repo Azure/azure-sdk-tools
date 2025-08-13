@@ -1,12 +1,12 @@
 import * as fs from "fs";
 import * as path from "path";
-import { logger } from "../../utils/logger";
-import { getLatestStableVersion } from "../../utils/version";
-import { extractExportAndGenerateChangelog } from "../../changelog/extractMetaData";
-import { fixChangelogFormat, getApiReviewPath, getSDKType, tryReadNpmPackageChangelog } from "../../common/utils";
-import { tryGetNpmView } from "../../common/npmUtils";
+import { logger } from "../../utils/logger.js";
+import { extractExportAndGenerateChangelog } from "../../changelog/extractMetaData.js";
+import { getLatestStableVersion } from "../../utils/version.js";
+import { fixChangelogFormat, getApiReviewPath, getSDKType, tryReadNpmPackageChangelog } from "../../common/utils.js";
+import { tryGetNpmView } from "../../common/npmUtils.js";
 
-const shell = require('shelljs');
+import shell from 'shelljs';
 const todayDate = new Date();
 const dd = String(todayDate.getDate()).padStart(2, '0');
 const mm = String(todayDate.getMonth() + 1).padStart(2, '0'); //January is 0!
@@ -44,7 +44,7 @@ export async function generateChangelog(packagePath) {
         generateChangelogForFirstRelease(packagePath, version);
         logger.info(`Generated changelog successfully.`);
     } else {
-        const stableVersion = getLatestStableVersion(npmViewResult);
+        const stableVersion = npmViewResult ? getLatestStableVersion(npmViewResult) : undefined;
         if (!stableVersion) {
             logger.error(`Invalid latest version ${stableVersion}`);
             process.exit(1);

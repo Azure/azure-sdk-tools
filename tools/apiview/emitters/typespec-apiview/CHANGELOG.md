@@ -1,5 +1,12 @@
 # Release History
 
+## Version 0.7.2 (05-14-2025)
+Fixed issue where `cannot deindent with an indent` could cause the generator to crash.
+
+## Version 0.7.1 (05-14-2025)
+Support new TypeSpec compiler.
+Fixed issue where `HasSuffixSpace` could cause the generator to crash.
+
 ## Version 0.7.0 (04-03-2025)
 Support new TypeSpec compiler.
 

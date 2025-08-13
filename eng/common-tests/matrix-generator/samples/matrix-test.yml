@@ -8,8 +8,8 @@ jobs:
     parameters:
       JobTemplatePath: /eng/common-tests/matrix-generator/samples/matrix-job-sample.yml
       AdditionalParameters: {}
-      Pool: Azure Pipelines
-      OsVmImage: ubuntu-20.04
+      Pool: azsdk-pool
+      OsVmImage: ubuntu-24.04
       CloudConfig:
         ServiceConnection: azure-sdk-tests-public
         Location: eastus2
@@ -18,7 +18,7 @@ jobs:
         # Exclusion example
         - OSVmImage=^(?!macOS).*
       MatrixReplace:
-        - OsVmImage=(ubuntu).*/$1-20.04
+        - OsVmImage=(ubuntu).*/$1-24.04
         - .*Framework.*=net5.0/net5.1
       MatrixConfigs:
         - Name: base_product_matrix

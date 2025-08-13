@@ -141,15 +141,9 @@ public class ReviewToken implements JsonSerializable<ReviewToken> {
     public JsonWriter toJson(JsonWriter jsonWriter) throws IOException {
         jsonWriter.writeStartObject()
             .writeIntField(JSON_NAME_KIND, tokenKind.getTokenKindId())
-            .writeStringField(JSON_NAME_VALUE, value);
-
-        if (navigationDisplayName != null) {
-            jsonWriter.writeStringField("NavigationDisplayName", navigationDisplayName);
-        }
-
-        if (navigateToId != null) {
-            jsonWriter.writeStringField("NavigateToId", navigateToId);
-        }
+            .writeStringField(JSON_NAME_VALUE, value)
+            .writeStringField("NavigationDisplayName", navigationDisplayName)
+            .writeStringField("NavigateToId", navigateToId);
 
         if (skipDiff) {
             jsonWriter.writeBooleanField("SkipDiff", skipDiff);
@@ -175,13 +169,11 @@ public class ReviewToken implements JsonSerializable<ReviewToken> {
 
         // FIXME tidy up
         if (renderClasses != null && !renderClasses.isEmpty()) {
-            jsonWriter.writeArrayField(JSON_NAME_RENDER_CLASSES, renderClasses, (jw, rc) -> rc.getValues().forEach(s -> {
-                try {
-                    jw.writeString(s);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
+            jsonWriter.writeArrayField(JSON_NAME_RENDER_CLASSES, renderClasses, (jw, rc) -> {
+                for (String str : rc.getValues()) {
+                    jw.writeString(str);
                 }
-            }));
+            });
         }
 
         return jsonWriter.writeEndObject();

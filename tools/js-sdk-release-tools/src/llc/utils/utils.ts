@@ -1,10 +1,10 @@
 import * as fs from "fs";
 import * as path from "path";
-import {logger} from "../../utils/logger";
-import {getLatestStableVersion} from "../../utils/version";
-import { tryGetNpmView } from "../../common/npmUtils";
-const readline = require('readline');
-
+import {logger} from "../../utils/logger.js";
+import {getLatestStableVersion} from "../../utils/version.js";
+import { tryGetNpmView } from "../../common/npmUtils.js";
+import readline from 'readline';
+import yaml from "js-yaml"
 export function validPackageName(packageName) {
     const match = /@azure-rest\/[a-zA-Z-]+/.exec(packageName);
     if (!match)
@@ -56,7 +56,8 @@ export function getPackageFolderName(packageName) {
 
 export async function getLatestCodegen(packagePath) {
     const npmViewResult = await tryGetNpmView('@autorest/typescript');
-    const stableVersion = getLatestStableVersion(npmViewResult);
+    const stableVersion = npmViewResult ? getLatestStableVersion(npmViewResult) : undefined;
+    // TODO: do not hardcode
     if (!stableVersion)
         return '6.0.0-beta.14';
     return stableVersion;
@@ -100,7 +101,6 @@ export function getConfigFromReadmeMd(readmePath: string) {
     if (!match || match.length !== 3) {
         throw new Error(`Cannot find valid package name from ${readmePath}`);
     }
-    const yaml = require('js-yaml');
     return yaml.load(match[1]);
 }
 

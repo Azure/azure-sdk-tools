@@ -10,7 +10,7 @@
     <MicrosoftExtensionsLoggingAbstractionsVersion>8.0.2</MicrosoftExtensionsLoggingAbstractionsVersion>
     <AzureAIOpenAIVersion>2.2.0-beta.1</AzureAIOpenAIVersion>
     <AzureIdentityVersion>1.13.1</AzureIdentityVersion>
-    <AzureSearchDocumentsVersion>11.7.0-beta.2</AzureSearchDocumentsVersion>
+    <AzureSearchDocumentsVersion>11.7.0-beta.4</AzureSearchDocumentsVersion>
     <AzureStorageBlobsVersion>12.23.0</AzureStorageBlobsVersion>
     <NewtonsoftJsonVersion>13.0.3</NewtonsoftJsonVersion>
     <MicrosoftExtensionsConfigurationVersion>9.0.0</MicrosoftExtensionsConfigurationVersion>
@@ -26,11 +26,11 @@
     <MicrosoftExtensionsLoggingConsoleVersion>9.0.1</MicrosoftExtensionsLoggingConsoleVersion>
     <MicrosoftNETTestSdkVersion>16.11.0</MicrosoftNETTestSdkVersion>
   </PropertyGroup>
-  
-     <!-- Apply the standard props first, so that any local props can override -->
-    <Import Project="../../Directory.Build.props" />
-  
+
     <!-- Apply the local props after, which allows them to override.-->
     <Import Project="Directory.Build.local.props" Condition="Exists('Directory.Build.local.props')" />
 
+     <!-- Apply the standard props first, so that any local props can override -->
+    <Import Project="../../Directory.Build.props" />
+    
 </Project>

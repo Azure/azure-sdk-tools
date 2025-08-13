@@ -46,7 +46,7 @@ def _build_dist(src_dir, build_type, extension):
 
 def _add_pyproject_package_to_temp(src_dir):
     temp_dir = tempfile.mkdtemp()
-    dest_dir = os.path.join(temp_dir, os.path.basename(src_dir))
+    dest_dir = os.path.join(temp_dir, os.path.basename(src_dir) + "-copied")
     shutil.copytree(src_dir, dest_dir)
 
     # Remove setup.py and add pyproject.toml
@@ -192,7 +192,7 @@ class TestApiView:
         apiview = stub_gen.generate_tokens()
         # ensure we have only the expected diagnostics when testing apistubgentest
         unclaimed = PylintParser.get_unclaimed()
-        assert len(apiview.diagnostics) == 22
+        assert len(apiview.diagnostics) == 34
         # The "needs copyright header" error corresponds to a file, which isn't directly
         # represented in APIView
         assert len(unclaimed) == 1

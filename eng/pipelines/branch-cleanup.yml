@@ -46,10 +46,10 @@ parameters:
 - name: DailyBranchRepos
   type: object
   default:
-    - Azure/azure-docs-sdk-dotnet
-    - Azure/azure-docs-sdk-java
     - MicrosoftDocs/azure-docs-sdk-node
     - MicrosoftDocs/azure-docs-sdk-python
+    - MicrosoftDocs/azure-docs-sdk-java
+    - MicrosoftDocs/azure-docs-sdk-dotnet
 
 - name: RestAPISpecsDocsRepos
   type: object
@@ -60,8 +60,8 @@ jobs:
   - job:
     displayName: Branch Clean-up
     pool:
-      name: azsdk-pool-mms-ubuntu-2204-general
-      vmImage: ubuntu-22.04
+      name: azsdk-pool
+      demands: ImageOverride -equals ubuntu-24.04
     timeoutInMinutes: 120
 
     variables:

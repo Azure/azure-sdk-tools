@@ -1,8 +1,8 @@
 package com.azure.tools.apiview.processor.model;
 
 import java.util.Arrays;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.Collections;
+import java.util.List;
 
 public enum RenderClass {
     ASSEMBLY("assembly", "java-assembly"),
@@ -43,13 +43,13 @@ public enum RenderClass {
     JAVADOC("javadoc"),
     DEPRECATED("deprecated");
 
-    private final Set<String> values;
+    private final List<String> values;
 
     RenderClass(String... values) {
-        this.values = new LinkedHashSet<>(Arrays.asList(values));
+        this.values = Collections.unmodifiableList(Arrays.asList(values));
     }
 
-    public Set<String> getValues() {
+    public List<String> getValues() {
         return values;
     }
 }

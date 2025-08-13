@@ -271,6 +271,19 @@ function buildReleaseTag(reviewLines: ReviewLine[], tag: string, relatedLineId: 
   reviewLines.push({ Tokens: [tagToken], RelatedToLine: relatedLineId });
 }
 
+function isDeprecated(item: ApiItem): boolean {
+  const docs = item instanceof ApiDocumentedItem ? item.tsdocComment : undefined;
+  return docs?.deprecatedBlock !== undefined;
+}
+
+function buildDeprecatedLine(reviewLines: ReviewLine[], relatedLineId: string): void {
+  const deprecatedToken = buildToken({
+    Kind: TokenKind.StringLiteral,
+    Value: `${ANNOTATION_TOKEN}deprecated`,
+  });
+  reviewLines.push({ Tokens: [deprecatedToken], RelatedToLine: relatedLineId });
+}
+
 /**
  * Checks whether a {@link @ApiItem} instance may have children or not
  * @param item The result array to push {@link ReviewLine}s to
@@ -289,16 +302,27 @@ function mayHaveChildren(item: ApiItem): boolean {
  * Builds the token list for an Api and pushes to the review line that is passed in
  * @param line The {@link ReviewLine} to push {@link ReviewToken}s to
  * @param item {@link ApiItem} instance
+ * @param deprecated Whether the Api is deprecated or not
  */
-function buildMemberLineTokens(line: ReviewLine, item: ApiItem) {
+function buildMemberLineTokens(line: ReviewLine, item: ApiItem, deprecated: boolean) {
   if (item instanceof ApiDeclaredItem) {
     if (item.kind === ApiItemKind.Namespace) {
-      splitAndBuild(line.Tokens, `declare namespace ${item.displayName} `, item);
+      splitAndBuild(line.Tokens, `declare namespace ${item.displayName} `, item, deprecated);
     } else {
       if (item.kind === ApiItemKind.Variable) {
         line.Tokens.push(
-          buildToken({ Kind: TokenKind.Keyword, Value: "export", HasSuffixSpace: true }),
-          buildToken({ Kind: TokenKind.Keyword, Value: "const", HasSuffixSpace: true }),
+          buildToken({
+            Kind: TokenKind.Keyword,
+            Value: "export",
+            HasSuffixSpace: true,
+            IsDeprecated: deprecated,
+          }),
+          buildToken({
+            Kind: TokenKind.Keyword,
+            Value: "const",
+            HasSuffixSpace: true,
+            IsDeprecated: deprecated,
+          }),
         );
       }
       if (!item.excerptTokens.some((except) => except.text.includes("\n"))) {
@@ -308,16 +332,17 @@ function buildMemberLineTokens(line: ReviewLine, item: ApiItem) {
               Kind: TokenKind.TypeName,
               NavigateToId: excerpt.canonicalReference.toString(),
               Value: excerpt.text,
+              IsDeprecated: deprecated,
             });
             line.Tokens.push(token);
           } else if (item.kind === ApiItemKind.Enum) {
-            splitAndBuild(line.Tokens, `export enum ${item.displayName}`, item);
+            splitAndBuild(line.Tokens, `export enum ${item.displayName}`, item, deprecated);
           } else {
-            splitAndBuild(line.Tokens, excerpt.text, item);
+            splitAndBuild(line.Tokens, excerpt.text, item, deprecated);
           }
         }
       } else {
-        splitAndBuildMultipleLine(line, item.excerptTokens, item);
+        splitAndBuildMultipleLine(line, item.excerptTokens, item, deprecated);
       }
     }
   }
@@ -344,7 +369,11 @@ function buildMember(reviewLines: ReviewLine[], item: ApiItem) {
     buildReleaseTag(reviewLines, releaseTag, line.LineId);
   }
 
-  buildMemberLineTokens(line, item);
+  const deprecated = isDeprecated(item);
+  if (deprecated) {
+    buildDeprecatedLine(reviewLines, line.LineId);
+  }
+  buildMemberLineTokens(line, item, deprecated);
 
   if (mayHaveChildren(item)) {
     if (line.Tokens.length > 0) {
@@ -396,7 +425,7 @@ function buildReview(
   buildSubpathExports(review, apiModel);
 }
 
-export function generateApiview(options: {
+export function generateApiView(options: {
   meta: Metadata;
   dependencies: Record<string, string>;
   apiModel: ApiModel;

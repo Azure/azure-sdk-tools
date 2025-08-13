@@ -1,9 +1,10 @@
 import fs from "fs";
 import path from "path";
-const commentJson = require('comment-json');
+import {  CommentDescriptor, CommentSymbol, parse, CommentArray, stringify  } from 'comment-json'
 
 export function changeRushJson(azureSDKForJSRepoRoot: string, packageName: any, relativePackageFolderPath: string, versionPolicyName: string) {
-    const rushJson = commentJson.parse(fs.readFileSync(path.join(azureSDKForJSRepoRoot, 'rush.json'), { encoding: 'utf-8' }));
+    const parsed  = parse(fs.readFileSync(path.join(azureSDKForJSRepoRoot, 'rush.json'), { encoding: 'utf-8' })) ;
+    const rushJson = parsed as CommentDescriptor & { projects: CommentArray<CommentSymbol> };
     const projects: any[] = rushJson.projects;
     let exist = false;
     for (const project of projects) {
@@ -18,6 +19,6 @@ export function changeRushJson(azureSDKForJSRepoRoot: string, packageName: any, 
             projectFolder: relativePackageFolderPath.replace(/\\/g, '/'),
             versionPolicyName: versionPolicyName
         });
-        fs.writeFileSync(path.join(azureSDKForJSRepoRoot, 'rush.json'), commentJson.stringify(rushJson,undefined, 2), {encoding: 'utf-8'});
+        fs.writeFileSync(path.join(azureSDKForJSRepoRoot, 'rush.json'), stringify(rushJson,undefined, 2), {encoding: 'utf-8'});
     }
 }

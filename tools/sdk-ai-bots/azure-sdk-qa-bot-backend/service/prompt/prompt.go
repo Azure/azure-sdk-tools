@@ -49,7 +49,6 @@ func (p *DefaultPromptParser) ParseResponse(response, template string) (*model.C
 		Answer:            resp.Answer,
 		HasResult:         resp.HasResult,
 		References:        resp.References,
-		Category:          &resp.Category,
 		ReasoningProgress: &resp.ReasoningProgress,
 	}, nil
 }

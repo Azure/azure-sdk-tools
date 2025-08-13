@@ -261,12 +261,9 @@ func (s *SearchClient) GetHeader1CompleteContext(chunk model.Index) ([]model.Ind
 func (s *SearchClient) CompleteChunk(chunk model.Index) model.Index {
 	var chunks []model.Index
 	var err error
-	switch chunk.ContextID {
-	case string(model.Source_TypeSpecQA):
+	if strings.HasPrefix(chunk.ContextID, "static") {
 		chunks, err = s.GetHeader1CompleteContext(chunk)
-	case string(model.Source_TypeSpecMigration):
-		chunks, err = s.GetHeader1CompleteContext(chunk)
-	default:
+	} else {
 		chunks, err = s.GetCompleteContext(chunk)
 	}
 	if err != nil {

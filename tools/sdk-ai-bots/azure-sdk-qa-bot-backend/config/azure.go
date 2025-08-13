@@ -30,7 +30,8 @@ const (
 	AI_SEARCH_AGENT                = "azure-sdk-agent"
 	STORAGE_BASE_URL               = "https://typespechelper4storage.blob.core.windows.net"
 	STORAGE_KNOWLEDGE_CONTAINER    = "knowledge"
-	STORAGE_FEEDBACK_CONTAINER     = "feedback"
+	STORAGE_FEEDBACK_CONTAINER     = "feedback-v2"
+	STORAGE_RECORDS_CONTAINER      = "records"
 )
 
 func InitOpenAIClient() {
@@ -45,7 +46,7 @@ func InitOpenAIClient() {
 }
 
 func InitSecrets() {
-	keyVaultURL := "https://azuresdkqabotconfig.vault.azure.net"
+	keyVaultURL := "https://azuresdkqabotea.vault.azure.net"
 
 	//Create a credential using the NewDefaultAzureCredential type.
 	cred, err := azidentity.NewDefaultAzureCredential(nil)

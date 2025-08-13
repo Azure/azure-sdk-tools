@@ -14,8 +14,9 @@ const onTurnErrorHandler = async (context, error) => {
   // This check writes out errors to console log .vs. app insights.
   // NOTE: In production environment, you should consider logging this to Azure
   //       application insights.
+  const meta = getTurnContextLogMeta(context);
   const stack = 'stack' in error ? (error.stack as string).replace(/\n/g, ' ') : '';
-  logger.error(`\n [onTurnError] unhandled error: ${error}, call stack: ${stack}`, getTurnContextLogMeta(context));
+  logger.error(`\n [onTurnError] unhandled error: ${error}, call stack: ${stack}`, { meta });
 
   // Only send error message for user messages, not for other message types so the bot doesn't spam a channel or chat.
   if (context.activity.type === 'message') {
@@ -27,11 +28,19 @@ const onTurnErrorHandler = async (context, error) => {
       'TurnError'
     );
 
-    // Send a message to the user
-    const errorMessage =
-      `The bot encountered an error or bug.` +
-      (process.env.IS_LOCAL === 'true' ? `\nError: ${error}. Stack: ${(error as Error)?.stack}` : '');
-    await context.sendActivity(errorMessage);
+    if (
+      error &&
+      'message' in error &&
+      typeof error.message === 'string' &&
+      !(error.message as string).includes("Cannot read properties of null (reading 'role')")
+    ) {
+      // Send a message to the user
+      const errorMessage =
+        `The bot encountered an error or bug.` +
+        (process.env.IS_LOCAL === 'true' ? `\nError: ${error}. Stack: ${(error as Error)?.stack}` : '');
+      await context.sendActivity(errorMessage);
+      logger.warn(`Sent error to teams. Error: ${error}`, { meta });
+    }
   }
 };
 

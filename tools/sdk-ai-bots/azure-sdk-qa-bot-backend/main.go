@@ -21,6 +21,7 @@ func setupRouter() *gin.Engine {
 	// Protected endpoints
 	r.POST("/completion", auth.APIKeyAuth(), handler.CompletionHandler)
 	r.POST("/feedback", auth.APIKeyAuth(), handler.FeedBackHandler)
+	r.POST("/record_answer", auth.APIKeyAuth(), handler.AnswerRecordHandler)
 
 	return r
 }

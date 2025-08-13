@@ -1,8 +1,7 @@
-package feedback
+package record
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"log"
 	"time"
@@ -13,19 +12,20 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
-type FeedbackService struct{}
+type RecordService struct{}
 
-func NewFeedbackService() *FeedbackService {
-	return &FeedbackService{}
+func NewRecordService() *RecordService {
+	return &RecordService{}
 }
 
-func (s *FeedbackService) SaveFeedback(feedback model.FeedbackReq) error {
+func (s *RecordService) SaveAnswerRecord(record model.AnswerRecordReq) error {
 	timestamp := time.Now()
-	// Get year and month
+
+	// Get year and month from the timestamp
 	year, month, _ := timestamp.Date()
-	
-	// Format: feedback_YYYY_MM.xlsx
-	filename := fmt.Sprintf("feedback_%04d_%02d.xlsx", year, int(month))
+
+	// Format: answer_records_YYYY_MM.xlsx
+	filename := fmt.Sprintf("answer_records_%04d_%02d.xlsx", year, int(month))
 
 	// Read file from storage
 	storageService, err := storage.NewStorageService()
@@ -37,9 +37,9 @@ func (s *FeedbackService) SaveFeedback(feedback model.FeedbackReq) error {
 	var existingData bool
 
 	// Try to download existing Excel file from storage
-	content, err := storageService.DownloadBlob(config.STORAGE_FEEDBACK_CONTAINER, filename)
+	content, err := storageService.DownloadBlob(config.STORAGE_RECORDS_CONTAINER, filename)
 	if err != nil || len(content) == 0 {
-		log.Printf("Failed to download feedback file or file is empty (creating new): %v", err)
+		log.Printf("Failed to download answer records file or file is empty (creating new): %v", err)
 		// Create new Excel file
 		f = excelize.NewFile()
 		existingData = false
@@ -54,15 +54,15 @@ func (s *FeedbackService) SaveFeedback(feedback model.FeedbackReq) error {
 
 	defer f.Close()
 
-	sheetName := "Feedback"
+	sheetName := "AnswerRecords"
 
 	// If this is a new file, set up the headers
 	if !existingData {
-		// Rename default sheet to "Feedback"
+		// Rename default sheet to "AnswerRecords"
 		f.SetSheetName("Sheet1", sheetName)
 
 		// Set headers
-		headers := []string{"Timestamp", "TenantID", "Messages", "Reaction", "Comment", "Reasons", "Link"}
+		headers := []string{"Timestamp", "ChannelName", "ChannelID", "MessageLink"}
 		for i, header := range headers {
 			cell := fmt.Sprintf("%c1", 'A'+i)
 			f.SetCellValue(sheetName, cell, header)
@@ -76,19 +76,12 @@ func (s *FeedbackService) SaveFeedback(feedback model.FeedbackReq) error {
 	}
 	nextRow := len(rows) + 1
 
-	// Convert data to JSON bytes for Excel
-	reasonBytes, _ := json.Marshal(feedback.Reasons)
-	messageBytes, _ := json.Marshal(feedback.Messages)
-
 	// Set the new row data
 	rowData := []interface{}{
 		timestamp.Format(time.RFC3339),
-		feedback.TenantID,
-		string(messageBytes),
-		feedback.Reaction,
-		feedback.Comment,
-		string(reasonBytes),
-		feedback.Link,
+		record.ChannelName,
+		record.ChannelID,
+		record.MessageLink,
 	}
 
 	for i, value := range rowData {
@@ -102,6 +95,6 @@ func (s *FeedbackService) SaveFeedback(feedback model.FeedbackReq) error {
 		return fmt.Errorf("failed to write Excel to buffer: %w", err)
 	}
 
-	err = storageService.PutBlob(config.STORAGE_FEEDBACK_CONTAINER, filename, buf.Bytes())
+	err = storageService.PutBlob(config.STORAGE_RECORDS_CONTAINER, filename, buf.Bytes())
 	return err
 }

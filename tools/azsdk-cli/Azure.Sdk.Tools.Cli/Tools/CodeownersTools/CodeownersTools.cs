@@ -159,7 +159,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
                 var labelsContent = labelsFileContent.Content;
-                var labelsSha = labelsFileContent.Sha;
 
                 // Validate service label
                 if (!string.IsNullOrEmpty(serviceLabel))

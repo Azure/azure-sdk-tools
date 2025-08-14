@@ -52,7 +52,7 @@ async def process_file(input_file: str, output_file: str, is_bot: bool) -> None:
     outputFile.flush()
     outputFile.close()
 
-async def call_bot_api(question: str, bot_endpoint: str, api_key: str, tenant_id: str = None) -> Dict[str, Any]:
+async def call_bot_api(question: str, bot_endpoint: str, api_key: str, tenant_id: str = None, withFullContext: bool = True) -> Dict[str, Any]:
     """Call the completion API endpoint."""
     headers = {
         "Content-Type": "application/json; charset=utf8",
@@ -65,6 +65,7 @@ async def call_bot_api(question: str, bot_endpoint: str, api_key: str, tenant_id
             "content": question
         },
         "with_preprocess": True,
+        "with_full_context": withFullContext
     }
 
     async with aiohttp.ClientSession() as session:

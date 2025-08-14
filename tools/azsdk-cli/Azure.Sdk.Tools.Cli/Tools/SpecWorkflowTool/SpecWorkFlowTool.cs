@@ -27,8 +27,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
         public static readonly string ARM_SIGN_OFF_LABEL = "ARMSignedOff";
         public static readonly string API_STEWARDSHIP_APPROVAL = "APIStewardshipBoard-SignedOff";
         private static readonly string DEFAULT_BRANCH = "main";
-        private static readonly System.Text.RegularExpressions.Regex GITHUB_PR_URL_REGEX = 
-            new(@"^https?:\/\/github\.com\/([^\/]+)\/([^\/]+)\/pull\/(\d+)", System.Text.RegularExpressions.RegexOptions.Compiled);
 
         public static readonly HashSet<string> SUPPORTED_LANGUAGES = new()
         {
@@ -396,9 +394,10 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
                 var pr = await devopsService.GetSDKPullRequestFromPipelineRunAsync(buildId, language, workItemId);
+                var parsedLink = DevOpsService.ParseSDKPullRequestUrl(pr);
 
                 var rp = await devopsService.GetReleasePlanForWorkItemAsync(workItemId);
-                await UpdateSdkPullRequestDescription(pr, rp);
+                await UpdateSdkPullRequestDescription(parsedLink, rp);
 
                 return pr;
             }
@@ -449,7 +448,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 // Parse just the pull request link from input
                 var repoName = GetRepoName(language);
                 var parsedLink = DevOpsService.ParseSDKPullRequestUrl(pullRequestUrl);
-                if (!parsedLink.Contains(repoName))
+                if (!parsedLink.FullUrl.Contains(repoName))
                 {
                     return $"Invalid pull request link. Provide a pull request link in SDK repo {repoName}";
                 }
@@ -461,7 +460,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     return $"Release plan with ID {releasePlanId} or work item ID {workItemId} is not found.";
                 }
 
-                var sdkInfoInRelease = devopsService.AddSdkInfoInReleasePlanAsync(releasePlan.WorkItemId, language, "", parsedLink);
+                var sdkInfoInRelease = devopsService.AddSdkInfoInReleasePlanAsync(releasePlan.WorkItemId, language, "", parsedLink.FullUrl);
                 var releaseInfoInSdk = UpdateSdkPullRequestDescription(parsedLink, releasePlan);
 
                 await Task.WhenAll(sdkInfoInRelease, releaseInfoInSdk);
@@ -475,18 +474,11 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        private async Task UpdateSdkPullRequestDescription(string pullRequestUrl, ReleasePlan releasePlan)
+        private async Task UpdateSdkPullRequestDescription(ParsedSdkPullRequest parsedUrl, ReleasePlan releasePlan)
         {
-            // Parse PR URL to extract owner, repo, and PR number
-            var prUrlMatch = GITHUB_PR_URL_REGEX.Match(pullRequestUrl);
-            if (!prUrlMatch.Success)
-            {
-                return;
-            }
-
-            var repoOwner = prUrlMatch.Groups[1].Value;
-            var repoName = prUrlMatch.Groups[2].Value;
-            var prNumber = int.Parse(prUrlMatch.Groups[3].Value);
+            var repoOwner = parsedUrl.RepoOwner;
+            var repoName = parsedUrl.RepoName;
+            var prNumber = parsedUrl.PrNumber;
 
             var pr = await githubService.GetPullRequestAsync(repoOwner, repoName, prNumber);
             if (pr == null)

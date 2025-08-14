@@ -18,5 +18,10 @@ public enum PackageCheckType
     /// <summary>
     /// Run dependency analysis check.
     /// </summary>
-    Dependency
+    Dependency,
+    
+    /// <summary>
+    /// Run README validation check.
+    /// </summary>
+    Readme
 }

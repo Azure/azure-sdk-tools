@@ -70,7 +70,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             output.Output(result);
         }
 
-        [McpServerTool(Name = "azsdk_package_run_check"), Description("Run validation checks for SDK packages. Provide package path and check type (All, Changelog, Dependency).")]
+        [McpServerTool(Name = "azsdk_package_run_check"), Description("Run validation checks for SDK packages. Provide package path and check type (All, Changelog, Dependency, Readme).")]
         public async Task<CLICheckResponse> RunPackageCheck(string packagePath, PackageCheckType checkType, CancellationToken ct = default)
         {
             try
@@ -117,6 +117,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     PackageCheckType.All => await RunAllChecks(packagePath, languageService, ct),
                     PackageCheckType.Changelog => await RunChangelogValidation(packagePath, languageService),
                     PackageCheckType.Dependency => await RunDependencyCheck(packagePath, languageService, ct),
+                    PackageCheckType.Readme => await RunReadmeValidation(packagePath, languageService),
                     _ => throw new ArgumentOutOfRangeException(
                         nameof(checkType),
                         checkType,
@@ -150,6 +151,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
             var changelogValidationResult = await languageService.ValidateChangelogAsync(packagePath);
             results.Add(changelogValidationResult);
             if (changelogValidationResult.ExitCode != 0)
+            {
+                overallSuccess = false;
+            }
+
+            // Run README validation
+            var readmeValidationResult = await languageService.ValidateReadmeAsync(packagePath);
+            results.Add(readmeValidationResult);
+            if (readmeValidationResult.ExitCode != 0)
             {
                 overallSuccess = false;
             }
@@ -192,6 +201,21 @@ namespace Azure.Sdk.Tools.Cli.Tools
             {
                 SetFailure(1);
                 return new CLICheckResponse(result.ExitCode, result.CheckStatusDetails, "Dependency check failed");
+            }
+
+            return result;
+        }
+
+        private async Task<CLICheckResponse> RunReadmeValidation(string packagePath, ILanguageRepoService languageService)
+        {
+            logger.LogInformation("Running README validation");
+            
+            var result = await languageService.ValidateReadmeAsync(packagePath);
+            
+            if (result.ExitCode != 0)
+            {
+                SetFailure(1);
+                return new CLICheckResponse(result.ExitCode, result.CheckStatusDetails, "README validation failed");
             }
 
             return result;

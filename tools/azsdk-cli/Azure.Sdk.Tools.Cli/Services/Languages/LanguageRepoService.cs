@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Configuration;
 
 namespace Azure.Sdk.Tools.Cli.Services;
 
@@ -46,6 +47,13 @@ public interface ILanguageRepoService
     /// <param name="packagePath">Absolute path to the package directory</param>
     /// <returns>CLI check response containing success/failure status and response message</returns>
     Task<CLICheckResponse> ValidateChangelogAsync(string packagePath);
+
+    /// <summary>
+    /// Validate README for the target language.
+    /// </summary>
+    /// <param name="packagePath">Absolute path to the package directory</param>
+    /// <returns>CLI check response containing success/failure status and response message</returns>
+    Task<CLICheckResponse> ValidateReadmeAsync(string packagePath);
 }
 
 /// <summary>
@@ -104,6 +112,11 @@ public class LanguageRepoService : ILanguageRepoService
         return await ValidateChangelogCommonAsync(packagePath);
     }
 
+    public virtual async Task<CLICheckResponse> ValidateReadmeAsync(string packagePath)
+    {
+        return await ValidateReadmeCommonAsync(packagePath);
+    }
+
     /// <summary>
     /// Common changelog validation implementation that works for most Azure SDK languages.
     /// Uses the PowerShell script from eng/common/scripts/Verify-ChangeLog.ps1.
@@ -156,6 +169,83 @@ public class LanguageRepoService : ILanguageRepoService
             else
             {
                 return new CLICheckResponse(1, processResult.Output, $"Changelog validation failed with exit code {processResult.ExitCode}");
+            }
+        }
+        catch (Exception ex)
+        {
+            stopwatch.Stop();
+            return new CLICheckResponse(1, "", $"Unhandled exception: {ex.Message}");
+        }
+        finally
+        {
+            await Task.CompletedTask; // Make this async for consistency
+        }
+    }
+
+    /// <summary>
+    /// Common README validation implementation that works for most Azure SDK languages.
+    /// Uses the PowerShell script from eng/common/scripts/Verify-Readme.ps1.
+    /// </summary>
+    /// <param name="packagePath">Absolute path to the package directory</param>
+    /// <returns>CLI check response containing success/failure status and response message</returns>
+    protected async Task<CLICheckResponse> ValidateReadmeCommonAsync(string packagePath)
+    {
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        
+        try
+        {
+            if (!Directory.Exists(packagePath))
+            {
+                return new CLICheckResponse(1, "", $"Package path does not exist: {packagePath}");
+            }
+
+            // Find the SDK repository root by looking for common repository indicators
+            var packageRepoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
+            if (string.IsNullOrEmpty(packageRepoRoot))
+            {
+                return new CLICheckResponse(1, "", $"Could not find repository root from package path: {packagePath}");
+            }
+
+            // Construct the path to the PowerShell script in the SDK repository
+            var scriptPath = Path.Combine(packageRepoRoot, Constants.ENG_COMMON_SCRIPTS_PATH, "Verify-Readme.ps1");
+            
+            if (!File.Exists(scriptPath))
+            {
+                return new CLICheckResponse(1, "", $"PowerShell script not found at expected location: {scriptPath}");
+            }
+
+            // Construct the path to the doc settings file
+            var settingsPath = Path.Combine(packageRepoRoot, "eng", ".docsettings.yml");
+            
+            if (!File.Exists(settingsPath))
+            {
+                return new CLICheckResponse(1, "", $"Doc settings file not found at expected location: {settingsPath}");
+            }
+
+            var command = "pwsh";
+            var args = new[] { 
+                "-File", scriptPath, 
+                "-SettingsPath", settingsPath,
+                "-ScanPaths", packagePath,
+            };
+
+            // Use a longer timeout for README validation - 10 minutes should be sufficient as it may need to install doc-warden
+            var timeoutMs = 600_000; // 10 minutes
+            var processResult = _processHelper.RunProcess(command, args, packagePath, timeoutMs);
+            stopwatch.Stop();
+
+            if (processResult.ExitCode == 0)
+            {
+                return new CLICheckResponse(0, System.Text.Json.JsonSerializer.Serialize(new
+                {
+                    Message = "README validation completed successfully",
+                    Duration = (int)stopwatch.ElapsedMilliseconds,
+                    Output = processResult.Output
+                }));
+            }
+            else
+            {
+                return new CLICheckResponse(1, processResult.Output, $"README validation failed with exit code {processResult.ExitCode}");
             }
         }
         catch (Exception ex)

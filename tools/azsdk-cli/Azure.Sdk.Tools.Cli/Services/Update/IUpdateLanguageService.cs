@@ -9,17 +9,7 @@ public interface IUpdateLanguageService
     string Language { get; }
 
     /// <summary>
-    /// Regenerates (or triggers generation of) fresh SDK code for the given spec into a staging path.
-    /// Implementations should:
-    /// 1. Invoke the appropriate TypeSpec emitter or generator for the language.
-    /// 2. Write all newly generated artifacts under the provided or computed <paramref name="newGeneratedPath"/>.
-    /// 3. Record the final path on <see cref="UpdateSessionState.NewGeneratedPath"/>.
-    /// 4. Avoid mutating any previous generation (the caller snapshots old output separately).
-    /// </summary>
-    Task RegenerateAsync(UpdateSessionState session, string specPath, string? newGeneratedPath, CancellationToken ct);
-
-    /// <summary>
-    /// Performs lightweight symbol extraction over a generated code tree and returns a dictionary of symbols keyed by a stable identifier.
+    /// Performs symbol extraction over a generated code tree and returns a dictionary of symbols keyed by a stable identifier.
     /// Symbols represent public API surface elements (classes, methods, etc.) relevant for diffing. Each <see cref="SymbolInfo"/> should capture:
     ///  - Id: unique key (e.g. ClassName or MethodName:Signature)
     ///  - Kind: classification (e.g. class, method)
@@ -35,9 +25,30 @@ public interface IUpdateLanguageService
     Task<List<ApiChange>> DiffAsync(Dictionary<string, SymbolInfo> oldSymbols, Dictionary<string, SymbolInfo> newSymbols);
 
     /// <summary>
-    /// Analyzes which customization files are impacted by the supplied API changes. Implementations scan the customization root
-    /// (developer-authored extensions / overrides) and return files along with textual reasons (e.g. symbol reference matches).
-    /// This powers the mapping stage: impacted files will later receive patch proposals, while non-impacted may be directly merged.
+    /// Discover the (single) customization root directory for this language given the generation root.
+    /// Return null if none exists. Some languages (e.g., Java) centralize customizations in one location.
     /// </summary>
-    Task<List<CustomizationImpact>> AnalyzeCustomizationImpactAsync(UpdateSessionState session, string customizationRoot, IEnumerable<ApiChange> apiChanges, CancellationToken ct);
+    Task<string?> GetCustomizationRootAsync(UpdateSessionState session, string generationRoot, CancellationToken ct);
+
+    /// <summary>
+    /// Analyze which customization files (under the single customization root) are impacted by the supplied API changes.
+    /// Return a list of impacted files with reasons; empty list if none or if root is null.
+    /// </summary>
+    Task<List<CustomizationImpact>> AnalyzeCustomizationImpactAsync(UpdateSessionState session, string? customizationRoot, IEnumerable<ApiChange> apiChanges, CancellationToken ct);
+
+    /// <summary>
+    /// Determine which customization files can be directly merged (no local edits conflicting) by comparing regenerated vs customization versions.
+    /// Return list of file paths eligible for direct merge.
+    /// </summary>
+    Task<List<string>> DetectDirectMergeFilesAsync(UpdateSessionState session, string? customizationRoot, CancellationToken ct);
+
+    /// <summary>
+    /// Produce proposed patch diffs for the impacted customization files not directly merged.
+    /// </summary>
+    Task<List<PatchProposal>> ProposePatchesAsync(UpdateSessionState session, IEnumerable<CustomizationImpact> impacts, IEnumerable<string> directMergeFiles, CancellationToken ct);
+
+    /// <summary>
+    /// Perform language-specific build / type / syntax validation (e.g., compile, mypy, tsc). Return tuple (success, errors).
+    /// </summary>
+    Task<(bool success, List<string> errors)> ValidateAsync(UpdateSessionState session, CancellationToken ct);
 }

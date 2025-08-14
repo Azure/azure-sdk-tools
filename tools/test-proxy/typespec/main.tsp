@@ -41,7 +41,7 @@ op StopRecord(@header("x-recording-id") recordingId: string, @header("x-recordin
  */
 @route("/Playback/Start")
 @post
-op StartPlayback(@body body: TestProxyStartInformation, @header("x-recording-id") recordingId: string | null): {
+op StartPlayback(@body body: TestProxyStartInformation, @header("x-recording-id") recordingId?: string): {
     @statusCode statusCode: 200;
     @header("x-recording-id") recordingId: string;
     @body response: Record<string>

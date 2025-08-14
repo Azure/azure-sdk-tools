@@ -199,7 +199,7 @@ namespace Admin {
         GitStore: "GitStore"
     }
 
-    model Certificate {
+    model TestProxyCertificate {
         PemValue: string;
         PemKey: string;
     }
@@ -208,7 +208,7 @@ namespace Admin {
         AllowAutoRedirect?: boolean;
         TLSValidationCert?: string;
         TLSValidationCertHost?: string;
-        Certificates?: Certificate[];
+        Certificates?: TestProxyCertificate[];
         PlaybackResponseTime?: int32;
     }
 

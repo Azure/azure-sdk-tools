@@ -77,7 +77,7 @@ namespace Admin {
      */
     @route("/Admin/AddSanitizers")
     @post
-    op AddSanitizers(@body sanitizers: SanitizerAddition[], @header("x-recording-id") recordingId: string | null): {
+    op AddSanitizers(@body sanitizers: SanitizerAddition[], @header("x-recording-id") recordingId?: string): {
         @statusCode statusCode: 200;
     } | BadRequestErrorResponse | UnhandledErrorResponse;
 
@@ -87,7 +87,7 @@ namespace Admin {
      */
     @route("/Admin/RemoveSanitizers")
     @post
-    op RemoveSanitizers(@body sanitizers: SanitizerList, @header("x-recording-id") recordingId: string | null): {
+    op RemoveSanitizers(@body sanitizers: SanitizerList, @header("x-recording-id") recordingId?: string): {
         @statusCode statusCode: 200;
         @body removed: RemovedSanitizers
     } | BadRequestErrorResponse | UnhandledErrorResponse;
@@ -98,7 +98,7 @@ namespace Admin {
      */
     @route("/Admin/SetRecordingOptions")
     @post
-    op SetRecordingOptions(@body body: RecordingOptions, @header("x-recording-id") recordingId: string | null): {
+    op SetRecordingOptions(@body body: RecordingOptions, @header("x-recording-id") recordingId?: string): {
         @statusCode statusCode: 200;
     } | BadRequestErrorResponse | UnhandledErrorResponse;
 }

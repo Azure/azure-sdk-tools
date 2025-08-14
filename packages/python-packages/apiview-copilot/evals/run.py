@@ -461,7 +461,7 @@ if __name__ == "__main__":
         "--num-runs",
         "-n",
         type=int,
-        default=1,
+        default=NUM_RUNS,
         help="The number of runs to perform, with the median of results kept. Defaults to 3.",
     )
     parser.add_argument(

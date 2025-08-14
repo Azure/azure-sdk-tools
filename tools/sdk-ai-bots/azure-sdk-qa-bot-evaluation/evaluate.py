@@ -140,8 +140,10 @@ def calculate_overall_score(row: dict[str, Any]) -> float:
     """Calculate weighted score based on various metrics."""
     # calculate the overall score when there are multiple metrics.
     similarityWeight = 0.6
-    groundedNessWeight = 0.4
-    return (row["outputs.similarity.similarity"] * similarityWeight + row["outputs.groundedness.groundedness"] * groundedNessWeight)/5
+    groundednessWeight = 0.4
+    similarity = float(row["outputs.similarity.similarity"]) if "outputs.similarity.similarity" in row else -1
+    groundedness = float(row["outputs.groundedness.groundedness"]) if "outputs.groundedness.groundedness" in row else -1
+    return (similarity * similarityWeight + groundedness * groundednessWeight)/5
 
 def record_run_result(result: dict[str, Any]) -> list[dict[str, Any]]:
     run_result = []
@@ -156,14 +158,14 @@ def record_run_result(result: dict[str, Any]) -> list[dict[str, Any]]:
         run_result.append(
             {
                 "testcase": row["inputs.testcase"],
-                "similarity": row["outputs.similarity.similarity"],
-                "gpt_similarity": row["outputs.similarity.gpt_similarity"],
-                "similarity_threshold": row["outputs.similarity.similarity_threshold"],
-                "similarity_result": row["outputs.similarity.similarity_result"],
-                "groundedness": row["outputs.groundedness.groundedness"],
-                "gpt_groundedness": row["outputs.groundedness.gpt_groundedness"],
-                "groundedness_threshold": row["outputs.groundedness.groundedness_threshold"],
-                "groundedness_result": row["outputs.groundedness.groundedness_result"],
+                "similarity": float(row["outputs.similarity.similarity"]) if "outputs.similarity.similarity" in row else -1,
+                "gpt_similarity": float(row["outputs.similarity.gpt_similarity"]) if "outputs.similarity.gpt_similarity" in row else -1,
+                "similarity_threshold": float(row["outputs.similarity.similarity_threshold"]) if "outputs.similarity.similarity_threshold" in row else 3,
+                "similarity_result": row["outputs.similarity.similarity_result"] if "outputs.similarity.similarity_result" in row else "N/A",
+                "groundedness": float(row["outputs.groundedness.groundedness"]) if "outputs.groundedness.groundedness" in row else -1,
+                "gpt_groundedness": float(row["outputs.groundedness.gpt_groundedness"]) if "outputs.groundedness.gpt_groundednes" in row else -1,
+                "groundedness_threshold": float(row["outputs.groundedness.groundedness_threshold"]) if "outputs.groundedness.groundedness_threshold" in row else 3,
+                "groundedness_result": row["outputs.groundedness.groundedness_result"] if "outputs.groundedness.groundedness_result" in row else "N/A",
                 "overall_score": score,
             }
         )
@@ -205,13 +207,23 @@ def output_table(baseline_results: dict[str, Any], eval_results: list[dict[str, 
         groundedness = result['groundedness']
         groundedness_result = result['groundedness_result']
         terminal_row = [testcase]
-        values = [
-            f"{sim:.1f}",
-            f"{sim_result}",
-            f"{groundedness}",
-            f"{groundedness_result}",
-            f"{score:.1f}"
-        ]
+        if testcase in baseline_results:
+            base = baseline_results[testcase]
+            values =[
+                f"{sim:.1f}{format_terminal_diff(sim, base['similarity'])}",
+                f"{sim_result}",
+                f"{groundedness}{format_terminal_diff(groundedness, base['groundedness'])}",
+                f"{groundedness_result}",
+                f"{score:.1f}{format_terminal_diff(score, base['overall_score'])}",
+            ]
+        else:
+            values = [
+                f"{sim:.1f}",
+                f"{sim_result}",
+                f"{groundedness}",
+                f"{groundedness_result}",
+                f"{score:.1f}"
+            ]
         terminal_row.extend(values)
         terminal_rows.append(terminal_row)
 
@@ -227,7 +239,8 @@ def show_results(args: argparse.Namespace, all_results: dict[str, Any]) -> None:
     """Display results in a table format."""
     for name, test_results in all_results.items():
         baseline_results = {}
-        baseline_path = pathlib.Path(__file__).parent / "results" / name[:-1]
+        baselineName = f"{name.split('_')[0]}-test.json"
+        baseline_path = pathlib.Path(__file__).parent / "results" / baselineName
 
         if baseline_path.exists():
             with open(baseline_path, "r") as f:
@@ -342,7 +355,8 @@ if __name__ == "__main__":
                 output_path="./evalresults.json",
                 **kwargs
             )
-            print("✅ Evaluation completed. Results:", result)
+            # print("✅ Evaluation completed. Results:", result)
+            print("✅ Evaluation completed.")
             run_result = record_run_result(result)
             all_results[output_file.name] = run_result
     except Exception as e:
@@ -351,3 +365,4 @@ if __name__ == "__main__":
         traceback.print_exc()
     
     show_results(args, all_results)
+    # check_results(all_results)

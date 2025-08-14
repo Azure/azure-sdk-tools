@@ -11,6 +11,8 @@ using Azure.Sdk.Tools.Cli.Helpers;
 
 namespace Azure.Sdk.Tools.Cli.Tools
 {
+
+
     /// <summary>
     /// This tool provides functionality for initializing TypeSpec projects and converting existing Azure service swagger definitions to TypeSpec projects.
     /// Use this tool to onboard to TypeSpec for new services or convert existing services.
@@ -18,18 +20,67 @@ namespace Azure.Sdk.Tools.Cli.Tools
     [McpServerToolType, Description("Tools for initializing TypeSpec projects and converting existing Azure service swagger definitions to TypeSpec projects.")]
     public class TypeSpecTool(INpxHelper npxHelper, ILogger<TypeSpecTool> logger, IOutputService output) : MCPTool
     {
+        /// <summary>
+        /// Represents the available TypeSpec project templates
+        /// </summary>
+        private enum TemplateEnum
+        {
+            /// <summary>
+            /// Azure Core template for data-plane services
+            /// </summary>
+            AzureCore,
+
+            /// <summary>
+            /// Azure ARM template for resource-manager services
+            /// </summary>
+            AzureArm
+        }
+
+        // This is the template registry URL used by the TypeSpec compiler's init command.
+        private const string AzureTemplatesUrl = "https://aka.ms/typespec/azure-init";
 
         // commands
         private const string ConvertSwaggerCommandName = "convert-swagger";
+        private const string InitCommandName = "init";
 
+        /// <summary>
+        /// Converts a TemplateEnum value to its corresponding string representation
+        /// </summary>
+        private static string TemplateEnumToString(TemplateEnum template)
+        {
+            return template switch
+            {
+                TemplateEnum.AzureCore => "azure-core",
+                TemplateEnum.AzureArm => "azure-arm",
+                _ => throw new ArgumentOutOfRangeException(nameof(template), template, "Invalid template enum value")
+            };
+        }
+
+        // Shared command options
         private readonly Option<string> outputDirectoryArg = new("--output-directory", "The output directory for the generated TypeSpec project. This directory must already exist and be empty.") { IsRequired = true };
 
+        // Init command options
+        private readonly Option<TemplateEnum> templateArg = new("--template", "The template to use for the TypeSpec project. Use AzureArm for resource management services, or AzureCore for data plane services.") { IsRequired = true };
+        private readonly Option<string> serviceNamespaceArg = new("--service-namespace", "The namespace of the service you are creating. This should be in Pascal case and represent the service's namespace.") { IsRequired = true };
+
+        // ConvertSwagger command options
         private readonly Option<string> swaggerReadmeArg = new("--swagger-readme", "The path or URL to an Azure swagger README file.") { IsRequired = true };
         private readonly Option<bool> isArmOption = new("--arm", "Whether the generated TypeSpec project is for an Azure Resource Management (ARM) API. This should be true if the swagger's path contains 'resource-manager'.");
         private readonly Option<bool> fullyCompatibleOption = new("--fully-compatible", "Whether to generate a TypeSpec project that is fully compatible with the swagger. It is recommended not to set this to true so that the converted TypeSpec project leverages TypeSpec built-in libraries with standard patterns and templates.");
 
         public override Command GetCommand()
         {
+
+            // Add validator to serviceNamespaceArg
+            serviceNamespaceArg.AddValidator(result =>
+            {
+                var value = result.GetValueOrDefault<string>();
+                if (string.IsNullOrWhiteSpace(value))
+                {
+                    result.ErrorMessage = "The service namespace cannot be empty or whitespace.";
+                }
+            });
+
             var tspCommand = new Command("tsp", "Tools for initializing TypeSpec projects and converting existing Azure service swagger definitions to TypeSpec projects");
 
             var subCommands = new[]
@@ -39,6 +90,11 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     outputDirectoryArg,
                     isArmOption,
                     fullyCompatibleOption
+                },
+                new Command(InitCommandName, "Initialize a new TypeSpec project") {
+                    outputDirectoryArg,
+                    templateArg,
+                    serviceNamespaceArg
                 }
             };
 
@@ -58,7 +114,10 @@ namespace Azure.Sdk.Tools.Cli.Tools
             switch (command)
             {
                 case ConvertSwaggerCommandName:
-                    HandleConvertCommand(ctx, ct);
+                    await HandleConvertCommand(ctx, ct);
+                    return;
+                case InitCommandName:
+                    await HandleInitCommand(ctx, ct);
                     return;
                 default:
                     logger.LogError($"Unknown command: {command}");
@@ -67,16 +126,36 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        private void HandleConvertCommand(InvocationContext ctx, CancellationToken ct)
+        private async Task HandleConvertCommand(InvocationContext ctx, CancellationToken ct)
         {
             var swaggerReadme = ctx.ParseResult.GetValueForOption(swaggerReadmeArg);
             var outputDirectory = ctx.ParseResult.GetValueForOption(outputDirectoryArg);
             var isArm = ctx.ParseResult.GetValueForOption(isArmOption);
             var fullyCompatible = ctx.ParseResult.GetValueForOption(fullyCompatibleOption);
 
-            TspToolResponse result = ConvertSwagger(swaggerReadme, outputDirectory, isArm, fullyCompatible);
+            TspToolResponse result = await ConvertSwagger(swaggerReadme, outputDirectory, isArm, fullyCompatible, ct);
             ctx.ExitCode = ExitCode;
             output.Output(result);
+        }
+
+        private async Task HandleInitCommand(InvocationContext ctx, CancellationToken ct)
+        {
+            try
+            {
+                var outputDirectory = ctx.ParseResult.GetValueForOption(outputDirectoryArg);
+                var template = ctx.ParseResult.GetValueForOption(templateArg);
+                var serviceNamespace = ctx.ParseResult.GetValueForOption(serviceNamespaceArg);
+
+                TspToolResponse result = await InitTypeSpecProject(outputDirectory: outputDirectory, template: TemplateEnumToString(template), serviceNamespace: serviceNamespace, ct);
+                ctx.ExitCode = ExitCode;
+                output.Output(result);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error initializing TypeSpec project");
+                SetFailure();
+                ctx.ExitCode = ExitCode;
+            }
         }
 
         [McpServerTool(Name = "azsdk_convert_swagger_to_typespec"), Description(@"Converts an existing Azure service swagger definition to a TypeSpec project.
@@ -88,7 +167,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         It is recommended not to set this to `true` so that the converted TypeSpec project
         leverages TypeSpec built-in libraries with standard patterns and templates.
         Returns path to the created project.")]
-        public TspToolResponse ConvertSwagger(string pathToSwaggerReadme, string outputDirectory, bool? isAzureResourceManagement = null, bool? fullyCompatible = null)
+        public async Task<TspToolResponse> ConvertSwagger(string pathToSwaggerReadme, string outputDirectory, bool? isAzureResourceManagement = null, bool? fullyCompatible = null, CancellationToken ct = default)
         {
             try
             {
@@ -115,12 +194,12 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     SetFailure();
                     return new TspToolResponse
                     {
-                        ResponseError = $"Failed: Invalid --output-dir, {validationResult}"
+                        ResponseError = $"Failed: Invalid --output-directory, {validationResult}"
                     };
                 }
 
                 var fullOutputDir = Path.GetFullPath(outputDirectory.Trim());
-                return RunTspClient(fullPathToSwaggerReadme, fullOutputDir, isAzureResourceManagement ?? false, fullyCompatible ?? false);
+                return await RunTspClientAsync(fullPathToSwaggerReadme, fullOutputDir, isAzureResourceManagement ?? false, fullyCompatible ?? false, ct);
             }
             catch (Exception ex)
             {
@@ -129,6 +208,68 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 return new TspToolResponse
                 {
                     ResponseError = $"Failed: An error occurred trying to convert '{pathToSwaggerReadme}': {ex.Message}"
+                };
+            }
+        }
+
+        [McpServerTool(Name = "azsdk_init_typespec_project"), Description("Use this tool to initialize a new TypeSpec project. Returns the path to the created project.")]
+        public async Task<TspToolResponse> InitTypeSpecProject(
+            [Description("Pass in the output directory where the project should be created. Must be an existing empty directory.")]
+            string outputDirectory,
+            [Description("`azure-core` for data-plane services, or `azure-arm` for resource-manager services.")]
+            string template,
+            [Description("The namespace of the service you are creating. Should be Pascal case. Exclude the 'Microsoft.' prefix for ARM services.")]
+            string serviceNamespace,
+            CancellationToken ct = default
+        )
+        {
+            try
+            {
+                logger.LogInformation("Initializing TypeSpec project: {outputDirectory}, template: {template}, serviceNamespace: {serviceNamespace}",
+                    outputDirectory, template, serviceNamespace);
+
+                // Validate template
+                var validTemplates = new[] { "azure-core", "azure-arm" };
+                if (string.IsNullOrWhiteSpace(template) || !validTemplates.Contains(template))
+                {
+                    SetFailure();
+                    return new TspToolResponse
+                    {
+                        ResponseError = $"Failed: Invalid --template, '{template}'. Must be one of: {string.Join(", ", validTemplates)}."
+                    };
+                }
+
+                // Validate service namespace
+                if (string.IsNullOrWhiteSpace(serviceNamespace))
+                {
+                    SetFailure();
+                    return new TspToolResponse
+                    {
+                        ResponseError = $"Failed: Invalid --service-namespace, '{serviceNamespace}'."
+                    };
+                }
+
+                // Validate outputDirectory using FileHelper
+                var validationResult = FileHelper.ValidateEmptyDirectory(outputDirectory);
+                if (validationResult != null)
+                {
+                    SetFailure();
+                    return new TspToolResponse
+                    {
+                        ResponseError = $"Failed: Invalid --output-directory, {validationResult}"
+                    };
+                }
+
+                var fullOutputDir = Path.GetFullPath(outputDirectory.Trim());
+                return await RunTspInitAsync(outputDirectory: fullOutputDir, template: template, serviceNamespace: serviceNamespace, ct);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error occurred while initializing TypeSpec project: {outputDirectory}, {template}, {serviceNamespace}", outputDirectory, template, serviceNamespace);
+                SetFailure();
+                return new TspToolResponse
+                {
+                    ResponseError = $"Failed: An error occurred trying to initialize TypeSpec project in '{outputDirectory}': {ex.Message}"
                 };
             }
         }
@@ -156,7 +297,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             return null; // Validation passed
         }
 
-        private TspToolResponse RunTspClient(string pathToSwaggerReadme, string outputDirectory, bool isAzureResourceManagement, bool fullyCompatible)
+        private async Task<TspToolResponse> RunTspClientAsync(string pathToSwaggerReadme, string outputDirectory, bool isAzureResourceManagement, bool fullyCompatible, CancellationToken ct)
         {
             var cmd = npxHelper.CreateCommand();
             cmd.Package = "@azure-tools/typespec-client-generator-cli";
@@ -173,13 +314,46 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 cmd.AddArgs("--fully-compatible");
             }
 
-            var result = cmd.Run();
+            var tspClientCt = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            tspClientCt.CancelAfter(TimeSpan.FromMinutes(2)); // Set a timeout for the conversion
+
+            var result = await cmd.RunAsync(tspClientCt.Token);
             if (result.ExitCode != 0)
             {
                 SetFailure();
                 return new TspToolResponse
                 {
                     ResponseError = $"Failed to convert swagger to TypeSpec project: {result.Output}"
+                };
+            }
+
+            return new TspToolResponse
+            {
+                IsSuccessful = true,
+                TypeSpecProjectPath = outputDirectory
+            };
+        }
+
+        private async Task<TspToolResponse> RunTspInitAsync(string outputDirectory, string template, string serviceNamespace, CancellationToken ct)
+        {
+            var cmd = npxHelper.CreateCommand();
+            cmd.Package = "@typespec/compiler";
+            cmd.Cwd = Environment.CurrentDirectory;
+            cmd.AddArgs("tsp", "init", "--no-prompt");
+            cmd.AddArgs("--project-name", serviceNamespace, "--args", $"ServiceNamespace={serviceNamespace}");
+            cmd.AddArgs("--output-dir", outputDirectory);
+            cmd.AddArgs("--template", template, AzureTemplatesUrl);
+
+            var tspInitCt = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            tspInitCt.CancelAfter(TimeSpan.FromMinutes(2)); // Set a timeout for the initialization
+
+            var result = await cmd.RunAsync(tspInitCt.Token);
+            if (result.ExitCode != 0)
+            {
+                SetFailure();
+                return new TspToolResponse
+                {
+                    ResponseError = $"Failed to initialize TypeSpec project: {result.Output}"
                 };
             }
 

@@ -6,7 +6,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 {
     public interface INpxHelper
     {
-        public ProcessResult RunNpx(List<string> args, string workingDirectory);
+        public Task<ProcessResult> RunNpxAsync(List<string> args, string workingDirectory, CancellationToken ct);
         public INpxCommand CreateCommand();
     }
 
@@ -20,7 +20,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         string Cwd { get; set; }
         INpxCommand AddArgs(params string[] args);
         INpxCommand AddArgs(IEnumerable<string> args);
-        ProcessResult Run();
+        Task<ProcessResult> RunAsync(CancellationToken ct);
     }
 
     public class NpxCommand : INpxCommand
@@ -48,7 +48,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             return this;
         }
 
-        public ProcessResult Run()
+        public async Task<ProcessResult> RunAsync(CancellationToken ct)
         {
             var finalArgs = new List<string>();
 
@@ -60,29 +60,31 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
             finalArgs.AddRange(args);
 
-            return npxHelper.RunNpx(finalArgs, Cwd);
+            return await npxHelper.RunNpxAsync(finalArgs, Cwd, ct);
         }
     }
 
     public class NpxHelper(IProcessHelper processHelper) : INpxHelper
     {
-        public ProcessResult RunNpx(List<string> args, string workingDirectory)
+        public async Task<ProcessResult> RunNpxAsync(List<string> args, string workingDirectory, CancellationToken ct)
         {
             var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
             if (isWindows)
             {
-                return processHelper.RunProcess(
+                return await processHelper.RunProcessAsync(
                     "cmd.exe",
                     ["/C", "npx", .. args],
-                    workingDirectory
+                    workingDirectory,
+                    ct
                 );
             }
             else
             {
-                return processHelper.RunProcess(
+                return await processHelper.RunProcessAsync(
                     "npx",
                     [.. args],
-                    workingDirectory
+                    workingDirectory,
+                    ct
                 );
             }
         }

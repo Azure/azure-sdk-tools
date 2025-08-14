@@ -23,5 +23,10 @@ public enum PackageCheckType
     /// <summary>
     /// Run README validation check.
     /// </summary>
-    Readme
+    Readme,
+    
+    /// <summary>
+    /// Run spelling check using cspell.
+    /// </summary>
+    Spelling
 }

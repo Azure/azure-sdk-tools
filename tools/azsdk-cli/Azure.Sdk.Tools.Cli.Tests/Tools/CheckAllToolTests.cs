@@ -87,6 +87,30 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         }
 
         [Test]
+        public async Task RunPackageCheck_WithReadmeCheck_ReturnsResult()
+        {
+            // Act
+            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Readme);
+
+            // Assert
+            Assert.IsNotNull(result);
+            // README check may succeed or fail depending on directory contents
+            Assert.That(result.ExitCode, Is.GreaterThanOrEqualTo(0));
+        }
+
+        [Test]
+        public async Task RunPackageCheck_WithSpellingCheck_ReturnsResult()
+        {
+            // Act
+            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Spelling);
+
+            // Assert
+            Assert.IsNotNull(result);
+            // Spelling check may succeed or fail depending on directory contents
+            Assert.That(result.ExitCode, Is.GreaterThanOrEqualTo(0));
+        }
+
+        [Test]
         public async Task RunPackageCheck_WithProjectFile_ReturnsPartialSuccess()
         {
             // Arrange - Create a basic project file to trigger language detection
@@ -143,16 +167,22 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var allResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.All);
             var changelogResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Changelog);
             var dependencyResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Dependency);
+            var readmeResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Readme);
+            var spellingResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Spelling);
 
             // Assert
             Assert.IsNotNull(allResult);
             Assert.IsNotNull(changelogResult);
             Assert.IsNotNull(dependencyResult);
+            Assert.IsNotNull(readmeResult);
+            Assert.IsNotNull(spellingResult);
             
             // All should execute (may fail due to test environment, but should not error on check type)
             Assert.IsTrue(allResult.ExitCode >= 0);
             Assert.IsTrue(changelogResult.ExitCode >= 0);
             Assert.IsTrue(dependencyResult.ExitCode >= 0);
+            Assert.IsTrue(readmeResult.ExitCode >= 0);
+            Assert.IsTrue(spellingResult.ExitCode >= 0);
         }
     }
 }

@@ -29,7 +29,7 @@ public class ConfigureTokenAuthenticationPolicy : IConfigureOptions<Authorizatio
                     return false;
                 }
 
-                return AuthenticationValidator.HasOrganizationOrManagedIdentityAccess(context.User,
+                return AuthenticationValidator.HasOrganizationOrAzureAuthenticationAccess(context.User,
                     _options.Value.RequiredOrganization);
             });
         });

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Security.Claims;
@@ -7,21 +8,22 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using APIView.Identity;
 using APIViewWeb.Models;
+using Microsoft.Extensions.Logging;
 
 namespace APIViewWeb.Account
 {
     public static class AuthenticationValidator
     {
-        #region Managed Identity Validation
+        #region Azure Identity Validation
 
-        public static bool IsValidManagedIdentity(ClaimsPrincipal user)
+        public static bool IsValidAzureIdentity(ClaimsPrincipal user)
         {
             if (!IsAuthenticated(user))
             {
                 return false;
             }
 
-            return HasRequiredManagedIdentityClaims(user) && IsValidAzureAuthentication(user);
+            return HasRequiredAzureIdentityClaims(user) && IsValidAzureAuthentication(user);
         }
 
         private static bool IsValidAzureAuthentication(ClaimsPrincipal user)
@@ -29,7 +31,7 @@ namespace APIViewWeb.Account
             return HasValidAuthenticationType(user) || HasValidIdentityProvider(user);
         }
 
-        private static bool HasRequiredManagedIdentityClaims(ClaimsPrincipal user)
+        private static bool HasRequiredAzureIdentityClaims(ClaimsPrincipal user)
         {
             Claim oidClaim = user.FindFirst("oid") ?? user.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier");
             return oidClaim != null;
@@ -83,19 +85,19 @@ namespace APIViewWeb.Account
 
         #region Combined Authentication Methods
         
-        public static bool HasOrganizationOrManagedIdentityAccess(ClaimsPrincipal user, string[] requiredOrganizations)
+        public static bool HasOrganizationOrAzureAuthenticationAccess(ClaimsPrincipal user, string[] requiredOrganizations)
         {
             if (!IsAuthenticated(user))
             {
                 return false;
             }
 
-            return IsValidManagedIdentity(user) || HasOrganizationAccess(user, requiredOrganizations);
+            return IsValidAzureIdentity(user) || HasOrganizationAccess(user, requiredOrganizations);
         }
         
         public static string GetAuthenticationMethod(ClaimsPrincipal user)
         {
-            if (IsValidManagedIdentity(user))
+            if (IsValidAzureIdentity(user))
             {
                 return "ManagedIdentity";
             }
@@ -128,7 +130,7 @@ namespace APIViewWeb.Account
         public static bool IsGitHubToken(string token) =>
             !string.IsNullOrEmpty(token) && gitHubTokenPrefixes.Any(token.StartsWith);
 
-        public static async Task<ClaimsPrincipal> ValidateGitHubTokenAsync(string token, HttpClient httpClient)
+        public static async Task<ClaimsPrincipal> ValidateGitHubTokenAsync(string token, HttpClient httpClient, ILogger logger = null)
         {
             if (!IsGitHubToken(token)) return null;
 
@@ -136,10 +138,10 @@ namespace APIViewWeb.Account
             {
                 SetupHttpClient(httpClient, token);
 
-                var user = await GetGitHubUserAsync(httpClient);
+                GithubUser user = await GetGitHubUserAsync(httpClient, logger);
                 if (user == null) { return null; }
 
-                string[] organizations = await GetUserOrganizationsAsync(httpClient);
+                string[] organizations = await GetUserOrganizationsAsync(httpClient, logger);
                 return CreateGitHubClaimsPrincipal(user, organizations);
             }
             catch
@@ -156,19 +158,29 @@ namespace APIViewWeb.Account
             httpClient.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
         }
 
-        private static async Task<GithubUser> GetGitHubUserAsync(HttpClient httpClient)
+        private static async Task<GithubUser> GetGitHubUserAsync(HttpClient httpClient, ILogger logger = null)
         {
-            var response = await httpClient.GetAsync("https://api.github.com/user");
-            if (!response.IsSuccessStatusCode) { return null; }
+            HttpResponseMessage response = await httpClient.GetAsync("https://api.github.com/user");
+            if (!response.IsSuccessStatusCode)
+            {
+                string errorContent = await response.Content.ReadAsStringAsync();
+                logger?.LogWarning("GitHub API /user request failed. Status: {StatusCode}, Content: {ErrorContent}", 
+                    response.StatusCode, errorContent);
+                return null;
+            }
 
             string json = await response.Content.ReadAsStringAsync();
             return JsonSerializer.Deserialize<GithubUser>(json, jsonOptions);
         }
 
-        private static async Task<string[]> GetUserOrganizationsAsync(HttpClient httpClient)
+        private static async Task<string[]> GetUserOrganizationsAsync(HttpClient httpClient, ILogger logger = null)
         {
             var response = await httpClient.GetAsync("https://api.github.com/user/orgs");
-            if (!response.IsSuccessStatusCode) { return []; }
+            if (!response.IsSuccessStatusCode) 
+            { 
+                logger?.LogWarning($"GitHub organization API call failed with status code: {response.StatusCode}");
+                return []; 
+            }
 
             string json = await response.Content.ReadAsStringAsync();
             GitHubOrganization[] orgs = JsonSerializer.Deserialize<GitHubOrganization[]>(json, jsonOptions);

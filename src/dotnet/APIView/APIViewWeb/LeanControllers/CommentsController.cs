@@ -135,7 +135,7 @@ namespace APIViewWeb.LeanControllers
                 await _commentsManager.RequestAgentReply(User, comment, apiRevisionId);
             }
 
-            return new LeanJsonResult(comment, StatusCodes.Status201Created, Url.Link("GetComments", new { reviewId = reviewId }));
+            return new LeanJsonResult(comment, StatusCodes.Status201Created, Url.Action("GetComments", "CommentsHybridAuth", new { reviewId = reviewId }));
         }
 
         /// <summary>

@@ -19,7 +19,7 @@ public class ConfigureCookieOrTokenPolicy : IConfigureOptions<AuthorizationOptio
         {
             policy.RequireAuthenticatedUser();
             policy.RequireAssertion(context =>
-                AuthenticationValidator.HasOrganizationOrManagedIdentityAccess(context.User,
+                AuthenticationValidator.HasOrganizationOrAzureAuthenticationAccess(context.User,
                     _options.Value.RequiredOrganization));
         });
     }

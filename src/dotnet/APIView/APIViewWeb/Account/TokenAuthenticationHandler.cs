@@ -13,12 +13,15 @@ namespace APIViewWeb.Account;
 
 public class TokenAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
 {
+    private readonly ILogger<TokenAuthenticationHandler> _authLogger;
+
     public TokenAuthenticationHandler(
         IOptionsMonitor<AuthenticationSchemeOptions> options,
         ILoggerFactory logger,
         UrlEncoder encoder)
         : base(options, logger, encoder)
     {
+        _authLogger = logger.CreateLogger<TokenAuthenticationHandler>();
     }
 
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
@@ -35,7 +38,7 @@ public class TokenAuthenticationHandler : AuthenticationHandler<AuthenticationSc
         {
             IHttpClientFactory httpClientFactory = Context.RequestServices.GetRequiredService<IHttpClientFactory>();
             using HttpClient httpClient = httpClientFactory.CreateClient();
-            ClaimsPrincipal user = await AuthenticationValidator.ValidateGitHubTokenAsync(token, httpClient);
+            ClaimsPrincipal user = await AuthenticationValidator.ValidateGitHubTokenAsync(token, httpClient, _authLogger);
             if (user != null)
             {
                 AuthenticationTicket ticket = new(user, "GitHubToken");

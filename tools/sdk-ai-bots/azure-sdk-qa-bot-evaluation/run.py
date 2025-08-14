@@ -149,11 +149,19 @@ def record_run_result(result: dict[str, Any]) -> list[dict[str, Any]]:
     run_result = []
     total_score = 0
 
+    similarity_pass_rate = 0
+    groundedness_pass_rate = 0
     for row in result["rows"]:
         score = calculate_overall_score(row)
         total_score += score
         # rules = [rule["rule_ids"] for rule in json.loads(row["inputs.response"])["comments"]]
         # rule_ids.update(*rules)
+
+        if "outputs.similarity.similarity_result" in row and row["outputs.similarity.similarity_result"] == "pass":
+            similarity_pass_rate += 1
+
+        if "outputs.groundedness.groundedness_result" in row and row["outputs.groundedness.groundedness_result"] == "pass":
+            groundedness_pass_rate += 1
 
         run_result.append(
             {
@@ -170,8 +178,11 @@ def record_run_result(result: dict[str, Any]) -> list[dict[str, Any]]:
             }
         )
 
-    average_score = total_score / len(result["rows"])
-    run_result.append({"average_score": average_score, "total_evals": len(result["rows"])})
+    if result:
+        average_score = total_score / len(result["rows"])
+    else:
+        average_score = 0
+    run_result.append({"average_score": average_score, "total_evals": len(result["rows"]), "similarity_pass_rate": similarity_pass_rate, "groundedness_pass_rate": groundedness_pass_rate})
     return run_result
 
 def format_terminal_diff(new: float, old: float, format_str: str = ".1f", reverse: bool = False) -> str:
@@ -199,13 +210,18 @@ def output_table(baseline_results: dict[str, Any], eval_results: list[dict[str, 
     ]
     terminal_rows = []
 
+    similarity_pass_rate = eval_results[-1]['similarity_pass_rate']
+    groundedness_pass_rate = eval_results[-1]['groundedness_pass_rate']
+
     for result in eval_results[:-1]:  # Skip summary object
         testcase = result["testcase"]
         score = result["overall_score"]
         sim = result["similarity"]
         sim_result = result["similarity_result"]
+
         groundedness = result['groundedness']
         groundedness_result = result['groundedness_result']
+        
         terminal_row = [testcase]
         if testcase in baseline_results:
             base = baseline_results[testcase]
@@ -232,8 +248,14 @@ def output_table(baseline_results: dict[str, Any], eval_results: list[dict[str, 
     print(tabulate(terminal_rows, headers, tablefmt="simple"))
     if baseline_results:
         print(
-            f"\n{file_name} average score: {eval_results[-1]['average_score']} {format_terminal_diff(eval_results[-1]['average_score'], baseline_results['average_score'])}\n\n"
+            f"\n{file_name} average score: {eval_results[-1]['average_score']} {format_terminal_diff(eval_results[-1]['average_score'], baseline_results['average_score'])}",
+            f" similarity: pass({similarity_pass_rate}) fail({len(eval_results)-1 - similarity_pass_rate})",
+            f" groundedness: pass({groundedness_pass_rate}) fail({len(eval_results)-1 - groundedness_pass_rate})"
+            "\n\n"
         )
+        # print(f" similarity: pass({similarity_pass_rate}) fail({len(eval_results)-1 - similarity_pass_rate})")
+        # print(f" groundedness: pass({groundedness_pass_rate}) fail({len(eval_results)-1 - groundedness_pass_rate})")
+        # print("\n\n")
 
 def show_results(args: argparse.Namespace, all_results: dict[str, Any]) -> None:
     """Display results in a table format."""
@@ -250,6 +272,33 @@ def show_results(args: argparse.Namespace, all_results: dict[str, Any]) -> None:
                 baseline_results["average_score"] = baseline_data[-1]["average_score"]
 
         output_table(baseline_results, test_results, name)
+
+def verify_results(args: argparse.Namespace, all_results: dict[str, Any]) -> bool:
+    ret = True
+    failed_scenarios = []
+    for name, test_results in all_results.items():
+        scenario_ret = True
+        baseline_results = {}
+        baselineName = f"{name.split('_')[0]}-test.json"
+        baseline_path = pathlib.Path(__file__).parent / "results" / baselineName
+
+        if baseline_path.exists():
+            with open(baseline_path, "r") as f:
+                baseline_data = json.load(f)
+                for result in baseline_data[:-1]:  # Skip summary
+                    baseline_results[result["testcase"]] = result
+                baseline_results["average_score"] = baseline_data[-1]["average_score"]
+        if test_results[-1]["similarity_pass_rate"] < test_results[-1]["total_evals"] or test_results[-1]["groundedness_pass_rate"] < test_results[-1]["total_evals"]:
+            scenario_ret = False
+        if test_results[-1]["average_score"] < baseline_data[-1]["average_score"]:
+            scenario_ret = False
+        if not scenario_ret:
+            failed_scenarios.append(name)
+            ret = False
+    if failed_scenarios:
+        print(f"Failed Scenarios: {' '.join(failed_scenarios)}")
+    return ret 
+
 
 if __name__ == "__main__":
 
@@ -365,4 +414,6 @@ if __name__ == "__main__":
         traceback.print_exc()
     
     show_results(args, all_results)
-    # check_results(all_results)
+    isPass = verify_results(args, all_results)
+    if not isPass:
+        exit(1)

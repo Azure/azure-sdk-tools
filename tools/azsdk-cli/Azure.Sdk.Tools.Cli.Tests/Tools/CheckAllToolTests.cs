@@ -54,7 +54,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public async Task RunPackageCheck_WithAllChecks_ReturnsFailureResult()
         {
             // Act - Using empty temp directory will cause dependency check to fail
-            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, "all");
+            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckName.All);
 
             // Assert
             Assert.IsNotNull(result);
@@ -66,7 +66,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public async Task RunPackageCheck_WithChangelogCheck_ReturnsResult()
         {
             // Act
-            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, "changelog");
+            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckName.Changelog);
 
             // Assert
             Assert.IsNotNull(result);
@@ -78,32 +78,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public async Task RunPackageCheck_WithDependencyCheck_ReturnsResult()
         {
             // Act
-            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, "dependency");
+            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckName.Dependency);
 
             // Assert
             Assert.IsNotNull(result);
             // Dependency check may succeed or fail depending on directory contents
             Assert.That(result.ExitCode, Is.GreaterThanOrEqualTo(0));
-        }
-
-        [Test]
-        public async Task RunPackageCheck_WithInvalidCheckType_ReturnsError()
-        {
-            // Arrange - Create a basic project file to trigger language detection
-            var projectFilePath = Path.Combine(_testProjectPath, "test.csproj");
-            await File.WriteAllTextAsync(projectFilePath, "<Project Sdk=\"Microsoft.NET.Sdk\"></Project>");
-
-            // Act
-            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, "invalid");
-
-            // Assert
-            Assert.IsNotNull(result);
-            Assert.That(result.ExitCode, Is.EqualTo(1));
-            // The test might fail at language detection step rather than check type validation
-            // So we accept either "Unknown check type" or "Unable to determine language" as valid error responses
-            var isValidError = result.ResponseError?.Contains("Unknown check type") == true ||
-                               result.ResponseError?.Contains("Unable to determine language") == true;
-            Assert.IsTrue(isValidError, $"Expected error about unknown check type or language detection, but got: '{result.ResponseError}'");
         }
 
         [Test]
@@ -114,7 +94,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             await File.WriteAllTextAsync(projectFilePath, "<Project Sdk=\"Microsoft.NET.Sdk\"></Project>");
 
             // Act - This will still fail because dotnet commands won't work properly, but test structure is better
-            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, "all");
+            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckName.All);
 
             // Assert
             Assert.IsNotNull(result);
@@ -130,7 +110,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             string invalidPath = "/tmp/nonexistent-path-12345";
 
             // Act
-            var result = await _packageCheckTool.RunPackageCheck(invalidPath, "all");
+            var result = await _packageCheckTool.RunPackageCheck(invalidPath, PackageCheckName.All);
 
             // Assert
             Assert.IsNotNull(result);
@@ -143,7 +123,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public async Task RunPackageCheck_WithValidPath_RunsAllChecks()
         {
             // Act
-            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, "all");
+            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckName.All);
 
             // Assert
             Assert.IsNotNull(result);
@@ -152,6 +132,27 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             // For valid paths, we expect the checks to run even if they fail
             // Since this is a test directory without proper project structure, checks may fail
             Assert.IsNotNull(result.CheckStatusDetails);
+        }
+
+        [Test]
+        public async Task RunPackageCheck_EnumValues_WorksCorrectly()
+        {
+            // Test that all enum values work correctly
+            
+            // Act - Test all enum values
+            var allResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckName.All);
+            var changelogResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckName.Changelog);
+            var dependencyResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckName.Dependency);
+
+            // Assert
+            Assert.IsNotNull(allResult);
+            Assert.IsNotNull(changelogResult);
+            Assert.IsNotNull(dependencyResult);
+            
+            // All should execute (may fail due to test environment, but should not error on check type)
+            Assert.IsTrue(allResult.ExitCode >= 0);
+            Assert.IsTrue(changelogResult.ExitCode >= 0);
+            Assert.IsTrue(dependencyResult.ExitCode >= 0);
         }
     }
 }

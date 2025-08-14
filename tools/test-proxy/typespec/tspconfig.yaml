@@ -9,7 +9,6 @@ options:
     service-dir: "sdk/core"
   "@typespec/http-client-csharp":
     package-name: "Microsoft.ClientModel.TestFramework"
-    namespace: "Microsoft.ClientModel.TestFramework"
     license:
       name: "MIT License"
       company: "Microsoft Corporation"

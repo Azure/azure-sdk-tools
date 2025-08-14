@@ -10,62 +10,58 @@ using TypeSpec.Http;
 
 namespace TestProxy;
 
-@doc("Start recording for a test.")
+/**
+ * Start recording for a test.
+ * @param body File location of the recording.
+ * @param recordingId The recording ID.
+ */
 @route("/Record/Start")
 @post
-op StartRecord(
-    @doc("File location of the recording.")
-    @body body: TestProxyStartInformation
-    ): {
+op StartRecord(@body body: TestProxyStartInformation): {
     @statusCode statusCode: 200;
-    @doc("The recording ID.")
     @header("x-recording-id") recordingId: string;
 } | BadRequestErrorResponse | NotFoundErrorResponse | UnhandledErrorResponse;
 
-@doc("Stop recording for a test.")
+/**
+ * Stop recording for a test.
+ * @param recordingId The recording ID.
+ * @param recordingSkip Optional header that can be set to request-response to skip recording this session.
+ * @param variables A set of variables for the recording session.
+ */
 @route("/Record/Stop")
 @post
-op StopRecord(
-    @doc("The recording ID.")
-    @header("x-recording-id")
-    recordingId: string,
-    @doc("Set to request-response to skip recording this session.")
-    @header("x-recording-skip")
-    recordingSkip?: string,
-    @body variables: Record<string>
-    ): {
+op StopRecord(@header("x-recording-id") recordingId: string, @header("x-recording-skip") recordingSkip?: string, @body variables: Record<string>): {
     @statusCode statusCode: 200;
 } | BadRequestErrorResponse | UnhandledErrorResponse;
 
-// when the recordingId is provided in a header on the request, the server will duplicate an existing playback
-// session and return the new session's recordingId. This is part of effective perf testing.
-@doc("Start playback for a test recording.")
+/**
+ * Start playback for a test recording.
+ * @param body File location of the recording.
+ * @param recordingId The recording ID. If provided, the server will duplicate an existing playback session and return the new session's recordingId.
+ */
 @route("/Playback/Start")
 @post
-op StartPlayback(
-    @doc("File location of the recording.")
-    @body body: TestProxyStartInformation,
-    @header("x-recording-id") recordingId: string | null
-    ): {
+op StartPlayback(@body body: TestProxyStartInformation, @header("x-recording-id") recordingId: string | null): {
     @statusCode statusCode: 200;
-    @doc("The recording ID.")
     @header("x-recording-id") recordingId: string;
     @body response: Record<string>
 } | BadRequestErrorResponse | NotFoundErrorResponse | UnhandledErrorResponse;
 
-@doc("Stop playback for a test recording.")
+/**
+ * Stop playback for a test recording.
+ * @param recordingId The recording ID.
+ */
 @route("/Playback/Stop")
 @post
-op StopPlayback(
-    @doc("The recording ID.")
-    @header("x-recording-id") recordingId: string): {
+op StopPlayback(@header("x-recording-id") recordingId: string): {
     @statusCode statusCode: 200;
 } | BadRequestErrorResponse | UnhandledErrorResponse;
 
-// below all of the Admin/ routes, if a recordingid is provided in a header, then the server will apply whatever the customization is
-// just to that session. If no recordingId is provided, then the server will apply the customization to all sessions.
-// this is what i'm trying to capture with the @header("x-recording-id") recordingId: string | null typing.
 namespace Admin {
+    /**
+     * Set the matcher for the test proxy. If a recording ID is provided in the header,
+     * the matcher will be set only for that session. Otherwise, it will be set globally.
+     */
     @route("/Admin/SetMatcher")
     // todo: we need to only allow CustomDefaultMatcherBody when the MatcherType is CustomDefaultMatcher
     @post
@@ -73,12 +69,20 @@ namespace Admin {
         @statusCode statusCode: 200;
     } | BadRequestErrorResponse | UnhandledErrorResponse;
 
+    /**
+     * Add sanitizers to the test proxy. If a recording ID is provided in the header,
+     * the sanitizers will be added only for that session. Otherwise, they will be added globally.
+     */
     @route("/Admin/AddSanitizers")
     @post
     op AddSanitizers(@body sanitizers: SanitizerAddition[], @header("x-recording-id") recordingId: string | null): {
         @statusCode statusCode: 200;
     } | BadRequestErrorResponse | UnhandledErrorResponse;
 
+    /**
+     * Remove sanitizers from the test proxy. If a recording ID is provided in the header,
+     * the sanitizers will be removed only for that session. Otherwise, they will be removed globally.
+     */
     @route("/Admin/RemoveSanitizers")
     @post
     op RemoveSanitizers(@body sanitizers: SanitizerList, @header("x-recording-id") recordingId: string | null): {
@@ -86,6 +90,10 @@ namespace Admin {
         @body removed: RemovedSanitizers
     } | BadRequestErrorResponse | UnhandledErrorResponse;
 
+    /**
+     * Set recording options for the test proxy. If a recording ID is provided in the header,
+     * the options will be set only for that session. Otherwise, they will be set globally.
+     */
     @route("/Admin/SetRecordingOptions")
     @post
     op SetRecordingOptions(@body body: RecordingOptions, @header("x-recording-id") recordingId: string | null): {

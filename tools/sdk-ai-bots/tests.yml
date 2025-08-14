@@ -70,7 +70,7 @@ stages:
             displayName: 'install requirements'
             workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
           - script: |
-              python evaluate.py
+              python run.py
             displayName: 'Run Evas'
             workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
             env:
@@ -101,7 +101,7 @@ stages:
           #       # Verify the context
           #       az account show --query '{subscription:name,tenant:tenantId}'
 
-          #       python $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/evaluate.py
+          #       python $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/run.py
           #       exit $?
           #   env:
           #     AZURE_AI_PROJECT_ENDPOINT: $(AZURE_AI_PROJECT_ENDPOINT)

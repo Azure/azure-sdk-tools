@@ -103,7 +103,7 @@ async def prepare_dataset(testdata_dir: str, file_prefix: str = None, is_bot: bo
     print(f"📄 Output file will be: {output_file}")
 
     
-    # Process markdown files in the folder, optionally filtered by prefix
+    # Process jsonl files in the folder, optionally filtered by prefix
     glob_pattern = f"{file_prefix}*.jsonl" if file_prefix else "*.jsonl"
     matching_files = list(data_dir.glob(glob_pattern))
     
@@ -154,8 +154,6 @@ def record_run_result(result: dict[str, Any]) -> list[dict[str, Any]]:
     for row in result["rows"]:
         score = calculate_overall_score(row)
         total_score += score
-        # rules = [rule["rule_ids"] for rule in json.loads(row["inputs.response"])["comments"]]
-        # rule_ids.update(*rules)
 
         if "outputs.similarity.similarity_result" in row and row["outputs.similarity.similarity_result"] == "pass":
             similarity_pass_rate += 1
@@ -253,11 +251,8 @@ def output_table(baseline_results: dict[str, Any], eval_results: list[dict[str, 
             f" groundedness: pass({groundedness_pass_rate}) fail({len(eval_results)-1 - groundedness_pass_rate})"
             "\n\n"
         )
-        # print(f" similarity: pass({similarity_pass_rate}) fail({len(eval_results)-1 - similarity_pass_rate})")
-        # print(f" groundedness: pass({groundedness_pass_rate}) fail({len(eval_results)-1 - groundedness_pass_rate})")
-        # print("\n\n")
 
-def show_results(args: argparse.Namespace, all_results: dict[str, Any]) -> None:
+def show_results(all_results: dict[str, Any]) -> None:
     """Display results in a table format."""
     for name, test_results in all_results.items():
         baseline_results = {}
@@ -273,7 +268,7 @@ def show_results(args: argparse.Namespace, all_results: dict[str, Any]) -> None:
 
         output_table(baseline_results, test_results, name)
 
-def verify_results(args: argparse.Namespace, all_results: dict[str, Any]) -> bool:
+def verify_results(all_results: dict[str, Any]) -> bool:
     ret = True
     failed_scenarios = []
     for name, test_results in all_results.items():
@@ -413,7 +408,7 @@ if __name__ == "__main__":
         import traceback
         traceback.print_exc()
     
-    show_results(args, all_results)
-    isPass = verify_results(args, all_results)
+    show_results(all_results)
+    isPass = verify_results(all_results)
     if not isPass:
         exit(1)

@@ -79,8 +79,8 @@ export class DifferenceDetector {
     
     this.result?.classes.forEach((v, k) => {
       if (this.hasIgnoreTargetNames(v)) this.result?.classes.delete(k);
-    });
-
+    });   
+    
     this.result?.typeAliases.forEach((v, k) => {
       if(this.shouldIgnoreTypeAliasBreakingChange(v, k)) this.result?.typeAliases.delete(k);
     });
@@ -89,6 +89,9 @@ export class DifferenceDetector {
       if(this.shouldIgnoreInterfaceBreakingChange(v, k)) this.result?.interfaces.delete(k);
       if(this.hasIgnoreTargetNames(v)) this.result?.interfaces.delete(k);
     });
+    
+    // Handle property refactoring to nested objects - should be ignored
+    this.ignorePropertyRefactoringChanges();
     
     // Handle generic interfaces - filter to only Added/Removed changes
     this.result?.interfaces.forEach((v, k) => {
@@ -111,9 +114,7 @@ export class DifferenceDetector {
   }
 
   private shouldIgnoreInterfaceBreakingChange(v: DiffPair[], k: string): boolean {    
-     // TODO: Create a new PR to ignore all 'any' cases for breaking change detection
-
-    if(k.endsWith('NextOptionalParams')) {
+    if (k.endsWith('NextOptionalParams')) {
       // Ignore NextOptionalParams as they are not breaking changes
       return true;
     }
@@ -148,6 +149,100 @@ export class DifferenceDetector {
       return name && ignoreTargets.includes(name) && pair.reasons === DiffReasons.Removed;
     });
   }
+
+  private ignorePropertyRefactoringChanges(): void {
+    if (!this.result) return;
+
+    const interfacesWithProperties = new Map<string, { 
+      diffPairs: DiffPair[], 
+      propertiesTypeName: string,
+      baselinePropsWithTypes: Map<string, string>
+    }>();
+
+    // Collect interfaces with properties
+    for (const [interfaceName, diffPairs] of this.result.interfaces) {
+      if (interfaceName.endsWith('Operations')) continue;
+
+      const currentInterface = this.context?.current.getInterface(interfaceName);
+      const propertiesProperty = currentInterface?.getProperty('properties');
+      
+      if (propertiesProperty) {
+        const propertiesTypeName = propertiesProperty.getTypeNode()?.getText();
+        if (propertiesTypeName) {
+          const baselineInterface = this.context?.baseline.getInterface(interfaceName);
+          const baselinePropsWithTypes = new Map<string, string>();
+          
+          baselineInterface?.getProperties().forEach(prop => {
+            baselinePropsWithTypes.set(prop.getName(), prop.getType().getText());
+          });
+          
+          interfacesWithProperties.set(interfaceName, { 
+            diffPairs, 
+            propertiesTypeName,
+            baselinePropsWithTypes
+          });
+        }
+      }
+    }
+
+    if (interfacesWithProperties.size === 0) return;
+
+    const addedTypeAliases = new Set<string>();
+    this.result.typeAliases.forEach((diffPairs, aliasName) => {
+      if (diffPairs.some(pair => pair.reasons === DiffReasons.Added)) {
+        addedTypeAliases.add(aliasName);
+      }
+    });
+
+    // Process property refactoring patterns
+    for (const [interfaceWithProperties, { diffPairs, propertiesTypeName, baselinePropsWithTypes }] of interfacesWithProperties) {
+      const addedInterface = this.context?.current.getInterface(propertiesTypeName);
+      if (!addedInterface) continue;
+
+      const addedPropsWithTypes = new Map(
+        addedInterface.getProperties().map(prop => [prop.getName(), prop.getType().getText()])
+      );
+      
+      const removedPropsWithTypes = diffPairs
+        .filter(pair => pair.reasons === DiffReasons.Removed && pair.target?.name)
+        .reduce((map, pair) => {
+          const propName = pair.target!.name!;
+          const propType = baselinePropsWithTypes.get(propName);
+          if (propType) map.set(propName, propType);
+          return map;
+        }, new Map<string, string>());
+
+      // Check if properties match exactly in both name and resolved type (property refactoring)
+      if (removedPropsWithTypes.size === addedPropsWithTypes.size && 
+          [...removedPropsWithTypes].every(([name, type]) => 
+            addedPropsWithTypes.has(name) && addedPropsWithTypes.get(name) === type)) {
+        
+        // Remove the added interface and related type aliases
+        this.result.interfaces.delete(propertiesTypeName);
+        addedTypeAliases.forEach(alias => {
+          if (this.context?.current.getTypeAlias(alias) && 
+              addedInterface.getFullText().includes(alias)) {
+            this.result?.typeAliases.delete(alias);
+          }
+        });
+
+        // Filter diff pairs for the original interface
+        const filteredDiffPairs = diffPairs.filter(pair => 
+          pair.reasons !== DiffReasons.Removed && 
+          !(pair.reasons === DiffReasons.Added && 
+            (pair.target?.name === 'properties' || pair.source?.name === 'properties'))
+        );
+
+        // Update or remove the original interface
+        if (filteredDiffPairs.length === 0) {
+          this.result.interfaces.delete(interfaceWithProperties);
+        } else {
+          this.result.interfaces.set(interfaceWithProperties, filteredDiffPairs);
+        }
+      }
+    }
+  }
+
 
   private convertHighLevelClientToModularClientCode(code: string): string {
     const project = new Project({

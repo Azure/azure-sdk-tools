@@ -26,7 +26,7 @@ public enum PackageCheckType
     Readme,
     
     /// <summary>
-    /// Run spelling check using cspell.
+    /// Run cspell.
     /// </summary>
     Cspell
 }

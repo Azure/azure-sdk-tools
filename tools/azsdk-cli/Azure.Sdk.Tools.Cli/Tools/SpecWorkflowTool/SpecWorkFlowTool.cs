@@ -471,7 +471,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        public async Task AddReleasePlanInfoInSdkAsync(string pullRequestUrl, ReleasePlan releasePlan)
+        private async Task AddReleasePlanInfoInSdkAsync(string pullRequestUrl, ReleasePlan releasePlan)
         {
             // Parse PR URL to extract owner, repo, and PR number
             var prUrlMatch = GITHUB_PR_URL_REGEX.Match(pullRequestUrl);
@@ -501,7 +501,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             var linksBuilder = new StringBuilder(header);
             linksBuilder.AppendLine();
             linksBuilder.AppendLine($"- Release Plan: {releasePlan.ReleasePlanLink}");
-            linksBuilder.AppendLine($"- Work Item Link: {releasePlan.WorkItemUrl}");
+            linksBuilder.AppendLine($"- Work Item Link: {releasePlan.WorkItemHtmlUrl}");
             linksBuilder.AppendLine($"- Spec Pull Request: {releasePlan.ActiveSpecPullRequest}");
             linksBuilder.Append($"- Spec API version: {releasePlan.SpecAPIVersion}");
 

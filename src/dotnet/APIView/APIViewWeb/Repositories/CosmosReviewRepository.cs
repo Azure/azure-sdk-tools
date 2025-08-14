@@ -68,31 +68,35 @@ namespace APIViewWeb
             return reviews;
         }
 
-        public async Task<IEnumerable<ReviewListItemModel>> GetPendingNamespaceApprovalReviewsAsync(IEnumerable<string> languages)
+        public async Task<IEnumerable<ReviewListItemModel>> GetPendingNamespaceApprovalReviewsAsync(IEnumerable<string> sdkLanguages)
         {
-            // Limit to 5 SDK languages: .NET, Java, JavaScript, Python, Go
-            var sdkLanguages = new[] { "C#", "Java", "JavaScript", "Python", "Go" };
-            var filteredLanguages = languages.Where(lang => sdkLanguages.Contains(lang)).Take(5);
-            
-            var languagesAsQueryStr = CosmosQueryHelpers.ArrayToQueryString(filteredLanguages);
-            var queryStringBuilder = new StringBuilder($@"
+            var languageArray = sdkLanguages.ToArray();
+            var languageList = string.Join(",", languageArray.Select(l => $"'{l}'"));
+            var queryText = $@"
                 SELECT * FROM Reviews r 
-                WHERE r.Language IN {languagesAsQueryStr}
-                AND (r.NamespaceReviewStatus = 1)
-                AND r.IsClosed = false
-                AND r.IsApproved = false
-                AND r.IsDeleted = false
-                AND IS_DEFINED(r.NamespaceApprovalRequestedBy)
-                AND IS_DEFINED(r.NamespaceApprovalRequestedOn)");
+                WHERE r.Language IN ({languageList}) 
+                AND r.NamespaceReviewStatus = 'Pending'
+                AND IS_DEFINED(r.NamespaceApprovalRequestedBy) 
+                AND IS_DEFINED(r.NamespaceApprovalRequestedOn)";
 
-            var queryDefinition = new QueryDefinition(queryStringBuilder.ToString());
-            var itemQueryIterator = _reviewsContainer.GetItemQueryIterator<ReviewListItemModel>(queryDefinition);
+            // Debug logging
+            Console.WriteLine($"[NAMESPACE DEBUG] Executing query: {queryText}");
+            
+            var itemQueryIterator = _reviewsContainer.GetItemQueryIterator<ReviewListItemModel>(queryText);
             var reviews = new List<ReviewListItemModel>();
             while (itemQueryIterator.HasMoreResults)
             {
                 var result = await itemQueryIterator.ReadNextAsync();
+                Console.WriteLine($"[NAMESPACE DEBUG] Query result batch: {result.Resource.Count()} items");
                 reviews.AddRange(result.Resource);
             }
+
+            Console.WriteLine($"[NAMESPACE DEBUG] Total reviews found: {reviews.Count}");
+            foreach (var review in reviews.Take(3)) // Log first 3 for debugging
+            {
+                Console.WriteLine($"[NAMESPACE DEBUG] Review: {review.Id} ({review.Language}) - Status: {review.NamespaceReviewStatus}");
+            }
+
             return reviews;
         }
 

@@ -46,8 +46,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private readonly Option<string[]> sourceOwnersOption = new(["--source-owners", "-sro"], "The source owners (space-separated)");
         private readonly Option<string> typeSpecProjectPathOption = new(["--typespec-project"], "Path to typespec project") { IsRequired = true };
         private readonly Option<bool> isAddingOption = new(["--is-adding", "-ia"], "Whether to add (true) or remove (false) owners");
-        private readonly Option<string> workingBranchOption = new(["--working-branch", "-wb"], "The existing branch to add changes to (from SDK generation)");
-
         public override Command GetCommand()
         {
             var command = new Command("codeowners-tools", "A tool to validate and modify codeowners.");
@@ -61,8 +59,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     serviceLabelOption,
                     serviceOwnersOption,
                     sourceOwnersOption,
-                    isAddingOption,
-                    workingBranchOption
+                    isAddingOption
                 },
                 new Command(validateCodeownersEntryCommandName, "Validate codeowners for an existing service entry")
                 {
@@ -95,7 +92,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     var serviceOwnersValue = commandParser.GetValueForOption(serviceOwnersOption);
                     var sourceOwnersValue = commandParser.GetValueForOption(sourceOwnersOption);
                     var isAddingValue = commandParser.GetValueForOption(isAddingOption);
-                    var workingBranchValue = commandParser.GetValueForOption(workingBranchOption);
 
                     var addResult = await UpdateCodeowners(
                         repoValue ?? "",
@@ -104,8 +100,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                         serviceLabelValue ?? "",
                         serviceOwnersValue?.ToList() ?? new List<string>(),
                         sourceOwnersValue?.ToList() ?? new List<string>(),
-                        isAddingValue,
-                        workingBranchValue ?? "");
+                        isAddingValue);
                     output.Output(addResult);
                     return;
                 case validateCodeownersEntryCommandName:
@@ -134,8 +129,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             string serviceLabel = null,
             List<string> serviceOwners = null,
             List<string> sourceOwners = null,
-            bool isAdding = false,
-            string workingBranch = null)
+            bool isAdding = false)
         {
             try
             {
@@ -168,23 +162,21 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
                         if (!LabelHelper.CheckServiceLabelInReview(labelsPullRequests, serviceLabel) && string.IsNullOrEmpty(normalizedPath))
                         {
-                            throw new Exception($"Service label: {serviceLabel} is invalid.");
+                            throw new Exception($"Service label: {serviceLabel} doesn't exist.");
                         }
                     }
                 }
 
-                if (!string.IsNullOrEmpty(workingBranch))
-                {
-                    var codeownersPullRequests = await githubService.SearchPullRequestsByTitleAsync(Constants.AZURE_OWNER_PATH, repo, "CODEOWNERS");
+                string? workingBranch = null;
+                var codeownersPullRequests = await githubService.SearchPullRequestsByTitleAsync(Constants.AZURE_OWNER_PATH, repo, "CODEOWNERS");
 
-                    foreach (var codeownersPullRequest in codeownersPullRequests)
+                foreach (var codeownersPullRequest in codeownersPullRequests)
+                {
+                    if (codeownersPullRequest != null &&
+                        ((!string.IsNullOrEmpty(serviceLabel) && codeownersPullRequest.Title.Contains(serviceLabel, StringComparison.OrdinalIgnoreCase)) ||
+                        (!string.IsNullOrEmpty(normalizedPath) && codeownersPullRequest.Title.Contains(normalizedPath, StringComparison.OrdinalIgnoreCase))))
                     {
-                        if (codeownersPullRequest != null &&
-                            (codeownersPullRequest.Title.Contains(serviceLabel, StringComparison.OrdinalIgnoreCase) ||
-                            codeownersPullRequest.Title.Contains(normalizedPath, StringComparison.OrdinalIgnoreCase)))
-                        {
-                            workingBranch = codeownersPullRequest.Head.Ref;
-                        }
+                        workingBranch = codeownersPullRequest.Head.Ref;
                     }
                 }
 

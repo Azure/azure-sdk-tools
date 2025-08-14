@@ -39,7 +39,7 @@ namespace Admin {
         HeaderlessMatcher: "HeaderlessMatcher",
     }
 
-    model CustomDefaultMatcherBody {
+    model CustomDefaultMatcher {
         compareBodies?: boolean;
         excludedHeaders?: string;
         ignoredHeaders?: string;

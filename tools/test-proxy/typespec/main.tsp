@@ -61,11 +61,13 @@ namespace Admin {
     /**
      * Set the matcher for the test proxy. If a recording ID is provided in the header,
      * the matcher will be set only for that session. Otherwise, it will be set globally.
+     * @param matcherType The type of matcher to set.
+     * @param matcher The matcher configuration. Only required if matcherType is CustomDefaultMatcher.
      */
     @route("/Admin/SetMatcher")
     // todo: we need to only allow CustomDefaultMatcherBody when the MatcherType is CustomDefaultMatcher
     @post
-    op SetMatcher(@body body: CustomDefaultMatcherBody | null, @header("x-abstraction-identifier") matcherType: MatcherType): {
+    op SetMatcher(@header("x-abstraction-identifier") matcherType: MatcherType, @body matcher?: CustomDefaultMatcher): {
         @statusCode statusCode: 200;
     } | BadRequestErrorResponse | UnhandledErrorResponse;
 

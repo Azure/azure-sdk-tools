@@ -1,7 +1,7 @@
 import { getFileExtension, getToolNames } from "./languages.ts";
 import { sampleGuidelines } from "./sampleGuidelines.ts";
+import type { Language, Sample, SampleIdea } from "./types.ts";
 import { verifySample } from "./verifySample.ts";
-import type { Language, SampleIdea, Sample } from "./types.ts";
 
 function generateCurlSample(sampleIdea: SampleIdea): Sample {
     let curlCmds: string[] = [];
@@ -95,6 +95,11 @@ async function generateSampleCode(inputs: {
             tools: getToolNames(language),
         },
     );
+
+    if (res.error) {
+        throw res.error;
+    }
+
     return {
         fileName: `${sampleIdea.fileName}.${getFileExtension(language)}`,
         content: res.text,

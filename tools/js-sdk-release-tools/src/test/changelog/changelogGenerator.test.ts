@@ -2208,6 +2208,53 @@ export interface Target {
             expect(actualBreakingChanges[2]).toBe('Interface Target no longer has parameter prop2');
         });
 
+        test('property changes with type mismatch should be detected', async () => {
+            const baselineApiView = `
+\`\`\`ts
+// @public
+export interface Target { 
+    prop1: string;
+    prop2?: number;
+}
+\`\`\`
+`;
+            const currentApiView = `
+\`\`\`ts
+// @public
+export interface Nested { 
+    prop1: string;
+    prop2?: string;   
+}
+
+// @public
+export interface Target { 
+    properties: Nested;
+}
+\`\`\`
+`;
+            const changelogItems = await generateChangelogItems(
+                {
+                    apiView: baselineApiView,
+                    sdkType: SDKType.ModularClient,
+                },
+                {
+                    apiView: currentApiView,
+                    sdkType: SDKType.ModularClient,
+                },
+            );
+            // Verify feature changes detected (should not be ignored since property types don't match exactly)
+            const actualFeatures = getActualChangelogItems(changelogItems.features);
+            expect(actualFeatures).toHaveLength(1);
+            expect(actualFeatures[0]).toBe('Added Interface Nested');
+
+            // Verify breaking changes detected (should not be ignored since property types don't match exactly)  
+            const actualBreakingChanges = getActualChangelogItems(changelogItems.breakingChanges);
+            expect(actualBreakingChanges).toHaveLength(3);
+            expect(actualBreakingChanges[0]).toBe('Interface Target has a new required parameter properties');
+            expect(actualBreakingChanges[1]).toBe('Interface Target no longer has parameter prop1');
+            expect(actualBreakingChanges[2]).toBe('Interface Target no longer has parameter prop2');
+        });
+
         test('property refactoring with type aliases', async () => {
             const baselineApiView = `
 \`\`\`ts

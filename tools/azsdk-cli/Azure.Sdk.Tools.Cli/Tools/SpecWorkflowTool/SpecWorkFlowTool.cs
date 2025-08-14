@@ -72,7 +72,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     response.Details.Add("Work item ID is required to check if release plan is ready for SDK generation.");
                     return response;
                 }
-                
+
                 var releasePlan = await devopsService.GetReleasePlanForWorkItemAsync(workItemId);
 
                 var sdkInfoList = releasePlan?.SDKInfo;
@@ -110,7 +110,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         }
         // disabling analyzer warning for MCP001 because the called function is in an entire try/catch block.
 #pragma warning disable MCP001
-        [McpServerTool, Description("Checks whether a TypeSpec API spec is ready to generate SDK. Provide a pull request number and path to TypeSpec project json as params.")]
+        [McpServerTool(Name = "azsdk_check_api_spec_ready_for_sdk"), Description("Checks whether a TypeSpec API spec is ready to generate SDK. Provide a pull request number and path to TypeSpec project json as params.")]
         public async Task<string> CheckApiReadyForSDKGeneration(string typeSpecProjectRoot, int pullRequestNumber, int workItemId = 0)
 #pragma warning restore MCP001
         {
@@ -172,9 +172,13 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 {
                     response.Details.Add($"Pull request is not found in {REPO_OWNER}/{PUBLIC_SPECS_REPO} for your TypeSpec changes.");
                     if (pullRequestNumber == 0)
+                    {
                         response.Details.Add("Do you have a pull request created for your TypeSpec changes? If not, make TypeSpec changes for your API specification and create a pull request.");
+                    }
                     else
+                    {
                         response.Details.Add($"Pull request {pullRequestNumber} is not valid. Please provide a valid pull request number to check the status.");
+                    }
                     return response;
                 }
 
@@ -308,10 +312,10 @@ namespace Azure.Sdk.Tools.Cli.Tools
         /// </summary>
         /// <param name="buildId">Build ID for the pipeline run</param>
         /// <returns></returns>
-        [McpServerTool, Description("Get SDK generation pipeline or release pipeline details and status for a given pipeline build ID")]
+        [McpServerTool(Name = "azsdk_get_pipeline_status"), Description("Get SDK generation pipeline or release pipeline details and status for a given pipeline build ID")]
         public async Task<string> GetPipelineRunStatus(int buildId)
         {
-                
+
             try
             {
                 var response = new GenericResponse();
@@ -339,7 +343,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         /// <param name="buildId">Build ID for the pipeline run</param>
         /// <param name="workItemId">Work item ID for the release plan</param>
         /// <returns></returns>
-        [McpServerTool, Description("Get SDK pull request link from SDK generation pipeline run or from work item. Build ID of pipeline run is required to query pull request link from SDK generation pipeline. This tool can get SDK pull request details if present in a work item.")]
+        [McpServerTool(Name = "azsdk_get_sdk_pull_request_link"), Description("Get SDK pull request link from SDK generation pipeline run or from work item. Build ID of pipeline run is required to query pull request link from SDK generation pipeline. This tool can get SDK pull request details if present in a work item.")]
         public async Task<string> GetSDKPullRequestDetails(string language, int workItemId, int buildId = 0)
         {
             try
@@ -420,7 +424,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             };
         }
 
-        [McpServerTool, Description("Link SDK pull request to release plan work item")]
+        [McpServerTool(Name = "azsdk_link_sdk_pull_request_to_release_plan"), Description("Link SDK pull request to release plan work item")]
         public async Task<string> LinkSdkPullRequestToReleasePlan(string language, string pullRequestUrl, int workItemId = 0, int releasePlanId = 0)
         {
             try
@@ -449,7 +453,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 {
                     return $"Invalid pull request link. Provide a pull request link in SDK repo {repoName}";
                 }
-                
+
                 // Add PR to release plan
                 var releasePlan = workItemId == 0 ? await devopsService.GetReleasePlanAsync(releasePlanId) : await devopsService.GetReleasePlanForWorkItemAsync(workItemId);
                 if (releasePlan == null || releasePlan.WorkItemId == 0)

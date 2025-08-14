@@ -1,31 +1,43 @@
+# -------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for
+# license information.
+# --------------------------------------------------------------------------
+
+# pylint: disable=too-many-lines
+
+"""
+Command line interface for APIView Copilot.
+"""
+
 import asyncio
-from collections import OrderedDict
-import colorama
-from colorama import Fore, Style
-from datetime import datetime
 import json
-from knack import CLI, ArgumentsContext, CLICommandsLoader
-from knack.commands import CommandGroup
-from knack.help_files import helps
 import os
 import pathlib
+import sys
+import time
+from collections import OrderedDict
+from datetime import datetime
+from typing import Optional
+
+import colorama
 import prompty
 import prompty.azure
 import requests
-import sys
-import time
-from typing import Optional
-
 from azure.cosmos import CosmosClient
 from azure.cosmos.exceptions import CosmosHttpResponseError
-
-from src.agent._agent import get_main_agent, invoke_agent
+from colorama import Fore, Style
+from knack import CLI, ArgumentsContext, CLICommandsLoader
+from knack.commands import CommandGroup
+from knack.help_files import helps
+from src._apiview_reviewer import ApiViewReview
 from src._credential import get_credential
-from src._search_manager import SearchManager
-from src._database_manager import get_database_manager, ContainerNames
+from src._database_manager import ContainerNames, get_database_manager
 from src._mention import handle_mention_request
 from src._models import APIViewComment
+from src._search_manager import SearchManager
 from src._utils import get_language_pretty_name, get_prompt_path
+from src.agent._agent import get_main_agent, invoke_agent
 
 colorama.init(autoreset=True)
 
@@ -109,8 +121,6 @@ def _local_review(
     """
     Generates a review using the locally installed code.
     """
-    from src._apiview_reviewer import ApiViewReview
-
     if base is None:
         filename = os.path.splitext(os.path.basename(target))[0]
     else:
@@ -356,12 +366,12 @@ def review_job_start(
     if comments_obj is not None:
         payload["comments"] = comments_obj
 
-    APP_NAME = os.getenv("AZURE_APP_NAME")
-    if not APP_NAME:
+    app_name = os.getenv("AZURE_APP_NAME")
+    if not app_name:
         raise ValueError("AZURE_APP_NAME environment variable is not set.")
-    api_endpoint = f"https://{APP_NAME}.azurewebsites.net/api-review/start"
+    api_endpoint = f"https://{app_name}.azurewebsites.net/api-review/start"
 
-    resp = requests.post(api_endpoint, json=payload)
+    resp = requests.post(api_endpoint, json=payload, timeout=60)
     if resp.status_code == 202:
         return resp.json()
     else:
@@ -370,12 +380,12 @@ def review_job_start(
 
 def review_job_get(job_id: str):
     """Get the status/result of an API review job."""
-    APP_NAME = os.getenv("AZURE_APP_NAME")
-    if not APP_NAME:
+    app_name = os.getenv("AZURE_APP_NAME")
+    if not app_name:
         raise ValueError("AZURE_APP_NAME environment variable is not set.")
-    api_endpoint = f"https://{APP_NAME}.azurewebsites.net/api-review"
+    api_endpoint = f"https://{app_name}.azurewebsites.net/api-review"
     url = f"{api_endpoint.rstrip('/')}/{job_id}"
-    resp = requests.get(url)
+    resp = requests.get(url, timeout=10)
     if resp.status_code == 200:
         return resp.json()
     else:
@@ -398,7 +408,7 @@ def search_knowledge_base(
     search = SearchManager(language=language)
     query = text
     if path:
-        with open(path, "r") as f:
+        with open(path, "r", encoding="utf-8") as f:
             query = f.read()
     results = search.search_all(query=query)
     context = search.build_context(results.results)
@@ -424,9 +434,9 @@ def review_summarize(language: str, target: str, base: str = None):
     payload = {"language": language, "target": target}
     if base:
         payload["base"] = base
-    APP_NAME = os.getenv("AZURE_APP_NAME")
-    api_endpoint = f"https://{APP_NAME}.azurewebsites.net/api-review/summarize"
-    response = requests.post(api_endpoint, json=payload)
+    app_name = os.getenv("AZURE_APP_NAME")
+    api_endpoint = f"https://{app_name}.azurewebsites.net/api-review/summarize"
+    response = requests.post(api_endpoint, json=payload, timeout=60)
     if response.status_code == 200:
         summary = response.json().get("summary")
         print(summary)
@@ -448,11 +458,11 @@ def handle_agent_chat(thread_id: Optional[str] = None, remote: bool = False):
         messages = []
         current_thread_id = thread_id
         if remote:
-            APP_NAME = os.getenv("AZURE_APP_NAME")
-            if not APP_NAME:
+            app_name = os.getenv("AZURE_APP_NAME")
+            if not app_name:
                 print(f"{BOLD}AZURE_APP_NAME environment variable is not set.{RESET}")
                 return
-            api_endpoint = f"https://{APP_NAME}.azurewebsites.net/agent/chat"
+            api_endpoint = f"https://{app_name}.azurewebsites.net/agent/chat"
             session = requests.Session()
             while True:
                 try:
@@ -461,6 +471,7 @@ def handle_agent_chat(thread_id: Optional[str] = None, remote: bool = False):
                     print(f"\n{BOLD}Exiting chat.{RESET}")
                     if current_thread_id:
                         print(
+                            # pylint: disable=line-too-long
                             f"{BOLD}Supply `-t/--thread-id {current_thread_id}` to continue the discussion later.{RESET}"
                         )
                     break
@@ -468,6 +479,7 @@ def handle_agent_chat(thread_id: Optional[str] = None, remote: bool = False):
                     print(f"\n{BOLD}Exiting chat.{RESET}")
                     if current_thread_id:
                         print(
+                            # pylint: disable=line-too-long
                             f"{BOLD}Supply `-t/--thread-id {current_thread_id}` to continue the discussion later.{RESET}"
                         )
                     break
@@ -475,7 +487,7 @@ def handle_agent_chat(thread_id: Optional[str] = None, remote: bool = False):
                     payload = {"user_input": user_input}
                     if current_thread_id:
                         payload["thread_id"] = current_thread_id
-                    resp = session.post(api_endpoint, json=payload)
+                    resp = session.post(api_endpoint, json=payload, timeout=60)
                     if resp.status_code == 200:
                         data = resp.json()
                         response = data.get("response", "")
@@ -496,6 +508,7 @@ def handle_agent_chat(thread_id: Optional[str] = None, remote: bool = False):
                         print(f"\n{BOLD}Exiting chat.{RESET}")
                         if current_thread_id:
                             print(
+                                # pylint: disable=line-too-long
                                 f"{BOLD}Supply `-t/--thread-id {current_thread_id}` to continue the discussion later.{RESET}"
                             )
                         break
@@ -503,6 +516,7 @@ def handle_agent_chat(thread_id: Optional[str] = None, remote: bool = False):
                         print(f"\n{BOLD}Exiting chat.{RESET}")
                         if current_thread_id:
                             print(
+                                # pylint: disable=line-too-long
                                 f"{BOLD}Supply `-t/--thread-id {current_thread_id}` to continue the discussion later.{RESET}"
                             )
                         break
@@ -541,15 +555,16 @@ def handle_agent_mention(comments_path: str, remote: bool = False):
     pretty_language = get_language_pretty_name(language)
 
     if remote:
-        APP_NAME = os.getenv("AZURE_APP_NAME")
-        if not APP_NAME:
+        app_name = os.getenv("AZURE_APP_NAME")
+        if not app_name:
             print("AZURE_APP_NAME environment variable is not set.")
             return
-        api_endpoint = f"https://{APP_NAME}.azurewebsites.net/api-review/mention"
+        api_endpoint = f"https://{app_name}.azurewebsites.net/api-review/mention"
         try:
             resp = requests.post(
                 api_endpoint,
                 json={"comments": comments, "language": language, "packageName": package_name, "code": code},
+                timeout=60,
             )
             data = resp.json()
             if resp.status_code == 200:
@@ -578,16 +593,6 @@ def db_get(container_name: str, id: str):
         print(f"Error retrieving item: {e}")
 
 
-def _get_apiview_cosmos_client(*, environment: str = "production"):
-    """
-    Returns the Cosmos DB container client for APIView comments.
-    """
-    apiview_account_names = {
-        "production": "apiview-cosmos",
-        "staging": "apiviewstaging",
-    }
-
-
 def _get_apiview_cosmos_client(container_name: str, environment: str = "production"):
     """
     Returns the Cosmos DB container client for the specified container and environment.
@@ -601,6 +606,7 @@ def _get_apiview_cosmos_client(container_name: str, environment: str = "producti
         cosmos_db = "APIViewV2"
         if not cosmos_acc:
             raise ValueError(
+                # pylint: disable=line-too-long
                 f"Unrecognized environment: {environment}. Valid options are: {', '.join(apiview_account_names.keys())}."
             )
         cosmos_url = f"https://{cosmos_acc}.documents.azure.com:443/"
@@ -611,30 +617,8 @@ def _get_apiview_cosmos_client(container_name: str, environment: str = "producti
     except CosmosHttpResponseError as e:
         if e.status_code == 403:
             print(
-                f"Error: You do not have permission to access Cosmos DB.\nTo grant yourself access, run: python scripts\\apiview_permissions.py"
-            )
-        sys.exit(1)
-
-
-def _get_apiview_reviews_client(environment: str = "production"):
-    """
-    Returns the Cosmos DB container client for APIView reviews.
-    """
-    try:
-        cosmos_acc = os.getenv("APIVIEW_COSMOS_ACC_NAME")
-        cosmos_db = "APIViewV2"
-        container_name = "Reviews"
-        if not cosmos_acc:
-            raise ValueError("APIVIEW_COSMOS_ACC_NAME environment variable is not set.")
-        cosmos_url = f"https://{cosmos_acc}.documents.azure.com:443/"
-        client = CosmosClient(url=cosmos_url, credential=get_credential())
-        database = client.get_database_client(cosmos_db)
-        container = database.get_container_client(container_name)
-        return container
-    except CosmosHttpResponseError as e:
-        if e.status_code == 403:
-            print(
-                f"Error: You do not have permission to access Cosmos DB.\nTo grant yourself access, run: python scripts\\apiview_permissions.py"
+                # pylint: disable=line-too-long
+                "Error: You do not have permission to access Cosmos DB.\nTo grant yourself access, run: python scripts\\apiview_permissions.py"
             )
         sys.exit(1)
 
@@ -658,8 +642,8 @@ APIVIEW_COMMENT_SELECT_FIELDS = [f"c.{field}" for field in _APIVIEW_COMMENT_SELE
 
 def get_apiview_comments(review_id: str, environment: str = "production", use_api: bool = False) -> dict:
     """
-    Retrieves comments for a specific APIView review and returns them grouped by element ID and sorted by CreatedOn time.
-    Omits resolved and deleted comments, and removes unnecessary fields.
+    Retrieves comments for a specific APIView review and returns them grouped by element ID and
+    sorted by CreatedOn time. Omits resolved and deleted comments, and removes unnecessary fields.
     """
     comments = []
     try:
@@ -668,15 +652,24 @@ def get_apiview_comments(review_id: str, environment: str = "production", use_ap
                 raise ValueError("When using the API, `--review-id` must be provided.")
             apiview_endpoints = {
                 "production": "https://apiview.dev",
-                "staging": "https://apiviewstaging.azurewebsites.net",
+                "staging": "https://apiviewstagingtest.com",
             }
             endpoint_root = apiview_endpoints.get(environment)
             endpoint = f"{endpoint_root}/api/Comments/{review_id}?commentType=APIRevision&isDeleted=false"
+            apiview_scopes = {
+                "production": "api://apiview/.default",
+                "staging": "api://apiviewstaging/.default",
+            }
+            credential = get_credential()
+            scope = apiview_scopes.get(environment)
+            token = credential.get_token(scope)
             response = requests.get(
                 endpoint,
-                # TODO: Fix this cookie handling
-                headers={"Content-Type": "application/json", "Cookie": "TODO"},
+                headers={"Content-Type": "application/json",
+                        "Authorization": f"Bearer {token.token}"},
+                timeout=30,
             )
+
             if response.status_code != 200:
                 print(f"Error retrieving comments: {response.status_code} - {response.text}")
                 return {}
@@ -693,6 +686,7 @@ def get_apiview_comments(review_id: str, environment: str = "production", use_ap
         else:
             container = _get_apiview_cosmos_client(container_name="Comments", environment=environment)
             result = container.query_items(
+                # pylint: disable=line-too-long
                 query=f"SELECT {', '.join(APIVIEW_COMMENT_SELECT_FIELDS)} FROM c WHERE c.ReviewId = @review_id AND c.IsResolved = false AND c.IsDeleted = false",
                 parameters=[{"name": "@review_id", "value": review_id}],
             )
@@ -853,6 +847,7 @@ def _calculate_language_adoption(start_date: str, end_date: str, environment: st
 
 
 def report_metrics(start_date: str, end_date: str, environment: str = "production", markdown: bool = False) -> dict:
+    """Generate a report of APIView metrics between two dates."""
     # validate that start_date and end_date are in YYYY-MM-DD format
     bad_dates = []
     iso_start = None
@@ -923,6 +918,7 @@ SUPPORTED_LANGUAGES = [
 
 
 class CliCommandsLoader(CLICommandsLoader):
+    """Loader for CLI commands related to APIView and review management."""
 
     # COMMAND REGISTRATION
 
@@ -978,6 +974,7 @@ class CliCommandsLoader(CLICommandsLoader):
             ac.argument(
                 "base",
                 type=str,
+                # pylint: disable=line-too-long
                 help="The path to the base APIView file to compare against. If omitted, copilot will review the entire target APIView.",
                 options_list=("--base", "-b"),
             )
@@ -1207,21 +1204,24 @@ class CliCommandsLoader(CLICommandsLoader):
 
 
 def run_cli():
+    """Run the CLI application."""
     cli = CLI(cli_name="apiviewcopilot", commands_loader_cls=CliCommandsLoader)
     exit_code = cli.invoke(sys.argv[1:])
     sys.exit(exit_code)
 
 
 class CustomJSONEncoder(json.JSONEncoder):
-    def default(self, obj):
+    """Custom JSON encoder to handle objects with `to_dict` or `__dict__` methods."""
+
+    def default(self, o):
         # If the object has a `to_dict` method, use it
-        if hasattr(obj, "to_dict"):
-            return obj.to_dict()
+        if hasattr(o, "to_dict"):
+            return o.to_dict()
         # If the object has a `__dict__` attribute, use it
-        elif hasattr(obj, "__dict__"):
-            return obj.__dict__
+        elif hasattr(o, "__dict__"):
+            return o.__dict__
         # Otherwise, use the default serialization
-        return super().default(obj)
+        return super().default(o)
 
 
 if __name__ == "__main__":

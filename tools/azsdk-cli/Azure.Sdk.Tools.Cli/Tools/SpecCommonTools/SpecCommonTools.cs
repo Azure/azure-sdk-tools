@@ -24,7 +24,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private readonly Option<string> repoRootOpt = new(["--repo-root"], "Path to azure-rest-api-spec repo root") { IsRequired = true };
         private readonly Option<string> targetBranchOpt = new(["--target-branch"], () => "main", "Target branch to compare the changes") { IsRequired = true };
 
-        [McpServerTool, Description("This tool returns list of TypeSpec projects modified in current branch")]
+        [McpServerTool(Name = "azsdk_get_modified_typespec_projects"), Description("This tool returns list of TypeSpec projects modified in current branch")]
         public string GetModifiedTypeSpecProjects(string repoRootPath, string targetBranch = "main")
         {
             try

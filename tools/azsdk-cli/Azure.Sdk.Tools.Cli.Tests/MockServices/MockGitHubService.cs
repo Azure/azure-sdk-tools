@@ -9,6 +9,17 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
 {
     public class MockGitHubService : IGitHubService
     {
+        public Task<CreateBranchStatus> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranchName = "main")
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> IsExistingBranchAsync(string repoOwner, string repoName, string branchName)
+        {
+            throw new NotImplementedException();
+        }
+
+
         public Task<User> GetGitUserDetailsAsync()
         {
             // Create a simple mock user - we'll use reflection to set properties if needed
@@ -33,7 +44,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
             return Task.FromResult($"https://github.com/{owner}/{repoName}");
         }
 
-        public Task<List<string>> CreatePullRequestAsync(string repoName, string repoOwner, string baseBranch, string headBranch, string title, string body, bool draft = true)
+        public Task<PullRequestResult> CreatePullRequestAsync(string repoName, string repoOwner, string baseBranch, string headBranch, string title, string body, bool draft = true)
         {
             throw new NotImplementedException();
         }
@@ -96,6 +107,16 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
             return Task.FromResult<IReadOnlyList<RepositoryContent>?>(contents.AsReadOnly());
         }
 
+        public Task UpdateFileAsync(string owner, string repoName, string path, string message, string content, string sha, string branch)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<RepositoryContent> GetContentsSingleAsync(string owner, string repoName, string path)
+        {
+            throw new NotImplementedException();
+        }
+
         private RepositoryContent CreateMockRepositoryContent(string name, string path, string encodedContent)
         {
             return new RepositoryContent(
@@ -107,7 +128,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
                 downloadUrl: $"https://raw.githubusercontent.com/testowner/testrepo/main/{path}",
                 url: $"https://api.github.com/repos/testowner/testrepo/contents/{path}",
                 htmlUrl: $"https://github.com/testowner/testrepo/blob/main/{path}",
-                gitUrl: null, 
+                gitUrl: null,
                 encoding: "base64",
                 encodedContent: encodedContent,
                 target: null,

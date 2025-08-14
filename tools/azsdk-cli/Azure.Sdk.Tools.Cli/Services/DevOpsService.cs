@@ -114,7 +114,9 @@ namespace Azure.Sdk.Tools.Cli.Services
             logger.LogInformation($"Fetching release plan work with id {workItemId}");
             var workItem = await connection.GetWorkItemClient().GetWorkItemAsync(workItemId, expand: WorkItemExpand.All);
             if (workItem?.Id == null)
+            {
                 throw new InvalidOperationException($"Work item {workItemId} not found.");
+            }
             var releasePlan = await MapWorkItemToReleasePlanAsync(workItem);
             releasePlan.WorkItemUrl = workItem.Url;
             releasePlan.WorkItemId = workItem?.Id ?? 0;
@@ -220,14 +222,20 @@ namespace Azure.Sdk.Tools.Cli.Services
                     {
                         var parent = workItem.Relations.FirstOrDefault(w => w.Rel.Equals("System.LinkTypes.Hierarchy-Reverse"));
                         if (parent == null)
+                        {
                             continue;
+                        }
                         // Get parent work item and make sure it is release plan work item
                         var parentWorkItemId = int.Parse(parent.Url.Split('/').Last());
                         var parentWorkItem = await connection.GetWorkItemClient().GetWorkItemAsync(parentWorkItemId);
                         if (parentWorkItem == null || !parentWorkItem.Fields.TryGetValue("System.WorkItemType", out Object? parentType))
+                        {
                             continue;
+                        }
                         if (parentType.Equals("Release Plan"))
+                        {
                             return await MapWorkItemToReleasePlanAsync(parentWorkItem);
+                        }
                     }
                 }
                 return null;
@@ -270,7 +278,9 @@ namespace Azure.Sdk.Tools.Cli.Services
                 // Link API spec as child of release plan
                 await LinkWorkItemAsChildAsync(releasePlanWorkItemId, apiSpecWorkItem.Url);
                 if (releasePlanWorkItem != null)
+                {
                     return releasePlanWorkItem;
+                }
 
                 throw new Exception("Failed to create API spec work item");
             }
@@ -280,9 +290,13 @@ namespace Azure.Sdk.Tools.Cli.Services
                 logger.LogError(errorMessage);
                 // Delete created work items if both release plan and API spec work items were not created and linked
                 if (releasePlanWorkItemId != 0)
+                {
                     await workItemClient.DeleteWorkItemAsync(releasePlanWorkItemId);
+                }
                 if (apiSpecWorkItemId != 0)
+                {
                     await workItemClient.DeleteWorkItemAsync(apiSpecWorkItemId);
+                }
                 throw new Exception(errorMessage);
             }
         }
@@ -304,7 +318,9 @@ namespace Azure.Sdk.Tools.Cli.Services
                 foreach (var pr in releasePlan.SpecPullRequests)
                 {
                     if (sb.Length > 0)
+                    {
                         sb.Append("<br>");
+                    }
                     sb.Append($"<a href=\"{pr}\">{pr}</a>");
                 }
                 var prLinks = sb.ToString();
@@ -510,7 +526,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                  { "ConfigPath", $"{typespecProjectRoot}/tspconfig.yaml" },
                  { "ApiVersion", apiVersion },
                  { "SdkReleaseType", sdkReleaseType },
-                 { "SkipPullRequestCreation", "false" }
+                 { "CreatePullRequest", "true" }
             };
             var build = await RunPipelineAsync(pipelineDefinitionId, templateParams, branchRef);
             var pipelineRunUrl = GetPipelineUrl(build.Id);
@@ -727,7 +743,9 @@ namespace Azure.Sdk.Tools.Cli.Services
                 var childWorkItemId = int.Parse(relation.Url.Split('/').Last());
                 var childWorkItem = await connection.GetWorkItemClient().GetWorkItemAsync(childWorkItemId);
                 if (childWorkItem == null || !childWorkItem.Fields.TryGetValue("System.WorkItemType", out Object? workItemType))
+                {
                     continue;
+                }
                 if (workItemType.Equals("API Spec"))
                 {
                     return childWorkItem;

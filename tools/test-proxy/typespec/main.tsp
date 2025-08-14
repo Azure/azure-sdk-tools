@@ -65,8 +65,7 @@ op StopPlayback(
 // below all of the Admin/ routes, if a recordingid is provided in a header, then the server will apply whatever the customization is
 // just to that session. If no recordingId is provided, then the server will apply the customization to all sessions.
 // this is what i'm trying to capture with the @header("x-recording-id") recordingId: string | null typing.
-
-namespace Admin{
+namespace Admin {
     @route("/Admin/SetMatcher")
     // todo: we need to only allow CustomDefaultMatcherBody when the MatcherType is CustomDefaultMatcher
     @post

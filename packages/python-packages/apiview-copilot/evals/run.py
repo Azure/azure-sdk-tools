@@ -462,7 +462,7 @@ if __name__ == "__main__":
         "-n",
         type=int,
         default=NUM_RUNS,
-        help="The number of runs to perform, with the median of results kept. Defaults to 3.",
+        help=f"The number of runs to perform, with the median of results kept. Defaults to {NUM_RUNS}.",
     )
     parser.add_argument(
         "--test-file",

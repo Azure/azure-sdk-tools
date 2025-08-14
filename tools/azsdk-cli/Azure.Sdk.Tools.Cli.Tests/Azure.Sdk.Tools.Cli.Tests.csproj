@@ -35,6 +35,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="..\Azure.Sdk.Tools.Cli\Templates\ReadMeGenerator\README-template.go.md" Link="TestAssets\README-template.go.md">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="TypeSpecTestData\specification\testcontoso\Contoso.Management\employee.tsp">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

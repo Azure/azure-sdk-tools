@@ -18,14 +18,17 @@ public class ReadFileTool(string baseDir) : AgentTool<ReadFileInput, ReadFileOut
             throw new ArgumentException("Input path cannot be null or empty.", nameof(input));
         }
 
-        var path = Path.Join(baseDir, input.FilePath);
+        if (!ToolHelpers.TryGetSafeFullPath(baseDir, input.FilePath, out var path))
+        {
+            throw new ArgumentException("The provided path is invalid or outside the allowed base directory.");
+        }
         if (!File.Exists(path))
         {
             throw new ArgumentException($"{path} does not exist");
         }
 
         // Read the file content
-        var content = File.ReadAllText(Path.Join(baseDir, input.FilePath));
+        var content = File.ReadAllText(path);
         return Task.FromResult(new ReadFileOutput(content));
     }
 }

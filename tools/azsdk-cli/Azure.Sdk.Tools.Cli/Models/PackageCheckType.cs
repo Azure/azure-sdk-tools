@@ -28,5 +28,5 @@ public enum PackageCheckType
     /// <summary>
     /// Run spelling check using cspell.
     /// </summary>
-    Spelling
+    Cspell
 }

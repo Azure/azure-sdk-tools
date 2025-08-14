@@ -102,7 +102,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public async Task RunPackageCheck_WithSpellingCheck_ReturnsResult()
         {
             // Act
-            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Spelling);
+            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Cspell);
 
             // Assert
             Assert.IsNotNull(result);
@@ -168,7 +168,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var changelogResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Changelog);
             var dependencyResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Dependency);
             var readmeResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Readme);
-            var spellingResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Spelling);
+            var spellingResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Cspell);
 
             // Assert
             Assert.IsNotNull(allResult);

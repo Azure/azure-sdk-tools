@@ -47,6 +47,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.CodeownersToolsSuite
         public void SetUp()
         {
             sut = CreateSut(out gh, out output, out typespec, out helper, out validator);
+            
+            // Setup common mocks that most tests need
+            // Setup for CODEOWNERS PR search (needed by most UpdateCodeowners tests)
+            gh.Setup(g => g.SearchPullRequestsByTitleAsync(It.IsAny<string>(), It.IsAny<string>(), "CODEOWNERS", It.IsAny<Octokit.ItemState?>()))
+              .ReturnsAsync(new List<Octokit.PullRequest?>());
         }
 
         private static CodeownersToolsType CreateSut(
@@ -155,8 +160,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.CodeownersToolsSuite
                 serviceLabel: string.Empty,
                 serviceOwners: new List<string>(),
                 sourceOwners: new List<string>(),
-                isAdding: true,
-                workingBranch: string.Empty);
+                isAdding: true);
 
             Assert.That(result, Does.StartWith("Error:"));
             Assert.That(result, Does.Contain("At least one must be valid"));
@@ -185,8 +189,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.CodeownersToolsSuite
                 serviceLabel: string.Empty,
                 serviceOwners: new List<string>{"@ok1","@ok2"},
                 sourceOwners: new List<string>{"@ok1","@ok2"},
-                isAdding: true,
-                workingBranch: string.Empty);
+                isAdding: true);
 
             Assert.That(result, Does.StartWith("Error:"));
             Assert.That(result, Does.Contain("Could not retrieve CODEOWNERS file"));
@@ -214,8 +217,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.CodeownersToolsSuite
                 serviceLabel: "Azure.Compute",
                 serviceOwners: new List<string>{"@ok1","@ok2"},
                 sourceOwners: new List<string>{"@ok1","@ok2"},
-                isAdding: true,
-                workingBranch: string.Empty);
+                isAdding: true);
 
             Assert.That(result, Does.StartWith("Error:"));
             Assert.That(result, Does.Contain("Could not retrieve labels file"));
@@ -518,8 +520,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.CodeownersToolsSuite
                 serviceLabel: "Contoso.UnitTest",
                 serviceOwners: new List<string> { "@ok1", "@ok2" },
                 sourceOwners: new List<string> { "@ok1", "@ok2" },
-                isAdding: true,
-                workingBranch: string.Empty);
+                isAdding: true);
 
             Assert.That(result, Does.Contain("Pull request created successfully as draft PR."));
             Assert.That(capturedContent, Is.Not.Null);
@@ -572,8 +573,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.CodeownersToolsSuite
                 serviceLabel: "Service Bus",
                 serviceOwners: new List<string> { "@ok1", "@ok2" },
                 sourceOwners: new List<string> { "@ok1", "@ok2" },
-                isAdding: true,
-                workingBranch: string.Empty);
+                isAdding: true);
 
             Assert.That(result, Does.Contain("Pull request created successfully as draft PR."));
         }
@@ -623,8 +623,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.CodeownersToolsSuite
                 serviceLabel: "Service Bus", // Add service label for the existing path
                 serviceOwners: new List<string> { "@ok1", "@ok2" },
                 sourceOwners: new List<string> { "@ok1", "@ok2" },
-                isAdding: true,
-                workingBranch: string.Empty);
+                isAdding: true);
 
             Assert.That(result, Does.Contain("Pull request created successfully as draft PR."));
         }
@@ -681,8 +680,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.CodeownersToolsSuite
                 serviceLabel: "NonExistentLabel", // invalid label
                 serviceOwners: new List<string> { "@ok1", "@ok2" },
                 sourceOwners: new List<string> { "@ok1", "@ok2" },
-                isAdding: true,
-                workingBranch: string.Empty);
+                isAdding: true);
 
             Assert.That(result, Does.Contain("Pull request created successfully as draft PR."));
             Assert.That(result, Does.Not.Contain("Service label: NonExistentLabel is invalid."));

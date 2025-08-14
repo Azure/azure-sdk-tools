@@ -117,7 +117,10 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     PackageCheckName.All => await RunAllChecks(packagePath, languageService, ct),
                     PackageCheckName.Changelog => await RunChangelogValidation(packagePath, languageService),
                     PackageCheckName.Dependency => await RunDependencyCheck(packagePath, languageService, ct),
-                    _ => throw new ArgumentOutOfRangeException(nameof(checkName), checkName, "Unknown check type")
+                    _ => throw new ArgumentOutOfRangeException(
+                        nameof(checkType),
+                        checkType,
+                        $"Unknown check type. Valid values are: {string.Join(", ", Enum.GetNames(typeof(PackageCheckName)))}")
                 };
             }
             catch (Exception ex)

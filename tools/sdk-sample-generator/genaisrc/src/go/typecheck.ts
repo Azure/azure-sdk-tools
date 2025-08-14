@@ -1,6 +1,6 @@
+import path from "node:path";
 import type { TypeCheckParameters, TypeCheckResult } from "../types.ts";
 import { getUniqueDirName } from "../utils.ts";
-import path from "node:path";
 
 const fileName = "temp.go";
 let container: ContainerHost | undefined = undefined;
@@ -40,39 +40,35 @@ export async function typecheckGo(
             );
         }
 
-        // Tidy up the Go module
-        const tidyResult = await container.exec("go", ["mod", "tidy"], {
-            cwd: projectDir,
-        });
+        const commands = [
+            ["go", "install", "github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.3.1"],
+            ["go", "build"],
+            ["go", "test", "-c"],
+            ["golangci-lint", "run", "."],
+        ];
 
-        // Run go build to check for type errors
-        const buildResult = await container.exec("go", ["build", fileName], {
-            cwd: projectDir,
-        });
+        let outputs = [];
 
-        // Run golint for linting (including unused variables)
-        await container.exec("go", [
-            "install",
-            "golang.org/x/lint/golint@latest",
-        ]);
-        const golintBin = "/go/bin/golint";
-        const lintResult = await container.exec(golintBin, [fileName], {
-            cwd: projectDir,
-        });
+        for (let cmd of commands) {
+            const result = await container.exec(cmd[0], cmd.slice(1), {
+                cwd: projectDir,
+            });
+
+            const output = `${cmd.join(" ")} output:\n${result.stdout ?? ""}, ${result.stderr ?? ""}`;
+
+            if (result.exitCode === 0 || result.failed) {
+                return {
+                    succeeded: false,
+                    output: output
+                }
+            }
+
+            outputs.push(output);
+        }
 
         return {
-            succeeded:
-                tidyResult.exitCode === 0 &&
-                !tidyResult.failed &&
-                buildResult.exitCode === 0 &&
-                !buildResult.failed &&
-                lintResult.exitCode === 0 &&
-                !lintResult.failed,
-            output: [
-                `go mod tidy output:\n${(tidyResult.stdout ?? "") + (tidyResult.stderr ?? "")}`,
-                `go build output:\n${(buildResult.stdout ?? "") + (buildResult.stderr ?? "")}`,
-                `golint output:\n${(lintResult.stdout ?? "") + (lintResult.stderr ?? "")}`,
-            ].join("\n"),
+            succeeded: true,
+            output: outputs.join("\n"),
         };
     } finally {
         try {
@@ -82,3 +78,4 @@ export async function typecheckGo(
         }
     }
 }
+

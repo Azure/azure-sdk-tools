@@ -66,7 +66,7 @@ stages:
             displayName: 'install requirements'
             workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
           - script: |
-              python run.py
+              python run.py --evaluation_name_prefix $(Build.BuildId)
             displayName: 'Run Evas'
             workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
             env:

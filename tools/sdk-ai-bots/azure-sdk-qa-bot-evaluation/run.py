@@ -305,7 +305,7 @@ if __name__ == "__main__":
     parser.add_argument("--prefix", type=str, help="Process only files starting with this prefix")
     parser.add_argument("--is_bot", type=str, default="True", help="Use bot API for processing Q&A pairs (True/False)")
     parser.add_argument("--is_cli", type=str, default="True", help="Run in CI/CD pipeline (True/False)")
-    parser.add_argument("--evaluation_name", type=str, help="the name of evaluation")
+    parser.add_argument("--evaluation_name_prefix", type=str, help="the prefix of evaluation name")
     parser.add_argument("--skip_data_process", type=str, default="False", help="skip to pre-process the test data")
     parser.add_argument("--send_result", type=str, default="True", help="Send the evaluation result to AI foundry project")
     args = parser.parse_args()
@@ -380,7 +380,7 @@ if __name__ == "__main__":
                     "similarity": SimilarityEvaluator(model_config=model_config),
                     "groundedness": GroundednessEvaluator(model_config=model_config)
                 },
-                evaluation_name=args.evaluation_name if args.evaluation_name else os.path.splitext(os.path.basename(output_file))[0],
+                evaluation_name=f"{args.evaluation_name_prefix}-{os.path.splitext(os.path.basename(output_file))[0]}" if args.evaluation_name_prefix else os.path.splitext(os.path.basename(output_file))[0],
                 # column mapping
                 evaluator_config={
                     "similarity": {

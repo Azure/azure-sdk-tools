@@ -26,9 +26,19 @@ public class TspClientUpdateResponse : Response
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? NextStep { get; set; }
 
-    [JsonPropertyName("nextTool")]
+
+    // Unified facade additions
+    [JsonPropertyName("nextStage")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? NextTool { get; set; }
+    public string? NextStage { get; set; }
+
+    [JsonPropertyName("needsFinalize")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? NeedsFinalize { get; set; }
+
+    [JsonPropertyName("terminal")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? Terminal { get; set; }
 
     public override string ToString()
     {
@@ -39,7 +49,11 @@ public class TspClientUpdateResponse : Response
         }
         if (Session != null)
         {
-            sb.AppendLine($"Session: {Session.SessionId} Status: {Session.Status} API changes: {Session.ApiChanges.Count} Impacted: {Session.ImpactedCustomizations.Count} Patches: {Session.ProposedPatches.Count} Next: {NextStep} NextTool: {NextTool}");
+            sb.AppendLine($"Session: {Session.SessionId} Status: {Session.Status} API changes: {Session.ApiChanges.Count} Impacted: {Session.ImpactedCustomizations.Count} Next: {NextStep}");
+            if (!string.IsNullOrWhiteSpace(NextStage) || NeedsFinalize == true || Terminal == true)
+            {
+                sb.AppendLine($"NextStage: {NextStage ?? "<none>"} NeedsFinalize: {NeedsFinalize} Terminal: {Terminal}");
+            }
         }
         if (!string.IsNullOrWhiteSpace(ErrorCode))
         {
@@ -59,6 +73,7 @@ public enum UpdateStage
     PatchesProposed,
     AppliedDryRun,
     Applied,
+    Validated,
     Stale
 }
 
@@ -70,6 +85,7 @@ public class UpdateSessionState
     [JsonPropertyName("language")] public string Language { get; set; } = string.Empty; // language key (java, csharp, etc.)
     [JsonPropertyName("oldGeneratedPath")] public string OldGeneratedPath { get; set; } = string.Empty;
     [JsonPropertyName("newGeneratedPath")] public string NewGeneratedPath { get; set; } = string.Empty;
+    [JsonPropertyName("customizationRoot")] public string? CustomizationRoot { get; set; }
     [JsonPropertyName("status")] public string Status { get; set; } = "Initialized";
     [JsonPropertyName("lastStage")] public UpdateStage LastStage { get; set; } = UpdateStage.Initialized;
     [JsonPropertyName("createdUtc")] public DateTime CreatedUtc { get; set; } = DateTime.UtcNow;
@@ -84,7 +100,11 @@ public class UpdateSessionState
     [JsonPropertyName("impactedCustomizations")] public List<CustomizationImpact> ImpactedCustomizations { get; set; } = new();
     [JsonPropertyName("directMergeFiles")] public List<string> DirectMergeFiles { get; set; } = new();
     [JsonPropertyName("proposedPatches")] public List<PatchProposal> ProposedPatches { get; set; } = new();
+    [JsonPropertyName("validationErrors")] public List<string> ValidationErrors { get; set; } = new();
+    [JsonPropertyName("validationSuccess")] public bool? ValidationSuccess { get; set; }
     [JsonIgnore] public Azure.Sdk.Tools.Cli.Services.Update.IUpdateLanguageService? LanguageService { get; set; } // cached, not serialized
+    [JsonPropertyName("requiresFinalize")] public bool RequiresFinalize { get; set; } = false;
+    [JsonPropertyName("completedStages")] public List<UpdateStage> CompletedStages { get; set; } = new();
 }
 
 public class ApiChange
@@ -116,10 +136,9 @@ public class CustomizationImpact
     [JsonPropertyName("file")] public string File { get; set; } = string.Empty;
     [JsonPropertyName("reasons")] public List<string> Reasons { get; set; } = new();
 }
-
 public class PatchProposal
 {
     [JsonPropertyName("file")] public string File { get; set; } = string.Empty;
-    [JsonPropertyName("diff")] public string Diff { get; set; } = string.Empty; // unified diff placeholder
-    [JsonPropertyName("rationale")] public string Rationale { get; set; } = string.Empty;
+    [JsonPropertyName("diff")] public string Diff { get; set; } = string.Empty; // unified diff text
+    [JsonPropertyName("rationale")] public string? Rationale { get; set; }
 }

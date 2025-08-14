@@ -20,15 +20,31 @@ public class ListFilesTool(string baseDirectory) : AgentTool<ListFilesInput, Lis
 
     public override Task<ListFilesOutput> InvokeAsync(ListFilesInput input, CancellationToken ct)
     {
-        var path = Path.Join(this.baseDirectory, input.Path);
-
-        if (!Directory.Exists(path))
+        if (input is null)
         {
-            throw new Exception($"{path} does not exist");
+            throw new ArgumentNullException(nameof(input));
+        }
+
+        if (!ToolHelpers.TryGetSafeFullPath(this.baseDirectory, input.Path, out var path))
+        {
+            throw new ArgumentException("The provided path is invalid or outside the allowed base directory.");
+        }
+
+        if (!File.Exists(path))
+        {
+            throw new ArgumentException($"Path ${input.Path} does not exist", nameof(input.Path));
+        }
+
+        if (!File.GetAttributes(path).HasFlag(FileAttributes.Directory))
+        {
+            throw new ArgumentException($"Path ${input.Path} is not a directory", nameof(input.Path));
         }
 
         Console.WriteLine($"Listing files in: {path}");
-        var result = Directory.GetFileSystemEntries(path, input.Filter, input.Recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+        var filter = string.IsNullOrWhiteSpace(input.Filter) ? "*" : input.Filter;
+        var searchOption = input.Recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+        var result = Directory.GetFileSystemEntries(path, filter, searchOption);
+
         return Task.FromResult(new ListFilesOutput(result.Select(p => Path.GetRelativePath(baseDirectory, p)).ToList()));
     }
 }

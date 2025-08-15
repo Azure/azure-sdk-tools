@@ -1,10 +1,8 @@
-using Azure.Sdk.Tools.Cli.Services;
+using Moq;
+using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Tests.MockServices;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools;
-using Moq;
-using System.IO;
-using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools
 {

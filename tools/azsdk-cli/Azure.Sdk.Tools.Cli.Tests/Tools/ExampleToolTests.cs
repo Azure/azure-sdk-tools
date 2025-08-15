@@ -1,5 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+using Moq;
+using NUnit.Framework.Internal;
 using Azure.Core;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
@@ -8,9 +10,6 @@ using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tests.MockServices;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools;
-using Microsoft.Extensions.Logging;
-using Moq;
-using NUnit.Framework.Internal;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools;
 
@@ -22,6 +21,7 @@ internal class ExampleToolTests
     private Mock<IDevOpsService>? mockDevOpsService;
     private MockGitHubService? mockGitHubService;
     private Mock<IProcessHelper>? mockProcessHelper;
+    private Mock<IPowershellHelper>? mockPowershellHelper;
 
     [SetUp]
     public void Setup()
@@ -32,6 +32,7 @@ internal class ExampleToolTests
         mockDevOpsService = new Mock<IDevOpsService>();
         mockGitHubService = new MockGitHubService();
         mockProcessHelper = new Mock<IProcessHelper>();
+        mockPowershellHelper = new Mock<IPowershellHelper>();
 
         // Set up Azure service mock to return a mock credential
         var mockCredential = new Mock<TokenCredential>();
@@ -56,6 +57,7 @@ internal class ExampleToolTests
             mockDevOpsService.Object,
             mockGitHubService,
             mockProcessHelper.Object,
+            mockPowershellHelper.Object,
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             null
 #pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
@@ -74,7 +76,7 @@ internal class ExampleToolTests
         Assert.That(result.Operation, Is.EqualTo("GetCredential"));
         Assert.That(result.Result, Does.Contain("Successfully obtained Azure credentials"));
         Assert.That(result.Details, Is.Not.Null);
-        Assert.That(result.Details!.ContainsKey("credential_type"), Is.True);
+        Assert.That(result.Details.ContainsKey("credential_type"), Is.True);
         Assert.That(result.Details.ContainsKey("token_expires"), Is.True);
         Assert.That(result.Details.ContainsKey("has_token"), Is.True);
     }
@@ -92,7 +94,7 @@ internal class ExampleToolTests
         Assert.That(result.Operation, Is.EqualTo("GetPackagePipelineUrl"));
         Assert.That(result.Result, Does.Contain("Found package pipeline"));
         Assert.That(result.Details, Is.Not.Null);
-        Assert.That(result.Details!["service_type"], Is.EqualTo("Azure DevOps"));
+        Assert.That(result.Details["service_type"], Is.EqualTo("Azure DevOps"));
         Assert.That(result.Details["package_pipeline_url"], Is.EqualTo("https://dev.azure.com/test-pipeline"));
 
         // Verify the service was called with correct parameters
@@ -108,7 +110,7 @@ internal class ExampleToolTests
         Assert.That(result.ServiceName, Is.EqualTo("GitHub"));
         Assert.That(result.Operation, Is.EqualTo("GetUser"));
         Assert.That(result.Details, Is.Not.Null);
-        Assert.That(result.Details!.ContainsKey("user_login"), Is.True);
+        Assert.That(result.Details.ContainsKey("user_login"), Is.True);
         Assert.That(result.Details.ContainsKey("user_id"), Is.True);
         Assert.That(result.Result, Does.Contain("Retrieved user details"));
     }
@@ -120,7 +122,7 @@ internal class ExampleToolTests
 
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.Result, Is.Not.Null);
-        Assert.That(result.Result!.ToString(), Does.Contain("successfully"));
+        Assert.That(result.Result.ToString(), Does.Contain("successfully"));
         Assert.That(result.Result.ToString(), Does.Contain("normal"));
     }
 
@@ -151,7 +153,7 @@ internal class ExampleToolTests
 
         Assert.That(command.Name, Is.EqualTo("demo"));
         Assert.That(command.Description, Does.Contain("Comprehensive demonstration"));
-        Assert.That(command.Subcommands.Count, Is.EqualTo(6));
+        Assert.That(command.Subcommands.Count, Is.EqualTo(7));
 
         var subCommandNames = command.Subcommands.Select(sc => sc.Name).ToList();
         Assert.That(subCommandNames, Does.Contain("azure"));
@@ -160,6 +162,7 @@ internal class ExampleToolTests
         Assert.That(subCommandNames, Does.Contain("ai"));
         Assert.That(subCommandNames, Does.Contain("error"));
         Assert.That(subCommandNames, Does.Contain("process"));
+        Assert.That(subCommandNames, Does.Contain("powershell"));
     }
 
     [Test]
@@ -201,14 +204,8 @@ internal class ExampleToolTests
     [Test]
     public async Task DemonstrateProcessExecution_Success()
     {
-        mockProcessHelper!.Setup(p => p.CreateForCrossPlatform("sleep", It.IsAny<string[]>(), "timeout", It.IsAny<string[]>(), It.IsAny<string>()))
-            .Returns(mockProcessHelper.Object);
-        mockProcessHelper!.Setup(p => p.RunProcess(It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ProcessResult
-            {
-                ExitCode = 0,
-                Output = ""
-            });
+        mockProcessHelper!.Setup(p => p.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessResult { ExitCode = 0, });
 
         var result = await tool.DemonstrateProcessExecution("5");
 
@@ -216,26 +213,36 @@ internal class ExampleToolTests
         Assert.That(result.ServiceName, Is.EqualTo("Process"));
         Assert.That(result.Operation, Is.EqualTo("RunSleep"));
         Assert.That(result.Result, Is.Empty);
-        Assert.That(result.Details, Is.Not.Null);
-        Assert.That(result.Details!["exit_code"], Is.EqualTo("0"));
+        Assert.That(result.Details?["exit_code"], Is.EqualTo("0"));
     }
 
     [Test]
     public async Task DemonstrateProcessExecution_Failure()
     {
-        mockProcessHelper!.Setup(p => p.CreateForCrossPlatform("sleep", It.IsAny<string[]>(), "timeout", It.IsAny<string[]>(), It.IsAny<string>()))
-            .Returns(mockProcessHelper.Object);
-        mockProcessHelper!.Setup(p => p.RunProcess(It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ProcessResult
-            {
-                ExitCode = 1,
-                Output = "Process failed" + Environment.NewLine,
-            });
+        var mockResult = new ProcessResult { ExitCode = 1 };
+        mockResult.AppendStderr("Process failed");
+        mockProcessHelper!.Setup(p => p.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockResult);
 
         var result = await tool.DemonstrateProcessExecution("failcase");
 
         Assert.That(result.ResponseErrors, Is.Not.Empty);
         Assert.That(result.ResponseErrors[0], Does.Contain("Sleep example failed"));
         Assert.That(result.ResponseErrors[1], Does.Contain("Process failed"));
+    }
+
+    [Test]
+    public async Task DemonstratePowershellExecution_Success()
+    {
+        mockPowershellHelper!.Setup(p => p.Run(It.IsAny<PowershellOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ProcessResult { ExitCode = 0, });
+
+        var result = await tool.DemonstratePowershellExecution("foobar");
+
+        Assert.That(result.ResponseError, Is.Null);
+        Assert.That(result.ServiceName, Is.EqualTo("PowerShell"));
+        Assert.That(result.Operation, Is.EqualTo("RunTempScript"));
+        Assert.That(result.Result, Is.Empty);
+        Assert.That(result.Details?["exit_code"], Is.EqualTo("0"));
     }
 }

@@ -85,7 +85,9 @@ public abstract class ProcessHelperBase<T>(ILogger<T> logger, IOutputHelper outp
 
             try
             {
+                tryPrintSeparator(options.LogOutputStream);
                 await process.WaitForExitAsync(linkedCts.Token);
+                tryPrintSeparator(options.LogOutputStream);
             }
             // Insert a more descriptive error message when the task times out
             catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested)
@@ -98,6 +100,21 @@ public abstract class ProcessHelperBase<T>(ILogger<T> logger, IOutputHelper outp
         }
 
         return result;
+    }
+
+    private void tryPrintSeparator(bool logOutputStream)
+    {
+        try
+        {
+            var windowWidth = Console.WindowWidth;
+            var separatorLength = 80;
+            if (windowWidth < 80)
+            {
+                separatorLength = 10;
+            }
+            outputHelper.OutputConsole(new string('-', separatorLength));
+        }
+        catch { }
     }
 }
 

@@ -41,7 +41,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var tool = new TypeSpecTool(npxHelper, logger, outputService);
 
             // Act
-            var result = await tool.ConvertSwagger("swagger.json", @"C:\temp", false, false, CancellationToken.None);
+            var result = await tool.ConvertSwagger("swagger.json", @"C:\temp", false, false, false, CancellationToken.None);
 
             // Assert
             Assert.That(result.IsSuccessful, Is.False);
@@ -58,7 +58,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var tool = new TypeSpecTool(npxHelper, logger, outputService);
 
             // Act
-            var result = await tool.ConvertSwagger(@"C:\nonexistent\readme.md", @"C:\temp", false, false, CancellationToken.None);
+            var result = await tool.ConvertSwagger(@"C:\nonexistent\readme.md", @"C:\temp", false, false, false, CancellationToken.None);
 
             // Assert
             Assert.That(result.IsSuccessful, Is.False);

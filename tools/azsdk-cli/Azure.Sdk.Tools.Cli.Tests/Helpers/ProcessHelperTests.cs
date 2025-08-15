@@ -20,12 +20,12 @@ internal class ProcessHelperTests
     }
 
     [Test]
-    public async Task RunProcessAsync_TimesOut()
+    public void RunProcessAsync_TimesOut()
     {
         var process = processHelper.CreateForCrossPlatform("sleep", ["1"], "timeout", ["/T", "1", "/NOBREAK"], Environment.CurrentDirectory);
-        var result = await process.RunProcess(TimeSpan.FromMilliseconds(1), CancellationToken.None);
-
-        Assert.That(result.ExitCode, Is.EqualTo(124));
-        Assert.That(result.Output, Does.Contain("timed out after 1ms"));
+        Assert.ThrowsAsync<OperationCanceledException>(async () =>
+        {
+            await process.RunProcess(TimeSpan.FromMilliseconds(1), CancellationToken.None);
+        });
     }
 }

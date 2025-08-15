@@ -157,22 +157,22 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
         private async Task<TspToolResponse> RunTspClient(string pathToSwaggerReadme, string outputDirectory, bool isAzureResourceManagement, bool fullyCompatible, CancellationToken ct)
         {
-            var cmd = npxHelper.CreateCommand();
-            cmd.Package = "@azure-tools/typespec-client-generator-cli";
-            cmd.Cwd = Environment.CurrentDirectory;
-            cmd.AddArgs("tsp-client", "convert", "--swagger-readme", pathToSwaggerReadme, "--output-dir", outputDirectory);
+            var npxOptions = new NpxOptions(
+                "@azure-tools/typespec-client-generator-cli",
+                ["tsp-client", "convert", "--swagger-readme", pathToSwaggerReadme, "--output-dir", outputDirectory ]
+            );
 
             if (isAzureResourceManagement)
             {
-                cmd.AddArgs("--arm");
+                npxOptions.AddArgs("--arm");
             }
 
             if (fullyCompatible)
             {
-                cmd.AddArgs("--fully-compatible");
+                npxOptions.AddArgs("--fully-compatible");
             }
 
-            var result = await cmd.Run(ct);
+            var result = await npxHelper.Run(npxOptions, ct);
             if (result.ExitCode != 0)
             {
                 SetFailure();

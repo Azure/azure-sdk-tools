@@ -407,7 +407,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         }
 
         [Test]
-        public void GetTypeSpecFilesAsync_WithNoTspFiles_ShouldThrowInvalidOperationException()
+        public async Task GetTypeSpecFilesAsync_WithNoTspFiles_ShouldReturnEmptyDictionary()
         {
             // Arrange
             var mockHandler = CreateMockHttpMessageHandler();
@@ -416,12 +416,15 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             SetupEmptyApiResponse(mockHandler);
 
-            // Act & Assert
-            var exception = Assert.ThrowsAsync<InvalidOperationException>(async () => 
-                await service.GetTypeSpecFilesAsync());
-            Assert.That(exception!.Message, Does.Contain("No valid .tsp files found with download URLs"));
+            // Act
+            var result = await service.GetTypeSpecFilesAsync();
 
-
+            // Assert
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.IsSuccess, Is.True);
+                Assert.That(result.Value!.Count, Is.EqualTo(0));
+            });
         }
 
         [Test]
@@ -504,7 +507,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         }
 
         [Test]
-        public async Task GetTypeSpecFilesAsync_WithFailedFileDownload_ShouldSkipFailedFiles()
+        public void GetTypeSpecFilesAsync_WithFailedFileDownload_ShouldThrowHttpRequestException()
         {
             // Arrange
             var mockHandler = CreateMockHttpMessageHandler();
@@ -515,19 +518,10 @@ namespace Azure.Tools.GeneratorAgent.Tests
             SetupSuccessfulFileDownload(mockHandler, "file1.tsp", "model File1 {}");
             SetupFailedFileDownload(mockHandler, "file2.tsp");
 
-            // Act
-            var result = await service.GetTypeSpecFilesAsync();
-
-            // Assert
-            Assert.Multiple(() =>
-            {
-                Assert.That(result.IsSuccess, Is.True);
-                Assert.That(result.Value!.Count, Is.EqualTo(1));
-                Assert.That(result.Value.ContainsKey("file1.tsp"), Is.True);
-                Assert.That(result.Value.ContainsKey("file2.tsp"), Is.False);
-            });
-
-
+            // Act & Assert
+            var exception = Assert.ThrowsAsync<HttpRequestException>(async () => 
+                await service.GetTypeSpecFilesAsync());
+            Assert.That(exception!.Message, Does.Contain("Failed to download file file2.tsp"));
         }
 
         [Test]

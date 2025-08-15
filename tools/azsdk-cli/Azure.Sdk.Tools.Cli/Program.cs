@@ -46,6 +46,18 @@ public class Program
             consoleLogOptions.LogToStandardErrorThreshold = logErrorThreshold;
         });
 
+        // Skip verbose azure client logging
+        builder.Logging.AddFilter((category, level) =>
+        {
+            var isAzureClient = category!.StartsWith("Azure.", StringComparison.Ordinal);
+            var isToolsClient = category!.StartsWith("Azure.Sdk.Tools.", StringComparison.Ordinal);
+            if (isAzureClient && !isToolsClient)
+            {
+                return level >= LogLevel.Warning;
+            }
+            return level >= logErrorThreshold;
+        });
+
         // register common services
         ServiceRegistrations.RegisterCommonServices(builder.Services);
 

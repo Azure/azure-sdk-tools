@@ -4,7 +4,7 @@ using System.Diagnostics;
 
 namespace Azure.Sdk.Tools.Cli.Helpers;
 
-public abstract class ProcessHelperBase<T>(ILogger<T> logger)
+public abstract class ProcessHelperBase<T>(ILogger<T> logger, IOutputHelper outputHelper)
 {
     /// <summary>
     /// Runs a process with the specified command and arguments in the given working directory.
@@ -48,7 +48,11 @@ public abstract class ProcessHelperBase<T>(ILogger<T> logger)
                     lock (result)
                     {
                         result.AppendStdout(e.Data);
-                        Console.WriteLine($"[{options.ShortName}] {e.Data}");
+                        if (options.LogOutputStream)
+                        {
+                            // TODO: Better to use output service but not good to take a helpers->services dependency
+                            outputHelper.OutputConsole($"[{options.ShortName}] {e.Data}");
+                        }
                     }
                 }
             };
@@ -59,7 +63,11 @@ public abstract class ProcessHelperBase<T>(ILogger<T> logger)
                     lock (result)
                     {
                         result.AppendStderr(e.Data);
-                        Console.WriteLine($"[{options.ShortName}] {e.Data}");
+                        if (options.LogOutputStream)
+                        {
+                            // TODO: Better to use output service but not good to take a helpers->services dependency
+                            outputHelper.OutputConsoleError($"[{options.ShortName}] {e.Data}");
+                        }
                     }
                 }
             };

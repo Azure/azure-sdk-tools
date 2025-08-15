@@ -29,7 +29,7 @@ public class PipelineAnalysisTool : MCPTool
     private readonly IAzureAgentServiceFactory azureAgentServiceFactory;
     private readonly ILogAnalysisHelper logAnalysisHelper;
     private ITestHelper testHelper;
-    private readonly IOutputService output;
+    private readonly IOutputHelper output;
     private readonly ILogger<PipelineAnalysisTool> logger;
 
     private IAzureAgentService azureAgentService;
@@ -70,7 +70,7 @@ public class PipelineAnalysisTool : MCPTool
         IAzureAgentServiceFactory azureAgentServiceFactory,
         ILogAnalysisHelper logAnalysisHelper,
         ITestHelper testHelper,
-        IOutputService output,
+        IOutputHelper output,
         ILogger<PipelineAnalysisTool> logger
     ) : base()
     {

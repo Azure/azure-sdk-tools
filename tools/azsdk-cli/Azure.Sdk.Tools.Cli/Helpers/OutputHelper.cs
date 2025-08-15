@@ -1,9 +1,9 @@
 using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Models;
 
-namespace Azure.Sdk.Tools.Cli.Services;
+namespace Azure.Sdk.Tools.Cli.Helpers;
 
-public interface IOutputService
+public interface IOutputHelper
 {
     string Format(object response);
     string ValidateAndFormat<T>(string response);
@@ -11,13 +11,15 @@ public interface IOutputService
     void Output(string output);
     void OutputError(object output);
     void OutputError(string output);
+    void OutputConsole(string output);
+    void OutputConsoleError(string output);
 }
 
-public class OutputService : IOutputService
+public class OutputHelper : IOutputHelper
 {
     private OutputModes OutputMode { get; set; }
 
-    public OutputService(OutputModes outputMode)
+    public OutputHelper(OutputModes outputMode)
     {
         OutputMode = outputMode;
         if (OutputMode == OutputModes.Mcp)
@@ -86,5 +88,21 @@ public class OutputService : IOutputService
     public virtual void OutputError(string output)
     {
         Console.Error.WriteLine(output);
+    }
+
+    public virtual void OutputConsole(string output)
+    {
+        if (OutputMode != OutputModes.Mcp)
+        {
+            Console.WriteLine(output);
+        }
+    }
+
+    public virtual void OutputConsoleError(string output)
+    {
+        if (OutputMode != OutputModes.Mcp)
+        {
+            Console.Error.WriteLine(output);
+        }
     }
 }

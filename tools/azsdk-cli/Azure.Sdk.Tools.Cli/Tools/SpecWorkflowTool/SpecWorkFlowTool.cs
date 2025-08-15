@@ -19,7 +19,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         IDevOpsService devopsService,
         IGitHelper gitHelper,
         ITypeSpecHelper typespecHelper,
-        IOutputService output,
+        IOutputHelper output,
         ILogger<SpecWorkflowTool> logger) : MCPTool
     {
         private static readonly string PUBLIC_SPECS_REPO = "azure-rest-api-specs";

@@ -17,7 +17,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             // Arrange
             var npxHelper = new Mock<INpxHelper>().Object;
             var logger = new Mock<ILogger<TypeSpecTool>>().Object;
-            var outputService = new Mock<IOutputService>().Object;
+            var outputService = new Mock<IOutputHelper>().Object;
             var tool = new TypeSpecTool(npxHelper, logger, outputService);
 
             // Act
@@ -37,7 +37,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             // Arrange
             var npxHelper = new Mock<INpxHelper>().Object;
             var logger = new Mock<ILogger<TypeSpecTool>>().Object;
-            var outputService = new Mock<IOutputService>().Object;
+            var outputService = new Mock<IOutputHelper>().Object;
             var tool = new TypeSpecTool(npxHelper, logger, outputService);
 
             // Act
@@ -54,7 +54,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             // Arrange
             var npxHelper = new Mock<INpxHelper>().Object;
             var logger = new Mock<ILogger<TypeSpecTool>>().Object;
-            var outputService = new Mock<IOutputService>().Object;
+            var outputService = new Mock<IOutputHelper>().Object;
             var tool = new TypeSpecTool(npxHelper, logger, outputService);
 
             // Act

@@ -10,7 +10,7 @@ namespace Azure.Sdk.Tools.Cli.Tests;
 
 internal class CliIntegrationTests
 {
-    private Mock<OutputService> outputServiceMock = new(MockBehavior.Strict);
+    private Mock<OutputHelper> outputServiceMock = new(MockBehavior.Strict);
 
     private Tuple<Command, TestLogger<T>> GetTestInstanceWithLogger<T>() where T : MCPTool
     {

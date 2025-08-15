@@ -4,20 +4,20 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
-using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Contract;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Models;
 
 namespace Azure.Sdk.Tools.Cli.Tools
 {
-    #if DEBUG
+#if DEBUG
     [McpServerToolType, Description("Simple echo tool for testing and demonstration purposes")]
     public class HelloWorldTool : MCPTool
     {
         // Dependencies
         private readonly ILogger<HelloWorldTool> logger;
-        private readonly IOutputService output;
+        private readonly IOutputHelper output;
 
         private Argument<string> _inputArg = new Argument<string>(
             name: "input",
@@ -29,7 +29,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
         private readonly Option<bool> failOpt = new(["--fail"], () => false, "Force failure");
 
-        public HelloWorldTool(ILogger<HelloWorldTool> logger, IOutputService output) : base()
+        public HelloWorldTool(ILogger<HelloWorldTool> logger, IOutputHelper output) : base()
         {
             this.logger = logger;
             this.output = output;
@@ -106,5 +106,5 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
     }
-    #endif
+#endif
 }

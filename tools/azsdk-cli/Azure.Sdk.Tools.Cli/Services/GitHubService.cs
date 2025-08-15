@@ -16,7 +16,7 @@ namespace Azure.Sdk.Tools.Cli.Services
     public class PullRequestResult
     {
         public string Url { get; set; } = string.Empty;
-        public List<string> Messages { get; set; } = new();
+        public List<string> Messages { get; set; } = new List<string>();
     }
 
 public class GitConnection
@@ -89,12 +89,13 @@ public class GitConnection
         public Task<PullRequestResult> CreatePullRequestAsync(string repoName, string repoOwner, string baseBranch, string headBranch, string title, string body, bool draft = true);
         public Task<List<string>> GetPullRequestCommentsAsync(string repoOwner, string repoName, int pullRequestNumber);
         public Task<PullRequest?> GetPullRequestForBranchAsync(string repoOwner, string repoName, string remoteBranch);
+        public Task<IReadOnlyList<PullRequest?>> SearchPullRequestsByTitleAsync(string repoOwner, string repoName, string titleSearchTerm, ItemState? state = ItemState.Open);
         public Task<Issue> GetIssueAsync(string repoOwner, string repoName, int issueNumber);
-        public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path);
+        public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path, string? branch = null);
         public Task UpdateFileAsync(string owner, string repoName, string path, string message, string content, string sha, string branch);
         public Task<CreateBranchStatus> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranchName = "main");
-        public Task<RepositoryContent> GetContentsSingleAsync(string owner, string repoName, string path);
         public Task<bool> IsExistingBranchAsync(string repoOwner, string repoName, string branchName);
+        public Task<RepositoryContent> GetContentsSingleAsync(string owner, string repoName, string path);
     }
 
     public class GitHubService : GitConnection, IGitHubService
@@ -134,7 +135,72 @@ public class GitConnection
             logger.LogInformation($"Getting all pull request for {repoOwner}/{repoName}");
             var pullRequests = await gitHubClient.PullRequest.GetAllForRepository(repoOwner, repoName);
             logger.LogInformation($"Branch name: {remoteBranch}");
-            return pullRequests?.FirstOrDefault(pr => pr.Head?.Label != null && pr.Head.Label.Equals(remoteBranch, StringComparison.InvariantCultureIgnoreCase));
+            return pullRequests?.FirstOrDefault(pr => pr.Head?.Ref != null && pr.Head.Ref.Equals(remoteBranch, StringComparison.InvariantCultureIgnoreCase));
+        }
+
+        public async Task<IReadOnlyList<PullRequest?>> SearchPullRequestsByTitleAsync(string repoOwner, string repoName, string titleSearchTerm, ItemState? state = ItemState.Open)
+        {
+            try
+            {
+                logger.LogInformation($"Searching for pull requests with title containing '{titleSearchTerm}' in {repoOwner}/{repoName}");
+
+                // Build the search query - remove quotes to enable case-insensitive matching
+                var searchQuery = $"repo:{repoOwner}/{repoName} is:pr {titleSearchTerm} in:title";
+
+                // Add state filter
+                if (state == ItemState.Open)
+                {
+                    searchQuery += " is:open";
+                }
+                else if (state == ItemState.Closed)
+                {
+                    searchQuery += " is:closed";
+                }
+                // If neither open nor closed, search all states (don't add filter)
+
+                var searchRequest = new SearchIssuesRequest(searchQuery)
+                {
+                    Type = IssueTypeQualifier.PullRequest,
+                    PerPage = 100 // Maximum allowed by GitHub API
+                };
+
+                var searchResult = await gitHubClient.Search.SearchIssues(searchRequest);
+
+                if (searchResult?.Items == null || !searchResult.Items.Any())
+                {
+                    logger.LogInformation($"No pull requests found with title containing '{titleSearchTerm}'");
+                    return new List<PullRequest>();
+                }
+
+                // Convert Issues to PullRequests (GitHub Search API returns Issues for PRs)
+                var pullRequests = new List<PullRequest?>();
+                foreach (var issue in searchResult.Items)
+                {
+                    if (issue.PullRequest != null)
+                    {
+                        // Get the full PR details since search only returns basic info
+                        try
+                        {
+                            var fullPr = await gitHubClient.PullRequest.Get(repoOwner, repoName, issue.Number);
+                            pullRequests.Add(fullPr);
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.LogWarning($"Failed to get full details for PR #{issue.Number}: {ex.Message}");
+                            // Still add the basic info if we can't get full details
+                            pullRequests.Add(null);
+                        }
+                    }
+                }
+
+                logger.LogInformation($"Found {pullRequests.Count} pull requests with title containing '{titleSearchTerm}'");
+                return pullRequests;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, $"Error searching for pull requests with title '{titleSearchTerm}' in {repoOwner}/{repoName}");
+                throw;
+            }
         }
 
         private async Task<bool> IsDiffMergeableAsync(string targetRepoOwner, string repoName, string baseBranch, string headBranch)
@@ -209,7 +275,7 @@ public class GitConnection
                     response.Url = createdPullRequest.HtmlUrl;
                     response.Messages.Add("Once you have successfully generated the SDK transition the PR to review ready.");
                 }
-
+                
                 response.Messages.Add($"Pull request created successfully.");
                 response.Url = createdPullRequest.HtmlUrl;
             }
@@ -311,25 +377,34 @@ public class GitConnection
         /// <param name="path">Directory or file path</param>
         /// <param name="expectSingleFile">If true, returns only the first file content; if false, returns all contents</param>
         /// <returns>List of repository contents or null if path doesn't exist</returns>
-        public async Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path)
+        public async Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path, string? branch = null)
         {
             try
             {
-                return await gitHubClient.Repository.Content.GetAllContents(owner, repoName, path);
+                IReadOnlyList<RepositoryContent> result;
+                if (string.IsNullOrEmpty(branch))
+                {
+                    result = await gitHubClient.Repository.Content.GetAllContents(owner, repoName, path);
+                }
+                else
+                {
+                    result = await gitHubClient.Repository.Content.GetAllContentsByRef(owner, repoName, path, branch);
+                }
+                return result;
             }
-            catch (NotFoundException)
+            catch (NotFoundException ex)
             {
-                logger.LogInformation($"Path {path} not found in {owner}/{repoName}");
+                logger.LogInformation("GitHubService: Path {path} not found in {owner}/{repoName} on reference {branch}. Exception: {exception}", path, owner, repoName, branch, ex.Message);
                 return null;
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, $"Error fetching contents from {owner}/{repoName}/{path}");
+                logger.LogError(ex, "GitHubService: Error fetching contents from {owner}/{repoName}/{path} on reference {branch}", owner, repoName, path, branch);
                 throw;
             }
         }
 
-        public async Task UpdateFileAsync(string owner, string repoName, string path, string message, string content, string sha, string branch)
+        public async Task UpdateFileAsync(string owner, string repoName, string path, string message, string content, string sha, string branch = null)
         {
             try
             {

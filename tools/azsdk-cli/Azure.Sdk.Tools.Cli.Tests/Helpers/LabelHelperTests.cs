@@ -2,7 +2,6 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Configuration;
 
-
 namespace Azure.Sdk.Tools.Cli.Tests.Helpers;
 
 internal class LabelHelperTests

@@ -42,6 +42,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../../codeowners-utils/Azure.Sdk.Tools.CodeownersUtils/Azure.Sdk.Tools.CodeownersUtils.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <EmbeddedResource Include="Images/quokka.ansi" />
   </ItemGroup>
 </Project>

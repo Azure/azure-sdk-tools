@@ -12,7 +12,8 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         {
             Exists,
             DoesNotExist,
-            NotAServiceLabel
+            NotAServiceLabel,
+            InReview
         }
 
         public static ServiceLabelStatus CheckServiceLabel(string csvContent, string serviceName)
@@ -57,6 +58,31 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             return ServiceLabelStatus.DoesNotExist;
         }
 
+        public static bool CheckServiceLabelInReview(IReadOnlyList<Octokit.PullRequest?> pullRequests, string serviceLabel)
+        {
+            try
+            {
+                if (pullRequests == null || !pullRequests.Any())
+                {
+                    return false;
+                }
+
+                foreach (var pr in pullRequests.Where(p => p != null))
+                {
+                    if (pr != null && pr.Title.Contains(serviceLabel, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
         public static string CreateServiceLabel(string csvContent, string serviceLabel)
         {
             // Filter out empty or whitespace-only lines
@@ -97,12 +123,5 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                     .ToLowerInvariant();
             return normalizedLabel;
         }
-    }
-
-    public class LabelData
-    {
-        public string Name { get; set; }
-        public string Description { get; set; }
-        public string Color { get; set; }
     }
 }

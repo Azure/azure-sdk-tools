@@ -5,10 +5,10 @@ using System.CommandLine.Invocation;
 using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Contract;
+using Azure.Sdk.Tools.Cli.Helpers;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses;
-using Azure.Sdk.Tools.Cli.Helpers;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
@@ -102,12 +102,19 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
         private async Task<LabelHelper.ServiceLabelStatus> getServiceLabelInfo(string serviceLabel)
         {
-            logger.LogInformation($"Checking service label: {serviceLabel}");
-
             var csvContents = await githubService.GetContentsSingleAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, Constants.AZURE_COMMON_LABELS_PATH);
 
             var result = LabelHelper.CheckServiceLabel(csvContents.Content, serviceLabel);
+            if (result == LabelHelper.ServiceLabelStatus.Exists)
+            {
+                return result;
+            }
 
+            var pullRequests = await githubService.SearchPullRequestsByTitleAsync("Azure", "azure-sdk-tools", "Service Label");
+            if (LabelHelper.CheckServiceLabelInReview(pullRequests, serviceLabel))
+            {
+                return LabelHelper.ServiceLabelStatus.InReview;
+            }
             return result;
         }
 
@@ -123,7 +130,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 // Create a new branch
                 if (checkResult == LabelHelper.ServiceLabelStatus.Exists)
                 {
-                    logger.LogInformation($"Service label '{label}' already exists. No action taken.");
                     return new ServiceLabelResponse
                     {
                         Status = "AlreadyExists",
@@ -141,7 +147,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
                 var branchResult = await githubService.CreateBranchAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, $"add_service_label_{normalizedLabel}", "main");
-                logger.LogInformation($"Branch creation result: {branchResult}");
 
                 // If branch already exists, return early with the compare URL
                 if (branchResult == CreateBranchStatus.AlreadyExists)
@@ -153,9 +158,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
                         PullRequestUrl = $"https://github.com/Azure/azure-sdk-tools/compare/main...add_service_label_{normalizedLabel}"
                     };
                 }
-
-                logger.LogInformation($"Creating new service label: {label}. Documentation link: {link}");
-
 
                 // Update the common-labels.csv file
                 var csvContent = await githubService.GetContentsSingleAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, Constants.AZURE_COMMON_LABELS_PATH);
@@ -170,11 +172,9 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     repoOwner: Constants.AZURE_OWNER_PATH,
                     baseBranch: "main",
                     headBranch: $"add_service_label_{normalizedLabel}",
-                    title: $"Add service label: {label}",
+                    title: $"[Service Label] Add service label: {label}",
                     body: $"This PR adds the service label '{label}' to the repository. Documentation link: {link}"
                 );
-
-                logger.LogInformation($"Service label '{label}' pull request created successfully. Result: {string.Join(", ", result)}");
 
                 // Extract the pull request URL from the result
                 var pullRequestUrl = result.Url;

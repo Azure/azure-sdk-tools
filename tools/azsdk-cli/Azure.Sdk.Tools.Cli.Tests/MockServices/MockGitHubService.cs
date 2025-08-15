@@ -64,13 +64,18 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
             throw new NotImplementedException();
         }
 
+        public Task<IReadOnlyList<PullRequest?>> SearchPullRequestsByTitleAsync(string repoOwner, string repoName, string titleSearchTerm, ItemState? state = ItemState.Open)
+        {
+            throw new NotImplementedException();
+        }
+
         public Task<Issue> GetIssueAsync(string repoOwner, string repoName, int issueNumber)
         {
             var issue = CreateMockIssue(repoOwner, repoName, issueNumber);
             return Task.FromResult(issue);
         }
 
-        public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path)
+        public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path, string? branch = null)
         {
             // Handle specific test scenarios
             if (path == "non-existent-path")
@@ -94,9 +99,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
             // Default: Return mock directory listing for .github/prompts or similar paths
             var contents = new List<RepositoryContent>
             {
-                CreateMockRepositoryContent("README.md", ".github/prompts/README.md", "test"), 
-                CreateMockRepositoryContent("prompt1.md", ".github/prompts/prompt1.md", "test"), 
-                CreateMockRepositoryContent("prompt2.md", ".github/prompts/prompt2.md", "test")  
+                CreateMockRepositoryContent("README.md", ".github/prompts/README.md", "test"),
+                CreateMockRepositoryContent("prompt1.md", ".github/prompts/prompt1.md", "test"),
+                CreateMockRepositoryContent("prompt2.md", ".github/prompts/prompt2.md", "test")
             };
 
             return Task.FromResult<IReadOnlyList<RepositoryContent>?>(contents.AsReadOnly());
@@ -123,7 +128,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
                 downloadUrl: $"https://raw.githubusercontent.com/testowner/testrepo/main/{path}",
                 url: $"https://api.github.com/repos/testowner/testrepo/contents/{path}",
                 htmlUrl: $"https://github.com/testowner/testrepo/blob/main/{path}",
-                gitUrl: null,
+                gitUrl: $"https://api.github.com/repos/testowner/testrepo/git/blobs/sha{name.GetHashCode():x}",
                 encoding: "base64",
                 encodedContent: encodedContent,
                 target: null,

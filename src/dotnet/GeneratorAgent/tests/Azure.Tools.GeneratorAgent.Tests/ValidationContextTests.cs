@@ -1,5 +1,4 @@
 using Azure.Tools.GeneratorAgent.Configuration;
-using Azure.Tools.GeneratorAgent.Security;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;

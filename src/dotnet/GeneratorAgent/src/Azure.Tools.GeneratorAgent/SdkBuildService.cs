@@ -1,9 +1,5 @@
-using System;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-using Azure.Tools.GeneratorAgent.Security;
 using Azure.Tools.GeneratorAgent.Exceptions;
+using Azure.Tools.GeneratorAgent.Security;
 using Microsoft.Extensions.Logging;
 
 namespace Azure.Tools.GeneratorAgent

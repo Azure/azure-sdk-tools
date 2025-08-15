@@ -1,8 +1,8 @@
 using System.Reflection;
+using Azure.Tools.GeneratorAgent;
 using Azure.Tools.GeneratorAgent.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Azure.Tools.GeneratorAgent;
 
 internal class ToolConfiguration
 {

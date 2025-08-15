@@ -54,6 +54,9 @@ namespace Azure.Tools.GeneratorAgent.Configuration
         // Script Paths
         public string PowerShellScriptPath => "eng/scripts/automation/Invoke-TypeSpecDataPlaneGenerateSDKPackage.ps1";
 
+        // GitHub Settings
+        public string? GitHubToken => Configuration.GetSection("GitHubSettings:Token").Value;
+
         private string GetRequiredSetting(string key)
         {
             string? value = Configuration.GetSection(key).Value;

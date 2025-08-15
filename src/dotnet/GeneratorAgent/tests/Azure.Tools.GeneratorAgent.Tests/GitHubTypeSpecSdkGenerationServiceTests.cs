@@ -1,9 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-using Azure.Tools.GeneratorAgent;
 using Azure.Tools.GeneratorAgent.Configuration;
 using Azure.Tools.GeneratorAgent.Exceptions;
 using Azure.Tools.GeneratorAgent.Security;
@@ -925,7 +919,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var result = await task;
 
             Assert.That(result.IsSuccess, Is.True);
-            VerifyLogMessage(logger, LogLevel.Information, "dotnet build output:");
+            VerifyLogMessage(logger, LogLevel.Information, "Running dotnet build /t:generateCode");
         }
 
         [Test]

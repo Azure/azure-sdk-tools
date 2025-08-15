@@ -1,9 +1,8 @@
-using Microsoft.Extensions.Logging;
-using Azure.Tools.GeneratorAgent.Configuration;
-using Azure.Tools.GeneratorAgent.Security;
-using Azure.Tools.GeneratorAgent.Exceptions;
 using System.Runtime.InteropServices;
-using System.Security;
+using Azure.Tools.GeneratorAgent.Configuration;
+using Azure.Tools.GeneratorAgent.Exceptions;
+using Azure.Tools.GeneratorAgent.Security;
+using Microsoft.Extensions.Logging;
 
 namespace Azure.Tools.GeneratorAgent
 {

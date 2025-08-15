@@ -1,6 +1,4 @@
 using System.Runtime.InteropServices;
-using System.Collections.Generic;
-using System;
 
 namespace Azure.Tools.GeneratorAgent.Security
 {
@@ -43,6 +41,12 @@ namespace Azure.Tools.GeneratorAgent.Security
         public static string GitExecutable => "git";
 
         /// <summary>
+        /// Gets the Bash executable name.
+        /// On Windows, this may require Git Bash or WSL. On other platforms, use bash.
+        /// </summary>
+        public static string BashExecutable => "bash";
+
+        /// <summary>
         /// Gets the set of allowed commands for security validation.
         /// Includes platform-specific variations for cross-platform compatibility.
         /// </summary>
@@ -56,6 +60,7 @@ namespace Azure.Tools.GeneratorAgent.Security
             "npx.cmd",  // Windows
             DotNetExecutable,
             "git",      // Git command for repository operations
+            "bash",     // Bash shell for scripting operations
             "-Command"  // PowerShell parameter
         };        /// <summary>
         /// Validates if a command is allowed to be executed.

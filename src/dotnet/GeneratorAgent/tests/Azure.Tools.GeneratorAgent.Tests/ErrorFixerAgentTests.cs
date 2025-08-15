@@ -6,8 +6,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using NUnit.Framework;
-using System.ClientModel.Primitives;
-using System.ClientModel;
 
 namespace Azure.Tools.GeneratorAgent.Tests
 {
@@ -68,8 +66,8 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 return MockAgent;
             }
 
-            public async Task<string> TestInitializeAgentEnvironmentAsync(string typeSpecDir, CancellationToken ct = default)
-                => await InitializeAgentEnvironmentAsync(typeSpecDir, ct);
+            public async Task<string> TestInitializeAgentEnvironmentAsync(Dictionary<string, string> typeSpecFiles, CancellationToken ct = default)
+                => await InitializeAgentEnvironmentAsync(typeSpecFiles, ct);
 
             public async ValueTask TestDisposeAsync() => await DisposeAsync();
         }
@@ -178,39 +176,35 @@ namespace Azure.Tools.GeneratorAgent.Tests
         }
 
         [Test]
-        public void InitializeAgentEnvironmentAsync_WithNonExistentDirectory_ShouldThrowDirectoryNotFoundException()
+        public void InitializeAgentEnvironmentAsync_WithEmptyDictionary_ShouldThrowInvalidOperationException()
         {
             // Arrange
             var agent = CreateTestableErrorFixerAgent();
-            var nonExistentDir = Path.Combine(Path.GetTempPath(), $"test_nonexistent_{Guid.NewGuid()}");
+            var emptyTypeSpecFiles = new Dictionary<string, string>();
 
             // Act & Assert
-            Assert.ThrowsAsync<DirectoryNotFoundException>(
-                async () => await agent.TestInitializeAgentEnvironmentAsync(nonExistentDir));
+            var ex = Assert.ThrowsAsync<InvalidOperationException>(
+                async () => await agent.TestInitializeAgentEnvironmentAsync(emptyTypeSpecFiles));
+            
+            Assert.That(ex!.Message, Does.Contain("No TypeSpec files"));
         }
 
         [Test]
-        public void InitializeAgentEnvironmentAsync_WithEmptyDirectory_ShouldThrowInvalidOperationException()
+        public void InitializeAgentEnvironmentAsync_WithNonTypeSpecFiles_ShouldThrowInvalidOperationException()
         {
             // Arrange
             var agent = CreateTestableErrorFixerAgent();
-            var tempDir = Path.Combine(Path.GetTempPath(), $"test_empty_{Guid.NewGuid()}");
-            
-            try
+            var nonTypeSpecFiles = new Dictionary<string, string>
             {
-                Directory.CreateDirectory(tempDir);
+                { "readme.md", "# README" },
+                { "config.txt", "some config" }
+            };
 
-                // Act & Assert
-                var ex = Assert.ThrowsAsync<InvalidOperationException>(
-                    async () => await agent.TestInitializeAgentEnvironmentAsync(tempDir));
-                
-                Assert.That(ex!.Message, Does.Contain("No TypeSpec files"));
-            }
-            finally
-            {
-                // Cleanup - Use retry logic to handle potential file locks
-                CleanupDirectory(tempDir);
-            }
+            // Act & Assert
+            var ex = Assert.ThrowsAsync<InvalidOperationException>(
+                async () => await agent.TestInitializeAgentEnvironmentAsync(nonTypeSpecFiles));
+            
+            Assert.That(ex!.Message, Does.Contain("No TypeSpec files"));
         }
 
         [Test]

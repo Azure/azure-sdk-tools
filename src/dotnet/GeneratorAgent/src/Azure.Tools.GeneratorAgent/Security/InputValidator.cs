@@ -1,7 +1,4 @@
 using System.Text.RegularExpressions;
-using System.IO;
-using System.Linq;
-using System;
 
 namespace Azure.Tools.GeneratorAgent.Security
 {

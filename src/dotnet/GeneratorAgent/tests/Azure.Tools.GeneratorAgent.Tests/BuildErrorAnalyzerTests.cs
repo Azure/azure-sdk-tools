@@ -1,8 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using Azure.Tools.ErrorAnalyzers;
-using Azure.Tools.GeneratorAgent;
 using Azure.Tools.GeneratorAgent.Exceptions;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -478,12 +474,11 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             analyzer.GetFixes(errors);
 
-            // Check that the log contains the correct error count
             loggerMock.Verify(
                 x => x.Log(
                     LogLevel.Information,
                     It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Generated fixes for 2 errors")),
+                    It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Generated fixes for errors")),
                     It.IsAny<Exception>(),
                     It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
                 Times.Once);

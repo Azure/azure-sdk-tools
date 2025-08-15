@@ -1,13 +1,9 @@
-using Azure.Tools.GeneratorAgent;
+using System.Diagnostics;
 using Azure.Tools.GeneratorAgent.Exceptions;
 using Azure.Tools.GeneratorAgent.Security;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
-using System.Security;
 
 namespace Azure.Tools.GeneratorAgent.Tests
 {

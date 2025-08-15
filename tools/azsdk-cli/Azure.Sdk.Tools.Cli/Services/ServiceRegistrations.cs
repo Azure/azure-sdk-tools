@@ -33,6 +33,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ILogAnalysisHelper, LogAnalysisHelper>();
             services.AddSingleton<IGitHelper, GitHelper>();
             services.AddSingleton<INpxHelper, NpxHelper>();
+            services.AddSingleton<IPowershellHelper, PowershellHelper>();
             services.AddSingleton<IProcessHelper, ProcessHelper>();
             services.AddSingleton<ITestHelper, TestHelper>();
             services.AddSingleton<ITypeSpecHelper, TypeSpecHelper>();

@@ -1,0 +1,100 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+using System.Diagnostics;
+
+namespace Azure.Sdk.Tools.Cli.Helpers;
+
+public abstract class ProcessHelperBase<T>(ILogger<T> logger)
+{
+    /// <summary>
+    /// Runs a process with the specified command and arguments in the given working directory.
+    /// </summary>
+    /// <param name="options">The options for the process to run.</param>
+    /// <param name="ct">The cancellation token to monitor for cancellation requests.</param>
+    /// <returns>A <see cref="ProcessResult"/> containing the output and exit code of the process.</returns>
+    /// <remarks>
+    /// If the process does not complete within the specified timeout, it will be terminated.
+    /// </remarks>
+    protected async Task<ProcessResult> Run(IProcessOptions options, CancellationToken ct)
+    {
+        using var timeoutCts = new CancellationTokenSource(options.Timeout);
+        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutCts.Token);
+
+        var processStartInfo = new ProcessStartInfo
+        {
+            FileName = options.Command,
+            WorkingDirectory = options.WorkingDirectory,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            RedirectStandardInput = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        foreach (var arg in options.Args)
+        {
+            processStartInfo.ArgumentList.Add(arg);
+        }
+
+        ProcessResult result = new() { ExitCode = 1 };
+
+        using (var process = new Process())
+        {
+            process.StartInfo = processStartInfo;
+            process.OutputDataReceived += (sender, e) =>
+            {
+                if (e.Data != null)
+                {
+                    lock (result)
+                    {
+                        result.AppendStdout(e.Data);
+                        Console.WriteLine($"[{options.ShortName}] {e.Data}");
+                    }
+                }
+            };
+            process.ErrorDataReceived += (sender, e) =>
+            {
+                if (e.Data != null)
+                {
+                    lock (result)
+                    {
+                        result.AppendStderr(e.Data);
+                        Console.WriteLine($"[{options.ShortName}] {e.Data}");
+                    }
+                }
+            };
+
+            logger.LogInformation(
+                "Running command: {command} {args} in {workingDirectory}",
+                options.Command, string.Join(" ", options.Args), options.WorkingDirectory);
+
+            process.Start();
+            lock (result)
+            {
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
+            }
+
+            try
+            {
+                await process.WaitForExitAsync(linkedCts.Token);
+            }
+            // Insert a more descriptive error message when the task times out
+            catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested)
+            {
+                logger.LogError("Process '{command}' timed out after {timeout}ms", options.ShortName, options.Timeout.TotalMilliseconds);
+                throw new OperationCanceledException($"Process '{options.ShortName}' timed out after {options.Timeout.TotalMilliseconds}ms");
+            }
+
+            result.ExitCode = process.ExitCode;
+        }
+
+        return result;
+    }
+}
+
+public enum StdioLevel
+{
+    StandardOutput,
+    StandardError,
+}

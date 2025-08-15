@@ -53,7 +53,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                         // Run npm ci
                         logger.LogInformation("Installing dependencies with npm ci");
                         RunNpmCi(specRepoRootPath);
-                        logger.LogInformation("Dependencies installation completed");
+                        logger.LogInformation("Dependency installation completed");
                     }
 
                     //Run TypeSpec validation

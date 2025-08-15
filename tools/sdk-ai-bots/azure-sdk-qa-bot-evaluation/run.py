@@ -2,6 +2,7 @@ import asyncio
 from collections import defaultdict
 from datetime import datetime
 import json
+import math
 import os
 from pathlib import Path
 import pathlib
@@ -14,6 +15,11 @@ from azure.identity import AzurePipelinesCredential, DefaultAzureCredential, Azu
 from tabulate import tabulate
 import argparse
 from dotenv import load_dotenv
+
+weights: dict[str, float] = {
+    "similarity_weight": 0.6,  # Similarity between expected and actual
+    "groundedness_weight": 0.4,  # Staying grounded in guidelines
+}
 
 async def process_file(input_file: str, output_file: str, is_bot: bool) -> None:
     """Process a single input file"""
@@ -139,11 +145,15 @@ async def prepare_dataset(testdata_dir: str, file_prefix: str = None, is_bot: bo
 def calculate_overall_score(row: dict[str, Any]) -> float:
     """Calculate weighted score based on various metrics."""
     # calculate the overall score when there are multiple metrics.
-    similarityWeight = 0.6
-    groundednessWeight = 0.4
-    similarity = float(row["outputs.similarity.similarity"]) if "outputs.similarity.similarity" in row else -1
-    groundedness = float(row["outputs.groundedness.groundedness"]) if "outputs.groundedness.groundedness" in row else -1
-    return (similarity * similarityWeight + groundedness * groundednessWeight)/5
+    if ("outputs.similarity.similarity" not in row) or ( "outputs.groundedness.groundedness" not in row):
+        return 0.0
+    
+    similarity = float(row["outputs.similarity.similarity"])
+    groundedness = float(row["outputs.groundedness.groundedness"])
+    if similarity == math.nan or groundedness == math.nan:
+        return 0.0
+    else:
+        return similarity * weights["similarity_weight"] + groundedness * weights["groundedness_weight"]
 
 def record_run_result(result: dict[str, Any]) -> list[dict[str, Any]]:
     run_result = []
@@ -164,6 +174,8 @@ def record_run_result(result: dict[str, Any]) -> list[dict[str, Any]]:
         run_result.append(
             {
                 "testcase": row["inputs.testcase"],
+                "expected": row["inputs.ground_truth"],
+                "actual": row["inputs.response"],
                 "similarity": float(row["outputs.similarity.similarity"]) if "outputs.similarity.similarity" in row else -1,
                 "gpt_similarity": float(row["outputs.similarity.gpt_similarity"]) if "outputs.similarity.gpt_similarity" in row else -1,
                 "similarity_threshold": float(row["outputs.similarity.similarity_threshold"]) if "outputs.similarity.similarity_threshold" in row else 3,
@@ -294,6 +306,29 @@ def verify_results(all_results: dict[str, Any]) -> bool:
         print(f"Failed Scenarios: {' '.join(failed_scenarios)}")
     return ret 
 
+def establish_baseline(args: argparse.Namespace, all_results: dict[str, Any]) -> None:
+    """Establish the current results as the new baseline."""
+
+    # only ask if we're not in CI
+    if args.is_cli is False:
+        establish_baseline = input("\nDo you want to establish this as the new baseline? (y/n): ")
+        if establish_baseline.lower() == "y":
+            for name, result in all_results.items():
+                baselineName = f"{name.split('_')[0]}-test.json"
+                baseline_path = pathlib.Path(__file__).parent / "results" / baselineName
+                with open(str(baseline_path), "w") as f:
+                    json.dump(result, indent=4, fp=f)
+
+    # whether or not we establish a baseline, we want to write results to a temp dir
+    log_path = pathlib.Path(__file__).parent / "results" / ".log"
+    if not log_path.exists():
+        log_path.mkdir(parents=True, exist_ok=True)
+
+    for name, result in all_results.items():
+        baselineName = f"{name.split('_')[0]}-test.json"
+        output_path = log_path / baselineName
+        with open(str(output_path), "w") as f:
+            json.dump(result, indent=4, fp=f)
 
 if __name__ == "__main__":
 
@@ -391,6 +426,15 @@ if __name__ == "__main__":
                             "ground_truth": "${data.ground_truth}",
                             "testcase": "${data.testcase}"
                         } 
+                    },
+                    "groundedness": {
+                        "column_mapping": {
+                            "query": "${data.query}",
+                            "response": "${data.response}",
+                            "context": "${data.context}",
+                            "ground_truth": "${data.ground_truth}",
+                            "testcase": "${data.testcase}"
+                        } 
                     }
                 },
                 # Optionally provide your Azure AI Foundry project information to track your evaluation results in your project portal
@@ -409,6 +453,7 @@ if __name__ == "__main__":
         traceback.print_exc()
     
     show_results(all_results)
+    establish_baseline(args, all_results)
     isPass = verify_results(all_results)
     if not isPass:
         exit(1)

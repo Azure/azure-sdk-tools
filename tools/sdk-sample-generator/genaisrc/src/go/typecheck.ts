@@ -41,6 +41,7 @@ export async function typecheckGo(
         }
 
         const commands = [
+            ["go", "mod", "tidy"],
             ["go", "install", "github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.3.1"],
             ["go", "build"],
             ["go", "test", "-c"],

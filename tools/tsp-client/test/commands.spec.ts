@@ -158,6 +158,22 @@ describe.sequential("Verify commands", () => {
         "save-inputs": true,
       };
       await updateCommand(args);
+      assert.isDefined(
+        await stat(
+          "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest/tsp-location.yaml",
+        ),
+      );
+
+      // Explicitly assert that we're not appending the current directory to the output path which would happen
+      // if we pass in the current directory to replace output-dir in the following format:
+      // emitter-output-dir: "{output-dir}/{service-dir}/contosowidgetmanager-rest"
+      try {
+        await stat(
+          "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest/sdk/contosowidgetmanager/",
+        );
+      } catch (error) {
+        assert.equal(error.code, "ENOENT");
+      }
     } catch (error) {
       assert.fail(`Failed to generate. Error: ${error}`);
     }

@@ -162,7 +162,7 @@ public class ExampleTool : MCPTool
             AISubCommand => await DemonstrateAIService(ctx.ParseResult.GetValueForArgument(aiInputArg), ct),
             ErrorSubCommand => await DemonstrateErrorHandling(ctx.ParseResult.GetValueForArgument(errorInputArg), ctx.ParseResult.GetValueForOption(forceFailureOption), ct),
             ProcessSubCommand => await DemonstrateProcessExecution(ctx.ParseResult.GetValueForArgument(processSleepArg), ct),
-            PowershellSubCommand => await DemonstratePowershellHelper(ctx.ParseResult.GetValueForArgument(powershellMessageArg), ct),
+            PowershellSubCommand => await DemonstratePowershellExecution(ctx.ParseResult.GetValueForArgument(powershellMessageArg), ct),
             _ => new ExampleServiceResponse { ResponseError = $"Unknown command: {commandName}" }
         };
 
@@ -391,8 +391,7 @@ public class ExampleTool : MCPTool
                 Result = trimmed,
                 Details = new Dictionary<string, string>
                 {
-                    ["exit_code"] = result.ExitCode.ToString(),
-                    ["raw_output"] = result.Output ?? string.Empty
+                    ["exit_code"] = result.ExitCode.ToString()
                 }
             };
         }
@@ -407,15 +406,25 @@ public class ExampleTool : MCPTool
         }
     }
 
-    [McpServerTool(Name = "example_powershell_helper"), Description("Demonstrates using the PowerShell helper to run a temp script with a parameter")]
-    public async Task<ExampleServiceResponse> DemonstratePowershellHelper(string message, CancellationToken ct = default)
+    [McpServerTool(Name = "example_powershell_execution"), Description("Demonstrates running a powershell script with a parameter")]
+    public async Task<ExampleServiceResponse> DemonstratePowershellExecution(string message, CancellationToken ct = default)
     {
         string? tempFile = null;
         try
         {
             // Create a temporary PowerShell script that echoes a parameter via Write-Host
-            tempFile = Path.Combine(Path.GetTempPath(), $"azsdk_example_{Guid.NewGuid():N}.ps1");
-            var script = "param([string]$Message)\nWrite-Host $Message\n";
+            var script = $"""
+                param([string]$Message)
+                Write-Host "1: $Message"
+                Start-Sleep -Seconds 1
+                Write-Host "2: $Message"
+                Start-Sleep -Seconds 1
+                Write-Error "Test error message, no failure"
+                Start-Sleep -Seconds 1
+                Write-Host "3: $Message"
+            """;
+            var guid = Guid.NewGuid().ToString()[..6];
+            tempFile = Path.Combine(Path.GetTempPath(), $"azsdk_example_{guid}.ps1");
             await File.WriteAllTextAsync(tempFile, script, ct);
 
             var options = new PowershellOptions(tempFile, [message]);
@@ -440,7 +449,7 @@ public class ExampleTool : MCPTool
             {
                 ServiceName = "PowerShell",
                 Operation = "RunTempScript",
-                Result = string.IsNullOrEmpty(output) ? "(no output)" : output,
+                Result = output,
                 Details = new Dictionary<string, string>
                 {
                     ["script_path"] = tempFile,
@@ -472,6 +481,5 @@ public class ExampleTool : MCPTool
             }
         }
     }
-
 }
 #endif

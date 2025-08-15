@@ -15,7 +15,7 @@ public class PowershellOptions : ProcessOptions, IProcessOptions
         {
             if (string.IsNullOrEmpty(shortName))
             {
-                shortName = string.IsNullOrEmpty(ScriptPath) ? "pwsh" : ScriptPath;
+                shortName = string.IsNullOrEmpty(ScriptPath) ? "pwsh" : Path.GetFileName(ScriptPath);
             }
             return shortName;
         }
@@ -26,7 +26,7 @@ public class PowershellOptions : ProcessOptions, IProcessOptions
         bool logOutputStream = true,
         string? workingDirectory = null,
         TimeSpan? timeout = null
-    ) : base("pwsh", ["-Command", ..args], logOutputStream, workingDirectory, timeout) {}
+    ) : base("pwsh", ["-Command", .. args], logOutputStream, workingDirectory, timeout) { }
 
     public PowershellOptions(
         string scriptPath,
@@ -34,7 +34,7 @@ public class PowershellOptions : ProcessOptions, IProcessOptions
         bool logOutputStream = true,
         string? workingDirectory = null,
         TimeSpan? timeout = null
-    ) : base("pwsh", ["-File", scriptPath, ..args], logOutputStream, workingDirectory, timeout)
+    ) : base("pwsh", ["-File", scriptPath, .. args], logOutputStream, workingDirectory, timeout)
     {
         ScriptPath = scriptPath;
     }

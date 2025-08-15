@@ -73,7 +73,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             var isArm = ctx.ParseResult.GetValueForOption(isArmOption);
             var fullyCompatible = ctx.ParseResult.GetValueForOption(fullyCompatibleOption);
 
-            TspToolResponse result = await ConvertSwagger(swaggerReadme, outputDirectory, isArm, fullyCompatible, ct);
+            TspToolResponse result = await ConvertSwagger(swaggerReadme, outputDirectory, isArm, fullyCompatible, true, ct);
             ctx.ExitCode = ExitCode;
             output.Output(result);
         }
@@ -87,7 +87,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
         It is recommended not to set this to `true` so that the converted TypeSpec project
         leverages TypeSpec built-in libraries with standard patterns and templates.
         Returns path to the created project.")]
-        public async Task<TspToolResponse> ConvertSwagger(string pathToSwaggerReadme, string outputDirectory, bool? isAzureResourceManagement, bool? fullyCompatible, CancellationToken ct)
+        public async Task<TspToolResponse> ConvertSwagger(
+            string pathToSwaggerReadme,
+            string outputDirectory,
+            bool? isAzureResourceManagement,
+            bool? fullyCompatible,
+            bool isCli,
+            CancellationToken ct
+        )
         {
             try
             {
@@ -119,7 +126,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
                 var fullOutputDir = Path.GetFullPath(outputDirectory.Trim());
-                return await RunTspClient(fullPathToSwaggerReadme, fullOutputDir, isAzureResourceManagement ?? false, fullyCompatible ?? false, ct);
+                return await RunTspClient(fullPathToSwaggerReadme, fullOutputDir, isAzureResourceManagement ?? false, fullyCompatible ?? false, isCli, ct);
             }
             catch (Exception ex)
             {
@@ -155,11 +162,19 @@ namespace Azure.Sdk.Tools.Cli.Tools
             return null; // Validation passed
         }
 
-        private async Task<TspToolResponse> RunTspClient(string pathToSwaggerReadme, string outputDirectory, bool isAzureResourceManagement, bool fullyCompatible, CancellationToken ct)
+        private async Task<TspToolResponse> RunTspClient(
+            string pathToSwaggerReadme,
+            string outputDirectory,
+            bool isAzureResourceManagement,
+            bool fullyCompatible,
+            bool isCli,
+            CancellationToken ct
+        )
         {
             var npxOptions = new NpxOptions(
                 "@azure-tools/typespec-client-generator-cli",
-                ["tsp-client", "convert", "--swagger-readme", pathToSwaggerReadme, "--output-dir", outputDirectory]
+                ["tsp-client", "convert", "--swagger-readme", pathToSwaggerReadme, "--output-dir", outputDirectory],
+                logOutputStream: true
             );
 
             if (isAzureResourceManagement)
@@ -176,9 +191,19 @@ namespace Azure.Sdk.Tools.Cli.Tools
             if (result.ExitCode != 0)
             {
                 SetFailure();
+                // Omit printing details in CLI mode since we already stream the generator cli output
+                if (isCli)
+                {
+                    return new TspToolResponse
+                    {
+                        ResponseError = $"Failed to convert swagger to TypeSpec project, see details in the above logs."
+                    };
+                }
                 return new TspToolResponse
                 {
-                    ResponseError = $"Failed to convert swagger to TypeSpec project: {result.Output}"
+                    ResponseError = $"Failed to convert swagger to TypeSpec project, see generator output below" +
+                                    Environment.NewLine +
+                                    result.Output
                 };
             }
 

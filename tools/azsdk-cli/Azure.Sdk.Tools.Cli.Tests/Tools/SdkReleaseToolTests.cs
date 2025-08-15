@@ -1,9 +1,10 @@
+using Microsoft.TeamFoundation.Build.WebApi;
+using Moq;
+using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools;
-using Microsoft.TeamFoundation.Build.WebApi;
-using Moq;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools
 {

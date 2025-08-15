@@ -166,10 +166,11 @@ namespace Azure.Tools.GeneratorAgent.Tests.Authentication
         {
             var factory = CreateCredentialFactory();
             string originalTenantId = Environment.GetEnvironmentVariable("AZURE_TENANT_ID") ?? "";
+            string uniqueTenantId = $"test-tenant-{Guid.NewGuid():N}";
             
             try
             {
-                Environment.SetEnvironmentVariable("AZURE_TENANT_ID", "test-tenant-id");
+                Environment.SetEnvironmentVariable("AZURE_TENANT_ID", uniqueTenantId);
 
                 TokenCredential credential = factory.CreateCredential(RuntimeEnvironment.LocalDevelopment);
 

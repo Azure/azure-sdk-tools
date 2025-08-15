@@ -1,7 +1,18 @@
-from enum import Enum
-from pydantic import BaseModel, Field, PrivateAttr
-from typing import List, Optional, Dict, Set
+# -------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for
+# license information.
+# --------------------------------------------------------------------------
+
+"""
+Module for defining data models used in APIView Copilot.
+"""
+
 from datetime import datetime
+from enum import Enum
+from typing import Dict, List, Optional, Set
+
+from pydantic import BaseModel, Field, PrivateAttr
 
 from ._sectioned_document import Section
 
@@ -26,6 +37,8 @@ class ExistingComment(BaseModel):
     )
 
     class Config:
+        """Pydantic configuration for ExistingComment."""
+
         populate_by_name = True
 
 
@@ -61,7 +74,7 @@ class APIViewComment(BaseModel):
     )
     downvotes: Optional[list[str]] = Field(
         default_factory=list,
-        description="List of user IDs who have downvoted the comment.",
+        description="List of user IDs who have down-voted the comment.",
         alias="Downvotes",
     )
     comment_type: Optional[str] = Field(
@@ -114,6 +127,7 @@ class Guideline(BaseModel):
     # Classification fields
     language: Optional[str] = Field(
         None,
+        # pylint: disable=line-too-long
         description="If this guideline is specific to a language (e.g., 'python'). If omitted, the guideline is language-agnostic.",
     )
     tags: Optional[List[str]] = Field(
@@ -134,6 +148,8 @@ class Guideline(BaseModel):
 
 
 class ExampleType(str, Enum):
+    """Represents the type of example, either 'good' or 'bad'."""
+
     GOOD = "good"
     BAD = "bad"
 
@@ -208,6 +224,7 @@ class Memory(BaseModel):
 
 
 class ReviewResult(BaseModel):
+    """Represents the result of a review, containing comments and metadata."""
 
     comments: List[Comment] = Field(description="List of comments, if any")
 
@@ -285,13 +302,13 @@ class ReviewResult(BaseModel):
                     new_comment.line_no = self._find_line_number(section, new_comment)
                     if new_comment.line_no is not None:
                         result_comments.append(new_comment)
-        self.comments.extend(result_comments)
+        self.comments.extend(result_comments)  # pylint: disable=no-member
 
     def sort(self):
         """
         Sort the comments by line number.
         """
-        self.comments.sort(key=lambda x: x.line_no)
+        self.comments.sort(key=lambda x: x.line_no)  # pylint: disable=no-member
 
     def sorted(self) -> "ReviewResult":
         """

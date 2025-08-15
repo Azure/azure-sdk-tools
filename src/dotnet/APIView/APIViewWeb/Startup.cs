@@ -1,4 +1,26 @@
 using System;
+using System.IO;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Reflection;
+using System.Security.Claims;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Threading.Tasks;
+using APIView.Identity;
+using APIViewWeb.Account;
+using APIViewWeb.Filters;
+using APIViewWeb.Helpers;
+using APIViewWeb.HostedServices;
+using APIViewWeb.Hubs;
+using APIViewWeb.LeanControllers;
+using APIViewWeb.Managers;
+using APIViewWeb.Managers.Interfaces;
+using APIViewWeb.MiddleWare;
+using APIViewWeb.Repositories;
+using Azure.Identity;
+using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OAuth;
@@ -7,42 +29,21 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ApplicationParts;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Newtonsoft.Json.Linq;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Reflection;
-using System.Security.Claims;
-using System.Text;
-using System.Text.Json;
-using APIViewWeb.Repositories;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using System.Threading.Tasks;
-using APIViewWeb.HostedServices;
-using APIViewWeb.Filters;
-using APIViewWeb.Account;
-using APIView.Identity;
-using APIViewWeb.Managers;
-using APIViewWeb.Hubs;
-using System.Text.Json.Serialization;
-using Microsoft.AspNetCore.Mvc.ApplicationParts;
-using APIViewWeb.LeanControllers;
-using APIViewWeb.MiddleWare;
 using Microsoft.OpenApi.Models;
-using System.IO;
-using Microsoft.Azure.Cosmos;
-using APIViewWeb.Managers.Interfaces;
-using Azure.Identity;
-using APIViewWeb.Helpers;
-using Azure.Storage.Blobs;
+using Newtonsoft.Json.Linq;
 
 namespace APIViewWeb
 {
     public class Startup
     {
         public static string RequireOrganizationPolicy = "RequireOrganization";
+        public static string RequireOrganizationOrManagedIdentityPolicy = "RequireOrganizationOrManagedIdentity";
 
         public static string VersionHash { get; set; }
 
@@ -95,6 +96,7 @@ namespace APIViewWeb
 
             services.AddHttpClient();
             services.AddSingleton<IPollingJobQueueManager, PollingJobQueueManager>();
+            services.AddSingleton<ICopilotJobProcessor, CopilotJobProcessor>();
             services.AddSingleton<IBlobCodeFileRepository, BlobCodeFileRepository>();
             services.AddSingleton<IBlobOriginalsRepository, BlobOriginalsRepository>();
             services.AddSingleton<IBlobUsageSampleRepository, BlobUsageSampleRepository>();
@@ -143,14 +145,45 @@ namespace APIViewWeb
             {
                 services.AddAuthentication(options =>
                 {
-                    options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                    options.DefaultAuthenticateScheme = "CookieOrBearerAuthentication";
                     options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                     options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 })
+                .AddScheme<AuthenticationSchemeOptions, CookieOrBearerAuthenticationHandler>("CookieOrBearerAuthentication", options => { })
                 .AddCookie(options =>
                 {
                     options.LoginPath = "/Login";
                     options.AccessDeniedPath = "/Unauthorized";
+                })
+                .AddJwtBearer("Bearer", options =>
+                {
+                    string tenantId = Configuration["AzureAd:TenantId"];
+                    string clientId = Configuration["AzureAd:ClientId"];
+
+                    if (string.IsNullOrEmpty(tenantId) || string.IsNullOrEmpty(clientId))
+                    {
+                        return;
+                    }
+
+                    options.Authority = $"https://login.microsoftonline.com/{tenantId}";
+                    options.Audience = clientId;
+                    options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        ClockSkew = TimeSpan.FromMinutes(5),
+                        ValidAudiences = [
+                            clientId, 
+                            $"api://{clientId}"
+                        ],
+                        ValidIssuers = [
+                            $"https://login.microsoftonline.com/{tenantId}/v2.0",
+                            $"https://login.microsoftonline.com/{tenantId}/",
+                            $"https://sts.windows.net/{tenantId}/"
+                        ]
+                    };
                 })
                 .AddOAuth("GitHub", options =>
                 {
@@ -238,6 +271,7 @@ namespace APIViewWeb
                 });
             });
             services.AddSingleton<IConfigureOptions<AuthorizationOptions>, ConfigureOrganizationPolicy>();
+            services.AddSingleton<IConfigureOptions<AuthorizationOptions>, ConfigureOrganizationOrManagedIdentityPolicy>();
             services.AddSingleton<IAuthorizationHandler, OrganizationRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, CommentOwnerRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, ReviewOwnerRequirementHandler>();

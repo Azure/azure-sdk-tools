@@ -1,61 +1,176 @@
-﻿using Azure.AI.Agents.Persistent;
+﻿using System.CommandLine;
+using System.Linq;
+using Azure;
+using Azure.AI.Agents.Persistent;
 using Azure.Core;
 using Azure.Identity;
 using Azure.Tools.GeneratorAgent.Authentication;
 using Azure.Tools.GeneratorAgent.Configuration;
+using Azure.Tools.GeneratorAgent.Security;
+using Azure.Tools.GeneratorAgent.Exceptions;
+using Azure.Tools.ErrorAnalyzers;
 using Microsoft.Extensions.Logging;
 
 namespace Azure.Tools.GeneratorAgent
 {
     public class Program
     {
-        static async Task<int> Main(string[] args)
-        {
-            using CancellationTokenSource cts = new CancellationTokenSource();
+        private const int ExitCodeSuccess = 0;
+        private const int ExitCodeFailure = 1;
 
-            Console.CancelKeyPress += (sender, eventArgs) =>
+        private readonly ToolConfiguration ToolConfig;
+        private readonly ILoggerFactory LoggerFactory;
+        private readonly ILogger<Program> Logger;
+        private readonly CommandLineConfiguration CommandLineConfig;
+
+        internal Program(ToolConfiguration toolConfig, ILoggerFactory loggerFactory)
+        {
+            ArgumentNullException.ThrowIfNull(toolConfig);
+            ArgumentNullException.ThrowIfNull(loggerFactory);
+            
+            ToolConfig = toolConfig;
+            LoggerFactory = loggerFactory;
+            Logger = LoggerFactory.CreateLogger<Program>();
+            CommandLineConfig = new CommandLineConfiguration(LoggerFactory.CreateLogger<CommandLineConfiguration>());
+        }
+
+        public static async Task<int> Main(string[] args)
+        {
+            ToolConfiguration toolConfig = new ToolConfiguration();
+            using ILoggerFactory loggerFactory = toolConfig.CreateLoggerFactory();
+
+            Program program = new Program(toolConfig, loggerFactory);
+            return await program.RunAsync(args).ConfigureAwait(false);
+        }
+
+        internal async Task<int> RunAsync(string[] args)
+        {
+            RootCommand rootCommand = CommandLineConfig.CreateRootCommand(HandleCommandAsync);
+            return await rootCommand.InvokeAsync(args).ConfigureAwait(false);
+        }
+
+        internal async Task<int> HandleCommandAsync(string? typespecPath, string? commitId, string sdkPath)
+        {
+            int validationResult = CommandLineConfig.ValidateInput(typespecPath, commitId, sdkPath);
+            if (validationResult != ExitCodeSuccess)
             {
-                cts.Cancel();
+                return validationResult;
+            }
+
+            using CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+            Console.CancelKeyPress += (_, eventArgs) =>
+            {
+                Logger.LogInformation("Cancellation requested by user");
+                cancellationTokenSource.Cancel();
                 eventArgs.Cancel = true;
             };
 
-            ToolConfiguration ToolConfig = new ToolConfiguration();
-            ILoggerFactory LoggerFactory = ToolConfig.CreateLoggerFactory();
-            AppSettings AppSettings = ToolConfig.CreateAppSettings();
-
-            ILogger<ErrorFixerAgent> AgentLogger = LoggerFactory.CreateLogger<ErrorFixerAgent>();
-            ILogger<CredentialFactory> CredentialLogger = LoggerFactory.CreateLogger<CredentialFactory>();
-            ILogger<Program> Logger = LoggerFactory.CreateLogger<Program>();
-
             try
             {
-                RuntimeEnvironment environment = DetermineRuntimeEnvironment();
-                TokenCredentialOptions? credentialOptions = CreateCredentialOptions();
-
-                CredentialFactory credentialFactory = new CredentialFactory(CredentialLogger);
-                TokenCredential credential = credentialFactory.CreateCredential(environment, credentialOptions);
-
-                PersistentAgentsAdministrationClient adminClient = new PersistentAgentsAdministrationClient(
-                    new Uri(AppSettings.ProjectEndpoint),
-                    credential);
-
-                await using (ErrorFixerAgent agent = new ErrorFixerAgent(AppSettings, AgentLogger, adminClient))
-                {
-                    await agent.FixCodeAsync(cts.Token).ConfigureAwait(false);
-                }
-
-                return 0;
+                return await ExecuteGenerationAsync(typespecPath, commitId, sdkPath, cancellationTokenSource.Token).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
-                Logger.LogInformation("Operation was cancelled. Shutting down gracefully...");
-                return 0;
+                Logger.LogInformation("Operation was cancelled. Shutting down gracefully");
+                return ExitCodeSuccess;
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Error occurred while running the Generator Agent");
-                return 1;
+                Logger.LogError(ex, "Unexpected error occurred during command execution");
+                return ExitCodeFailure;
             }
+        }
+
+        private async Task<int> ExecuteGenerationAsync(string? typespecdir, string? commitId, string sdkdir, CancellationToken cancellationToken)
+        {
+            try
+            {
+                // Step 1: Create AppSettings
+                ILogger<AppSettings> appSettingsLogger = LoggerFactory.CreateLogger<AppSettings>();
+                AppSettings appSettings = ToolConfig.CreateAppSettings(appSettingsLogger);
+                ProcessExecutor processExecutor = new ProcessExecutor(LoggerFactory.CreateLogger<ProcessExecutor>());
+
+                // Step 2: Create and Initialize ErrorFixer Agent
+                ErrorFixerAgent agent = CreateErrorFixerAgent(appSettings);
+                string threadId = await agent.InitializeAgentEnvironmentAsync(typespecdir!, cancellationToken).ConfigureAwait(false);
+
+                // Step 3: Compile Typespec 
+                ISdkGenerationService sdkGenerationService = SdkGenerationServiceFactory.CreateSdkGenerationService(
+                    typespecdir,
+                    commitId,
+                    sdkdir,
+                    appSettings,
+                    LoggerFactory,
+                    processExecutor);
+                Result<object> compileResult = await sdkGenerationService.CompileTypeSpecAsync(cancellationToken).ConfigureAwait(false);
+
+                // Step 4: Compile Generated SDK
+                SdkBuildService sdkBuildService = new SdkBuildService(
+                    LoggerFactory.CreateLogger<SdkBuildService>(), 
+                    processExecutor, 
+                    sdkdir);
+                Result<object> buildResult = await sdkBuildService.BuildSdkAsync(cancellationToken).ConfigureAwait(false);
+
+                // Step 5: Analyze all errors and get fixes
+                BuildErrorAnalyzer analyzer = new BuildErrorAnalyzer(LoggerFactory.CreateLogger<BuildErrorAnalyzer>());
+                List<Fix> allFixes = analyzer.AnalyzeAndGetFixes(compileResult, buildResult);
+                
+                // Step 6:                     
+                // TODO: Send fixes to ErrorFixerAgent
+                // await agent.ProcessFixesAsync(allFixes, threadId, cancellationToken);
+
+                return ExitCodeSuccess;
+            }
+            catch (OperationCanceledException)
+            {
+                Logger.LogInformation("SDK generation was cancelled");
+                return ExitCodeSuccess;
+            }
+            catch (InvalidOperationException ex)
+            {
+                Logger.LogError("Operation failed: {Error}", ex.Message);
+                return ExitCodeFailure;
+            }
+            catch (ArgumentException ex)
+            {
+                Logger.LogError("Invalid configuration: {Error}", ex.Message);
+                return ExitCodeFailure;
+            }
+            catch (RequestFailedException ex) when (ex.Status == 401)
+            {
+                Logger.LogError("Authentication failed for Azure AI service. Please check your credentials.");
+                return ExitCodeFailure;
+            }
+            catch (RequestFailedException ex) when (ex.Status >= 500)
+            {
+                Logger.LogError("Azure AI service is temporarily unavailable: {Error}", ex.Message);
+                return ExitCodeFailure;
+            }
+            catch (RequestFailedException ex)
+            {
+                Logger.LogError("Azure AI service error: {Error}", ex.Message);
+                return ExitCodeFailure;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error occurred during SDK generation");
+                return ExitCodeFailure;
+            }
+        }
+
+        private ErrorFixerAgent CreateErrorFixerAgent(AppSettings appSettings)
+        {
+            RuntimeEnvironment environment = DetermineRuntimeEnvironment();
+            TokenCredentialOptions? credentialOptions = CreateCredentialOptions();
+
+            CredentialFactory credentialFactory = new CredentialFactory(LoggerFactory.CreateLogger<CredentialFactory>());
+            TokenCredential credential = credentialFactory.CreateCredential(environment, credentialOptions);
+
+            PersistentAgentsClient client = new PersistentAgentsClient(
+                appSettings.ProjectEndpoint,
+                credential);
+
+            return new ErrorFixerAgent(appSettings, LoggerFactory.CreateLogger<ErrorFixerAgent>(), client);
         }
 
         private static RuntimeEnvironment DetermineRuntimeEnvironment()
@@ -87,7 +202,7 @@ namespace Azure.Tools.GeneratorAgent
                 return null;
             }
 
-            var options = new TokenCredentialOptions();
+            TokenCredentialOptions options = new TokenCredentialOptions();
 
             if (authorityHost != null)
             {

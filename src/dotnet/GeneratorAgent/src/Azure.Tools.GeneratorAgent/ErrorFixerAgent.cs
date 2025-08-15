@@ -1,6 +1,10 @@
 using Azure.AI.Agents.Persistent;
 using Azure.Tools.GeneratorAgent.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
+using System.Text;
+using System.Text.Json.Serialization;
+using System.Linq;
 
 namespace Azure.Tools.GeneratorAgent
 {
@@ -8,34 +12,33 @@ namespace Azure.Tools.GeneratorAgent
     {
         private readonly AppSettings AppSettings;
         private readonly ILogger<ErrorFixerAgent> Logger;
-        private readonly PersistentAgentsAdministrationClient AdminClient;
+        private readonly PersistentAgentsClient Client;
         private readonly Lazy<PersistentAgent> Agent;
-        private bool _disposed = false;
+        private readonly SemaphoreSlim ConcurrencyLimiter;
+        private volatile bool Disposed = false;
 
         public ErrorFixerAgent(
             AppSettings appSettings,
             ILogger<ErrorFixerAgent> logger,
-            PersistentAgentsAdministrationClient adminClient)
+            PersistentAgentsClient client)
         {
-            AppSettings = appSettings ?? throw new ArgumentNullException(nameof(appSettings));
-            Logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            AdminClient = adminClient ?? throw new ArgumentNullException(nameof(adminClient));
+            ArgumentNullException.ThrowIfNull(appSettings);
+            ArgumentNullException.ThrowIfNull(logger);
+            ArgumentNullException.ThrowIfNull(client);
+
+            AppSettings = appSettings;
+            Logger = logger;
+            Client = client;
             Agent = new Lazy<PersistentAgent>(() => CreateAgent());
-        }
 
-        public async Task FixCodeAsync(CancellationToken ct)
-        {
-            PersistentAgent agent = Agent.Value;
-
-            // TODO: Implement the code fixing logic here
-            await Task.CompletedTask.ConfigureAwait(false);
+            ConcurrencyLimiter = new SemaphoreSlim(Environment.ProcessorCount, Environment.ProcessorCount);
         }
 
         internal virtual PersistentAgent CreateAgent()
         {
             Logger.LogInformation("Creating AZC Fixer agent...");
-            
-            Response<PersistentAgent> response = AdminClient.CreateAgent(
+
+            Response<PersistentAgent> response = Client.Administration.CreateAgent(
                 model: AppSettings.Model,
                 name: AppSettings.AgentName,
                 instructions: AppSettings.AgentInstructions,
@@ -47,18 +50,280 @@ namespace Azure.Tools.GeneratorAgent
                 throw new InvalidOperationException("Failed to create AZC Fixer agent");
             }
 
-            Logger.LogInformation("✅ Agent created successfully: {Name} ({Id})", agent.Name, agent.Id);
+            Logger.LogInformation("Agent created successfully: {Name} ({Id})", agent.Name, agent.Id);
             return agent;
+        }
+
+        public async Task FixCodeAsync(CancellationToken ct)
+        {
+            PersistentAgent agent = Agent.Value;
+
+            // TODO: Implement the code fixing logic here
+            await Task.CompletedTask.ConfigureAwait(false);
+        }
+
+        public async Task<string> InitializeAgentEnvironmentAsync(string typeSpecDir, CancellationToken ct = default)
+        {
+            List<string> uploadedFilesIds = await UploadTspAsync(typeSpecDir, ct);
+            if (uploadedFilesIds.Count == 0)
+                throw new InvalidOperationException("No TypeSpec files (*.tsp) found in the directory. Cannot proceed with AZC error fixing.");
+
+            await WaitForIndexingAsync(uploadedFilesIds, ct);
+            string vectorStoreId = await CreateVectorStoreAsync(uploadedFilesIds, ct);
+            await UpdateAgentVectorStoreAsync(vectorStoreId, ct);
+
+            PersistentAgentThread thread = await Client.Threads.CreateThreadAsync(cancellationToken: ct);
+            Logger.LogInformation("Created new thread with ID: {ThreadId}", thread.Id);
+
+            return thread.Id;
+        }
+
+        private async Task<List<string>> UploadTspAsync(string typeSpecDir, CancellationToken ct)
+        {
+            string[] tspFiles = Directory.GetFiles(typeSpecDir, "*.tsp", SearchOption.AllDirectories);
+
+            IEnumerable<Task<string?>> uploadTasks = tspFiles.Select(async file =>
+            {
+                await ConcurrencyLimiter.WaitAsync(ct);
+                try
+                {
+                    return await UploadSingleFileAsync(file, ct);
+                }
+                finally
+                {
+                    ConcurrencyLimiter.Release();
+                }
+            });
+
+            string?[] results = await Task.WhenAll(uploadTasks);
+            List<string> uploadedFilesIds = results.Where(id => !string.IsNullOrEmpty(id)).Select(id => id!).ToList();
+
+            Logger.LogInformation("Successfully uploaded {Count}/{Total} TypeSpec files as text files", uploadedFilesIds.Count, tspFiles.Length);
+            return uploadedFilesIds;
+        }
+
+        private async Task<string?> UploadSingleFileAsync(string filePath, CancellationToken ct)
+        {
+            try
+            {
+                string fileName = Path.GetFileNameWithoutExtension(filePath);
+                string txtFileName = $"{fileName}.txt";
+
+                // Read the .tsp file content and upload as .txt since .tsp is not supported
+                string content = await File.ReadAllTextAsync(filePath, ct);
+                using MemoryStream contentStream = new MemoryStream(Encoding.UTF8.GetBytes(content));
+                
+                Response<PersistentAgentFileInfo>? uploaded = await Client.Files.UploadFileAsync(
+                    contentStream,
+                    PersistentAgentFilePurpose.Agents,
+                    txtFileName,
+                    cancellationToken: ct
+                );
+
+                if (uploaded?.Value?.Id != null)
+                {
+                    Logger.LogDebug("Uploaded TypeSpec file as text: {OriginalFile} -> {FileName} -> {FileId}",
+                        Path.GetFileName(filePath), txtFileName, uploaded.Value.Id);
+                    return uploaded.Value.Id;
+                }
+                else
+                {
+                    Logger.LogWarning("Failed to upload file: {FileName}", fileName);
+                    return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error uploading file: {FilePath}", filePath);
+                return null;
+            }
+        }
+
+        private async Task WaitForIndexingAsync(List<string> uploadedFilesIds, CancellationToken ct)
+        {
+            TimeSpan maxWaitTime = AppSettings.IndexingMaxWaitTime;
+            TimeSpan pollingInterval = AppSettings.IndexingPollingInterval;
+            System.Diagnostics.Stopwatch stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+            Logger.LogInformation("Waiting for {Count} files to be indexed... (timeout: {Timeout}s, polling interval: {Interval}s)", 
+                uploadedFilesIds.Count, maxWaitTime.TotalSeconds, pollingInterval.TotalSeconds);
+
+            const int batchSize = 10;
+            while (stopwatch.Elapsed < maxWaitTime)
+            {
+                List<(string FileId, PersistentAgentFileInfo? File)> results = new List<(string FileId, PersistentAgentFileInfo? File)>();
+                
+                for (int i = 0; i < uploadedFilesIds.Count; i += batchSize)
+                {
+                    IEnumerable<string> batch = uploadedFilesIds.Skip(i).Take(batchSize);
+                    IEnumerable<Task<(string FileId, PersistentAgentFileInfo? File)>> checkTasks = batch.Select(fileId => CheckFileStatusAsync(fileId, ct));
+                    (string FileId, PersistentAgentFileInfo? File)[] batchResults = await Task.WhenAll(checkTasks);
+                    results.AddRange(batchResults);
+                }
+                
+                bool allIndexed = true;
+                List<string>? pendingFiles = Logger.IsEnabled(LogLevel.Debug) ? new List<string>() : null;
+                Dictionary<string, int>? currentStatusCounts = Logger.IsEnabled(LogLevel.Information) ? new Dictionary<string, int>() : null;
+                
+                foreach ((string FileId, PersistentAgentFileInfo? File) result in results)
+                {
+                    if (result.File == null)
+                    {
+                        Logger.LogWarning("Could not retrieve status for file: {FileId}", result.FileId);
+                        allIndexed = false;
+                        pendingFiles?.Add(result.FileId);
+                        if (currentStatusCounts != null)
+                        {
+                            currentStatusCounts["Unknown"] = currentStatusCounts.GetValueOrDefault("Unknown") + 1;
+                        }
+                    }
+                    else
+                    {
+                        string status = result.File?.Status.ToString() ?? "Unknown";
+                        if (currentStatusCounts != null)
+                        {
+                            currentStatusCounts[status] = currentStatusCounts.GetValueOrDefault(status) + 1;
+                        }
+                        
+                        Logger.LogDebug("File {Filename} (ID: {FileId}) status: {Status}", 
+                            result.File?.Filename, result.FileId, status);
+
+                        if (!status.Equals("Processed", StringComparison.OrdinalIgnoreCase))
+                        {
+                            allIndexed = false;
+                            if (result.File != null)
+                            {
+                                pendingFiles?.Add($"{result.File.Filename}({status})");
+                            }
+                        }
+                    }
+                }
+
+                if (Logger.IsEnabled(LogLevel.Information) && currentStatusCounts != null)
+                {
+                    string statusSummary = string.Join(", ", currentStatusCounts.Select(kvp => $"{kvp.Key}: {kvp.Value}"));
+                    Logger.LogInformation("Indexing status summary: {StatusSummary} | Elapsed: {Elapsed:F1}s", 
+                        statusSummary, stopwatch.Elapsed.TotalSeconds);
+                }
+
+                if (allIndexed)
+                {
+                    Logger.LogInformation("All {Count} files indexed successfully in {Duration:F1}s", 
+                        uploadedFilesIds.Count, stopwatch.Elapsed.TotalSeconds);
+                    return;
+                }
+
+                if (Logger.IsEnabled(LogLevel.Debug) && pendingFiles?.Count <= 3)
+                {
+                    Logger.LogDebug("Still waiting for: {PendingFiles}", string.Join(", ", pendingFiles));
+                }
+
+                await Task.Delay(pollingInterval, ct);
+            }
+
+            (string FileId, PersistentAgentFileInfo? File)[] finalResults = await Task.WhenAll(uploadedFilesIds.Select(id => CheckFileStatusAsync(id, ct)));
+            
+            bool allProcessed = finalResults.All(r => r.File?.Status.ToString().Equals("Processed", StringComparison.OrdinalIgnoreCase) == true);
+            if (allProcessed)
+            {
+                Logger.LogInformation("All {Count} files indexed successfully in {Duration:F1}s (completed during final check)", 
+                    uploadedFilesIds.Count, stopwatch.Elapsed.TotalSeconds);
+                return;
+            }
+
+            Dictionary<string, int> finalSummary = finalResults
+                .Where(r => r.File != null)
+                .GroupBy(r => r.File!.Status.ToString() ?? "Unknown")
+                .ToDictionary(g => g.Key ?? "Unknown", g => g.Count());
+            
+            string finalStatusSummary = string.Join(", ", finalSummary.Select(kvp => $"{kvp.Key}: {kvp.Value}"));
+            
+            throw new TimeoutException(
+                $"Timeout after {maxWaitTime.TotalSeconds}s while waiting for file indexing to complete. " +
+                $"Final status: {finalStatusSummary}. " +
+                $"This may indicate the Azure AI service is experiencing delays or the files require more processing time.");
+        }
+
+        private async Task<(string FileId, PersistentAgentFileInfo? File)> CheckFileStatusAsync(string fileId, CancellationToken ct)
+        {
+            try
+            {
+                PersistentAgentFileInfo file = await Client.Files.GetFileAsync(fileId, cancellationToken: ct);
+                return (fileId, file);
+            }
+            catch (Azure.RequestFailedException ex) when (ex.Status == 404)
+            {
+                Logger.LogWarning("File not found (404): {FileId} - it may have been deleted or not yet available", fileId);
+                return (fileId, null);
+            }
+            catch (Azure.RequestFailedException ex) when (ex.Status >= 400 && ex.Status < 500)
+            {
+                Logger.LogWarning("Client error ({StatusCode}) checking file {FileId}: {Message}", 
+                    ex.Status, fileId, ex.Message);
+                return (fileId, null);
+            }
+            catch (Azure.RequestFailedException ex) when (ex.Status >= 500)
+            {
+                Logger.LogWarning("Server error ({StatusCode}) checking file {FileId}: {Message} - will retry", 
+                    ex.Status, fileId, ex.Message);
+                return (fileId, null);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "Unexpected error checking status for file: {FileId}", fileId);
+                return (fileId, null);
+            }
+        }
+
+        private async Task UpdateAgentVectorStoreAsync(string vectorStoreId, CancellationToken ct)
+        {
+            PersistentAgent agent = Agent.Value;
+
+            // Replace the FileSearchToolResource with a new one containing only the latest store
+            Response<PersistentAgent> updated = await Client.Administration.UpdateAgentAsync(
+                agent.Id,
+                toolResources: new ToolResources
+                {
+                    FileSearch = new FileSearchToolResource
+                    {
+                        VectorStoreIds = { vectorStoreId }
+                    }
+                },
+                cancellationToken: ct
+            );
+
+            Logger.LogInformation("Agent vector store updated to: {VectorStoreId}", vectorStoreId);
+        }
+
+
+        private async Task<string> CreateVectorStoreAsync(List<string> fileIds, CancellationToken ct)
+        {
+            string storeName = $"azc-{DateTime.Now:yyyyMMddHHmmss}";
+
+            Logger.LogInformation("Creating vector store '{StoreName}' with {Count} files...", storeName, fileIds.Count);
+
+            var store = await Client.VectorStores.CreateVectorStoreAsync(
+                fileIds,
+                name: storeName,
+                cancellationToken: ct
+            );
+
+            Logger.LogInformation("Created vector store: {Name} ({Id})", store.Value.Name, store.Value.Id);
+
+            Logger.LogDebug("Waiting 5 seconds for vector store to be ready...");
+            await Task.Delay(5000, ct);
+
+            return store.Value.Id;
         }
 
         private async Task DeleteAgentsAsync(CancellationToken ct)
         {
             List<Task> deleteTasks = new List<Task>();
 
-            await foreach (PersistentAgent agent in AdminClient.GetAgentsAsync(cancellationToken: ct))
+            await foreach (PersistentAgent agent in Client.Administration.GetAgentsAsync(cancellationToken: ct))
             {
-                Task deleteTask = AdminClient.DeleteAgentAsync(agent.Id, ct)
-                    .ContinueWith(t => 
+                Task deleteTask = Client.Administration.DeleteAgentAsync(agent.Id, ct)
+                    .ContinueWith(t =>
                     {
                         if (t.IsFaulted)
                         {
@@ -78,12 +343,12 @@ namespace Azure.Tools.GeneratorAgent
 
         public async ValueTask DisposeAsync()
         {
-            if (_disposed)
+            if (Disposed)
             {
                 return;
             }
 
-            _disposed = true;
+            Disposed = true;
 
             if (Agent.IsValueCreated)
             {

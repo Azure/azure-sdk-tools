@@ -40,16 +40,17 @@
 /tools/perf-automation/**/*Rust*.cs     @heaths @LarryOsterman @RickWinter
 /tools/pipeline-generator/              @weshaggard @benbp
 /tools/pipeline-witness/                @hallipr
+/tools/sdk-sample-generator             @deyaaeldeen
 /tools/sdk-testgen/                     @lirenhe @tadelesh
 /tools/spec-gen-sdk/                    @raych1 @chidozieononiwu
 /tools/test-proxy/                      @scbedd @mikeharder @benbp
-/tools/tsp-client/                      @catalinaperalta @timotheeguerin
+/tools/tsp-client/                      @catalinaperalta
 /tools/typespec-bump-deps/              @weidongxu-microsoft
 /tools/content-validation/              @xiangyan99 @zedy-wj
 /tools/perf-regression-finder/          @sa7936 @m-redding @jsquire
 
 # PRLabel: %azsdk-cli
-/tools/azsdk-cli/                       @benbp @scbedd @praveenkuttappan @smw-ms @Jeo02 @maririos 
+/tools/azsdk-cli/                       @benbp @scbedd @praveenkuttappan @smw-ms @Jeo02 @maririos @richardpark-msft
 
 ###########
 # Stress

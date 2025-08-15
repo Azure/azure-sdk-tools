@@ -33,6 +33,8 @@ namespace Azure.Sdk.Tools.PerfAutomation.Models
         public double CpuMean => Iterations.Any() ? Iterations.Average(i => i.AverageCpu) : -1;
         public long MemoryMean => Iterations.Any() ? (long)Iterations.Average(i => i.AverageMemory) : -1;
 
+        public AdvancedStatistics AdvancedStatistics { get; set; } = null;
+
         private double Median(IEnumerable<double> values)
         {
             var count = values.Count();

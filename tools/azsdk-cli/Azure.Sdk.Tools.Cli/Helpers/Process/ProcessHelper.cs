@@ -118,14 +118,20 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 {
                     if (e.Data != null)
                     {
-                        output.AppendLine(e.Data);
+                        lock (output)
+                        {
+                            output.AppendLine(e.Data);
+                        }
                     }
                 };
                 process.ErrorDataReceived += (sender, e) =>
                 {
                     if (e.Data != null)
                     {
-                        output.AppendLine(e.Data);
+                        lock (output)
+                        {
+                            output.AppendLine(e.Data);
+                        }
                     }
                 };
 
@@ -149,7 +155,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 exitCode = process.ExitCode;
             }
 
-            return new ProcessResult { Output = output.ToString() ?? "", ExitCode = exitCode };
+            return new ProcessResult { Output = output.ToString(), ExitCode = exitCode };
         }
     }
 

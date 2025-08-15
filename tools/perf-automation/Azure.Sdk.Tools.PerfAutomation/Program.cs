@@ -12,7 +12,6 @@ using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using YamlDotNet.Core;
-using YamlDotNet.Core.Tokens;
 using YamlDotNet.Serialization;
 
 namespace Azure.Sdk.Tools.PerfAutomation
@@ -43,6 +42,9 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
         public class Options
         {
+            [Option("advanced-stats")]
+            public bool AdvancedStats { get; set; }
+
             [Option('a', "arguments", HelpText = "Regex of arguments to run")]
             public string Arguments { get; set; }
 
@@ -102,9 +104,6 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             [Option("tests-file", Required = true)]
             public string TestsFile { get; set; }
-
-            [Option("advanced-stats")]
-            public bool AdvancedStats { get; set; }
         }
 
         public static async Task Main(string[] args)
@@ -454,6 +453,18 @@ namespace Azure.Sdk.Tools.PerfAutomation
                         Console.WriteLine();
                     }
                 }
+                if (resultsRoot != null)
+                {
+                    try
+                    {
+                        Directory.Delete(resultsRoot, true);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine($"Exception deleting results directory - {e}");
+                        Console.WriteLine();
+                    }
+                }
             }
         }
 
@@ -660,7 +671,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             foreach (OperationResult result in opeartionResults)
             {
-                double latency = result.Time.TotalMilliseconds;
+                double latency = result.Time;
                 latencies.Add(latency);
                 latencySum += latency;
                 latencyMin = Math.Min(latencyMin, latency);

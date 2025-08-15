@@ -217,7 +217,6 @@ public class LanguageRepoService : ILanguageRepoService
             var packageRepoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
             if (string.IsNullOrEmpty(packageRepoRoot))
             {
-
                 return new CLICheckResponse(1, "", $"Could not find repository root from package path: {packagePath}");
             }
 

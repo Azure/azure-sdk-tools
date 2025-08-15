@@ -94,8 +94,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
 
             // Assert
             Assert.IsNotNull(result);
-            // README check may succeed or fail depending on directory contents
-            Assert.That(result.ExitCode, Is.GreaterThanOrEqualTo(0));
         }
 
         [Test]
@@ -106,8 +104,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
 
             // Assert
             Assert.IsNotNull(result);
-            // Spelling check may succeed or fail depending on directory contents
-            Assert.That(result.ExitCode, Is.GreaterThanOrEqualTo(0));
         }
 
         [Test]

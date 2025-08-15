@@ -239,7 +239,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             if (result.ExitCode != 0)
             {
                 SetFailure(1);
-                return new CLICheckResponse(result.ExitCode, result.CheckStatusDetails, "Spelling validation failed");
+                return new CLICheckResponse(result.ExitCode, result.CheckStatusDetails, $"Spelling validation failed {result.CheckStatusDetails}");
             }
 
             return result;

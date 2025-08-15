@@ -71,11 +71,13 @@ public class LanguageRepoService : ILanguageRepoService
 {
     protected readonly IProcessHelper _processHelper;
     protected readonly IGitHelper _gitHelper;
+    protected readonly INpxHelper _npxHelper;
 
-    public LanguageRepoService(IProcessHelper processHelper, IGitHelper gitHelper)
+    public LanguageRepoService(IProcessHelper processHelper, IGitHelper gitHelper, INpxHelper npxHelper)
     {
         _processHelper = processHelper;
         _gitHelper = gitHelper;
+        _npxHelper = npxHelper;
     }
 
     /// <summary>
@@ -274,7 +276,7 @@ public class LanguageRepoService : ILanguageRepoService
 
     /// <summary>
     /// Common spelling check implementation that works for most Azure SDK languages.
-    /// Uses the PowerShell script from eng/common/scripts/check-spelling-in-changed-files.ps1.
+    /// Uses cspell directly to check spelling in the package directory.
     /// </summary>
     /// <param name="packagePath">Absolute path to the package directory</param>
     /// <returns>CLI check response containing success/failure status and response message</returns>
@@ -296,41 +298,38 @@ public class LanguageRepoService : ILanguageRepoService
                 return new CLICheckResponse(1, "", $"Could not find repository root from package path: {packagePath}");
             }
 
-            // Construct the path to the PowerShell script in the SDK repository
-            var scriptPath = Path.Combine(packageRepoRoot, "eng", "common", "scripts", "check-spelling-in-changed-files.ps1");
-            
-            if (!File.Exists(scriptPath))
-            {
-                return new CLICheckResponse(1, "", $"PowerShell script not found at expected location: {scriptPath}");
-            }
-
             // Construct the path to the cspell config file
             var cspellConfigPath = Path.Combine(packageRepoRoot, ".vscode", "cspell.json");
             
             if (!File.Exists(cspellConfigPath))
             {
-                return new CLICheckResponse(1, "", $"Cspell config file not found at expected location: {cspellConfigPath}");
+                // Try alternative locations for cspell config
+                cspellConfigPath = Path.Combine(packageRepoRoot, "cspell.json");
+                if (!File.Exists(cspellConfigPath))
+                {
+                    cspellConfigPath = Path.Combine(packageRepoRoot, ".cspell.json");
+                    if (!File.Exists(cspellConfigPath))
+                    {
+                        return new CLICheckResponse(1, "", $"Cspell config file not found in expected locations");
+                    }
+                }
             }
 
-            // Get the target branch (usually main or master) for the repository
-            var targetBranch = _gitHelper.GetBranchName(packageRepoRoot);
-            if (string.IsNullOrEmpty(targetBranch))
-            {
-                targetBranch = "main"; // fallback to main if we can't determine the default branch
-            }
-
-            var command = "pwsh";
-            var args = new[] { 
-                "-File", scriptPath, 
-                "-CspellConfigPath", cspellConfigPath,
-                "-SpellCheckRoot", packageRepoRoot,
-                "-TargetCommittish", $"origin/{targetBranch}",
-                "-ExitWithError"
-            };
-
-            // Use a longer timeout for spelling check - 10 minutes should be sufficient as it may need to install npm packages
-            var timeoutMs = 600_000; // 10 minutes
-            var processResult = _processHelper.RunProcess(command, args, packageRepoRoot, timeoutMs);
+            // Run cspell using npx (no need to check if installed globally)
+            var npxCommand = _npxHelper.CreateCommand();
+            npxCommand.Cwd = packageRepoRoot;
+            
+            // Convert absolute path to relative path from repo root
+            var relativePath = Path.GetRelativePath(packageRepoRoot, packagePath);
+            
+            var processResult = npxCommand
+                .AddArgs("cspell")
+                .AddArgs("lint")
+                .AddArgs("--config", cspellConfigPath)
+                .AddArgs("--root", packageRepoRoot)
+                .AddArgs($"./{relativePath}/**")
+                .Run();
+            
             stopwatch.Stop();
 
             if (processResult.ExitCode == 0)

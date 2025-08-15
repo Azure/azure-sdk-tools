@@ -19,7 +19,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         IDevOpsService devopsService,
         IGitHelper gitHelper,
         ITypeSpecHelper typespecHelper,
-        IOutputService output,
+        IOutputHelper output,
         ILogger<SpecWorkflowTool> logger) : MCPTool
     {
         private static readonly string PUBLIC_SPECS_REPO = "azure-rest-api-specs";
@@ -224,7 +224,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         }
 
 
-        [McpServerTool(Name ="RunGenerateSdk"), Description("Generate SDK from a TypeSpec project using pipeline.")]
+        [McpServerTool(Name = "RunGenerateSdk"), Description("Generate SDK from a TypeSpec project using pipeline.")]
         public async Task<string> RunGenerateSdkAsync(string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int pullRequestNumber = 0, int workItemId = 0)
         {
             try
@@ -356,7 +356,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     return "Either build ID or release plan work item ID is required to get SDK pull request details.";
                 }
 
-                StringBuilder sb = new ();
+                StringBuilder sb = new();
 
                 // Get SDK details from work item
                 if (buildId == 0)
@@ -467,7 +467,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
                 return $"Successfully linked pull request to release plan {releasePlan.ReleasePlanId}, work item id {releasePlan.WorkItemId}, and updated PR description.";
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 SetFailure();
                 return $"Failed to link SDK pull request to release plan work item, Error: {ex.Message}";

@@ -29,7 +29,7 @@ public class ExampleTool : MCPTool
 
     // Dependencies injected via constructor
     private readonly ILogger<ExampleTool> logger;
-    private readonly IOutputService output;
+    private readonly IOutputHelper output;
     private readonly IAzureService azureService;
     private readonly IDevOpsService devOpsService;
     private readonly IGitHubService gitHubService;
@@ -75,7 +75,7 @@ public class ExampleTool : MCPTool
 
     public ExampleTool(
         ILogger<ExampleTool> logger,
-        IOutputService output,
+        IOutputHelper output,
         IAzureService azureService,
         IDevOpsService devOpsService,
         IGitHubService gitHubService,

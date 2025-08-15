@@ -27,7 +27,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         {
             logger = new TestLogger<FileValidationTool>();
 
-            var outputServiceMock = new Mock<IOutputService>();
+            var outputServiceMock = new Mock<IOutputHelper>();
             outputServiceMock.Setup(x => x.Format(It.IsAny<object>())).Returns<object>(obj => obj?.ToString() ?? "");
 
             var gitHubService = new MockGitHubService();

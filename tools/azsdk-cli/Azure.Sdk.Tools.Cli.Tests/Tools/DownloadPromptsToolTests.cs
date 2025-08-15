@@ -24,7 +24,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         {
             logger = new TestLogger<DownloadPromptsTool>();
 
-            var outputServiceMock = new Mock<IOutputService>();
+            var outputServiceMock = new Mock<IOutputHelper>();
             outputServiceMock.Setup(x => x.Format(It.IsAny<object>())).Returns<object>(obj => obj?.ToString() ?? "");
 
             var gitHubService = new MockGitHubService();
@@ -152,7 +152,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             Assert.IsTrue(result.Success);
             Assert.That(result.TotalFiles, Is.EqualTo(3));
             Assert.That(result.DownloadedCount, Is.EqualTo(2)); // Should skip README.md
-            
+
             // Verify existing file wasn't overwritten
             var fileContent = await File.ReadAllTextAsync(existingFilePath);
             Assert.That(fileContent, Is.EqualTo("existing content"));

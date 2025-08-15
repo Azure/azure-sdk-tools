@@ -17,7 +17,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools;
 internal class ExampleToolTests
 {
     private ExampleTool tool;
-    private Mock<IOutputService>? mockOutput;
+    private Mock<IOutputHelper>? mockOutput;
     private Mock<IAzureService>? mockAzureService;
     private Mock<IDevOpsService>? mockDevOpsService;
     private MockGitHubService? mockGitHubService;
@@ -27,7 +27,7 @@ internal class ExampleToolTests
     public void Setup()
     {
         // Create mock services
-        mockOutput = new Mock<IOutputService>();
+        mockOutput = new Mock<IOutputHelper>();
         mockAzureService = new Mock<IAzureService>();
         mockDevOpsService = new Mock<IDevOpsService>();
         mockGitHubService = new MockGitHubService();

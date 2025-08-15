@@ -16,7 +16,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
     /// Use this tool to onboard to TypeSpec for new services or convert existing services.
     /// </summary>
     [McpServerToolType, Description("Tools for initializing TypeSpec projects and converting existing Azure service swagger definitions to TypeSpec projects.")]
-    public class TypeSpecTool(INpxHelper npxHelper, ILogger<TypeSpecTool> logger, IOutputService output) : MCPTool
+    public class TypeSpecTool(INpxHelper npxHelper, ILogger<TypeSpecTool> logger, IOutputHelper output) : MCPTool
     {
 
         // commands
@@ -159,7 +159,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         {
             var npxOptions = new NpxOptions(
                 "@azure-tools/typespec-client-generator-cli",
-                ["tsp-client", "convert", "--swagger-readme", pathToSwaggerReadme, "--output-dir", outputDirectory ]
+                ["tsp-client", "convert", "--swagger-readme", pathToSwaggerReadme, "--output-dir", outputDirectory]
             );
 
             if (isAzureResourceManagement)

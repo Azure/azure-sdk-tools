@@ -1,29 +1,29 @@
-import os
-import json
-import pathlib
 import argparse
-from typing import Set, Tuple, Any
+import copy
+import json
+import os
+import pathlib
+import sys
+from typing import Any, Set, Tuple
+
 import prompty
 import prompty.azure_beta
-import copy
-import sys
 import yaml
-
 from src._utils import get_prompt_path
 
 # set before azure.ai.evaluation import to make PF output less noisy
 os.environ["PF_LOGGING_LEVEL"] = "CRITICAL"
 
 import dotenv
-from tabulate import tabulate
-from azure.ai.evaluation import evaluate, SimilarityEvaluator, GroundednessEvaluator
+from azure.ai.evaluation import GroundednessEvaluator, SimilarityEvaluator, evaluate
 from azure.identity import AzurePipelinesCredential
+from tabulate import tabulate
 
 dotenv.load_dotenv()
 
 NUM_RUNS: int = 3
 # for best results, this should always be a different model from the one we are evaluating
-MODEL_JUDGE = "gpt-4.1-nano"
+MODEL_JUDGE = "gpt-5-mini"
 
 model_config: dict[str, str] = {
     "azure_endpoint": os.environ["AZURE_OPENAI_ENDPOINT"],

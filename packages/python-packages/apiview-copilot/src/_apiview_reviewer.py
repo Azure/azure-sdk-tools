@@ -713,7 +713,7 @@ class ApiViewReview:
 
         def execute_prompt() -> str:
             if in_ci():
-                configuration = {"api_key": self.settings.get("AZURE_OPENAI_API_KEY")}
+                configuration = {"api_key": self.settings.get("OPENAI_API_KEY")}
             else:
                 configuration = {}
 
@@ -732,6 +732,7 @@ class ApiViewReview:
             )
             raise exception
 
+        os.environ["OPENAI_ENDPOINT"] = self.settings.get("OPENAI_ENDPOINT")
         return retry_with_backoff(
             func=execute_prompt,
             max_retries=max_retries,

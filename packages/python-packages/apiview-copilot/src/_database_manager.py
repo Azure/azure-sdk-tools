@@ -42,7 +42,6 @@ class DatabaseManager:
     def __init__(self, endpoint: str, db_name: str, credential: ChainedTokenCredential):
         self.client = CosmosClient(endpoint, credential=credential)
         self.database = self.client.get_database_client(db_name)
-        self._settings = SettingsManager()
         self.containers = {}
 
     def get_container_client(self, name: str) -> "BasicContainer":
@@ -158,8 +157,9 @@ class BasicContainer:
         """
         Trigger the Azure Search indexer for this container (examples, guidelines, or memories).
         """
+        settings = SettingsManager()
         indexer_name = f"{self.container_name}-indexer"
-        search_endpoint = self._settings.get("search_endpoint")
+        search_endpoint = settings.get("SEARCH_ENDPOINT")
         client = SearchIndexerClient(endpoint=search_endpoint, credential=get_credential())
         status = client.get_indexer_status(indexer_name)
         if status.status in ["inProgress"]:

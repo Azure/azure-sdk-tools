@@ -42,7 +42,7 @@ def create_kernel() -> Kernel:
     base_url = settings.get("OPENAI_ENDPOINT")
     # FIXME: Not in AppConfig
     deployment_name = settings.get("OPENAI_DEPLOYMENT")
-    api_key = settings.get("AZURE_OPENAI_API_KEY")
+    api_key = settings.get("OPENAI_API_KEY")
     logging.info("Using Azure OpenAI at %s with deployment %s", base_url, deployment_name)
     kernel = Kernel(
         plugins={},  # Register your plugins here if needed

@@ -511,7 +511,7 @@ class SearchManager:
 
         results = {}
         settings = SettingsManager()
-        search_endpoint = settings.get("search_endpoint")
+        search_endpoint = settings.get("SEARCH_ENDPOINT")
         client = SearchIndexerClient(endpoint=search_endpoint, credential=get_credential())
         for indexer_name in indexers_to_run:
             try:

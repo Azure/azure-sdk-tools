@@ -25,12 +25,14 @@ from src._apiview_reviewer import ApiViewReview
 from src._database_manager import get_database_manager
 from src._diff import create_diff_with_line_numbers
 from src._mention import handle_mention_request
+from src._settings import SettingsManager
 from src._utils import get_language_pretty_name, get_prompt_path
 from src.agent._agent import get_main_agent, invoke_agent
 
 # How long to keep completed jobs (seconds)
 JOB_RETENTION_SECONDS = 1800  # 30 minutes
 db_manager = get_database_manager()
+settings = SettingsManager()
 
 app = FastAPI()
 
@@ -46,6 +48,7 @@ supported_languages = [
     "java",
     "python",
     "rest",
+    "rust",
     "typescript",
 ]
 
@@ -213,6 +216,7 @@ async def summarize_api(request: SummarizeRequest):
         loop = asyncio.get_running_loop()
 
         def run_prompt():
+            os.environ["OPENAI_ENDPOINT"] = settings.get("OPENAI_ENDPOINT")
             return prompty.execute(prompt_path, inputs=inputs)
 
         summary = await loop.run_in_executor(None, run_prompt)

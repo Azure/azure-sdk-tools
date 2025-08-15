@@ -6,7 +6,6 @@
 
 """Plugin for database operations."""
 
-import os
 from contextlib import AsyncExitStack, asynccontextmanager
 from datetime import timedelta
 from typing import Optional
@@ -30,7 +29,7 @@ async def get_delete_agent():
 
     settings = SettingsManager()
     ai_agent_settings = AzureAIAgentSettings(
-        # FIXME: Missing in AppConfig
+        # FIXME: Not in AppConfig
         endpoint=settings.get("AZURE_AI_AGENT_ENDPOINT"),
         model_deployment_name=settings.get("AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME"),
         api_version=settings.get("AZURE_AI_AGENT_API_VERSION"),

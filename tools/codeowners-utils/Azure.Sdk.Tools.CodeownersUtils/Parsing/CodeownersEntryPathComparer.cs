@@ -12,44 +12,23 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
     {
         public int Compare(CodeownersEntry x, CodeownersEntry y)
         {
-            if (x == null && y == null) {
+            if (x == null && y == null)
+            {
                 return 0;
             }
-            if (x == null) {
+            if (x == null)
+            {
                 return -1;
             }
-            if (y == null) {
+            if (y == null)
+            {
                 return 1;
             }
 
-            // FIRST PRIORITY: Prioritize ** wildcards at the very top globally
+            // FIRST PRIORITY: Treat catch-all patterns (like /sdk/) as the highest priority globally
             string pathX = x.PathExpression ?? string.Empty;
             string pathY = y.PathExpression ?? string.Empty;
-            
-            bool xHasDoubleWildcard = x.ContainsDoubleWildcard;
-            bool yHasDoubleWildcard = y.ContainsDoubleWildcard;
 
-            if (xHasDoubleWildcard && !yHasDoubleWildcard)
-            {
-                return -1; // x (with **) comes before y (without **)
-            }
-            if (!xHasDoubleWildcard && yHasDoubleWildcard)
-            {
-                return 1; // y (with **) comes before x (without **)
-            }
-
-            // If both have ** wildcards, sort by path first (natural alphabetical order handles specificity)
-            // e.g., "/**/" comes before "/**/*Management*/" comes before "/**/Azure.ResourceManager*/"
-            if (xHasDoubleWildcard && yHasDoubleWildcard)
-            {
-                int pathComparison = string.Compare(pathX, pathY, StringComparison.Ordinal);
-                if (pathComparison != 0)
-                {
-                    return pathComparison;
-                }
-            }
-
-            // SECOND PRIORITY: Handle catch-all patterns (like /sdk/) that should appear at the top of their sections
             bool xIsCatchAll = IsCatchAllPattern(pathX);
             bool yIsCatchAll = IsCatchAllPattern(pathY);
 
@@ -71,7 +50,35 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
                     return lengthComparison;
                 }
                 // If same length, sort alphabetically
-                return string.Compare(pathX, pathY, StringComparison.Ordinal);
+                int catchAllAlpha = string.Compare(pathX, pathY, StringComparison.Ordinal);
+                if (catchAllAlpha != 0)
+                {
+                    return catchAllAlpha;
+                }
+            }
+
+            // SECOND PRIORITY: Prioritize ** wildcards next
+            bool xHasDoubleWildcard = x.ContainsDoubleWildcard;
+            bool yHasDoubleWildcard = y.ContainsDoubleWildcard;
+
+            if (xHasDoubleWildcard && !yHasDoubleWildcard)
+            {
+                return -1; // x (with **) comes before y (without **)
+            }
+            if (!xHasDoubleWildcard && yHasDoubleWildcard)
+            {
+                return 1; // y (with **) comes before x (without **)
+            }
+
+            // If both have ** wildcards, sort by path first (natural alphabetical order handles specificity)
+            // e.g., "/**/" comes before "/**/*Management*/" comes before "/**/Azure.ResourceManager*/"
+            if (xHasDoubleWildcard && yHasDoubleWildcard)
+            {
+                int pathComparison = string.Compare(pathX, pathY, StringComparison.Ordinal);
+                if (pathComparison != 0)
+                {
+                    return pathComparison;
+                }
             }
 
             // Third, compare by service label

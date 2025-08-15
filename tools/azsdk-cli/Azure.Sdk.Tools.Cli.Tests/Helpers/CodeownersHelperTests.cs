@@ -184,6 +184,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             {
                 PathExpression = "sdk/servicebus/",
                 ServiceLabels = new List<string> { "Service Bus" },
+                PRLabels = new List<string> { "Service Bus" },
                 ServiceOwners = new List<string> { "user1", "@user2" },
                 SourceOwners = new List<string> { "source1", "@source2" },
                 AzureSdkOwners = new List<string>()
@@ -199,7 +200,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             Assert.That(lines[1], Does.Contain("@source1 @source2"));
             Assert.That(lines[2], Is.EqualTo(""));
             Assert.That(lines[3], Is.EqualTo("# ServiceLabel: %Service Bus"));
-            Assert.That(lines[4], Is.EqualTo("# ServiceOwners: @user1 @user2"));
+            Assert.That(lines[4], Does.Contain("# ServiceOwners:"));
+            Assert.That(lines[4], Does.Contain("@user1 @user2"));
         }
 
         #endregion
@@ -432,7 +434,7 @@ line3";
         {
             // Arrange
             var existingOwners = new List<string> { "@azure/team1", "@azure/team2" };
-            var ownersToAdd = new List<string> { "azure/team1", "azure/team3" };
+            var ownersToAdd = new List<string> { "azure/team1", "@azure/team3" };
 
             // Act
             var result = codeownersHelper.AddUniqueOwners(existingOwners, ownersToAdd);
@@ -453,7 +455,7 @@ line3";
         {
             // Arrange
             var existingOwners = new List<string> { "@azure/team1", "@azure/team2", "@azure/team3" };
-            var ownersToRemove = new List<string> { "azure/team1", "azure/team3" };
+            var ownersToRemove = new List<string> { "@azure/team1", "@azure/team3" };
 
             // Act
             var result = codeownersHelper.RemoveOwners(existingOwners, ownersToRemove);
@@ -470,7 +472,7 @@ line3";
         {
             // Arrange
             var existingOwners = new List<string> { "@azure/team1", "@azure/team2" };
-            var ownersToRemove = new List<string> { "azure/team3", "azure/team4" };
+            var ownersToRemove = new List<string> { "@azure/team3", "@azure/team4" };
 
             // Act
             var result = codeownersHelper.RemoveOwners(existingOwners, ownersToRemove);

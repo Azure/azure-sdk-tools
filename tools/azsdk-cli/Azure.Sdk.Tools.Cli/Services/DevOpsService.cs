@@ -141,6 +141,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 WorkItemId = workItem.Id ?? 0,
                 WorkItemUrl = workItem.Url,
+                WorkItemHtmlUrl = workItem.Url?.Replace("_apis/wit/workItems", "_workitems/edit") ?? string.Empty,
                 Title = workItem.Fields.TryGetValue("System.Title", out object? value) ? value?.ToString() ?? string.Empty : string.Empty,
                 Status = workItem.Fields.TryGetValue("System.State", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 ServiceTreeId = workItem.Fields.TryGetValue("Custom.ServiceTreeID", out value) ? value?.ToString() ?? string.Empty : string.Empty,
@@ -591,9 +592,9 @@ namespace Azure.Sdk.Tools.Cli.Services
                     if (workItemId != 0)
                     {
                         logger.LogInformation("Adding SDK pull request to release plan");
-                        await AddSdkInfoInReleasePlanAsync(workItemId, MapLanguageToId(language), GetPipelineUrl(buildId), pullRequestUrl);
+                        await AddSdkInfoInReleasePlanAsync(workItemId, MapLanguageToId(language), GetPipelineUrl(buildId), pullRequestUrl.FullUrl);
                     }
-                    return pullRequestUrl;
+                    return pullRequestUrl.FullUrl;
                 }
             }
 
@@ -614,11 +615,21 @@ namespace Azure.Sdk.Tools.Cli.Services
             return $"{Constants.AZURE_SDK_DEVOPS_BASE_URL}/internal/_build/results?buildId={buildId}";
         }
 
-        public static string ParseSDKPullRequestUrl(string sdkGenerationSummary)
+        public static ParsedSdkPullRequest ParseSDKPullRequestUrl(string sdkGenerationSummary)
         {
-            Regex regex = new Regex("https:\\/\\/github.com\\/[Aa]zure\\/azure-sdk-for-[a-z]+\\/pull\\/[0-9]+");
+            Regex regex = new Regex("https:\\/\\/github.com\\/([Aa]zure)\\/(azure-sdk-for-[a-z]+)\\/pull\\/([0-9]+)");
             var match = regex.Match(sdkGenerationSummary);
-            return match.Success ? match.Value : string.Empty;
+            if (match.Success)
+            {
+                return new ParsedSdkPullRequest
+                {
+                    RepoOwner = match.Groups[1].Value,
+                    RepoName = match.Groups[2].Value,
+                    PrNumber = int.Parse(match.Groups[3].Value),
+                    FullUrl = match.Value
+                };
+            }
+            return new ParsedSdkPullRequest();
         }
 
         /// <summary>

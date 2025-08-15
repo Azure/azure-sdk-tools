@@ -21,8 +21,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             Directory.CreateDirectory(GoPackageDir);
 
             var mockGitHubService = new Mock<IGitHubService>();
+            var mockNpxHelper = new Mock<INpxHelper>();
             var gitHelper = new GitHelper(mockGitHubService.Object, NullLogger<GitHelper>.Instance);
-            LangService = new GoLanguageRepoService(new ProcessHelper(NullLogger<ProcessHelper>.Instance), gitHelper, NullLogger<GoLanguageRepoService>.Instance);
+            LangService = new GoLanguageRepoService(new ProcessHelper(NullLogger<ProcessHelper>.Instance), gitHelper, mockNpxHelper.Object, NullLogger<GoLanguageRepoService>.Instance);
 
             if (!await LangService.CheckDependencies())
             {

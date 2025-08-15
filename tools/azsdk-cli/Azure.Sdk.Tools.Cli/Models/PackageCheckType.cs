@@ -3,7 +3,7 @@ namespace Azure.Sdk.Tools.Cli.Models;
 /// <summary>
 /// Defines the types of validation checks that can be run on SDK packages.
 /// </summary>
-public enum PackageCheckName
+public enum PackageCheckType
 {
     /// <summary>
     /// Run all available validation checks.
@@ -18,5 +18,15 @@ public enum PackageCheckName
     /// <summary>
     /// Run dependency analysis check.
     /// </summary>
-    Dependency
+    Dependency,
+    
+    /// <summary>
+    /// Run README validation check.
+    /// </summary>
+    Readme,
+    
+    /// <summary>
+    /// Run cspell.
+    /// </summary>
+    Cspell
 }

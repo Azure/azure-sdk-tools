@@ -56,7 +56,7 @@ export async function typecheckGo(
 
             const output = `${cmd.join(" ")} output:\n${result.stdout ?? ""}, ${result.stderr ?? ""}`;
 
-            if (result.exitCode === 0 || result.failed) {
+            if (result.exitCode !== 0 || result.failed) {
                 return {
                     succeeded: false,
                     output: output

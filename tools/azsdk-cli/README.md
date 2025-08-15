@@ -326,7 +326,8 @@ Release - https://dev.azure.com/azure-sdk/internal/_build?definitionId=7684
     - Rapid ad-hoc testing is easier via CLI than MCP, and any tools we build can be consumed by other software/scripts outside of MCP
     - For example, the engsys/azsdk cli app is built around System.CommandLine along with some dependency injection and ASP.net glue + attributes to get it working with the MCP C# sdk
 - Return structured data from all tools/commands. Define response classes that can `ToString()` or `ToJson()` for different output modes (and handle failure flows)
-- Write debug logging to stderr and/or a file in MCP mode. This avoids the misleading "FAILURE TO PARSE MESSAGE" type errors in the MCP client logs
+- Use structured logging with appropriate levels: `LogInformation` for business events, `LogDebug` for diagnostics.
+- Write debug logging to stderr and/or a file in MCP mode to avoid the misleading "FAILURE TO PARSE MESSAGE" type errors in the MCP client logs
 - Support both stdio and http mode for MCP to enable easy debugging with tools like mcp inspector
 - Where possible, avoid dependencies/pre-requisites requiring manual setup, prefer being able to set them up within the app (e.g. az login, gh login, etc.)
 

@@ -303,7 +303,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
         private async Task<WorkItem> CreateWorkItemAsync(ReleasePlan releasePlan, string workItemType, string title)
         {
-            logger.LogInformation($"Input work item json: {JsonSerializer.Serialize(releasePlan)}");
+            logger.LogDebug($"Input work item json: {JsonSerializer.Serialize(releasePlan)}");
             var specDocument = releasePlan.GetPatchDocument();
             specDocument.Add(new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchOperation
             {
@@ -346,8 +346,8 @@ namespace Azure.Sdk.Tools.Cli.Services
                 });
             }
 
-            logger.LogInformation($"Creating {workItemType} work item");
-            logger.LogInformation($"Request data to DeVops: {JsonSerializer.Serialize(specDocument)}");
+            logger.LogInformation("Creating {workItemType} work item", workItemType);
+            logger.LogDebug("Sending work item request to DevOps: {@specDocument}", specDocument);
             var workItem = await connection.GetWorkItemClient().CreateWorkItemAsync(specDocument, Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT, workItemType);
             if (workItem == null)
             {

@@ -1,0 +1,27 @@
+trigger: none
+pr: none 
+
+pool:
+  name: azsdk-pool
+  demands: ImageOverride -equals ubuntu-24.04
+
+schedules: 
+  -cron: '0 0 * * *'
+  displayName: Daily midnight build
+  branches:
+    include:
+      - main
+  always: true
+
+jobs:
+  - job: AttestCPEXKPIs
+    steps:
+      - checkout: self
+      - task: AzureCLI@2
+        displayName: Complete Attestations for CPEX KPIs
+        inputs:
+          azureSubscription: opensource-api-connection
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            $(Build.SourcesDirectory)/eng/scripts/Attest-CPEX-KPIs.ps1"

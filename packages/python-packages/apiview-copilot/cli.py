@@ -36,6 +36,7 @@ from src._database_manager import ContainerNames, get_database_manager
 from src._mention import handle_mention_request
 from src._models import APIViewComment
 from src._search_manager import SearchManager
+from src._settings import SettingsManager
 from src._utils import get_language_pretty_name, get_prompt_path
 from src.agent._agent import get_main_agent, invoke_agent
 
@@ -665,8 +666,7 @@ def get_apiview_comments(review_id: str, environment: str = "production", use_ap
             token = credential.get_token(scope)
             response = requests.get(
                 endpoint,
-                headers={"Content-Type": "application/json",
-                        "Authorization": f"Bearer {token.token}"},
+                headers={"Content-Type": "application/json", "Authorization": f"Bearer {token.token}"},
                 timeout=30,
             )
 

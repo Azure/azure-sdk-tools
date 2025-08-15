@@ -169,7 +169,7 @@ def record_run_result(result: dict[str, Any]) -> list[dict[str, Any]]:
                 "similarity_threshold": float(row["outputs.similarity.similarity_threshold"]) if "outputs.similarity.similarity_threshold" in row else 3,
                 "similarity_result": row["outputs.similarity.similarity_result"] if "outputs.similarity.similarity_result" in row else "N/A",
                 "groundedness": float(row["outputs.groundedness.groundedness"]) if "outputs.groundedness.groundedness" in row else -1,
-                "gpt_groundedness": float(row["outputs.groundedness.gpt_groundedness"]) if "outputs.groundedness.gpt_groundednes" in row else -1,
+                "gpt_groundedness": float(row["outputs.groundedness.gpt_groundedness"]) if "outputs.groundedness.gpt_groundedness" in row else -1,
                 "groundedness_threshold": float(row["outputs.groundedness.groundedness_threshold"]) if "outputs.groundedness.groundedness_threshold" in row else 3,
                 "groundedness_result": row["outputs.groundedness.groundedness_result"] if "outputs.groundedness.groundedness_result" in row else "N/A",
                 "overall_score": score,

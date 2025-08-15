@@ -9,7 +9,6 @@ Module for managing search operations in APIView Copilot.
 """
 
 import copy
-import os
 from collections import deque
 from typing import Dict, List, Optional
 
@@ -26,23 +25,7 @@ from azure.search.documents.models import (
 from src._credential import get_credential
 from src._database_manager import ContainerNames, get_database_manager
 from src._models import Example, Guideline, Memory
-
-if "APPSETTING_WEBSITE_SITE_NAME" not in os.environ:
-    # running on dev machine, loadenv
-    import dotenv
-
-    dotenv.load_dotenv()
-
-# Cosmos DB
-COSMOS_ACC_NAME = os.environ.get("AZURE_COSMOS_ACC_NAME")
-COSMOS_DB_NAME = os.environ.get("AZURE_COSMOS_DB_NAME")
-COSMOS_ENDPOINT = f"https://{COSMOS_ACC_NAME}.documents.azure.com:443/"
-
-# Azure AI Search
-AZURE_SEARCH_NAME = os.environ.get("AZURE_SEARCH_NAME")
-SEARCH_ENDPOINT = f"https://{AZURE_SEARCH_NAME}.search.windows.net"
-
-CREDENTIAL = get_credential()
+from src._settings import SettingsManager
 
 
 class SearchItem:
@@ -306,20 +289,14 @@ class SearchManager:
         self.filter_expression = f"language eq '{language}'"
         if include_general_guidelines:
             self.filter_expression += " or language eq '' or language eq null"
-        self._ensure_env_vars(["AZURE_SEARCH_NAME"])
-        self.client = SearchClient(endpoint=SEARCH_ENDPOINT, index_name="archagent-index", credential=CREDENTIAL)
+        self._settings = SettingsManager()
+        self._search_endpoint = self._settings.get("SEARCH_ENDPOINT")
+        self._credential = get_credential()
+        self._index_name = self._settings.get("SEARCH_INDEX_NAME")
+        self.client = SearchClient(
+            endpoint=self._search_endpoint, index_name=self._index_name, credential=self._credential
+        )
         self.language_guidelines = self._fetch_language_guidelines(language)
-
-    def _ensure_env_vars(self, vars: List[str]):
-        """
-        Ensures that the given environment variables are set.
-        """
-        missing = []
-        for var in vars:
-            if os.getenv(var) is None:
-                missing.append(var)
-        if missing:
-            raise ValueError(f"Environment variables not set: {', '.join(missing)}")
 
     def _fetch_language_guidelines(self, language: str) -> SearchResult:
         """
@@ -340,7 +317,6 @@ class SearchManager:
         Internal method to perform a search on the Azure Search index.
         This method is used by the public search methods to perform the actual search.
         """
-        self._ensure_env_vars(["AZURE_SEARCH_NAME"])
         result = self.client.search(
             search_text=query,
             filter=filter,
@@ -533,8 +509,10 @@ class SearchManager:
             # Map container names to indexer names (simple mapping: container_name + '-indexer')
             indexers_to_run = [f"{name}-indexer" for name in container_names]
 
-        client = SearchIndexerClient(endpoint=SEARCH_ENDPOINT, credential=CREDENTIAL)
         results = {}
+        settings = SettingsManager()
+        search_endpoint = settings.get("SEARCH_ENDPOINT")
+        client = SearchIndexerClient(endpoint=search_endpoint, credential=get_credential())
         for indexer_name in indexers_to_run:
             try:
                 status = client.get_indexer_status(indexer_name)

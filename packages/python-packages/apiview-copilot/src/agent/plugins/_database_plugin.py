@@ -6,7 +6,6 @@
 
 """Plugin for database operations."""
 
-import os
 from contextlib import AsyncExitStack, asynccontextmanager
 from datetime import timedelta
 from typing import Optional
@@ -19,6 +18,7 @@ from semantic_kernel.agents import AzureAIAgent, AzureAIAgentSettings, RunPollin
 from semantic_kernel.functions import kernel_function
 from src._database_manager import ContainerNames, get_database_manager
 from src._models import Example, Guideline, Memory
+from src._settings import SettingsManager
 
 
 @asynccontextmanager
@@ -27,10 +27,12 @@ async def get_delete_agent():
     # pylint: disable=import-outside-toplevel
     from src.agent._agent import create_kernel
 
+    settings = SettingsManager()
     ai_agent_settings = AzureAIAgentSettings(
-        endpoint=os.getenv("AZURE_AI_AGENT_ENDPOINT"),
-        model_deployment_name=os.getenv("AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME"),
-        api_version=os.getenv("AZURE_AI_AGENT_API_VERSION"),
+        # FIXME: Not in AppConfig
+        endpoint=settings.get("AZURE_AI_AGENT_ENDPOINT"),
+        model_deployment_name=settings.get("AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME"),
+        api_version=settings.get("AZURE_AI_AGENT_API_VERSION"),
     )
     ai_instructions = f"""
 You are an agent that processes database delete requests for guidelines, examples, memories or review jobs.
@@ -75,10 +77,12 @@ async def get_create_agent():
     # pylint: disable=import-outside-toplevel
     from src.agent._agent import _SUPPORTED_LANGUAGES, create_kernel
 
+    # FIXME: Not in AppConfig
+    settings = SettingsManager()
     ai_agent_settings = AzureAIAgentSettings(
-        endpoint=os.getenv("AZURE_AI_AGENT_ENDPOINT"),
-        model_deployment_name=os.getenv("AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME"),
-        api_version=os.getenv("AZURE_AI_AGENT_API_VERSION"),
+        endpoint=settings.get("AZURE_AI_AGENT_ENDPOINT"),
+        model_deployment_name=settings.get("AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME"),
+        api_version=settings.get("AZURE_AI_AGENT_API_VERSION"),
     )
     guideline_schema = Guideline.model_json_schema()
     example_schema = Example.model_json_schema()
@@ -178,10 +182,12 @@ async def get_retrieve_agent():
     # pylint: disable=import-outside-toplevel
     from src.agent._agent import create_kernel
 
+    # FIXME: Not in AppConfig
+    settings = SettingsManager()
     ai_agent_settings = AzureAIAgentSettings(
-        endpoint=os.getenv("AZURE_AI_AGENT_ENDPOINT"),
-        model_deployment_name=os.getenv("AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME"),
-        api_version=os.getenv("AZURE_AI_AGENT_API_VERSION"),
+        endpoint=settings.get("AZURE_AI_AGENT_ENDPOINT"),
+        model_deployment_name=settings.get("AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME"),
+        api_version=settings.get("AZURE_AI_AGENT_API_VERSION"),
     )
     ai_instructions = """
 You are an agent that processes database get or retrieval requests for guidelines, examples, memories, or review jobs.
@@ -212,10 +218,12 @@ async def get_link_agent():
     # pylint: disable=import-outside-toplevel
     from src.agent._agent import create_kernel
 
+    # FIXME: Not in AppConfig
+    settings = SettingsManager()
     ai_agent_settings = AzureAIAgentSettings(
-        endpoint=os.getenv("AZURE_AI_AGENT_ENDPOINT"),
-        model_deployment_name=os.getenv("AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME"),
-        api_version=os.getenv("AZURE_AI_AGENT_API_VERSION"),
+        endpoint=settings.get("AZURE_AI_AGENT_ENDPOINT"),
+        model_deployment_name=settings.get("AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME"),
+        api_version=settings.get("AZURE_AI_AGENT_API_VERSION"),
     )
     ai_instructions = f"""
 You are an agent that processes database requests to link or unlink guidelines, examples, memories or review jobs.

@@ -1,23 +1,23 @@
-import os
-import json
-import pathlib
 import argparse
-from typing import Set, Tuple, Any
+import copy
+import json
+import os
+import pathlib
+import sys
+from typing import Any, Set, Tuple
+
 import prompty
 import prompty.azure_beta
-import copy
-import sys
 import yaml
-
 from src._utils import get_prompt_path
 
 # set before azure.ai.evaluation import to make PF output less noisy
 os.environ["PF_LOGGING_LEVEL"] = "CRITICAL"
 
 import dotenv
-from tabulate import tabulate
-from azure.ai.evaluation import evaluate, SimilarityEvaluator, GroundednessEvaluator
+from azure.ai.evaluation import GroundednessEvaluator, SimilarityEvaluator, evaluate
 from azure.identity import AzurePipelinesCredential
+from tabulate import tabulate
 
 dotenv.load_dotenv()
 
@@ -27,7 +27,7 @@ MODEL_JUDGE = "gpt-4.1-nano"
 
 model_config: dict[str, str] = {
     "azure_endpoint": os.environ["AZURE_OPENAI_ENDPOINT"],
-    "api_key": os.environ["AZURE_OPENAI_API_KEY"],
+    "api_key": os.environ["OPENAI_API_KEY"],
     "azure_deployment": MODEL_JUDGE,
     "api_version": "2025-03-01-preview",
 }
@@ -144,7 +144,7 @@ class CustomAPIViewEvaluator:
                     "exceptions": exceptions,
                     "language": language,
                 },
-                configuration={"api_key": os.getenv("AZURE_OPENAI_API_KEY")},
+                configuration={"api_key": os.getenv("OPENAI_API_KEY")},
             )
             comment["valid"] = "true" in response.lower()
 

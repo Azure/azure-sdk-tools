@@ -9,12 +9,10 @@ Module for managing APIView Copilot agents.
 """
 
 import logging
-import os
 from contextlib import AsyncExitStack, asynccontextmanager
 from datetime import timedelta
 
 from azure.identity.aio import DefaultAzureCredential
-from dotenv import load_dotenv
 from semantic_kernel import Kernel
 
 # pylint: disable=no-name-in-module
@@ -25,6 +23,7 @@ from semantic_kernel.agents import (
     RunPollingOptions,
 )
 from semantic_kernel.connectors.ai.open_ai import AzureChatCompletion
+from src._settings import SettingsManager
 
 from .plugins import (
     ApiReviewPlugin,
@@ -36,34 +35,14 @@ from .plugins import (
     get_retrieve_agent,
 )
 
-load_dotenv(override=True)
-
-
-_SUPPORTED_LANGUAGES = [
-    "android",
-    "clang",
-    "cpp",
-    "dotnet",
-    "golang",
-    "ios",
-    "java",
-    "python",
-    "rust",
-    "typescript",
-]
-
 
 def create_kernel() -> Kernel:
     """Creates a Kernel instance configured for Azure OpenAI."""
-    base_url = os.getenv("AZURE_OPENAI_ENDPOINT")
-    deployment_name = os.getenv("AZURE_OPENAI_DEPLOYMENT")
-    api_key = os.getenv("AZURE_OPENAI_API_KEY")
-    if not base_url:
-        raise RuntimeError("AZURE_OPENAI_ENDPOINT environment variable is required.")
-    if not deployment_name:
-        raise RuntimeError("AZURE_OPENAI_DEPLOYMENT environment variable is required.")
-    if not api_key:
-        raise RuntimeError("AZURE_OPENAI_API_KEY environment variable is required.")
+    settings = SettingsManager()
+    base_url = settings.get("OPENAI_ENDPOINT")
+    # FIXME: Not in AppConfig
+    deployment_name = settings.get("OPENAI_DEPLOYMENT")
+    api_key = settings.get("AZURE_OPENAI_API_KEY")
     logging.info("Using Azure OpenAI at %s with deployment %s", base_url, deployment_name)
     kernel = Kernel(
         plugins={},  # Register your plugins here if needed
@@ -98,10 +77,12 @@ async def invoke_agent(*, agent, user_input, thread_id=None, messages=None):
 async def get_main_agent():
     """Create and yield the main APIView Copilot agent."""
     kernel = create_kernel()
+    settings = SettingsManager()
     ai_agent_settings = AzureAIAgentSettings(
-        endpoint=os.getenv("AZURE_AI_AGENT_ENDPOINT"),
-        model_deployment_name=os.getenv("AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME"),
-        api_version=os.getenv("AZURE_AI_AGENT_API_VERSION"),
+        # FIXME: Not in AppConfig
+        endpoint=settings.get("AZURE_AI_AGENT_ENDPOINT"),
+        model_deployment_name=settings.get("AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME"),
+        api_version=settings.get("AZURE_AI_AGENT_API_VERSION"),
     )
     ai_instructions = """
 Your job is to receive a request from the user, determine their intent, and pass the request to the

@@ -19,6 +19,7 @@ def in_ci():
 def get_credential():
     """Get Azure credentials based on the environment."""
     if in_ci():
+        # FIXME: Ask Krista about this...
         service_connection_id = os.environ["AZURESUBSCRIPTION_SERVICE_CONNECTION_ID"]
         client_id = os.environ["AZURESUBSCRIPTION_CLIENT_ID"]
         tenant_id = os.environ["AZURESUBSCRIPTION_TENANT_ID"]

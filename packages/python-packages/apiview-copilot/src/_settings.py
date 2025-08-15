@@ -5,6 +5,9 @@ import threading
 from azure.appconfiguration import AzureAppConfigurationClient
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
+from dotenv import load_dotenv
+
+load_dotenv(override=True)
 
 
 class SettingsManager:
@@ -30,11 +33,13 @@ class SettingsManager:
         self.label = os.getenv("ENVIRONMENT_NAME")
         if not self.label:
             raise ValueError("ENVIRONMENT_NAME must be set in the environment.")
+        self.label = self.label.strip().lower()
         self.app_config_client = AzureAppConfigurationClient(self.app_config_endpoint, self.credential)
         self._keyvault_clients = {}
         self._cache = {}
 
     def get(self, key):
+        key = key.strip().lower()
         cache_key = (key, self.label)
         if cache_key in self._cache:
             return self._cache[cache_key]

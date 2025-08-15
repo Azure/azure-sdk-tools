@@ -367,10 +367,9 @@ def review_job_start(
     if comments_obj is not None:
         payload["comments"] = comments_obj
 
-    app_name = os.getenv("AZURE_APP_NAME")
-    if not app_name:
-        raise ValueError("AZURE_APP_NAME environment variable is not set.")
-    api_endpoint = f"https://{app_name}.azurewebsites.net/api-review/start"
+    settings = SettingsManager()
+    base_url = settings.get("WEBAPP_ENDPOINT")
+    api_endpoint = f"{base_url}/api-review/start"
 
     resp = requests.post(api_endpoint, json=payload, timeout=60)
     if resp.status_code == 202:
@@ -381,10 +380,9 @@ def review_job_start(
 
 def review_job_get(job_id: str):
     """Get the status/result of an API review job."""
-    app_name = os.getenv("AZURE_APP_NAME")
-    if not app_name:
-        raise ValueError("AZURE_APP_NAME environment variable is not set.")
-    api_endpoint = f"https://{app_name}.azurewebsites.net/api-review"
+    settings = SettingsManager()
+    base_url = settings.get("WEBAPP_ENDPOINT")
+    api_endpoint = f"{base_url}/api-review"
     url = f"{api_endpoint.rstrip('/')}/{job_id}"
     resp = requests.get(url, timeout=10)
     if resp.status_code == 200:
@@ -435,8 +433,9 @@ def review_summarize(language: str, target: str, base: str = None):
     payload = {"language": language, "target": target}
     if base:
         payload["base"] = base
-    app_name = os.getenv("AZURE_APP_NAME")
-    api_endpoint = f"https://{app_name}.azurewebsites.net/api-review/summarize"
+    settings = SettingsManager()
+    base_url = settings.get("WEBAPP_ENDPOINT")
+    api_endpoint = f"{base_url}/api-review/summarize"
     response = requests.post(api_endpoint, json=payload, timeout=60)
     if response.status_code == 200:
         summary = response.json().get("summary")
@@ -459,11 +458,9 @@ def handle_agent_chat(thread_id: Optional[str] = None, remote: bool = False):
         messages = []
         current_thread_id = thread_id
         if remote:
-            app_name = os.getenv("AZURE_APP_NAME")
-            if not app_name:
-                print(f"{BOLD}AZURE_APP_NAME environment variable is not set.{RESET}")
-                return
-            api_endpoint = f"https://{app_name}.azurewebsites.net/agent/chat"
+            settings = SettingsManager()
+            base_url = settings.get("WEBAPP_ENDPOINT")
+            api_endpoint = f"{base_url}/agent/chat"
             session = requests.Session()
             while True:
                 try:
@@ -556,11 +553,9 @@ def handle_agent_mention(comments_path: str, remote: bool = False):
     pretty_language = get_language_pretty_name(language)
 
     if remote:
-        app_name = os.getenv("AZURE_APP_NAME")
-        if not app_name:
-            print("AZURE_APP_NAME environment variable is not set.")
-            return
-        api_endpoint = f"https://{app_name}.azurewebsites.net/api-review/mention"
+        settings = SettingsManager()
+        base_url = settings.get("WEBAPP_ENDPOINT")
+        api_endpoint = f"{base_url}/api-review/mention"
         try:
             resp = requests.post(
                 api_endpoint,

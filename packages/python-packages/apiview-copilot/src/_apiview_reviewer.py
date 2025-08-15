@@ -30,6 +30,7 @@ from ._models import Comment, ExistingComment, ReviewResult
 from ._retry import retry_with_backoff
 from ._search_manager import SearchManager
 from ._sectioned_document import SectionedDocument
+from ._settings import SettingsManager
 from ._utils import get_language_pretty_name, get_prompt_path
 
 # Set up package root for log and metadata paths
@@ -62,12 +63,6 @@ root_logger.addHandler(console_handler)
 
 # Create module-level logger
 logger = logging.getLogger(__name__)
-
-if "APPSETTING_WEBSITE_SITE_NAME" not in os.environ:
-    # running on dev machine, loadenv
-    import dotenv
-
-    dotenv.load_dotenv()
 
 
 CREDENTIAL = get_credential()
@@ -121,6 +116,7 @@ class ApiViewReview:
         if include_general_guidelines:
             self.filter_expression += " or language eq '' or language eq null"
         self.debug_log = debug_log
+        self.settings = SettingsManager()
         self._isatty = sys.stdout.isatty()
 
         class JobLogger:
@@ -193,17 +189,6 @@ class ApiViewReview:
             print(f"[{self.job_id}] {msg}", flush=True)
         else:
             print(f"[{self.job_id}]", flush=True)
-
-    def _ensure_env_vars(self, vars: List[str]):
-        """
-        Ensures that the given environment variables are set.
-        """
-        missing = []
-        for var in vars:
-            if os.getenv(var) is None:
-                missing.append(var)
-        if missing:
-            raise ValueError(f"Environment variables not set: {', '.join(missing)}")
 
     def _create_sectioned_document(self) -> SectionedDocument:
         """
@@ -728,7 +713,7 @@ class ApiViewReview:
 
         def execute_prompt() -> str:
             if in_ci():
-                configuration = {"api_key": os.getenv("AZURE_OPENAI_API_KEY")}
+                configuration = {"api_key": self.settings.get("AZURE_OPENAI_API_KEY")}
             else:
                 configuration = {}
 
@@ -835,7 +820,6 @@ class ApiViewReview:
         Returns an error string if authentication fails, otherwise None.
         """
         try:
-            self._ensure_env_vars(["AZURE_SEARCH_NAME"])
             try:
                 # Use a real search result, even if empty
                 _ = self.search.search_all(query="canary")
@@ -852,7 +836,6 @@ class ApiViewReview:
         memories and examples.
         """
         try:
-            self._ensure_env_vars(["AZURE_SEARCH_NAME"])
             results = self.search.search_all(query=query)
             context = self.search.build_context(results.results)
             return context

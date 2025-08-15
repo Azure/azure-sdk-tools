@@ -23,6 +23,7 @@ def get_language_pretty_name(language: str) -> str:
         "ios": "Swift",
         "java": "Java",
         "python": "Python",
+        "rust": "Rust",
         "typescript": "TypeScript",
     }
     return language_pretty_names.get(language, language.capitalize())

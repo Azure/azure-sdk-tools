@@ -8,11 +8,13 @@ namespace Azure.Sdk.Tools.Cli.Commands
     public static class SharedOptions
     {
         public static readonly List<Type> ToolsList = [
+            typeof(PackageCheckTool),
             typeof(CleanupTool),
             typeof(DownloadPromptsTool),
-            typeof(LogAnalysisTool),
             typeof(FileValidationTool),
+            typeof(GitHubLabelsTool),
             typeof(HostServerTool),
+            typeof(LogAnalysisTool),
             typeof(PipelineAnalysisTool),
             typeof(PipelineTestsTool),
             typeof(QuokkaTool),
@@ -50,6 +52,11 @@ namespace Azure.Sdk.Tools.Cli.Commands
         {
             Description = "Enable debug logging",
             IsRequired = false,
+        };
+
+        public static Option<string> PackagePath = new(["--package-path", "-p"], "Path to the package directory to check") 
+        { 
+            IsRequired = true 
         };
 
         public static (string, bool) GetGlobalOptionValues(string[] args)

@@ -29,7 +29,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         /// Validates the TypeSpec API specification.
         /// </summary>
         /// <param name="typeSpecProjectRootPath">The root path of the TypeSpec project.</param>
-        [McpServerTool, Description("Run TypeSpec validation. Provide absolute path to TypeSpec project root as param. This tool runs TypeSpec validation and TypeSpec configuration validation.")]
+        [McpServerTool(Name = "azsdk_run_typespec_validation"), Description("Run TypeSpec validation. Provide absolute path to TypeSpec project root as param. This tool runs TypeSpec validation and TypeSpec configuration validation.")]
         public IList<string> RunTypeSpecValidation(string typeSpecProjectRootPath)
         {
             try
@@ -51,15 +51,15 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     if (!IsTypeSpecValidationExecutablePresent(specRepoRootPath))
                     {
                         // Run npm ci
-                        logger.LogInformation("Running npm ci");
+                        logger.LogInformation("Installing dependencies with npm ci");
                         RunNpmCi(specRepoRootPath);
-                        logger.LogInformation("Completed running npm ci");
+                        logger.LogInformation("Dependency installation completed");
                     }
 
                     //Run TypeSpec validation
-                    logger.LogInformation("Running npx tsv to run the validation");
+                    logger.LogInformation("Starting TypeSpec validation");
                     ValidateTypeSpec(typeSpecProjectRootPath, specRepoRootPath, validationResults);
-                    logger.LogInformation("Completed running TypeSpec validation");
+                    logger.LogInformation("TypeSpec validation completed");
                 }
                 catch (Exception ex)
                 {

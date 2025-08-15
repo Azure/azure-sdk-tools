@@ -16,7 +16,7 @@ import { readTspLocation, removeDirectory } from "../src/fs.js";
 import { doesFileExist } from "../src/network.js";
 import { TspLocation } from "../src/typespec.js";
 import { writeTspLocationYaml } from "../src/utils.js";
-import { dirname } from "node:path";
+import { dirname, resolve } from "node:path";
 
 describe.sequential("Verify commands", () => {
   let repoRoot;
@@ -169,7 +169,9 @@ describe.sequential("Verify commands", () => {
         directory: "specification/contosowidgetmanager/Contoso.WidgetManager",
         commit: "45924e49834c4e01c0713e6b7ca21f94be17e396",
         repo: "Azure/azure-rest-api-specs",
-        additionalDirectories: ["specification/contosowidgetmanager/Contoso.WidgetManager.Shared"],
+        additionalDirectories: [
+          "tools/tsp-client/test/examples/specification/contosowidgetmanager/Contoso.WidgetManager.Shared",
+        ],
         emitterPackageJsonPath: "tools/tsp-client/test/utils/emitter-package.json",
       };
       await writeTspLocationYaml(
@@ -178,7 +180,8 @@ describe.sequential("Verify commands", () => {
       );
       const args = {
         "output-dir": joinPaths(cwd(), "test/examples/sdk/alternate-emitter-package-json-path"),
-        "save-inputs": true,
+        "local-spec-repo":
+          "./test/examples/specification/contosowidgetmanager/Contoso.WidgetManager",
       };
       await updateCommand(args);
     } catch (error) {
@@ -192,7 +195,9 @@ describe.sequential("Verify commands", () => {
         directory: "specification/contosowidgetmanager/Contoso.WidgetManager",
         commit: "45924e49834c4e01c0713e6b7ca21f94be17e396",
         repo: "Azure/azure-rest-api-specs",
-        additionalDirectories: ["specification/contosowidgetmanager/Contoso.WidgetManager.Shared"],
+        additionalDirectories: [
+          "tools/tsp-client/test/examples/specification/contosowidgetmanager/Contoso.WidgetManager.Shared",
+        ],
         emitterPackageJsonPath: "tools/tsp-client/test/utils/alternate-emitter-package.json",
       };
       await writeTspLocationYaml(
@@ -201,7 +206,8 @@ describe.sequential("Verify commands", () => {
       );
       const args = {
         "output-dir": joinPaths(cwd(), "test/examples/sdk/alternate-emitter-package-json-path"),
-        "save-inputs": true,
+        "local-spec-repo":
+          "./test/examples/specification/contosowidgetmanager/Contoso.WidgetManager",
       };
       await updateCommand(args);
     } catch (error) {
@@ -209,7 +215,8 @@ describe.sequential("Verify commands", () => {
     }
   });
 
-  it("Update example sdk & pass tspconfig.yaml", async () => {
+  // TODO: unskip after updates have been merged to upstream tspconfig.yaml files
+  it.skip("Update example sdk & pass tspconfig.yaml", async () => {
     try {
       const args = {
         "output-dir": joinPaths(
@@ -226,7 +233,8 @@ describe.sequential("Verify commands", () => {
     }
   });
 
-  it("Update example sdk & pass commit", async () => {
+  // TODO: unskip after updates have been merged to upstream tspconfig.yaml files
+  it.skip("Update example sdk & pass commit", async () => {
     try {
       const args = {
         "output-dir": joinPaths(
@@ -234,7 +242,6 @@ describe.sequential("Verify commands", () => {
           "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest",
         ),
         commit: "45924e49834c4e01c0713e6b7ca21f94be17e396",
-        "save-inputs": true,
       };
       await updateCommand(args);
     } catch (error) {
@@ -250,7 +257,6 @@ describe.sequential("Verify commands", () => {
           "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest",
         ),
         repo: "foo",
-        "save-inputs": true,
       };
       await updateCommand(args);
       assert.fail("Should have failed");
@@ -316,6 +322,28 @@ describe.sequential("Verify commands", () => {
       const tspLocation = await readTspLocation(outputDir);
       assert.equal(tspLocation.commit, "<replace with your value>");
       assert.equal(tspLocation.repo, "<replace with your value>");
+      await removeDirectory(joinPaths(cwd(), "./test/examples/init/sdk"));
+    } catch (error: any) {
+      assert.fail("Failed to init. Error: " + error);
+    }
+  });
+
+  it("Init with legacy package path resolution", async () => {
+    try {
+      const args = {
+        "output-dir": joinPaths(cwd(), "./test/examples/init/"),
+        "tsp-config": joinPaths(
+          cwd(),
+          "./test/examples/specification/contosowidgetmanager-legacy-package-dir/Contoso.WidgetManager/",
+        ),
+      };
+      const outputDir = await initCommand(args);
+      assert.equal(
+        outputDir,
+        resolve(
+          joinPaths(cwd(), "./test/examples/init/", "sdk/legacypath", "contosowidgetmanager-rest"),
+        ),
+      );
       await removeDirectory(joinPaths(cwd(), "./test/examples/init/sdk"));
     } catch (error: any) {
       assert.fail("Failed to init. Error: " + error);

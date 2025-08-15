@@ -1,5 +1,10 @@
 # Release
 
+## 2025-08-13 - 0.28.0
+
+- Support `emitter-output-dir` when generating a client library. `emitter-output-dir` will be given preference over client library path parsing with the `package-dir` option under the emitter.
+- Add a warning when `package-dir` is used to explain that support for this option will be deprecated in the future.
+
 ## 2025-08-05 - 0.27.0
 
 - Support multiple emitter language repositories through a global `tspclientconfig.yaml` file checked in under `<repo root>/eng`. If this file is added to a language repository the default emitter used for a library might change based on the emitters configured in their tspconfig.yaml and the order of emitters listed in the `tspclientconfig.yaml` file.

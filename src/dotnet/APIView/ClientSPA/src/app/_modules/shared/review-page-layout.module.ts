@@ -14,11 +14,13 @@ import { SharedAppModule } from './shared-app.module';
 import { CommonModule } from '@angular/common'; 
 import { PageOptionsSectionComponent } from 'src/app/_components/shared/page-options-section/page-options-section.component';
 import { HtmlToMarkdownPipe } from 'src/app/_pipes/html-to-markdown.pipe';
+import { CrossLangViewComponent } from 'src/app/_components/cross-lang-view/cross-lang-view.component';
 
 @NgModule({
   declarations: [
     ReviewInfoComponent,
     CommentThreadComponent,
+    CrossLangViewComponent,
     ConversationsComponent,
     ReviewPageLayoutComponent,
     RevisionOptionsComponent,
@@ -30,6 +32,7 @@ import { HtmlToMarkdownPipe } from 'src/app/_pipes/html-to-markdown.pipe';
   exports: [
     ReviewInfoComponent,
     CommentThreadComponent,
+    CrossLangViewComponent,
     ConversationsComponent,
     PageOptionsSectionComponent,
     ReviewPageLayoutComponent,

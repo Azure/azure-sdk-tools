@@ -2,11 +2,11 @@ import { ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { Title } from '@angular/platform-browser';
 import { MenuItem, TreeNode } from 'primeng/api';
-import { Observable, Subject, take, takeUntil } from 'rxjs';
+import { concatMap, EMPTY, from, Observable, Subject, take, takeUntil, tap } from 'rxjs';
 import { CodeLineRowNavigationDirection, getLanguageCssSafeName } from 'src/app/_helpers/common-helpers';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
 import { Review } from 'src/app/_models/review';
-import { APIRevision, ApiTreeBuilderData } from 'src/app/_models/revision';
+import { APIRevision, APIRevisionGroupedByLanguage, ApiTreeBuilderData } from 'src/app/_models/revision';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 import { APIRevisionsService } from 'src/app/_services/revisions/revisions.service';
 import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
@@ -14,7 +14,7 @@ import { WorkerService } from 'src/app/_services/worker/worker.service';
 import { CodePanelComponent } from '../code-panel/code-panel.component';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { ACTIVE_API_REVISION_ID_QUERY_PARAM, DIFF_API_REVISION_ID_QUERY_PARAM, DIFF_STYLE_QUERY_PARAM, REVIEW_ID_ROUTE_PARAM, SCROLL_TO_NODE_QUERY_PARAM } from 'src/app/_helpers/router-helpers';
-import { CodePanelData, CodePanelRowData, CodePanelRowDatatype } from 'src/app/_models/codePanelModels';
+import { CodePanelData, CodePanelRowData, CodePanelRowDatatype, CrossLanguageContentDto } from 'src/app/_models/codePanelModels';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { ReviewPageWorkerMessageDirective } from 'src/app/_models/insertCodePanelRowDataMessage';
 import { CommentItemModel, CommentType } from 'src/app/_models/commentItemModel';
@@ -23,6 +23,7 @@ import { SamplesRevisionService } from 'src/app/_services/samples/samples.servic
 import { SamplesRevision } from 'src/app/_models/samples';
 import { CodeLineSearchInfo } from 'src/app/_models/codeLineSearchInfo';
 import { HttpResponse } from '@angular/common/http';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-review-page',
@@ -37,14 +38,18 @@ export class ReviewPageComponent implements OnInit {
   diffApiRevisionId : string | null = null;
   diffStyle : string | null = null;
 
+  assetsPath : string = environment.assetsPath;
+
   userProfile : UserProfile | undefined;
   review : Review | undefined = undefined;
   apiRevisions: APIRevision[] = [];
+  crossLanguageAPIRevisions: APIRevisionGroupedByLanguage[] = [];
   comments: CommentItemModel[] = [];
   activeAPIRevision : APIRevision | undefined = undefined;
   diffAPIRevision : APIRevision | undefined = undefined;
   latestSampleRevision: SamplesRevision | undefined = undefined;
   revisionSidePanel : boolean | undefined = undefined;
+  crosslanguageRevisionSidePanel : boolean | undefined = undefined; 
   conversationSidePanel : boolean | undefined = undefined;
   reviewPageNavigation : TreeNode[] = [];
   language: string | undefined;
@@ -71,6 +76,7 @@ export class ReviewPageComponent implements OnInit {
 
   codePanelData: CodePanelData | null = null;
   codePanelRowData: CodePanelRowData[] = [];
+  crossLanguageRowData: CrossLanguageContentDto[] = [];
   apiRevisionPageSize = 50;
   lastNodeIdUnhashedDiscarded = '';
 
@@ -119,14 +125,13 @@ export class ReviewPageComponent implements OnInit {
     this.loadPreferredApprovers(this.reviewId!);
     this.loadAPIRevisions(0, this.apiRevisionPageSize);
     this.loadComments();
-    this.createSideMenu();
     this.handleRealTimeReviewUpdates();
     this.handleRealTimeAPIRevisionUpdates();
     this.loadLatestSampleRevision(this.reviewId!);
   }
 
   createSideMenu() {
-    this.sideMenu = [
+    const menu : MenuItem [] = [
       {
           icon: 'bi bi-clock-history',
           tooltip: 'Revisions',
@@ -135,7 +140,21 @@ export class ReviewPageComponent implements OnInit {
               this.revisionSidePanel = !this.revisionSidePanel;
             }
           }
-      },
+      }
+    ];
+
+    if (this.activeAPIRevision?.files[0].crossLanguagePackageId && this.crossLanguageAPIRevisions.length > 0) {
+      menu.push({
+        icon: 'bi bi-arrow-left-right',
+        tooltip: 'Cross Language',
+        command: () => {
+          if (this.getLoadingStatus() === 'completed') {
+            this.crosslanguageRevisionSidePanel = !this.crosslanguageRevisionSidePanel;
+          }
+        }
+      });
+    }
+    menu.push(...[
       {
         icon: 'bi bi-chat-left-dots',
         tooltip: 'Conversations',
@@ -159,7 +178,9 @@ export class ReviewPageComponent implements OnInit {
           }
         }
       }
-    ];
+    ]);
+    this.sideMenu = menu;
+    this.changeDetectorRef.detectChanges();
   }
 
   updateStateBasedOnQueryParams(params: Params) {
@@ -239,6 +260,7 @@ export class ReviewPageComponent implements OnInit {
             // Passing ArrayBufer to worker is way faster than passing object
             this.workerService.postToApiTreeBuilder(response.body, apiTreeBuilderData);
           }
+          this.createSideMenu();
         },
         error: (error: any) => {
           this.loadFailed = true;
@@ -280,8 +302,9 @@ export class ReviewPageComponent implements OnInit {
 
     this.apiRevisionsService.getAPIRevisions(noOfItemsRead, pageSize, this.reviewId!, undefined, undefined, 
       undefined, "createdOn", undefined, undefined, undefined, true, pageRevisions)
-      .pipe(takeUntil(this.destroyLoadAPIRevision$)).subscribe({
-        next: (response: any) => {
+      .pipe(
+        takeUntil(this.destroyLoadAPIRevision$),
+        concatMap((response: any) => {
           this.apiRevisions = response.result;
           if (this.apiRevisions.length > 0) {
             this.language = this.apiRevisions[0].language;
@@ -291,8 +314,43 @@ export class ReviewPageComponent implements OnInit {
               this.diffAPIRevision = this.apiRevisions.filter(x => x.id === this.diffApiRevisionId)[0];
             }
           }
-        }
-      });
+
+          if (this.activeAPIRevision && this.activeAPIRevision.files[0].crossLanguagePackageId) {
+            return this.apiRevisionsService.getCrossLanguageAPIRevisions(this.activeAPIRevision.files[0].crossLanguagePackageId);
+          }
+          return EMPTY
+        }),
+        concatMap((response: any) => {
+          this.crossLanguageAPIRevisions = response.filter((c: APIRevisionGroupedByLanguage) => c.label !== this.language);
+          this.createSideMenu();
+          if (this.crossLanguageAPIRevisions.length > 0) {
+            const itemsToProcess = this.crossLanguageAPIRevisions
+              .filter(revision => revision.items.length > 0 && revision.items[0].files.length > 0)
+              .map(revision => ({
+                reviewId: revision.items[0].reviewId,
+                apiRevisionId: revision.items[0].id,
+                codeFileId: revision.items[0].files[0].fileId,
+                packageVersion: revision.items[0].packageVersion,
+                packageName: revision.items[0].packageName
+              }));
+            return from(itemsToProcess).pipe(
+              concatMap((item : any) => this.reviewsService.getCrossLanguageContent(item.apiRevisionId, item.codeFileId).pipe(
+                tap(response => {
+                  response.reviewId = item.reviewId;
+                  response.packageVersion = item.packageVersion;
+                  response.packageName = item.packageName;
+                  this.crossLanguageRowData.push(response);
+                })
+              ))
+            );
+          }
+          return EMPTY;
+        }),
+      ).subscribe({
+          next: (response: any) => {
+            
+          }
+        });
   }
 
   loadComments() {
@@ -573,6 +631,24 @@ export class ReviewPageComponent implements OnInit {
         }
       }
     });
+  }
+
+  handleCrossLangaugeAPIRevisionChange(value: APIRevision) {
+    this.reviewsService.getCrossLanguageContent(value.id, value.files[0].fileId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(response => {
+        response.reviewId = value.reviewId;
+        response.packageVersion = value.packageVersion;
+        response.packageName = value.packageName;
+        const cldto: CrossLanguageContentDto [] = [];
+        this.crossLanguageRowData.forEach((dto: CrossLanguageContentDto) => {
+          if (dto.apiRevisionId !== value.id) {
+            cldto.push(dto);
+          }
+        });
+        cldto.push(response)
+        this.crossLanguageRowData = cldto;
+      });
   }
 
   getLoadingStatus() : 'loading' | 'completed' | 'failed' {

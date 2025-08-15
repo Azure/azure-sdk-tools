@@ -21,47 +21,38 @@ namespace Azure.Tools.GeneratorAgent.Configuration
             return new ValidationContext(validatedTypeSpecPath, validatedCommitId, validatedOutputPath);
         }
 
-        public static ValidationContext ValidateAndCreate(
+        public static Result<ValidationContext> TryValidateAndCreate(
             string? typespecPath, 
             string? commitId, 
             string sdkOutputPath, 
             ILogger logger)
         {
-            logger.LogInformation("Starting input validation...");
-
-
             bool isLocalPath = string.IsNullOrWhiteSpace(commitId);
 
-            ValidationResult typespecValidation = InputValidator.ValidateTypeSpecDir(typespecPath, isLocalPath);
-            if (!typespecValidation.IsValid)
+            Result<string> typespecValidation = InputValidator.ValidateTypeSpecDir(typespecPath, isLocalPath);
+            if (typespecValidation.IsFailure)
             {
-                logger.LogError("TypeSpec path validation failed: {Error}", typespecValidation.ErrorMessage);
-                throw new ArgumentException($"TypeSpec path validation failed: {typespecValidation.ErrorMessage}", nameof(typespecPath));
+                return Result<ValidationContext>.Failure(new ArgumentException($"TypeSpec path validation failed: {typespecValidation.Exception?.Message}"));
             }
 
-            ValidationResult commitValidation = InputValidator.ValidateCommitId(commitId);
-            if (!commitValidation.IsValid)
+            Result<string> commitValidation = InputValidator.ValidateCommitId(commitId);
+            if (commitValidation.IsFailure)
             {
-                logger.LogError("Commit ID validation failed: {Error}", commitValidation.ErrorMessage);
-                throw new ArgumentException($"Commit ID validation failed: {commitValidation.ErrorMessage}", nameof(commitId));
+                return Result<ValidationContext>.Failure(new ArgumentException($"Commit ID validation failed: {commitValidation.Exception?.Message}"));
             }
 
-            ValidationResult outputValidation = InputValidator.ValidateOutputDirectory(sdkOutputPath);
-            if (!outputValidation.IsValid)
+            Result<string> outputValidation = InputValidator.ValidateOutputDirectory(sdkOutputPath);
+            if (outputValidation.IsFailure)
             {
-                logger.LogError("SDK output path validation failed: {Error}", outputValidation.ErrorMessage);
-                throw new ArgumentException($"SDK output path validation failed: {outputValidation.ErrorMessage}", nameof(sdkOutputPath));
+                return Result<ValidationContext>.Failure(new ArgumentException($"SDK output path validation failed: {outputValidation.Exception?.Message}"));
             }
 
             logger.LogInformation("All input validation completed successfully");
-            logger.LogInformation("Validated TypeSpec path: {TypeSpecPath}", typespecValidation.Value);
-            logger.LogInformation("Validated commit ID: {CommitId}", string.IsNullOrEmpty(commitValidation.Value) ? "[None]" : commitValidation.Value);
-            logger.LogInformation("Validated SDK output path: {SdkOutputPath}", outputValidation.Value);
 
-            return new ValidationContext(
-                typespecValidation.Value,
-                commitValidation.Value,
-                outputValidation.Value);
+            return Result<ValidationContext>.Success(new ValidationContext(
+                typespecValidation.Value!,
+                commitValidation.Value!,
+                outputValidation.Value!));
         }
     }
 }

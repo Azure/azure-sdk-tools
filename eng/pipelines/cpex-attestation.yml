@@ -24,4 +24,4 @@ jobs:
           scriptType: pscore
           scriptLocation: inlineScript
           inlineScript: |
-            $(Build.SourcesDirectory)/eng/scripts/Attest-CPEX-KPIs.ps1"
+            $(Build.SourcesDirectory)/eng/scripts/Attest-CPEX-KPIs.ps1

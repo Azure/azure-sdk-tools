@@ -6,7 +6,9 @@
                 <ng-container *ngIf="canToggleApproveAPIRevision; else cantToggleApproveAPIRevision">
                     <span *ngIf="apiRevisionApprovalMessage" class="small text-muted">{{apiRevisionApprovalMessage}}</span>
                     <div class="d-grid gap-2">
-                        <button class="{{apiRevisionApprovalBtnClass}}" type="button" (click)="handleAPIRevisionApprovalAction()">{{apiRevisionApprovalBtnLabel}}</button>
+                        <button class="{{apiRevisionApprovalBtnClass}}" type="button" 
+                            (click)="handleAPIRevisionApprovalAction()"
+                            [disabled]="isAPIRevisionApprovalDisabled">{{apiRevisionApprovalBtnLabel}}</button>
                     </div>
                 </ng-container>
                 <ng-template #cantToggleApproveAPIRevision>

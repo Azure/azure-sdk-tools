@@ -155,6 +155,7 @@ describe.sequential("Verify commands", () => {
           cwd(),
           "./test/examples/sdk/contosowidgetmanager/contosowidgetmanager-rest",
         ),
+        "save-inputs": true,
       };
       await updateCommand(args);
       assert.isDefined(

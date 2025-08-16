@@ -39,7 +39,7 @@ namespace Azure.Tools.GeneratorAgent
         /// Gets TypeSpec files from either local directory or GitHub repository.
         /// Returns a dictionary where key is filename and value is file content.
         /// </summary>
-        public async Task<Result<Dictionary<string, string>>> GetTypeSpecFilesAsync(
+        public async Task<Dictionary<string, string>> GetTypeSpecFilesAsync(
             CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(ValidationContext.ValidatedCommitId))
@@ -54,7 +54,7 @@ namespace Azure.Tools.GeneratorAgent
             }
         }
 
-        private async Task<Result<Dictionary<string, string>>> GetLocalTypeSpecFilesAsync(
+        private async Task<Dictionary<string, string>> GetLocalTypeSpecFilesAsync(
             string typeSpecDir, 
             CancellationToken cancellationToken)
         {
@@ -75,7 +75,7 @@ namespace Azure.Tools.GeneratorAgent
                 }
 
                 Logger.LogInformation("Successfully read {Count} TypeSpec files from local directory", typeSpecFiles.Count);
-                return Result<Dictionary<string, string>>.Success(typeSpecFiles);
+                return typeSpecFiles;
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
@@ -84,7 +84,7 @@ namespace Azure.Tools.GeneratorAgent
             }
         }
 
-        private async Task<Result<Dictionary<string, string>>> GetGitHubTypeSpecFilesAsync(
+        private async Task<Dictionary<string, string>> GetGitHubTypeSpecFilesAsync(
             CancellationToken cancellationToken)
         {
             Logger.LogInformation("Fetching TypeSpec files from GitHub: {TypeSpecDir} at commit {CommitId}", 
@@ -94,12 +94,9 @@ namespace Azure.Tools.GeneratorAgent
             {
                 GitHubService = GitHubServiceFactory(ValidationContext);
 
-                Result<Dictionary<string, string>> result = await GitHubService.GetTypeSpecFilesAsync(cancellationToken);
+                Dictionary<string, string> result = await GitHubService.GetTypeSpecFilesAsync(cancellationToken);
 
-                if (result.IsSuccess)
-                {
-                    Logger.LogInformation("Successfully fetched {Count} TypeSpec files from GitHub", result.Value!.Count);
-                }
+                Logger.LogInformation("Successfully fetched {Count} TypeSpec files from GitHub", result.Count);
 
                 return result;
             }

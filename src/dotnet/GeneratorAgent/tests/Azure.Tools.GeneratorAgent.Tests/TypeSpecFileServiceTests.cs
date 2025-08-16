@@ -241,9 +241,8 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var result = await service.GetTypeSpecFilesAsync(CancellationToken.None);
 
             // Assert
-            Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Value, Is.Not.Null);
-            Assert.That(result.Value!.Count, Is.GreaterThan(0));
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.Count, Is.GreaterThan(0));
         }
 
         [Test]

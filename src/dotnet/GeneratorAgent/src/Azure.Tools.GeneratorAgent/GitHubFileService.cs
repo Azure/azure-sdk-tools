@@ -48,22 +48,7 @@ namespace Azure.Tools.GeneratorAgent
                 hasAuthHeader ? "Configured" : "Not configured - using rate-limited access");
         }
 
-        public async Task<Result<Dictionary<string, string>>> GetTypeSpecFilesAsync(CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                Result<Dictionary<string, string>> apiResult = await FetchTypeSpecFilesViaApiAsync(cancellationToken).ConfigureAwait(false);
-                return apiResult;
-            }
-            catch (Exception ex) when (ex is not OperationCanceledException)
-            {
-                Logger.LogCritical(ex, "Unexpected error while fetching TypeSpec files from GitHub repository {Repository}", 
-                    AppSettings.AzureSpecRepository);
-                throw;
-            }
-        }
-
-        private async Task<Result<Dictionary<string, string>>> FetchTypeSpecFilesViaApiAsync(CancellationToken cancellationToken)
+        public async Task<Dictionary<string, string>> GetTypeSpecFilesAsync(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -84,7 +69,11 @@ namespace Azure.Tools.GeneratorAgent
 
                 if (contents == null)
                 {
-                    throw new InvalidOperationException("Failed to deserialize GitHub API response");
+                    Logger.LogCritical("Failed to deserialize GitHub API response from {ApiUrl}. " +
+                        "Response content: {JsonContent}", apiUrl, jsonContent);
+                    throw new InvalidOperationException($"Failed to deserialize GitHub API response for " +
+                        $"'{AppSettings.AzureSpecRepository}/{TypespecSpecDir}' at commit '{CommitId}'. " +
+                        $"Please verify the repository path and commit ID are correct.");
                 }
 
                 Dictionary<string, string> typeSpecFiles = new(contents.Length);
@@ -96,12 +85,6 @@ namespace Azure.Tools.GeneratorAgent
 
                 IEnumerable<Task<(string FileName, string Content)>> downloadTasks = tspFiles
                     .Select(tspFile => DownloadFileContentAsync(tspFile.Name, tspFile.DownloadUrl, cancellationToken));
-
-                if (!downloadTasks.Any())
-                {
-                    Logger.LogWarning("No valid .tsp files found with download URLs");
-                    throw new InvalidOperationException("No valid .tsp files found with download URLs");
-                }
 
                 (string FileName, string Content)[] downloadedFiles = await Task.WhenAll(downloadTasks).ConfigureAwait(false);
 
@@ -118,7 +101,7 @@ namespace Azure.Tools.GeneratorAgent
                     }
                 }
 
-                return Result<Dictionary<string, string>>.Success(typeSpecFiles);
+                return typeSpecFiles;
             }
             catch (Exception ex)
             {
@@ -131,28 +114,18 @@ namespace Azure.Tools.GeneratorAgent
         {
             if (string.IsNullOrEmpty(downloadUrl))
             {
-                Logger.LogWarning("Download URL is null or empty for file {FileName}", fileName);
-                return (fileName, string.Empty);
+                throw new InvalidOperationException($"Download URL is null or empty for file {fileName}");
             }
 
-            try
-            {
-                HttpResponseMessage response = await HttpClient.GetAsync(downloadUrl, cancellationToken).ConfigureAwait(false);
-                if (response.IsSuccessStatusCode)
-                {
-                    string content = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-                    return (fileName, content);
-                }
+            HttpResponseMessage response = await HttpClient.GetAsync(downloadUrl, cancellationToken).ConfigureAwait(false);
 
-                Logger.LogWarning("Failed to download file {FileName} from {Url}: {StatusCode} {ReasonPhrase}", 
-                    fileName, downloadUrl, response.StatusCode, response.ReasonPhrase);
-                return (fileName, string.Empty);
-            }
-            catch (Exception ex) when (ex is not OperationCanceledException)
+            if (!response.IsSuccessStatusCode)
             {
-                Logger.LogCritical(ex, "Error downloading file {FileName} from {Url}", fileName, downloadUrl);
-                return (fileName, string.Empty);
+                throw new HttpRequestException($"Failed to download file {fileName}: {response.StatusCode} {response.ReasonPhrase}");
             }
+
+            string content = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+            return (fileName, content);
         }
     }
 }

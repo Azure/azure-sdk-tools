@@ -93,16 +93,7 @@ namespace Azure.Tools.GeneratorAgent
                 var fileServiceFactory = ServiceProvider.GetRequiredService<Func<ValidationContext, TypeSpecFileService>>();
                 TypeSpecFileService fileService = fileServiceFactory(validationContext);
 
-                Result<Dictionary<string, string>> fileResult = await fileService.GetTypeSpecFilesAsync(cancellationToken);
-
-                if (fileResult.IsFailure)
-                {
-                    Logger.LogError("Failed to retrieve TypeSpec files: {Error}", 
-                        fileResult.Exception?.Message ?? fileResult.ProcessException?.Message ?? "Unknown error");
-                    return ExitCodeFailure;
-                }
-
-                Dictionary<string, string> typeSpecFiles = fileResult.Value!;
+                Dictionary<string, string> typeSpecFiles = await fileService.GetTypeSpecFilesAsync(cancellationToken);
 
                 // Step 3: Initialize ErrorFixer Agent with files in memory (singleton)
                 ErrorFixerAgent agent = ServiceProvider.GetRequiredService<ErrorFixerAgent>();

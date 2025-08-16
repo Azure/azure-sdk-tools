@@ -4,12 +4,12 @@
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.ComponentModel;
-using Azure.Sdk.Tools.Cli.Services;
+using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Commands;
-using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Helpers;
-using ModelContextProtocol.Server;
+using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Services;
 
 namespace Azure.Sdk.Tools.Cli.Tools
 {
@@ -21,10 +21,10 @@ namespace Azure.Sdk.Tools.Cli.Tools
     public class PackageCheckTool : MCPTool
     {
         private readonly ILogger<PackageCheckTool> logger;
-        private readonly IOutputService output;
+        private readonly IOutputHelper output;
         private readonly ILanguageRepoServiceFactory languageRepoServiceFactory;
 
-        public PackageCheckTool(ILogger<PackageCheckTool> logger, IOutputService output, ILanguageRepoServiceFactory languageRepoServiceFactory) : base()
+        public PackageCheckTool(ILogger<PackageCheckTool> logger, IOutputHelper output, ILanguageRepoServiceFactory languageRepoServiceFactory) : base()
         {
             this.logger = logger;
             this.output = output;
@@ -115,7 +115,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 return checkName switch
                 {
                     PackageCheckName.All => await RunAllChecks(packagePath, languageService, ct),
-                    PackageCheckName.Changelog => await RunChangelogValidation(packagePath, languageService),
+                    PackageCheckName.Changelog => await RunChangelogValidation(packagePath, languageService, ct),
                     PackageCheckName.Dependency => await RunDependencyCheck(packagePath, languageService, ct),
                     _ => throw new ArgumentOutOfRangeException(
                         nameof(checkName),
@@ -147,7 +147,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
 
             // Run changelog validation
-            var changelogValidationResult = await languageService.ValidateChangelogAsync(packagePath);
+            var changelogValidationResult = await languageService.ValidateChangelogAsync(packagePath, ct);
             results.Add(changelogValidationResult);
             if (changelogValidationResult.ExitCode != 0)
             {
@@ -167,11 +167,11 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 : new CLICheckResponse(1, combinedOutput, message);
         }
 
-        private async Task<CLICheckResponse> RunChangelogValidation(string packagePath, ILanguageRepoService languageService)
+        private async Task<CLICheckResponse> RunChangelogValidation(string packagePath, ILanguageRepoService languageService, CancellationToken ct)
         {
             logger.LogInformation("Running changelog validation");
 
-            var result = await languageService.ValidateChangelogAsync(packagePath);
+            var result = await languageService.ValidateChangelogAsync(packagePath, ct);
 
             if (result.ExitCode != 0)
             {

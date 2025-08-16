@@ -118,7 +118,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
             catch (Exception ex)
             {
-                output.OutputError($"ReadmeGenerator threw an exception: {ex.ToString()}");
+                logger.LogError(ex, "ReadmeGeneratorTool failed");
+                output.OutputError($"ReadmeGenerator threw an exception: {ex.Message}");
                 ctx.ExitCode = 1;
             }
         }

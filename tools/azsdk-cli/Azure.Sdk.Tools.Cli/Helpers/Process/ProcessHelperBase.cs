@@ -50,7 +50,6 @@ public abstract class ProcessHelperBase<T>(ILogger<T> logger, IOutputHelper outp
                         result.AppendStdout(e.Data);
                         if (options.LogOutputStream)
                         {
-                            // TODO: Better to use output service but not good to take a helpers->services dependency
                             outputHelper.OutputConsole($"[{options.ShortName}] {e.Data}");
                         }
                     }
@@ -65,7 +64,6 @@ public abstract class ProcessHelperBase<T>(ILogger<T> logger, IOutputHelper outp
                         result.AppendStderr(e.Data);
                         if (options.LogOutputStream)
                         {
-                            // TODO: Better to use output service but not good to take a helpers->services dependency
                             outputHelper.OutputConsoleError($"[{options.ShortName}] {e.Data}");
                         }
                     }

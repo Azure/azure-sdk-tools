@@ -3,23 +3,24 @@
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.ComponentModel;
-using Azure.Sdk.Tools.Cli.Services;
-using Azure.Sdk.Tools.Cli.Contract;
 using ModelContextProtocol.Server;
-using Azure.Sdk.Tools.Cli.Models;
 using Octokit;
+using Azure.Sdk.Tools.Cli.Contract;
+using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Services;
 
 namespace Azure.Sdk.Tools.Cli.Tools
 {
     [McpServerToolType, Description("Compares files in a local directory against files in a GitHub repository to identify missing files.")]
-    public class FileValidationTool(ILogger<FileValidationTool> logger, IOutputService output, IGitHubService gitHubService) : MCPTool
+    public class FileValidationTool(ILogger<FileValidationTool> logger, IOutputHelper output, IGitHubService gitHubService) : MCPTool
     {
         // Options
         private readonly Option<string> sourceRepoOwnerOpt = new(["--source-repo-owner"], () => "Azure", "Owner of the source repository") { IsRequired = false };
         private readonly Option<string> sourceRepoNameOpt = new(["--source-repo-name"], () => "azure-rest-api-specs", "Name of the source repository") { IsRequired = false };
         private readonly Option<string> sourceFilesPathOpt = new(["--source-files-path"], () => ".github/prompts", "Path in the source repository to compare against") { IsRequired = false };
         private readonly Option<string> localFilesPathOpt = new(["--local-files-path"], () => ".github/prompts", "Local directory path to validate") { IsRequired = false };
-    
+
         public override Command GetCommand()
         {
             Command command = new("validate-workspace-files");
@@ -37,7 +38,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             var sourceRepoName = ctx.ParseResult.GetValueForOption(sourceRepoNameOpt);
             var sourceFilesPath = ctx.ParseResult.GetValueForOption(sourceFilesPathOpt);
             var localFilesPath = ctx.ParseResult.GetValueForOption(localFilesPathOpt);
-            
+
             var result = await ValidateWorkspaceFiles(sourceRepoOwner, sourceRepoName, sourceFilesPath, localFilesPath);
             ctx.ExitCode = ExitCode;
             output.Output(result);
@@ -46,14 +47,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
         [McpServerTool(Name = "azsdk_validate_workspace_files"), Description("Validates whether the current workspace has all the files from a source repository (defaults to Azure/azure-rest-api-specs)")]
         public async Task<ValidationResponse> ValidateWorkspaceFiles(
             string sourceRepoOwner,
-            string sourceRepoName, 
+            string sourceRepoName,
             string sourceFilesPath,
             string localFilesPath
         )
         {
             try
             {
-                logger.LogInformation("Starting validation of workspace files against {sourceRepoOwner}/{sourceRepoName}/{sourceFilesPath}", 
+                logger.LogInformation("Starting validation of workspace files against {sourceRepoOwner}/{sourceRepoName}/{sourceFilesPath}",
                     sourceRepoOwner, sourceRepoName, sourceFilesPath);
 
                 // Get files from source repository

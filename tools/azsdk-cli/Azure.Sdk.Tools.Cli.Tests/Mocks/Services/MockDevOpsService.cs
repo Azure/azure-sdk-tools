@@ -1,15 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.TeamFoundation.Build.WebApi;
+using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Services;
-using Microsoft.TeamFoundation.Build.WebApi;
-using Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models;
 
-namespace Azure.Sdk.Tools.Cli.Tests.MockServices
+namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
 {
     internal class MockDevOpsService : IDevOpsService
     {

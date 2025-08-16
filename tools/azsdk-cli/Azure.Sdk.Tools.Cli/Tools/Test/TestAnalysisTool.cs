@@ -13,7 +13,7 @@ using ModelContextProtocol.Server;
 namespace Azure.Sdk.Tools.Cli.Tools;
 
 [McpServerToolType, Description("Processes and analyzes test results from TRX files")]
-public class TestAnalysisTool(ITestHelper testHelper, IOutputService output, ILogger<PipelineAnalysisTool> logger) : MCPTool()
+public class TestAnalysisTool(ITestHelper testHelper, IOutputHelper output, ILogger<PipelineAnalysisTool> logger) : MCPTool()
 {
     // Options
     private readonly Option<string> trxPathOpt = new(["--trx-file"], "Path to the TRX file for failed test runs") { IsRequired = true };

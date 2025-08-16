@@ -12,7 +12,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 {
     [Description("This type contains tools to run various common tasks in specs repo")]
     [McpServerToolType]
-    public class SpecCommonTools(IGitHelper gitHelper, ILogger<SpecCommonTools> logger, IOutputService output) : MCPTool
+    public class SpecCommonTools(IGitHelper gitHelper, ILogger<SpecCommonTools> logger, IOutputHelper output) : MCPTool
     {
 
         static readonly string GET_CHANGED_TYPESPEC_PROJECT_SCRIPT = "eng/scripts/Get-TypeSpec-Folders.ps1";

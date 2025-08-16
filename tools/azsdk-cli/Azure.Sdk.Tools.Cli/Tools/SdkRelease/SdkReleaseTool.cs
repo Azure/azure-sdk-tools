@@ -14,13 +14,13 @@ using ModelContextProtocol.Server;
 namespace Azure.Sdk.Tools.Cli.Tools
 {
     [McpServerToolType, Description("This type contains the tools to release SDK package")]
-    public class SdkReleaseTool(IDevOpsService devopsService, ILogger<SdkReleaseTool> logger, ILogger<ReleaseReadinessTool> releaseReadinessLogger, IOutputService output) : MCPTool
+    public class SdkReleaseTool(IDevOpsService devopsService, ILogger<SdkReleaseTool> logger, ILogger<ReleaseReadinessTool> releaseReadinessLogger, IOutputHelper output) : MCPTool
     {
         private readonly string commandName = "sdk-release";
         private readonly Option<string> packageNameOpt = new(["--package"], "Package name") { IsRequired = true };
         private readonly Option<string> languageOpt = new(["--language"], "Language of the package") { IsRequired = true };
-        private readonly Option<string> branchOpt = new(["--branch"],() => "main",  "Branch to release the package from") { IsRequired = false };
-        public static readonly string[] ValidLanguages = { ".NET", "Go", "Java", "JavaScript", "Python"};
+        private readonly Option<string> branchOpt = new(["--branch"], () => "main", "Branch to release the package from") { IsRequired = false };
+        public static readonly string[] ValidLanguages = { ".NET", "Go", "Java", "JavaScript", "Python" };
 
         public override Command GetCommand()
         {

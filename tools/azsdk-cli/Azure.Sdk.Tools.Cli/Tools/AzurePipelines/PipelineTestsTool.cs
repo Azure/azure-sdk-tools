@@ -4,15 +4,16 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.ComponentModel;
 using Azure.Core;
-using Azure.Sdk.Tools.Cli.Commands;
-using Azure.Sdk.Tools.Cli.Configuration;
-using Azure.Sdk.Tools.Cli.Contract;
-using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Services;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Microsoft.VisualStudio.Services.OAuth;
 using Microsoft.VisualStudio.Services.WebApi;
 using ModelContextProtocol.Server;
+using Azure.Sdk.Tools.Cli.Commands;
+using Azure.Sdk.Tools.Cli.Configuration;
+using Azure.Sdk.Tools.Cli.Contract;
+using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Services;
 
 namespace Azure.Sdk.Tools.Cli.Tools;
 
@@ -24,7 +25,7 @@ public class PipelineTestsTool : MCPTool
 
     private IAzureService azureService;
     private IDevOpsService devopsService;
-    private IOutputService output;
+    private IOutputHelper output;
     private ILogger<PipelineTestsTool> logger;
 
     private readonly Argument<int> buildIdArg = new("Pipeline/Build ID");
@@ -32,7 +33,7 @@ public class PipelineTestsTool : MCPTool
     public PipelineTestsTool(
         IAzureService azureService,
         IDevOpsService devopsService,
-        IOutputService output,
+        IOutputHelper output,
         ILogger<PipelineTestsTool> logger
     ) : base()
     {

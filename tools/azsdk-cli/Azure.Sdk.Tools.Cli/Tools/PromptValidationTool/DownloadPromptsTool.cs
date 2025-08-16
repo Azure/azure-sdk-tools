@@ -3,20 +3,19 @@
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.ComponentModel;
-using System.Text;
-using System.Text.Json;
-using Azure.Sdk.Tools.Cli.Services;
-using Azure.Sdk.Tools.Cli.Contract;
 using ModelContextProtocol.Server;
-using Azure.Sdk.Tools.Cli.Models;
 using Octokit;
+using Azure.Sdk.Tools.Cli.Contract;
+using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Services;
 
 namespace Azure.Sdk.Tools.Cli.Tools
 {
-    
+
 
     [McpServerToolType, Description("Downloads files from any GitHub repository to a local directory, or from provided file data.")]
-    public class DownloadPromptsTool(ILogger<DownloadPromptsTool> logger, IOutputService output, IGitHubService gitHubService) : MCPTool
+    public class DownloadPromptsTool(ILogger<DownloadPromptsTool> logger, IOutputHelper output, IGitHubService gitHubService) : MCPTool
     {
         // Options
         private readonly Option<string> sourceRepoOwnerOpt = new(["--source-repo-owner"], () => "Azure", "Owner of the source repository") { IsRequired = false };
@@ -52,9 +51,9 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
         [McpServerTool(Name = "azsdk_download_prompts"), Description("Downloads files from a GitHub repository to a local directory, or from provided file paths")]
         public async Task<DownloadResponse> DownloadPrompts(
-            string sourceRepoOwner, 
-            string sourceRepoName, 
-            string sourcePath, 
+            string sourceRepoOwner,
+            string sourceRepoName,
+            string sourcePath,
             string destinationPath,
             string? missingFilesList = null)
         {
@@ -73,7 +72,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     };
                 }
 
-                logger.LogInformation("Starting download from {sourceRepoOwner}/{sourceRepoName}/{sourcePath} to {destinationPath}", 
+                logger.LogInformation("Starting download from {sourceRepoOwner}/{sourceRepoName}/{sourcePath} to {destinationPath}",
                     sourceRepoOwner, sourceRepoName, sourcePath, destinationPath);
 
                 // Create destination directory if it doesn't exist
@@ -124,42 +123,42 @@ namespace Azure.Sdk.Tools.Cli.Tools
         /// Gets the list of files to download, either from provided comma-delimited file paths or by listing the GitHub repository directory
         /// </summary>
         private async Task<List<string>> GetFilesToDownloadAsync(
-            string sourceRepoOwner, 
-            string sourceRepoName, 
-            string sourcePath, 
+            string sourceRepoOwner,
+            string sourceRepoName,
+            string sourcePath,
             string? missingFilesList)
         {
             if (!string.IsNullOrEmpty(missingFilesList))
             {
                 logger.LogInformation("Using provided missing files list: {filesList}", missingFilesList);
-                
+
                 var filePaths = missingFilesList
                     .Split(',', StringSplitOptions.RemoveEmptyEntries)
                     .Where(path => !string.IsNullOrEmpty(path))
                     .Select(path =>
                     {
                         var trimmedPath = path.Trim();
-                            
+
                         // Use the provided path, or construct it if it's just a filename
-                        var fullPath = trimmedPath.Contains('/') || trimmedPath.Contains('\\') 
+                        var fullPath = trimmedPath.Contains('/') || trimmedPath.Contains('\\')
                             ? trimmedPath.Replace('\\', '/') // Normalize to forward slashes for GitHub
                             : $"{sourcePath}/{trimmedPath}"; // Prepend source path if just filename
-                        
+
                         logger.LogInformation("Will download: {filePath}", fullPath);
                         return fullPath;
                     })
                     .ToList();
-                
+
                 logger.LogInformation("Parsed {fileCount} files from provided list", filePaths.Count);
                 return filePaths;
             }
 
             // If no missing files provided, fetch all files from GitHub repository
             logger.LogInformation("No missing files provided, fetching all files from GitHub repository");
-            
+
             var contents = await gitHubService.GetContentsAsync(sourceRepoOwner, sourceRepoName, sourcePath);
             var files = contents?.Where(item => item.Type == ContentType.File).ToList() ?? new List<RepositoryContent>();
-            
+
             if (files.Count == 0)
             {
                 logger.LogWarning("No files found in {sourceRepoOwner}/{sourceRepoName}/{sourcePath}", sourceRepoOwner, sourceRepoName, sourcePath);
@@ -176,9 +175,9 @@ namespace Azure.Sdk.Tools.Cli.Tools
         /// Downloads all files in the provided list from GitHub
         /// </summary>
         private async Task<DownloadResponse> DownloadFilesAsync(
-            string sourceRepoOwner, 
-            string sourceRepoName, 
-            string destinationPath, 
+            string sourceRepoOwner,
+            string sourceRepoName,
+            string destinationPath,
             List<string> filesToDownload)
         {
             var downloadedFiles = new List<string>();
@@ -190,12 +189,12 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 var fileName = Path.GetFileName(filePath);
 
                 var localFilePath = Path.Combine(destinationPath, fileName);
-                if (File.Exists(localFilePath)) 
+                if (File.Exists(localFilePath))
                 {
                     logger.LogInformation("File {fileName} already exists in {destinationPath}, skipping download", fileName, destinationPath);
                     continue;
                 }
-                
+
                 // Fetch the file content from GitHub
                 logger.LogInformation("Fetching content for {fileName} from {filePath}", fileName, filePath);
                 var contentsResult = await gitHubService.GetContentsAsync(sourceRepoOwner, sourceRepoName, filePath);
@@ -209,7 +208,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
                 await File.WriteAllTextAsync(localFilePath, fileContent.Content);
-                
+
                 downloadedFiles.Add(fileName);
                 logger.LogInformation("Downloaded {fileName} from {sourcePath} to {localPath}", fileName, filePath, localFilePath);
             }
@@ -220,7 +219,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 await AddToGitignoreAsync(destinationPath, downloadedFiles);
             }
 
-            logger.LogInformation("Download completed: {downloadedCount}/{totalCount} files successful", 
+            logger.LogInformation("Download completed: {downloadedCount}/{totalCount} files successful",
                 downloadedFiles.Count, filesToDownload.Count);
 
             return new DownloadResponse
@@ -247,14 +246,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
                 var gitignorePath = Path.Combine(repoRoot, ".gitignore");
-                
+
                 // Read existing .gitignore content
-                var existingLines = File.Exists(gitignorePath) 
-                    ? await File.ReadAllLinesAsync(gitignorePath) 
+                var existingLines = File.Exists(gitignorePath)
+                    ? await File.ReadAllLinesAsync(gitignorePath)
                     : Array.Empty<string>();
 
                 var entriesToAdd = new List<string>();
-                
+
                 // Add header if not already present
                 if (!existingLines.Any(line => line.Contains("Downloaded prompt files for Azure SDK MCP")))
                 {
@@ -266,7 +265,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 foreach (var fileName in downloadedFiles)
                 {
                     var relativePath = Path.GetRelativePath(repoRoot, Path.Combine(destinationPath, fileName)).Replace('\\', '/');
-                    
+
                     if (!existingLines.Any(line => line.Trim() == relativePath))
                     {
                         entriesToAdd.Add(relativePath);

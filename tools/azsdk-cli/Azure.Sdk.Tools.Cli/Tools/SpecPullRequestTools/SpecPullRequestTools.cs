@@ -19,7 +19,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         IGitHelper gitHelper,
         ISpecPullRequestHelper prHelper,
         ILogger<SpecPullRequestTools> logger,
-        IOutputService output,
+        IOutputHelper output,
         ITypeSpecHelper typeSpecHelper) : MCPTool
     {
         private readonly static string REPO_OWNER = "Azure";
@@ -53,7 +53,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     ? output.Format($"Connected to GitHub as {user.Login}")
                     : output.Format("Failed to connect to GitHub. Please make sure to login to GitHub using gh auth login to connect to GitHub.");
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 SetFailure();
                 return output.Format($"Failed to connect to GitHub. Unhandled error: {ex.Message}");

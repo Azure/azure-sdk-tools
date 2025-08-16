@@ -1,11 +1,7 @@
-using Azure.Sdk.Tools.Cli.Services;
 using Octokit;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Azure.Sdk.Tools.Cli.Services;
 
-namespace Azure.Sdk.Tools.Cli.Tests.MockServices
+namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
 {
     public class MockGitHubService : IGitHubService
     {
@@ -99,9 +95,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
             // Default: Return mock directory listing for .github/prompts or similar paths
             var contents = new List<RepositoryContent>
             {
-                CreateMockRepositoryContent("README.md", ".github/prompts/README.md", "test"), 
-                CreateMockRepositoryContent("prompt1.md", ".github/prompts/prompt1.md", "test"), 
-                CreateMockRepositoryContent("prompt2.md", ".github/prompts/prompt2.md", "test")  
+                CreateMockRepositoryContent("README.md", ".github/prompts/README.md", "test"),
+                CreateMockRepositoryContent("prompt1.md", ".github/prompts/prompt1.md", "test"),
+                CreateMockRepositoryContent("prompt2.md", ".github/prompts/prompt2.md", "test")
             };
 
             return Task.FromResult<IReadOnlyList<RepositoryContent>?>(contents.AsReadOnly());
@@ -176,7 +172,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
         private PullRequest CreateMockPullRequest(string repoOwner, string repoName, int pullRequestNumber)
         {
             var user = CreateMockUser("testuser", 123456);
-            
+
             // Create minimal pull request
             return new PullRequest(
                 url: $"https://api.github.com/repos/{repoOwner}/{repoName}/pulls/{pullRequestNumber}",
@@ -291,7 +287,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.MockServices
         private Issue CreateMockIssue(string repoOwner, string repoName, int issueNumber)
         {
             var user = CreateMockUser("testuser", 123456);
-            
+
             return new Issue(
                 url: $"https://api.github.com/repos/{repoOwner}/{repoName}/issues/{issueNumber}",
                 htmlUrl: $"https://github.com/{repoOwner}/{repoName}/issues/{issueNumber}",

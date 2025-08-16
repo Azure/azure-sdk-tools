@@ -3,14 +3,14 @@
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Reflection;
-using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Contract;
 
 // Just a lil easter egg :)
 
 namespace Azure.Sdk.Tools.Cli.Tools;
 
-public class QuokkaTool(IOutputService output) : MCPTool
+public class QuokkaTool(IOutputHelper output) : MCPTool
 {
     public override Command GetCommand()
     {

@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.Xml;
+using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 
 namespace Azure.Sdk.Tools.Cli.Services;
@@ -12,9 +13,9 @@ public interface ITestHelper
     Task<List<FailedTestRunResponse>> GetFailedTestRunDataFromTrx(string trxFilePath);
 }
 
-public class TestHelper(IOutputService output, ILogger<TestHelper> logger) : ITestHelper
+public class TestHelper(IOutputHelper output, ILogger<TestHelper> logger) : ITestHelper
 {
-    private readonly IOutputService output = output;
+    private readonly IOutputHelper output = output;
     private readonly ILogger<TestHelper> logger = logger;
 
     public async Task<List<FailedTestRunResponse>> GetFailedTestCases(string trxFilePath, string filterTitle = "")

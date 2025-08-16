@@ -2,15 +2,16 @@ using System.ClientModel;
 using System.ClientModel.Primitives;
 using System.CommandLine;
 using System.CommandLine.Parsing;
-using Azure.AI.OpenAI;
-using Azure.Sdk.Tools.Cli.Services;
-using Azure.Sdk.Tools.Cli.Tests.MockServices;
-using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
-using Azure.Sdk.Tools.Cli.Tools;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Azure.AI.OpenAI;
 using OpenAI.Chat;
+using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Tests.Mocks.Helpers;
+using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
+using Azure.Sdk.Tools.Cli.Tools;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators
 {
@@ -35,8 +36,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators
                 Assert.Multiple(() =>
                 {
                     Assert.That(exitCode, Is.EqualTo(0), "Command should execute successfully");
-                    Assert.That(testClients.OutputService.Outputs.First().Method, Is.EqualTo("Output"));
-                    Assert.That(testClients.OutputService.Outputs.First().OutputValue, Is.EqualTo($"Readme written to {readmeOutputPath}"));
+                    Assert.That(testClients.OutputHelper.Outputs.First().Method, Is.EqualTo("Output"));
+                    Assert.That(testClients.OutputHelper.Outputs.First().OutputValue, Is.EqualTo($"Readme written to {readmeOutputPath}"));
                 });
 
                 Assert.That(File.Exists(readmeOutputPath), Is.True, "Readme output file should be created");
@@ -64,7 +65,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators
                 Assert.Ignore("Skipping test as AZURE_SDK_FOR_GO_PATH is not set");
             }
 
-            var (sp, outputServiceMock) = CreateServiceProvider();
+            var (sp, OutputHelperMock) = CreateServiceProvider();
 
             var tool = ActivatorUtilities.CreateInstance<ReadMeGeneratorTool>(sp);
             var command = tool.GetCommand();
@@ -78,8 +79,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators
 
             Assert.Multiple(() =>
             {
-                Assert.That(outputServiceMock.Outputs.First().Method, Is.EqualTo("Output"));
-                Assert.That(outputServiceMock.Outputs.First().OutputValue, Is.EqualTo($"Readme written to {readmeOutputPath}"));
+                Assert.That(OutputHelperMock.Outputs.First().Method, Is.EqualTo("Output"));
+                Assert.That(OutputHelperMock.Outputs.First().OutputValue, Is.EqualTo($"Readme written to {readmeOutputPath}"));
             });
         }
 
@@ -88,24 +89,24 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators
         /// </summary>
         /// <param name="customizeServices">Optional Action you can use to register your own client instances</param>
         /// <returns></returns>
-        private static (ServiceProvider, MockOutputService) CreateServiceProvider(Action<ServiceCollection>? customizeServices = default)
+        private static (ServiceProvider, MockOutputHelper) CreateServiceProvider(Action<ServiceCollection>? customizeServices = default)
         {
             var serviceCollection = new ServiceCollection();
-            var outputService = new MockOutputService();
+            var OutputHelper = new MockOutputHelper();
 
-            
+
             serviceCollection.AddLogging();     // so our ILogger<T>'s will be available.
 
-            
+
             ServiceRegistrations.RegisterCommonServices(serviceCollection);
-            serviceCollection.AddSingleton<IOutputService>(outputService);
+            serviceCollection.AddSingleton<IOutputHelper>(OutputHelper);
 
             customizeServices?.Invoke(serviceCollection);
 
             var sp = serviceCollection.BuildServiceProvider();
-            return (sp, outputService);
+            return (sp, OutputHelper);
         }
-        
+
         private static TestClients SetupOpenAIMocks()
         {
             var (openAIClientMock, chatClientMock) = OpenAIMockHelper.Create("gpt-4.1");
@@ -126,7 +127,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators
                     );
                 });
 
-            var (serviceProvider, outputService) = CreateServiceProvider((sc) =>
+            var (serviceProvider, OutputHelper) = CreateServiceProvider((sc) =>
             {
                 sc.AddLogging((lb) => lb.AddConsole());
                 sc.AddSingleton(openAIClientMock.Object);
@@ -136,9 +137,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators
                 sc.AddSingleton(openAIClientMock);
             });
 
-            return new TestClients(openAIClientMock, chatClientMock, serviceProvider, outputService);
+            return new TestClients(openAIClientMock, chatClientMock, serviceProvider, OutputHelper);
         }
-        
+
         private static async Task<(DirectoryInfo root, string packagePath)> CreateFakeLanguageRepo()
         {
             var root = Directory.CreateTempSubdirectory("readme-generator-tool-test");
@@ -156,7 +157,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators
             Mock<AzureOpenAIClient> OpenAIClient,
             Mock<ChatClient> ChatClient,
             ServiceProvider ServiceProvider,
-            MockOutputService OutputService
+            MockOutputHelper OutputHelper
         );
     }
 }

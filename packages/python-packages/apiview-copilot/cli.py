@@ -30,7 +30,7 @@ from colorama import Fore, Style
 from knack import CLI, ArgumentsContext, CLICommandsLoader
 from knack.commands import CommandGroup
 from knack.help_files import helps
-from src._apiview_reviewer import ApiViewReview
+from src._apiview_reviewer import SUPPORTED_LANGUAGES, ApiViewReview
 from src._credential import get_credential
 from src._database_manager import ContainerNames, get_database_manager
 from src._mention import handle_mention_request
@@ -896,20 +896,6 @@ def report_metrics(start_date: str, end_date: str, environment: str = "productio
         print(summary)
     else:
         return report
-
-
-SUPPORTED_LANGUAGES = [
-    "android",
-    "clang",
-    "cpp",
-    "dotnet",
-    "golang",
-    "ios",
-    "java",
-    "python",
-    "rust",
-    "typescript",
-]
 
 
 class CliCommandsLoader(CLICommandsLoader):

@@ -21,7 +21,7 @@ import prompty.azure
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from semantic_kernel.exceptions.agent_exceptions import AgentInvokeException
-from src._apiview_reviewer import ApiViewReview
+from src._apiview_reviewer import SUPPORTED_LANGUAGES, ApiViewReview
 from src._database_manager import get_database_manager
 from src._diff import create_diff_with_line_numbers
 from src._mention import handle_mention_request
@@ -37,20 +37,6 @@ settings = SettingsManager()
 app = FastAPI()
 
 logger = logging.getLogger("uvicorn")  # Use Uvicorn's logger
-
-supported_languages = [
-    "android",
-    "clang",
-    "cpp",
-    "dotnet",
-    "golang",
-    "ios",
-    "java",
-    "python",
-    "rest",
-    "rust",
-    "typescript",
-]
 
 
 _PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__)))
@@ -89,7 +75,7 @@ class ApiReviewJobStatusResponse(BaseModel):
 async def submit_api_review_job(job_request: ApiReviewJobRequest):
     """Submit a new API review job."""
     # Validate language
-    if job_request.language not in supported_languages:
+    if job_request.language not in SUPPORTED_LANGUAGES:
         raise HTTPException(status_code=400, detail=f"Unsupported language `{job_request.language}`")
 
     reviewer = ApiViewReview(
@@ -197,7 +183,7 @@ class SummarizeResponse(BaseModel):
 @app.post("/api-review/summarize", response_model=SummarizeResponse)
 async def summarize_api(request: SummarizeRequest):
     """Summarize API changes based on the provided request."""
-    if request.language not in supported_languages:
+    if request.language not in SUPPORTED_LANGUAGES:
         raise HTTPException(status_code=400, detail=f"Unsupported language `{request.language}`")
     try:
         if request.base:

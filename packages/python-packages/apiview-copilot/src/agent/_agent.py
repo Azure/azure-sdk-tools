@@ -40,8 +40,7 @@ def create_kernel() -> Kernel:
     """Creates a Kernel instance configured for Azure OpenAI."""
     settings = SettingsManager()
     base_url = settings.get("OPENAI_ENDPOINT")
-    # FIXME: Not in AppConfig
-    deployment_name = settings.get("OPENAI_DEPLOYMENT")
+    deployment_name = settings.get("FOUNDRY_KERNEL_MODEL")
     api_key = settings.get("OPENAI_API_KEY")
     logging.info("Using Azure OpenAI at %s with deployment %s", base_url, deployment_name)
     kernel = Kernel(
@@ -73,17 +72,21 @@ async def invoke_agent(*, agent, user_input, thread_id=None, messages=None):
     return str(response), thread_id_out, messages
 
 
+def _get_agent_settings() -> AzureAIAgentSettings:
+    """Retrieve the Azure AI Agent settings from the configuration."""
+    settings = SettingsManager()
+    return AzureAIAgentSettings(
+        endpoint=settings.get("FOUNDRY_ENDPOINT"),
+        model_deployment_name=settings.get("FOUNDRY_KERNEL_MODEL"),
+        api_version=settings.get("FOUNDRY_API_VERSION"),
+    )
+
+
 @asynccontextmanager
 async def get_main_agent():
     """Create and yield the main APIView Copilot agent."""
     kernel = create_kernel()
-    settings = SettingsManager()
-    ai_agent_settings = AzureAIAgentSettings(
-        # FIXME: Not in AppConfig
-        endpoint=settings.get("AZURE_AI_AGENT_ENDPOINT"),
-        model_deployment_name=settings.get("AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME"),
-        api_version=settings.get("AZURE_AI_AGENT_API_VERSION"),
-    )
+    ai_agent_settings = _get_agent_settings()
     ai_instructions = """
 Your job is to receive a request from the user, determine their intent, and pass the request to the
 appropriate agent or agents for processing. You will then return the response from that agent to the user.

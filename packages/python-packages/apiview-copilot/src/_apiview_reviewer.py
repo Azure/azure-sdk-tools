@@ -67,6 +67,19 @@ logger = logging.getLogger(__name__)
 
 CREDENTIAL = get_credential()
 
+SUPPORTED_LANGUAGES = [
+    "android",
+    "clang",
+    "cpp",
+    "dotnet",
+    "golang",
+    "ios",
+    "java",
+    "python",
+    "rust",
+    "typescript",
+]
+
 
 class ApiViewReviewMode:
     """Enumeration for APIView review modes."""

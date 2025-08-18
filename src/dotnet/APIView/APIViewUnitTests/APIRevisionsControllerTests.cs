@@ -36,7 +36,6 @@ public class APIRevisionsControllerTests
         Mock<IReviewManager> mockReviewManager = new();
         Mock<INotificationManager> mockNotificationManager = new();
         Mock<IHubContext<SignalRHub>> mockSignalRHubContext = new();
-        Mock<IBlobCodeFileRepository> mockCodeFileRepository = new();
         Mock<IConfiguration> mockConfiguration = new();
         Mock<IHttpClientFactory> mockHttpClientFactory = new();
         Mock<IPullRequestManager> mockPullRequestManager = new();
@@ -49,8 +48,7 @@ public class APIRevisionsControllerTests
             mockNotificationManager.Object,
             mockConfiguration.Object,
             mockSignalRHubContext.Object,
-            mockHttpClientFactory.Object,
-            mockCodeFileRepository.Object
+            mockHttpClientFactory.Object
         );
 
         List<Claim> claims = new() { new Claim("login", "testuser") };

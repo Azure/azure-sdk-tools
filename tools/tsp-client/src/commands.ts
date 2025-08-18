@@ -388,6 +388,8 @@ export async function generateCommand(argv: any) {
   const saveInputs = argv["save-inputs"];
   const skipInstall = argv["skip-install"];
 
+  const repoRoot = await getRepoRoot(outputDir);
+
   const tempRoot = joinPaths(outputDir, "TempTypeSpecFiles");
   const tspLocation = await readTspLocation(outputDir);
   const dirSplit = tspLocation.directory.split("/");
@@ -396,9 +398,7 @@ export async function generateCommand(argv: any) {
     throw new Error("cannot find project name");
   }
   const srcDir = joinPaths(tempRoot, projectName);
-  const emitter = await getEmitterFromRepoConfig(
-    getEmitterPackageJsonPath(await getRepoRoot(outputDir), tspLocation),
-  );
+  const emitter = await getEmitterFromRepoConfig(getEmitterPackageJsonPath(repoRoot, tspLocation));
   if (!emitter) {
     throw new Error("emitter is undefined");
   }
@@ -432,7 +432,7 @@ export async function generateCommand(argv: any) {
     }
     // NOTE: This environment variable should be used for developer testing only. A force
     // install may ignore any conflicting dependencies and result in unexpected behavior.
-    dotenvConfig({ path: resolve(await getRepoRoot(outputDir), ".env") });
+    dotenvConfig({ path: resolve(repoRoot, ".env") });
     if (process.env["TSPCLIENT_FORCE_INSTALL"]?.toLowerCase() === "true") {
       args.push("--force");
     }
@@ -445,7 +445,7 @@ export async function generateCommand(argv: any) {
   }
   const result = await compileTsp({
     emitterPackage: emitter,
-    outputPath: outputDir,
+    outputPath: legacyPathResolution ? outputDir : repoRoot, // always use repo root when using emitter-output-dir
     resolvedMainFilePath,
     saveInputs: saveInputs,
     additionalEmitterOptions: emitterOptions,

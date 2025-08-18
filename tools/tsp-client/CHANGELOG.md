@@ -1,5 +1,9 @@
 # Release
 
+## 2025-08-15 - 0.28.1
+
+- Fix bug when using `emitter-output-dir` in tspconfig.yaml, always pass the repo root path for the `{output-dir}` variable.
+
 ## 2025-08-13 - 0.28.0
 
 - Support `emitter-output-dir` when generating a client library. `emitter-output-dir` will be given preference over client library path parsing with the `package-dir` option under the emitter.

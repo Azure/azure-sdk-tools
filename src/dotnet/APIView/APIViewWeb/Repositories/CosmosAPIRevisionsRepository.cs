@@ -224,7 +224,7 @@ namespace APIViewWeb
             {
                 queryStringBuilder.Append(" AND c.APIRevisionType = @apiRevisionType");
             }
-            queryStringBuilder.Append(" ORDER BY c.CreatedOn ASC OFFSET 0 LIMIT 20");
+            queryStringBuilder.Append(" ORDER BY c.CreatedOn DESC OFFSET 0 LIMIT 20");
             var revisions = new List<APIRevisionListItemModel>();
             QueryDefinition queryDefinition = new QueryDefinition(queryStringBuilder.ToString())
                 .WithParameter("@apiRevisionType", apiRevisionType.ToString());

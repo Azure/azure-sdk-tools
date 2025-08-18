@@ -25,6 +25,7 @@ Your task is to analyze the logs and provide a summary of the failures.
 Include relevant data like error type, error messages, functions and error lines.
 Find other log lines in addition to the final error that may be descriptive of the problem.
 Errors like 'Powershell exited with code 1' are not error messages, but the error message may be in the logs above it.
+The full response should be parsed as valid json, do not prefix with another message.
 Provide suggested next steps. Respond only in valid JSON with a single object in the following format:
 {
     ""summary"": ""..."",
@@ -32,7 +33,8 @@ Provide suggested next steps. Respond only in valid JSON with a single object in
         { ""file"": ""..."", ""line"": ..., ""message"": ""..."" }
     ],
     ""suggested_fixes"": ""...""
-}";
+}
+Again, the entire response **MUST BE VALID JSON**";
 
     public async Task DeleteAgents(CancellationToken ct = default)
     {

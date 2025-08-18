@@ -29,7 +29,7 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
             isEnabledByDefault: true);
 
         // Kebab-case pattern: lowercase letters/numbers, separated by hyphens, no consecutive hyphens
-        private static readonly Regex KebabCasePattern = new Regex(@"^[a-z0-9]+(-[a-z0-9]+)*$", RegexOptions.Compiled);
+        private static readonly Regex KebabCasePattern = new Regex(@"^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$", RegexOptions.Compiled);
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
             => ImmutableArray.Create(CommandRule, OptionRule);
@@ -64,13 +64,13 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
             if (objectCreation.ArgumentList?.Arguments.Count > 0)
             {
                 var firstArgument = objectCreation.ArgumentList.Arguments[0];
-                
+
                 // Check if the argument is a string literal
                 if (firstArgument.Expression is LiteralExpressionSyntax literal &&
                     literal.Token.IsKind(SyntaxKind.StringLiteralToken))
                 {
                     var commandName = literal.Token.ValueText;
-                    
+
                     // Validate kebab-case convention
                     if (!KebabCasePattern.IsMatch(commandName))
                     {
@@ -89,7 +89,7 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
             if (objectCreation.ArgumentList?.Arguments.Count > 0)
             {
                 var firstArgument = objectCreation.ArgumentList.Arguments[0];
-                
+
                 // Check if the argument is an array creation expression or collection expression
                 if (firstArgument.Expression is ArrayCreationExpressionSyntax arrayCreation)
                 {
@@ -136,13 +136,13 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
         private static void ValidateOptionName(SyntaxNodeAnalysisContext context, LiteralExpressionSyntax literal)
         {
             var optionName = literal.Token.ValueText;
-            
+
             // Only validate long options (starting with --), skip short options like -p
             if (optionName.StartsWith("--"))
             {
                 // Remove the -- prefix for validation
                 var nameWithoutPrefix = optionName.Substring(2);
-                
+
                 // Validate kebab-case convention
                 if (!KebabCasePattern.IsMatch(nameWithoutPrefix))
                 {

@@ -13,7 +13,7 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
     {
         public const string MissingNameId = "MCP004";
         public const string InvalidNamingId = "MCP005";
-        
+
         private static readonly DiagnosticDescriptor MissingNameRule = new DiagnosticDescriptor(
             MissingNameId,
             "McpServerTool attribute must specify a Name property",
@@ -31,7 +31,7 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
             isEnabledByDefault: true);
 
         // Snake-case pattern: lowercase letters/numbers, separated by underscores, no consecutive underscores
-        private static readonly Regex SnakeCasePattern = new Regex(@"^[a-z0-9]+(_[a-z0-9]+)*$", RegexOptions.Compiled);
+        private static readonly Regex SnakeCasePattern = new Regex(@"^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$", RegexOptions.Compiled);
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
             => ImmutableArray.Create(MissingNameRule, InvalidNamingRule);
@@ -70,13 +70,13 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
                 if (argument.NameEquals?.Name.Identifier.ValueText == "Name")
                 {
                     hasName = true;
-                    
+
                     // Check if the value is a string literal
                     if (argument.Expression is LiteralExpressionSyntax literal &&
                         literal.Token.IsKind(SyntaxKind.StringLiteralToken))
                     {
                         var toolName = literal.Token.ValueText;
-                        
+
                         // Validate snake_case convention
                         if (!SnakeCasePattern.IsMatch(toolName))
                         {

@@ -201,3 +201,17 @@ Methods with the `[McpServerTool]` attribute must specify a Name property.
 - `[McpServerTool(Name = "Hello_World")]` - PascalCase
 - `[McpServerTool(Name = "hello-world")]` - kebab-case
 - `[McpServerTool(Name = "HelloWorld")]` - PascalCase
+
+# MCP Server Tool Name Prefix (MCP008)
+
+## Overview
+
+All MCP server tool names must start with the prefix `azsdk_`. This ensures clear ownership and avoids name collisions across MCP server tool lists.
+
+**Valid examples:**
+- `[McpServerTool(Name = "azsdk_hello_world")]`
+- `[McpServerTool(Name = "azsdk_generate_sdk")]`
+
+**Invalid examples:**
+- `[McpServerTool(Name = "hello_world")]`
+- `[McpServerTool(Name = "generate_sdk")]`

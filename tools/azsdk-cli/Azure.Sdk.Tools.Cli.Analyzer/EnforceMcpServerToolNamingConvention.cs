@@ -12,8 +12,10 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
     {
         public const string MissingNameId = "MCP006";
         public const string InvalidNamingId = "MCP007";
+        public const string MissingAzsdkPrefixId = "MCP008";
 
         public const string MCP_ATTRIBUTE_NAME = "McpServerTool";
+        public const string AZSDK_PREFIX = "azsdk_";
 
         private static readonly DiagnosticDescriptor missingNameRule = new DiagnosticDescriptor(
             MissingNameId,
@@ -23,6 +25,7 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
             DiagnosticSeverity.Error,
             isEnabledByDefault: true);
 
+        // NOTE: do not use interpolated strings here, otherwise the '{0}' will not be filled in for compiler messages
         private static readonly DiagnosticDescriptor invalidNamingRule = new DiagnosticDescriptor(
             InvalidNamingId,
             MCP_ATTRIBUTE_NAME + " attribute parameter 'Name' must follow snake_case convention",
@@ -31,11 +34,20 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
             DiagnosticSeverity.Error,
             isEnabledByDefault: true);
 
+        // NOTE: do not use interpolated strings here, otherwise the '{0}' will not be filled in for compiler messages
+        private static readonly DiagnosticDescriptor missingPrefixRule = new DiagnosticDescriptor(
+            MissingAzsdkPrefixId,
+            MCP_ATTRIBUTE_NAME + " attribute parameter 'Name' must start with '" + AZSDK_PREFIX + "'",
+            MCP_ATTRIBUTE_NAME + " Name '{0}' must start with '" + AZSDK_PREFIX + "'",
+            "Naming",
+            DiagnosticSeverity.Error,
+            isEnabledByDefault: true);
+
         // Snake-case pattern: lowercase letters/numbers, separated by underscores, no consecutive underscores
         private static readonly Regex snakeCasePattern = new Regex(@"^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$", RegexOptions.Compiled);
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
-            => ImmutableArray.Create(missingNameRule, invalidNamingRule);
+            => ImmutableArray.Create(missingNameRule, invalidNamingRule, missingPrefixRule);
 
         public override void Initialize(AnalysisContext context)
         {
@@ -77,6 +89,15 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
                         literal.Token.IsKind(SyntaxKind.StringLiteralToken))
                     {
                         var toolName = literal.Token.ValueText;
+
+                        // Enforce azsdk prefix
+                        if (!toolName.StartsWith(AZSDK_PREFIX))
+                        {
+                            context.ReportDiagnostic(Diagnostic.Create(
+                                missingPrefixRule,
+                                literal.GetLocation(),
+                                toolName));
+                        }
 
                         // Validate snake_case convention
                         if (!snakeCasePattern.IsMatch(toolName))

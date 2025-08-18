@@ -419,6 +419,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
                                 }
 
                                 result.Iterations.Add(iterationResult);
+                                // Update results after each iteration for more timely feedback
+                                await WriteResults(outputJson, outputCsv, outputTxt, outputMd, results);
                             }
 
                             if (options.AdvancedStats && operationResults.Count > 0)

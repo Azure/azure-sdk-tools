@@ -159,7 +159,16 @@ This directory contains analyzers that enforce naming conventions for the azsdk-
 
 ## Analyzers
 
+### MCP002 - Tool Exception Handling
+
+McpServerTool methods must wrap their body in a try/catch statement, see the [new-tool.md](../docs/new-tool.md) for examples. Top level variable declarations are allowed.
+
+### MCP002 - Tools Registration
+
+Every MCPTool class must be added to [SharedOptions.ToolsList](../Azure.Sdk.Tools.Cli/Commands/SharedOptions.cs)
+
 ### MCP003 - CLI Command Naming Convention
+
 Enforces kebab-case naming for CLI commands.
 
 **Valid examples:**
@@ -170,10 +179,11 @@ Enforces kebab-case naming for CLI commands.
 **Invalid examples:**
 - `new Command("helloWorld", "description")` - camelCase
 - `new Command("Hello", "description")` - PascalCase
-- `new Command("hello_world", "description")` - snake_case
+- `new Command("hello_world", "description")` - `snake_case`
 - `new Command("hello-World", "description")` - mixed case
 
-### MCP006 - CLI Option Naming Convention
+### MCP004 - CLI Option Naming Convention
+
 Enforces kebab-case naming for CLI option names (only validates long options starting with `--`).
 
 **Valid examples:**
@@ -183,21 +193,22 @@ Enforces kebab-case naming for CLI option names (only validates long options sta
 
 **Invalid examples:**
 - `new Option<string>(["--logId"], "description")` - camelCase
-- `new Option<string>(["--project_name"], "description")` - snake_case
+- `new Option<string>(["--project_name"], "description")` - `snake_case`
 - `new Option<string>(["--ProjectName"], "description")` - PascalCase
 
-### MCP004 - Missing MCP Server Tool Name
+### MCP005 - Missing MCP Server Tool Name
 Enforces that McpServerTool attributes specify a Name property.
 
 **Invalid examples:**
 - `[McpServerTool]` - missing Name property
 - `[McpServerTool()]` - empty attribute
 
-### MCP005 - MCP Server Tool Naming Convention
-Enforces snake_case naming for MCP server tool names.
+### MCP006 - MCP Server Tool Naming Convention
+
+Enforces `snake_case` naming for MCP server tool names.
 
 **Valid examples:**
-- `[McpServerTool(Name = "hello_world")]`
+- `[McpServerTool(Name = "hello\_world")]`
 - `[McpServerTool(Name = "test_tool")]`
 - `[McpServerTool(Name = "api_validator")]`
 
@@ -207,6 +218,7 @@ Enforces snake_case naming for MCP server tool names.
 - `[McpServerTool(Name = "hello-world")]` - kebab-case
 - `[McpServerTool(Name = "HelloWorld")]` - PascalCase
 
+<<<<<<< HEAD
 ## Gradual Rollout
 
 Due to existing code violations, these analyzers are currently **disabled by default** in the main project. This allows for a gradual migration approach.
@@ -255,3 +267,5 @@ When ready to enforce project-wide, remove the warnings from the main `.csproj` 
 
 See `Examples/NamingConventionDemo.cs` for examples of correct and incorrect naming patterns.
 >>>>>>> ffe9cf38e (Complete naming convention analyzers with documentation and gradual rollout support)
+=======
+>>>>>>> 93e68b253 (Update analyzers/docs)

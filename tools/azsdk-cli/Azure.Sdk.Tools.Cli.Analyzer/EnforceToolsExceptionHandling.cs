@@ -14,7 +14,7 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
         public const string Id = "MCP001";
         private static readonly DiagnosticDescriptor Rule = new DiagnosticDescriptor(
             Id,
-            "McpServerTool methods must wrap body in try/catch, see the README within the tools directory for examples",
+            "McpServerTool methods must wrap body in try/catch, see 'docs/new-tool.md' for examples",
             "Method '{0}' must have its entire body inside 'try {} catch(Exception) {}'",
             "Reliability",
             DiagnosticSeverity.Error,

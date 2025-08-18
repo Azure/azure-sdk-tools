@@ -11,15 +11,15 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class EnforceMcpServerToolNamingConventionAnalyzer : DiagnosticAnalyzer
     {
-        public const string MissingNameId = "MCP004";
-        public const string InvalidNamingId = "MCP005";
+        public const string MissingNameId = "MCP005";
+        public const string InvalidNamingId = "MCP006";
 
         private static readonly DiagnosticDescriptor MissingNameRule = new DiagnosticDescriptor(
             MissingNameId,
             "McpServerTool attribute must specify a Name property",
             "McpServerTool attribute must include Name property with snake_case convention",
             "Naming",
-            DiagnosticSeverity.Warning,
+            DiagnosticSeverity.Error,
             isEnabledByDefault: true);
 
         private static readonly DiagnosticDescriptor InvalidNamingRule = new DiagnosticDescriptor(
@@ -27,7 +27,7 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
             "McpServerTool Name must follow snake_case convention",
             "McpServerTool Name '{0}' must follow snake_case convention (lowercase letters, numbers, and underscores only)",
             "Naming",
-            DiagnosticSeverity.Warning,
+            DiagnosticSeverity.Error,
             isEnabledByDefault: true);
 
         // Snake-case pattern: lowercase letters/numbers, separated by underscores, no consecutive underscores

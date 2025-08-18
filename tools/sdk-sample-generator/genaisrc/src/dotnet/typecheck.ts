@@ -107,7 +107,7 @@ export async function typecheckDotNet({
     clientDist,
     pkgName,
 }: TypeCheckParameters): Promise<TypeCheckResult> {
-    const projectDir = path.join("tmp", getUniqueDirName());
+    const projectDir = `tmp/${getUniqueDirName()}`;
     const filePath = `${projectDir}/${fileName}`;
 
     const packages = parseImportedPackages(

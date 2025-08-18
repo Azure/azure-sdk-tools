@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, map, Observable } from 'rxjs';
+import { BehaviorSubject, map } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
 @Injectable({
@@ -40,11 +40,5 @@ export class ConfigService {
 
   get webAppUrl () : string {
     return this.config.webAppUrl;
-  }
-
-  getIsReviewByCopilotRequired(language?: string): Observable<boolean> {
-    const url = `${this.config.apiUrl}reviews/isReviewByCopilotRequired`;
-    const params = language ? `?language=${encodeURIComponent(language)}` : '';
-    return this.http.get<boolean>(`${url}${params}`);
   }
 }

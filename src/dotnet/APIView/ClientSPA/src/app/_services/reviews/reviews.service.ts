@@ -152,4 +152,10 @@ export class ReviewsService {
       params: params, withCredentials: true 
     });
   }
+
+  getIsReviewByCopilotRequired(language?: string): Observable<boolean> {
+    const url = `${this.baseUrl}/isReviewByCopilotRequired`;
+    const params = language ? `?language=${encodeURIComponent(language)}` : '';
+    return this.http.get<boolean>(`${url}${params}`);
+  }
 }

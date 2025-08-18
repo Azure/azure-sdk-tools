@@ -264,6 +264,7 @@ namespace APIViewWeb.LeanControllers
             if (!string.IsNullOrEmpty(language))
             {
                 string[] supportedLanguages = value.Split(',')
+                    .Where(lang => !string.IsNullOrEmpty(lang))
                     .Select(lang => lang.Trim().ToLowerInvariant())
                     .ToArray();
                 

@@ -6,6 +6,7 @@ import { CodeLineRowNavigationDirection, FULL_DIFF_STYLE, getAIReviewNotifiation
 import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
 import { ConfigService } from 'src/app/_services/config/config.service';
+import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 import { APIRevisionsService } from 'src/app/_services/revisions/revisions.service';
 import { debounceTime, distinctUntilChanged, Subject, take, takeUntil } from 'rxjs';
 import { UserProfile } from 'src/app/_models/userProfile';
@@ -120,7 +121,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   };
 
   constructor(
-    private configService: ConfigService, private route: ActivatedRoute, 
+    private configService: ConfigService, private reviewsService: ReviewsService, private route: ActivatedRoute, 
     private router: Router,  private apiRevisionsService: APIRevisionsService, private commentsService: CommentsService,
     private pullRequestService: PullRequestsService, private messageService: MessageService,
     private signalRService: SignalRService, private notificationsService: NotificationsService) { }
@@ -314,11 +315,16 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   setAPIRevisionApprovalStates() {
     const language = this.review?.language;
     if (language) {
-      this.configService.getIsReviewByCopilotRequired(language).pipe(take(1)).subscribe({
+      this.reviewsService.getIsReviewByCopilotRequired(language).pipe(take(1)).subscribe({
         next: (isRequired: boolean) => {
           this.updateApprovalStates(isRequired);
         },
         error: (error) => {
+          this.messageService.add({
+	            severity: 'error',
+	            summary: 'Error',
+	            detail: 'Failed to check if review by Copilot is required. Defaulting to manual approval.'
+	          })
           this.updateApprovalStates(false);
         }
       });

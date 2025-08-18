@@ -353,7 +353,7 @@ namespace APIViewWeb.Managers
             var client = _httpClientFactory.CreateClient();
             var payload = new Dictionary<string, object>
             {
-                { "language", LanguageServiceHelpers.GetLanguageAliasForCopilotService(activeApiRevision.Language) },
+                { "language", LanguageServiceHelpers.GetLanguageAliasForCopilotService(activeApiRevision.Language, activeCodeFile.CodeFile.LanguageVariant) },
                 { "target", String.Join("\\n", activeCodeLines.Select(item => item.lineText.Trim())) },
                 { "outline", activeApiOutline },
                 { "comments", existingCommentInfo },

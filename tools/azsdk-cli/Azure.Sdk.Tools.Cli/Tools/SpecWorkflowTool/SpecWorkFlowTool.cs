@@ -224,7 +224,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         }
 
 
-        [McpServerTool(Name ="RunGenerateSdk"), Description("Generate SDK from a TypeSpec project using pipeline.")]
+        [McpServerTool(Name = "azsdk_run_generate_sdk"), Description("Generate SDK from a TypeSpec project using pipeline.")]
         public async Task<string> RunGenerateSdkAsync(string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int pullRequestNumber = 0, int workItemId = 0)
         {
             try
@@ -356,7 +356,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     return "Either build ID or release plan work item ID is required to get SDK pull request details.";
                 }
 
-                StringBuilder sb = new ();
+                StringBuilder sb = new();
 
                 // Get SDK details from work item
                 if (buildId == 0)
@@ -467,7 +467,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
                 return $"Successfully linked pull request to release plan {releasePlan.ReleasePlanId}, work item id {releasePlan.WorkItemId}, and updated PR description.";
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 SetFailure();
                 return $"Failed to link SDK pull request to release plan work item, Error: {ex.Message}";
@@ -485,7 +485,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             {
                 throw new InvalidOperationException($"Failed to fetch pull request {repoOwner}/{repoName}#{prNumber}");
             }
-            
+
             // Check if the PR body already contains the release plan link (main indicator)
             var header = "## Release Plan Details";
             if (!string.IsNullOrEmpty(pr.Body) && pr.Body.Contains(header, StringComparison.OrdinalIgnoreCase))

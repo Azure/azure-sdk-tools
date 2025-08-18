@@ -36,7 +36,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         {
             Command command = new("run-checks", "Run validation checks for SDK packages");
             command.AddOption(SharedOptions.PackagePath);
-            
+
             var checkTypeOption = new Option<PackageCheckName>(
                 "--check-type",
                 "The type of check to run")
@@ -44,15 +44,15 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 IsRequired = true
             };
             command.AddOption(checkTypeOption);
-            
-            command.SetHandler(async (InvocationContext ctx) => 
-            { 
+
+            command.SetHandler(async (InvocationContext ctx) =>
+            {
                 var packagePath = ctx.ParseResult.GetValueForOption(SharedOptions.PackagePath);
                 var checkName = ctx.ParseResult.GetValueForOption(checkTypeOption);
-                
-                await HandleCommandWithOptions(packagePath, checkName, ctx.GetCancellationToken()); 
+
+                await HandleCommandWithOptions(packagePath, checkName, ctx.GetCancellationToken());
             });
-            
+
             return command;
         }
 
@@ -63,7 +63,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         }
 
         private async Task HandleCommandWithOptions(string packagePath, PackageCheckName checkName, CancellationToken ct)
-        {          
+        {
             var result = await RunPackageCheck(packagePath, checkName, ct);
 
             ExitCode = result.ExitCode;
@@ -76,7 +76,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             try
             {
                 logger.LogInformation($"Starting {checkName} check for package at: {packagePath}");
-                
+
                 if (!Directory.Exists(packagePath))
                 {
                     SetFailure(1);
@@ -134,7 +134,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private async Task<CLICheckResponse> RunAllChecks(string packagePath, ILanguageRepoService languageService, CancellationToken ct)
         {
             logger.LogInformation("Running all validation checks");
-            
+
             var results = new List<CLICheckResponse>();
             var overallSuccess = true;
 
@@ -154,25 +154,25 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 overallSuccess = false;
             }
 
-            if (!overallSuccess) 
-            { 
-                SetFailure(1); 
+            if (!overallSuccess)
+            {
+                SetFailure(1);
             }
 
             var message = overallSuccess ? "All checks completed successfully" : "Some checks failed";
             var combinedOutput = string.Join("\n", results.Select(r => r.CheckStatusDetails));
-            
-            return overallSuccess 
-                ? new CLICheckResponse(0, combinedOutput) 
+
+            return overallSuccess
+                ? new CLICheckResponse(0, combinedOutput)
                 : new CLICheckResponse(1, combinedOutput, message);
         }
 
         private async Task<CLICheckResponse> RunChangelogValidation(string packagePath, ILanguageRepoService languageService)
         {
             logger.LogInformation("Running changelog validation");
-            
+
             var result = await languageService.ValidateChangelogAsync(packagePath);
-            
+
             if (result.ExitCode != 0)
             {
                 SetFailure(1);
@@ -185,9 +185,9 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private async Task<CLICheckResponse> RunDependencyCheck(string packagePath, ILanguageRepoService languageService, CancellationToken ct)
         {
             logger.LogInformation("Running dependency check");
-            
+
             var result = await languageService.AnalyzeDependenciesAsync(packagePath, ct);
-            
+
             if (result.ExitCode != 0)
             {
                 SetFailure(1);

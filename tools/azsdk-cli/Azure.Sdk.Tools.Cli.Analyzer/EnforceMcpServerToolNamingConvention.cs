@@ -1,5 +1,4 @@
 using System.Collections.Immutable;
-using System.Linq;
 using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -11,10 +10,10 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class EnforceMcpServerToolNamingConventionAnalyzer : DiagnosticAnalyzer
     {
-        public const string MissingNameId = "MCP005";
-        public const string InvalidNamingId = "MCP006";
+        public const string MissingNameId = "MCP006";
+        public const string InvalidNamingId = "MCP007";
 
-        private static readonly DiagnosticDescriptor MissingNameRule = new DiagnosticDescriptor(
+        private static readonly DiagnosticDescriptor missingNameRule = new DiagnosticDescriptor(
             MissingNameId,
             "McpServerTool attribute must specify a Name property",
             "McpServerTool attribute must include Name property with snake_case convention",
@@ -22,7 +21,7 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
             DiagnosticSeverity.Error,
             isEnabledByDefault: true);
 
-        private static readonly DiagnosticDescriptor InvalidNamingRule = new DiagnosticDescriptor(
+        private static readonly DiagnosticDescriptor invalidNamingRule = new DiagnosticDescriptor(
             InvalidNamingId,
             "McpServerTool Name must follow snake_case convention",
             "McpServerTool Name '{0}' must follow snake_case convention (lowercase letters, numbers, and underscores only)",
@@ -34,7 +33,7 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
         private static readonly Regex SnakeCasePattern = new Regex(@"^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$", RegexOptions.Compiled);
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
-            => ImmutableArray.Create(MissingNameRule, InvalidNamingRule);
+            => ImmutableArray.Create(missingNameRule, invalidNamingRule);
 
         public override void Initialize(AnalysisContext context)
         {
@@ -58,7 +57,7 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
             {
                 // Missing Name property
                 context.ReportDiagnostic(Diagnostic.Create(
-                    MissingNameRule,
+                    missingNameRule,
                     attribute.GetLocation()));
                 return;
             }
@@ -81,7 +80,7 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
                         if (!SnakeCasePattern.IsMatch(toolName))
                         {
                             context.ReportDiagnostic(Diagnostic.Create(
-                                InvalidNamingRule,
+                                invalidNamingRule,
                                 literal.GetLocation(),
                                 toolName));
                         }
@@ -94,7 +93,7 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
             {
                 // Name property not found
                 context.ReportDiagnostic(Diagnostic.Create(
-                    MissingNameRule,
+                    missingNameRule,
                     attribute.GetLocation()));
             }
         }

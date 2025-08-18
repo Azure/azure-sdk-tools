@@ -1,17 +1,10 @@
-<<<<<<< HEAD
 # Tool Exception Handling Analyzer (MCP001)
 
 ## Overview
 
-The `EnforceToolsExceptionHandlingAnalyzer` ensures that all methods decorated with the `McpServerTool` attribute properly wrap their entire body in try/catch blocks with proper exception handling.
+The `EnforceToolsExceptionHandlingAnalyzer` ensures that all methods decorated with the `[McpServerTool]` attribute properly wrap their entire body in try/catch blocks with proper exception handling, with the exception of top-level variable declarations.
 
 Unhandled exceptions in MCP mode prevent the client from logging tool responses correctly as the error information is not transmitted through the protocol. Currently there is no middleware support in the MCP C# SDK that could intercept unhandled exceptions. See https://github.com/modelcontextprotocol/csharp-sdk/issues/267
-
-## Rule: MCP001
-
-**Title**: McpServerTool methods must wrap body in try/catch
-
-Methods decorated with `[McpServerTool]` must have their entire body wrapped in a try/catch block that catches `System.Exception`. This ensures consistent error handling across all MCP tools.
 
 ## Requirements
 
@@ -62,10 +55,6 @@ public async Task<Response> ProcessData(string myArg)
 
 The `EnforceToolsListAnalyzer` ensures that every class inheriting from `MCPTool` is properly registered in the `SharedOptions.ToolsList` static list, otherwise they will not be loaded at startup.
 
-## Rule: MCP002
-
-**Title**: Every MCPTool must be listed in SharedOptions.ToolsList
-
 All non-abstract classes that inherit from `Azure.Sdk.Tools.Cli.Contract.MCPTool` must be included as `typeof(ClassName)` entries in the `SharedOptions.ToolsList` static field (`Azure.Sdk.Tools.Cli/Commands/SharedOptions.cs`).
 
 ## Requirements
@@ -102,10 +91,6 @@ public static readonly List<Type> ToolsList = [
 
 The `EnforceToolsReturnTypesAnalyzer` ensures that all public non-static methods in classes within
 the `Azure.Sdk.Tools.Cli.Tools` namespace return only approved types at compile time.
-
-## Rule: MCP003
-
-**Title**: Tool methods must return Response types, built-in value types, or string
 
 This excludes inherited methods `GetCommand`, `HandleCommand`, etc.
 
@@ -152,24 +137,13 @@ catch (Exception ex)
    }
 }
 ```
-=======
-# Naming Convention Analyzers
 
-This directory contains analyzers that enforce naming conventions for the azsdk-cli project.
 
-## Analyzers
+# CLI Command Naming Convention Analyzer (MCP004)
 
-### MCP002 - Tool Exception Handling
+## Overview
 
-McpServerTool methods must wrap their body in a try/catch statement, see the [new-tool.md](../docs/new-tool.md) for examples. Top level variable declarations are allowed.
-
-### MCP002 - Tools Registration
-
-Every MCPTool class must be added to [SharedOptions.ToolsList](../Azure.Sdk.Tools.Cli/Commands/SharedOptions.cs)
-
-### MCP003 - CLI Command Naming Convention
-
-Enforces kebab-case naming for CLI commands.
+`kebab-case` style naming is required for CLI command names.
 
 **Valid examples:**
 - `new Command("hello-world", "description")`
@@ -182,9 +156,12 @@ Enforces kebab-case naming for CLI commands.
 - `new Command("hello_world", "description")` - `snake_case`
 - `new Command("hello-World", "description")` - mixed case
 
-### MCP004 - CLI Option Naming Convention
 
-Enforces kebab-case naming for CLI option names (only validates long options starting with `--`).
+# CLI Option Naming Convention (MCP005)
+
+## Overview
+
+`kebab-case` style naming is required for CLI option names (only long options starting with `--`).
 
 **Valid examples:**
 - `new Option<string>(["--log-id"], "description")`
@@ -196,76 +173,31 @@ Enforces kebab-case naming for CLI option names (only validates long options sta
 - `new Option<string>(["--project_name"], "description")` - `snake_case`
 - `new Option<string>(["--ProjectName"], "description")` - PascalCase
 
-### MCP005 - Missing MCP Server Tool Name
-Enforces that McpServerTool attributes specify a Name property.
+
+# MCP Server Tool Name Required (MCP006)
+
+## Overview
+
+Methods with the `[McpServerTool]` attribute must specify a Name property.
 
 **Invalid examples:**
 - `[McpServerTool]` - missing Name property
 - `[McpServerTool()]` - empty attribute
 
-### MCP006 - MCP Server Tool Naming Convention
 
-Enforces `snake_case` naming for MCP server tool names.
+# MCP Server Tool Naming Convention (MCP007)
+
+## Overview
+
+`snake_case` style naming is required for MCP server tool names.
 
 **Valid examples:**
-- `[McpServerTool(Name = "hello\_world")]`
+- `[McpServerTool(Name = "hello_world")]`
 - `[McpServerTool(Name = "test_tool")]`
 - `[McpServerTool(Name = "api_validator")]`
 
 **Invalid examples:**
 - `[McpServerTool(Name = "helloWorld")]` - camelCase
-- `[McpServerTool(Name = "Hello_World")]` - PascalCase  
+- `[McpServerTool(Name = "Hello_World")]` - PascalCase
 - `[McpServerTool(Name = "hello-world")]` - kebab-case
 - `[McpServerTool(Name = "HelloWorld")]` - PascalCase
-
-<<<<<<< HEAD
-## Gradual Rollout
-
-Due to existing code violations, these analyzers are currently **disabled by default** in the main project. This allows for a gradual migration approach.
-
-### Current Status
-- ✅ Analyzers implemented and working correctly
-- ✅ Build succeeds with analyzers temporarily disabled 
-- ✅ Example violations fixed in HelloWorldTool and ReleaseReadinessTool
-- 📋 ~40 violations remain in existing codebase
-
-### Enabling Analyzers for New Code
-
-To enable the analyzers for a specific file (recommended for new files), remove the analyzer warnings from the NoWarn list just for that file by adding this at the top:
-
-```csharp
-// Enable naming convention analyzers for this file
-#pragma warning enable MCP003 // CLI command names must follow kebab-case convention
-#pragma warning enable MCP004 // McpServerTool attribute must specify a Name property  
-#pragma warning enable MCP005 // McpServerTool Name must follow snake_case convention
-#pragma warning enable MCP006 // CLI option names must follow kebab-case convention
-```
-
-### Disabling Analyzers for Existing Code
-
-For existing files during migration, you can disable specific analyzers:
-
-```csharp
-#pragma warning disable MCP003 // CLI command names must follow kebab-case convention
-#pragma warning disable MCP004 // McpServerTool attribute must specify a Name property  
-#pragma warning disable MCP005 // McpServerTool Name must follow snake_case convention
-#pragma warning disable MCP006 // CLI option names must follow kebab-case convention
-```
-
-### Project-wide Enablement
-
-When ready to enforce project-wide, remove the warnings from the main `.csproj` file:
-
-```xml
-<!-- In Azure.Sdk.Tools.Cli.csproj, remove MCP003;MCP004;MCP005;MCP006 from NoWarn -->
-<PropertyGroup>
-  <NoWarn>ASP0000;CS8603;CS8618;CS8625;CS8604</NoWarn> 
-</PropertyGroup>
-```
-
-## Example Usage
-
-See `Examples/NamingConventionDemo.cs` for examples of correct and incorrect naming patterns.
->>>>>>> ffe9cf38e (Complete naming convention analyzers with documentation and gradual rollout support)
-=======
->>>>>>> 93e68b253 (Update analyzers/docs)

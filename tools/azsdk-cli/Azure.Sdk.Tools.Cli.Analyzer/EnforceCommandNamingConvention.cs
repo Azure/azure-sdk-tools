@@ -10,8 +10,8 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class EnforceCommandNamingConventionAnalyzer : DiagnosticAnalyzer
     {
-        public const string Id = "MCP003";
-        private static readonly DiagnosticDescriptor CommandRule = new DiagnosticDescriptor(
+        public const string Id = "MCP004";
+        private static readonly DiagnosticDescriptor commandRule = new DiagnosticDescriptor(
             Id,
             "CLI command names must follow kebab-case convention",
             "Command name '{0}' must follow kebab-case convention (lowercase letters, numbers, and hyphens only)",
@@ -19,8 +19,8 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
             DiagnosticSeverity.Error,
             isEnabledByDefault: true);
 
-        public const string OptionId = "MCP004";
-        private static readonly DiagnosticDescriptor OptionRule = new DiagnosticDescriptor(
+        public const string OptionId = "MCP005";
+        private static readonly DiagnosticDescriptor optionRule = new DiagnosticDescriptor(
             OptionId,
             "CLI option names must follow kebab-case convention",
             "Option name '{0}' must follow kebab-case convention (lowercase letters, numbers, and hyphens only)",
@@ -29,10 +29,10 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
             isEnabledByDefault: true);
 
         // Kebab-case pattern: lowercase letters/numbers, separated by hyphens, no consecutive hyphens
-        private static readonly Regex KebabCasePattern = new Regex(@"^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$", RegexOptions.Compiled);
+        private static readonly Regex kebabCasePattern = new Regex(@"^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$", RegexOptions.Compiled);
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
-            => ImmutableArray.Create(CommandRule, OptionRule);
+            => ImmutableArray.Create(commandRule, optionRule);
 
         public override void Initialize(AnalysisContext context)
         {
@@ -72,10 +72,10 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
                     var commandName = literal.Token.ValueText;
 
                     // Validate kebab-case convention
-                    if (!KebabCasePattern.IsMatch(commandName))
+                    if (!kebabCasePattern.IsMatch(commandName))
                     {
                         context.ReportDiagnostic(Diagnostic.Create(
-                            CommandRule,
+                            commandRule,
                             literal.GetLocation(),
                             commandName));
                     }
@@ -108,7 +108,10 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
 
         private static void AnalyzeArrayCreationExpression(SyntaxNodeAnalysisContext context, InitializerExpressionSyntax initializer)
         {
-            if (initializer?.Expressions == null) return;
+            if (initializer?.Expressions == null)
+            {
+                return;
+            }
 
             foreach (var expression in initializer.Expressions)
             {
@@ -144,10 +147,10 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
                 var nameWithoutPrefix = optionName.Substring(2);
 
                 // Validate kebab-case convention
-                if (!KebabCasePattern.IsMatch(nameWithoutPrefix))
+                if (!kebabCasePattern.IsMatch(nameWithoutPrefix))
                 {
                     context.ReportDiagnostic(Diagnostic.Create(
-                        OptionRule,
+                        optionRule,
                         literal.GetLocation(),
                         optionName));
                 }

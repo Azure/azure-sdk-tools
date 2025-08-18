@@ -12,7 +12,7 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
     public class EnforceToolsExceptionHandlingAnalyzer : DiagnosticAnalyzer
     {
         public const string Id = "MCP001";
-        private static readonly DiagnosticDescriptor Rule = new DiagnosticDescriptor(
+        private static readonly DiagnosticDescriptor rule = new DiagnosticDescriptor(
             Id,
             "McpServerTool methods must wrap body in try/catch, see 'docs/new-tool.md' for examples",
             "Method '{0}' must have its entire body inside 'try {} catch(Exception) {}'",
@@ -21,7 +21,7 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
             isEnabledByDefault: true);
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
-            => ImmutableArray.Create(Rule);
+            => ImmutableArray.Create(rule);
 
         public override void Initialize(AnalysisContext ctx)
         {
@@ -68,14 +68,14 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
                 }
                 if (!(stmt is TryStatementSyntax tryStmt))
                 {
-                    ctx.ReportDiagnostic(Diagnostic.Create(Rule, md.Identifier.GetLocation(), md.Identifier.Text));
+                    ctx.ReportDiagnostic(Diagnostic.Create(rule, md.Identifier.GetLocation(), md.Identifier.Text));
                     continue;
                 }
                 // verify there’s a catch(Exception)
                 bool hasExCatch = tryStmt.Catches.Any(c => c.Declaration?.Type.ToString() == "Exception");
                 if (!hasExCatch)
                 {
-                    ctx.ReportDiagnostic(Diagnostic.Create(Rule, md.Identifier.GetLocation(), md.Identifier.Text));
+                    ctx.ReportDiagnostic(Diagnostic.Create(rule, md.Identifier.GetLocation(), md.Identifier.Text));
                 }
             }
 

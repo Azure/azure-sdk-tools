@@ -72,7 +72,7 @@ namespace APIViewUnitTests
         [InlineData("")]
         public void GetIsReviewByCopilotRequired_WhenConfigurationIsNullOrEmpty_ReturnsFalse(string configValue)
         {
-            _mockConfiguration.Setup(c => c["IsReviewByCopilotRequired"]).Returns(configValue);
+            _mockConfiguration.Setup(c => c["CopilotReviewIsRequired"]).Returns(configValue);
 
             ActionResult<bool> result = _controller.GetIsReviewByCopilotRequired("Java");
             result.Should().NotBeNull();
@@ -87,7 +87,7 @@ namespace APIViewUnitTests
         [InlineData("false", false)]
         public void GetIsReviewByCopilotRequired_WhenConfigurationIsBooleanValue_ReturnsExpectedResult(string configValue, bool expectedResult)
         {
-            _mockConfiguration.Setup(c => c["IsReviewByCopilotRequired"]).Returns(configValue);
+            _mockConfiguration.Setup(c => c["CopilotReviewIsRequired"]).Returns(configValue);
 
             ActionResult<bool> result = _controller.GetIsReviewByCopilotRequired("Java");
             result.Should().NotBeNull();
@@ -102,7 +102,7 @@ namespace APIViewUnitTests
         [InlineData("  *  ")]
         public void GetIsReviewByCopilotRequired_WhenConfigurationIsWildcard_ReturnsTrue(string configValue)
         {
-            _mockConfiguration.Setup(c => c["IsReviewByCopilotRequired"]).Returns(configValue);
+            _mockConfiguration.Setup(c => c["CopilotReviewIsRequired"]).Returns(configValue);
 
             ActionResult<bool> result = _controller.GetIsReviewByCopilotRequired("Java");
             result.Should().NotBeNull();
@@ -122,7 +122,7 @@ namespace APIViewUnitTests
         [InlineData("Java,,Python,", "C#", false)] // Empty entries in list
         public void GetIsReviewByCopilotRequired_WhenLanguageMatchingConfiguration_ReturnsExpectedResult(string configValue, string language, bool expectedResult)
         {
-            _mockConfiguration.Setup(c => c["IsReviewByCopilotRequired"]).Returns(configValue);
+            _mockConfiguration.Setup(c => c["CopilotReviewIsRequired"]).Returns(configValue);
 
             ActionResult<bool> result = _controller.GetIsReviewByCopilotRequired(language);
             result.Should().NotBeNull();
@@ -138,7 +138,7 @@ namespace APIViewUnitTests
         [InlineData("invalid-value", "Java", false)]
         public void GetIsReviewByCopilotRequired_WhenInvalidInput_ReturnsFalse(string configValue, string language, bool expectedResult)
         {
-            _mockConfiguration.Setup(c => c["IsReviewByCopilotRequired"]).Returns(configValue);
+            _mockConfiguration.Setup(c => c["CopilotReviewIsRequired"]).Returns(configValue);
 
             ActionResult<bool> result = _controller.GetIsReviewByCopilotRequired(language);
             result.Should().NotBeNull();
@@ -155,7 +155,7 @@ namespace APIViewUnitTests
         [InlineData("FALSE")]
         public void GetIsReviewByCopilotRequired_WhenConfigurationIsBooleanWithDifferentCasing_ReturnsParsedValue(string configValue)
         {
-            _mockConfiguration.Setup(c => c["IsReviewByCopilotRequired"]).Returns(configValue);
+            _mockConfiguration.Setup(c => c["CopilotReviewIsRequired"]).Returns(configValue);
             bool expectedResult = bool.Parse(configValue);
 
             ActionResult<bool> result = _controller.GetIsReviewByCopilotRequired("Java");

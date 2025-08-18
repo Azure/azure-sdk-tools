@@ -21,3 +21,5 @@ lib/
 
 # Dev tool directories
 /devTools/
+
+azsdk-cli/

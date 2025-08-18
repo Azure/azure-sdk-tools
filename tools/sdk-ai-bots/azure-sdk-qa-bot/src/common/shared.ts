@@ -1,5 +1,5 @@
 import {
-  DefaultAzureCredential,
+  AzureCliCredential,
   ManagedIdentityCredential,
   TokenCredential,
 } from '@azure/identity';
@@ -34,6 +34,6 @@ export async function isAzureAppService(): Promise<boolean> {
   return !isLocal;
 }
 
-export function getAzureCredential(botId: string): TokenCredential {
-  return isAzureAppService() ? new ManagedIdentityCredential(botId) : new DefaultAzureCredential();
+export async function getAzureCredential(botId: string): Promise<TokenCredential> {
+  return (await isAzureAppService()) ? new ManagedIdentityCredential(botId) : new AzureCliCredential();
 }

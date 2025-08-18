@@ -61,7 +61,7 @@ class ChannelConfigManager {
       // TODO: update env file in the future
       const blobStorageUrl = storageUrl.replace('.table.core.windows.net', '.blob.core.windows.net');
 
-      const credential = getAzureCredential(this.botId);
+      const credential = await getAzureCredential(this.botId);
 
       this.blobServiceClient = new BlobServiceClient(blobStorageUrl, credential);
 

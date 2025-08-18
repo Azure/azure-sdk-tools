@@ -33,7 +33,7 @@ export class LoggingAnalyzer {
   private async runPowerShellCommand(pipelineLink: string, meta: object): Promise<string> {
     try {
       // Run the azsdk analyze command using dotnet from PATH
-      const analyzeCommand = `./azsdk-cli/publish/azsdk azp analyze "${pipelineLink}"`;
+      const analyzeCommand = `./azsdk-cli/publish-${process.platform}/azsdk azp analyze "${pipelineLink}"`;
 
       logger.info('Executing analysis command', { analyzeCommand, pipelineLink, meta });
 

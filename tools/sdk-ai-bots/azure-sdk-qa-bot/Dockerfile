@@ -16,7 +16,7 @@ COPY . .
 # setup azsdk-cli
 RUN dotnet restore ./azsdk-cli/Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj
 RUN dotnet build ./azsdk-cli/Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj --self-contained
-RUN dotnet publish ./azsdk-cli/Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj -c Release -o ./azsdk-cli/publish --self-contained
+RUN dotnet publish ./azsdk-cli/Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj -c Release -o ./azsdk-cli/publish-linux --self-contained
 
 # setup node server
 RUN npm install

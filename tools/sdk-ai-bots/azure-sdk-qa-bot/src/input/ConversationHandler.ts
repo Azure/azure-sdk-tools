@@ -143,7 +143,7 @@ export class ConversationHandler {
       }
 
       // Use managed identity or default Azure credentials
-      const credential = getAzureCredential(this.botId);
+      const credential = await getAzureCredential(this.botId);
 
       try {
         // Create table service client

@@ -224,7 +224,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         }
 
 
-        [McpServerTool(Name ="RunGenerateSdk"), Description("Generate SDK from a TypeSpec project using pipeline.")]
+        [McpServerTool(Name ="run_generate_sdk"), Description("Generate SDK from a TypeSpec project using pipeline.")]
         public async Task<string> RunGenerateSdkAsync(string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int pullRequestNumber = 0, int workItemId = 0)
         {
             try
@@ -485,7 +485,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             {
                 throw new InvalidOperationException($"Failed to fetch pull request {repoOwner}/{repoName}#{prNumber}");
             }
-            
+
             // Check if the PR body already contains the release plan link (main indicator)
             var header = "## Release Plan Details";
             if (!string.IsNullOrEmpty(pr.Body) && pr.Body.Contains(header, StringComparison.OrdinalIgnoreCase))

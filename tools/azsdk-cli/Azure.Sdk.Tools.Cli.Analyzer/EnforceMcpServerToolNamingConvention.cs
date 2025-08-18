@@ -13,24 +13,26 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
         public const string MissingNameId = "MCP006";
         public const string InvalidNamingId = "MCP007";
 
+        public const string MCP_ATTRIBUTE_NAME = "McpServerTool";
+
         private static readonly DiagnosticDescriptor missingNameRule = new DiagnosticDescriptor(
             MissingNameId,
-            "McpServerTool attribute must specify a Name property",
-            "McpServerTool attribute must include Name property with snake_case convention",
+            MCP_ATTRIBUTE_NAME + " attribute must specify a Name property",
+            MCP_ATTRIBUTE_NAME + " attribute must include Name property with snake_case convention",
             "Naming",
             DiagnosticSeverity.Error,
             isEnabledByDefault: true);
 
         private static readonly DiagnosticDescriptor invalidNamingRule = new DiagnosticDescriptor(
             InvalidNamingId,
-            "McpServerTool Name must follow snake_case convention",
-            "McpServerTool Name '{0}' must follow snake_case convention (lowercase letters, numbers, and underscores only)",
+            MCP_ATTRIBUTE_NAME + " attribute parameter 'Name' must follow snake_case convention",
+            MCP_ATTRIBUTE_NAME + " Name '{0}' must follow snake_case convention (lowercase letters, numbers, and underscores only)",
             "Naming",
             DiagnosticSeverity.Error,
             isEnabledByDefault: true);
 
         // Snake-case pattern: lowercase letters/numbers, separated by underscores, no consecutive underscores
-        private static readonly Regex SnakeCasePattern = new Regex(@"^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$", RegexOptions.Compiled);
+        private static readonly Regex snakeCasePattern = new Regex(@"^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$", RegexOptions.Compiled);
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
             => ImmutableArray.Create(missingNameRule, invalidNamingRule);
@@ -47,7 +49,7 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
             var attribute = (AttributeSyntax)context.Node;
 
             // Check if this is McpServerTool attribute
-            if (!attribute.Name.ToString().Contains("McpServerTool"))
+            if (attribute.Name.ToString() != MCP_ATTRIBUTE_NAME)
             {
                 return;
             }
@@ -77,7 +79,7 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
                         var toolName = literal.Token.ValueText;
 
                         // Validate snake_case convention
-                        if (!SnakeCasePattern.IsMatch(toolName))
+                        if (!snakeCasePattern.IsMatch(toolName))
                         {
                             context.ReportDiagnostic(Diagnostic.Create(
                                 invalidNamingRule,

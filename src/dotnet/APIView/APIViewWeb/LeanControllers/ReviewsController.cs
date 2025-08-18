@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using APIViewWeb.Extensions;
 using APIViewWeb.Helpers;
@@ -6,6 +7,7 @@ using APIViewWeb.Hubs;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers;
 using APIViewWeb.Managers.Interfaces;
+using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -230,6 +232,45 @@ namespace APIViewWeb.LeanControllers
             contentData.Language = revisionReviewCodeFile.Language;
 
             return new LeanJsonResult(contentData, StatusCodes.Status200OK);
+        }
+
+        /// <summary>
+        /// Get whether Copilot review is required for approval
+        /// </summary>
+        /// <param name="language">The programming language of the review</param>
+        /// <returns>Boolean indicating if Copilot review is required</returns>
+        [HttpGet("isReviewByCopilotRequired")]
+        public ActionResult<bool> GetIsReviewByCopilotRequired([FromQuery] string language)
+        {
+            string value = _configuration["CopilotReviewIsRequired"];
+
+            if (string.IsNullOrEmpty(value))
+            {
+                return Ok(false);
+            }
+
+            if (bool.TryParse(value, out bool isRequired))
+            {
+                return Ok(isRequired);
+            }
+
+            // If value is "*", Copilot review is required for all languages
+            if (value.Trim() == "*")
+            {
+                return Ok(true);
+            }
+            
+            if (!string.IsNullOrEmpty(language))
+            {
+                string[] supportedLanguages = value.Split(',')
+                    .Select(lang => lang.Trim().ToLowerInvariant())
+                    .ToArray();
+                
+                string normalizedLanguage = language.Trim().ToLowerInvariant();
+                return Ok(supportedLanguages.Contains(normalizedLanguage));
+            }
+            
+            return Ok(false);
         }
     }
 }

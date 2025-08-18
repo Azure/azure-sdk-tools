@@ -357,7 +357,7 @@ public class ExampleTool : MCPTool
         }
     }
 
-    [McpServerTool(Name = "example_process_execution"), Description("Demonstrates running an external process (sleep) and capturing output")]
+    [McpServerTool(Name = "azsdk_example_process_execution"), Description("Demonstrates running an external process (sleep) and capturing output")]
     public async Task<ExampleServiceResponse> DemonstrateProcessExecution(string time, CancellationToken ct = default)
     {
         try
@@ -406,7 +406,7 @@ public class ExampleTool : MCPTool
         }
     }
 
-    [McpServerTool(Name = "example_powershell_execution"), Description("Demonstrates running a powershell script with a parameter")]
+    [McpServerTool(Name = "azsdk_example_powershell_execution"), Description("Demonstrates running a powershell script with a parameter")]
     public async Task<ExampleServiceResponse> DemonstratePowershellExecution(string message, CancellationToken ct = default)
     {
         string? tempFile = null;

@@ -373,11 +373,6 @@ if __name__ == "__main__":
         "azure_deployment": os.environ["AZURE_EVALUATION_MODEL_NAME"],
         "api_version": os.environ["AZURE_API_VERSION"],
     }
-    azure_ai_project = {
-        "subscription_id": os.environ["AZURE_SUBSCRIPTION_ID"],
-        "resource_group_name": os.environ["AZURE_FOUNDRY_RESOURCE_GROUP"],
-        "project_name": os.environ["AZURE_FOUNDRY_PROJECT_NAME"],
-    }
     all_results = {}
     try: 
         print("📊 Preparing dataset...")

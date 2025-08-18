@@ -393,8 +393,13 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     return $"SDK generation pipeline did not succeed. Status: {pipeline.Result?.ToString()}. For more details: {DevOpsService.GetPipelineUrl(buildId)}";
                 }
 
-                var data = await devopsService.GetSDKPullRequestFromPipelineRunAsync(buildId, language, workItemId);
-                return data;
+                var pr = await devopsService.GetSDKPullRequestFromPipelineRunAsync(buildId, language, workItemId);
+                var parsedLink = DevOpsService.ParseSDKPullRequestUrl(pr);
+
+                var rp = await devopsService.GetReleasePlanForWorkItemAsync(workItemId);
+                await UpdateSdkPullRequestDescription(parsedLink, rp);
+
+                return pr;
             }
             catch (Exception ex)
             {
@@ -443,7 +448,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 // Parse just the pull request link from input
                 var repoName = GetRepoName(language);
                 var parsedLink = DevOpsService.ParseSDKPullRequestUrl(pullRequestUrl);
-                if (!parsedLink.Contains(repoName))
+                if (!parsedLink.FullUrl.Contains(repoName))
                 {
                     return $"Invalid pull request link. Provide a pull request link in SDK repo {repoName}";
                 }
@@ -455,14 +460,53 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     return $"Release plan with ID {releasePlanId} or work item ID {workItemId} is not found.";
                 }
 
-                await devopsService.AddSdkInfoInReleasePlanAsync(releasePlan.WorkItemId, language, "", parsedLink);
-                return $"Successfully linked pull request to release plan {releasePlan.ReleasePlanId}, work item id {releasePlan.WorkItemId}";
+                var sdkInfoInRelease = devopsService.AddSdkInfoInReleasePlanAsync(releasePlan.WorkItemId, language, "", parsedLink.FullUrl);
+                var releaseInfoInSdk = UpdateSdkPullRequestDescription(parsedLink, releasePlan);
+
+                await Task.WhenAll(sdkInfoInRelease, releaseInfoInSdk);
+
+                return $"Successfully linked pull request to release plan {releasePlan.ReleasePlanId}, work item id {releasePlan.WorkItemId}, and updated PR description.";
             }
             catch(Exception ex)
             {
                 SetFailure();
                 return $"Failed to link SDK pull request to release plan work item, Error: {ex.Message}";
             }
+        }
+
+        private async Task UpdateSdkPullRequestDescription(ParsedSdkPullRequest parsedUrl, ReleasePlan releasePlan)
+        {
+            var repoOwner = parsedUrl.RepoOwner;
+            var repoName = parsedUrl.RepoName;
+            var prNumber = parsedUrl.PrNumber;
+
+            var pr = await githubService.GetPullRequestAsync(repoOwner, repoName, prNumber);
+            if (pr == null)
+            {
+                throw new InvalidOperationException($"Failed to fetch pull request {repoOwner}/{repoName}#{prNumber}");
+            }
+            
+            // Check if the PR body already contains the release plan link (main indicator)
+            var header = "## Release Plan Details";
+            if (!string.IsNullOrEmpty(pr.Body) && pr.Body.Contains(header, StringComparison.OrdinalIgnoreCase))
+            {
+                // If already contains release plan info, just return without doing anything
+                return;
+            }
+
+            var linksBuilder = new StringBuilder(header);
+            linksBuilder.AppendLine();
+            linksBuilder.AppendLine($"- Release Plan: {releasePlan.ReleasePlanLink}");
+            linksBuilder.AppendLine($"- Work Item Link: {releasePlan.WorkItemHtmlUrl}");
+            linksBuilder.AppendLine($"- Spec Pull Request: {releasePlan.ActiveSpecPullRequest}");
+            linksBuilder.Append($"- Spec API version: {releasePlan.SpecAPIVersion}");
+
+            var links = linksBuilder.ToString();
+            var appendedBody = string.IsNullOrEmpty(pr.Body)
+                ? links
+                : $"{pr.Body}\n{links}";
+
+            await githubService.UpdatePullRequestAsync(repoOwner, repoName, prNumber, pr.Title, appendedBody, pr.State.Value);
         }
 
         public override Command GetCommand()

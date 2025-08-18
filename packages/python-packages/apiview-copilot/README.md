@@ -77,7 +77,9 @@ for this script to succeed.
 
 ## Reporting Metrics
 
-To report metrics, you can use the following command:
+Report is now available at [PowerBI](https://msit.powerbi.com/groups/3e17dcb0-4257-4a30-b843-77f47f1d4121/reports/d8fdff73-ac33-49dd-873a-3948d7cb3c48?ctid=72f988bf-86f1-41af-91ab-2d7cd011db47&pbi_source=linkShare)
+
+Underneath, we use a script to generate the metrics. You can use the following command:
 `python cli.py report metrics -s <YYYY-MM-DD> -e <YYYY-MM-DD> [--markdown] [--environment "production"|"staging"]`
 
 Specify the start and end dates for the metrics you want to report. The `--markdown` option will pass the results through an LLM to summarize the results in markdown. The `--environment` option allows you to specify whether to report metrics from the production or staging environment, with production being the default.

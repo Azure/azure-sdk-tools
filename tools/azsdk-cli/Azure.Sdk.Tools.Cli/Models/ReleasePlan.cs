@@ -8,6 +8,7 @@ namespace Azure.Sdk.Tools.Cli.Models
     {
         public int WorkItemId { get; set; }
         public string WorkItemUrl { get; set; } = string.Empty;
+        public string WorkItemHtmlUrl { get; set; } = string.Empty;
         public string ServiceTreeId { get; set; } = string.Empty;
         public string ProductTreeId { get; set; } = string.Empty;
         public string ProductName { get; set; } = string.Empty;

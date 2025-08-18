@@ -91,6 +91,7 @@ public class GitConnection
         public Task<PullRequest?> GetPullRequestForBranchAsync(string repoOwner, string repoName, string remoteBranch);
         public Task<Issue> GetIssueAsync(string repoOwner, string repoName, int issueNumber);
         public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path);
+        public Task UpdatePullRequestAsync(string repoOwner, string repoName, int pullRequestNumber, string title, string body, ItemState state);
         public Task UpdateFileAsync(string owner, string repoName, string path, string message, string content, string sha, string branch);
         public Task<CreateBranchStatus> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranchName = "main");
         public Task<RepositoryContent> GetContentsSingleAsync(string owner, string repoName, string path);
@@ -117,6 +118,17 @@ public class GitConnection
         {
             var pullRequest = await gitHubClient.PullRequest.Get(repoOwner, repoName, pullRequestNumber);
             return pullRequest;
+        }        
+        public async Task UpdatePullRequestAsync(string repoOwner, string repoName, int pullRequestNumber, string title, string body, ItemState state)
+        {
+            // This method now accepts title, body, and state directly, so caller must fetch the PR first if needed.
+            var update = new PullRequestUpdate
+            {
+                Title = title,
+                Body = body,
+                State = state
+            };
+            await gitHubClient.PullRequest.Update(repoOwner, repoName, pullRequestNumber, update);
         }
 
         public async Task<string> GetGitHubParentRepoUrlAsync(string owner, string repoName)
@@ -131,9 +143,8 @@ public class GitConnection
 
         public async Task<PullRequest?> GetPullRequestForBranchAsync(string repoOwner, string repoName, string remoteBranch)
         {
-            logger.LogInformation($"Getting all pull request for {repoOwner}/{repoName}");
+            logger.LogInformation($"Searching for pull request in repository {repoOwner}/{repoName} for branch {remoteBranch}");
             var pullRequests = await gitHubClient.PullRequest.GetAllForRepository(repoOwner, repoName);
-            logger.LogInformation($"Branch name: {remoteBranch}");
             return pullRequests?.FirstOrDefault(pr => pr.Head?.Label != null && pr.Head.Label.Equals(remoteBranch, StringComparison.InvariantCultureIgnoreCase));
         }
 

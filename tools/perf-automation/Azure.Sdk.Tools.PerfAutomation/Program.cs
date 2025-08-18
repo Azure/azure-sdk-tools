@@ -363,8 +363,6 @@ namespace Azure.Sdk.Tools.PerfAutomation
                         };
 
                         results.Add(result);
-
-                        await WriteResults(outputJson, outputCsv, outputTxt, outputMd, results);
                         if (setupException == null)
                         {
                             for (var i = 0; i < options.Iterations; i++)
@@ -421,17 +419,15 @@ namespace Azure.Sdk.Tools.PerfAutomation
                                 }
 
                                 result.Iterations.Add(iterationResult);
+                            }
 
-                                await WriteResults(outputJson, outputCsv, outputTxt, outputMd, results);
+                            if (options.AdvancedStats && operationResults.Count > 0)
+                            {
+                                result.AdvancedStatistics = CalculateAdvancedStatistics(operationResults);
                             }
                         }
 
                         result.End = DateTime.Now;
-                        if (options.AdvancedStats && operationResults.Count > 0)
-                        {
-                            result.AdvancedStatistics = CalculateAdvancedStatistics(operationResults);
-                        }
-
                         await WriteResults(outputJson, outputCsv, outputTxt, outputMd, results);
                     }
                 }
@@ -660,7 +656,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             return JsonSerializer.Deserialize<List<OperationResult>>(json);
         }
 
-        private static AdvancedStatistics CalculateAdvancedStatistics(List<OperationResult> opeartionResults)
+        private static AdvancedStatistics CalculateAdvancedStatistics(List<OperationResult> operationResults)
         {
             List<double> latencies = [];
             double latencySum = 0;
@@ -669,7 +665,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             long totalSize = 0;
             int count = 0;
 
-            foreach (OperationResult result in opeartionResults)
+            foreach (OperationResult result in operationResults)
             {
                 double latency = result.Time;
                 latencies.Add(latency);
@@ -690,18 +686,23 @@ namespace Azure.Sdk.Tools.PerfAutomation
             Dictionary<int, double> latencyPercentiles = new();
             foreach (int p in percentiles)
             {
-                int index = (int)Math.Ceiling(p / 100.0 * count) - 1;
+                int index = (int)(p / 100.0 * count) - 1;
                 latencyPercentiles.Add(p, latencies[index]);
             }
 
-            double throughputMean = totalSize / latencySum * 1000;  // B/s
+            double throughputMean = -1;
+            if (totalSize > 0 && latencySum > 0)
+            {
+                throughputMean = totalSize / latencySum * 1000;  // B/s
+                throughputMean = throughputMean / (1024 * 1024);  // MB/s
+            }
             return new()
             {
                 LatencyMean = latencySum / count,
                 LatencyMax = latencyMax,
                 LatencyMin = latencyMin,
                 LatencyPercentiles = latencyPercentiles,
-                ThroughputMBpsMean = throughputMean / (1024 * 1024),  // MB/s
+                ThroughputMBpsMean = throughputMean,
             };
         }
     }

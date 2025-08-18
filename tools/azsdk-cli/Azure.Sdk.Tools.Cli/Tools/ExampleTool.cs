@@ -8,6 +8,7 @@ using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Helpers;
 using ModelContextProtocol.Server;
 using OpenAI.Chat;
 
@@ -23,30 +24,48 @@ public class ExampleTool : MCPTool
     private const string GitHubSubCommand = "github";
     private const string AISubCommand = "ai";
     private const string ErrorSubCommand = "error";
+    private const string ProcessSubCommand = "process";
+    private const string PowershellSubCommand = "powershell";
 
     // Dependencies injected via constructor
     private readonly ILogger<ExampleTool> logger;
-    private readonly IOutputService output;
+    private readonly IOutputHelper output;
     private readonly IAzureService azureService;
     private readonly IDevOpsService devOpsService;
     private readonly IGitHubService gitHubService;
     private readonly AzureOpenAIClient openAIClient;
+    private readonly IProcessHelper processHelper;
+    private readonly IPowershellHelper powershellHelper;
 
     // CLI Options and Arguments
     private readonly Argument<string> aiInputArg = new(
         name: "chat-prompt",
         description: "Chat prompt surrounded with quotes"
-    ) { Arity = ArgumentArity.ExactlyOne };
+    )
+    { Arity = ArgumentArity.ExactlyOne };
 
     private readonly Argument<string> packageArgument = new(
         name: "package",
         description: "Package name"
-    ) { Arity = ArgumentArity.ExactlyOne };
+    )
+    { Arity = ArgumentArity.ExactlyOne };
 
     private readonly Argument<string> errorInputArg = new(
         name: "error-input",
         description: "Error type to simulate, can be argument, timeout, notfound, or any user input"
-    ) { Arity = ArgumentArity.ExactlyOne };
+    )
+    { Arity = ArgumentArity.ExactlyOne };
+
+    private readonly Argument<string> processSleepArg = new(
+        name: "sleep",
+        description: "How many seconds to sleep"
+    )
+    { Arity = ArgumentArity.ExactlyOne };
+
+    private readonly Argument<string> powershellMessageArg = new(
+        name: "message",
+        description: "Message to pass to the PowerShell script via parameter")
+    { Arity = ArgumentArity.ExactlyOne };
 
     private readonly Option<string> tenantOption = new(["--tenant", "-t"], "Tenant ID");
     private readonly Option<string> languageOption = new(["--language", "-l"], "Programming language of the repository");
@@ -56,10 +75,12 @@ public class ExampleTool : MCPTool
 
     public ExampleTool(
         ILogger<ExampleTool> logger,
-        IOutputService output,
+        IOutputHelper output,
         IAzureService azureService,
         IDevOpsService devOpsService,
         IGitHubService gitHubService,
+        IProcessHelper processHelper,
+        IPowershellHelper powershellHelper,
         AzureOpenAIClient openAIClient
     ) : base()
     {
@@ -69,6 +90,8 @@ public class ExampleTool : MCPTool
         this.devOpsService = devOpsService;
         this.gitHubService = gitHubService;
         this.openAIClient = openAIClient;
+        this.processHelper = processHelper;
+        this.powershellHelper = powershellHelper;
 
         // Set command hierarchy - results in: azsdk example
         CommandHierarchy = [
@@ -106,11 +129,23 @@ public class ExampleTool : MCPTool
         errorCmd.AddOption(forceFailureOption);
         errorCmd.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
 
+        // Process execution example sub-command
+        var processCmd = new Command(ProcessSubCommand, "Demonstrate spawning an external process (echo)");
+        processCmd.AddArgument(processSleepArg);
+        processCmd.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
+
+        // PowerShell helper example sub-command
+        var powershellCmd = new Command(PowershellSubCommand, "Demonstrate PowerShell helper running a temp script with a parameter");
+        powershellCmd.AddArgument(powershellMessageArg);
+        powershellCmd.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
+
         parentCommand.Add(azureCmd);
         parentCommand.Add(devopsCmd);
         parentCommand.Add(githubCmd);
         parentCommand.Add(aiCmd);
         parentCommand.Add(errorCmd);
+        parentCommand.Add(processCmd);
+        parentCommand.Add(powershellCmd);
 
         return parentCommand;
     }
@@ -126,6 +161,8 @@ public class ExampleTool : MCPTool
             GitHubSubCommand => await DemonstrateGitHubService(ct),
             AISubCommand => await DemonstrateAIService(ctx.ParseResult.GetValueForArgument(aiInputArg), ct),
             ErrorSubCommand => await DemonstrateErrorHandling(ctx.ParseResult.GetValueForArgument(errorInputArg), ctx.ParseResult.GetValueForOption(forceFailureOption), ct),
+            ProcessSubCommand => await DemonstrateProcessExecution(ctx.ParseResult.GetValueForArgument(processSleepArg), ct),
+            PowershellSubCommand => await DemonstratePowershellExecution(ctx.ParseResult.GetValueForArgument(powershellMessageArg), ct),
             _ => new ExampleServiceResponse { ResponseError = $"Unknown command: {commandName}" }
         };
 
@@ -317,6 +354,131 @@ public class ExampleTool : MCPTool
             {
                 ResponseError = $"Demonstrated error handling: {ex.GetType().Name}: {ex.Message}"
             };
+        }
+    }
+
+    [McpServerTool(Name = "azsdk_example_process_execution"), Description("Demonstrates running an external process (sleep) and capturing output")]
+    public async Task<ExampleServiceResponse> DemonstrateProcessExecution(string time, CancellationToken ct = default)
+    {
+        try
+        {
+            // Trigger process timeout or normal sleep depending on whether value > 2
+            var options = new ProcessOptions(
+                "sleep", [time],  // Run on unix
+                "timeout", ["/t", time],  // Run on windows
+                logOutputStream: true,
+                timeout: TimeSpan.FromSeconds(2)
+            );
+            var result = await processHelper.Run(options, ct);
+            var trimmed = (result.Output ?? string.Empty).Trim();
+
+            if (result.ExitCode != 0)
+            {
+                SetFailure(result.ExitCode);
+                return new ExampleServiceResponse
+                {
+                    ResponseErrors = [
+                        $"Sleep example failed to run process",
+                        result.Output
+                    ]
+                };
+            }
+
+            return new ExampleServiceResponse
+            {
+                ServiceName = "Process",
+                Operation = "RunSleep",
+                Result = trimmed,
+                Details = new Dictionary<string, string>
+                {
+                    ["exit_code"] = result.ExitCode.ToString()
+                }
+            };
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error demonstrating process execution for sleep: {time}", time);
+            SetFailure();
+            return new ExampleServiceResponse
+            {
+                ResponseError = $"Failed to execute process: {ex.Message}"
+            };
+        }
+    }
+
+    [McpServerTool(Name = "azsdk_example_powershell_execution"), Description("Demonstrates running a powershell script with a parameter")]
+    public async Task<ExampleServiceResponse> DemonstratePowershellExecution(string message, CancellationToken ct = default)
+    {
+        string? tempFile = null;
+        try
+        {
+            // Create a temporary PowerShell script that echoes a parameter via Write-Host
+            var script = $"""
+                param([string]$Message)
+                Write-Host "1: $Message"
+                Start-Sleep -Seconds 1
+                Write-Host "2: $Message"
+                Start-Sleep -Seconds 1
+                Write-Error "Test error message, no failure"
+                Start-Sleep -Seconds 1
+                Write-Host "3: $Message"
+            """;
+            var guid = Guid.NewGuid().ToString()[..6];
+            tempFile = Path.Combine(Path.GetTempPath(), $"azsdk_example_{guid}.ps1");
+            await File.WriteAllTextAsync(tempFile, script, ct);
+
+            var options = new PowershellOptions(tempFile, [message]);
+            var result = await powershellHelper.Run(options, ct);
+            var output = (result.Output ?? string.Empty).Trim();
+
+            if (result.ExitCode != 0)
+            {
+                SetFailure(result.ExitCode);
+                return new ExampleServiceResponse
+                {
+                    ServiceName = "PowerShell",
+                    Operation = "RunTempScript",
+                    ResponseErrors = [
+                        $"PowerShell script exited with code {result.ExitCode}",
+                        result.Output ?? string.Empty
+                    ]
+                };
+            }
+
+            return new ExampleServiceResponse
+            {
+                ServiceName = "PowerShell",
+                Operation = "RunTempScript",
+                Result = output,
+                Details = new Dictionary<string, string>
+                {
+                    ["script_path"] = tempFile,
+                    ["exit_code"] = result.ExitCode.ToString()
+                }
+            };
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error demonstrating PowerShell helper with message: {Message}", message);
+            SetFailure();
+            return new ExampleServiceResponse
+            {
+                ResponseError = $"Failed to run PowerShell script: {ex.Message}"
+            };
+        }
+        finally
+        {
+            if (!string.IsNullOrEmpty(tempFile))
+            {
+                try
+                {
+                    if (File.Exists(tempFile))
+                    {
+                        File.Delete(tempFile);
+                    }
+                }
+                catch { /* ignore cleanup errors */ }
+            }
         }
     }
 }

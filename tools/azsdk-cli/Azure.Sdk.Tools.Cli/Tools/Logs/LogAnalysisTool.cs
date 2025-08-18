@@ -16,7 +16,7 @@ namespace Azure.Sdk.Tools.Cli.Tools;
 public class LogAnalysisTool : MCPTool
 {
     private readonly ILogAnalysisHelper logHelper;
-    private readonly IOutputService output;
+    private readonly IOutputHelper output;
     private readonly ILogger<LogAnalysisTool> logger;
 
     private const int DEFAULT_CONTEXT_LINES = 20;
@@ -32,7 +32,7 @@ public class LogAnalysisTool : MCPTool
 
     public LogAnalysisTool(
         ILogAnalysisHelper logHelper,
-        IOutputService output,
+        IOutputHelper output,
         ILogger<LogAnalysisTool> logger
     ) : base()
     {

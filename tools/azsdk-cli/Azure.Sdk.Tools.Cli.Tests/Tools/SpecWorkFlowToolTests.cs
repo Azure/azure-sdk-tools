@@ -15,7 +15,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
     internal class SpecWorkflowToolTests
     {
         private Mock<IDevOpsService> mockDevOpsService;
-        private Mock<IOutputService> mockOutputService;
+        private Mock<IOutputHelper> mockOutputService;
         private Mock<IGitHubService> mockGitHubService;
         private Mock<IGitHelper> mockGitHelper;
         private Mock<ITypeSpecHelper> mockTypeSpecHelper;
@@ -26,7 +26,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public void Setup()
         {
             mockDevOpsService = new Mock<IDevOpsService>();
-            mockOutputService = new Mock<IOutputService>();
+            mockOutputService = new Mock<IOutputHelper>();
             mockGitHubService = new Mock<IGitHubService>();
             mockGitHelper = new Mock<IGitHelper>();
             mockTypeSpecHelper = new Mock<ITypeSpecHelper>();
@@ -194,10 +194,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             };
             mockGitHubService.Setup(x => x.GetPullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()))
                 .ReturnsAsync(
-                new Octokit.PullRequest(123, null, null,null,null,null,null,null,123,ItemState.Open,null,null,DateTimeOffset.Now, DateTimeOffset.Now,DateTimeOffset.Now, null,null, null, null,null,null,false, null,null,null,null,0,1,1,1,1,null,false,null,null,null, labels,null));
+                new Octokit.PullRequest(123, null, null, null, null, null, null, null, 123, ItemState.Open, null, null, DateTimeOffset.Now, DateTimeOffset.Now, DateTimeOffset.Now, null, null, null, null, null, null, false, null, null, null, null, 0, 1, 1, 1, 1, null, false, null, null, null, labels, null));
 
             mockDevOpsService.Setup(x => x.RunSDKGenerationPipelineAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()))
-                .ReturnsAsync( new Build()
+                .ReturnsAsync(new Build()
                 {
                     Id = 100,
                     Status = BuildStatus.InProgress,
@@ -221,7 +221,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 .Returns("specification/testcontoso/Contoso.Management");
             mockTypeSpecHelper.Setup(x => x.IsValidTypeSpecProjectPath(It.IsAny<string>()))
                 .Returns(true);
-            
+
             mockDevOpsService.Setup(x => x.RunSDKGenerationPipelineAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()))
                 .ReturnsAsync(new Build()
                 {

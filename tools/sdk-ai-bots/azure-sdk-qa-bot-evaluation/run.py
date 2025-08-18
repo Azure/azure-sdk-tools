@@ -310,7 +310,7 @@ def establish_baseline(args: argparse.Namespace, all_results: dict[str, Any]) ->
     """Establish the current results as the new baseline."""
 
     # only ask if we're not in CI
-    if args.is_cli is False:
+    if args.is_ci is False:
         establish_baseline = input("\nDo you want to establish this as the new baseline? (y/n): ")
         if establish_baseline.lower() == "y":
             for name, result in all_results.items():
@@ -339,15 +339,13 @@ if __name__ == "__main__":
     parser.add_argument("--test_folder", type=str, help="the path to the test folder")
     parser.add_argument("--prefix", type=str, help="Process only files starting with this prefix")
     parser.add_argument("--is_bot", type=str, default="True", help="Use bot API for processing Q&A pairs (True/False)")
-    parser.add_argument("--is_cli", type=str, default="True", help="Run in CI/CD pipeline (True/False)")
+    parser.add_argument("--is_ci", type=str, default="True", help="Run in CI/CD pipeline (True/False)")
     parser.add_argument("--evaluation_name_prefix", type=str, help="the prefix of evaluation name")
-    parser.add_argument("--skip_data_process", type=str, default="False", help="skip to pre-process the test data")
     parser.add_argument("--send_result", type=str, default="True", help="Send the evaluation result to AI foundry project")
     args = parser.parse_args()
 
     args.is_bot = args.is_bot.lower() in ('true', '1', 'yes', 'on')
-    args.is_cli = args.is_cli.lower() in ('true', '1', 'yes', 'on')
-    args.skip_data_process = args.skip_data_process.lower() in ('true', '1', 'yes')
+    args.is_ci = args.is_ci.lower() in ('true', '1', 'yes', 'on')
     args.send_result = args.send_result.lower() in ('true', '1', 'yes')
 
     
@@ -378,7 +376,7 @@ if __name__ == "__main__":
         print("📊 Preparing dataset...")
         kwargs = {}
         if args.send_result:
-            if args.is_cli:
+            if args.is_ci:
                 # service_connection_id = os.environ["AZURESUBSCRIPTION_SERVICE_CONNECTION_ID"]
                 # client_id = os.environ["AZURESUBSCRIPTION_CLIENT_ID"]
                 # tenant_id = os.environ["AZURESUBSCRIPTION_TENANT_ID"]

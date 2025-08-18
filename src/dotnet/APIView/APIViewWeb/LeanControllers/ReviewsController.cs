@@ -16,7 +16,6 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using APIViewWeb.DTOs;
-using APIViewWeb.Models;
 
 namespace APIViewWeb.LeanControllers
 {

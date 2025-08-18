@@ -53,7 +53,7 @@ namespace APIViewWeb.Helpers
                 "Swift" => "ios",
                 "Go" => "golang",
                 "Java" => languageVariant == "Android" ? "android" : "java",
-                _ => language?.ToLowerInvariant() ?? string.Empty
+                _ => language?.ToLowerInvariant()
             };
         }
 

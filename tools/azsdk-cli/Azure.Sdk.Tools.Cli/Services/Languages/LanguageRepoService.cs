@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Configuration;
@@ -139,8 +138,6 @@ public class LanguageRepoService : ILanguageRepoService
     /// <returns>CLI check response containing success/failure status and response message</returns>
     protected async Task<CLICheckResponse> ValidateChangelogCommonAsync(string packagePath)
     {
-        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-        
         try
         {
             if (!Directory.Exists(packagePath))
@@ -169,25 +166,11 @@ public class LanguageRepoService : ILanguageRepoService
             // Use a longer timeout for changelog validation - 5 minutes should be sufficient
             var timeoutMs = 300_000; // 5 minutes
             var processResult = _processHelper.RunProcess(command, args, packagePath, timeoutMs);
-            stopwatch.Stop();
 
-            if (processResult.ExitCode == 0)
-            {
-                return new CLICheckResponse(0, System.Text.Json.JsonSerializer.Serialize(new
-                {
-                    Message = "Changelog validation completed successfully",
-                    Duration = (int)stopwatch.ElapsedMilliseconds,
-                    Output = processResult.Output
-                }));
-            }
-            else
-            {
-                return new CLICheckResponse(1, processResult.Output, $"Changelog validation failed with exit code {processResult.ExitCode}");
-            }
+            return CreateResponseFromProcessResult(processResult);
         }
         catch (Exception ex)
         {
-            stopwatch.Stop();
             return new CLICheckResponse(1, "", $"Unhandled exception: {ex.Message}");
         }
         finally
@@ -204,8 +187,6 @@ public class LanguageRepoService : ILanguageRepoService
     /// <returns>CLI check response containing success/failure status and response message</returns>
     protected async Task<CLICheckResponse> ValidateReadmeCommonAsync(string packagePath)
     {
-        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-        
         try
         {
             if (!Directory.Exists(packagePath))
@@ -246,25 +227,11 @@ public class LanguageRepoService : ILanguageRepoService
             // Use a longer timeout for README validation - 10 minutes should be sufficient as it may need to install doc-warden
             var timeoutMs = 600_000; // 10 minutes
             var processResult = _processHelper.RunProcess(command, args, packagePath, timeoutMs);
-            stopwatch.Stop();
 
-            if (processResult.ExitCode == 0)
-            {
-                return new CLICheckResponse(0, System.Text.Json.JsonSerializer.Serialize(new
-                {
-                    Message = "README validation completed successfully",
-                    Duration = (int)stopwatch.ElapsedMilliseconds,
-                    Output = processResult.Output
-                }));
-            }
-            else
-            {
-                return new CLICheckResponse(1, processResult.Output, $"README validation failed with exit code {processResult.ExitCode}");
-            }
+            return CreateResponseFromProcessResult(processResult);
         }
         catch (Exception ex)
         {
-            stopwatch.Stop();
             return new CLICheckResponse(1, "", $"Unhandled exception: {ex.Message}");
         }
         finally
@@ -281,8 +248,6 @@ public class LanguageRepoService : ILanguageRepoService
     /// <returns>CLI check response containing success/failure status and response message</returns>
     protected async Task<CLICheckResponse> CheckSpellingCommonAsync(string packagePath)
     {
-        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-        
         try
         {
             if (!Directory.Exists(packagePath))
@@ -328,26 +293,11 @@ public class LanguageRepoService : ILanguageRepoService
                 .AddArgs("--root", packageRepoRoot)
                 .AddArgs($"./{relativePath}/**")
                 .Run();
-            
-            stopwatch.Stop();
 
-            if (processResult.ExitCode == 0)
-            {
-                return new CLICheckResponse(0, System.Text.Json.JsonSerializer.Serialize(new
-                {
-                    Message = "Spelling check completed successfully",
-                    Duration = (int)stopwatch.ElapsedMilliseconds,
-                    Output = processResult.Output
-                }));
-            }
-            else
-            {
-                return new CLICheckResponse(1, processResult.Output, $"Spelling check failed with exit code {processResult.ExitCode}");
-            }
+            return CreateResponseFromProcessResult(processResult);
         }
         catch (Exception ex)
         {
-            stopwatch.Stop();
             return new CLICheckResponse(1, "", $"Unhandled exception: {ex.Message}");
         }
         finally

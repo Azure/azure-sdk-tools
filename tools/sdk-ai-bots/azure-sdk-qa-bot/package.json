@@ -37,11 +37,13 @@
     "axios": "^1.8.4",
     "botbuilder": "^4.23.1",
     "express": "^5.0.1",
+    "fs-extra": "^11.3.1",
     "winston": "^3.17.0",
     "yaml": "^2.3.4"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",
+    "@types/fs-extra": "^11.0.4",
     "@types/node": "^18.0.0",
     "env-cmd": "^10.1.0",
     "nodemon": "^3.1.7",

@@ -28,6 +28,9 @@
     },
     "typespecHelperStorageResourceGroupName": {
       "value": "${{TYPESPEC_HELPER_STORAGE_RESOURCE_GROUP_NAME}}"
+    },
+    "dockerImageTag": {
+      "value": "${{DOCKER_IMAGE_TAG}}"
     }
   }
 }

@@ -1,7 +1,7 @@
 import { TableClient, TableServiceClient, TableEntity, odata } from '@azure/data-tables';
-import { DefaultAzureCredential, ManagedIdentityCredential } from '@azure/identity';
 import { logger } from '../logging/logger.js';
 import config from '../config/config.js';
+import { getAzureCredential } from '../common/shared.js';
 
 export interface Prompt {
   textWithoutMention: string;
@@ -143,8 +143,7 @@ export class ConversationHandler {
       }
 
       // Use managed identity or default Azure credentials
-      const credential =
-        process.env.IS_LOCAL === 'true' ? new DefaultAzureCredential() : new ManagedIdentityCredential(this.botId);
+      const credential = getAzureCredential(this.botId);
 
       try {
         // Create table service client

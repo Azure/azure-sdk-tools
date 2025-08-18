@@ -267,16 +267,7 @@ public class LanguageRepoService : ILanguageRepoService
             
             if (!File.Exists(cspellConfigPath))
             {
-                // Try alternative locations for cspell config
-                cspellConfigPath = Path.Combine(packageRepoRoot, "cspell.json");
-                if (!File.Exists(cspellConfigPath))
-                {
-                    cspellConfigPath = Path.Combine(packageRepoRoot, ".cspell.json");
-                    if (!File.Exists(cspellConfigPath))
-                    {
-                        return new CLICheckResponse(1, "", $"Cspell config file not found in expected locations");
-                    }
-                }
+                return new CLICheckResponse(1, "", $"Cspell config file not found in expected locations");
             }
 
             // Run cspell using npx (no need to check if installed globally)

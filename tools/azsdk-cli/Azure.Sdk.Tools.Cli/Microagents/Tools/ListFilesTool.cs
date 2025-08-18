@@ -18,7 +18,7 @@ public class ListFilesTool(string baseDirectory) : AgentTool<ListFilesInput, Lis
 
     private readonly string baseDirectory = baseDirectory;
 
-    public override Task<ListFilesOutput> InvokeAsync(ListFilesInput input, CancellationToken ct)
+    public override Task<ListFilesOutput> Invoke(ListFilesInput input, CancellationToken ct)
     {
         if (input is null)
         {

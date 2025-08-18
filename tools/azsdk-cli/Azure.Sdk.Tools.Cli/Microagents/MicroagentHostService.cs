@@ -1,22 +1,17 @@
-
 using System.ComponentModel;
 using Azure.AI.OpenAI;
-using Microsoft.TeamFoundation.WorkItemTracking.WebApi;
 using OpenAI.Chat;
 
 namespace Azure.Sdk.Tools.Cli.Microagents;
 
-public interface IMicroagentHostService
-{
-    Task<TResult> RunAgentToCompletionAsync<TResult>(Microagent<TResult> agentDefinition, CancellationToken ct = default);
-}
-
 public class MicroagentHostService(AzureOpenAIClient openAI, ILogger<MicroagentHostService> logger) : IMicroagentHostService
 {
+    private const string ExitToolName = "Exit";
+
     private AzureOpenAIClient openAI = openAI;
     private ILogger logger = logger;
 
-    public async Task<TResult> RunAgentToCompletionAsync<TResult>(Microagent<TResult> agentDefinition, CancellationToken ct = default)
+    public async Task<TResult> RunAgentToCompletion<TResult>(Microagent<TResult> agentDefinition, CancellationToken ct = default)
     {
         logger.LogInformation("Starting agent with model '{Model}'", agentDefinition.Model);
 
@@ -40,12 +35,18 @@ public class MicroagentHostService(AzureOpenAIClient openAI, ILogger<MicroagentH
         };
 
         // Add the special-case "exit" tool
-        chatCompletionOptions.Tools.Add(ChatTool.CreateFunctionTool("Exit", "Call this tool when you are finished with the work or are otherwise unable to continue.", BinaryData.FromString(ToolHelpers.GetJsonSchemaRepresentation(typeof(ToolCallResult<TResult>)))));
+        chatCompletionOptions.Tools.Add(
+            ChatTool.CreateFunctionTool(ExitToolName,
+                "Call this tool when you are finished with the work or are otherwise unable to continue.",
+                BinaryData.FromString(ToolHelpers.GetJsonSchemaRepresentation(typeof(MicroagentResult<TResult>)))
+            )
+        );
+
         foreach (var tool in tools.Values)
         {
-            // Create our tool definitions using the tool's name and by converting the tool's input schema type to a JSON schema.
             logger.LogDebug("Registering tool '{ToolName}' with description: {Description}", tool.Name, tool.Description);
-            chatCompletionOptions.Tools.Add(ChatTool.CreateFunctionTool(tool.Name, tool.Description, BinaryData.FromString(ToolHelpers.GetJsonSchemaRepresentation(tool.InputSchema))));
+            var chatTool = ChatTool.CreateFunctionTool(tool.Name, tool.Description, BinaryData.FromString(tool.InputSchema));
+            chatCompletionOptions.Tools.Add(chatTool);
         }
 
         for (var i = 0; i < agentDefinition.MaxToolCalls; i++)
@@ -63,21 +64,28 @@ public class MicroagentHostService(AzureOpenAIClient openAI, ILogger<MicroagentH
             logger.LogDebug("Invoking tool '{ToolName}' with arguments: {Arguments}", toolCall.FunctionName, toolCall.FunctionArguments.ToString());
 
             // Dispatch the tool call...
-            if (toolCall.FunctionName == "Exit")
+            if (toolCall.FunctionName == ExitToolName)
             {
                 // exit tool was called with the result, return it.
                 logger.LogInformation("Agent is exiting with result.");
-                return toolCall.FunctionArguments.ToObjectFromJson<ToolCallResult<TResult>>()!.Result ?? throw new InvalidOperationException("Exit tool did not return a valid result.");
+                var result = toolCall.FunctionArguments.ToObjectFromJson<MicroagentResult<TResult>>();
+                if (result == null)
+                {
+                    throw new InvalidOperationException($"Exit tool did not return a valid result: {toolCall.FunctionArguments}");
+                }
+
+                return result.Result;
             }
 
-            var tool = tools[toolCall.FunctionName];
-
-            // TODO: error handling. What if the tool is not found? What if the arguments are invalid?
+            if (!tools.TryGetValue(toolCall.FunctionName, out var tool))
+            {
+                throw new InvalidOperationException($"Agent attempted to call nonexistent tool: {toolCall.FunctionName}");
+            }
 
             string toolResult;
             try
             {
-                toolResult = await tool.InvokeAsync(toolCall.FunctionArguments.ToString(), ct);
+                toolResult = await tool.Invoke(toolCall.FunctionArguments.ToString(), ct);
             }
             catch (Exception e)
             {
@@ -98,7 +106,7 @@ public class MicroagentHostService(AzureOpenAIClient openAI, ILogger<MicroagentH
     /// (OpenAI expects an object at the top level)
     /// </summary>
     /// <typeparam name="T">Type of the result</typeparam>
-    private class ToolCallResult<T>
+    private class MicroagentResult<T>
     {
         [Description("The result of the agent run. Output the result requested exactly, without additional padding, explanation, or code fences unless requested.")]
         public T Result { get; set; }

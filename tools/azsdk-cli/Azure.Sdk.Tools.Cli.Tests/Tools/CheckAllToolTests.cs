@@ -87,23 +87,33 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         }
 
         [Test]
-        public async Task RunPackageCheck_WithReadmeCheck_ReturnsResult()
+        public async Task RunPackageCheck_WithReadmeCheck_WhenNoReadmeExists_ReturnsFailure()
         {
+            // Arrange - Empty directory with no README
+
             // Act
             var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Readme);
 
             // Assert
             Assert.IsNotNull(result);
+            Assert.That(result.ExitCode, Is.Not.EqualTo(0), "Should fail when no README exists");
+            Assert.IsNotNull(result.CheckStatusDetails);
         }
 
         [Test]
-        public async Task RunPackageCheck_WithSpellingCheck_ReturnsResult()
+        public async Task RunPackageCheck_WithSpellingCheck_WhenFileWithTypos_ReturnsFailure()
         {
+            // Arrange - Create a file with obvious spelling errors
+            var testFile = Path.Combine(_testProjectPath, "test.md");
+            await File.WriteAllTextAsync(testFile, "This file contians obvioius speling erors.");
+
             // Act
             var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Cspell);
 
             // Assert
             Assert.IsNotNull(result);
+            Assert.IsNotNull(result.CheckStatusDetails);
+            Assert.That(result.ExitCode, Is.Not.EqualTo(0));
         }
 
         [Test]

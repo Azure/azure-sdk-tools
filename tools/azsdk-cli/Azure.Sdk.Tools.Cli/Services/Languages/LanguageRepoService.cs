@@ -174,10 +174,6 @@ public class LanguageRepoService : ILanguageRepoService
         {
             return new CLICheckResponse(1, "", $"Unhandled exception: {ex.Message}");
         }
-        finally
-        {
-            await Task.CompletedTask; // Make this async for consistency
-        }
     }
 
     /// <summary>
@@ -235,10 +231,6 @@ public class LanguageRepoService : ILanguageRepoService
         {
             return new CLICheckResponse(1, "", $"Unhandled exception: {ex.Message}");
         }
-        finally
-        {
-            await Task.CompletedTask; // Make this async for consistency
-        }
     }
 
     /// <summary>
@@ -268,7 +260,7 @@ public class LanguageRepoService : ILanguageRepoService
             
             if (!File.Exists(cspellConfigPath))
             {
-                return new CLICheckResponse(1, "", $"Cspell config file not found in expected locations");
+                return new CLICheckResponse(1, "", $"Cspell config file not found at expected location: {cspellConfigPath}");
             }
 
             // Convert absolute path to relative path from repo root

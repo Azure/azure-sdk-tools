@@ -4,6 +4,7 @@ using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tests.Mocks.Services;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools;
+using Microsoft.Graph.Models;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools
 {
@@ -72,8 +73,16 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public async Task Test_Create_releasePlan_with_invalid_product_tree_id()
         {
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
-            var releaseplan = await releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "12345678-1234-5678-9012-123456789012", "InvalidProductTreeId", "Test version", "https://github.com/Azure/azure-rest-api-specs/pull/35446", "beta", isTestReleasePlan: true);
+            var releaseplan = await releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "12345678-1234-5678-9012-123456789012", "InvalidProductTreeId", "Test version", "https://github.com/Azure/azure-rest-api-specs-pr/pull/35446", "beta", isTestReleasePlan: true);
             Assert.True(releaseplan.Contains("Product tree ID 'InvalidProductTreeId' is not a valid GUID"));
+        }
+
+        [Test]
+        public async Task Test_Create_releasePlan_with_invalid_pull_request_url()
+        {
+            var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
+            var releaseplan = await releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "12345678-1234-5678-9012-123456789012", "12345678-1234-5678-9012-123456789012", "Test version", "https://github.com/Azure/invalid-repo/pull/35446", "beta", isTestReleasePlan: true);
+            Assert.True(releaseplan.Contains("Invalid spec pull request URL"));
         }
 
         [Test]

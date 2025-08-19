@@ -32,10 +32,10 @@ export async function updateSnippets(packageDirectory: string) {
 }
 
 export async function lintFix(packageDirectory: string) {
-    logger.info(`Start to format code in '${packageDirectory}'.`);
+    logger.info(`Start to fix lint errors in '${packageDirectory}'.`);
     const cwd = packageDirectory;
     const options = { ...runCommandOptions, cwd };
-    const lintFixCommand = 'eslint package.json api-extractor.json src test samples-dev --fix --fix-type [problem,suggestion]';
+    const lintFixCommand = 'eslint package.json api-extractor.json src test samples-dev --fix --fix-type';
 
     try {
         await runCommand(`npm`, ['exec', lintFixCommand], options, true, 300, true);

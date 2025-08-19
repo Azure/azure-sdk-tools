@@ -15,6 +15,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using APIViewWeb.DTOs;
 using APIViewWeb.Models;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace APIViewWeb.LeanControllers
 {
@@ -30,6 +31,7 @@ namespace APIViewWeb.LeanControllers
         private readonly INotificationManager _notificationManager;
         private readonly IEnumerable<LanguageService> _languageServices;
         private readonly IWebHostEnvironment _env;
+        private readonly IMemoryCache _cache;
 
         public ReviewsController(ILogger<ReviewsController> logger,
             IAPIRevisionsManager reviewRevisionsManager, IReviewManager reviewManager,
@@ -37,7 +39,7 @@ namespace APIViewWeb.LeanControllers
             IConfiguration configuration, UserProfileCache userProfileCache,
             IEnumerable<LanguageService> languageServices,
             IHubContext<SignalRHub> signalRHub, INotificationManager notificationManager,
-            IWebHostEnvironment env)
+            IWebHostEnvironment env, IMemoryCache cache)
         {
             _apiRevisionsManager = reviewRevisionsManager;
             _reviewManager = reviewManager;
@@ -49,6 +51,7 @@ namespace APIViewWeb.LeanControllers
             _signalRHubContext = signalRHub;
             _notificationManager = notificationManager;
             _env = env;
+            _cache = cache;
         }
 
         /// <summary>
@@ -71,6 +74,7 @@ namespace APIViewWeb.LeanControllers
         /// <param name="reviewId"></param>
         /// <returns></returns>
         [HttpGet("{reviewId}", Name = "GetReview")]
+        [ResponseCache(Duration = 300, VaryByQueryKeys = new[] { "reviewId" })] // Cache for 5 minutes
         public async Task<ActionResult<ReviewListItemModel>> GetReviewAsync(string reviewId)
         {
             var review = await _reviewManager.GetReviewAsync(User, reviewId);
@@ -82,6 +86,7 @@ namespace APIViewWeb.LeanControllers
         }
 
         [HttpGet("allowedApprovers", Name = "AllowedApprovers")]
+        [ResponseCache(Duration = 3600)] // Cache for 1 hour since approvers don't change frequently
         public ActionResult<HashSet<string>> GetAllowedApproversAsync()
         {
             var allowedApprovers = _configuration["approvers"];
@@ -92,7 +97,7 @@ namespace APIViewWeb.LeanControllers
         public async Task<ActionResult<HashSet<string>>> GetPreferredApproversAsync(string reviewId)
         {
             var review = await _reviewManager.GetReviewAsync(User, reviewId);
-            HashSet<string> preferredApprovers = PageModelHelpers.GetPreferredApprovers(_configuration, _userProfileCache, User, review);
+            HashSet<string> preferredApprovers = await PageModelHelpers.GetPreferredApproversAsync(_configuration, _userProfileCache, User, review);
             return new LeanJsonResult(preferredApprovers, StatusCodes.Status200OK);
         }
 

@@ -6,7 +6,7 @@
 @{
     Layout = "Shared/_Layout";
     ViewData["Title"] = "Usage Samples";
-    var userPreference = PageModelHelpers.GetUserPreference(Model._userProfileCache, User);
+    var userPreference = await PageModelHelpers.GetUserPreferenceAsync(Model._userProfileCache, User);
     TempData["UserPreference"] = userPreference;
 }
 

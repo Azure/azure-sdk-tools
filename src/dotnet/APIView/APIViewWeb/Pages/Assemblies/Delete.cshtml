@@ -4,7 +4,7 @@
 @using APIViewWeb.Models
 @{
     ViewData["Title"] = "Delete";
-    TempData["UserPreference"] = PageModelHelpers.GetUserPreference(Model._userProfileCache, User);
+    TempData["UserPreference"] = await PageModelHelpers.GetUserPreferenceAsync(Model._userProfileCache, User);
 }
 <div class="container-fluid">
     <div class="mx-5 mt-2">

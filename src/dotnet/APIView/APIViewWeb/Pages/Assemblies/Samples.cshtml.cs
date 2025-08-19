@@ -72,7 +72,7 @@ namespace APIViewWeb.Pages.Assemblies
                     }
 
                     Comments = await _commentsManager.GetUsageSampleCommentsAsync(Review.Id);
-                    SampleContent = ParseLines(ActiveSampleRevision.FileId, Comments).Result;
+                    SampleContent = await ParseLines(ActiveSampleRevision.FileId, Comments);
                     SampleOriginal = await _samplesRevisionsManager.GetSamplesRevisionContentAsync(ActiveSampleRevision.OriginalFileId);
                     Upload.UpdateString = SampleOriginal;
                     if (SampleContent == null)

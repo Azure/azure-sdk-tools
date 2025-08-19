@@ -132,11 +132,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
                 ServiceOwners = new List<string>(),
                 AzureSdkOwners = new List<string>()
             };
-            var index = 1;
             var codeownersEntryExists = false;
 
             // Act
-            var result = codeownersHelper.AddCodeownersEntryAtIndex(content, codeownersEntry, index, codeownersEntryExists);
+            var result = codeownersHelper.AddCodeownersEntry(new List<CodeownersEntry>(), content, codeownersEntry, codeownersEntryExists);
 
             // Assert
             Assert.That(result, Does.Contain("line1"));
@@ -161,11 +160,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
                 startLine = 1,
                 endLine = 1
             };
-            var index = 1;
             var codeownersEntryExists = true;
 
             // Act
-            var result = codeownersHelper.AddCodeownersEntryAtIndex(content, codeownersEntry, index, codeownersEntryExists);
+            var result = codeownersHelper.AddCodeownersEntry(new List<CodeownersEntry>(), content, codeownersEntry, codeownersEntryExists);
 
             // Assert
             Assert.That(result, Does.Contain("Test Service"));
@@ -419,7 +417,7 @@ line3";
             var ownersToAdd = new List<string> { "azure/team3", "@azure/team4" };
 
             // Act
-            var result = codeownersHelper.AddUniqueOwners(existingOwners, ownersToAdd);
+            var result = codeownersHelper.AddOwners(existingOwners, ownersToAdd);
 
             // Assert
             Assert.That(result.Count, Is.EqualTo(4));
@@ -437,7 +435,7 @@ line3";
             var ownersToAdd = new List<string> { "azure/team1", "@azure/team3" };
 
             // Act
-            var result = codeownersHelper.AddUniqueOwners(existingOwners, ownersToAdd);
+            var result = codeownersHelper.AddOwners(existingOwners, ownersToAdd);
 
             // Assert
             Assert.That(result.Count, Is.EqualTo(3));

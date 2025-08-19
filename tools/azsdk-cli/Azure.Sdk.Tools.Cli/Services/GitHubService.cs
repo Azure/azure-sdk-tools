@@ -95,7 +95,9 @@ public class GitConnection
         public Task UpdateFileAsync(string owner, string repoName, string path, string message, string content, string sha, string branch);
         public Task<CreateBranchStatus> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranchName = "main");
         public Task<bool> IsExistingBranchAsync(string repoOwner, string repoName, string branchName);
-        public Task<RepositoryContent> GetContentsSingleAsync(string owner, string repoName, string path);
+        public Task<RepositoryContent> GetContentsSingleAsync(string owner, string repoName, string path, string? branch = null);
+        public Task<IReadOnlyList<Organization>?> GetPublicOrgMembership(string username);
+        public Task<CollaboratorPermissionResponse> HasWritePermission(string owner, string repo, string username);
     }
 
     public class GitHubService : GitConnection, IGitHubService
@@ -193,7 +195,7 @@ public class GitConnection
                     }
                 }
 
-                logger.LogInformation($"Found {pullRequests.Count} pull requests with title containing '{titleSearchTerm}'");
+                logger.LogInformation($"Found {pullRequests.Count} pull requests with title containing '{titleSearchTerm}'.");
                 return pullRequests;
             }
             catch (Exception ex)
@@ -275,7 +277,7 @@ public class GitConnection
                     response.Url = createdPullRequest.HtmlUrl;
                     response.Messages.Add("Once you have successfully generated the SDK transition the PR to review ready.");
                 }
-                
+
                 response.Messages.Add($"Pull request created successfully.");
                 response.Url = createdPullRequest.HtmlUrl;
             }
@@ -472,9 +474,9 @@ public class GitConnection
             }
         }
 
-        public async Task<RepositoryContent> GetContentsSingleAsync(string owner, string repoName, string path)
+        public async Task<RepositoryContent> GetContentsSingleAsync(string owner, string repoName, string path, string? branch = null)
         {
-            var contents = await GetContentsAsync(owner, repoName, path);
+            var contents = await GetContentsAsync(owner, repoName, path, branch);
             if (contents == null || contents.Count == 0)
             {
                 throw new InvalidOperationException($"Could not retrieve '{path}' file content");
@@ -484,6 +486,18 @@ public class GitConnection
                 throw new InvalidOperationException($"'{path}' file is empty");
             }
             return contents[0];
+        }
+
+        public async Task<IReadOnlyList<Organization>?> GetPublicOrgMembership(string username)
+        {
+            var organizations = await gitHubClient.Organization.GetAllForUser(username);
+            return organizations;
+        }
+
+        public async Task<CollaboratorPermissionResponse> HasWritePermission(string owner, string repo, string username)
+        {
+            var permission = await gitHubClient.Repository.Collaborator.ReviewPermission(owner, repo, username);
+            return permission;
         }
     }
 }

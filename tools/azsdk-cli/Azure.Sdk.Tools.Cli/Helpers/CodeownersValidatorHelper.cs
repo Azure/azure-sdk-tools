@@ -23,23 +23,15 @@ namespace Azure.Sdk.Tools.Cli.Helpers
     /// This is a C# replacement for the Validate-AzsdkCodeOwner.ps1 PowerShell script.
     /// </summary>
     [Description("Validates GitHub users for Azure SDK code owner requirements")]
-    public class CodeownersValidatorHelper : ICodeownersValidatorHelper
+      public class CodeownersValidatorHelper(IGitHubService githubService,
+      ILogger<CodeownersValidatorHelper> logger) : ICodeownersValidatorHelper
     {
-        private readonly IGitHubService githubService;
-        private readonly ILogger<CodeownersValidatorHelper> logger;
-
         private static readonly HashSet<string> RequiredOrganizations = new(StringComparer.OrdinalIgnoreCase)
         {
             "Microsoft",
             "Azure"
         };
-
-        public CodeownersValidatorHelper(IGitHubService _githubService, ILogger<CodeownersValidatorHelper> _logger)
-        {
-            githubService = _githubService;
-            logger = _logger;
-        }
-
+        
         /// <summary>
         /// Validates if a GitHub user meets the requirements to be an Azure SDK code owner.
         /// </summary>
@@ -47,82 +39,78 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         /// <returns>Validation result with detailed information</returns>
         public async Task<CodeownersValidationResult> ValidateCodeOwnerAsync(string username, bool verbose = false)
         {
-            var result = new CodeownersValidationResult
-            {
-                Username = username,
-                Organizations = new Dictionary<string, bool>(),
-                HasWritePermission = false,
-                IsValidCodeOwner = false,
-                Status = "Processing"
-            };
-
             try
             {
-                var hasRequiredOrgs = await ValidateOrganizationsAsync(username, result);
+                // Get user's public organization memberships and evaluate required-org membership inline
+                var memberships = await ValidateOrganizationsAsync(username);
+                var hasRequiredOrgs = RequiredOrganizations.All(o => memberships.Contains(o));
+
+                // Populate result. Organizations from memberships without having the validator helper mutate the result.
+                Dictionary<string, bool> organizations = new();
+                foreach (var requiredOrg in RequiredOrganizations)
+                {
+                    organizations[requiredOrg] = memberships.Contains(requiredOrg);
+                }
 
                 // Validate write permissions on azure-sdk-for-net
                 var hasWritePermission = await ValidatePermissionsAsync(username);
-                result.HasWritePermission = hasWritePermission;
 
-                result.IsValidCodeOwner = hasRequiredOrgs && hasWritePermission;
-                result.Status = "Success";
-                result.Message = result.IsValidCodeOwner
-                    ? "Valid code owner"
-                    : "Not a valid code owner";
-
-                return result;
+                var isValidCodeowner = hasRequiredOrgs && hasWritePermission;
+                return new CodeownersValidationResult
+                {
+                    Username = username,
+                    Status = "Success",
+                    Message = isValidCodeowner
+                        ? "Valid code owner" 
+                        : "Not a valid code owner",
+                    Organizations = organizations,
+                    HasWritePermission = hasWritePermission,
+                    IsValidCodeOwner = isValidCodeowner,
+                };
             }
             catch (NotFoundException)
             {
-                result.Status = "Error";
-                result.Message = $"GitHub user '{username}' not found";
-                logger.LogWarning("GitHub user not found: {Username}", username);
-                return result;
+                return new CodeownersValidationResult
+                {
+                    Username = username,
+                    Status = "Error",
+                    Message = $"GitHub user not found '{username}' not found"
+                };
             }
             catch (RateLimitExceededException ex)
             {
-                result.Status = "Error";
-                result.Message = $"Rate limit exceeded. Reset at: {ex.Reset}";
-                logger.LogError("Rate limit exceeded for user {Username}. Reset at: {Reset}", 
-                    username, ex.Reset);
-                return result;
+                return new CodeownersValidationResult
+                {
+                    Username = username,
+                    Status = "Error",
+                    Message = $"Rate limit exceeded for user {username}. Reset at: {ex.Reset}"
+                };
             }
             catch (SecondaryRateLimitExceededException ex)
             {
-                result.Status = "Error";
-                result.Message = $"Secondary rate limit exceeded. Please wait a few minutes before trying again.";
-                logger.LogError("Secondary rate limit exceeded for user {Username}: {Message}", 
-                    username, ex.Message);
-                return result;
+                return new CodeownersValidationResult
+                {
+                    Username = username,
+                    Status = "Error",
+                    Message = $"Secondary rate limit exceeded for user {username}: {ex.Message}."
+                };
             }
             catch (Exception ex)
             {
-                result.Status = "Error";
-                result.Message = $"Error validating user: {ex.Message}";
-                logger.LogError(ex, "Error validating GitHub user: {Username}", username);
-                return result;
+                throw new Exception($"Error validating user {username}: {ex.Message}");
             }
         }
 
         /// <summary>
         /// Validates the user's organization memberships (Microsoft and Azure only).
         /// </summary>
-        private async Task<bool> ValidateOrganizationsAsync(string username, CodeownersValidationResult result)
+        private async Task<HashSet<string>> ValidateOrganizationsAsync(string username)
         {
             try
             {
-                var client = ((GitHubService)githubService).gitHubClient;
-                var organizations = await client.Organization.GetAllForUser(username);
+                var organizations = await githubService.GetPublicOrgMembership(username);
                 var userOrgs = organizations.Select(org => org.Login).ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-                // Check only required organizations
-                foreach (var requiredOrg in RequiredOrganizations)
-                {
-                    bool isMember = userOrgs.Contains(requiredOrg);
-                    result.Organizations[requiredOrg] = isMember;
-                }
-
-                return RequiredOrganizations.All(org => result.Organizations[org]);
+                return userOrgs;
             }
             catch (Exception ex)
             {
@@ -138,18 +126,9 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         {
             try
             {
-                var client = ((GitHubService)githubService).gitHubClient;
-                
-                try
-                {
-                    var permission = await client.Repository.Collaborator.ReviewPermission("Azure", "azure-sdk-for-net", username);
-                    return permission.Permission.Equals("write", StringComparison.OrdinalIgnoreCase) || 
-                           permission.Permission.Equals("admin", StringComparison.OrdinalIgnoreCase);
-                }
-                catch (NotFoundException)
-                {
-                    return false;
-                }
+                var permission = await githubService.HasWritePermission("Azure", "azure-sdk-for-net", username);
+                return permission.Permission.Equals("write", StringComparison.OrdinalIgnoreCase) || 
+                        permission.Permission.Equals("admin", StringComparison.OrdinalIgnoreCase);
             }
             catch (Exception ex)
             {

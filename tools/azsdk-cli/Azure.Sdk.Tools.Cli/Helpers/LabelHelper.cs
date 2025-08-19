@@ -69,7 +69,10 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
                 foreach (var pr in pullRequests.Where(p => p != null))
                 {
-                    if (pr != null && pr.Title.Contains(serviceLabel, StringComparison.OrdinalIgnoreCase))
+                    if (
+                    pr != null &&
+                    pr.Title.Contains(serviceLabel, StringComparison.OrdinalIgnoreCase) &&
+                    pr.Labels.Any(label => label.Name.Equals("Created by copilot")))
                     {
                         return true;
                     }

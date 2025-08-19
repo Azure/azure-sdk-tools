@@ -8,7 +8,7 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// Uses tools like mvn/gradle for build, dependency management, testing, and code formatting.
 /// </summary>
 public class JavaLanguageRepoService(IProcessHelper processHelper, IGitHelper gitHelper) : LanguageRepoService(processHelper, gitHelper)
-
+{
     public override async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct)
     {
         await Task.CompletedTask;

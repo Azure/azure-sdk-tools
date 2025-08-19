@@ -150,7 +150,7 @@ def calculate_overall_score(row: dict[str, Any]) -> float:
     
     similarity = float(row["outputs.similarity.similarity"])
     groundedness = float(row["outputs.groundedness.groundedness"])
-    if similarity == math.nan or groundedness == math.nan:
+    if math.isnan(similarity) or math.isnan(groundedness):
         return 0.0
     else:
         return similarity * weights["similarity_weight"] + groundedness * weights["groundedness_weight"]

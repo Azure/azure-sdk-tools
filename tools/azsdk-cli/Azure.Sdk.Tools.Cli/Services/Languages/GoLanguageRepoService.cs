@@ -19,19 +19,7 @@ public class GoLanguageRepoService(
     private readonly string formatterName = "goimports";
     private readonly string formatterNameWindows = "gofmt.exe";
     private readonly string linterName = "golangci-lint";
-
-    public GoLanguageRepoService(IProcessHelper processHelper, IGitHelper gitHelper, INpxHelper npxHelper, ILogger<GoLanguageRepoService> logger)
-        : base(processHelper, gitHelper, npxHelper)
-    {
-        _logger = logger;
-
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        {
-            compilerName = "go.exe";
-            formatterName = "gofmt.exe";
-            linterName = "golangci-lint.exe";
-        }
-    }
+    private readonly string linterNameWindows = "golangci-lint.exe";
 
     #region Go specific functions, not part of the LanguageRepoService
 

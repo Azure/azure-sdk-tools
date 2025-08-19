@@ -38,7 +38,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             command.AddOption(SharedOptions.PackagePath);
             var checkTypeOption = new Option<PackageCheckType>(
                 "--check-type",
-                () => PackageCheckName.All,
+                () => PackageCheckType.All,
                 "The type of check to run")
             {
                 IsRequired = true

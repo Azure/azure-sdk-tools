@@ -30,17 +30,16 @@ public class ListFilesTool(string baseDirectory) : AgentTool<ListFilesInput, Lis
             throw new ArgumentException("The provided path is invalid or outside the allowed base directory.");
         }
 
-        if (!File.Exists(path))
+        if (!Path.Exists(path))
         {
-            throw new ArgumentException($"Path ${input.Path} does not exist", nameof(input.Path));
+            throw new ArgumentException($"Path {input.Path} does not exist", nameof(input.Path));
         }
 
         if (!File.GetAttributes(path).HasFlag(FileAttributes.Directory))
         {
-            throw new ArgumentException($"Path ${input.Path} is not a directory", nameof(input.Path));
+            throw new ArgumentException($"Path {input.Path} is not a directory", nameof(input.Path));
         }
-
-        Console.WriteLine($"Listing files in: {path}");
+        
         var filter = string.IsNullOrWhiteSpace(input.Filter) ? "*" : input.Filter;
         var searchOption = input.Recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
         var result = Directory.GetFileSystemEntries(path, filter, searchOption);

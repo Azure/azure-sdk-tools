@@ -51,7 +51,7 @@ public static class ToolHelpers
     /// </summary>
     /// <param name="baseDirectory">The base directory that bounds all operations.</param>
     /// <param name="relativePath">A relative path provided by the user or caller.</param>
-    /// <param name="fullPath">Outputs the resolved full path if successful; otherwise an empty string.</param>
+    /// <param name="fullPath">Outputs the resolved full path if successful; otherwise it's null.</param>
     /// <returns>True if the path resolves within the base directory; otherwise false.</returns>
     public static bool TryGetSafeFullPath(string baseDirectory, string relativePath, out string fullPath)
     {

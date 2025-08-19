@@ -10,7 +10,7 @@ public class ReadFileTool(string baseDir) : AgentTool<ReadFileInput, ReadFileOut
     public override string Name { get; init; } = "ReadFile";
     public override string Description { get; init; } = "Read the contents of a file";
 
-    public override Task<ReadFileOutput> Invoke(ReadFileInput input, CancellationToken ct)
+    public override async Task<ReadFileOutput> Invoke(ReadFileInput input, CancellationToken ct)
     {
         // Ensure the input is not null or empty
         if (string.IsNullOrEmpty(input.FilePath))
@@ -28,7 +28,7 @@ public class ReadFileTool(string baseDir) : AgentTool<ReadFileInput, ReadFileOut
         }
 
         // Read the file content
-        var content = File.ReadAllText(path);
-        return Task.FromResult(new ReadFileOutput(content));
+        var content = await File.ReadAllTextAsync(path);
+        return new ReadFileOutput(content);
     }
 }

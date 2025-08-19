@@ -11,9 +11,9 @@ namespace Azure.Sdk.Tools.Cli.Microagents;
 public class Microagent<TResult>
 {
     /// <summary>
-    /// The system prompt provided to the agent.
+    /// The instructions provided to the agent.
     /// </summary>
-    public required string SystemPrompt { get; init; }
+    public required string Instructions { get; init; }
 
     /// <summary>
     /// A list of tools that are made available to the agent. For a simple LLM call without tools, this can be left empty.

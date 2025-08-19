@@ -27,7 +27,7 @@ public class MicroagentHostService(AzureOpenAIClient openAI, ILogger<MicroagentH
         // with a result, indicating success, or we hit the max number of iterations.
         var conversationHistory = new List<ChatMessage>
         {
-            new SystemChatMessage(agentDefinition.SystemPrompt)
+            new SystemChatMessage(agentDefinition.Instructions)
         };
 
         var chatCompletionOptions = new ChatCompletionOptions
@@ -39,6 +39,8 @@ public class MicroagentHostService(AzureOpenAIClient openAI, ILogger<MicroagentH
         };
 
         // Add the special-case "exit" tool
+        // We define a tool for this as it allows us to provide a JSON schema for the expected output. This is more
+        // reliable than parsing the end-of-conversation message from the agent.
         chatCompletionOptions.Tools.Add(
             ChatTool.CreateFunctionTool(ExitToolName,
                 "Call this tool when you are finished with the work or are otherwise unable to continue.",

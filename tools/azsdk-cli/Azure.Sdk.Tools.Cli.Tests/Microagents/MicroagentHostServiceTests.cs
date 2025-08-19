@@ -33,7 +33,7 @@ internal class MicroagentHostServiceTests
         {
             var agentDefinition = new Microagent<string>
             {
-                SystemPrompt = "You are a helpful assistant.",
+                Instructions = "You are a helpful assistant.",
                 Tools = new List<IAgentTool>
                 {
                     new ListFilesTool(".")
@@ -62,7 +62,7 @@ internal class MicroagentHostServiceTests
 
         var agentDefinition = new Microagent<string>
         {
-            SystemPrompt = "You are a helpful assistant."
+            Instructions = "You are a helpful assistant."
         };
         chatClientMock.Setup(client => client.CompleteChatAsync(It.IsAny<IReadOnlyList<ChatMessage>>(), It.IsAny<ChatCompletionOptions>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ClientResult.FromValue(chatCompletion, Mock.Of<PipelineResponse>()));
@@ -98,7 +98,7 @@ internal class MicroagentHostServiceTests
 
         var microagent = new Microagent<string>
         {
-            SystemPrompt = "You are a helpful assistant.",
+            Instructions = "You are a helpful assistant.",
             Tools = [tool],
         };
 
@@ -138,7 +138,7 @@ internal class MicroagentHostServiceTests
 
         var microagent = new Microagent<string>
         {
-            SystemPrompt = "You are a helpful assistant.",
+            Instructions = "You are a helpful assistant.",
             Tools = [tool],
             MaxToolCalls = 2,
         };

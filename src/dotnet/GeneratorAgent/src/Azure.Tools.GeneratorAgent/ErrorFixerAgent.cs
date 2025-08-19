@@ -1,5 +1,6 @@
 using System.Text;
 using Azure.AI.Agents.Persistent;
+using Azure.Tools.ErrorAnalyzers;
 using Azure.Tools.GeneratorAgent.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -12,21 +13,29 @@ namespace Azure.Tools.GeneratorAgent
         private readonly PersistentAgentsClient Client;
         private readonly Lazy<PersistentAgent> Agent;
         private readonly SemaphoreSlim ConcurrencyLimiter;
+        private readonly FixPromptService FixPromptService;
+        private readonly AgentResponseParser ResponseParser;
         private volatile bool Disposed = false;
 
         public ErrorFixerAgent(
             AppSettings appSettings,
             ILogger<ErrorFixerAgent> logger,
-            PersistentAgentsClient client)
+            PersistentAgentsClient client,
+            FixPromptService fixPromptService,
+            AgentResponseParser responseParser)
         {
             ArgumentNullException.ThrowIfNull(appSettings);
             ArgumentNullException.ThrowIfNull(logger);
             ArgumentNullException.ThrowIfNull(client);
+            ArgumentNullException.ThrowIfNull(fixPromptService);
+            ArgumentNullException.ThrowIfNull(responseParser);
 
             AppSettings = appSettings;
             Logger = logger;
             Client = client;
             Agent = new Lazy<PersistentAgent>(() => CreateAgent());
+            FixPromptService = fixPromptService;
+            ResponseParser = responseParser;
 
             ConcurrencyLimiter = new SemaphoreSlim(Environment.ProcessorCount, Environment.ProcessorCount);
         }
@@ -51,12 +60,161 @@ namespace Azure.Tools.GeneratorAgent
             return agent;
         }
 
-        public async Task FixCodeAsync(CancellationToken ct)
+
+        /// <summary>
+        /// Processes a list of fixes by converting them to prompts and processing them sequentially,
+        /// building upon the state maintained in the conversation thread.
+        /// </summary>
+        public async Task<string> FixCodeAsync(List<Fix> fixes, string threadId, CancellationToken cancellationToken = default)
+        {            
+            Logger.LogInformation("Starting code fix process with {Count} fixes using thread {ThreadId}", fixes.Count, threadId);
+
+            string? finalUpdatedContent = null;
+
+            try
+            {
+                await ConcurrencyLimiter.WaitAsync(cancellationToken).ConfigureAwait(false);
+                
+                for (int i = 0; i < fixes.Count; i++)
+                {
+                    Fix fix = fixes[i];
+                    string fixTypeName = fix switch
+                    {
+                        AgentPromptFix => nameof(AgentPromptFix),
+                        _ => fix.GetType().Name // Fallback
+                    };
+                    
+                    Logger.LogInformation("Processing fix {Current}/{Total}: {FixType}", 
+                        i + 1, fixes.Count, fixTypeName);
+                    try
+                    {
+                        finalUpdatedContent = await ProcessSingleFixWithStateAsync(fix, threadId, i + 1, cancellationToken).ConfigureAwait(false);
+                        
+                        Logger.LogDebug("Successfully applied fix {Current}/{Total}. Content length: {Length}", 
+                            i + 1, fixes.Count, finalUpdatedContent?.Length ?? 0);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.LogError(ex, "Failed to apply fix {Current}/{Total}: {FixType}", 
+                            i + 1, fixes.Count, fixTypeName);
+                        
+                        // TODO: Add configuration for whether to stop on first failure or continue
+                        throw; // For now, fail fast on any fix failure
+                    }
+                    
+                    if (i < fixes.Count - 1)
+                    {
+                        await Task.Delay(AppSettings.DelayBetweenFixesMs, cancellationToken).ConfigureAwait(false);
+                    }
+                }
+                
+                Logger.LogInformation("Successfully processed all {Count} fixes. Final content length: {Length}", 
+                    fixes.Count, finalUpdatedContent?.Length ?? 0);
+                
+                return finalUpdatedContent ?? throw new InvalidOperationException("No fixes were successfully applied");
+            }
+            catch (Exception ex) when (!(ex is OperationCanceledException))
+            {
+                 Logger.LogError(ex, "Failed to complete code fix process for thread {ThreadId}. Processed {ProcessedCount}/{TotalCount} fixes", 
+                    threadId, fixes.FindIndex(f => finalUpdatedContent == null) >= 0 ? fixes.FindIndex(f => finalUpdatedContent == null) : fixes.Count, fixes.Count);
+                throw;
+            }
+            finally
+            {
+                ConcurrencyLimiter.Release();
+            }
+        }
+
+        /// <summary>
+        /// Processes a single fix and returns the updated client.tsp content
+        /// </summary>
+        private async Task<string> ProcessSingleFixWithStateAsync(Fix fix, string threadId, int fixNumber, CancellationToken cancellationToken)
+        {
+            try
+            {
+                string prompt = FixPromptService.ConvertFixToPrompt(fix);
+                
+                await Client.Messages.CreateMessageAsync(threadId, MessageRole.User, prompt, cancellationToken: cancellationToken).ConfigureAwait(false);
+                await ProcessAgentRunAsync(threadId, cancellationToken).ConfigureAwait(false);
+                string response = await ReadResponseAsync(threadId, cancellationToken).ConfigureAwait(false);
+                
+                Models.AgentResponse agentResponse = ResponseParser.ParseResponse(response);
+                
+                Logger.LogInformation("Updated client.tsp content for fix #{FixNumber} ({Length} characters):\n{UpdatedContent}", 
+                    fixNumber, agentResponse.UpdatedFileContent.Length, agentResponse.UpdatedFileContent);
+                
+                return agentResponse.UpdatedFileContent;
+            }
+            catch (Exception ex) when (!(ex is OperationCanceledException))
+            {
+                Logger.LogError(ex, "Failed to process fix #{FixNumber}: {FixType}", fixNumber, fix.GetType().Name);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Processes an agent run and waits for completion
+        /// </summary>
+        private async Task ProcessAgentRunAsync(string threadId, CancellationToken cancellationToken)
         {
             PersistentAgent agent = Agent.Value;
+            ThreadRun run = await Client.Runs.CreateRunAsync(threadId, agent.Id, cancellationToken: cancellationToken).ConfigureAwait(false);
+            
+            Logger.LogDebug("Created run {RunId} for thread {ThreadId}", run.Id, threadId);
+            
+            RunStatus status;
+            TimeSpan? maxWaitTime = AppSettings.AgentRunMaxWaitTime;
+            TimeSpan? pollingInterval = AppSettings.AgentRunPollingInterval ?? TimeSpan.FromSeconds(5);
+            System.Diagnostics.Stopwatch stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            
+            do
+            {
+                await Task.Delay(pollingInterval.Value, cancellationToken).ConfigureAwait(false);
+                run = await Client.Runs.GetRunAsync(threadId, run.Id, cancellationToken: cancellationToken).ConfigureAwait(false);
+                status = run.Status;
+                
+                Logger.LogDebug("Run {RunId} status: {Status} (elapsed: {Elapsed:F1}s)", 
+                    run.Id, status, stopwatch.Elapsed.TotalSeconds);
+                
+                if (maxWaitTime.HasValue && stopwatch.Elapsed > maxWaitTime.Value)
+                {
+                    Logger.LogError("Agent run {RunId} timed out after {Elapsed:F1}s", 
+                        run.Id, stopwatch.Elapsed.TotalSeconds);
+                    throw new TimeoutException($"Agent run timed out after {stopwatch.Elapsed.TotalSeconds:F1} seconds");
+                }
+            }
+            while (status == RunStatus.Queued || status == RunStatus.InProgress);
+            
+            if (status != RunStatus.Completed)
+            {
+                Logger.LogError("Agent run {RunId} failed with status: {Status}", run.Id, status);
+                throw new InvalidOperationException($"Agent run failed with status: {status}");
+            }
+        }
 
-            // TODO: Implement the code fixing logic here
-            await Task.CompletedTask.ConfigureAwait(false);
+        /// <summary>
+        /// Reads the latest response from the agent thread
+        /// </summary>
+        private async Task<string> ReadResponseAsync(string threadId, CancellationToken cancellationToken)
+        {
+            var messages = Client.Messages.GetMessagesAsync(threadId, order: ListSortOrder.Ascending, cancellationToken: cancellationToken);
+            List<string> allText = new List<string>();
+
+            await foreach (var message in messages.ConfigureAwait(false))
+            {
+                foreach (MessageTextContent content in message.ContentItems.OfType<MessageTextContent>())
+                {
+                    Logger.LogDebug("Message content: {Text}", content.Text);
+                    allText.Add(content.Text);
+                }
+            }
+
+            if (allText.Count == 0)
+            {
+                throw new InvalidOperationException("No text content found in thread messages");
+            }
+
+            return string.Join("\n", allText);
         }
 
         public async Task<string> InitializeAgentEnvironmentAsync(
@@ -64,7 +222,7 @@ namespace Azure.Tools.GeneratorAgent
             CancellationToken ct = default)
         {
             IEnumerable<string> uploadedFilesIds = await UploadTspFromMemoryAsync(typeSpecFiles, ct);
-            List<string> uploadedFilesList = uploadedFilesIds.ToList(); // Materialize once for multiple usage
+            List<string> uploadedFilesList = uploadedFilesIds.ToList();
             
             if (uploadedFilesList.Count == 0)
             {
@@ -75,7 +233,7 @@ namespace Azure.Tools.GeneratorAgent
             string vectorStoreId = await CreateVectorStoreAsync(uploadedFilesList, ct);
             await UpdateAgentVectorStoreAsync(vectorStoreId, ct);
 
-            PersistentAgentThread thread = await Client.Threads.CreateThreadAsync(cancellationToken: ct);
+            PersistentAgentThread thread = await Client.Threads.CreateThreadAsync(cancellationToken: ct).ConfigureAwait(false);
             Logger.LogInformation("Created new thread with ID: {ThreadId}", thread.Id);
 
             return thread.Id;
@@ -85,8 +243,7 @@ namespace Azure.Tools.GeneratorAgent
             Dictionary<string, string> typeSpecFiles, 
             CancellationToken ct)
         {
-            // Filter TypeSpec files
-            var relevantFiles = typeSpecFiles.Where(kvp => 
+            IEnumerable<KeyValuePair<string, string>> relevantFiles = typeSpecFiles.Where(kvp => 
                 kvp.Key.EndsWith(".tsp", StringComparison.OrdinalIgnoreCase));
 
             IEnumerable<Task<string?>> uploadTasks = relevantFiles.Select(file =>
@@ -115,7 +272,7 @@ namespace Azure.Tools.GeneratorAgent
                     PersistentAgentFilePurpose.Agents,
                     txtFileName,
                     cancellationToken: ct
-                );
+                ).ConfigureAwait(false);
 
                 if (uploaded?.Value?.Id != null)
                 {
@@ -215,12 +372,12 @@ namespace Azure.Tools.GeneratorAgent
                     Logger.LogDebug("Still waiting for: {PendingFiles}", string.Join(", ", pendingFiles));
                 }
 
-                await Task.Delay(pollingInterval, ct);
+                await Task.Delay(pollingInterval, ct).ConfigureAwait(false);
             }
 
-            (string FileId, PersistentAgentFileInfo? File)[] finalResults = await Task.WhenAll(uploadedFilesIds.Select(id => CheckFileStatusAsync(id, ct)));
+            (string FileId, PersistentAgentFileInfo? File)[] finalResults = await Task.WhenAll(uploadedFilesIds.Select(id => CheckFileStatusAsync(id, ct))).ConfigureAwait(false);
             
-            bool allProcessed = finalResults.All(r => r.File?.Status.ToString().Equals("Processed", StringComparison.OrdinalIgnoreCase) == true);
+            bool allProcessed = finalResults.All(r => r.File?.Status.ToString()?.Equals("Processed", StringComparison.OrdinalIgnoreCase) == true);
             if (allProcessed)
             {
                 Logger.LogInformation("All {Count} files indexed successfully in {Duration:F1}s (completed during final check)", 
@@ -245,7 +402,7 @@ namespace Azure.Tools.GeneratorAgent
         {
             try
             {
-                PersistentAgentFileInfo file = await Client.Files.GetFileAsync(fileId, cancellationToken: ct);
+                PersistentAgentFileInfo file = await Client.Files.GetFileAsync(fileId, cancellationToken: ct).ConfigureAwait(false);
                 return (fileId, file);
             }
             catch (Azure.RequestFailedException ex) when (ex.Status == 404)
@@ -287,7 +444,7 @@ namespace Azure.Tools.GeneratorAgent
                     }
                 },
                 cancellationToken: ct
-            );
+            ).ConfigureAwait(false);
 
             Logger.LogInformation("Agent vector store updated to: {VectorStoreId}", vectorStoreId);
         }
@@ -299,16 +456,16 @@ namespace Azure.Tools.GeneratorAgent
 
             Logger.LogInformation("Creating vector store '{StoreName}' with {Count} files...", storeName, fileIds.Count);
 
-            var store = await Client.VectorStores.CreateVectorStoreAsync(
+            Response<PersistentAgentsVectorStore> store = await Client.VectorStores.CreateVectorStoreAsync(
                 fileIds,
                 name: storeName,
                 cancellationToken: ct
-            );
+            ).ConfigureAwait(false);
 
             Logger.LogInformation("Created vector store: {Name} ({Id})", store.Value.Name, store.Value.Id);
 
             Logger.LogDebug("Waiting 5 seconds for vector store to be ready...");
-            await Task.Delay(5000, ct);
+            await Task.Delay(5000, ct).ConfigureAwait(false);
 
             return store.Value.Id;
         }
@@ -317,7 +474,7 @@ namespace Azure.Tools.GeneratorAgent
         {
             List<Task> deleteTasks = new List<Task>();
 
-            await foreach (PersistentAgent agent in Client.Administration.GetAgentsAsync(cancellationToken: ct))
+            await foreach (PersistentAgent agent in Client.Administration.GetAgentsAsync(cancellationToken: ct).ConfigureAwait(false))
             {
                 Task deleteTask = Client.Administration.DeleteAgentAsync(agent.Id, ct)
                     .ContinueWith(t =>

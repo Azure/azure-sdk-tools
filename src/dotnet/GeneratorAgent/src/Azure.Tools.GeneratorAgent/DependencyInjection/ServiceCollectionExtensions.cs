@@ -26,7 +26,7 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
             services.AddSingleton(toolConfig);
             services.AddSingleton(provider =>
             {
-                var logger = provider.GetRequiredService<ILogger<AppSettings>>();
+                ILogger<AppSettings> logger = provider.GetRequiredService<ILogger<AppSettings>>();
                 return toolConfig.CreateAppSettings(logger);
             });
 
@@ -53,9 +53,9 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
             services.AddSingleton<CredentialFactory>();
             services.AddSingleton<TokenCredential>(provider =>
             {
-                var credentialFactory = provider.GetRequiredService<CredentialFactory>();
-                var environment = DetermineRuntimeEnvironment();
-                var options = CreateCredentialOptions();
+                CredentialFactory credentialFactory = provider.GetRequiredService<CredentialFactory>();
+                RuntimeEnvironment environment = DetermineRuntimeEnvironment();
+                TokenCredentialOptions? options = CreateCredentialOptions();
                 return credentialFactory.CreateCredential(environment, options);
             });
 
@@ -78,7 +78,7 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
                 
                 if (string.IsNullOrEmpty(githubToken))
                 {
-                    var appSettings = serviceProvider.GetRequiredService<AppSettings>();
+                    AppSettings? appSettings = serviceProvider.GetRequiredService<AppSettings>();
                     githubToken = appSettings?.GitHubToken;
                 }
                 
@@ -100,8 +100,8 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
         {
             services.AddSingleton<PersistentAgentsClient>(provider =>
             {
-                var appSettings = provider.GetRequiredService<AppSettings>();
-                var credential = provider.GetRequiredService<TokenCredential>();
+                AppSettings appSettings = provider.GetRequiredService<AppSettings>();
+                TokenCredential credential = provider.GetRequiredService<TokenCredential>();
                 return new PersistentAgentsClient(appSettings.ProjectEndpoint, credential);
             });
 
@@ -113,12 +113,12 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
         /// </summary>
         private static IServiceCollection AddApplicationServices(this IServiceCollection services)
         {
-            // All core services are stateless and can be singletons for better performance
-            services.AddSingleton<ErrorFixerAgent>();      // Thread-safe, uses threadId for isolation
-            services.AddSingleton<ProcessExecutor>();      // Stateless - just executes commands
-            services.AddSingleton<BuildErrorAnalyzer>();   // Stateless - just analyzes errors
+            services.AddSingleton<ErrorFixerAgent>();
+            services.AddSingleton<ProcessExecutor>();
+            services.AddSingleton<BuildErrorAnalyzer>();
+            services.AddSingleton<FixPromptService>();
+            services.AddSingleton<AgentResponseParser>();
 
-            // Factory services create ValidationContext-dependent instances, but factories themselves are stateless
             services.AddSingleton<Func<ValidationContext, ISdkGenerationService>>(provider =>
             {
                 return validationContext => SdkGenerationServiceFactory.CreateSdkGenerationService(
@@ -136,7 +136,6 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
                     validationContext.ValidatedSdkDir);
             });
 
-            // Register factory method for TypeSpecFileService that requires ValidationContext
             services.AddSingleton<Func<ValidationContext, TypeSpecFileService>>(provider =>
             {
                 return validationContext => new TypeSpecFileService(
@@ -147,13 +146,12 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
                     provider.GetRequiredService<Func<ValidationContext, GitHubFileService>>());
             });
 
-            // Register factory method for GitHubFilesService that requires ValidationContext
             services.AddSingleton<Func<ValidationContext, GitHubFileService>>(provider =>
             {
                 return validationContext => 
                 {
-                    var httpClientFactory = provider.GetRequiredService<IHttpClientFactory>();
-                    var httpClient = httpClientFactory.CreateClient(nameof(GitHubFileService));
+                    IHttpClientFactory httpClientFactory = provider.GetRequiredService<IHttpClientFactory>();
+                    HttpClient httpClient = httpClientFactory.CreateClient(nameof(GitHubFileService));
                     
                     return new GitHubFileService(
                         provider.GetRequiredService<AppSettings>(),

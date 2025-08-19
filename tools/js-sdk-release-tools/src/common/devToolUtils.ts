@@ -38,7 +38,7 @@ export async function lintFix(packageDirectory: string) {
     const lintFixCommand = 'eslint package.json api-extractor.json src test samples-dev --fix --fix-type';
 
     try {
-        await runCommand(`npm`, [lintFixCommand], options, true, 300, true);
+        await runCommand(`pnpm`, [lintFixCommand], options, true, 300, true);
         logger.info(`Fix the automatically repairable lint errors successfully.`);
     } catch (error) {
         logger.warn(`Failed to fix lint errors due to: ${(error as Error)?.stack ?? error}`);

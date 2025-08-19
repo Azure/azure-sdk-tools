@@ -16,6 +16,14 @@ namespace APIViewWeb.Services
             string typeSpecUrl,
             IEnumerable<ReviewListItemModel> languageReviews,
             string notes = null);
+
+        Task<string> GetNamespaceReviewApprovedEmailAsync(
+            string packageName,
+            string typeSpecUrl,
+            IEnumerable<ReviewListItemModel> languageReviews,
+            bool isAutoApproved = false,
+            DateTime? originalRequestDate = null,
+            DateTime? autoApprovedDate = null);
     }
 
     public class EmailTemplateService : IEmailTemplateService
@@ -23,7 +31,7 @@ namespace APIViewWeb.Services
         private readonly IHostEnvironment _hostEnvironment;
         private readonly string _apiviewEndpoint;
         private const int MaxPackageNameLength = 60;
-        private const int BusinessDaysForDeadline = 3;
+        private const int BusinessDaysForDeadline = 1;
 
         public EmailTemplateService(IHostEnvironment hostEnvironment, IConfiguration configuration)
         {
@@ -61,6 +69,60 @@ namespace APIViewWeb.Services
                 .Replace("{{LanguageLinks}}", languageLinksHtml)
                 .Replace("{{NotesSection}}", notesSectionHtml)
                 .Replace("{{ApprovalDeadline}}", deadline.ToString("MMMM dd, yyyy"));
+        }
+
+        public async Task<string> GetNamespaceReviewApprovedEmailAsync(
+            string packageName,
+            string typeSpecUrl,
+            IEnumerable<ReviewListItemModel> languageReviews,
+            bool isAutoApproved = false,
+            DateTime? originalRequestDate = null,
+            DateTime? autoApprovedDate = null)
+        {
+            var templatePath = Path.Combine(_hostEnvironment.ContentRootPath, "Templates", "NamespaceReviewApprovedEmail.html");
+            var template = await File.ReadAllTextAsync(templatePath);
+
+            // Generate language package names in the simple format
+            var languagePackagesHtml = GenerateLanguagePackagesHtml(languageReviews);
+
+            // Generate auto-approval section if needed
+            var autoApprovalSectionHtml = "";
+            if (isAutoApproved)
+            {
+                autoApprovalSectionHtml = $@"
+                    <div class=""auto-approval-section"">
+                        <div class=""auto-approval-title"">✅ Auto-Approved</div>
+                        <div>This namespace review was automatically approved after 1 business day with no comments raised.</div>
+                        <div class=""auto-approval-dates"">
+                            <strong>Original Request Date:</strong> {originalRequestDate?.ToString("MMMM dd, yyyy") ?? "N/A"}<br/>
+                            <strong>Auto-Approved Date:</strong> {autoApprovedDate?.ToString("MMMM dd, yyyy") ?? DateTime.UtcNow.ToString("MMMM dd, yyyy")}
+                        </div>
+                    </div>";
+            }
+
+            // Replace all placeholders
+            return template
+                .Replace("{{PackageName}}", packageName)
+                .Replace("{{TypeSpecUrl}}", typeSpecUrl)
+                .Replace("{{LanguageViews}}", languagePackagesHtml)
+                .Replace("{{AutoApprovalSection}}", autoApprovalSectionHtml);
+        }
+
+        private string GenerateLanguagePackagesHtml(IEnumerable<ReviewListItemModel> languageReviews)
+        {
+            if (languageReviews == null || !languageReviews.Any())
+                return "<li class=\"package-item\">No language-specific package names available yet.</li>";
+
+            var packagesHtml = "";
+            foreach (var review in languageReviews)
+            {
+                // Build format to match the request email styling
+                packagesHtml += $@"
+                    <li class=""package-item"">
+                        <span class=""language-name"">{review.Language}:</span>{review.PackageName}
+                    </li>";
+            }
+            return packagesHtml;
         }
 
         private string GenerateLanguageLinksHtml(IEnumerable<ReviewListItemModel> languageReviews)

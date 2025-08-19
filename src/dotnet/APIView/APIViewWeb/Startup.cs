@@ -120,6 +120,9 @@ namespace APIViewWeb
             services.AddSingleton<IUserProfileManager, UserProfileManager>();
             services.AddSingleton<UserProfileCache>();
 
+            // Background services
+            services.AddHostedService<NamespaceAutoApprovalService>();
+
             services.AddSingleton<LanguageService, JsonLanguageService>();
             services.AddSingleton<LanguageService, CSharpLanguageService>();
             services.AddSingleton<LanguageService, CLanguageService>();

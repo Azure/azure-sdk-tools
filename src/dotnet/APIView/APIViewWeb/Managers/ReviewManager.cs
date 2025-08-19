@@ -349,17 +349,9 @@ namespace APIViewWeb.Managers
         /// <param name="reviewId"></param>
         /// <param name="associatedReviewIds">List of review IDs for associated language reviews to update</param>
         /// <returns></returns>
-        public async Task<ReviewListItemModel> RequestNamespaceReviewAsync(ClaimsPrincipal user, string reviewId,List<string> associatedReviewIds)
+        public async Task<ReviewListItemModel> RequestNamespaceReviewAsync(ClaimsPrincipal user, string reviewId, List<string> associatedReviewIds)
         {
-            ReviewListItemModel typeSpecReview = await _reviewsRepository.GetReviewAsync(reviewId);
-            
-            // Add logging to see what we're receiving
-            _telemetryClient.TrackTrace($"[NAMESPACE] RequestNamespaceReviewAsync called for reviewId: {reviewId}");
-            _telemetryClient.TrackTrace($"[NAMESPACE] Provided associatedReviewIds count: {associatedReviewIds?.Count ?? 0}");
-            if (associatedReviewIds?.Any() == true)
-            {
-                _telemetryClient.TrackTrace($"[NAMESPACE] Provided review IDs: {string.Join(", ", associatedReviewIds)}");
-            }
+            var typeSpecReview = await _reviewsRepository.GetReviewAsync(reviewId);
             
             // Only allow for TypeSpec reviews
             if (typeSpecReview.Language != "TypeSpec")
@@ -377,31 +369,49 @@ namespace APIViewWeb.Managers
             
             await _reviewsRepository.UpsertReviewAsync(typeSpecReview);
 
-            // Send email notifications to preferred approvers
-            await _notificationManager.NotifyApproversOnNamespaceReviewRequest(user, typeSpecReview);
-
             // Auto-discover related reviews using pull request numbers from TypeSpec review
             var discoveredReviewIds = await FindRelatedReviewsByPullRequestAsync(reviewId);
-            _telemetryClient.TrackTrace($"[NAMESPACE] Auto-discovered review IDs count: {discoveredReviewIds?.Count ?? 0}");
-            if (discoveredReviewIds?.Any() == true)
-            {
-                _telemetryClient.TrackTrace($"[NAMESPACE] Auto-discovered review IDs: {string.Join(", ", discoveredReviewIds)}");
-            }
             
             // Combine provided review IDs with auto-discovered ones
-            var languagReviewIds = associatedReviewIds.Union(discoveredReviewIds).Distinct().ToList();
-            _telemetryClient.TrackTrace($"[NAMESPACE] Total combined review IDs count: {languagReviewIds.Count}");
-            if (languagReviewIds.Any())
-            {
-                _telemetryClient.TrackTrace($"[NAMESPACE] Combined review IDs: {string.Join(", ", languagReviewIds)}");
-            }
+            var languageReviewIds = associatedReviewIds.Union(discoveredReviewIds).Distinct().ToList();
             
             // Update the reviews identified by review IDs with namespace approval fields
-            await MarkAssociatedReviewsForNamespaceReview(languagReviewIds, userId, requestedOn);
+            await MarkAssociatedReviewsForNamespaceReview(languageReviewIds, userId, requestedOn);
 
-            _telemetryClient.TrackTrace($"[NAMESPACE] Updated {languagReviewIds.Count} related reviews for TypeSpec review {reviewId}");
+            // Get the actual review records for email notification (after they've been updated)
+            var languageReviews = await GetValidLanguageReviews(languageReviewIds);
+
+            // Send email notifications to preferred approvers with the actual language review data
+            await _notificationManager.NotifyApproversOnNamespaceReviewRequest(user, typeSpecReview, languageReviews);
 
             return typeSpecReview;
+        }
+
+        /// <summary>
+        /// Get valid language reviews from review IDs
+        /// </summary>
+        private async Task<List<ReviewListItemModel>> GetValidLanguageReviews(List<string> reviewIds)
+        {
+            var languageReviews = new List<ReviewListItemModel>();
+            
+            foreach (var reviewId in reviewIds)
+            {
+                try
+                {
+                    var review = await _reviewsRepository.GetReviewAsync(reviewId);
+                    if (review != null && IsSDKLanguageOrTypeSpec(review.Language) && review.Language != "TypeSpec")
+                    {
+                        languageReviews.Add(review);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _telemetryClient.TrackException(ex);
+                    // Continue with other reviews
+                }
+            }
+            
+            return languageReviews;
         }
 
         /// <summary>
@@ -418,41 +428,31 @@ namespace APIViewWeb.Managers
             {
                 var updatedCount = 0;
 
-                // Update all provided associated reviews
                 foreach (var reviewId in associatedReviewIds.Where(id => !string.IsNullOrEmpty(id)))
                 {
                     try
                     {
-                        // Get the review and update it with namespace approval fields
                         var review = await _reviewsRepository.GetReviewAsync(reviewId);
                         if (review != null && IsSDKLanguageOrTypeSpec(review.Language))
                         {
-                            // Update the review record itself with namespace approval fields
                             review.NamespaceReviewStatus = NamespaceReviewStatus.Pending;
                             review.NamespaceApprovalRequestedBy = userId;
                             review.NamespaceApprovalRequestedOn = requestedOn;
                             
-                            // Update the review record in database
                             await _reviewsRepository.UpsertReviewAsync(review);
-                            
                             updatedCount++;
-                            _telemetryClient.TrackTrace($"[NAMESPACE] Updated review {reviewId} ({review.Language}) with namespace approval fields");
                         }
                     }
                     catch (Exception ex)
                     {
                         _telemetryClient.TrackException(ex);
-                        _telemetryClient.TrackTrace($"[NAMESPACE] Error updating review {reviewId}: {ex.Message}");
                         // Continue with other reviews
                     }
                 }
-
-                _telemetryClient.TrackTrace($"[NAMESPACE] Updated {updatedCount} reviews with namespace approval fields using provided review IDs");
             }
             catch (Exception ex)
             {
                 _telemetryClient.TrackException(ex);
-                _telemetryClient.TrackTrace($"[NAMESPACE] Error updating associated reviews: {ex.Message}");
                 // Continue - don't fail the namespace request if this fails
             }
         }
@@ -473,24 +473,17 @@ namespace APIViewWeb.Managers
             // NOTE: Namespace approval is now tracked at review level only
             // This method is kept for backward compatibility but does nothing
             await Task.CompletedTask;
-            _telemetryClient.TrackTrace($"[NAMESPACE] Skipping revision-level namespace approval updates - tracking at review level only");
         }
 
         /// <summary>
         /// Update a single API revision with namespace approval fields
         /// NOTE: This is legacy - namespace approval should be tracked at review level only
         /// </summary>
-        /// <param name="revision"></param>
-        /// <param name="requestId"></param>
-        /// <param name="userId"></param>
-        /// <param name="requestedOn"></param>
-        /// <returns></returns>
         private async Task UpdateSingleAPIRevisionWithNamespaceFields(APIRevisionListItemModel revision, string requestId, string userId, DateTime requestedOn)
         {
             // NOTE: Namespace approval is now tracked at review level only
             // This method is kept for backward compatibility but does nothing
             await Task.CompletedTask;
-            _telemetryClient.TrackTrace($"[NAMESPACE] Skipping revision-level namespace approval update for {revision.Id} - tracking at review level only");
         }
 
         /// <summary>
@@ -523,8 +516,6 @@ namespace APIViewWeb.Managers
                     .Distinct()
                     .ToList();
 
-                _telemetryClient.TrackTrace($"[NAMESPACE] Found {pullRequestNumbers.Count} pull request numbers in TypeSpec review {typeSpecReviewId}");
-
                 // For each pull request number, find related reviews
                 foreach (var prNumber in pullRequestNumbers)
                 {
@@ -542,7 +533,6 @@ namespace APIViewWeb.Managers
                                 if (review != null && IsSDKLanguageOrTypeSpec(review.Language) && review.Language != "TypeSpec")
                                 {
                                     relatedReviewIds.Add(pr.ReviewId);
-                                    _telemetryClient.TrackTrace($"[NAMESPACE] Found related {review.Language} review {pr.ReviewId} via PR {prNumber}");
                                 }
                             }
                         }
@@ -550,20 +540,15 @@ namespace APIViewWeb.Managers
                     catch (Exception ex)
                     {
                         _telemetryClient.TrackException(ex);
-                        _telemetryClient.TrackTrace($"[NAMESPACE] Error looking up reviews for PR {prNumber}: {ex.Message}");
                         // Continue with other PRs
                     }
                 }
 
-                var uniqueReviewIds = relatedReviewIds.Distinct().ToList();
-                _telemetryClient.TrackTrace($"[NAMESPACE] Found {uniqueReviewIds.Count} related language reviews for TypeSpec review {typeSpecReviewId}");
-                
-                return uniqueReviewIds;
+                return relatedReviewIds.Distinct().ToList();
             }
             catch (Exception ex)
             {
                 _telemetryClient.TrackException(ex);
-                _telemetryClient.TrackTrace($"[NAMESPACE] Error finding related reviews for TypeSpec review {typeSpecReviewId}: {ex.Message}");
                 return new List<string>();
             }
         }
@@ -637,14 +622,15 @@ namespace APIViewWeb.Managers
             // This flag is set only to make sure revisions are upgradable to the latest version of the parser
             if(verifyUpgradabilityOnly)
             {
-                _telemetryClient.TrackTrace("Running background task to verify review upgradability only.");
+                // verifyUpgradabilityOnly is set when we need to run the upgrade in read only mode to recreate code files
+                // But review code file or metadata in the DB will not be updated
+                // This flag is set only to make sure revisions are upgradable to the latest version of the parser
             }
 
             foreach (var language in LanguageService.SupportedLanguages)
             {
                 if (updateDisabledLanguages.Contains(language))
                 {
-                    _telemetryClient.TrackTrace("Background task to update API review at startup is disabled for language " + language);
                     continue;
                 }
                 var languageService = LanguageServiceHelpers.GetLanguageService(language, _languageServices);
@@ -654,7 +640,6 @@ namespace APIViewWeb.Managers
                 // If review is updated using devops pipeline then batch process update review requests
                 if (languageService.IsReviewGenByPipeline)
                 {
-                    _telemetryClient.TrackTrace($"{language} uses sandboxing pipeline to upgrade API revisions. Upgrade eligibility test is not yet supported for {language}.");
                     // Do not run sandboxing based upgrade during verify upgradability only mode
                     // This requires some changes in the pipeline to support this mode
                     if (!verifyUpgradabilityOnly)
@@ -819,8 +804,6 @@ namespace APIViewWeb.Managers
         {
             try
             {
-                _telemetryClient.TrackTrace($"Starting UpdateReviewsUsingPipeline for language: {language}");
-
                 // Get all non-closed reviews for the language
                 var reviews = await _reviewsRepository.GetReviewsAsync(language: language, isClosed: false);
                 
@@ -854,7 +837,6 @@ namespace APIViewWeb.Managers
                     catch (Exception ex)
                     {
                         _telemetryClient.TrackException(ex);
-                        _telemetryClient.TrackTrace($"Error processing review {review.Id} for pipeline update: {ex.Message}");
                         // Continue with other reviews
                     }
                 }
@@ -869,33 +851,24 @@ namespace APIViewWeb.Managers
                         .Select(g => g.Select(x => x.review).ToList())
                         .ToList();
 
-                    _telemetryClient.TrackTrace($"Processing {eligibleReviews.Count} eligible reviews in {batches.Count} batches for language: {language}");
-
                     foreach (var batch in batches)
                     {
                         try
                         {
                             // Use the same pipeline generation approach as API revisions
                             await _apiRevisionsManager.RunAPIRevisionGenerationPipeline(batch, language);
-                            _telemetryClient.TrackTrace($"Successfully queued pipeline batch with {batch.Count} reviews for language: {language}");
                         }
                         catch (Exception ex)
                         {
                             _telemetryClient.TrackException(ex);
-                            _telemetryClient.TrackTrace($"Failed to queue pipeline batch for language {language}: {ex.Message}");
                             // Continue with other batches
                         }
                     }
-                }
-                else
-                {
-                    _telemetryClient.TrackTrace($"No eligible reviews found for pipeline update for language: {language}");
                 }
             }
             catch (Exception ex)
             {
                 _telemetryClient.TrackException(ex);
-                _telemetryClient.TrackTrace($"Error in UpdateReviewsUsingPipeline for language {language}: {ex.Message}");
                 // Don't rethrow - this shouldn't break the background update process
             }
         }
@@ -1026,6 +999,359 @@ namespace APIViewWeb.Managers
             // This might check user roles, permissions, etc.
             // For now, return true as placeholder - you should implement the actual logic
             return true;
+        }
+
+        /// <summary>
+        /// Process pending namespace reviews for auto-approval after 1 business day with no open comments
+        /// Groups reviews by pull request number and sends one consolidated email per TypeSpec namespace
+        /// </summary>
+        public async Task ProcessPendingNamespaceAutoApprovals()
+        {
+            try
+            {
+                var pendingReviews = await GetPendingNamespaceReviewsForAutoApproval();
+                
+                // Group reviews by pull request numbers to consolidate related approvals
+                var prGroups = await GroupReviewsByPullRequestNumbers(pendingReviews);
+
+                foreach (var prGroup in prGroups)
+                {
+                    var reviewsInGroup = prGroup.Value;
+                    
+                    // Find the TypeSpec review as the primary review for this group
+                    var typeSpecReview = reviewsInGroup.FirstOrDefault(r => r.Language == "TypeSpec");
+                    
+                    // Check if any review in this group should be auto-approved
+                    var shouldAutoApproveGroup = false;
+                    foreach (var review in reviewsInGroup)
+                    {
+                        if (await ShouldAutoApprove(review))
+                        {
+                            shouldAutoApproveGroup = true;
+                            break;
+                        }
+                    }
+                    
+                    if (shouldAutoApproveGroup)
+                    {
+                        await AutoApproveNamespaceGroup(reviewsInGroup, typeSpecReview);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _telemetryClient.TrackException(ex);
+            }
+        }
+
+        /// <summary>
+        /// Get all reviews with pending namespace approval status
+        /// </summary>
+        private async Task<List<ReviewListItemModel>> GetPendingNamespaceReviewsForAutoApproval()
+        {
+            // Get all reviews (including TypeSpec) that have pending namespace approval
+            var allLanguages = new[] { "C#", "Java", "Python", "Go", "JavaScript", "TypeSpec" };
+            var pendingReviews = await _reviewsRepository.GetPendingNamespaceApprovalReviewsAsync(allLanguages);
+            return pendingReviews.ToList();
+        }
+
+        /// <summary>
+        /// Check if a review should be auto-approved (1 business day passed + no open comments)
+        /// </summary>
+        private async Task<bool> ShouldAutoApprove(ReviewListItemModel review)
+        {
+            if (!review.NamespaceApprovalRequestedOn.HasValue) return false;
+            
+            // Calculate 1 business day deadline (same logic as EmailTemplateService)
+            var approvalDeadline = CalculateBusinessDays(review.NamespaceApprovalRequestedOn.Value, 1);
+            
+            // Check if deadline has passed
+            if (DateTime.UtcNow < approvalDeadline) return false;
+            
+            // Check for open/unresolved comments
+            var openComments = await GetOpenComments(review.Id);
+            return !openComments.Any();
+        }
+
+        /// <summary>
+        /// Calculate business days from a start date (reusing EmailTemplateService logic)
+        /// </summary>
+        private DateTime CalculateBusinessDays(DateTime startDate, int businessDays)
+        {
+            var currentDate = startDate;
+            var daysAdded = 0;
+
+            while (daysAdded < businessDays)
+            {
+                currentDate = currentDate.AddDays(1);
+                if (currentDate.DayOfWeek != DayOfWeek.Saturday && currentDate.DayOfWeek != DayOfWeek.Sunday)
+                {
+                    daysAdded++;
+                }
+            }
+            return currentDate;
+        }
+
+        /// <summary>
+        /// Get open/unresolved comments for a review
+        /// </summary>
+        private async Task<IEnumerable<CommentItemModel>> GetOpenComments(string reviewId)
+        {
+            var comments = await _commentManager.GetCommentsAsync(reviewId);
+            return comments.Where(c => !c.IsResolved && !c.IsDeleted);
+        }
+
+        /// <summary>
+        /// Group reviews by their pull request numbers to identify related reviews
+        /// </summary>
+        private async Task<Dictionary<string, List<ReviewListItemModel>>> GroupReviewsByPullRequestNumbers(List<ReviewListItemModel> pendingReviews)
+        {
+            var prGroups = new Dictionary<string, List<ReviewListItemModel>>();
+            var reviewsWithoutPR = new List<ReviewListItemModel>();
+
+            foreach (var review in pendingReviews)
+            {
+                try
+                {
+                    // Get all API revisions for this review to find pull request numbers
+                    var revisions = await _apiRevisionsManager.GetAPIRevisionsAsync(review.Id);
+                    var pullRequestNumbers = revisions
+                        .Where(r => r.PullRequestNo.HasValue && r.PullRequestNo.Value > 0)
+                        .Select(r => r.PullRequestNo.Value.ToString())
+                        .Distinct()
+                        .ToList();
+
+                    if (pullRequestNumbers.Any())
+                    {
+                        // Group by first PR number found (most reviews should have the same PR number)
+                        var prKey = pullRequestNumbers.First();
+                        
+                        if (!prGroups.ContainsKey(prKey))
+                        {
+                            prGroups[prKey] = new List<ReviewListItemModel>();
+                        }
+                        prGroups[prKey].Add(review);
+                    }
+                    else
+                    {
+                        // No PR number found, handle separately
+                        reviewsWithoutPR.Add(review);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _telemetryClient.TrackException(ex);
+                    // Add to individual processing if we can't group it
+                    reviewsWithoutPR.Add(review);
+                }
+            }
+
+            // Handle reviews without PR numbers - use smarter grouping by service name
+            var serviceGroups = GroupReviewsByServiceName(reviewsWithoutPR);
+
+            foreach (var serviceGroup in serviceGroups)
+            {
+                var fallbackKey = $"service_{serviceGroup.Key}";
+                prGroups[fallbackKey] = serviceGroup.Value;
+            }
+
+            return prGroups;
+        }
+
+        /// <summary>
+        /// Group reviews by extracting service name from package names
+        /// </summary>
+        private Dictionary<string, List<ReviewListItemModel>> GroupReviewsByServiceName(List<ReviewListItemModel> reviews)
+        {
+            var serviceGroups = new Dictionary<string, List<ReviewListItemModel>>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var review in reviews)
+            {
+                var serviceName = ExtractServiceNameFromPackage(review.PackageName);
+                
+                if (!serviceGroups.ContainsKey(serviceName))
+                {
+                    serviceGroups[serviceName] = new List<ReviewListItemModel>();
+                }
+                serviceGroups[serviceName].Add(review);
+            }
+
+            return serviceGroups;
+        }
+
+        /// <summary>
+        /// Extract service name from package name to group related packages
+        /// Examples:
+        /// - Microsoft.MixedReality -> MixedReality
+        /// - com.azure.resourcemanager:azure-resourcemanager-mixedreality -> MixedReality  
+        /// - azure-mgmt-mixedreality -> MixedReality
+        /// - @azure/arm-mixedreality -> MixedReality
+        /// </summary>
+        private string ExtractServiceNameFromPackage(string packageName)
+        {
+            if (string.IsNullOrEmpty(packageName))
+                return "Unknown";
+
+            var name = packageName.ToLowerInvariant();
+            
+            // Remove common prefixes and suffixes
+            var patterns = new[]
+            {
+                @"microsoft\.",
+                @"azure\.",
+                @"com\.azure\.resourcemanager:",
+                @"azure-resourcemanager-",
+                @"azure-mgmt-",
+                @"@azure/arm-",
+                @"@azure/"
+            };
+
+            foreach (var pattern in patterns)
+            {
+                name = System.Text.RegularExpressions.Regex.Replace(name, pattern, "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            }
+
+            // Extract the service name (first part before any dots, hyphens, or underscores after cleanup)
+            var serviceName = name.Split(new[] { '.', '-', '_' }, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+            
+            // Capitalize first letter for consistency
+            if (!string.IsNullOrEmpty(serviceName) && serviceName.Length > 0)
+            {
+                serviceName = char.ToUpperInvariant(serviceName[0]) + serviceName.Substring(1);
+            }
+
+            return serviceName ?? "Unknown";
+        }
+
+        /// <summary>
+        /// Auto-approve all reviews in a group and send one consolidated notification
+        /// </summary>
+        private async Task AutoApproveNamespaceGroup(List<ReviewListItemModel> allReviewsInGroup, ReviewListItemModel typeSpecReview)
+        {
+            try
+            {
+                // Approve all reviews in this group
+                foreach (var review in allReviewsInGroup)
+                {
+                    review.NamespaceReviewStatus = NamespaceReviewStatus.Approved;
+                    await _reviewsRepository.UpsertReviewAsync(review);
+                }
+                
+                // Send ONE consolidated email for the TypeSpec review with all associated language reviews
+                if (typeSpecReview != null)
+                {
+                    // Get language reviews (exclude TypeSpec and Swagger from the associated list)
+                    var associatedLanguageReviews = allReviewsInGroup
+                        .Where(r => r.Language != "TypeSpec" && r.Language != "Swagger")
+                        .ToList();
+                    
+                    await _notificationManager.NotifyStakeholdersOfAutoApproval(typeSpecReview, associatedLanguageReviews);
+                }
+                else
+                {
+                    // Fallback: if no TypeSpec review found, use the first review as primary
+                    var primaryReview = allReviewsInGroup.First();
+                    var otherReviews = allReviewsInGroup.Skip(1).ToList();
+                    
+                    await _notificationManager.NotifyStakeholdersOfAutoApproval(primaryReview, otherReviews);
+                }
+            }
+            catch (Exception ex)
+            {
+                _telemetryClient.TrackException(ex);
+            }
+        }
+
+        /// <summary>
+        /// Auto-approve all reviews for a package and send one consolidated notification
+        /// </summary>
+        private async Task AutoApproveNamespacePackage(string packageName, List<ReviewListItemModel> allReviewsInPackage, ReviewListItemModel typeSpecReview)
+        {
+            try
+            {
+                // Approve all reviews in this package
+                foreach (var review in allReviewsInPackage)
+                {
+                    review.NamespaceReviewStatus = NamespaceReviewStatus.Approved;
+                    await _reviewsRepository.UpsertReviewAsync(review);
+                }
+                
+                // Send ONE consolidated email for the TypeSpec review with all associated language reviews
+                if (typeSpecReview != null)
+                {
+                    // Get language reviews (exclude TypeSpec and Swagger from the associated list)
+                    var associatedLanguageReviews = allReviewsInPackage
+                        .Where(r => r.Language != "TypeSpec" && r.Language != "Swagger")
+                        .ToList();
+                    
+                    await _notificationManager.NotifyStakeholdersOfAutoApproval(typeSpecReview, associatedLanguageReviews);
+                }
+                else
+                {
+                    // Fallback: if no TypeSpec review found, use the first review as primary
+                    var primaryReview = allReviewsInPackage.First();
+                    var otherReviews = allReviewsInPackage.Skip(1).ToList();
+                    
+                    await _notificationManager.NotifyStakeholdersOfAutoApproval(primaryReview, otherReviews);
+                }
+            }
+            catch (Exception ex)
+            {
+                _telemetryClient.TrackException(ex);
+            }
+        }
+
+        /// <summary>
+        /// Auto-approve a namespace review and all associated language reviews
+        /// NOTE: This method is deprecated in favor of AutoApproveNamespacePackage for consolidated approvals
+        /// </summary>
+        private async Task AutoApproveNamespaceReview(ReviewListItemModel review)
+        {
+            // Update the main review to Approved
+            review.NamespaceReviewStatus = NamespaceReviewStatus.Approved;
+            await _reviewsRepository.UpsertReviewAsync(review);
+            
+            // Find and update associated language reviews to Approved as well
+            var associatedReviews = await FindAssociatedLanguageReviews(review.Id);
+            foreach (var assocReview in associatedReviews)
+            {
+                assocReview.NamespaceReviewStatus = NamespaceReviewStatus.Approved;
+                await _reviewsRepository.UpsertReviewAsync(assocReview);
+            }
+            
+            // Send notification about auto-approval
+            await _notificationManager.NotifyStakeholdersOfAutoApproval(review, associatedReviews);
+        }
+
+        /// <summary>
+        /// Find associated language reviews for a TypeSpec review (reusing existing logic)
+        /// </summary>
+        private async Task<List<ReviewListItemModel>> FindAssociatedLanguageReviews(string reviewId)
+        {
+            var associatedReviews = new List<ReviewListItemModel>();
+            
+            try
+            {
+                // Reuse existing logic to find related reviews
+                var discoveredReviewIds = await FindRelatedReviewsByPullRequestAsync(reviewId);
+                
+                foreach (var relatedReviewId in discoveredReviewIds)
+                {
+                    var relatedReview = await _reviewsRepository.GetReviewAsync(relatedReviewId);
+                    if (relatedReview != null && 
+                        IsSDKLanguage(relatedReview.Language) && 
+                        relatedReview.NamespaceReviewStatus == NamespaceReviewStatus.Pending)
+                    {
+                        associatedReviews.Add(relatedReview);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _telemetryClient.TrackException(ex);
+            }
+            
+            return associatedReviews;
         }
     }
 }

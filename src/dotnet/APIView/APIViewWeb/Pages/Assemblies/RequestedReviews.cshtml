@@ -162,7 +162,7 @@
                                 @foreach (var apiRevision in Model.NamespaceApprovalRequestedAPIRevisions)
                                 {
                                     // Get namespace approval request information from the stored data
-                                    var hasNamespaceInfo = Model.NamespaceApprovalInfo.TryGetValue(apiRevision.Id, out var namespaceInfo);
+                                    var hasNamespaceInfo = Model.NamespaceApprovalInfo.TryGetValue(apiRevision.ReviewId, out var namespaceInfo);
                                     var approvalRequestedOn = hasNamespaceInfo ? namespaceInfo.RequestedOn : (DateTime?)null;
                                     var requestBy = hasNamespaceInfo ? namespaceInfo.RequestedBy : null;
                                     

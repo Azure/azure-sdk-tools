@@ -17,10 +17,11 @@ using System.Net.Http;
 using System.Text.Json;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Helpers;
+using APIViewWeb.Services;
 
 namespace APIViewWeb.Managers
 {
-    public class NotificationManager : INotificationManager
+        public class NotificationManager : INotificationManager
     {
         private readonly IConfiguration _configuration;
         private readonly string _apiviewEndpoint;
@@ -31,6 +32,8 @@ namespace APIViewWeb.Managers
         private readonly string _testEmailToAddress;
         private readonly string _emailSenderServiceUrl;
         private readonly TelemetryClient _telemetryClient;
+        private readonly IEmailTemplateService _emailTemplateService;
+        private readonly IHttpClientFactory _httpClientFactory;
 
         private const string ENDPOINT_SETTING = "Endpoint";
 
@@ -38,7 +41,9 @@ namespace APIViewWeb.Managers
             ICosmosReviewRepository reviewRepository, ICosmosAPIRevisionsRepository apiRevisionRepository,
             ICosmosUserProfileRepository userProfileRepository,
             UserProfileCache userProfileCache,
-            TelemetryClient telemetryClient)
+            TelemetryClient telemetryClient,
+            IEmailTemplateService emailTemplateService,
+            IHttpClientFactory httpClientFactory)
         {
             _configuration = configuration;
             _apiviewEndpoint = configuration.GetValue<string>(ENDPOINT_SETTING);
@@ -49,6 +54,8 @@ namespace APIViewWeb.Managers
             _testEmailToAddress = configuration["apiview-email-test-address"] ?? "";
             _emailSenderServiceUrl = configuration["azure-sdk-emailer-url"] ?? "";
             _telemetryClient = telemetryClient;
+            _emailTemplateService = emailTemplateService;
+            _httpClientFactory = httpClientFactory;
         }
 
         public async Task NotifySubscribersOnComment(ClaimsPrincipal user, CommentItemModel comment)
@@ -208,14 +215,12 @@ namespace APIViewWeb.Managers
 
         private async Task SendUserEmailsAsync<T>(T model, UserProfileModel user, string htmlContent) where T : BaseListitemModel 
         {
-            // Always send email to a test address when test address is configured.
             if (string.IsNullOrEmpty(user.Email))
             {
-                _telemetryClient.TrackTrace($"Email address is not available for user {user.UserName}. Not sending email.");
                 return;
             }
 
-            await SendEmail(user.Email, $"Notification from APIView - {model.PackageName}", htmlContent);
+            await SendEmailAsync(user.Email, $"Notification from APIView - {model.PackageName}", htmlContent);
         }
         private async Task SendEmailsAsync(ReviewListItemModel review, ClaimsPrincipal user, string htmlContent, ISet<string> notifiedUsers)
         {
@@ -227,12 +232,10 @@ namespace APIViewWeb.Managers
                 foreach (var username in notifiedUsers)
                 {
                     var email = await GetEmailAddress(username);
-                    if (string.IsNullOrEmpty(email))
+                    if (!string.IsNullOrEmpty(email))
                     {
-                        _telemetryClient.TrackTrace($"Email address is not available for user {username}, review {review.Id}. Not sending email.");
-                        continue;
+                        notifiedEmails.Add(email);
                     }
-                    notifiedEmails.Add(email);
                 }
             }           
             var subscribers = review.Subscribers.ToList()
@@ -245,34 +248,9 @@ namespace APIViewWeb.Managers
 
             // Send single email to all subscribers
             var emailToList = string.Join("; ", subscribers);
-            await SendEmail(emailToList, $"Update on APIView - {review.PackageName} from {GetUserName(user)}", htmlContent);
+            await SendEmailAsync(emailToList, $"Update on APIView - {review.PackageName} from {GetUserName(user)}", htmlContent);
         }
 
-        private async Task SendEmail(string emailToList, string subject, string content)
-        {
-            if (string.IsNullOrEmpty(_emailSenderServiceUrl))
-            {
-                _telemetryClient.TrackTrace($"Email sender service URL is not configured. Email will not be sent to {emailToList} with subject: {subject}");
-                return;
-            }
-            var emailToAddress = !string.IsNullOrEmpty(_testEmailToAddress) ? _testEmailToAddress : emailToList;
-            var requestBody = new EmailModel(emailToAddress, subject, content);
-            var httpClient = new HttpClient();
-            try
-            {
-                var requestBodyJson = JsonSerializer.Serialize(requestBody);
-                _telemetryClient.TrackTrace($"Sending email address request to logic apps. request: {requestBodyJson}");
-                var response = await httpClient.PostAsync(_emailSenderServiceUrl, new StringContent(requestBodyJson, Encoding.UTF8, "application/json"));
-                if (response.StatusCode !=  HttpStatusCode.OK && response.StatusCode != HttpStatusCode.Accepted)
-                {
-                    _telemetryClient.TrackTrace($"Failed to send email to user {emailToList} with subject: {subject}, status code: {response.StatusCode}, Details: {response.ToString}");
-                }
-            }
-            catch (Exception ex)
-            {
-                _telemetryClient.TrackException(ex);
-            }
-        }
         private static string GetUserName(ClaimsPrincipal user)
         {
             var name = user.FindFirstValue(ClaimConstants.Name);
@@ -287,7 +265,91 @@ namespace APIViewWeb.Managers
             return user.Email;
         }
 
-        public async Task NotifyApproversOnNamespaceReviewRequest(ClaimsPrincipal user, ReviewListItemModel review, string notes = "")
+        private async Task<IEnumerable<APIRevisionListItemModel>> GetLanguageSpecificReviews(string packageName)
+        {
+            try
+            {
+                // Extract the core service name from the package name for better matching
+                // e.g., "Microsoft.MixedReality" -> "MixedReality"
+                var serviceName = ExtractServiceName(packageName);
+                
+                // Get all recent manual revisions and filter by service name
+                var recentDate = DateTime.UtcNow.AddMonths(-6); // Get revisions from last 6 months
+                var allReviews = await _apiRevisionRepository.GetAPIRevisionsAsync(recentDate, APIRevisionType.Manual);
+
+                // Find reviews that contain the service name (more flexible matching)
+                var relatedReviews = allReviews.Where(r => 
+                    !string.IsNullOrEmpty(r.PackageName) && 
+                    (r.PackageName.Contains(serviceName, StringComparison.OrdinalIgnoreCase) ||
+                     r.PackageName.Contains(packageName, StringComparison.OrdinalIgnoreCase)))
+                    .OrderByDescending(r => r.CreatedOn)
+                    .Take(15); // Get more results to filter
+
+                // Group by language and take the most recent for each language
+                var languageGroups = relatedReviews
+                    .GroupBy(r => r.Language)
+                    .Select(g => g.OrderByDescending(r => r.CreatedOn).First())
+                    .OrderBy(r => r.Language)
+                    .ToList();
+
+                return languageGroups;
+            }
+            catch (Exception ex)
+            {
+                _telemetryClient.TrackException(ex);
+                return Enumerable.Empty<APIRevisionListItemModel>();
+            }
+        }
+
+        private string ExtractServiceName(string packageName)
+        {
+            if (string.IsNullOrEmpty(packageName))
+                return packageName;
+
+            // Handle different package naming patterns
+            // Microsoft.ServiceName -> ServiceName
+            // Azure.ResourceManager.ServiceName -> ServiceName  
+            // azure-mgmt-servicename -> servicename
+            // @azure/arm-servicename -> servicename
+
+            var serviceName = packageName;
+
+            // Remove common prefixes
+            var prefixesToRemove = new[]
+            {
+                "Microsoft.",
+                "Azure.ResourceManager.",
+                "Azure.",
+                "azure-mgmt-",
+                "azure-",
+                "@azure/arm-",
+                "@azure/"
+            };
+
+            foreach (var prefix in prefixesToRemove)
+            {
+                if (serviceName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    serviceName = serviceName.Substring(prefix.Length);
+                    break;
+                }
+            }
+
+            // Remove common suffixes
+            var suffixesToRemove = new[] { "-preview", ".Preview" };
+            foreach (var suffix in suffixesToRemove)
+            {
+                if (serviceName.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
+                {
+                    serviceName = serviceName.Substring(0, serviceName.Length - suffix.Length);
+                    break;
+                }
+            }
+
+            return serviceName;
+        }
+
+        public async Task NotifyApproversOnNamespaceReviewRequest(ClaimsPrincipal user, ReviewListItemModel review, IEnumerable<ReviewListItemModel> languageReviews = null, string notes = "")
         {
             try
             {
@@ -295,31 +357,20 @@ namespace APIViewWeb.Managers
                 var preferredApprovers = PageModelHelpers.GetPreferredApprovers(_configuration, _userProfileCache, user, review);
                 if (!preferredApprovers.Any())
                 {
-                    _telemetryClient.TrackTrace($"No preferred approvers found for language: {review.Language}");
                     return;
                 }
 
-                var requesterName = GetUserName(user);
                 var subject = $"Namespace Review Requested: {review.PackageName}";
                 
-                var contentBuilder = new StringBuilder();
-                contentBuilder.AppendLine($"Hello,");
-                contentBuilder.AppendLine();
-                contentBuilder.AppendLine($"{requesterName} has requested a namespace review for: {review.PackageName}");
-                contentBuilder.AppendLine();
-                contentBuilder.AppendLine($"Package: {review.PackageName}");
-                contentBuilder.AppendLine($"Language: {review.Language}");
-                if (!string.IsNullOrEmpty(notes))
-                {
-                    contentBuilder.AppendLine($"Notes: {notes}");
-                }
-                contentBuilder.AppendLine();
-                contentBuilder.AppendLine($"Please review at: {_apiviewEndpoint}/Assemblies/Review/{review.Id}");
-                contentBuilder.AppendLine();
-                contentBuilder.AppendLine("Thank you,");
-                contentBuilder.AppendLine("APIView Team");
-
-                var emailContent = contentBuilder.ToString();
+                // Build TypeSpec URL
+                var typeSpecUrl = $"{_apiviewEndpoint}/Assemblies/Review/{review.Id}";
+                
+                // Generate email content using template with actual language review data
+                var emailContent = await _emailTemplateService.GetNamespaceReviewRequestEmailAsync(
+                    review.PackageName,
+                    typeSpecUrl,
+                    languageReviews ?? Enumerable.Empty<ReviewListItemModel>(),
+                    notes);
                 
                 // Get email addresses for preferred approvers
                 var emailAddresses = new List<string>();
@@ -337,11 +388,6 @@ namespace APIViewWeb.Managers
                 if (!string.IsNullOrEmpty(emailToList))
                 {
                     await SendEmailAsync(emailToList, subject, emailContent);
-                    _telemetryClient.TrackTrace($"Namespace review notification sent to {emailToList} for review {review.Id}");
-                }
-                else
-                {
-                    _telemetryClient.TrackTrace($"No email addresses found for preferred approvers of language: {review.Language}");
                 }
             }
             catch (Exception ex)
@@ -354,21 +400,82 @@ namespace APIViewWeb.Managers
         {
             if (string.IsNullOrEmpty(_emailSenderServiceUrl))
             {
-                _telemetryClient.TrackTrace($"Email sender service URL is not configured. Email will not be sent to {emailToList} with subject: {subject}");
                 return;
             }
+            
             var emailToAddress = !string.IsNullOrEmpty(_testEmailToAddress) ? _testEmailToAddress : emailToList;
             var requestBody = new EmailModel(emailToAddress, subject, content);
-            var httpClient = new HttpClient();
+            
             try
             {
                 var requestBodyJson = JsonSerializer.Serialize(requestBody);
-                _telemetryClient.TrackTrace($"Sending email address request to logic apps. request: {requestBodyJson}");
+                using var httpClient = _httpClientFactory.CreateClient();
                 var response = await httpClient.PostAsync(_emailSenderServiceUrl, new StringContent(requestBodyJson, Encoding.UTF8, "application/json"));
-                if (response.StatusCode !=  HttpStatusCode.OK && response.StatusCode != HttpStatusCode.Accepted)
+                
+                if (response.StatusCode != HttpStatusCode.OK && response.StatusCode != HttpStatusCode.Accepted)
                 {
-                    _telemetryClient.TrackTrace($"Failed to send email to user {emailToList} with subject: {subject}, status code: {response.StatusCode}, Details: {response.ToString}");
+                    _telemetryClient.TrackTrace($"Failed to send email with subject: {subject}, status code: {response.StatusCode}");
                 }
+            }
+            catch (Exception ex)
+            {
+                _telemetryClient.TrackException(ex);
+            }
+        }
+
+        public async Task NotifyStakeholdersOfManualApproval(ReviewListItemModel review, IEnumerable<ReviewListItemModel> associatedReviews)
+        {
+            try
+            {
+                // Get the original requester's email
+                var requesterEmail = await GetEmailAddress(review.NamespaceApprovalRequestedBy);
+                if (string.IsNullOrEmpty(requesterEmail)) return;
+                
+                var subject = $"Namespace Review Approved: {review.PackageName}";
+                
+                // Build TypeSpec URL
+                var typeSpecUrl = $"{_apiviewEndpoint}/Assemblies/Review/{review.Id}";
+                
+                // Use the unified approval email template for manual approval
+                var emailContent = await _emailTemplateService.GetNamespaceReviewApprovedEmailAsync(
+                    review.PackageName,
+                    typeSpecUrl,
+                    associatedReviews ?? Enumerable.Empty<ReviewListItemModel>(),
+                    isAutoApproved: false);
+                
+                // Send to the original requester
+                await SendEmailAsync(requesterEmail, subject, emailContent);
+            }
+            catch (Exception ex)
+            {
+                _telemetryClient.TrackException(ex);
+            }
+        }
+
+        public async Task NotifyStakeholdersOfAutoApproval(ReviewListItemModel review, IEnumerable<ReviewListItemModel> associatedReviews)
+        {
+            try
+            {
+                // Get the original requester's email
+                var requesterEmail = await GetEmailAddress(review.NamespaceApprovalRequestedBy);
+                if (string.IsNullOrEmpty(requesterEmail)) return;
+                
+                var subject = $"Namespace Review Auto-Approved: {review.PackageName}";
+                
+                // Build TypeSpec URL
+                var typeSpecUrl = $"{_apiviewEndpoint}/Assemblies/Review/{review.Id}";
+                
+                // Use the unified approval email template for auto-approval
+                var emailContent = await _emailTemplateService.GetNamespaceReviewApprovedEmailAsync(
+                    review.PackageName,
+                    typeSpecUrl,
+                    associatedReviews ?? Enumerable.Empty<ReviewListItemModel>(),
+                    isAutoApproved: true,
+                    originalRequestDate: review.NamespaceApprovalRequestedOn,
+                    autoApprovedDate: DateTime.UtcNow);
+                
+                // Send to the original requester
+                await SendEmailAsync(requesterEmail, subject, emailContent);
             }
             catch (Exception ex)
             {

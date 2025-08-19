@@ -99,6 +99,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var releaseplan = await releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "12345678-1234-5678-9012-123456789012", "12345678-1234-5678-9012-123456789012", "2025-01-01", "https://github.com/Azure/azure-rest-api-specs/pull/35446", "beta", isTestReleasePlan: true);
             Assert.IsNotNull(releaseplan);
             Assert.True(releaseplan.Contains("Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem"));
+
+            releaseplan = await releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "12345678-1234-5678-9012-123456789012", "12345678-1234-5678-9012-123456789012", "2025-01-01-preview", "https://github.com/Azure/azure-rest-api-specs/pull/35446", "beta", isTestReleasePlan: true);
+            Assert.IsNotNull(releaseplan);
+            Assert.True(releaseplan.Contains("Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem"));
         }
 
         [Test]

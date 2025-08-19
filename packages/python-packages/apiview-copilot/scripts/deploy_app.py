@@ -13,7 +13,6 @@ import os
 import subprocess
 import sys
 import zipfile
-from typing import Optional
 
 from dotenv import load_dotenv
 from src._settings import SettingsManager

@@ -7,10 +7,11 @@ using System.Xml;
 using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Tools.Pipeline;
 using Azure.Sdk.Tools.Cli.Services;
 using ModelContextProtocol.Server;
 
-namespace Azure.Sdk.Tools.Cli.Tools;
+namespace Azure.Sdk.Tools.Cli.Tools.EngSys;
 
 [McpServerToolType, Description("Processes and analyzes test results from TRX files")]
 public class TestAnalysisTool(ITestHelper testHelper, IOutputHelper output, ILogger<PipelineAnalysisTool> logger) : MCPTool()

@@ -13,7 +13,7 @@ using Azure.Sdk.Tools.Cli.Services;
 using ModelContextProtocol.Server;
 using Octokit;
 
-namespace Azure.Sdk.Tools.Cli.Tools
+namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 {
     [Description("Release Plan Tool type that contains tools to connect to Azure DevOps to get release plan work item")]
     [McpServerToolType]
@@ -249,7 +249,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
                 logger.LogInformation("User email for release plan submission: {userEmail}", userEmail);
 
-                var releasePlan = new ReleasePlan
+                var releasePlan = new ReleasePlanDetails
                 {
                     SDKReleaseMonth = targetReleaseMonthYear,
                     ServiceTreeId = serviceTreeId,

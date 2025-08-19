@@ -12,7 +12,7 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using ModelContextProtocol.Server;
 using OpenAI.Chat;
 
-namespace Azure.Sdk.Tools.Cli.Tools;
+namespace Azure.Sdk.Tools.Cli.Tools.Example;
 
 #if DEBUG
 [McpServerToolType, Description("Example tool demonstrating various framework features and service integrations")]
@@ -178,7 +178,7 @@ public class ExampleTool : MCPTool
             var credential = azureService.GetCredential(tenantId);
 
             // Get token for demonstration (but don't log the actual token)
-            var tokenResult = await credential.GetTokenAsync(new Azure.Core.TokenRequestContext(["https://management.azure.com/.default"]), ct);
+            var tokenResult = await credential.GetTokenAsync(new Core.TokenRequestContext(["https://management.azure.com/.default"]), ct);
 
             var details = new Dictionary<string, string>
             {

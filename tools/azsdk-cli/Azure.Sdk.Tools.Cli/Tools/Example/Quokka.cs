@@ -8,7 +8,7 @@ using Azure.Sdk.Tools.Cli.Contract;
 
 // Just a lil easter egg :)
 
-namespace Azure.Sdk.Tools.Cli.Tools;
+namespace Azure.Sdk.Tools.Cli.Tools.Example;
 
 public class QuokkaTool(IOutputHelper output) : MCPTool
 {

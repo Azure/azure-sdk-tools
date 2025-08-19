@@ -9,7 +9,7 @@ using Azure.Sdk.Tools.Cli.Contract;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Models;
 
-namespace Azure.Sdk.Tools.Cli.Tools
+namespace Azure.Sdk.Tools.Cli.Tools.Example
 {
 #if DEBUG
     [McpServerToolType, Description("Simple echo tool for testing and demonstration purposes")]

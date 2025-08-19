@@ -4,7 +4,7 @@ using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
 
 namespace Azure.Sdk.Tools.Cli.Models
 {
-    public class ReleasePlan
+    public class ReleasePlanDetails
     {
         public int WorkItemId { get; set; }
         public string WorkItemUrl { get; set; } = string.Empty;

@@ -10,7 +10,7 @@ using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 using ModelContextProtocol.Server;
 
-namespace Azure.Sdk.Tools.Cli.Tools;
+namespace Azure.Sdk.Tools.Cli.Tools.EngSys;
 
 [McpServerToolType, Description("Analyzes log files for errors and issues")]
 public class LogAnalysisTool : MCPTool

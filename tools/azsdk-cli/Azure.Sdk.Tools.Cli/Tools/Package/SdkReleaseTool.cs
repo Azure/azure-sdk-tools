@@ -6,12 +6,11 @@ using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Services;
-using Azure.Sdk.Tools.Cli.Tools;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.TeamFoundation.Common;
 using ModelContextProtocol.Server;
 
-namespace Azure.Sdk.Tools.Cli.Tools
+namespace Azure.Sdk.Tools.Cli.Tools.Package
 {
     [McpServerToolType, Description("This type contains the tools to release SDK package")]
     public class SdkReleaseTool(IDevOpsService devopsService, ILogger<SdkReleaseTool> logger, ILogger<ReleaseReadinessTool> releaseReadinessLogger, IOutputHelper output) : MCPTool

@@ -15,7 +15,7 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 
-namespace Azure.Sdk.Tools.Cli.Tools;
+namespace Azure.Sdk.Tools.Cli.Tools.Pipeline;
 
 [McpServerToolType, Description("Fetches test data from Azure Pipelines")]
 public class PipelineTestsTool : MCPTool

@@ -19,7 +19,7 @@ using Microsoft.VisualStudio.Services.TestResults.WebApi;
 using Microsoft.VisualStudio.Services.WebApi;
 using ModelContextProtocol.Server;
 
-namespace Azure.Sdk.Tools.Cli.Tools;
+namespace Azure.Sdk.Tools.Cli.Tools.Pipeline;
 
 [McpServerToolType, Description("Fetches data from an Azure Pipelines run.")]
 public class PipelineAnalysisTool : MCPTool

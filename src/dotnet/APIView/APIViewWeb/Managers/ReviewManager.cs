@@ -348,7 +348,7 @@ namespace APIViewWeb.Managers
             var activeApiOutline = activeCodeFile.CodeFile.GetApiOutlineText();
 
             List<ApiViewAgentComment> diagnostics = new();
-            if (activeCodeFile.CodeFile?.Diagnostics?.Length > 0)
+            if (activeCodeFile?.CodeFile?.Diagnostics?.Length > 0)
             {
                 diagnostics = AgentHelpers.BuildDiagnosticsForAgent(activeCodeFile.CodeFile.Diagnostics.ToList(), activeCodeFile);
             }

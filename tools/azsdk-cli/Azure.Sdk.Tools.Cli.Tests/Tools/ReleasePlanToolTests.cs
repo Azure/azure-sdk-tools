@@ -4,7 +4,6 @@ using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tests.Mocks.Services;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools;
-using Microsoft.Graph.Models;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools
 {

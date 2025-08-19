@@ -50,7 +50,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         [GeneratedRegex("https:\\/\\/github.com\\/Azure\\/azure-sdk\\/issues\\/([0-9]+)")]
         private static partial Regex NameSpaceIssueUrlRegex();
 
-        [GeneratedRegex("https:\\/\\/github.com\\/Azure\\/(azure-rest-api-specs|azure-rest-api-specs-pr)\\/pull\\/?")]
+        [GeneratedRegex("https:\\/\\/github.com\\/Azure\\/(azure-rest-api-specs|azure-rest-api-specs-pr)\\/pull\\/[0-9]+\\/?")]
         private static partial Regex PullRequestUrlRegex();
 
 

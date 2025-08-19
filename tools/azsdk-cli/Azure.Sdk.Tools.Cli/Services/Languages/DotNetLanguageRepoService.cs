@@ -14,4 +14,6 @@ public class DotNetLanguageRepoService : LanguageRepoService
         : base(processHelper, gitHelper)
     {
     }
+
+    public override string Language => "dotnet";
 }

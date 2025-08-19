@@ -14,4 +14,6 @@ public class JavaScriptLanguageRepoService : LanguageRepoService
         : base(processHelper, gitHelper)
     {
     }
+
+    public override string Language => "javascript";
 }

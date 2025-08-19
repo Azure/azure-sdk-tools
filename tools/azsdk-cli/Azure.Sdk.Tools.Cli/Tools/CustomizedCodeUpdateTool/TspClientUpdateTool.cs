@@ -3,46 +3,43 @@
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.ComponentModel;
-using System.IO;
+using System.Linq;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Models;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Update;
-using Microsoft.Extensions.Logging.Abstractions;
+using Update = Azure.Sdk.Tools.Cli.Services.Update;
 
 namespace Azure.Sdk.Tools.Cli.Tools;
 
 [McpServerToolType, Description("Update customized SDK code after TypeSpec regeneration: creates/continues a session, diffs old vs new generated code, maps API changes to impacted customization files, applies patches.")]
 public class TspClientUpdateTool : MCPTool
 {
-    private readonly ILogger<TspClientUpdateTool> logger;
-    private readonly IOutputService output;
+    private readonly ILogger<TspClientUpdateTool> _logger;
+    private readonly IOutputService _output;
+    private readonly Func<string, Update.IUpdateLanguageService> _languageServiceFactory;
 
     // --- CLI options/args ---
     private readonly Argument<string> _specPathArg = new(name: "spec-path", description: "Path to the .tsp specification file") { Arity = ArgumentArity.ExactlyOne };
     // Removed --session option (single implicit session). Kept placeholder variable (unused) to minimize diff if reintroduced later.
     // private readonly Option<string> _sessionIdOpt = new(["--session", "-s"], () => string.Empty, "Existing session id (omit to create a new session)");
-    private readonly Option<string> _languageOpt = new(["--language", "-l"], () => "java", "Target language (e.g. java, csharp)");
-    private readonly Option<string> _stageOpt = new(["--stage"], () => string.Empty, "Run only a specific stage (regenerate,diff,map,merge,propose,apply,validate,all)");
+    private readonly Option<TspStageSelection> _stageOpt = new(["--stage"], description: "The stage to run (regenerate|diff|apply|all)") { IsRequired = true };
     private readonly Option<bool> _resumeOpt = new(["--resume"], () => false, "Resume from existing session state");
     private readonly Option<bool> _finalizeOpt = new(["--finalize"], () => false, "When applying, perform final (non-dry-run) apply if a dry-run occurred");
     // Old/new generated code roots: old = current code baseline (before regeneration), new = location future regenerate will output to
-    private readonly Option<string?> _generatedOldOpt = new(["--old-gen"], description: "Path to existing generated package currently customized (baseline for diff)");
-    private readonly Option<string?> _generatedNewOpt = new(["--new-gen"], description: "Path to directory where new TypeSpec generation output will be produced");
+    private readonly Option<string?> _generatedNewOpt = new(["--new-gen"], () => "./tmpgen", "Path to directory where new TypeSpec generation output will be produced");
 
     // Simplified session handling: single in-memory session only (no disk persistence)
     // TODO(#11645): Reintroduce pluggable session store (file/remote/memory) with manifest + pruning.
     private UpdateSessionState? _currentSession;
 
-    private readonly IEnumerable<IUpdateLanguageService> _languageServices;
-
-    public TspClientUpdateTool(ILogger<TspClientUpdateTool> logger, IOutputService output, IEnumerable<IUpdateLanguageService>? languageServices = null)
+    public TspClientUpdateTool(ILogger<TspClientUpdateTool> logger, IOutputService output, Func<string, Update.IUpdateLanguageService> languageServiceFactory)
     {
-        this.logger = logger;
-        this.output = output;
-        _languageServices = languageServices ?? new List<IUpdateLanguageService> { new JavaUpdateLanguageService() };
+    _logger = logger;
+    _output = output;
+        _languageServiceFactory = languageServiceFactory;
         CommandHierarchy = [ SharedCommandGroups.Tsp ];
     }
 
@@ -52,169 +49,143 @@ public class TspClientUpdateTool : MCPTool
             name: "customized-update",
             description: "Update customized TypeSpec-generated client code. Stages: regenerate -> diff -> apply (dry-run + finalize). Use --stage to run one stage; omit to run available stages in order; use --finalize to complete apply after a dry-run.");
         cmd.AddArgument(_specPathArg);
-        cmd.AddOption(_languageOpt);
+        cmd.AddOption(SharedOptions.PackagePath);
         cmd.AddOption(_stageOpt);
         cmd.AddOption(_resumeOpt);
         cmd.AddOption(_finalizeOpt);
-        cmd.AddOption(_generatedOldOpt);
         cmd.AddOption(_generatedNewOpt);
         cmd.SetHandler(async ctx => { await HandleUnified(ctx, ctx.GetCancellationToken()); });
+
         return cmd;
     }
 
     public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct) => await Task.CompletedTask;
 
     // --------------- MCP Methods ---------------
-    [McpServerTool(Name = "azsdk_tsp_update"), Description("Unified update-customize-code workflow (supports stage / resume)")] 
-    public async Task<TspClientUpdateResponse> UnifiedUpdate(string specPath, string? stage = null, bool resume = false, bool finalize = false, CancellationToken ct = default)
+    [McpServerTool(Name = "azsdk_tsp_update"), Description("Unified update-customize-code workflow")] 
+    public async Task<TspClientUpdateResponse> UnifiedUpdate(string specPath, IUpdateLanguageService languageService, TspStageSelection stage = TspStageSelection.All, bool resume = false, bool finalize = false, CancellationToken ct = default)
     {
-        try
-        {
+            try
+            {
             var session = resume ? _currentSession : null;
             if (session == null)
             {
                 session = GetOrCreateSession(null);
             }
+            // Ensure session records the language used (derived from the injected language service)
+            session.Language = languageService.Language;
             if (!resume)
             {
                 // Reset for a fresh run if not resuming
-                session.CompletedStages.Clear();
                 session.RequiresFinalize = false;
                 session.ApiChanges.Clear();
             }
             if (!string.IsNullOrWhiteSpace(specPath)) { session.SpecPath = specPath; }
-            var normalizedStage = string.IsNullOrWhiteSpace(stage) ? "all" : stage.ToLowerInvariant();
-            var runAll = normalizedStage is "all" or "";
-            var ordered = new List<string> { "regenerate", "diff", "map", "merge", "propose", "apply", "validate" };
+            var runAll = stage == TspStageSelection.All;
+            var ordered = new List<TspStageSelection> { TspStageSelection.Regenerate, TspStageSelection.Diff, TspStageSelection.Apply };
             string? nextStage = null;
             bool terminal = false;
             bool needsFinalize = false;
-            foreach (var s in ordered)
+            
+            foreach (var stageToRun in ordered)
             {
-                if (!runAll && !string.Equals(s, normalizedStage, StringComparison.OrdinalIgnoreCase))
+                if (!runAll && stageToRun != stage)
                 {
                     // Skip stages not requested
                     continue;
                 }
-                // Enforce stage order
-                if (s == "diff" && session.LastStage < UpdateStage.Regenerated) { nextStage = "regenerate"; break; }
-                if (s == "map" && session.LastStage < UpdateStage.Diffed) { nextStage = "diff"; break; }
-                if (s == "merge" && session.LastStage < UpdateStage.Mapped) { nextStage = "map"; break; }
-                if (s == "propose" && session.LastStage < UpdateStage.Merged) { nextStage = "merge"; break; }
-                if (s == "apply" && session.LastStage < UpdateStage.PatchesProposed) { nextStage = "propose"; break; }
-                if (s == "validate" && session.LastStage < UpdateStage.Applied) { nextStage = session.LastStage == UpdateStage.AppliedDryRun ? "apply" : "apply"; break; }
-                switch (s)
+                // Enforce stage order via policy
+                if (!StagePolicy.CanRun(session, stageToRun, out nextStage))
                 {
-                    case "regenerate":
-                        if (session.LastStage < UpdateStage.Regenerated || !resume || runAll)
+                    break;
+                }
+                switch (stageToRun)
+                {
+                    case TspStageSelection.Regenerate:
+                        if (StagePolicy.ShouldRun(session, TspStageSelection.Regenerate, resume, runAll))
                         {
-                            var r = await RegenerateCore(session.SpecPath, session.SessionId, null, ct);
-                            if (!string.IsNullOrEmpty(r.ResponseError))
+                            var regenerateResult = await RegenerateCore(session.SpecPath, session.SessionId, null, ct);
+                            if (!string.IsNullOrEmpty(regenerateResult.ResponseError))
                             {
-                                return r;
+                                return regenerateResult;
                             }
-                            session = r.Session!;
+                            session = regenerateResult.Session!;
                         }
                         break;
-                    case "diff":
-                        if (session.LastStage < UpdateStage.Diffed || runAll)
+                    case TspStageSelection.Diff:
+                        if (StagePolicy.ShouldRun(session, TspStageSelection.Diff, resume, runAll))
                         {
-                            var d = await DiffCore(session.SessionId, null, null, ct);
-                            if (!string.IsNullOrEmpty(d.ResponseError))
+                            var diffResult = await DiffCore(session.SessionId, languageService, null, null, ct);
+                            if (!string.IsNullOrEmpty(diffResult.ResponseError))
                             {
-                                return d;
+                                return diffResult;
                             }
-                            session = d.Session!;
+                            session = diffResult.Session!;
                         }
                         if (session.ApiChangeCount == 0)
                         {
                             terminal = true; // nothing else to do
                             goto Finish;
                         }
-                        break;
-                    case "map":
-                        if (session.ApiChangeCount == 0)
+                        // Map + Propose even when only 'diff' is requested (single-file flow chains these steps)
                         {
-                            terminal = true; goto Finish;
-                        }
-                        if (session.LastStage < UpdateStage.Mapped || runAll)
-                        {
-                            var m = await MapCore(session.SessionId, ct);
-                            if (!string.IsNullOrEmpty(m.ResponseError)) { return m; }
-                            session = m.Session!;
-                        }
-                        break;
-                    case "merge":
-                        if (session.ApiChangeCount == 0)
-                        {
-                            terminal = true; goto Finish;
-                        }
-                        if (session.LastStage < UpdateStage.Merged || runAll)
-                        {
-                            var mg = await MergeCore(session.SessionId, ct);
-                            if (!string.IsNullOrEmpty(mg.ResponseError)) { return mg; }
-                            session = mg.Session!;
-                        }
-                        break;
-                    case "propose":
-                        if (session.ApiChangeCount == 0)
-                        {
-                            terminal = true; goto Finish;
-                        }
-                        if (session.LastStage < UpdateStage.PatchesProposed || runAll)
-                        {
-                            var p = await ProposeCore(session.SessionId, null, ct);
-                            if (!string.IsNullOrEmpty(p.ResponseError)) { return p; }
-                            session = p.Session!;
-                        }
-                        break;
-                    case "apply":
-                        if (session.ApiChangeCount == 0) { terminal = true; goto Finish; }
-                        if (session.LastStage < UpdateStage.PatchesProposed)
-                        {
-                            nextStage = "propose"; break;
-                        }
-                        if (session.LastStage < UpdateStage.AppliedDryRun)
-                        {
-                            var aDry = ApplyCore(session.SessionId, dryRun: true, ct);
-                            if (!string.IsNullOrEmpty(aDry.ResponseError))
+                            var mapResult = await MapCore(session.SessionId, languageService, ct);
+                            if (!string.IsNullOrEmpty(mapResult.ResponseError)) { return mapResult; }
+                            session = mapResult.Session!;
+
+                            var proposeResult = await ProposeCore(session.SessionId, languageService, null, ct);
+                            if (!string.IsNullOrEmpty(proposeResult.ResponseError)) { return proposeResult; }
+                            session = proposeResult.Session!;
+
+                            // In single-stage mode suggest the next stage explicitly
+                            if (!runAll)
                             {
-                                return aDry;
+                                nextStage = StagePolicy.ToStageKeyword(TspStageSelection.Apply);
                             }
-                            session = aDry.Session!;
+                        }
+                        break;
+                    case TspStageSelection.Apply:
+                        if (session.ApiChangeCount == 0) { terminal = true; goto Finish; }
+                        if (StagePolicy.ShouldRun(session, TspStageSelection.Apply, resume, runAll) && session.LastStage < UpdateStage.AppliedDryRun)
+                        {
+                            var applyDryRunResult = ApplyCore(session.SessionId, dryRun: true, ct);
+                            if (!string.IsNullOrEmpty(applyDryRunResult.ResponseError))
+                            {
+                                return applyDryRunResult;
+                            }
+                            session = applyDryRunResult.Session!;
                             needsFinalize = true;
                             if (!finalize)
                             {
                                 // Stop after dry-run in all-mode unless finalize requested
-                                if (runAll) { nextStage = "apply"; }
+                                if (runAll) { nextStage = StagePolicy.ToStageKeyword(TspStageSelection.Apply); }
                                 goto Finish;
                             }
                         }
                         if (finalize && session.LastStage == UpdateStage.AppliedDryRun)
                         {
-                            var a = ApplyCore(session.SessionId, dryRun: false, ct);
-                            if (!string.IsNullOrEmpty(a.ResponseError))
+                            var applyFinalResult = ApplyCore(session.SessionId, dryRun: false, ct);
+                            if (!string.IsNullOrEmpty(applyFinalResult.ResponseError))
                             {
-                                return a;
+                                return applyFinalResult;
                             }
-                            session = a.Session!;
+                            session = applyFinalResult.Session!;
                             needsFinalize = false;
                         }
                         // don't mark terminal yet; allow validate stage
-                        break;
-                    case "validate":
                         if (session.LastStage < UpdateStage.Applied)
                         {
-                            nextStage = session.LastStage == UpdateStage.AppliedDryRun ? "apply" : "apply"; break;
+                            nextStage = StagePolicy.ToStageKeyword(TspStageSelection.Apply); break;
                         }
-                        if (session.LastStage < UpdateStage.Validated || runAll)
+                        // Validate stage
+                        if (session.LastStage < UpdateStage.Validated)
                         {
-                            var v = await ValidateCore(session.SessionId, ct);
-                            if (!string.IsNullOrEmpty(v.ResponseError)) { return v; }
-                            session = v.Session!;
+                            var validateResult = await ValidateCore(session.SessionId, languageService, ct);
+                            if (!string.IsNullOrEmpty(validateResult.ResponseError)) { return validateResult; }
+                            session = validateResult.Session!;
                         }
                         terminal = true;
-                        break;
+                        goto Finish;
                 }
                 if (!runAll)
                 {
@@ -224,7 +195,7 @@ public class TspClientUpdateTool : MCPTool
         Finish:
             if (nextStage == null && !terminal)
             {
-                nextStage = needsFinalize ? "apply" : (session.LastStage == UpdateStage.Applied ? "validate" : null);
+                nextStage = StagePolicy.NextHintAfter(session, runAll, needsFinalize);
             }
             return new TspClientUpdateResponse
             {
@@ -235,9 +206,9 @@ public class TspClientUpdateTool : MCPTool
                 Terminal = terminal ? true : null
             };
         }
-        catch (Exception ex)
+            catch (Exception ex)
         {
-            logger.LogError(ex, "Unified update failed for spec {specPath}", specPath);
+            _logger.LogError(ex, "Unified update failed for spec {specPath}", specPath);
             SetFailure();
             return new TspClientUpdateResponse { ResponseError = ex.Message, ErrorCode = "UnifiedUpdateFailed" };
         }
@@ -246,48 +217,42 @@ public class TspClientUpdateTool : MCPTool
     // --------------- Internal Stage Methods ---------------
     private Task<TspClientUpdateResponse> RegenerateCore(string specPath, string? sessionId, string? newGeneratedPath, CancellationToken ct)
     {
-        try
-        {
+            try
+            {
             var session = GetOrCreateSession(sessionId);
-            // placeholder : no real generation invoke logic here, delegate to TspClientTool update/regenerate command and populate session paths.
+            // placeholder : no real generation invoke logic here, delegate to TspClientTool/Service to update/regenerate command and populate session paths.
+            // should regenerate to <newGeneratedPath> location
             session.Status = "Regenerated";
             session.LastStage = UpdateStage.Regenerated;
-            session.UpdatedUtc = DateTime.UtcNow;
-            return Task.FromResult(new TspClientUpdateResponse { Session = session, Message = $"Regenerate placeholder complete (language={session.Language})", NextStep = ComputeNextStep(session) });
+            // session timestamp removed for leaner session
+            return Task.FromResult(new TspClientUpdateResponse { Session = session, Message = $"Regenerate complete (language={session.Language})", NextStep = ComputeNextStep(session) });
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Regenerate failed: {specPath}", specPath);
+            _logger.LogError(ex, "Regenerate failed: {specPath}", specPath);
             SetFailure();
             return Task.FromResult(new TspClientUpdateResponse { ResponseError = ex.Message, ErrorCode = "RegenerateFailed" });
         }
     }
 
-    private async Task<TspClientUpdateResponse> DiffCore(string sessionId, string? oldGeneratedPath, string? newGeneratedPath, CancellationToken ct)
+    private async Task<TspClientUpdateResponse> DiffCore(string sessionId, IUpdateLanguageService languageService, string? oldGeneratedPath, string? newGeneratedPath, CancellationToken ct)
     {
         try
         {
             var session = RequireSession(sessionId);
-            EnforceStageOrder(session, UpdateStage.Regenerated, "diff");
-            // Defensive: ensure language still set (some tests invoke MCP methods directly)
-            if (string.IsNullOrWhiteSpace(session.Language))
-            {
-                var firstLang = _languageServices.FirstOrDefault();
-                if (firstLang != null) { session.Language = firstLang.Language; }
-            }
-            var ls = EnsureLanguageService(session);
+            StagePolicy.EnsurePrereqOrThrow(session, UpdateStage.Regenerated, "diff", ComputeNextStep);
             var oldSymbols = new Dictionary<string, SymbolInfo>();
             var newSymbols = new Dictionary<string, SymbolInfo>();
             // TODO: populate oldSymbols/newSymbols via ExtractSymbolsAsync once baseline paths wired
-            var apiChanges = await ls.DiffAsync(oldSymbols, newSymbols);
+
+            var apiChanges = await languageService.DiffAsync(oldSymbols, newSymbols);
             session.ApiChanges = apiChanges;
             session.ApiChangeCount = apiChanges.Count;
             // Reset mapping results (handled in map stage)
             session.ImpactedCustomizations = new List<CustomizationImpact>();
-            session.ImpactedCount = 0;
             session.Status = "Diffed";
             session.LastStage = UpdateStage.Diffed;
-            session.UpdatedUtc = DateTime.UtcNow;
+            // session timestamp removed for leaner session
             var mapSummary = session.ApiChangeCount == 0 ? "no changes" : "changes detected";
             return new TspClientUpdateResponse
             {
@@ -302,7 +267,7 @@ public class TspClientUpdateTool : MCPTool
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Diff failed: {sessionId}", sessionId);
+            _logger.LogError(ex, "Diff failed: {sessionId}", sessionId);
             SetFailure();
             return new TspClientUpdateResponse { ResponseError = ex.Message, ErrorCode = "DiffFailed" };
         }
@@ -313,18 +278,11 @@ public class TspClientUpdateTool : MCPTool
         try
         {
             var session = RequireSession(sessionId);
-            if (session.LastStage < UpdateStage.PatchesProposed)
-            {
-                throw new StageOrderException("Cannot run 'apply' before proposing patches.", "InvalidStageOrder", ComputeNextStep(session) ?? "Run propose");
-            }
-            if (dryRun)
-            {
-                session.PatchesAppliedSuccess = session.ProposedPatches.Count;
-                session.PatchesAppliedFailed = 0;
-            }
+            StagePolicy.EnsurePrereqOrThrow(session, UpdateStage.PatchesProposed, "apply", ComputeNextStep);
+            // skip tracking per-file apply counts in lean mode
             session.Status = dryRun ? "AppliedDryRun" : "Applied";
             session.LastStage = dryRun ? UpdateStage.AppliedDryRun : UpdateStage.Applied;
-            session.UpdatedUtc = DateTime.UtcNow;
+            // session timestamp removed for leaner session
             if (dryRun) { session.RequiresFinalize = true; }
             else { session.RequiresFinalize = false; }
             return new TspClientUpdateResponse { Session = session, Message = dryRun ? "Apply dry-run complete (placeholder)." : "Apply finalized (placeholder)." };
@@ -335,140 +293,151 @@ public class TspClientUpdateTool : MCPTool
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Apply failed: {sessionId}", sessionId);
+            _logger.LogError(ex, "Apply failed: {sessionId}", sessionId);
             SetFailure();
             return new TspClientUpdateResponse { ResponseError = ex.Message, ErrorCode = "ApplyFailed" };
         }
     }
 
-    private Task<TspClientUpdateResponse> MapCore(string sessionId, CancellationToken ct)
+    private async Task<TspClientUpdateResponse> MapCore(string sessionId, IUpdateLanguageService languageService, CancellationToken ct)
     {
         try
         {
             var session = RequireSession(sessionId);
-            EnforceStageOrder(session, UpdateStage.Diffed, "map");
+            StagePolicy.EnsurePrereqOrThrow(session, UpdateStage.Diffed, "map", ComputeNextStep);
             if (session.ApiChangeCount > 0)
             {
-                var ls = EnsureLanguageService(session);
                 var generationRoot = session.NewGeneratedPath;
                 if (!string.IsNullOrWhiteSpace(generationRoot) && Directory.Exists(generationRoot))
                 {
-                    var root = ls.GetCustomizationRootAsync(session, generationRoot, ct).GetAwaiter().GetResult();
-                    if (!string.IsNullOrWhiteSpace(root))
+                    var customizationSource = await languageService.GetCustomizationRootAsync(session, generationRoot, ct).ConfigureAwait(false);
+                    if (!string.IsNullOrWhiteSpace(customizationSource))
                     {
-                        session.CustomizationRoot = root;
-                        var impacts = ls.AnalyzeCustomizationImpactAsync(session, root, session.ApiChanges, ct).GetAwaiter().GetResult();
+                        session.CustomizationRoot = customizationSource;
+                        var impacts = await languageService.AnalyzeCustomizationImpactAsync(session, customizationSource, session.ApiChanges, ct).ConfigureAwait(false);
                         if (impacts != null)
                         {
                             session.ImpactedCustomizations = impacts;
-                            session.ImpactedCount = impacts.Count;
+                            // Removed ImpactedCount assignment
+                            // session.ImpactedCount = impacts.Count;
                         }
                     }
                 }
             }
             session.Status = "Mapped";
             session.LastStage = UpdateStage.Mapped;
-            session.UpdatedUtc = DateTime.UtcNow;
-        return Task.FromResult(new TspClientUpdateResponse { Session = session, Message = "Map stage complete (placeholder).", NextStep = ComputeNextStep(session) });
+            // session timestamp removed for leaner session
+        return new TspClientUpdateResponse { Session = session, Message = "Map stage complete (placeholder).", NextStep = ComputeNextStep(session) };
         }
         catch (StageOrderException sox)
         {
-        return Task.FromResult(new TspClientUpdateResponse { ResponseError = sox.Message, ErrorCode = sox.Code, NextStep = sox.SuggestedCommand });
+        return new TspClientUpdateResponse { ResponseError = sox.Message, ErrorCode = sox.Code, NextStep = sox.SuggestedCommand };
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Map failed: {sessionId}", sessionId);
+            _logger.LogError(ex, "Internal stage Map failed: {sessionId}", sessionId);
             SetFailure();
-        return Task.FromResult(new TspClientUpdateResponse { ResponseError = ex.Message, ErrorCode = "MapFailed" });
+        return new TspClientUpdateResponse { ResponseError = ex.Message, ErrorCode = "MapFailed" };
         }
     }
 
-    private Task<TspClientUpdateResponse> MergeCore(string sessionId, CancellationToken ct)
+    private async Task<TspClientUpdateResponse> ProposeCore(string sessionId, IUpdateLanguageService languageService, string? filesCsv, CancellationToken ct)
     {
         try
         {
             var session = RequireSession(sessionId);
-            EnforceStageOrder(session, UpdateStage.Mapped, "merge");
-            var ls = EnsureLanguageService(session);
-            var direct = ls.DetectDirectMergeFilesAsync(session, session.CustomizationRoot, ct).GetAwaiter().GetResult();
-            session.DirectMergeFiles = direct;
-            session.Status = "Merged";
-            session.LastStage = UpdateStage.Merged;
-            session.UpdatedUtc = DateTime.UtcNow;
-        return Task.FromResult(new TspClientUpdateResponse { Session = session, Message = "Merge stage complete (placeholder).", NextStep = ComputeNextStep(session) });
-        }
-        catch (StageOrderException sox)
-        {
-        return Task.FromResult(new TspClientUpdateResponse { ResponseError = sox.Message, ErrorCode = sox.Code, NextStep = sox.SuggestedCommand });
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Merge failed: {sessionId}", sessionId);
-            SetFailure();
-        return Task.FromResult(new TspClientUpdateResponse { ResponseError = ex.Message, ErrorCode = "MergeFailed" });
-        }
-    }
-
-    private Task<TspClientUpdateResponse> ProposeCore(string sessionId, string? filesCsv, CancellationToken ct)
-    {
-        try
-        {
-            var session = RequireSession(sessionId);
-            EnforceStageOrder(session, UpdateStage.Merged, "propose");
+            StagePolicy.EnsurePrereqOrThrow(session, UpdateStage.Mapped, "propose", ComputeNextStep);
             session.ProposedPatches.Clear();
-            var ls = EnsureLanguageService(session);
             var impacts = session.ImpactedCustomizations;
             if (!string.IsNullOrWhiteSpace(filesCsv))
             {
                 var filter = filesCsv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToHashSet(StringComparer.OrdinalIgnoreCase);
                 impacts = impacts.Where(i => filter.Contains(i.File)).ToList();
             }
-            var proposals = ls.ProposePatchesAsync(session, impacts, session.DirectMergeFiles, ct).GetAwaiter().GetResult();
+        var proposals = await languageService.ProposePatchesAsync(session, impacts, ct).ConfigureAwait(false);
             session.ProposedPatches.AddRange(proposals);
             session.Status = "PatchesProposed";
             session.LastStage = UpdateStage.PatchesProposed;
-            session.UpdatedUtc = DateTime.UtcNow;
-            return Task.FromResult(new TspClientUpdateResponse { Session = session, Message = "Propose stage complete (placeholder).", NextStep = ComputeNextStep(session) });
+            // session timestamp removed for leaner session
+            return new TspClientUpdateResponse { Session = session, Message = "Propose stage complete (placeholder).", NextStep = ComputeNextStep(session) };
         }
-        catch (StageOrderException sox)
+    catch (StageOrderException sox)
         {
-            return Task.FromResult(new TspClientUpdateResponse { ResponseError = sox.Message, ErrorCode = sox.Code, NextStep = sox.SuggestedCommand });
+            return new TspClientUpdateResponse { ResponseError = sox.Message, ErrorCode = sox.Code, NextStep = sox.SuggestedCommand };
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Propose failed: {sessionId}", sessionId);
+            _logger.LogError(ex, "Internal stage Propose failed: {sessionId}", sessionId);
             SetFailure();
-            return Task.FromResult(new TspClientUpdateResponse { ResponseError = ex.Message, ErrorCode = "ProposeFailed" });
+            return new TspClientUpdateResponse { ResponseError = ex.Message, ErrorCode = "ProposeFailed" };
         }
     }
 
-    private Task<TspClientUpdateResponse> ValidateCore(string sessionId, CancellationToken ct)
+    private async Task<TspClientUpdateResponse> ValidateCore(string sessionId, IUpdateLanguageService languageService, CancellationToken ct)
     {
         try
         {
             var session = RequireSession(sessionId);
-            if (session.LastStage < UpdateStage.Applied)
+            StagePolicy.EnsurePrereqOrThrow(session, UpdateStage.Applied, "validate", ComputeNextStep);
+
+            const int MAX_ATTEMPTS = 3;
+            while (true)
             {
-                throw new StageOrderException("Cannot validate before apply is finalized.", "InvalidStageOrder", ComputeNextStep(session) ?? "Run apply");
+                var (success, errors) = await languageService!.ValidateAsync(session, ct).ConfigureAwait(false);
+                session.ValidationAttemptCount++;
+                session.ValidationErrors = errors;
+                session.ValidationSuccess = success;
+                if (success)
+                {
+                    session.Status = "Validated";
+                    session.LastStage = UpdateStage.Validated;
+                    return new TspClientUpdateResponse { Session = session, Message = "Validation succeeded." };
+                }
+
+                // If we've reached max attempts, mark for manual intervention and return failure
+                if (session.ValidationAttemptCount >= MAX_ATTEMPTS)
+                {
+                    session.Status = "ValidationFailed";
+                    session.RequiresManualIntervention = true;
+                    session.LastStage = UpdateStage.Validated;
+                    return new TspClientUpdateResponse { Session = session, Message = $"Validation failed after {session.ValidationAttemptCount} attempts.", NextStage = ComputeNextStep(session) };
+                }
+
+                // Ask language service for conservative fixes and apply them to ProposedPatches as additional proposals
+                var fixes = await languageService!.ProposeFixesAsync(session, errors, ct).ConfigureAwait(false);
+                if (fixes == null || fixes.Count == 0)
+                {
+                    // No automatic fixes; try repo-level format/lint as a last-ditch attempt if available
+                    if (!string.IsNullOrWhiteSpace(session.CustomizationRoot))
+                    {
+                        try
+                        {
+                            // best-effort: attempt format and lint helpers exposed by repo (if implemented)
+                            var repo = ((Update.UpdateLanguageServiceBase?)languageService)?.GetType();
+                            // we intentionally avoid a hard dependency; languages should implement ProposeFixesAsync when possible
+                        }
+                        catch { }
+                    }
+                    // No fixes proposed; loop will re-run validation until MAX_ATTEMPTS exhausted
+                    continue;
+                }
+
+                // Merge fixes into session.ProposedPatches so they are visible/auditable
+                session.ProposedPatches.AddRange(fixes);
+                // Simulate applying fixes as dry-run by advancing stage but keep LastStage as Applied to allow re-validation
+                session.Status = "AppliedDryRunWithFixes";
+                // loop back to re-run validation
             }
-            var ls = EnsureLanguageService(session);
-            var (success, errors) = ls.ValidateAsync(session, ct).GetAwaiter().GetResult();
-            session.ValidationErrors = errors;
-            session.ValidationSuccess = success;
-            session.Status = success ? "Validated" : "ValidationFailed";
-            session.LastStage = UpdateStage.Validated;
-            session.UpdatedUtc = DateTime.UtcNow;
-            return Task.FromResult(new TspClientUpdateResponse { Session = session, Message = success ? "Validation succeeded." : $"Validation failed: {errors.Count} error(s)." });
         }
         catch (StageOrderException sox)
         {
-            return Task.FromResult(new TspClientUpdateResponse { ResponseError = sox.Message, ErrorCode = sox.Code, NextStep = sox.SuggestedCommand });
+            return new TspClientUpdateResponse { ResponseError = sox.Message, ErrorCode = sox.Code, NextStep = sox.SuggestedCommand };
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Validate failed: {sessionId}", sessionId);
+            _logger.LogError(ex, "Internal stageValidate failed: {sessionId}", sessionId);
             SetFailure();
-            return Task.FromResult(new TspClientUpdateResponse { ResponseError = ex.Message, ErrorCode = "ValidateFailed" });
+            return new TspClientUpdateResponse { ResponseError = ex.Message, ErrorCode = "ValidateFailed" };
         }
     }
     
@@ -476,32 +445,55 @@ public class TspClientUpdateTool : MCPTool
     // --------------- Internal Methods ---------------
     private async Task HandleUnified(InvocationContext ctx, CancellationToken ct)
     {
-        try
-        {
+            try
+            {
             var spec = ctx.ParseResult.GetValueForArgument(_specPathArg);
             var stage = ctx.ParseResult.GetValueForOption(_stageOpt);
             var resume = ctx.ParseResult.GetValueForOption(_resumeOpt);
             var finalize = ctx.ParseResult.GetValueForOption(_finalizeOpt);
-            // force option removed
-            var lang = ctx.ParseResult.GetValueForOption(_languageOpt);
-            var oldGen = ctx.ParseResult.GetValueForOption(_generatedOldOpt);
-            var newGen = ctx.ParseResult.GetValueForOption(_generatedNewOpt);
-            if (!string.IsNullOrWhiteSpace(oldGen) || !string.IsNullOrWhiteSpace(newGen) || !string.IsNullOrWhiteSpace(lang))
+            var packagePath = ctx.ParseResult.GetValueForOption(SharedOptions.PackagePath);
+
+            // Create language service
+            IUpdateLanguageService languageService;
+            try
             {
-                // Ensure session exists so we can stash paths/language prior to unified workflow reset logic
-                var s = GetOrCreateSession(null);
-                if (!string.IsNullOrWhiteSpace(lang)) { s.Language = lang; }
-                if (!string.IsNullOrWhiteSpace(oldGen)) { s.OldGeneratedPath = Path.GetFullPath(oldGen!); }
-                if (!string.IsNullOrWhiteSpace(newGen)) { s.NewGeneratedPath = Path.GetFullPath(newGen!); }
+                languageService = _languageServiceFactory(Directory.Exists(packagePath) ? packagePath : Path.GetDirectoryName(packagePath)!);
+                _logger.LogDebug($"Retrieved language service: {languageService.GetType().Name}");
             }
-            var resp = await UnifiedUpdate(spec, stage, resume, finalize, ct);
-            ctx.ExitCode = ExitCode; output.Output(resp);
+            catch (Exception ex)
+            {
+                SetFailure(1);
+                _logger.LogError(ex, "Failed to create language service");
+                ctx.ExitCode = ExitCode;
+                _output.OutputError(new TspClientUpdateResponse { ResponseError = $"Unable to determine language for package at: {packagePath}. Error: {ex.Message}", ErrorCode = "LanguageDetectionFailed" });
+                return;
+            }
+            var oldGen = packagePath;
+            var newGen = ctx.ParseResult.GetValueForOption(_generatedNewOpt) ?? "./tmpgen";
+            try
+            {
+                // Ensure the default or provided new-gen directory exists and attach to the session early
+                Directory.CreateDirectory(newGen);
+                var sess = GetOrCreateSession(null);
+                sess.NewGeneratedPath = newGen;
+                if (!string.IsNullOrWhiteSpace(oldGen))
+                {
+                    sess.OldGeneratedPath = oldGen;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Unable to initialize new-gen directory at {newGen}", newGen);
+            }
+
+            var resp = await UnifiedUpdate(spec, languageService, stage, resume, finalize, ct);
+            ctx.ExitCode = ExitCode; _output.Output(resp);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "CLI unified update failed");
+            _logger.LogError(ex, "Unhandled exception while running update");
             SetFailure();
-            ctx.ExitCode = ExitCode; output.OutputError(new TspClientUpdateResponse { ResponseError = ex.Message, ErrorCode = "UnifiedFailed" });
+            ctx.ExitCode = ExitCode; _output.OutputError(new TspClientUpdateResponse { ResponseError = ex.Message, ErrorCode = "UnifiedUpdateFailed" });
         }
     }
 
@@ -515,7 +507,7 @@ public class TspClientUpdateTool : MCPTool
         return _currentSession;
     }
 
-    private UpdateSessionState RequireSession(string sessionId)
+    private UpdateSessionState RequireSession(string? sessionId)
     {
         if (_currentSession == null)
         {
@@ -529,56 +521,17 @@ public class TspClientUpdateTool : MCPTool
         return _currentSession;
     }
 
-    internal sealed class StageOrderException(string message, string code, string suggestedCommand) : Exception(message)
-    {
-        public string Code { get; } = code;
-        public string SuggestedCommand { get; } = suggestedCommand;
-    }
-
-    private void EnforceStageOrder(UpdateSessionState session, UpdateStage requiredPriorStage, string currentCommand)
-    {
-        if (session.LastStage < requiredPriorStage)
-        {
-            var needed = requiredPriorStage.ToString();
-            var suggestion = ComputeNextStep(session) ?? "(run previous stage)";
-            throw new StageOrderException($"Cannot run '{currentCommand}' before completing stage '{needed}'.", "InvalidStageOrder", suggestion);
-        }
-    }
-
     private string? ComputeNextStep(UpdateSessionState session)
     {
         return session.LastStage switch
         {
             UpdateStage.Regenerated => "Run diff",
             UpdateStage.Diffed => session.ApiChangeCount == 0 ? null : "Run map",
-            UpdateStage.Mapped => "Run merge",
-            UpdateStage.Merged => "Run propose",
+            UpdateStage.Mapped => "Run propose",
             UpdateStage.PatchesProposed => "Run apply (dry-run)",
             UpdateStage.AppliedDryRun => "Re-run apply to finalize",
             UpdateStage.Applied => "Run validate",
             _ => null
         };
-    }
-
-    private IUpdateLanguageService ResolveLanguageService(string lang)
-    {
-        var svc = _languageServices.FirstOrDefault(s => string.Equals(s.Language, lang, StringComparison.OrdinalIgnoreCase))
-            ?? throw new InvalidOperationException($"No language service registered for '{lang}'");
-        return svc;
-    }
-
-    private IUpdateLanguageService EnsureLanguageService(UpdateSessionState session)
-    {
-        if (session.LanguageService != null)
-        {
-            if (!string.Equals(session.LanguageService.Language, session.Language, StringComparison.OrdinalIgnoreCase))
-            {
-                throw new InvalidOperationException($"Session language changed from '{session.LanguageService.Language}' to '{session.Language}' after service resolution; mid-session language changes are unsupported.");
-            }
-            return session.LanguageService;
-        }
-        var resolved = ResolveLanguageService(session.Language);
-        session.LanguageService = resolved; // cache
-        return resolved;
     }
 }

@@ -26,8 +26,6 @@ public class TspClientUpdateResponse : Response
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? NextStep { get; set; }
 
-
-    // Unified facade additions
     [JsonPropertyName("nextStage")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? NextStage { get; set; }
@@ -69,7 +67,6 @@ public enum UpdateStage
     Regenerated,
     Diffed,
     Mapped,
-    Merged,
     PatchesProposed,
     AppliedDryRun,
     Applied,
@@ -79,32 +76,23 @@ public enum UpdateStage
 
 public class UpdateSessionState
 {
-    [JsonPropertyName("schemaVersion")] public int SchemaVersion { get; set; } = 1;
     [JsonPropertyName("sessionId")] public string SessionId { get; set; } = Guid.NewGuid().ToString("n");
     [JsonPropertyName("specPath")] public string SpecPath { get; set; } = string.Empty;
-    [JsonPropertyName("language")] public string Language { get; set; } = string.Empty; // language key (java, csharp, etc.)
+    [JsonPropertyName("language"), JsonIgnore] public string Language { get; set; } = string.Empty; // language key (java, csharp, etc.)
     [JsonPropertyName("oldGeneratedPath")] public string OldGeneratedPath { get; set; } = string.Empty;
     [JsonPropertyName("newGeneratedPath")] public string NewGeneratedPath { get; set; } = string.Empty;
     [JsonPropertyName("customizationRoot")] public string? CustomizationRoot { get; set; }
-    [JsonPropertyName("status")] public string Status { get; set; } = "Initialized";
+    [JsonPropertyName("status"), JsonIgnore] public string Status { get; set; } = "Initialized";
     [JsonPropertyName("lastStage")] public UpdateStage LastStage { get; set; } = UpdateStage.Initialized;
-    [JsonPropertyName("createdUtc")] public DateTime CreatedUtc { get; set; } = DateTime.UtcNow;
-    [JsonPropertyName("updatedUtc")] public DateTime UpdatedUtc { get; set; } = DateTime.UtcNow;
-    [JsonPropertyName("createdBy")] public string CreatedBy { get; set; } = Environment.UserName;
-    [JsonPropertyName("toolVersion")] public string ToolVersion { get; set; } = string.Empty;
-    [JsonPropertyName("apiChangeCount")] public int ApiChangeCount { get; set; } = 0;
-    [JsonPropertyName("impactedCount")] public int ImpactedCount { get; set; } = 0;
-    [JsonPropertyName("patchesAppliedSuccess")] public int PatchesAppliedSuccess { get; set; } = 0;
-    [JsonPropertyName("patchesAppliedFailed")] public int PatchesAppliedFailed { get; set; } = 0;
-    [JsonPropertyName("apiChanges")] public List<ApiChange> ApiChanges { get; set; } = new();
-    [JsonPropertyName("impactedCustomizations")] public List<CustomizationImpact> ImpactedCustomizations { get; set; } = new();
-    [JsonPropertyName("directMergeFiles")] public List<string> DirectMergeFiles { get; set; } = new();
-    [JsonPropertyName("proposedPatches")] public List<PatchProposal> ProposedPatches { get; set; } = new();
-    [JsonPropertyName("validationErrors")] public List<string> ValidationErrors { get; set; } = new();
+    [JsonPropertyName("apiChangeCount"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public int ApiChangeCount { get; set; } = 0;
+    [JsonPropertyName("apiChanges"), JsonIgnore] public List<ApiChange> ApiChanges { get; set; } = new();
+    [JsonPropertyName("impactedCustomizations"), JsonIgnore] public List<CustomizationImpact> ImpactedCustomizations { get; set; } = new();
+    [JsonPropertyName("proposedPatches"), JsonIgnore] public List<PatchProposal> ProposedPatches { get; set; } = new();
+    [JsonPropertyName("validationErrors"), JsonIgnore] public List<string> ValidationErrors { get; set; } = new();
     [JsonPropertyName("validationSuccess")] public bool? ValidationSuccess { get; set; }
-    [JsonIgnore] public Azure.Sdk.Tools.Cli.Services.Update.IUpdateLanguageService? LanguageService { get; set; } // cached, not serialized
+    [JsonPropertyName("validationAttemptCount"), JsonIgnore] public int ValidationAttemptCount { get; set; } = 0;
+    [JsonPropertyName("requiresManualIntervention")] public bool RequiresManualIntervention { get; set; } = false;
     [JsonPropertyName("requiresFinalize")] public bool RequiresFinalize { get; set; } = false;
-    [JsonPropertyName("completedStages")] public List<UpdateStage> CompletedStages { get; set; } = new();
 }
 
 public class ApiChange

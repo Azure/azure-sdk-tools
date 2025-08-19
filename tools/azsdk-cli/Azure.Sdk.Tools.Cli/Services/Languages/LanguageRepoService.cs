@@ -72,6 +72,9 @@ public class LanguageRepoService : ILanguageRepoService
         _gitHelper = gitHelper;
     }
 
+    // Default language identifier for the base class - override in derived classes.
+    public virtual string Language => "unknown";
+
     /// <summary>
     /// Creates a response from a ProcessResult.
     /// </summary>

@@ -1,29 +1,33 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.Text.RegularExpressions;
+using Azure.Sdk.Tools.Cli.Services;
+using System.IO;
 using Azure.Sdk.Tools.Cli.Models;
 
 namespace Azure.Sdk.Tools.Cli.Services.Update;
 
 /// <summary>
-/// Minimal stub implementation for Java update language service so tests compile.
-/// Real implementation TODO: parse generated code for symbols, diff, and impact analysis.
+/// Java-specific update language service. Composes Java repo operations via ILanguageRepoService and
+/// implements update semantics for symbol extraction, diff, mapping, and patch proposal.
 /// </summary>
-public class JavaUpdateLanguageService : IUpdateLanguageService
+public class JavaUpdateLanguageService : UpdateLanguageServiceBase
 {
-    public string Language => "java";
+    public override string Language => "java";
 
-    public Task<Dictionary<string, SymbolInfo>> ExtractSymbolsAsync(string rootPath, CancellationToken ct)
+    public JavaUpdateLanguageService(ILanguageRepoService repoService) : base(repoService) { }
+
+    public override Task<Dictionary<string, SymbolInfo>> ExtractSymbolsAsync(string rootPath, CancellationToken ct)
     {
         return Task.FromResult(new Dictionary<string, SymbolInfo>());
     }
 
-    public Task<List<ApiChange>> DiffAsync(Dictionary<string, SymbolInfo> oldSymbols, Dictionary<string, SymbolInfo> newSymbols)
+    public override Task<List<ApiChange>> DiffAsync(Dictionary<string, SymbolInfo> oldSymbols, Dictionary<string, SymbolInfo> newSymbols)
     {
         return Task.FromResult(new List<ApiChange>());
     }
 
-    public Task<string?> GetCustomizationRootAsync(UpdateSessionState session, string generationRoot, CancellationToken ct)
+    public override Task<string?> GetCustomizationRootAsync(UpdateSessionState session, string generationRoot, CancellationToken ct)
     {
         try
         {
@@ -50,23 +54,16 @@ public class JavaUpdateLanguageService : IUpdateLanguageService
         return Task.FromResult<string?>(null);
     }
 
-    public Task<List<CustomizationImpact>> AnalyzeCustomizationImpactAsync(UpdateSessionState session, string? customizationRoot, IEnumerable<ApiChange> apiChanges, CancellationToken ct)
+    public override Task<List<CustomizationImpact>> AnalyzeCustomizationImpactAsync(UpdateSessionState session, string? customizationRoot, IEnumerable<ApiChange> apiChanges, CancellationToken ct)
     {
         // Stub: TODO no impacted files
         return Task.FromResult(new List<CustomizationImpact>());
     }
 
-    public Task<List<string>> DetectDirectMergeFilesAsync(UpdateSessionState session, string? customizationRoot, CancellationToken ct)
+    public override Task<List<PatchProposal>> ProposePatchesAsync(UpdateSessionState session, IEnumerable<CustomizationImpact> impacts, CancellationToken ct)
     {
-        // Stub: no direct merges detected yet.
-        return Task.FromResult(new List<string>());
-    }
-
-    public Task<List<PatchProposal>> ProposePatchesAsync(UpdateSessionState session, IEnumerable<CustomizationImpact> impacts, IEnumerable<string> directMergeFiles, CancellationToken ct)
-    {
-        // Stub: create a trivial placeholder patch for each impacted file not directly merged.
+    // Stub: create a trivial placeholder patch for each impacted file.
         var proposals = impacts
-            .Where(i => !directMergeFiles.Contains(i.File, StringComparer.OrdinalIgnoreCase))
             .Select(i => new PatchProposal
             {
                 File = i.File,
@@ -77,9 +74,36 @@ public class JavaUpdateLanguageService : IUpdateLanguageService
         return Task.FromResult(proposals);
     }
 
-    public Task<(bool success, List<string> errors)> ValidateAsync(UpdateSessionState session, CancellationToken ct)
+    // Prefer marker-based repo root discovery for Java
+    protected override string? ResolveValidationPackagePath(UpdateSessionState session)
     {
-        // Stub: pretend validation passes.
-        return Task.FromResult((true, new List<string>()));
+        var candidates = new[] { session.CustomizationRoot, session.NewGeneratedPath, session.OldGeneratedPath }
+            .Where(c => !string.IsNullOrWhiteSpace(c))
+            .Select(c => Directory.Exists(c!) ? c! : (Path.GetDirectoryName(c!) ?? string.Empty))
+            .Where(p => !string.IsNullOrWhiteSpace(p))
+            .ToList();
+        foreach (var start in candidates)
+        {
+            var found = FindUpwardsWithMarkers(start!, new[] { "pom.xml", "build.gradle", "build.gradle.kts" });
+            if (!string.IsNullOrWhiteSpace(found))
+            {
+                return found;
+            }
+        }
+        return base.ResolveValidationPackagePath(session);
+    }
+
+    private static string? FindUpwardsWithMarkers(string startDir, string[] markerFiles)
+    {
+        var dir = new DirectoryInfo(startDir);
+        while (dir != null)
+        {
+            if (markerFiles.Any(m => File.Exists(Path.Combine(dir.FullName, m))))
+            {
+                return dir.FullName;
+            }
+            dir = dir.Parent;
+        }
+        return null;
     }
 }

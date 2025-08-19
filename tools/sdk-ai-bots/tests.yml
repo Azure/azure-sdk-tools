@@ -5,6 +5,15 @@ parameters:
 
 pool:
   vmImage: 'ubuntu-latest'
+
+trigger:
+- azure-sdk-ai-bot
+- main
+
+pr:
+- azure-sdk-ai-bot
+- main
+
 stages:
   - stage: 'evaluation'
     jobs:

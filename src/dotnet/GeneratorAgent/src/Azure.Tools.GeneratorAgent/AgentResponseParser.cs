@@ -10,10 +10,10 @@ namespace Azure.Tools.GeneratorAgent
     internal class AgentResponseParser
     {
         private readonly ILogger<AgentResponseParser> Logger;
-        private static readonly Regex TypeSpecCodeBlockRegex = new(@"```typespec\s*\n(.*?)\n```", RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.Compiled);
-        private static readonly Regex TspCodeBlockRegex = new(@"```tsp\s*\n(.*?)\n```", RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.Compiled);
-        private static readonly Regex TypeScriptCodeBlockRegex = new(@"```typescript\s*\n(.*?)\n```", RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.Compiled);
-        private static readonly Regex GenericCodeBlockRegex = new(@"```\s*\n(.*?)\n```", RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex TypeSpecCodeBlockRegex = new(@"```typespec\s*\n(.*?)\n```", RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(1));
+        private static readonly Regex TspCodeBlockRegex = new(@"```tsp\s*\n(.*?)\n```", RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(1));
+        private static readonly Regex TypeScriptCodeBlockRegex = new(@"```typescript\s*\n(.*?)\n```", RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(1));
+        private static readonly Regex GenericCodeBlockRegex = new(@"```\s*\n(.*?)\n```", RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(1));
 
         public AgentResponseParser(ILogger<AgentResponseParser> logger)
         {

@@ -70,6 +70,7 @@ namespace Azure.Tools.GeneratorAgent
             Logger.LogInformation("Starting code fix process with {Count} fixes using thread {ThreadId}", fixes.Count, threadId);
 
             string? finalUpdatedContent = null;
+            int processedCount = 0;
 
             try
             {
@@ -89,6 +90,7 @@ namespace Azure.Tools.GeneratorAgent
                     try
                     {
                         finalUpdatedContent = await ProcessSingleFixWithStateAsync(fix, threadId, i + 1, cancellationToken).ConfigureAwait(false);
+                        processedCount++;
                         
                         Logger.LogDebug("Successfully applied fix {Current}/{Total}. Content length: {Length}", 
                             i + 1, fixes.Count, finalUpdatedContent?.Length ?? 0);
@@ -116,7 +118,7 @@ namespace Azure.Tools.GeneratorAgent
             catch (Exception ex) when (!(ex is OperationCanceledException))
             {
                  Logger.LogError(ex, "Failed to complete code fix process for thread {ThreadId}. Processed {ProcessedCount}/{TotalCount} fixes", 
-                    threadId, fixes.FindIndex(f => finalUpdatedContent == null) >= 0 ? fixes.FindIndex(f => finalUpdatedContent == null) : fixes.Count, fixes.Count);
+                    threadId, processedCount, fixes.Count);
                 throw;
             }
             finally

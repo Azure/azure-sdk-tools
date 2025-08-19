@@ -14,14 +14,5 @@ namespace Azure.Tools.GeneratorAgent.Models
         /// Indicates whether the response contained valid TypeSpec content
         /// </summary>
         public bool HasValidContent { get; set; } = false;
-        
-        /// <summary>
-        /// Legacy property for backward compatibility - maps to UpdatedFileContent
-        /// </summary>
-        public string UpdatedClientTsp 
-        { 
-            get => UpdatedFileContent; 
-            set => UpdatedFileContent = value; 
-        }
     }
 }

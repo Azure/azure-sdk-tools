@@ -11,7 +11,7 @@ public class PythonLanguageRepoService : LanguageRepoService
 {
     private readonly ILogger<PythonLanguageRepoService> _logger;
 
-    public PythonLanguageRepoService(IProcessHelper processHelper, IGitHelper gitHelper, ILogger<PythonLanguageRepoService> logger) 
+    public PythonLanguageRepoService(IProcessHelper processHelper, IGitHelper gitHelper, ILogger<PythonLanguageRepoService> logger)
         : base(processHelper, gitHelper)
     {
         _logger = logger;

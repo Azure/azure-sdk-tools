@@ -50,6 +50,9 @@ namespace Azure.Sdk.Tools.Cli.Tools
         [GeneratedRegex("https:\\/\\/github.com\\/Azure\\/azure-sdk\\/issues\\/([0-9]+)")]
         private static partial Regex NameSpaceIssueUrlRegex();
 
+        [GeneratedRegex("https:\\/\\/github.com\\/Azure\\/(azure-rest-api-specs|azure-rest-api-specs-pr)\\/pull\\/[0-9]+\\/?")]
+        private static partial Regex PullRequestUrlRegex();
+
 
         [McpServerTool(Name = "azsdk_get_release_plan_for_spec_pr"), Description("Get release plan for API spec pull request. This tool should be used only if work item Id is unknown.")]
         public async Task<string> GetReleasePlanForPullRequest(string pullRequestLink)
@@ -153,6 +156,13 @@ namespace Azure.Sdk.Tools.Cli.Tools
             if (string.IsNullOrEmpty(specPullRequestUrl))
             {
                 throw new Exception("API spec pull request URL is required to create a release plan.");
+            }
+
+            var match = PullRequestUrlRegex().Match(specPullRequestUrl);
+
+            if (!match.Success)
+            {
+                throw new Exception($"Invalid spec pull request URL '{specPullRequestUrl}' It should be a valid GitHub pull request to azure-rest-api-specs or azure-rest-api-specs-pr repo.");
             }
 
             logger.LogInformation("Checking for existing release plan for pull request URL: {specPullRequestUrl}", specPullRequestUrl);

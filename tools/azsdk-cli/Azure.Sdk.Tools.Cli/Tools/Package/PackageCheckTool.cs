@@ -36,7 +36,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
         {
             Command command = new("run-checks", "Run validation checks for SDK packages");
             command.AddOption(SharedOptions.PackagePath);
-            
             var checkTypeOption = new Option<PackageCheckType>(
                 "--check-type",
                 () => PackageCheckName.All,
@@ -50,7 +49,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
             {
                 var packagePath = ctx.ParseResult.GetValueForOption(SharedOptions.PackagePath);
                 var checkType = ctx.ParseResult.GetValueForOption(checkTypeOption);
-                
                 await HandleCommandWithOptions(packagePath, checkType, ctx.GetCancellationToken()); 
             });
 
@@ -66,7 +64,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private async Task HandleCommandWithOptions(string packagePath, PackageCheckType checkType, CancellationToken ct)
         {          
             var result = await RunPackageCheck(packagePath, checkType, ct);
-
             ExitCode = result.ExitCode;
             output.Output(result);
         }
@@ -77,7 +74,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
             try
             {
                 logger.LogInformation($"Starting {checkType} check for package at: {packagePath}");
-                
                 if (!Directory.Exists(packagePath))
                 {
                     SetFailure(1);

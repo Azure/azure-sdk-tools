@@ -39,7 +39,7 @@ public class ListFilesTool(string baseDirectory) : AgentTool<ListFilesInput, Lis
         {
             throw new ArgumentException($"Path {input.Path} is not a directory", nameof(input.Path));
         }
-        
+
         var filter = string.IsNullOrWhiteSpace(input.Filter) ? "*" : input.Filter;
         var searchOption = input.Recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
         var result = Directory.GetFileSystemEntries(path, filter, searchOption);

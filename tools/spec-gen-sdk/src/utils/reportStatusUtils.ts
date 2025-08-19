@@ -20,9 +20,9 @@ const githubStateEmoji: { [key in SDKAutomationState]: string } = {
   notEnabled: '🚫'
 };
 
-const trimNewLine = (line: string) => htmlEscape(line.trimEnd());
+export const trimNewLine = (line: string) => htmlEscape(line.trimEnd());
 
-const handleBarHelpers = {
+export const handleBarHelpers = {
   renderStatus: (status: SDKAutomationState) => `<code>${githubStateEmoji[status]}</code>`,
   renderStatusName: (status: SDKAutomationState) => `${getSDKAutomationStateString(status)}`,
   renderMessagesUnifiedPipeline: (messages: string[] | string | undefined, status: SDKAutomationState) => {
@@ -97,6 +97,6 @@ export const renderHandlebarTemplate = (
   return commentBody;
 };
 
-function unifiedRenderingMessages(message: string[], title?: string): string {
+export function unifiedRenderingMessages(message: string[], title?: string): string {
   return `<pre>${title ? `<strong>${title}</strong><BR>` : ''}${message.map(trimNewLine).join('<BR>')}</pre>`;
 }

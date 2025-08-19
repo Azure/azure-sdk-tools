@@ -1,7 +1,4 @@
-using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Text;
-using Microsoft.Extensions.Logging;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Helpers;
 
@@ -11,11 +8,16 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// Go-specific implementation of language repository service.
 /// Uses tools like go build, go test, go mod, gofmt, etc. for Go development workflows.
 /// </summary>
-public class GoLanguageRepoService : LanguageRepoService
+public class GoLanguageRepoService(
+    IProcessHelper processHelper,
+    IGitHelper gitHelper,
+    ILogger<GoLanguageRepoService> logger
+) : LanguageRepoService(processHelper, gitHelper)
 {
-    private readonly ILogger<GoLanguageRepoService> _logger;
     private readonly string compilerName = "go";
+    private readonly string compilerNameWindows = "go.exe";
     private readonly string formatterName = "goimports";
+    private readonly string formatterNameWindows = "gofmt.exe";
     private readonly string linterName = "golangci-lint";
 
     public GoLanguageRepoService(IProcessHelper processHelper, IGitHelper gitHelper, INpxHelper npxHelper, ILogger<GoLanguageRepoService> logger)
@@ -33,117 +35,114 @@ public class GoLanguageRepoService : LanguageRepoService
 
     #region Go specific functions, not part of the LanguageRepoService
 
-    public Task<bool> CheckDependencies()
+    public async Task<bool> CheckDependencies(CancellationToken ct)
     {
         try
         {
-            var compilerExists = _processHelper.RunProcess(compilerName, ["version"], ".").ExitCode == 0;
-            var linterExists = _processHelper.RunProcess(linterName, ["--version"], ".").ExitCode == 0;
-            var formatterExists = _processHelper.RunProcess("echo", ["package main", "|", "goimports"], ".").ExitCode == 0;
-
-            return Task.FromResult(compilerExists && linterExists && formatterExists);
+            var compilerExists = (await _processHelper.Run(new(compilerName, ["version"], compilerNameWindows, ["version"]), ct)).ExitCode == 0;
+            var linterExists = (await _processHelper.Run(new(linterName, ["--version"], linterNameWindows, ["--version"]), ct)).ExitCode == 0;
+            var formatterExists = (await _processHelper.Run(new("echo", ["package main", "|", formatterName]), ct)).ExitCode == 0;
+            return compilerExists && linterExists && formatterExists;
         }
         catch (Exception)
         {
-            return Task.FromResult(false);
+            return false;
         }
     }
 
-    public async Task<CLICheckResponse> CreateEmptyPackage(string packagePath, string moduleName)
+    public async Task<CLICheckResponse> CreateEmptyPackage(string packagePath, string moduleName, CancellationToken ct)
     {
         try
         {
-            await Task.CompletedTask;
-            var result = _processHelper.RunProcess(compilerName, new[] { "mod", "init", moduleName }, packagePath);
+            var result = await _processHelper.Run(new(compilerName, ["mod", "init", moduleName], workingDirectory: packagePath), ct);
             return CreateResponseFromProcessResult(result);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(CreateEmptyPackage));
+            logger.LogError(ex, "{MethodName} failed with an exception", nameof(CreateEmptyPackage));
             return new CLICheckResponse(1, "", $"{nameof(CreateEmptyPackage)} failed with an exception: {ex.Message}");
         }
     }
 
     #endregion
 
-    public override async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct = default)
+    public override async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct)
     {
         try
         {
-            await Task.CompletedTask;
             // Update all dependencies to the latest first
-            var updateResult = _processHelper.RunProcess(compilerName, new[] { "get", "-u", "all" }, packagePath);
+            var updateResult = await _processHelper.Run(new(compilerName, ["get", "-u", "all"], workingDirectory: packagePath), ct);
             if (updateResult.ExitCode != 0)
             {
                 return CreateResponseFromProcessResult(updateResult);
             }
 
             // Now tidy, to cleanup any deps that aren't needed
-            var tidyResult = _processHelper.RunProcess(compilerName, new[] { "mod", "tidy" }, packagePath);
+            var tidyResult = await _processHelper.Run(new(compilerName, ["mod", "tidy"], workingDirectory: packagePath), ct);
             return CreateResponseFromProcessResult(tidyResult);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(AnalyzeDependenciesAsync));
+            logger.LogError(ex, "{MethodName} failed with an exception", nameof(AnalyzeDependenciesAsync));
             return new CLICheckResponse(1, "", $"{nameof(AnalyzeDependenciesAsync)} failed with an exception: {ex.Message}");
         }
     }
-    public override async Task<CLICheckResponse> FormatCodeAsync(string packagePath)
+    public override async Task<CLICheckResponse> FormatCodeAsync(string packagePath, CancellationToken ct)
     {
         try
         {
-            await Task.CompletedTask;
-            var result = _processHelper.RunProcess(formatterName, new[] { "-w", "." }, packagePath);
+            var result = await _processHelper.Run(new(
+                formatterName, ["-w", "."],
+                formatterNameWindows, ["-w", "."],
+                workingDirectory: packagePath
+            ), ct);
             return CreateResponseFromProcessResult(result);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(FormatCodeAsync));
+            logger.LogError(ex, "{MethodName} failed with an exception", nameof(FormatCodeAsync));
             return new CLICheckResponse(1, "", $"{nameof(FormatCodeAsync)} failed with an exception: {ex.Message}");
         }
     }
 
-    public override async Task<CLICheckResponse> LintCodeAsync(string packagePath)
+    public override async Task<CLICheckResponse> LintCodeAsync(string packagePath, CancellationToken ct)
     {
         try
         {
-            await Task.CompletedTask;
-            var result = _processHelper.RunProcess(linterName, new[] { "run" }, packagePath);
+            var result = await _processHelper.Run(new(linterName, ["run"], workingDirectory: packagePath), ct);
             return CreateResponseFromProcessResult(result);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(LintCodeAsync));
+            logger.LogError(ex, "{MethodName} failed with an exception", nameof(LintCodeAsync));
             return new CLICheckResponse(1, "", $"{nameof(LintCodeAsync)} failed with an exception: {ex.Message}");
         }
     }
 
-    public override async Task<CLICheckResponse> RunTestsAsync(string packagePath)
+    public override async Task<CLICheckResponse> RunTestsAsync(string packagePath, CancellationToken ct)
     {
         try
         {
-            await Task.CompletedTask;
-            var result = _processHelper.RunProcess(compilerName, new[] { "test", "-v", "-timeout", "1h", "./..." }, packagePath);
+            var result = await _processHelper.Run(new(compilerName, ["test", "-v", "-timeout", "1h", "./..."], workingDirectory: packagePath), ct);
             return CreateResponseFromProcessResult(result);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(RunTestsAsync));
+            logger.LogError(ex, "{MethodName} failed with an exception", nameof(RunTestsAsync));
             return new CLICheckResponse(1, "", $"{nameof(RunTestsAsync)} failed with an exception: {ex.Message}");
         }
     }
 
-    public async Task<CLICheckResponse> BuildProjectAsync(string packagePath)
+    public async Task<CLICheckResponse> BuildProjectAsync(string packagePath, CancellationToken ct)
     {
         try
         {
-            await Task.CompletedTask;
-            var result = _processHelper.RunProcess(compilerName, new[] { "build" }, packagePath);
+            var result = await _processHelper.Run(new(compilerName, ["build"], workingDirectory: packagePath), ct);
             return CreateResponseFromProcessResult(result);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(BuildProjectAsync));
+            logger.LogError(ex, "{MethodName} failed with an exception", nameof(BuildProjectAsync));
             return new CLICheckResponse(1, "", $"{nameof(BuildProjectAsync)} failed with an exception: {ex.Message}");
         }
     }

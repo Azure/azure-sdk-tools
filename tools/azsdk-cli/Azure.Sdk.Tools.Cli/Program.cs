@@ -2,6 +2,7 @@ using System.CommandLine;
 using System.CommandLine.Builder;
 using System.CommandLine.Parsing;
 using Azure.Sdk.Tools.Cli.Commands;
+using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 
@@ -46,8 +47,17 @@ public class Program
             consoleLogOptions.LogToStandardErrorThreshold = logErrorThreshold;
         });
 
-        // register common services
-        ServiceRegistrations.RegisterCommonServices(builder.Services);
+        // Skip verbose azure client logging
+        builder.Logging.AddFilter((category, level) =>
+        {
+            var isAzureClient = category!.StartsWith("Azure.", StringComparison.Ordinal);
+            var isToolsClient = category!.StartsWith("Azure.Sdk.Tools.", StringComparison.Ordinal);
+            if (isAzureClient && !isToolsClient)
+            {
+                return level >= LogLevel.Warning;
+            }
+            return level >= logErrorThreshold;
+        });
 
         // add the console logger
         var logLevel = debug ? LogLevel.Debug : LogLevel.Information;
@@ -58,22 +68,17 @@ public class Program
             l.SetMinimumLevel(logLevel);
         });
 
-        if (!isCLI)
+        var outputMode = !isCLI ? OutputModes.Mcp : outputFormat switch
         {
-            builder.Services.AddSingleton<IOutputService>(new OutputService(OutputModes.Mcp));
-        }
-        else if (outputFormat == "plain")
-        {
-            builder.Services.AddSingleton<IOutputService>(new OutputService(OutputModes.Plain));
-        }
-        else if (outputFormat == "json")
-        {
-            builder.Services.AddSingleton<IOutputService>(new OutputService(OutputModes.Json));
-        }
-        else
-        {
-            throw new ArgumentException($"Invalid output format '{outputFormat}'. Supported formats are: plain, json");
-        }
+            "plain" => OutputModes.Plain,
+            "json" => OutputModes.Json,
+            _ => throw new ArgumentException($"Invalid output format '{outputFormat}'. Supported formats are: plain, json")
+        };
+        builder.Services.AddSingleton<IOutputHelper>(new OutputHelper(outputMode));
+
+        // register common services
+        ServiceRegistrations.RegisterCommonServices(builder.Services);
+
 
         builder.WebHost.ConfigureKestrel(options =>
         {
@@ -84,8 +89,8 @@ public class Program
 
         builder.Services
             .AddMcpServer()
-                    .WithStdioServerTransport()
-                    .WithTools(toolTypes);
+            .WithStdioServerTransport()
+            .WithTools(toolTypes);
 
         return builder;
     }

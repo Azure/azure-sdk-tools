@@ -4,12 +4,12 @@
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.ComponentModel;
-using Azure.Sdk.Tools.Cli.Services;
+using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Commands;
-using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Helpers;
-using ModelContextProtocol.Server;
+using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Services;
 
 namespace Azure.Sdk.Tools.Cli.Tools
 {
@@ -21,10 +21,10 @@ namespace Azure.Sdk.Tools.Cli.Tools
     public class PackageCheckTool : MCPTool
     {
         private readonly ILogger<PackageCheckTool> logger;
-        private readonly IOutputService output;
+        private readonly IOutputHelper output;
         private readonly ILanguageRepoServiceFactory languageRepoServiceFactory;
 
-        public PackageCheckTool(ILogger<PackageCheckTool> logger, IOutputService output, ILanguageRepoServiceFactory languageRepoServiceFactory) : base()
+        public PackageCheckTool(ILogger<PackageCheckTool> logger, IOutputHelper output, ILanguageRepoServiceFactory languageRepoServiceFactory) : base()
         {
             this.logger = logger;
             this.output = output;
@@ -44,15 +44,15 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 IsRequired = true
             };
             command.AddOption(checkTypeOption);
-            
-            command.SetHandler(async (InvocationContext ctx) => 
-            { 
+
+            command.SetHandler(async (InvocationContext ctx) =>
+            {
                 var packagePath = ctx.ParseResult.GetValueForOption(SharedOptions.PackagePath);
                 var checkType = ctx.ParseResult.GetValueForOption(checkTypeOption);
                 
                 await HandleCommandWithOptions(packagePath, checkType, ctx.GetCancellationToken()); 
             });
-            
+
             return command;
         }
 
@@ -136,7 +136,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private async Task<CLICheckResponse> RunAllChecks(string packagePath, ILanguageRepoService languageService, CancellationToken ct)
         {
             logger.LogInformation("Running all validation checks");
-            
+
             var results = new List<CLICheckResponse>();
             var overallSuccess = true;
 
@@ -149,7 +149,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
 
             // Run changelog validation
-            var changelogValidationResult = await languageService.ValidateChangelogAsync(packagePath);
+            var changelogValidationResult = await languageService.ValidateChangelogAsync(packagePath, ct);
             results.Add(changelogValidationResult);
             if (changelogValidationResult.ExitCode != 0)
             {
@@ -179,18 +179,18 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
             var message = overallSuccess ? "All checks completed successfully" : "Some checks failed";
             var combinedOutput = string.Join("\n", results.Select(r => r.CheckStatusDetails));
-            
-            return overallSuccess 
-                ? new CLICheckResponse(0, combinedOutput) 
+
+            return overallSuccess
+                ? new CLICheckResponse(0, combinedOutput)
                 : new CLICheckResponse(1, combinedOutput, message);
         }
 
-        private async Task<CLICheckResponse> RunChangelogValidation(string packagePath, ILanguageRepoService languageService)
+        private async Task<CLICheckResponse> RunChangelogValidation(string packagePath, ILanguageRepoService languageService, CancellationToken ct)
         {
             logger.LogInformation("Running changelog validation");
-            
-            var result = await languageService.ValidateChangelogAsync(packagePath);
-            
+
+            var result = await languageService.ValidateChangelogAsync(packagePath, ct);
+
             if (result.ExitCode != 0)
             {
                 SetFailure(1);
@@ -203,9 +203,9 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private async Task<CLICheckResponse> RunDependencyCheck(string packagePath, ILanguageRepoService languageService, CancellationToken ct)
         {
             logger.LogInformation("Running dependency check");
-            
+
             var result = await languageService.AnalyzeDependenciesAsync(packagePath, ct);
-            
+
             if (result.ExitCode != 0)
             {
                 SetFailure(1);

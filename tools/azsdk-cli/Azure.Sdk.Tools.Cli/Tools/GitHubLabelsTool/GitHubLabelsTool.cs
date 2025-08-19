@@ -3,25 +3,20 @@
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.ComponentModel;
-using Azure.Sdk.Tools.Cli.Services;
-using Azure.Sdk.Tools.Cli.Contract;
 using ModelContextProtocol.Server;
-using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Models.Responses;
-using Azure.Sdk.Tools.Cli.Helpers;
-using System.Text;
-using Microsoft.Extensions.Logging;
-using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Configuration;
+using Azure.Sdk.Tools.Cli.Contract;
+using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Models.Responses;
+using Azure.Sdk.Tools.Cli.Services;
 
 
 namespace Azure.Sdk.Tools.Cli.Tools
 {
-
     [McpServerToolType, Description("Tools for working with GitHub labels for services")]
     public class GitHubLabelsTool(
         ILogger<GitHubLabelsTool> logger,
-        IOutputService output,
+        IOutputHelper output,
         IGitHubService githubService
     ) : MCPTool
     {
@@ -77,7 +72,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        [McpServerTool(Name = "CheckServiceLabel"), Description("Checks if a service label exists and returns its details")]
+        [McpServerTool(Name = "azsdk_check_service_label"), Description("Checks if a service label exists and returns its details")]
         public async Task<ServiceLabelResponse> CheckServiceLabel(string serviceLabel)
         {
             try
@@ -102,7 +97,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
         private async Task<LabelHelper.ServiceLabelStatus> getServiceLabelInfo(string serviceLabel)
         {
-            logger.LogInformation($"Checking service label: {serviceLabel}");
+            logger.LogInformation("Checking service label: {serviceLabel}", serviceLabel);
 
             var csvContents = await githubService.GetContentsSingleAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, Constants.AZURE_COMMON_LABELS_PATH);
 
@@ -111,7 +106,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             return result;
         }
 
-        [McpServerTool(Name = "CreateServiceLabel"), Description("Creates a pull request to add a new service label")]
+        [McpServerTool(Name = "azsdk_create_service_label"), Description("Creates a pull request to add a new service label")]
         public async Task<ServiceLabelResponse> CreateServiceLabel(string label, string link)
         {
             try
@@ -154,7 +149,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     };
                 }
 
-                logger.LogInformation($"Creating new service label: {label}. Documentation link: {link}");
+                logger.LogInformation("Creating new service label: {label}. Documentation link: {link}", label, link);
 
 
                 // Update the common-labels.csv file

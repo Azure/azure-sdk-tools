@@ -1,14 +1,9 @@
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
-using NUnit.Framework;
-using Azure.Sdk.Tools.Cli.Services;
-using Azure.Sdk.Tools.Cli.Tools;
-using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Tools;
+using Azure.Sdk.Tools.Cli.Services;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools
 {
@@ -16,8 +11,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
     public class PackageCheckToolTests
     {
         private Mock<ILogger<PackageCheckTool>> _mockLogger;
-        private Mock<IOutputService> _mockOutputService;
-        private Mock<IGitHelper> _mockGitHelper;
+        private Mock<IOutputHelper> _mockOutputHelper;
         private Mock<ILanguageRepoServiceFactory> _mockLanguageRepoServiceFactory;
         private PackageCheckTool _packageCheckTool;
         private string _testProjectPath;
@@ -26,12 +20,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public void Setup()
         {
             _mockLogger = new Mock<ILogger<PackageCheckTool>>();
-            _mockOutputService = new Mock<IOutputService>();
-            _mockGitHelper = new Mock<IGitHelper>();
+            _mockOutputHelper = new Mock<IOutputHelper>();
             _mockLanguageRepoServiceFactory = new Mock<ILanguageRepoServiceFactory>();
 
-            _packageCheckTool = new PackageCheckTool(_mockLogger.Object, _mockOutputService.Object, _mockLanguageRepoServiceFactory.Object);
-            
+            _packageCheckTool = new PackageCheckTool(_mockLogger.Object, _mockOutputHelper.Object, _mockLanguageRepoServiceFactory.Object);
+
             // Create a temporary test directory
             _testProjectPath = Path.Combine(Path.GetTempPath(), "PackageCheckToolTest");
             if (Directory.Exists(_testProjectPath))
@@ -158,7 +151,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             // Assert
             Assert.IsNotNull(result);
             Assert.IsTrue(result.ExitCode == 0 || (result.ExitCode != 0));
-            
+
             // For valid paths, we expect the checks to run even if they fail
             // Since this is a test directory without proper project structure, checks may fail
             Assert.IsNotNull(result.CheckStatusDetails);
@@ -168,7 +161,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public async Task RunPackageCheck_EnumValues_WorksCorrectly()
         {
             // Test that all enum values work correctly
-            
+
             // Act - Test all enum values
             var allResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.All);
             var changelogResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Changelog);

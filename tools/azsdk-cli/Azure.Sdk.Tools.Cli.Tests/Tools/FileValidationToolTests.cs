@@ -1,12 +1,8 @@
-using Azure.Sdk.Tools.Cli.Services;
-using Azure.Sdk.Tools.Cli.Tests.MockServices;
+using Moq;
+using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Tests.Mocks.Services;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools;
-using Moq;
-using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools
 {
@@ -27,7 +23,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         {
             logger = new TestLogger<FileValidationTool>();
 
-            var outputServiceMock = new Mock<IOutputService>();
+            var outputServiceMock = new Mock<IOutputHelper>();
             outputServiceMock.Setup(x => x.Format(It.IsAny<object>())).Returns<object>(obj => obj?.ToString() ?? "");
 
             var gitHubService = new MockGitHubService();

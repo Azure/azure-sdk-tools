@@ -4,19 +4,19 @@
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.ComponentModel;
-using System.Text;
-using Azure.Sdk.Tools.Cli.Contract;
-using Azure.Sdk.Tools.Cli.Models.Responses;
-using Azure.Sdk.Tools.Cli.Services;
 using Microsoft.TeamFoundation.Build.WebApi;
 using ModelContextProtocol.Server;
+using Azure.Sdk.Tools.Cli.Contract;
+using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Models.Responses;
+using Azure.Sdk.Tools.Cli.Services;
 
 namespace Azure.Sdk.Tools.Cli.Tools
 {
     [Description("This class contains an MCP tool that checks the release readiness status of a package")]
     [McpServerToolType]
     public class ReleaseReadinessTool(IDevOpsService devopsService,
-        IOutputService output,
+        IOutputHelper output,
         ILogger<ReleaseReadinessTool> logger) : MCPTool
     {
         private readonly Option<string> packageNameOpt = new(["--package-name"], "SDK package name") { IsRequired = true };
@@ -25,7 +25,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
         public override Command GetCommand()
         {
-            var command = new Command("releaseReadiness", "Checks release readiness of a SDK package.") { packageNameOpt, languageOpt };
+            var command = new Command("release-readiness", "Checks release readiness of a SDK package.") { packageNameOpt, languageOpt };
             command.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
             return command;
         }
@@ -159,7 +159,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
                 return $"Failed to get pipeline run details. The pipeline run URL '{pipelineRunUrl}' is invalid or does not contain a valid build ID.";
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 logger.LogError("Failed to get pipeline run details. Error: {exception}", ex.Message);
                 return $"Failed to get pipeline run details. Error: {ex.Message}";

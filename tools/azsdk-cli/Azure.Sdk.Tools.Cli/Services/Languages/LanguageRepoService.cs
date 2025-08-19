@@ -24,28 +24,28 @@ public interface ILanguageRepoService
     /// </summary>
     /// <param name="packagePath">Absolute path to the package directory</param>
     /// <returns>CLI check response containing success/failure status and response message</returns>
-    Task<CLICheckResponse> FormatCodeAsync(string packagePath);
+    Task<CLICheckResponse> FormatCodeAsync(string packagePath, CancellationToken ct);
 
     /// <summary>
     /// Run linting/static analysis for the target language.
     /// </summary>
     /// <param name="packagePath">Absolute path to the package directory</param>
     /// <returns>CLI check response containing success/failure status and response message</returns>
-    Task<CLICheckResponse> LintCodeAsync(string packagePath);
+    Task<CLICheckResponse> LintCodeAsync(string packagePath, CancellationToken ct);
 
     /// <summary>
     /// Run tests for the target language.
     /// </summary>
     /// <param name="packagePath">Absolute path to the package directory</param>
     /// <returns>CLI check response containing success/failure status and response message</returns>
-    Task<CLICheckResponse> RunTestsAsync(string packagePath);
+    Task<CLICheckResponse> RunTestsAsync(string packagePath, CancellationToken ct);
 
     /// <summary>
     /// Validate changelog for the target language.
     /// </summary>
     /// <param name="packagePath">Absolute path to the package directory</param>
     /// <returns>CLI check response containing success/failure status and response message</returns>
-    Task<CLICheckResponse> ValidateChangelogAsync(string packagePath);
+    Task<CLICheckResponse> ValidateChangelogAsync(string packagePath, CancellationToken ct);
 
     /// <summary>
     /// Validate README for the target language.
@@ -97,27 +97,27 @@ public class LanguageRepoService : ILanguageRepoService
         return new CLICheckResponse(1, "", "AnalyzeDependencies not implemented for this language");
     }
 
-    public virtual async Task<CLICheckResponse> FormatCodeAsync(string packagePath)
+    public virtual async Task<CLICheckResponse> FormatCodeAsync(string packagePath, CancellationToken ct)
     {
         await Task.CompletedTask;
         return new CLICheckResponse(1, "", "FormatCode not implemented for this language");
     }
 
-    public virtual async Task<CLICheckResponse> LintCodeAsync(string packagePath)
+    public virtual async Task<CLICheckResponse> LintCodeAsync(string packagePath, CancellationToken ct)
     {
         await Task.CompletedTask;
         return new CLICheckResponse(1, "", "LintCode not implemented for this language");
     }
 
-    public virtual async Task<CLICheckResponse> RunTestsAsync(string packagePath)
+    public virtual async Task<CLICheckResponse> RunTestsAsync(string packagePath, CancellationToken ct)
     {
         await Task.CompletedTask;
         return new CLICheckResponse(1, "", "RunTests not implemented for this language");
     }
 
-    public virtual async Task<CLICheckResponse> ValidateChangelogAsync(string packagePath)
+    public virtual async Task<CLICheckResponse> ValidateChangelogAsync(string packagePath, CancellationToken ct)
     {
-        return await ValidateChangelogCommonAsync(packagePath);
+        return await ValidateChangelogCommonAsync(packagePath, ct);
     }
 
     public virtual async Task<CLICheckResponse> ValidateReadmeAsync(string packagePath)
@@ -136,8 +136,10 @@ public class LanguageRepoService : ILanguageRepoService
     /// </summary>
     /// <param name="packagePath">Absolute path to the package directory</param>
     /// <returns>CLI check response containing success/failure status and response message</returns>
-    protected async Task<CLICheckResponse> ValidateChangelogCommonAsync(string packagePath)
+    protected async Task<CLICheckResponse> ValidateChangelogCommonAsync(string packagePath, CancellationToken ct)
     {
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
         try
         {
             if (!Directory.Exists(packagePath))
@@ -154,7 +156,7 @@ public class LanguageRepoService : ILanguageRepoService
 
             // Construct the path to the PowerShell script in the SDK repository
             var scriptPath = Path.Combine(packageRepoRoot, "eng", "common", "scripts", "Verify-ChangeLog.ps1");
-            
+
             if (!File.Exists(scriptPath))
             {
                 return new CLICheckResponse(1, "", $"PowerShell script not found at expected location: {scriptPath}");
@@ -164,8 +166,9 @@ public class LanguageRepoService : ILanguageRepoService
             var args = new[] { "-File", scriptPath, "-PackageName", Path.GetFileName(packagePath) };
 
             // Use a longer timeout for changelog validation - 5 minutes should be sufficient
-            var timeoutMs = 300_000; // 5 minutes
-            var processResult = _processHelper.RunProcess(command, args, packagePath, timeoutMs);
+            var timeout = TimeSpan.FromMinutes(5);
+            var processResult = await _processHelper.Run(new(command, args, timeout: timeout, workingDirectory: packagePath), ct);
+            stopwatch.Stop();
 
             return CreateResponseFromProcessResult(processResult);
         }

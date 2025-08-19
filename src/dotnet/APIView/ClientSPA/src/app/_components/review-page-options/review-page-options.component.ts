@@ -377,14 +377,15 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   setNamespaceReviewStates() {
     // Only show namespace review request for TypeSpec language
     this.canRequestNamespaceReview = this.review?.language === 'TypeSpec';
-    this.isNamespaceReviewRequested = this.review?.namespaceReviewStatus === 'pending' || this.review?.namespaceReviewStatus === 'approved';
+    // Always keep the button available for requesting namespace review
+    this.isNamespaceReviewRequested = false;
 
     console.log('setNamespaceReviewStates - namespaceReviewStatus:', this.review?.namespaceReviewStatus);
     console.log('setNamespaceReviewStates - isNamespaceReviewRequested:', this.isNamespaceReviewRequested);
     console.log('setNamespaceReviewStates - isNamespaceReviewInProgress:', this.isNamespaceReviewInProgress);
 
     // CRITICAL FIX: If we were in progress and now have a pending/approved status, reset loading state
-    if (this.isNamespaceReviewInProgress && this.isNamespaceReviewRequested) {
+    if (this.isNamespaceReviewInProgress && (this.review?.namespaceReviewStatus === 'pending' || this.review?.namespaceReviewStatus === 'approved')) {
       console.log('🎯 RESETTING LOADING STATE: Was in progress, now has pending/approved status');
       this.isNamespaceReviewInProgress = false;
     }

@@ -25,6 +25,7 @@ using APIViewWeb.Filters;
 using APIViewWeb.Account;
 using APIView.Identity;
 using APIViewWeb.Managers;
+using APIViewWeb.Services;
 using APIViewWeb.Hubs;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
@@ -111,6 +112,7 @@ namespace APIViewWeb
             services.AddSingleton<IAPIRevisionsManager, APIRevisionsManager>();
             services.AddSingleton<ICommentsManager, CommentsManager>();
             services.AddSingleton<INotificationManager, NotificationManager>();
+            services.AddSingleton<IEmailTemplateService, EmailTemplateService>();
             services.AddSingleton<IPullRequestManager, PullRequestManager>();
             services.AddSingleton<IPackageNameManager, PackageNameManager>();
             services.AddSingleton<ISamplesRevisionsManager, SamplesRevisionsManager>();

@@ -243,10 +243,9 @@ namespace APIViewWeb.Managers
                 return;
             }
 
-            foreach(var userEmail in subscribers)
-            {
-                await SendEmail(userEmail, $"Update on APIView - {review.PackageName} from {GetUserName(user)}", htmlContent);
-            }
+            // Send single email to all subscribers
+            var emailToList = string.Join("; ", subscribers);
+            await SendEmail(emailToList, $"Update on APIView - {review.PackageName} from {GetUserName(user)}", htmlContent);
         }
 
         private async Task SendEmail(string emailToList, string subject, string content)

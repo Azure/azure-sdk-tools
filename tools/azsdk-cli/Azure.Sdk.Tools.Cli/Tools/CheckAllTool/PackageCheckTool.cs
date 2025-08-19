@@ -115,7 +115,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 return checkType switch
                 {
                     PackageCheckType.All => await RunAllChecks(packagePath, languageService, ct),
-                    PackageCheckType.Changelog => await RunChangelogValidation(packagePath, languageService),
+                    PackageCheckType.Changelog => await RunChangelogValidation(packagePath, languageService, ct),
                     PackageCheckType.Dependency => await RunDependencyCheck(packagePath, languageService, ct),
                     PackageCheckType.Readme => await RunReadmeValidation(packagePath, languageService),
                     PackageCheckType.Cspell => await RunSpellingValidation(packagePath, languageService),

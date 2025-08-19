@@ -70,13 +70,11 @@ public class LanguageRepoService : ILanguageRepoService
 {
     protected readonly IProcessHelper _processHelper;
     protected readonly IGitHelper _gitHelper;
-    protected readonly INpxHelper _npxHelper;
 
-    public LanguageRepoService(IProcessHelper processHelper, IGitHelper gitHelper, INpxHelper npxHelper)
+    public LanguageRepoService(IProcessHelper processHelper, IGitHelper gitHelper)
     {
         _processHelper = processHelper;
         _gitHelper = gitHelper;
-        _npxHelper = npxHelper;
     }
 
     /// <summary>
@@ -228,8 +226,8 @@ public class LanguageRepoService : ILanguageRepoService
             };
 
             // Use a longer timeout for README validation - 10 minutes should be sufficient as it may need to install doc-warden
-            var timeoutMs = 600_000; // 10 minutes
-            var processResult = _processHelper.RunProcess(command, args, packagePath, timeoutMs);
+            var timeout = TimeSpan.FromMilliseconds(600_000); // 10 minutes
+            var processResult = await _processHelper.Run(new(command, args, timeout: timeout, workingDirectory: packagePath), ct: default);
 
             return CreateResponseFromProcessResult(processResult);
         }
@@ -273,21 +271,18 @@ public class LanguageRepoService : ILanguageRepoService
                 return new CLICheckResponse(1, "", $"Cspell config file not found in expected locations");
             }
 
-            // Run cspell using npx (no need to check if installed globally)
-            var npxCommand = _npxHelper.CreateCommand();
-            npxCommand.Cwd = packageRepoRoot;
-            
             // Convert absolute path to relative path from repo root
             var relativePath = Path.GetRelativePath(packageRepoRoot, packagePath);
-            
-            var processResult = npxCommand
-                .AddArgs("cspell")
-                .AddArgs("lint")
-                .AddArgs("--config", cspellConfigPath)
-                .AddArgs("--root", packageRepoRoot)
-                .AddArgs($"./{relativePath}/**")
-                .Run();
 
+            // Build arguments for npx cspell lint
+            var args = new[] {
+                "cspell", "lint",
+                "--config", cspellConfigPath,
+                "--root", packageRepoRoot,
+                $"./{relativePath}/**"
+            };
+
+            var processResult = await _processHelper.Run(new("npx", args, workingDirectory: packageRepoRoot), ct: default);
             return CreateResponseFromProcessResult(processResult);
         }
         catch (Exception ex)

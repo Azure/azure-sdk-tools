@@ -19,7 +19,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         IGitHelper gitHelper,
         ISpecPullRequestHelper prHelper,
         ILogger<PullRequestTools> logger,
-        IOutputService output) : MCPTool
+        IOutputHelper output) : MCPTool
     {
         // Commands
         private const string getPullRequestForCurrentBranchCommandName = "get-pr-for-current-branch";

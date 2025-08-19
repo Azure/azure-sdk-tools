@@ -10,10 +10,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Microagents;
 
 internal class MicroagentHostServiceTests
 {
-    private Mock<AzureOpenAIClient>? openAIClientMock;
-    private Mock<Microsoft.Extensions.Logging.ILogger<MicroagentHostService>>? loggerMock;
-    private Mock<ChatClient>? chatClientMock;
-    private MicroagentHostService? microagentHostService;
+    private Mock<AzureOpenAIClient> openAIClientMock;
+    private Mock<Microsoft.Extensions.Logging.ILogger<MicroagentHostService>> loggerMock;
+    private Mock<ChatClient> chatClientMock;
+    private MicroagentHostService microagentHostService;
 
     [SetUp]
     public void Setup()

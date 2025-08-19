@@ -4,7 +4,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Microagents.Tools;
 
 internal class ListFilesToolTests
 {
-    private string? baseDir;
+    private string baseDir;
 
     [OneTimeSetUp]
     public void OneTimeSetup()

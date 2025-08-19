@@ -263,16 +263,12 @@ def deconstruct_test_case(language: str, test_case: str, test_file: str):
     print(f"Deconstructed test case '{test_case}' into {deconstructed_apiview} and {deconstructed_expected}.")
 
 
-def deploy_flask_app(
-    app_name: Optional[str] = None,
-    resource_group: Optional[str] = None,
-    subscription_id: Optional[str] = None,
-):
+def deploy_flask_app():
     """Command to deploy the Flask app."""
     # pylint: disable=import-outside-toplevel
     from scripts.deploy_app import deploy_app_to_azure
 
-    deploy_app_to_azure(app_name, resource_group, subscription_id)
+    deploy_app_to_azure()
 
 
 def generate_review(
@@ -1005,22 +1001,6 @@ class CliCommandsLoader(CLICommandsLoader):
             ac.argument("language", type=str, help="The language for the test case.")
             ac.argument("test_case", type=str, help="The specific test case to deconstruct.")
             ac.argument("test_file", type=str, help="The full path to the JSONL test file.")
-        with ArgumentsContext(self, "app deploy") as ac:
-            ac.argument(
-                "app_name",
-                options_list=["--app-name"],
-                help="The name of the Azure App Service. Env var: AZURE_APP_NAME",
-            )
-            ac.argument(
-                "resource_group",
-                options_list=["--resource-group"],
-                help="The Azure resource group containing the App Service. Env var: AZURE_RESOURCE_GROUP",
-            )
-            ac.argument(
-                "subscription_id",
-                options_list=["--subscription-id"],
-                help="The Azure subscription ID. Env var: AZURE_SUBSCRIPTION_ID",
-            )
         with ArgumentsContext(self, "search") as ac:
             ac.argument(
                 "path",
@@ -1186,7 +1166,7 @@ class CliCommandsLoader(CLICommandsLoader):
 
 def run_cli():
     """Run the CLI application."""
-    cli = CLI(cli_name="apiviewcopilot", commands_loader_cls=CliCommandsLoader)
+    cli = CLI(cli_name="avc", commands_loader_cls=CliCommandsLoader)
     exit_code = cli.invoke(sys.argv[1:])
     sys.exit(exit_code)
 

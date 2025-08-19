@@ -16,12 +16,11 @@ import zipfile
 from typing import Optional
 
 from dotenv import load_dotenv
+from src._settings import SettingsManager
 
 load_dotenv(override=True)
 
-RESOURCE_GROUP = os.getenv("AZURE_RESOURCE_GROUP")
-SUBSCRIPTION_ID = os.getenv("AZURE_SUBSCRIPTION_ID")
-APP_NAME = os.getenv("AZURE_APP_NAME")
+settings = SettingsManager()
 
 
 def _zip_current_repo(output_filename: str):
@@ -42,26 +41,11 @@ def _zip_current_repo(output_filename: str):
     print(f"Repository zipped to {output_filename}")
 
 
-def deploy_app_to_azure(
-    app_name: Optional[str] = None,
-    resource_group: Optional[str] = None,
-    subscription_id: Optional[str] = None,
-):
+def deploy_app_to_azure():
     """Deploy the zipped repository to Azure App Service using Azure CLI."""
-    app_name = app_name or APP_NAME
-    resource_group = resource_group or RESOURCE_GROUP
-    subscription_id = subscription_id or SUBSCRIPTION_ID
-    missing_vars = []
-
-    if not app_name:
-        missing_vars.append("AZURE_APP_NAME")
-    if not resource_group:
-        missing_vars.append("AZURE_RESOURCE_GROUP")
-    if not subscription_id:
-        missing_vars.append("AZURE_SUBSCRIPTION_ID")
-
-    if missing_vars:
-        raise ValueError(f"Missing required environment variables: {', '.join(missing_vars)}")
+    app_name = settings.get("WEBAPP_NAME")
+    resource_group = settings.get("RG_NAME")
+    subscription_id = settings.get("SUBSCRIPTION_ID")
 
     zip_file = "repo.zip"
     _zip_current_repo(zip_file)

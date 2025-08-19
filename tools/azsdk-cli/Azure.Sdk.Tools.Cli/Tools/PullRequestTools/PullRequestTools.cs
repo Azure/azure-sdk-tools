@@ -100,7 +100,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 try
                 {
                     // Discover the repository root from the provided path
-                    var repoRootPath = gitHelper.DiscoverRepoRoot(repositoryPath);
+                    var repoRootPath = gitHelper.DiscoverRepoRoot(repoPath);
                     var headBranchName = gitHelper.GetBranchName(repoRootPath);
                     if (string.IsNullOrEmpty(headBranchName) || headBranchName.Equals("main"))
                     {

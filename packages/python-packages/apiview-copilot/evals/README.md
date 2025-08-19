@@ -6,16 +6,7 @@ This directory contains the evaluation testing for APIView Copilot.
 
 - Python 3.9+
 - Azure OpenAI (endpoint and key)
-- Environment variables set up in a `.env` file:
-  ```
-  AZURE_OPENAI_ENDPOINT=<your-endpoint>
-  AZURE_OPENAI_API_KEY=<your-key>
-  AZURE_SUBSCRIPTION_ID=<playground-subscription-id>
-  AZURE_FOUNDRY_RESOURCE_GROUP=openai-shared
-  AZURE_FOUNDRY_PROJECT_NAME=apiview-ai
-  ```
-
-> Note: the API key is needed for AI-assisted evaluations. The service does not support Entra ID yet.
+- Environment variables set up in a `.env` file as shown in the ApiView Copilot README.
 
 ## Running Evaluations
 

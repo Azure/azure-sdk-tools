@@ -9,6 +9,10 @@ from typing import Any, Set, Tuple
 import prompty
 import prompty.azure_beta
 import yaml
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+from src._settings import SettingsManager
 from src._utils import get_prompt_path
 
 # set before azure.ai.evaluation import to make PF output less noisy
@@ -21,13 +25,15 @@ from tabulate import tabulate
 
 dotenv.load_dotenv()
 
+settings = SettingsManager()
+
 NUM_RUNS: int = 3
 # for best results, this should always be a different model from the one we are evaluating
-MODEL_JUDGE = "gpt-4.1-nano"
+MODEL_JUDGE = "gpt-5"
 
 model_config: dict[str, str] = {
-    "azure_endpoint": os.environ["AZURE_OPENAI_ENDPOINT"],
-    "api_key": os.environ["OPENAI_API_KEY"],
+    "azure_endpoint": settings.get("OPENAI_ENDPOINT"),
+    "api_key": settings.get("OPENAI_API_KEY"),
     "azure_deployment": MODEL_JUDGE,
     "api_version": "2025-03-01-preview",
 }
@@ -485,9 +491,9 @@ if __name__ == "__main__":
             continue
 
         azure_ai_project = {
-            "subscription_id": os.environ["AZURE_SUBSCRIPTION_ID"],
-            "resource_group_name": os.environ["AZURE_FOUNDRY_RESOURCE_GROUP"],
-            "project_name": os.environ["AZURE_FOUNDRY_PROJECT_NAME"],
+            "subscription_id": settings.get("SUBSCRIPTION_ID"),
+            "resource_group_name": settings.get("RG_NAME"),
+            "project_name": settings.get("FOUNDRY_PROJECT_NAME"),
         }
         if in_ci():
             service_connection_id = os.environ["AZURESUBSCRIPTION_SERVICE_CONNECTION_ID"]

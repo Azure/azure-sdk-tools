@@ -181,14 +181,6 @@ class ApiViewReview:
             data["commentText"] = data.pop("text")
         if "timestamp" in data:
             data["createdOn"] = data.pop("timestamp")
-
-        # TODO: Remove once https://github.com/Azure/azure-sdk-tools/pull/11057 is deployed to production
-        if "commentText" not in data:
-            data["commentText"] = ""
-        if "createdOn" not in data:
-            data["createdOn"] = datetime.datetime.now().isoformat()
-        if "createdBy" not in data:
-            data["createdBy"] = "unknown"
         return data
 
     def _print_message(self, msg: str = "", overwrite: bool = False):

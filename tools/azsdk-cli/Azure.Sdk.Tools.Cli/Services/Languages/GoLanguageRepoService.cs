@@ -135,4 +135,14 @@ public class GoLanguageRepoService(
         }
     }
 
+    public override string GetSDKPackagePath(string repo, string packagePath)
+    {
+        if (!repo.EndsWith(Path.DirectorySeparatorChar))
+        {
+            repo += Path.DirectorySeparatorChar;
+        }
+
+        // ex: sdk/messaging/azservicebus
+        return packagePath.Replace(repo, "");
+    }
 }

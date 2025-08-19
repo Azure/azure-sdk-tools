@@ -60,6 +60,14 @@ public interface ILanguageRepoService
     /// <param name="packagePath">Absolute path to the package directory</param>
     /// <returns>CLI check response containing success/failure status and response message</returns>
     Task<CLICheckResponse> CheckSpellingAsync(string packagePath);
+    /// SDK package paths should be the package name, as referred to by any scripts within the repo.
+    /// </summary>
+    /// <returns>The package name, suitable for passing to scripts that take a -PackagePath parameter. 
+    /// Some examples:
+    /// - In Go, this would be of the format "sdk/messaging/azservicebus"
+    /// - In Python, it would be "azure-servicebus".
+    /// </returns>
+    string GetSDKPackagePath(string repo, string packagePath);
 }
 
 /// <summary>
@@ -161,7 +169,7 @@ public class LanguageRepoService : ILanguageRepoService
             }
 
             var command = "pwsh";
-            var args = new[] { "-File", scriptPath, "-PackageName", Path.GetFileName(packagePath) };
+            var args = new[] { "-File", scriptPath, "-PackageName", this.GetSDKPackagePath(packageRepoRoot, packagePath) };
 
             // Use a longer timeout for changelog validation - 5 minutes should be sufficient
             var timeout = TimeSpan.FromMinutes(5);
@@ -285,5 +293,10 @@ public class LanguageRepoService : ILanguageRepoService
         {
             await Task.CompletedTask; // Make this async for consistency
         }
+    }
+
+    public virtual string GetSDKPackagePath(string repo, string packagePath)
+    {
+        return Path.GetFileName(packagePath);
     }
 }

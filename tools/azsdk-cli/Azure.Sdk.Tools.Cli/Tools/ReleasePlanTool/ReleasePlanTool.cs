@@ -162,7 +162,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
             if (!match.Success)
             {
-                throw new Exception($"Invalid spec pull request URL '{specPullRequestUrl}' It should be a valid Github pull request to azure-rest-api-specs or azure-rest-api-specs-pr repo.");
+                throw new Exception($"Invalid spec pull request URL '{specPullRequestUrl}' It should be a valid GitHub pull request to azure-rest-api-specs or azure-rest-api-specs-pr repo.");
             }
 
             logger.LogInformation("Checking for existing release plan for pull request URL: {specPullRequestUrl}", specPullRequestUrl);

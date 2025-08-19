@@ -23,7 +23,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(ReleaseReadinessTool),
             typeof(SdkReleaseTool),
             typeof(SpecCommonTools),
-            typeof(SpecPullRequestTools),
+            typeof(PullRequestTools),
             typeof(SpecWorkflowTool),
             typeof(SpecValidationTools),
             typeof(TestAnalysisTool),

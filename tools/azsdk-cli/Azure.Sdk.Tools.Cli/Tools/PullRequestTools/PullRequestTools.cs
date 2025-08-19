@@ -92,7 +92,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         }
 
         [McpServerTool(Name = "azsdk_create_pull_request"), Description("Create pull request for repository changes. Provide title, description and path within repository. Creates a pull request for committed changes in the current branch.")]
-        public async Task<List<string>> CreatePullRequest(string title, string description, string repositoryPath, string targetBranch = "main", bool draft = true)
+        public async Task<List<string>> CreatePullRequest(string title, string description, string repoPath, string targetBranch = "main", bool draft = true)
         {
             try
             {

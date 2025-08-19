@@ -53,6 +53,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
         [GeneratedRegex("https:\\/\\/github.com\\/Azure\\/(azure-rest-api-specs|azure-rest-api-specs-pr)\\/pull\\/[0-9]+\\/?")]
         private static partial Regex PullRequestUrlRegex();
 
+        [GeneratedRegex(@"^\d{4}-\d{2}-\d{2}(-preview)?$")]
+        private static partial Regex ApiVersionRegex();
 
         [McpServerTool(Name = "azsdk_get_release_plan_for_spec_pr"), Description("Get release plan for API spec pull request. This tool should be used only if work item Id is unknown.")]
         public async Task<string> GetReleasePlanForPullRequest(string pullRequestLink)
@@ -150,7 +152,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        private async Task ValidateCreateReleasePlanInputAsync(string typeSpecProjectPath, string serviceTreeId, string productTreeId, string specPullRequestUrl, string sdkReleaseType)
+        private async Task ValidateCreateReleasePlanInputAsync(string typeSpecProjectPath, string serviceTreeId, string productTreeId, string specPullRequestUrl, string sdkReleaseType, string specApiVersion)
         {
             // Check for existing release plan for the given pull request URL.
             if (string.IsNullOrEmpty(specPullRequestUrl))
@@ -175,6 +177,13 @@ namespace Azure.Sdk.Tools.Cli.Tools
             if (string.IsNullOrEmpty(typeSpecProjectPath))
             {
                 throw new Exception("TypeSpec project path is empty. Cannot create a release plan without a TypeSpec project root path");
+            }
+
+            var isValidApiVersion = ApiVersionRegex().Match(specApiVersion);
+
+            if (!isValidApiVersion.Success)
+            {
+                throw new Exception("Invalid API version format. Supported formats are: yyyy-MM-dd or yyyy-MM-dd-preview");
             }
 
             var supportedReleaseTypes = new[] { "beta", "stable" };
@@ -212,7 +221,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             try
             {
                 sdkReleaseType = sdkReleaseType?.ToLower() ?? "";
-                await ValidateCreateReleasePlanInputAsync(typeSpecProjectPath, serviceTreeId, productTreeId, specPullRequestUrl, sdkReleaseType);
+                await ValidateCreateReleasePlanInputAsync(typeSpecProjectPath, serviceTreeId, productTreeId, specPullRequestUrl, sdkReleaseType, specApiVersion);
 
                 // Check environment variable to determine if this should be a test release plan
                 var isAgentTesting = environmentHelper.GetBooleanVariable("AZSDKTOOLS_AGENT_TESTING", false);

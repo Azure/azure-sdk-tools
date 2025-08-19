@@ -18,7 +18,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
     /// </summary>
     [Description("TypeSpec validation tools")]
     [McpServerToolType]
-    public class SpecValidationTools(ITypeSpecHelper typeSpecHelper, ILogger<SpecValidationTools> logger, IOutputService output) : MCPTool
+    public class SpecValidationTools(ITypeSpecHelper typeSpecHelper, ILogger<SpecValidationTools> logger, IOutputHelper output) : MCPTool
     {
         // Commands
         private const string typespecValidationCommandName = "validate-typespec";

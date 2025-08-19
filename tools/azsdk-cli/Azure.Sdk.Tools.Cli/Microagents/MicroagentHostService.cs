@@ -13,10 +13,14 @@ public class MicroagentHostService(AzureOpenAIClient openAI, ILogger<MicroagentH
 
     public async Task<TResult> RunAgentToCompletion<TResult>(Microagent<TResult> agentDefinition, CancellationToken ct = default)
     {
-        logger.LogInformation("Starting agent with model '{Model}'", agentDefinition.Model);
-
-        var chatClient = openAI.GetChatClient(agentDefinition.Model);
         var tools = agentDefinition.Tools?.ToDictionary(t => t.Name) ?? new Dictionary<string, IAgentTool>();
+        if (tools.ContainsKey(ExitToolName))
+        {
+            throw new ArgumentException($"Cannot name a tool with the special name '{ExitToolName}'. Please choose a different name.", nameof(agentDefinition.Tools));
+        }
+
+        logger.LogInformation("Starting agent with model '{Model}'", agentDefinition.Model);
+        var chatClient = openAI.GetChatClient(agentDefinition.Model);
 
         // This list keeps track of all chat messages (essentially, just tool requests from the LLM and results from our program).
         // As the agent loop continues, this conversation history gets longer, until either the LLM calls the "exit" tool

@@ -8,13 +8,25 @@ namespace Azure.Sdk.Tools.Cli.Microagents;
 /// it calls the special sentinel "exit" tool with the result.
 /// </summary>
 /// <typeparam name="TResult">A type representing the schema of the result of the agent's execution</typeparam>
-/// <param name="SystemPrompt">The system prompt provided to the agent.</param>
-/// <param name="Tools">A list of tools that are made available to the agent. For a simple LLM call without tools, this can be left empty.</param>
-/// <param name="Model">The model that this microagent is designed for.</param>
-/// <param name="MaxToolCalls">The maximum number of tool calls in the agent loop. If this is exceeded, the microagent run is deemed to have failed.</param>
-public record Microagent<TResult>(
-    string SystemPrompt,
-    IEnumerable<IAgentTool> Tools = null,
-    string Model = "gpt-4.1",
-    int MaxToolCalls = 1_000
-);
+public class Microagent<TResult>
+{
+    /// <summary>
+    /// The system prompt provided to the agent.
+    /// </summary>
+    public required string SystemPrompt { get; init; }
+
+    /// <summary>
+    /// A list of tools that are made available to the agent. For a simple LLM call without tools, this can be left empty.
+    /// </summary>
+    public IEnumerable<IAgentTool> Tools { get; init; } = [];
+
+    /// <summary>
+    /// The model that this microagent is designed for.
+    /// </summary>
+    public string Model { get; init; } = "gpt-4.1";
+
+    /// <summary>
+    /// The maximum number of tool calls in the agent loop. If this is exceeded, the microagent run is deemed to have failed.
+    /// </summary>
+    public int MaxToolCalls { get; init; } = 100;
+}

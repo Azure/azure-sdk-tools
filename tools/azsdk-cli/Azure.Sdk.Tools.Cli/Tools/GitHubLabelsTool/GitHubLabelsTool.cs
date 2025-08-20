@@ -7,17 +7,8 @@ using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Helpers;
 using ModelContextProtocol.Server;
-using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses;
-using System.Text;
-using Microsoft.Extensions.Logging;
-using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Configuration;
-using Azure.Sdk.Tools.Cli.Contract;
-using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Models.Responses;
-using Azure.Sdk.Tools.Cli.Services;
-
 
 namespace Azure.Sdk.Tools.Cli.Tools
 {

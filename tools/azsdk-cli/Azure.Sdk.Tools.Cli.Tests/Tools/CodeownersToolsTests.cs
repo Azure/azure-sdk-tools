@@ -6,7 +6,7 @@ using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Tools;
 using Azure.Sdk.Tools.Cli.Models.Responses;
-using Azure.Sdk.Tools.Cli.Tests.MockServices;
+using Azure.Sdk.Tools.Cli.Tests.Mocks.Services;
 using Moq;
 using NUnit.Framework;
 using Octokit;
@@ -19,7 +19,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
     public class CodeownersToolsTests
     {
         private MockGitHubService _mockGithub;
-        private Mock<IOutputService> _mockOutput;
+        private Mock<IOutputHelper> _mockOutput;
         private Mock<ITypeSpecHelper> _mockTypeSpecHelper;
         private ICodeownersHelper _codeownersHelper;
         private Mock<ICodeownersValidatorHelper> _mockCodeownersValidator;
@@ -30,7 +30,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public void Setup()
         {
             _mockGithub = new MockGitHubService();
-            _mockOutput = new Mock<IOutputService>();
+            _mockOutput = new Mock<IOutputHelper>();
             _mockTypeSpecHelper = new Mock<ITypeSpecHelper>();
             _codeownersHelper = new CodeownersHelper();
             _mockCodeownersValidator = new Mock<ICodeownersValidatorHelper>();
@@ -198,7 +198,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             gh.Setup(s => s.GetContentsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>()))
                 .ReturnsAsync((IReadOnlyList<RepositoryContent>?)null);
 
-            var output = new Mock<IOutputService>();
+            var output = new Mock<IOutputHelper>();
             var typespec = new Mock<ITypeSpecHelper>();
             var helper = new CodeownersHelper();
             var validator = new Mock<ICodeownersValidatorHelper>();

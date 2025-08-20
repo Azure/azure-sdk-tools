@@ -272,7 +272,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
             catch (Exception ex)
             {
                 SetFailure();
-                return $"Error: {ex}";
+                logger.LogError(ex);
+                return ex.Message;
             }
         }
 

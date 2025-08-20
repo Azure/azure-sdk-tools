@@ -36,7 +36,10 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         public bool IsRepoPathForPublicSpecRepo(string path)
         {
             var uri = _gitHelper.GetRepoRemoteUri(path);
-            return uri.ToString().Contains(SPEC_REPO_NAME);
+            var uriString = uri.ToString();
+
+            // Contains the spec repo name but not followed by a hyphen (to avoid specs-pr)
+            return uriString.Contains(SPEC_REPO_NAME) && !uriString.Contains($"{SPEC_REPO_NAME}-");
         }
 
         public string GetSpecRepoRootPath(string path)

@@ -17,12 +17,13 @@ import {
 } from '../utils/generateSampleReadmeMd.js';
 import { updateTypeSpecProjectYamlFile } from '../utils/updateTypeSpecProjectYamlFile.js';
 import { getRelativePackagePath } from "../utils/utils.js";
-import { defaultChildProcessTimeout, getGeneratedPackageDirectory, generateRepoDataInTspLocation, specifyApiVersionToGenerateSDKByTypeSpec } from "../../common/utils.js";
+import { defaultChildProcessTimeout, getGeneratedPackageDirectory, generateRepoDataInTspLocation, specifyApiVersionToGenerateSDKByTypeSpec, cleanUpPackageDirectory } from "../../common/utils.js";
 import { remove } from 'fs-extra';
 import { generateChangelogAndBumpVersion } from "../../common/changelog/automaticGenerateChangeLogAndBumpVersion.js";
 import { updateChangelogResult } from "../../common/packageResultUtils.js";
 import { isRushRepo } from "../../common/rushUtils.js";
 import { updateSnippets } from "../../common/devToolUtils.js";
+import { RunMode } from "../../common/types.js";
 
 export async function generateRLCInPipeline(options: {
     sdkRepo: string;
@@ -41,6 +42,7 @@ export async function generateRLCInPipeline(options: {
     runningEnvironment?: RunningEnvironment;
     apiVersion: string | undefined;
     sdkReleaseType: string | undefined;
+    runMode: RunMode;
 }) {
     let packagePath: string | undefined;
     let relativePackagePath: string | undefined;
@@ -48,7 +50,6 @@ export async function generateRLCInPipeline(options: {
     if (options.typespecProject) {
         const typespecProject = path.join(options.swaggerRepo, options.typespecProject); 
         const generatedPackageDir = await getGeneratedPackageDirectory(typespecProject, options.sdkRepo);
-        await remove(generatedPackageDir);
 
         if (!options.skipGeneration) {
             logger.info(`Start to generate rest level client SDK from '${options.typespecProject}'.`);
@@ -75,6 +76,8 @@ export async function generateRLCInPipeline(options: {
                 });
                 logger.info("End with TypeSpec command.");
             } else {
+                await cleanUpPackageDirectory(generatedPackageDir, options.runMode);
+
                 logger.info("Start to generate code by tsp-client.");
                 const tspDefDir = path.join(options.swaggerRepo, options.typespecProject);
                 if (options.apiVersion) {

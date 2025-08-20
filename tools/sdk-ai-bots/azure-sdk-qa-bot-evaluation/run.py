@@ -15,13 +15,46 @@ from azure.identity import AzurePipelinesCredential, DefaultAzureCredential, Azu
 from tabulate import tabulate
 import argparse
 from dotenv import load_dotenv
+from azure.storage.blob import BlobServiceClient
+import yaml
 
 weights: dict[str, float] = {
     "similarity_weight": 0.6,  # Similarity between expected and actual
     "groundedness_weight": 0.4,  # Staying grounded in guidelines
 }
 
-async def process_file(input_file: str, output_file: str, is_bot: bool) -> None:
+scenario_to_channel: dict[str, str] = {
+    "typespec": "TypeSpec Discussion",
+    "python": "Language - Python",
+    "advocacy": "Advocacy",
+    "ai": "AI Discussion",
+    "apispec": "API Spec Review",
+    "apiview": "APIView"
+}
+
+def retrieve_tenant_id(channel: str):
+    credential = DefaultAzureCredential()
+    storage_blob_account = os.environ["STORAGE_BLOB_ACCOUNT"]
+    blob_service_client = BlobServiceClient(
+        account_url=f"https://{storage_blob_account}.blob.core.windows.net",
+        credential = credential
+
+    )
+    container_name = os.environ["BOT_CONFIG_CONTAINER"]
+    container_client = blob_service_client.get_container_client(container_name)
+    filename = os.environ["BOT_CONFIG_CHANNEL_BLOB"]
+    blob_client = container_client.get_blob_client(filename)
+    download_stream = blob_client.download_blob()
+    channel_data_yaml = yaml.safe_load(download_stream.readall())
+    channels = channel_data_yaml["channels"]
+    if channels:
+        for item in channels:
+            if item["name"] == channel:
+                return item["tenant"]
+
+    return channel_data_yaml["default"]["tenant"]
+
+async def process_file(input_file: str, output_file: str, scenario: str, is_bot: bool) -> None:
     """Process a single input file"""
     print(f"Processing file: {input_file}")
     
@@ -29,6 +62,8 @@ async def process_file(input_file: str, output_file: str, is_bot: bool) -> None:
     bot_service_endpoint = os.environ.get("BOT_SERVICE_ENDPOINT", None) 
     api_url = f"{bot_service_endpoint}/completion" if bot_service_endpoint is not None else "http://localhost:8088/completion"
     start_time = time.time()
+    tenant_id = retrieve_tenant_id(scenario_to_channel[scenario])
+    
     outputFile = open(output_file, 'a', encoding='utf-8')
     with open(input_file, "r", encoding="utf-8") as f:
         for line in f:
@@ -36,7 +71,7 @@ async def process_file(input_file: str, output_file: str, is_bot: bool) -> None:
             # print(record)
             if is_bot:
                 try:
-                    api_response = await call_bot_api(record["query"], api_url, azure_openai_api_key)
+                    api_response = await call_bot_api(record["query"], api_url, azure_openai_api_key, tenant_id)
                     answer = api_response.get("answer", "")
                     full_context = api_response.get("full_context", "")
                     latency = time.time() - start_time
@@ -104,11 +139,6 @@ async def prepare_dataset(testdata_dir: str, file_prefix: str = None, is_bot: bo
         return None
     
     current_date = datetime.now().strftime("%Y_%m_%d")
-    output_file_name = f"{file_prefix}_{current_date}.jsonl" if file_prefix else f"collected_qa_{current_date}.jsonl"
-    output_file = os.path.join(output_dir.absolute(), output_file_name)
-    print(f"📄 Output file will be: {output_file}")
-
-    
     # Process jsonl files in the folder, optionally filtered by prefix
     glob_pattern = f"{file_prefix}*.jsonl" if file_prefix else "*.jsonl"
     matching_files = list(data_dir.glob(glob_pattern))
@@ -122,7 +152,7 @@ async def prepare_dataset(testdata_dir: str, file_prefix: str = None, is_bot: bo
         grouped = defaultdict(list)
 
         for item in matching_files:
-            match = re.match(r"^([^-]+)-", item.name)
+            match = re.match(r"^([^_]+)_", item.name)
             if match:
                 key = match.group(1)
                 grouped[key].append(item)
@@ -131,7 +161,7 @@ async def prepare_dataset(testdata_dir: str, file_prefix: str = None, is_bot: bo
             output_file = os.path.join(output_dir.absolute(), f"{key}_{current_date}.jsonl")
             for file_path in items:
                 print(f"  - {file_path.name}")
-                await process_file(str(file_path), str(output_file), is_bot)
+                await process_file(str(file_path), str(output_file), key, is_bot)
     elif file_prefix:
         print(f"No files found matching prefix '{file_prefix}' in {data_dir}/")
         return None

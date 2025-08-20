@@ -109,6 +109,9 @@ if __name__ == "__main__":
     if (args.dest_jsonl_folder == None):
         args.dest_jsonl_folder = os.path.join(script_directory, "tests")
     
+    output_test_dir = Path(args.dest_jsonl_folder)
+    output_test_dir.mkdir(exist_ok=True)
+
     if os.path.isfile(args.source_md_path):
         output_file = os.path.join(args.dest_jsonl_folder, f"{os.path.splitext(os.path.basename(args.source_md_path))[0]}.jsonl")
         convert_md_to_jsonl(args.source_md_path, output_file)

@@ -16,12 +16,10 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             bool isAdding,
             bool isMgmtPlane);
         CodeownersEntry CreateCodeownersEntry(
-            CodeownersEntry? existingEntry,
             string path,
             string serviceLabel,
             List<string> serviceOwners,
             List<string> sourceOwners,
-            bool isAdding,
             bool isMgmtPlane);
         string AddCodeownersEntry(List<CodeownersEntry> codeownersEntries, string codeownersContent, CodeownersEntry codeownersEntry, bool codeownersEntryExists);
         CodeownersEntry FindAlphabeticalInsertionPoint(List<CodeownersEntry> codeownersEntries, CodeownersEntry codeownersEntry);
@@ -75,29 +73,30 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             bool isAdding,
             bool isMgmtPlane)
         {
+            // Copy constructor for codeownersentry needed
+            var updatedCodeownersEntry = new CodeownersEntry(existingEntry);
+            
             if (existingEntry != null)
             {
                 if (isAdding)
                 {
-                    existingEntry.ServiceOwners = AddOwners(existingEntry.ServiceOwners, serviceOwners);
-                    existingEntry.SourceOwners = AddOwners(existingEntry.SourceOwners, sourceOwners);
+                    updatedCodeownersEntry.ServiceOwners = AddOwners(updatedCodeownersEntry.ServiceOwners, serviceOwners);
+                    updatedCodeownersEntry.SourceOwners = AddOwners(updatedCodeownersEntry.SourceOwners, sourceOwners);
                 }
                 else
                 {
-                    existingEntry.ServiceOwners = RemoveOwners(existingEntry.ServiceOwners, serviceOwners);
-                    existingEntry.SourceOwners = RemoveOwners(existingEntry.SourceOwners, sourceOwners);
+                    updatedCodeownersEntry.ServiceOwners = RemoveOwners(updatedCodeownersEntry.ServiceOwners, serviceOwners);
+                    updatedCodeownersEntry.SourceOwners = RemoveOwners(updatedCodeownersEntry.SourceOwners, sourceOwners);
                 }
             }
-            return existingEntry;
+            return updatedCodeownersEntry;
         }
 
         public CodeownersEntry CreateCodeownersEntry(
-            CodeownersEntry? existingEntry,
             string path,
             string serviceLabel,
             List<string> serviceOwners,
             List<string> sourceOwners,
-            bool isAdding,
             bool isMgmtPlane)
         {
             // Create new entry
@@ -178,47 +177,51 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         public CodeownersEntry FindAlphabeticalInsertionPoint(List<CodeownersEntry> codeownersEntries, CodeownersEntry codeownersEntry)
         {
             var comparer = new CodeownersEntryPathComparer();
+            var codeownersEntriesCopy = new List<CodeownersEntry>(codeownersEntries);
+            var updatedCodeownersEntry = new CodeownersEntry(codeownersEntry);
 
             // Find the first entry that should come after our new entry
-            for (int i = 0; i < codeownersEntries.Count; i++)
+            for (int i = 0; i < codeownersEntriesCopy.Count; i++)
             {
-                int comparison = comparer.Compare(codeownersEntries[i], codeownersEntry);
+                int comparison = comparer.Compare(codeownersEntriesCopy[i], updatedCodeownersEntry);
 
                 // If the current entry should come after our new entry, insert before it
                 // Treat equality as "insert before" so entries that compare equal don't fall through and get appended
                 if (comparison >= 0)
                 {
-                    codeownersEntry.startLine = codeownersEntries[i].startLine;
-                    codeownersEntry.endLine = codeownersEntries[i].endLine;
-                    return codeownersEntry;
+                    updatedCodeownersEntry.startLine = codeownersEntriesCopy[i].startLine;
+                    updatedCodeownersEntry.endLine = codeownersEntriesCopy[i].endLine;
+                    return updatedCodeownersEntry;
                 }
 
-                (codeownersEntries, i) = MergeCodeownerEntries(codeownersEntries, i);
+                (codeownersEntriesCopy, i) = MergeCodeownerEntries(codeownersEntriesCopy, i);
             }
 
             // If we didn't find an insertion point, append at the end
-            if (codeownersEntries.Count > 0)
+            if (codeownersEntriesCopy.Count > 0)
             {
-                var lastEntry = codeownersEntries[codeownersEntries.Count - 1];
+                var lastEntry = codeownersEntriesCopy[codeownersEntriesCopy.Count - 1];
                 // Add 1 to move past the last entry, plus 1 more for spacing between entries
                 // Place the new entry after the last entry's end line, leaving one blank line between
-                codeownersEntry.startLine = lastEntry.endLine + 2;
-                codeownersEntry.endLine = codeownersEntry.endLine + 2;
-                return codeownersEntry;
+                updatedCodeownersEntry.startLine = lastEntry.endLine + 2;
+                updatedCodeownersEntry.endLine = updatedCodeownersEntry.endLine + 2;
+                return updatedCodeownersEntry;
             }
 
             // If the list is empty, start at line 1
-            codeownersEntry.startLine = 1;
-            codeownersEntry.endLine = 1;
-            return codeownersEntry;
+            updatedCodeownersEntry.startLine = 1;
+            updatedCodeownersEntry.endLine = 1;
+            return updatedCodeownersEntry;
         }
 
         public (List<CodeownersEntry>, int) MergeCodeownerEntries(List<CodeownersEntry> codeownersEntries, int index)
         {
-            if (index < codeownersEntries.Count - 1)
+            var codeownersEntriesCopy = new List<CodeownersEntry>(codeownersEntries);
+
+            if (index < codeownersEntriesCopy.Count - 1)
             {
-                var codeownersEntry = codeownersEntries[index];
-                var nextCodeownersEntry = codeownersEntries[index + 1];
+                var codeownersEntry = codeownersEntriesCopy[index];
+                var nextCodeownersEntry = codeownersEntriesCopy[index + 1];
 
                 if (AreEntriesRelated(codeownersEntry, nextCodeownersEntry))
                 {
@@ -234,8 +237,8 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                         endLine = Math.Max(codeownersEntry.endLine, nextCodeownersEntry.endLine)
                     };
 
-                    codeownersEntries[index] = mergedEntry;
-                    codeownersEntries.RemoveAt(index + 1);
+                    codeownersEntriesCopy[index] = mergedEntry;
+                    codeownersEntriesCopy.RemoveAt(index + 1);
 
                     if (index - 1 < 0)
                     {
@@ -243,7 +246,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                     }
                 }
             }
-            return (codeownersEntries, index);
+            return (codeownersEntriesCopy, index);
         }
 
         private bool AreEntriesRelated(CodeownersEntry entry1, CodeownersEntry entry2)
@@ -544,14 +547,14 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             }
 
             // Remove any leading or trailing whitespace and slashes using regex
-            path = Regex.Replace(path, "^[\\s/]+|[\\s/]+$", "");
+            var normalizedPath = Regex.Replace(path, "^[\\s/]+|[\\s/]+$", "");
 
-            if (!path.StartsWith("sdk/", StringComparison.OrdinalIgnoreCase))
+            if (!normalizedPath.StartsWith("sdk/", StringComparison.OrdinalIgnoreCase))
             {
-                path = "sdk/" + path;
+                normalizedPath = "sdk/" + normalizedPath;
             }
-            path = $"/{path}/";
-            return path;
+            normalizedPath = $"/{normalizedPath}/";
+            return normalizedPath;
         }
 
         private string NormalizeLabel(string input)
@@ -571,7 +574,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
         public string NormalizeIdentifier(string input)
         {
-            input = input
+            var normalizedInput = input
                 .Replace(" - ", "-")
                 .Replace(" ", "-")
                 .Replace("/", "-")
@@ -579,7 +582,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 .Replace(".", "-")
                 .Trim('-')
                 .ToLowerInvariant();
-            return Regex.Replace(input, @"[^a-zA-Z0-9\-]", "");
+            return Regex.Replace(normalizedInput, @"[^a-zA-Z0-9\-]", "");
         }
 
         public List<string> AddOwners(List<string> existingOwners, List<string> ownersToAdd)

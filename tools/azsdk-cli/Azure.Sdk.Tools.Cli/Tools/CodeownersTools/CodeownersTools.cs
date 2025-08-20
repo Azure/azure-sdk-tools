@@ -10,13 +10,14 @@ using Octokit;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 
+
 namespace Azure.Sdk.Tools.Cli.Tools
 {
     [Description("Tool that validates and manipulates codeowners files.")]
     [McpServerToolType]
     public class CodeownersTools(
         IGitHubService githubService,
-        IOutputService output,
+        IOutputHelper output,
         ITypeSpecHelper typespecHelper,
         ICodeownersHelper codeownersHelper,
         ICodeownersValidatorHelper codeownersValidator) : MCPTool
@@ -39,6 +40,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private readonly Option<string[]> serviceOwnersOption = new(["--service-owners", "-so"], "The service owners (space-separated)") { IsRequired = false };
         private readonly Option<string[]> sourceOwnersOption = new(["--source-owners", "-sro"], "The source owners (space-separated)") { IsRequired = false };
         private readonly Option<bool> isAddingOption = new(["--is-adding", "-ia"], "Whether to add (true) or remove (false) owners") { IsRequired = false };
+        private readonly Option<string> workingBranchOption = new(["--working-branch", "-wb"], "Branch to make edits to, only if provided.") { IsRequired = false };
 
         public override Command GetCommand()
         {
@@ -54,13 +56,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     serviceOwnersOption,
                     sourceOwnersOption,
                     isAddingOption,
+                    workingBranchOption,
                 },
                 new Command(validateCodeownersEntryCommandName, "Validate codeowners for an existing service entry")
                 {
                     repoOption,
                     serviceLabelOption,
                     pathOptionOptional
-                }
+                },
             };
 
             foreach (var subCommand in subCommands)
@@ -86,6 +89,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     var serviceOwnersValue = commandParser.GetValueForOption(serviceOwnersOption);
                     var sourceOwnersValue = commandParser.GetValueForOption(sourceOwnersOption);
                     var isAddingValue = commandParser.GetValueForOption(isAddingOption);
+                    var workingBranchValue = commandParser.GetValueForOption(workingBranchOption);
 
                     var addResult = await UpdateCodeowners(
                         repoValue ?? "",
@@ -94,7 +98,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
                         serviceLabelValue ?? "",
                         serviceOwnersValue?.ToList() ?? new List<string>(),
                         sourceOwnersValue?.ToList() ?? new List<string>(),
-                        isAddingValue);
+                        isAddingValue,
+                        workingBranchValue ?? "");
                     output.Output(addResult);
                     return;
                 case validateCodeownersEntryCommandName:
@@ -115,7 +120,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        [McpServerTool(Name = "UpdateCodeowners"), Description("Adds or deletes codeowners for a given service label or path in a repo.")]
+        [McpServerTool(Name = "azsdk_update_codeowners"), Description("Adds or deletes codeowners for a given service label or path in a repo.")]
         public async Task<string> UpdateCodeowners(
             string repo,
             string typeSpecProjectRoot = "",
@@ -123,7 +128,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
             string serviceLabel = "",
             List<string> serviceOwners = null,
             List<string> sourceOwners = null,
-            bool isAdding = false)
+            bool isAdding = false,
+            string workingBranch = "")
         {
             try
             {
@@ -159,7 +165,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     }
                 }
 
-                var workingBranch = "";
                 if (string.IsNullOrEmpty(workingBranch))
                 {
                     var codeownersPullRequests = (await githubService.SearchPullRequestsByTitleAsync(Constants.AZURE_OWNER_PATH, repo, "[CODEOWNERS]"))
@@ -233,7 +238,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 else
                 {
                     updatedEntry = codeownersHelper.CreateCodeownersEntry(
-                        matchingEntry, normalizedPath, serviceLabel, serviceOwners, sourceOwners, isAdding, isMgmtPlane
+                        normalizedPath, serviceLabel, serviceOwners, sourceOwners, isMgmtPlane
                     );
                 }
 
@@ -255,7 +260,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     : updatedEntry.PathExpression;
                 var resultMessages = await CreateCodeownersPR(
                     repo,                                                             // Repository name
-                    string.Join('\n', modifiedCodeownersContent),                     // Modified content
+                    modifiedCodeownersContent,                     // Modified content
                     codeownersSha,                                                    // SHA of the file to update 
                     $"Update codeowners entry for {identifier}", // Description for commit message, PR title, and description
                     "update-codeowners-entry",                                             // Branch prefix for the action
@@ -324,7 +329,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             return resultMessages;
         }
 
-        [McpServerTool(Name = "ValidateCodeownersEntryForService"), Description("Validates codeowners in a specific repository for a given service or repo path.")]
+        [McpServerTool(Name = "azsdk_validate_codeowners_entry_for_service"), Description("Validates codeowners in a specific repository for a given service or repo path.")]
         public async Task<ServiceCodeownersResult> ValidateCodeownersEntryForService(string repoName, string? serviceLabel = null, string? path = null)
         {
             ServiceCodeownersResult response = new() { };

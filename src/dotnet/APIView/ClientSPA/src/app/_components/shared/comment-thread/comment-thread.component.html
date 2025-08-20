@@ -6,7 +6,7 @@
     <p-timeline [value]="codePanelRowData!.comments">
         <ng-template pTemplate="marker" let-comment>
             <img *ngIf="comment.createdBy !== 'azure-sdk'" [alt]="comment.createdBy" src="https://github.com/{{ comment.createdBy }}.png?size=40" width="40" height="40" class="user-avartar"/>
-            <img *ngIf="comment.createdBy === 'azure-sdk'" alt="Azure SDK Copilot" src="/assets/icons/copilot.svg" width="40" height="40" class="user-avartar"/>
+            <img *ngIf="comment.createdBy === 'azure-sdk'" alt="Azure SDK Copilot" src="{{assetsPath}}/icons/copilot.svg" width="40" height="40" class="user-avartar"/>
         </ng-template>        
         <ng-template pTemplate="content" let-comment>
             <p-panel [toggleable]="false" [attr.data-comment-id]="comment.id">

@@ -17,7 +17,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 {
     [Description("Release Plan Tool type that contains tools to connect to Azure DevOps to get release plan work item")]
     [McpServerToolType]
-    public partial class ReleasePlanTool(IDevOpsService devOpsService, ITypeSpecHelper typeSpecHelper, ILogger<ReleasePlanTool> logger, IOutputService output, IUserHelper userHelper, IGitHubService githubService, IEnvironmentHelper environmentHelper) : MCPTool
+    public partial class ReleasePlanTool(IDevOpsService devOpsService, ITypeSpecHelper typeSpecHelper, ILogger<ReleasePlanTool> logger, IOutputHelper output, IUserHelper userHelper, IGitHubService githubService, IEnvironmentHelper environmentHelper) : MCPTool
     {
         //Namespace approval repo details
         private const string namespaceApprovalRepoName = "azure-sdk";
@@ -50,6 +50,11 @@ namespace Azure.Sdk.Tools.Cli.Tools
         [GeneratedRegex("https:\\/\\/github.com\\/Azure\\/azure-sdk\\/issues\\/([0-9]+)")]
         private static partial Regex NameSpaceIssueUrlRegex();
 
+        [GeneratedRegex("https:\\/\\/github.com\\/Azure\\/(azure-rest-api-specs|azure-rest-api-specs-pr)\\/pull\\/[0-9]+\\/?")]
+        private static partial Regex PullRequestUrlRegex();
+
+        [GeneratedRegex(@"^\d{4}-\d{2}-\d{2}(-preview)?$")]
+        private static partial Regex ApiVersionRegex();
 
         [McpServerTool(Name = "azsdk_get_release_plan_for_spec_pr"), Description("Get release plan for API spec pull request. This tool should be used only if work item Id is unknown.")]
         public async Task<string> GetReleasePlanForPullRequest(string pullRequestLink)
@@ -147,12 +152,19 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        private async Task ValidateCreateReleasePlanInputAsync(string typeSpecProjectPath, string serviceTreeId, string productTreeId, string specPullRequestUrl, string sdkReleaseType)
+        private async Task ValidateCreateReleasePlanInputAsync(string typeSpecProjectPath, string serviceTreeId, string productTreeId, string specPullRequestUrl, string sdkReleaseType, string specApiVersion)
         {
             // Check for existing release plan for the given pull request URL.
             if (string.IsNullOrEmpty(specPullRequestUrl))
             {
                 throw new Exception("API spec pull request URL is required to create a release plan.");
+            }
+
+            var match = PullRequestUrlRegex().Match(specPullRequestUrl);
+
+            if (!match.Success)
+            {
+                throw new Exception($"Invalid spec pull request URL '{specPullRequestUrl}' It should be a valid GitHub pull request to azure-rest-api-specs or azure-rest-api-specs-pr repo.");
             }
 
             logger.LogInformation("Checking for existing release plan for pull request URL: {specPullRequestUrl}", specPullRequestUrl);
@@ -165,6 +177,13 @@ namespace Azure.Sdk.Tools.Cli.Tools
             if (string.IsNullOrEmpty(typeSpecProjectPath))
             {
                 throw new Exception("TypeSpec project path is empty. Cannot create a release plan without a TypeSpec project root path");
+            }
+
+            var isValidApiVersion = ApiVersionRegex().Match(specApiVersion);
+
+            if (!isValidApiVersion.Success)
+            {
+                throw new Exception("Invalid API version format. Supported formats are: yyyy-MM-dd or yyyy-MM-dd-preview");
             }
 
             var supportedReleaseTypes = new[] { "beta", "stable" };
@@ -202,7 +221,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             try
             {
                 sdkReleaseType = sdkReleaseType?.ToLower() ?? "";
-                await ValidateCreateReleasePlanInputAsync(typeSpecProjectPath, serviceTreeId, productTreeId, specPullRequestUrl, sdkReleaseType);
+                await ValidateCreateReleasePlanInputAsync(typeSpecProjectPath, serviceTreeId, productTreeId, specPullRequestUrl, sdkReleaseType, specApiVersion);
 
                 // Check environment variable to determine if this should be a test release plan
                 var isAgentTesting = environmentHelper.GetBooleanVariable("AZSDKTOOLS_AGENT_TESTING", false);
@@ -213,7 +232,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
                 var specType = typeSpecHelper.IsValidTypeSpecProjectPath(typeSpecProjectPath) ? "TypeSpec" : "OpenAPI";
-                var isMgmt = typeSpecHelper.IsTypeSpecProjectForMgmtPlane(typeSpecProjectPath); 
+                var isMgmt = typeSpecHelper.IsTypeSpecProjectForMgmtPlane(typeSpecProjectPath);
 
                 logger.LogInformation("Attempting to retrieve current user email.");
 
@@ -347,7 +366,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 // Get issue number from the match
                 var issueNumber = int.Parse(match.Groups[1].Value);
                 var issue = await githubService.GetIssueAsync(namespaceApprovalRepoOwner, namespaceApprovalRepoName, issueNumber);
-                if(issue == null)
+                if (issue == null)
                 {
                     return $"Failed to verify approval status. Namespace approval issue #{namespaceApprovalIssue} not found in {namespaceApprovalRepoOwner}/{namespaceApprovalRepoName}.";
                 }
@@ -359,7 +378,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 }
 
                 // Verify if issue is closed
-                StringBuilder response = new ();
+                StringBuilder response = new();
                 if (issue.State == ItemState.Open)
                 {
                     response.Append($"Namespace approval is still pending. Please check {issue.HtmlUrl} for more details.");

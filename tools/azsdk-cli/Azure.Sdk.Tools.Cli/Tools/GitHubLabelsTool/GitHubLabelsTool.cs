@@ -13,15 +13,18 @@ using System.Text;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Configuration;
+using Azure.Sdk.Tools.Cli.Contract;
+using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Models.Responses;
+using Azure.Sdk.Tools.Cli.Services;
 
 
 namespace Azure.Sdk.Tools.Cli.Tools
 {
-
     [McpServerToolType, Description("Tools for working with GitHub labels for services")]
     public class GitHubLabelsTool(
         ILogger<GitHubLabelsTool> logger,
-        IOutputService output,
+        IOutputHelper output,
         IGitHubService githubService
     ) : MCPTool
     {
@@ -77,7 +80,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        [McpServerTool(Name = "CheckServiceLabel"), Description("Checks if a service label exists and returns its details")]
+        [McpServerTool(Name = "azsdk_check_service_label"), Description("Checks if a service label exists and returns its details")]
         public async Task<ServiceLabelResponse> CheckServiceLabel(string serviceLabel)
         {
             try
@@ -118,7 +121,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             return result;
         }
 
-        [McpServerTool(Name = "CreateServiceLabel"), Description("Creates a pull request to add a new service label")]
+        [McpServerTool(Name = "azsdk_create_service_label"), Description("Creates a pull request to add a new service label")]
         public async Task<ServiceLabelResponse> CreateServiceLabel(string label, string link)
         {
             try
@@ -173,7 +176,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     baseBranch: "main",
                     headBranch: $"add_service_label_{normalizedLabel}",
                     title: $"[Service Label] Add service label: {label}",
-                    body: $"This PR adds the service label '{label}' to the repository. Documentation link: {link}"
+                    body: $"This PR adds the service label '{label}' to the repository. Documentation link: {link}",
+                    draft : true
                 );
 
                 // Extract the pull request URL from the result

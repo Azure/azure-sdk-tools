@@ -100,6 +100,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                         sourceOwnersValue?.ToList() ?? new List<string>(),
                         isAddingValue,
                         workingBranchValue ?? "");
+                        ctx.ExitCode = ExitCode;
                     output.Output(addResult);
                     return;
                 case validateCodeownersEntryCommandName:
@@ -111,6 +112,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                         validateRepo ?? "",
                         validateServiceLabel,
                         validateRepoPath);
+                        ctx.ExitCode = ExitCode;
                     output.Output(validateResult);
                     return;
                 default:

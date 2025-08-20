@@ -12,9 +12,11 @@
     "test": "echo \"No tests yet...\""
   },
   "dependencies": {
+    "@azure/arm-search": "^3.3.0",
     "@azure/functions": "^4.0.0",
     "@azure/identity": "^4.5.0",
     "@azure/openai": "^1.0.0-beta.12",
+    "@azure/search-documents": "^12.1.0",
     "@azure/storage-blob": "^12.21.0",
     "@microsoft/microsoft-graph-types": "^2.40.0",
     "botframework-schema": "^4.17.0-blobs1",

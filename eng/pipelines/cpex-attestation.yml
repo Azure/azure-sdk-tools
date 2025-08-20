@@ -14,6 +14,4 @@ jobs:
         inputs:
           azureSubscription: opensource-api-connection
           scriptType: pscore
-          scriptLocation: inlineScript
-          inlineScript: |
-            $(Build.SourcesDirectory)/eng/scripts/Attest-CPEX-KPIs.ps1"
+          scriptPath: eng/scripts/Attest-CPEX-KPIs.ps1

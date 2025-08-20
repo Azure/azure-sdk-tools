@@ -10,7 +10,7 @@ using System.CommandLine;
 using Azure.Sdk.Tools.Cli.Contract;
 using System.CommandLine.Invocation;
 
-namespace Azure.Sdk.Tools.Cli.Tools.GitHub
+namespace Azure.Sdk.Tools.Cli.Tools
 {
     [Description("Pull request tools")]
     [McpServerToolType]
@@ -19,8 +19,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
         IGitHelper gitHelper,
         ISpecPullRequestHelper prHelper,
         ILogger<PullRequestTools> logger,
-        IOutputHelper output,
-        ITypeSpecHelper typeSpecHelper) : MCPTool
+        IOutputHelper output) : MCPTool
     {
         // Commands
         private const string getPullRequestForCurrentBranchCommandName = "get-pr-for-current-branch";
@@ -46,7 +45,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
                     ? output.Format($"Connected to GitHub as {user.Login}")
                     : output.Format("Failed to connect to GitHub. Please make sure to login to GitHub using gh auth login to connect to GitHub.");
             }
-            catch (Exception ex)
+            catch(Exception ex)
             {
                 SetFailure();
                 return output.Format($"Failed to connect to GitHub. Unhandled error: {ex.Message}");
@@ -93,7 +92,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
         }
 
         [McpServerTool(Name = "azsdk_create_pull_request"), Description("Create pull request for repository changes. Provide title, description and path within repository. Creates a pull request for committed changes in the current branch.")]
-        public async Task<List<string>> CreatePullRequest(string title, string description, string repositoryPath, string targetBranch = "main", bool draft = true)
+        public async Task<List<string>> CreatePullRequest(string title, string description, string repoPath, string targetBranch = "main", bool draft = true)
         {
             try
             {
@@ -101,7 +100,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
                 try
                 {
                     // Discover the repository root from the provided path
-                    var repoRootPath = gitHelper.DiscoverRepoRoot(repositoryPath);
+                    var repoRootPath = gitHelper.DiscoverRepoRoot(repoPath);
                     var headBranchName = gitHelper.GetBranchName(repoRootPath);
                     if (string.IsNullOrEmpty(headBranchName) || headBranchName.Equals("main"))
                     {
@@ -144,7 +143,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
             var repoRootPath = gitHelper.DiscoverRepoRoot(repoPath);
             var repoOwner = await gitHelper.GetRepoOwnerNameAsync(repoRootPath, false);
             var repoName = gitHelper.GetRepoName(repoRootPath);
-
+            
             var comments = await gitHubService.GetPullRequestCommentsAsync(repoOwner, repoName, pullRequestNumber);
             if (comments == null || comments.Count == 0)
             {
@@ -162,7 +161,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
                 var repoRootPath = gitHelper.DiscoverRepoRoot(repoPath);
                 var repoOwner = await gitHelper.GetRepoOwnerNameAsync(repoRootPath, false);
                 var repoName = gitHelper.GetRepoName(repoRootPath);
-
+                
                 logger.LogInformation($"Getting pull request details for {pullRequestNumber} in repo {repoName}");
                 var pullRequest = await gitHubService.GetPullRequestAsync(repoOwner, repoName, pullRequestNumber);
                 PullRequestDetails prDetails = new()

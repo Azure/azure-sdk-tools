@@ -45,12 +45,13 @@ All tools in the azsdk-cli project follow a consistent architecture:
 **Questions to Consider:**
 - What is the primary function of your tool?
 - Does it fit into an existing command group or need a new one?
+- Does it fit into an existing namespace based on the primary function?
 - What should the CLI command structure look like?
 
 **Naming Conventions:**
 - **Class Name**: `{FunctionalName}Tool` (e.g., `LogAnalysisTool`, `PipelineAnalysisTool`)
 - **File Location**: [`Tools/{Category}/{ToolName}.cs`](../Azure.Sdk.Tools.Cli/Tools/) or [`Tools/{ToolName}.cs`](../Azure.Sdk.Tools.Cli/Tools/)
-- **Namespace**: Always `Azure.Sdk.Tools.Cli.Tools` (not nested namespaces)
+- **Namespace**: `Azure.Sdk.Tools.Cli.Tools.{Category}` (namespace category should be choosen based on the primary function)
 
 ### Step 2: Define Command Group and Structure
 
@@ -98,7 +99,7 @@ CommandHierarchy = [ SharedCommandGroups.EngSys, SharedCommandGroups.Cleanup ];
 
 ## Code Examples and Templates
 
-A working example of multiple tool types and usage of services can be found at [`ExampleTool.cs`](../Azure.Sdk.Tools.Cli/Tools/ExampleTool.cs)
+A working example of multiple tool types and usage of services can be found at [`ExampleTool.cs`](../Azure.Sdk.Tools.Cli/Tools/Example/ExampleTool.cs)
 
 Additional documents exist that detail more specific scenarios:
 
@@ -120,7 +121,7 @@ using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 using ModelContextProtocol.Server;
 
-namespace Azure.Sdk.Tools.Cli.Tools;
+namespace Azure.Sdk.Tools.Cli.Tools.YourToolCategory;
 
 [McpServerToolType, Description("Brief description of what this tool does")]
 public class YourTool : MCPTool

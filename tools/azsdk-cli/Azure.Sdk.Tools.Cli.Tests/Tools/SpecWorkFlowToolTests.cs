@@ -2,7 +2,7 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
-using Azure.Sdk.Tools.Cli.Tools;
+using Azure.Sdk.Tools.Cli.Tools.ReleasePlan;
 using Microsoft.Azure.Pipelines.WebApi;
 using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.Build.WebApi;
@@ -54,7 +54,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         [Test]
         public async Task GenerateSDK_WhenPackageNameEmpty()
         {
-            var releasePlan = new ReleasePlan
+            var releasePlan = new ReleasePlanDetails
             {
                 SDKInfo = new List<SDKInfo>
                 {
@@ -85,7 +85,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public async Task GenerateSDK_WhenLanguageNotInReleasePlan()
         {
             // Test 1: Different language than requested
-            var releasePlan = new ReleasePlan
+            var releasePlan = new ReleasePlanDetails
             {
                 SDKInfo = new List<SDKInfo>
                 {
@@ -112,7 +112,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             Assert.That(result, Does.Contain("does not have a language specified"));
 
             // Test 2: Empty language
-            var releasePlanWithEmptyLanguage = new ReleasePlan
+            var releasePlanWithEmptyLanguage = new ReleasePlanDetails
             {
                 SDKInfo = new List<SDKInfo>
                 {
@@ -142,7 +142,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         [Test]
         public async Task GenerateSDK_WhenSDKInfoListIsEmpty()
         {
-            var releasePlan = new ReleasePlan
+            var releasePlan = new ReleasePlanDetails
             {
                 SDKInfo = new List<SDKInfo>() // Empty list - no SDK info at all
             };
@@ -166,7 +166,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public async Task GenerateSdk_Uses_WorkItemApi()
         {
             // Test 1: Different language than requested
-            var releasePlan = new ReleasePlan
+            var releasePlan = new ReleasePlanDetails
             {
                 SDKInfo = new List<SDKInfo>
                 {

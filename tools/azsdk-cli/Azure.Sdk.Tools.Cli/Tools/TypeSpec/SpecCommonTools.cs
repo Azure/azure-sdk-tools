@@ -8,7 +8,7 @@ using Azure.Sdk.Tools.Cli.Contract;
 using System.CommandLine;
 using Azure.Sdk.Tools.Cli.Services;
 
-namespace Azure.Sdk.Tools.Cli.Tools
+namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 {
     [Description("This type contains tools to run various common tasks in specs repo")]
     [McpServerToolType]

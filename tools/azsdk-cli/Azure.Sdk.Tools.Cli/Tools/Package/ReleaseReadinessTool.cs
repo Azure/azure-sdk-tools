@@ -11,7 +11,7 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Services;
 
-namespace Azure.Sdk.Tools.Cli.Tools
+namespace Azure.Sdk.Tools.Cli.Tools.Package
 {
     [Description("This class contains an MCP tool that checks the release readiness status of a package")]
     [McpServerToolType]

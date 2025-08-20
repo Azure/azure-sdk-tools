@@ -10,15 +10,15 @@ using System.CommandLine;
 using Azure.Sdk.Tools.Cli.Contract;
 using System.CommandLine.Invocation;
 
-namespace Azure.Sdk.Tools.Cli.Tools
+namespace Azure.Sdk.Tools.Cli.Tools.GitHub
 {
     [Description("Pull request tools")]
     [McpServerToolType]
-    public class SpecPullRequestTools(
+    public class PullRequestTools(
         IGitHubService gitHubService,
         IGitHelper gitHelper,
         ISpecPullRequestHelper prHelper,
-        ILogger<SpecPullRequestTools> logger,
+        ILogger<PullRequestTools> logger,
         IOutputHelper output,
         ITypeSpecHelper typeSpecHelper) : MCPTool
     {
@@ -42,24 +42,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private readonly Option<string> repoOwnerOpt = new(["--repo-owner"], () => "Azure", "GitHub repo owner") { IsRequired = false };
         private readonly Option<string> repoNameOpt = new(["--repo-name"], () => "azure-rest-api-specs", "GitHub repo name") { IsRequired = false };
 
-
-        [McpServerTool(Name = "azsdk_get_github_user_details"), Description("Connect to GitHub using personal access token.")]
-        public async Task<string> GetGitHubUserDetails()
-        {
-            try
-            {
-                var user = await gitHubService.GetGitUserDetailsAsync();
-                return user != null
-                    ? output.Format($"Connected to GitHub as {user.Login}")
-                    : output.Format("Failed to connect to GitHub. Please make sure to login to GitHub using gh auth login to connect to GitHub.");
-            }
-            catch (Exception ex)
-            {
-                SetFailure();
-                return output.Format($"Failed to connect to GitHub. Unhandled error: {ex.Message}");
-            }
-
-        }
 
         [McpServerTool(Name = "azsdk_check_typespec_project_in_public_repo"), Description("Check if TypeSpec project is in public repo. Provide absolute path to TypeSpec project root as param.")]
         public string CheckIfSpecInPublicRepo(string typeSpecProjectPath)

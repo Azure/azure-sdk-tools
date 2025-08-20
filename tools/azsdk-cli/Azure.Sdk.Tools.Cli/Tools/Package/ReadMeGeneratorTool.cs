@@ -13,7 +13,7 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Configuration;
 
-namespace Azure.Sdk.Tools.Cli.Tools
+namespace Azure.Sdk.Tools.Cli.Tools.Package
 {
     // Will add after we decide which tools are exported via the MCP.
     //[McpServerToolType, Description("Generates a README file, using service documentation")]

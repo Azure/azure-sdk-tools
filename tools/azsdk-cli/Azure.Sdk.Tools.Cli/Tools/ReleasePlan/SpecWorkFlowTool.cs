@@ -11,7 +11,7 @@ using Azure.Sdk.Tools.Cli.Contract;
 using System.CommandLine.Invocation;
 using System.Text;
 
-namespace Azure.Sdk.Tools.Cli.Tools
+namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 {
     [Description("This type contains the MCP tool to run SDK generation using pipeline, check SDK generation pipeline status and to get generated SDK pull request details.")]
     [McpServerToolType]
@@ -40,7 +40,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
         // Commands
         private const string checkApiReadinessCommandName = "check-api-readiness";
         private const string generateSdkCommandName = "generate-sdk";
-        private const string getPipelineStatusCommandName = "create-pr";
         private const string getSdkPullRequestCommandName = "get-sdk-pr";
         private const string linkSdkPrCommandName = "link-sdk-pr";
 
@@ -305,34 +304,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        /// <summary>
-        /// Get SDK generation pipeline run details and status for a given pipeline build ID
-        /// </summary>
-        /// <param name="buildId">Build ID for the pipeline run</param>
-        /// <returns></returns>
-        [McpServerTool(Name = "azsdk_get_pipeline_status"), Description("Get SDK generation pipeline or release pipeline details and status for a given pipeline build ID")]
-        public async Task<string> GetPipelineRunStatus(int buildId)
-        {
-
-            try
-            {
-                var response = new GenericResponse();
-                var pipeline = await devopsService.GetPipelineRunAsync(buildId);
-                if (pipeline != null)
-                {
-                    response.Status = pipeline.Result?.ToString() ?? pipeline.Status?.ToString() ?? "Not available";
-                    response.Details.Add($"Pipeline run link: {DevOpsService.GetPipelineUrl(pipeline.Id)}");
-                }
-                return output.Format(response);
-            }
-            catch (Exception ex)
-            {
-                var errorResponse = new GenericResponse();
-                errorResponse.Status = "Failed";
-                errorResponse.Details.Add($"Failed to get pipeline run with id {buildId}. Error: {ex.Message}");
-                return output.Format(errorResponse);
-            }
-        }
 
         /// <summary>
         /// Get SDK pull request link from SDK generation pipeline.
@@ -474,7 +445,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        private async Task UpdateSdkPullRequestDescription(ParsedSdkPullRequest parsedUrl, ReleasePlan releasePlan)
+        private async Task UpdateSdkPullRequestDescription(ParsedSdkPullRequest parsedUrl, ReleasePlanDetails releasePlan)
         {
             var repoOwner = parsedUrl.RepoOwner;
             var repoName = parsedUrl.RepoName;
@@ -516,7 +487,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
             {
                 new Command(checkApiReadinessCommandName, "Check if API spec is ready to generate SDK") { typeSpecProjectPathOpt, pullRequestNumberOpt, workItemIdOpt },
                 new Command(generateSdkCommandName, "Generate SDK for a TypeSpec project") { typeSpecProjectPathOpt, apiVersionOpt, sdkReleaseTypeOpt, languageOpt, pullRequestNumberOpt, workItemIdOpt },
-                new Command(getPipelineStatusCommandName, "Get SDK generation pipeline run status") { pipelineRunIdOpt },
                 new Command(getSdkPullRequestCommandName, "Get SDK pull request link from SDK generation pipeline") { languageOpt, pipelineRunIdOpt, workItemIdOpt },
                 new Command(linkSdkPrCommandName, "Link SDK pull request to release plan.") {languageOpt, urlOpt, workItemOptionalIdOpt, releasePlanIdOpt }
             };
@@ -547,10 +517,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
                         commandParser.GetValueForOption(pullRequestNumberOpt),
                         commandParser.GetValueForOption(workItemIdOpt));
                     output.Output($"SDK generation response: {sdkGenerationResponse}");
-                    return;
-                case getPipelineStatusCommandName:
-                    var pipelineRunStatus = await GetPipelineRunStatus(commandParser.GetValueForOption(pipelineRunIdOpt));
-                    output.Output($"SDK generation pipeline run status: {pipelineRunStatus}");
                     return;
                 case getSdkPullRequestCommandName:
                     var sdkPullRequestDetails = await GetSDKPullRequestDetails(commandParser.GetValueForOption(languageOpt), workItemId: commandParser.GetValueForOption(workItemIdOpt), buildId: commandParser.GetValueForOption(pipelineRunIdOpt));

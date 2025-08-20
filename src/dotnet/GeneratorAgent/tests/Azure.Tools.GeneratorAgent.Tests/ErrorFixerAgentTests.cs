@@ -352,7 +352,26 @@ namespace Azure.Tools.GeneratorAgent.Tests
         private FixPromptService CreateMockFixPromptService()
         {
             var mockLogger = new Mock<ILogger<FixPromptService>>();
-            return new FixPromptService(mockLogger.Object);
+            var appSettings = CreateMockAppSettings();
+            return new FixPromptService(mockLogger.Object, appSettings);
+        }
+
+        private AppSettings CreateMockAppSettings()
+        {
+            var mockConfiguration = new Mock<IConfiguration>();
+            var mockLogger = new Mock<ILogger<AppSettings>>();
+            
+            // Set up required configuration values
+            var projectEndpointSection = new Mock<IConfigurationSection>();
+            projectEndpointSection.Setup(s => s.Value).Returns("https://test.endpoint.com");
+            mockConfiguration.Setup(c => c.GetSection("AzureSettings:ProjectEndpoint")).Returns(projectEndpointSection.Object);
+            
+            // Set up agent instructions
+            var agentInstructionsSection = new Mock<IConfigurationSection>();
+            agentInstructionsSection.Setup(s => s.Value).Returns("You are an expert Azure SDK developer and TypeSpec author. Your primary goal is to resolve all AZC analyzer and TypeSpec compilation errors in the TypeSpec files and produce a valid, compilable result that strictly follows Azure SDK and TypeSpec guidelines.\n\n### SYSTEM INSTRUCTIONS\n- All files (e.g., main.tsp, client.tsp) are available via FileSearchTool. Retrieve any file content by filename as needed.\n- Never modify main.tsp—only client.tsp may be changed.");
+            mockConfiguration.Setup(c => c.GetSection("AzureSettings:AgentInstructions")).Returns(agentInstructionsSection.Object);
+            
+            return new AppSettings(mockConfiguration.Object, mockLogger.Object);
         }
 
         private AgentResponseParser CreateMockResponseParser()

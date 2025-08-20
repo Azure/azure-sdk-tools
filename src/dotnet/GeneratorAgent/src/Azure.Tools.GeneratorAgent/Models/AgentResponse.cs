@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Azure.Tools.GeneratorAgent.Models
 {
     /// <summary>
@@ -6,13 +8,15 @@ namespace Azure.Tools.GeneratorAgent.Models
     public class AgentResponse
     {
         /// <summary>
-        /// The complete updated client.tsp content extracted from TypeSpec code blocks
+        /// File path from the response (should be "client.tsp")
         /// </summary>
-        public string UpdatedFileContent { get; set; } = string.Empty;
-        
+        [JsonPropertyName("path")]
+        public string Path { get; set; } = string.Empty;
+
         /// <summary>
-        /// Indicates whether the response contained valid TypeSpec content
+        /// Plain text content of the updated client.tsp file
         /// </summary>
-        public bool HasValidContent { get; set; } = false;
+        [JsonPropertyName("content")]
+        public string Content { get; set; } = string.Empty;
     }
 }

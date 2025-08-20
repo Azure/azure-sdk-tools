@@ -1,8 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using Azure.Tools.ErrorAnalyzers;
-using Azure.Tools.GeneratorAgent;
+using Azure.Tools.GeneratorAgent.Configuration;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
@@ -18,8 +16,9 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public void Constructor_WithValidLogger_ShouldCreateInstance()
         {
             var mockLogger = new Mock<ILogger<FixPromptService>>();
+            var appSettings = CreateAppSettings();
 
-            var service = new FixPromptService(mockLogger.Object);
+            var service = new FixPromptService(mockLogger.Object, appSettings);
 
             Assert.That(service, Is.Not.Null);
         }
@@ -27,7 +26,8 @@ namespace Azure.Tools.GeneratorAgent.Tests
         [Test]
         public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
         {
-            var ex = Assert.Throws<ArgumentNullException>(() => new FixPromptService(null!));
+            var appSettings = CreateAppSettings();
+            var ex = Assert.Throws<ArgumentNullException>(() => new FixPromptService(null!, appSettings));
             Assert.That(ex!.ParamName, Is.EqualTo("logger"));
         }
 
@@ -56,12 +56,12 @@ namespace Azure.Tools.GeneratorAgent.Tests
             {
                 Assert.That(result, Is.Not.Null);
                 Assert.That(result, Is.Not.Empty);
-                Assert.That(result, Does.Contain("🔧 **APPLY FIX TO CURRENT CLIENT.TSP**"));
-                Assert.That(result, Does.Contain("**Context:**"));
-                Assert.That(result, Does.Contain("**Fix Instructions:**"));
-                Assert.That(result, Does.Contain("**CRITICAL Requirements:**"));
-                Assert.That(result, Does.Contain("Use the FileSearchTool to reference other TypeSpec files as needed"));
-                Assert.That(result, Does.Contain("Ensure the fix resolves the AZC violation while maintaining compatibility"));
+                Assert.That(result, Does.Contain("### SPECIFIC FIX TO APPLY"));
+                Assert.That(result, Does.Contain("### CONTEXT"));
+                Assert.That(result, Does.Contain("SYSTEM INSTRUCTIONS"));
+                Assert.That(result, Does.Contain("TypeSpec files and produce a valid, compilable result"));
+                Assert.That(result, Does.Contain("FileSearchTool"));
+                Assert.That(result, Does.Contain("Now apply this fix following the system instructions above"));
             });
         }
 
@@ -77,12 +77,12 @@ namespace Azure.Tools.GeneratorAgent.Tests
             {
                 Assert.That(result, Is.Not.Null);
                 Assert.That(result, Is.Not.Empty);
-                Assert.That(result, Does.Contain("🔧 **APPLY FIX TO CURRENT CLIENT.TSP**"));
-                Assert.That(result, Does.Contain("**Context:**"));
-                Assert.That(result, Does.Contain("**Fix Instructions:**"));
-                Assert.That(result, Does.Contain("**CRITICAL Requirements:**"));
-                Assert.That(result, Does.Contain("Use the FileSearchTool to reference other TypeSpec files as needed"));
-                Assert.That(result, Does.Contain("Ensure the fix resolves the AZC violation while maintaining compatibility"));
+                Assert.That(result, Does.Contain("### SPECIFIC FIX TO APPLY"));
+                Assert.That(result, Does.Contain("### CONTEXT"));
+                Assert.That(result, Does.Contain("SYSTEM INSTRUCTIONS"));
+                Assert.That(result, Does.Contain("TypeSpec files and produce a valid, compilable result"));
+                Assert.That(result, Does.Contain("FileSearchTool"));
+                Assert.That(result, Does.Contain("Now apply this fix following the system instructions above"));
             });
         }
 
@@ -98,10 +98,9 @@ namespace Azure.Tools.GeneratorAgent.Tests
             {
                 Assert.That(result, Is.Not.Null);
                 Assert.That(result, Is.Not.Empty);
-                Assert.That(result, Does.Contain("🔧 **APPLY FIX TO CURRENT CLIENT.TSP**"));
-                Assert.That(result, Does.Not.Contain("**Context:**"));
-                Assert.That(result, Does.Contain("**Fix Instructions:**"));
-                Assert.That(result, Does.Contain("**CRITICAL Requirements:**"));
+                Assert.That(result, Does.Contain("### SPECIFIC FIX TO APPLY"));
+                Assert.That(result, Does.Contain("### CONTEXT"));
+                Assert.That(result, Does.Contain("No additional context provided"));
             });
         }
 
@@ -117,12 +116,12 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             Assert.Multiple(() =>
             {
-                Assert.That(analyzerResult, Does.Contain("🔧 **APPLY FIX TO CURRENT CLIENT.TSP**"));
-                Assert.That(agentPromptResult, Does.Contain("🔧 **APPLY FIX TO CURRENT CLIENT.TSP**"));
-                Assert.That(analyzerResult, Does.Contain("**CRITICAL Requirements:**"));
-                Assert.That(agentPromptResult, Does.Contain("**CRITICAL Requirements:**"));
-                Assert.That(analyzerResult, Does.Contain("```typespec"));
-                Assert.That(agentPromptResult, Does.Contain("```typespec"));
+                Assert.That(analyzerResult, Does.Contain("### SPECIFIC FIX TO APPLY"));
+                Assert.That(agentPromptResult, Does.Contain("### SPECIFIC FIX TO APPLY"));
+                Assert.That(analyzerResult, Does.Contain("### CONTEXT"));
+                Assert.That(agentPromptResult, Does.Contain("### CONTEXT"));
+                Assert.That(analyzerResult, Does.Contain("SYSTEM INSTRUCTIONS"));
+                Assert.That(agentPromptResult, Does.Contain("SYSTEM INSTRUCTIONS"));
             });
         }
 
@@ -166,7 +165,26 @@ namespace Azure.Tools.GeneratorAgent.Tests
         private FixPromptService CreateFixPromptService()
         {
             var mockLogger = new Mock<ILogger<FixPromptService>>();
-            return new FixPromptService(mockLogger.Object);
+            var appSettings = CreateAppSettings();
+            return new FixPromptService(mockLogger.Object, appSettings);
+        }
+
+        private AppSettings CreateAppSettings()
+        {
+            var mockConfiguration = new Mock<IConfiguration>();
+            var mockLogger = new Mock<ILogger<AppSettings>>();
+            
+            // Set up required configuration values
+            var projectEndpointSection = new Mock<IConfigurationSection>();
+            projectEndpointSection.Setup(s => s.Value).Returns("https://test.endpoint.com");
+            mockConfiguration.Setup(c => c.GetSection("AzureSettings:ProjectEndpoint")).Returns(projectEndpointSection.Object);
+            
+            // Set up agent instructions
+            var agentInstructionsSection = new Mock<IConfigurationSection>();
+            agentInstructionsSection.Setup(s => s.Value).Returns("You are an expert Azure SDK developer and TypeSpec author. Your primary goal is to resolve all AZC analyzer and TypeSpec compilation errors in the TypeSpec files and produce a valid, compilable result that strictly follows Azure SDK and TypeSpec guidelines.\n\n### SYSTEM INSTRUCTIONS\n- All files (e.g., main.tsp, client.tsp) are available via FileSearchTool. Retrieve any file content by filename as needed.\n- Never modify main.tsp—only client.tsp may be changed.");
+            mockConfiguration.Setup(c => c.GetSection("AzureSettings:AgentInstructions")).Returns(agentInstructionsSection.Object);
+            
+            return new AppSettings(mockConfiguration.Object, mockLogger.Object);
         }
 
         private Fix CreateValidFixFromAnalyzer()

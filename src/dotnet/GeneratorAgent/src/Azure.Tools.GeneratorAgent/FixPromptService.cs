@@ -1,43 +1,34 @@
-using System.Text;
 using Azure.Tools.ErrorAnalyzers;
+using Azure.Tools.GeneratorAgent.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Azure.Tools.GeneratorAgent
 {
     /// <summary>
-    /// Service for converting Fix objects into prompts for the AI agent
+    /// Service for converting Fix objects into prompts for the AI agent by combining system instructions with specific fix details
     /// </summary>
     internal class FixPromptService
     {
         private readonly ILogger<FixPromptService> Logger;
+        private readonly AppSettings AppSettings;
 
-        private const string HeaderTemplate = "🔧 **APPLY FIX TO CURRENT CLIENT.TSP**\n\n";
-        
-        private const string RequirementsTemplate = """
-            **CRITICAL Requirements:**
-            1. Apply this fix to the current state of client.tsp (from our conversation history)
-            2. {0}
-            3. {1}
-            4. Preserve ALL previous fixes that were applied in our conversation
-            5. **MUST return the COMPLETE, FULL client.tsp file** - never partial content
-            6. Include ALL imports, namespace, interfaces, models, and operations
+        private const string FixInstructionTemplate = """
 
-            **MANDATORY Response Format:**
-            1. Provide a brief explanation of the changes made
-            2. **Return the COMPLETE client.tsp file** (ready to save directly)
-            3. Validate that ALL previous fixes are still present before responding
-            4. **Use ONLY actual TypeSpec code in the code block - no template comments**
+            ### SPECIFIC FIX TO APPLY
+            {0}
 
-            Expected format:
-            ```typespec
-            [Your complete client.tsp content here]
-            ```
+            ### CONTEXT
+            {1}
+
+            Now apply this fix following the system instructions above.
             """;
 
-        public FixPromptService(ILogger<FixPromptService> logger)
+        public FixPromptService(ILogger<FixPromptService> logger, AppSettings appSettings)
         {
             ArgumentNullException.ThrowIfNull(logger);
+            ArgumentNullException.ThrowIfNull(appSettings);
             Logger = logger;
+            AppSettings = appSettings;
         }
 
         /// <summary>
@@ -62,23 +53,12 @@ namespace Azure.Tools.GeneratorAgent
         /// </summary>
         private string BuildAgentPromptFixMessage(AgentPromptFix promptFix)
         {
-            return BuildFixMessage(
-                customContent: sb =>
-                {
-                    if (!string.IsNullOrEmpty(promptFix.Context))
-                    {
-                        sb.AppendLine("**Context:**");
-                        sb.AppendLine(promptFix.Context);
-                        sb.AppendLine();
-                    }
-                    
-                    sb.AppendLine("**Fix Instructions:**");
-                    sb.AppendLine(promptFix.Prompt);
-                    sb.AppendLine();
-                },
-                toolInstruction: "Use the FileSearchTool to reference other TypeSpec files as needed",
-                primaryGoal: "Ensure the fix resolves the AZC violation while maintaining compatibility"
-            );
+            string fixInstruction = promptFix.Prompt;
+            string context = !string.IsNullOrEmpty(promptFix.Context) 
+                ? promptFix.Context 
+                : "No additional context provided.";
+
+            return AppSettings.AgentInstructions + string.Format(FixInstructionTemplate, fixInstruction, context);
         }
 
         /// <summary>
@@ -86,46 +66,16 @@ namespace Azure.Tools.GeneratorAgent
         /// </summary>
         private string BuildGenericFixMessage(Fix fix)
         {
-            return BuildFixMessage(
-                customContent: sb =>
-                {
-                    sb.AppendLine("**Fix Type:**");
-                    string fixTypeName = fix switch
-                    {
-                        AgentPromptFix => nameof(AgentPromptFix),
-                        _ => fix.GetType().Name
-                    };
-                    sb.AppendLine(fixTypeName);
-                    sb.AppendLine();
-                    
-                    sb.AppendLine("**Action Required:**");
-                    sb.AppendLine(fix.Action.ToString());
-                    sb.AppendLine();
-                },
-                toolInstruction: "Use the FileSearchTool to analyze the TypeSpec files if needed",
-                primaryGoal: "Address the compilation error while maintaining existing functionality"
-            );
-        }
+            string fixTypeName = fix switch
+            {
+                AgentPromptFix => nameof(AgentPromptFix),
+                _ => fix.GetType().Name
+            };
 
-        /// <summary>
-        /// Builds a fix message using a template with customizable parts
-        /// </summary>
-        private string BuildFixMessage(Action<StringBuilder> customContent, string toolInstruction, string primaryGoal)
-        {
-            ArgumentNullException.ThrowIfNull(customContent);
-            ArgumentNullException.ThrowIfNull(toolInstruction);
-            ArgumentNullException.ThrowIfNull(primaryGoal);
-            
-            StringBuilder messageBuilder = new StringBuilder(2048);
-            
-            messageBuilder.Append(HeaderTemplate);
-            
-            customContent(messageBuilder);
-            
-            string requirements = string.Format(RequirementsTemplate, toolInstruction, primaryGoal);
-            messageBuilder.Append(requirements);
-            
-            return messageBuilder.ToString();
+            string fixInstruction = $"Fix Type: {fixTypeName}\nAction Required: {fix.Action}";
+            string context = "Generic fix - apply appropriate changes to resolve the compilation error.";
+
+            return AppSettings.AgentInstructions + string.Format(FixInstructionTemplate, fixInstruction, context);
         }
     }
 }

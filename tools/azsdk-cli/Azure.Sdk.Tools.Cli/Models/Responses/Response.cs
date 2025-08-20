@@ -15,6 +15,10 @@ public class Response
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public List<string> ResponseErrors { get; set; }
 
+    [JsonPropertyName("next_steps")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<string>? NextSteps { get; set; }
+
     protected string ToString(StringBuilder value)
     {
         return ToString(value.ToString());
@@ -22,19 +26,24 @@ public class Response
 
     protected string ToString(string value)
     {
-        List<string> errors = [];
+        List<string> messages = [];
         if (!string.IsNullOrEmpty(ResponseError))
         {
-            errors.Add("[ERROR] " + ResponseError);
+            messages.Add("[ERROR] " + ResponseError);
         }
         foreach (var error in ResponseErrors ?? [])
         {
-            errors.Add("[ERROR] " + error);
+            messages.Add("[ERROR] " + error);
         }
 
-        if (errors.Count > 0)
+        foreach (var nextStep in NextSteps ?? [])
         {
-            value = string.Join(Environment.NewLine, errors);
+            messages.Add("[NEXT STEPS] " + nextStep);
+        }
+
+        if (messages.Count > 0)
+        {
+            value = string.Join(Environment.NewLine, messages);
         }
 
         return value;

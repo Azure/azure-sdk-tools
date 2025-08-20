@@ -1,0 +1,116 @@
+@startuml Codeowners Entry Workflow
+
+title Azure SDK Codeowners Entry Management Workflow
+
+start
+
+:User initiates codeowners entry workflow;
+note right: Assumes service label is validated
+
+:ValidateCodeownersEntryForService();
+note right: Check if entry exists in CODEOWNERS
+
+switch (Codeowners Entry Exists?)
+case (Entry Found)
+  :Entry exists in CODEOWNERS file;
+  :ValidateMinimumOwnerRequirements();
+  note right
+    Check current owners against
+    minimum requirements
+  end note
+  
+  if (Current owners valid?) then (yes)
+    :Owners meet minimum requirements\n(2+ service owners, 2+ source owners);
+    :Prompt user for modification;
+    
+    if (User wants to modify entry?) then (yes)
+      :Collect new owners to add/remove;
+      :ValidateMinimumOwnerRequirements() for updated entry;
+      
+      if (Updated entry will have sufficient owners?) then (yes)
+        :UpdateCodeowners();
+        note right
+          Modify existing entry
+          with new owners
+        end note
+      else (no)
+        :Return error - insufficient owners after modification;
+        stop
+      endif
+    else (no)
+      :No changes requested;
+      :Return current entry status;
+      stop
+    endif
+  else (no)
+    :Return validation info;
+    note right
+      Show validation failures:
+      - Insufficient owner count
+      - Invalid usernames
+      - Permission issues
+    end note
+    stop
+  endif
+
+case (Entry Not Found)
+  :No existing entry found;
+  :Create new CodeownersEntry;
+  note right
+    New entry requires:
+    - Service label
+    - Repository path
+    - Service owners list
+    - Source owners list
+  end note
+  
+  :ValidateMinimumOwnerRequirements();
+  
+  if (New entry meets requirements?) then (yes)
+    :UpdateCodeowners() with new entry;
+    note right
+      Create new CODEOWNERS entry
+      in appropriate section
+    end note
+  else (no)
+    :Return validation error;
+    note right
+      Show validation failures:
+      - Insufficient owner count
+      - Invalid usernames
+      - Permission issues
+    end note
+    stop
+  endif
+endswitch
+
+:CreateCodeownersPR();
+note right
+  - Create or use existing working branch
+  - Update CODEOWNERS file with changes
+  - Create draft pull request
+end note
+
+if (PR creation successful?) then (yes)
+  :Return success with PR details;
+  note right
+    Includes:
+    - PR URL
+    - Branch name
+    - Success messages
+  end note
+else (no)
+  :Return PR creation error;
+endif
+
+stop
+
+legend right
+  |= Component |= Description |
+  | ValidateCodeownersEntryForService | Checks if service has CODEOWNERS entry |
+  | ValidateMinimumOwnerRequirements | Ensures 2+ valid owners of each type |
+  | UpdateCodeowners | Adds/modifies CODEOWNERS entries |
+  | CreateCodeownersPR | Creates PR with CODEOWNERS changes |
+endlegend
+
+@enduml

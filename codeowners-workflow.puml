@@ -1,0 +1,63 @@
+@startuml codeownerss Workflow Overview
+
+title Azure SDK codeownerss Management - Complete Workflow Overview
+
+note top
+  **This workflow is split into two phases:**
+  **1. Service Label Management (service-label-workflow.puml)**
+  **2. codeownerss Entry Management (codeownerss-entry-workflow.puml)**
+end note
+
+start
+
+:User initiates codeownerss workflow;
+
+partition "Phase 1: Service Label Management" {
+  :Check if service label exists and is valid;
+  note right
+    See: service-label-workflow.puml
+    - Validates label in common-labels.csv
+    - Creates PR for new labels if needed
+    - Handles labels in review
+  end note
+  
+  if (Service label validated?) then (yes)
+    :Service label ready for use;
+  else (no)
+    :Handle service label creation/validation;
+    stop
+  endif
+}
+
+partition "Phase 2: codeownerss Entry Management" {
+  :Manage codeownerssS file entries;
+  note right
+    See: codeownerss-entry-workflow.puml
+    - Validates existing entries
+    - Creates new entries
+    - Modifies existing entries
+    - Validates owner requirements
+  end note
+  
+  :Create PR with codeownerssS changes;
+}
+
+:Complete workflow;
+stop
+
+legend right
+  |= File |= Description |
+  | service-label-workflow.puml | Handles service label validation and creation |
+  | codeownerss-entry-workflow.puml | Manages codeownerssS file entries |
+  | codeownerss-workflow.puml | Overview of complete workflow |
+endlegend
+
+note bottom
+  **Key Components:**
+  - **Service Labels**: Must exist in common-labels.csv with color "e99695"
+  - **codeownerss Entries**: Require minimum 2 valid owners of each type
+  - **Validation**: All owners must have write permissions
+  - **Pull Requests**: Automated PR creation for all changes
+end note
+
+@enduml

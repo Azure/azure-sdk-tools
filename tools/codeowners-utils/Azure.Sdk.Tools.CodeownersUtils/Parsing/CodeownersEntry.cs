@@ -87,6 +87,25 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
         public CodeownersEntry()
         {
         }
+
+        public CodeownersEntry(CodeownersEntry other)
+        {
+            if (other == null)
+            {
+                return;
+            }
+
+            PathExpression = other.PathExpression;
+            SourceOwners = other.SourceOwners != null ? new List<string>(other.SourceOwners) : new List<string>();
+            PRLabels = other.PRLabels != null ? new List<string>(other.PRLabels) : new List<string>();
+            ServiceLabels = other.ServiceLabels != null ? new List<string>(other.ServiceLabels) : new List<string>();
+            ServiceOwners = other.ServiceOwners != null ? new List<string>(other.ServiceOwners) : new List<string>();
+            AzureSdkOwners = other.AzureSdkOwners != null ? new List<string>(other.AzureSdkOwners) : new List<string>();
+
+            startLine = other.startLine;
+            endLine = other.endLine;
+        }
+
         public override string ToString()
         {
             return string.Join(

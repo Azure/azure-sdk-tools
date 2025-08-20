@@ -1,0 +1,67 @@
+@startuml Service Label Workflow
+
+title Azure SDK Service Label Management Workflow
+
+start
+
+:User initiates workflow with service label;
+
+:CheckServiceLabel();
+
+switch (Service Label Status?)
+case (Exists)
+  :Label exists in common-labels.csv;
+  :Service label validation passed;
+case (DoesNotExist)
+  :Label doesn't exist in common-labels.csv;
+  :CreateServiceLabel();
+  note right
+    Creates PR to add label 
+    to common-labels.csv with
+    color code "e99695"
+  end note
+  if (PR created successfully?) then (yes)
+    :Service label creation initiated;
+    note right
+      PR URL provided for tracking
+      Label will be available after merge
+    end note
+  else (no)
+    :Return error - PR creation failed;
+    stop
+  endif
+case (NotAServiceLabel)
+  :Label exists but has wrong color code;
+  :Return error - not a valid service label;
+  note right
+    Service labels must have 
+    color code "e99695"
+  end note
+  stop
+case (InReview)
+  :Label is pending approval in PR;
+  :Check if label exists in pending PRs;
+  note right
+    Label creation is in progress
+    Can proceed with workflow
+  end note
+  :Label validation in progress;
+endswitch
+
+:Service label ready for codeowner workflow;
+note right
+  Label is either:
+  - Existing and validated
+  - Creation PR submitted
+  - In review process
+end note
+
+stop
+
+legend right
+  |= Component |= Description |
+  | CheckServiceLabel | Validates service label exists in common-labels.csv |
+  | CreateServiceLabel | Creates PR to add new service label |
+endlegend
+
+@enduml

@@ -1,0 +1,547 @@
+# Git Diff Summary
+
+Generated: 2025-08-15 12:06:57
+
+## Statistics
+- Lines removed: 532
+- Lines added: 636  
+- Net change: 104
+- Content preserved (moved): 259
+- Content lost: 273
+- New content: 306
+
+## Validation Results
+- Total path patterns: 137
+- Duplicate paths: 1
+- Validation issues: 1
+⚠️ **Validation Issues Found:**
+- Duplicate path pattern: /sdk/containerregistry/ (appears 2 times)
+
+### Duplicate Paths (1 patterns)
+- `/sdk/containerregistry/` (lines: 386, 393)
+
+## Removed Content (273 lines)
+- Line 32: `# ServiceOwners: @luigiw @needuv @paulshealy1 @singankit`
+- Line 36: `/sdk/ai/                                                             @luigiw @needuv @paulshealy1 @singankit @dargilco @jhakulin`
+- Line 38: `# ServiceOwners: @luigiw @needuv @singankit`
+- Line 42: `/sdk/evaluation/                                                     @Azure/azure-sdk-write-evaluation`
+- Line 46: `/sdk/agrifood/azure-agrifood-farming/                                @bhargav-kansagara`
+- Line 48: `# AzureSdkOwners: @xiangyan99`
+- Line 51: `/sdk/identity/                                                       @pvaneck @xiangyan99 @Azure/azure-sdk-write-identity`
+- Line 53: `# AzureSdkOwners: @kashifkhan`
+- Line 55: `# ServiceOwners: @kasun04`
+- Line 58: `/sdk/eventhub/                                                       @annatisch @kashifkhan @swathipil @l0lawrence`
+- Line 61: `# ServiceOwners: @jalauzon-msft @vincenttran-msft`
+- Line 64: `/sdk/storage/                                                        @annatisch @jalauzon-msft @vincenttran-msft @weirongw23-msft`
+- Line 68: `# ServiceOwners: @albertofori @avanigupta @mrm9084`
+- Line 71: `/sdk/appconfiguration/                                               @xiangyan99`
+- Line 73: `# ServiceOwners: @mrm9084`
+- Line 77: `/sdk/appconfiguration/azure-appconfiguration-provider/               @albertofori @avanigupta @mrm9084 @rossgrambo`
+- Line 81: `/sdk/attestation/azure-security-attestation/                         @anilba06 @Azure/azure-sdk-write-attestation @gkostal`
+- Line 85: `/sdk/batch/                                                          @jingjlii @JJJessieWang @wanghoppe @dpwatrous @wiboris @cRui861`
+- Line 88: `/sdk/cognitiveservices/                                              @kristapratico`
+- Line 92: `/sdk/communication/                                                  @acsdevx-msft`
+- Line 96: `/sdk/communication/azure-communication-callautomation/               @minwoolee-msft @fhaghbin-msft @juntuchen-msft @v-dharmarajv`
+- Line 100: `/sdk/communication/azure-communication-chat/                         @AikoBB @LuChen-Microsoft`
+- Line 104: `/sdk/communication/azure-communication-email/                        @yogeshmo`
+- Line 108: `/sdk/communication/azure-communication-jobrouter/                    @sarkar-rajarshi`
+- Line 112: `/sdk/communication/azure-communication-phonenumbers/                 @Arazan @whisper6284 @danielortega-msft @sofiar-msft`
+- Line 116: `/sdk/communication/azure-communication-rooms/                        @shirleyqin-msft @minnieliu @paolamvhz @alexokun @Mrayyan @shwali-msft @allchiang-msft┬á@mikehang-msft`
+- Line 120: `/sdk/communication/azure-communication-sms/                           @gfeitosa-msft @besh2014 @phermanov-msft @ilyapaliakou-msft @dinazavyr`
+- Line 124: `/sdk/communication/azure-communication-messages/                      @shamkh`
+- Line 128: `/sdk/communication/azure-communication-identity/                     @Azure/acs-identity-sdk @AikoBB @maximrytych-ms @mjafferi-msft`
+- Line 132: `/sdk/communication/**/_shared/                                       @Azure/acs-identity-sdk @AikoBB @maximrytych-ms @mjafferi-msft`
+- Line 135: `# ServiceOwners: @PallabPaul`
+- Line 138: `/sdk/confidentialledger/azure-confidentialledger/                    @PallabPaul @lynshi @amruthashree18`
+- Line 142: `/sdk/contentsafety/                                                  @mengaims`
+- Line 146: `/sdk/devcenter/                                                      @drielenr @leti367 @sebrenna`
+- Line 150: `/sdk/easm/                                                           @nathanfalke`
+- Line 154: `/sdk/face/                                                           @zihyunting`
+- Line 158: `/sdk/healthinsights/                                                 @tomsft @koen-mertens`
+- Line 160: `# AzureSdkOwners: @mccoyp @Azure/azure-sdk-write-keyvault`
+- Line 162: `# ServiceOwners:                                                     @cheathamb36 @chen-karen @Azure/azure-sdk-write-keyvault`
+- Line 165: `/sdk/keyvault/                                                       @mccoyp @Azure/azure-sdk-write-keyvault`
+- Line 168: `/sdk/loadtesting/azure-developer-loadtesting/                        @prativen @mitsha-microsoft @ninallam`
+- Line 203: `/sdk/consumption/                                                    @sandeepnl`
+- Line 207: `/sdk/containerinstance/                                              @samkreter @xizhamsft`
+- Line 209: `# AzureSdkOwners: @lmazuel`
+- Line 212: `/sdk/containerregistry/                                              @lmazuel`
+- Line 216: `/sdk/containerservice/                                               @zqingqing1`
+- Line 218: `# ServiceLabel: %Cosmos`
+- Line 220: `/sdk/cosmos/                                                         @Azure/azure-cosmos-python-sdk`
+- Line 223: `#/<NotInRepo>/                                                       @pjohari-ms @simorenoh @AbhinavTrips @bambriz @pilchie`
+- Line 227: `/sdk/datafactory/                                                    @hvermis`
+- Line 228: `/sdk/datalake/                                                       @ro-joowan`
+- Line 229: `/sdk/datamigration/                                                  @vchske`
+- Line 232: `/sdk/iothub/azure-iot-deviceprovisioning                             @c-ryan-k @digimaun`
+- Line 236: `/sdk/deviceupdate/                                                   @dpokluda @sedols`
+- Line 240: `/sdk/durabletask/                                                    @berndverst @kaibocai @torosent @RyanLettieri @philliphoff @cgillum`
+- Line 242: `# AzureSdkOwners: @shankarsama @rajeshka`
+- Line 245: `/sdk/eventgrid/                                                      @shankarsama @rajeshka`
+- Line 249: `/sdk/vision/azure-ai-vision-imageanalysis/                           @dargilco @rhurey`
+- Line 253: `/sdk/ai/azure-ai-inference/                                          @dargilco @trangevi @jhakulin`
+- Line 257: `/sdk/ai/azure-ai-agents/                                             @dargilco @jhakulin @trangevi @glharper @nick863 @howieleung`
+- Line 261: `/sdk/ai/azure-ai-projects/                                           @dargilco @jhakulin @trangevi @glharper @nick863 @howieleung`
+- Line 265: `/sdk/hdinsight/                                                      @idear1203`
+- Line 268: `/sdk/modelsrepository/                                               @cartertinney @digimaun`
+- Line 271: `/sdk/machinelearning/                                                @shutchings`
+- Line 274: `# ServiceOwners: @azureml-github @Azure/azure-ml-sdk`
+- Line 277: `/sdk/ml/                                                             @paulshealy1 @achauhan-scc @kingernupur @jayesh-tanna`
+- Line 280: `/sdk/ml/azure-ai-ml/azure/ai/ml/_local_endpoints/                    @NonStatic2014 @arunsu @JustinFirsching`
+- Line 283: `/sdk/ml/azure-ai-ml/azure/ai/ml/_schema/job*                         @TonyJ1 @kingernupur @achauhan-scc @jayesh-tanna @paulshealy1`
+- Line 284: `/sdk/ml/azure-ai-ml/azure/ai/ml/entities/_job/                       @TonyJ1 @kingernupur @achauhan-scc @jayesh-tanna @paulshealy1`
+- Line 285: `/sdk/ml/training-experiences.tests.yml                               @TonyJ1 @kingernupur @achauhan-scc @jayesh-tanna @paulshealy1`
+- Line 288: `/sdk/ml/azure-ai-ml/azure/ai/ml/_schema/automl/                      @skasturi @rtanase @raduk @PhaniShekhar @sharma-riti @jialiu103 @nick863 @yuanzhuangyuanzhuang @novaturient95`
+- Line 289: `/sdk/ml/azure-ai-ml/azure/ai/ml/_schema/pipeline/automl_node.py      @skasturi @rtanase @raduk @PhaniShekhar @sharma-riti @jialiu103 @nick863 @yuanzhuangyuanzhuang @novaturient95`
+- Line 290: `/sdk/ml/azure-ai-ml/azure/ai/ml/automl/                              @skasturi @rtanase @raduk @PhaniShekhar @sharma-riti @jialiu103 @nick863 @yuanzhuangyuanzhuang @novaturient95`
+- Line 291: `/sdk/ml/azure-ai-ml/azure/ai/ml/entities/_job/automl/                @skasturi @rtanase @raduk @PhaniShekhar @sharma-riti @jialiu103 @nick863 @yuanzhuangyuanzhuang @novaturient95`
+- Line 292: `/sdk/ml/azure-ai-ml/tests/automl_job/                                @skasturi @rtanase @raduk @PhaniShekhar @sharma-riti @jialiu103 @nick863 @yuanzhuangyuanzhuang @novaturient95`
+- Line 293: `/sdk/ml/azure-ai-ml/tests/test_configs/automl_job/                   @skasturi @rtanase @raduk @PhaniShekhar @sharma-riti @jialiu103 @nick863 @yuanzhuangyuanzhuang @novaturient95`
+- Line 294: `/sdk/ml/automl.tests.yml                                             @skasturi @rtanase @raduk @PhaniShekhar @sharma-riti @jialiu103 @nick863 @yuanzhuangyuanzhuang @novaturient95`
+- Line 297: `/sdk/ml/azure-ai-ml/azure/ai/ml/_schema/job/import_job.py                     @vivram`
+- Line 298: `/sdk/ml/azure-ai-ml/azure/ai/ml/entities/_job/import_job.py                   @vivram`
+- Line 299: `/sdk/ml/azure-ai-ml/azure/ai/ml/_schema/pipeline/pipeline_import_job.py       @vivram`
+- Line 300: `/sdk/ml/azure-ai-ml/azure/ai/ml/entities/_builders/import_func.py             @vivram`
+- Line 301: `/sdk/ml/azure-ai-ml/azure/ai/ml/entities/_builders/import_node.py             @vivram`
+- Line 305: `/sdk/maps/                                                           @dubiety @andykao1213`
+- Line 309: `/sdk/mixedreality/azure-mixedreality-authentication/                 @RamonArguelles`
+- Line 310: `/sdk/remoterendering/                                                @FlorianBorn71`
+- Line 314: `/sdk/onlineexperimentation/                                          @Azure/azure-sdk-write-onlineexperimentation`
+- Line 317: `# ServiceOwners: @trrwilson`
+- Line 320: `/sdk/openai/                                                         @trrwilson`
+- Line 324: `/sdk/networkcloud/                                                   @Azure/azure-sdk-write-networkcloud`
+- Line 326: `# AzureSdkOwners: @annatisch`
+- Line 328: `# ServiceOwners: @annatisch`
+- Line 331: `/sdk/projects/                                                      @annatisch`
+- Line 335: `/sdk/purview/                                                        @adyabansal-ms`
+- Line 338: `# ServiceOwners: @Daya-Patil @Sharmistha-Rai`
+- Line 341: `/sdk/recoveryservices/                                               @DheerendraRathor`
+- Line 345: `# ServiceOwners: @arerlend @alzimmermsft`
+- Line 348: `/sdk/schemaregistry/                                                 @kashifkhan @swathipil`
+- Line 352: `# ServiceOwners:  @mattgotteiner`
+- Line 355: `/sdk/search/                                                         @xiangyan99 @Azure/azsdk-search`
+- Line 358: `/sdk/servicefabric/                                                  @QingChenmsft @samedder`
+- Line 361: `# ServiceOwners: @azureSQLGitHub`
+- Line 365: `# ServiceOwners:  @EldertGrootenboer`
+- Line 368: `/sdk/servicebus/                                                     @annatisch @kashifkhan @swathipil @l0lawrence`
+- Line 370: `# ServiceOwners:  @wanyang7 @zesluo`
+- Line 374: `/sdk/synapse/                                                        @wanyang7 @yanjungao718`
+- Line 377: `/sdk/template/                                                       @scbedd @weshaggard @benbp`
+- Line 381: `/sdk/textanalytics/                                                  @quentinRobinson @wangyuantao`
+- Line 385: `/sdk/healthdataaiservices/                                           @alexathomases @Azure/healthdatadeidentification`
+- Line 387: `# AzureSdkOwners: @yungshinlintw @vkurpad`
+- Line 389: `# ServiceOwners: @yungshinlintw @vkurpad`
+- Line 392: `/sdk/formrecognizer/                                                 @yungshinlintw @vkurpad`
+- Line 399: `/sdk/documentintelligence/                                           @yungshinlintw @vkurpad`
+- Line 404: `/sdk/metricsadvisor/                                                 @xiangyan99 @kristapratico @iscai-msft`
+- Line 408: `/sdk/anomalydetector/                                                @conhua @mengaims @juaduan @moreOver0`
+- Line 410: `# ServiceOwners: @MikeyMCZ`
+- Line 414: `/sdk/translation/                                                    @kristapratico`
+- Line 415: `/sdk/translation/azure-ai-translation-text/                          @MikeyMCZ`
+- Line 418: `/sdk/cognitivelanguage/                                              @quentinRobinson @wangyuantao`
+- Line 421: `/sdk/personalizer/                                                   @sharathmalladi`
+- Line 424: `/sdk/graphrbac/                                                      @lmazuel`
+- Line 426: `# AzureSdkOwners: @YalinLi0312`
+- Line 428: `# ServiceOwners: @klaaslanghout`
+- Line 431: `/sdk/tables/                                                         @YalinLi0312`
+- Line 434: `/sdk/media/                                                          @naiteeks @giakas`
+- Line 438: `# ServiceOwners: @toddysm @northtyphoon`
+- Line 441: `/sdk/containerregistry/                                              @YalinLi0312`
+- Line 445: `/sdk/digitaltwins/                                                   @johngallardo @Aashish93-stack @sjiherzig @Satya-Kolluri`
+- Line 448: `/sdk/videoanalyzer/                                                  @hivyas`
+- Line 451: `/sdk/webpubsub/                                                      @msyyc @iscai-msft`
+- Line 453: `# Smoke Tests`
+- Line 454: `/common/smoketest/                                                   @lmazuel @chlowell @annatisch @mccoyp @shurd @southpolesteve`
+- Line 457: `#/<NotInRepo>/          @adamedx`
+- Line 460: `#/<NotInRepo>/          @Azure/aks-pm`
+- Line 463: `#/<NotInRepo>/          @liadtal @yairgil`
+- Line 466: `#/<NotInRepo>/          @armleads-azure`
+- Line 487: `#/<NotInRepo>/          @mojayara @Prasanna-Padmanabhan`
+- Line 490: `#/<NotInRepo>/          @athipp @taiwu @minghan`
+- Line 493: `#/<NotInRepo>/          @miaojiang`
+- Line 496: `#/<NotInRepo>/          @azmonapplicationinsights`
+- Line 499: `#/<NotInRepo>/          @antcp @AzureAppServiceCLI`
+- Line 502: `#/<NotInRepo>/          @mjudeikis @jim-minter @julienstroheker @amanohar`
+- Line 505: `#/<NotInRepo>/          @darshanhs90 @AshishGargMicrosoft`
+- Line 508: `#/<NotInRepo>/          @jaspkaur28 @omairabdullah`
+- Line 511: `#/<NotInRepo>/          @divka78 @amitchat @aishu`
+- Line 514: `#/<NotInRepo>/          @sijuman @sarathys @bganapa @rakku-ms`
+- Line 517: `#/<NotInRepo>/          @matthchr`
+- Line 520: `#/<NotInRepo>/          @cabbpt`
+- Line 523: `#/<NotInRepo>/          @alex-frankel @filizt`
+- Line 526: `#/<NotInRepo>/          @sgellock`
+- Line 529: `#/<NotInRepo>/          @mbifeld`
+- Line 532: `#/<NotInRepo>/          @areddish @tburns10`
+- Line 535: `#/<NotInRepo>/          @ryogok @TFR258 @tburns10`
+- Line 538: `#/<NotInRepo>/          @JinyuID @dipidoo @SteveMSFT`
+- Line 541: `#/<NotInRepo>/          @bingisbestest @nerajput1607`
+- Line 544: `#/<NotInRepo>/          @robch @oscholz`
+- Line 547: `#/<NotInRepo>/          @cahann @kayousef`
+- Line 550: `#/<NotInRepo>/          @swiftarrow11`
+- Line 553: `#/<NotInRepo>/          @dwaijam @sharathmalladi`
+- Line 556: `#/<NotInRepo>/          @metanMSFT`
+- Line 559: `#/<NotInRepo>/          @olduroja`
+- Line 562: `#/<NotInRepo>/          @jaggerbodas-ms @arwong`
+- Line 565: `#/<NotInRepo>/          @yangyuan`
+- Line 568: `#/<NotInRepo>/          @ms-premp @qiaozha`
+- Line 571: `#/<NotInRepo>/          @Drewm3 @TravisCragg-MSFT @GabstaMSFT @amjads1 @sandeepraichura`
+- Line 574: `#/<NotInRepo>/          @Drewm3 @amjads1 @GabstaMSFT`
+- Line 577: `#/<NotInRepo>/          @Drewm3 @sandeepraichura`
+- Line 580: `#/<NotInRepo>/          @Drewm3 @TravisCragg-MSFT @ushnaarshadkhan`
+- Line 583: `#/<NotInRepo>/          @Drewm3 @TravisCragg-MSFT`
+- Line 589: `#/<NotInRepo>/          @Drewm3 @Kanik09`
+- Line 592: `#/<NotInRepo>/          @akashkeshari`
+- Line 595: `#/<NotInRepo>/          @shefymk`
+- Line 598: `#/<NotInRepo>/          @manoharp @MSEvanhi`
+- Line 601: `#/<NotInRepo>/          @adriankjohnson`
+- Line 604: `#/<NotInRepo>/          @arindamc`
+- Line 607: `#/<NotInRepo>/          @tmvishwajit @matdickson @manuaery @madhurinms`
+- Line 610: `#/<NotInRepo>/          @a-t-mason @ganzee @manuaery`
+- Line 613: `#/<NotInRepo>/          @ingave`
+- Line 616: `#/<NotInRepo>/          @radjaram @kavitham10`
+- Line 619: `#/<NotInRepo>/          @raedJarrar @jifems`
+- Line 622: `#/<NotInRepo>/          @narula0781 @ashishonce @romil07`
+- Line 625: `#/<NotInRepo>/          @yuzorMa @johnsta @greenie-msft`
+- Line 628: `#/<NotInRepo>/          @Tanmayeekamath`
+- Line 631: `#/<NotInRepo>/          @nberdy`
+- Line 634: `#/<NotInRepo>/          @ahmedelnably @fabiocav`
+- Line 637: `#/<NotInRepo>/          @dkershaw10 @baywet`
+- Line 640: `#/<NotInRepo>/          @mgreenegit @vivlingaiah`
+- Line 643: `#/<NotInRepo>/          @aim-for-better @idear1203 @deshriva`
+- Line 646: `#/<NotInRepo>/          @romahamu @omzevall`
+- Line 649: `#/<NotInRepo>/          @madhurinms`
+- Line 652: `#/<NotInRepo>/          @NarayanThiru`
+- Line 655: `#/<NotInRepo>/          @Azure/azure-logicapps-team`
+- Line 664: `#/<NotInRepo>/          @minamnmik`
+- Line 667: `#/<NotInRepo>/          @varunkch`
+- Line 670: `#/<NotInRepo>/          @Lighthouse-Azure`
+- Line 673: `#/<NotInRepo>/          @ambhatna @savjani`
+- Line 676: `#/<NotInRepo>/          @prbansa`
+- Line 679: `#/<NotInRepo>/          @akucer`
+- Line 682: `#/<NotInRepo>/          @shijojoy`
+- Line 685: `#/<NotInRepo>/          @kpiteira`
+- Line 691: `#/<NotInRepo>/          @aznetsuppgithub`
+- Line 694: `#/<NotInRepo>/          @appgwsuppgithub`
+- Line 697: `#/<NotInRepo>/          @cdnfdsuppgithub`
+- Line 700: `#/<NotInRepo>/          @ddossuppgithub`
+- Line 703: `#/<NotInRepo>/          @exrsuppgithub`
+- Line 706: `#/<NotInRepo>/          @fwsuppgithub`
+- Line 712: `#/<NotInRepo>/          @slbsupportgithub`
+- Line 715: `#/<NotInRepo>/          @vnetsuppgithub`
+- Line 718: `#/<NotInRepo>/          @netwatchsuppgithub`
+- Line 721: `#/<NotInRepo>/          @dnssuppgithub`
+- Line 724: `#/<NotInRepo>/          @tmsuppgithub`
+- Line 727: `#/<NotInRepo>/          @vpngwsuppgithub`
+- Line 730: `#/<NotInRepo>/          @tjsomasundaram`
+- Line 733: `#/<NotInRepo>/          @AzmonLogA`
+- Line 736: `#/<NotInRepo>/          @aperezcloud @kenieva`
+- Line 739: `#/<NotInRepo>/          @kenieva`
+- Line 742: `#/<NotInRepo>/          @sunilagarwal @lfittl-msft @sr-msft @niklarin`
+- Line 745: `#/<NotInRepo>/          @yegu-ms`
+- Line 748: `#/<NotInRepo>/          @Rkapso`
+- Line 755: `#/<NotInRepo>/          @chiragg4u`
+- Line 758: `#/<NotInRepo>/          @stephbaron`
+- Line 761: `#/<NotInRepo>/          @derek1ee`
+- Line 764: `#/<NotInRepo>/          @chlahav`
+- Line 765: `# ServiceLabel: %Service Attention %SignalR`
+- Line 768: `# ServiceLabel: %Service Attention %Storsimple`
+- Line 771: `# ServiceLabel: %Service Attention %Stream Analytics`
+- Line 774: `# ServiceLabel: %Service Attention %Subscription`
+- Line 777: `# ServiceLabel: %Service Attention %Support`
+- Line 780: `# ServiceLabel: %Service Attention %TimeseriesInsights`
+- Line 783: `# ServiceLabel: %Service Attention %vFXT`
+- Line 786: `# ServiceLabel: %Service Attention %Web Apps`
+- Line 793: `#/<NotInRepo>/          @vwansuppgithub`
+- Line 796: `#/<NotInRepo>/          @nvasuppgithub`
+- Line 799: `#/<NotInRepo>/          @bastionsuppgithub`
+- Line 802: `#/<NotInRepo>/          @privlinksuppgithub`
+- Line 805: `#/<NotInRepo>/          @rpsqrd @edyoung`
+- Line 808: `#/<NotInRepo>/          @amirkeren`
+- Line 811: `#/<NotInRepo>/          @Azure/azure-iot-cli-triage`
+- Line 814: `#/<NotInRepo>/          @ccmaxpcrew`
+- Line 817: `#/<NotInRepo>/          @ccmixpdevs`
+- Line 820: `#/<NotInRepo>/          @ccmbpxpcrew`
+- Line 826: `#/<NotInRepo>/          @TiagoCrewGitHubIssues`
+- Line 829: `#/<NotInRepo>/          @ccmshowbackdevs`
+- Line 835: `/**/*mgmt*/                                                          @ChenxiJiang333 @msyyc`
+
+## Added Content (306 lines)
+- Line 33: `# ServiceOwners:                                                   @adamedx`
+- Line 36: `# ServiceOwners:                                                   @mojayara @Prasanna-Padmanabhan`
+- Line 39: `/sdk/agrifood/azure-agrifood-farming/                              @bhargav-kansagara`
+- Line 42: `# ServiceOwners:                                                   @bhargav-kansagara`
+- Line 45: `/sdk/ai/                                                           @luigiw @needuv @paulshealy1 @singankit @dargilco @jhakulin`
+- Line 48: `# ServiceOwners:                                                   @luigiw @needuv @paulshealy1 @singankit`
+- Line 51: `/sdk/ai/azure-ai-agents/                                           @dargilco @jhakulin @trangevi @glharper @nick863 @howieleung`
+- Line 54: `# ServiceOwners:                                                   @dargilco @jhakulin @trangevi @glharper @nick863 @howieleung`
+- Line 57: `/sdk/ai/azure-ai-inference/                                        @dargilco @trangevi @jhakulin`
+- Line 60: `# ServiceOwners:                                                   @dargilco @trangevi @jhakulin`
+- Line 63: `/sdk/ai/azure-ai-projects/                                         @dargilco @jhakulin @trangevi @glharper @nick863 @howieleung`
+- Line 69: `# ServiceOwners:                                                   @Azure/aks-pm`
+- Line 72: `# ServiceOwners:                                                   @liadtal @yairgil`
+- Line 75: `# ServiceOwners:                                                   @athipp @taiwu @minghan`
+- Line 78: `# ServiceOwners:                                                   @miaojiang`
+- Line 81: `/sdk/appconfiguration/                                             @xiangyan99`
+- Line 84: `# AzureSdkOwners:                                                  @xiangyan99`
+- Line 85: `# ServiceOwners:                                                   @albertofori @avanigupta @mrm9084`
+- Line 88: `/sdk/appconfiguration/azure-appconfiguration-provider/             @albertofori @avanigupta @mrm9084 @rossgrambo`
+- Line 91: `# ServiceOwners:                                                   @mrm9084`
+- Line 94: `# ServiceOwners:                                                   @antcp @AzureAppServiceCLI`
+- Line 97: `# ServiceOwners:                                                   @azmonapplicationinsights`
+- Line 100: `# ServiceOwners:                                                   @armleads-azure`
+- Line 121: `# ServiceOwners:                                                   @mjudeikis @jim-minter @julienstroheker @amanohar`
+- Line 124: `/sdk/attestation/azure-security-attestation/                       @anilba06 @Azure/azure-sdk-write-attestation @gkostal`
+- Line 127: `# ServiceOwners:                                                   @anilba06 @Azure/azure-sdk-write-attestation @gkostal`
+- Line 130: `# ServiceOwners:                                                   @darshanhs90 @AshishGargMicrosoft`
+- Line 133: `# ServiceOwners:                                                   @jaspkaur28 @omairabdullah`
+- Line 136: `# ServiceOwners:                                                   @divka78 @amitchat @aishu`
+- Line 139: `# ServiceOwners:                                                   @rpsqrd @edyoung`
+- Line 142: `# ServiceOwners:                                                   @ilayrn @orhasban @zoharHenMicrosoft`
+- Line 145: `/sdk/projects/                                                     @annatisch`
+- Line 148: `# AzureSdkOwners:                                                  @annatisch`
+- Line 149: `# ServiceOwners:                                                   @annatisch`
+- Line 152: `# ServiceOwners:                                                   @sijuman @sarathys @bganapa @rakku-ms`
+- Line 155: `/sdk/identity/                                                     @pvaneck @xiangyan99 @Azure/azure-sdk-write-identity`
+- Line 159: `# ServiceOwners:                                                   @pvaneck @xiangyan99 @Azure/azure-sdk-write-identity`
+- Line 162: `/sdk/batch/                                                        @jingjlii @JJJessieWang @wanghoppe @dpwatrous @wiboris @cRui861`
+- Line 165: `# ServiceOwners:                                                   @jingjlii @JJJessieWang @wanghoppe @dpwatrous @wiboris @cRui861`
+- Line 168: `# ServiceOwners:                                                   @matthchr`
+- Line 171: `# ServiceOwners:                                                   @cabbpt`
+- Line 174: `# ServiceOwners:                                                   @alex-frankel @filizt`
+- Line 177: `# ServiceOwners:                                                   @sgellock`
+- Line 180: `# ServiceOwners:                                                   @mbifeld`
+- Line 183: `/sdk/anomalydetector/                                              @conhua @mengaims @juaduan @moreOver0`
+- Line 186: `# ServiceOwners:                                                   @conhua @mengaims @juaduan @moreOver0`
+- Line 189: `# ServiceOwners:                                                   @jaggerbodas-ms @arwong`
+- Line 192: `# ServiceOwners:                                                   @ryogok @TFR258 @tburns10`
+- Line 195: `# ServiceOwners:                                                   @swiftarrow11`
+- Line 198: `# ServiceOwners:                                                   @areddish @tburns10`
+- Line 201: `# ServiceOwners:                                                   @JinyuID @dipidoo @SteveMSFT`
+- Line 204: `/sdk/formrecognizer/                                               @yungshinlintw @vkurpad`
+- Line 207: `# AzureSdkOwners:                                                  @yungshinlintw @vkurpad`
+- Line 208: `# ServiceOwners:                                                   @yungshinlintw @vkurpad`
+- Line 211: `/sdk/healthinsights/                                               @tomsft @koen-mertens`
+- Line 214: `# ServiceOwners:                                                   @tomsft @koen-mertens`
+- Line 217: `# ServiceOwners:                                                   @metanMSFT`
+- Line 220: `# ServiceOwners:                                                   @olduroja`
+- Line 223: `/sdk/cognitivelanguage/                                            @quentinRobinson @wangyuantao`
+- Line 226: `# ServiceOwners:                                                   @cahann @kayousef`
+- Line 229: `/sdk/metricsadvisor/                                               @xiangyan99 @kristapratico @iscai-msft`
+- Line 233: `# ServiceOwners:                                                   @xiangyan99 @kristapratico @iscai-msft`
+- Line 236: `# ServiceOwners:                                                   @yangyuan`
+- Line 239: `/sdk/personalizer/                                                 @sharathmalladi`
+- Line 242: `# ServiceOwners:                                                   @dwaijam @sharathmalladi`
+- Line 245: `# ServiceOwners:                                                   @bingisbestest @nerajput1607`
+- Line 248: `# ServiceOwners:                                                   @robch @oscholz`
+- Line 251: `/sdk/textanalytics/                                                @quentinRobinson @wangyuantao`
+- Line 254: `# ServiceOwners:                                                   @quentinRobinson @wangyuantao`
+- Line 257: `/sdk/translation/                                                  @kristapratico`
+- Line 260: `# ServiceOwners:                                                   @MikeyMCZ`
+- Line 263: `/sdk/translation/azure-ai-translation-text/                        @MikeyMCZ`
+- Line 269: `/sdk/cognitiveservices/                                            @kristapratico`
+- Line 272: `# ServiceOwners:                                                   @ms-premp @qiaozha`
+- Line 275: `/sdk/communication/                                                @acsdevx-msft`
+- Line 278: `# ServiceOwners:                                                   @acsdevx-msft`
+- Line 281: `/sdk/communication/azure-communication-callautomation/             @minwoolee-msft @fhaghbin-msft @juntuchen-msft @v-dharmarajv`
+- Line 284: `# ServiceOwners:                                                   @minwoolee-msft @fhaghbin-msft @juntuchen-msft @v-dharmarajv`
+- Line 287: `/sdk/communication/azure-communication-chat/                       @AikoBB @LuChen-Microsoft`
+- Line 290: `# ServiceOwners:                                                   @AikoBB @LuChen-Microsoft`
+- Line 293: `/sdk/communication/azure-communication-email/                      @yogeshmo`
+- Line 296: `# ServiceOwners:                                                   @yogeshmo`
+- Line 299: `/sdk/communication/azure-communication-identity/                   @Azure/acs-identity-sdk @AikoBB @maximrytych-ms @mjafferi-msft`
+- Line 302: `# ServiceOwners:                                                   @Azure/acs-identity-sdk @AikoBB @maximrytych-ms @mjafferi-msft`
+- Line 305: `/sdk/communication/azure-communication-jobrouter/                  @sarkar-rajarshi`
+- Line 308: `# ServiceOwners:                                                   @sarkar-rajarshi`
+- Line 311: `/sdk/communication/azure-communication-messages/                   @shamkh`
+- Line 314: `# ServiceOwners:                                                   @shamkh`
+- Line 317: `/sdk/communication/azure-communication-phonenumbers/               @Arazan @whisper6284 @danielortega-msft @sofiar-msft`
+- Line 320: `# ServiceOwners:                                                   @Arazan @whisper6284 @danielortega-msft @sofiar-msft`
+- Line 323: `/sdk/communication/azure-communication-rooms/                      @shirleyqin-msft @minnieliu @paolamvhz @alexokun @Mrayyan @shwali-msft @allchiang-msft @mikehang-msft`
+- Line 326: `# ServiceOwners:                                                   @shirleyqin-msft @minnieliu @paolamvhz @alexokun @Mrayyan @shwali-msft @allchiang-msft @mikehang-msft`
+- Line 329: `/sdk/communication/azure-communication-sms/                        @gfeitosa-msft @besh2014 @phermanov-msft @ilyapaliakou-msft @dinazavyr`
+- Line 332: `# ServiceOwners:                                                   @gfeitosa-msft @besh2014 @phermanov-msft @ilyapaliakou-msft @dinazavyr`
+- Line 335: `/sdk/communication/**/_shared/                                     @Azure/acs-identity-sdk @AikoBB @maximrytych-ms @mjafferi-msft`
+- Line 341: `# ServiceOwners:                                                   @Drewm3 @TravisCragg-MSFT @GabstaMSFT @amjads1 @sandeepraichura`
+- Line 344: `# ServiceOwners:                                                   @Drewm3 @amjads1 @GabstaMSFT`
+- Line 347: `# ServiceOwners:                                                   @Drewm3 @sandeepraichura`
+- Line 350: `# ServiceOwners:                                                   @Drewm3 @TravisCragg-MSFT @ushnaarshadkhan`
+- Line 353: `# ServiceOwners:                                                   @Drewm3 @TravisCragg-MSFT`
+- Line 359: `# ServiceOwners:                                                   @Drewm3 @Kanik09`
+- Line 362: `/sdk/confidentialledger/azure-confidentialledger/                  @PallabPaul @lynshi @amruthashree18`
+- Line 365: `# ServiceOwners:                                                   @PallabPaul`
+- Line 368: `# ServiceOwners:                                                   @akashkeshari`
+- Line 371: `/sdk/consumption/                                                  @sandeepnl`
+- Line 374: `# ServiceOwners:                                                   @sandeepnl`
+- Line 377: `# ServiceOwners:                                                   @ccmbpxpcrew`
+- Line 380: `/sdk/containerinstance/                                            @samkreter @xizhamsft`
+- Line 383: `# ServiceOwners:                                                   @samkreter @xizhamsft`
+- Line 386: `/sdk/containerregistry/                                            @lmazuel`
+- Line 389: `# AzureSdkOwners:                                                  @lmazuel`
+- Line 390: `# ServiceOwners:                                                   @lmazuel`
+- Line 393: `/sdk/containerregistry/                                            @YalinLi0312`
+- Line 396: `# AzureSdkOwners:                                                  @YalinLi0312`
+- Line 397: `# ServiceOwners:                                                   @toddysm @northtyphoon`
+- Line 400: `/sdk/containerservice/                                             @zqingqing1`
+- Line 403: `# ServiceOwners:                                                   @zqingqing1`
+- Line 406: `/sdk/contentsafety/                                                @mengaims`
+- Line 409: `# ServiceOwners:                                                   @mengaims`
+- Line 412: `/sdk/cosmos/                                                       @Azure/azure-cosmos-python-sdk`
+- Line 415: `# ServiceOwners:                                                   @Azure/azure-cosmos-python-sdk @pjohari-ms @simorenoh @AbhinavTrips @bambriz @pilchie`
+- Line 421: `# ServiceOwners:                                                   @ccmaxpcrew`
+- Line 424: `# ServiceOwners:                                                   @ccmixpdevs`
+- Line 427: `# ServiceOwners:                                                   @ccmshowbackdevs`
+- Line 430: `# ServiceOwners:                                                   @TiagoCrewGitHubIssues`
+- Line 433: `# ServiceOwners:                                                   @manoharp @MSEvanhi`
+- Line 436: `# ServiceOwners:                                                   @shefymk`
+- Line 439: `# ServiceOwners:                                                   @adriankjohnson`
+- Line 442: `# ServiceOwners:                                                   @arindamc`
+- Line 445: `# ServiceOwners:                                                   @ingave`
+- Line 448: `/sdk/datafactory/                                                  @hvermis`
+- Line 451: `# ServiceOwners:                                                   @hvermis`
+- Line 454: `/sdk/datalake/                                                     @ro-joowan`
+- Line 457: `/sdk/datamigration/                                                @vchske`
+- Line 460: `# ServiceOwners:                                                   @radjaram @kavitham10`
+- Line 463: `# ServiceOwners:                                                   @raedJarrar @jifems`
+- Line 466: `# ServiceOwners:                                                   @tmvishwajit @matdickson @manuaery @madhurinms`
+- Line 469: `# ServiceOwners:                                                   @a-t-mason @ganzee @manuaery`
+- Line 472: `/sdk/easm/                                                         @nathanfalke`
+- Line 475: `# ServiceOwners:                                                   @nathanfalke`
+- Line 478: `# ServiceOwners:                                                   @yuzorMa @johnsta @greenie-msft`
+- Line 481: `/sdk/devcenter/                                                    @drielenr @leti367 @sebrenna`
+- Line 484: `# ServiceOwners:                                                   @drielenr @leti367 @sebrenna`
+- Line 487: `/sdk/iothub/azure-iot-deviceprovisioning                           @c-ryan-k @digimaun`
+- Line 490: `# ServiceOwners:                                                   @nberdy`
+- Line 493: `/sdk/deviceupdate/                                                 @dpokluda @sedols`
+- Line 496: `# ServiceOwners:                                                   @dpokluda @sedols`
+- Line 499: `# ServiceOwners:                                                   @narula0781 @ashishonce @romil07`
+- Line 502: `/sdk/digitaltwins/                                                 @johngallardo @Aashish93-stack @sjiherzig @Satya-Kolluri`
+- Line 505: `# ServiceOwners:                                                   @johngallardo @Aashish93-stack @sjiherzig @Satya-Kolluri`
+- Line 508: `/sdk/documentintelligence/                                         @yungshinlintw @vkurpad`
+- Line 518: `/sdk/durabletask/                                                  @berndverst @kaibocai @torosent @RyanLettieri @philliphoff @cgillum`
+- Line 521: `# ServiceOwners:                                                   @berndverst @kaibocai @torosent @RyanLettieri @philliphoff @cgillum`
+- Line 524: `/sdk/template/                                                     @scbedd @weshaggard @benbp`
+- Line 527: `/sdk/evaluation/                                                   @Azure/azure-sdk-write-evaluation`
+- Line 530: `# ServiceOwners:                                                   @luigiw @needuv @singankit`
+- Line 533: `/sdk/eventgrid/                                                    @shankarsama @rajeshka`
+- Line 536: `# AzureSdkOwners:                                                  @shankarsama @rajeshka`
+- Line 537: `# ServiceOwners:                                                   @shankarsama @rajeshka`
+- Line 540: `/sdk/eventhub/                                                     @annatisch @kashifkhan @swathipil @l0lawrence`
+- Line 543: `# AzureSdkOwners:                                                  @kashifkhan`
+- Line 544: `# ServiceOwners:                                                   @kasun04`
+- Line 547: `/sdk/face/                                                         @zihyunting`
+- Line 550: `# ServiceOwners:                                                   @zihyunting`
+- Line 553: `# ServiceOwners:                                                   @ahmedelnably @fabiocav`
+- Line 556: `/sdk/graphrbac/                                                    @lmazuel`
+- Line 559: `# ServiceOwners:                                                   @dkershaw10 @baywet`
+- Line 562: `# ServiceOwners:                                                   @mgreenegit @vivlingaiah`
+- Line 565: `/sdk/hdinsight/                                                    @idear1203`
+- Line 568: `# ServiceOwners:                                                   @aim-for-better @idear1203 @deshriva`
+- Line 571: `/sdk/healthdataaiservices/                                         @alexathomases @Azure/healthdatadeidentification`
+- Line 574: `# ServiceOwners:                                                   @alexathomases @Azure/healthdatadeidentification`
+- Line 577: `# ServiceOwners:                                                   @romahamu @omzevall`
+- Line 580: `/sdk/vision/azure-ai-vision-imageanalysis/                         @dargilco @rhurey`
+- Line 583: `# ServiceOwners:                                                   @dargilco @rhurey`
+- Line 586: `# ServiceOwners:                                                   @madhurinms`
+- Line 589: `# ServiceOwners:                                                   @Azure/azure-iot-cli-triage`
+- Line 592: `/sdk/keyvault/                                                     @mccoyp @Azure/azure-sdk-write-keyvault`
+- Line 595: `# AzureSdkOwners:                                                  @mccoyp @Azure/azure-sdk-write-keyvault`
+- Line 596: `# ServiceOwners:                                                   @cheathamb36 @chen-karen @Azure/azure-sdk-write-keyvault`
+- Line 599: `# ServiceOwners:                                                   @NarayanThiru`
+- Line 605: `/sdk/loadtesting/azure-developer-loadtesting/                      @prativen @mitsha-microsoft @ninallam`
+- Line 608: `# ServiceOwners:                                                   @Azure/azure-logicapps-team`
+- Line 611: `# ServiceOwners:                                                   @minamnmik`
+- Line 614: `/sdk/ml/                                                           @paulshealy1 @achauhan-scc @kingernupur @jayesh-tanna`
+- Line 617: `# ServiceOwners:                                                   @azureml-github @Azure/azure-ml-sdk`
+- Line 620: `/sdk/machinelearning/                                              @shutchings`
+- Line 623: `# ServiceOwners:                                                   @varunkch`
+- Line 626: `# ServiceOwners:                                                   @Lighthouse-Azure`
+- Line 629: `/sdk/maps/                                                         @dubiety @andykao1213`
+- Line 632: `# ServiceOwners:                                                   @dubiety @andykao1213`
+- Line 635: `# ServiceOwners:                                                   @ambhatna @savjani`
+- Line 647: `# ServiceOwners:                                                   @shijojoy`
+- Line 650: `/sdk/remoterendering/                                              @FlorianBorn71`
+- Line 653: `/sdk/mixedreality/azure-mixedreality-authentication/               @RamonArguelles`
+- Line 656: `# ServiceOwners:                                                   @RamonArguelles`
+- Line 659: `/sdk/ml/azure-ai-ml/azure/ai/ml/_schema/job*                       @TonyJ1 @kingernupur @achauhan-scc @jayesh-tanna @paulshealy1`
+- Line 662: `/sdk/ml/azure-ai-ml/azure/ai/ml/entities/_job/                     @TonyJ1 @kingernupur @achauhan-scc @jayesh-tanna @paulshealy1`
+- Line 665: `/sdk/ml/training-experiences.tests.yml                             @TonyJ1 @kingernupur @achauhan-scc @jayesh-tanna @paulshealy1`
+- Line 668: `/sdk/ml/azure-ai-ml/azure/ai/ml/_schema/automl/                    @skasturi @rtanase @raduk @PhaniShekhar @sharma-riti @jialiu103 @nick863 @yuanzhuangyuanzhuang @novaturient95`
+- Line 671: `/sdk/ml/azure-ai-ml/azure/ai/ml/_schema/pipeline/automl_node.py    @skasturi @rtanase @raduk @PhaniShekhar @sharma-riti @jialiu103 @nick863 @yuanzhuangyuanzhuang @novaturient95`
+- Line 674: `/sdk/ml/azure-ai-ml/azure/ai/ml/automl/                            @skasturi @rtanase @raduk @PhaniShekhar @sharma-riti @jialiu103 @nick863 @yuanzhuangyuanzhuang @novaturient95`
+- Line 677: `/sdk/ml/azure-ai-ml/azure/ai/ml/entities/_job/automl/              @skasturi @rtanase @raduk @PhaniShekhar @sharma-riti @jialiu103 @nick863 @yuanzhuangyuanzhuang @novaturient95`
+- Line 680: `/sdk/ml/azure-ai-ml/tests/automl_job/                              @skasturi @rtanase @raduk @PhaniShekhar @sharma-riti @jialiu103 @nick863 @yuanzhuangyuanzhuang @novaturient95`
+- Line 683: `/sdk/ml/azure-ai-ml/tests/test_configs/automl_job/                 @skasturi @rtanase @raduk @PhaniShekhar @sharma-riti @jialiu103 @nick863 @yuanzhuangyuanzhuang @novaturient95`
+- Line 686: `/sdk/ml/automl.tests.yml                                           @skasturi @rtanase @raduk @PhaniShekhar @sharma-riti @jialiu103 @nick863 @yuanzhuangyuanzhuang @novaturient95`
+- Line 689: `/sdk/ml/azure-ai-ml/azure/ai/ml/_schema/job/import_job.py          @vivram`
+- Line 692: `/sdk/ml/azure-ai-ml/azure/ai/ml/entities/_job/import_job.py        @vivram`
+- Line 695: `/sdk/ml/azure-ai-ml/azure/ai/ml/_schema/pipeline/pipeline_import_job.py    @vivram`
+- Line 698: `/sdk/ml/azure-ai-ml/azure/ai/ml/entities/_builders/import_func.py     @vivram`
+- Line 701: `/sdk/ml/azure-ai-ml/azure/ai/ml/entities/_builders/import_node.py     @vivram`
+- Line 704: `/sdk/ml/azure-ai-ml/azure/ai/ml/_local_endpoints/                  @NonStatic2014 @arunsu @JustinFirsching`
+- Line 707: `# ServiceOwners:                                                   @kpiteira`
+- Line 710: `/sdk/modelsrepository/                                             @cartertinney @digimaun`
+- Line 747: `# ServiceOwners:                                                   @aznetsuppgithub`
+- Line 750: `# ServiceOwners:                                                   @appgwsuppgithub`
+- Line 753: `# ServiceOwners:                                                   @bastionsuppgithub`
+- Line 756: `# ServiceOwners:                                                   @cdnfdsuppgithub`
+- Line 759: `# ServiceOwners:                                                   @ddossuppgithub`
+- Line 762: `# ServiceOwners:                                                   @dnssuppgithub`
+- Line 765: `# ServiceOwners:                                                   @exrsuppgithub`
+- Line 768: `# ServiceOwners:                                                   @fwsuppgithub`
+- Line 774: `# ServiceOwners:                                                   @slbsupportgithub`
+- Line 777: `# ServiceOwners:                                                   @vnetsuppgithub`
+- Line 780: `# ServiceOwners:                                                   @netwatchsuppgithub`
+- Line 783: `# ServiceOwners:                                                   @privlinksuppgithub`
+- Line 786: `# ServiceOwners:                                                   @tmsuppgithub`
+- Line 789: `# ServiceOwners:                                                   @vnetsuppgithub`
+- Line 795: `# ServiceOwners:                                                   @vwansuppgithub`
+- Line 798: `# ServiceOwners:                                                   @vpngwsuppgithub`
+- Line 801: `# ServiceOwners:                                                   @tjsomasundaram`
+- Line 804: `# ServiceOwners:                                                   @AzmonLogA`
+- Line 807: `/sdk/onlineexperimentation/                                        @Azure/azure-sdk-write-onlineexperimentation`
+- Line 810: `# ServiceOwners:                                                   @Azure/azure-sdk-write-onlineexperimentation`
+- Line 813: `/sdk/openai/                                                       @trrwilson`
+- Line 816: `# ServiceOwners:                                                   @trrwilson`
+- Line 819: `# ServiceOwners:                                                   @AzmonLogA`
+- Line 822: `/sdk/networkcloud/                                                 @Azure/azure-sdk-write-networkcloud`
+- Line 825: `# ServiceOwners:                                                   @Azure/azure-sdk-write-networkcloud`
+- Line 828: `# ServiceOwners:                                                   @aperezcloud @kenieva`
+- Line 831: `# ServiceOwners:                                                   @kenieva`
+- Line 834: `# ServiceOwners:                                                   @sunilagarwal @lfittl-msft @sr-msft @niklarin`
+- Line 837: `/sdk/purview/                                                      @adyabansal-ms`
+- Line 840: `# ServiceOwners:                                                   @adyabansal-ms`
+- Line 843: `/sdk/recoveryservices/                                             @DheerendraRathor`
+- Line 846: `# ServiceOwners:                                                   @Daya-Patil @Sharmistha-Rai`
+- Line 849: `# ServiceOwners:                                                   @yegu-ms`
+- Line 852: `# ServiceOwners:                                                   @Rkapso`
+- Line 855: `# ServiceOwners:                                                   @chiragg4u`
+- Line 858: `# ServiceOwners:                                                   @stephbaron`
+- Line 861: `# ServiceOwners:                                                   @derek1ee`
+- Line 864: `/sdk/schemaregistry/                                               @kashifkhan @swathipil`
+- Line 868: `# ServiceOwners:                                                   @arerlend @alzimmermsft`
+- Line 871: `/sdk/search/                                                       @xiangyan99 @Azure/azsdk-search`
+- Line 875: `# ServiceOwners:                                                   @mattgotteiner`
+- Line 878: `# ServiceOwners:                                                   @chlahav`
+- Line 881: `# ServiceOwners:                                                   @amirkeren`
+- Line 883: `# ServiceLabel: %Service Attention %SignalR %Storsimple`
+- Line 884: `# ServiceOwners:                                                   @sffamily @chenkennt @anoobbacker @ganzee @manuaery`
+- Line 886: `# ServiceLabel: %Service Attention %Stream Analytics %Subscription`
+- Line 887: `# ServiceOwners:                                                   @atpham256 @anuragdalmia @shilpigautam @ramaganesan-rg`
+- Line 889: `# ServiceLabel: %Service Attention %Support %TimeseriesInsights`
+- Line 890: `# ServiceOwners:                                                   @shahbj79 @mit2nil @aygoya @ganganarayanan @Shipra1Mishra`
+- Line 892: `# ServiceLabel: %Service Attention %vFXT %Web Apps`
+- Line 893: `# ServiceOwners:                                                   @zhusijia26 @AzureAppServiceCLI @antcp`
+- Line 896: `/sdk/servicebus/                                                   @annatisch @kashifkhan @swathipil @l0lawrence`
+- Line 900: `# ServiceOwners:                                                   @EldertGrootenboer`
+- Line 903: `/sdk/servicefabric/                                                @QingChenmsft @samedder`
+- Line 906: `# ServiceOwners:                                                   @azureSQLGitHub`
+- Line 909: `/sdk/storage/                                                      @annatisch @jalauzon-msft @vincenttran-msft @weirongw23-msft`
+- Line 912: `# ServiceOwners:                                                   @jalauzon-msft @vincenttran-msft`
+- Line 915: `/sdk/synapse/                                                      @wanyang7 @yanjungao718`
+- Line 918: `# ServiceOwners:                                                   @wanyang7 @zesluo`
+- Line 921: `/sdk/tables/                                                       @YalinLi0312`
+- Line 925: `# ServiceOwners:                                                   @klaaslanghout`
+- Line 928: `/sdk/videoanalyzer/                                                @hivyas`
+- Line 931: `/sdk/webpubsub/                                                    @msyyc @iscai-msft`
+- Line 933: `/common/smoketest/                                                 @lmazuel @chlowell @annatisch @mccoyp @shurd @southpolesteve`
+- Line 939: `/**/*mgmt*/                                                        @ChenxiJiang333 @msyyc`

@@ -64,6 +64,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     serviceLabelOption,
                     pathOptionOptional
                 },
+                new Command("list-tools", "") { }
             };
 
             foreach (var subCommand in subCommands)
@@ -112,6 +113,10 @@ namespace Azure.Sdk.Tools.Cli.Tools
                         validateServiceLabel,
                         validateRepoPath);
                     output.Output(validateResult);
+                    return;
+                case "list-tools":
+                    var toolsOutput = await listtools();
+                    output.Output(toolsOutput);
                     return;
                 default:
                     SetFailure();
@@ -478,6 +483,68 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 return (string.Join(" ", validationErrors), distinctResults);
             }
             return ("", distinctResults);
+        }
+
+        [McpServerTool(Name = "azsdk_list_tools"), Description("")]
+        public async Task<string> listtools()
+        {
+            try
+            {
+                var startPath = Directory.GetCurrentDirectory();
+                var repoRoot = FindGitRepositoryRoot(startPath);
+                if (string.IsNullOrEmpty(repoRoot))
+                {
+                    return $"Error: Could not find git repository root starting from '{startPath}'";
+                }
+
+                var promptFilesPath = Path.Combine(repoRoot, "eng", "common", "instructions");
+                if (!Directory.Exists(promptFilesPath))
+                {
+                    return $"Error: Prompt files directory not found: {promptFilesPath}";
+                }
+
+                var sb = new System.Text.StringBuilder();
+
+                var files = Directory.EnumerateFiles(promptFilesPath, "*", SearchOption.AllDirectories)
+                    .OrderBy(p => p);
+
+                foreach (var file in files)
+                {
+                    var relative = Path.GetRelativePath(promptFilesPath, file);
+                    sb.AppendLine($"--- {relative} ---");
+                    try
+                    {
+                        var content = await System.IO.File.ReadAllTextAsync(file);
+                        sb.AppendLine(content);
+                    }
+                    catch (Exception ex)
+                    {
+                        sb.AppendLine($"Error reading file {relative}: {ex.Message}");
+                    }
+                    sb.AppendLine();
+                }
+
+                return sb.ToString();
+            }
+            catch (Exception ex)
+            {
+                return $"Error: {ex}";
+            }
+        }
+        
+
+        private string? FindGitRepositoryRoot(string startPath)
+        {
+            var currentDir = new DirectoryInfo(startPath);
+            while (currentDir != null)
+            {
+                if (Directory.Exists(Path.Combine(currentDir.FullName, ".git")))
+                {
+                    return currentDir.FullName;
+                }
+                currentDir = currentDir.Parent;
+            }
+            return null;
         }
     }
 }

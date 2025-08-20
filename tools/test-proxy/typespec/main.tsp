@@ -65,7 +65,6 @@ namespace Admin {
      * @param matcher The matcher configuration. Only required if matcherType is CustomDefaultMatcher.
      */
     @route("/Admin/SetMatcher")
-    // todo: we need to only allow CustomDefaultMatcherBody when the MatcherType is CustomDefaultMatcher
     @post
     op SetMatcher(@header("x-abstraction-identifier") matcherType: MatcherType, @body matcher?: CustomDefaultMatcher): {
         @statusCode statusCode: 200;

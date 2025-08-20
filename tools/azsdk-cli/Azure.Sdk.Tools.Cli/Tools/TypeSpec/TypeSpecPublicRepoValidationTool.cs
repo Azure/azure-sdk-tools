@@ -14,7 +14,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
     /// </summary>
     [Description("TypeSpec public repository validation tool")]
     [McpServerToolType]
-    public class TypeSpecProjectInPublicRepo(ITypeSpecHelper typeSpecHelper, ILogger<TypeSpecProjectInPublicRepo> logger) : MCPTool
+    public class TypeSpecPublicRepoValidationTool(ITypeSpecHelper typeSpecHelper, ILogger<TypeSpecPublicRepoValidationTool> logger) : MCPTool
     {
         // Commands
         private const string checkPublicRepoCommandName = "check-public-repo";
@@ -26,7 +26,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         /// Checks if a TypeSpec project is in a public spec repository.
         /// </summary>
         /// <param name="typeSpecProjectPath">The path to the TypeSpec project.</param>
-        [McpServerTool(Name = "azsdk_check_typespec_project_in_public_repo"), Description("Check if TypeSpec project is in public spec repo. Provide absolute path to TypeSpec project root as param.")]
+        [McpServerTool(Name = "azsdk_typespec_check_project_in_public_repo"), Description("Check if TypeSpec project is in public spec repo. Provide absolute path to TypeSpec project root as param.")]
         public string CheckTypeSpecProjectInPublicRepo(string typeSpecProjectPath)
         {
             try

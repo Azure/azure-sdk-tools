@@ -7,7 +7,7 @@ using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Helpers;
 using ModelContextProtocol.Server;
 
-namespace Azure.Sdk.Tools.Cli.Tools
+namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 {
     /// <summary>
     /// This tool is used to check if a TypeSpec project is in a public spec repository.

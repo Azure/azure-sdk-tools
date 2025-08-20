@@ -15,6 +15,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
     public static class SharedOptions
     {
         public static readonly List<Type> ToolsList = [
+            typeof(TypeSpecProjectInPublicRepo),
             typeof(PackageCheckTool),
             typeof(CleanupTool),
             typeof(GitHubLabelsTool),

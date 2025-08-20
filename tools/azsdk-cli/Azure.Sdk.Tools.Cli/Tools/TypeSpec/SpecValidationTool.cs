@@ -8,7 +8,6 @@ using System.Runtime.InteropServices;
 using System.Text;
 using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Services;
 using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
@@ -18,11 +17,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
     /// </summary>
     [Description("TypeSpec validation tools")]
     [McpServerToolType]
-    public class SpecValidationTools(ITypeSpecHelper typeSpecHelper, ILogger<SpecValidationTools> logger, IOutputHelper output) : MCPTool
+    public class SpecValidationTools(ITypeSpecHelper typeSpecHelper, ILogger<SpecValidationTools> logger) : MCPTool
     {
         // Commands
         private const string typespecValidationCommandName = "validate-typespec";
-        private const string checkPublicRepoCommandName = "check-public-repo";
 
         // Options
         private readonly Option<string> typeSpecProjectPathOpt = new(["--typespec-project"], "Path to typespec project") { IsRequired = true };
@@ -74,22 +72,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                 logger.LogError($"Unhandled exception: {ex}");
                 SetFailure();
                 return new List<string> { $"Unhandled exception: {ex.Message}" };
-            }
-        }
-
-        [McpServerTool(Name = "azsdk_check_typespec_project_in_public_repo"), Description("Check if TypeSpec project is in public spec repo. Provide absolute path to TypeSpec project root as param.")]
-        public string CheckTypeSpecProjectInPublicRepo(string typeSpecProjectPath)
-        {
-            try
-            {
-                var repoRootPath = typeSpecHelper.GetSpecRepoRootPath(typeSpecProjectPath);
-                var isPublicRepo = typeSpecHelper.IsRepoPathForPublicSpecRepo(repoRootPath);
-                return output.Format(isPublicRepo);
-            }
-            catch (Exception ex)
-            {
-                SetFailure();
-                return output.Format($"Unexpected failure occurred. Error: {ex.Message}");
             }
         }
 
@@ -185,17 +167,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 
         public override Command GetCommand()
         {
-            var command = new Command("spec-validation", "TypeSpec validation tools");
-            var subCommands = new[] {
-                new Command(typespecValidationCommandName, "Run typespec validation") { typeSpecProjectPathOpt },
-                new Command(checkPublicRepoCommandName, "Check if TypeSpec project is in public repo") { typeSpecProjectPathOpt }
-            };
-
-            foreach (var subCommand in subCommands)
-            {
-                subCommand.SetHandler(async ctx => { ctx.ExitCode = await HandleCommand(ctx, ctx.GetCancellationToken()); });
-                command.AddCommand(subCommand);
-            }
+            Command command = new Command(typespecValidationCommandName, "Run typespec validation") { typeSpecProjectPathOpt };
+            command.SetHandler(async ctx => { ctx.ExitCode = await HandleCommand(ctx, ctx.GetCancellationToken()); });
             return command;
         }
 
@@ -212,11 +185,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                     var validationResults = RunTypeSpecValidation(repoRootPath);
                     logger.LogInformation($"Validation results: [{validationResults}]");
                     return 0;
-                case checkPublicRepoCommandName:
-                    var typeSpecProjectPath = ctx.ParseResult.GetValueForOption(typeSpecProjectPathOpt);
-                    var checkResult = CheckTypeSpecProjectInPublicRepo(typeSpecProjectPath);
-                    logger.LogInformation($"Public repo check result: {checkResult}");
-                    return 0;
+
                 default:
                     logger.LogError($"Unknown command: {command}");
                     return 1;

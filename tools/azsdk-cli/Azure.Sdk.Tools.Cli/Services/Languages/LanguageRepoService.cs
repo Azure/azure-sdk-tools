@@ -100,6 +100,28 @@ public class LanguageRepoService : ILanguageRepoService
             : new CLICheckResponse(result.ExitCode, result.Output, "Process failed");
     }
 
+    /// <summary>
+    /// Validates package path and discovers repository root.
+    /// </summary>
+    /// <param name="packagePath">Absolute path to the package directory</param>
+    /// <returns>Repository root path if successful, or CLICheckResponse with error if validation fails</returns>
+    protected (string? repoRoot, CLICheckResponse? errorResponse) ValidatePackageAndDiscoverRepo(string packagePath)
+    {
+        if (!Directory.Exists(packagePath))
+        {
+            return (null, new CLICheckResponse(1, "", $"Package path does not exist: {packagePath}"));
+        }
+
+        // Find the SDK repository root by looking for common repository indicators
+        var packageRepoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
+        if (string.IsNullOrEmpty(packageRepoRoot))
+        {
+            return (null, new CLICheckResponse(1, "", $"Could not find repository root from package path: {packagePath}"));
+        }
+
+        return (packageRepoRoot, null);
+    }
+
     public virtual async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct)
     {
         await Task.CompletedTask;
@@ -151,16 +173,10 @@ public class LanguageRepoService : ILanguageRepoService
 
         try
         {
-            if (!Directory.Exists(packagePath))
+            var (packageRepoRoot, errorResponse) = ValidatePackageAndDiscoverRepo(packagePath);
+            if (errorResponse != null)
             {
-                return new CLICheckResponse(1, "", $"Package path does not exist: {packagePath}");
-            }
-
-            // Find the SDK repository root by looking for common repository indicators
-            var packageRepoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
-            if (string.IsNullOrEmpty(packageRepoRoot))
-            {
-                return new CLICheckResponse(1, "", $"Could not find repository root from package path: {packagePath}");
+                return errorResponse;
             }
 
             // Construct the path to the PowerShell script in the SDK repository
@@ -198,16 +214,10 @@ public class LanguageRepoService : ILanguageRepoService
     {
         try
         {
-            if (!Directory.Exists(packagePath))
+            var (packageRepoRoot, errorResponse) = ValidatePackageAndDiscoverRepo(packagePath);
+            if (errorResponse != null)
             {
-                return new CLICheckResponse(1, "", $"Package path does not exist: {packagePath}");
-            }
-
-            // Find the SDK repository root by looking for common repository indicators
-            var packageRepoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
-            if (string.IsNullOrEmpty(packageRepoRoot))
-            {
-                return new CLICheckResponse(1, "", $"Could not find repository root from package path: {packagePath}");
+                return errorResponse;
             }
 
             // Construct the path to the PowerShell script in the SDK repository
@@ -255,16 +265,10 @@ public class LanguageRepoService : ILanguageRepoService
     {
         try
         {
-            if (!Directory.Exists(packagePath))
+            var (packageRepoRoot, errorResponse) = ValidatePackageAndDiscoverRepo(packagePath);
+            if (errorResponse != null)
             {
-                return new CLICheckResponse(1, "", $"Package path does not exist: {packagePath}");
-            }
-
-            // Find the SDK repository root by looking for common repository indicators
-            var packageRepoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
-            if (string.IsNullOrEmpty(packageRepoRoot))
-            {
-                return new CLICheckResponse(1, "", $"Could not find repository root from package path: {packagePath}");
+                return errorResponse;
             }
 
             // Construct the path to the cspell config file

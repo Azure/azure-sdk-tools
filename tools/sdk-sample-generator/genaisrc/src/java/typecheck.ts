@@ -1,6 +1,6 @@
 import path from "node:path";
-import { getUniqueDirName } from "../utils.ts";
 import type { TypeCheckParameters, TypeCheckResult } from "../types.ts";
+import { getUniqueDirName } from "../utils.ts";
 
 const fileName = "Temp.java";
 let container: ContainerHost | undefined = undefined;
@@ -61,7 +61,7 @@ export async function typecheckJava({
 
     if (!container) {
         container = await host.container({
-            image: "eclipse-temurin:24-jdk-alpine",
+            image: "maven:3.9.4-eclipse-temurin-17",
             networkEnabled: true,
             persistent: true,
         });

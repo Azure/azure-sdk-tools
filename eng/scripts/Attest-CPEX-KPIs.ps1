@@ -16,14 +16,14 @@ $KPI_ID_Data_GA = "Data_GA"
 
 function InvokeKustoCommand($command) {
     $clusterUri = "https://azsdk-cpex-attestation.westus2.kusto.windows.net"
-    $databaseName = "CPEX-attestations"
+    $databaseName = "CPEX_Attestation_DB"
     $accessToken = az account get-access-token --resource "https://api.kusto.windows.net" --query "accessToken" --output tsv
     $headers = @{ Authorization="Bearer $accessToken" }
     Invoke-RestMethod -Uri "$clusterUri/v1/rest/mgmt" -Headers $headers -Method Post -Body (@{csl=$command; db=$databaseName} | ConvertTo-Json -Depth 3) -ContentType "application/json"
 }
 
 function AddAttestationEntry($targetId, $actionItemId, $status, $targetType, $url) {
-    $tableName = "KPI_Attestations"
+    $tableName = "KpiEvidenceStream"
 
     $command = @"
 .append $tableName <|

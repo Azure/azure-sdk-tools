@@ -6,7 +6,7 @@ $Complete = 1
 $NA = 3
 
 # Add KPI Ids after launch criteria creation
-$KPI_ID_Onboarding_Private_Preview = "Onboarding_Private_Preview"
+$KPI_ID_Onboarding = "Onboarding"
 $KPI_ID_Mgmt_Private_Preview = "Mgmt_Private_Preview"
 $KPI_ID_Data_Private_Preview = "Data_Private_Preview"
 $KPI_ID_Mgmt_Public_Preview = "Mgmt_Public_Preview"
@@ -49,7 +49,7 @@ foreach ($triage in $triages) {
     $productType = $fields["Custom.ProductType"]
     $url = $triage.url
 
-    AddAttestationEntry $productServiceTreeId $KPI_ID_Onboarding_Private_Preview $Complete $productType $url
+    AddAttestationEntry $productServiceTreeId $KPI_ID_Onboarding $Complete $productType $url
 
      if ($dataScope -eq 'Yes') {
         AddAttestationEntry $productServiceTreeId $KPI_ID_Data_Public_Preview $Incomplete $productType $url

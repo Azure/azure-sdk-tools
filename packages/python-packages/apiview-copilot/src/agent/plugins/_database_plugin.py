@@ -6,7 +6,6 @@
 
 """Plugin for database operations."""
 
-import os
 from contextlib import AsyncExitStack, asynccontextmanager
 from datetime import timedelta
 from typing import Optional
@@ -15,7 +14,7 @@ from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from azure.identity import DefaultAzureCredential
 
 # pylint: disable=no-name-in-module
-from semantic_kernel.agents import AzureAIAgent, AzureAIAgentSettings, RunPollingOptions
+from semantic_kernel.agents import AzureAIAgent, RunPollingOptions
 from semantic_kernel.functions import kernel_function
 from src._database_manager import ContainerNames, get_database_manager
 from src._models import Example, Guideline, Memory
@@ -25,13 +24,9 @@ from src._models import Example, Guideline, Memory
 async def get_delete_agent():
     """Agent for handling database delete requests."""
     # pylint: disable=import-outside-toplevel
-    from src.agent._agent import create_kernel
+    from src.agent._agent import _get_agent_settings, create_kernel
 
-    ai_agent_settings = AzureAIAgentSettings(
-        endpoint=os.getenv("AZURE_AI_AGENT_ENDPOINT"),
-        model_deployment_name=os.getenv("AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME"),
-        api_version=os.getenv("AZURE_AI_AGENT_API_VERSION"),
-    )
+    ai_agent_settings = _get_agent_settings()
     ai_instructions = f"""
 You are an agent that processes database delete requests for guidelines, examples, memories or review jobs.
 
@@ -73,13 +68,13 @@ You must ensure you adhere to the following guidelines.
 async def get_create_agent():
     """Agent for handling database create requests."""
     # pylint: disable=import-outside-toplevel
-    from src.agent._agent import _SUPPORTED_LANGUAGES, create_kernel
-
-    ai_agent_settings = AzureAIAgentSettings(
-        endpoint=os.getenv("AZURE_AI_AGENT_ENDPOINT"),
-        model_deployment_name=os.getenv("AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME"),
-        api_version=os.getenv("AZURE_AI_AGENT_API_VERSION"),
+    from src._apiview_reviewer import SUPPORTED_LANGUAGES
+    from src.agent._agent import (
+        _get_agent_settings,
+        create_kernel,
     )
+
+    ai_agent_settings = _get_agent_settings()
     guideline_schema = Guideline.model_json_schema()
     example_schema = Example.model_json_schema()
     memory_schema = Memory.model_json_schema()
@@ -92,7 +87,7 @@ You must ensure you adhere to the following guidelines.
 
 ## General
 - The only valid container names are: {', '.join([c.value for c in ContainerNames])}
-- The only valid language values are: {', '.join(_SUPPORTED_LANGUAGES)}
+- The only valid language values are: {', '.join(SUPPORTED_LANGUAGES)}
 - cpp means C++
 - dotnet means C#
 - ios means Swift
@@ -176,13 +171,9 @@ For specific fields:
 async def get_retrieve_agent():
     """Agent for handling database retrieval requests."""
     # pylint: disable=import-outside-toplevel
-    from src.agent._agent import create_kernel
+    from src.agent._agent import _get_agent_settings, create_kernel
 
-    ai_agent_settings = AzureAIAgentSettings(
-        endpoint=os.getenv("AZURE_AI_AGENT_ENDPOINT"),
-        model_deployment_name=os.getenv("AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME"),
-        api_version=os.getenv("AZURE_AI_AGENT_API_VERSION"),
-    )
+    ai_agent_settings = _get_agent_settings()
     ai_instructions = """
 You are an agent that processes database get or retrieval requests for guidelines, examples, memories, or review jobs.
 """
@@ -210,13 +201,9 @@ You are an agent that processes database get or retrieval requests for guideline
 async def get_link_agent():
     """Agent for handling database linking and unlinking requests."""
     # pylint: disable=import-outside-toplevel
-    from src.agent._agent import create_kernel
+    from src.agent._agent import _get_agent_settings, create_kernel
 
-    ai_agent_settings = AzureAIAgentSettings(
-        endpoint=os.getenv("AZURE_AI_AGENT_ENDPOINT"),
-        model_deployment_name=os.getenv("AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME"),
-        api_version=os.getenv("AZURE_AI_AGENT_API_VERSION"),
-    )
+    ai_agent_settings = _get_agent_settings()
     ai_instructions = f"""
 You are an agent that processes database requests to link or unlink guidelines, examples, memories or review jobs.
 

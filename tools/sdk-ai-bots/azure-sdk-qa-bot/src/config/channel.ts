@@ -1,9 +1,9 @@
 import { parse } from 'yaml';
 import { BlobServiceClient } from '@azure/storage-blob';
-import { DefaultAzureCredential, ManagedIdentityCredential } from '@azure/identity';
 import { setTimeout } from 'timers/promises';
 import { logger } from '../logging/logger.js';
 import config from './config.js';
+import { getAzureCredential } from '../common/shared.js';
 
 export interface ChannelItem {
   name: string;
@@ -61,8 +61,7 @@ class ChannelConfigManager {
       // TODO: update env file in the future
       const blobStorageUrl = storageUrl.replace('.table.core.windows.net', '.blob.core.windows.net');
 
-      const credential =
-        process.env.IS_LOCAL === 'true' ? new DefaultAzureCredential() : new ManagedIdentityCredential(this.botId);
+      const credential = await getAzureCredential(this.botId);
 
       this.blobServiceClient = new BlobServiceClient(blobStorageUrl, credential);
 

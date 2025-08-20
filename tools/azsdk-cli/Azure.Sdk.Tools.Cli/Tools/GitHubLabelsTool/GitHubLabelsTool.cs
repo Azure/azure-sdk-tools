@@ -10,7 +10,6 @@ using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Configuration;
 
-
 namespace Azure.Sdk.Tools.Cli.Tools
 {
     [McpServerToolType, Description("Tools for working with GitHub labels for services")]

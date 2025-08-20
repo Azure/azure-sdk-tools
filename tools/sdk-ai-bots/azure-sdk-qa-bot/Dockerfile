@@ -1,5 +1,8 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0
 
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
+
 RUN apt-get update \
     && apt-get install -y curl gnupg \
     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \

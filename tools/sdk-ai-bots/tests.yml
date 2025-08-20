@@ -12,6 +12,7 @@ trigger:
 
 pr:
 - azure-sdk-ai-bot
+- azure-sdk-ai-bot-dev
 - main
 
 stages:

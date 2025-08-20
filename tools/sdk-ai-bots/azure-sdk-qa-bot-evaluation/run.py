@@ -150,7 +150,7 @@ def calculate_overall_score(row: dict[str, Any]) -> float:
     
     similarity = float(row["outputs.similarity.similarity"])
     groundedness = float(row["outputs.groundedness.groundedness"])
-    if similarity == math.nan or groundedness == math.nan:
+    if math.isnan(similarity) or math.isnan(groundedness):
         return 0.0
     else:
         return similarity * weights["similarity_weight"] + groundedness * weights["groundedness_weight"]
@@ -357,7 +357,7 @@ if __name__ == "__main__":
     print("Current working directory:", current_file_path)
 
 
-    if (args.test_folder == None):
+    if (args.test_folder is None):
         args.test_folder = os.path.join(script_directory, "tests")
     
     print(f"test folder: {args.test_folder}")

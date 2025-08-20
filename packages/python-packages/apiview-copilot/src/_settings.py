@@ -4,7 +4,7 @@ import threading
 
 from azure.appconfiguration import AzureAppConfigurationClient
 from azure.identity import DefaultAzureCredential
-from azure.keyvault.secrets import SecretClient
+from azure.keyvault.secrets import KeyVaultSecretIdentifier, SecretClient
 from dotenv import load_dotenv
 
 load_dotenv(override=True)
@@ -75,13 +75,11 @@ class SettingsManager:
     def _get_secret_from_keyvault(self, secret_uri):
         # Parse the Key Vault URI
         # Example: https://<vault-name>.vault.azure.net/secrets/<secret-name>/<version>
-        from urllib.parse import urlparse
+        parsed = KeyVaultSecretIdentifier(secret_uri)
 
-        parsed = urlparse(secret_uri)
-        vault_url = f"{parsed.scheme}://{parsed.hostname}"
-        secret_path = parsed.path.strip("/").split("/")
-        secret_name = secret_path[1] if len(secret_path) > 1 else secret_path[0]
-        secret_version = secret_path[2] if len(secret_path) > 2 else None
+        vault_url = parsed.vault_url
+        secret_name = parsed.name
+        secret_version = parsed.version
         if vault_url not in self._keyvault_clients:
             self._keyvault_clients[vault_url] = SecretClient(vault_url=vault_url, credential=self.credential)
         client = self._keyvault_clients[vault_url]

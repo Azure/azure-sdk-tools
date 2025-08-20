@@ -10,7 +10,7 @@ import prompty
 import prompty.azure_beta
 import yaml
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from src._apiview_reviewer import ApiViewReview
 from src._settings import SettingsManager
@@ -30,6 +30,9 @@ NUM_RUNS: int = 3
 # for best results, this should always be a different model from the one we are evaluating
 MODEL_JUDGE = "gpt-4.1-nano"
 
+global settings
+settings = SettingsManager()
+
 weights: dict[str, float] = {
     "exact_match_weight": 0.7,  # Exact match (rule id and line number)
     "groundedness_weight": 0.2,  # Staying grounded in guidelines
@@ -38,28 +41,24 @@ weights: dict[str, float] = {
     "fuzzy_match_bonus": 0.2,  # Bonus for fuzzy match (right rule, wrong line)
 }
 
+model_config: dict[str, str] = {
+    "azure_endpoint": settings.get("OPENAI_ENDPOINT"),
+    "api_key": settings.get("OPENAI_API_KEY"),
+    "azure_deployment": MODEL_JUDGE,
+    "api_version": "2025-03-01-preview",
+}
+
 
 def in_ci():
     return os.getenv("TF_BUILD", False)
-
-
-def get_model_config():
-    settings = SettingsManager()
-    model_config: dict[str, str] = {
-        "azure_endpoint": settings.get("OPENAI_ENDPOINT"),
-        "api_key": settings.get("OPENAI_API_KEY"),
-        "azure_deployment": MODEL_JUDGE,
-        "api_version": "2025-03-01-preview",
-    }
-    return model_config
 
 
 class CustomAPIViewEvaluator:
     """Evaluator for comparing expected and actual APIView comments."""
 
     def __init__(self):
-        self._groundedness_eval = GroundednessEvaluator(model_config=get_model_config())
-        self._similarity_eval = SimilarityEvaluator(model_config=get_model_config())
+        self._groundedness_eval = GroundednessEvaluator(model_config=model_config)
+        self._similarity_eval = SimilarityEvaluator(model_config=model_config)
 
     def _calculate_overall_score(self, review_eval: dict[str, Any]) -> float:
         """Calculate the overall score based on the review evaluation metrics."""
@@ -131,7 +130,6 @@ class CustomAPIViewEvaluator:
     def _evaluate_generic_comments(self, query: str, language: str, generic_comments: list[dict[str, Any]]) -> None:
         """Evaluate generic comments. If they are invalid, they count as false positives and receive penalty."""
 
-        settings = SettingsManager()
         filter_path = pathlib.Path(__file__).parent.parent / "metadata" / language / "filter.yaml"
         with open(filter_path, "r", encoding="utf-8") as f:
             filter_data = yaml.safe_load(f)
@@ -452,8 +450,6 @@ def record_run_result(result: dict[str, Any], rule_ids: Set[str]) -> list[dict[s
 
 
 if __name__ == "__main__":
-    settings = SettingsManager()
-
     parser = argparse.ArgumentParser(description="Run evals for APIview copilot.")
     parser.add_argument(
         "--language",

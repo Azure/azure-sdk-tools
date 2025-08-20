@@ -1,6 +1,7 @@
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.Cli.Services;
 
@@ -78,11 +79,13 @@ public class LanguageRepoService : ILanguageRepoService
 {
     protected readonly IProcessHelper _processHelper;
     protected readonly IGitHelper _gitHelper;
+    protected readonly ILogger<LanguageRepoService> _logger;
 
-    public LanguageRepoService(IProcessHelper processHelper, IGitHelper gitHelper)
+    public LanguageRepoService(IProcessHelper processHelper, IGitHelper gitHelper, ILogger<LanguageRepoService> logger)
     {
         _processHelper = processHelper;
         _gitHelper = gitHelper;
+        _logger = logger;
     }
 
     /// <summary>
@@ -180,6 +183,7 @@ public class LanguageRepoService : ILanguageRepoService
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Error in ValidateChangelogCommonAsync");
             return new CLICheckResponse(1, "", $"Unhandled exception: {ex.Message}");
         }
     }
@@ -229,14 +233,14 @@ public class LanguageRepoService : ILanguageRepoService
                 "-ScanPaths", packagePath,
             };
 
-            // Use a longer timeout for README validation - 10 minutes should be sufficient as it may need to install doc-warden
-            var timeout = TimeSpan.FromMilliseconds(600_000); // 10 minutes
+            var timeout = TimeSpan.FromMinutes(10);
             var processResult = await _processHelper.Run(new(command, args, timeout: timeout, workingDirectory: packagePath), ct: default);
 
             return CreateResponseFromProcessResult(processResult);
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Error in ValidateReadmeCommonAsync");
             return new CLICheckResponse(1, "", $"Unhandled exception: {ex.Message}");
         }
     }
@@ -276,10 +280,11 @@ public class LanguageRepoService : ILanguageRepoService
 
             // Build arguments for npx cspell lint
             var args = new[] {
+                "-y",
                 "cspell", "lint",
                 "--config", cspellConfigPath,
                 "--root", packageRepoRoot,
-                $"./{relativePath}/**"
+                $"." + Path.DirectorySeparatorChar + relativePath + Path.DirectorySeparatorChar + "**"
             };
 
             var processResult = await _processHelper.Run(new("npx", args, workingDirectory: packageRepoRoot), ct: default);
@@ -287,11 +292,8 @@ public class LanguageRepoService : ILanguageRepoService
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Error in CheckSpellingCommonAsync");
             return new CLICheckResponse(1, "", $"Unhandled exception: {ex.Message}");
-        }
-        finally
-        {
-            await Task.CompletedTask; // Make this async for consistency
         }
     }
 

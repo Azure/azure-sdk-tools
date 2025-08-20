@@ -8,7 +8,7 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// Java-specific implementation of language repository service.
 /// Uses tools like mvn/gradle for build, dependency management, testing, and code formatting.
 /// </summary>
-public class JavaLanguageRepoService(IProcessHelper processHelper, IGitHelper gitHelper, ILogger<JavaLanguageRepoService> logger) : LanguageRepoService(processHelper, gitHelper, logger)
+public class JavaLanguageRepoService(IProcessHelper processHelper, INpxHelper npxHelper, IGitHelper gitHelper, ILogger<JavaLanguageRepoService> logger) : LanguageRepoService(processHelper, npxHelper, gitHelper, logger)
 {
     public override async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct)
     {

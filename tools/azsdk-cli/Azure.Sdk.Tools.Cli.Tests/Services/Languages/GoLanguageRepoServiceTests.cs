@@ -23,7 +23,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
             var mockGitHubService = new Mock<IGitHubService>();
             var gitHelper = new GitHelper(mockGitHubService.Object, NullLogger<GitHelper>.Instance);
-            LangService = new GoLanguageRepoService(new ProcessHelper(NullLogger<ProcessHelper>.Instance, Mock.Of<IOutputHelper>()), gitHelper, NullLogger<GoLanguageRepoService>.Instance);
+            LangService = new GoLanguageRepoService(new ProcessHelper(NullLogger<ProcessHelper>.Instance, Mock.Of<IOutputHelper>()), new NpxHelper(NullLogger<NpxHelper>.Instance, Mock.Of<IOutputHelper>()), gitHelper, NullLogger<GoLanguageRepoService>.Instance);
 
             if (!await LangService.CheckDependencies(CancellationToken.None))
             {

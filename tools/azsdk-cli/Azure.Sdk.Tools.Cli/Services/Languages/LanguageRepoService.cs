@@ -78,12 +78,14 @@ public interface ILanguageRepoService
 public class LanguageRepoService : ILanguageRepoService
 {
     protected readonly IProcessHelper _processHelper;
+    protected readonly INpxHelper _npxHelper;
     protected readonly IGitHelper _gitHelper;
     protected readonly ILogger<LanguageRepoService> _logger;
 
-    public LanguageRepoService(IProcessHelper processHelper, IGitHelper gitHelper, ILogger<LanguageRepoService> logger)
+    public LanguageRepoService(IProcessHelper processHelper, INpxHelper npxHelper, IGitHelper gitHelper, ILogger<LanguageRepoService> logger)
     {
         _processHelper = processHelper;
+        _npxHelper = npxHelper;
         _gitHelper = gitHelper;
         _logger = logger;
     }
@@ -282,16 +284,13 @@ public class LanguageRepoService : ILanguageRepoService
             // Convert absolute path to relative path from repo root
             var relativePath = Path.GetRelativePath(packageRepoRoot, packagePath);
 
-            // Build arguments for npx cspell lint
-            var args = new[] {
-                "-y",
-                "cspell", "lint",
-                "--config", cspellConfigPath,
-                "--root", packageRepoRoot,
-                $"." + Path.DirectorySeparatorChar + relativePath + Path.DirectorySeparatorChar + "**"
-            };
 
-            var processResult = await _processHelper.Run(new("npx", args, workingDirectory: packageRepoRoot), ct: default);
+            var npxOptions = new NpxOptions( 
+                null, 
+                ["cspell", "lint", "--config", cspellConfigPath, "--root", packageRepoRoot, $"." + Path.DirectorySeparatorChar + relativePath + Path.DirectorySeparatorChar + "**"], 
+                logOutputStream: true 
+            ); 
+            var processResult = await _npxHelper.Run(npxOptions, ct: default);
             return CreateResponseFromProcessResult(processResult);
         }
         catch (Exception ex)

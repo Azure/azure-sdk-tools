@@ -11,9 +11,10 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// </summary>
 public class GoLanguageRepoService(
     IProcessHelper processHelper,
+    INpxHelper npxHelper,
     IGitHelper gitHelper,
     ILogger<GoLanguageRepoService> logger
-) : LanguageRepoService(processHelper, gitHelper, logger)
+) : LanguageRepoService(processHelper, npxHelper, gitHelper, logger)
 {
     private readonly string compilerName = "go";
     private readonly string compilerNameWindows = "go.exe";

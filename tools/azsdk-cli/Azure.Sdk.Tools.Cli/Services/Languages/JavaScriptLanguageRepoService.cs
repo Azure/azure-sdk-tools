@@ -11,8 +11,8 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// </summary>
 public class JavaScriptLanguageRepoService : LanguageRepoService
 {
-    public JavaScriptLanguageRepoService(IProcessHelper processHelper, IGitHelper gitHelper, ILogger<JavaScriptLanguageRepoService> logger) 
-        : base(processHelper, gitHelper, logger)
+    public JavaScriptLanguageRepoService(IProcessHelper processHelper, INpxHelper npxHelper, IGitHelper gitHelper, ILogger<JavaScriptLanguageRepoService> logger) 
+        : base(processHelper, npxHelper, gitHelper, logger)
     {
     }
 }

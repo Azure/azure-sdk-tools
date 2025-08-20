@@ -10,8 +10,8 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// </summary>
 public class PythonLanguageRepoService : LanguageRepoService
 {
-    public PythonLanguageRepoService(IProcessHelper processHelper, IGitHelper gitHelper, ILogger<PythonLanguageRepoService> logger)
-        : base(processHelper, gitHelper, logger)
+    public PythonLanguageRepoService(IProcessHelper processHelper, INpxHelper npxHelper, IGitHelper gitHelper, ILogger<PythonLanguageRepoService> logger)
+        : base(processHelper, npxHelper, gitHelper, logger)
     {
     }
 

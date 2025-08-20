@@ -11,8 +11,8 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// </summary>
 public class DotNetLanguageRepoService : LanguageRepoService
 {
-    public DotNetLanguageRepoService(IProcessHelper processHelper, IGitHelper gitHelper, ILogger<DotNetLanguageRepoService> logger) 
-        : base(processHelper, gitHelper, logger)
+    public DotNetLanguageRepoService(IProcessHelper processHelper, INpxHelper npxHelper, IGitHelper gitHelper, ILogger<DotNetLanguageRepoService> logger) 
+        : base(processHelper, npxHelper, gitHelper, logger)
     {
     }
 }

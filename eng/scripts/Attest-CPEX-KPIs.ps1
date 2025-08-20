@@ -1,5 +1,5 @@
 Set-StrictMode -Version 3
-. (Join-Path $PSScriptRoot "\..\common\scripts\Helpers\DevOps-WorkItem-Helpers.ps1")
+. (Join-Path $PSScriptRoot ".." common scripts DevOps-WorkItem-Helpers.ps1)
 
 $Incomplete = 0
 $Complete = 1

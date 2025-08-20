@@ -1,0 +1,21 @@
+[
+    {
+        "testcase": "typespec-negative-lookaheads",
+        "query": "title: Does typespec allow negative lookaheads in name validation?\n\nquestion: Hi Team,\nDoes typespec allow negative lookahead for validating names? If not can you share the limitations?\nHere is the pattern we are trying to implement:\n- Length - 4 - 64\n- Alphanumerics and hyphens\n- Can't end with period. Start with a letter\n- Can't start or end with hyphen. Can't us consecutive hyphens\n- Can have spaces but not at the start or end of a name.\n```\nmodel StorageDiscoveryScope {\n@doc(\"Display name of the collection\")\n@pattern(\"^(?! )[a-zA-Z0-9]+(?:[ -][a-zA-Z0-9]+)*(?<! )$\")\n@minLength(4)\n@maxLength(64)\ndisplayName: string;\n```",
+        "expected": {
+            "response": "",
+            "context": ""
+        },
+        "actual": {
+            "response": "",
+            "context": ""
+        },
+        "similarity": 5,
+        "groundedness": 5,
+        "overall_score": 1
+    },
+    {
+        "average_score": 1.0,
+        "total_evals": 1
+    }
+]

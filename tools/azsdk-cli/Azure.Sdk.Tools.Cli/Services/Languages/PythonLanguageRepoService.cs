@@ -1,5 +1,6 @@
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.Cli.Services;
 
@@ -9,12 +10,9 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// </summary>
 public class PythonLanguageRepoService : LanguageRepoService
 {
-    private readonly ILogger<PythonLanguageRepoService> _logger;
-
-    public PythonLanguageRepoService(IProcessHelper processHelper, IGitHelper gitHelper, ILogger<PythonLanguageRepoService> logger)
-        : base(processHelper, gitHelper)
+    public PythonLanguageRepoService(IProcessHelper processHelper, INpxHelper npxHelper, IGitHelper gitHelper, ILogger<PythonLanguageRepoService> logger)
+        : base(processHelper, npxHelper, gitHelper, logger)
     {
-        _logger = logger;
     }
 
     public override async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct = default)

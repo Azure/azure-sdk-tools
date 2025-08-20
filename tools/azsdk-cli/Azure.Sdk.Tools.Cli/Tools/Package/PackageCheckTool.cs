@@ -36,10 +36,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             Command command = new("run-checks", "Run validation checks for SDK packages");
             command.AddOption(SharedOptions.PackagePath);
-
-            var checkTypeOption = new Option<PackageCheckName>(
+            var checkTypeOption = new Option<PackageCheckType>(
                 "--check-type",
-                () => PackageCheckName.All,
+                () => PackageCheckType.All,
                 "The type of check to run")
             {
                 IsRequired = true
@@ -49,9 +48,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             command.SetHandler(async (InvocationContext ctx) =>
             {
                 var packagePath = ctx.ParseResult.GetValueForOption(SharedOptions.PackagePath);
-                var checkName = ctx.ParseResult.GetValueForOption(checkTypeOption);
-
-                await HandleCommandWithOptions(packagePath, checkName, ctx.GetCancellationToken());
+                var checkType = ctx.ParseResult.GetValueForOption(checkTypeOption);
+                await HandleCommandWithOptions(packagePath, checkType, ctx.GetCancellationToken()); 
             });
 
             return command;
@@ -63,21 +61,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             throw new NotImplementedException("Command handling is done in GetCommand SetHandler");
         }
 
-        private async Task HandleCommandWithOptions(string packagePath, PackageCheckName checkName, CancellationToken ct)
-        {
-            var result = await RunPackageCheck(packagePath, checkName, ct);
-
+        private async Task HandleCommandWithOptions(string packagePath, PackageCheckType checkType, CancellationToken ct)
+        {          
+            var result = await RunPackageCheck(packagePath, checkType, ct);
             ExitCode = result.ExitCode;
             output.Output(result);
         }
 
-        [McpServerTool(Name = "azsdk_package_run_check"), Description("Run validation checks for SDK packages. Provide package path and check type (All, Changelog, Dependency).")]
-        public async Task<CLICheckResponse> RunPackageCheck(string packagePath, PackageCheckName checkName, CancellationToken ct = default)
+        [McpServerTool(Name = "azsdk_package_run_check"), Description("Run validation checks for SDK packages. Provide package path and check type (All, Changelog, Dependency, Readme, Cspell).")]
+        public async Task<CLICheckResponse> RunPackageCheck(string packagePath, PackageCheckType checkType, CancellationToken ct = default)
         {
             try
             {
-                logger.LogInformation($"Starting {checkName} check for package at: {packagePath}");
-
+                logger.LogInformation($"Starting {checkType} check for package at: {packagePath}");
                 if (!Directory.Exists(packagePath))
                 {
                     SetFailure(1);
@@ -113,22 +109,24 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     return new CLICheckResponse(1, "", $"Unable to determine language for package at: {packagePath}. Error: {ex.Message}");
                 }
 
-                return checkName switch
+                return checkType switch
                 {
-                    PackageCheckName.All => await RunAllChecks(packagePath, languageService, ct),
-                    PackageCheckName.Changelog => await RunChangelogValidation(packagePath, languageService, ct),
-                    PackageCheckName.Dependency => await RunDependencyCheck(packagePath, languageService, ct),
+                    PackageCheckType.All => await RunAllChecks(packagePath, languageService, ct),
+                    PackageCheckType.Changelog => await RunChangelogValidation(packagePath, languageService, ct),
+                    PackageCheckType.Dependency => await RunDependencyCheck(packagePath, languageService, ct),
+                    PackageCheckType.Readme => await RunReadmeValidation(packagePath, languageService),
+                    PackageCheckType.Cspell => await RunSpellingValidation(packagePath, languageService),
                     _ => throw new ArgumentOutOfRangeException(
-                        nameof(checkName),
-                        checkName,
-                        $"Unknown check type. Valid values are: {string.Join(", ", Enum.GetNames(typeof(PackageCheckName)))}")
+                        nameof(checkType),
+                        checkType,
+                        $"Unknown check type. Valid values are: {string.Join(", ", Enum.GetNames(typeof(PackageCheckType)))}")
                 };
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Unhandled exception while running package check");
                 SetFailure(1);
-                return new CLICheckResponse(1, ex.ToString(), $"Unhandled exception while running {checkName} check");
+                return new CLICheckResponse(1, ex.ToString(), $"Unhandled exception while running {checkType} check");
             }
         }
 
@@ -155,9 +153,25 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 overallSuccess = false;
             }
 
-            if (!overallSuccess)
+            // Run README validation
+            var readmeValidationResult = await languageService.ValidateReadmeAsync(packagePath);
+            results.Add(readmeValidationResult);
+            if (readmeValidationResult.ExitCode != 0)
             {
-                SetFailure(1);
+                overallSuccess = false;
+            }
+
+            // Run spelling check
+            var spellingCheckResult = await languageService.CheckSpellingAsync(packagePath);
+            results.Add(spellingCheckResult);
+            if (spellingCheckResult.ExitCode != 0)
+            {
+                overallSuccess = false;
+            }
+
+            if (!overallSuccess) 
+            { 
+                SetFailure(1); 
             }
 
             var message = overallSuccess ? "All checks completed successfully" : "Some checks failed";
@@ -198,8 +212,38 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return result;
         }
 
+        private async Task<CLICheckResponse> RunReadmeValidation(string packagePath, ILanguageRepoService languageService)
+        {
+            logger.LogInformation("Running README validation");
+            
+            var result = await languageService.ValidateReadmeAsync(packagePath);
+            
+            if (result.ExitCode != 0)
+            {
+                SetFailure(1);
+                return new CLICheckResponse(result.ExitCode, result.CheckStatusDetails, "README validation failed");
+            }
+
+            return result;
+        }
+
+        private async Task<CLICheckResponse> RunSpellingValidation(string packagePath, ILanguageRepoService languageService)
+        {
+            logger.LogInformation("Running spelling validation");
+            
+            var result = await languageService.CheckSpellingAsync(packagePath);
+            
+            if (result.ExitCode != 0)
+            {
+                SetFailure(1);
+                return new CLICheckResponse(result.ExitCode, result.CheckStatusDetails, $"Spelling validation failed");
+            }
+
+            return result;
+        }
+
         // Back-compat overload for callers/tests that don't pass a CancellationToken
-        public Task<CLICheckResponse> RunPackageCheck(string packagePath, PackageCheckName checkName)
-            => RunPackageCheck(packagePath, checkName, ct: default);
+        public Task<CLICheckResponse> RunPackageCheck(string packagePath, PackageCheckType checkType)
+            => RunPackageCheck(packagePath, checkType, ct: default);
     }
 }

@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.Cli.Services;
 
@@ -10,8 +11,8 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// </summary>
 public class DotNetLanguageRepoService : LanguageRepoService
 {
-    public DotNetLanguageRepoService(IProcessHelper processHelper, IGitHelper gitHelper) 
-        : base(processHelper, gitHelper)
+    public DotNetLanguageRepoService(IProcessHelper processHelper, INpxHelper npxHelper, IGitHelper gitHelper, ILogger<DotNetLanguageRepoService> logger) 
+        : base(processHelper, npxHelper, gitHelper, logger)
     {
     }
 }

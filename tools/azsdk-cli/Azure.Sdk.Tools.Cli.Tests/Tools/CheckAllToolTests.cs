@@ -47,7 +47,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public async Task RunPackageCheck_WithAllChecks_ReturnsFailureResult()
         {
             // Act - Using empty temp directory will cause dependency check to fail
-            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckName.All);
+            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.All);
 
             // Assert
             Assert.IsNotNull(result);
@@ -59,7 +59,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public async Task RunPackageCheck_WithChangelogCheck_ReturnsResult()
         {
             // Act
-            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckName.Changelog);
+            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Changelog);
 
             // Assert
             Assert.IsNotNull(result);
@@ -71,12 +71,42 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public async Task RunPackageCheck_WithDependencyCheck_ReturnsResult()
         {
             // Act
-            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckName.Dependency);
+            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Dependency);
 
             // Assert
             Assert.IsNotNull(result);
             // Dependency check may succeed or fail depending on directory contents
             Assert.That(result.ExitCode, Is.GreaterThanOrEqualTo(0));
+        }
+
+        [Test]
+        public async Task RunPackageCheck_WithReadmeCheck_WhenNoReadmeExists_ReturnsFailure()
+        {
+            // Arrange - Empty directory with no README
+
+            // Act
+            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Readme);
+
+            // Assert
+            Assert.IsNotNull(result);
+            Assert.That(result.ExitCode, Is.Not.EqualTo(0), "Should fail when no README exists");
+            Assert.IsNotNull(result.CheckStatusDetails);
+        }
+
+        [Test]
+        public async Task RunPackageCheck_WithSpellingCheck_WhenFileWithTypos_ReturnsFailure()
+        {
+            // Arrange - Create a file with obvious spelling errors
+            var testFile = Path.Combine(_testProjectPath, "test.md");
+            await File.WriteAllTextAsync(testFile, "This file contians obvioius speling erors.");
+
+            // Act
+            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Cspell);
+
+            // Assert
+            Assert.IsNotNull(result);
+            Assert.IsNotNull(result.CheckStatusDetails);
+            Assert.That(result.ExitCode, Is.Not.EqualTo(0));
         }
 
         [Test]
@@ -87,7 +117,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             await File.WriteAllTextAsync(projectFilePath, "<Project Sdk=\"Microsoft.NET.Sdk\"></Project>");
 
             // Act - This will still fail because dotnet commands won't work properly, but test structure is better
-            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckName.All);
+            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.All);
 
             // Assert
             Assert.IsNotNull(result);
@@ -103,7 +133,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             string invalidPath = "/tmp/nonexistent-path-12345";
 
             // Act
-            var result = await _packageCheckTool.RunPackageCheck(invalidPath, PackageCheckName.All);
+            var result = await _packageCheckTool.RunPackageCheck(invalidPath, PackageCheckType.All);
 
             // Assert
             Assert.IsNotNull(result);
@@ -116,7 +146,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public async Task RunPackageCheck_WithValidPath_RunsAllChecks()
         {
             // Act
-            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckName.All);
+            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.All);
 
             // Assert
             Assert.IsNotNull(result);
@@ -133,19 +163,25 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             // Test that all enum values work correctly
 
             // Act - Test all enum values
-            var allResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckName.All);
-            var changelogResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckName.Changelog);
-            var dependencyResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckName.Dependency);
+            var allResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.All);
+            var changelogResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Changelog);
+            var dependencyResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Dependency);
+            var readmeResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Readme);
+            var spellingResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Cspell);
 
             // Assert
             Assert.IsNotNull(allResult);
             Assert.IsNotNull(changelogResult);
             Assert.IsNotNull(dependencyResult);
-
+            Assert.IsNotNull(readmeResult);
+            Assert.IsNotNull(spellingResult);
+            
             // All should execute (may fail due to test environment, but should not error on check type)
             Assert.IsTrue(allResult.ExitCode >= 0);
             Assert.IsTrue(changelogResult.ExitCode >= 0);
             Assert.IsTrue(dependencyResult.ExitCode >= 0);
+            Assert.IsTrue(readmeResult.ExitCode >= 0);
+            Assert.IsTrue(spellingResult.ExitCode >= 0);
         }
     }
 }

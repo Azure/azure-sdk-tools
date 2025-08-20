@@ -7,7 +7,7 @@ using Azure.Sdk.Tools.Cli.Tools.GitHub;
 using Azure.Sdk.Tools.Cli.Tools.Package;
 using Azure.Sdk.Tools.Cli.Tools.Pipeline;
 using Azure.Sdk.Tools.Cli.Tools.ReleasePlan;
-using Azure.Sdk.Tools.Cli.Tools.Template;
+using Azure.Sdk.Tools.Cli.Tools.Example;
 using Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 
 namespace Azure.Sdk.Tools.Cli.Commands

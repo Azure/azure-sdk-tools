@@ -1,5 +1,7 @@
 
 import { logger } from '../utils/logger.js';
+import * as path from 'path';
+import { exists } from 'fs-extra';
 import { runCommand, runCommandOptions } from './utils.js';
 
 export async function formatSdk(packageDirectory: string) {
@@ -32,10 +34,12 @@ export async function updateSnippets(packageDirectory: string) {
 }
 
 export async function lintFix(packageDirectory: string) {
+    const hasSampleFolder = await exists(path.join(packageDirectory, "samples-dev"));
+    const samplesDev = hasSampleFolder ? ' samples-dev' : '';
     logger.info(`Start to fix lint errors in '${packageDirectory}'.`);
     const cwd = packageDirectory;
     const options = { ...runCommandOptions, cwd };
-    const lintFixCommand = 'eslint package.json api-extractor.json src test samples-dev --fix --fix-type';
+    const lintFixCommand = `eslint package.json api-extractor.json src test${samplesDev} --fix --fix-type [problem,suggestion]`;
 
     try {
         await runCommand(`pnpm`, [lintFixCommand], options, true, 300, true);

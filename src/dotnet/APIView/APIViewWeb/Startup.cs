@@ -68,6 +68,7 @@ namespace APIViewWeb
         {
             services.AddApplicationInsightsTelemetry();
             services.AddApplicationInsightsTelemetryProcessor<TelemetryIpAddressFilter>();
+            services.AddAzureAppConfiguration();
 
             services.Configure<CookiePolicyOptions>(options =>
             {
@@ -375,6 +376,7 @@ namespace APIViewWeb
             app.UseCookiePolicy();
             app.UseAuthentication();
             app.UseAuthorization();
+            app.UseAzureAppConfiguration();
             app.UseMiddleware<SwaggerAuthMiddleware>();
             app.UseMiddleware<RequestLoggingMiddleware>();
             app.UseSwagger();

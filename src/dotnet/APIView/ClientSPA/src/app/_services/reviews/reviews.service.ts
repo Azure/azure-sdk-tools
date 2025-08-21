@@ -158,4 +158,12 @@ export class ReviewsService {
     const params = language ? `?language=${encodeURIComponent(language)}` : '';
     return this.http.get<boolean>(`${url}${params}`);
   }
+
+  getIsReviewVersionReviewedByCopilot(reviewId: string, packageVersion?: string): Observable<boolean> {
+    let url = `${this.baseUrl}/${reviewId}/isReviewVersionReviewedByCopilot`;
+    if (packageVersion) {
+      url += `?packageVersion=${encodeURIComponent(packageVersion)}`;
+    }
+    return this.http.get<boolean>(url);
+  }
 }

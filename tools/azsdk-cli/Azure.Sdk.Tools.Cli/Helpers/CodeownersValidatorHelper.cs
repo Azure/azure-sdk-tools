@@ -42,7 +42,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             try
             {
                 // Get user's public organization memberships and evaluate required-org membership inline
-                var memberships = await ValidateOrganizationsAsync(username);
+                var memberships = await GetUserOrganizationsAsync(username);
                 var hasRequiredOrgs = RequiredOrganizations.All(o => memberships.Contains(o));
 
                 // Populate result. Organizations from memberships without having the validator helper mutate the result.
@@ -104,13 +104,11 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         /// <summary>
         /// Validates the user's organization memberships (Microsoft and Azure only).
         /// </summary>
-        private async Task<HashSet<string>> ValidateOrganizationsAsync(string username)
+        private async Task<HashSet<string>> GetUserOrganizationsAsync(string username)
         {
             try
             {
-                var organizations = await githubService.GetPublicOrgMembership(username);
-                var userOrgs = organizations.Select(org => org.Login).ToHashSet(StringComparer.OrdinalIgnoreCase);
-                return userOrgs;
+                return await githubService.GetPublicOrgMembership(username);
             }
             catch (Exception ex)
             {
@@ -126,6 +124,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         {
             try
             {
+                // Write access to the Azure/azure-sdk-for-net repository is a sufficient proxy for knowing if the user has write permissions.
                 var permission = await githubService.HasWritePermission("Azure", "azure-sdk-for-net", username);
                 return permission.Permission.Equals("write", StringComparison.OrdinalIgnoreCase) || 
                         permission.Permission.Equals("admin", StringComparison.OrdinalIgnoreCase);

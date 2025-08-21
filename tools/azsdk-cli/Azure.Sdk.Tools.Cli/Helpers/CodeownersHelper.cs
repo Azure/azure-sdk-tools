@@ -1,43 +1,96 @@
 using System.Text.RegularExpressions;
-using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.CodeownersUtils.Parsing;
 
 namespace Azure.Sdk.Tools.Cli.Helpers
 {
     public interface ICodeownersHelper
     {
-        CodeownersEntry? FindMatchingEntries(IList<CodeownersEntry> entries, string path = null, string serviceLabel = null);
-        CodeownersEntry UpdateCodeownersEntry(
-            CodeownersEntry? existingEntry,
-            string path,
+        public (string, CodeownersEntry) AddCodeownersEntry(
+            string codeownersContent,
+            bool isMgmtPlane,
+            string normalizedPath,
             string serviceLabel,
             List<string> serviceOwners,
             List<string> sourceOwners,
-            bool isAdding,
-            bool isMgmtPlane);
+            bool isAdding);
+        CodeownersEntry UpdateCodeownersEntry(
+            CodeownersEntry? existingEntry,
+            List<string> serviceOwners,
+            List<string> sourceOwners,
+            bool isAdding);
         CodeownersEntry CreateCodeownersEntry(
             string path,
             string serviceLabel,
             List<string> serviceOwners,
             List<string> sourceOwners,
             bool isMgmtPlane);
-        string AddCodeownersEntry(List<CodeownersEntry> codeownersEntries, string codeownersContent, CodeownersEntry codeownersEntry, bool codeownersEntryExists);
+        string AddCodeownersEntryToFile(List<CodeownersEntry> codeownersEntries, string codeownersContent, CodeownersEntry codeownersEntry, bool codeownersEntryExists);
         CodeownersEntry FindAlphabeticalInsertionPoint(List<CodeownersEntry> codeownersEntries, CodeownersEntry codeownersEntry);
-        (List<CodeownersEntry>, int) MergeCodeownerEntries(List<CodeownersEntry> codeownersEntries, int index);
         string ReplaceEntryInLines(string lines, CodeownersEntry targetEntry);
         string FormatCodeownersEntry(CodeownersEntry codeownersEntry);
         (int StartLine, int EndLine) FindBlock(string currentContent, string serviceCategory);
-        string ExtractDirectoryName(string path);
-        string CreateBranchName(string prefix, string identifier);
         List<string> AddOwners(List<string> existingOwners, List<string> ownersToAdd);
         List<string> RemoveOwners(List<string> existingOwners, List<string> ownersToRemove);
     }
 
-    public class CodeownersHelper : ICodeownersHelper
+    public class CodeownersHelper() : ICodeownersHelper
     {
-        // High-level lookup and update methods first (call helpers placed below)
-        public CodeownersEntry? FindMatchingEntries(IList<CodeownersEntry> entries, string path = null, string serviceLabel = null)
+        private static readonly string standardServiceCategory = "# Client Libraries";
+        private static readonly string standardManagementCategory = "# Management Libraries";
+        private const string azureWriteTeamsBlobUrl = "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/azure-sdk-write-teams-blob";
+        
+        public (string, CodeownersEntry) AddCodeownersEntry(
+            string codeownersContent,
+            bool isMgmtPlane,
+            string normalizedPath,
+            string serviceLabel,
+            List<string> serviceOwners,
+            List<string> sourceOwners,
+            bool isAdding)
         {
+            // Find Codeowner Entry with the validated Label or Path            
+            var (startLine, endLine) = isMgmtPlane
+                ? FindBlock(codeownersContent, standardManagementCategory)
+                : FindBlock(codeownersContent, standardServiceCategory);
+
+            var codeownersContentList = codeownersContent.Split("\n").ToList();
+
+            var codeownersEntries = CodeownersParser.ParseCodeownersEntries(codeownersContentList, azureWriteTeamsBlobUrl, startLine, endLine);
+
+
+            // Find existing codeowners entry by path or service label
+            var matchingEntry = FindMatchingEntries(codeownersEntries, normalizedPath, serviceLabel);
+
+            var codeownersEntryExisted = false;
+            var updatedEntry = new CodeownersEntry();
+            if (matchingEntry != null)
+            {
+                updatedEntry = UpdateCodeownersEntry(
+                    matchingEntry, serviceOwners, sourceOwners, isAdding);
+                codeownersEntryExisted = true;
+            }
+            else
+            {
+                updatedEntry = CreateCodeownersEntry(
+                    normalizedPath, serviceLabel, serviceOwners, sourceOwners, isMgmtPlane
+                );
+            }
+
+            // Modify the file
+            var modifiedCodeownersContent = AddCodeownersEntryToFile(codeownersEntries, codeownersContent, updatedEntry, codeownersEntryExisted);
+
+            return (modifiedCodeownersContent, updatedEntry);
+        }
+
+        // High-level lookup and update methods first (call helpers placed below)
+        public static CodeownersEntry? FindMatchingEntries(IList<CodeownersEntry> entries, string path = null, string serviceLabel = null)
+        {
+            var mergedCodeownersEntries = new List<CodeownersEntry>(entries);
+            for (int i = 0; i < mergedCodeownersEntries.Count; i++)
+            {
+                mergedCodeownersEntries = MergeCodeownerEntries(mergedCodeownersEntries, i);
+            }
+
             foreach (var entry in entries)
             {
                 // If serviceLabel is provided, match by ServiceLabels or PRLabels (exact match, case and space insensitive)
@@ -66,12 +119,9 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
         public CodeownersEntry UpdateCodeownersEntry(
             CodeownersEntry? existingEntry,
-            string path,
-            string serviceLabel,
             List<string> serviceOwners,
             List<string> sourceOwners,
-            bool isAdding,
-            bool isMgmtPlane)
+            bool isAdding)
         {
             // Copy constructor for codeownersentry needed
             var updatedCodeownersEntry = new CodeownersEntry(existingEntry);
@@ -124,7 +174,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             return newEntry;
         }
 
-        public string AddCodeownersEntry(List<CodeownersEntry> codeownersEntries, string codeownersContent, CodeownersEntry codeownersEntry, bool codeownersEntryExists)
+        public string AddCodeownersEntryToFile(List<CodeownersEntry> codeownersEntries, string codeownersContent, CodeownersEntry codeownersEntry, bool codeownersEntryExists)
         {
             var lines = codeownersContent.Split('\n').ToList();
 
@@ -194,7 +244,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                     return updatedCodeownersEntry;
                 }
 
-                (codeownersEntriesCopy, i) = MergeCodeownerEntries(codeownersEntriesCopy, i);
+                codeownersEntriesCopy = MergeCodeownerEntries(codeownersEntriesCopy, i);
             }
 
             // If we didn't find an insertion point, append at the end
@@ -214,7 +264,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             return updatedCodeownersEntry;
         }
 
-        public (List<CodeownersEntry>, int) MergeCodeownerEntries(List<CodeownersEntry> codeownersEntries, int index)
+        public static List<CodeownersEntry> MergeCodeownerEntries(List<CodeownersEntry> codeownersEntries, int index)
         {
             var codeownersEntriesCopy = new List<CodeownersEntry>(codeownersEntries);
 
@@ -240,16 +290,12 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                     codeownersEntriesCopy[index] = mergedEntry;
                     codeownersEntriesCopy.RemoveAt(index + 1);
 
-                    if (index - 1 < 0)
-                    {
-                        index = 0;
-                    }
                 }
             }
-            return (codeownersEntriesCopy, index);
+            return codeownersEntriesCopy;
         }
 
-        private bool AreEntriesRelated(CodeownersEntry entry1, CodeownersEntry entry2)
+        private static bool AreEntriesRelated(CodeownersEntry entry1, CodeownersEntry entry2)
         {
             var path1 = entry1.PathExpression?.Trim();
             var path2 = entry2.PathExpression?.Trim();
@@ -520,14 +566,14 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             return (0, lines.Length - 1);
         }
 
-        private (string serviceLabel, string PRLabel) GetPrimaryLabel(CodeownersEntry entry)
+        private static (string serviceLabel, string PRLabel) GetPrimaryLabel(CodeownersEntry entry)
         {
             var serviceLabel = entry.ServiceLabels?.FirstOrDefault(label => !string.IsNullOrWhiteSpace(label)) ?? string.Empty;
             var PRLabel = entry.PRLabels?.FirstOrDefault(label => !string.IsNullOrWhiteSpace(label)) ?? string.Empty;
             return (serviceLabel, PRLabel);
         }
 
-        public string ExtractDirectoryName(string path)
+        public static string ExtractDirectoryName(string path)
         {
             if (string.IsNullOrEmpty(path))
             {
@@ -557,7 +603,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             return normalizedPath;
         }
 
-        private string NormalizeLabel(string input)
+        private static string NormalizeLabel(string input)
         {
             if (string.IsNullOrEmpty(input))
             {
@@ -566,13 +612,13 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             return input.Replace(" ", "").Replace("%", "").Trim();
         }
 
-        public string CreateBranchName(string prefix, string identifier)
+        public static string CreateBranchName(string prefix, string identifier)
         {
             var normalizedIdentifier = NormalizeIdentifier(identifier);
             return $"{prefix}-{normalizedIdentifier}";
         }
 
-        public string NormalizeIdentifier(string input)
+        public static string NormalizeIdentifier(string input)
         {
             var normalizedInput = input
                 .Replace(" - ", "-")

@@ -97,7 +97,7 @@ public class GitConnection
         public Task<CreateBranchStatus> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranchName = "main");
         public Task<bool> IsExistingBranchAsync(string repoOwner, string repoName, string branchName);
         public Task<RepositoryContent> GetContentsSingleAsync(string owner, string repoName, string path, string? branch = null);
-        public Task<IReadOnlyList<Organization>?> GetPublicOrgMembership(string username);
+        public Task<HashSet<string>?> GetPublicOrgMembership(string username);
         public Task<CollaboratorPermissionResponse> HasWritePermission(string owner, string repo, string username);
     }
 
@@ -500,10 +500,11 @@ public class GitConnection
             return contents[0];
         }
 
-        public async Task<IReadOnlyList<Organization>?> GetPublicOrgMembership(string username)
+        public async Task<HashSet<string>?> GetPublicOrgMembership(string username)
         {
             var organizations = await gitHubClient.Organization.GetAllForUser(username);
-            return organizations;
+            var userOrgs = organizations.Select(org => org.Login).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            return userOrgs;
         }
 
         public async Task<CollaboratorPermissionResponse> HasWritePermission(string owner, string repo, string username)

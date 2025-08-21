@@ -133,7 +133,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(content);
         }
 
-        public Task<IReadOnlyList<Organization>?> GetPublicOrgMembership(string username)
+        public Task<HashSet<string>?> GetPublicOrgMembership(string username)
         {
             throw new Exception("Not implemented.");
         }

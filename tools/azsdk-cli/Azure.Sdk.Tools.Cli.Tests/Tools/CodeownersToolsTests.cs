@@ -20,7 +20,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
     {
         private MockGitHubService _mockGithub;
         private Mock<IOutputHelper> _mockOutput;
-        private Mock<ITypeSpecHelper> _mockTypeSpecHelper;
         private ICodeownersHelper _codeownersHelper;
         private Mock<ICodeownersValidatorHelper> _mockCodeownersValidator;
 
@@ -31,7 +30,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         {
             _mockGithub = new MockGitHubService();
             _mockOutput = new Mock<IOutputHelper>();
-            _mockTypeSpecHelper = new Mock<ITypeSpecHelper>();
             _codeownersHelper = new CodeownersHelper();
             _mockCodeownersValidator = new Mock<ICodeownersValidatorHelper>();
 
@@ -39,7 +37,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             _tool = new CodeownersTools(
                 _mockGithub,
                 _mockOutput.Object,
-                _mockTypeSpecHelper.Object,
                 _codeownersHelper,
                 _mockCodeownersValidator.Object);
         }
@@ -48,7 +45,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public async Task Update_InvalidInputs_Throws()
         {
             // both serviceLabel and path empty -> method throws
-            var result = await _tool.UpdateCodeowners("repo", "", "", "", new List<string>(), new List<string>(), false);
+            var result = await _tool.UpdateCodeowners("repo", false, "", "", new List<string>(), new List<string>(), false);
 
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Contains("Service label:  and Path:  are both invalid. At least one must be valid"));
@@ -68,9 +65,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             gh.Setup(s => s.GetContentsSingleAsync(Constants.AZURE_OWNER_PATH, "repo", Constants.AZURE_CODEOWNERS_PATH, It.IsAny<string>()))
                 .ReturnsAsync(new RepositoryContent("CODEOWNERS", ".github/CODEOWNERS", "shaCode", 0, ContentType.File, null, null, null, null, "utf-8", Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("")), null, null));
 
-            var tool = new CodeownersTools(gh.Object, _mockOutput.Object, _mockTypeSpecHelper.Object, _codeownersHelper, _mockCodeownersValidator.Object);
+            var tool = new CodeownersTools(gh.Object, _mockOutput.Object, _codeownersHelper, _mockCodeownersValidator.Object);
 
-            var result = await tool.UpdateCodeowners("repo", "", "", "NonExistService", new List<string>(), new List<string>(), true);
+            var result = await tool.UpdateCodeowners("repo", false, "", "NonExistService", new List<string>(), new List<string>(), true);
 
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Contains("Error: "));
@@ -116,9 +113,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var typespec = new Mock<ITypeSpecHelper>();
             typespec.Setup(t => t.IsTypeSpecProjectForMgmtPlane(It.IsAny<string>())).Returns(false);
 
-            var tool = new CodeownersTools(gh.Object, _mockOutput.Object, typespec.Object, new CodeownersHelper(), validator.Object);
+            var tool = new CodeownersTools(gh.Object, _mockOutput.Object, _codeownersHelper, validator.Object);
 
-            var result = await tool.UpdateCodeowners("repoName", "", "/sdk/newsvc/", "NewSvc", new List<string> { "@a", "@b" }, new List<string> { "@s1", "@s2" }, true);
+            var result = await tool.UpdateCodeowners("repoName", false, "/sdk/newsvc/", "NewSvc", new List<string> { "@a", "@b" }, new List<string> { "@s1", "@s2" }, true);
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Contains("URL:") || result.Contains("Created"));
         }
@@ -158,9 +155,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var typespec = new Mock<ITypeSpecHelper>();
             typespec.Setup(t => t.IsTypeSpecProjectForMgmtPlane(It.IsAny<string>())).Returns(false);
 
-            var tool = new CodeownersTools(gh.Object, _mockOutput.Object, typespec.Object, new CodeownersHelper(), validator.Object);
+            var tool = new CodeownersTools(gh.Object, _mockOutput.Object, _codeownersHelper, validator.Object);
 
-            var result = await tool.UpdateCodeowners("repoName", "", "/sdk/newsvc/", "NewSvc", new List<string> { "@a", "@b" }, new List<string> { "@s1", "@s2" }, true);
+            var result = await tool.UpdateCodeowners("repoName", false, "/sdk/newsvc/", "NewSvc", new List<string> { "@a", "@b" }, new List<string> { "@s1", "@s2" }, true);
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Contains("Failed to create pull request") || result.Contains("Error") || result.Contains("Error: Failed to create pull request"));
         }
@@ -203,7 +200,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var helper = new CodeownersHelper();
             var validator = new Mock<ICodeownersValidatorHelper>();
 
-            var tool = new CodeownersTools(gh.Object, output.Object, typespec.Object, helper, validator.Object);
+            var tool = new CodeownersTools(gh.Object, output.Object, helper, validator.Object);
 
             var result = await tool.ValidateCodeownersEntryForService("test-repo", "Any", null);
             Assert.IsNotNull(result);

@@ -4,6 +4,7 @@ using NUnit.Framework;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Moq;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Helpers
 
@@ -60,7 +61,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             };
 
             // Act
-            var result = codeownersHelper.FindMatchingEntries(entries, serviceLabel: serviceName);
+            var result = CodeownersHelper.FindMatchingEntries(entries, serviceLabel: serviceName);
 
             // Assert
             if (expectedCount == 0)
@@ -89,7 +90,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             };
 
             // Act
-            var result = codeownersHelper.FindMatchingEntries(entries, serviceLabel: null!);
+            var result = CodeownersHelper.FindMatchingEntries(entries, serviceLabel: null!);
 
             // Assert
             Assert.That(result, Is.Null, "Null service name should return no entries");
@@ -109,7 +110,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             };
 
             // Act
-            var result = codeownersHelper.FindMatchingEntries(entries, serviceLabel: "nonexistent");
+            var result = CodeownersHelper.FindMatchingEntries(entries, serviceLabel: "nonexistent");
 
             // Assert
             Assert.That(result, Is.Null);
@@ -135,7 +136,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             var codeownersEntryExists = false;
 
             // Act
-            var result = codeownersHelper.AddCodeownersEntry(new List<CodeownersEntry>(), content, codeownersEntry, codeownersEntryExists);
+            var result = codeownersHelper.AddCodeownersEntryToFile(new List<CodeownersEntry>(), content, codeownersEntry, codeownersEntryExists);
 
             // Assert
             Assert.That(result, Does.Contain("line1"));
@@ -163,7 +164,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             var codeownersEntryExists = true;
 
             // Act
-            var result = codeownersHelper.AddCodeownersEntry(new List<CodeownersEntry>(), content, codeownersEntry, codeownersEntryExists);
+            var result = codeownersHelper.AddCodeownersEntryToFile(new List<CodeownersEntry>(), content, codeownersEntry, codeownersEntryExists);
 
             // Assert
             Assert.That(result, Does.Contain("Test Service"));
@@ -255,7 +256,7 @@ line3";
         [TestCase("add", "Special@Chars!", "add-specialchars")]
         public void TestCreateBranchName(string prefix, string identifier, string expected)
         {
-            var actual = codeownersHelper.CreateBranchName(prefix, identifier);
+            var actual = CodeownersHelper.CreateBranchName(prefix, identifier);
             Assert.That(actual, Does.Match($"{expected}"));
         }
 
@@ -277,7 +278,7 @@ line3";
         [TestCase("Under_Score_Text", "under-score-text")]
         public void TestNormalizeIdentifier(string input, string expected)
         {
-            var actual = codeownersHelper.NormalizeIdentifier(input);
+            var actual = CodeownersHelper.NormalizeIdentifier(input);
             Assert.That(actual, Is.EqualTo(expected));
         }
 

@@ -112,7 +112,7 @@ public class LanguageChecks
             var processResult = await _processHelper.Run(new(command, args, timeout: timeout, workingDirectory: packagePath), ct);
             stopwatch.Stop();
 
-            return CreateResponseFromProcessResult(processResult);
+            return ChecksHelper.CreateResponseFromProcessResult(processResult);
         }
         catch (Exception ex)
         {
@@ -163,7 +163,7 @@ public class LanguageChecks
             var timeout = TimeSpan.FromMinutes(10);
             var processResult = await _processHelper.Run(new(command, args, timeout: timeout, workingDirectory: packagePath), ct: default);
 
-            return CreateResponseFromProcessResult(processResult);
+            return ChecksHelper.CreateResponseFromProcessResult(processResult);
         }
         catch (Exception ex)
         {
@@ -206,7 +206,7 @@ public class LanguageChecks
                 logOutputStream: true 
             ); 
             var processResult = await _npxHelper.Run(npxOptions, ct: default);
-            return CreateResponseFromProcessResult(processResult);
+            return ChecksHelper.CreateResponseFromProcessResult(processResult);
         }
         catch (Exception ex)
         {
@@ -218,15 +218,5 @@ public class LanguageChecks
     public virtual string GetSDKPackagePath(string repo, string packagePath)
     {
         return Path.GetFileName(packagePath);
-    }
-
-    /// <summary>
-    /// Creates a CLICheckResponse from a process result.
-    /// </summary>
-    /// <param name="processResult">The process result to convert</param>
-    /// <returns>CLI check response</returns>
-    protected CLICheckResponse CreateResponseFromProcessResult(ProcessResult processResult)
-    {
-        return new CLICheckResponse(processResult.ExitCode, processResult.Output);
     }
 }

@@ -20,7 +20,7 @@ public interface ILanguageSpecificCheck
     bool CanHandle(string packagePath);
 
     /// <summary>
-    /// Analyzes dependencies for the specific language.
+    /// Analyzes dependencies for the specific package.
     /// </summary>
     /// <param name="packagePath">Path to the package directory</param>
     /// <param name="cancellationToken">Cancellation token</param>

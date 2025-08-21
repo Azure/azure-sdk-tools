@@ -81,7 +81,7 @@ public class GoLanguageSpecificChecks : ILanguageSpecificCheck
         try
         {
             var result = await _processHelper.Run(new ProcessOptions(compilerName, ["mod", "init", moduleName], workingDirectory: packagePath), ct);
-            return CreateResponseFromProcessResult(result);
+            return ChecksHelper.CreateResponseFromProcessResult(result);
         }
         catch (Exception ex)
         {
@@ -100,12 +100,12 @@ public class GoLanguageSpecificChecks : ILanguageSpecificCheck
             var updateResult = await _processHelper.Run(new ProcessOptions(compilerName, ["get", "-u", "all"], workingDirectory: packagePath), ct);
             if (updateResult.ExitCode != 0)
             {
-                return CreateResponseFromProcessResult(updateResult);
+                return ChecksHelper.CreateResponseFromProcessResult(updateResult);
             }
 
             // Now tidy, to cleanup any deps that aren't needed
             var tidyResult = await _processHelper.Run(new ProcessOptions(compilerName, ["mod", "tidy"], workingDirectory: packagePath), ct);
-            return CreateResponseFromProcessResult(tidyResult);
+            return ChecksHelper.CreateResponseFromProcessResult(tidyResult);
         }
         catch (Exception ex)
         {
@@ -122,7 +122,7 @@ public class GoLanguageSpecificChecks : ILanguageSpecificCheck
                 formatterNameWindows, ["-w", "."],
                 workingDirectory: packagePath
             ), ct);
-            return CreateResponseFromProcessResult(result);
+            return ChecksHelper.CreateResponseFromProcessResult(result);
         }
         catch (Exception ex)
         {
@@ -136,7 +136,7 @@ public class GoLanguageSpecificChecks : ILanguageSpecificCheck
         try
         {
             var result = await _processHelper.Run(new ProcessOptions(linterName, ["run"], workingDirectory: packagePath), ct);
-            return CreateResponseFromProcessResult(result);
+            return ChecksHelper.CreateResponseFromProcessResult(result);
         }
         catch (Exception ex)
         {
@@ -150,7 +150,7 @@ public class GoLanguageSpecificChecks : ILanguageSpecificCheck
         try
         {
             var result = await _processHelper.Run(new ProcessOptions(compilerName, ["test", "-v", "-timeout", "1h", "./..."], workingDirectory: packagePath), ct);
-            return CreateResponseFromProcessResult(result);
+            return ChecksHelper.CreateResponseFromProcessResult(result);
         }
         catch (Exception ex)
         {
@@ -164,7 +164,7 @@ public class GoLanguageSpecificChecks : ILanguageSpecificCheck
         try
         {
             var result = await _processHelper.Run(new ProcessOptions(compilerName, ["build"], workingDirectory: packagePath), ct);
-            return CreateResponseFromProcessResult(result);
+            return ChecksHelper.CreateResponseFromProcessResult(result);
         }
         catch (Exception ex)
         {
@@ -182,15 +182,5 @@ public class GoLanguageSpecificChecks : ILanguageSpecificCheck
 
         // ex: sdk/messaging/azservicebus
         return packagePath.Replace(repo, "");
-    }
-
-    /// <summary>
-    /// Creates a CLI check response from a process result
-    /// </summary>
-    /// <param name="processResult">The process result to convert</param>
-    /// <returns>CLI check response</returns>
-    private CLICheckResponse CreateResponseFromProcessResult(ProcessResult processResult)
-    {
-        return new CLICheckResponse(processResult.ExitCode, processResult.Output);
     }
 }

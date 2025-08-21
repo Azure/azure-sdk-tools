@@ -171,7 +171,7 @@ namespace Azure.Tools.GeneratorAgent
             Logger.LogDebug("Created run {RunId} for thread {ThreadId}", run.Id, threadId);
             
             var maxWaitTime = AppSettings.AgentRunMaxWaitTime;
-            var pollingInterval = AppSettings.AgentRunPollingInterval ?? TimeSpan.FromSeconds(5);
+            var pollingInterval = AppSettings.AgentRunPollingInterval;
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             
             RunStatus status;
@@ -185,7 +185,7 @@ namespace Azure.Tools.GeneratorAgent
                 Logger.LogDebug("Run {RunId} status: {Status} (elapsed: {Elapsed:F1}s)", 
                     run.Id, status, stopwatch.Elapsed.TotalSeconds);
                 
-                if (maxWaitTime.HasValue && stopwatch.Elapsed > maxWaitTime.Value)
+                if (stopwatch.Elapsed > maxWaitTime)
                 {
                     Logger.LogError("Agent run {RunId} timed out after {Elapsed:F1}s", 
                         run.Id, stopwatch.Elapsed.TotalSeconds);

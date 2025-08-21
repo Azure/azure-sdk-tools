@@ -100,6 +100,9 @@ public class GitConnection
         public Task<RepositoryContent> GetContentsSingleAsync(string owner, string repoName, string path, string? branch = null);
         public Task<HashSet<string>?> GetPublicOrgMembership(string username);
         public Task<CollaboratorPermissionResponse> HasWritePermission(string owner, string repo, string username);
+        public Task<User?> GetCurrentUserAsync();
+        public Task<bool> IsUserMemberOfOrgAsync(string organization, string username);
+        public Task<bool> MakeOrgMembershipPublicAsync(string organization, string username);
     }
 
     public class GitHubService : GitConnection, IGitHubService
@@ -537,6 +540,48 @@ public class GitConnection
         {
             var permission = await gitHubClient.Repository.Collaborator.ReviewPermission(owner, repo, username);
             return permission;
+        }
+
+        public async Task<User?> GetCurrentUserAsync()
+        {
+            try
+            {
+                return await gitHubClient.User.Current();
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error getting current user from GitHub");
+                return null;
+            }
+        }
+
+        public async Task<bool> IsUserMemberOfOrgAsync(string organization, string username)
+        {
+            try
+            {
+                return await gitHubClient.Organization.Member.CheckMember(organization, username);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error checking if user {Username} is member of organization {Organization}", username, organization);
+                return false;
+            }
+        }
+
+        public async Task<bool> MakeOrgMembershipPublicAsync(string organization, string username)
+        {
+            try
+            {
+                // Make membership public
+                await gitHubClient.Organization.Member.PublicizeMembership(organization, username);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error making membership public for user {Username} in organization {Organization}", 
+                    username, organization);
+                return false;
+            }
         }
     }
 }

@@ -30,6 +30,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         // Command names
         private const string updateCodeownersCommandName = "azsdk_codeowners_update";
         private const string validateCodeownersEntryCommandName = "azsdk_codeowners_validate";
+        private const string publicizeGitHubOrgVisibilityCommandName = "azsdk_publicize_github_org_visibility";
 
         // Core command options
         private readonly Option<string> repoOption = new(["--repo", "-r"], "The repository name") { IsRequired = true };
@@ -40,6 +41,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private readonly Option<string[]> sourceOwnersOption = new(["--source-owners"], "The source owners (space-separated)") { IsRequired = false };
         private readonly Option<bool> isAddingOption = new(["--is-adding"], "Whether to add (true) or remove (false) owners") { IsRequired = false };
         private readonly Option<string> workingBranchOption = new(["--branch"], "Branch to make edits to, only if provided.") { IsRequired = false };
+        private readonly Option<string> organizationOption = new(["--organization", "-o"], "The GitHub organization name") { IsRequired = true };
+        private readonly Option<string> usernameOption = new(["--username", "-u"], "The GitHub username (defaults to current authenticated user)") { IsRequired = false };
 
         public override Command GetCommand()
         {
@@ -62,6 +65,11 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     repoOption,
                     serviceLabelOption,
                     pathOptionOptional
+                },
+                new Command(publicizeGitHubOrgVisibilityCommandName, "Make GitHub organization membership public")
+                {
+                    organizationOption,
+                    usernameOption
                 }
             };
 
@@ -115,6 +123,19 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     validateRepoPath);
                     ctx.ExitCode = ExitCode;
                 output.Output(validateResult);
+                ctx.ExitCode = ExitCode;
+                return;
+            }
+            else if (command == publicizeGitHubOrgVisibilityCommandName)
+            {
+                var organization = commandParser.GetValueForOption(organizationOption);
+                var username = commandParser.GetValueForOption(usernameOption);
+
+                var result = await PublicizeGitHubOrgVisibility(
+                    organization ?? "",
+                    username ?? "");
+                    ctx.ExitCode = ExitCode;
+                output.Output(result);
                 ctx.ExitCode = ExitCode;
                 return;
             }
@@ -373,6 +394,51 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 SetFailure();
                 response.Message += $"Error processing repository: {ex.Message}";
                 return response;
+            }
+        }
+
+        [McpServerTool(Name = "azsdk_publicize_github_org_visibility"), Description("Makes a user's GitHub organization membership public.")]
+        public async Task<string> PublicizeGitHubOrgVisibility(
+            string organization,
+            string username = "")
+        {
+            try
+            {
+                // If no username provided, use the authenticated user
+                if (string.IsNullOrEmpty(username))
+                {
+                    var currentUser = await githubService.GetCurrentUserAsync();
+                    if (currentUser == null)
+                    {
+                        throw new Exception("Could not retrieve current authenticated user. Ensure you're logged into GitHub.");
+                    }
+                    username = currentUser.Login;
+                }
+
+                // Validate that the user is a member of the organization first
+                var isMember = await githubService.IsUserMemberOfOrgAsync(organization, username);
+                if (!isMember)
+                {
+                    throw new Exception($"User '{username}' is not a member of organization '{organization}' or membership cannot be verified.");
+                }
+
+                // Make membership public
+                var result = await githubService.MakeOrgMembershipPublicAsync(organization, username);
+                
+                if (result)
+                {
+                    return $"Successfully made {username}'s membership in '{organization}' public.";
+                }
+                else
+                {
+                    throw new Exception($"Failed to make membership public for {username} in organization '{organization}'.");
+                }
+            }
+            catch (Exception ex)
+            {
+                SetFailure();
+                logger.LogError($"Error updating GitHub organization membership visibility: {ex}");
+                return $"Error: {ex.Message}";
             }
         }
 

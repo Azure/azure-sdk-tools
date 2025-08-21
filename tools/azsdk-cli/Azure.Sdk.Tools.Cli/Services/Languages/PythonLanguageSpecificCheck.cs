@@ -51,125 +51,52 @@ public class PythonLanguageSpecificCheck : ILanguageSpecificCheck
         return false;
     }
 
+
     public async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct = default)
     {
-        _logger.LogInformation("Starting Python-specific dependency analysis for package at {PackagePath}", packagePath);
-
         try
         {
-            var issues = new List<string>();
+            _logger.LogInformation($"Starting dependency analysis for Python project at: {packagePath}");
 
-            // Check for requirements.txt
-            var requirementsPath = Path.Combine(packagePath, "requirements.txt");
-            if (File.Exists(requirementsPath))
+            // Find the repository root from the package path using GitHelper
+            var repoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
+            _logger.LogInformation("Found repository root at: {RepoRoot}", repoRoot);
+
+            // Construct path to tox.ini from repository root
+            var toxConfigPath = Path.Combine(repoRoot, "eng", "tox", "tox.ini");
+
+            // Verify the tox.ini file exists
+            if (!File.Exists(toxConfigPath))
             {
-                var requirements = await File.ReadAllTextAsync(requirementsPath, ct);
-                _logger.LogDebug("Found requirements.txt with {Length} characters", requirements.Length);
-                
-                await ValidatePythonRequirements(requirements, issues, ct);
+                _logger.LogError("Tox configuration file not found at: {ToxConfigPath}", toxConfigPath);
+                return new CLICheckResponse(1, "", $"Tox configuration file not found at: {toxConfigPath}");
             }
 
-            // Check for setup.py
-            var setupPyPath = Path.Combine(packagePath, "setup.py");
-            if (File.Exists(setupPyPath))
+            _logger.LogInformation("Using tox configuration file: {ToxConfigPath}", toxConfigPath);
+
+            // Run tox for dependency analysis
+            var command = "tox";
+            var args = new[] { "run", "-e", "mindependency", "-c", toxConfigPath, "--root", "." };
+
+            _logger.LogInformation("Executing command: {Command} {Arguments}", command, string.Join(" ", args));
+            var timeout = TimeSpan.FromMinutes(5);
+            var result = await _processHelper.Run(new(command, args, workingDirectory: packagePath, timeout: timeout), ct);
+
+            if (result.ExitCode == 0)
             {
-                var setupContent = await File.ReadAllTextAsync(setupPyPath, ct);
-                _logger.LogDebug("Found setup.py with {Length} characters", setupContent.Length);
-                
-                await ValidateSetupPyDependencies(setupContent, issues, ct);
+                _logger.LogInformation("Dependency analysis completed successfully with exit code 0");
+                return new CLICheckResponse(result.ExitCode, result.Output);
             }
-
-            // Check for pyproject.toml
-            var pyprojectPath = Path.Combine(packagePath, "pyproject.toml");
-            if (File.Exists(pyprojectPath))
+            else
             {
-                var pyprojectContent = await File.ReadAllTextAsync(pyprojectPath, ct);
-                _logger.LogDebug("Found pyproject.toml with {Length} characters", pyprojectContent.Length);
-                
-                await ValidatePyprojectDependencies(pyprojectContent, issues, ct);
+                _logger.LogWarning("Dependency analysis failed with exit code {ExitCode}", result.ExitCode);
+                return new CLICheckResponse(result.ExitCode, result.Output, "Process failed");
             }
-
-            var statusDetails = issues.Any() ? string.Join("\n", issues) : "Python dependency analysis completed successfully";
-            var exitCode = issues.Any() ? 1 : 0;
-
-            return new CLICheckResponse(exitCode, statusDetails, 
-                exitCode == 0 ? "Python dependencies are valid" : "Python dependency issues found");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error during Python dependency analysis");
-            return new CLICheckResponse(1, ex.ToString(), $"Python dependency analysis failed: {ex.Message}");
+            _logger.LogError(ex, "Exception occurred during dependency analysis");
+            return new CookbookCLICheckResponse(0, $"Failed to run dependency analysis. Ensure tox is installed. Error: {ex.Message}", "https://docs.python.org/3/tutorial/venv.html");
         }
-    }
-
-    private async Task ValidatePythonRequirements(string requirements, List<string> issues, CancellationToken cancellationToken)
-    {
-        if (string.IsNullOrWhiteSpace(requirements))
-        {
-            issues.Add("requirements.txt is empty");
-            return;
-        }
-
-        var lines = requirements.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-        foreach (var line in lines)
-        {
-            var trimmed = line.Trim();
-            if (trimmed.StartsWith("#") || string.IsNullOrEmpty(trimmed))
-            {
-                continue;
-            }
-
-            // Check for version constraints
-            if (!trimmed.Contains("==") && !trimmed.Contains(">=") && !trimmed.Contains("~="))
-            {
-                issues.Add($"Requirement '{trimmed}' should specify version constraints");
-            }
-        }
-
-        await Task.CompletedTask;
-    }
-
-    private async Task ValidateSetupPyDependencies(string setupContent, List<string> issues, CancellationToken cancellationToken)
-    {
-        if (string.IsNullOrWhiteSpace(setupContent))
-        {
-            issues.Add("setup.py is empty");
-            return;
-        }
-
-        // Check for basic setup.py structure
-        if (!setupContent.Contains("setup("))
-        {
-            issues.Add("setup.py does not contain setup() function call");
-        }
-
-        // Check for required metadata
-        var requiredFields = new[] { "name", "version", "description", "author" };
-        foreach (var field in requiredFields)
-        {
-            if (!setupContent.Contains($"{field}="))
-            {
-                issues.Add($"setup.py missing required field: {field}");
-            }
-        }
-
-        await Task.CompletedTask;
-    }
-
-    private async Task ValidatePyprojectDependencies(string pyprojectContent, List<string> issues, CancellationToken cancellationToken)
-    {
-        if (string.IsNullOrWhiteSpace(pyprojectContent))
-        {
-            issues.Add("pyproject.toml is empty");
-            return;
-        }
-
-        // Basic TOML structure validation
-        if (!pyprojectContent.Contains("[project]") && !pyprojectContent.Contains("[tool.setuptools]"))
-        {
-            issues.Add("pyproject.toml should contain [project] or [tool.setuptools] section");
-        }
-
-        await Task.CompletedTask;
     }
 }

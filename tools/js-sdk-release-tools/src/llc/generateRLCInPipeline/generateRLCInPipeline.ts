@@ -25,9 +25,6 @@ import { isRushRepo } from "../../common/rushUtils.js";
 import { formatSdk, updateSnippets } from "../../common/devToolUtils.js";
 import { RunMode } from "../../common/types.js";
 import { exists } from 'fs-extra';
-import { C } from "vitest/dist/chunks/reporters.d.BFLkQcL6.js";
-import { cat } from "shelljs";
-import { error } from "console";
 
 export async function generateRLCInPipeline(options: {
     sdkRepo: string;

@@ -37,7 +37,7 @@ def retrieve_tenant_id(channel: str):
     storage_blob_account = os.environ["STORAGE_BLOB_ACCOUNT"]
     blob_service_client = BlobServiceClient(
         account_url=f"https://{storage_blob_account}.blob.core.windows.net",
-        credential = credential
+        credential=credential
 
     )
     container_name = os.environ["BOT_CONFIG_CONTAINER"]
@@ -62,7 +62,7 @@ async def process_file(input_file: str, output_file: str, scenario: str, is_bot:
     bot_service_endpoint = os.environ.get("BOT_SERVICE_ENDPOINT", None) 
     api_url = f"{bot_service_endpoint}/completion" if bot_service_endpoint is not None else "http://localhost:8088/completion"
     start_time = time.time()
-    tenant_id = retrieve_tenant_id(scenario_to_channel[scenario])
+    tenant_id = retrieve_tenant_id(scenario_to_channel[scenario] if scenario in scenario_to_channel else scenario)
     
     outputFile = open(output_file, 'a', encoding='utf-8')
     with open(input_file, "r", encoding="utf-8") as f:

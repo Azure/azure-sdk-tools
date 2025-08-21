@@ -45,7 +45,7 @@ if __name__ == "__main__":
     storage_blob_account = os.environ["STORAGE_BLOB_ACCOUNT"]
     blob_service_client = BlobServiceClient(
         account_url=f"https://{storage_blob_account}.blob.core.windows.net",
-        credential = credential
+        credential=credential
 
     )
     container_name = os.environ["AI_ONLINE_PERFORMANCE_EVALUATION_STORAGE_CONTAINER"]

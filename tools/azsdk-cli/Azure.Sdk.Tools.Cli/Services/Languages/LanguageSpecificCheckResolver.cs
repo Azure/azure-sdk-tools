@@ -38,8 +38,8 @@ public class LanguageSpecificCheckResolver
 
         _logger.LogDebug("Resolving language-specific check for package at {PackagePath}", packagePath);
 
-        // Find specific language implementations first (excluding default)
-        var specificLanguageCheck = _languageChecks.CanHandle(packagePath);
+        // Find specific language implementations
+        var specificLanguageCheck = _languageChecks.FirstOrDefault(check => check.CanHandle(packagePath));
         
         if (specificLanguageCheck != null)
         {

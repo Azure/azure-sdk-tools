@@ -17,7 +17,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         private Mock<IGitHelper> _mockGitHelper;
         private Mock<ILogger<LanguageChecks>> _mockLanguageChecksLogger;
         private Mock<ILogger<PythonLanguageSpecificCheck>> _mockPythonLogger;
-        private Mock<ILogger<DefaultLanguageSpecificCheck>> _mockDefaultLogger;
         private Mock<ILogger<LanguageSpecificCheckResolver>> _mockResolverLogger;
         private LanguageChecks _languageChecks;
         private PackageCheckTool _packageCheckTool;
@@ -33,14 +32,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             _mockGitHelper = new Mock<IGitHelper>();
             _mockLanguageChecksLogger = new Mock<ILogger<LanguageChecks>>();
             _mockPythonLogger = new Mock<ILogger<PythonLanguageSpecificCheck>>();
-            _mockDefaultLogger = new Mock<ILogger<DefaultLanguageSpecificCheck>>();
             _mockResolverLogger = new Mock<ILogger<LanguageSpecificCheckResolver>>();
 
             // Create language-specific check implementations with mocked dependencies
             var pythonCheck = new PythonLanguageSpecificCheck(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _mockPythonLogger.Object);
-            var defaultCheck = new DefaultLanguageSpecificCheck(_mockDefaultLogger.Object);
             
-            var languageChecks = new List<ILanguageSpecificCheck> { pythonCheck, defaultCheck };
+            var languageChecks = new List<ILanguageSpecificCheck> { pythonCheck };
             var resolver = new LanguageSpecificCheckResolver(languageChecks, _mockResolverLogger.Object);
             
             _languageChecks = new LanguageChecks(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _mockLanguageChecksLogger.Object, resolver);

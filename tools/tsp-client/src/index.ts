@@ -109,7 +109,8 @@ const parser = yargs(hideBin(process.argv))
         })
         .option("emitter-options", {
           type: "string",
-          description: "The options to pass to the emitter",
+          description:
+            'Semi-colon separated set of options to pass to the emitter. Options should be in the following format: "<emitter name>.<option name>=<value>;<emitter name>.<option name>=<value>;"',
         })
         .option("commit", {
           type: "string",
@@ -135,7 +136,17 @@ const parser = yargs(hideBin(process.argv))
           type: "boolean",
           description: "Update the library if it exists, keeping extra tsp-location.yaml data",
           default: false,
-        });
+        })
+        .example([
+          [
+            "tsp-client init --tsp-config <path or url to TypeSpec project tspconfig.yaml file>",
+            "Initialize a client library from a TypeSpec project. Run command from the root of the repository.",
+          ],
+          [
+            'tsp-client init --tsp-config <path or url to TypeSpec project tspconfig.yaml file> --emitter-options @azure-tools/typespec-python.package-name="azure-widget"',
+            "Specify emitter options to be used when initializing a client library",
+          ],
+        ]);
     },
     async (argv: any) => {
       argv["output-dir"] = resolveOutputDir(argv);
@@ -163,7 +174,8 @@ const parser = yargs(hideBin(process.argv))
       return yargs
         .options("emitter-options", {
           type: "string",
-          description: "The options to pass to the emitter",
+          description:
+            'Semi-colon separated set of options to pass to the emitter. Options should be in the following format: "<emitter name>.<option name>=<value>;<emitter name>.<option name>=<value>;"',
         })
         .options("save-inputs", {
           type: "boolean",
@@ -176,7 +188,17 @@ const parser = yargs(hideBin(process.argv))
         .option("trace", {
           type: "array",
           description: "Enable tracing during compile",
-        });
+        })
+        .example([
+          [
+            "tsp-client generate",
+            "Generate from a the TypeSpec project that's already been synced under TempTypeSpecFiles/",
+          ],
+          [
+            'tsp-client generate --emitter-options @azure-tools/typespec-python.package-name="azure-widget"',
+            "Specify emitter options to be used when generating",
+          ],
+        ]);
     },
     async (argv: any) => {
       argv["output-dir"] = resolveOutputDir(argv);
@@ -204,9 +226,10 @@ const parser = yargs(hideBin(process.argv))
           type: "string",
           description: "Path to local spec repo",
         })
-        .option("emitter-options", {
+        .options("emitter-options", {
           type: "string",
-          description: "The options to pass to the emitter",
+          description:
+            'Semi-colon separated set of options to pass to the emitter. Options should be in the following format: <emitter name>.<option name>=<value>;<emitter name>.<option name>=<value>;"',
         })
         .option("save-inputs", {
           type: "boolean",
@@ -219,7 +242,14 @@ const parser = yargs(hideBin(process.argv))
         .option("trace", {
           type: "array",
           description: "Enable tracing during compile",
-        });
+        })
+        .example([
+          ["tsp-client update", "Update a client library from a TypeSpec project"],
+          [
+            'tsp-client update --emitter-options @azure-tools/typespec-python.package-name="azure-widget"',
+            "Specify emitter options to be used when updating a client library",
+          ],
+        ]);
     },
     async (argv: any) => {
       argv["output-dir"] = resolveOutputDir(argv);

@@ -53,6 +53,7 @@ public class LanguageChecks
         
         if (languageSpecificCheck == null)
         {
+            _logger.LogError("No language-specific check handler found for package at {PackagePath}. Supported languages may not include this package type.", packagePath);
             return new CLICheckResponse(
                 exitCode: 1, 
                 checkStatusDetails: $"No language-specific check handler found for package at {packagePath}. Supported languages may not include this package type.",

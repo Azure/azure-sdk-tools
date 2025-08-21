@@ -58,19 +58,4 @@ public class LanguageSpecificCheckResolver
     /// <returns>Collection of all available language check services</returns>
     public IEnumerable<ILanguageSpecificCheck> GetAllLanguageChecks() => _languageChecks;
 
-    /// <summary>
-    /// Gets a language-specific check service by language name.
-    /// </summary>
-    /// <param name="languageName">Name of the language</param>
-    /// <returns>Language-specific check service, or null if not found</returns>
-    public ILanguageSpecificCheck? GetLanguageCheckByName(string languageName)
-    {
-        if (string.IsNullOrWhiteSpace(languageName))
-        {
-            return null;
-        }
-
-        return _languageChecks.FirstOrDefault(check => 
-            string.Equals(check.SupportedLanguage, languageName, StringComparison.OrdinalIgnoreCase));
-    }
 }

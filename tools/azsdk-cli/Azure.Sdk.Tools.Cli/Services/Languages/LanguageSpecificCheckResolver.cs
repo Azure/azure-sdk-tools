@@ -1,0 +1,86 @@
+using Microsoft.Extensions.Logging;
+
+namespace Azure.Sdk.Tools.Cli.Services;
+
+/// <summary>
+/// Resolves the appropriate language-specific check implementation based on package contents.
+/// Uses composition pattern instead of inheritance.
+/// </summary>
+public class LanguageSpecificCheckResolver
+{
+    private readonly IEnumerable<ILanguageSpecificCheck> _languageChecks;
+    private readonly ILogger<LanguageSpecificCheckResolver> _logger;
+
+    public LanguageSpecificCheckResolver(
+        IEnumerable<ILanguageSpecificCheck> languageChecks,
+        ILogger<LanguageSpecificCheckResolver> logger)
+    {
+        _languageChecks = languageChecks ?? throw new ArgumentNullException(nameof(languageChecks));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    /// <summary>
+    /// Gets the appropriate language-specific check service for the given package path.
+    /// </summary>
+    /// <param name="packagePath">Path to the package directory</param>
+    /// <returns>Language-specific check service that can handle the package, or default implementation</returns>
+    public ILanguageSpecificCheck GetLanguageCheck(string packagePath)
+    {
+        if (string.IsNullOrWhiteSpace(packagePath))
+        {
+            throw new ArgumentException("Package path cannot be null or empty", nameof(packagePath));
+        }
+
+        if (!Directory.Exists(packagePath))
+        {
+            throw new ArgumentException($"Package path does not exist: {packagePath}", nameof(packagePath));
+        }
+
+        _logger.LogDebug("Resolving language-specific check for package at {PackagePath}", packagePath);
+
+        // Find specific language implementations first (excluding default)
+        var specificLanguageCheck = _languageChecks
+            .Where(check => check.SupportedLanguage != "Default")
+            .FirstOrDefault(check => check.CanHandle(packagePath));
+        
+        if (specificLanguageCheck != null)
+        {
+            _logger.LogInformation("Selected {Language} check service for package at {PackagePath}", 
+                specificLanguageCheck.SupportedLanguage, packagePath);
+            return specificLanguageCheck;
+        }
+
+        // Fall back to default implementation
+        var defaultCheck = _languageChecks.FirstOrDefault(check => check.SupportedLanguage == "Default");
+        if (defaultCheck != null)
+        {
+            _logger.LogInformation("Using default check service for package at {PackagePath} (no specific language detected)", packagePath);
+            return defaultCheck;
+        }
+
+        // This should not happen if DefaultLanguageSpecificCheck is registered
+        throw new InvalidOperationException("No language-specific check services are available, including default implementation");
+    }
+
+    /// <summary>
+    /// Gets all available language-specific check services.
+    /// </summary>
+    /// <returns>Collection of all available language check services</returns>
+    public IEnumerable<ILanguageSpecificCheck> GetAllLanguageChecks() => _languageChecks;
+
+    /// <summary>
+    /// Gets a language-specific check service by language name.
+    /// </summary>
+    /// <param name="languageName">Name of the language</param>
+    /// <returns>Language-specific check service, or null if not found</returns>
+    public ILanguageSpecificCheck? GetLanguageCheckByName(string languageName)
+    {
+        if (string.IsNullOrWhiteSpace(languageName))
+        {
+            return null;
+        }
+
+        return _languageChecks.FirstOrDefault(check => 
+            string.Equals(check.SupportedLanguage, languageName, StringComparison.OrdinalIgnoreCase));
+    }
+}

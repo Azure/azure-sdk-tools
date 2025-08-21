@@ -22,13 +22,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     {
         private readonly ILogger<PackageCheckTool> logger;
         private readonly IOutputHelper output;
-        private readonly ILanguageRepoServiceFactory languageRepoServiceFactory;
+        private readonly LanguageChecks languageChecks;
 
-        public PackageCheckTool(ILogger<PackageCheckTool> logger, IOutputHelper output, ILanguageRepoServiceFactory languageRepoServiceFactory) : base()
+        public PackageCheckTool(ILogger<PackageCheckTool> logger, IOutputHelper output, LanguageChecks languageChecks) : base()
         {
             this.logger = logger;
             this.output = output;
-            this.languageRepoServiceFactory = languageRepoServiceFactory;
+            this.languageChecks = languageChecks;
             CommandHierarchy = [SharedCommandGroups.Package];
         }
 
@@ -80,42 +80,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     return new CLICheckResponse(1, "", $"Package path does not exist: {packagePath}");
                 }
 
-                // Create language service
-                ILanguageRepoService languageService;
-                try
-                {
-                    languageService = languageRepoServiceFactory.GetService(packagePath);
-                    logger.LogDebug($"Retrieved language service: {languageService.GetType().Name}");
-                }
-                catch (ArgumentException ex)
-                {
-                    SetFailure(1);
-                    return new CLICheckResponse(1, "", $"Invalid package path: {ex.Message}");
-                }
-                catch (DirectoryNotFoundException ex)
-                {
-                    SetFailure(1);
-                    return new CLICheckResponse(1, "", $"Package directory not found: {ex.Message}");
-                }
-                catch (NotSupportedException ex)
-                {
-                    SetFailure(1);
-                    return new CLICheckResponse(1, "", $"Unsupported language: {ex.Message}");
-                }
-                catch (Exception ex)
-                {
-                    SetFailure(1);
-                    logger.LogError(ex, "Failed to create language service");
-                    return new CLICheckResponse(1, "", $"Unable to determine language for package at: {packagePath}. Error: {ex.Message}");
-                }
-
                 return checkType switch
                 {
-                    PackageCheckType.All => await RunAllChecks(packagePath, languageService, ct),
-                    PackageCheckType.Changelog => await RunChangelogValidation(packagePath, languageService, ct),
-                    PackageCheckType.Dependency => await RunDependencyCheck(packagePath, languageService, ct),
-                    PackageCheckType.Readme => await RunReadmeValidation(packagePath, languageService),
-                    PackageCheckType.Cspell => await RunSpellingValidation(packagePath, languageService),
+                    PackageCheckType.All => await RunAllChecks(packagePath, ct),
+                    PackageCheckType.Changelog => await RunChangelogValidation(packagePath, ct),
+                    PackageCheckType.Dependency => await RunDependencyCheck(packagePath, ct),
+                    PackageCheckType.Readme => await RunReadmeValidation(packagePath),
+                    PackageCheckType.Cspell => await RunSpellingValidation(packagePath),
                     _ => throw new ArgumentOutOfRangeException(
                         nameof(checkType),
                         checkType,
@@ -130,7 +101,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
         }
 
-        private async Task<CLICheckResponse> RunAllChecks(string packagePath, ILanguageRepoService languageService, CancellationToken ct)
+        private async Task<CLICheckResponse> RunAllChecks(string packagePath, CancellationToken ct)
         {
             logger.LogInformation("Running all validation checks");
 
@@ -138,7 +109,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             var overallSuccess = true;
 
             // Run dependency check
-            var dependencyCheckResult = await languageService.AnalyzeDependenciesAsync(packagePath, ct);
+            var dependencyCheckResult = await languageChecks.AnalyzeDependenciesAsync(packagePath, ct);
             results.Add(dependencyCheckResult);
             if (dependencyCheckResult.ExitCode != 0)
             {
@@ -146,7 +117,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             // Run changelog validation
-            var changelogValidationResult = await languageService.ValidateChangelogAsync(packagePath, ct);
+            var changelogValidationResult = await languageChecks.ValidateChangelogAsync(packagePath, ct);
             results.Add(changelogValidationResult);
             if (changelogValidationResult.ExitCode != 0)
             {
@@ -154,7 +125,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             // Run README validation
-            var readmeValidationResult = await languageService.ValidateReadmeAsync(packagePath);
+            var readmeValidationResult = await languageChecks.ValidateReadmeAsync(packagePath);
             results.Add(readmeValidationResult);
             if (readmeValidationResult.ExitCode != 0)
             {
@@ -162,7 +133,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             // Run spelling check
-            var spellingCheckResult = await languageService.CheckSpellingAsync(packagePath);
+            var spellingCheckResult = await languageChecks.CheckSpellingAsync(packagePath);
             results.Add(spellingCheckResult);
             if (spellingCheckResult.ExitCode != 0)
             {
@@ -182,11 +153,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 : new CLICheckResponse(1, combinedOutput, message);
         }
 
-        private async Task<CLICheckResponse> RunChangelogValidation(string packagePath, ILanguageRepoService languageService, CancellationToken ct)
+        private async Task<CLICheckResponse> RunChangelogValidation(string packagePath, CancellationToken ct)
         {
             logger.LogInformation("Running changelog validation");
 
-            var result = await languageService.ValidateChangelogAsync(packagePath, ct);
+            var result = await languageChecks.ValidateChangelogAsync(packagePath, ct);
 
             if (result.ExitCode != 0)
             {
@@ -197,11 +168,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return result;
         }
 
-        private async Task<CLICheckResponse> RunDependencyCheck(string packagePath, ILanguageRepoService languageService, CancellationToken ct)
+        private async Task<CLICheckResponse> RunDependencyCheck(string packagePath, CancellationToken ct)
         {
             logger.LogInformation("Running dependency check");
 
-            var result = await languageService.AnalyzeDependenciesAsync(packagePath, ct);
+            var result = await languageChecks.AnalyzeDependenciesAsync(packagePath, ct);
 
             if (result.ExitCode != 0)
             {
@@ -212,11 +183,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return result;
         }
 
-        private async Task<CLICheckResponse> RunReadmeValidation(string packagePath, ILanguageRepoService languageService)
+        private async Task<CLICheckResponse> RunReadmeValidation(string packagePath)
         {
             logger.LogInformation("Running README validation");
             
-            var result = await languageService.ValidateReadmeAsync(packagePath);
+            var result = await languageChecks.ValidateReadmeAsync(packagePath);
             
             if (result.ExitCode != 0)
             {
@@ -227,11 +198,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return result;
         }
 
-        private async Task<CLICheckResponse> RunSpellingValidation(string packagePath, ILanguageRepoService languageService)
+        private async Task<CLICheckResponse> RunSpellingValidation(string packagePath)
         {
             logger.LogInformation("Running spelling validation");
             
-            var result = await languageService.CheckSpellingAsync(packagePath);
+            var result = await languageChecks.CheckSpellingAsync(packagePath);
             
             if (result.ExitCode != 0)
             {

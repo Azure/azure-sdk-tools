@@ -78,48 +78,51 @@ namespace Azure.Sdk.Tools.Cli.Tools
             var command = ctx.ParseResult.CommandResult.Command.Name;
             var commandParser = ctx.ParseResult;
 
-            switch (command)
+            if (command == updateCodeownersCommandName)
             {
-                case updateCodeownersCommandName:
-                    var repoValue = commandParser.GetValueForOption(repoOption);
-                    var isMgmtPlaneValue = commandParser.GetValueForOption(isMgmtPlaneOption);
-                    var pathValue = commandParser.GetValueForOption(pathOptionOptional);
-                    var serviceLabelValue = commandParser.GetValueForOption(serviceLabelOption);
-                    var serviceOwnersValue = commandParser.GetValueForOption(serviceOwnersOption);
-                    var sourceOwnersValue = commandParser.GetValueForOption(sourceOwnersOption);
-                    var isAddingValue = commandParser.GetValueForOption(isAddingOption);
-                    var workingBranchValue = commandParser.GetValueForOption(workingBranchOption);
+                var repoValue = commandParser.GetValueForOption(repoOption);
+                var isMgmtPlaneValue = commandParser.GetValueForOption(isMgmtPlaneOption);
+                var pathValue = commandParser.GetValueForOption(pathOptionOptional);
+                var serviceLabelValue = commandParser.GetValueForOption(serviceLabelOption);
+                var serviceOwnersValue = commandParser.GetValueForOption(serviceOwnersOption);
+                var sourceOwnersValue = commandParser.GetValueForOption(sourceOwnersOption);
+                var isAddingValue = commandParser.GetValueForOption(isAddingOption);
+                var workingBranchValue = commandParser.GetValueForOption(workingBranchOption);
 
-                    var addResult = await UpdateCodeowners(
-                        repoValue ?? "",
-                        isMgmtPlaneValue,
-                        pathValue ?? "",
-                        serviceLabelValue ?? "",
-                        serviceOwnersValue?.ToList() ?? new List<string>(),
-                        sourceOwnersValue?.ToList() ?? new List<string>(),
-                        isAddingValue,
-                        workingBranchValue ?? "");
-                        ctx.ExitCode = ExitCode;
-                    output.Output(addResult);
+                var addResult = await UpdateCodeowners(
+                    repoValue ?? "",
+                    isMgmtPlaneValue,
+                    pathValue ?? "",
+                    serviceLabelValue ?? "",
+                    serviceOwnersValue?.ToList() ?? new List<string>(),
+                    sourceOwnersValue?.ToList() ?? new List<string>(),
+                    isAddingValue,
+                    workingBranchValue ?? "");
                     ctx.ExitCode = ExitCode;
-                    return;
-                case validateCodeownersEntryCommandName:
-                    var validateRepo = commandParser.GetValueForOption(repoOption);
-                    var validateServiceLabel = commandParser.GetValueForOption(serviceLabelOption);
-                    var validateRepoPath = commandParser.GetValueForOption(pathOptionOptional);
+                output.Output(addResult);
+                ctx.ExitCode = ExitCode;
+                return;
+            }
+            else if (command == validateCodeownersEntryCommandName)
+            {
+                var validateRepo = commandParser.GetValueForOption(repoOption);
+                var validateServiceLabel = commandParser.GetValueForOption(serviceLabelOption);
+                var validateRepoPath = commandParser.GetValueForOption(pathOptionOptional);
 
-                    var validateResult = await ValidateCodeownersEntryForService(
-                        validateRepo ?? "",
-                        validateServiceLabel,
-                        validateRepoPath);
-                        ctx.ExitCode = ExitCode;
-                    output.Output(validateResult);
+                var validateResult = await ValidateCodeownersEntryForService(
+                    validateRepo ?? "",
+                    validateServiceLabel,
+                    validateRepoPath);
                     ctx.ExitCode = ExitCode;
-                    return;
-                default:
-                    SetFailure();
-                    output.OutputError($"Unknown command: '{command}'");
-                    return;
+                output.Output(validateResult);
+                ctx.ExitCode = ExitCode;
+                return;
+            }
+            else
+            {
+                SetFailure();
+                output.OutputError($"Unknown command: '{command}'");
+                return;
             }
         }
 

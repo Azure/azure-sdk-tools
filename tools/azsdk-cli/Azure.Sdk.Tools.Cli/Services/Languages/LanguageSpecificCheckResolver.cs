@@ -8,11 +8,11 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// </summary>
 public class LanguageSpecificCheckResolver
 {
-    private readonly IEnumerable<ILanguageSpecificCheck> _languageChecks;
+    private readonly IEnumerable<ILanguageSpecificChecks> _languageChecks;
     private readonly ILogger<LanguageSpecificCheckResolver> _logger;
 
     public LanguageSpecificCheckResolver(
-        IEnumerable<ILanguageSpecificCheck> languageChecks,
+        IEnumerable<ILanguageSpecificChecks> languageChecks,
         ILogger<LanguageSpecificCheckResolver> logger)
     {
         _languageChecks = languageChecks ?? throw new ArgumentNullException(nameof(languageChecks));
@@ -24,7 +24,7 @@ public class LanguageSpecificCheckResolver
     /// </summary>
     /// <param name="packagePath">Path to the package directory</param>
     /// <returns>Language-specific check service that can handle the package, or null if no handler is found</returns>
-    public ILanguageSpecificCheck? GetLanguageCheck(string packagePath)
+    public ILanguageSpecificChecks? GetLanguageCheck(string packagePath)
     {
         if (string.IsNullOrWhiteSpace(packagePath))
         {
@@ -56,6 +56,6 @@ public class LanguageSpecificCheckResolver
     /// Gets all available language-specific check services.
     /// </summary>
     /// <returns>Collection of all available language check services</returns>
-    public IEnumerable<ILanguageSpecificCheck> GetAllLanguageChecks() => _languageChecks;
+    public IEnumerable<ILanguageSpecificChecks> GetAllLanguageChecks() => _languageChecks;
 
 }

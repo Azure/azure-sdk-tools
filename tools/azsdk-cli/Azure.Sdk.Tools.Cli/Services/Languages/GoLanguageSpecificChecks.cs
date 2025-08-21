@@ -9,7 +9,7 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// Go-specific implementation of language repository service.
 /// Uses tools like go build, go test, go mod, gofmt, etc. for Go development workflows.
 /// </summary>
-public class GoLanguageSpecificChecks : ILanguageSpecificCheck
+public class GoLanguageSpecificChecks : ILanguageSpecificChecks
 {
     private readonly IProcessHelper _processHelper;
     private readonly INpxHelper _npxHelper;

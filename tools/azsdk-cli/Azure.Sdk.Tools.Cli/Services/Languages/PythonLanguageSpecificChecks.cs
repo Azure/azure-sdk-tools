@@ -7,18 +7,18 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// <summary>
 /// Python-specific implementation of language checks.
 /// </summary>
-public class PythonLanguageSpecificCheck : ILanguageSpecificCheck
+public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
 {
     private readonly IProcessHelper _processHelper;
     private readonly INpxHelper _npxHelper;
     private readonly IGitHelper _gitHelper;
-    private readonly ILogger<PythonLanguageSpecificCheck> _logger;
+    private readonly ILogger<PythonLanguageSpecificChecks> _logger;
 
-    public PythonLanguageSpecificCheck(
+    public PythonLanguageSpecificChecks(
         IProcessHelper processHelper, 
         INpxHelper npxHelper, 
         IGitHelper gitHelper, 
-        ILogger<PythonLanguageSpecificCheck> logger)
+        ILogger<PythonLanguageSpecificChecks> logger)
     {
         _processHelper = processHelper;
         _npxHelper = npxHelper;

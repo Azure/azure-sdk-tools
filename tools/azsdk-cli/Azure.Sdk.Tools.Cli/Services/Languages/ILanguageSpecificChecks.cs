@@ -5,7 +5,7 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// <summary>
 /// Interface for language-specific check implementations.
 /// </summary>
-public interface ILanguageSpecificCheck
+public interface ILanguageSpecificChecks
 {
     /// <summary>
     /// Gets the language this implementation supports.

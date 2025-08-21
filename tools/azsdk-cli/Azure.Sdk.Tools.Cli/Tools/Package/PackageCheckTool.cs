@@ -173,13 +173,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             logger.LogInformation("Running dependency check");
 
             var result = await languageChecks.AnalyzeDependenciesAsync(packagePath, ct);
-
-            if (result.ExitCode != 0)
-            {
-                SetFailure(1);
-                return new CLICheckResponse(result.ExitCode, result.CheckStatusDetails, "Dependency check failed");
-            }
-
             return result;
         }
 
@@ -188,13 +181,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             logger.LogInformation("Running README validation");
             
             var result = await languageChecks.ValidateReadmeAsync(packagePath);
-            
-            if (result.ExitCode != 0)
-            {
-                SetFailure(1);
-                return new CLICheckResponse(result.ExitCode, result.CheckStatusDetails, "README validation failed");
-            }
-
             return result;
         }
 
@@ -203,13 +189,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             logger.LogInformation("Running spelling validation");
             
             var result = await languageChecks.CheckSpellingAsync(packagePath);
-            
-            if (result.ExitCode != 0)
-            {
-                SetFailure(1);
-                return new CLICheckResponse(result.ExitCode, result.CheckStatusDetails, $"Spelling validation failed");
-            }
-
             return result;
         }
 

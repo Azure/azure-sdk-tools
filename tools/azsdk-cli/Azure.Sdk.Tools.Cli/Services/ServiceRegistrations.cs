@@ -44,15 +44,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<Func<string, Update.IUpdateLanguageService>>(sp => (packagePath) =>
             {
                 var repoService = sp.GetRequiredService<ILanguageRepoServiceFactory>().GetService(packagePath);
-                return repoService.Language switch
-                {
-                    "java" => ActivatorUtilities.CreateInstance<Update.JavaUpdateLanguageService>(sp, repoService),
-                    // "python" => ActivatorUtilities.CreateInstance<Update.PythonUpdateLanguageService>(sp, repoService),
-                    // "javascript" => ActivatorUtilities.CreateInstance<Update.JavaScriptUpdateLanguageService>(sp, repoService),
-                    // "dotnet" => ActivatorUtilities.CreateInstance<Update.DotNetUpdateLanguageService>(sp, repoService),
-                    // "go" => ActivatorUtilities.CreateInstance<Update.GoUpdateLanguageService>(sp, repoService),
-                    _ => throw new NotSupportedException($"No update service registered for detected language: {repoService?.Language ?? "unknown"}")
-                };
+                return repoService.CreateUpdateService(sp);
             });
             // concrete update implementations - register each concrete UpdateLanguageService so
             // the factory can resolve them via DI when creating per-repo instances.

@@ -13,8 +13,6 @@ namespace Azure.Sdk.Tools.Cli.Services.Update;
 /// </summary>
 public class JavaUpdateLanguageService : UpdateLanguageServiceBase
 {
-    public override string Language => "java";
-
     public JavaUpdateLanguageService(ILanguageRepoService repoService) : base(repoService) { }
 
     public override Task<Dictionary<string, SymbolInfo>> ExtractSymbolsAsync(string rootPath, CancellationToken ct)

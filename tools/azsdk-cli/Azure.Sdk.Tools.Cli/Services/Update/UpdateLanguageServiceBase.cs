@@ -17,9 +17,6 @@ public abstract class UpdateLanguageServiceBase : IUpdateLanguageService
         RepoService = repoService;
     }
 
-    // Language key implemented per language (e.g., "java", "python").
-    public abstract string Language { get; }
-
     public abstract Task<Dictionary<string, SymbolInfo>> ExtractSymbolsAsync(string rootPath, CancellationToken ct);
     public abstract Task<List<ApiChange>> DiffAsync(Dictionary<string, SymbolInfo> oldSymbols, Dictionary<string, SymbolInfo> newSymbols);
     public abstract Task<string?> GetCustomizationRootAsync(UpdateSessionState session, string generationRoot, CancellationToken ct);
@@ -30,21 +27,24 @@ public abstract class UpdateLanguageServiceBase : IUpdateLanguageService
     /// Default validation delegates to the repo service test run using the resolved package path.
     /// Languages can override to run lint/format/type-check as needed.
     /// </summary>
-    public virtual async Task<(bool success, List<string> errors)> ValidateAsync(UpdateSessionState session, CancellationToken ct)
+    public virtual async Task<ValidationResult> ValidateAsync(UpdateSessionState session, CancellationToken ct)
     {
         var packagePath = ResolveValidationPackagePath(session);
         if (string.IsNullOrWhiteSpace(packagePath) || !Directory.Exists(packagePath))
         {
             // If we cannot resolve a package path, don't hard-fail; treat as success to avoid blocking.
-            return (true, new List<string>());
+            return ValidationResult.CreateSuccess();
         }
 
-        var result = await RepoService.RunTestsAsync(packagePath);
+        var result = await RepoService.RunTestsAsync(packagePath, ct);
         var ok = result.ExitCode == 0;
-        var errors = ok
-            ? new List<string>()
-            : new List<string> { string.IsNullOrWhiteSpace(result.ResponseError) ? result.CheckStatusDetails : result.ResponseError };
-        return (ok, errors);
+        if (ok)
+        {
+            return ValidationResult.CreateSuccess();
+        }
+        
+        var errorMessage = string.IsNullOrWhiteSpace(result.ResponseError) ? result.CheckStatusDetails : result.ResponseError;
+        return ValidationResult.CreateFailure(errorMessage);
     }
 
     /// <summary>

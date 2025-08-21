@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Services.Update;
 
 namespace Azure.Sdk.Tools.Cli.Services;
 
@@ -15,5 +16,8 @@ public class DotNetLanguageRepoService : LanguageRepoService
     {
     }
 
-    public override string Language => "dotnet";
+    public override IUpdateLanguageService CreateUpdateService(IServiceProvider serviceProvider)
+    {
+        throw new NotSupportedException(".NET update service is not yet implemented");
+    }
 }

@@ -78,7 +78,6 @@ public class UpdateSessionState
 {
     [JsonPropertyName("sessionId")] public string SessionId { get; set; } = Guid.NewGuid().ToString("n");
     [JsonPropertyName("specPath")] public string SpecPath { get; set; } = string.Empty;
-    [JsonPropertyName("language"), JsonIgnore] public string Language { get; set; } = string.Empty; // language key (java, csharp, etc.)
     [JsonPropertyName("oldGeneratedPath")] public string OldGeneratedPath { get; set; } = string.Empty;
     [JsonPropertyName("newGeneratedPath")] public string NewGeneratedPath { get; set; } = string.Empty;
     [JsonPropertyName("customizationRoot")] public string? CustomizationRoot { get; set; }

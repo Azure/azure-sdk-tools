@@ -3,9 +3,6 @@ namespace Azure.Sdk.Tools.Cli.Services.Update;
 
 public interface IUpdateLanguageService
 {
-    // Short language key this service supports (e.g. "java", "python")
-    string Language { get; }
-
     // Extract public API symbols from a generated code tree
     Task<Dictionary<string, SymbolInfo>> ExtractSymbolsAsync(string rootPath, CancellationToken ct);
 
@@ -23,7 +20,7 @@ public interface IUpdateLanguageService
     Task<List<PatchProposal>> ProposePatchesAsync(UpdateSessionState session, IEnumerable<CustomizationImpact> impacts, CancellationToken ct);
 
     // Perform language-specific validation (build/tests/type checks)
-    Task<(bool success, List<string> errors)> ValidateAsync(UpdateSessionState session, CancellationToken ct);
+    Task<ValidationResult> ValidateAsync(UpdateSessionState session, CancellationToken ct);
 
     // Optionally propose conservative fixes targeted at validation failures (formatting, import fixes, small shims).
     // Default implementations may return an empty list when no auto-fixes are available.

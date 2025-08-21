@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Services.Update;
 
 namespace Azure.Sdk.Tools.Cli.Services;
 
@@ -20,6 +21,11 @@ public class GoLanguageRepoService(
     private readonly string formatterNameWindows = "gofmt.exe";
     private readonly string linterName = "golangci-lint";
     private readonly string linterNameWindows = "golangci-lint.exe";
+
+    public override IUpdateLanguageService CreateUpdateService(IServiceProvider serviceProvider)
+    {
+        throw new NotSupportedException("Go update service is not yet implemented");
+    }
 
     #region Go specific functions, not part of the LanguageRepoService
 

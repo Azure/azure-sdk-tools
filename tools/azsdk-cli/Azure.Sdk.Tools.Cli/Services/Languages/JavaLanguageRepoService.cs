@@ -1,5 +1,7 @@
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Services.Update;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Azure.Sdk.Tools.Cli.Services;
 
@@ -7,8 +9,19 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// Java-specific implementation of language repository service.
 /// Uses tools like mvn/gradle for build, dependency management, testing, and code formatting.
 /// </summary>
-public class JavaLanguageRepoService(IProcessHelper processHelper, IGitHelper gitHelper) : LanguageRepoService(processHelper, gitHelper)
+public class JavaLanguageRepoService : LanguageRepoService
 {
+    private readonly ILogger<JavaLanguageRepoService> _logger;
+    public JavaLanguageRepoService(IProcessHelper processHelper, IGitHelper gitHelper, ILogger<JavaLanguageRepoService> logger)
+        : base(processHelper, gitHelper)
+    {
+        _logger = logger;
+    }
+    public override IUpdateLanguageService CreateUpdateService(IServiceProvider serviceProvider)
+    {
+        return ActivatorUtilities.CreateInstance<JavaUpdateLanguageService>(serviceProvider, this);
+    }
+
     public override async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct)
     {
         await Task.CompletedTask;

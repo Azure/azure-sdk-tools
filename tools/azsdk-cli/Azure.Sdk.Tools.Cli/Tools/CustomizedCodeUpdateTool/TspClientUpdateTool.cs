@@ -3,14 +3,13 @@
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.ComponentModel;
-using System.Linq;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Models;
 using ModelContextProtocol.Server;
-using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.Update;
 using Update = Azure.Sdk.Tools.Cli.Services.Update;
+using Azure.Sdk.Tools.Cli.Helpers;
 
 namespace Azure.Sdk.Tools.Cli.Tools;
 
@@ -18,7 +17,7 @@ namespace Azure.Sdk.Tools.Cli.Tools;
 public class TspClientUpdateTool : MCPTool
 {
     private readonly ILogger<TspClientUpdateTool> _logger;
-    private readonly IOutputService _output;
+    private readonly IOutputHelper _output;
     private readonly Func<string, Update.IUpdateLanguageService> _languageServiceFactory;
 
     // --- CLI options/args ---
@@ -35,10 +34,10 @@ public class TspClientUpdateTool : MCPTool
     // TODO(#11645): Reintroduce pluggable session store (file/remote/memory) with manifest + pruning.
     private UpdateSessionState? _currentSession;
 
-    public TspClientUpdateTool(ILogger<TspClientUpdateTool> logger, IOutputService output, Func<string, Update.IUpdateLanguageService> languageServiceFactory)
+    public TspClientUpdateTool(ILogger<TspClientUpdateTool> logger, IOutputHelper output, Func<string, IUpdateLanguageService> languageServiceFactory)
     {
-    _logger = logger;
-    _output = output;
+        _logger = logger;
+        _output = output;
         _languageServiceFactory = languageServiceFactory;
         CommandHierarchy = [ SharedCommandGroups.Tsp ];
     }
@@ -67,19 +66,7 @@ public class TspClientUpdateTool : MCPTool
     {
             try
             {
-            var session = resume ? _currentSession : null;
-            if (session == null)
-            {
-                session = GetOrCreateSession(null);
-            }
-            // Ensure session records the language used (derived from the injected language service)
-            session.Language = languageService.Language;
-            if (!resume)
-            {
-                // Reset for a fresh run if not resuming
-                session.RequiresFinalize = false;
-                session.ApiChanges.Clear();
-            }
+            var session = GetOrCreateSession(null, resetForFreshRun: !resume);
             if (!string.IsNullOrWhiteSpace(specPath)) { session.SpecPath = specPath; }
             var runAll = stage == TspStageSelection.All;
             var ordered = new List<TspStageSelection> { TspStageSelection.Regenerate, TspStageSelection.Diff, TspStageSelection.Apply };
@@ -225,7 +212,7 @@ public class TspClientUpdateTool : MCPTool
             session.Status = "Regenerated";
             session.LastStage = UpdateStage.Regenerated;
             // session timestamp removed for leaner session
-            return Task.FromResult(new TspClientUpdateResponse { Session = session, Message = $"Regenerate complete (language={session.Language})", NextStep = ComputeNextStep(session) });
+            return Task.FromResult(new TspClientUpdateResponse { Session = session, Message = "Regenerate complete", NextStep = ComputeNextStep(session) });
         }
         catch (Exception ex)
         {
@@ -383,11 +370,11 @@ public class TspClientUpdateTool : MCPTool
             const int MAX_ATTEMPTS = 3;
             while (true)
             {
-                var (success, errors) = await languageService!.ValidateAsync(session, ct).ConfigureAwait(false);
+                var validationResult = await languageService!.ValidateAsync(session, ct).ConfigureAwait(false);
                 session.ValidationAttemptCount++;
-                session.ValidationErrors = errors;
-                session.ValidationSuccess = success;
-                if (success)
+                session.ValidationErrors = validationResult.Errors;
+                session.ValidationSuccess = validationResult.Success;
+                if (validationResult.Success)
                 {
                     session.Status = "Validated";
                     session.LastStage = UpdateStage.Validated;
@@ -404,7 +391,7 @@ public class TspClientUpdateTool : MCPTool
                 }
 
                 // Ask language service for conservative fixes and apply them to ProposedPatches as additional proposals
-                var fixes = await languageService!.ProposeFixesAsync(session, errors, ct).ConfigureAwait(false);
+                var fixes = await languageService!.ProposeFixesAsync(session, validationResult.Errors, ct).ConfigureAwait(false);
                 if (fixes == null || fixes.Count == 0)
                 {
                     // No automatic fixes; try repo-level format/lint as a last-ditch attempt if available
@@ -497,13 +484,21 @@ public class TspClientUpdateTool : MCPTool
         }
     }
 
-    private UpdateSessionState GetOrCreateSession(string? sessionId)
+    private UpdateSessionState GetOrCreateSession(string? sessionId, bool resetForFreshRun = false)
     {
         // Ignore provided id for now; single session lifecycle per process.
         if (_currentSession == null)
         {
             _currentSession = new UpdateSessionState();
+            // New sessions are always fresh, so no need to check resetForFreshRun
         }
+        else if (resetForFreshRun)
+        {
+            // Reset existing session state for a fresh run
+            _currentSession.RequiresFinalize = false;
+            _currentSession.ApiChanges.Clear();
+        }
+        
         return _currentSession;
     }
 

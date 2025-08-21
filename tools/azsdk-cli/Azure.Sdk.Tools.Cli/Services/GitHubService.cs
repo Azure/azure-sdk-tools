@@ -103,7 +103,6 @@ public class GitConnection
         public Task<User?> GetCurrentUserAsync();
         public Task<bool> IsUserMemberOfOrgAsync(string organization, string username);
         public Task<bool> MakeOrgMembershipPublicAsync(string organization, string username);
-        public Task<bool> AddUserToOrgAsync(string organization, string username);
     }
 
     public class GitHubService : GitConnection, IGitHubService
@@ -579,22 +578,6 @@ public class GitConnection
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error making membership public for user {Username} in organization {Organization}", 
-                    username, organization);
-                return false;
-            }
-        }
-
-        public async Task<bool> AddUserToOrgAsync(string organization, string username)
-        {
-            try
-            {
-                // Add user to organization
-                await gitHubClient.Organization.Member.AddOrUpdateOrganizationMembership(organization, username, new OrganizationMembershipUpdate());
-                return true;
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Error adding user {Username} to organization {Organization}", 
                     username, organization);
                 return false;
             }

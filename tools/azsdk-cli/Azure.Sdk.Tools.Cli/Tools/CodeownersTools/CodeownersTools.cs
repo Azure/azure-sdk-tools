@@ -30,7 +30,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
         // Command names
         private const string updateCodeownersCommandName = "azsdk_codeowners_update";
         private const string validateCodeownersEntryCommandName = "azsdk_codeowners_validate";
-        private const string addAndPublicizeOrgMemberCommandName = "azsdk_add_and_publicize_org_member";
+        private const string publicizeOrgMembershipCommandName = "azsdk_publicize_org_membership";
 
         // Core command options
         private readonly Option<string> repoOption = new(["--repo", "-r"], "The repository name") { IsRequired = true };
@@ -66,7 +66,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     serviceLabelOption,
                     pathOptionOptional
                 },
-                new Command(addAndPublicizeOrgMemberCommandName, "Add user to GitHub organization and make membership public")
+                new Command(publicizeOrgMembershipCommandName, "Make GitHub organization membership public")
                 {
                     organizationOption,
                     usernameOption
@@ -126,15 +126,14 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 ctx.ExitCode = ExitCode;
                 return;
             }
-            else if (command == addAndPublicizeOrgMemberCommandName)
+            else if (command == publicizeOrgMembershipCommandName)
             {
                 var organization = commandParser.GetValueForOption(organizationOption);
                 var username = commandParser.GetValueForOption(usernameOption);
 
-                var result = await AddAndPublicizeOrgMember(
+                var result = await PublicizeOrgMembership(
                     organization ?? "",
                     username ?? "");
-                    ctx.ExitCode = ExitCode;
                 output.Output(result);
                 ctx.ExitCode = ExitCode;
                 return;
@@ -397,8 +396,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        [McpServerTool(Name = "azsdk_add_and_publicize_org_member"), Description("Adds a user to a GitHub organization and makes their membership public.")]
-        public async Task<string> AddAndPublicizeOrgMember(
+        [McpServerTool(Name = "azsdk_publicize_org_membership"), Description("Makes a user's GitHub organization membership public.")]
+        public async Task<string> PublicizeOrgMembership(
             string organization,
             string username = "")
         {
@@ -415,17 +414,11 @@ namespace Azure.Sdk.Tools.Cli.Tools
                     username = currentUser.Login;
                 }
 
-                // Check if user is already a member
+                // Validate that the user is a member of the organization first
                 var isMember = await githubService.IsUserMemberOfOrgAsync(organization, username);
-                
                 if (!isMember)
                 {
-                    // Add user to organization
-                    var addResult = await githubService.AddUserToOrgAsync(organization, username);
-                    if (!addResult)
-                    {
-                        throw new Exception($"Failed to add user '{username}' to organization '{organization}'. You may need admin permissions or the user may need to accept the invitation.");
-                    }
+                    throw new Exception($"User '{username}' is not a member of organization '{organization}' or membership cannot be verified. User must be added to the organization first.");
                 }
 
                 // Make membership public
@@ -433,31 +426,17 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 
                 if (publicResult)
                 {
-                    if (isMember)
-                    {
-                        return $"User '{username}' was already a member of '{organization}'. Successfully made their membership public.";
-                    }
-                    else
-                    {
-                        return $"Successfully added '{username}' to organization '{organization}' and made their membership public.";
-                    }
+                    return $"Successfully made {username}'s membership in '{organization}' public.";
                 }
                 else
                 {
-                    if (isMember)
-                    {
-                        throw new Exception($"User '{username}' was already a member, but failed to make membership public in organization '{organization}'.");
-                    }
-                    else
-                    {
-                        throw new Exception($"Successfully added '{username}' to organization '{organization}', but failed to make membership public.");
-                    }
+                    throw new Exception($"Failed to make membership public for {username} in organization '{organization}'.");
                 }
             }
             catch (Exception ex)
             {
                 SetFailure();
-                logger.LogError($"Error adding and publicizing GitHub organization member: {ex}");
+                logger.LogError($"Error publicizing GitHub organization membership: {ex}");
                 return $"Error: {ex.Message}";
             }
         }

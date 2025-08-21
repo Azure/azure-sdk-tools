@@ -250,6 +250,7 @@ Visual Studio,,e99695
 Web Apps,,e99695
 WebPubSub,,e99695
 Weights & Biases,,e99695
+WidgetManager,,e99695
 auto-close-exempt,Prevents the auto-close from closing based on max lifetime,ededed
 blocking-release,Blocks release,d73a49
 breaking-change,,d73a49

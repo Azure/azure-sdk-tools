@@ -39,9 +39,7 @@ public class LanguageSpecificCheckResolver
         _logger.LogDebug("Resolving language-specific check for package at {PackagePath}", packagePath);
 
         // Find specific language implementations first (excluding default)
-        var specificLanguageCheck = _languageChecks
-            .Where(check => check.SupportedLanguage != "Default")
-            .FirstOrDefault(check => check.CanHandle(packagePath));
+        var specificLanguageCheck = _languageChecks.CanHandle(packagePath);
         
         if (specificLanguageCheck != null)
         {
@@ -50,16 +48,8 @@ public class LanguageSpecificCheckResolver
             return specificLanguageCheck;
         }
 
-        // Fall back to default implementation
-        var defaultCheck = _languageChecks.FirstOrDefault(check => check.SupportedLanguage == "Default");
-        if (defaultCheck != null)
-        {
-            _logger.LogInformation("Using default check service for package at {PackagePath} (no specific language detected)", packagePath);
-            return defaultCheck;
-        }
 
-        // This should not happen if DefaultLanguageSpecificCheck is registered
-        throw new InvalidOperationException("No language-specific check services are available, including default implementation");
+        throw new InvalidOperationException("No language-specific check services are available");
     }
 
     /// <summary>

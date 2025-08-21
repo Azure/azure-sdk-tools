@@ -26,7 +26,6 @@ namespace Azure.Sdk.Tools.Cli.Services
             // Language Check Services (Composition-based)
             services.AddSingleton<LanguageChecks>();
             services.AddSingleton<ILanguageSpecificCheck, PythonLanguageSpecificCheck>();
-            services.AddSingleton<ILanguageSpecificCheck, DefaultLanguageSpecificCheck>();
             services.AddSingleton<LanguageSpecificCheckResolver>();
 
             // Helper classes

@@ -22,8 +22,12 @@ import { remove } from 'fs-extra';
 import { generateChangelogAndBumpVersion } from "../../common/changelog/automaticGenerateChangeLogAndBumpVersion.js";
 import { updateChangelogResult } from "../../common/packageResultUtils.js";
 import { isRushRepo } from "../../common/rushUtils.js";
-import { updateSnippets } from "../../common/devToolUtils.js";
+import { formatSdk, updateSnippets } from "../../common/devToolUtils.js";
 import { RunMode } from "../../common/types.js";
+import { exists } from 'fs-extra';
+import { C } from "vitest/dist/chunks/reporters.d.BFLkQcL6.js";
+import { cat } from "shelljs";
+import { error } from "console";
 
 export async function generateRLCInPipeline(options: {
     sdkRepo: string;
@@ -50,7 +54,18 @@ export async function generateRLCInPipeline(options: {
     if (options.typespecProject) {
         const typespecProject = path.join(options.swaggerRepo, options.typespecProject); 
         const generatedPackageDir = await getGeneratedPackageDirectory(typespecProject, options.sdkRepo);
-
+        if ( options.runMode === RunMode.Local || options.runMode === RunMode.Release) {
+            let sourcePath = "src";
+            if(await exists(path.join(generatedPackageDir, "generated"))) 
+            {
+                sourcePath = "generated";
+            }else if(await exists(path.join(generatedPackageDir, "src","generated"))) {
+                sourcePath = path.join("src", "generated");
+            }
+            await remove(path.join(generatedPackageDir, sourcePath));
+        } else {
+            await remove(generatedPackageDir);
+        }
         if (!options.skipGeneration) {
             logger.info(`Start to generate rest level client SDK from '${options.typespecProject}'.`);
             // TODO: remove it, since this function is used in pipeline.
@@ -76,8 +91,6 @@ export async function generateRLCInPipeline(options: {
                 });
                 logger.info("End with TypeSpec command.");
             } else {
-                await cleanUpPackageDirectory(generatedPackageDir, options.runMode);
-
                 logger.info("Start to generate code by tsp-client.");
                 const tspDefDir = path.join(options.swaggerRepo, options.typespecProject);
                 if (options.apiVersion) {
@@ -246,6 +259,11 @@ export async function generateRLCInPipeline(options: {
                 outputPackageInfo.packageFolder = relativePackagePath;
             }
         }
+
+        await formatSdk(packagePath)
+        await updateSnippets(packagePath);
+
+        let buildStatus = `succeeded`;
         if (isRushRepo(options.sdkRepo)) {
             logger.info(`Start to update rush.`);
             execSync('node common/scripts/install-run-rush.js update', {stdio: 'inherit'});
@@ -261,14 +279,23 @@ export async function generateRLCInPipeline(options: {
                         
             logger.info(`Start to build '${packageName}', except for tests and samples, which may be written manually.`);
             // To build generated codes except test and sample, we need to change tsconfig.json.
-            execSync(`pnpm build --filter ${packageName}...`, {stdio: 'inherit'});
+
+            if(options.runMode === RunMode.Local || options.runMode === RunMode.Release){
+                try {
+                    execSync(`pnpm build --filter ${packageName}...`, {stdio: 'inherit'});
+                } catch (error) {
+                    logger.warn(`Failed to fix lint errors due to: ${(error as Error)?.stack ?? error}`);
+                    buildStatus = `failed`;
+                }
+            } else {
+                execSync(`pnpm run --filter ${packageName}... build`, {stdio: 'inherit'});
+            }
+            
             logger.info(`Start to run command 'pnpm run --filter ${packageJson.name}... pack'.`);
             execSync(`pnpm run --filter ${packageJson.name}... pack`, {stdio: 'inherit'});
         }
-
-        await updateSnippets(packagePath);
-        
-        if (!options.skipGeneration) {
+     
+        if (!options.skipGeneration && buildStatus === 'succeeded') {
             const getChangelogItems = () => {
                 const categories = changelog?.changelogItems.breakingChanges.keys();
                 if (!categories) return [];

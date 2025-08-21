@@ -20,5 +20,10 @@ public enum APIRevisionSelectionType
     /// <summary>
     ///     Use the latest manual revision (non-automatic)
     /// </summary>
-    LatestManual = 3
+    LatestAutomatic = 3,
+
+    /// <summary>
+    ///     Use the latest manual revision (non-automatic)
+    /// </summary>
+    LatestManual = 4
 }

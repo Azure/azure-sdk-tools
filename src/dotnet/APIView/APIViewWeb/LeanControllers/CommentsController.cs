@@ -34,18 +34,6 @@ namespace APIViewWeb.LeanControllers
 
 
         /// <summary>
-        /// Retrieve comments for a revision.
-        /// </summary>
-        /// <param name="apiRevisionId"></param>
-        /// <returns></returns>
-        [HttpGet("{apiRevisionId}/GetRevisionComments", Name = "GetRevisionComments")]
-        public async Task<ActionResult<IEnumerable<CommentItemModel>>> GetRevisionComments(string apiRevisionId)
-        {
-            var comments = await _commentsManager.GetAPIRevisionCommentsAsync(apiRevisionId);
-            return new LeanJsonResult(comments, StatusCodes.Status200OK);
-        }
-
-        /// <summary>
         /// Retrieve conversation information
         /// </summary>
         /// <param name="reviewId"></param>

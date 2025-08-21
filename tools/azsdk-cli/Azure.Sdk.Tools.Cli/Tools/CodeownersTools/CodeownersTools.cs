@@ -196,7 +196,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 var branchToFetch = string.IsNullOrEmpty(workingBranch) ? "main" : workingBranch;
 
                 var codeownersContent = codeownersFileContent.Content;
-                var codeownersSha = codeownersFileContent.Sha;
                 var codeownersContentList = codeownersContent.Split("\n").ToList();
 
                 var (modifiedCodeownersContent, updatedEntry) = codeownersHelper.AddCodeownersEntry(codeownersContent, isMgmtPlane, normalizedPath, serviceLabel, serviceOwners, sourceOwners, isAdding);
@@ -217,7 +216,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
                 var resultMessages = await CreateCodeownersPR(
                     repo,                                                             // Repository name
                     modifiedCodeownersContent,                     // Modified content
-                    codeownersSha,                                                    // SHA of the file to update 
                     $"Update codeowners entry for {identifier}", // Description for commit message, PR title, and description
                     "update-codeowners-entry",                                             // Branch prefix for the action
                     identifier, // Identifier for the PR
@@ -236,7 +234,6 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private async Task<List<string>> CreateCodeownersPR(
             string repo,
             string modifiedContent,
-            string sha,
             string description, // used for commit message, PR title, and PR description
             string branchPrefix,
             string identifier,

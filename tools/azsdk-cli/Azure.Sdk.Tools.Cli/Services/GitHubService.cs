@@ -91,6 +91,7 @@ public class GitConnection
         public Task<PullRequest?> GetPullRequestForBranchAsync(string repoOwner, string repoName, string remoteBranch);
         public Task<IReadOnlyList<PullRequest?>> SearchPullRequestsByTitleAsync(string repoOwner, string repoName, string titleSearchTerm, ItemState? state = ItemState.Open);
         public Task<Issue> GetIssueAsync(string repoOwner, string repoName, int issueNumber);
+        public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path);
         public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path, string? branch = null);
         public Task UpdatePullRequestAsync(string repoOwner, string repoName, int pullRequestNumber, string title, string body, ItemState state);
         public Task UpdateFileAsync(string owner, string repoName, string path, string message, string content, string sha, string branch);
@@ -148,8 +149,7 @@ public class GitConnection
         {
             logger.LogInformation($"Searching for pull request in repository {repoOwner}/{repoName} for branch {remoteBranch}");
             var pullRequests = await gitHubClient.PullRequest.GetAllForRepository(repoOwner, repoName);
-            logger.LogInformation($"Branch name: {remoteBranch}");
-            return pullRequests?.FirstOrDefault(pr => pr.Head?.Ref != null && pr.Head.Ref.Equals(remoteBranch, StringComparison.InvariantCultureIgnoreCase));
+            return pullRequests?.FirstOrDefault(pr => pr.Head?.Label != null && pr.Head.Label.Equals(remoteBranch, StringComparison.InvariantCultureIgnoreCase));
         }
 
         public async Task<IReadOnlyList<PullRequest?>> SearchPullRequestsByTitleAsync(string repoOwner, string repoName, string titleSearchTerm, ItemState? state = ItemState.Open)
@@ -390,6 +390,32 @@ public class GitConnection
         /// <param name="repoName">Repository name</param>
         /// <param name="path">Directory or file path</param>
         /// <param name="expectSingleFile">If true, returns only the first file content; if false, returns all contents</param>
+        /// <returns>List of repository contents or null if path doesn't exist</returns>
+        public async Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path)
+        {
+            try
+            {
+                return await gitHubClient.Repository.Content.GetAllContents(owner, repoName, path);
+            }
+            catch (NotFoundException)
+            {
+                logger.LogInformation($"Path {path} not found in {owner}/{repoName}");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, $"Error fetching contents from {owner}/{repoName}/{path}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Helper method to get contents from a GitHub repository path.
+        /// </summary>
+        /// <param name="owner">Repository owner</param>
+        /// <param name="repoName">Repository name</param>
+        /// <param name="path">Directory or file path</param>
+        /// <param name="branch">If provided, returns a list of repository contents within the given branch</param>
         /// <returns>List of repository contents or null if path doesn't exist</returns>
         public async Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path, string? branch = null)
         {

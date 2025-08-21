@@ -41,12 +41,12 @@ export async function lintFix(packageDirectory: string) {
     const options = { ...runCommandOptions, cwd };
 
 
-    const depInstallation = await exists(path.join(packageDirectory, "node_modules"))
-    logger.info("the installation of dep:" + depInstallation)
-    const depInstallationEslint = await exists(path.join(packageDirectory, "node_modules","@azure","eslint-plugin-azure-sdk"))
-    logger.info("the installation of eslint-plugin-azure-sdk:" + depInstallationEslint)
+    const depInstallation = await exists(path.join(packageDirectory, "node_modules","@azure","eslint-plugin-azure-sdk","dist"))
+    logger.info(depInstallation)
+    const depInstallationEslint = await exists(path.join(packageDirectory, "node_modules","@azure","eslint-plugin-azure-sdk","dist","esm"))
+    logger.info(depInstallationEslint)
     const depInstallationEslintIndex = await exists(path.join(packageDirectory, "node_modules","@azure","eslint-plugin-azure-sdk","dist","esm","indexe.js"))
-    logger.info("the installation of eslint-plugin-azure-sdk/dist/esm/index.js" + depInstallationEslintIndex)
+    logger.info(depInstallationEslintIndex)
     const lintFixCommand = `run vendored eslint package.json api-extractor.json src test${samplesDev} --fix --fix-type [problem,suggestion]`;
 
     try {

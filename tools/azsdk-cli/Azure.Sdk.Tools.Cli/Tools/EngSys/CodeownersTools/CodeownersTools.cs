@@ -11,19 +11,21 @@ using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.CodeownersUtils.Parsing;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Models.Responses;
+using Azure.Sdk.Tools.Cli.Commands;
 
 
 namespace Azure.Sdk.Tools.Cli.Tools.EngSys
 {
     [Description("Tool that validates and manipulates codeowners files.")]
     [McpServerToolType]
-    public class CodeownersTools(
-        IGitHubService githubService,
-        IOutputHelper output,
-        ILogger<CodeownersTools> logger,
-        ICodeownersHelper codeownersHelper,
-        ICodeownersValidatorHelper codeownersValidator) : MCPTool
+    public class CodeownersTools : MCPTool
     {
+        private readonly IGitHubService githubService;
+        private readonly IOutputHelper output;
+        private readonly ILogger<CodeownersTools> logger;
+        private readonly ICodeownersHelper codeownersHelper;
+        private readonly ICodeownersValidatorHelper codeownersValidator;
+
         // URL constants
         private const string azureWriteTeamsBlobUrl = "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/azure-sdk-write-teams-blob";
 
@@ -40,6 +42,25 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
         private readonly Option<string[]> sourceOwnersOption = new(["--source-owners"], "The source owners (space-separated)") { IsRequired = false };
         private readonly Option<bool> isAddingOption = new(["--is-adding"], "Whether to add (true) or remove (false) owners") { IsRequired = false };
         private readonly Option<string> workingBranchOption = new(["--branch"], "Branch to make edits to, only if provided.") { IsRequired = false };
+
+        public CodeownersTools(
+            IGitHubService githubService,
+            IOutputHelper output,
+            ILogger<CodeownersTools> logger,
+            ICodeownersHelper codeownersHelper,
+            ICodeownersValidatorHelper codeownersValidator) : base()
+        {
+            this.githubService = githubService;
+            this.output = output;
+            this.logger = logger;
+            this.codeownersHelper = codeownersHelper;
+            this.codeownersValidator = codeownersValidator;
+
+            CommandHierarchy =
+            [
+                SharedCommandGroups.EngSys
+            ];
+        }
 
         public override Command GetCommand()
         {

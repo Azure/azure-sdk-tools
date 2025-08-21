@@ -89,66 +89,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
 
         public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path)
         {
-            // Handle specific test scenarios
-            if (path == "non-existent-path")
-            {
-                return Task.FromResult<IReadOnlyList<RepositoryContent>?>(null);
-            }
-
-            if (path == "empty-directory")
-            {
-                return Task.FromResult<IReadOnlyList<RepositoryContent>?>(new List<RepositoryContent>().AsReadOnly());
-            }
-
-            // Handle single file requests (when specific files are requested)
-            if (path.Contains("/") && path.EndsWith(".md"))
-            {
-                var fileName = System.IO.Path.GetFileName(path);
-                var content = CreateMockRepositoryContent(fileName, path, "test");
-                return Task.FromResult<IReadOnlyList<RepositoryContent>?>(new List<RepositoryContent> { content }.AsReadOnly());
-            }
-
-            // Default: Return mock directory listing for .github/prompts or similar paths
-            var contents = new List<RepositoryContent>
-            {
-                CreateMockRepositoryContent("README.md", ".github/prompts/README.md", "test"),
-                CreateMockRepositoryContent("prompt1.md", ".github/prompts/prompt1.md", "test"),
-                CreateMockRepositoryContent("prompt2.md", ".github/prompts/prompt2.md", "test")
-            };
-
-            return Task.FromResult<IReadOnlyList<RepositoryContent>?>(contents.AsReadOnly());
+            return Task.FromResult<IReadOnlyList<RepositoryContent>?>(new List<RepositoryContent>().AsReadOnly());
         }
 
         public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path, string? branch = null)
         {
-            // Handle specific test scenarios
-            if (path == "non-existent-path")
-            {
-                return Task.FromResult<IReadOnlyList<RepositoryContent>?>(null);
-            }
-
-            if (path == "empty-directory")
-            {
-                return Task.FromResult<IReadOnlyList<RepositoryContent>?>(new List<RepositoryContent>().AsReadOnly());
-            }
-
-            // Handle single file requests (when specific files are requested)
-            if (path.Contains("/") && path.EndsWith(".md"))
-            {
-                var fileName = System.IO.Path.GetFileName(path);
-                var content = CreateMockRepositoryContent(fileName, path, "test");
-                return Task.FromResult<IReadOnlyList<RepositoryContent>?>(new List<RepositoryContent> { content }.AsReadOnly());
-            }
-
-            // Default: Return mock directory listing for .github/prompts or similar paths
-            var contents = new List<RepositoryContent>
-            {
-                CreateMockRepositoryContent("README.md", ".github/prompts/README.md", "test"),
-                CreateMockRepositoryContent("prompt1.md", ".github/prompts/prompt1.md", "test"),
-                CreateMockRepositoryContent("prompt2.md", ".github/prompts/prompt2.md", "test")
-            };
-
-            return Task.FromResult<IReadOnlyList<RepositoryContent>?>(contents.AsReadOnly());
+            return Task.FromResult<IReadOnlyList<RepositoryContent>?>(new List<RepositoryContent>().AsReadOnly());
         }
 
         public Task UpdateFileAsync(string owner, string repoName, string path, string message, string content, string sha, string branch)

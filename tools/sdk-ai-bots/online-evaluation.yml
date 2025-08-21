@@ -34,6 +34,10 @@ stages:
                 echo "##vso[task.setvariable variable=AZURE_FEDERATED_TOKEN_FILE]$(Agent.BuildDirectory)/id_token"
                 echo "##vso[task.setvariable variable=SYSTEM_ACCESSTOKEN]$idToken"
           - script: |
+              pip install -r requirements.txt
+            displayName: 'install requirements'
+            workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
+          - script: |
               python download-md-dataset.py
               python convert-md-to-jsonl.py --source_md_path "$(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/online-qa-tests" --dest_jsonl_folder "$(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/online-tests"
               python run.py --evaluation_name_prefix $(Build.BuildId) --test_folder "$(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/online-tests"

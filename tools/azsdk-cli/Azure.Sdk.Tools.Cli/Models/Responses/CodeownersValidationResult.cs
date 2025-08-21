@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models.Responses;
@@ -24,24 +25,22 @@ public class CodeownersValidationResult : Response
 
     public override string ToString()
     {
-        var result = new List<string>
-            {
-                $"Username: {Username}",
-                $"IsValid: {IsValidCodeOwner}",
-                $"HasWritePermission: {HasWritePermission}",
-                $"Status: {Status}",
-                $"Message: {Message ?? "None"}"
-            };
+        var result = new StringBuilder();
+        result.AppendLine($"Username: {Username}");
+        result.AppendLine($"IsValid: {IsValidCodeOwner}");
+        result.AppendLine($"HasWritePermission: {HasWritePermission}");
+        result.AppendLine($"Status: {Status}");
+        result.AppendLine($"Message: {Message ?? "None"}");
 
         if (Organizations?.Any() == true)
         {
-            result.Add($"Organizations:");
+            result.AppendLine("Organizations:");
             foreach (var org in Organizations)
             {
-                result.Add($"  - {org.Key}: {org.Value}");
+                result.AppendLine($"  - {org.Key}: {org.Value}");
             }
         }
 
-        return ToString(string.Join("\n", result));
+        return result.ToString();
     }
 }

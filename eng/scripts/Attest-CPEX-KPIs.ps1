@@ -5,14 +5,13 @@ $Incomplete = 0
 $Complete = 1
 $NA = 3
 
-# Add KPI Ids after launch criteria creation
-$KPI_ID_Onboarding = "Onboarding"
-$KPI_ID_Mgmt_Private_Preview = "Mgmt_Private_Preview"
-$KPI_ID_Data_Private_Preview = "Data_Private_Preview"
-$KPI_ID_Mgmt_Public_Preview = "Mgmt_Public_Preview"
-$KPI_ID_Data_Public_Preview = "Data_Public_Preview"
-$KPI_ID_Mgmt_GA = "Mgmt_GA"
-$KPI_ID_Data_GA = "Data_GA"
+$KPI_ID_Onboarding = "ba2c80d5-b8be-465f-8948-283229082fd1"
+$KPI_ID_Mgmt_Private_Preview = "e0504da9-8897-41db-a75f-5027298ba410"
+$KPI_ID_Data_Private_Preview = "dfe9c112-416e-4e0a-8012-4a3a29807782"
+$KPI_ID_Mgmt_Public_Preview = "84715402-4f3c-4dca-b330-f05206abaec5"
+$KPI_ID_Data_Public_Preview = "ad70777b-a1f5-4d77-8926-5c466d7a214d"
+$KPI_ID_Mgmt_GA = "210c095f-b3a2-4cf4-a899-eaab4c3ed958"
+$KPI_ID_Data_GA = "da768dff-8f90-4999-ad3a-adcd790911f3"
 
 function InvokeKustoCommand($command) {
     $clusterUri = "https://azsdk-cpex-attestation.westus2.kusto.windows.net"
@@ -94,7 +93,7 @@ foreach ($releasePlan in $releasePlans) {
             "*Public Preview*" {
                 AddAttestationEntry $productServiceTreeId $KPI_ID_Data_Public_Preview $Complete $productType $url
             }
-            "*Private Preview" {
+            "*Private Preview*" {
                 AddAttestationEntry $productServiceTreeId $KPI_ID_Data_Private_Preview $Complete $productType $url
             }
             "*GA*" {
@@ -111,7 +110,7 @@ foreach ($releasePlan in $releasePlans) {
             "*Public Preview*" {
                 AddAttestationEntry $productServiceTreeId $KPI_ID_Mgmt_Public_Preview $Complete $productType $url
             }
-            "*Private Preview" {
+            "*Private Preview*" {
                 AddAttestationEntry $productServiceTreeId $KPI_ID_Mgmt_Private_Preview $Complete $productType $url
             }
             "*GA*" {

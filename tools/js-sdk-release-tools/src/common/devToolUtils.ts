@@ -33,21 +33,14 @@ export async function updateSnippets(packageDirectory: string) {
     }
 }
 
-export async function lintFix(packageDirectory: string) {
+export async function lintFix(sdkPath:string, packageDirectory: string) {
     const hasSampleFolder = await exists(path.join(packageDirectory, "samples-dev"));
-    const samplesDev = hasSampleFolder ? ' samples-dev' : '';
+    const samplesDev = hasSampleFolder ? ` ${path.join(packageDirectory, "samples-dev")}` : '';
     logger.info(`Start to fix lint errors in '${packageDirectory}'.`);
-    const cwd = packageDirectory;
+    const cwd = sdkPath;
     const options = { ...runCommandOptions, cwd };
 
-
-    const depInstallation = await exists(path.join(packageDirectory, "node_modules","@azure","eslint-plugin-azure-sdk","dist"))
-    logger.info(depInstallation)
-    const depInstallationEslint = await exists(path.join(packageDirectory, "node_modules","@azure","eslint-plugin-azure-sdk","dist","esm"))
-    logger.info(depInstallationEslint)
-    const depInstallationEslintIndex = await exists(path.join(packageDirectory, "node_modules","@azure","eslint-plugin-azure-sdk","dist","esm","indexe.js"))
-    logger.info(depInstallationEslintIndex)
-    const lintFixCommand = `run vendored eslint package.json api-extractor.json src test${samplesDev} --fix --fix-type [problem,suggestion]`;
+    const lintFixCommand = `run vendored eslint ${path.join(packageDirectory, "package.json")} ${path.join(packageDirectory, "api-extractor.json")} ${path.join(packageDirectory, "src")} ${path.join(packageDirectory, "test")}${samplesDev} --fix --fix-type [problem,suggestion]`;
 
     try {
         await runCommand(`npm`, ['exec', '--', 'dev-tool', lintFixCommand], options, true, 300, true);

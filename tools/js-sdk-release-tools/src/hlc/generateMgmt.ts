@@ -132,7 +132,7 @@ export async function generateMgmt(options: {
                 logger.info(`Start to run command: 'pnpm install'.`);
                 execSync('pnpm install', {stdio: 'inherit'});
 
-                await lintFix(packagePath);
+                await lintFix(options.sdkRepo, packagePath);
                                 
                 logger.info(`Start to run command: 'pnpm build --filter ${packageName}...', that builds generated codes, except test and sample, which may be written manually.`);
                 execSync(`pnpm build --filter ${packageName}...`, {stdio: 'inherit'});

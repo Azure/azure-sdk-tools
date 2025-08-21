@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace APIViewWeb.Services
 {
     /// <summary>
-    /// Background service that automatically approves namespace reviews after 1 business day with no open comments
+    /// Background service that automatically approves namespace reviews after 3 business days with no open comments
     /// </summary>
     public class NamespaceAutoApprovalService : BackgroundService
     {

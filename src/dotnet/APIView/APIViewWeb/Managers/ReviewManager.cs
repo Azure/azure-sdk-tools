@@ -25,6 +25,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace APIViewWeb.Managers
 {
@@ -47,6 +48,7 @@ namespace APIViewWeb.Managers
         private readonly IPollingJobQueueManager _pollingJobQueueManager;
         private readonly INotificationManager _notificationManager;
         private readonly ICosmosPullRequestsRepository _pullRequestsRepository;
+        private readonly ILogger<ReviewManager> _logger;
 
         public ReviewManager (
             IAuthorizationService authorizationService, ICosmosReviewRepository reviewsRepository,
@@ -54,7 +56,7 @@ namespace APIViewWeb.Managers
             IBlobCodeFileRepository codeFileRepository, ICosmosCommentsRepository commentsRepository, 
             ICosmosAPIRevisionsRepository apiRevisionsRepository,
             IHubContext<SignalRHub> signalRHubContext, IEnumerable<LanguageService> languageServices,
-            TelemetryClient telemetryClient, ICodeFileManager codeFileManager, IConfiguration configuration, IHttpClientFactory httpClientFactory, IPollingJobQueueManager pollingJobQueueManager, INotificationManager notificationManager, ICosmosPullRequestsRepository pullRequestsRepository)
+            TelemetryClient telemetryClient, ICodeFileManager codeFileManager, IConfiguration configuration, IHttpClientFactory httpClientFactory, IPollingJobQueueManager pollingJobQueueManager, INotificationManager notificationManager, ICosmosPullRequestsRepository pullRequestsRepository, ILogger<ReviewManager> logger)
 
         {
             _authorizationService = authorizationService;
@@ -73,6 +75,7 @@ namespace APIViewWeb.Managers
             _pollingJobQueueManager = pollingJobQueueManager;
             _notificationManager = notificationManager;
             _pullRequestsRepository = pullRequestsRepository;
+            _logger = logger;
         }
 
         /// <summary>
@@ -1002,38 +1005,62 @@ namespace APIViewWeb.Managers
         }
 
         /// <summary>
-        /// Process pending namespace reviews for auto-approval after 1 business day with no open comments
+        /// Process pending namespace reviews for auto-approval after 3 business days with no open comments
         /// Groups reviews by pull request number and sends one consolidated email per TypeSpec namespace
         /// </summary>
         public async Task ProcessPendingNamespaceAutoApprovals()
         {
             try
             {
+                _logger.LogInformation("=== Starting ProcessPendingNamespaceAutoApprovals ===");
+                
                 var pendingReviews = await GetPendingNamespaceReviewsForAutoApproval();
+                _logger.LogInformation($"Found {pendingReviews.Count} pending namespace approval reviews");
+                
+                // Log all pending reviews for debugging
+                foreach (var review in pendingReviews)
+                {
+                    _logger.LogInformation($"Pending review: {review.Id} - {review.PackageName} ({review.Language}) - Requested: {review.NamespaceApprovalRequestedOn}");
+                }
                 
                 // Group reviews by pull request numbers to consolidate related approvals
-                var prGroups = await GroupReviewsByPullRequestNumbers(pendingReviews);
+                var prGroups = GroupReviewsByPullRequestNumbers(pendingReviews);
+
+                _logger.LogInformation($"After grouping, processing {prGroups.Count} groups for auto-approval");
 
                 foreach (var prGroup in prGroups)
                 {
                     var reviewsInGroup = prGroup.Value;
+                    _logger.LogInformation($"=== Processing group '{prGroup.Key}' with {reviewsInGroup.Count} reviews ===");
                     
                     // Find the TypeSpec review as the primary review for this group
                     var typeSpecReview = reviewsInGroup.FirstOrDefault(r => r.Language == "TypeSpec");
+                    if (typeSpecReview != null)
+                    {
+                        _logger.LogInformation($"Found TypeSpec review in group: {typeSpecReview.PackageName}");
+                    }
+                    else
+                    {
+                        _logger.LogInformation("No TypeSpec review found in this group");
+                    }
                     
                     // Check if any review in this group should be auto-approved
                     var shouldAutoApproveGroup = false;
                     foreach (var review in reviewsInGroup)
                     {
-                        if (await ShouldAutoApprove(review))
+                        var shouldApprove = await ShouldAutoApprove(review);
+                        _logger.LogInformation($"Review {review.PackageName} ({review.Language}) - ShouldAutoApprove: {shouldApprove}");
+                        if (shouldApprove)
                         {
                             shouldAutoApproveGroup = true;
-                            break;
                         }
                     }
                     
+                    _logger.LogInformation($"Group '{prGroup.Key}' auto-approval decision: {shouldAutoApproveGroup}");
+                    
                     if (shouldAutoApproveGroup)
                     {
+                        _logger.LogInformation($"Auto-approving group '{prGroup.Key}' with {reviewsInGroup.Count} reviews");
                         await AutoApproveNamespaceGroup(reviewsInGroup, typeSpecReview);
                     }
                 }
@@ -1056,21 +1083,38 @@ namespace APIViewWeb.Managers
         }
 
         /// <summary>
-        /// Check if a review should be auto-approved (1 business day passed + no open comments)
+        /// Check if a review should be auto-approved (3 business days passed + no open comments)
         /// </summary>
         private async Task<bool> ShouldAutoApprove(ReviewListItemModel review)
         {
-            if (!review.NamespaceApprovalRequestedOn.HasValue) return false;
+            _logger.LogInformation($"=== Checking auto-approval for {review.PackageName} ({review.Language}) ===");
             
-            // Calculate 1 business day deadline (same logic as EmailTemplateService)
-            var approvalDeadline = CalculateBusinessDays(review.NamespaceApprovalRequestedOn.Value, 1);
+            if (!review.NamespaceApprovalRequestedOn.HasValue)
+            {
+                _logger.LogInformation($"No NamespaceApprovalRequestedOn date - skipping auto-approval");
+                return false;
+            }
+            
+            // Calculate 3 business day deadline (same logic as EmailTemplateService)
+            var approvalDeadline = CalculateBusinessDays(review.NamespaceApprovalRequestedOn.Value, 3);
+            _logger.LogInformation($"Approval deadline: {approvalDeadline}, Current time: {DateTime.UtcNow}");
             
             // Check if deadline has passed
-            if (DateTime.UtcNow < approvalDeadline) return false;
+            if (DateTime.UtcNow < approvalDeadline)
+            {
+                _logger.LogInformation($"Deadline not reached yet - skipping auto-approval");
+                return false;
+            }
             
             // Check for open/unresolved comments
             var openComments = await GetOpenComments(review.Id);
-            return !openComments.Any();
+            var hasOpenComments = openComments.Any();
+            _logger.LogInformation($"Open comments count: {openComments.Count()}, Has open comments: {hasOpenComments}");
+            
+            var shouldApprove = !hasOpenComments;
+            _logger.LogInformation($"Final auto-approval decision: {shouldApprove}");
+            
+            return shouldApprove;
         }
 
         /// <summary>
@@ -1102,60 +1146,66 @@ namespace APIViewWeb.Managers
         }
 
         /// <summary>
-        /// Group reviews by their pull request numbers to identify related reviews
+        /// Group reviews by their timestamp and service to identify related reviews
+        /// Reviews with same NamespaceApprovalRequestedOn timestamp are likely from the same logical request
         /// </summary>
-        private async Task<Dictionary<string, List<ReviewListItemModel>>> GroupReviewsByPullRequestNumbers(List<ReviewListItemModel> pendingReviews)
+        private Dictionary<string, List<ReviewListItemModel>> GroupReviewsByPullRequestNumbers(List<ReviewListItemModel> pendingReviews)
         {
-            var prGroups = new Dictionary<string, List<ReviewListItemModel>>();
-            var reviewsWithoutPR = new List<ReviewListItemModel>();
+            var timestampGroups = new Dictionary<string, List<ReviewListItemModel>>();
+            var reviewsWithoutTimestamp = new List<ReviewListItemModel>();
 
+            // Group by NamespaceApprovalRequestedOn timestamp and service name
             foreach (var review in pendingReviews)
             {
                 try
                 {
-                    // Get all API revisions for this review to find pull request numbers
-                    var revisions = await _apiRevisionsManager.GetAPIRevisionsAsync(review.Id);
-                    var pullRequestNumbers = revisions
-                        .Where(r => r.PullRequestNo.HasValue && r.PullRequestNo.Value > 0)
-                        .Select(r => r.PullRequestNo.Value.ToString())
-                        .Distinct()
-                        .ToList();
-
-                    if (pullRequestNumbers.Any())
+                    if (review.NamespaceApprovalRequestedOn.HasValue)
                     {
-                        // Group by first PR number found (most reviews should have the same PR number)
-                        var prKey = pullRequestNumbers.First();
+                        // Extract service name from package name for grouping
+                        var serviceName = ExtractServiceNameFromPackage(review.PackageName);
                         
-                        if (!prGroups.ContainsKey(prKey))
+                        // Create timestamp key with service name - precise to the minute to group related requests
+                        var timestampKey = $"{serviceName}_{review.NamespaceApprovalRequestedOn.Value:yyyy-MM-dd_HH-mm}";
+                        
+                        if (!timestampGroups.ContainsKey(timestampKey))
                         {
-                            prGroups[prKey] = new List<ReviewListItemModel>();
+                            timestampGroups[timestampKey] = new List<ReviewListItemModel>();
                         }
-                        prGroups[prKey].Add(review);
+                        timestampGroups[timestampKey].Add(review);
+                        
+                        _logger.LogInformation($"Added review {review.Id} ({review.PackageName}, {review.Language}) to timestamp group {timestampKey} (service: {serviceName}, time: {review.NamespaceApprovalRequestedOn.Value})");
                     }
                     else
                     {
-                        // No PR number found, handle separately
-                        reviewsWithoutPR.Add(review);
+                        // No timestamp, handle individually
+                        reviewsWithoutTimestamp.Add(review);
+                        _logger.LogInformation($"Review {review.Id} ({review.PackageName}, {review.Language}) has no timestamp, adding to individual processing");
                     }
                 }
                 catch (Exception ex)
                 {
                     _telemetryClient.TrackException(ex);
-                    // Add to individual processing if we can't group it
-                    reviewsWithoutPR.Add(review);
+                    reviewsWithoutTimestamp.Add(review);
                 }
             }
 
-            // Handle reviews without PR numbers - use smarter grouping by service name
-            var serviceGroups = GroupReviewsByServiceName(reviewsWithoutPR);
-
-            foreach (var serviceGroup in serviceGroups)
+            // Add individual reviews for those without timestamps
+            foreach (var review in reviewsWithoutTimestamp)
             {
-                var fallbackKey = $"service_{serviceGroup.Key}";
-                prGroups[fallbackKey] = serviceGroup.Value;
+                var individualKey = $"individual_{review.Id}";
+                timestampGroups[individualKey] = new List<ReviewListItemModel> { review };
+                _logger.LogInformation($"Added review {review.Id} ({review.PackageName}, {review.Language}) as individual group");
             }
 
-            return prGroups;
+            // Log final grouping results
+            _logger.LogInformation($"Final timestamp grouping results: {timestampGroups.Count} groups");
+            foreach (var group in timestampGroups)
+            {
+                var reviewDetails = string.Join(", ", group.Value.Select(r => $"{r.PackageName}({r.Language})"));
+                _logger.LogInformation($"Group '{group.Key}': {group.Value.Count} reviews - {reviewDetails}");
+            }
+
+            return timestampGroups;
         }
 
         /// <summary>
@@ -1193,6 +1243,17 @@ namespace APIViewWeb.Managers
                 return "Unknown";
 
             var name = packageName.ToLowerInvariant();
+            
+            // Handle Java packages specifically 
+            if (name.Contains("azure-resourcemanager-"))
+            {
+                var match = System.Text.RegularExpressions.Regex.Match(name, @"azure-resourcemanager-([^-]+)");
+                if (match.Success)
+                {
+                    var extractedService = match.Groups[1].Value;
+                    return char.ToUpperInvariant(extractedService[0]) + extractedService.Substring(1);
+                }
+            }
             
             // Remove common prefixes and suffixes
             var patterns = new[]

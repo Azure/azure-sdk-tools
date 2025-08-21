@@ -31,7 +31,7 @@ namespace APIViewWeb.Services
         private readonly IHostEnvironment _hostEnvironment;
         private readonly string _apiviewEndpoint;
         private const int MaxPackageNameLength = 60;
-        private const int BusinessDaysForDeadline = 1;
+        private const int BusinessDaysForDeadline = 3;
 
         public EmailTemplateService(IHostEnvironment hostEnvironment, IConfiguration configuration)
         {
@@ -92,7 +92,7 @@ namespace APIViewWeb.Services
                 autoApprovalSectionHtml = $@"
                     <div class=""auto-approval-section"">
                         <div class=""auto-approval-title"">✅ Auto-Approved</div>
-                        <div>This namespace review was automatically approved after 1 business day with no comments raised.</div>
+                        <div>This namespace review was automatically approved after 3 business days with no comments raised.</div>
                         <div class=""auto-approval-dates"">
                             <strong>Original Request Date:</strong> {originalRequestDate?.ToString("MMMM dd, yyyy") ?? "N/A"}<br/>
                             <strong>Auto-Approved Date:</strong> {autoApprovedDate?.ToString("MMMM dd, yyyy") ?? DateTime.UtcNow.ToString("MMMM dd, yyyy")}

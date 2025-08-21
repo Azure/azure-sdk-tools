@@ -14,9 +14,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         {
             // Arrange
             var npxHelper = new Mock<INpxHelper>().Object;
-            var logger = new Mock<ILogger<TspInitTool>>().Object;
+            var logger = new Mock<ILogger<TypeSpecInitTool>>().Object;
             var outputService = new Mock<IOutputHelper>().Object;
-            var tool = new TspInitTool(npxHelper, logger, outputService);
+            var tool = new TypeSpecInitTool(npxHelper, logger, outputService);
 
             // Act
             var command = tool.GetCommand();
@@ -32,9 +32,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public async Task Init_WithInvalidTemplate_ShouldReturnError()
         {
             var npxHelper = new Mock<INpxHelper>().Object;
-            var logger = new Mock<ILogger<TspInitTool>>().Object;
+            var logger = new Mock<ILogger<TypeSpecInitTool>>().Object;
             var outputService = new Mock<IOutputHelper>().Object;
-            var tool = new TspInitTool(npxHelper, logger, outputService);
+            var tool = new TypeSpecInitTool(npxHelper, logger, outputService);
 
             var result = await tool.InitTypeSpecProjectAsync(outputDirectory: "never-used", template: "invalid-template", serviceNamespace: "MyService", isCli: false);
 
@@ -50,9 +50,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public async Task Init_WithInvalidServiceNamespace_ShouldReturnError()
         {
             var npxHelper = new Mock<INpxHelper>().Object;
-            var logger = new Mock<ILogger<TspInitTool>>().Object;
+            var logger = new Mock<ILogger<TypeSpecInitTool>>().Object;
             var outputService = new Mock<IOutputHelper>().Object;
-            var tool = new TspInitTool(npxHelper, logger, outputService);
+            var tool = new TypeSpecInitTool(npxHelper, logger, outputService);
 
             var result = await tool.InitTypeSpecProjectAsync(outputDirectory: "never-used", template: "azure-core", serviceNamespace: "", isCli: false);
 
@@ -67,9 +67,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public async Task Init_WithNonExistentDirectory_ShouldReturnError()
         {
             var npxHelper = new Mock<INpxHelper>().Object;
-            var logger = new Mock<ILogger<TspInitTool>>().Object;
+            var logger = new Mock<ILogger<TypeSpecInitTool>>().Object;
             var outputService = new Mock<IOutputHelper>().Object;
-            var tool = new TspInitTool(npxHelper, logger, outputService);
+            var tool = new TypeSpecInitTool(npxHelper, logger, outputService);
 
             var result = await tool.InitTypeSpecProjectAsync(outputDirectory: Path.Combine(Path.GetTempPath(), $"test-nonexistent-{Guid.NewGuid()}"), template: "azure-core", serviceNamespace: "MyService", isCli: false);
 

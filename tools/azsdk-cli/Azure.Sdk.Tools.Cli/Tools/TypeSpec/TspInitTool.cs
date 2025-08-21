@@ -19,13 +19,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
     /// Use this tool to onboard new services to TypeSpec.
     /// </summary>
     [McpServerToolType, Description("Tools for initializing TypeSpec projects.")]
-    public class TspInitTool : MCPTool
+    public class TypeSpecInitTool : MCPTool
     {
         private readonly INpxHelper npxHelper;
-        private readonly ILogger<TspInitTool> logger;
+        private readonly ILogger<TypeSpecInitTool> logger;
         private readonly IOutputHelper output;
 
-        public TspInitTool(INpxHelper npxHelper, ILogger<TspInitTool> logger, IOutputHelper output)
+        public TypeSpecInitTool(INpxHelper npxHelper, ILogger<TypeSpecInitTool> logger, IOutputHelper output)
         {
             this.npxHelper = npxHelper;
             this.logger = logger;

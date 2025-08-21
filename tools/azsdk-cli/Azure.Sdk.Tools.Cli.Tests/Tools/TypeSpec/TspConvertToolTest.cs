@@ -14,9 +14,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         {
             // Arrange
             var npxHelper = new Mock<INpxHelper>().Object;
-            var logger = new Mock<ILogger<TspConvertTool>>().Object;
+            var logger = new Mock<ILogger<TypeSpecConvertTool>>().Object;
             var outputService = new Mock<IOutputHelper>().Object;
-            var tool = new TspConvertTool(npxHelper, logger, outputService);
+            var tool = new TypeSpecConvertTool(npxHelper, logger, outputService);
 
             // Act
             var command = tool.GetCommand();
@@ -32,9 +32,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         {
             // Arrange
             var npxHelper = new Mock<INpxHelper>().Object;
-            var logger = new Mock<ILogger<TspConvertTool>>().Object;
+            var logger = new Mock<ILogger<TypeSpecConvertTool>>().Object;
             var outputService = new Mock<IOutputHelper>().Object;
-            var tool = new TspConvertTool(npxHelper, logger, outputService);
+            var tool = new TypeSpecConvertTool(npxHelper, logger, outputService);
 
             // Act
             var result = await tool.ConvertSwaggerAsync("swagger.json", @"C:\temp", false, false, false, CancellationToken.None);
@@ -49,9 +49,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         {
             // Arrange
             var npxHelper = new Mock<INpxHelper>().Object;
-            var logger = new Mock<ILogger<TspConvertTool>>().Object;
+            var logger = new Mock<ILogger<TypeSpecConvertTool>>().Object;
             var outputService = new Mock<IOutputHelper>().Object;
-            var tool = new TspConvertTool(npxHelper, logger, outputService);
+            var tool = new TypeSpecConvertTool(npxHelper, logger, outputService);
 
             // Act
             var result = await tool.ConvertSwaggerAsync(@"C:\nonexistent\readme.md", @"C:\temp", false, false, false, CancellationToken.None);

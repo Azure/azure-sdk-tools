@@ -28,7 +28,7 @@ dotenv.load_dotenv()
 
 NUM_RUNS: int = 3
 # for best results, this should always be a different model from the one we are evaluating
-MODEL_JUDGE = "gpt-4.1-nano"
+MODEL_JUDGE = "gpt-5-mini"
 
 global settings
 settings = SettingsManager()

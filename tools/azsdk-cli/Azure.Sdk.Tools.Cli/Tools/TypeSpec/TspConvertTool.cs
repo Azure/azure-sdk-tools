@@ -19,14 +19,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
     /// Use this tool to convert existing services to TypeSpec.
     /// </summary>
     [McpServerToolType, Description("Tools for converting existing Azure service swagger definitions to TypeSpec projects.")]
-    public class TspConvertTool : MCPTool
+    public class TypeSpecConvertTool : MCPTool
     {
 
         private readonly INpxHelper npxHelper;
-        private readonly ILogger<TspConvertTool> logger;
+        private readonly ILogger<TypeSpecConvertTool> logger;
         private readonly IOutputHelper output;
 
-        public TspConvertTool(INpxHelper npxHelper, ILogger<TspConvertTool> logger, IOutputHelper output)
+        public TypeSpecConvertTool(INpxHelper npxHelper, ILogger<TypeSpecConvertTool> logger, IOutputHelper output)
         {
             this.npxHelper = npxHelper;
             this.logger = logger;

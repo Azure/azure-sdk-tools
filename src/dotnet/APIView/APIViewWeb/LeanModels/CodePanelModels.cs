@@ -26,6 +26,7 @@ namespace APIViewWeb.LeanModels
         public List<StructuredToken> RowOfTokens => RowOfTokensObj.Count > 0 ? RowOfTokensObj : null;
         public string NodeId { get; set; }
         public string NodeIdHashed { get; set; }
+        public string CrossLanguageId { get; set; }
         public int RowPositionInGroup { get; set; } // The position / index of the row within the group of similar rows
         public int AssociatedRowPositionInGroup { get; set; } // For comment threads, this is the position of the associated code line within the group of similar rows
         [JsonIgnore]

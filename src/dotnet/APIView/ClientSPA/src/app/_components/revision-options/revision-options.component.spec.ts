@@ -43,13 +43,13 @@ describe('ApiRevisionOptionsComponent', () => {
       {
         id: '1',
         isApproved: false,
-        version: "12.15.1",
+        packageVersion: "12.15.1",
         apiRevisionType: 'manual',
       },
       {
         id: '2',
         isApproved: true,
-        version: "12.20.0-beta.2",
+        packageVersion: "12.20.0-beta.2",
         changeHistory: [
           {
             changeAction: 'approved',
@@ -64,7 +64,7 @@ describe('ApiRevisionOptionsComponent', () => {
       {
         id: '3',
         isApproved: true,
-        version: "12.20.0",
+        packageVersion: "12.20.0",
         changeHistory: [
           {
             changeAction: 'approved',
@@ -79,7 +79,7 @@ describe('ApiRevisionOptionsComponent', () => {
       {
         id: '4',
         isApproved: true,
-        version: "12.21.1",
+        packageVersion: "12.21.1",
         changeHistory: [
           {
             changeAction: 'approved',
@@ -93,7 +93,7 @@ describe('ApiRevisionOptionsComponent', () => {
       {
         id: '5',
         isApproved: false,
-        version: "13.0.0",
+        packageVersion: "13.0.0",
         isReleased: false,
         apiRevisionType: 'automatic',
         lastUpdatedOn: '2024-07-04T00:00:00Z',
@@ -101,7 +101,7 @@ describe('ApiRevisionOptionsComponent', () => {
       {
         id: '6',
         isApproved: true,
-        version: "11.0.0",
+        packageVersion: "11.0.0",
         changeHistory: [
           {
             changeAction: 'approved',

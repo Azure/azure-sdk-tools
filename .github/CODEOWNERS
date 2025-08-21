@@ -44,7 +44,7 @@
 /tools/sdk-testgen/                     @lirenhe @tadelesh
 /tools/spec-gen-sdk/                    @raych1 @chidozieononiwu
 /tools/test-proxy/                      @scbedd @mikeharder @benbp
-/tools/tsp-client/                      @catalinaperalta @timotheeguerin
+/tools/tsp-client/                      @catalinaperalta
 /tools/typespec-bump-deps/              @weidongxu-microsoft
 /tools/content-validation/              @xiangyan99 @zedy-wj
 /tools/perf-regression-finder/          @sa7936 @m-redding @jsquire

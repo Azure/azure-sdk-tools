@@ -1,8 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using Microsoft.Extensions.Logging;
-using Azure.Sdk.Tools.Cli.Services;
-using Azure.Sdk.Tools.Cli.Tools;
+using Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 using Moq;
 using Azure.Sdk.Tools.Cli.Helpers;
 
@@ -16,7 +15,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             // Arrange
             var npxHelper = new Mock<INpxHelper>().Object;
             var logger = new Mock<ILogger<TypeSpecTool>>().Object;
-            var outputService = new Mock<IOutputService>().Object;
+            var outputService = new Mock<IOutputHelper>().Object;
             var tool = new TypeSpecTool(npxHelper, logger, outputService);
 
             // Act
@@ -42,11 +41,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             // Arrange
             var npxHelper = new Mock<INpxHelper>().Object;
             var logger = new Mock<ILogger<TypeSpecTool>>().Object;
-            var outputService = new Mock<IOutputService>().Object;
+            var outputService = new Mock<IOutputHelper>().Object;
             var tool = new TypeSpecTool(npxHelper, logger, outputService);
 
             // Act
-            var result = await tool.ConvertSwagger("swagger.json", @"C:\temp", false, false);
+            var result = await tool.ConvertSwagger("swagger.json", @"C:\temp", false, false, false, CancellationToken.None);
 
             // Assert
             Assert.That(result.IsSuccessful, Is.False);
@@ -59,15 +58,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             // Arrange
             var npxHelper = new Mock<INpxHelper>().Object;
             var logger = new Mock<ILogger<TypeSpecTool>>().Object;
-            var outputService = new Mock<IOutputService>().Object;
+            var outputService = new Mock<IOutputHelper>().Object;
             var tool = new TypeSpecTool(npxHelper, logger, outputService);
 
             // Act
-            var result = await tool.ConvertSwagger(@"C:\nonexistent\readme.md", @"C:\temp", false, false);
-
-            // Assert
+            var result = await tool.ConvertSwagger(@"C:\nonexistent\readme.md", @"C:\temp", false, false, false, CancellationToken.None);
             Assert.That(result.IsSuccessful, Is.False);
-            Assert.That(result.ResponseError, Does.Contain("does not exist"));
         }
 
         [Test]

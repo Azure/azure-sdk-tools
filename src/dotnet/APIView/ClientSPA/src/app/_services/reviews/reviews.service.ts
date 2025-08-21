@@ -6,6 +6,7 @@ import { PaginatedResult } from 'src/app/_models/pagination';
 import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
 import { ConfigService } from '../config/config.service';
+import { CrossLanguageContentDto } from 'src/app/_models/codePanelModels';
 
 @Injectable({
   providedIn: 'root'
@@ -138,5 +139,17 @@ export class ReviewsService {
     return this.http.get(this.baseUrl + `/${reviewId}/content`, 
     { 
       params: params, observe: 'response',
-      responseType: 'arraybuffer', withCredentials: true });
-  }}
+      responseType: 'arraybuffer', withCredentials: true 
+    });
+  }
+
+  getCrossLanguageContent(apiRevisionId: string, apiCodeFileId: string) : Observable<CrossLanguageContentDto> {
+    let params = new HttpParams();
+    params = params.append('apiRevisionId', apiRevisionId);
+    params = params.append('apiCodeFileId', apiCodeFileId);
+    return this.http.get<CrossLanguageContentDto>(this.baseUrl + `/crossLanguageContent`, 
+    { 
+      params: params, withCredentials: true 
+    });
+  }
+}

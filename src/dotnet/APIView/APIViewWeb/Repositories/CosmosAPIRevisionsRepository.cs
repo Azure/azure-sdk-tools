@@ -26,7 +26,7 @@ namespace APIViewWeb
         }
 
         /// <summary>
-        /// Add new Revisionto database
+        /// Add new Revision to database
         /// </summary>
         /// <param name="revision"></param>
         /// <returns></returns>
@@ -200,6 +200,34 @@ namespace APIViewWeb
             var query = $"SELECT * FROM Revisions c WHERE c.IsDeleted = false AND c.ReviewId = '{reviewId}'";
             var revisions = new List<APIRevisionListItemModel>();
             QueryDefinition queryDefinition = new QueryDefinition(query);
+            using FeedIterator<APIRevisionListItemModel> feedIterator = _apiRevisionContainer.GetItemQueryIterator<APIRevisionListItemModel>(queryDefinition);
+            while (feedIterator.HasMoreResults)
+            {
+                FeedResponse<APIRevisionListItemModel> response = await feedIterator.ReadNextAsync();
+                revisions.AddRange(response);
+            }
+            return revisions;
+        }
+
+        /// <summary>
+        /// Retrieve Revisions from the Revisions container in CosmosDb for a given crossLanguageId and language
+        /// Limits to 20 revision sby default
+        /// </summary>
+        /// <param name="crossLanguageId"></param> The reviewId
+        /// <param name="language"></param> language
+        /// <param name="apiRevisionType"></param>
+        /// <returns></returns>
+        public async Task<IEnumerable<APIRevisionListItemModel>> GetCrossLanguageAPIRevisionsAsync(string crossLanguageId, string language, APIRevisionType apiRevisionType = APIRevisionType.All)
+        {
+            var queryStringBuilder = new StringBuilder($"SELECT * FROM Revisions c WHERE c.IsDeleted = false AND c.Files[0].CrossLanguagePackageId = '{crossLanguageId}' AND c.Language = '{language}'");
+            if (apiRevisionType != APIRevisionType.All)
+            {
+                queryStringBuilder.Append(" AND c.APIRevisionType = @apiRevisionType");
+            }
+            queryStringBuilder.Append(" ORDER BY c.CreatedOn DESC OFFSET 0 LIMIT 20");
+            var revisions = new List<APIRevisionListItemModel>();
+            QueryDefinition queryDefinition = new QueryDefinition(queryStringBuilder.ToString())
+                .WithParameter("@apiRevisionType", apiRevisionType.ToString());
             using FeedIterator<APIRevisionListItemModel> feedIterator = _apiRevisionContainer.GetItemQueryIterator<APIRevisionListItemModel>(queryDefinition);
             while (feedIterator.HasMoreResults)
             {

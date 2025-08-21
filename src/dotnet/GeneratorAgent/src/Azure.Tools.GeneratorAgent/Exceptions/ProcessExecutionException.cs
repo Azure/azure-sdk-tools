@@ -6,7 +6,7 @@ namespace Azure.Tools.GeneratorAgent.Exceptions
     /// Base exception class for process execution related errors.
     /// Contains common properties for all process execution failures.
     /// </summary>
-    public abstract class ProcessExecutionException : Exception
+    internal abstract class ProcessExecutionException : Exception
     {
         /// <summary>
         /// The command that was being executed

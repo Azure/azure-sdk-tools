@@ -150,6 +150,18 @@ namespace APIViewWeb.Managers
         }
 
         /// <summary>
+        /// Retrieve Revisions from the APIRevisions container in CosmosDb for a given crossLanguageId and language
+        /// </summary>
+        /// <param name="crossLanguageId"></param>
+        /// <param name="language"></param>
+        /// <param name="apiRevisionType"></param>
+        /// <returns>APIRevisionListItemModel</returns>
+        public async Task<IEnumerable<APIRevisionListItemModel>> GetCrossLanguageAPIRevisionsAsync(string crossLanguageId, string language, APIRevisionType apiRevisionType = APIRevisionType.All)
+        {
+            return await this._apiRevisionsRepository.GetCrossLanguageAPIRevisionsAsync(crossLanguageId, language, apiRevisionType);
+        }
+
+        /// <summary>
         /// Retrieve Revisions from the Revisions container in CosmosDb.
         /// </summary>
         /// <param name="user"></param>

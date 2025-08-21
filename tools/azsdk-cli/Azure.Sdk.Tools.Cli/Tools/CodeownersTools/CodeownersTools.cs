@@ -98,6 +98,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                         sourceOwnersValue?.ToList() ?? new List<string>(),
                         isAddingValue,
                         workingBranchValue ?? "");
+                        ctx.ExitCode = ExitCode;
                     output.Output(addResult);
                     ctx.ExitCode = ExitCode;
                     return;
@@ -110,6 +111,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
                         validateRepo ?? "",
                         validateServiceLabel,
                         validateRepoPath);
+                        ctx.ExitCode = ExitCode;
                     output.Output(validateResult);
                     ctx.ExitCode = ExitCode;
                     return;
@@ -225,7 +227,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
             catch (Exception ex)
             {
                 SetFailure();
-                return $"Error: {ex}";
+                logger.LogError(ex);
+                return ex.Message;
             }
         }
 

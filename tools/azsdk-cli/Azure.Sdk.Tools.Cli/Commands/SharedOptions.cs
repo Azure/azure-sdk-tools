@@ -33,7 +33,8 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(SpecWorkflowTool),
             typeof(SpecValidationTools),
             typeof(TestAnalysisTool),
-            typeof(TypeSpecTool),
+            typeof(TspConvertTool),
+            typeof(TspInitTool),
 
             #if DEBUG
             // only add these tools in debug mode
@@ -60,9 +61,9 @@ namespace Azure.Sdk.Tools.Cli.Commands
             IsRequired = false,
         };
 
-        public static Option<string> PackagePath = new(["--package-path", "-p"], "Path to the package directory to check") 
-        { 
-            IsRequired = true 
+        public static Option<string> PackagePath = new(["--package-path", "-p"], "Path to the package directory to check")
+        {
+            IsRequired = true
         };
 
         public static (string, bool) GetGlobalOptionValues(string[] args)

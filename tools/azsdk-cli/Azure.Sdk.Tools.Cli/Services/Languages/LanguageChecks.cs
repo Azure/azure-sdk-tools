@@ -50,6 +50,16 @@ public class LanguageChecks
     public virtual async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct)
     {
         var languageSpecificCheck = _languageSpecificCheckResolver.GetLanguageCheck(packagePath);
+        
+        if (languageSpecificCheck == null)
+        {
+            return new CLICheckResponse(
+                exitCode: 1, 
+                checkStatusDetails: $"No language-specific check handler found for package at {packagePath}. Supported languages may not include this package type.",
+                error: "Unsupported package type"
+            );
+        }
+        
         return await languageSpecificCheck.AnalyzeDependenciesAsync(packagePath, ct);
     }
 

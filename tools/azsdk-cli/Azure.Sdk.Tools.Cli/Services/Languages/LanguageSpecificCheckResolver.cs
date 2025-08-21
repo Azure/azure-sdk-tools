@@ -23,8 +23,8 @@ public class LanguageSpecificCheckResolver
     /// Gets the appropriate language-specific check service for the given package path.
     /// </summary>
     /// <param name="packagePath">Path to the package directory</param>
-    /// <returns>Language-specific check service that can handle the package, or default implementation</returns>
-    public ILanguageSpecificCheck GetLanguageCheck(string packagePath)
+    /// <returns>Language-specific check service that can handle the package, or null if no handler is found</returns>
+    public ILanguageSpecificCheck? GetLanguageCheck(string packagePath)
     {
         if (string.IsNullOrWhiteSpace(packagePath))
         {
@@ -48,8 +48,8 @@ public class LanguageSpecificCheckResolver
             return specificLanguageCheck;
         }
 
-
-        throw new InvalidOperationException("No language-specific check services are available");
+        _logger.LogWarning("No language-specific check service found for package at {PackagePath}", packagePath);
+        return null;
     }
 
     /// <summary>

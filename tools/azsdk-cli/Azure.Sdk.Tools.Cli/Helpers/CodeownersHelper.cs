@@ -91,7 +91,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 mergedCodeownersEntries = MergeCodeownerEntries(mergedCodeownersEntries, i);
             }
 
-            foreach (var entry in entries)
+            foreach (var entry in mergedCodeownersEntries)
             {
                 // If serviceLabel is provided, match by ServiceLabels or PRLabels (exact match, case and space insensitive)
                 if (!string.IsNullOrEmpty(serviceLabel))
@@ -592,7 +592,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 return string.Empty;
             }
 
-            // Remove any leading or trailing whitespace and slashes using regex
+            // "  /sdk/service/library/  " -> "sdk/service/library"
             var normalizedPath = Regex.Replace(path, "^[\\s/]+|[\\s/]+$", "");
 
             if (!normalizedPath.StartsWith("sdk/", StringComparison.OrdinalIgnoreCase))
@@ -602,6 +602,10 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             normalizedPath = $"/{normalizedPath}/";
             return normalizedPath;
         }
+
+        // NormalizeOwner: strip leading/trailing whitespace and leading '@' characters from a GitHub owner string.
+        // Example: "  @deepakmauryams " -> "deepakmauryams"
+        private static string NormalizeOwner(string owner) => Regex.Replace(owner ?? string.Empty, "^[\\s@]+|[\\s@]+$", "");
 
         private static string NormalizeLabel(string input)
         {
@@ -628,6 +632,9 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 .Replace(".", "-")
                 .Trim('-')
                 .ToLowerInvariant();
+            
+            // Remove all characters except letters, digits and hyphen.
+            // Example: "My Service/Name_v1.0" -> "my-service-name-v10"
             return Regex.Replace(normalizedInput, @"[^a-zA-Z0-9\-]", "");
         }
 
@@ -636,14 +643,11 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             var result = new List<string>();
             var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            // Helper to normalize an owner (strip whitespace and leading '@')
-            static string Normalize(string owner) => Regex.Replace(owner ?? string.Empty, "^[\\s@]+|[\\s@]+$", "");
-
             if (existingOwners != null)
             {
                 foreach (var existingOwner in existingOwners)
                 {
-                    var normalized = Normalize(existingOwner);
+                    var normalized = NormalizeOwner(existingOwner);
                     if (string.IsNullOrEmpty(normalized))
                     {
                         continue;
@@ -660,7 +664,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             {
                 foreach (var owner in ownersToAdd)
                 {
-                    var normalized = Normalize(owner);
+                    var normalized = NormalizeOwner(owner);
                     if (string.IsNullOrEmpty(normalized))
                     {
                         continue;
@@ -674,53 +678,53 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             }
 
             return result;
-        }
+         }
 
-        public List<string> RemoveOwners(List<string> existingOwners, List<string> ownersToRemove)
-        {
-            // Always return a new list; do not mutate inputs
-            if (existingOwners == null || existingOwners.Count == 0)
-            {
-                return new List<string>();
-            }
+         public List<string> RemoveOwners(List<string> existingOwners, List<string> ownersToRemove)
+         {
+             // Always return a new list; do not mutate inputs
+             if (existingOwners == null || existingOwners.Count == 0)
+             {
+                 return new List<string>();
+             }
 
-            // Build normalized remove set (no leading '@')
-            var removeSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            if (ownersToRemove != null)
-            {
-                foreach (var owner in ownersToRemove)
-                {
-                    var normalized = Regex.Replace(owner ?? string.Empty, "^[\\s@]+|[\\s@]+$", "");
-                    if (!string.IsNullOrEmpty(normalized))
-                    {
-                        removeSet.Add(normalized);
-                    }
-                }
-            }
+             // Build normalized remove set (no leading '@')
+             var removeSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+             if (ownersToRemove != null)
+             {
+                 foreach (var owner in ownersToRemove)
+                 {
+                     var normalized = NormalizeOwner(owner);
+                     if (!string.IsNullOrEmpty(normalized))
+                     {
+                         removeSet.Add(normalized);
+                     }
+                 }
+             }
 
-            var result = new List<string>();
-            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+             var result = new List<string>();
+             var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            foreach (var existingOwner in existingOwners)
-            {
-                var normalizedExisting = Regex.Replace(existingOwner ?? string.Empty, "^[\\s@]+|[\\s@]+$", "");
-                if (string.IsNullOrEmpty(normalizedExisting))
-                {
-                    continue;
-                }
+             foreach (var existingOwner in existingOwners)
+             {
+                 var normalizedExisting = NormalizeOwner(existingOwner);
+                 if (string.IsNullOrEmpty(normalizedExisting))
+                 {
+                     continue;
+                 }
 
-                if (removeSet.Contains(normalizedExisting))
-                {
-                    continue;
-                }
+                 if (removeSet.Contains(normalizedExisting))
+                 {
+                     continue;
+                 }
 
-                if (seen.Add(normalizedExisting))
-                {
-                    result.Add("@" + normalizedExisting);
-                }
-            }
+                 if (seen.Add(normalizedExisting))
+                 {
+                     result.Add("@" + normalizedExisting);
+                 }
+             }
 
-            return result;
-        }
+             return result;
+         }
     }
 }

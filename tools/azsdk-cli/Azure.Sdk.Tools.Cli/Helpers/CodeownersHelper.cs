@@ -318,8 +318,8 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             if (!string.IsNullOrEmpty(path1) && !string.IsNullOrEmpty(serviceLabel2))
             {
                 var dirName = ExtractDirectoryName(path1);
-                if (serviceLabel2.Equals(dirName, StringComparison.OrdinalIgnoreCase) ||
-                    dirName.Equals(serviceLabel2.Replace("%", "").Trim(), StringComparison.OrdinalIgnoreCase))
+                if (NormalizeLabel(serviceLabel2).Equals(NormalizeLabel(dirName), StringComparison.OrdinalIgnoreCase) ||
+                    NormalizeLabel(dirName).Equals(NormalizeLabel(serviceLabel2), StringComparison.OrdinalIgnoreCase))
                 {
                     return true;
                 }
@@ -328,8 +328,8 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             if (!string.IsNullOrEmpty(path2) && !string.IsNullOrEmpty(serviceLabel1))
             {
                 var dirName = ExtractDirectoryName(path2);
-                if (serviceLabel1.Equals(dirName, StringComparison.OrdinalIgnoreCase) ||
-                    dirName.Equals(serviceLabel1.Replace("%", "").Trim(), StringComparison.OrdinalIgnoreCase))
+                if (NormalizeLabel(serviceLabel1).Equals(NormalizeLabel(dirName), StringComparison.OrdinalIgnoreCase) ||
+                    NormalizeLabel(dirName).Equals(NormalizeLabel(serviceLabel1), StringComparison.OrdinalIgnoreCase))
                 {
                     return true;
                 }
@@ -338,7 +338,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             // 2: Compare service label to PR label
             if (!string.IsNullOrEmpty(serviceLabel1) && !string.IsNullOrEmpty(PRLabel2))
             {
-                if (string.Equals(serviceLabel1.Replace("%", "").Trim(), PRLabel2.Replace("%", "").Trim(), StringComparison.OrdinalIgnoreCase))
+                if (NormalizeLabel(serviceLabel1).Equals(NormalizeLabel(PRLabel2), StringComparison.OrdinalIgnoreCase))
                 {
                     return true;
                 }
@@ -346,16 +346,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
             if (!string.IsNullOrEmpty(PRLabel1) && !string.IsNullOrEmpty(serviceLabel2))
             {
-                if (string.Equals(PRLabel1.Replace("%", "").Trim(), serviceLabel2.Replace("%", "").Trim(), StringComparison.OrdinalIgnoreCase))
-                {
-                    return true;
-                }
-            }
-
-            // 3: Compare by service label
-            if (!string.IsNullOrEmpty(serviceLabel1) && !string.IsNullOrEmpty(serviceLabel2))
-            {
-                if (string.Equals(serviceLabel1.Replace("%", "").Trim(), serviceLabel2.Replace("%", "").Trim(), StringComparison.OrdinalIgnoreCase))
+                if (NormalizeLabel(PRLabel1).Equals(NormalizeLabel(serviceLabel2), StringComparison.OrdinalIgnoreCase))
                 {
                     return true;
                 }

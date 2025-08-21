@@ -42,18 +42,18 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             try
             {
                 // Get user's public organization memberships and evaluate required-org membership inline
-                var memberships = await GetUserOrganizationsAsync(username);
-                var hasRequiredOrgs = RequiredOrganizations.All(o => memberships.Contains(o));
+                var memberships = await githubService.GetPublicOrgMembership(username);
+                var hasRequiredOrgs = memberships != null && RequiredOrganizations.All(o => memberships.Contains(o));
 
                 // Populate result. Organizations from memberships without having the validator helper mutate the result.
                 Dictionary<string, bool> organizations = new();
                 foreach (var requiredOrg in RequiredOrganizations)
                 {
-                    organizations[requiredOrg] = memberships.Contains(requiredOrg);
+                    organizations[requiredOrg] = memberships?.Contains(requiredOrg) ?? false;
                 }
 
                 // Validate write permissions on azure-sdk-for-net
-                var hasWritePermission = await ValidatePermissionsAsync(username);
+                var hasWritePermission = await githubService.HasWritePermission("Azure", "azure-sdk-for-net", username);
 
                 var isValidCodeowner = hasRequiredOrgs && hasWritePermission;
                 return new CodeownersValidationResult
@@ -98,41 +98,6 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             catch (Exception ex)
             {
                 throw new Exception($"Error validating user {username}: {ex.Message}");
-            }
-        }
-
-        /// <summary>
-        /// Validates the user's organization memberships (Microsoft and Azure only).
-        /// </summary>
-        private async Task<HashSet<string>> GetUserOrganizationsAsync(string username)
-        {
-            try
-            {
-                return await githubService.GetPublicOrgMembership(username);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Error validating organizations for user: {Username}", username);
-                throw;
-            }
-        }
-
-        /// <summary>
-        /// Validates the user's write permissions on azure-sdk-for-net repository.
-        /// </summary>
-        private async Task<bool> ValidatePermissionsAsync(string username)
-        {
-            try
-            {
-                // Write access to the Azure/azure-sdk-for-net repository is a sufficient proxy for knowing if the user has write permissions.
-                var permission = await githubService.HasWritePermission("Azure", "azure-sdk-for-net", username);
-                return permission.Permission.Equals("write", StringComparison.OrdinalIgnoreCase) || 
-                        permission.Permission.Equals("admin", StringComparison.OrdinalIgnoreCase);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Error validating permissions for user: {Username}", username);
-                throw;
             }
         }
     }

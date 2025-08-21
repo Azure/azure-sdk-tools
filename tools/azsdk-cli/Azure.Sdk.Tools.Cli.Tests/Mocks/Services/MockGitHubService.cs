@@ -115,9 +115,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         {
             throw new Exception("Not implemented.");
         }
-        public Task<CollaboratorPermissionResponse> HasWritePermission(string owner, string repo, string username)
+        public Task<bool> HasWritePermission(string owner, string repo, string username)
         {
-            throw new Exception("Not implemented.");
+            return Task.FromResult(true);
         }
 
         private RepositoryContent CreateMockRepositoryContent(string name, string path, string encodedContent)

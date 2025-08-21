@@ -217,12 +217,6 @@ public class LanguageChecks
     /// <returns>CLI check response</returns>
     protected CLICheckResponse CreateResponseFromProcessResult(ProcessResult processResult)
     {
-        var exitCode = processResult.ExitCode;
-        var output = processResult.Output ?? "";
-        
-        var statusDetails = output;
-        var message = exitCode == 0 ? "Process completed successfully" : "Process failed";
-        
-        return new CLICheckResponse(exitCode, statusDetails.Trim(), message);
+        return new CLICheckResponse(processResult.ExitCode, processResult.Output);
     }
 }

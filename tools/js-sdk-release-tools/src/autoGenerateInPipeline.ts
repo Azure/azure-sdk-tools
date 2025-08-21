@@ -76,6 +76,7 @@ async function automationGenerateInPipeline(
                     gitCommitId: gitCommitId,
                     apiVersion: apiVersion,
                     sdkReleaseType: sdkReleaseType,
+                    runMode: runMode as RunMode,
                 });
                 break;
 

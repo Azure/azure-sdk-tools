@@ -29,7 +29,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             throw new NotImplementedException();
         }
 
-        Task<WorkItem> IDevOpsService.CreateReleasePlanWorkItemAsync(ReleasePlan releasePlan)
+        Task<WorkItem> IDevOpsService.CreateReleasePlanWorkItemAsync(ReleasePlanDetails releasePlan)
         {
             var workItem = new WorkItem
             {
@@ -49,9 +49,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             throw new NotImplementedException();
         }
 
-        Task<ReleasePlan> IDevOpsService.GetReleasePlanAsync(int releasePlanId)
+        Task<ReleasePlanDetails> IDevOpsService.GetReleasePlanAsync(int releasePlanId)
         {
-            var releasePlan = new ReleasePlan
+            var releasePlan = new ReleasePlanDetails
             {
                 WorkItemId = 1,
                 ReleasePlanId = releasePlanId,
@@ -61,9 +61,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(releasePlan);
         }
 
-        Task<ReleasePlan> IDevOpsService.GetReleasePlanAsync(string pullRequestUrl)
+        Task<ReleasePlanDetails> IDevOpsService.GetReleasePlanAsync(string pullRequestUrl)
         {
-            var releasePlan = new ReleasePlan
+            var releasePlan = new ReleasePlanDetails
             {
                 WorkItemId = 0, // Release plan does not exists
                 ReleasePlanId = 1,
@@ -74,9 +74,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(releasePlan);
         }
 
-        Task<ReleasePlan> IDevOpsService.GetReleasePlanForWorkItemAsync(int workItemId)
+        Task<ReleasePlanDetails> IDevOpsService.GetReleasePlanForWorkItemAsync(int workItemId)
         {
-            var releasePlan = new ReleasePlan
+            var releasePlan = new ReleasePlanDetails
             {
                 WorkItemId = workItemId,
                 ReleasePlanId = 1,

@@ -85,10 +85,10 @@ namespace Azure.Sdk.Tools.Cli.Services
 
     public interface IDevOpsService
     {
-        public Task<ReleasePlan> GetReleasePlanAsync(int releasePlanId);
-        public Task<ReleasePlan> GetReleasePlanForWorkItemAsync(int workItemId);
-        public Task<ReleasePlan> GetReleasePlanAsync(string pullRequestUrl);
-        public Task<WorkItem> CreateReleasePlanWorkItemAsync(ReleasePlan releasePlan);
+        public Task<ReleasePlanDetails> GetReleasePlanAsync(int releasePlanId);
+        public Task<ReleasePlanDetails> GetReleasePlanForWorkItemAsync(int workItemId);
+        public Task<ReleasePlanDetails> GetReleasePlanAsync(string pullRequestUrl);
+        public Task<WorkItem> CreateReleasePlanWorkItemAsync(ReleasePlanDetails releasePlan);
         public Task<Build> RunSDKGenerationPipelineAsync(string branchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId);
         public Task<Build> GetPipelineRunAsync(int buildId);
         public Task<string> GetSDKPullRequestFromPipelineRunAsync(int buildId, string language, int workItemId);
@@ -109,7 +109,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         [GeneratedRegex("\\|\\s(Beta|Stable|GA)\\s\\|\\s([\\S]+)\\s\\|\\s([\\S]+)\\s\\|")]
         private static partial Regex SdkReleaseDetailsRegex();
 
-        public async Task<ReleasePlan> GetReleasePlanForWorkItemAsync(int workItemId)
+        public async Task<ReleasePlanDetails> GetReleasePlanForWorkItemAsync(int workItemId)
         {
             logger.LogInformation($"Fetching release plan work with id {workItemId}");
             var workItem = await connection.GetWorkItemClient().GetWorkItemAsync(workItemId, expand: WorkItemExpand.All);
@@ -123,7 +123,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             return releasePlan;
         }
 
-        public async Task<ReleasePlan> GetReleasePlanAsync(int releasePlanId)
+        public async Task<ReleasePlanDetails> GetReleasePlanAsync(int releasePlanId)
         {
             // First find the API spec work item
             var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [Custom.ReleasePlanID] = '{releasePlanId}' AND [System.WorkItemType] = 'Release Plan' AND [System.State] NOT IN ('Closed','Duplicate','Abandoned')";
@@ -135,9 +135,9 @@ namespace Azure.Sdk.Tools.Cli.Services
             return await MapWorkItemToReleasePlanAsync(releasePlanWorkItems[0]);
         }
 
-        private async Task<ReleasePlan> MapWorkItemToReleasePlanAsync(WorkItem workItem)
+        private async Task<ReleasePlanDetails> MapWorkItemToReleasePlanAsync(WorkItem workItem)
         {
-            var releasePlan = new ReleasePlan()
+            var releasePlan = new ReleasePlanDetails()
             {
                 WorkItemId = workItem.Id ?? 0,
                 WorkItemUrl = workItem.Url,
@@ -203,7 +203,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             return releasePlan;
         }
 
-        public async Task<ReleasePlan> GetReleasePlanAsync(string pullRequestUrl)
+        public async Task<ReleasePlanDetails> GetReleasePlanAsync(string pullRequestUrl)
         {
             // First find the API spec work item
             try
@@ -248,7 +248,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
         }
 
-        public async Task<WorkItem> CreateReleasePlanWorkItemAsync(ReleasePlan releasePlan)
+        public async Task<WorkItem> CreateReleasePlanWorkItemAsync(ReleasePlanDetails releasePlan)
         {
             int releasePlanWorkItemId = 0;
             int apiSpecWorkItemId = 0;
@@ -301,7 +301,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
 
-        private async Task<WorkItem> CreateWorkItemAsync(ReleasePlan releasePlan, string workItemType, string title)
+        private async Task<WorkItem> CreateWorkItemAsync(ReleasePlanDetails releasePlan, string workItemType, string title)
         {
             logger.LogDebug($"Input work item json: {JsonSerializer.Serialize(releasePlan)}");
             var specDocument = releasePlan.GetPatchDocument();

@@ -3,7 +3,9 @@
 using Azure.AI.OpenAI;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Microagents;
+using Azure.Sdk.Tools.Cli.Options;
 using Microsoft.Extensions.Azure;
+using Microsoft.Extensions.Configuration;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -23,6 +25,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IDevOpsService, DevOpsService>();
             services.AddSingleton<IGitHubService, GitHubService>();
             services.AddSingleton<ILanguageRepoServiceFactory, LanguageRepoServiceFactory>();
+            services.AddSingleton<IAiCompletionService, AiCompletionService>();
 
             // Language Services
             services.AddSingleton<LanguageRepoService>();
@@ -47,6 +50,9 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IProcessHelper, ProcessHelper>();
 
             services.AddSingleton<IMicroagentHostService, MicroagentHostService>();
+
+            // Add HttpClient for AI completion service
+            services.AddHttpClient<IAiCompletionService, AiCompletionService>();
 
             services.AddAzureClients(clientBuilder =>
             {

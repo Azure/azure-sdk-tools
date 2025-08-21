@@ -13,7 +13,7 @@ using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 
 
-namespace Azure.Sdk.Tools.Cli.Tools
+namespace Azure.Sdk.Tools.Cli.Tools.EngSys
 {
     [Description("Tool that validates and manipulates codeowners files.")]
     [McpServerToolType]
@@ -28,8 +28,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
         private const string azureWriteTeamsBlobUrl = "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/azure-sdk-write-teams-blob";
 
         // Command names
-        private const string updateCodeownersCommandName = "azsdk_codeowners_update";
-        private const string validateCodeownersEntryCommandName = "azsdk_codeowners_validate";
+        private const string updateCodeownersCommandName = "update";
+        private const string validateCodeownersEntryCommandName = "validate";
 
         // Core command options
         private readonly Option<string> repoOption = new(["--repo", "-r"], "The repository name") { IsRequired = true };
@@ -43,7 +43,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
 
         public override Command GetCommand()
         {
-            var command = new Command("codeowners-tools", "A tool to validate and modify codeowners.");
+            var command = new Command("codeowners", "A tool to validate and modify codeowners.");
             var subCommands = new[]
             {
                 new Command(updateCodeownersCommandName, "Update codeowners in a repository")
@@ -126,7 +126,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             }
         }
 
-        [McpServerTool(Name = "azsdk_update_codeowners"), Description("Adds or deletes codeowners for a given service label or path in a repo.")]
+        [McpServerTool(Name = "azsdk_engsys_codeowner_update"), Description("Adds or deletes codeowners for a given service label or path in a repo.")]
         public async Task<string> UpdateCodeowners(
             string repo,
             bool isMgmtPlane,
@@ -286,7 +286,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
             return resultMessages;
         }
 
-        [McpServerTool(Name = "azsdk_validate_codeowners_entry_for_service"), Description("Validates codeowners in a specific repository for a given service or repo path.")]
+        [McpServerTool(Name = "azsdk_engsys_validate_codeowners_entry_for_service"), Description("Validates codeowners in a specific repository for a given service or repo path.")]
         public async Task<ServiceCodeownersResult> ValidateCodeownersEntryForService(string repoName, string? serviceLabel = null, string? path = null)
         {
             ServiceCodeownersResult response = new() { };

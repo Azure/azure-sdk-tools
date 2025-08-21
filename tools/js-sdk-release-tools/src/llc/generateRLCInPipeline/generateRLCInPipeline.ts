@@ -259,9 +259,6 @@ export async function generateRLCInPipeline(options: {
             }
         }
 
-        await formatSdk(packagePath)
-        await updateSnippets(packagePath);
-
         let buildStatus = `succeeded`;
         if (isRushRepo(options.sdkRepo)) {
             logger.info(`Start to update rush.`);
@@ -293,7 +290,10 @@ export async function generateRLCInPipeline(options: {
             logger.info(`Start to run command 'pnpm run --filter ${packageJson.name}... pack'.`);
             execSync(`pnpm run --filter ${packageJson.name}... pack`, {stdio: 'inherit'});
         }
-     
+        
+        await formatSdk(packagePath)
+        await updateSnippets(packagePath);
+
         if (!options.skipGeneration && buildStatus === 'succeeded') {
             const getChangelogItems = () => {
                 const categories = changelog?.changelogItems.breakingChanges.keys();

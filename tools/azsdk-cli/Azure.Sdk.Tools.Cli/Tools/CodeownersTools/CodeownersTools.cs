@@ -20,6 +20,7 @@ namespace Azure.Sdk.Tools.Cli.Tools
     public class CodeownersTools(
         IGitHubService githubService,
         IOutputHelper output,
+        ILogger<CodeownersTools> logger,
         ICodeownersHelper codeownersHelper,
         ICodeownersValidatorHelper codeownersValidator) : MCPTool
     {
@@ -227,8 +228,8 @@ namespace Azure.Sdk.Tools.Cli.Tools
             catch (Exception ex)
             {
                 SetFailure();
-                logger.LogError(ex);
-                return ex.Message;
+                logger.LogError($"Error: {ex}");
+                return $"Error: {ex.Message}";
             }
         }
 

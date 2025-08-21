@@ -148,8 +148,7 @@ public class GitConnection
         {
             logger.LogInformation($"Searching for pull request in repository {repoOwner}/{repoName} for branch {remoteBranch}");
             var pullRequests = await gitHubClient.PullRequest.GetAllForRepository(repoOwner, repoName);
-            logger.LogInformation($"Branch name: {remoteBranch}");
-            return pullRequests?.FirstOrDefault(pr => pr.Head?.Ref != null && pr.Head.Ref.Equals(remoteBranch, StringComparison.InvariantCultureIgnoreCase));
+            return pullRequests?.FirstOrDefault(pr => pr.Head?.Label != null && pr.Head.Label.Equals(remoteBranch, StringComparison.InvariantCultureIgnoreCase));
         }
 
         public async Task<IReadOnlyList<PullRequest?>> SearchPullRequestsByTitleAsync(string repoOwner, string repoName, string titleSearchTerm, ItemState? state = ItemState.Open)

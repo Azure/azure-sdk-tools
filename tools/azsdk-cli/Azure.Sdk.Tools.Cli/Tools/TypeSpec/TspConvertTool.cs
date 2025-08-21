@@ -63,7 +63,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             switch (command)
             {
                 case ConvertSwaggerCommandName:
-                    await HandleConvertCommand(ctx, ct);
+                    await HandleConvertCommandAsync(ctx, ct);
                     return;
                 default:
                     SetFailure();
@@ -72,7 +72,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             }
         }
 
-        private async Task HandleConvertCommand(InvocationContext ctx, CancellationToken ct)
+        private async Task HandleConvertCommandAsync(InvocationContext ctx, CancellationToken ct)
         {
             var swaggerReadme = ctx.ParseResult.GetValueForOption(swaggerReadmeArg);
             var outputDirectory = ctx.ParseResult.GetValueForOption(outputDirectoryArg);

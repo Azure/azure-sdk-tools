@@ -36,7 +36,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var outputService = new Mock<IOutputHelper>().Object;
             var tool = new TspInitTool(npxHelper, logger, outputService);
 
-            var result = await tool.InitTypeSpecProject(outputDirectory: "never-used", template: "invalid-template", serviceNamespace: "MyService", isCli: false);
+            var result = await tool.InitTypeSpecProjectAsync(outputDirectory: "never-used", template: "invalid-template", serviceNamespace: "MyService", isCli: false);
 
             Assert.Multiple(() =>
             {
@@ -54,7 +54,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var outputService = new Mock<IOutputHelper>().Object;
             var tool = new TspInitTool(npxHelper, logger, outputService);
 
-            var result = await tool.InitTypeSpecProject(outputDirectory: "never-used", template: "azure-core", serviceNamespace: "", isCli: false);
+            var result = await tool.InitTypeSpecProjectAsync(outputDirectory: "never-used", template: "azure-core", serviceNamespace: "", isCli: false);
 
             Assert.Multiple(() =>
             {
@@ -71,7 +71,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var outputService = new Mock<IOutputHelper>().Object;
             var tool = new TspInitTool(npxHelper, logger, outputService);
 
-            var result = await tool.InitTypeSpecProject(outputDirectory: Path.Combine(Path.GetTempPath(), $"test-nonexistent-{Guid.NewGuid()}"), template: "azure-core", serviceNamespace: "MyService", isCli: false);
+            var result = await tool.InitTypeSpecProjectAsync(outputDirectory: Path.Combine(Path.GetTempPath(), $"test-nonexistent-{Guid.NewGuid()}"), template: "azure-core", serviceNamespace: "MyService", isCli: false);
 
             Assert.Multiple(() =>
             {

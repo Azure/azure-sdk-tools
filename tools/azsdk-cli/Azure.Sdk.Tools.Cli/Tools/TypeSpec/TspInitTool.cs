@@ -100,7 +100,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                 var template = ctx.ParseResult.GetValueForOption(templateArg);
                 var serviceNamespace = ctx.ParseResult.GetValueForOption(serviceNamespaceArg);
 
-                TspToolResponse result = await InitTypeSpecProject(outputDirectory: outputDirectory, template: template, serviceNamespace: serviceNamespace, isCli: true, ct);
+                TspToolResponse result = await InitTypeSpecProjectAsync(outputDirectory: outputDirectory, template: template, serviceNamespace: serviceNamespace, isCli: true, ct);
                 ctx.ExitCode = ExitCode;
                 output.Output(result);
             }
@@ -113,7 +113,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         }
 
         [McpServerTool(Name = "azsdk_init_typespec_project"), Description("Use this tool to initialize a new TypeSpec project. Returns the path to the created project.")]
-        public async Task<TspToolResponse> InitTypeSpecProject(
+        public async Task<TspToolResponse> InitTypeSpecProjectAsync(
             [Description("Pass in the output directory where the project should be created. Must be an existing empty directory.")]
             string outputDirectory,
             [Description("`azure-core` for data-plane services, or `azure-arm` for resource-manager services.")]

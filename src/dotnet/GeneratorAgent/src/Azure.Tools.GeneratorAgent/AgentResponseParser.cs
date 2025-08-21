@@ -20,7 +20,7 @@ namespace Azure.Tools.GeneratorAgent
         /// <summary>
         /// Parses the agent's response and extracts the updated client.tsp content from JSON
         /// </summary>
-        public AgentResponse ParseResponse(string rawResponse)
+        public AgentTypeSpecResponse ParseResponse(string rawResponse)
         {
             Logger.LogInformation("Raw agent response: {Response}", rawResponse);
             
@@ -32,7 +32,7 @@ namespace Azure.Tools.GeneratorAgent
                 }
 
                 // Parse as JSON
-                var response = JsonSerializer.Deserialize<AgentResponse>(rawResponse.Trim(), new JsonSerializerOptions
+                var response = JsonSerializer.Deserialize<AgentTypeSpecResponse>(rawResponse.Trim(), new JsonSerializerOptions
                 {
                     PropertyNameCaseInsensitive = true,
                     AllowTrailingCommas = true

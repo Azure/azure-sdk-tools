@@ -12,7 +12,6 @@ namespace Azure.Tools.GeneratorAgent
         private readonly ILogger<ErrorFixerAgent> Logger;
         private readonly PersistentAgentsClient Client;
         private readonly Lazy<PersistentAgent> Agent;
-        private readonly SemaphoreSlim ConcurrencyLimiter;
         private readonly FixPromptService FixPromptService;
         private readonly AgentResponseParser ResponseParser;
         private volatile bool Disposed = false;
@@ -37,7 +36,6 @@ namespace Azure.Tools.GeneratorAgent
             FixPromptService = fixPromptService;
             ResponseParser = responseParser;
 
-            ConcurrencyLimiter = new SemaphoreSlim(Environment.ProcessorCount, Environment.ProcessorCount);
         }
 
         internal virtual PersistentAgent CreateAgent()
@@ -74,9 +72,6 @@ namespace Azure.Tools.GeneratorAgent
 
             try
             {
-                // Ensure only one fix process runs at a time to maintain thread safety
-                await ConcurrencyLimiter.WaitAsync(cancellationToken).ConfigureAwait(false);
-                
                 // Process each fix sequentially to maintain conversation context
                 // Each fix builds upon the previous one's result
                 for (var i = 0; i < fixes.Count; i++)
@@ -126,10 +121,6 @@ namespace Azure.Tools.GeneratorAgent
                  Logger.LogError(ex, "Failed to complete code fix process for thread {ThreadId}. Processed {ProcessedCount}/{TotalCount} fixes", 
                     threadId, processedCount, fixes.Count);
                 throw;
-            }
-            finally
-            {
-                ConcurrencyLimiter.Release();
             }
         }
 
@@ -541,7 +532,6 @@ namespace Azure.Tools.GeneratorAgent
                 }
             }
 
-            ConcurrencyLimiter?.Dispose();
         }
     }
 }

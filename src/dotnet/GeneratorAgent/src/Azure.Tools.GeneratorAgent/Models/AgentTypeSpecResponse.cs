@@ -5,7 +5,7 @@ namespace Azure.Tools.GeneratorAgent.Models
     /// <summary>
     /// Represents the parsed response from the AI agent containing updated TypeSpec content
     /// </summary>
-    public class AgentResponse
+    internal class AgentTypeSpecResponse
     {
         /// <summary>
         /// File path from the response (should be "client.tsp")

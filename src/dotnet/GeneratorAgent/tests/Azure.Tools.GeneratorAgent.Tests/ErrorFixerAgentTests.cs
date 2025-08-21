@@ -173,19 +173,6 @@ namespace Azure.Tools.GeneratorAgent.Tests
             Assert.That(ex!.Message, Does.Contain("No fixes were successfully applied"));
         }
 
-        [Test]
-        public void FixCodeAsync_WithCancelledToken_ShouldThrowSemaphoreFullException()
-        {
-            var agent = CreateTestableAgent();
-            var fixes = CreateValidFixesList();
-            var threadId = "test-thread-id";
-            var cts = new CancellationTokenSource();
-            cts.Cancel();
-
-            Assert.ThrowsAsync<SemaphoreFullException>(
-                async () => await agent.FixCodeAsync(fixes, threadId, cts.Token));
-        }
-
         #endregion
 
         #region InitializeAgentEnvironmentAsync Tests

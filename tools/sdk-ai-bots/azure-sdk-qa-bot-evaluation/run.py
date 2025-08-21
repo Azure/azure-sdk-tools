@@ -393,17 +393,17 @@ if __name__ == "__main__":
     print(f"test folder: {args.test_folder}")
     # Required environment variables
     load_dotenv()
-    azure_ai_project_endpoint = os.environ["AZURE_AI_PROJECT_ENDPOINT"]
-    print(f"📋 Using project endpoint: {azure_ai_project_endpoint}")
-    model_config: dict[str, str] = {
-        "azure_endpoint": os.environ["AZURE_OPENAI_ENDPOINT"],
-        "api_key": os.environ["AZURE_OPENAI_API_KEY"],
-        "azure_deployment": os.environ["AZURE_EVALUATION_MODEL_NAME"],
-        "api_version": os.environ["AZURE_API_VERSION"],
-    }
     all_results = {}
     try: 
         print("📊 Preparing dataset...")
+        azure_ai_project_endpoint = os.environ["AZURE_AI_PROJECT_ENDPOINT"]
+        print(f"📋 Using project endpoint: {azure_ai_project_endpoint}")
+        model_config: dict[str, str] = {
+            "azure_endpoint": os.environ["AZURE_OPENAI_ENDPOINT"],
+            "api_key": os.environ["AZURE_OPENAI_API_KEY"],
+            "azure_deployment": os.environ["AZURE_EVALUATION_MODEL_NAME"],
+            "api_version": os.environ["AZURE_API_VERSION"],
+        }
         kwargs = {}
         if args.send_result:
             if args.is_ci:
@@ -474,6 +474,7 @@ if __name__ == "__main__":
         print(f"❌ Error occurred: {str(e)}")
         import traceback
         traceback.print_exc()
+        exit(1)
     
     show_results(all_results)
     establish_baseline(args, all_results)

@@ -90,30 +90,30 @@ export class SearchService {
         }
 
         try {
-            // // Create documents for deletion (only need the key field, but TypeScript requires all fields)
-            // const documentsToDelete = documentIds.map(id => ({ 
-            //     chunk_id: id
-            // } as SearchDocument));
+            // Create documents for deletion (only need the key field, but TypeScript requires all fields)
+            const documentsToDelete = documentIds.map(id => ({ 
+                chunk_id: id
+            } as SearchDocument));
             
-            // const deleteResult = await this.searchClient.deleteDocuments(documentsToDelete);
+            const deleteResult = await this.searchClient.deleteDocuments(documentsToDelete);
             
-            // let successCount = 0;
-            // let failureCount = 0;
+            let successCount = 0;
+            let failureCount = 0;
             
-            // for (const result of deleteResult.results) {
-            //     if (result.succeeded) {
-            //         successCount++;
-            //     } else {
-            //         failureCount++;
-            //         context.error(`Failed to delete document ${result.key}:`, result.errorMessage);
-            //     }
-            // }
+            for (const result of deleteResult.results) {
+                if (result.succeeded) {
+                    successCount++;
+                } else {
+                    failureCount++;
+                    context.error(`Failed to delete document ${result.key}:`, result.errorMessage);
+                }
+            }
             
-            // context.log(`Successfully deleted ${successCount} documents, ${failureCount} failures`);
+            context.log(`Successfully deleted ${successCount} documents, ${failureCount} failures`);
             
-            // if (failureCount > 0) {
-            //     throw new Error(`Failed to delete ${failureCount} out of ${documentIds.length} documents`);
-            // }
+            if (failureCount > 0) {
+                throw new Error(`Failed to delete ${failureCount} out of ${documentIds.length} documents`);
+            }
         } catch (error) {
             context.error('Error deleting documents:', error);
             throw new Error(`Failed to delete documents: ${error instanceof Error ? error.message : 'Unknown error'}`);

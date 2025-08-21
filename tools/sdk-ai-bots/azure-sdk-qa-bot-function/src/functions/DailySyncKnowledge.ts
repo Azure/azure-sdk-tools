@@ -131,8 +131,8 @@ async function processDailySyncKnowledge(context: InvocationContext): Promise<vo
         
         context.log('Preprocessing spector cases...');
         
-        // // Preprocess spector cases
-        // await preprocessSpectorCases(docsDir, context);
+        // Preprocess spector cases
+        await preprocessSpectorCases(docsDir, context);
 
         context.log('Processing documentation sources...');
         
@@ -338,7 +338,7 @@ Host github.com
  */
 async function setupDocumentationRepositories(docsDir: string, context: InvocationContext): Promise<void> {
     // Setup SSH configuration first
-    // await setupSSHConfig(context);
+    await setupSSHConfig(context);
     
     // Load repository configurations from the config file
     const repositories = ConfigurationLoader.getRepositoryConfigs(context);

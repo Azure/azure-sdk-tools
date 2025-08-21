@@ -36,16 +36,16 @@ export class StorageService {
      */
     async putBlob(context: InvocationContext, containerName: string, blobPath: string, content: Buffer | string): Promise<void> {
         try {
-            // const containerClient = this.blobServiceClient.getContainerClient(containerName);
-            // const blockBlobClient = containerClient.getBlockBlobClient(blobPath);
+            const containerClient = this.blobServiceClient.getContainerClient(containerName);
+            const blockBlobClient = containerClient.getBlockBlobClient(blobPath);
             
-            // const uploadOptions = {
-            //     blobHTTPHeaders: {
-            //         blobContentType: this.getContentType(blobPath)
-            //     }
-            // };
+            const uploadOptions = {
+                blobHTTPHeaders: {
+                    blobContentType: this.getContentType(blobPath)
+                }
+            };
             
-            // await blockBlobClient.upload(content, Buffer.byteLength(content.toString()), uploadOptions);
+            await blockBlobClient.upload(content, Buffer.byteLength(content.toString()), uploadOptions);
             context.log(`Uploaded ${blobPath} to blob storage`);
         } catch (error) {
             throw new Error(`Failed to upload blob ${blobPath}: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -97,13 +97,13 @@ export class StorageService {
      */
     async deleteBlob(context: InvocationContext, containerName: string, blobPath: string): Promise<void> {
         try {
-            // const containerClient = this.blobServiceClient.getContainerClient(containerName);
-            // const blockBlobClient = containerClient.getBlockBlobClient(blobPath);
+            const containerClient = this.blobServiceClient.getContainerClient(containerName);
+            const blockBlobClient = containerClient.getBlockBlobClient(blobPath);
             
-            // // Set metadata to mark blob as deleted (soft delete)
-            // await blockBlobClient.setMetadata({
-            //     IsDeleted: 'true'
-            // });
+            // Set metadata to mark blob as deleted (soft delete)
+            await blockBlobClient.setMetadata({
+                IsDeleted: 'true'
+            });
             
             context.log(`Deleted blob ${blobPath}`);
         } catch (error) {

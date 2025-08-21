@@ -35,11 +35,13 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(TestAnalysisTool),
             typeof(TypeSpecTool),
             typeof(TspClientUpdateTool),
+            typeof(TypeSpecPublicRepoValidationTool),
+
             #if DEBUG
             // only add these tools in debug mode
             typeof(ExampleTool),
             typeof(HelloWorldTool),
-            #endif
+#endif
         ];
 
         public static Option<string> ToolOption = new("--tools")

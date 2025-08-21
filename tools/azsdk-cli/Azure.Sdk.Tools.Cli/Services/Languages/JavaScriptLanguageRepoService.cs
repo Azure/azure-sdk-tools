@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.Cli.Services;
 
@@ -10,8 +11,8 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// </summary>
 public class JavaScriptLanguageRepoService : LanguageRepoService
 {
-    public JavaScriptLanguageRepoService(IProcessHelper processHelper, IGitHelper gitHelper) 
-        : base(processHelper, gitHelper)
+    public JavaScriptLanguageRepoService(IProcessHelper processHelper, INpxHelper npxHelper, IGitHelper gitHelper, ILogger<JavaScriptLanguageRepoService> logger) 
+        : base(processHelper, npxHelper, gitHelper, logger)
     {
     }
 }

@@ -8,7 +8,7 @@ using Azure.Sdk.Tools.Cli.Contract;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Commands;
 
-namespace Azure.Sdk.Tools.Cli.Tools;
+namespace Azure.Sdk.Tools.Cli.Tools.EngSys;
 
 [McpServerToolType, Description("Cleans up various engsys resources")]
 public class CleanupTool: MCPTool

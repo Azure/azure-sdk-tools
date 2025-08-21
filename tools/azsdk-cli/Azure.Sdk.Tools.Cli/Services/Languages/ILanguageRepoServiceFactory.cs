@@ -36,6 +36,6 @@ public interface ILanguageRepoServiceFactory
     /// </summary>
     /// <param name="repositoryPath">Path to the repository root</param>
     /// <returns>Detected language string</returns>
-    string DetectLanguage(string repositoryPath);
+    public string DetectLanguage(string repositoryPath, string packagePath);
 
 }

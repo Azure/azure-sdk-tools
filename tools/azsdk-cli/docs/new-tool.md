@@ -45,12 +45,13 @@ All tools in the azsdk-cli project follow a consistent architecture:
 **Questions to Consider:**
 - What is the primary function of your tool?
 - Does it fit into an existing command group or need a new one?
+- Does it fit into an existing namespace based on the primary function?
 - What should the CLI command structure look like?
 
 **Naming Conventions:**
 - **Class Name**: `{FunctionalName}Tool` (e.g., `LogAnalysisTool`, `PipelineAnalysisTool`)
 - **File Location**: [`Tools/{Category}/{ToolName}.cs`](../Azure.Sdk.Tools.Cli/Tools/) or [`Tools/{ToolName}.cs`](../Azure.Sdk.Tools.Cli/Tools/)
-- **Namespace**: Always `Azure.Sdk.Tools.Cli.Tools` (not nested namespaces)
+- **Namespace**: `Azure.Sdk.Tools.Cli.Tools.{Category}` (namespace category should be choosen based on the primary function)
 
 ### Step 2: Define Command Group and Structure
 
@@ -91,14 +92,18 @@ CommandHierarchy = [ SharedCommandGroups.EngSys, SharedCommandGroups.Cleanup ];
 
 **Common Dependencies:**
 - `ILogger<YourTool>` - Always required for logging
-- `IOutputService` - Required for CLI output (final results only)
+- `IOutputHelper` - Required for CLI output (final results only)
 - `IAzureService` - For Azure authentication and credentials
 - `IDevOpsService` - For Azure DevOps operations
 - Custom service interfaces for your tool's specific needs
 
 ## Code Examples and Templates
 
-A working example of multiple tool types and usage of services can be found at [`ExampleTool.cs`](../Azure.Sdk.Tools.Cli/Tools/ExampleTool.cs)
+A working example of multiple tool types and usage of services can be found at [`ExampleTool.cs`](../Azure.Sdk.Tools.Cli/Tools/Example/ExampleTool.cs)
+
+Additional documents exist that detail more specific scenarios:
+
+- [Process Calling](./process-calling.md)
 
 ### Basic Tool Template
 
@@ -116,14 +121,14 @@ using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 using ModelContextProtocol.Server;
 
-namespace Azure.Sdk.Tools.Cli.Tools;
+namespace Azure.Sdk.Tools.Cli.Tools.YourToolCategory;
 
 [McpServerToolType, Description("Brief description of what this tool does")]
 public class YourTool : MCPTool
 {
     // Dependencies (injected via constructor)
     private readonly ILogger<YourTool> logger;
-    private readonly IOutputService output;
+    private readonly IOutputHelper output;
 
     // CLI Options and Arguments
     private readonly Argument<string> requiredArg = new Argument<string>(
@@ -137,7 +142,7 @@ public class YourTool : MCPTool
     // Constructor with dependency injection
     public YourTool(
         ILogger<YourTool> logger,
-        IOutputService output
+        IOutputHelper output
         // Add other dependencies as needed
     ) : base()
     {
@@ -204,7 +209,7 @@ public class YourTool : MCPTool
 
 ```csharp
 [McpServerToolType, Description("Tool with multiple sub-commands")]
-public class ComplexTool(ILogger<ComplexTool> logger, IOutputService output) : MCPTool
+public class ComplexTool(ILogger<ComplexTool> logger, IOutputHelper output) : MCPTool
 {
     private const string SubCommandName1 = "sub-command-1";
     private const string SubCommandName2 = "sub-command-2";
@@ -276,7 +281,7 @@ public class ComplexTool(ILogger<ComplexTool> logger, IOutputService output) : M
 ```csharp
 public YourTool(
     ILogger<YourTool> logger,                        // Logging - ALWAYS required
-    IOutputService output,                           // CLI output - required for CLI commands
+    IOutputHelper output,                           // CLI output - required for CLI commands
     IAzureService azureService,                      // Azure credentials and authentication
     IDevOpsService devopsService,                    // Azure DevOps operations
     IAzureAgentServiceFactory agentServiceFactory,   // AI services factory
@@ -287,7 +292,7 @@ public YourTool(
 ### Service Usage Guidelines
 
 - **ILogger**: Use for all logging operations (Info, Warning, Error, Debug)
-- **IOutputService**: Use ONLY in `GetCommand()` for final CLI output to terminal/MCP client
+- **IOutputHelper**: Use ONLY in `GetCommand()` for final CLI output to terminal/MCP client
 - **IAzureService**: Get Azure credentials, authenticate with Azure services
 - **Custom Services**: Implement business logic in separate services, not in tools
 
@@ -471,8 +476,8 @@ internal class YourToolTests
     {
         // Arrange
         var logger = new Mock<ILogger<YourTool>>();
-        var outputService = new Mock<IOutputService>();
-        var tool = new YourTool(logger.Object, outputService.Object);
+        var outputHelper = new Mock<IOutputHelper>();
+        var tool = new YourTool(logger.Object, outputHelper.Object);
 
         // Act
         var result = await tool.YourToolMethod("test-input");
@@ -504,7 +509,7 @@ internal class YourToolTests
     - BAD: `Logger.LogError($"Error occurred, {ex.Message}");`
 
 ### 3. Output
-- **Use IOutputService only for final CLI results in `HandleCommand()`** - not for progress or debugging, those use `ILogger`.
+- **Use IOutputHelper only for final CLI results in `HandleCommand()`** - not for progress or debugging, those use `ILogger`.
 - **Structure output for both CLI and JSON consumption**
 - **Provide meaningful ToString() implementations** for CLI output
 

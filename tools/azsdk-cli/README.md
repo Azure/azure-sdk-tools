@@ -330,6 +330,7 @@ Release - https://dev.azure.com/azure-sdk/internal/_build?definitionId=7684
 - Write debug logging to stderr and/or a file in MCP mode to avoid the misleading "FAILURE TO PARSE MESSAGE" type errors in the MCP client logs
 - Support both stdio and http mode for MCP to enable easy debugging with tools like mcp inspector
 - Where possible, avoid dependencies/pre-requisites requiring manual setup, prefer being able to set them up within the app (e.g. az login, gh login, etc.)
+- Reusable instructions should be placed under [azsdk instructions](https://github.com/Azure/azure-sdk-tools/tree/main/eng/common/instructions/azsdk-tools) where they will be synced to all azure sdk repositories.
 
 ## Adding a New Tool
 

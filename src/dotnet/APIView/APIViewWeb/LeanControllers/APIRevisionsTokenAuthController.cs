@@ -73,7 +73,7 @@ public class APIRevisionsTokenAuthController : ControllerBase
                         return BadRequest("apiRevisionId is required when selectionType is Specific");
                     }
 
-                    activeApiRevision = await _apiRevisionsManager.GetAPIRevisionAsync(apiRevisionId);
+                    activeApiRevision = await _apiRevisionsManager.GetAPIRevisionAsync(User, apiRevisionId);
                     break;
                 case APIRevisionSelectionType.Latest:
                     activeApiRevision = await _apiRevisionsManager.GetLatestAPIRevisionsAsync(reviewId);

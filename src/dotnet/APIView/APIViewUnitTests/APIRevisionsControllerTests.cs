@@ -24,13 +24,13 @@ namespace APIViewUnitTests;
 
 public class APIRevisionsControllerTests
 {
-    private readonly APIRevisionsController _controller;
+    private readonly APIRevisionsTokenAuthController _controller;
     private readonly Mock<IAPIRevisionsManager> _mockApiRevisionsManager;
-    private readonly Mock<ILogger<APIRevisionsController>> _mockLogger;
+    private readonly Mock<ILogger<APIRevisionsTokenAuthController>> _mockLogger;
 
     public APIRevisionsControllerTests()
     {
-        _mockLogger = new Mock<ILogger<APIRevisionsController>>();
+        _mockLogger = new Mock<ILogger<APIRevisionsTokenAuthController>>();
         _mockApiRevisionsManager = new Mock<IAPIRevisionsManager>();
 
         Mock<IReviewManager> mockReviewManager = new();
@@ -40,15 +40,9 @@ public class APIRevisionsControllerTests
         Mock<IHttpClientFactory> mockHttpClientFactory = new();
         Mock<IPullRequestManager> mockPullRequestManager = new();
 
-        _controller = new APIRevisionsController(
+        _controller = new APIRevisionsTokenAuthController(
             _mockLogger.Object,
-            mockReviewManager.Object,
-            mockPullRequestManager.Object,
-            _mockApiRevisionsManager.Object,
-            mockNotificationManager.Object,
-            mockConfiguration.Object,
-            mockSignalRHubContext.Object,
-            mockHttpClientFactory.Object
+            _mockApiRevisionsManager.Object
         );
 
         List<Claim> claims = new() { new Claim("login", "testuser") };
@@ -96,7 +90,7 @@ public class APIRevisionsControllerTests
             reviewId);
 
         BadRequestObjectResult badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
-        Assert.Equal("activeApiRevisionId is required when selectionType is Specific or default",
+        Assert.Equal("apiRevisionId is required when selectionType is Specific",
             badRequestResult.Value);
     }
 

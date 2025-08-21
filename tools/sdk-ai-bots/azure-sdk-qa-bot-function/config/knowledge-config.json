@@ -18,7 +18,7 @@
         },
         {
           "description": "TypeSpec HTTP specification test cases",
-          "path": "packages/http-specs/specs/generated",
+          "path": "packages/http-specs/specs",
           "folder": "typespec_http_specs",
           "fileNameLowerCase": true
         }
@@ -39,7 +39,7 @@
         },
         {
           "description": "TypeSpec Azure HTTP specification test cases",
-          "path": "packages/azure-http-specs/specs/generated",
+          "path": "packages/azure-http-specs/specs",
           "folder": "typespec_azure_http_specs",
           "fileNameLowerCase": true
         }

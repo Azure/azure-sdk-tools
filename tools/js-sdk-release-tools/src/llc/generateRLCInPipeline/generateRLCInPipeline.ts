@@ -59,8 +59,10 @@ export async function generateRLCInPipeline(options: {
             }else if(await exists(path.join(generatedPackageDir, "src","generated"))) {
                 sourcePath = path.join("src", "generated");
             }
+            logger.info(`Should only remove ${sourcePath} for RLC generation in ${options.runMode} mode.`)
             await remove(path.join(generatedPackageDir, sourcePath));
         } else {
+            logger.info(`Should remove all for RLC generation in ${options.runMode} mode`)
             await remove(generatedPackageDir);
         }
         if (!options.skipGeneration) {

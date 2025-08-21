@@ -9,7 +9,7 @@ using NUnit.Framework;
 namespace Azure.Sdk.Tools.CodeownersUtils.Tests.Parsing
 {
     [TestFixture]
-    public class CodeownersEntryPathComparerTests2
+    public class CodeownersEntryPathComparerTests
     {
         private CodeownersEntryPathComparer comparer;
         private OwnerDataUtils _ownerDataUtils;

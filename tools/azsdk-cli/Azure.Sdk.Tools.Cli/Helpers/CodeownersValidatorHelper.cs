@@ -23,8 +23,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
     /// This is a C# replacement for the Validate-AzsdkCodeOwner.ps1 PowerShell script.
     /// </summary>
     [Description("Validates GitHub users for Azure SDK code owner requirements")]
-      public class CodeownersValidatorHelper(IGitHubService githubService,
-      ILogger<CodeownersValidatorHelper> logger) : ICodeownersValidatorHelper
+      public class CodeownersValidatorHelper(IGitHubService githubService) : ICodeownersValidatorHelper
     {
         private static readonly HashSet<string> RequiredOrganizations = new(StringComparer.OrdinalIgnoreCase)
         {

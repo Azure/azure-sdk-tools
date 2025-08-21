@@ -119,9 +119,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                     sourceOwnersValue?.ToList() ?? new List<string>(),
                     isAddingValue,
                     workingBranchValue ?? "");
-                    ctx.ExitCode = ExitCode;
-                output.Output(addResult);
                 ctx.ExitCode = ExitCode;
+                output.Output(addResult);
                 return;
             }
             else if (command == validateCodeownersEntryCommandName)
@@ -134,9 +133,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                     validateRepo ?? "",
                     validateServiceLabel,
                     validateRepoPath);
-                    ctx.ExitCode = ExitCode;
-                output.Output(validateResult);
                 ctx.ExitCode = ExitCode;
+                output.Output(validateResult);
                 return;
             }
             else

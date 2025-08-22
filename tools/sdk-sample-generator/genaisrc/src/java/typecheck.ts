@@ -2,12 +2,6 @@ import path from "node:path";
 import { getUniqueDirName } from "../utils.ts";
 import type { TypeCheckParameters, TypeCheckResult } from "../types.ts";
 
-// Grab the public class name from a Java file 
-function extractClassName(code: string): string {
-    const classMatch = code.match(/public\s+class\s+(\w+)/);
-    return classMatch ? classMatch[1] : "Temp";
-}
-
 let container: ContainerHost | undefined = undefined;
 const importRegex = /^import\s+([a-zA-Z0-9_.]+);/gm;
 
@@ -26,7 +20,6 @@ function extractPackageName(javaClass: string): string {
     if (parts.length <= 1) return javaClass;
     return parts.slice(0, -1).join('.');
 }
-
 
 // Convert Azure package name to Maven artifact name
 function packageToArtifactName(packageName: string): string {
@@ -53,7 +46,6 @@ export async function getMavenCoordinatesFromAPI(
         const artifactId = packageToArtifactName(packageName);
         const cacheKey = `com.azure:${artifactId}`;
         
-        // Check cache first
         if (mavenApiCache.has(cacheKey)) {
             return mavenApiCache.get(cacheKey);
         }
@@ -97,7 +89,15 @@ async function parseMavenDependencies(
     const deps = new Map<string, MavenCoordinates>();
     let match;
     while ((match = importRegex.exec(code)) !== null) {
-        const dep = await getMavenCoordinatesFromAPI(match[1]);
+        const importClass = match[1];
+        
+        // Skip JDK classes early to avoid unnecessary API calls
+        const packageName = extractPackageName(importClass);
+        if (packageName.startsWith('java.') || packageName.startsWith('javax.')) {
+            continue;
+        }
+        
+        const dep = await getMavenCoordinatesFromAPI(importClass);
         if (dep && (!pkgName || dep.artifactId !== pkgName)) {
             const key = `${dep.groupId}:${dep.artifactId}`;
             if (!deps.has(key)) {
@@ -108,59 +108,12 @@ async function parseMavenDependencies(
     return Array.from(deps.values());
 }
 
-// Make javac errors a bit friendlier with extra hints
-function enhanceJavacErrors(javacOutput: string): string[] {
-    const enhancements: string[] = [];
-    const lines = javacOutput.split('\n');
-    
-    for (const line of lines) {
-        if (line.includes('error: cannot find symbol')) {
-            // Extract the symbol from the error line
-            const symbolMatch = line.match(/symbol:\s+(\w+)\s+(\w+)/);
-            
-            if (symbolMatch) {
-                const symbolType = symbolMatch[1]; // class, method, variable
-                const symbolName = symbolMatch[2];
-                
-                if (symbolType === 'class') {
-                    enhancements.push(`• Missing class '${symbolName}': Check if you need to add an import statement. Common issues:
-                                        - Missing import for the class
-                                        - Incorrect package name in import
-                                        - Missing Maven dependency for the library
-                                        - Class name typo or wrong capitalization`);
-                } else if (symbolType === 'method') {
-                    enhancements.push(`• Missing method '${symbolName}': This method may not exist in the current library version. Check:
-                                        - Method name spelling and capitalization
-                                        - If the method was renamed or moved to a different class
-                                        - Library documentation for the correct method signature`);
-                } else {
-                    enhancements.push(`• Missing symbol '${symbolName}': Verify the symbol name and ensure proper imports are included.`);
-                }
-            }
-        } else if (line.includes('error: package') && line.includes('does not exist')) {
-            const packageMatch = line.match(/package\s+([a-zA-Z0-9_.]+)\s+does not exist/);
-            if (packageMatch) {
-                const packageName = packageMatch[1];
-                enhancements.push(`• Missing package '${packageName}': This package could not be resolved. Check:
-                                    - Package name spelling and case sensitivity
-                                    - If the package exists in Maven Central
-                                    - If you need to add the corresponding Maven dependency`);
-            }
-        } else if (line.includes('error:') && line.includes('incompatible types')) {
-            enhancements.push(`• Type incompatibility: Check that you're using compatible types. Ensure proper casting or use the correct method signatures.`);
-        }
-    }
-    
-    
-    return enhancements;
-}
 
 export async function typecheckJava({
     code,
-    clientDist,
     pkgName,
 }: TypeCheckParameters): Promise<TypeCheckResult> {
-    const className = extractClassName(code);
+    const className = code.match(/public\s+class\s+(\w+)/)?.[1] || "Temp";
     const fileName = `${className}.java`;
     const projectDir = path.join("tmp", getUniqueDirName());
     const filePath = `${projectDir}/${fileName}`;
@@ -179,15 +132,7 @@ export async function typecheckJava({
     try {
         await container.writeText(filePath, code);
 
-        // Add client jar to classpath if passed in
-        let classpath = ".";
-        if (clientDist) {
-            await container.copyTo(clientDist, projectDir);
-            const distName = path.basename(clientDist);
-            classpath += `:${distName}`;
-        }
-
-         // Look for dependencies in imports and build a quick pom.xml
+        // Look for dependencies in imports and build a quick pom.xml
         const deps = await parseMavenDependencies(code, pkgName);
         let installRes: ShellOutput | undefined;
         if (deps.length > 0) {
@@ -212,8 +157,8 @@ export async function typecheckJava({
                   <version>${d.version}</version>
                 </dependency>
               `).join("\n")}
-            </dependencies>
-          </project>
+              </dependencies>
+              </project>
                 `.trim();
             await container.writeText(path.join(projectDir, "pom.xml"), pomXml);
 
@@ -237,32 +182,11 @@ export async function typecheckJava({
         // Get compile output (Maven or javac)
         const compileOutput = (installRes?.stdout ?? "") + (installRes?.stderr ?? "");
         
-        // Filter output to show only essential information
-        const filteredOutput = compileOutput
-            .split('\n')
-            .filter(line => 
-                line.includes('BUILD SUCCESS') || 
-                line.includes('BUILD FAILURE') ||
-                line.includes('ERROR') ||
-                line.includes('WARN') ||
-                line.includes('Total time:') ||
-                line.includes('error:') ||
-                line.includes('FAILURE:')
-            )
-            .join('\n');
+        let output = `compile output:\n${compileOutput || (compileSucceeded ? 'Compilation successful' : 'Compilation failed')}`;
 
-        let output = `compile output:\n${filteredOutput || compileOutput || (compileSucceeded ? 'Compilation successful' : 'Compilation failed')}`;
-
-        // If failed, add explicit error summary with helpful guidance
+        // If failed, add explicit error summary
         if (!compileSucceeded) {
-            const errors = [`Java compilation failed (exit code: ${installRes?.exitCode})`];
-            
-            // Parse and enhance compilation errors with helpful context
-            const enhancedErrors = enhanceJavacErrors(compileOutput);
-            if (enhancedErrors.length > 0) {
-                errors.push(`\nDETAILED ERROR ANALYSIS:\n${enhancedErrors.join('\n')}`);
-            }
-            output += `\n\nCOMPILATION ERRORS:\n${errors.join('\n')}`;
+            output += `\n\nCOMPILATION FAILED (exit code: ${installRes?.exitCode})`;
         }
 
         return {

@@ -7,11 +7,11 @@ using Azure.Tools.ErrorAnalyzers;
 namespace Azure.Tools.ErrorAnalyzers.ClientRuleAnalyzers
 {
     /// <summary>
-    /// Handles AZC0012: Generic type name violations.
+    /// Handles AZC0034: Type name conflicts.
     /// </summary>
     [DiscoverableAnalyzer]
-    internal sealed class AZC0012RuleAnalyzer : BasePromptAnalyzer
+    internal sealed class AZC0034RuleAnalyzer : BasePromptAnalyzer
     {
-        public AZC0012RuleAnalyzer() : base("AZC0012") { }
+        public AZC0034RuleAnalyzer() : base("AZC0034") { }
     }
 }

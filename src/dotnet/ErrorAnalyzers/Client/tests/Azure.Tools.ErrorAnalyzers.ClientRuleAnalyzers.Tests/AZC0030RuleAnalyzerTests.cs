@@ -9,15 +9,15 @@ using Azure.Tools.ErrorAnalyzers.ClientRuleAnalyzers;
 namespace Azure.Tools.ErrorAnalyzers.ClientRuleAnalyzers.Tests
 {
     [TestFixture]
-    public class AZC0012RuleAnalyzerTests
+    public class AZC0030RuleAnalyzerTests
     {
-        private const string TestErrorMessage = "Type name 'Client' is too generic and has high chance of collision with BCL types or types from other libraries.";
+        private const string TestErrorMessage = "Model name 'UserModel' ends with 'Model'. Consider using a more appropriate suffix.";
 
         [Test]
-        public void CanFix_ValidAZC0012Error_ReturnsTrue()
+        public void CanFix_ValidAZC0030Error_ReturnsTrue()
         {
-            AZC0012RuleAnalyzer analyzer = new AZC0012RuleAnalyzer();
-            RuleError error = new RuleError("AZC0012", TestErrorMessage);
+            AZC0030RuleAnalyzer analyzer = new AZC0030RuleAnalyzer();
+            RuleError error = new RuleError("AZC0030", TestErrorMessage);
 
             bool result = analyzer.CanFix(error);
 
@@ -27,8 +27,8 @@ namespace Azure.Tools.ErrorAnalyzers.ClientRuleAnalyzers.Tests
         [Test]
         public void CanFix_InvalidErrorType_ReturnsFalse()
         {
-            AZC0012RuleAnalyzer analyzer = new AZC0012RuleAnalyzer();
-            RuleError error = new RuleError("AZC0001", "Some other error message");
+            AZC0030RuleAnalyzer analyzer = new AZC0030RuleAnalyzer();
+            RuleError error = new RuleError("AZC0012", "Some other error message");
 
             bool result = analyzer.CanFix(error);
 
@@ -38,7 +38,7 @@ namespace Azure.Tools.ErrorAnalyzers.ClientRuleAnalyzers.Tests
         [Test]
         public void CanFix_NullError_ReturnsFalse()
         {
-            AZC0012RuleAnalyzer analyzer = new AZC0012RuleAnalyzer();
+            AZC0030RuleAnalyzer analyzer = new AZC0030RuleAnalyzer();
 
             bool result = analyzer.CanFix(null!);
 
@@ -48,8 +48,8 @@ namespace Azure.Tools.ErrorAnalyzers.ClientRuleAnalyzers.Tests
         [Test]
         public void GetFix_ReturnsAgentPromptFixFromProvider()
         {
-            AZC0012RuleAnalyzer analyzer = new AZC0012RuleAnalyzer();
-            RuleError error = new RuleError("AZC0012", TestErrorMessage);
+            AZC0030RuleAnalyzer analyzer = new AZC0030RuleAnalyzer();
+            RuleError error = new RuleError("AZC0030", TestErrorMessage);
 
             Fix? fix = analyzer.GetFix(error);
 
@@ -61,21 +61,10 @@ namespace Azure.Tools.ErrorAnalyzers.ClientRuleAnalyzers.Tests
         }
 
         [Test]
-        public void GetFix_InvalidErrorType_ReturnsNull()
-        {
-            AZC0012RuleAnalyzer analyzer = new AZC0012RuleAnalyzer();
-            RuleError error = new RuleError("AZC0001", TestErrorMessage);
-
-            Fix? fix = analyzer.GetFix(error);
-
-            Assert.That(fix, Is.Null);
-        }
-
-        [Test]
         public void GetFix_UsesAnalyzerPromptProvider()
         {
-            AZC0012RuleAnalyzer analyzer = new AZC0012RuleAnalyzer();
-            RuleError error = new RuleError("AZC0012", TestErrorMessage);
+            AZC0030RuleAnalyzer analyzer = new AZC0030RuleAnalyzer();
+            RuleError error = new RuleError("AZC0030", TestErrorMessage);
 
             Fix? fix = analyzer.GetFix(error);
 
@@ -86,6 +75,25 @@ namespace Azure.Tools.ErrorAnalyzers.ClientRuleAnalyzers.Tests
             // The specific content of prompt and context is now managed by AnalyzerPromptProvider
             Assert.That(promptFix.Context, Is.Not.Null);
             Assert.That(promptFix.Prompt, Is.Not.Null);
+        }
+
+        [Test]
+        public void GetFix_InvalidErrorType_ReturnsNull()
+        {
+            AZC0030RuleAnalyzer analyzer = new AZC0030RuleAnalyzer();
+            RuleError error = new RuleError("AZC0012", TestErrorMessage);
+
+            Fix? fix = analyzer.GetFix(error);
+
+            Assert.That(fix, Is.Null);
+        }
+
+        [Test]
+        public void GetFix_NullMessage_ThrowsArgumentException()
+        {
+            AZC0030RuleAnalyzer analyzer = new AZC0030RuleAnalyzer();
+
+            Assert.Throws<ArgumentNullException>(() => new RuleError("AZC0030", null!));
         }
     }
 }

@@ -1,8 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using System;
-
 namespace Azure.Tools.ErrorAnalyzers
 {
     /// <summary>
@@ -15,7 +13,7 @@ namespace Azure.Tools.ErrorAnalyzers
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(prompt);
             Prompt = prompt;
-            Context = context;
+            Context = context ?? string.Empty;
         }
 
         /// <summary>
@@ -26,6 +24,6 @@ namespace Azure.Tools.ErrorAnalyzers
         /// <summary>
         /// Optional additional context for the agent.
         /// </summary>
-        public string? Context { get; }
+        public string Context { get; }
     }
 }

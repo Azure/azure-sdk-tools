@@ -2,7 +2,7 @@ import { app, HttpRequest, HttpResponseInit, InvocationContext, Timer } from '@a
 import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
-import { StorageService } from '../services/StorageService';
+import { BlobService } from '../services/BlobService';
 import { SpectorCaseProcessor } from '../services/SpectorCaseProcessor';
 
 /**
@@ -742,7 +742,7 @@ function extractSections(content: string): string {
  */
 async function uploadFilesToBlobStorage(tempDocsDir: string, sources: DocumentationSource[], context: InvocationContext): Promise<string[]> {
     try {
-        const storageService = new StorageService();
+        const blobService = new BlobService();
         const containerName = process.env.STORAGE_KNOWLEDGE_CONTAINER || 'knowledge';
         
         const currentFiles: string[] = [];
@@ -770,7 +770,7 @@ async function uploadFilesToBlobStorage(tempDocsDir: string, sources: Documentat
                         }
                         const blobPath = path.join(source.folder, fileName);
                         const content = fs.readFileSync(fullPath);
-                        storageService.putBlob(context, containerName, blobPath, content);
+                        blobService.putBlob(context, containerName, blobPath, content);
                         uploadedCount++;
                         currentFiles.push(blobPath);
                     }
@@ -793,12 +793,12 @@ async function uploadFilesToBlobStorage(tempDocsDir: string, sources: Documentat
  */
 async function cleanupExpiredBlobs(currentFiles: string[], context: InvocationContext): Promise<void> {
     try {
-        const storageService = new StorageService();
+        const blobService = new BlobService();
         const containerName = process.env.STORAGE_KNOWLEDGE_CONTAINER || 'knowledge';
         
         context.log('Cleaning up expired blobs...');
         
-        const deletedCount = await storageService.deleteExpiredBlobs(context, containerName, currentFiles);
+        const deletedCount = await blobService.deleteExpiredBlobs(context, containerName, currentFiles);
         
         context.log(`Cleaned up ${deletedCount} expired blobs`);
     } catch (error) {

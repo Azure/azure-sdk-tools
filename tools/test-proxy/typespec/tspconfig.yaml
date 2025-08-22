@@ -12,3 +12,8 @@ options:
     license:
       name: "MIT License"
       company: "Microsoft Corporation"
+  "@azure-tools/typespec-csharp":
+    package-name: "Microsoft.ClientModel.TestFramework"
+    license:
+      name: "MIT License"
+      company: "Microsoft Corporation"

@@ -1,6 +1,7 @@
 import { InvocationContext} from '@azure/functions';
-import { BlobServiceClient, ContainerClient } from '@azure/storage-blob';
-import { ChainedTokenCredential, DefaultAzureCredential, AzureCliCredential, EnvironmentCredential, ManagedIdentityCredential } from '@azure/identity';
+import { BlobServiceClient, BlobItem } from '@azure/storage-blob';
+import { ChainedTokenCredential, ManagedIdentityCredential, EnvironmentCredential, AzureCliCredential } from '@azure/identity';
+import * as crypto from 'crypto';
 
 /**
  * Azure Storage service for managing blob operations
@@ -52,7 +53,27 @@ export class BlobService {
     }
     
     /**
-     * List all blobs in a container
+     * List all blobs in a container with their properties including contentMD5
+     */
+    async listBlobsWithProperties(containerName: string, prefix?: string): Promise<Map<string, BlobItem>> {
+        try {
+            const containerClient = this.blobServiceClient.getContainerClient(containerName);
+            const blobs = new Map<string, BlobItem>();
+            
+            const listOptions = prefix ? { prefix, includeMetadata: true } : { includeMetadata: true };
+            
+            for await (const blob of containerClient.listBlobsFlat(listOptions)) {
+                blobs.set(blob.name, blob);
+            }
+            
+            return blobs;
+        } catch (error) {
+            throw new Error(`Failed to list blobs with properties: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    }
+
+    /**
+     * List all blob names in a container
      */
     async listBlobs(containerName: string, prefix?: string): Promise<string[]> {
         try {
@@ -70,7 +91,7 @@ export class BlobService {
             throw new Error(`Failed to list blobs: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
-    
+
     /**
      * Delete a blob from storage (soft delete using metadata)
      */
@@ -89,33 +110,60 @@ export class BlobService {
             throw new Error(`Failed to delete blob ${blobPath}: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
-    
+
     /**
-     * Delete multiple blobs that are not in the current files list
+     * Calculate MD5 hash of content
+     * @param content The content to hash
+     * @returns MD5 hash as base64 string (matching Azure's contentMD5 format)
      */
-    async deleteExpiredBlobs(context: InvocationContext, containerName: string, currentFiles: string[]): Promise<number> {
-        try {
-            const allBlobs = await this.listBlobs(containerName);
-            const currentFileSet = new Set(currentFiles);
-            
-            let deletedCount = 0;
-            for (const blobPath of allBlobs) {
-                // Skip static files (matching Go logic)
-                if (blobPath.startsWith('static_')) {
-                    continue;
-                }
-                
-                // Delete if not in current files
-                if (!currentFileSet.has(blobPath)) {
-                    await this.deleteBlob(context, containerName, blobPath);
-                    deletedCount++;
-                }
-            }
-            
-            return deletedCount;
-        } catch (error) {
-            throw new Error(`Failed to delete expired blobs: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    private calculateContentMD5(content: string | Buffer): string {
+        const buffer = typeof content === 'string' ? Buffer.from(content) : content;
+        return crypto.createHash('md5').update(buffer).digest('base64');
+    }
+
+    /**
+     * Check if document content has changed by comparing MD5 hashes
+     * @param blobPath The blob path to check
+     * @param content The current content
+     * @param existingBlobs Map of existing blob items with their properties
+     * @returns True if content has changed or is new, false if unchanged
+     */
+    hasContentChanged(
+        blobPath: string, 
+        content: string | Buffer,
+        existingBlobs: Map<string, BlobItem>
+    ): boolean {
+        const currentMD5 = this.calculateContentMD5(content);
+        const existing = existingBlobs.get(blobPath);
+        
+        if (!existing || !existing.properties.contentMD5) {
+            // New blob or blob without MD5 (needs update)
+            return true;
         }
+        
+        // Convert Uint8Array to base64 string for comparison
+        const existingMD5 = Buffer.from(existing.properties.contentMD5).toString('base64');
+        
+        // Check if content MD5 has changed
+        return existingMD5 !== currentMD5;
+    }
+
+    /**
+     * Get title from blob name or metadata
+     * @param blobItem The blob item
+     * @returns The title extracted from metadata or derived from name
+     */
+    getBlobTitle(blobItem: BlobItem): string | undefined {
+        // Try to get title from metadata first
+        if (blobItem.metadata && blobItem.metadata.title) {
+            return blobItem.metadata.title;
+        }
+        
+        // Fallback to deriving title from blob name
+        // Remove file extension and replace path separators with spaces
+        const name = blobItem.name;
+        const nameWithoutExtension = name.replace(/\.[^/.]+$/, '');
+        return nameWithoutExtension.replace(/[/#]/g, ' ').trim();
     }
     
     /**

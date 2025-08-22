@@ -41,7 +41,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
         private readonly Option<string[]> serviceOwnersOption = new(["--service-owners"], "The service owners (space-separated)") { IsRequired = false };
         private readonly Option<string[]> sourceOwnersOption = new(["--source-owners"], "The source owners (space-separated)") { IsRequired = false };
         private readonly Option<bool> isAddingOption = new(["--is-adding"], "Whether to add (true) or remove (false) owners") { IsRequired = false };
-        private readonly Option<string> workingBranchOption = new(["--branch"], "Branch to make edits to, only if provided.") { IsRequired = false };
+        private readonly Option<string> workingBranchOption = new(["--branch"], "PR number or branch name to add changes to existing PR.") { IsRequired = false };
 
         public CodeownersTools(
             IGitHubService githubService,
@@ -167,44 +167,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                 // Normalize service path
                 var normalizedPath = CodeownersHelper.NormalizePath(path);
 
-                // Validate service label (perform early so tests expecting exceptions aren't swallowed)
-                if (!string.IsNullOrEmpty(serviceLabel))
+                // Resolve PR number to actual branch name if provided
+                if (!string.IsNullOrEmpty(workingBranch))
                 {
-                    var labelsFileContent = await githubService.GetContentsSingleAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, Constants.AZURE_COMMON_LABELS_PATH);
-                    if (labelsFileContent == null)
-                    {
-                        throw new Exception("Could not retrieve labels file from the repository.");
-                    }
-
-                    var labelsContent = labelsFileContent.Content;
-                    var serviceLabelValidationResults = LabelHelper.CheckServiceLabel(labelsContent, serviceLabel);
-                    if (serviceLabelValidationResults != LabelHelper.ServiceLabelStatus.Exists)
-                    {
-                        var labelsPullRequests = (await githubService.SearchPullRequestsByTitleAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, "Service Label"))
-                            ?? new List<PullRequest?>().AsReadOnly();
-
-                        if (!LabelHelper.CheckServiceLabelInReview(labelsPullRequests, serviceLabel) && string.IsNullOrEmpty(normalizedPath))
-                        {
-                            throw new Exception($"Service label: {serviceLabel} doesn't exist.");
-                        }
-                    }
-                }
-
-                if (string.IsNullOrEmpty(workingBranch))
-                {
-                    var codeownersPullRequests = (await githubService.SearchPullRequestsByTitleAsync(Constants.AZURE_OWNER_PATH, repo, "[CODEOWNERS]"))
-                        ?? new List<PullRequest?>().AsReadOnly();
-
-                    foreach (var codeownersPullRequest in codeownersPullRequests)
-                    {
-                        if (codeownersPullRequest != null &&
-                            ((!string.IsNullOrEmpty(serviceLabel) && codeownersPullRequest.Title.Contains(serviceLabel, StringComparison.OrdinalIgnoreCase)) ||
-                            (!string.IsNullOrEmpty(normalizedPath) && codeownersPullRequest.Title.Contains(normalizedPath, StringComparison.OrdinalIgnoreCase))))
-                        {
-                            workingBranch = codeownersPullRequest.Head.Ref;
-                            break;
-                        }
-                    }
+                    workingBranch = await ResolveBranchFromInput(workingBranch, repo);
                 }
 
                 // Get codeowners file contents.
@@ -326,20 +292,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
 
                 var normalizedPath = CodeownersHelper.NormalizePath(path);
 
-                var workingBranch = "";
-                var codeownersPullRequests = await githubService.SearchPullRequestsByTitleAsync(Constants.AZURE_OWNER_PATH, repoName, "[CODEOWNERS]");
-
-                foreach (var codeownersPullRequest in codeownersPullRequests)
-                {
-                    if (codeownersPullRequest != null &&
-                        ((!string.IsNullOrEmpty(serviceLabel) && codeownersPullRequest.Title.Contains(serviceLabel, StringComparison.OrdinalIgnoreCase)) ||
-                        (!string.IsNullOrEmpty(normalizedPath) && codeownersPullRequest.Title.Contains(normalizedPath, StringComparison.OrdinalIgnoreCase))))
-                    {
-                        workingBranch = codeownersPullRequest.Head.Ref;
-                    }
-                }
-
-                workingBranch = string.IsNullOrEmpty(workingBranch) ? "main" : workingBranch;
+                var workingBranch = "main";
 
                 CodeownersEntry? matchingEntry;
                 try
@@ -451,6 +404,27 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                 return (string.Join(" ", validationErrors), distinctResults);
             }
             return ("", distinctResults);
+        }
+
+        private async Task<string> ResolveBranchFromInput(string input, string repo)
+        {
+            var cleanInput = input.TrimStart('#');
+            
+            if (int.TryParse(cleanInput, out int prNumber))
+            {
+                try
+                {
+                    var pr = await githubService.GetPullRequestAsync(Constants.AZURE_OWNER_PATH, repo, prNumber);
+                    logger.LogInformation($"Found PR #{prNumber}: {pr.Title} on branch {pr.Head.Ref}");
+                    return pr.Head.Ref;
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception($"Could not find PR #{prNumber}: {ex.Message}");
+                }
+            }
+            
+            throw new Exception($"Input '{input}' must be a valid PR number (e.g., #123 or 123)");
         }
     }
 }

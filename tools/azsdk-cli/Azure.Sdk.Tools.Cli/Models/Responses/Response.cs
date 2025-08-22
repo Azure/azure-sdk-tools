@@ -17,7 +17,7 @@ public class Response
 
     [JsonPropertyName("next_steps")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public List<string>? NextSteps { get; set; }
+    public string? NextSteps { get; set; }
 
     protected string ToString(StringBuilder value)
     {
@@ -36,9 +36,9 @@ public class Response
             messages.Add("[ERROR] " + error);
         }
 
-        foreach (var nextStep in NextSteps ?? [])
+        if (!string.IsNullOrEmpty(NextSteps))
         {
-            messages.Add("[NEXT STEPS] " + nextStep);
+            messages.Add("[NEXT STEPS] " + NextSteps);
         }
 
         if (messages.Count > 0)

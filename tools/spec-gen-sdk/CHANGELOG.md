@@ -3,6 +3,7 @@
 ## 2025-08-05 - 0.9.1
 
 - Support SDK breaking change flagging for V2 folder structure by detecting management plane TypeSpec projects containing 'resource-manager' in the path
+- Update function `parseSemverVersionString`, remove the artificial PrereleaseLabel and PrereleaseNumber values
 
 ## 2025-07-25 - 0.9.0
 

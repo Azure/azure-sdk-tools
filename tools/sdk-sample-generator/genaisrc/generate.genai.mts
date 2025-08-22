@@ -28,12 +28,12 @@ script({
     "samples-count": {
       type: "number",
       description: "The maximum number of samples to generate",
-      default: "10",
+      default: "5",
     },
     "ideas-model": {
       type: "string",
       description: "The model to use for generating sample ideas",
-      default: "azure:gpt-4.1-nano",
+      default: "azure:gpt-4.1-mini",
     },
     "coding-model": {
       type: "string",
@@ -164,7 +164,7 @@ const cacheFolder = path.join(appEnvPaths.cache, getUniqueDirName());
 let selectedSampleIdeas;
 
 if (userPromptPath) {
-  const userSampleIdea = await parseUserPrompt(userPromptPath);
+  const userSampleIdea = await parseUserPrompt(userPromptPath, selectedLanguages[0]);
   selectedSampleIdeas = [userSampleIdea];
 } else {
   const sampleIdeas = await generateOrLoadSampleIdeas({

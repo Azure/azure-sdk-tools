@@ -9,6 +9,7 @@
     "clean": "npm run clean:clones && rimraf *.tsbuildinfo",
     "clean:clones": "rimraf .artifacts",
     "clone:rest": "mkdir -p .artifacts && git clone --depth=1 --filter=blob:none --sparse https://github.com/Azure/azure-rest-api-specs.git .artifacts/azure-rest-api-specs && cd .artifacts/azure-rest-api-specs && git sparse-checkout set specification/cognitiveservices/Language.AnalyzeText",
+    "clone:java": "mkdir -p .artifacts && git clone --depth=1 --filter=blob:none https://github.com/Azure/azure-sdk-for-java.git .artifacts/azure-sdk-for-java && cd .artifacts/azure-sdk-for-java/sdk/storage/azure-storage-blob",
     "clone:ts": "mkdir -p .artifacts && git clone --depth=1 --filter=blob:none https://github.com/Azure/azure-sdk-for-js.git .artifacts/azure-sdk-for-js && cd .artifacts/azure-sdk-for-js && pnpm install && cd sdk/cognitivelanguage/ai-language-text && pnpm run build && pnpm pack",
     "clone:py": "mkdir -p .artifacts && git clone --depth=1 --filter=blob:none https://github.com/Azure/azure-sdk-for-python.git .artifacts/azure-sdk-for-python && cd .artifacts/azure-sdk-for-python/sdk/textanalytics/azure-ai-textanalytics",
     "clone:go": "mkdir -p .artifacts && git clone --depth=1 --filter=blob:none https://github.com/Azure/azure-sdk-for-go.git .artifacts/azure-sdk-for-go && cd .artifacts/azure-sdk-for-go/sdk/storage/azblob",

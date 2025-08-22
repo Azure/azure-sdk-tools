@@ -11,20 +11,25 @@
     "test": "echo \"No tests yet...\""
   },
   "dependencies": {
+    "@azure/data-tables": "^13.3.1",
     "@azure/functions": "^4.0.0",
     "@azure/identity": "^4.5.0",
     "@azure/openai": "^1.0.0-beta.12",
     "@azure/storage-blob": "^12.21.0",
     "@microsoft/microsoft-graph-types": "^2.40.0",
     "botframework-schema": "^4.17.0-blobs1",
-    "openai": "^5.10.2"
+    "openai": "^5.10.2",
+    "uuid": "^11.1.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@microsoft/microsoft-graph-types": "^2.40.0",
     "@types/node": "^20.x",
+    "@types/uuid": "^10.0.0",
+    "@types/xlsx": "^0.0.36",
     "botframework-schema": "^4.17.0-blobs1",
     "rimraf": "^5.0.0",
-    "typescript": "^4.0.0"
+    "typescript": "^5.0.0"
   },
   "main": "dist/src/{index.js,functions/*.js}"
 }

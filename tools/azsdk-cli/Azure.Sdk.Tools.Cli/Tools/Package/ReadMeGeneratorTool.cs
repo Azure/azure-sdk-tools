@@ -153,11 +153,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         /// Generates a README.md file using a template, service documentation, and package information.
         /// </summary>
         /// <param name="ct">Cancellation token for the operation.</param>
-        /// <returns>
-        /// True if a valid README was generated and passed validation checks;
-        /// false if the README did not pass validation (e.g., due to dead or invalid links).
-        /// </returns>
-        /// <returns>true if a valid readme was generated, false is the readme did not pass validation checks. For instance, dead/invalid links.</returns>
         public async Task Generate(CancellationToken ct)
         {
             ArgumentException.ThrowIfNullOrEmpty(templatePath);

@@ -134,7 +134,7 @@ export async function buildPackage(
         await runCommand(`pnpm`, ['install'], runCommandOptions, false);
         logger.info(`Pnpm install successfully.`);
 
-        await lintFix(options.sdkRepoRoot,packageDirectory);
+        await lintFix(packageDirectory);
 
         logger.info(`Start to build package '${name}'.`);
         await runCommand('pnpm', ['build', '--filter', `${name}...`], runCommandOptions);

@@ -9,10 +9,10 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.CodeownersUtils.Parsing;
+using Azure.Sdk.Tools.CodeownersUtils.Editing;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Commands;
-
 
 namespace Azure.Sdk.Tools.Cli.Tools.EngSys
 {
@@ -23,7 +23,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
         private readonly IGitHubService githubService;
         private readonly IOutputHelper output;
         private readonly ILogger<CodeownersTools> logger;
-        private readonly ICodeownersHelper codeownersHelper;
         private readonly ICodeownersValidatorHelper codeownersValidator;
 
         // URL constants
@@ -47,13 +46,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
             IGitHubService githubService,
             IOutputHelper output,
             ILogger<CodeownersTools> logger,
-            ICodeownersHelper codeownersHelper,
             ICodeownersValidatorHelper codeownersValidator) : base()
         {
             this.githubService = githubService;
             this.output = output;
             this.logger = logger;
-            this.codeownersHelper = codeownersHelper;
             this.codeownersValidator = codeownersValidator;
 
             CommandHierarchy =
@@ -190,7 +187,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                     }
                 }
 
-                if (string.IsNullOrEmpty(workingBranch))
+                if (workingBranch.Equals("main", StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new Exception($"Cannot make changes on branch: {workingBranch}");
+                }
+                else if (string.IsNullOrEmpty(workingBranch))
                 {
                     var codeownersPullRequests = (await githubService.SearchPullRequestsByTitleAsync(Constants.AZURE_OWNER_PATH, repo, "[CODEOWNERS]"))
                         ?? new List<PullRequest?>().AsReadOnly();
@@ -216,17 +217,34 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                 }
 
                 var branchToFetch = string.IsNullOrEmpty(workingBranch) ? "main" : workingBranch;
-
                 var codeownersContent = codeownersFileContent.Content;
-                var codeownersContentList = codeownersContent.Split("\n").ToList();
 
-                var (modifiedCodeownersContent, updatedEntry) = codeownersHelper.AddCodeownersEntry(codeownersContent, isMgmtPlane, normalizedPath, serviceLabel, serviceOwners, sourceOwners, isAdding);
+                // Use CodeownersEditor for manipulation
+                var editor = new CodeownersEditor(codeownersContent);
+                CodeownersEntry updatedEntry;
+                if (isAdding)
+                {
+                    updatedEntry = editor.AddOrUpdateEntry(
+                        path: path,
+                        serviceLabel: serviceLabel,
+                        serviceOwners: serviceOwners,
+                        sourceOwners: sourceOwners,
+                        isMgmtPlane: isMgmtPlane);
+                }
+                else
+                {
+                    updatedEntry = editor.RemoveOwners(
+                        path: path,
+                        serviceLabel: serviceLabel,
+                        serviceOwnersToRemove: serviceOwners,
+                        sourceOwnersToRemove: sourceOwners);
+                }
 
                 // Validate the modified/created Entry
                 var (validationErrors, codeownersValidationResults) = await ValidateMinimumOwnerRequirements(updatedEntry);
 
                 var codeownersValidationResultMessage = string.Join("\n", codeownersValidationResults.Select(r => r.ToString()));
-                if (validationErrors.Any())
+                if (!string.IsNullOrEmpty(validationErrors))
                 {
                     throw new Exception($"{validationErrors} Validation results: {codeownersValidationResultMessage}");
                 }
@@ -237,7 +255,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                     : updatedEntry.PathExpression;
                 var resultMessages = await CreateCodeownersPR(
                     repo,                                                             // Repository name
-                    modifiedCodeownersContent,                     // Modified content
+                    editor.ToString(),                     // Modified content
                     $"Update codeowners entry for {identifier}", // Description for commit message, PR title, and description
                     "update-codeowners-entry",                                             // Branch prefix for the action
                     identifier, // Identifier for the PR
@@ -291,7 +309,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
             // Use codeownersSha in UpdateFileAsync
             await githubService.UpdateFileAsync(Constants.AZURE_OWNER_PATH, repo, Constants.AZURE_CODEOWNERS_PATH, description, modifiedContent, codeownersSha, branchName);
 
-            var prInfoList = await githubService.CreatePullRequestAsync(repo, Constants.AZURE_OWNER_PATH, "main", branchName, "[CODEOWNERS] " + description, description, true);
+            var prInfoList = await githubService.CreatePullRequestAsync(repo, Constants.AZURE_OWNER_PATH, "main", branchName, "[CODEOWNERS] " + description, description);
             if (prInfoList != null)
             {
                 resultMessages.Add($"URL: {prInfoList.Url}");
@@ -338,8 +356,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                         workingBranch = codeownersPullRequest.Head.Ref;
                     }
                 }
-
-                workingBranch = string.IsNullOrEmpty(workingBranch) ? "main" : workingBranch;
+                
+                if (workingBranch.Equals("main", StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new Exception($"Cannot make changes on branch: {workingBranch}");
+                }
 
                 CodeownersEntry? matchingEntry;
                 try

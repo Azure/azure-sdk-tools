@@ -9,6 +9,7 @@ import {
 import * as XLSX from "xlsx";
 import { v4 as uuidv4 } from "uuid";
 import * as readline from "readline";
+import * as yaml from "js-yaml";
 
 // Type definitions (copied from FeedbackHandler to avoid imports)
 export type Role = "user" | "assistant" | "system";
@@ -31,10 +32,19 @@ export interface FeedbackData {
     feedbackId: string;
 }
 
+export interface Channel {
+    name: string;
+    id: string;
+}
+
+export interface ChannelConfig {
+    channels: Channel[];
+}
+
 export interface FeedbackTableEntity extends TableEntity {
     partitionKey: string; // channelId
     rowKey: string; // feedbackId (GUID)
-    timestamp: string;
+    submitTime: string;
     tenantId: string;
     messages: string; // JSON serialized Message[]
     reaction: "good" | "bad";
@@ -42,6 +52,7 @@ export interface FeedbackTableEntity extends TableEntity {
     reasons: string; // JSON serialized string[]
     link: string;
     postId: string; // postId field for easier querying
+    channelName: string; // channelName field from channel.yaml
 }
 
 // Excel row interface (based on the columns: Timestamp TenantID Messages Reaction Comment Reasons Link)
@@ -81,6 +92,86 @@ export class FeedbackConverter {
 
         const tableUrl = `https://${storageAccountName}.table.core.windows.net`;
         this.tableClient = new TableClient(tableUrl, "feedback", credential);
+    }
+
+    // Load channel mapping from bot-configs/channel.yaml
+    private async loadChannelMapping(): Promise<Map<string, string>> {
+        const channelMapping = new Map<string, string>();
+
+        try {
+            console.log(
+                "Loading channel mapping from bot-configs/channel.yaml..."
+            );
+
+            const containerClient =
+                this.blobServiceClient.getContainerClient("bot-configs");
+            const blobClient = containerClient.getBlobClient("channel.yaml");
+
+            // Check if blob exists
+            const exists = await blobClient.exists();
+            if (!exists) {
+                console.warn(
+                    "Warning: channel.yaml not found in bot-configs container. Channel names will be empty."
+                );
+                return channelMapping;
+            }
+
+            // Download blob content
+            const downloadResponse = await blobClient.download(0);
+            if (!downloadResponse.readableStreamBody) {
+                throw new Error("Failed to download channel.yaml content");
+            }
+
+            // Convert stream to string
+            const chunks: Buffer[] = [];
+            for await (const chunk of downloadResponse.readableStreamBody) {
+                chunks.push(Buffer.from(chunk));
+            }
+            const yamlContent = Buffer.concat(chunks).toString("utf-8");
+
+            // Parse YAML content
+            const channelConfig = yaml.load(yamlContent) as ChannelConfig;
+
+            if (
+                !channelConfig ||
+                !channelConfig.channels ||
+                !Array.isArray(channelConfig.channels)
+            ) {
+                console.warn(
+                    "Warning: Invalid channel.yaml format. Expected 'channels' array property."
+                );
+                return channelMapping;
+            }
+
+            // Build mapping from channelId to channelName
+            for (const channel of channelConfig.channels) {
+                if (channel.id && channel.name) {
+                    channelMapping.set(channel.id, channel.name);
+                }
+            }
+
+            console.log(
+                `Successfully loaded ${channelMapping.size} channel mappings:"`
+            );
+            for (const [id, name] of channelMapping) {
+                console.log(`  ${id} -> ${name}`);
+            }
+        } catch (error) {
+            console.error("Error loading channel mapping:", error);
+            console.warn(
+                "Warning: Failed to load channel mapping. Channel names will be empty."
+            );
+        }
+
+        return channelMapping;
+    }
+
+    // Get channel name by channelId
+    private getChannelName(
+        channelId: string,
+        channelMapping: Map<string, string>
+    ): string {
+        return channelMapping.get(channelId) || "";
     }
 
     // Parse Teams link to extract channelId and postId
@@ -128,7 +219,8 @@ export class FeedbackConverter {
 
     // Convert Excel row directly to table entity (no need to deserialize/serialize)
     private convertExcelRowToTableEntity(
-        row: ExcelFeedbackRow
+        row: ExcelFeedbackRow,
+        channelMapping: Map<string, string>
     ): FeedbackTableEntity {
         try {
             // Validate required fields first
@@ -156,11 +248,12 @@ export class FeedbackConverter {
             }
 
             const feedbackId = uuidv4();
+            const channelName = this.getChannelName(channelId, channelMapping);
 
             return {
                 partitionKey: channelId,
                 rowKey: feedbackId,
-                timestamp: row.Timestamp,
+                submitTime: row.Timestamp,
                 tenantId: row.TenantID,
                 messages: row.Messages || "", // Use raw string from Excel
                 reaction: reaction as "good" | "bad",
@@ -168,6 +261,7 @@ export class FeedbackConverter {
                 reasons: row.Reasons || "", // Use raw string from Excel
                 link: row.Link,
                 postId: postId,
+                channelName: channelName,
             };
         } catch (error) {
             console.error("Error converting Excel row:", error, row);
@@ -283,7 +377,8 @@ export class FeedbackConverter {
     // Import single Excel file from blob storage
     async importExcelFile(
         containerName: string,
-        blobName: string
+        blobName: string,
+        channelMapping: Map<string, string>
     ): Promise<void> {
         try {
             console.log(
@@ -422,8 +517,12 @@ export class FeedbackConverter {
                 );
 
                 try {
-                    const entity = this.convertExcelRowToTableEntity(row);
+                    const entity = this.convertExcelRowToTableEntity(
+                        row,
+                        channelMapping
+                    );
                     entities.push(entity);
+                    console.log("Table entity:", entity)
                     console.log(`✅ Row ${i + 2} converted successfully`);
                 } catch (error) {
                     // Don't skip - throw error to stop processing
@@ -465,6 +564,9 @@ export class FeedbackConverter {
             console.log(
                 `Starting import from local directory: ${directoryPath}`
             );
+
+            // Load channel mapping first
+            const channelMapping = await this.loadChannelMapping();
 
             const fs = await import("fs");
             const path = await import("path");
@@ -528,8 +630,12 @@ export class FeedbackConverter {
                     );
 
                     try {
-                        const entity = this.convertExcelRowToTableEntity(row);
+                        const entity = this.convertExcelRowToTableEntity(
+                            row,
+                            channelMapping
+                        );
                         entities.push(entity);
+                        console.log("Table entity:", entity);
                         console.log(`✅ Row ${i + 2} converted successfully`);
                     } catch (error) {
                         // Don't skip - throw error to stop processing
@@ -574,6 +680,9 @@ export class FeedbackConverter {
     async importAllExcelFiles(
         containerName: string = "feedback-v2"
     ): Promise<void> {
+        // Load channel mapping first (only once for all files)
+        const channelMapping = await this.loadChannelMapping();
+
         const excelFiles = await this.listExcelFiles(containerName);
         console.log(
             `Found ${excelFiles.length} Excel files in container ${containerName}`
@@ -581,7 +690,7 @@ export class FeedbackConverter {
 
         for (const fileName of excelFiles) {
             console.log(`\n--- Processing file: ${fileName} ---`);
-            await this.importExcelFile(containerName, fileName);
+            await this.importExcelFile(containerName, fileName, channelMapping);
         }
 
         console.log(

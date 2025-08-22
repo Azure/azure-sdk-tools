@@ -1,5 +1,6 @@
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Services.Update;
 using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.Cli.Services;
@@ -13,6 +14,11 @@ public class PythonLanguageRepoService : LanguageRepoService
     public PythonLanguageRepoService(IProcessHelper processHelper, INpxHelper npxHelper, IGitHelper gitHelper, ILogger<PythonLanguageRepoService> logger)
         : base(processHelper, npxHelper, gitHelper, logger)
     {
+    }
+
+    public override IUpdateLanguageService CreateUpdateService(IServiceProvider serviceProvider)
+    {
+        throw new NotSupportedException("Python update service is not yet implemented");
     }
 
     public override async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct = default)

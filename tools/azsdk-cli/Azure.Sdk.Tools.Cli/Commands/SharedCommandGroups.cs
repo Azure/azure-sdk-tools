@@ -41,6 +41,12 @@ namespace Azure.Sdk.Tools.Cli.Commands
             Options: []
         );
 
+        public static readonly CommandGroup Tsp = new(
+            Verb: "tsp",
+            Description: "TypeSpec client customization tools",
+            Options: []
+        );
+
         #if DEBUG
         public static readonly CommandGroup Example = new(
             Verb: "example",

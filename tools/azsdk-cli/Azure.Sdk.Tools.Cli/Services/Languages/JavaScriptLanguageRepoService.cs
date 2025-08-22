@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Microsoft.Extensions.Logging;
+using Azure.Sdk.Tools.Cli.Services.Update;
 
 namespace Azure.Sdk.Tools.Cli.Services;
 
@@ -14,5 +14,10 @@ public class JavaScriptLanguageRepoService : LanguageRepoService
     public JavaScriptLanguageRepoService(IProcessHelper processHelper, INpxHelper npxHelper, IGitHelper gitHelper, ILogger<JavaScriptLanguageRepoService> logger) 
         : base(processHelper, npxHelper, gitHelper, logger)
     {
+    }
+
+    public override IUpdateLanguageService CreateUpdateService(IServiceProvider serviceProvider)
+    {
+        throw new NotSupportedException("JavaScript update service is not yet implemented");
     }
 }

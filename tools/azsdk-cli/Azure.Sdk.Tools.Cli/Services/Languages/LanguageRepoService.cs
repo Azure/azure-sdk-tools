@@ -1,5 +1,6 @@
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Services.Update;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -69,6 +70,13 @@ public interface ILanguageRepoService
     /// - In Python, it would be "azure-servicebus".
     /// </returns>
     string GetSDKPackagePath(string repo, string packagePath);
+    /// Creates the corresponding update language service for this language.
+    /// Each language repo service knows how to create its own update service,
+    /// eliminating the need for string-based discrimination in factories.
+    /// </summary>
+    /// <param name="serviceProvider">Service provider for dependency injection</param>
+    /// <returns>The update language service for this language</returns>
+    IUpdateLanguageService CreateUpdateService(IServiceProvider serviceProvider);
 }
 
 /// <summary>
@@ -88,6 +96,12 @@ public class LanguageRepoService : ILanguageRepoService
         _npxHelper = npxHelper;
         _gitHelper = gitHelper;
         _logger = logger;
+    }
+
+    // Default implementation for the base class - throws since unknown languages shouldn't be used
+    public virtual IUpdateLanguageService CreateUpdateService(IServiceProvider serviceProvider)
+    {
+        throw new NotSupportedException("CreateUpdateService not implemented for this language");
     }
 
     /// <summary>

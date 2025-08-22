@@ -35,6 +35,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(SpecValidationTools),
             typeof(TestAnalysisTool),
             typeof(TypeSpecTool),
+            typeof(TspClientUpdateTool),
             typeof(TypeSpecPublicRepoValidationTool),
 
             #if DEBUG

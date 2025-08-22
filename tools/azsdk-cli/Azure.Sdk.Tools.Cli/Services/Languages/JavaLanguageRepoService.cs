@@ -1,8 +1,6 @@
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services.Update;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.Cli.Services;
 
@@ -12,11 +10,9 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// </summary>
 public class JavaLanguageRepoService : LanguageRepoService
 {
-    private readonly ILogger<JavaLanguageRepoService> _logger;
-    public JavaLanguageRepoService(IProcessHelper processHelper, IGitHelper gitHelper, ILogger<JavaLanguageRepoService> logger)
-        : base(processHelper, gitHelper)
+    public JavaLanguageRepoService(IProcessHelper processHelper, INpxHelper npxHelper, IGitHelper gitHelper, ILogger<LanguageRepoService> logger)
+        : base(processHelper, npxHelper, gitHelper, logger)
     {
-        _logger = logger;
     }
     public override IUpdateLanguageService CreateUpdateService(IServiceProvider serviceProvider)
     {

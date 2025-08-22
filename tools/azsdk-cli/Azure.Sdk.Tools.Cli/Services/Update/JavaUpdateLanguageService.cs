@@ -1,8 +1,5 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-using System.Text.RegularExpressions;
-using Azure.Sdk.Tools.Cli.Services;
-using System.IO;
 using Azure.Sdk.Tools.Cli.Models;
 
 namespace Azure.Sdk.Tools.Cli.Services.Update;
@@ -14,6 +11,8 @@ namespace Azure.Sdk.Tools.Cli.Services.Update;
 public class JavaUpdateLanguageService : UpdateLanguageServiceBase
 {
     public JavaUpdateLanguageService(ILanguageRepoService repoService) : base(repoService) { }
+
+    private const string CustomizationDirName = "customization";
 
     public override Task<Dictionary<string, SymbolInfo>> ExtractSymbolsAsync(string rootPath, CancellationToken ct)
     {
@@ -40,7 +39,7 @@ public class JavaUpdateLanguageService : UpdateLanguageServiceBase
             var packageRoot = Directory.GetParent(generationRoot)?.FullName; // parent of 'src'
             if (!string.IsNullOrEmpty(packageRoot) && Directory.Exists(packageRoot))
             {
-                var customizationDir = Path.Combine(packageRoot, "customization");
+                var customizationDir = Path.Combine(packageRoot, CustomizationDirName);
                 var customizationSourceRoot = Path.Combine(customizationDir, "src", "main", "java");
                 if (Directory.Exists(customizationSourceRoot))
                 {
@@ -70,38 +69,5 @@ public class JavaUpdateLanguageService : UpdateLanguageServiceBase
             })
             .ToList();
         return Task.FromResult(proposals);
-    }
-
-    // Prefer marker-based repo root discovery for Java
-    protected override string? ResolveValidationPackagePath(UpdateSessionState session)
-    {
-        var candidates = new[] { session.CustomizationRoot, session.NewGeneratedPath, session.OldGeneratedPath }
-            .Where(c => !string.IsNullOrWhiteSpace(c))
-            .Select(c => Directory.Exists(c!) ? c! : (Path.GetDirectoryName(c!) ?? string.Empty))
-            .Where(p => !string.IsNullOrWhiteSpace(p))
-            .ToList();
-        foreach (var start in candidates)
-        {
-            var found = FindUpwardsWithMarkers(start!, new[] { "pom.xml", "build.gradle", "build.gradle.kts" });
-            if (!string.IsNullOrWhiteSpace(found))
-            {
-                return found;
-            }
-        }
-        return base.ResolveValidationPackagePath(session);
-    }
-
-    private static string? FindUpwardsWithMarkers(string startDir, string[] markerFiles)
-    {
-        var dir = new DirectoryInfo(startDir);
-        while (dir != null)
-        {
-            if (markerFiles.Any(m => File.Exists(Path.Combine(dir.FullName, m))))
-            {
-                return dir.FullName;
-            }
-            dir = dir.Parent;
-        }
-        return null;
     }
 }

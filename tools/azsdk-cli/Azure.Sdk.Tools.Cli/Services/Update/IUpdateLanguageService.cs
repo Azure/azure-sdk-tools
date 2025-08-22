@@ -16,7 +16,7 @@ public interface IUpdateLanguageService
     // typically return one impact pointing to the canonical customization file.
     Task<List<CustomizationImpact>> AnalyzeCustomizationImpactAsync(UpdateSessionState session, string? customizationRoot, IEnumerable<ApiChange> apiChanges, CancellationToken ct);
 
-    // Propose patches for impacted files (single-file customization aggregates changes into one patch)
+    // Propose patches for impacted files, aggregates changes into one patch
     Task<List<PatchProposal>> ProposePatchesAsync(UpdateSessionState session, IEnumerable<CustomizationImpact> impacts, CancellationToken ct);
 
     // Perform language-specific validation (build/tests/type checks)

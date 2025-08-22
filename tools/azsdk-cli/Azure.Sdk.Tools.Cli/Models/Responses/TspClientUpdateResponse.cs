@@ -57,7 +57,7 @@ public class TspClientUpdateResponse : Response
         {
             sb.AppendLine($"ErrorCode: {ErrorCode}");
         }
-        return ToString(sb.ToString());
+        return ToString(sb);
     }
 }
 

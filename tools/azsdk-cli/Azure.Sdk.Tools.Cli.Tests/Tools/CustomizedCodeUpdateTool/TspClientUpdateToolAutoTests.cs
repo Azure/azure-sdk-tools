@@ -56,7 +56,7 @@ public class TspClientUpdateToolAutoTests
     {
         Func<string, IUpdateLanguageService> func = (p) => new MockNoChangeLanguageService();
         var tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), new NullOutputService(), func);
-        var run = await tool.UnifiedUpdate("placeholder.tsp", new MockNoChangeLanguageService(), TspStageSelection.All, resume: false, finalize: false, ct: CancellationToken.None);
+        var run = await tool.UnifiedUpdateAsync("placeholder.tsp", new MockNoChangeLanguageService(), TspStageSelection.All, resume: false, finalize: false, ct: CancellationToken.None);
         Assert.That(run.Session, Is.Not.Null, "Session should be created");
         Assert.That(run.Session!.LastStage, Is.EqualTo(UpdateStage.Diffed), "No changes should stop after diff");
         Assert.That(run.Session.ApiChangeCount, Is.EqualTo(0));
@@ -80,7 +80,7 @@ public class TspClientUpdateToolAutoTests
         Assert.That(first.Terminal, Is.Null.Or.False, "Not terminal until finalize (validate still pending)");
 
         // Second pass: finalize only
-        var second = await tool.UnifiedUpdate("placeholder-change.tsp", new MockChangeLanguageService(), TspStageSelection.Apply, resume: true, finalize: true, ct: CancellationToken.None);
+        var second = await tool.UnifiedUpdateAsync("placeholder-change.tsp", new MockChangeLanguageService(), TspStageSelection.Apply, resume: true, finalize: true, ct: CancellationToken.None);
         Assert.That(second.Session, Is.Not.Null);
         Assert.That(second.Session!.LastStage, Is.EqualTo(UpdateStage.Validated), "Finalize triggers validate automatically in Apply stage");
         Assert.That(second.NeedsFinalize, Is.Null.Or.False, "Finalize flag should clear");

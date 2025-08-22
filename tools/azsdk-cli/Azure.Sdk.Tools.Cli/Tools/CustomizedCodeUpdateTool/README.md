@@ -15,14 +15,19 @@ This tool runs the `customized-update` workflow: regenerate TypeSpec output, dif
 Run from the repository root (uses the `Azure.Sdk.Tools.Cli` project):
 
 ```powershell
-# Full workflow: regenerate -> diff -> map -> propose -> apply (dry-run)
-dotnet run --project Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj customized-update path/to/spec.tsp --new-gen ./tmpgen
+# Notes
+- When invoking via `dotnet run`, put `--` before the application arguments so they are forwarded to the app.
+- The tool is registered under the `tsp` command group; the full invocation is `tsp customized-update`.
+- The tool currently requires `--stage` (one of: `regenerate`, `diff`, `apply`, `all`).
 
-# Run a specific stage
-dotnet run --project Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj customized-update path/to/spec.tsp --stage diff --new-gen ./tmpgen
+# Full workflow: regenerate -> diff -> map -> propose -> apply (dry-run)
+dotnet run --project Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj -- tsp customized-update path/to/spec.tsp --stage all --package-path ./sdk/yourpkg --new-gen ./tmpgen
+
+# Run a specific stage (diff only)
+dotnet run --project Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj -- tsp customized-update path/to/spec.tsp --stage diff --package-path ./sdk/yourpkg --new-gen ./tmpgen
 
 # Dry-run apply then finalize
-dotnet run --project Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj customized-update path/to/spec.tsp --new-gen ./tmpgen --finalize
+dotnet run --project Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj -- tsp customized-update path/to/spec.tsp --stage apply --package-path ./sdk/yourpkg --new-gen ./tmpgen --finalize
 ```
 
 ---
@@ -39,7 +44,7 @@ dotnet run --project Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj customized-u
 
 ## Programmatic / MCP usage
 
-The MCP entrypoint is `azsdk_tsp_update`, which calls `UnifiedUpdate(specPath, IUpdateLanguageService, ...)`. Language-specific logic is provided via `IUpdateLanguageService` implementations.
+The MCP entrypoint is `azsdk_tsp_update`, which calls `UnifiedUpdateAsync(specPath, IUpdateLanguageService, ...)`. Language-specific logic is provided via `IUpdateLanguageService` implementations.
 
 ## Architecture
 

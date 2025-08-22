@@ -16,29 +16,29 @@ namespace Azure.Sdk.Tools.Cli.Tools;
 [McpServerToolType, Description("Update customized SDK code after TypeSpec regeneration: creates/continues a session, diffs old vs new generated code, maps API changes to impacted customization files, applies patches.")]
 public class TspClientUpdateTool : MCPTool
 {
-    private readonly ILogger<TspClientUpdateTool> _logger;
-    private readonly IOutputHelper _output;
-    private readonly Func<string, Update.IUpdateLanguageService> _languageServiceFactory;
+    private readonly ILogger<TspClientUpdateTool> logger;
+    private readonly IOutputHelper output;
+    private readonly Func<string, IUpdateLanguageService> languageServiceFactory;
 
     // --- CLI options/args ---
-    private readonly Argument<string> _specPathArg = new(name: "spec-path", description: "Path to the .tsp specification file") { Arity = ArgumentArity.ExactlyOne };
+    private readonly Argument<string> specPathArg = new(name: "spec-path", description: "Path to the .tsp specification file") { Arity = ArgumentArity.ExactlyOne };
     // Removed --session option (single implicit session). Kept placeholder variable (unused) to minimize diff if reintroduced later.
     // private readonly Option<string> _sessionIdOpt = new(["--session", "-s"], () => string.Empty, "Existing session id (omit to create a new session)");
-    private readonly Option<TspStageSelection> _stageOpt = new(["--stage"], description: "The stage to run (regenerate|diff|apply|all)") { IsRequired = true };
-    private readonly Option<bool> _resumeOpt = new(["--resume"], () => false, "Resume from existing session state");
-    private readonly Option<bool> _finalizeOpt = new(["--finalize"], () => false, "When applying, perform final (non-dry-run) apply if a dry-run occurred");
+    private readonly Option<TspStageSelection> stageOpt = new(["--stage"], description: "The stage to run (regenerate|diff|apply|all)") { IsRequired = true };
+    private readonly Option<bool> resumeOpt = new(["--resume"], () => false, "Resume from existing session state");
+    private readonly Option<bool> finalizeOpt = new(["--finalize"], () => false, "When applying, perform final (non-dry-run) apply if a dry-run occurred");
     // Old/new generated code roots: old = current code baseline (before regeneration), new = location future regenerate will output to
-    private readonly Option<string?> _generatedNewOpt = new(["--new-gen"], () => "./tmpgen", "Path to directory where new TypeSpec generation output will be produced");
+    private readonly Option<string?> generatedNewOpt = new(["--new-gen"], () => "./tmpgen", "Path to directory where new TypeSpec generation output will be produced");
 
     // Simplified session handling: single in-memory session only (no disk persistence)
     // TODO(#11645): Reintroduce pluggable session store (file/remote/memory) with manifest + pruning.
-    private UpdateSessionState? _currentSession;
+    private UpdateSessionState? currentSession;
 
     public TspClientUpdateTool(ILogger<TspClientUpdateTool> logger, IOutputHelper output, Func<string, IUpdateLanguageService> languageServiceFactory)
     {
-        _logger = logger;
-        _output = output;
-        _languageServiceFactory = languageServiceFactory;
+        this.logger = logger;
+        this.output = output;
+        this.languageServiceFactory = languageServiceFactory;
         CommandHierarchy = [ SharedCommandGroups.Tsp ];
     }
 
@@ -47,12 +47,12 @@ public class TspClientUpdateTool : MCPTool
         var cmd = new Command(
             name: "customized-update",
             description: "Update customized TypeSpec-generated client code. Stages: regenerate -> diff -> apply (dry-run + finalize). Use --stage to run one stage; omit to run available stages in order; use --finalize to complete apply after a dry-run.");
-        cmd.AddArgument(_specPathArg);
+        cmd.AddArgument(specPathArg);
         cmd.AddOption(SharedOptions.PackagePath);
-        cmd.AddOption(_stageOpt);
-        cmd.AddOption(_resumeOpt);
-        cmd.AddOption(_finalizeOpt);
-        cmd.AddOption(_generatedNewOpt);
+        cmd.AddOption(stageOpt);
+        cmd.AddOption(resumeOpt);
+        cmd.AddOption(finalizeOpt);
+        cmd.AddOption(generatedNewOpt);
         cmd.SetHandler(async ctx => { await HandleUnified(ctx, ctx.GetCancellationToken()); });
 
         return cmd;
@@ -62,12 +62,15 @@ public class TspClientUpdateTool : MCPTool
 
     // --------------- MCP Methods ---------------
     [McpServerTool(Name = "azsdk_tsp_update"), Description("Unified update-customize-code workflow")] 
-    public async Task<TspClientUpdateResponse> UnifiedUpdate(string specPath, IUpdateLanguageService languageService, TspStageSelection stage = TspStageSelection.All, bool resume = false, bool finalize = false, CancellationToken ct = default)
+    public async Task<TspClientUpdateResponse> UnifiedUpdateAsync(string specPath, IUpdateLanguageService languageService, TspStageSelection stage = TspStageSelection.All, bool resume = false, bool finalize = false, CancellationToken ct = default)
     {
             try
             {
             var session = GetOrCreateSession(null, resetForFreshRun: !resume);
-            if (!string.IsNullOrWhiteSpace(specPath)) { session.SpecPath = specPath; }
+            if (!string.IsNullOrWhiteSpace(specPath))
+            {
+                session.SpecPath = specPath;
+            }
             var runAll = stage == TspStageSelection.All;
             var ordered = new List<TspStageSelection> { TspStageSelection.Regenerate, TspStageSelection.Diff, TspStageSelection.Apply };
             string? nextStage = null;
@@ -195,7 +198,7 @@ public class TspClientUpdateTool : MCPTool
         }
             catch (Exception ex)
         {
-            _logger.LogError(ex, "Unified update failed for spec {specPath}", specPath);
+            logger.LogError(ex, "Unified update failed for spec {specPath}", specPath);
             SetFailure();
             return new TspClientUpdateResponse { ResponseError = ex.Message, ErrorCode = "UnifiedUpdateFailed" };
         }
@@ -216,7 +219,7 @@ public class TspClientUpdateTool : MCPTool
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Regenerate failed: {specPath}", specPath);
+            logger.LogError(ex, "Regenerate failed: {specPath}", specPath);
             SetFailure();
             return Task.FromResult(new TspClientUpdateResponse { ResponseError = ex.Message, ErrorCode = "RegenerateFailed" });
         }
@@ -254,7 +257,7 @@ public class TspClientUpdateTool : MCPTool
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Diff failed: {sessionId}", sessionId);
+            logger.LogError(ex, "Diff failed: {sessionId}", sessionId);
             SetFailure();
             return new TspClientUpdateResponse { ResponseError = ex.Message, ErrorCode = "DiffFailed" };
         }
@@ -280,7 +283,7 @@ public class TspClientUpdateTool : MCPTool
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Apply failed: {sessionId}", sessionId);
+            logger.LogError(ex, "Apply failed: {sessionId}", sessionId);
             SetFailure();
             return new TspClientUpdateResponse { ResponseError = ex.Message, ErrorCode = "ApplyFailed" };
         }
@@ -322,7 +325,7 @@ public class TspClientUpdateTool : MCPTool
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Internal stage Map failed: {sessionId}", sessionId);
+            logger.LogError(ex, "Internal stage Map failed: {sessionId}", sessionId);
             SetFailure();
         return new TspClientUpdateResponse { ResponseError = ex.Message, ErrorCode = "MapFailed" };
         }
@@ -354,7 +357,7 @@ public class TspClientUpdateTool : MCPTool
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Internal stage Propose failed: {sessionId}", sessionId);
+            logger.LogError(ex, "Internal stage Propose failed: {sessionId}", sessionId);
             SetFailure();
             return new TspClientUpdateResponse { ResponseError = ex.Message, ErrorCode = "ProposeFailed" };
         }
@@ -422,7 +425,7 @@ public class TspClientUpdateTool : MCPTool
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Internal stageValidate failed: {sessionId}", sessionId);
+            logger.LogError(ex, "Internal stageValidate failed: {sessionId}", sessionId);
             SetFailure();
             return new TspClientUpdateResponse { ResponseError = ex.Message, ErrorCode = "ValidateFailed" };
         }
@@ -434,86 +437,95 @@ public class TspClientUpdateTool : MCPTool
     {
             try
             {
-            var spec = ctx.ParseResult.GetValueForArgument(_specPathArg);
-            var stage = ctx.ParseResult.GetValueForOption(_stageOpt);
-            var resume = ctx.ParseResult.GetValueForOption(_resumeOpt);
-            var finalize = ctx.ParseResult.GetValueForOption(_finalizeOpt);
+            var spec = ctx.ParseResult.GetValueForArgument(specPathArg);
+            var stage = ctx.ParseResult.GetValueForOption(stageOpt);
+            var resume = ctx.ParseResult.GetValueForOption(resumeOpt);
+            var finalize = ctx.ParseResult.GetValueForOption(finalizeOpt);
             var packagePath = ctx.ParseResult.GetValueForOption(SharedOptions.PackagePath);
 
-            // Create language service
+            // Map CLI options consistently:
+            // - --new-gen => session.NewGeneratedPath
+            // - --package-path => session.OldGeneratedPath
+            var newGen = ctx.ParseResult.GetValueForOption(generatedNewOpt) ?? "./tmpgen";
+            var session = GetOrCreateSession(null);
+            session.NewGeneratedPath = newGen;
+            if (!string.IsNullOrWhiteSpace(packagePath))
+            {
+                session.OldGeneratedPath = packagePath;
+            }
+
+            try
+            {
+                // Ensure the new-gen directory exists where possible.
+                Directory.CreateDirectory(newGen);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Unable to initialize new-gen directory at {newGen}", newGen);
+            }
+
+            // Create language service using new-gen as primary probe (fallback to package path)
             IUpdateLanguageService languageService;
             try
             {
-                languageService = _languageServiceFactory(Directory.Exists(packagePath) ? packagePath : Path.GetDirectoryName(packagePath)!);
-                _logger.LogDebug($"Retrieved language service: {languageService.GetType().Name}");
+                string probe = newGen;
+                if (!Directory.Exists(probe))
+                {
+                    probe = !string.IsNullOrWhiteSpace(packagePath) ? packagePath : newGen;
+                }
+                languageService = languageServiceFactory(probe);
+                logger.LogDebug($"Retrieved language service: {languageService.GetType().Name}");
             }
             catch (Exception ex)
             {
                 SetFailure(1);
-                _logger.LogError(ex, "Failed to create language service");
+                logger.LogError(ex, "Failed to create language service");
                 ctx.ExitCode = ExitCode;
-                _output.OutputError(new TspClientUpdateResponse { ResponseError = $"Unable to determine language for package at: {packagePath}. Error: {ex.Message}", ErrorCode = "LanguageDetectionFailed" });
+                output.OutputError(new TspClientUpdateResponse { ResponseError = $"Unable to determine language for package at: {packagePath}. Error: {ex.Message}", ErrorCode = "LanguageDetectionFailed" });
                 return;
             }
-            var oldGen = packagePath;
-            var newGen = ctx.ParseResult.GetValueForOption(_generatedNewOpt) ?? "./tmpgen";
-            try
-            {
-                // Ensure the default or provided new-gen directory exists and attach to the session early
-                Directory.CreateDirectory(newGen);
-                var sess = GetOrCreateSession(null);
-                sess.NewGeneratedPath = newGen;
-                if (!string.IsNullOrWhiteSpace(oldGen))
-                {
-                    sess.OldGeneratedPath = oldGen;
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Unable to initialize new-gen directory at {newGen}", newGen);
-            }
 
-            var resp = await UnifiedUpdate(spec, languageService, stage, resume, finalize, ct);
-            ctx.ExitCode = ExitCode; _output.Output(resp);
+            var resp = await UnifiedUpdateAsync(spec, languageService, stage, resume, finalize, ct);
+            ctx.ExitCode = ExitCode; output.Output(resp);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unhandled exception while running update");
+            logger.LogError(ex, "Unhandled exception while running update");
             SetFailure();
-            ctx.ExitCode = ExitCode; _output.OutputError(new TspClientUpdateResponse { ResponseError = ex.Message, ErrorCode = "UnifiedUpdateFailed" });
+            ctx.ExitCode = ExitCode; output.OutputError(new TspClientUpdateResponse { ResponseError = ex.Message, ErrorCode = "UnifiedUpdateFailed" });
         }
     }
 
     private UpdateSessionState GetOrCreateSession(string? sessionId, bool resetForFreshRun = false)
     {
         // Ignore provided id for now; single session lifecycle per process.
-        if (_currentSession == null)
+        if (currentSession == null)
         {
-            _currentSession = new UpdateSessionState();
+            currentSession = new UpdateSessionState();
             // New sessions are always fresh, so no need to check resetForFreshRun
         }
         else if (resetForFreshRun)
         {
             // Reset existing session state for a fresh run
-            _currentSession.RequiresFinalize = false;
-            _currentSession.ApiChanges.Clear();
+            currentSession.RequiresFinalize = false;
+            currentSession.ApiChanges.Clear();
         }
         
-        return _currentSession;
+        return currentSession;
     }
 
     private UpdateSessionState RequireSession(string? sessionId)
     {
-        if (_currentSession == null)
+        if (currentSession == null)
         {
             throw new InvalidOperationException("No active session. Start one with: azsdk customized-update <spec-path> [--stage regenerate|diff|apply]");
         }
         // If caller supplied a different id, warn (but still allow since only one session exists)
-        if (!string.IsNullOrWhiteSpace(sessionId) && !sessionId.Equals(_currentSession.SessionId, StringComparison.OrdinalIgnoreCase))
+        if (!string.IsNullOrWhiteSpace(sessionId) && !sessionId.Equals(currentSession.SessionId, StringComparison.OrdinalIgnoreCase))
         {
-            throw new InvalidOperationException($"Only one in-memory session supported in this build. Active session id: {_currentSession.SessionId}.");
+            throw new InvalidOperationException($"Only one in-memory session supported in this build. Active session id: {currentSession.SessionId}.");
         }
-        return _currentSession;
+        return currentSession;
     }
 
     private string? ComputeNextStep(UpdateSessionState session)

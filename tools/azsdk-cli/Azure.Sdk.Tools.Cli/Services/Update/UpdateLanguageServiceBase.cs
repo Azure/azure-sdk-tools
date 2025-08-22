@@ -29,7 +29,8 @@ public abstract class UpdateLanguageServiceBase : IUpdateLanguageService
     /// </summary>
     public virtual async Task<ValidationResult> ValidateAsync(UpdateSessionState session, CancellationToken ct)
     {
-        var packagePath = ResolveValidationPackagePath(session);
+        string? packagePath = session.OldGeneratedPath;    
+
         if (string.IsNullOrWhiteSpace(packagePath) || !Directory.Exists(packagePath))
         {
             // If we cannot resolve a package path, don't hard-fail; treat as success to avoid blocking.
@@ -54,19 +55,5 @@ public abstract class UpdateLanguageServiceBase : IUpdateLanguageService
     public virtual Task<List<PatchProposal>> ProposeFixesAsync(UpdateSessionState session, List<string> validationErrors, CancellationToken ct)
     {
         return Task.FromResult(new List<PatchProposal>());
-    }
-
-    /// <summary>
-    /// Resolve the package path to use for repo-level operations. Default picks the first existing path
-    /// from CustomizationRoot, NewGeneratedPath, OldGeneratedPath. Languages can override to add marker-based discovery.
-    /// </summary>
-    protected virtual string? ResolveValidationPackagePath(UpdateSessionState session)
-    {
-        var candidates = new[] { session.CustomizationRoot, session.NewGeneratedPath, session.OldGeneratedPath }
-            .Where(p => !string.IsNullOrWhiteSpace(p))
-            .Select(p => Directory.Exists(p!) ? p! : (Path.GetDirectoryName(p!) ?? string.Empty))
-            .Where(p => !string.IsNullOrWhiteSpace(p) && Directory.Exists(p))
-            .ToList();
-        return candidates.FirstOrDefault();
     }
 }

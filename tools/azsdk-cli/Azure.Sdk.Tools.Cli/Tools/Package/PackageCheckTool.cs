@@ -34,31 +34,42 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
         public override Command GetCommand()
         {
-            Command command = new("run-checks", "Run validation checks for SDK packages");
-            command.AddOption(SharedOptions.PackagePath);
-            var checkTypeOption = new Option<PackageCheckType>(
-                "--check-type",
-                () => PackageCheckType.All,
-                "The type of check to run")
+            var parentCommand = new Command("run-checks", "Run validation checks for SDK packages");
+            
+            // Create sub-commands for each check type
+            var checkTypeValues = Enum.GetValues<PackageCheckType>();
+            foreach (var checkType in checkTypeValues)
             {
-                IsRequired = true
-            };
-            command.AddOption(checkTypeOption);
+                var subCommand = new Command(checkType.ToString(), $"Run {checkType} validation check");
+                subCommand.AddOption(SharedOptions.PackagePath);
+                
+                subCommand.SetHandler(async (InvocationContext ctx) =>
+                {
+                    var packagePath = ctx.ParseResult.GetValueForOption(SharedOptions.PackagePath);
+                    await HandleCommandWithOptions(packagePath, checkType, ctx.GetCancellationToken()); 
+                });
+                
+                parentCommand.AddCommand(subCommand);
+            }
 
-            command.SetHandler(async (InvocationContext ctx) =>
-            {
-                var packagePath = ctx.ParseResult.GetValueForOption(SharedOptions.PackagePath);
-                var checkType = ctx.ParseResult.GetValueForOption(checkTypeOption);
-                await HandleCommandWithOptions(packagePath, checkType, ctx.GetCancellationToken()); 
-            });
-
-            return command;
+            return parentCommand;
         }
 
-        public override Task HandleCommand(InvocationContext ctx, CancellationToken ct)
+        public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
         {
-            // This method is required by the base class but not used since we handle commands directly in GetCommand
-            throw new NotImplementedException("Command handling is done in GetCommand SetHandler");
+            // Get the command name which corresponds to the check type
+            var commandName = ctx.ParseResult.CommandResult.Command.Name;
+            
+            // Parse the command name back to enum
+            if (Enum.TryParse<PackageCheckType>(commandName, true, out var checkType))
+            {
+                var packagePath = ctx.ParseResult.GetValueForOption(SharedOptions.PackagePath);
+                await HandleCommandWithOptions(packagePath, checkType, ct);
+            }
+            else
+            {
+                throw new ArgumentException($"Unknown command: {commandName}");
+            }
         }
 
         private async Task HandleCommandWithOptions(string packagePath, PackageCheckType checkType, CancellationToken ct)

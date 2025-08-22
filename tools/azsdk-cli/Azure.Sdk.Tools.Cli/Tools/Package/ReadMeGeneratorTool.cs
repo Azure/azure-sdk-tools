@@ -150,9 +150,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         }
 
         /// <summary>
-        /// Generates a readme.md file.
-        /// </summary>
-        /// <summary>
         /// Generates a README.md file using a template, service documentation, and package information.
         /// </summary>
         /// <param name="ct">Cancellation token for the operation.</param>

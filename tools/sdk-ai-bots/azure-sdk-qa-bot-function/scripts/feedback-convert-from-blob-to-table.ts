@@ -33,7 +33,7 @@ export interface FeedbackData {
 
 export interface FeedbackTableEntity extends TableEntity {
     partitionKey: string; // channelId
-    rowKey: string; // postId-feedbackId
+    rowKey: string; // feedbackId (GUID)
     timestamp: string;
     tenantId: string;
     messages: string; // JSON serialized Message[]
@@ -41,7 +41,7 @@ export interface FeedbackTableEntity extends TableEntity {
     comment: string;
     reasons: string; // JSON serialized string[]
     link: string;
-    postid: string; // postId field for easier querying
+    postId: string; // postId field for easier querying
 }
 
 // Excel row interface (based on the columns: Timestamp TenantID Messages Reaction Comment Reasons Link)
@@ -159,7 +159,7 @@ export class FeedbackConverter {
 
             return {
                 partitionKey: channelId,
-                rowKey: `${postId}-${feedbackId}`,
+                rowKey: feedbackId,
                 timestamp: row.Timestamp,
                 tenantId: row.TenantID,
                 messages: row.Messages || "", // Use raw string from Excel
@@ -167,7 +167,7 @@ export class FeedbackConverter {
                 comment: row.Comment || "",
                 reasons: row.Reasons || "", // Use raw string from Excel
                 link: row.Link,
-                postid: postId,
+                postId: postId,
             };
         } catch (error) {
             console.error("Error converting Excel row:", error, row);

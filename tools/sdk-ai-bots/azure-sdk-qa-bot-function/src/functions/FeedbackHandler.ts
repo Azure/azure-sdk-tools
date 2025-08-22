@@ -42,7 +42,7 @@ export interface FeedbackTableEntity extends TableEntity {
     comment: string;
     reasons: string; // Array will be serialized to string
     link: string;
-    postid: string; // Original post ID stored as separate field
+    postId: string; // Original post ID stored as separate field
 }
 
 // Query parameters interface for feedback requests
@@ -69,7 +69,7 @@ export function serializeFeedbackData(data: FeedbackData): FeedbackTableEntity {
 
     return {
         partitionKey: data.channelId, // ChannelID maps to PartitionKey
-        rowKey: `${data.postId}_${feedbackId}`, // <postId>_<feedbackId> format
+        rowKey: feedbackId, // feedbackId (GUID) format
         timestamp: data.timestamp,
         tenantId: data.tenantId,
         messages: JSON.stringify(data.messages), // Serialize array to string
@@ -77,7 +77,7 @@ export function serializeFeedbackData(data: FeedbackData): FeedbackTableEntity {
         comment: data.comment,
         reasons: JSON.stringify(data.reasons), // Serialize array to string
         link: data.link,
-        postid: data.postId, // Store original post ID as separate field
+        postId: data.postId, // Store original post ID as separate field
     };
 }
 
@@ -85,12 +85,8 @@ export function serializeFeedbackData(data: FeedbackData): FeedbackTableEntity {
 export function deserializeFeedbackData(
     entity: FeedbackTableEntity
 ): FeedbackData {
-    // Extract feedbackId from rowKey format: <postId>-<feedbackId>
-    const rowKeyParts = (entity.rowKey || "").split("-");
-    const feedbackId =
-        rowKeyParts.length > 1
-            ? rowKeyParts.slice(1).join("_")
-            : entity.rowKey || "";
+    // rowKey is now directly the feedbackId (GUID)
+    const feedbackId = entity.rowKey || "";
 
     return {
         timestamp: entity.timestamp,
@@ -100,7 +96,7 @@ export function deserializeFeedbackData(
         comment: entity.comment,
         reasons: JSON.parse(entity.reasons || "[]"), // Deserialize string to array
         link: entity.link,
-        postId: entity.postid,
+        postId: entity.postId,
         channelId: entity.partitionKey || "",
         feedbackId: feedbackId,
     };

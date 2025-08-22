@@ -11,6 +11,9 @@ function extractClassName(code: string): string {
 let container: ContainerHost | undefined = undefined;
 const importRegex = /^import\s+([a-zA-Z0-9_.]+);/gm;
 
+// Cache Maven API responses to avoid repeated HTTP calls
+const mavenApiCache = new Map<string, MavenCoordinates>();
+
 interface MavenCoordinates {
     groupId: string;
     artifactId: string;
@@ -47,8 +50,15 @@ export async function getMavenCoordinatesFromAPI(
     
     // For Azure packages, query Maven repo dynamically
     if (packageName.startsWith('com.azure.')) {
+        const artifactId = packageToArtifactName(packageName);
+        const cacheKey = `com.azure:${artifactId}`;
+        
+        // Check cache first
+        if (mavenApiCache.has(cacheKey)) {
+            return mavenApiCache.get(cacheKey);
+        }
+        
         try {
-            const artifactId = packageToArtifactName(packageName);
             const metadataUrl = `https://repo1.maven.org/maven2/com/azure/${artifactId}/maven-metadata.xml`;
             
             const response = await fetch(metadataUrl);
@@ -62,11 +72,15 @@ export async function getMavenCoordinatesFromAPI(
             
             const version = latestMatch?.[1] || releaseMatch?.[1];
             if (version) {
-                return {
+                const coordinates = {
                     groupId: 'com.azure',
                     artifactId,
                     version
                 };
+                
+                // Cache the result for future use
+                mavenApiCache.set(cacheKey, coordinates);
+                return coordinates;
             }
         } catch (error) {
             console.warn(`Failed to fetch Maven metadata for ${packageName}:`, error);
@@ -153,10 +167,13 @@ export async function typecheckJava({
 
     if (!container) {
         container = await host.container({
-            image: "eclipse-temurin:24-jdk-alpine",
+            image: "eclipse-temurin:21-jdk-alpine", // Java 21 with Alpine
             networkEnabled: true,
             persistent: true,
         });
+        
+        // Install Maven once per container lifecycle (cached in persistent container)
+        await container.exec("apk", ["add", "--no-cache", "maven"]);
     }
 
     try {
@@ -200,31 +217,28 @@ export async function typecheckJava({
                 `.trim();
             await container.writeText(path.join(projectDir, "pom.xml"), pomXml);
 
-            await container.exec("apk", ["add", "--no-cache", "maven"]);
+            // Use single mvn compile command (Maven pre-installed, no need to install)
             installRes = await container.exec(
                 "mvn",
-                ["dependency:copy-dependencies"],
+                ["compile", "-q", "--batch-mode"], // Quiet, non-interactive, handles deps + compilation
                 { cwd: projectDir },
             );
-            classpath += ":target/dependency/*";
+        } else {
+            // No dependencies, just compile with javac
+            installRes = await container.exec(
+                "javac",
+                [fileName],
+                { cwd: projectDir },
+            );
         }
 
-        const javacResult = await container.exec(
-            "javac",
-            ["-classpath", classpath, fileName],
-            { cwd: projectDir },
-        );
+        const compileSucceeded = installRes?.exitCode === 0 && !installRes.failed;
 
-        const mavenSucceeded = !installRes || (installRes?.exitCode === 0 && !installRes.failed);
-        const javacSucceeded = javacResult.exitCode === 0 && !javacResult.failed;
-        const overallSucceeded = mavenSucceeded && javacSucceeded;
-
-        // Only include essential output and filter out verbose Maven dependency copying
-        const mvnOutput = (installRes?.stdout ?? "") + (installRes?.stderr ?? "");
-        const javacOutput = (javacResult.stdout ?? "") + (javacResult.stderr ?? "");
+        // Get compile output (Maven or javac)
+        const compileOutput = (installRes?.stdout ?? "") + (installRes?.stderr ?? "");
         
-        // For Maven output and only show summary lines and errors
-        const filteredMvnOutput = mvnOutput
+        // Filter output to show only essential information
+        const filteredOutput = compileOutput
             .split('\n')
             .filter(line => 
                 line.includes('BUILD SUCCESS') || 
@@ -232,37 +246,27 @@ export async function typecheckJava({
                 line.includes('ERROR') ||
                 line.includes('WARN') ||
                 line.includes('Total time:') ||
-                line.includes('ERROR:') ||
+                line.includes('error:') ||
                 line.includes('FAILURE:')
             )
             .join('\n');
 
-        let output = [
-            `mvn output:\n${filteredMvnOutput || '[Maven dependency resolution completed]'}`,
-            `javac output:\n${javacOutput}`,
-        ].join("\n");
+        let output = `compile output:\n${filteredOutput || compileOutput || (compileSucceeded ? 'Compilation successful' : 'Compilation failed')}`;
 
         // If failed, add explicit error summary with helpful guidance
-        if (!overallSucceeded) {
-            const errors = [];
-            if (!mavenSucceeded) {
-                errors.push(`Maven dependency resolution failed (exit code: ${installRes?.exitCode})`);
-            }
-            if (!javacSucceeded) {
-                const javacErrors = (javacResult.stderr ?? "") + (javacResult.stdout ?? "");
-                errors.push(`Java compilation failed (exit code: ${javacResult.exitCode})`);
-                
-                // Parse and enhance javac errors with helpful context
-                const enhancedErrors = enhanceJavacErrors(javacErrors);
-                if (enhancedErrors.length > 0) {
-                    errors.push(`\nDETAILED ERROR ANALYSIS:\n${enhancedErrors.join('\n')}`);
-                }
+        if (!compileSucceeded) {
+            const errors = [`Java compilation failed (exit code: ${installRes?.exitCode})`];
+            
+            // Parse and enhance compilation errors with helpful context
+            const enhancedErrors = enhanceJavacErrors(compileOutput);
+            if (enhancedErrors.length > 0) {
+                errors.push(`\nDETAILED ERROR ANALYSIS:\n${enhancedErrors.join('\n')}`);
             }
             output += `\n\nCOMPILATION ERRORS:\n${errors.join('\n')}`;
         }
 
         return {
-            succeeded: overallSucceeded,
+            succeeded: compileSucceeded,
             output,
         };
     } finally {

@@ -40,6 +40,7 @@ export async function lintFix(packageDirectory: string) {
     const cwd = packageDirectory;
     const options = { ...runCommandOptions, cwd };
 
+    await runCommand('pnpm', ['build', '--filter', `@azure/eslint-plugin-azure-sdk...`], runCommandOptions);
     const lintFixCommand = `run vendored eslint package.json api-extractor.json src test${samplesDev} --fix --fix-type [problem,suggestion]`;
 
     try {

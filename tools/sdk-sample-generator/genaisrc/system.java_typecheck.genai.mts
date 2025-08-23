@@ -14,7 +14,8 @@ system({
     },
     "client-dist-name": {
       type: "string",
-      description: "The name of the client distribution, e.g. groupId:artifactId",
+      description:
+        "The name of the client distribution, e.g. groupId:artifactId",
       required: false,
     },
   },

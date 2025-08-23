@@ -164,7 +164,10 @@ const cacheFolder = path.join(appEnvPaths.cache, getUniqueDirName());
 let selectedSampleIdeas;
 
 if (userPromptPath) {
-  const userSampleIdea = await parseUserPrompt(userPromptPath, selectedLanguages[0]);
+  const userSampleIdea = await parseUserPrompt(
+    userPromptPath,
+    selectedLanguages[0],
+  );
   selectedSampleIdeas = [userSampleIdea];
 } else {
   const sampleIdeas = await generateOrLoadSampleIdeas({

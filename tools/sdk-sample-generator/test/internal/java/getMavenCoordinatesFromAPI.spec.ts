@@ -9,7 +9,7 @@ describe("getMavenCoordinatesFromAPI (Azure SDK)", () => {
             fetch: fetch.bind(globalThis),
         } as PromptHost;
     });
-    
+
     it("returns valid coordinates for Azure Storage Blob SDK", async () => {
         const javaClass = "com.azure.storage.blob.BlobClient";
         const result = await getMavenCoordinatesFromAPI(javaClass);

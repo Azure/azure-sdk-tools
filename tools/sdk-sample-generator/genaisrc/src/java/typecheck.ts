@@ -16,17 +16,17 @@ interface MavenCoordinates {
 
 // Get the package name from a fully-qualified Java class
 function extractPackageName(javaClass: string): string {
-    const parts = javaClass.split('.');
+    const parts = javaClass.split(".");
     if (parts.length <= 1) return javaClass;
-    return parts.slice(0, -1).join('.');
+    return parts.slice(0, -1).join(".");
 }
 
 // Convert Azure package name to Maven artifact name
 function packageToArtifactName(packageName: string): string {
-    const parts = packageName.split('.');
-    if (parts.length >= 3 && parts[0] === 'com' && parts[1] === 'azure') {
+    const parts = packageName.split(".");
+    if (parts.length >= 3 && parts[0] === "com" && parts[1] === "azure") {
         const serviceParts = parts.slice(2);
-        return 'azure-' + serviceParts.join('-');
+        return "azure-" + serviceParts.join("-");
     }
     return packageName;
 }
@@ -35,50 +35,53 @@ export async function getMavenCoordinatesFromAPI(
     javaClass: string,
 ): Promise<MavenCoordinates | undefined> {
     const packageName = extractPackageName(javaClass);
-    
+
     // Skip JDK classes early
-    if (packageName.startsWith('java.') || packageName.startsWith('javax.')) {
+    if (packageName.startsWith("java.") || packageName.startsWith("javax.")) {
         return undefined;
     }
-    
+
     // For Azure packages, query Maven repo dynamically
-    if (packageName.startsWith('com.azure.')) {
+    if (packageName.startsWith("com.azure.")) {
         const artifactId = packageToArtifactName(packageName);
         const cacheKey = `com.azure:${artifactId}`;
-        
+
         if (mavenApiCache.has(cacheKey)) {
             return mavenApiCache.get(cacheKey);
         }
-        
+
         try {
             const metadataUrl = `https://repo1.maven.org/maven2/com/azure/${artifactId}/maven-metadata.xml`;
-            
+
             const response = await fetch(metadataUrl);
             if (!response.ok) {
                 return undefined;
             }
-            
+
             const xmlText = await response.text();
             const latestMatch = xmlText.match(/<latest>([^<]+)<\/latest>/);
             const releaseMatch = xmlText.match(/<release>([^<]+)<\/release>/);
-            
+
             const version = latestMatch?.[1] || releaseMatch?.[1];
             if (version) {
                 const coordinates = {
-                    groupId: 'com.azure',
+                    groupId: "com.azure",
                     artifactId,
-                    version
+                    version,
                 };
-                
+
                 // Cache the result for future use
                 mavenApiCache.set(cacheKey, coordinates);
                 return coordinates;
             }
         } catch (error) {
-            console.warn(`Failed to fetch Maven metadata for ${packageName}:`, error);
+            console.warn(
+                `Failed to fetch Maven metadata for ${packageName}:`,
+                error,
+            );
         }
     }
-    
+
     return undefined;
 }
 
@@ -90,13 +93,16 @@ async function parseMavenDependencies(
     let match;
     while ((match = importRegex.exec(code)) !== null) {
         const importClass = match[1];
-        
+
         // Skip JDK classes early to avoid unnecessary API calls
         const packageName = extractPackageName(importClass);
-        if (packageName.startsWith('java.') || packageName.startsWith('javax.')) {
+        if (
+            packageName.startsWith("java.") ||
+            packageName.startsWith("javax.")
+        ) {
             continue;
         }
-        
+
         const dep = await getMavenCoordinatesFromAPI(importClass);
         if (dep && (!pkgName || dep.artifactId !== pkgName)) {
             const key = `${dep.groupId}:${dep.artifactId}`;
@@ -107,7 +113,6 @@ async function parseMavenDependencies(
     }
     return Array.from(deps.values());
 }
-
 
 export async function typecheckJava({
     code,
@@ -124,7 +129,7 @@ export async function typecheckJava({
             networkEnabled: true,
             persistent: true,
         });
-        
+
         // Install Maven once per container lifecycle (cached in persistent container)
         await container.exec("apk", ["add", "--no-cache", "maven"]);
     }
@@ -150,13 +155,17 @@ export async function typecheckJava({
                 </repository>
               </repositories>
               <dependencies>
-              ${deps.map((d) => `
+              ${deps
+                  .map(
+                      (d) => `
                 <dependency>
                   <groupId>${d.groupId}</groupId>
                   <artifactId>${d.artifactId}</artifactId>
                   <version>${d.version}</version>
                 </dependency>
-              `).join("\n")}
+              `,
+                  )
+                  .join("\n")}
               </dependencies>
               </project>
                 `.trim();
@@ -170,19 +179,19 @@ export async function typecheckJava({
             );
         } else {
             // No dependencies, just compile with javac
-            installRes = await container.exec(
-                "javac",
-                [fileName],
-                { cwd: projectDir },
-            );
+            installRes = await container.exec("javac", [fileName], {
+                cwd: projectDir,
+            });
         }
 
-        const compileSucceeded = installRes?.exitCode === 0 && !installRes.failed;
+        const compileSucceeded =
+            installRes?.exitCode === 0 && !installRes.failed;
 
         // Get compile output (Maven or javac)
-        const compileOutput = (installRes?.stdout ?? "") + (installRes?.stderr ?? "");
-        
-        let output = `compile output:\n${compileOutput || (compileSucceeded ? 'Compilation successful' : 'Compilation failed')}`;
+        const compileOutput =
+            (installRes?.stdout ?? "") + (installRes?.stderr ?? "");
+
+        let output = `compile output:\n${compileOutput || (compileSucceeded ? "Compilation successful" : "Compilation failed")}`;
 
         // If failed, add explicit error summary
         if (!compileSucceeded) {

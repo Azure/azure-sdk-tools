@@ -8,12 +8,12 @@ import type { SampleIdea } from "./types.ts";
 function toPascalCaseExample(title: string): string {
     const pascalCase = title
         .toLowerCase()
-        .replace(/[^a-z0-9\s]/g, "")                                // Remove special characters
-        .split(/\s+/)                                               // Split on whitespace
-        .filter(word => word.length > 0)                            // Remove empty strings
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))  // Capitalise first letter
-        .join('');
-        
+        .replace(/[^a-z0-9\s]/g, "") // Remove special characters
+        .split(/\s+/) // Split on whitespace
+        .filter((word) => word.length > 0) // Remove empty strings
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1)) // Capitalise first letter
+        .join("");
+
     return `${pascalCase}Example`;
 }
 
@@ -23,16 +23,18 @@ function toPascalCaseExample(title: string): string {
  * @param language The target programming language (optional, defaults to generic kebab-case)
  */
 function generateFileName(title: string, language?: string): string {
-    if (language?.toLowerCase() === 'java') {
+    if (language?.toLowerCase() === "java") {
         return toPascalCaseExample(title);
     }
-    
+
     // Default behaviour for other languages (kebab-case)
-    return title
-        .toLowerCase()
-        .replace(/[^a-z0-9\s]/g, "")
-        .replace(/\s+/g, "-")
-        .substring(0, 50) || "user-sample";
+    return (
+        title
+            .toLowerCase()
+            .replace(/[^a-z0-9\s]/g, "")
+            .replace(/\s+/g, "-")
+            .substring(0, 50) || "user-sample"
+    );
 }
 
 /**
@@ -41,7 +43,10 @@ function generateFileName(title: string, language?: string): string {
  * @param language Optional language to determine filename format
  * @returns A SampleIdea object based on the user prompt
  */
-export async function parseUserPrompt(promptPath: string, language?: string): Promise<SampleIdea> {
+export async function parseUserPrompt(
+    promptPath: string,
+    language?: string,
+): Promise<SampleIdea> {
     try {
         const content = await fs.readFile(promptPath, "utf-8");
 

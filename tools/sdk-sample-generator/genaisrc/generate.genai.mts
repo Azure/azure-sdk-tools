@@ -33,7 +33,7 @@ script({
     "ideas-model": {
       type: "string",
       description: "The model to use for generating sample ideas",
-      default: "azure:gpt-4.1-mini",
+      default: "azure:gpt-4.1-nano",
     },
     "coding-model": {
       type: "string",

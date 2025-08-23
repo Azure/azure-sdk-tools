@@ -28,7 +28,7 @@ script({
     "samples-count": {
       type: "number",
       description: "The maximum number of samples to generate",
-      default: "5",
+      default: "10",
     },
     "ideas-model": {
       type: "string",

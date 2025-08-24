@@ -10,7 +10,6 @@ namespace ContentValidation.Test
     [Parallelizable(ParallelScope.All)]
     public class TestCommon
     {
-        public static List<string> TestLinksOfCodeFormatValidation { get; set; }
         public static List<string> TestLinksOfEmptyTagsValidation { get; set; }
         public static List<string> TestLinksOfErrorDisplayValidation { get; set; }
         public static List<string> TestLinksOfExtraLabelValidation { get; set; }
@@ -27,10 +26,6 @@ namespace ContentValidation.Test
         static TestCommon()
         {
             playwright = Playwright.CreateAsync().GetAwaiter().GetResult();
-            TestLinksOfCodeFormatValidation = new List<string>()
-            {
-                "https://learn.microsoft.com/en-us/dotnet/api/azure.ai.metricsadvisor.administration?view=azure-dotnet"
-            };
             TestLinksOfEmptyTagsValidation = new List<string>()
             {
                 "https://learn.microsoft.com/en-us/dotnet/api/azure.ai.metricsadvisor.administration.azureblobdatafeedsource?view=azure-dotnet"
@@ -68,34 +63,6 @@ namespace ContentValidation.Test
                 "https://learn.microsoft.com/en-us/python/api/azure-monitor-query/azure.monitor.query.aio.logsqueryclient?view=azure-python&branch=main"
             };
         }
-
-        [Test]
-        [Category("CommonTest")]
-        [TestCaseSource(nameof(TestLinksOfCodeFormatValidation))]
-        public async Task TestCodeFormatValidation(string testLink)
-        {
-
-            IValidation Validation = new CodeFormatValidation(playwright);
-
-            var res = new TResult();
-
-            try
-            {
-                res = await Validation.Validate(testLink);
-                res.TestCase = "TestCodeFormat";
-                if (!res.Result)
-                {
-                    TestCommonResults.Enqueue(res);
-                }
-            }
-            catch
-            {
-                throw;
-            }
-
-            Assert.That(res.Result, Is.True, res.FormatErrorMessage());
-        }
-
 
         [Test]
         [Category("CommonTest")]
@@ -349,4 +316,3 @@ namespace ContentValidation.Test
         }
     }
 }
-

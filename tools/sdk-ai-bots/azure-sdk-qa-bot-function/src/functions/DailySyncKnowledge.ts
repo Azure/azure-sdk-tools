@@ -34,7 +34,6 @@ interface DocumentationSource {
 
 // Model for processed markdown file result
 interface ProcessedMarkdownFile {
-    title: string;
     filename: string;
     content: string;
     blobPath: string;
@@ -215,7 +214,7 @@ async function deleteAISearchIndex(searchService: SearchService, changeFiles: Pr
     for (const processed of changeFiles) {
         // Delete existing chunks from AI Search if document title exists
         try {
-            await searchService.deleteDocumentChunksByTitle(processed.title, context);
+            await searchService.deleteDocumentChunksByFileName(processed.filename, context);
             context.log(`Deleted AI search chunks for: "${processed.blobPath}"`);
         } catch (error) {
             context.warn(`Failed to delete chunks for: "${processed.blobPath}": ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -429,7 +428,7 @@ async function processSourceDirectory(
                 
                 try {
                     // Use the shared processMarkdownFile logic to get processed content and blob path
-                    const processed = processMarkdownFile(fullPath, source, targetDir, sourceDir);
+                    const processed = processMarkdownFile(fullPath, source, sourceDir);
                     
                     // Skip if the file is not valid for processing (e.g., azure-sdk-guidelines case)
                     if (!processed.isValid) {
@@ -625,23 +624,20 @@ function extractReleaseInfo(content: string): { title: string; releaseDate: stri
 function processMarkdownFile(
     filePath: string,
     source: DocumentationSource,
-    targetDir: string,
     sourceDir: string
 ): ProcessedMarkdownFile {
     const content = fs.readFileSync(filePath, 'utf-8');
     
     // Process file content
-    const processed = convertMarkdown(content, filePath, source, sourceDir);
-    
+    const processed = convertMarkdown(content);
+
     if (!processed.filename) {
         // If no filename was found in frontmatter, generate one from file path
         const relativePath = path.relative(sourceDir, filePath);
         processed.filename = relativePath.replace(/[/\\]/g, '#');
-        
         if (source.folder === 'azure-sdk-guidelines') {
             // Skip processing empty filename case for azure-sdk-guidelines
             return { 
-                title: processed.title,
                 filename: '',
                 content: '',
                 blobPath: '',
@@ -662,7 +658,6 @@ function processMarkdownFile(
     const blobPath = path.join(source.folder, fileName).replace(/\\/g, '/');
     
     return {
-        title: processed.title,
         filename: processed.filename,
         content: processed.content,
         blobPath: blobPath,
@@ -671,9 +666,9 @@ function processMarkdownFile(
 }
 
 /**
- * Convert markdown similar to Go version
+ * Convert markdown
  */
-function convertMarkdown(content: string, filePath: string, source: DocumentationSource, sourceDir: string): { title: string; filename: string; content: string } {
+function convertMarkdown(content: string): { filename: string; content: string } {
     let title = '';
     let filename = '';
     let foundTitle = false;
@@ -721,7 +716,6 @@ function convertMarkdown(content: string, filePath: string, source: Documentatio
     }
     
     return {
-        title,
         filename,
         content: contentLines.join('\n')
     };

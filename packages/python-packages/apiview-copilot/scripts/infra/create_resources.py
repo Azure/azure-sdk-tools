@@ -136,10 +136,6 @@ def create_resource_group(v: Variables):
 
 def create_cosmosdb_account(v: Variables):
     """Create the Azure CosmosDB account and assign the necessary roles."""
-    if not v.assignee_object_id:
-        raise Exception(
-            "ASSIGNEE_OBJECT_ID is required to assign RBAC roles. Run the command: `az ad signed-in-user show`"
-        )
     try:
         client = CosmosDBManagementClient(credential, v.subscription_id)
         try:
@@ -488,12 +484,13 @@ def configure_search_identity(v: Variables, resource: SearchService):
         principal_type=PrincipalType.SERVICE_PRINCIPAL,
         scope=v.openai_id,
     )
-    assign_rbac_roles(
-        v,
-        roles=["Search Index Data Reader"],
-        principal_id=v.assignee_object_id,
-        principal_type=PrincipalType.USER,
-    )
+    if v.assignee_object_id:
+        assign_rbac_roles(
+            v,
+            roles=["Search Index Data Reader"],
+            principal_id=v.assignee_object_id,
+            principal_type=PrincipalType.USER,
+        )
     _assign_cosmosdb_builtin_roles(v, kind="readOnly", principal_id=principal_id)
 
 
@@ -1009,25 +1006,26 @@ def create_keyvault(v: Variables):
         print(f"✅ Using existing Key Vault: {v.keyvault_name}")
     except ResourceNotFoundError:
         try:
+            access_policies = []
+            if v.assignee_object_id:
+                access_policies.append(
+                    AccessPolicyEntry(
+                        tenant_id=v.tenant_id,
+                        object_id=v.assignee_object_id,
+                        permissions=Permissions(
+                            keys=["get", "list"],
+                            secrets=["get", "list", "set"],
+                            certificates=["get", "list"],
+                        ),
+                    )
+                )
             client.vaults.begin_create_or_update(
                 v.rg_name,
                 v.keyvault_name,
                 Vault(
                     location=v.rg_location,
                     properties=VaultProperties(
-                        tenant_id=v.tenant_id,
-                        sku=KeyVaultSku(name="standard"),
-                        access_policies=[
-                            AccessPolicyEntry(
-                                tenant_id=v.tenant_id,
-                                object_id=v.assignee_object_id,
-                                permissions=Permissions(
-                                    keys=["get", "list"],
-                                    secrets=["get", "list", "set"],
-                                    certificates=["get", "list"],
-                                ),
-                            )
-                        ],
+                        tenant_id=v.tenant_id, sku=KeyVaultSku(name="standard"), access_policies=access_policies
                     ),
                 ),
             ).result()
@@ -1256,38 +1254,49 @@ def create_azure_ai_foundry_project(v: Variables):
             sys.exit(1)
 
 
+def check_assignee(v):
+    if not v.assignee_object_id:
+        print(
+            "⚠️ ASSIGNEE_OBJECT_ID is not set. You will be unable to directly use the resources created. Run the command: `az ad signed-in-user show` to get your object ID."
+        )
+
+
 if __name__ == "__main__":
     v = Variables(is_staging=True)
     check_credential()
+    check_assignee(v)
     create_resource_group(v)
 
     create_cosmosdb_account(v)
-    assign_cosmosdb_permissions(v, principal_id=v.assignee_object_id, principal_type=PrincipalType.USER)
+    if v.assignee_object_id:
+        assign_cosmosdb_permissions(v, principal_id=v.assignee_object_id, principal_type=PrincipalType.USER)
     create_cosmosdb_database(v)
     create_cosmosdb_containers(v)
 
     create_cognitive_services(v)
     openai_resource = create_azure_openai(v)
     create_azure_openai_deployments(v)
-    assign_rbac_roles(
-        v,
-        roles=["Cognitive Services OpenAI User"],
-        principal_id=v.assignee_object_id,
-        principal_type=PrincipalType.USER,
-        scope=openai_resource.id,
-    )
+    if v.assignee_object_id:
+        assign_rbac_roles(
+            v,
+            roles=["Cognitive Services OpenAI User"],
+            principal_id=v.assignee_object_id,
+            principal_type=PrincipalType.USER,
+            scope=openai_resource.id,
+        )
     ai_foundry_resource = create_azure_ai_foundry(v)
     create_azure_ai_foundry_deployments(v)
     create_azure_ai_foundry_project(v)
-    assign_rbac_roles(
-        v,
-        roles=[
-            "Azure AI User",
-        ],
-        principal_id=v.assignee_object_id,
-        principal_type=PrincipalType.USER,
-        scope=ai_foundry_resource.id,
-    )
+    if v.assignee_object_id:
+        assign_rbac_roles(
+            v,
+            roles=[
+                "Azure AI User",
+            ],
+            principal_id=v.assignee_object_id,
+            principal_type=PrincipalType.USER,
+            scope=ai_foundry_resource.id,
+        )
 
     search_service = create_azure_search_service(v)
     configure_search_identity(v, search_service)
@@ -1298,12 +1307,13 @@ if __name__ == "__main__":
 
     create_keyvault(v)
     create_app_configuration(v)
-    assign_rbac_roles(
-        v,
-        roles=["App Configuration Data Owner"],
-        principal_id=v.assignee_object_id,
-        principal_type=PrincipalType.USER,
-    )
+    if v.assignee_object_id:
+        assign_rbac_roles(
+            v,
+            roles=["App Configuration Data Owner"],
+            principal_id=v.assignee_object_id,
+            principal_type=PrincipalType.USER,
+        )
     populate_settings(v)
 
     create_app_service_plan(v)

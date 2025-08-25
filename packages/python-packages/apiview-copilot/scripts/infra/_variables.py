@@ -1,6 +1,9 @@
 import os
 
+import dotenv
 from yaml import safe_load
+
+dotenv.load_dotenv(override=True)
 
 
 class Variables:
@@ -16,7 +19,6 @@ class Variables:
                 "RG_LOCATION",
                 "SUBSCRIPTION_ID",
                 "TENANT_ID",
-                "ASSIGNEE_OBJECT_ID",
                 "SEARCH_NAME",
                 "SEARCH_INDEX_NAME",
                 "VECTORIZER_PROFILE_NAME",
@@ -48,7 +50,6 @@ class Variables:
                     "RG_LOCATION",
                     "SUBSCRIPTION_ID",
                     "TENANT_ID",
-                    "ASSIGNEE_OBJECT_ID",
                     "VECTORIZER_PROFILE_NAME",
                     "COSMOS_DB_NAME",
                     "OPENAI_NAME",
@@ -79,6 +80,7 @@ class Variables:
         self.foundry_endpoint = (
             f"https://{self.foundry_account_name}.services.ai.azure.com/api/projects/{self.foundry_project_name}"
         )
+        self.assignee_object_id = os.getenv("ASSIGNEE_OBJECT_ID")
         self.is_staging = is_staging
 
     def __getattr__(self, name: str):

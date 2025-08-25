@@ -8,8 +8,6 @@ namespace Azure.Sdk.Tools.Cli.Tools;
 
 public class InstrumentedTool(ILogger logger, McpServerTool innerTool, string toolName) : DelegatingMcpServerTool(innerTool)
 {
-    private const int MaxInstrumentationUploadTime = 5;
-
     public override async ValueTask<CallToolResult> InvokeAsync(RequestContext<CallToolRequestParams> request, CancellationToken ct = default)
     {
         try

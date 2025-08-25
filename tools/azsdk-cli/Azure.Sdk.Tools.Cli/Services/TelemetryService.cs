@@ -10,8 +10,9 @@ public static class TelemetryService
 
     public static void InstrumentationBefore(ILogger logger, string toolName, object? args, CancellationToken ct)
     {
-        ct = CancellationTokenSource.CreateLinkedTokenSource(ct, new CancellationTokenSource(TimeSpan.FromSeconds(MaxInstrumentationUploadTime)).Token).Token;
-        Task.Run(() => _instrumentationBefore(logger, toolName, args), ct);
+        using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(MaxInstrumentationUploadTime));
+        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutCts.Token);
+        Task.Run(() => _instrumentationBefore(logger, toolName, args), linkedCts.Token);
     }
 
     private static void _instrumentationBefore(ILogger logger, string toolName, object? args)
@@ -22,8 +23,9 @@ public static class TelemetryService
 
     public static void InstrumentationAfter(ILogger logger, string toolName, object? result, CancellationToken ct)
     {
-        ct = CancellationTokenSource.CreateLinkedTokenSource(ct, new CancellationTokenSource(TimeSpan.FromSeconds(MaxInstrumentationUploadTime)).Token).Token;
-        Task.Run(() => _instrumentationAfter(logger, toolName, result), ct);
+        using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(MaxInstrumentationUploadTime));
+        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutCts.Token);
+        Task.Run(() => _instrumentationAfter(logger, toolName, result), linkedCts.Token);
     }
 
     private static void _instrumentationAfter(ILogger logger, string toolName, object? result)
@@ -44,9 +46,10 @@ public static class TelemetryService
 
     public static void InstrumentationError(ILogger logger, string toolName, Exception ex, CancellationToken ct)
     {
-        ct = CancellationTokenSource.CreateLinkedTokenSource(ct, new CancellationTokenSource(TimeSpan.FromSeconds(MaxInstrumentationUploadTime)).Token).Token;
+        using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(MaxInstrumentationUploadTime));
+        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutCts.Token);
         // TODO: replace with app insights
-        Task.Run(() => _instrumentationError(logger, toolName, ex), ct);
+        Task.Run(() => _instrumentationError(logger, toolName, ex), linkedCts.Token);
     }
 
     private static void _instrumentationError(ILogger logger, string toolName, Exception ex)

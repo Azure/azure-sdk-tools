@@ -79,7 +79,7 @@ class Variables:
         self.foundry_endpoint = (
             f"https://{self.foundry_account_name}.services.ai.azure.com/api/projects/{self.foundry_project_name}"
         )
-        self._is_staging = is_staging
+        self.is_staging = is_staging
 
     def __getattr__(self, name: str):
         try:

@@ -1077,7 +1077,7 @@ def populate_settings(v: Variables):
         print(f"❌ An error occurred: {e}")
         sys.exit(1)
     # pylint: disable=protected-access
-    label = "staging" if v._is_staging else "production"
+    label = "staging" if v.is_staging else "production"
     appconfig_client = AzureAppConfigurationClient(base_url=v.app_configuration_endpoint, credential=credential)
 
     # allow list of setting keys we want to persist in AppConfiguration
@@ -1155,7 +1155,7 @@ def create_webapp(v: Variables) -> Site:
             env_v = {
                 "SCM_DO_BUILD_DURING_DEPLOYMENT": "true",
                 "WEBSITE_ENABLE_SYNC_UPDATE_SITE": "true",
-                "ENVIRONMENT_NAME": "staging" if v._is_staging else "production",
+                "ENVIRONMENT_NAME": "staging" if v.is_staging else "production",
                 "AZURE_APP_CONFIG_ENDPOINT": v.app_configuration_endpoint,
             }
             client.web_apps.begin_create_or_update(

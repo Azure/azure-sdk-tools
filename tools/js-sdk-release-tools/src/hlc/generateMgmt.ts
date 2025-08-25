@@ -16,7 +16,7 @@ import {getReleaseTool} from "./utils/getReleaseTool.js";
 import { addApiViewInfo } from "../utils/addApiViewInfo.js";
 import { defaultChildProcessTimeout } from '../common/utils.js'
 import { isRushRepo } from "../common/rushUtils.js";
-import { updateSnippets } from "../common/devToolUtils.js";
+import { lintFix, updateSnippets } from "../common/devToolUtils.js";
 import { ChangelogResult } from "../changelog/v2/ChangelogGenerator.js";
 
 export async function generateMgmt(options: {
@@ -131,6 +131,8 @@ export async function generateMgmt(options: {
             } else {
                 logger.info(`Start to run command: 'pnpm install'.`);
                 execSync('pnpm install', {stdio: 'inherit'});
+
+                await lintFix(packagePath);
                                 
                 logger.info(`Start to run command: 'pnpm build --filter ${packageName}...', that builds generated codes, except test and sample, which may be written manually.`);
                 execSync(`pnpm build --filter ${packageName}...`, {stdio: 'inherit'});

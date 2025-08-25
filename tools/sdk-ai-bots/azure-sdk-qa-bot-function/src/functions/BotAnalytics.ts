@@ -354,7 +354,7 @@ Response Format:
 */
 
 // Register the Azure Function
-app.http("getFeedbackData", {
+app.http("feedbacks", {
     methods: ["GET"],
     authLevel: "function",
     handler: getFeedbackData,

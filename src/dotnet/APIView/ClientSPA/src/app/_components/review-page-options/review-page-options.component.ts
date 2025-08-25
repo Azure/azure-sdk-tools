@@ -183,13 +183,9 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
 
       // Reset loading state when review data is updated (indicating the request completed)
       if (this.isNamespaceReviewInProgress) {
-        console.log('Checking namespace review status:', changes['review'].currentValue.namespaceReviewStatus);
-        console.log('Current isNamespaceReviewInProgress:', this.isNamespaceReviewInProgress);
-
         // Reset loading if status changed to pending or approved (indicating request completed)
         if (changes['review'].currentValue.namespaceReviewStatus === 'pending' ||
             changes['review'].currentValue.namespaceReviewStatus === 'approved') {
-          console.log('Resetting namespace review loading state');
           this.isNamespaceReviewInProgress = false;
           this.updateNamespaceReviewButtonState();
         }
@@ -380,13 +376,8 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     // Always keep the button available for requesting namespace review
     this.isNamespaceReviewRequested = false;
 
-    console.log('setNamespaceReviewStates - namespaceReviewStatus:', this.review?.namespaceReviewStatus);
-    console.log('setNamespaceReviewStates - isNamespaceReviewRequested:', this.isNamespaceReviewRequested);
-    console.log('setNamespaceReviewStates - isNamespaceReviewInProgress:', this.isNamespaceReviewInProgress);
-
     // CRITICAL FIX: If we were in progress and now have a pending/approved status, reset loading state
     if (this.isNamespaceReviewInProgress && (this.review?.namespaceReviewStatus === 'pending' || this.review?.namespaceReviewStatus === 'approved')) {
-      console.log('🎯 RESETTING LOADING STATE: Was in progress, now has pending/approved status');
       this.isNamespaceReviewInProgress = false;
     }
 
@@ -568,7 +559,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     this.showAPIRevisionApprovalModal = false;
   }
   handleNamespaceReviewAction() {
-    console.log('Namespace review button clicked, isNamespaceReviewRequested:', this.isNamespaceReviewRequested);
     // Only allow if not already requested
     if (!this.isNamespaceReviewRequested && !this.isNamespaceReviewInProgress) {
       // Optimistic UI update - immediately show as in progress

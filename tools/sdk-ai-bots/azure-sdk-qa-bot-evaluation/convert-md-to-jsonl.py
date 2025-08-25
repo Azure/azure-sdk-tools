@@ -14,6 +14,7 @@ async def parse_data(file_path: str) -> List[Tuple[str, str, str]]:
     current_answer = []
     in_question_section = False
     in_answer_section = False
+    in_code_block = False
     
     with open(file_path, 'r', encoding='utf-8') as f:
         lines = f.readlines()
@@ -23,9 +24,17 @@ async def parse_data(file_path: str) -> List[Tuple[str, str, str]]:
     current_section = []
     
     for line in lines:
-        if line.strip().startswith('# ') and current_section:
+        # Detect start or end of a fenced code block
+        if line.strip().startswith("```"):
+            in_code_block = not in_code_block
+            current_section.append(line)
+            continue
+        
+        # If not in a code block and line is a first-level title
+        if not in_code_block and line.strip().startswith('# ') and current_section:
             sections.append(current_section)
             current_section = []
+        
         current_section.append(line)
         
     if current_section:
@@ -109,6 +118,9 @@ if __name__ == "__main__":
     if (args.dest_jsonl_folder == None):
         args.dest_jsonl_folder = os.path.join(script_directory, "tests")
     
+    output_test_dir = Path(args.dest_jsonl_folder)
+    output_test_dir.mkdir(exist_ok=True)
+
     if os.path.isfile(args.source_md_path):
         output_file = os.path.join(args.dest_jsonl_folder, f"{os.path.splitext(os.path.basename(args.source_md_path))[0]}.jsonl")
         convert_md_to_jsonl(args.source_md_path, output_file)

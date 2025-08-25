@@ -2,7 +2,7 @@ import { app, HttpRequest, HttpResponseInit, InvocationContext, Timer } from '@a
 import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
-import { BlobService } from '../services/BlobService';
+import { BlobService } from '../services/StorageService';
 import { SpectorCaseProcessor } from '../services/SpectorCaseProcessor';
 import { ConfigurationLoader, RepositoryConfig } from '../services/ConfigurationLoader';
 import { SearchService } from '../services/SearchService';

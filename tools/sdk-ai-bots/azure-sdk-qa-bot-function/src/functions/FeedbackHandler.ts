@@ -4,9 +4,9 @@ import {
     HttpResponseInit,
     InvocationContext,
 } from "@azure/functions";
-import { TableService } from "../services/TableService";
 import { TableEntity } from "@azure/data-tables";
 import { v4 as uuidv4 } from "uuid";
+import { TableService } from "../services/StorageService";
 
 // Message role types
 export type Role = "user" | "assistant" | "system";

@@ -22,7 +22,7 @@ import { remove } from 'fs-extra';
 import { generateChangelogAndBumpVersion } from "../../common/changelog/automaticGenerateChangeLogAndBumpVersion.js";
 import { updateChangelogResult } from "../../common/packageResultUtils.js";
 import { isRushRepo } from "../../common/rushUtils.js";
-import { formatSdk, updateSnippets } from "../../common/devToolUtils.js";
+import { formatSdk, updateSnippets, lintFix } from "../../common/devToolUtils.js";
 import { RunMode } from "../../common/types.js";
 import { exists } from 'fs-extra';
 
@@ -272,6 +272,8 @@ export async function generateRLCInPipeline(options: {
         } else {
             logger.info(`Start to update.`);
             execSync('pnpm install', {stdio: 'inherit'});
+
+            await lintFix(packagePath);
                         
             logger.info(`Start to build '${packageName}', except for tests and samples, which may be written manually.`);
             // To build generated codes except test and sample, we need to change tsconfig.json.

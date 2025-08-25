@@ -4,7 +4,7 @@ This project is the primary integration point for all `azure-sdk` provided [MCP]
 
 ## Table of Contents
 
-* [Azure SDK CLI and MCP server](#azure-sdk-cli-and-mcp-server)
+* [Azure SDK CLI and MCP server](#azure-sdk-cli-and-mcp-server)   
    * [Table of Contents](#table-of-contents)
    * [Getting Started](#getting-started)
       * [Install standalone](#install-standalone)
@@ -21,6 +21,8 @@ This project is the primary integration point for all `azure-sdk` provided [MCP]
       * [Pipelines](#pipelines)
    * [Design Guidelines](#design-guidelines)
    * [Adding a New Tool](#adding-a-new-tool)
+   * [Data Collection](#data-collection)
+      * [Telemetry Configuration](#telemetry-configuration)
 
 ## Getting Started
 
@@ -343,3 +345,12 @@ Help me create a new tool using #new-tool.md as a reference
 ```
 
 Or manually, see [docs/new-tool.md](./docs/new-tool.md) for more details.
+
+## Data Collection
+
+The software may collect information about you and your use of the software and send it to Microsoft. Microsoft may use this information to provide services and improve our products and services. You may turn off the telemetry as described in the repository. There are also some features in the software that may enable you and Microsoft to collect data from users of your applications. If you use these features, you must comply with applicable law, including providing appropriate notices to users of your applications together with a copy of Microsoft's [privacy statement](https://www.microsoft.com/privacy/privacystatement) and [data privacy statement](https://www.microsoft.com/en-us/privacy/data-privacy-notice). You can learn more about data collection and use in the help documentation and our privacy statement. Your use of the software operates as your consent to these practices.
+
+### Telemetry Configuration
+Telemetry collection is on by default.
+
+To opt out, set the environment variable AZSDKTOOLS_MCP_COLLECT_TELEMETRY to false in your environment.

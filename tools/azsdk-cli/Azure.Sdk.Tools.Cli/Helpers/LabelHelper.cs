@@ -60,30 +60,42 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
         public static bool CheckServiceLabelInReview(IReadOnlyList<Octokit.PullRequest?> pullRequests, string serviceLabel)
         {
-            try
-            {
-                if (pullRequests == null || !pullRequests.Any())
-                {
-                    return false;
-                }
-
-                foreach (var pr in pullRequests.Where(p => p != null))
-                {
-                    if (
-                    pr != null &&
-                    pr.Title.Contains(serviceLabel, StringComparison.OrdinalIgnoreCase) &&
-                    pr.Labels.Any(label => label.Name.Equals("Created by copilot")))
-                    {
-                        return true;
-                    }
-                }
-
-                return false;
-            }
-            catch (Exception)
+            if (pullRequests == null || pullRequests.Count == 0 || string.IsNullOrWhiteSpace(serviceLabel))
             {
                 return false;
             }
+
+            foreach (var pr in pullRequests)
+            {
+                if (pr == null)
+                {
+                    continue;
+                }
+
+                var headLabel = pr.Head?.Label;
+                if (string.IsNullOrEmpty(headLabel))
+                {
+                    continue;
+                }
+
+                if (!headLabel.Contains(serviceLabel, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                var labels = pr.Labels;
+                if (labels == null)
+                {
+                    continue;
+                }
+
+                if (labels.Any(l => string.Equals(l?.Name, "Created by copilot", StringComparison.OrdinalIgnoreCase)))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public static string CreateServiceLabel(string csvContent, string serviceLabel)

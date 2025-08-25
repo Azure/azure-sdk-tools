@@ -99,7 +99,7 @@ public class GitConnection
         public Task<bool> IsExistingBranchAsync(string repoOwner, string repoName, string branchName);
         public Task<RepositoryContent> GetContentsSingleAsync(string owner, string repoName, string path, string? branch = null);
         public Task<HashSet<string>?> GetPublicOrgMembership(string username);
-        public Task<CollaboratorPermissionResponse> HasWritePermission(string owner, string repo, string username);
+        public Task<bool> HasWritePermission(string owner, string repo, string username);
         public Task<User?> GetCurrentUserAsync();
         public Task<bool> IsUserMemberOfOrgAsync(string organization, string username);
         public Task<bool> MakeOrgMembershipPublicAsync(string organization, string username);
@@ -536,10 +536,21 @@ public class GitConnection
             return userOrgs;
         }
 
-        public async Task<CollaboratorPermissionResponse> HasWritePermission(string owner, string repo, string username)
+        public async Task<bool> HasWritePermission(string owner, string repo, string username)
         {
-            var permission = await gitHubClient.Repository.Collaborator.ReviewPermission(owner, repo, username);
-            return permission;
+            try
+            {
+                var permission = await gitHubClient.Repository.Collaborator.ReviewPermission(owner, repo, username);
+
+                // Write access to the Azure/azure-sdk-for-net repository is a sufficient proxy for knowing if the user has write permissions.
+                return permission.Permission.Equals("write", StringComparison.OrdinalIgnoreCase) ||
+                        permission.Permission.Equals("admin", StringComparison.OrdinalIgnoreCase);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error validating permissions for user: {Username}", username);
+                throw;
+            }
         }
 
         public async Task<User?> GetCurrentUserAsync()
@@ -577,7 +588,7 @@ public class GitConnection
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error making membership public for user {Username} in organization {Organization}", 
+                logger.LogError(ex, "Error making membership public for user {Username} in organization {Organization}",
                     username, organization);
                 return false;
             }

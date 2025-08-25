@@ -44,6 +44,17 @@ namespace Azure.Tools.GeneratorAgent.Configuration
         public TimeSpan VectorStoreReadyWaitTime => TimeSpan.FromMilliseconds(
             int.Parse(Configuration.GetSection("AzureSettings:VectorStoreReadyWaitTimeMs").Value ?? "5000"));
         
+
+        // Agent run settings
+        public TimeSpan AgentRunMaxWaitTime =>
+            TimeSpan.FromMinutes(int.Parse(Configuration.GetSection("AzureSettings:AgentRunMaxWaitTimeMinutes").Value ?? "10"));
+        public TimeSpan AgentRunPollingInterval =>
+            TimeSpan.FromSeconds(int.Parse(Configuration.GetSection("AzureSettings:AgentRunPollingIntervalSeconds").Value ?? "5"));
+        
+        // Fix processing settings
+        public int DelayBetweenFixesMs => 
+            int.Parse(Configuration.GetSection("AzureSettings:DelayBetweenFixesMs").Value ?? "500");
+        
         public string TypespecEmitterPackage => "@typespec/http-client-csharp";
         public string TypeSpecDirectoryName => "@typespec";
         public string HttpClientCSharpDirectoryName => "http-client-csharp";

@@ -30,7 +30,7 @@ namespace Azure.Tools.GeneratorAgent
             ToolConfiguration toolConfig = new ToolConfiguration();
             using ILoggerFactory loggerFactory = toolConfig.CreateLoggerFactory();
 
-            var services = new ServiceCollection();
+            ServiceCollection services = new ServiceCollection();
             services.AddSingleton(loggerFactory);
             services.AddLogging();
             services.AddGeneratorAgentServices(toolConfig);
@@ -90,22 +90,22 @@ namespace Azure.Tools.GeneratorAgent
                 AppSettings appSettings = ServiceProvider.GetRequiredService<AppSettings>();
                 
                 // Step 2: Get TypeSpec files (from local or GitHub)
-                var fileServiceFactory = ServiceProvider.GetRequiredService<Func<ValidationContext, TypeSpecFileService>>();
+                Func<ValidationContext, TypeSpecFileService> fileServiceFactory = ServiceProvider.GetRequiredService<Func<ValidationContext, TypeSpecFileService>>();
                 TypeSpecFileService fileService = fileServiceFactory(validationContext);
 
-                Dictionary<string, string> typeSpecFiles = await fileService.GetTypeSpecFilesAsync(cancellationToken);
+                Dictionary<string, string> typeSpecFiles = await fileService.GetTypeSpecFilesAsync(cancellationToken).ConfigureAwait(false);
 
                 // Step 3: Initialize ErrorFixer Agent with files in memory (singleton)
                 ErrorFixerAgent agent = ServiceProvider.GetRequiredService<ErrorFixerAgent>();
                 string threadId = await agent.InitializeAgentEnvironmentAsync(typeSpecFiles, cancellationToken).ConfigureAwait(false);
 
                 // Step 4: Compile Typespec 
-                var sdkServiceFactory = ServiceProvider.GetRequiredService<Func<ValidationContext, ISdkGenerationService>>();
+                Func<ValidationContext, ISdkGenerationService> sdkServiceFactory = ServiceProvider.GetRequiredService<Func<ValidationContext, ISdkGenerationService>>();
                 ISdkGenerationService sdkGenerationService = sdkServiceFactory(validationContext);
                 Result<object> compileResult = await sdkGenerationService.CompileTypeSpecAsync(cancellationToken).ConfigureAwait(false);
 
                 // Step 5: Compile Generated SDK
-                var sdkBuildServiceFactory = ServiceProvider.GetRequiredService<Func<ValidationContext, SdkBuildService>>();
+                Func<ValidationContext, SdkBuildService> sdkBuildServiceFactory = ServiceProvider.GetRequiredService<Func<ValidationContext, SdkBuildService>>();
                 SdkBuildService sdkBuildService = sdkBuildServiceFactory(validationContext);
                 Result<object> buildResult = await sdkBuildService.BuildSdkAsync(cancellationToken).ConfigureAwait(false);
 
@@ -113,9 +113,11 @@ namespace Azure.Tools.GeneratorAgent
                 BuildErrorAnalyzer analyzer = ServiceProvider.GetRequiredService<BuildErrorAnalyzer>();
                 List<Fix> allFixes = analyzer.AnalyzeAndGetFixes(compileResult, buildResult);
 
-                // Step 7:                     
-                // TODO: Send fixes to ErrorFixerAgent if List<Fix> is not empty
-                // await agent.ProcessFixesAsync(allFixes, threadId, cancellationToken);
+                // Step 7: Send fixes to ErrorFixerAgent if List<Fix> is not empty
+                if (allFixes.Count > 0)
+                {
+                    await agent.FixCodeAsync(allFixes, threadId, cancellationToken).ConfigureAwait(false);
+                }
 
                 return ExitCodeSuccess;
             }

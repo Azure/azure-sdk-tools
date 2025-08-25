@@ -189,7 +189,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 Model = this.model,
                 Tools =
                 [
-                    FuncAdapterTool<ReadmeContents, CheckReadmeResult>.Create("check_readme_tool", "Checks a readme to make sure that all the required values have been replaced", CheckReadme),
+                    AgentTool<ReadmeContents, CheckReadmeResult>.FromFunc("check_readme_tool", "Checks a readme to make sure that all the required values have been replaced", CheckReadme),
                 ]
             }, ct);
 

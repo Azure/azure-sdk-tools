@@ -7,23 +7,23 @@ namespace Azure.Sdk.Tools.Cli.Models;
 
 public class Response
 {
-    /**
-    ResponseError represents a single error message associated with the response.
-    **/
+    /// <summary>
+    /// ResponseError represents a single error message associated with the response.
+    /// </summary>
     [JsonPropertyName("response_error")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? ResponseError { get; set; }
 
-    /**
-    ResponseErrors represents a list of error messages associated with the response.
-    **/
+    /// <summary>
+    /// ResponseErrors represents a list of error messages associated with the response.
+    /// </summary>
     [JsonPropertyName("response_errors")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public List<string> ResponseErrors { get; set; }
 
-    /**
-    NextSteps provides guidance or recommended actions regarding the response.
-    **/
+    /// <summary>
+    /// NextSteps provides guidance or recommended actions regarding the response.
+    /// </summary>
     [JsonPropertyName("next_steps")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public List<string>? NextSteps { get; set; }

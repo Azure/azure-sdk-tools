@@ -82,8 +82,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                   conversationHistory: null,
                   includeFullContext: includeContext,
                   topK: topK,
-                  apiKey: apiKey,
-                  endpoint: endpoint,
                   ct: ct);
 
                 if (response.IsSuccessful)
@@ -133,10 +131,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             bool includeFullContext = false,
             [Description("Number of documents to search (1-100, default: 10)")]
             int topK = 10,
-            [Description("API key override (optional - uses environment variable if not provided)")]
-            string? apiKey = null,
-            [Description("Endpoint override (optional - uses configuration if not provided)")]
-            string? endpoint = null,
             CancellationToken ct = default)
         {
             try
@@ -198,7 +192,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 
                 // Call the service
                 var response = await _aiCompletionService.SendCompletionRequestAsync(
-                    request, apiKey, endpoint, ct);
+                    request, null, null, ct);
 
                 _logger.LogInformation("Received response with ID: {Id}, HasResult: {HasResult}",
                     response.Id, response.HasResult);
@@ -257,10 +251,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             bool includeFullContext = false,
             [Description("Number of documents to search (1-100, default: 10)")]
             int topK = 10,
-            [Description("API key override (optional - uses environment variable if not provided)")]
-            string? apiKey = null,
-            [Description("Endpoint override (optional - uses configuration if not provided)")]
-            string? endpoint = null,
             CancellationToken ct = default)
         {
             try
@@ -322,7 +312,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 
                 // Call the service
                 var response = await _aiCompletionService.SendCompletionRequestAsync(
-                    request, apiKey, endpoint, ct);
+                    request, null, null, ct);
 
                 return new AiCompletionToolResponse
                 {

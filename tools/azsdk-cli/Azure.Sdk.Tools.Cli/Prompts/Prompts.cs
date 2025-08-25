@@ -14,7 +14,7 @@ namespace Azure.Sdk.Tools.Cli.Prompts
         [McpServerPrompt, Description("Get status for a spec PR")]
         public static Task<string> GetStatusForSpecPR(string prNumber)
         {
-            return Task.FromResult($"I have submitted a spec PR{prNumber}. What's the status of it");
+            return Task.FromResult($"I have submitted a spec PR#{prNumber}. What's the status of it");
         }
     }
 }

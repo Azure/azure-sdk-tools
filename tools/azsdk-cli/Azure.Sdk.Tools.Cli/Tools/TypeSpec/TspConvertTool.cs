@@ -12,8 +12,6 @@ using Azure.Sdk.Tools.Cli.Commands;
 
 namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 {
-
-
     /// <summary>
     /// This tool provides functionality for converting existing Azure service swagger definitions to TypeSpec projects.
     /// Use this tool to convert existing services to TypeSpec.
@@ -21,7 +19,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
     [McpServerToolType, Description("Tools for converting existing Azure service swagger definitions to TypeSpec projects.")]
     public class TypeSpecConvertTool : MCPTool
     {
-
         private readonly INpxHelper npxHelper;
         private readonly ILogger<TypeSpecConvertTool> logger;
         private readonly IOutputHelper output;
@@ -161,7 +158,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             var fullPathToSwaggerReadme = Path.GetFullPath(pathToSwaggerReadme.Trim());
             if (!File.Exists(fullPathToSwaggerReadme))
             {
-
                 return $"Failed: pathToSwaggerReadme '{fullPathToSwaggerReadme}' does not exist.";
             }
 

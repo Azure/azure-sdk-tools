@@ -12,8 +12,6 @@ using Azure.Sdk.Tools.Cli.Commands;
 
 namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 {
-
-
     /// <summary>
     /// This tool provides functionality for initializing TypeSpec projects.
     /// Use this tool to onboard new services to TypeSpec.
@@ -32,6 +30,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             this.output = output;
             CommandHierarchy = [SharedCommandGroups.TypeSpec];
         }
+
         // This is the template registry URL used by the TypeSpec compiler's init command.
         private const string AzureTemplatesUrl = "https://aka.ms/typespec/azure-init";
 
@@ -57,7 +56,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 
         public override Command GetCommand()
         {
-
             // Add validator to serviceNamespaceArg
             serviceNamespaceArg.AddValidator(result =>
             {

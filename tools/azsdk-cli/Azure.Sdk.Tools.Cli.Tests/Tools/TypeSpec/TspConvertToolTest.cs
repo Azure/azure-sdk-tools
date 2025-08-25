@@ -27,6 +27,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 Assert.That(command.Description, Does.Contain("Convert an existing Azure service swagger definition to a TypeSpec project"));
             });
         }
+
         [Test]
         public async Task ConvertSwagger_WithInvalidFileExtension_ShouldReturnError()
         {

@@ -247,7 +247,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
             finally
             {
-                try { File.Delete(tempFile); } catch (Exception) { }
+                try { File.Delete(tempFile); } catch { }
             }
 
             return new CheckReadmeResult(suggestions);

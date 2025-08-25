@@ -1,17 +1,16 @@
-using System.ClientModel;
-using System.ClientModel.Primitives;
 using System.CommandLine;
 using System.CommandLine.Parsing;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Moq;
 using Azure.AI.OpenAI;
-using OpenAI.Chat;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tests.Mocks.Helpers;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.Package;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Moq;
+using OpenAI.Chat;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators
 {
@@ -20,7 +19,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators
         [Test]
         public async Task TestReadmeGeneratorTool()
         {
-            var testClients = SetupOpenAIMocks();
+            var testClients = SetupMocks();
             (DirectoryInfo root, string packagePath) = await CreateFakeLanguageRepo();
 
             var readmeOutputPath = Path.GetTempFileName();
@@ -107,34 +106,19 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators
             return (sp, OutputHelper);
         }
 
-        private static TestClients SetupOpenAIMocks()
+        private static TestClients SetupMocks()
         {
             var (openAIClientMock, chatClientMock) = OpenAIMockHelper.Create("gpt-4.1");
 
-            // basically - create a model using the appropriate OpenAI*ModelFactory
-            // then return it, wrapped in a ClientResult. This is really similar to the online samples
-            // except it's ClientResult (instead of Response).
-            var chatCompletion = OpenAIChatModelFactory.ChatCompletion(
-                content: new ChatMessageContent("This is a test response for the readme generation.")
-            );
-
-            chatClientMock
-                .Setup(ccm => ccm.CompleteChatAsync(It.IsAny<ChatMessage[]>()))     // NOTE: I'm not checking the chat message input - I already know what I'm sending.
-                .Returns(() =>
-                {
-                    return Task.FromResult(
-                        ClientResult.FromValue(chatCompletion, Mock.Of<PipelineResponse>())
-                    );
-                });
+            var serviceMock = new Mock<IMicroagentHostService>();
+            serviceMock.Setup(svc => svc.RunAgentToCompletion(
+                It.IsAny<Microagent<ReadmeGenerator.ReadmeContents>>(), It.IsAny<CancellationToken>())
+            ).Returns(() => Task.FromResult(new ReadmeGenerator.ReadmeContents("This is a test response for the readme generation.")));
 
             var (serviceProvider, OutputHelper) = CreateServiceProvider((sc) =>
             {
                 sc.AddLogging((lb) => lb.AddConsole());
-                sc.AddSingleton(openAIClientMock.Object);
-
-                // register the mocks too, if you want to grab them later.
-                sc.AddSingleton(chatClientMock);
-                sc.AddSingleton(openAIClientMock);
+                sc.AddSingleton(serviceMock.Object);
             });
 
             return new TestClients(openAIClientMock, chatClientMock, serviceProvider, OutputHelper);

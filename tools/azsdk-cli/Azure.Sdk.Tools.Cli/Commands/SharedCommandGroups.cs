@@ -43,7 +43,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
 
         public static readonly CommandGroup TypeSpec = new(
             Verb: "tsp",
-            Description: "Tools for setting up TypeSpec projects",
+            Description: "Tools for setting up or working with TypeSpec projects",
             Options: []
         );
 

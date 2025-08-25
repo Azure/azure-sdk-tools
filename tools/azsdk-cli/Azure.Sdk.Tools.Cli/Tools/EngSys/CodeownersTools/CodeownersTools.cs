@@ -410,12 +410,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
         {
             var cleanInput = input.TrimStart('#');
             
+            // Is a PR number
             if (int.TryParse(cleanInput, out int prNumber))
             {
                 try
                 {
                     var pr = await githubService.GetPullRequestAsync(Constants.AZURE_OWNER_PATH, repo, prNumber);
-                    logger.LogInformation($"Found PR #{prNumber}: {pr.Title} on branch {pr.Head.Ref}");
                     return pr.Head.Ref;
                 }
                 catch (Exception ex)
@@ -424,7 +424,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                 }
             }
             
-            throw new Exception($"Input '{input}' must be a valid PR number (e.g., #123 or 123)");
+            // Is a branch name
+            var branchExists = await githubService.IsExistingBranchAsync(Constants.AZURE_OWNER_PATH, repo, cleanInput);
+            if (branchExists)
+            {
+                return cleanInput;
+            }
+            throw new Exception($"Branch '{cleanInput}' does not exist in repository {Constants.AZURE_OWNER_PATH}/{repo}. Please provide a valid PR number or existing branch name.");
         }
     }
 }

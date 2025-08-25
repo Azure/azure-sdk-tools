@@ -77,17 +77,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 
         public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
         {
-            var command = ctx.ParseResult.CommandResult.Command.Name;
-            switch (command)
-            {
-                case InitCommandName:
-                    await HandleInitCommandAsync(ctx, ct);
-                    return;
-                default:
-                    SetFailure();
-                    output.Output($"Unknown command: {command}");
-                    return;
-            }
+            await HandleInitCommandAsync(ctx, ct);
         }
 
         private async Task HandleInitCommandAsync(InvocationContext ctx, CancellationToken ct)

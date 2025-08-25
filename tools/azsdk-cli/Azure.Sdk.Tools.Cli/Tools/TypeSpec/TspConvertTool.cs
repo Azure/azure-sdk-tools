@@ -56,17 +56,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 
         public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
         {
-            var command = ctx.ParseResult.CommandResult.Command.Name;
-            switch (command)
-            {
-                case ConvertSwaggerCommandName:
-                    await HandleConvertCommandAsync(ctx, ct);
-                    return;
-                default:
-                    SetFailure();
-                    output.Output($"Unknown command: {command}");
-                    return;
-            }
+            await HandleConvertCommandAsync(ctx, ct);
         }
 
         private async Task HandleConvertCommandAsync(InvocationContext ctx, CancellationToken ct)

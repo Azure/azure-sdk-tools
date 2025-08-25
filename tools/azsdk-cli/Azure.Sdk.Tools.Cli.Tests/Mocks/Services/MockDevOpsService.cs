@@ -121,5 +121,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         {
             return Task.FromResult(new Dictionary<string, List<string>>());
         }
+
+        Task<List<ReleasePlanDetails>> IDevOpsService.GetOpenReleasePlansAsync()
+        {
+            // Return empty list for mock
+            return Task.FromResult(new List<ReleasePlanDetails>());
+        }
     }
 }

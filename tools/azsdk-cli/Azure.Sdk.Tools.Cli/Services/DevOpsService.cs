@@ -88,6 +88,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<ReleasePlanDetails> GetReleasePlanAsync(int releasePlanId);
         public Task<ReleasePlanDetails> GetReleasePlanForWorkItemAsync(int workItemId);
         public Task<ReleasePlanDetails> GetReleasePlanAsync(string pullRequestUrl);
+        public Task<List<ReleasePlanDetails>> GetOpenReleasePlansAsync();
         public Task<WorkItem> CreateReleasePlanWorkItemAsync(ReleasePlanDetails releasePlan);
         public Task<Build> RunSDKGenerationPipelineAsync(string branchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId);
         public Task<Build> GetPipelineRunAsync(int buildId);
@@ -133,6 +134,37 @@ namespace Azure.Sdk.Tools.Cli.Services
                 throw new Exception($"Failed to find release plan work item with release plan Id {releasePlanId}");
             }
             return await MapWorkItemToReleasePlanAsync(releasePlanWorkItems[0]);
+        }
+
+        public async Task<List<ReleasePlanDetails>> GetOpenReleasePlansAsync()
+        {
+            logger.LogInformation("Fetching all open release plan work items");
+            
+            // Query for open release plans with active spec pull requests
+            var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' " +
+                       $"AND [System.WorkItemType] = 'Release Plan' " +
+                       $"AND [System.State] NOT IN ('Closed','Duplicate','Abandoned') " +
+                       $"AND [Custom.ActiveSpecPullRequestUrl] IS NOT NULL " +
+                       $"AND [Custom.ActiveSpecPullRequestUrl] <> ''";
+            
+            var workItems = await FetchWorkItemsAsync(query);
+            var releasePlans = new List<ReleasePlanDetails>();
+
+            foreach (var workItem in workItems)
+            {
+                try
+                {
+                    var releasePlan = await MapWorkItemToReleasePlanAsync(workItem);
+                    releasePlans.Add(releasePlan);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning($"Failed to map work item {workItem.Id} to release plan: {ex.Message}");
+                }
+            }
+
+            logger.LogInformation($"Found {releasePlans.Count} open release plans with spec pull requests");
+            return releasePlans;
         }
 
         private async Task<ReleasePlanDetails> MapWorkItemToReleasePlanAsync(WorkItem workItem)

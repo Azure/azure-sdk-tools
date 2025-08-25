@@ -272,11 +272,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         [Test]
         public async Task CheckApiReadyForSDKGeneration_WhenPRIsMerged_ShouldUpdateStatusToApproved()
         {
-            // Arrange - Create a merged PR by copying from existing working test and modifying it
+            // Arrange - Create a merged PR by using exact same signature as working test
             var mergedPr = new Octokit.PullRequest(
                 123, null, null, null, null, null, null, null, 123, ItemState.Closed,
                 "Test PR", "Test body", DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now, DateTimeOffset.Now,
-                null, null, null, null, null, null, true, // merged = true
+                null, null, null, null, null, null, true, // Changed from false to true for merged
                 null, null, null, null, 0, 1, 1, 1, 1, null, false, null, null, null, null, null);
 
             mockTypeSpecHelper.Setup(x => x.IsValidTypeSpecProjectPath(It.IsAny<string>())).Returns(true);
@@ -291,14 +291,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             Console.WriteLine($"PR State: {mergedPr.State}");
             Console.WriteLine($"PR Merged: {mergedPr.Merged}");
 
-            // Assert - Current behavior shows the bug exists
-            // The PR is marked as merged=true but the code still says it's "closed without merging"
-            // This proves the bug exists in the current implementation
-            Assert.That(result, Does.Contain("closed status without merging changes"), 
-                "This test confirms the bug exists - merged PRs are not recognized properly");
+            // Now this should work if the constructor signature is correct
+            Assert.That(result, Does.Contain("Your API spec changes are ready to generate SDK"));
             
-            // The DevOps status should NOT be updated since the bug prevents recognition of merged PRs
-            mockDevOpsService.Verify(x => x.UpdateApiSpecStatusAsync(It.IsAny<int>(), It.IsAny<string>()), Times.Never);
+            // Verify UpdateApiSpecStatusAsync was called with "Approved"
+            mockDevOpsService.Verify(x => x.UpdateApiSpecStatusAsync(456, "Approved"), Times.Once);
         }
 
         [Test]

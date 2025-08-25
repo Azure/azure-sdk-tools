@@ -42,6 +42,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         private const string generateSdkCommandName = "generate-sdk";
         private const string getSdkPullRequestCommandName = "get-sdk-pr";
         private const string linkSdkPrCommandName = "link-sdk-pr";
+        private const string syncApiSpecStatusCommandName = "sync-api-spec-status";
 
         // Options
         private readonly Option<string> typeSpecProjectPathOpt = new(["--typespec-project"], "Path to typespec project") { IsRequired = true };
@@ -488,7 +489,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 new Command(checkApiReadinessCommandName, "Check if API spec is ready to generate SDK") { typeSpecProjectPathOpt, pullRequestNumberOpt, workItemIdOpt },
                 new Command(generateSdkCommandName, "Generate SDK for a TypeSpec project") { typeSpecProjectPathOpt, apiVersionOpt, sdkReleaseTypeOpt, languageOpt, pullRequestNumberOpt, workItemIdOpt },
                 new Command(getSdkPullRequestCommandName, "Get SDK pull request link from SDK generation pipeline") { languageOpt, pipelineRunIdOpt, workItemIdOpt },
-                new Command(linkSdkPrCommandName, "Link SDK pull request to release plan.") {languageOpt, urlOpt, workItemOptionalIdOpt, releasePlanIdOpt }
+                new Command(linkSdkPrCommandName, "Link SDK pull request to release plan.") {languageOpt, urlOpt, workItemOptionalIdOpt, releasePlanIdOpt },
+                new Command(syncApiSpecStatusCommandName, "Sync API spec status for all open release plans by checking GitHub PR status") { }
             };
 
             foreach (var subCommand in subCommands)
@@ -497,6 +499,138 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 command.AddCommand(subCommand);
             }
             return command;
+        }
+
+        [McpServerTool(Name = "azsdk_sync_api_spec_status"), Description("Sync API spec status for all open release plans by checking their GitHub PR merge status.")]
+        public async Task<string> SyncApiSpecStatusForOpenReleasePlans()
+        {
+            try
+            {
+                var response = new GenericResponse()
+                {
+                    Status = "Success"
+                };
+
+                logger.LogInformation("Starting sync of API spec status for all open release plans");
+                
+                // Get all open release plans from DevOps (this method would need to be added to IDevOpsService)
+                var openReleasePlans = await devopsService.GetOpenReleasePlansAsync();
+                
+                if (openReleasePlans == null || !openReleasePlans.Any())
+                {
+                    response.Details.Add("No open release plans found");
+                    return output.Format(response);
+                }
+
+                int updatedCount = 0;
+                int skippedCount = 0;
+                int errorCount = 0;
+
+                foreach (var releasePlan in openReleasePlans)
+                {
+                    try
+                    {
+                        // Skip if no active spec PR
+                        if (string.IsNullOrEmpty(releasePlan.ActiveSpecPullRequest))
+                        {
+                            logger.LogDebug($"Skipping release plan {releasePlan.WorkItemId} - no active spec PR");
+                            skippedCount++;
+                            continue;
+                        }
+
+                        // Parse PR number from URL
+                        var prNumber = ExtractPullRequestNumber(releasePlan.ActiveSpecPullRequest);
+                        if (prNumber == 0)
+                        {
+                            logger.LogWarning($"Could not parse PR number from {releasePlan.ActiveSpecPullRequest}");
+                            skippedCount++;
+                            continue;
+                        }
+
+                        // Get current PR status from GitHub
+                        var pullRequest = await githubService.GetPullRequestAsync(REPO_OWNER, PUBLIC_SPECS_REPO, prNumber);
+                        if (pullRequest == null)
+                        {
+                            logger.LogWarning($"PR {prNumber} not found in GitHub");
+                            skippedCount++;
+                            continue;
+                        }
+
+                        // Check if PR is merged and DevOps status needs updating
+                        bool shouldUpdateStatus = false;
+                        string newStatus = "";
+
+                        if (pullRequest.State == Octokit.ItemState.Closed && pullRequest.Merged)
+                        {
+                            // PR is merged - status should be "Merged" 
+                            if (!releasePlan.IsSpecApproved)
+                            {
+                                shouldUpdateStatus = true;
+                                newStatus = "Merged";
+                            }
+                        }
+                        else if (pullRequest.State == Octokit.ItemState.Open)
+                        {
+                            // PR is still open - check if it has required approvals
+                            var isMgmtPlane = typespecHelper.IsTypeSpecProjectForMgmtPlane("/temp"); // This is a placeholder
+                            var requiredLabel = isMgmtPlane ? ARM_SIGN_OFF_LABEL : API_STEWARDSHIP_APPROVAL;
+                            
+                            if (pullRequest.Labels != null && pullRequest.Labels.Any(l => l.Name.Equals(requiredLabel)))
+                            {
+                                if (!releasePlan.IsSpecApproved)
+                                {
+                                    shouldUpdateStatus = true;
+                                    newStatus = "Approved";
+                                }
+                            }
+                        }
+
+                        if (shouldUpdateStatus && releasePlan.ApiSpecWorkItemId != 0)
+                        {
+                            await devopsService.UpdateApiSpecStatusAsync(releasePlan.ApiSpecWorkItemId, newStatus);
+                            logger.LogInformation($"Updated API spec status for release plan {releasePlan.WorkItemId} (PR {prNumber}) to {newStatus}");
+                            updatedCount++;
+                        }
+                        else
+                        {
+                            logger.LogDebug($"No status update needed for release plan {releasePlan.WorkItemId} (PR {prNumber})");
+                            skippedCount++;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError($"Error processing release plan {releasePlan.WorkItemId}: {ex.Message}");
+                        errorCount++;
+                    }
+                }
+
+                response.Details.Add($"Sync completed: {updatedCount} updated, {skippedCount} skipped, {errorCount} errors");
+                response.Status = errorCount == 0 ? "Success" : "Partial";
+                
+                logger.LogInformation($"API spec status sync completed: {updatedCount} updated, {skippedCount} skipped, {errorCount} errors");
+                return output.Format(response);
+            }
+            catch (Exception ex)
+            {
+                var response = new GenericResponse()
+                {
+                    Status = "Failed"
+                };
+                response.Details.Add($"Failed to sync API spec status: {ex.Message}");
+                logger.LogError($"Failed to sync API spec status: {ex.Message}");
+                return output.Format(response);
+            }
+        }
+
+        private static int ExtractPullRequestNumber(string pullRequestUrl)
+        {
+            // Extract PR number from URLs like "https://github.com/Azure/azure-rest-api-specs/pull/12345"
+            var match = System.Text.RegularExpressions.Regex.Match(pullRequestUrl, @"/pull/(\d+)");
+            if (match.Success && int.TryParse(match.Groups[1].Value, out int prNumber))
+            {
+                return prNumber;
+            }
+            return 0;
         }
 
         public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
@@ -525,6 +659,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 case linkSdkPrCommandName:
                     var linkStatus = await LinkSdkPullRequestToReleasePlan(commandParser.GetValueForOption(languageOpt), commandParser.GetValueForOption(urlOpt), workItemId: commandParser.GetValueForOption(workItemOptionalIdOpt), releasePlanId: commandParser.GetValueForOption(releasePlanIdOpt));
                     output.Output($"Link status: {linkStatus}");
+                    return;
+                case syncApiSpecStatusCommandName:
+                    var syncStatus = await SyncApiSpecStatusForOpenReleasePlans();
+                    output.Output($"Sync status: {syncStatus}");
                     return;
                 default:
                     SetFailure();

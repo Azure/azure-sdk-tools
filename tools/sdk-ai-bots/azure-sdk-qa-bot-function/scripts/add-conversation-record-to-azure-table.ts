@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
 import { TableEntity } from "@azure/data-tables";
-import { Converter } from "./shared";
+import { Converter } from "./utils";
 import { loadChannelMapping } from "../src/common/shared";
 import { BlobService } from "../src/services/StorageService";
 
@@ -48,7 +48,9 @@ class RecordConverter extends Converter {
         if (!row.ChannelName || row.ChannelName.trim() === "") {
             const channelName = this.channelMapping.get(row.ChannelID);
             if (!channelName) {
-                console.warn(`Warning: Channel ID '${row.ChannelID}' not found in mapping.`);
+                console.warn(
+                    `Warning: Channel ID '${row.ChannelID}' not found in mapping.`
+                );
             }
             row.ChannelName = channelName || "";
         }

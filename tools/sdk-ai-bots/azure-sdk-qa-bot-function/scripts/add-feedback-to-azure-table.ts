@@ -1,6 +1,6 @@
 import { TableEntity } from "@azure/data-tables";
 import { v4 as uuidv4 } from "uuid";
-import { Converter } from "./shared";
+import { Converter } from "./utils";
 import { loadChannelMapping } from "../src/common/shared";
 import { BlobService } from "../src/services/StorageService";
 

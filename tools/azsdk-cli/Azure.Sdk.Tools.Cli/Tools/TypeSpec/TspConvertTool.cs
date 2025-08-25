@@ -71,19 +71,26 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             output.Output(result);
         }
 
-        [McpServerTool(Name = "azsdk_convert_swagger_to_typespec"), Description(@"Converts an existing Azure service swagger definition to a TypeSpec project.
-        Pass in the `pathToSwaggerReadme` which is the path to the swagger README file.
-        Pass in the `outputDirectory` where the TypeSpec project should be created. This must be an existing empty directory.
-        Pass in `isAzureResourceManagement` to indicate whether the swagger is for an Azure Resource Management (ARM) API.
-        This should be true if the swagger's path contains `resource-manager`.
-        Pass in `fullyCompatible` to indicate whether the generated TypeSpec project should be fully compatible with the swagger.
-        It is recommended not to set this to `true` so that the converted TypeSpec project
-        leverages TypeSpec built-in libraries with standard patterns and templates.
-        Returns path to the created project.")]
+        [
+            McpServerTool(Name = "azsdk_convert_swagger_to_typespec"),
+            Description("Converts an existing Azure service swagger definition to a TypeSpec project. Returns path to the created project.")
+        ]
         public async Task<TspToolResponse> ConvertSwaggerAsync(
+            [Description("Path to the swagger README file.")]
             string pathToSwaggerReadme,
+            [Description("The output directory for the generated TypeSpec project. This must be an existing empty directory.")]
             string outputDirectory,
+            [Description(@"
+                Indicates whether the swagger is for an Azure Resource Management (ARM) API.
+                Should be true if the swagger's path contains `resource-manager`.
+                ")
+            ]
             bool? isAzureResourceManagement,
+            [Description(@"
+                Indicates whether the generated TypeSpec project should be fully compatible with the swagger.
+                It is recommended to set this to `false` so that the generated project leverages TypeSpec built-in libraries with standard patterns and templates.
+                ")
+            ]
             bool? fullyCompatible,
             bool isCli,
             CancellationToken ct

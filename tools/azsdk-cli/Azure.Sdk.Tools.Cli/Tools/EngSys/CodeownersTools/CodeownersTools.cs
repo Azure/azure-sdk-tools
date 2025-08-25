@@ -176,6 +176,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                 if (prNumber > 0)
                 {
                     var pr = await githubService.GetPullRequestAsync(Constants.AZURE_OWNER_PATH, repo, prNumber);
+                    if (pr == null)
+                    {
+                        throw new Exception($"Pull request #{prNumber} could not be found or retrieved from repository '{repo}'.");
+                    }
                     workingBranch = pr.Head.Ref;
                 }
 

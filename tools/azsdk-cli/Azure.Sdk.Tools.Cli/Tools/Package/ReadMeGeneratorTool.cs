@@ -10,8 +10,6 @@ using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Microagents;
-using Azure.Sdk.Tools.Cli.Microagents.Tools;
-using Octokit;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package
 {
@@ -103,9 +101,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     outputPath: outputPath,
                     model: model);
 
-
                 await generator.Generate(ct);
                 output.Output($"Readme written to {outputPath}");
+            }
+            catch (ReadmeValidationException ex)
+            {
+                logger.LogError(ex, "ReadmeGeneratorTool failed");
+                output.OutputError($"ReadmeGenerator failed with validation errors: {ex.Message}");
+                ctx.ExitCode = 1;
             }
             catch (Exception ex)
             {
@@ -198,7 +201,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
             if (checkReadmeResult.Suggestions.Any())
             {
-                throw new Exception(string.Join(Environment.NewLine, checkReadmeResult.Suggestions));
+                throw new ReadmeValidationException(string.Join(Environment.NewLine, checkReadmeResult.Suggestions));
             }
 
             await File.WriteAllTextAsync(outputPath, result.Contents, ct);
@@ -212,25 +215,22 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             var suggestions = new List<string>();
 
-            // look for any instances of template, and if so, flag them and have the LLM fix them.
-            if (parameters.Contents.Contains("Azure Template"))
+            var re = placeholderRegex();
+
+            var placeholderMatches = re.Matches(parameters.Contents);
+
+            if (placeholderMatches != null && placeholderMatches.Count() > 0)
             {
-                suggestions.Add("The readme contains 'Azure Template', which is a placeholder that should be removed and replaced with a proper package name");
+                var placeholders = placeholderMatches.Select(m => m.Groups[1].Value).Distinct();
+                suggestions.Add($"The readme contains placeholders ({string.Join(',', placeholders)}) that should be removed and replaced with a proper package name");
             }
 
-            if (parameters.Contents.Contains("(package path)"))
-            {
-                suggestions.Add("The readme contains '(package path)', which is a placeholder that should be removed and replaced with the proper package path");
-            }
+            var localeMatches = localeRegex().Matches(parameters.Contents);
 
-            if (parameters.Contents.Contains("en-us"))
+            if (localeMatches != null && localeMatches.Count() > 0)
             {
-                suggestions.Add("The readme contains links with en-us. Keep the link, but remove en-us.");
-            }
-
-            if (parameters.Contents.Contains("aztemplate"))
-            {
-                suggestions.Add("The readme contains references to aztemplate, which is a placeholder that should be removed and replaced with a proper package name");
+                var locales = localeMatches.Select(m => m.Groups[1].Value);
+                suggestions.Add($"The readme contains links with locales. Keep the link, but remove these locales from links: ({string.Join(',', locales)}).");
             }
 
             var tempFile = Path.GetTempFileName();
@@ -306,8 +306,25 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return (pieces[0], pieces[1]);
         }
 
-        [GeneratedRegex(@"Template Package|<package path>", RegexOptions.IgnoreCase, "")]
-        private static partial Regex TemplatePackagePlaceholderRegex();
+        // Example: 'en-us' from http://hello/en-us/blah
+        [GeneratedRegex(@"https?://[^\s/]+/([a-z]{2}-[a-z]{2})/")]
+        private static partial Regex localeRegex();
+
+        // Example matches:
+        // - '# Azure Template Package client library for Go'
+        // - 'Use the (package) client module `github.com/Azure/azure-sdk-for-go/sdk/(package path)` in your application to:'
+        [GeneratedRegex(@"(Azure Template|\(package path\)|aztemplate)")]
+        private static partial Regex placeholderRegex();
+    }
+
+    /// <summary>
+    /// Exception thrown when README validation fails.
+    /// </summary>
+    public class ReadmeValidationException : Exception
+    {
+        public ReadmeValidationException() { }
+
+        public ReadmeValidationException(string message) : base(message) { }
     }
 }
 

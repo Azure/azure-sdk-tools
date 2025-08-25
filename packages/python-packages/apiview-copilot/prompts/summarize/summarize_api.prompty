@@ -8,14 +8,14 @@ model:
   api: chat
   configuration:
     type: azure_openai
-    azure_endpoint: ${env:AZURE_OPENAI_ENDPOINT}
-    azure_deployment: o3-mini
+    azure_endpoint: ${env:OPENAI_ENDPOINT}
+    azure_deployment: gpt-5
     api_version: 2025-03-01-preview
   parameters:
     frequency_penalty: 0
     presence_penalty: 0
     max_completion_tokens: 80000
-    reasoning_effort: "high"
+    reasoning_effort: "medium"
 sample:
   content: |
     ```python

@@ -1,9 +1,10 @@
+using Microsoft.TeamFoundation.Build.WebApi;
+using Moq;
+using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
-using Azure.Sdk.Tools.Cli.Tools;
-using Microsoft.TeamFoundation.Build.WebApi;
-using Moq;
+using Azure.Sdk.Tools.Cli.Tools.Package;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools
 {
@@ -11,7 +12,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
     {
         private TestLogger<SdkReleaseTool> logger;
         private IDevOpsService devOpsService;
-        private IOutputService outputService;
+        private IOutputHelper outputService;
         private SdkReleaseTool sdkReleaseTool;
 
         [SetUp]
@@ -66,7 +67,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 });
             devOpsService = mockDevOpsService.Object;
 
-            var outputServiceMock = new Mock<IOutputService>();
+            var outputServiceMock = new Mock<IOutputHelper>();
             outputServiceMock.Setup(x => x.Format(It.IsAny<object>())).Returns<object>(obj => obj?.ToString() ?? "");
             outputService = outputServiceMock.Object;
             var releaseReadinessToolLogger = new TestLogger<ReleaseReadinessTool>();

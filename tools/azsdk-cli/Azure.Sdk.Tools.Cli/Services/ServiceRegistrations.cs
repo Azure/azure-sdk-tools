@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 using Azure.AI.OpenAI;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Microagents;
 using Microsoft.Extensions.Azure;
 
 namespace Azure.Sdk.Tools.Cli.Services
@@ -15,13 +16,15 @@ namespace Azure.Sdk.Tools.Cli.Services
          /// todo: make this use reflection to populate itself with all of our services and helpers
         public static void RegisterCommonServices(IServiceCollection services)
         {
+            // Services
             services.AddSingleton<IAzureService, AzureService>();
             services.AddSingleton<IAzureAgentServiceFactory, AzureAgentServiceFactory>();
+            services.AddSingleton<IDevOpsConnection, DevOpsConnection>();
             services.AddSingleton<IDevOpsService, DevOpsService>();
             services.AddSingleton<IGitHubService, GitHubService>();
-            services.AddSingleton<IDevOpsConnection, DevOpsConnection>();
             services.AddSingleton<ILanguageRepoServiceFactory, LanguageRepoServiceFactory>();
 
+            // Language Services
             services.AddSingleton<LanguageRepoService>();
             services.AddSingleton<PythonLanguageRepoService>();
             services.AddSingleton<JavaScriptLanguageRepoService>();
@@ -32,13 +35,20 @@ namespace Azure.Sdk.Tools.Cli.Services
             // Helper classes
             services.AddSingleton<ILogAnalysisHelper, LogAnalysisHelper>();
             services.AddSingleton<IGitHelper, GitHelper>();
-            services.AddSingleton<INpxHelper, NpxHelper>();
-            services.AddSingleton<IProcessHelper, ProcessHelper>();
             services.AddSingleton<ITestHelper, TestHelper>();
             services.AddSingleton<ITypeSpecHelper, TypeSpecHelper>();
             services.AddSingleton<ISpecPullRequestHelper, SpecPullRequestHelper>();
             services.AddSingleton<IUserHelper, UserHelper>();
+            services.AddSingleton<ICodeownersHelper, CodeownersHelper>();
+            services.AddSingleton<ICodeownersValidatorHelper, CodeownersValidatorHelper>();
             services.AddSingleton<IEnvironmentHelper, EnvironmentHelper>();
+
+            // Process Helper Classes
+            services.AddSingleton<INpxHelper, NpxHelper>();
+            services.AddSingleton<IPowershellHelper, PowershellHelper>();
+            services.AddSingleton<IProcessHelper, ProcessHelper>();
+
+            services.AddSingleton<IMicroagentHostService, MicroagentHostService>();
 
             services.AddAzureClients(clientBuilder =>
             {

@@ -43,7 +43,9 @@ namespace APIViewWeb
     public class Startup
     {
         public static string RequireOrganizationPolicy = "RequireOrganization";
-        public static string RequireOrganizationOrManagedIdentityPolicy = "RequireOrganizationOrManagedIdentity";
+        public static string RequireCookieAuthenticationPolicy = "RequireCookieAuthentication";
+        public static string RequireTokenAuthenticationPolicy = "RequireTokenAuthentication";
+        public static string RequireTokenOrCookieAuthenticationPolicy = "RequireTokenOrCookieAuthentication"; 
 
         public static string VersionHash { get; set; }
 
@@ -68,6 +70,7 @@ namespace APIViewWeb
         {
             services.AddApplicationInsightsTelemetry();
             services.AddApplicationInsightsTelemetryProcessor<TelemetryIpAddressFilter>();
+            services.AddAzureAppConfiguration();
 
             services.Configure<CookiePolicyOptions>(options =>
             {
@@ -145,16 +148,17 @@ namespace APIViewWeb
             {
                 services.AddAuthentication(options =>
                 {
-                    options.DefaultAuthenticateScheme = "CookieOrBearerAuthentication";
+                    options.DefaultAuthenticateScheme = "CookieOrTokenAuth";
                     options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                     options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 })
-                .AddScheme<AuthenticationSchemeOptions, CookieOrBearerAuthenticationHandler>("CookieOrBearerAuthentication", options => { })
+                .AddScheme<AuthenticationSchemeOptions, CookieOrTokenAuthenticationHandler>("CookieOrTokenAuth", options => { })
                 .AddCookie(options =>
                 {
                     options.LoginPath = "/Login";
                     options.AccessDeniedPath = "/Unauthorized";
                 })
+                .AddScheme<AuthenticationSchemeOptions, TokenAuthenticationHandler>("TokenAuth", options => { })
                 .AddJwtBearer("Bearer", options =>
                 {
                     string tenantId = Configuration["AzureAd:TenantId"];
@@ -271,7 +275,9 @@ namespace APIViewWeb
                 });
             });
             services.AddSingleton<IConfigureOptions<AuthorizationOptions>, ConfigureOrganizationPolicy>();
-            services.AddSingleton<IConfigureOptions<AuthorizationOptions>, ConfigureOrganizationOrManagedIdentityPolicy>();
+            services.AddSingleton<IConfigureOptions<AuthorizationOptions>, ConfigureCookieOrTokenPolicy>();
+            services.AddSingleton<IConfigureOptions<AuthorizationOptions>, ConfigureCookieAuthenticationPolicy>();
+            services.AddSingleton<IConfigureOptions<AuthorizationOptions>, ConfigureTokenAuthenticationPolicy>();
             services.AddSingleton<IAuthorizationHandler, OrganizationRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, CommentOwnerRequirementHandler>();
             services.AddSingleton<IAuthorizationHandler, ReviewOwnerRequirementHandler>();
@@ -375,6 +381,7 @@ namespace APIViewWeb
             app.UseCookiePolicy();
             app.UseAuthentication();
             app.UseAuthorization();
+            app.UseAzureAppConfiguration();
             app.UseMiddleware<SwaggerAuthMiddleware>();
             app.UseMiddleware<RequestLoggingMiddleware>();
             app.UseSwagger();

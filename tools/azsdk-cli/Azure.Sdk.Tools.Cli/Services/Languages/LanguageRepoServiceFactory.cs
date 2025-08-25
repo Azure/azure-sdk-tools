@@ -73,11 +73,12 @@ public class LanguageRepoServiceFactory : ILanguageRepoServiceFactory
 
         // Discover the repository root from the project path
         var repoRootPath = gitHelper.DiscoverRepoRoot(packagePath);
+
         logger.LogInformation($"Discovered repository root: {repoRootPath}");
 
         // Create language service using factory (detects language automatically)
         logger.LogInformation($"Creating language service for repository at: {repoRootPath}");
-        var detectedLanguage = DetectLanguage(repoRootPath);
+        var detectedLanguage = DetectLanguage(repoRootPath, packagePath);
 
         return detectedLanguage switch
         {
@@ -96,10 +97,11 @@ public class LanguageRepoServiceFactory : ILanguageRepoServiceFactory
     /// </summary>
     /// <param name="repositoryPath">Path to the repository root</param>
     /// <returns>Detected language string</returns>
-    public string DetectLanguage(string repositoryPath)
-    {        
+    public string DetectLanguage(string repositoryPath, string packagePath)
+    {
         // Get the repository name from the directory path
         var repoName = Path.GetFileName(repositoryPath?.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar))?.ToLowerInvariant() ?? "";
+
         _logger.LogInformation($"Repository name: {repoName}");
 
         // Extract the language from the repository name
@@ -123,7 +125,7 @@ public class LanguageRepoServiceFactory : ILanguageRepoServiceFactory
             _logger.LogInformation("Detected language: java from repository name");
             return "java";
         }
-        if (repoName.Contains("azure-sdk-for-go"))
+        if (repoName.Contains("azure-sdk-for-go") || File.Exists(Path.Join(packagePath, "go.mod")))
         {
             _logger.LogInformation("Detected language: go from repository name");
             return "go";
@@ -132,5 +134,5 @@ public class LanguageRepoServiceFactory : ILanguageRepoServiceFactory
         _logger.LogWarning("No recognized language found in repository name: {RepoName}", repoName);
         return "unknown";
     }
-    
+
 }

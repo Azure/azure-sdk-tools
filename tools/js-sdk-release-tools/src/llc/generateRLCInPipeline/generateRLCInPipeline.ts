@@ -17,12 +17,14 @@ import {
 } from '../utils/generateSampleReadmeMd.js';
 import { updateTypeSpecProjectYamlFile } from '../utils/updateTypeSpecProjectYamlFile.js';
 import { getRelativePackagePath } from "../utils/utils.js";
-import { defaultChildProcessTimeout, getGeneratedPackageDirectory, generateRepoDataInTspLocation, specifyApiVersionToGenerateSDKByTypeSpec } from "../../common/utils.js";
+import { defaultChildProcessTimeout, getGeneratedPackageDirectory, generateRepoDataInTspLocation, specifyApiVersionToGenerateSDKByTypeSpec, cleanUpPackageDirectory } from "../../common/utils.js";
 import { remove } from 'fs-extra';
 import { generateChangelogAndBumpVersion } from "../../common/changelog/automaticGenerateChangeLogAndBumpVersion.js";
 import { updateChangelogResult } from "../../common/packageResultUtils.js";
 import { isRushRepo } from "../../common/rushUtils.js";
-import { lintFix, updateSnippets } from "../../common/devToolUtils.js";
+import { formatSdk, updateSnippets, lintFix } from "../../common/devToolUtils.js";
+import { RunMode } from "../../common/types.js";
+import { exists } from 'fs-extra';
 
 export async function generateRLCInPipeline(options: {
     sdkRepo: string;
@@ -41,6 +43,7 @@ export async function generateRLCInPipeline(options: {
     runningEnvironment?: RunningEnvironment;
     apiVersion: string | undefined;
     sdkReleaseType: string | undefined;
+    runMode: RunMode;
 }) {
     let packagePath: string | undefined;
     let relativePackagePath: string | undefined;
@@ -48,8 +51,20 @@ export async function generateRLCInPipeline(options: {
     if (options.typespecProject) {
         const typespecProject = path.join(options.swaggerRepo, options.typespecProject); 
         const generatedPackageDir = await getGeneratedPackageDirectory(typespecProject, options.sdkRepo);
-        await remove(generatedPackageDir);
-
+        if ( options.runMode === RunMode.Local || options.runMode === RunMode.Release) {
+            let sourcePath = "src";
+            if(await exists(path.join(generatedPackageDir, "generated"))) 
+            {
+                sourcePath = "generated";
+            }else if(await exists(path.join(generatedPackageDir, "src","generated"))) {
+                sourcePath = path.join("src", "generated");
+            }
+            logger.info(`Should only remove ${sourcePath} for RLC generation in ${options.runMode} mode.`)
+            await remove(path.join(generatedPackageDir, sourcePath));
+        } else {
+            logger.info(`Should remove all for RLC generation in ${options.runMode} mode`)
+            await remove(generatedPackageDir);
+        }
         if (!options.skipGeneration) {
             logger.info(`Start to generate rest level client SDK from '${options.typespecProject}'.`);
             // TODO: remove it, since this function is used in pipeline.
@@ -243,6 +258,8 @@ export async function generateRLCInPipeline(options: {
                 outputPackageInfo.packageFolder = relativePackagePath;
             }
         }
+
+        let buildStatus = `succeeded`;
         if (isRushRepo(options.sdkRepo)) {
             logger.info(`Start to update rush.`);
             execSync('node common/scripts/install-run-rush.js update', {stdio: 'inherit'});
@@ -260,14 +277,26 @@ export async function generateRLCInPipeline(options: {
                         
             logger.info(`Start to build '${packageName}', except for tests and samples, which may be written manually.`);
             // To build generated codes except test and sample, we need to change tsconfig.json.
-            execSync(`pnpm build --filter ${packageName}...`, {stdio: 'inherit'});
+
+            if(options.runMode === RunMode.Local || options.runMode === RunMode.Release){
+                try {
+                    execSync(`pnpm build --filter ${packageName}...`, {stdio: 'inherit'});
+                } catch (error) {
+                    logger.warn(`Failed to fix lint errors due to: ${(error as Error)?.stack ?? error}`);
+                    buildStatus = `failed`;
+                }
+            } else {
+                execSync(`pnpm run --filter ${packageName}... build`, {stdio: 'inherit'});
+            }
+            
             logger.info(`Start to run command 'pnpm run --filter ${packageJson.name}... pack'.`);
             execSync(`pnpm run --filter ${packageJson.name}... pack`, {stdio: 'inherit'});
         }
-
-        await updateSnippets(packagePath);
         
-        if (!options.skipGeneration) {
+        await formatSdk(packagePath)
+        await updateSnippets(packagePath);
+
+        if (!options.skipGeneration && buildStatus === 'succeeded') {
             const getChangelogItems = () => {
                 const categories = changelog?.changelogItems.breakingChanges.keys();
                 if (!categories) return [];

@@ -1,7 +1,6 @@
 using System.CommandLine;
-using Microsoft.Extensions.Logging;
-using Azure.Tools.GeneratorAgent.Security;
 using Azure.Tools.GeneratorAgent.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace Azure.Tools.GeneratorAgent
 {

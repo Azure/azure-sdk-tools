@@ -2,6 +2,13 @@ using System.CommandLine;
 using System.CommandLine.Parsing;
 using System.IO.Enumeration;
 using Azure.Sdk.Tools.Cli.Tools;
+using Azure.Sdk.Tools.Cli.Tools.EngSys;
+using Azure.Sdk.Tools.Cli.Tools.GitHub;
+using Azure.Sdk.Tools.Cli.Tools.Package;
+using Azure.Sdk.Tools.Cli.Tools.Pipeline;
+using Azure.Sdk.Tools.Cli.Tools.ReleasePlan;
+using Azure.Sdk.Tools.Cli.Tools.Example;
+using Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 
 namespace Azure.Sdk.Tools.Cli.Commands
 {
@@ -10,11 +17,11 @@ namespace Azure.Sdk.Tools.Cli.Commands
         public static readonly List<Type> ToolsList = [
             typeof(PackageCheckTool),
             typeof(CleanupTool),
-            typeof(DownloadPromptsTool),
-            typeof(FileValidationTool),
+            typeof(CodeownersTools),
             typeof(GitHubLabelsTool),
             typeof(HostServerTool),
             typeof(LogAnalysisTool),
+            typeof(PipelineTool),
             typeof(PipelineAnalysisTool),
             typeof(PipelineTestsTool),
             typeof(QuokkaTool),
@@ -23,17 +30,18 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(ReleaseReadinessTool),
             typeof(SdkReleaseTool),
             typeof(SpecCommonTools),
-            typeof(SpecPullRequestTools),
+            typeof(PullRequestTools),
             typeof(SpecWorkflowTool),
             typeof(SpecValidationTools),
             typeof(TestAnalysisTool),
             typeof(TypeSpecTool),
+            typeof(TypeSpecPublicRepoValidationTool),
 
             #if DEBUG
             // only add these tools in debug mode
             typeof(ExampleTool),
             typeof(HelloWorldTool),
-            #endif
+#endif
         ];
 
         public static Option<string> ToolOption = new("--tools")

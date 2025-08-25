@@ -9,12 +9,10 @@ Module for managing APIView Copilot agents.
 """
 
 import logging
-import os
 from contextlib import AsyncExitStack, asynccontextmanager
 from datetime import timedelta
 
 from azure.identity.aio import DefaultAzureCredential
-from dotenv import load_dotenv
 from semantic_kernel import Kernel
 
 # pylint: disable=no-name-in-module
@@ -25,6 +23,7 @@ from semantic_kernel.agents import (
     RunPollingOptions,
 )
 from semantic_kernel.connectors.ai.open_ai import AzureChatCompletion
+from src._settings import SettingsManager
 
 from .plugins import (
     ApiReviewPlugin,
@@ -36,34 +35,13 @@ from .plugins import (
     get_retrieve_agent,
 )
 
-load_dotenv(override=True)
-
-
-_SUPPORTED_LANGUAGES = [
-    "android",
-    "clang",
-    "cpp",
-    "dotnet",
-    "golang",
-    "ios",
-    "java",
-    "python",
-    "rust",
-    "typescript",
-]
-
 
 def create_kernel() -> Kernel:
     """Creates a Kernel instance configured for Azure OpenAI."""
-    base_url = os.getenv("AZURE_OPENAI_ENDPOINT")
-    deployment_name = os.getenv("AZURE_OPENAI_DEPLOYMENT")
-    api_key = os.getenv("AZURE_OPENAI_API_KEY")
-    if not base_url:
-        raise RuntimeError("AZURE_OPENAI_ENDPOINT environment variable is required.")
-    if not deployment_name:
-        raise RuntimeError("AZURE_OPENAI_DEPLOYMENT environment variable is required.")
-    if not api_key:
-        raise RuntimeError("AZURE_OPENAI_API_KEY environment variable is required.")
+    settings = SettingsManager()
+    base_url = settings.get("OPENAI_ENDPOINT")
+    deployment_name = settings.get("FOUNDRY_KERNEL_MODEL")
+    api_key = settings.get("OPENAI_API_KEY")
     logging.info("Using Azure OpenAI at %s with deployment %s", base_url, deployment_name)
     kernel = Kernel(
         plugins={},  # Register your plugins here if needed
@@ -94,15 +72,21 @@ async def invoke_agent(*, agent, user_input, thread_id=None, messages=None):
     return str(response), thread_id_out, messages
 
 
+def _get_agent_settings() -> AzureAIAgentSettings:
+    """Retrieve the Azure AI Agent settings from the configuration."""
+    settings = SettingsManager()
+    return AzureAIAgentSettings(
+        endpoint=settings.get("FOUNDRY_ENDPOINT"),
+        model_deployment_name=settings.get("FOUNDRY_KERNEL_MODEL"),
+        api_version=settings.get("FOUNDRY_API_VERSION"),
+    )
+
+
 @asynccontextmanager
 async def get_main_agent():
     """Create and yield the main APIView Copilot agent."""
     kernel = create_kernel()
-    ai_agent_settings = AzureAIAgentSettings(
-        endpoint=os.getenv("AZURE_AI_AGENT_ENDPOINT"),
-        model_deployment_name=os.getenv("AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME"),
-        api_version=os.getenv("AZURE_AI_AGENT_API_VERSION"),
-    )
+    ai_agent_settings = _get_agent_settings()
     ai_instructions = """
 Your job is to receive a request from the user, determine their intent, and pass the request to the
 appropriate agent or agents for processing. You will then return the response from that agent to the user.

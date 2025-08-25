@@ -95,9 +95,9 @@ namespace Azure.Tools.GeneratorAgent
 
                 Dictionary<string, string> typeSpecFiles = await fileService.GetTypeSpecFilesAsync(cancellationToken).ConfigureAwait(false);
 
-                // Step 3: Initialize ErrorFixer Agent with files in memory (singleton)
-                ErrorFixerAgent agent = ServiceProvider.GetRequiredService<ErrorFixerAgent>();
-                string threadId = await agent.InitializeAgentEnvironmentAsync(typeSpecFiles, cancellationToken).ConfigureAwait(false);
+                // Step 3: Initialize ErrorFixer Agent with files in memory
+                AgentOrchestrator agentOrchestrator = ServiceProvider.GetRequiredService<AgentOrchestrator>();
+                await agentOrchestrator.InitializeAgentEnvironmentAsync(typeSpecFiles, cancellationToken).ConfigureAwait(false);
 
                 // Step 4: Compile Typespec 
                 Func<ValidationContext, ISdkGenerationService> sdkServiceFactory = ServiceProvider.GetRequiredService<Func<ValidationContext, ISdkGenerationService>>();
@@ -111,12 +111,12 @@ namespace Azure.Tools.GeneratorAgent
 
                 // Step 6: Analyze all errors and get fixes (singleton)
                 BuildErrorAnalyzer analyzer = ServiceProvider.GetRequiredService<BuildErrorAnalyzer>();
-                List<Fix> allFixes = analyzer.AnalyzeAndGetFixes(compileResult, buildResult);
+                List<Fix> allFixes = await analyzer.AnalyzeAndGetFixesAsync(compileResult, buildResult, cancellationToken);
 
-                // Step 7: Send fixes to ErrorFixerAgent if List<Fix> is not empty
+                // Step 7: Send fixes to AgentProcessor if List<Fix> is not empty
                 if (allFixes.Count > 0)
                 {
-                    await agent.FixCodeAsync(allFixes, threadId, cancellationToken).ConfigureAwait(false);
+                    await agentOrchestrator.FixCodeAsync(allFixes, cancellationToken).ConfigureAwait(false);
                 }
 
                 return ExitCodeSuccess;

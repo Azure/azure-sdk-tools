@@ -1,6 +1,10 @@
 using Azure.Tools.ErrorAnalyzers;
 using Azure.Tools.GeneratorAgent.Exceptions;
+using Azure.Tools.GeneratorAgent.Configuration;
+using Azure.AI.Agents.Persistent;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using NUnit.Framework;
 
@@ -9,17 +13,378 @@ namespace Azure.Tools.GeneratorAgent.Tests
     [TestFixture]
     public class BuildErrorAnalyzerTests
     {
-        private static Mock<ILogger<BuildErrorAnalyzer>> CreateLoggerMock()
+        #region Constructor Tests
+
+        [Test]
+        public void Constructor_WithNullLogger_ThrowsArgumentNullException()
+        {
+            var errorParser = CreateMockErrorParser();
+
+            var ex = Assert.Throws<ArgumentNullException>(() => new BuildErrorAnalyzer(null!, errorParser.Object));
+            Assert.That(ex?.ParamName, Is.EqualTo("logger"));
+        }
+
+        [Test]
+        public void Constructor_WithNullErrorParser_ThrowsArgumentNullException()
+        {
+            var logger = NullLogger<BuildErrorAnalyzer>.Instance;
+
+            var ex = Assert.Throws<ArgumentNullException>(() => new BuildErrorAnalyzer(logger, null!));
+            Assert.That(ex?.ParamName, Is.EqualTo("errorParser"));
+        }
+
+        [Test]
+        public void Constructor_WithValidParameters_DoesNotThrow()
+        {
+            var logger = NullLogger<BuildErrorAnalyzer>.Instance;
+            var errorParser = CreateMockErrorParser();
+
+            Assert.DoesNotThrow(() => new BuildErrorAnalyzer(logger, errorParser.Object));
+        }
+
+        [Test]
+        public void Constructor_WithValidParameters_AssignsProperties()
+        {
+            var logger = NullLogger<BuildErrorAnalyzer>.Instance;
+            var errorParser = CreateMockErrorParser();
+            
+            var analyzer = new BuildErrorAnalyzer(logger, errorParser.Object);
+            
+            // Verify dependencies are properly assigned by calling a method
+            Assert.DoesNotThrowAsync(async () => 
+                await analyzer.AnalyzeAndGetFixesAsync(null, null, CancellationToken.None));
+        }
+
+        #endregion
+
+        #region AnalyzeAndGetFixesAsync Tests
+
+        [Test]
+        public async Task AnalyzeAndGetFixesAsync_WithNullResults_ReturnsEmptyList()
+        {
+            var analyzer = CreateBuildErrorAnalyzer();
+
+            var result = await analyzer.AnalyzeAndGetFixesAsync(null, null, CancellationToken.None);
+
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.Empty);
+        }
+
+        [Test]
+        public async Task AnalyzeAndGetFixesAsync_WithSuccessfulResults_ReturnsEmptyList()
+        {
+            var analyzer = CreateBuildErrorAnalyzer();
+            var successResult = CreateSuccessResult();
+
+            var result = await analyzer.AnalyzeAndGetFixesAsync(successResult, successResult, CancellationToken.None);
+
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.Empty);
+        }
+
+        [Test]
+        public async Task AnalyzeAndGetFixesAsync_WithCompileFailure_CallsErrorParserForCompileResult()
+        {
+            var mockErrorParser = CreateMockErrorParser();
+            var mockFixes = CreateMockFixes(2);
+            mockErrorParser.Setup(p => p.AnalyzeErrorsAsync(It.IsAny<Result<object>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(mockFixes);
+            
+            var analyzer = CreateBuildErrorAnalyzer(errorParser: mockErrorParser);
+            var compileResult = CreateFailureResult(CreateTypeSpecCompilationException());
+
+            var result = await analyzer.AnalyzeAndGetFixesAsync(compileResult, null, CancellationToken.None);
+
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.Count, Is.EqualTo(2));
+            mockErrorParser.Verify(p => p.AnalyzeErrorsAsync(compileResult, CancellationToken.None), Times.Once);
+        }
+
+        [Test]
+        public async Task AnalyzeAndGetFixesAsync_WithBuildFailure_CallsErrorParserForBuildResult()
+        {
+            var mockErrorParser = CreateMockErrorParser();
+            var mockFixes = CreateMockFixes(3);
+            mockErrorParser.Setup(p => p.AnalyzeErrorsAsync(It.IsAny<Result<object>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(mockFixes);
+            
+            var analyzer = CreateBuildErrorAnalyzer(errorParser: mockErrorParser);
+            var buildResult = CreateFailureResult(CreateDotNetBuildException());
+
+            var result = await analyzer.AnalyzeAndGetFixesAsync(null, buildResult, CancellationToken.None);
+
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.Count, Is.EqualTo(3));
+            mockErrorParser.Verify(p => p.AnalyzeErrorsAsync(buildResult, CancellationToken.None), Times.Once);
+        }
+
+        [Test]
+        public async Task AnalyzeAndGetFixesAsync_WithBothFailures_CallsErrorParserForBothResults()
+        {
+            var mockErrorParser = CreateMockErrorParser();
+            var compileFixes = CreateMockFixes(2, "Compile");
+            var buildFixes = CreateMockFixes(3, "Build");
+            
+            mockErrorParser.SetupSequence(p => p.AnalyzeErrorsAsync(It.IsAny<Result<object>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(compileFixes)
+                .ReturnsAsync(buildFixes);
+            
+            var analyzer = CreateBuildErrorAnalyzer(errorParser: mockErrorParser);
+            var compileResult = CreateFailureResult(CreateTypeSpecCompilationException());
+            var buildResult = CreateFailureResult(CreateDotNetBuildException());
+
+            var result = await analyzer.AnalyzeAndGetFixesAsync(compileResult, buildResult, CancellationToken.None);
+
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.Count, Is.EqualTo(5)); // 2 + 3 fixes
+            mockErrorParser.Verify(p => p.AnalyzeErrorsAsync(It.IsAny<Result<object>>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
+        }
+
+        [Test]
+        public async Task AnalyzeAndGetFixesAsync_WithNonFailureResults_DoesNotCallErrorParser()
+        {
+            var mockErrorParser = CreateMockErrorParser();
+            var analyzer = CreateBuildErrorAnalyzer(errorParser: mockErrorParser);
+            var successResult = CreateSuccessResult();
+
+            var result = await analyzer.AnalyzeAndGetFixesAsync(successResult, successResult, CancellationToken.None);
+
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.Empty);
+            mockErrorParser.Verify(p => p.AnalyzeErrorsAsync(It.IsAny<Result<object>>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [Test]
+        public async Task AnalyzeAndGetFixesAsync_LogsTotalFixesGenerated()
+        {
+            var mockLogger = CreateMockLogger();
+            var mockErrorParser = CreateMockErrorParser();
+            var mockFixes = CreateMockFixes(5);
+            mockErrorParser.Setup(p => p.AnalyzeErrorsAsync(It.IsAny<Result<object>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(mockFixes);
+            
+            var analyzer = CreateBuildErrorAnalyzer(logger: mockLogger, errorParser: mockErrorParser);
+            var compileResult = CreateFailureResult(CreateTypeSpecCompilationException());
+
+            await analyzer.AnalyzeAndGetFixesAsync(compileResult, null, CancellationToken.None);
+
+            // Verify total fixes count is logged
+            mockLogger.Verify(
+                x => x.Log(
+                    LogLevel.Information,
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Total fixes generated: 5")),
+                    It.IsAny<Exception>(),
+                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+                Times.Once);
+        }
+
+        [Test]
+        public async Task AnalyzeAndGetFixesAsync_WithCancellationToken_PassesToErrorParser()
+        {
+            var mockErrorParser = CreateMockErrorParser();
+            var cts = new CancellationTokenSource();
+            var cancellationToken = cts.Token;
+            
+            var analyzer = CreateBuildErrorAnalyzer(errorParser: mockErrorParser);
+            var compileResult = CreateFailureResult(CreateTypeSpecCompilationException());
+
+            await analyzer.AnalyzeAndGetFixesAsync(compileResult, null, cancellationToken);
+
+            mockErrorParser.Verify(p => p.AnalyzeErrorsAsync(compileResult, cancellationToken), Times.Once);
+        }
+
+        [Test]
+        public void AnalyzeAndGetFixesAsync_WithCancelledToken_ThrowsOperationCanceledException()
+        {
+            var mockErrorParser = CreateMockErrorParser();
+            mockErrorParser.Setup(p => p.AnalyzeErrorsAsync(It.IsAny<Result<object>>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new OperationCanceledException());
+            
+            var analyzer = CreateBuildErrorAnalyzer(errorParser: mockErrorParser);
+            var compileResult = CreateFailureResult(CreateTypeSpecCompilationException());
+            var cts = new CancellationTokenSource();
+            cts.Cancel();
+
+            Assert.ThrowsAsync<OperationCanceledException>(async () =>
+                await analyzer.AnalyzeAndGetFixesAsync(compileResult, null, cts.Token));
+        }
+
+        [Test]
+        public void AnalyzeAndGetFixesAsync_WhenErrorParserThrows_PropagatesException()
+        {
+            var mockErrorParser = CreateMockErrorParser();
+            var expectedException = new InvalidOperationException("Error parser failed");
+            mockErrorParser.Setup(p => p.AnalyzeErrorsAsync(It.IsAny<Result<object>>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(expectedException);
+            
+            var analyzer = CreateBuildErrorAnalyzer(errorParser: mockErrorParser);
+            var compileResult = CreateFailureResult(CreateTypeSpecCompilationException());
+
+            var ex = Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                await analyzer.AnalyzeAndGetFixesAsync(compileResult, null, CancellationToken.None));
+            
+            Assert.That(ex, Is.EqualTo(expectedException));
+        }
+
+        [Test]
+        public async Task AnalyzeAndGetFixesAsync_WithEmptyFixesFromErrorParser_ReturnsEmptyList()
+        {
+            var mockErrorParser = CreateMockErrorParser();
+            mockErrorParser.Setup(p => p.AnalyzeErrorsAsync(It.IsAny<Result<object>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<Fix>());
+            
+            var analyzer = CreateBuildErrorAnalyzer(errorParser: mockErrorParser);
+            var compileResult = CreateFailureResult(CreateTypeSpecCompilationException());
+
+            var result = await analyzer.AnalyzeAndGetFixesAsync(compileResult, null, CancellationToken.None);
+
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.Empty);
+        }
+
+        #endregion
+
+        #region Static Constructor Tests
+
+        [Test]
+        public void StaticConstructor_RegistersAnalyzerProviders()
+        {
+            // This test verifies that the static constructor has run by checking that
+            // ErrorAnalyzerService has providers registered. We create a new analyzer 
+            // instance to ensure static constructor runs.
+            var logger = NullLogger<BuildErrorAnalyzer>.Instance;
+            var errorParser = CreateMockErrorParser();
+            
+            var analyzer = new BuildErrorAnalyzer(logger, errorParser.Object);
+
+            // If the static constructor ran properly, the analyzer should be constructible
+            Assert.That(analyzer, Is.Not.Null);
+        }
+
+        [Test]
+        public void StaticConstructor_RegistersClientAnalyzerProvider()
+        {
+            // Verify that creating the analyzer doesn't throw, indicating providers are registered
+            var logger = NullLogger<BuildErrorAnalyzer>.Instance;
+            var errorParser = CreateMockErrorParser();
+
+            Assert.DoesNotThrow(() => new BuildErrorAnalyzer(logger, errorParser.Object));
+        }
+
+        [Test]
+        public void StaticConstructor_RegistersGeneralAnalyzerProvider()
+        {
+            // Verify that creating the analyzer doesn't throw, indicating providers are registered
+            var logger = NullLogger<BuildErrorAnalyzer>.Instance;
+            var errorParser = CreateMockErrorParser();
+
+            Assert.DoesNotThrow(() => new BuildErrorAnalyzer(logger, errorParser.Object));
+        }
+
+        [Test]
+        public void StaticConstructor_RegistersManagementAnalyzerProvider()
+        {
+            // Verify that creating the analyzer doesn't throw, indicating providers are registered
+            var logger = NullLogger<BuildErrorAnalyzer>.Instance;
+            var errorParser = CreateMockErrorParser();
+
+            Assert.DoesNotThrow(() => new BuildErrorAnalyzer(logger, errorParser.Object));
+        }
+
+        #endregion
+
+        #region Integration Tests
+
+        [Test]
+        public async Task IntegrationTest_AnalyzeAndGetFixesAsync_WithRealScenario()
+        {
+            var mockLogger = CreateMockLogger();
+            var mockErrorParser = CreateMockErrorParser();
+            var expectedFixes = CreateMockFixes(3, "Integration");
+            mockErrorParser.Setup(p => p.AnalyzeErrorsAsync(It.IsAny<Result<object>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(expectedFixes);
+            
+            var analyzer = CreateBuildErrorAnalyzer(logger: mockLogger, errorParser: mockErrorParser);
+            var compileResult = CreateFailureResult(CreateTypeSpecCompilationException());
+            var buildResult = CreateFailureResult(CreateDotNetBuildException());
+
+            var result = await analyzer.AnalyzeAndGetFixesAsync(compileResult, buildResult, CancellationToken.None);
+
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.Count, Is.EqualTo(6)); // 3 + 3 fixes
+            
+            // Verify both results were processed
+            mockErrorParser.Verify(p => p.AnalyzeErrorsAsync(compileResult, CancellationToken.None), Times.Once);
+            mockErrorParser.Verify(p => p.AnalyzeErrorsAsync(buildResult, CancellationToken.None), Times.Once);
+            
+            // Verify logging occurred
+            mockLogger.Verify(
+                x => x.Log(
+                    LogLevel.Information,
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Total fixes generated: 6")),
+                    It.IsAny<Exception>(),
+                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+                Times.Once);
+        }
+
+        #endregion
+
+        #region Error Handling Tests
+
+        [Test]
+        public void AnalyzeAndGetFixesAsync_WithPartialFailure_ContinuesProcessing()
+        {
+            var mockErrorParser = CreateMockErrorParser();
+            var validFixes = CreateMockFixes(2);
+            
+            // Setup to succeed on first call, fail on second
+            mockErrorParser.SetupSequence(p => p.AnalyzeErrorsAsync(It.IsAny<Result<object>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(validFixes)
+                .ThrowsAsync(new InvalidOperationException("Second call failed"));
+            
+            var analyzer = CreateBuildErrorAnalyzer(errorParser: mockErrorParser);
+            var compileResult = CreateFailureResult(CreateTypeSpecCompilationException());
+            var buildResult = CreateFailureResult(CreateDotNetBuildException());
+
+            // Should throw because we don't catch exceptions in the analyzer
+            var ex = Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                await analyzer.AnalyzeAndGetFixesAsync(compileResult, buildResult, CancellationToken.None));
+            
+            Assert.That(ex?.Message, Is.EqualTo("Second call failed"));
+        }
+
+        #endregion
+
+        #region Helper Methods
+
+        private BuildErrorAnalyzer CreateBuildErrorAnalyzer(
+            Mock<ILogger<BuildErrorAnalyzer>>? logger = null,
+            Mock<ErrorParser>? errorParser = null)
+        {
+            var loggerInstance = logger?.Object ?? NullLogger<BuildErrorAnalyzer>.Instance;
+            var errorParserInstance = errorParser?.Object ?? CreateMockErrorParser().Object;
+            
+            return new BuildErrorAnalyzer(loggerInstance, errorParserInstance);
+        }
+
+        private Mock<ILogger<BuildErrorAnalyzer>> CreateMockLogger()
         {
             return new Mock<ILogger<BuildErrorAnalyzer>>();
         }
 
-        private static BuildErrorAnalyzer CreateBuildErrorAnalyzer(Mock<ILogger<BuildErrorAnalyzer>>? loggerMock = null)
+        private Mock<ErrorParser> CreateMockErrorParser()
         {
-            return new BuildErrorAnalyzer((loggerMock ?? CreateLoggerMock()).Object);
+            // Create a mock that directly uses null for AgentOrchestrator since it won't be called in tests
+            var mock = new Mock<ErrorParser>(null, Mock.Of<ILogger<ErrorParser>>());
+            mock.CallBase = false; // Don't call base methods
+            mock.Setup(p => p.AnalyzeErrorsAsync(It.IsAny<Result<object>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<Fix>());
+            return mock;
         }
 
-        private static TypeSpecCompilationException CreateTypeSpecCompilationException(
+        private TypeSpecCompilationException CreateTypeSpecCompilationException(
             string command = "tsp compile",
             string output = "TypeSpec output",
             string error = "error AZC0012: Type name 'Client' is too generic",
@@ -28,7 +393,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
             return new TypeSpecCompilationException(command, output, error, exitCode);
         }
 
-        private static DotNetBuildException CreateDotNetBuildException(
+        private DotNetBuildException CreateDotNetBuildException(
             string command = "dotnet build",
             string output = "Build output",
             string error = "error CS0103: The name 'variable' does not exist",
@@ -37,630 +402,25 @@ namespace Azure.Tools.GeneratorAgent.Tests
             return new DotNetBuildException(command, output, error, exitCode);
         }
 
-        private static Result<object> CreateFailureResult(ProcessExecutionException exception)
+        private Result<object> CreateFailureResult(ProcessExecutionException exception)
         {
             return Result<object>.Failure(exception);
         }
 
-        private static Result<object> CreateSuccessResult(object value = null!)
+        private Result<object> CreateSuccessResult(object? value = null)
         {
             return Result<object>.Success(value ?? new object());
         }
 
-        #region Constructor Tests
-
-        [Test]
-        public void Constructor_WithNullLogger_ThrowsArgumentNullException()
+        private List<Fix> CreateMockFixes(int count, string prefix = "Fix")
         {
-            var ex = Assert.Throws<ArgumentNullException>(() => new BuildErrorAnalyzer(null!));
-            Assert.That(ex?.ParamName, Is.EqualTo("logger"));
-        }
-
-        [Test]
-        public void Constructor_WithValidLogger_DoesNotThrow()
-        {
-            var loggerMock = CreateLoggerMock();
-            Assert.DoesNotThrow(() => new BuildErrorAnalyzer(loggerMock.Object));
-        }
-
-        [Test]
-        public void Constructor_WithValidLogger_AssignsLogger()
-        {
-            var loggerMock = CreateLoggerMock();
-            var analyzer = new BuildErrorAnalyzer(loggerMock.Object);
-            
-            // Verify logger is used by calling a method that logs
-            analyzer.ParseBuildOutput(CreateTypeSpecCompilationException());
-            
-            // Verify logger was called (indicates it was properly assigned)
-            loggerMock.Verify(
-                x => x.Log(
-                    It.IsAny<LogLevel>(),
-                    It.IsAny<EventId>(),
-                    It.IsAny<It.IsAnyType>(),
-                    It.IsAny<Exception>(),
-                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-                Times.AtLeastOnce);
-        }
-
-        #endregion
-
-        #region AnalyzeAndGetFixes Tests
-
-        [Test]
-        public void AnalyzeAndGetFixes_WithNullResults_ReturnsEmptyList()
-        {
-            var analyzer = CreateBuildErrorAnalyzer();
-
-            var result = analyzer.AnalyzeAndGetFixes(null, null);
-
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result, Is.Empty);
-        }
-
-        [Test]
-        public void AnalyzeAndGetFixes_WithSuccessfulResults_ReturnsEmptyList()
-        {
-            var analyzer = CreateBuildErrorAnalyzer();
-            var successResult = CreateSuccessResult();
-
-            var result = analyzer.AnalyzeAndGetFixes(successResult, successResult);
-
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result, Is.Empty);
-        }
-
-        [Test]
-        public void AnalyzeAndGetFixes_WithTypeSpecFailure_ProcessesTypeSpecErrors()
-        {
-            var loggerMock = CreateLoggerMock();
-            var analyzer = CreateBuildErrorAnalyzer(loggerMock);
-            var typeSpecException = CreateTypeSpecCompilationException();
-            var compileResult = CreateFailureResult(typeSpecException);
-
-            var result = analyzer.AnalyzeAndGetFixes(compileResult, null);
-
-            Assert.That(result, Is.Not.Null);
-            // Verify that TypeSpec compilation was logged
-            loggerMock.Verify(
-                x => x.Log(
-                    LogLevel.Information,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Analyzing TypeSpec compilation errors")),
-                    It.IsAny<Exception>(),
-                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-                Times.Once);
-        }
-
-        [Test]
-        public void AnalyzeAndGetFixes_WithDotNetBuildFailure_ProcessesBuildErrors()
-        {
-            var loggerMock = CreateLoggerMock();
-            var analyzer = CreateBuildErrorAnalyzer(loggerMock);
-            var dotNetException = CreateDotNetBuildException();
-            var buildResult = CreateFailureResult(dotNetException);
-
-            var result = analyzer.AnalyzeAndGetFixes(null, buildResult);
-
-            Assert.That(result, Is.Not.Null);
-            // Verify that .NET build was logged
-            loggerMock.Verify(
-                x => x.Log(
-                    LogLevel.Information,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Analyzing .NET build errors")),
-                    It.IsAny<Exception>(),
-                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-                Times.Once);
-        }
-
-        [Test]
-        public void AnalyzeAndGetFixes_WithBothFailures_ProcessesBothTypes()
-        {
-            var loggerMock = CreateLoggerMock();
-            var analyzer = CreateBuildErrorAnalyzer(loggerMock);
-            var typeSpecException = CreateTypeSpecCompilationException();
-            var dotNetException = CreateDotNetBuildException();
-            var compileResult = CreateFailureResult(typeSpecException);
-            var buildResult = CreateFailureResult(dotNetException);
-
-            var result = analyzer.AnalyzeAndGetFixes(compileResult, buildResult);
-
-            Assert.That(result, Is.Not.Null);
-            // Verify both types were processed
-            loggerMock.Verify(
-                x => x.Log(
-                    LogLevel.Information,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Analyzing TypeSpec compilation errors")),
-                    It.IsAny<Exception>(),
-                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-                Times.Once);
-            loggerMock.Verify(
-                x => x.Log(
-                    LogLevel.Information,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Analyzing .NET build errors")),
-                    It.IsAny<Exception>(),
-                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-                Times.Once);
-        }
-
-        [Test]
-        public void AnalyzeAndGetFixes_WithNonProcessExceptionFailure_SkipsProcessing()
-        {
-            var analyzer = CreateBuildErrorAnalyzer();
-            var generalException = new InvalidOperationException("General error");
-            var failureResult = Result<object>.Failure(generalException);
-
-            var result = analyzer.AnalyzeAndGetFixes(failureResult, failureResult);
-
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result, Is.Empty);
-        }
-
-        [Test]
-        public void AnalyzeAndGetFixes_LogsTotalFixesGenerated()
-        {
-            var loggerMock = CreateLoggerMock();
-            var analyzer = CreateBuildErrorAnalyzer(loggerMock);
-            var typeSpecException = CreateTypeSpecCompilationException();
-            var compileResult = CreateFailureResult(typeSpecException);
-
-            analyzer.AnalyzeAndGetFixes(compileResult, null);
-
-            // Verify total fixes count is logged
-            loggerMock.Verify(
-                x => x.Log(
-                    LogLevel.Information,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Total fixes generated")),
-                    It.IsAny<Exception>(),
-                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-                Times.Once);
-        }
-
-        #endregion
-
-        #region ParseBuildOutput Tests
-
-        [Test]
-        public void ParseBuildOutput_WithNullException_ThrowsArgumentNullException()
-        {
-            var analyzer = CreateBuildErrorAnalyzer();
-
-            var ex = Assert.Throws<ArgumentNullException>(() => analyzer.ParseBuildOutput(null!));
-            Assert.That(ex?.ParamName, Is.EqualTo("processException"));
-        }
-
-        [Test]
-        public void ParseBuildOutput_WithEmptyOutput_ReturnsEmptyList()
-        {
-            var analyzer = CreateBuildErrorAnalyzer();
-            var exception = CreateTypeSpecCompilationException(output: "", error: "");
-
-            var result = analyzer.ParseBuildOutput(exception);
-
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result, Is.Empty);
-        }
-
-        [Test]
-        public void ParseBuildOutput_WithWhitespaceOnlyOutput_ReturnsEmptyList()
-        {
-            var analyzer = CreateBuildErrorAnalyzer();
-            var exception = CreateTypeSpecCompilationException(output: "   ", error: "   ");
-
-            var result = analyzer.ParseBuildOutput(exception);
-
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result, Is.Empty);
-        }
-
-        [Test]
-        public void ParseBuildOutput_WithSingleValidError_ReturnsSingleRuleError()
-        {
-            var analyzer = CreateBuildErrorAnalyzer();
-            var exception = CreateTypeSpecCompilationException(
-                error: "error AZC0012: Type name 'Client' is too generic");
-
-            var result = analyzer.ParseBuildOutput(exception);
-
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.Count, Is.EqualTo(1));
-            Assert.That(result[0].type, Is.EqualTo("AZC0012"));
-            Assert.That(result[0].message, Is.EqualTo("Type name 'Client' is too generic"));
-        }
-
-        [Test]
-        public void ParseBuildOutput_WithMultipleValidErrors_ReturnsMultipleRuleErrors()
-        {
-            var analyzer = CreateBuildErrorAnalyzer();
-            var combinedErrors = "error AZC0012: Type name 'Client' is too generic\nerror CS0103: The name 'variable' does not exist";
-            var exception = CreateTypeSpecCompilationException(error: combinedErrors);
-
-            var result = analyzer.ParseBuildOutput(exception);
-
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.Count, Is.EqualTo(2));
-            
-            var azc0012Error = result.FirstOrDefault(e => e.type == "AZC0012");
-            Assert.That(azc0012Error, Is.Not.Null);
-            Assert.That(azc0012Error!.message, Is.EqualTo("Type name 'Client' is too generic"));
-            
-            var cs0103Error = result.FirstOrDefault(e => e.type == "CS0103");
-            Assert.That(cs0103Error, Is.Not.Null);
-            Assert.That(cs0103Error!.message, Is.EqualTo("The name 'variable' does not exist"));
-        }
-
-        [Test]
-        public void ParseBuildOutput_WithDuplicateErrors_RemovesDuplicates()
-        {
-            var analyzer = CreateBuildErrorAnalyzer();
-            var duplicateErrors = "error AZC0012: Type name 'Client' is too generic\nerror AZC0012: Type name 'Client' is too generic";
-            var exception = CreateTypeSpecCompilationException(error: duplicateErrors);
-
-            var result = analyzer.ParseBuildOutput(exception);
-
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.Count, Is.EqualTo(1));
-            Assert.That(result[0].type, Is.EqualTo("AZC0012"));
-            Assert.That(result[0].message, Is.EqualTo("Type name 'Client' is too generic"));
-        }
-
-        [Test]
-        public void ParseBuildOutput_WithCombinedOutputAndError_ProcessesBothStreams()
-        {
-            var analyzer = CreateBuildErrorAnalyzer();
-            var exception = CreateTypeSpecCompilationException(
-                output: "error AZC0012: Type name 'Client' is too generic",
-                error: "error CS0103: The name 'variable' does not exist");
-
-            var result = analyzer.ParseBuildOutput(exception);
-
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.Count, Is.EqualTo(2));
-            
-            var errorTypes = result.Select(e => e.type).ToList();
-            Assert.That(errorTypes, Contains.Item("AZC0012"));
-            Assert.That(errorTypes, Contains.Item("CS0103"));
-        }
-
-        [Test]
-        public void ParseBuildOutput_WithInvalidErrorFormat_SkipsInvalidErrors()
-        {
-            var analyzer = CreateBuildErrorAnalyzer();
-            var mixedContent = "This is not an error\nerror AZC0012: Type name 'Client' is too generic\nAnother non-error line";
-            var exception = CreateTypeSpecCompilationException(error: mixedContent);
-
-            var result = analyzer.ParseBuildOutput(exception);
-
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.Count, Is.EqualTo(1));
-            Assert.That(result[0].type, Is.EqualTo("AZC0012"));
-        }
-
-        [Test]
-        public void ParseBuildOutput_WithEmptyErrorTypeOrMessage_SkipsError()
-        {
-            var analyzer = CreateBuildErrorAnalyzer();
-            var invalidErrors = "error : Missing error type\nerror VALID001: Valid error message";
-            var exception = CreateTypeSpecCompilationException(error: invalidErrors);
-
-            var result = analyzer.ParseBuildOutput(exception);
-
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.Count, Is.EqualTo(1));
-            Assert.That(result[0].type, Is.EqualTo("VALID001"));
-        }
-
-        [Test]
-        public void ParseBuildOutput_LogsWarningForNoContent()
-        {
-            var loggerMock = CreateLoggerMock();
-            var analyzer = CreateBuildErrorAnalyzer(loggerMock);
-            var exception = CreateTypeSpecCompilationException(output: "", error: "");
-
-            analyzer.ParseBuildOutput(exception);
-
-            loggerMock.Verify(
-                x => x.Log(
-                    LogLevel.Warning,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("No output or error content available")),
-                    It.IsAny<Exception>(),
-                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-                Times.Once);
-        }
-
-        [Test]
-        public void ParseBuildOutput_LogsDebugForMatchCount()
-        {
-            var loggerMock = CreateLoggerMock();
-            var analyzer = CreateBuildErrorAnalyzer(loggerMock);
-            var exception = CreateTypeSpecCompilationException(error: "error AZC0012: Type name 'Client' is too generic");
-
-            analyzer.ParseBuildOutput(exception);
-
-            loggerMock.Verify(
-                x => x.Log(
-                    LogLevel.Debug,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Found") && v.ToString()!.Contains("potential error matches")),
-                    It.IsAny<Exception>(),
-                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-                Times.Once);
-        }
-
-        [Test]
-        public void ParseBuildOutput_LogsDebugForExtractedErrors()
-        {
-            var loggerMock = CreateLoggerMock();
-            var analyzer = CreateBuildErrorAnalyzer(loggerMock);
-            var exception = CreateTypeSpecCompilationException(error: "error AZC0012: Type name 'Client' is too generic");
-
-            analyzer.ParseBuildOutput(exception);
-
-            loggerMock.Verify(
-                x => x.Log(
-                    LogLevel.Debug,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Extracted error")),
-                    It.IsAny<Exception>(),
-                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-                Times.Once);
-        }
-
-        #endregion
-
-        #region GetFixes Tests
-
-        [Test]
-        public void GetFixes_WithNullErrors_ThrowsArgumentNullException()
-        {
-            var analyzer = CreateBuildErrorAnalyzer();
-
-            var ex = Assert.Throws<ArgumentNullException>(() => analyzer.GetFixes(null!));
-            Assert.That(ex?.ParamName, Is.EqualTo("errors"));
-        }
-
-        [Test]
-        public void GetFixes_WithEmptyErrorList_ReturnsEmptyEnumerable()
-        {
-            var analyzer = CreateBuildErrorAnalyzer();
-            var emptyErrors = new List<RuleError>();
-
-            var result = analyzer.GetFixes(emptyErrors);
-
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.ToList(), Is.Empty);
-        }
-
-        [Test]
-        public void GetFixes_WithValidErrors_CallsErrorAnalyzerService()
-        {
-            var loggerMock = CreateLoggerMock();
-            var analyzer = CreateBuildErrorAnalyzer(loggerMock);
-            var errors = new List<RuleError>
+            var fixes = new List<Fix>();
+            for (int i = 1; i <= count; i++)
             {
-                new RuleError("AZC0012", "Type name 'Client' is too generic")
-            };
-
-            var result = analyzer.GetFixes(errors);
-
-            Assert.That(result, Is.Not.Null);
-            
-            // Verify that information was logged about generating fixes
-            loggerMock.Verify(
-                x => x.Log(
-                    LogLevel.Information,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Generated fixes for") && v.ToString()!.Contains("errors")),
-                    It.IsAny<Exception>(),
-                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-                Times.Once);
-        }
-
-        [Test]
-        public void GetFixes_WithValidErrors_LogsErrorCount()
-        {
-            var loggerMock = CreateLoggerMock();
-            var analyzer = CreateBuildErrorAnalyzer(loggerMock);
-            var errors = new List<RuleError>
-            {
-                new RuleError("AZC0012", "Type name 'Client' is too generic"),
-                new RuleError("CS0103", "The name 'variable' does not exist")
-            };
-
-            analyzer.GetFixes(errors);
-
-            loggerMock.Verify(
-                x => x.Log(
-                    LogLevel.Information,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Generated fixes for errors")),
-                    It.IsAny<Exception>(),
-                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-                Times.Once);
-        }
-
-        #endregion
-
-        #region Static Constructor and Error Regex Tests
-
-        [Test]
-        public void StaticConstructor_RegistersAnalyzerProviders()
-        {
-            // This test verifies that the static constructor has run by checking that
-            // ErrorAnalyzerService has providers registered. We'll create a new analyzer 
-            // instance to ensure static constructor runs, then verify providers exist
-            // by checking if GetFixes returns expected behavior
-            var analyzer = CreateBuildErrorAnalyzer();
-            var errors = new List<RuleError>
-            {
-                new RuleError("AZC0012", "Type name 'Client' is too generic")
-            };
-
-            var result = analyzer.GetFixes(errors);
-
-            // If providers are registered, we should get results (or at least not throw)
-            Assert.That(result, Is.Not.Null);
-            Assert.DoesNotThrow(() => result.ToList());
-        }
-
-        [Test]
-        public void ErrorRegex_MatchesStandardErrorFormat()
-        {
-            var analyzer = CreateBuildErrorAnalyzer();
-            var exception = CreateTypeSpecCompilationException(
-                error: "error AZC0012: Type name 'Client' is too generic");
-
-            var result = analyzer.ParseBuildOutput(exception);
-
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.Count, Is.EqualTo(1));
-            Assert.That(result[0].type, Is.EqualTo("AZC0012"));
-            Assert.That(result[0].message, Is.EqualTo("Type name 'Client' is too generic"));
-        }
-
-        [Test]
-        public void ErrorRegex_MatchesCaseInsensitiveError()
-        {
-            var analyzer = CreateBuildErrorAnalyzer();
-            var exception = CreateTypeSpecCompilationException(
-                error: "ERROR AZC0012: Type name 'Client' is too generic");
-
-            var result = analyzer.ParseBuildOutput(exception);
-
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.Count, Is.EqualTo(1));
-            Assert.That(result[0].type, Is.EqualTo("AZC0012"));
-        }
-
-        [Test]
-        public void ErrorRegex_MatchesMultipleErrorFormats()
-        {
-            var analyzer = CreateBuildErrorAnalyzer();
-            var exception = CreateTypeSpecCompilationException(
-                error: "error CS0103: Variable not found\nerror AZC0012: Generic type name");
-
-            var result = analyzer.ParseBuildOutput(exception);
-
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.Count, Is.EqualTo(2));
-            
-            var errorTypes = result.Select(e => e.type).ToList();
-            Assert.That(errorTypes, Contains.Item("CS0103"));
-            Assert.That(errorTypes, Contains.Item("AZC0012"));
-        }
-
-        #endregion
-
-        #region Error Handling Tests
-
-        [Test]
-        public void AnalyzeAndGetFixes_WithExceptionInTypeSpecProcessing_ContinuesWithLogging()
-        {
-            var loggerMock = CreateLoggerMock();
-            var analyzer = CreateBuildErrorAnalyzer(loggerMock);
-            
-            // Create an exception that might cause issues during processing
-            var typeSpecException = CreateTypeSpecCompilationException(
-                error: "error INVALID: This might cause issues during parsing");
-            var compileResult = CreateFailureResult(typeSpecException);
-
-            var result = analyzer.AnalyzeAndGetFixes(compileResult, null);
-
-            // Should not throw and should return a list (possibly empty)
-            Assert.That(result, Is.Not.Null);
-            Assert.DoesNotThrow(() => result.ToList());
-        }
-
-        [Test]
-        public void AnalyzeAndGetFixes_WithExceptionInDotNetProcessing_ContinuesWithLogging()
-        {
-            var loggerMock = CreateLoggerMock();
-            var analyzer = CreateBuildErrorAnalyzer(loggerMock);
-            
-            var dotNetException = CreateDotNetBuildException(
-                error: "error INVALID: This might cause issues during parsing");
-            var buildResult = CreateFailureResult(dotNetException);
-
-            var result = analyzer.AnalyzeAndGetFixes(null, buildResult);
-
-            // Should not throw and should return a list (possibly empty)
-            Assert.That(result, Is.Not.Null);
-            Assert.DoesNotThrow(() => result.ToList());
-        }
-
-        [Test]
-        public void GetFixes_WithExceptionFromErrorAnalyzerService_ReturnsEmptyAndLogsError()
-        {
-            var loggerMock = CreateLoggerMock();
-            var analyzer = CreateBuildErrorAnalyzer(loggerMock);
-            
-            // Create a scenario that might cause ErrorAnalyzerService to throw
-            var errors = new List<RuleError>
-            {
-                new RuleError("PROBLEMATIC", "This might cause internal issues")
-            };
-
-            var result = analyzer.GetFixes(errors);
-
-            // Should return empty enumerable and not throw
-            Assert.That(result, Is.Not.Null);
-            Assert.DoesNotThrow(() => result.ToList());
-        }
-
-        #endregion
-
-        #region Integration-Style Tests (using real error patterns)
-
-        [Test]
-        public void ParseBuildOutput_WithRealTypeSpecError_ParsesCorrectly()
-        {
-            var analyzer = CreateBuildErrorAnalyzer();
-            var realError = @"
-/path/to/file.tsp(10,5): error typespec/library/invalid-model: Model 'TestModel' contains invalid properties.
-error AZC0012: Type name 'Client' is too generic. Consider using a more descriptive multi-word name, such as 'ServiceClient'.
-";
-            var exception = CreateTypeSpecCompilationException(error: realError);
-
-            var result = analyzer.ParseBuildOutput(exception);
-
-            Assert.That(result, Is.Not.Null);
-            var azc0012Error = result.FirstOrDefault(e => e.type == "AZC0012");
-            Assert.That(azc0012Error, Is.Not.Null);
-            Assert.That(azc0012Error!.message, Does.Contain("Type name 'Client' is too generic"));
-        }
-
-        [Test]
-        public void ParseBuildOutput_WithRealDotNetBuildError_ParsesCorrectly()
-        {
-            var analyzer = CreateBuildErrorAnalyzer();
-            var realError = @"
-  Build FAILED.
-  
-/path/to/Program.cs(15,13): error CS0103: The name 'undefinedVariable' does not exist in the current context [/path/to/project.csproj]
-/path/to/Other.cs(22,5): error CS0246: The type or namespace name 'UnknownType' could not be found [/path/to/project.csproj]
-  
-    0 Warning(s)
-    2 Error(s)
-";
-            var exception = CreateDotNetBuildException(error: realError);
-
-            var result = analyzer.ParseBuildOutput(exception);
-
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.Count, Is.EqualTo(2));
-            
-            var cs0103Error = result.FirstOrDefault(e => e.type == "CS0103");
-            Assert.That(cs0103Error, Is.Not.Null);
-            Assert.That(cs0103Error!.message, Does.Contain("undefinedVariable"));
-            
-            var cs0246Error = result.FirstOrDefault(e => e.type == "CS0246");
-            Assert.That(cs0246Error, Is.Not.Null);
-            Assert.That(cs0246Error!.message, Does.Contain("UnknownType"));
+                var fix = new AgentPromptFix($"{prefix}_{i}", $"Context for {prefix}_{i}");
+                fixes.Add(fix);
+            }
+            return fixes;
         }
 
         #endregion

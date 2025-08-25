@@ -5,6 +5,7 @@ using Azure.Sdk.Tools.GitHubEventProcessor.Utils;
 using Azure.Sdk.Tools.GitHubEventProcessor.Constants;
 using System.Text.Json;
 using Octokit.Internal;
+using System;
 
 namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
 {
@@ -21,6 +22,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
             await PullRequestTriage(gitHubEventClient, prEventPayload);
             ResetPullRequestActivity(gitHubEventClient, prEventPayload);
             await ResetApprovalsForUntrustedChanges(gitHubEventClient, prEventPayload);
+            await UpdateReleasePlanApiSpecStatus(gitHubEventClient, prEventPayload);
 
             // After all of the rules have been processed, call to process pending updates
             await gitHubEventClient.ProcessPendingUpdates(prEventPayload.Repository.Id, prEventPayload.PullRequest.Number);
@@ -218,6 +220,59 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
             }
 
             return prEventPayload;
+        }
+
+        /// <summary>
+        /// Update Release Plan API Spec Status
+        /// Trigger: pull_request closed (merged)
+        /// Conditions: 
+        ///     Pull request is in azure-rest-api-specs repository
+        ///     Pull request is merged (not just closed)
+        /// Resulting Action:
+        ///     Update corresponding DevOps release plan work item API spec status to "Merged"
+        /// </summary>
+        /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
+        /// <param name="prEventPayload">PullRequestEventGitHubPayload deserialized from the json event payload</param>
+        public static async Task UpdateReleasePlanApiSpecStatus(GitHubEventClient gitHubEventClient, PullRequestEventGitHubPayload prEventPayload)
+        {
+            // Only process if rule is enabled and this is for azure-rest-api-specs repo
+            if (!gitHubEventClient.RulesConfiguration.RuleEnabled(RulesConstants.UpdateReleasePlanApiSpecStatus))
+            {
+                return;
+            }
+
+            // Only handle merged PRs in the azure-rest-api-specs repository
+            if (prEventPayload.Action != ActionConstants.Closed ||
+                !prEventPayload.PullRequest.Merged ||
+                !prEventPayload.Repository.Name.Equals("azure-rest-api-specs", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            try
+            {
+                // TODO: This requires integration with the Azure DevOps service
+                // For now, this is a placeholder that logs the event
+                // In a complete implementation, this would:
+                // 1. Query DevOps for release plans with matching spec PR URLs
+                // 2. Update their API spec status to "Merged"
+                
+                Console.WriteLine($"[UpdateReleasePlanApiSpecStatus] PR #{prEventPayload.PullRequest.Number} was merged in azure-rest-api-specs. " +
+                                 $"This should trigger an update to corresponding release plan work items.");
+                
+                // Example of what the implementation would look like:
+                // var devopsService = serviceProvider.GetService<IDevOpsService>();
+                // var openReleasePlans = await devopsService.GetOpenReleasePlansAsync();
+                // var matchingPlans = openReleasePlans.Where(rp => rp.ActiveSpecPullRequest.Contains($"/pull/{prEventPayload.PullRequest.Number}"));
+                // foreach (var plan in matchingPlans)
+                // {
+                //     await devopsService.UpdateApiSpecStatusAsync(plan.ApiSpecWorkItemId, "Merged");
+                // }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[UpdateReleasePlanApiSpecStatus] Error processing merged PR {prEventPayload.PullRequest.Number}: {ex.Message}");
+            }
         }
     }
 }

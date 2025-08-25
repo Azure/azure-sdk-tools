@@ -8,47 +8,53 @@ using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Commands;
 
 namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 {
+
+
     /// <summary>
-    /// This tool provides functionality for initializing TypeSpec projects and converting existing Azure service swagger definitions to TypeSpec projects.
-    /// Use this tool to onboard to TypeSpec for new services or convert existing services.
+    /// This tool provides functionality for converting existing Azure service swagger definitions to TypeSpec projects.
+    /// Use this tool to convert existing services to TypeSpec.
     /// </summary>
-    [McpServerToolType, Description("Tools for initializing TypeSpec projects and converting existing Azure service swagger definitions to TypeSpec projects.")]
-    public class TypeSpecTool(INpxHelper npxHelper, ILogger<TypeSpecTool> logger, IOutputHelper output) : MCPTool
+    [McpServerToolType, Description("Tools for converting existing Azure service swagger definitions to TypeSpec projects.")]
+    public class TypeSpecConvertTool : MCPTool
     {
+
+        private readonly INpxHelper npxHelper;
+        private readonly ILogger<TypeSpecConvertTool> logger;
+        private readonly IOutputHelper output;
+
+        public TypeSpecConvertTool(INpxHelper npxHelper, ILogger<TypeSpecConvertTool> logger, IOutputHelper output)
+        {
+            this.npxHelper = npxHelper;
+            this.logger = logger;
+            this.output = output;
+            CommandHierarchy = [SharedCommandGroups.TypeSpec];
+        }
 
         // commands
         private const string ConvertSwaggerCommandName = "convert-swagger";
 
+        // command options
         private readonly Option<string> outputDirectoryArg = new("--output-directory", "The output directory for the generated TypeSpec project. This directory must already exist and be empty.") { IsRequired = true };
-
         private readonly Option<string> swaggerReadmeArg = new("--swagger-readme", "The path or URL to an Azure swagger README file.") { IsRequired = true };
         private readonly Option<bool> isArmOption = new("--arm", "Whether the generated TypeSpec project is for an Azure Resource Management (ARM) API. This should be true if the swagger's path contains 'resource-manager'.");
         private readonly Option<bool> fullyCompatibleOption = new("--fully-compatible", "Whether to generate a TypeSpec project that is fully compatible with the swagger. It is recommended not to set this to true so that the converted TypeSpec project leverages TypeSpec built-in libraries with standard patterns and templates.");
 
         public override Command GetCommand()
         {
-            var tspCommand = new Command("tsp", "Tools for initializing TypeSpec projects and converting existing Azure service swagger definitions to TypeSpec projects");
 
-            var subCommands = new[]
-            {
-                new Command(ConvertSwaggerCommandName, "Convert an existing Azure service swagger definition to a TypeSpec project") {
-                    swaggerReadmeArg,
-                    outputDirectoryArg,
-                    isArmOption,
-                    fullyCompatibleOption
-                }
+            Command command = new(ConvertSwaggerCommandName, "Convert an existing Azure service swagger definition to a TypeSpec project") {
+                swaggerReadmeArg,
+                outputDirectoryArg,
+                isArmOption,
+                fullyCompatibleOption
             };
+            command.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
 
-            foreach (var subCommand in subCommands)
-            {
-                subCommand.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
-                tspCommand.AddCommand(subCommand);
-            }
-
-            return tspCommand;
+            return command;
         }
 
         public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
@@ -57,7 +63,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             switch (command)
             {
                 case ConvertSwaggerCommandName:
-                    await HandleConvertCommand(ctx, ct);
+                    await HandleConvertCommandAsync(ctx, ct);
                     return;
                 default:
                     SetFailure();
@@ -66,14 +72,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             }
         }
 
-        private async Task HandleConvertCommand(InvocationContext ctx, CancellationToken ct)
+        private async Task HandleConvertCommandAsync(InvocationContext ctx, CancellationToken ct)
         {
             var swaggerReadme = ctx.ParseResult.GetValueForOption(swaggerReadmeArg);
             var outputDirectory = ctx.ParseResult.GetValueForOption(outputDirectoryArg);
             var isArm = ctx.ParseResult.GetValueForOption(isArmOption);
             var fullyCompatible = ctx.ParseResult.GetValueForOption(fullyCompatibleOption);
 
-            TspToolResponse result = await ConvertSwagger(swaggerReadme, outputDirectory, isArm, fullyCompatible, true, ct);
+            TspToolResponse result = await ConvertSwaggerAsync(swaggerReadme, outputDirectory, isArm, fullyCompatible, true, ct);
             ctx.ExitCode = ExitCode;
             output.Output(result);
         }
@@ -87,7 +93,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         It is recommended not to set this to `true` so that the converted TypeSpec project
         leverages TypeSpec built-in libraries with standard patterns and templates.
         Returns path to the created project.")]
-        public async Task<TspToolResponse> ConvertSwagger(
+        public async Task<TspToolResponse> ConvertSwaggerAsync(
             string pathToSwaggerReadme,
             string outputDirectory,
             bool? isAzureResourceManagement,
@@ -121,12 +127,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                     SetFailure();
                     return new TspToolResponse
                     {
-                        ResponseError = $"Failed: Invalid --output-dir, {validationResult}"
+                        ResponseError = $"Failed: Invalid --output-directory, {validationResult}"
                     };
                 }
 
                 var fullOutputDir = Path.GetFullPath(outputDirectory.Trim());
-                return await RunTspClient(fullPathToSwaggerReadme, fullOutputDir, isAzureResourceManagement ?? false, fullyCompatible ?? false, isCli, ct);
+                return await RunTspClientAsync(fullPathToSwaggerReadme, fullOutputDir, isAzureResourceManagement ?? false, fullyCompatible ?? false, isCli, ct);
             }
             catch (Exception ex)
             {
@@ -162,7 +168,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             return null; // Validation passed
         }
 
-        private async Task<TspToolResponse> RunTspClient(
+        private async Task<TspToolResponse> RunTspClientAsync(
             string pathToSwaggerReadme,
             string outputDirectory,
             bool isAzureResourceManagement,

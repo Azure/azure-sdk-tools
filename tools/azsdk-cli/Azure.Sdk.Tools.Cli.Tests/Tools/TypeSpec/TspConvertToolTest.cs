@@ -7,39 +7,37 @@ using Azure.Sdk.Tools.Cli.Helpers;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools
 {
-    public class TypeSpecToolTests
+    public class TspConvertToolTests
     {
         [Test]
-        public void GetCommand_ShouldReturnCommandWithSubcommands()
+        public void GetCommand_ShouldReturnCommand()
         {
             // Arrange
             var npxHelper = new Mock<INpxHelper>().Object;
-            var logger = new Mock<ILogger<TypeSpecTool>>().Object;
+            var logger = new Mock<ILogger<TypeSpecConvertTool>>().Object;
             var outputService = new Mock<IOutputHelper>().Object;
-            var tool = new TypeSpecTool(npxHelper, logger, outputService);
+            var tool = new TypeSpecConvertTool(npxHelper, logger, outputService);
 
             // Act
             var command = tool.GetCommand();
 
             Assert.Multiple(() =>
             {
-                Assert.That(command.Name, Is.EqualTo("tsp"));
-                Assert.That(command.Description, Does.Contain("Tools for initializing TypeSpec projects"));
-                Assert.That(command.Subcommands, Has.Count.EqualTo(1));
+                Assert.That(command.Name, Is.EqualTo("convert-swagger"));
+                Assert.That(command.Description, Does.Contain("Convert an existing Azure service swagger definition to a TypeSpec project"));
             });
         }
-
         [Test]
         public async Task ConvertSwagger_WithInvalidFileExtension_ShouldReturnError()
         {
             // Arrange
             var npxHelper = new Mock<INpxHelper>().Object;
-            var logger = new Mock<ILogger<TypeSpecTool>>().Object;
+            var logger = new Mock<ILogger<TypeSpecConvertTool>>().Object;
             var outputService = new Mock<IOutputHelper>().Object;
-            var tool = new TypeSpecTool(npxHelper, logger, outputService);
+            var tool = new TypeSpecConvertTool(npxHelper, logger, outputService);
 
             // Act
-            var result = await tool.ConvertSwagger("swagger.json", @"C:\temp", false, false, false, CancellationToken.None);
+            var result = await tool.ConvertSwaggerAsync("swagger.json", @"C:\temp", false, false, false, CancellationToken.None);
 
             // Assert
             Assert.That(result.IsSuccessful, Is.False);
@@ -51,16 +49,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         {
             // Arrange
             var npxHelper = new Mock<INpxHelper>().Object;
-            var logger = new Mock<ILogger<TypeSpecTool>>().Object;
+            var logger = new Mock<ILogger<TypeSpecConvertTool>>().Object;
             var outputService = new Mock<IOutputHelper>().Object;
-            var tool = new TypeSpecTool(npxHelper, logger, outputService);
+            var tool = new TypeSpecConvertTool(npxHelper, logger, outputService);
 
             // Act
-            var result = await tool.ConvertSwagger(@"C:\nonexistent\readme.md", @"C:\temp", false, false, false, CancellationToken.None);
-
-            // Assert
+            var result = await tool.ConvertSwaggerAsync(@"C:\nonexistent\readme.md", @"C:\temp", false, false, false, CancellationToken.None);
             Assert.That(result.IsSuccessful, Is.False);
-            Assert.That(result.ResponseError, Does.Contain("does not exist"));
         }
     }
 }

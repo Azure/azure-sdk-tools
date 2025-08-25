@@ -28,6 +28,7 @@ interface DocumentationSource {
     name?: string;
     fileNameLowerCase?: boolean;
     ignoredPaths?: string[];
+    isSpectorTest?: boolean;
 }
 
 
@@ -647,6 +648,10 @@ function processMarkdownFile(
                 isValid: false
             };
         }
+        if (source.isSpectorTest) {
+            // remove generated prefix
+            processed.filename = processed.filename.replace(/^generated#/, '');
+        }
     }
 
     // Create blob path based on source folder and file name
@@ -773,7 +778,7 @@ async function uploadFilesToBlobStorage(
 async function cleanupExpiredBlobs(currentFiles: ProcessedMarkdownFile[], context: InvocationContext): Promise<void> {
     try {
         const storageService = new StorageService();
-        const containerName = process.env.STORAGE_KNOWLEDGE_CONTAINER || 'knowledge';
+        const containerName = process.env.STORAGE_KNOWLEDGE_CONTAINER;
         
         context.log('Cleaning up expired blobs...');
         

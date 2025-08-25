@@ -126,6 +126,11 @@
           "type": "boolean",
           "description": "Whether paths are relative to the repository root",
           "default": false
+        },
+        "isSpectorTest": {
+          "type": "boolean",
+          "description": "Whether this path is a Spector test",
+          "default": false
         }
       },
       "required": ["description", "folder"],

@@ -122,27 +122,31 @@ export class SearchService {
 
     /**
      * Delete all document chunks for a given title
-     * @param title The document title whose chunks should be deleted
+     * @param fileName The document name whose chunks should be deleted
      * @param context Invocation context for logging
      */
-    async deleteDocumentChunksByTitle(title: string, context: InvocationContext): Promise<void> {
+    async deleteDocumentChunksByFileName(fileName: string, context: InvocationContext): Promise<void> {
+        if (fileName.length === 0) {
+            context.log(`No file name provided for chunk deletion: ${fileName}`);
+            return;
+        }
         try {
-            context.log(`Deleting all chunks for document title: ${title}`);
-            
+            context.log(`Deleting all chunks for document: ${fileName}`);
+
             // First, search for all documents with this title
-            const documentIds = await this.searchDocumentsByTitle(title, context);
+            const documentIds = await this.searchDocumentsByTitle(fileName, context);
             
             if (documentIds.length === 0) {
-                context.log(`No existing chunks found for title: ${title}`);
+                context.log(`No existing chunks found for: ${fileName}`);
                 return;
             }
             
             // Delete all found documents
             await this.deleteDocuments(documentIds, context);
             
-            context.log(`Successfully deleted all chunks for title: ${title}`);
+            context.log(`Successfully deleted all chunks for: ${fileName}`);
         } catch (error) {
-            context.error(`Error deleting chunks for title "${title}":`, error);
+            context.error(`Error deleting chunks for "${fileName}":`, error);
             throw error;
         }
     }

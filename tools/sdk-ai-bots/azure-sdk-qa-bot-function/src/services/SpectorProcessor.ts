@@ -7,14 +7,6 @@ import { InvocationContext } from '@azure/functions';
  * Processes generated test case files and converts them to markdown format
  */
 
-interface SpectorCase {
-    name: string;
-    description?: string;
-    request?: any;
-    response?: any;
-    metadata?: any;
-}
-
 /**
  * Process spector cases in a directory
  */

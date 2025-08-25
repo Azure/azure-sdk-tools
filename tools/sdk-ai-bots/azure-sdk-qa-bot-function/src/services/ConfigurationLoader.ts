@@ -13,6 +13,7 @@ export interface DocumentationPath {
     fileNameLowerCase?: boolean;
     ignoredPaths?: string[];
     relativeByRepoPath?: boolean;
+    isSpectorTest?: boolean;
 }
 
 export interface Repository {
@@ -44,6 +45,7 @@ export interface DocumentationSource {
     folder: string;
     fileNameLowerCase?: boolean;
     ignoredPaths?: string[];
+    isSpectorTest?: boolean;
 }
 
 export interface RepositoryConfig {
@@ -105,7 +107,8 @@ export class ConfigurationLoader {
                     path: (docPath.relativeByRepoPath || docPath.path === undefined) ? `docs/${repoPath}` : `docs/${repoPath}/${docPath.path}`,
                     folder: docPath.folder,
                     fileNameLowerCase: docPath.fileNameLowerCase,
-                    ignoredPaths: docPath.ignoredPaths
+                    ignoredPaths: docPath.ignoredPaths,
+                    isSpectorTest: docPath.isSpectorTest
                 });
             }
         }

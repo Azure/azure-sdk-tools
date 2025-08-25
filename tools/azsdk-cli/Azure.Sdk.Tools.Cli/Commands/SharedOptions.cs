@@ -34,7 +34,8 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(SpecWorkflowTool),
             typeof(SpecValidationTools),
             typeof(TestAnalysisTool),
-            typeof(TypeSpecTool),
+            typeof(TypeSpecConvertTool),
+            typeof(TypeSpecInitTool),
             typeof(TypeSpecPublicRepoValidationTool),
 
             #if DEBUG

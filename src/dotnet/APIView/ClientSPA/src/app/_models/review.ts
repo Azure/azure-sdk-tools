@@ -7,16 +7,16 @@ export enum FirstReleaseApproval {
 }
 
 export class Review {
-  id: string;
-  packageName: string;
-  language: string;
-  lastUpdatedOn: string;
-  isDeleted: boolean;
-  isApproved: boolean;
+  id: string
+  packageName: string
+  language: string
+  lastUpdatedOn: string
+  isDeleted: boolean
+  isApproved: boolean
+  changeHistory: ChangeHistory[]
+  subscribers: string[]
+  namespaceReviewStatus: string
 
-  namespaceReviewStatus: string;
-  changeHistory: ChangeHistory[];
-  subscribers: string[];
   constructor() {
     this.id = ''
     this.packageName = ''

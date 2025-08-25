@@ -580,16 +580,6 @@ namespace APIViewWeb.Managers
         /// <returns></returns>
         public async Task UpdateReviewsInBackground(HashSet<string> updateDisabledLanguages, int backgroundBatchProcessCount, bool verifyUpgradabilityOnly, string packageNameFilterForUpgrade = "")
         {
-            // verifyUpgradabilityOnly is set when we need to run the upgrade in read only mode to recreate code files
-            // But review code file or metadata in the DB will not be updated
-            // This flag is set only to make sure revisions are upgradable to the latest version of the parser
-            if(verifyUpgradabilityOnly)
-            {
-                // verifyUpgradabilityOnly is set when we need to run the upgrade in read only mode to recreate code files
-                // But review code file or metadata in the DB will not be updated
-                // This flag is set only to make sure revisions are upgradable to the latest version of the parser
-            }
-
             foreach (var language in LanguageService.SupportedLanguages)
             {
                 if (updateDisabledLanguages.Contains(language))
@@ -942,18 +932,6 @@ namespace APIViewWeb.Managers
             return typeSpecReview;
         }
 
-        /// <summary>
-        /// Helper method to check if user can approve a review
-        /// </summary>
-        /// <param name="review">Review to check permissions for</param>
-        /// <returns>True if user has permission to approve</returns>
-        private bool CanUserApproveReview(ReviewListItemModel review)
-        {
-            // Add your business logic here for determining if user can approve
-            // This might check user roles, permissions, etc.
-            // For now, return true as placeholder - you should implement the actual logic
-            return true;
-        }
 
         /// <summary>
         /// Process pending namespace reviews for auto-approval after 3 business days with no open comments
@@ -963,52 +941,29 @@ namespace APIViewWeb.Managers
         {
             try
             {
-                _logger.LogInformation("=== Starting ProcessPendingNamespaceAutoApprovals ===");
                 
                 var pendingReviews = await GetPendingNamespaceReviewsForAutoApproval();
-                _logger.LogInformation($"Found {pendingReviews.Count} pending namespace approval reviews");
-                
-                // Log all pending reviews for debugging
-                foreach (var review in pendingReviews)
-                {
-                    _logger.LogInformation($"Pending review: {review.Id} - {review.PackageName} ({review.Language}) - Requested: {review.NamespaceApprovalRequestedOn}");
-                }
                 
                 // Group reviews by pull request numbers to consolidate related approvals
                 var prGroups = GroupReviewsByPullRequestNumbers(pendingReviews);
 
-                _logger.LogInformation($"After grouping, processing {prGroups.Count} groups for auto-approval");
-
                 foreach (var prGroup in prGroups)
                 {
                     var reviewsInGroup = prGroup.Value;
-                    _logger.LogInformation($"=== Processing group '{prGroup.Key}' with {reviewsInGroup.Count} reviews ===");
                     
                     // Find the TypeSpec review as the primary review for this group
                     var typeSpecReview = reviewsInGroup.FirstOrDefault(r => r.Language == "TypeSpec");
-                    if (typeSpecReview != null)
-                    {
-                        _logger.LogInformation($"Found TypeSpec review in group: {typeSpecReview.PackageName}");
-                    }
-                    else
-                    {
-                        _logger.LogInformation("No TypeSpec review found in this group");
-                    }
                     
                     // Check if any review in this group should be auto-approved
                     var shouldAutoApproveGroup = false;
                     foreach (var review in reviewsInGroup)
                     {
                         var shouldApprove = await ShouldAutoApprove(review);
-                        _logger.LogInformation($"Review {review.PackageName} ({review.Language}) - ShouldAutoApprove: {shouldApprove}");
                         if (shouldApprove)
                         {
                             shouldAutoApproveGroup = true;
                         }
-                    }
-                    
-                    _logger.LogInformation($"Group '{prGroup.Key}' auto-approval decision: {shouldAutoApproveGroup}");
-                    
+                    }     
                     if (shouldAutoApproveGroup)
                     {
                         _logger.LogInformation($"Auto-approving group '{prGroup.Key}' with {reviewsInGroup.Count} reviews");
@@ -1038,32 +993,31 @@ namespace APIViewWeb.Managers
         /// </summary>
         private async Task<bool> ShouldAutoApprove(ReviewListItemModel review)
         {
-            _logger.LogInformation($"=== Checking auto-approval for {review.PackageName} ({review.Language}) ===");
-            
             if (!review.NamespaceApprovalRequestedOn.HasValue)
             {
-                _logger.LogInformation($"No NamespaceApprovalRequestedOn date - skipping auto-approval");
                 return false;
             }
             
             // Calculate 3 business day deadline (using centralized utility)
             var approvalDeadline = DateTimeHelper.CalculateBusinessDays(review.NamespaceApprovalRequestedOn.Value, 3);
-            _logger.LogInformation($"Approval deadline: {approvalDeadline}, Current time: {DateTime.UtcNow}");
             
             // Check if deadline has passed
             if (DateTime.UtcNow < approvalDeadline)
             {
-                _logger.LogInformation($"Deadline not reached yet - skipping auto-approval");
                 return false;
             }
             
             // Check for open/unresolved comments
             var openComments = await GetOpenComments(review.Id);
             var hasOpenComments = openComments.Any();
-            _logger.LogInformation($"Open comments count: {openComments.Count()}, Has open comments: {hasOpenComments}");
             
             var shouldApprove = !hasOpenComments;
-            _logger.LogInformation($"Final auto-approval decision: {shouldApprove}");
+            
+            // Only log when actually approving to reduce noise
+            if (shouldApprove)
+            {
+                _logger.LogInformation($"Auto-approving {review.PackageName} ({review.Language}) - deadline passed with no open comments");
+            }
             
             return shouldApprove;
         }
@@ -1104,14 +1058,11 @@ namespace APIViewWeb.Managers
                             timestampGroups[timestampKey] = new List<ReviewListItemModel>();
                         }
                         timestampGroups[timestampKey].Add(review);
-                        
-                        _logger.LogInformation($"Added review {review.Id} ({review.PackageName}, {review.Language}) to timestamp group {timestampKey} (service: {serviceName}, time: {review.NamespaceApprovalRequestedOn.Value})");
                     }
                     else
                     {
                         // No timestamp, handle individually
                         reviewsWithoutTimestamp.Add(review);
-                        _logger.LogInformation($"Review {review.Id} ({review.PackageName}, {review.Language}) has no timestamp, adding to individual processing");
                     }
                 }
                 catch (Exception ex)
@@ -1126,15 +1077,6 @@ namespace APIViewWeb.Managers
             {
                 var individualKey = $"individual_{review.Id}";
                 timestampGroups[individualKey] = new List<ReviewListItemModel> { review };
-                _logger.LogInformation($"Added review {review.Id} ({review.PackageName}, {review.Language}) as individual group");
-            }
-
-            // Log final grouping results
-            _logger.LogInformation($"Final timestamp grouping results: {timestampGroups.Count} groups");
-            foreach (var group in timestampGroups)
-            {
-                var reviewDetails = string.Join(", ", group.Value.Select(r => $"{r.PackageName}({r.Language})"));
-                _logger.LogInformation($"Group '{group.Key}': {group.Value.Count} reviews - {reviewDetails}");
             }
 
             return timestampGroups;

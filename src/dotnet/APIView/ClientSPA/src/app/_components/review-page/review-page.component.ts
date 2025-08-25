@@ -109,7 +109,6 @@ export class ReviewPageComponent implements OnInit {
           this.showLineNumbers = false;
         }
       });
-
     this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
       const navigationState = this.router.getCurrentNavigation()?.extras.state;
       if (!navigationState || !navigationState['skipStateUpdate']) {
@@ -495,7 +494,6 @@ export class ReviewPageComponent implements OnInit {
     if (value) {
       // Collect associated review IDs from the review page options component
       // Each pull request has a reviewId that corresponds to the individual language review to update
-      // Filter out the active TypeSpec review since it's the source requesting the review, not a target
       const associatedReviewIds = this.reviewPageOptionsComponent?.pullRequestsOfAssociatedAPIRevisions
         ?.map(pr => pr.reviewId)
         ?.filter(reviewId => reviewId !== this.reviewId) || [];

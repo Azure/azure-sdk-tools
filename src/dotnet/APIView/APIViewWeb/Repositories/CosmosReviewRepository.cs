@@ -78,23 +78,13 @@ namespace APIViewWeb
                 AND r.NamespaceReviewStatus = 'Pending'
                 AND IS_DEFINED(r.NamespaceApprovalRequestedBy) 
                 AND IS_DEFINED(r.NamespaceApprovalRequestedOn)";
-
-            // Debug logging
-            Console.WriteLine($"[NAMESPACE DEBUG] Executing query: {queryText}");
             
             var itemQueryIterator = _reviewsContainer.GetItemQueryIterator<ReviewListItemModel>(queryText);
             var reviews = new List<ReviewListItemModel>();
             while (itemQueryIterator.HasMoreResults)
             {
                 var result = await itemQueryIterator.ReadNextAsync();
-                Console.WriteLine($"[NAMESPACE DEBUG] Query result batch: {result.Resource.Count()} items");
                 reviews.AddRange(result.Resource);
-            }
-
-            Console.WriteLine($"[NAMESPACE DEBUG] Total reviews found: {reviews.Count}");
-            foreach (var review in reviews.Take(3)) // Log first 3 for debugging
-            {
-                Console.WriteLine($"[NAMESPACE DEBUG] Review: {review.Id} ({review.Language}) - Status: {review.NamespaceReviewStatus}");
             }
 
             return reviews;

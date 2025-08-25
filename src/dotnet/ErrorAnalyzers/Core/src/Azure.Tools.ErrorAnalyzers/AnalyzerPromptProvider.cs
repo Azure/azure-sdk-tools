@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 using System.Collections.Concurrent;
 using System.Reflection;
 using System.Text.Json;
@@ -33,7 +36,7 @@ namespace Azure.Tools.ErrorAnalyzers
             using var stream = SourceAssembly.GetManifestResourceStream(ResourceName);
             if (stream == null)
             {
-                return;
+                throw new InvalidOperationException($"Embedded resource '{ResourceName}' not found in assembly '{SourceAssembly.FullName}'. Ensure the resource is correctly embedded and available at runtime.");
             }
 
             using var reader = new StreamReader(stream);

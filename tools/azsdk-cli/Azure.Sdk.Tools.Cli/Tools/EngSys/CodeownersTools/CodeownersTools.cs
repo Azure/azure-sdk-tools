@@ -41,7 +41,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
         private readonly Option<string[]> serviceOwnersOption = new(["--service-owners"], "The service owners (space-separated)") { IsRequired = false };
         private readonly Option<string[]> sourceOwnersOption = new(["--source-owners"], "The source owners (space-separated)") { IsRequired = false };
         private readonly Option<bool> isAddingOption = new(["--is-adding"], "Whether to add (true) or remove (false) owners") { IsRequired = false };
-        private readonly Option<string> workingBranchOption = new(["--branch"], "PR number or branch name to add changes to existing PR.") { IsRequired = false };
+        private readonly Option<string> workingBranchOption = new(["--branch"], "PR number.") { IsRequired = false };
 
         public CodeownersTools(
             IGitHubService githubService,

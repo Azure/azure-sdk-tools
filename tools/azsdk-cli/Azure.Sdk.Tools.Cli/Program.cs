@@ -90,7 +90,8 @@ public class Program
         builder.Services
             .AddMcpServer()
             .WithStdioServerTransport()
-            .WithTools(toolTypes);
+            .WithTools(toolTypes)
+            .WithPrompts<Prompts.Prompts>();
 
         return builder;
     }

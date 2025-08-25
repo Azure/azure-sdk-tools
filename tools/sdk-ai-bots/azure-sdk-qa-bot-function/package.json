@@ -5,7 +5,7 @@
   "scripts": {
     "build": "tsc && npm run copy-config",
     "watch": "npm run copy-config && tsc -w",
-    "copy-config": "mkdir -p dist/config && cp -r config/* dist/config/",
+    "copy-config": "shx mkdir -p dist/config && shx cp -r config/* dist/config/",
     "clean": "rimraf dist",
     "prestart": "npm run clean && npm run build",
     "start": "func start",
@@ -34,6 +34,7 @@
     "@types/xlsx": "^0.0.36",
     "botframework-schema": "^4.17.0-blobs1",
     "rimraf": "^5.0.0",
+    "shx": "^0.4.0",
     "typescript": "^5.0.0"
   },
   "main": "dist/src/{index.js,functions/*.js}"

@@ -1,10 +1,9 @@
-# pylint: disable=too-many-lines
+# pylint: disable=too-many-lines, redefined-outer-name, reimported
 import re
 import sys
 from typing import List, Literal, Optional
 from uuid import uuid4
 
-from _variables import Variables
 from azure.appconfiguration import (
     AzureAppConfigurationClient,
     ConfigurationSetting,
@@ -93,6 +92,7 @@ from azure.search.documents.indexes.models import (
     VectorSearch,
     VectorSearchProfile,
 )
+from scripts.infra._variables import Variables
 
 # pyright: reportCallIssue=false
 # pyright: reportArgumentType=false
@@ -192,7 +192,7 @@ def assign_rbac_roles(
             )
 
             if not role_definitions:
-                raise Exception(f"Role '{role_name}' not found!")
+                raise KeyError(f"Role '{role_name}' not found!")
 
             role_definition_id = role_definitions[0].id
             role_scope = scope or f"/subscriptions/{v.subscription_id}/resourceGroups/{v.rg_name}"
@@ -217,6 +217,8 @@ def _assign_cosmosdb_builtin_roles(v: Variables, *, kind: Literal["readOnly", "r
     """Assigns special built-in roles for Cosmos DB."""
     cosmos_mgmt_client = CosmosDBManagementClient(credential, v.subscription_id)
     cosmos_account = cosmos_mgmt_client.database_accounts.get(v.rg_name, v.cosmos_account_name)
+    role_name = None
+    role_id = None
     # Assign well-known Role ID for "Cosmos DB Built-in Data Contributor"
     if kind == "readWrite":
         role_id = f"{cosmos_account.id}/sqlRoleDefinitions/00000000-0000-0000-0000-000000000002"
@@ -1262,7 +1264,7 @@ def check_assignee(v):
 
 
 if __name__ == "__main__":
-    v = Variables(is_staging=True)
+    v = Variables(is_staging=False)
     check_credential()
     check_assignee(v)
     create_resource_group(v)

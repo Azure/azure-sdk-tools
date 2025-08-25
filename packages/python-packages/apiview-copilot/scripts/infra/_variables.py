@@ -86,5 +86,5 @@ class Variables:
     def __getattr__(self, name: str):
         try:
             return self.__dict__[name]
-        except KeyError:
-            raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
+        except KeyError as exc:
+            raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'") from exc

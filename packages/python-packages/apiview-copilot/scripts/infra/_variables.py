@@ -11,6 +11,7 @@ class Variables:
         with open(path, "r", encoding="utf-8") as stream:
             data = safe_load(stream)
             variables = [
+                "AI_RG",
                 "RG_NAME",
                 "RG_LOCATION",
                 "SUBSCRIPTION_ID",
@@ -43,16 +44,20 @@ class Variables:
                 if val is None:
                     missing.append(var)
                 elif is_staging and var not in [
+                    "AI_RG",
                     "RG_LOCATION",
                     "SUBSCRIPTION_ID",
                     "TENANT_ID",
                     "ASSIGNEE_OBJECT_ID",
                     "VECTORIZER_PROFILE_NAME",
                     "COSMOS_DB_NAME",
+                    "OPENAI_NAME",
                     "OPENAI_RG",
                     "OPENAI_SUBSCRIPTION_ID",
                     "OPENAI_EMBEDDING_MODEL",
                     "OPENAI_EMBEDDING_DIMENSIONS",
+                    "FOUNDRY_ACCOUNT_NAME",
+                    "FOUNDRY_PROJECT_NAME",
                     "FOUNDRY_KERNEL_MODEL",
                     "FOUNDRY_API_VERSION",
                     "EVALS_RG",

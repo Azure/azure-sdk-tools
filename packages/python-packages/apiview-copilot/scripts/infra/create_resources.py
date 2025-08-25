@@ -182,12 +182,7 @@ def assign_cosmosdb_permissions(v: Variables, principal_id: str, principal_type:
 
 
 def assign_rbac_roles(
-    v: Variables,
-    *,
-    roles: List[str],
-    principal_id: str,
-    principal_type=PrincipalType,
-    scope: Optional[str] = None,
+    v: Variables, *, roles: List[str], principal_id: str, principal_type: PrincipalType, scope: Optional[str] = None
 ):
     """Assigns arbitrary RBAC roles to the logged-in user."""
     client = AuthorizationManagementClient(credential, v.subscription_id)
@@ -346,11 +341,10 @@ def create_azure_openai(v: Variables):
     """Creates an Azure OpenAI resource."""
     client = CognitiveServicesManagementClient(credential, v.subscription_id)
     try:
-        resource = client.accounts.get(v.rg_name, v.openai_name)
+        resource = client.accounts.get(v.ai_rg, v.openai_name)
         print(f"✅ Using existing OpenAI resource: {v.openai_name}")
         return resource
     except ResourceNotFoundError:
-        # FIXME: Needs a custom domain name
         openai_resource = Account(
             location=v.rg_location,
             sku=CognitiveSku(name="S0"),
@@ -368,7 +362,7 @@ def create_azure_openai(v: Variables):
             ),
         )
         try:
-            resource = client.accounts.begin_create(v.rg_name, v.openai_name, openai_resource).result()
+            resource = client.accounts.begin_create(v.ai_rg, v.openai_name, openai_resource).result()
             print(f"✅ Created OpenAI resource: {v.openai_name}")
             return resource
         except Exception as e:
@@ -383,20 +377,20 @@ def create_azure_openai_deployments(v: Variables):
         (v.openai_embedding_model, "GlobalStandard", "1", 500),
         ("gpt-4.1", "GlobalStandard", "2025-04-14", 500),
         ("gpt-4.1-nano", "GlobalStandard", "2025-04-14", 500),
-        ("o3-mini", "GlobalStandard", "2025-01-31", 250),
-        ("gpt-5", "GlobalStandard", "2025-08-07", 250),
-        ("gpt-5-mini", "GlobalStandard", "2025-08-07", 250),
+        ("o3-mini", "GlobalStandard", "2025-01-31", 100),
+        ("gpt-5", "GlobalStandard", "2025-08-07", 100),
+        ("gpt-5-mini", "GlobalStandard", "2025-08-07", 100),
     ]
     for model, sku, version, capacity in models_to_deploy:
         try:
-            client.deployments.get(v.rg_name, v.openai_name, model)
+            client.deployments.get(v.ai_rg, v.openai_name, model)
             print(f"✅ Using existing OpenAI model deployment: {model}")
         except ResourceNotFoundError:
             deployment = Deployment(
                 properties={"model": DeploymentModel(format="OpenAI", name=model, version=version)},
                 sku=ResourceSku(name=sku, capacity=capacity),
             )
-            client.deployments.begin_create_or_update(v.rg_name, v.openai_name, model, deployment).result()
+            client.deployments.begin_create_or_update(v.ai_rg, v.openai_name, model, deployment).result()
             print(f"✅ Created OpenAI model deployment: {model}")
 
 
@@ -1076,7 +1070,7 @@ def populate_settings(v: Variables):
         secret_uri = f"https://{v.keyvault_name}.vault.azure.net/secrets/{secret_name}"
         secrets_client.set_secret(
             secret_name,
-            mgmt_client.accounts.list_keys(v.rg_name, v.openai_name).key1,
+            mgmt_client.accounts.list_keys(v.ai_rg, v.openai_name).key1,
         )
     except Exception as e:
         print(f"❌ An error occurred: {e}")
@@ -1194,7 +1188,7 @@ def create_azure_ai_foundry(v: Variables):
     """Create the Azure AI Foundry resource."""
     client = CognitiveServicesManagementClient(credential, v.subscription_id)
     try:
-        resource = client.accounts.get(v.rg_name, v.foundry_account_name)
+        resource = client.accounts.get(v.ai_rg, v.foundry_account_name)
         print(f"✅ Using existing Azure AI Foundry resource: {v.foundry_account_name}")
         return resource
     except ResourceNotFoundError:
@@ -1210,7 +1204,7 @@ def create_azure_ai_foundry(v: Variables):
             },
         )
         try:
-            resource = client.accounts.begin_create(v.rg_name, v.foundry_account_name, foundry_resource).result()
+            resource = client.accounts.begin_create(v.ai_rg, v.foundry_account_name, foundry_resource).result()
             print(f"✅ Created Azure AI Foundry resource: {v.foundry_account_name}")
             return resource
         except Exception as e:
@@ -1222,31 +1216,31 @@ def create_azure_ai_foundry_deployments(v: Variables):
     """Create the necessary model deployments in Azure AI Foundry"""
     client = CognitiveServicesManagementClient(credential, v.subscription_id)
     models_to_deploy = [
-        ("gpt-5", "GlobalStandard", "2025-08-07", 250),
-        ("gpt-5-mini", "GlobalStandard", "2025-08-07", 170),
+        ("gpt-5", "GlobalStandard", "2025-08-07", 100),
+        ("gpt-5-mini", "GlobalStandard", "2025-08-07", 100),
     ]
     for model, sku, version, capacity in models_to_deploy:
         try:
-            client.deployments.get(v.rg_name, v.foundry_account_name, model)
+            client.deployments.get(v.ai_rg, v.foundry_account_name, model)
             print(f"✅ Using existing Azure AI Foundry model deployment: {model}")
         except ResourceNotFoundError:
             deployment = Deployment(
                 properties={"model": DeploymentModel(format="OpenAI", name=model, version=version)},
                 sku=ResourceSku(name=sku, capacity=capacity),
             )
-            client.deployments.begin_create_or_update(v.rg_name, v.foundry_account_name, model, deployment).result()
+            client.deployments.begin_create_or_update(v.ai_rg, v.foundry_account_name, model, deployment).result()
             print(f"✅ Created Azure AI Foundry model deployment: {model}")
 
 
 def create_azure_ai_foundry_project(v: Variables):
     client = CognitiveServicesManagementClient(credential, v.subscription_id)
     try:
-        client.projects.get(v.rg_name, v.foundry_account_name, v.foundry_project_name)
+        client.projects.get(v.ai_rg, v.foundry_account_name, v.foundry_project_name)
         print(f"✅ Using existing Azure AI Foundry Project: {v.foundry_project_name}")
     except ResourceNotFoundError:
         try:
             client.projects.begin_create(
-                resource_group_name=v.rg_name,
+                resource_group_name=v.ai_rg,
                 account_name=v.foundry_account_name,
                 project_name=v.foundry_project_name,
                 project={
@@ -1262,7 +1256,7 @@ def create_azure_ai_foundry_project(v: Variables):
 
 
 if __name__ == "__main__":
-    v = Variables(is_staging=False)
+    v = Variables(is_staging=True)
     check_credential()
     create_resource_group(v)
 

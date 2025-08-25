@@ -1,7 +1,7 @@
 import { TableEntity } from "@azure/data-tables";
 import { v4 as uuidv4 } from "uuid";
 import { Converter } from "./utils";
-import { loadChannelMapping } from "../src/common/shared";
+import { loadChannelMapping } from "../src/common/channelConfig";
 import { BlobService } from "../src/services/StorageService";
 
 // Type definitions (copied from FeedbackHandler to avoid imports)

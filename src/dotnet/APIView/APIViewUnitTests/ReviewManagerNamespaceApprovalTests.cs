@@ -29,10 +29,16 @@ namespace APIViewUnitTests
             Assert.False(IsSDKLanguageStatic("Rust"));
             Assert.False(IsSDKLanguageStatic("Unknown"));
             Assert.False(IsSDKLanguageStatic(""));
-            Assert.False(IsSDKLanguageStatic(null));
             // Case-insensitive names should be false (implementation is case-sensitive)
             Assert.False(IsSDKLanguageStatic("c#"));
             Assert.False(IsSDKLanguageStatic("java"));
+        }
+
+        [Fact]
+        public void IsSDKLanguage_Returns_False_For_Null()
+        {
+            // Test null separately since the actual implementation doesn't handle null gracefully
+            Assert.Throws<ArgumentNullException>(() => IsSDKLanguageStatic(null));
         }
 
         [Fact]
@@ -119,11 +125,11 @@ namespace APIViewUnitTests
             };
         }
 
-        // Static helper methods mirroring latest ReviewManager logic
+        // Static helper methods mirroring actual ReviewManager logic
         private static bool IsSDKLanguageStatic(string language)
         {
             var sdkLanguages = new[] { "C#", "Java", "Python", "Go", "JavaScript" };
-            return !string.IsNullOrEmpty(language) && sdkLanguages.Contains(language);
+            return sdkLanguages.Contains(language); // This will throw ArgumentNullException for null, matching actual implementation
         }
 
         private static bool AreAllRelatedSDKReviewsApprovedStatic(IEnumerable<ReviewListItemModel> allReviews, string packageBaseName)

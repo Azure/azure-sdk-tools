@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using System.Linq;
 using APIViewWeb.LeanModels;
+using APIViewWeb.Helpers;
 using Microsoft.Extensions.Configuration;
 
 namespace APIViewWeb.Services
@@ -48,8 +49,8 @@ namespace APIViewWeb.Services
             var templatePath = Path.Combine(_hostEnvironment.ContentRootPath, "Templates", "NamespaceReviewRequestEmail.html");
             var template = await File.ReadAllTextAsync(templatePath);
 
-            // Calculate deadline (3 business days from now)
-            var deadline = CalculateBusinessDays(DateTime.Now, BusinessDaysForDeadline);
+            // Calculate deadline (3 business days from now using centralized utility)
+            var deadline = DateTimeHelper.CalculateBusinessDays(DateTime.Now, BusinessDaysForDeadline);
 
             // Generate language links HTML like the pending namespace approval tab
             var languageLinksHtml = GenerateLanguageLinksHtml(languageReviews);
@@ -145,23 +146,6 @@ namespace APIViewWeb.Services
                     </li>";
             }
             return linksHtml;
-        }
-
-        private DateTime CalculateBusinessDays(DateTime startDate, int businessDays)
-        {
-            var currentDate = startDate;
-            var daysAdded = 0;
-
-            while (daysAdded < businessDays)
-            {
-                currentDate = currentDate.AddDays(1);
-                if (currentDate.DayOfWeek != DayOfWeek.Saturday && currentDate.DayOfWeek != DayOfWeek.Sunday)
-                {
-                    daysAdded++;
-                }
-            }
-
-            return currentDate;
         }
     }
 }

@@ -322,7 +322,7 @@ namespace APIViewWeb.Managers
         {
             ReviewListItemModel review = await _reviewsRepository.GetReviewAsync(id);
             var userId = user.GetGitHubLogin();
-            var updatedReview = await ToggleReviewApproval(user, review);
+            var updatedReview = await ToggleReviewApproval(user, review, notes);
             await _signalRHubContext.Clients.Group(userId).SendAsync("ReceiveApprovalSelf", id, revisionId, review.IsApproved);
             await _signalRHubContext.Clients.All.SendAsync("ReceiveApproval", id, revisionId, userId, review.IsApproved);
             return updatedReview;
@@ -402,7 +402,7 @@ namespace APIViewWeb.Managers
                 try
                 {
                     var review = await _reviewsRepository.GetReviewAsync(reviewId);
-                    if (review != null && IsSDKLanguageOrTypeSpec(review.Language) && review.Language != "TypeSpec")
+                    if (review != null && LanguageHelper.IsSDKLanguageOrTypeSpec(review.Language) && review.Language != "TypeSpec")
                     {
                         languageReviews.Add(review);
                     }
@@ -436,7 +436,7 @@ namespace APIViewWeb.Managers
                     try
                     {
                         var review = await _reviewsRepository.GetReviewAsync(reviewId);
-                        if (review != null && IsSDKLanguageOrTypeSpec(review.Language))
+                        if (review != null && LanguageHelper.IsSDKLanguageOrTypeSpec(review.Language))
                         {
                             review.NamespaceReviewStatus = NamespaceReviewStatus.Pending;
                             review.NamespaceApprovalRequestedBy = userId;
@@ -458,46 +458,6 @@ namespace APIViewWeb.Managers
                 _telemetryClient.TrackException(ex);
                 // Continue - don't fail the namespace request if this fails
             }
-        }
-
-        /// <summary>
-        /// Update the provided API revision IDs with namespace approval fields
-        /// NOTE: This is legacy - namespace approval should be tracked at review level only
-        /// Keeping this for backward compatibility but consider deprecating
-        /// </summary>
-        /// <param name="activeApiRevisionId">Current API revision ID being viewed</param>
-        /// <param name="associatedApiRevisionIds">List of associated API revision IDs from frontend</param>
-        /// <param name="userId"></param>
-        /// <param name="requestId">Unique ID for this namespace approval request</param>
-        /// <param name="requestedOn">When the namespace approval was requested</param>
-        /// <returns></returns>
-        private async Task MarkProvidedAPIRevisionsForNamespaceReview(string activeApiRevisionId, List<string> associatedApiRevisionIds, string userId, string requestId, DateTime requestedOn)
-        {
-            // NOTE: Namespace approval is now tracked at review level only
-            // This method is kept for backward compatibility but does nothing
-            await Task.CompletedTask;
-        }
-
-        /// <summary>
-        /// Update a single API revision with namespace approval fields
-        /// NOTE: This is legacy - namespace approval should be tracked at review level only
-        /// </summary>
-        private async Task UpdateSingleAPIRevisionWithNamespaceFields(APIRevisionListItemModel revision, string requestId, string userId, DateTime requestedOn)
-        {
-            // NOTE: Namespace approval is now tracked at review level only
-            // This method is kept for backward compatibility but does nothing
-            await Task.CompletedTask;
-        }
-
-        /// <summary>
-        /// Check if the language is TypeSpec or one of the 5 supported SDK languages
-        /// </summary>
-        /// <param name="language"></param>
-        /// <returns></returns>
-        private bool IsSDKLanguageOrTypeSpec(string language)
-        {
-            var supportedLanguages = new[] { "TypeSpec", "C#", "Java", "Python", "Go", "JavaScript" };
-            return supportedLanguages.Contains(language);
         }
 
         /// <summary>
@@ -533,7 +493,7 @@ namespace APIViewWeb.Managers
                             {
                                 // Verify this is a language review (not another TypeSpec review)
                                 var review = await _reviewsRepository.GetReviewAsync(pr.ReviewId);
-                                if (review != null && IsSDKLanguageOrTypeSpec(review.Language) && review.Language != "TypeSpec")
+                                if (review != null && LanguageHelper.IsSDKLanguageOrTypeSpec(review.Language) && review.Language != "TypeSpec")
                                 {
                                     relatedReviewIds.Add(pr.ReviewId);
                                 }
@@ -688,18 +648,18 @@ namespace APIViewWeb.Managers
             }
         }
 
-        private async Task<ReviewListItemModel> ToggleReviewApproval(ClaimsPrincipal user, ReviewListItemModel review)
+        private async Task<ReviewListItemModel> ToggleReviewApproval(ClaimsPrincipal user, ReviewListItemModel review, string notes = "")
         {
             await ManagerHelpers.AssertApprover<ReviewListItemModel>(user, review, _authorizationService);
             var userId = user.GetGitHubLogin();
             var changeUpdate = ChangeHistoryHelpers.UpdateBinaryChangeAction<ReviewChangeHistoryModel, ReviewChangeAction>(
-                review.ChangeHistory, ReviewChangeAction.Approved, userId, "");
+                review.ChangeHistory, ReviewChangeAction.Approved, userId, notes);
             review.ChangeHistory = changeUpdate.ChangeHistory;
             review.IsApproved = changeUpdate.ChangeStatus;
             await _reviewsRepository.UpsertReviewAsync(review);
             
             // If this review was approved (first release), check if we should auto-approve namespace for related TypeSpec
-            if (changeUpdate.ChangeStatus && IsSDKLanguage(review.Language))
+            if (changeUpdate.ChangeStatus && LanguageHelper.IsSDKLanguage(review.Language))
             {
                 await CheckAndAutoApproveNamespaceForTypeSpec(review.PackageName, userId);
             }
@@ -739,7 +699,8 @@ namespace APIViewWeb.Managers
             {
                 // Log the error but don't fail the original approval
                 // This is a nice-to-have feature, not critical
-                System.Diagnostics.Debug.WriteLine($"Error in auto-namespace approval: {ex.Message}");
+                _logger.LogWarning(ex, "Error in auto-namespace approval for package: {PackageName}", packageName);
+                _telemetryClient.TrackException(ex);
             }
         }
 
@@ -782,17 +743,6 @@ namespace APIViewWeb.Managers
 
             // Check if ALL found SDK reviews are approved
             return foundReviews.All(review => review.IsApproved);
-        }
-
-        /// <summary>
-        /// Check if the language is one of the 5 supported SDK languages
-        /// </summary>
-        /// <param name="language"></param>
-        /// <returns></returns>
-        private bool IsSDKLanguage(string language)
-        {
-            var sdkLanguages = new[] { "C#", "Java", "Python", "Go", "JavaScript" };
-            return sdkLanguages.Contains(language);
         }
 
         /// <summary>
@@ -985,7 +935,8 @@ namespace APIViewWeb.Managers
             catch (Exception ex)
             {
                 // Log the error but don't fail the page load
-                System.Diagnostics.Debug.WriteLine($"Error checking namespace review status: {ex.Message}");
+                _logger.LogWarning(ex, "Error checking namespace review status for TypeSpec review");
+                _telemetryClient.TrackException(ex);
             }
 
             return typeSpecReview;
@@ -1095,8 +1046,8 @@ namespace APIViewWeb.Managers
                 return false;
             }
             
-            // Calculate 3 business day deadline (same logic as EmailTemplateService)
-            var approvalDeadline = CalculateBusinessDays(review.NamespaceApprovalRequestedOn.Value, 3);
+            // Calculate 3 business day deadline (using centralized utility)
+            var approvalDeadline = DateTimeHelper.CalculateBusinessDays(review.NamespaceApprovalRequestedOn.Value, 3);
             _logger.LogInformation($"Approval deadline: {approvalDeadline}, Current time: {DateTime.UtcNow}");
             
             // Check if deadline has passed
@@ -1115,25 +1066,6 @@ namespace APIViewWeb.Managers
             _logger.LogInformation($"Final auto-approval decision: {shouldApprove}");
             
             return shouldApprove;
-        }
-
-        /// <summary>
-        /// Calculate business days from a start date (reusing EmailTemplateService logic)
-        /// </summary>
-        private DateTime CalculateBusinessDays(DateTime startDate, int businessDays)
-        {
-            var currentDate = startDate;
-            var daysAdded = 0;
-
-            while (daysAdded < businessDays)
-            {
-                currentDate = currentDate.AddDays(1);
-                if (currentDate.DayOfWeek != DayOfWeek.Saturday && currentDate.DayOfWeek != DayOfWeek.Sunday)
-                {
-                    daysAdded++;
-                }
-            }
-            return currentDate;
         }
 
         /// <summary>
@@ -1162,7 +1094,7 @@ namespace APIViewWeb.Managers
                     if (review.NamespaceApprovalRequestedOn.HasValue)
                     {
                         // Extract service name from package name for grouping
-                        var serviceName = ExtractServiceNameFromPackage(review.PackageName);
+                        var serviceName = StringHelper.ExtractServiceName(review.PackageName);
                         
                         // Create timestamp key with service name - precise to the minute to group related requests
                         var timestampKey = $"{serviceName}_{review.NamespaceApprovalRequestedOn.Value:yyyy-MM-dd_HH-mm}";
@@ -1209,82 +1141,6 @@ namespace APIViewWeb.Managers
         }
 
         /// <summary>
-        /// Group reviews by extracting service name from package names
-        /// </summary>
-        private Dictionary<string, List<ReviewListItemModel>> GroupReviewsByServiceName(List<ReviewListItemModel> reviews)
-        {
-            var serviceGroups = new Dictionary<string, List<ReviewListItemModel>>(StringComparer.OrdinalIgnoreCase);
-
-            foreach (var review in reviews)
-            {
-                var serviceName = ExtractServiceNameFromPackage(review.PackageName);
-                
-                if (!serviceGroups.ContainsKey(serviceName))
-                {
-                    serviceGroups[serviceName] = new List<ReviewListItemModel>();
-                }
-                serviceGroups[serviceName].Add(review);
-            }
-
-            return serviceGroups;
-        }
-
-        /// <summary>
-        /// Extract service name from package name to group related packages
-        /// Examples:
-        /// - Microsoft.MixedReality -> MixedReality
-        /// - com.azure.resourcemanager:azure-resourcemanager-mixedreality -> MixedReality  
-        /// - azure-mgmt-mixedreality -> MixedReality
-        /// - @azure/arm-mixedreality -> MixedReality
-        /// </summary>
-        private string ExtractServiceNameFromPackage(string packageName)
-        {
-            if (string.IsNullOrEmpty(packageName))
-                return "Unknown";
-
-            var name = packageName.ToLowerInvariant();
-            
-            // Handle Java packages specifically 
-            if (name.Contains("azure-resourcemanager-"))
-            {
-                var match = System.Text.RegularExpressions.Regex.Match(name, @"azure-resourcemanager-([^-]+)");
-                if (match.Success)
-                {
-                    var extractedService = match.Groups[1].Value;
-                    return char.ToUpperInvariant(extractedService[0]) + extractedService.Substring(1);
-                }
-            }
-            
-            // Remove common prefixes and suffixes
-            var patterns = new[]
-            {
-                @"microsoft\.",
-                @"azure\.",
-                @"com\.azure\.resourcemanager:",
-                @"azure-resourcemanager-",
-                @"azure-mgmt-",
-                @"@azure/arm-",
-                @"@azure/"
-            };
-
-            foreach (var pattern in patterns)
-            {
-                name = System.Text.RegularExpressions.Regex.Replace(name, pattern, "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-            }
-
-            // Extract the service name (first part before any dots, hyphens, or underscores after cleanup)
-            var serviceName = name.Split(new[] { '.', '-', '_' }, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
-            
-            // Capitalize first letter for consistency
-            if (!string.IsNullOrEmpty(serviceName) && serviceName.Length > 0)
-            {
-                serviceName = char.ToUpperInvariant(serviceName[0]) + serviceName.Substring(1);
-            }
-
-            return serviceName ?? "Unknown";
-        }
-
-        /// <summary>
         /// Auto-approve all reviews in a group and send one consolidated notification
         /// </summary>
         private async Task AutoApproveNamespaceGroup(List<ReviewListItemModel> allReviewsInGroup, ReviewListItemModel typeSpecReview)
@@ -1321,98 +1177,6 @@ namespace APIViewWeb.Managers
             {
                 _telemetryClient.TrackException(ex);
             }
-        }
-
-        /// <summary>
-        /// Auto-approve all reviews for a package and send one consolidated notification
-        /// </summary>
-        private async Task AutoApproveNamespacePackage(string packageName, List<ReviewListItemModel> allReviewsInPackage, ReviewListItemModel typeSpecReview)
-        {
-            try
-            {
-                // Approve all reviews in this package
-                foreach (var review in allReviewsInPackage)
-                {
-                    review.NamespaceReviewStatus = NamespaceReviewStatus.Approved;
-                    await _reviewsRepository.UpsertReviewAsync(review);
-                }
-                
-                // Send ONE consolidated email for the TypeSpec review with all associated language reviews
-                if (typeSpecReview != null)
-                {
-                    // Get language reviews (exclude TypeSpec and Swagger from the associated list)
-                    var associatedLanguageReviews = allReviewsInPackage
-                        .Where(r => r.Language != "TypeSpec" && r.Language != "Swagger")
-                        .ToList();
-                    
-                    await _notificationManager.NotifyStakeholdersOfAutoApproval(typeSpecReview, associatedLanguageReviews);
-                }
-                else
-                {
-                    // Fallback: if no TypeSpec review found, use the first review as primary
-                    var primaryReview = allReviewsInPackage.First();
-                    var otherReviews = allReviewsInPackage.Skip(1).ToList();
-                    
-                    await _notificationManager.NotifyStakeholdersOfAutoApproval(primaryReview, otherReviews);
-                }
-            }
-            catch (Exception ex)
-            {
-                _telemetryClient.TrackException(ex);
-            }
-        }
-
-        /// <summary>
-        /// Auto-approve a namespace review and all associated language reviews
-        /// NOTE: This method is deprecated in favor of AutoApproveNamespacePackage for consolidated approvals
-        /// </summary>
-        private async Task AutoApproveNamespaceReview(ReviewListItemModel review)
-        {
-            // Update the main review to Approved
-            review.NamespaceReviewStatus = NamespaceReviewStatus.Approved;
-            await _reviewsRepository.UpsertReviewAsync(review);
-            
-            // Find and update associated language reviews to Approved as well
-            var associatedReviews = await FindAssociatedLanguageReviews(review.Id);
-            foreach (var assocReview in associatedReviews)
-            {
-                assocReview.NamespaceReviewStatus = NamespaceReviewStatus.Approved;
-                await _reviewsRepository.UpsertReviewAsync(assocReview);
-            }
-            
-            // Send notification about auto-approval
-            await _notificationManager.NotifyStakeholdersOfAutoApproval(review, associatedReviews);
-        }
-
-        /// <summary>
-        /// Find associated language reviews for a TypeSpec review (reusing existing logic)
-        /// </summary>
-        private async Task<List<ReviewListItemModel>> FindAssociatedLanguageReviews(string reviewId)
-        {
-            var associatedReviews = new List<ReviewListItemModel>();
-            
-            try
-            {
-                // Reuse existing logic to find related reviews
-                var discoveredReviewIds = await FindRelatedReviewsByPullRequestAsync(reviewId);
-                
-                foreach (var relatedReviewId in discoveredReviewIds)
-                {
-                    var relatedReview = await _reviewsRepository.GetReviewAsync(relatedReviewId);
-                    if (relatedReview != null && 
-                        IsSDKLanguage(relatedReview.Language) && 
-                        relatedReview.NamespaceReviewStatus == NamespaceReviewStatus.Pending)
-                    {
-                        associatedReviews.Add(relatedReview);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                _telemetryClient.TrackException(ex);
-            }
-            
-            return associatedReviews;
         }
     }
 }

@@ -215,8 +215,10 @@ namespace APIViewWeb.Managers
 
         private async Task SendUserEmailsAsync<T>(T model, UserProfileModel user, string htmlContent) where T : BaseListitemModel 
         {
+            // Always send email to a test address when test address is configured.
             if (string.IsNullOrEmpty(user.Email))
             {
+                _telemetryClient.TrackTrace($"Email address is not available for user {user.UserName}. Not sending email.");
                 return;
             }
 
@@ -232,10 +234,12 @@ namespace APIViewWeb.Managers
                 foreach (var username in notifiedUsers)
                 {
                     var email = await GetEmailAddress(username);
-                    if (!string.IsNullOrEmpty(email))
+                    if (string.IsNullOrEmpty(email))
                     {
-                        notifiedEmails.Add(email);
+                        _telemetryClient.TrackTrace($"Email address is not available for user {username}, review {review.Id}. Not sending email.");
+                        continue;
                     }
+                    notifiedEmails.Add(email);
                 }
             }           
             var subscribers = review.Subscribers.ToList()
@@ -263,90 +267,6 @@ namespace APIViewWeb.Managers
                 return "";
             var user = await _userProfileRepository.TryGetUserProfileAsync(username);
             return user.Email;
-        }
-
-        private async Task<IEnumerable<APIRevisionListItemModel>> GetLanguageSpecificReviews(string packageName)
-        {
-            try
-            {
-                // Extract the core service name from the package name for better matching
-                // e.g., "Microsoft.MixedReality" -> "MixedReality"
-                var serviceName = ExtractServiceName(packageName);
-                
-                // Get all recent manual revisions and filter by service name
-                var recentDate = DateTime.UtcNow.AddMonths(-6); // Get revisions from last 6 months
-                var allReviews = await _apiRevisionRepository.GetAPIRevisionsAsync(recentDate, APIRevisionType.Manual);
-
-                // Find reviews that contain the service name (more flexible matching)
-                var relatedReviews = allReviews.Where(r => 
-                    !string.IsNullOrEmpty(r.PackageName) && 
-                    (r.PackageName.Contains(serviceName, StringComparison.OrdinalIgnoreCase) ||
-                     r.PackageName.Contains(packageName, StringComparison.OrdinalIgnoreCase)))
-                    .OrderByDescending(r => r.CreatedOn)
-                    .Take(15); // Get more results to filter
-
-                // Group by language and take the most recent for each language
-                var languageGroups = relatedReviews
-                    .GroupBy(r => r.Language)
-                    .Select(g => g.OrderByDescending(r => r.CreatedOn).First())
-                    .OrderBy(r => r.Language)
-                    .ToList();
-
-                return languageGroups;
-            }
-            catch (Exception ex)
-            {
-                _telemetryClient.TrackException(ex);
-                return Enumerable.Empty<APIRevisionListItemModel>();
-            }
-        }
-
-        private string ExtractServiceName(string packageName)
-        {
-            if (string.IsNullOrEmpty(packageName))
-                return packageName;
-
-            // Handle different package naming patterns
-            // Microsoft.ServiceName -> ServiceName
-            // Azure.ResourceManager.ServiceName -> ServiceName  
-            // azure-mgmt-servicename -> servicename
-            // @azure/arm-servicename -> servicename
-
-            var serviceName = packageName;
-
-            // Remove common prefixes
-            var prefixesToRemove = new[]
-            {
-                "Microsoft.",
-                "Azure.ResourceManager.",
-                "Azure.",
-                "azure-mgmt-",
-                "azure-",
-                "@azure/arm-",
-                "@azure/"
-            };
-
-            foreach (var prefix in prefixesToRemove)
-            {
-                if (serviceName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-                {
-                    serviceName = serviceName.Substring(prefix.Length);
-                    break;
-                }
-            }
-
-            // Remove common suffixes
-            var suffixesToRemove = new[] { "-preview", ".Preview" };
-            foreach (var suffix in suffixesToRemove)
-            {
-                if (serviceName.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
-                {
-                    serviceName = serviceName.Substring(0, serviceName.Length - suffix.Length);
-                    break;
-                }
-            }
-
-            return serviceName;
         }
 
         public async Task NotifyApproversOnNamespaceReviewRequest(ClaimsPrincipal user, ReviewListItemModel review, IEnumerable<ReviewListItemModel> languageReviews = null, string notes = "")
@@ -400,21 +320,22 @@ namespace APIViewWeb.Managers
         {
             if (string.IsNullOrEmpty(_emailSenderServiceUrl))
             {
+                _telemetryClient.TrackTrace($"Email sender service URL is not configured. Email will not be sent to {emailToList} with subject: {subject}");
                 return;
             }
             
             var emailToAddress = !string.IsNullOrEmpty(_testEmailToAddress) ? _testEmailToAddress : emailToList;
             var requestBody = new EmailModel(emailToAddress, subject, content);
+            var httpClient = new HttpClient();
             
             try
             {
                 var requestBodyJson = JsonSerializer.Serialize(requestBody);
-                using var httpClient = _httpClientFactory.CreateClient();
+                _telemetryClient.TrackTrace($"Sending email address request to logic apps. request: {requestBodyJson}");
                 var response = await httpClient.PostAsync(_emailSenderServiceUrl, new StringContent(requestBodyJson, Encoding.UTF8, "application/json"));
-                
                 if (response.StatusCode != HttpStatusCode.OK && response.StatusCode != HttpStatusCode.Accepted)
                 {
-                    _telemetryClient.TrackTrace($"Failed to send email with subject: {subject}, status code: {response.StatusCode}");
+                   _telemetryClient.TrackTrace($"Failed to send email to user {emailToList} with subject: {subject}, status code: {response.StatusCode}, Details: {response.ToString}");
                 }
             }
             catch (Exception ex)

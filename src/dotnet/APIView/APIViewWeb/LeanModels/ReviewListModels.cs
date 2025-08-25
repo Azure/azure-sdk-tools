@@ -154,9 +154,6 @@ namespace APIViewWeb.LeanModels
         public bool IsReleased { get; set; }
         public DateTime ReleasedOn { get; set; }
         public HashSet<string> ViewedBy { get; set; } = new HashSet<string>();
-        
-        // NOTE: Namespace approval is handled at the Review level, not Revision level
-        // See ReviewListItemModel for namespace approval properties
     }
 
 

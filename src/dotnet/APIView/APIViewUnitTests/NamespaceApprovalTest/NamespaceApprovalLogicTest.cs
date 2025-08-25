@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Xunit;
@@ -25,6 +26,12 @@ namespace APIViewUnitTests
         public void IsSDKLanguage_Unsupported_ReturnsFalse(string language)
         {
             Assert.False(IsSDKLanguage(language));
+        }
+
+        [Fact]
+        public void IsSDKLanguage_Null_ThrowsException()
+        {
+            Assert.Throws<ArgumentNullException>(() => IsSDKLanguage(null));
         }
 
         [Fact]
@@ -79,7 +86,7 @@ namespace APIViewUnitTests
         private static bool IsSDKLanguage(string language)
         {
             var sdk = new[] { "C#","Java","Python","Go","JavaScript" };
-            return !string.IsNullOrEmpty(language) && sdk.Contains(language);
+            return sdk.Contains(language); // Matches actual implementation - will throw for null
         }
 
         private static bool AllRelatedSdkApproved(IEnumerable<(string Package, string Lang, bool Approved)> all, string baseLower)

@@ -112,11 +112,18 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
         /// </summary>
         private static IServiceCollection AddApplicationServices(this IServiceCollection services)
         {
-            services.AddSingleton<ErrorFixerAgent>();
             services.AddSingleton<ProcessExecutor>();
             services.AddSingleton<BuildErrorAnalyzer>();
             services.AddSingleton<FixPromptService>();
             services.AddSingleton<AgentResponseParser>();
+
+            services.AddSingleton<AgentManager>();
+            services.AddSingleton<AgentProcessor>();
+            services.AddSingleton<FileManager>();
+            services.AddSingleton<ThreadManager>();
+            services.AddSingleton<ErrorParser>();
+
+            services.AddSingleton<AgentOrchestrator>();
 
             services.AddSingleton<Func<ValidationContext, ISdkGenerationService>>(provider =>
             {

@@ -72,7 +72,7 @@ class Variables:
         self.cosmos_endpoint = f"https://{self.cosmos_account_name}.documents.azure.com:443/"
         self.cognitive_services_id = f"/subscriptions/{self.subscription_id}/resourceGroups/{self.rg_name}/providers/Microsoft.CognitiveServices/accounts/{self.cognitive_services_name}"
         self.openai_endpoint = f"https://{self.openai_name}.openai.azure.com/"
-        self.openai_id = f"/subscriptions/{self.subscription_id}/resourceGroups/{self.rg_name}/providers/Microsoft.CognitiveServices/accounts/{self.openai_name}"
+        self.openai_id = f"/subscriptions/{self.subscription_id}/resourceGroups/{self.ai_rg}/providers/Microsoft.CognitiveServices/accounts/{self.openai_name}"
         self.keyvault_endpoint = f"https://{self.keyvault_name}.vault.azure.net/"
         self.app_configuration_endpoint = f"https://{self.app_configuration_name}.azconfig.io"
         self.webapp_endpoint = f"https://{self.webapp_name}.azurewebsites.net/"

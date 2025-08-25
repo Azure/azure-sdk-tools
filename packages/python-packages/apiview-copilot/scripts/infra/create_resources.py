@@ -408,6 +408,7 @@ def create_azure_search_service(v: Variables):
             sku=SearchSku(name="standard"),
             disable_local_auth=True,  # Ensures compliance with security policy
             identity={"type": "SystemAssigned"},
+            semantic_search="standard",
         )
         resource = client.services.begin_create_or_update(v.rg_name, v.search_name, search_service).result()
         print(f"Created Azure AI Search resource: {v.search_name}")
@@ -1314,10 +1315,19 @@ if __name__ == "__main__":
         roles=[
             "App Configuration Data Owner",
             "Search Index Data Reader",
+        ],
+        principal_id=webapp_identity,
+        principal_type=PrincipalType.SERVICE_PRINCIPAL,
+    )
+
+    assign_rbac_roles(
+        v,
+        roles=[
             "Cognitive Services OpenAI User",
         ],
         principal_id=webapp_identity,
         principal_type=PrincipalType.SERVICE_PRINCIPAL,
+        scope=openai_resource.id,
     )
     assign_rbac_roles(
         v,

@@ -167,10 +167,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                 // Normalize service path
                 var normalizedPath = CodeownersHelper.NormalizePath(path);
 
-                // Resolve PR number to actual branch name if provided
+                // Resolve PR number to actual branch name if provided.
                 if (!string.IsNullOrEmpty(workingBranch))
                 {
-                    workingBranch = await ResolveBranchFromInput(workingBranch, repo);
+                    var cleanInput = workingBranch.TrimStart('#');
+
+                    // Is a PR number
+                    if (int.TryParse(cleanInput, out int prNumber))
+                    {
+                        var pr = await githubService.GetPullRequestAsync(Constants.AZURE_OWNER_PATH, repo, prNumber);
+                        workingBranch = pr.Head.Ref;
+                    }
                 }
 
                 // Get codeowners file contents.
@@ -404,33 +411,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                 return (string.Join(" ", validationErrors), distinctResults);
             }
             return ("", distinctResults);
-        }
-
-        private async Task<string> ResolveBranchFromInput(string input, string repo)
-        {
-            var cleanInput = input.TrimStart('#');
-            
-            // Is a PR number
-            if (int.TryParse(cleanInput, out int prNumber))
-            {
-                try
-                {
-                    var pr = await githubService.GetPullRequestAsync(Constants.AZURE_OWNER_PATH, repo, prNumber);
-                    return pr.Head.Ref;
-                }
-                catch (Exception ex)
-                {
-                    throw new Exception($"Could not find PR #{prNumber}: {ex.Message}");
-                }
-            }
-            
-            // Is a branch name
-            var branchExists = await githubService.IsExistingBranchAsync(Constants.AZURE_OWNER_PATH, repo, cleanInput);
-            if (branchExists)
-            {
-                return cleanInput;
-            }
-            throw new Exception($"Branch '{cleanInput}' does not exist in repository {Constants.AZURE_OWNER_PATH}/{repo}. Please provide a valid PR number or existing branch name.");
         }
     }
 }

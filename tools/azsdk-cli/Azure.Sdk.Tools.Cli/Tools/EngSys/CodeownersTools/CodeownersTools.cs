@@ -299,7 +299,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
 
                 var normalizedPath = CodeownersHelper.NormalizePath(path);
 
-                var workingBranch = "main";
+                var workingBranch = "";
+                var codeownersPullRequests = await githubService.SearchPullRequestsByTitleAsync(Constants.AZURE_OWNER_PATH, repoName, "[CODEOWNERS]");
+
+                foreach (var codeownersPullRequest in codeownersPullRequests)
+                {
+                    if (codeownersPullRequest != null &&
+                        ((!string.IsNullOrEmpty(serviceLabel) && codeownersPullRequest.Title.Contains(serviceLabel, StringComparison.OrdinalIgnoreCase)) ||
+                        (!string.IsNullOrEmpty(normalizedPath) && codeownersPullRequest.Title.Contains(normalizedPath, StringComparison.OrdinalIgnoreCase))))
+                    {
+                        workingBranch = codeownersPullRequest.Head.Ref;
+                    }
+                }
+
+                workingBranch = string.IsNullOrEmpty(workingBranch) ? "main" : workingBranch;
 
                 CodeownersEntry? matchingEntry;
                 try

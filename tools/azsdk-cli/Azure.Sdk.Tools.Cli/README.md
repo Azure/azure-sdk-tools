@@ -49,7 +49,7 @@ This is the SDK developer experience CLI and MCP server. It is intended to:
 
 ```text
 Description:
-  azsdk cli - A Model Context Protocol (MCP) server that enables various tasks for the Azure SDK Engineering System.
+  azsdk cli - A Model Context Protocol (MCP) server that facilitates tasks for anyone working with the Azure SDK team.
 
 Usage:
   azsdk [command] [options]

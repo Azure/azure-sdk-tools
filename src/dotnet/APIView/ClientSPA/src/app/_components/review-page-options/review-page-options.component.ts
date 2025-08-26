@@ -23,6 +23,7 @@ import { AIReviewJobCompletedDto } from 'src/app/_dtos/aiReviewJobCompletedDto';
 import { NotificationsService } from 'src/app/_services/notifications/notifications.service';
 import { SiteNotification } from 'src/app/_models/notificationsModel';
 import { SiteNotificationDto, SiteNotificationStatus } from 'src/app/_dtos/siteNotificationDto';
+import { AzureEngSemanticVersion } from 'src/app/_models/azureEngSemanticVersion';
 
 @Component({
   selector: 'app-review-page-options',
@@ -337,8 +338,15 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   private updateApprovalStates(isReviewByCopilotRequired: boolean, isVersionReviewedByCopilot: boolean) {
     this.activeAPIRevisionIsApprovedByCurrentUser = this.activeAPIRevision?.approvers.includes(this.userProfile?.userName!)!;
     this.canToggleApproveAPIRevision = (!this.diffAPIRevision || this.diffAPIRevision.approvers.length > 0);
-  
-    this.isAPIRevisionApprovalDisabled = isReviewByCopilotRequired && !isVersionReviewedByCopilot && !this.activeAPIRevisionIsApprovedByCurrentUser;
+
+    const isPreviewVersion = this.activeAPIRevision ? 
+      new AzureEngSemanticVersion(this.activeAPIRevision.packageVersion, this.activeAPIRevision.language).isPrerelease : 
+      false;
+
+    this.isAPIRevisionApprovalDisabled = !isPreviewVersion && 
+                                        isReviewByCopilotRequired && 
+                                        !isVersionReviewedByCopilot && 
+                                        !this.activeAPIRevisionIsApprovedByCurrentUser;
     
     if (this.canToggleApproveAPIRevision) {
       if (this.isAPIRevisionApprovalDisabled) {

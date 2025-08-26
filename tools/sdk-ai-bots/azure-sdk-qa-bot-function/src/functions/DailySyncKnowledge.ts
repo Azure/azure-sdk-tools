@@ -2,7 +2,7 @@ import { app, HttpRequest, HttpResponseInit, InvocationContext, Timer } from '@a
 import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
-import { StorageService } from '../services/StorageService';
+import { BlobService } from '../services/StorageService';
 import { SpectorCaseProcessor } from '../services/SpectorCaseProcessor';
 import { ConfigurationLoader, RepositoryConfig } from '../services/ConfigurationLoader';
 import { SearchService } from '../services/SearchService';
@@ -103,7 +103,7 @@ async function processDailySyncKnowledge(context: InvocationContext): Promise<vo
     const tempDocsDir = path.join(workingDir, 'temp_docs');
     
     // Initialize services
-    const storageService = new StorageService();
+    const blobService = new BlobService();
     const searchService = new SearchService();
     
     try {
@@ -122,7 +122,7 @@ async function processDailySyncKnowledge(context: InvocationContext): Promise<vo
         
         // Load existing blob metadata for change detection
         const containerName = process.env.STORAGE_KNOWLEDGE_CONTAINER;
-        const existingBlobs = await storageService.listBlobsWithProperties(containerName);
+        const existingBlobs = await blobService.listBlobsWithProperties(containerName);
         
         context.log('Setting up documentation repositories...');
         
@@ -171,7 +171,7 @@ async function processDailySyncKnowledge(context: InvocationContext): Promise<vo
                     targetDir, 
                     existingBlobs,
                     searchService,
-                    storageService,
+                    blobService,
                     context
                 );
                 
@@ -393,7 +393,7 @@ async function processSourceDirectory(
     targetDir: string,
     existingBlobs: Map<string, any>,
     searchService: SearchService,
-    storageService: StorageService,
+    blobService: BlobService,
     context: InvocationContext
 ): Promise<ProcessSourceDirectoryResult> {
     
@@ -436,7 +436,7 @@ async function processSourceDirectory(
                     }
 
                     // Check if content has changed by comparing MD5
-                    if (storageService.hasContentChanged(processed.blobPath, processed.content, existingBlobs)) {
+                    if (blobService.hasContentChanged(processed.blobPath, processed.content, existingBlobs)) {
                         context.log(`Content changed for: ${processed.blobPath}`);
                         changedDocuments++;
                         changedFiles.push(processed);
@@ -745,7 +745,7 @@ async function uploadFilesToBlobStorage(
     context: InvocationContext
 ) {
     try {
-        const storageService = new StorageService();
+        const blobService = new BlobService();
         const containerName = process.env.STORAGE_KNOWLEDGE_CONTAINER;
         
         let uploadedCount = 0;
@@ -753,7 +753,7 @@ async function uploadFilesToBlobStorage(
         // Upload only changed files
         for (const file of changedFiles) {
             if (file.isValid) {
-                await storageService.putBlob(context, containerName, file.blobPath, file.content);
+                await blobService.putBlob(context, containerName, file.blobPath, file.content);
                 uploadedCount++;
             }
         }
@@ -771,13 +771,13 @@ async function uploadFilesToBlobStorage(
  */
 async function cleanupExpiredBlobs(currentFiles: ProcessedMarkdownFile[], context: InvocationContext): Promise<void> {
     try {
-        const storageService = new StorageService();
+        const blobService = new BlobService();
         const containerName = process.env.STORAGE_KNOWLEDGE_CONTAINER;
         
         context.log('Cleaning up expired blobs...');
         
         // Get all existing blobs
-        const allBlobs = await storageService.listBlobs(containerName);
+        const allBlobs = await blobService.listBlobs(containerName);
         
         // Create a set of current file blob paths for efficient lookup
         const currentFileBlobPaths = new Set(
@@ -797,7 +797,7 @@ async function cleanupExpiredBlobs(currentFiles: ProcessedMarkdownFile[], contex
             // Delete if not in current files
             if (!currentFileBlobPaths.has(blobPath)) {
                 try {
-                    await storageService.deleteBlob(context, containerName, blobPath);
+                    await blobService.deleteBlob(context, containerName, blobPath);
                     deletedCount++;
                 } catch (error) {
                     context.warn(`Failed to delete blob ${blobPath}: ${error instanceof Error ? error.message : 'Unknown error'}`);

@@ -38,6 +38,43 @@ function Get-PurgeableGroupResources {
     $purgeableResources += $deletedKeyVaults
   }
 
+  Write-Verbose "Retrieving AI resources from resource group $ResourceGroupName"
+
+  # Get AI resources that support soft delete
+  $aiResources = @(Get-AzResource -ResourceGroupName $ResourceGroupName -ErrorAction Ignore | Where-Object {
+    ($_.ResourceType -eq 'Microsoft.CognitiveServices/accounts') -or 
+    ($_.ResourceType -eq 'Microsoft.MachineLearningServices/workspaces')
+  } | ForEach-Object {
+    $resource = $_
+    # Add metadata for AI resources that support soft delete
+    if ($resource.ResourceType -eq 'Microsoft.CognitiveServices/accounts') {
+      # Create a simplified object for Cognitive Services resources
+      [pscustomobject] @{
+        AzsdkResourceType = 'Cognitive Services Account'
+        AzsdkName         = $resource.Name
+        Id                = $resource.ResourceId
+        Name              = $resource.Name
+        Location          = $resource.Location
+        ResourceType      = $resource.ResourceType
+      }
+    } elseif ($resource.ResourceType -eq 'Microsoft.MachineLearningServices/workspaces') {
+      # Create a simplified object for ML workspaces
+      [pscustomobject] @{
+        AzsdkResourceType = 'Machine Learning Workspace'
+        AzsdkName         = $resource.Name
+        Id                = $resource.ResourceId
+        Name              = $resource.Name
+        Location          = $resource.Location
+        ResourceType      = $resource.ResourceType
+      }
+    }
+  } | Where-Object { $_ -ne $null })
+
+  if ($aiResources) {
+    Write-Verbose "Found $($aiResources.Count) AI resources to potentially purge."
+    $purgeableResources += $aiResources
+  }
+
   return $purgeableResources
 }
 
@@ -93,6 +130,73 @@ function Get-PurgeableResources {
     }
   }
   catch { }
+
+  Write-Verbose "Retrieving deleted Cognitive Services accounts from subscription $subscriptionId"
+
+  # Get deleted Cognitive Services accounts for the current subscription.
+  $response = Invoke-AzRestMethod -Method GET -Path "/subscriptions/$subscriptionId/providers/Microsoft.CognitiveServices/deletedAccounts?api-version=2023-05-01" -ErrorAction Ignore
+  if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 300 -and $response.Content) {
+    $content = $response.Content | ConvertFrom-Json
+
+    $deletedCognitiveServices = @()
+    foreach ($r in $content.value) {
+      $resourceType = switch ($r.properties.kind) {
+        'OpenAI' { 'Azure OpenAI' }
+        'ComputerVision' { 'Computer Vision' }
+        'CustomVision.Training' { 'Custom Vision Training' }
+        'CustomVision.Prediction' { 'Custom Vision Prediction' }
+        'ContentSafety' { 'Content Safety' }
+        'FormRecognizer' { 'Document Intelligence' }
+        'Face' { 'Face API' }
+        'ImmersiveReader' { 'Immersive Reader' }
+        'TextAnalytics' { 'Language Service' }
+        'SpeechServices' { 'Speech Service' }
+        'TextTranslation' { 'Translator' }
+        'AIServices' { 'Azure AI Foundry' }
+        default { "Cognitive Services ($($r.properties.kind))" }
+      }
+
+      $deletedCognitiveServices += [pscustomobject] @{
+        AzsdkResourceType = $resourceType
+        AzsdkName         = $r.name
+        Id                = $r.id
+        Name              = $r.name
+        Location          = $r.properties.location
+        Kind              = $r.properties.kind
+        DeletionDate      = $r.properties.deletionDate -as [DateTime]
+      }
+    }
+
+    if ($deletedCognitiveServices) {
+      Write-Verbose "Found $($deletedCognitiveServices.Count) deleted Cognitive Services accounts to potentially purge."
+      $purgeableResources += $deletedCognitiveServices
+    }
+  }
+
+  Write-Verbose "Retrieving deleted Machine Learning workspaces from subscription $subscriptionId"
+
+  # Get deleted Machine Learning workspaces for the current subscription.
+  $response = Invoke-AzRestMethod -Method GET -Path "/subscriptions/$subscriptionId/providers/Microsoft.MachineLearningServices/deletedWorkspaces?api-version=2023-04-01" -ErrorAction Ignore
+  if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 300 -and $response.Content) {
+    $content = $response.Content | ConvertFrom-Json
+
+    $deletedMLWorkspaces = @()
+    foreach ($r in $content.value) {
+      $deletedMLWorkspaces += [pscustomobject] @{
+        AzsdkResourceType = 'Machine Learning Workspace'
+        AzsdkName         = $r.name
+        Id                = $r.id
+        Name              = $r.name
+        Location          = $r.properties.location
+        DeletionDate      = $r.properties.deletionDate -as [DateTime]
+      }
+    }
+
+    if ($deletedMLWorkspaces) {
+      Write-Verbose "Found $($deletedMLWorkspaces.Count) deleted Machine Learning workspaces to potentially purge."
+      $purgeableResources += $deletedMLWorkspaces
+    }
+  }
 
   return $purgeableResources
 }
@@ -150,6 +254,42 @@ filter Remove-PurgeableResources {
             if ($content.error) {
               $err = $content.error
               Write-Warning "Failed to deleted Managed HSM '$($r.Name)': ($($err.code)) $($err.message)"
+            }
+          }
+        }.GetNewClosure()
+      }
+
+      { $_ -like 'Cognitive Services Account' -or $_ -like 'Azure OpenAI' -or $_ -like 'Computer Vision' -or $_ -like 'Custom Vision*' -or $_ -like 'Content Safety' -or $_ -like 'Document Intelligence' -or $_ -like 'Face API' -or $_ -like 'Immersive Reader' -or $_ -like 'Language Service' -or $_ -like 'Speech Service' -or $_ -like 'Translator' -or $_ -like 'Azure AI Foundry' -or $_ -like 'Cognitive Services*' } {
+        # Use `GetNewClosure()` on the `-Action` ScriptBlock to make sure variables are captured.
+        Invoke-AzRestMethod -Method POST -Path "/subscriptions/$subscriptionId/providers/Microsoft.CognitiveServices/locations/$($r.Location)/deletedAccounts/$($r.Name)/purge?api-version=2023-05-01" -ErrorAction Ignore -AsJob `
+        | Wait-PurgeableResourceJob -Resource $r -Timeout $Timeout -PassThru:$PassThru -Action {
+          param ( $response )
+          if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 300) {
+            Write-Warning "Successfully requested that $($r.AzsdkResourceType) '$($r.Name)' be purged, but may take a few minutes before it is actually purged."
+          }
+          elseif ($response.Content) {
+            $content = $response.Content | ConvertFrom-Json
+            if ($content.error) {
+              $err = $content.error
+              Write-Warning "Failed to purge $($r.AzsdkResourceType) '$($r.Name)': ($($err.code)) $($err.message)"
+            }
+          }
+        }.GetNewClosure()
+      }
+
+      'Machine Learning Workspace' {
+        # Use `GetNewClosure()` on the `-Action` ScriptBlock to make sure variables are captured.
+        Invoke-AzRestMethod -Method POST -Path "/subscriptions/$subscriptionId/providers/Microsoft.MachineLearningServices/locations/$($r.Location)/deletedWorkspaces/$($r.Name)/purge?api-version=2023-04-01" -ErrorAction Ignore -AsJob `
+        | Wait-PurgeableResourceJob -Resource $r -Timeout $Timeout -PassThru:$PassThru -Action {
+          param ( $response )
+          if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 300) {
+            Write-Warning "Successfully requested that Machine Learning Workspace '$($r.Name)' be purged, but may take a few minutes before it is actually purged."
+          }
+          elseif ($response.Content) {
+            $content = $response.Content | ConvertFrom-Json
+            if ($content.error) {
+              $err = $content.error
+              Write-Warning "Failed to purge Machine Learning Workspace '$($r.Name)': ($($err.code)) $($err.message)"
             }
           }
         }.GetNewClosure()

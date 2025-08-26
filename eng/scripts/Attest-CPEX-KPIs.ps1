@@ -61,16 +61,14 @@ foreach ($triage in $triages) {
 
     if ($dataAttestationStatus -ne "Completed") {
         if ($dataScope -eq "Yes") {
-            $status = $Incomplete
             Update-AttestationStatusInWorkItem -workItemId $triage.id -fieldName "Custom.DataplaneAttestationStatus" -status "Complete"
         } else {
-            $status = $NA
             Update-AttestationStatusInWorkItem -workItemId $triage.id -fieldName "Custom.DataplaneAttestationStatus" -status "Not applicable"
-        }
 
-        if ($lifecycleToDataKpis.ContainsKey($lifecycle)) {
-            foreach ($kpiId in $lifecycleToDataKpis[$lifecycle]) {
-                AddAttestationEntry $productServiceTreeId $kpiId $status $productType $url
+            if ($lifecycleToDataKpis.ContainsKey($lifecycle)) {
+                foreach ($kpiId in $lifecycleToDataKpis[$lifecycle]) {
+                    AddAttestationEntry $productServiceTreeId $kpiId $NA $productType $url
+                }
             }
         }
     }
@@ -83,16 +81,13 @@ foreach ($triage in $triages) {
 
     if ($mgmtAttestationStatus -ne "Completed") {
         if ($mgmtScope -eq "Yes") {
-            $status = $Incomplete
             Update-AttestationStatusInWorkItem -workItemId $triage.id -fieldName "Custom.ManagementPlaneAttestationStatus" -status "Complete"
         } else {
-            $status = $NA
             Update-AttestationStatusInWorkItem -workItemId $triage.id -fieldName "Custom.ManagementPlaneAttestationStatus" -status "Not applicable"
-        }
-
-        if ($lifecycleToMgmtKpis.ContainsKey($lifecycle)) {
-            foreach ($kpiId in $lifecycleToMgmtKpis[$lifecycle]) {
-                AddAttestationEntry $productServiceTreeId $kpiId $status $productType $url
+            if ($lifecycleToMgmtKpis.ContainsKey($lifecycle)) {
+                foreach ($kpiId in $lifecycleToMgmtKpis[$lifecycle]) {
+                    AddAttestationEntry $productServiceTreeId $kpiId $NA $productType $url
+                }
             }
         }
     }

@@ -584,7 +584,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     return isReviewByCopilotRequired && !isVersionReviewedByCopilot;
   }
 
-    private isCopilotReviewSupportedForPackage(): boolean {
+  private isCopilotReviewSupportedForPackage(): boolean {
     if (!this.review?.packageName || !this.review?.language) {
       return true;
     }

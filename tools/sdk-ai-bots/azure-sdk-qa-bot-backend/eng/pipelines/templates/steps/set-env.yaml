@@ -1,0 +1,42 @@
+parameters:
+  NodeVersion: "$(NodeVersion)"
+  GoVersion: "$(GoVersion)"
+  GoLintCLIVersion: "$(GoLintCLIVersion)"
+  pnpmStorePath: $(Pipeline.Workspace)/.pnpm-store
+
+steps:
+  - task: NodeTool@0
+    displayName: "Install Node ${{ parameters.NodeVersion }}"
+    inputs:
+      versionSpec: "${{ parameters.NodeVersion }}"
+
+  - task: GoTool@0
+    inputs:
+      version: "${{ parameters.GoVersion }}"
+    displayName: "Select Go Version"
+
+  - task: Cache@2
+    inputs:
+      key: 'pnpm | "$(Agent.OS)" | $(System.DefaultWorkingDirectory)/pnpm-lock.yaml'
+      path: ${{ parameters.pnpmStorePath }}
+    displayName: Cache pnpm store
+
+  - script: |
+      npm i -g corepack@latest
+      corepack enable
+      corepack prepare pnpm@latest-10 --activate
+    displayName: Install pnpm
+
+  - script: pnpm config set store-dir ${{ parameters.pnpmStorePath }}
+    displayName: Setup pnpm cache dir
+
+  - script: |
+      echo "Node:"
+      node -v
+      echo "Pnpm:"
+      pnpm -v
+    displayName: Log tool versions used
+
+  - script: |
+      npm install -g autorest
+    displayName: "Install Latest Autorest"

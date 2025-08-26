@@ -12,6 +12,7 @@ import (
 )
 
 func TestQueryIndex(t *testing.T) {
+	config.InitEnvironment()
 	config.InitSecrets()
 	searchClient := search.NewSearchClient()
 	req := &model.QueryIndexRequest{
@@ -36,9 +37,11 @@ func TestQueryIndex(t *testing.T) {
 }
 
 func TestGetFullContext(t *testing.T) {
+	config.InitEnvironment()
+	config.InitSecrets()
 	searchClient := search.NewSearchClient()
 	resp, err := searchClient.GetCompleteContext(model.Index{
-		Title: "introduction_installation.mdx",
+		Title: "getstarted#installation.md",
 	})
 	if err != nil {
 		t.Errorf("QueryIndex() got an error: %v", err)
@@ -48,6 +51,7 @@ func TestGetFullContext(t *testing.T) {
 }
 
 func TestAgenticSearch(t *testing.T) {
+	config.InitEnvironment()
 	config.InitSecrets()
 	searchClient := search.NewSearchClient()
 	resp, err := searchClient.AgenticSearch(context.Background(), "how can i install typespec?", nil, "")

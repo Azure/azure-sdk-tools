@@ -3,10 +3,12 @@ package test
 import (
 	"testing"
 
+	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/storage"
 )
 
 func TestGetBlobs(t *testing.T) {
+	config.InitEnvironment()
 	// Initialize the storage client
 	storageClient, err := storage.NewStorageService()
 	if err != nil {
@@ -34,6 +36,7 @@ func TestGetBlobs(t *testing.T) {
 }
 
 func TestPutBlob(t *testing.T) {
+	config.InitEnvironment()
 	// Initialize the storage client
 	storageClient, err := storage.NewStorageService()
 	if err != nil {
@@ -55,6 +58,7 @@ func TestPutBlob(t *testing.T) {
 }
 
 func TestDeleteBlob(t *testing.T) {
+	config.InitEnvironment()
 	// Initialize the storage client
 	storageClient, err := storage.NewStorageService()
 	if err != nil {

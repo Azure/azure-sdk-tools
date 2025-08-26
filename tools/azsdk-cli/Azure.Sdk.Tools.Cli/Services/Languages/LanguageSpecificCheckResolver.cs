@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Models;
 
 namespace Azure.Sdk.Tools.Cli.Services;
 
@@ -13,35 +14,30 @@ public interface ILanguageSpecificCheckResolver
     /// </summary>
     /// <param name="packagePath">Path to the package directory</param>
     /// <returns>Language-specific check service that can handle the package, or null if no handler is found</returns>
-    ILanguageSpecificChecks? GetLanguageCheck(string packagePath);
+    Task<ILanguageSpecificChecks?> GetLanguageCheckAsync(string packagePath);
 }
 
 /// <summary>
 /// Resolves the appropriate language-specific check implementation based on package contents.
+/// Uses the Language-Settings.ps1 file in the repository to determine the language.
 /// Uses composition pattern instead of inheritance.
 /// </summary>
 public class LanguageSpecificCheckResolver : ILanguageSpecificCheckResolver
 {
     private readonly IEnumerable<ILanguageSpecificChecks> _languageChecks;
     private readonly IGitHelper _gitHelper;
+    private readonly IPowershellHelper _powershellHelper;
     private readonly ILogger<LanguageSpecificCheckResolver> _logger;
-
-    private static readonly Dictionary<string, string> RepositoryLanguageMapping = new()
-    {
-        { "azure-sdk-for-python", "Python" },
-        { "azure-sdk-for-java", "Java" },
-        { "azure-sdk-for-js", "JavaScript" },
-        { "azure-sdk-for-go", "Go" },
-        { "azure-sdk-for-net", "Dotnet" }
-    };
 
     public LanguageSpecificCheckResolver(
         IEnumerable<ILanguageSpecificChecks> languageChecks,
         IGitHelper gitHelper,
+        IPowershellHelper powershellHelper,
         ILogger<LanguageSpecificCheckResolver> logger)
     {
         _languageChecks = languageChecks ?? throw new ArgumentNullException(nameof(languageChecks));
         _gitHelper = gitHelper ?? throw new ArgumentNullException(nameof(gitHelper));
+        _powershellHelper = powershellHelper ?? throw new ArgumentNullException(nameof(powershellHelper));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -50,7 +46,7 @@ public class LanguageSpecificCheckResolver : ILanguageSpecificCheckResolver
     /// </summary>
     /// <param name="packagePath">Path to the package directory</param>
     /// <returns>Language-specific check service that can handle the package, or null if no handler is found</returns>
-    public ILanguageSpecificChecks? GetLanguageCheck(string packagePath)
+    public async Task<ILanguageSpecificChecks?> GetLanguageCheckAsync(string packagePath)
     {
         if (string.IsNullOrWhiteSpace(packagePath))
         {
@@ -65,7 +61,7 @@ public class LanguageSpecificCheckResolver : ILanguageSpecificCheckResolver
         _logger.LogDebug("Resolving language-specific check for package at {PackagePath}", packagePath);
 
         // Use repository detection service to identify the language
-        var detectedLanguage = DetectLanguage(packagePath);
+        var detectedLanguage = await DetectLanguageAsync(packagePath);
         
         if (string.IsNullOrEmpty(detectedLanguage))
         {
@@ -89,7 +85,7 @@ public class LanguageSpecificCheckResolver : ILanguageSpecificCheckResolver
         return null;
     }
 
-    private string? DetectLanguage(string packagePath)
+    private async Task<string?> DetectLanguageAsync(string packagePath)
     {
         try
         {
@@ -99,19 +95,19 @@ public class LanguageSpecificCheckResolver : ILanguageSpecificCheckResolver
                 return null;
             }
 
-            var repoName = Path.GetFileName(repositoryPath?.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar))?.ToLowerInvariant();
-            if (string.IsNullOrEmpty(repoName))
+            // Read Language-Settings.ps1 file to determine language
+            var languageSettingsPath = Path.Combine(repositoryPath, "eng", "scripts", "Language-Settings.ps1");
+            if (!File.Exists(languageSettingsPath))
             {
+                _logger.LogWarning("Language-Settings.ps1 not found at {LanguageSettingsPath}", languageSettingsPath);
                 return null;
             }
 
-            foreach (var (repoPattern, language) in RepositoryLanguageMapping)
+            var language = await ExtractLanguageFromFileAsync(languageSettingsPath);
+            if (!string.IsNullOrEmpty(language))
             {
-                if (repoName.Contains(repoPattern))
-                {
-                    _logger.LogDebug("Detected language: {Language} from repository name: {RepoName}", language, repoName);
-                    return language;
-                }
+                _logger.LogDebug("Detected language: {Language} from Language-Settings.ps1 at {Path}", language, languageSettingsPath);
+                return language;
             }
 
             return null;
@@ -119,6 +115,39 @@ public class LanguageSpecificCheckResolver : ILanguageSpecificCheckResolver
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error detecting language for package path: {PackagePath}", packagePath);
+            return null;
+        }
+    }
+
+    private async Task<string?> ExtractLanguageFromFileAsync(string filePath)
+    {
+        try
+        {
+            var options = new PowershellOptions([". '" + filePath.Replace("'", "''") + "'; Write-Output $Language"], 
+                workingDirectory: Path.GetDirectoryName(filePath));
+
+            var result = await _powershellHelper.Run(options, CancellationToken.None);
+            
+            if (result.ExitCode != 0)
+            {
+                _logger.LogError("PowerShell execution failed for {FilePath}: {Output}", filePath, result.Output);
+                return null;
+            }
+
+            var output = result.Output?.Trim();
+            
+            if (!string.IsNullOrWhiteSpace(output))
+            {
+                _logger.LogDebug("Extracted language '{Language}' from {FilePath}", output, filePath);
+                return output;
+            }
+
+            _logger.LogWarning("No valid language value found in {FilePath}", filePath);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error reading Language-Settings.ps1 file: {FilePath}", filePath);
             return null;
         }
     }

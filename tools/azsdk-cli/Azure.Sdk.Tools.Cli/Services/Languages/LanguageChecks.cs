@@ -93,7 +93,7 @@ public class LanguageChecks : ILanguageChecks
 
     public virtual async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct)
     {
-        var languageSpecificCheck = _languageSpecificCheckResolver.GetLanguageCheck(packagePath);
+        var languageSpecificCheck = await _languageSpecificCheckResolver.GetLanguageCheckAsync(packagePath);
         
         if (languageSpecificCheck == null)
         {

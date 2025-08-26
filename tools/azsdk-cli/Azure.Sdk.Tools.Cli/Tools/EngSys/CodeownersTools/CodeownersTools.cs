@@ -184,9 +184,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                     throw new Exception($"Service label: {serviceLabel} and Path: {path} are both invalid. At least one must be valid");
                 }
 
-                // Normalize service path
-                var normalizedPath = CodeownersHelper.NormalizePath(path);
-
                 string workingBranch = "";
 
                 // Resolve PR number to actual branch name if provided.
@@ -338,8 +335,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                 {
                     throw new Exception("Must provide a service label or a repository path.");
                 }
-
-                var normalizedPath = CodeownersHelper.NormalizePath(path);
 
                 string workingBranch = "";
 

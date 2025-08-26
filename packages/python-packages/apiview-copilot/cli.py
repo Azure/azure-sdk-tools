@@ -27,7 +27,6 @@ import requests
 from azure.cosmos import CosmosClient
 from azure.cosmos.exceptions import CosmosHttpResponseError
 from colorama import Fore, Style
-from evals._runner import EvalRunner
 from knack import CLI, ArgumentsContext, CLICommandsLoader
 from knack.commands import CommandGroup
 from knack.help_files import helps
@@ -178,6 +177,8 @@ def run_test_case(language: str, test_file: str, num_runs: int = 3):
     """
     Runs one or all eval test cases.
     """
+    from evals._runner import EvalRunner
+
     runner = EvalRunner(language=language, test_path=test_file, num_runs=num_runs)
     runner.run()
 

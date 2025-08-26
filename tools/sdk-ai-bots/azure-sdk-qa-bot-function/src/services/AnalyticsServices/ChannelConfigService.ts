@@ -5,6 +5,8 @@ import { AnalyticsServiceBase } from "./AnalyticsServiceBase";
 interface Channel {
     name: string;
     id: string;
+    tenant: string;
+    endpoint: string;
 }
 
 interface ChannelConfigData {
@@ -41,16 +43,6 @@ export class ChannelConfigService extends AnalyticsServiceBase<
     protected deserializeData(entities: string[]): Channel[] {
         const channels = entities.flatMap((entity) => {
             const channelConfig = yaml.load(entity) as ChannelConfigData;
-
-            if (
-                !channelConfig ||
-                !channelConfig.channels ||
-                !Array.isArray(channelConfig.channels)
-            ) {
-                throw new Error(
-                    "Warning: Invalid channel.yaml format. Expected 'channels' array property."
-                );
-            }
             return channelConfig.channels;
         });
         return channels;

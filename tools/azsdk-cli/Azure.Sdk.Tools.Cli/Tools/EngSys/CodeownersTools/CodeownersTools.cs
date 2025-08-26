@@ -167,29 +167,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                 // Normalize service path
                 var normalizedPath = CodeownersHelper.NormalizePath(path);
 
-                // Validate service label (perform early so tests expecting exceptions aren't swallowed)
-                if (!string.IsNullOrEmpty(serviceLabel))
-                {
-                    var labelsFileContent = await githubService.GetContentsSingleAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, Constants.AZURE_COMMON_LABELS_PATH);
-                    if (labelsFileContent == null)
-                    {
-                        throw new Exception("Could not retrieve labels file from the repository.");
-                    }
-
-                    var labelsContent = labelsFileContent.Content;
-                    var serviceLabelValidationResults = LabelHelper.CheckServiceLabel(labelsContent, serviceLabel);
-                    if (serviceLabelValidationResults != LabelHelper.ServiceLabelStatus.Exists)
-                    {
-                        var labelsPullRequests = (await githubService.SearchPullRequestsByTitleAsync(Constants.AZURE_OWNER_PATH, Constants.AZURE_SDK_TOOLS_PATH, "Service Label"))
-                            ?? new List<PullRequest?>().AsReadOnly();
-
-                        if (!LabelHelper.CheckServiceLabelInReview(labelsPullRequests, serviceLabel) && string.IsNullOrEmpty(normalizedPath))
-                        {
-                            throw new Exception($"Service label: {serviceLabel} doesn't exist.");
-                        }
-                    }
-                }
-
                 if (string.IsNullOrEmpty(workingBranch))
                 {
                     var codeownersPullRequests = (await githubService.SearchPullRequestsByTitleAsync(Constants.AZURE_OWNER_PATH, repo, "[CODEOWNERS]"))

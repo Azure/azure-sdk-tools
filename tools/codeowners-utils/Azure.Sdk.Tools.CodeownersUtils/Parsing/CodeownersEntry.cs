@@ -192,5 +192,135 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
                 return hc;
             }
         }
+
+        public string FormatCodeownersEntry()
+        {
+            var lines = new List<string>();
+
+            bool addSeperationLine = false;
+
+            string path = this.PathExpression ?? string.Empty;
+            List<string> serviceLabels = this.ServiceLabels ?? new List<string>();
+            List<string> prLabels = this.PRLabels ?? new List<string>();
+            List<string> serviceOwners = this.ServiceOwners ?? new List<string>();
+            List<string> sourceOwners = this.SourceOwners ?? new List<string>();
+            List<string> azureSDKOwners = this.AzureSdkOwners ?? new List<string>();
+
+            // Helper to compute pad width: start at basePad and if the left content length exceeds it,
+            // round up to the next multiple of 5.
+            int basePad = 67;
+            int ComputePad(int leftLength)
+            {
+                int candidate = ((leftLength + 5) / 5) * 5; // next multiple of 5 >= leftLength+? small margin
+                return Math.Max(basePad, candidate);
+            }
+
+            // Add all PRLabels first (each on its own line) - derived from service labels
+            if (prLabels.Any())
+            {
+                // ensure label is prefixed without duplicate %
+                var formattedPRLabels = prLabels
+                    .Where(lbl => !string.IsNullOrWhiteSpace(lbl))
+                    .Select(lbl => lbl.StartsWith("%") ? lbl : $"%{lbl}");
+                lines.Add($"# PRLabel: {string.Join(" ", formattedPRLabels)}");
+                addSeperationLine = true;
+            }
+
+            // Add the path and source owners line
+            if (!string.IsNullOrEmpty(path) && sourceOwners != null && sourceOwners.Count > 0)
+            {
+                addSeperationLine = true;
+                // Normalize and deduplicate source owners while preserving original casing
+                var normalizedSourceOwners = sourceOwners
+                    .Where(o => !string.IsNullOrWhiteSpace(o))
+                    .Select(o => o.Trim())
+                    .Select(o => o.StartsWith("@") ? o.Substring(1) : o)
+                    .Select(o => o.Trim())
+                    .ToList();
+
+                var uniqueSourceOwners = new List<string>();
+                var seenSource = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var owner in normalizedSourceOwners)
+                {
+                    if (seenSource.Add(owner))
+                    {
+                        uniqueSourceOwners.Add("@" + owner);
+                    }
+                }
+
+                // Compute pad width based on the path length (start at basePad and increase in steps of 5)
+                int padWidth = ComputePad(path.Length);
+                var pathLine = $"{path}".PadRight(padWidth) + $"{string.Join(" ", uniqueSourceOwners)}";
+                lines.Add(pathLine);
+            }
+
+            if (addSeperationLine)
+            {
+                lines.Add("");
+            }
+
+            // Add ServiceLabel(s) on a single line if provided
+            if (serviceLabels.Any())
+            {
+                var formattedServiceLabels = serviceLabels
+                    .Where(lbl => !string.IsNullOrWhiteSpace(lbl))
+                    .Select(lbl => lbl.StartsWith("%") ? lbl : $"%{lbl}");
+                lines.Add($"# ServiceLabel: {string.Join(" ", formattedServiceLabels)}");
+            }
+
+            // Add AzureSDKOwners if provided (normalize/dedupe)
+            if (azureSDKOwners != null && azureSDKOwners.Count > 0)
+            {
+                var normalizedAzureSdkOwners = azureSDKOwners
+                    .Where(o => !string.IsNullOrWhiteSpace(o))
+                    .Select(o => o.Trim())
+                    .Select(o => o.StartsWith("@") ? o.Substring(1) : o)
+                    .Select(o => o.Trim())
+                    .ToList();
+
+                var uniqueAzureSdkOwnersList = new List<string>();
+                var seenAzure = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var owner in normalizedAzureSdkOwners)
+                {
+                    if (seenAzure.Add(owner))
+                    {
+                        uniqueAzureSdkOwnersList.Add("@" + owner);
+                    }
+                }
+
+                // Use computed pad width so owners align even when the path is long
+                int padForAzure = ComputePad(Math.Max(path.Length, "# AzureSdkOwners: ".Length));
+                var azureSDKOwnersLine = $"# AzureSdkOwners: ".PadRight(padForAzure) + $"{string.Join(" ", uniqueAzureSdkOwnersList)}";
+                lines.Add(azureSDKOwnersLine);
+            }
+
+            // Add ServiceOwners if provided (normalize/dedupe)
+            if (serviceOwners != null && serviceOwners.Count > 0)
+            {
+                var normalizedServiceOwners = serviceOwners
+                    .Where(o => !string.IsNullOrWhiteSpace(o))
+                    .Select(o => o.Trim())
+                    .Select(o => o.StartsWith("@") ? o.Substring(1) : o)
+                    .Select(o => o.Trim())
+                    .ToList();
+
+                var uniqueServiceOwners = new List<string>();
+                var seenService = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var owner in normalizedServiceOwners)
+                {
+                    if (seenService.Add(owner))
+                    {
+                        uniqueServiceOwners.Add("@" + owner);
+                    }
+                }
+
+                int padForService = ComputePad(Math.Max(path.Length, "# ServiceOwners: ".Length));
+                var serviceOwnersLine = $"# ServiceOwners: ".PadRight(padForService) + $"{string.Join(" ", uniqueServiceOwners)}";
+                lines.Add(serviceOwnersLine);
+            }
+
+            var formattedCodeownersEntry = string.Join("\n", lines);
+            return formattedCodeownersEntry;
+        }
     }
 }

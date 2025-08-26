@@ -45,9 +45,6 @@ Additional features include:
 ### Project Setup
 1. Clone the repository:
    ```bash
-   git clone https://github.com/wanlwanl/wanl-fork-azure-sdk-tools.git
-   cd wanl-fork-azure-sdk-tools
-   git checkout azure-sdk-ai-bot-dev
    cd tools/sdk-ai-bots/azure-sdk-qa-bot-backend
    ```
 

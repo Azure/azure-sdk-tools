@@ -44,37 +44,59 @@ foreach ($triage in $triages) {
     $fields = $triage.fields
     $dataScope = $fields["Custom.DataScope"]
     $mgmtScope = $fields["Custom.MgmtScope"]
+    $productLifecycle = $fields["Custom.ProductLifecycle"]
+    $dataAttestationStatus = $fields["Custom.DataplaneAttestationStatus"]
+    $mgmtAttestationStatus = $fields["Custom.ManagementPlaneAttestationStatus"]
     $productServiceTreeId = $fields["Custom.ProductServiceTreeID"]
     $productType = $fields["Custom.ProductType"]
     $url = $triage.url
 
     AddAttestationEntry $productServiceTreeId $KPI_ID_Onboarding $Complete $productType $url
 
-     if ($dataScope -eq 'Yes') {
-        AddAttestationEntry $productServiceTreeId $KPI_ID_Data_Public_Preview $Incomplete $productType $url
-        AddAttestationEntry $productServiceTreeId $KPI_ID_Data_Private_Preview $Incomplete $productType $url
-        AddAttestationEntry $productServiceTreeId $KPI_ID_Data_GA $Incomplete $productType $url
+    $lifecycleToDataKpis = @{
+        "In Dev" = @($KPI_ID_Data_Private_Preview, $KPI_ID_Data_Public_Preview, $KPI_ID_Data_GA)
+        "Private Preview" = @($KPI_ID_Data_Public_Preview, $KPI_ID_Data_GA)
+        "Public Preview" = @($KPI_ID_Data_GA)
     }
 
-    if ($mgmtScope -eq 'Yes') {
-        AddAttestationEntry $productServiceTreeId $KPI_ID_Mgmt_Public_Preview $Incomplete $productType $url
-        AddAttestationEntry $productServiceTreeId $KPI_ID_Mgmt_Private_Preview $Incomplete $productType $url
-        AddAttestationEntry $productServiceTreeId $KPI_ID_Mgmt_GA $Incomplete $productType $url
+    if ($dataAttestationStatus -ne "Completed") {
+        if ($dataScope -eq "Yes") {
+            $status = $Incomplete
+            Update-AttestationStatusInWorkItem -workItemId $triage.id -fieldName "Custom.DataplaneAttestationStatus" -status "Complete"
+        } else {
+            $status = $NA
+            Update-AttestationStatusInWorkItem -workItemId $triage.id -fieldName "Custom.DataplaneAttestationStatus" -status "Not applicable"
+        }
+
+        if ($lifecycleToDataKpis.ContainsKey($lifecycle)) {
+            foreach ($kpiId in $lifecycleToDataKpis[$lifecycle]) {
+                AddAttestationEntry $productServiceTreeId $kpiId $status $productType $url
+            }
+        }
     }
 
-    if ($dataScope -eq 'No') {
-        AddAttestationEntry $productServiceTreeId $KPI_ID_Data_Public_Preview $NA $productType $url
-        AddAttestationEntry $productServiceTreeId $KPI_ID_Data_Private_Preview $NA $productType $url
-        AddAttestationEntry $productServiceTreeId $KPI_ID_Data_GA $NA $productType $url
+    $lifecycleToMgmtKpis = @{
+        "In Dev" = @($KPI_ID_Mgmt_Private_Preview, $KPI_ID_Mgmt_Public_Preview, $KPI_ID_Mgmt_GA)
+        "Private Preview" = @($KPI_ID_Mgmt_Public_Preview, $KPI_ID_Mgmt_GA)
+        "Public Preview" = @($KPI_ID_Mgmt_GA)
     }
 
-    if ($mgmtScope -eq 'No') {
-        AddAttestationEntry $productServiceTreeId $KPI_ID_Mgmt_Public_Preview $NA $productType $url
-        AddAttestationEntry $productServiceTreeId $KPI_ID_Mgmt_Private_Preview $NA $productType $url
-        AddAttestationEntry $productServiceTreeId $KPI_ID_Mgmt_GA $NA $productType $url
+    if ($mgmtAttestationStatus -ne "Completed") {
+        if ($mgmtScope -eq "Yes") {
+            $status = $Incomplete
+            Update-AttestationStatusInWorkItem -workItemId $triage.id -fieldName "Custom.ManagementPlaneAttestationStatus" -status "Complete"
+        } else {
+            $status = $NA
+            Update-AttestationStatusInWorkItem -workItemId $triage.id -fieldName "Custom.ManagementPlaneAttestationStatus" -status "Not applicable"
+        }
+
+        if ($lifecycleToMgmtKpis.ContainsKey($lifecycle)) {
+            foreach ($kpiId in $lifecycleToMgmtKpis[$lifecycle]) {
+                AddAttestationEntry $productServiceTreeId $kpiId $status $productType $url
+            }
+        }
     }
 
-    Update-AttestationStatusInReleasePlan $triage.id "Completed"
 }
 
 $releasePlans = Get-ReleasePlansForCPEXAttestation
@@ -122,5 +144,5 @@ foreach ($releasePlan in $releasePlans) {
         }
     }
 
-    Update-AttestationStatusInReleasePlan $releasePlan.id "Completed"
+    Update-AttestationStatusInWorkItem -workItemId $releasePlan.id -fieldName "Custom.AttestationStatus" -status "Completed"
 }

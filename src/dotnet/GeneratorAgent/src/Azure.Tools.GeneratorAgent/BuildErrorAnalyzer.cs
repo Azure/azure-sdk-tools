@@ -15,8 +15,7 @@ namespace Azure.Tools.GeneratorAgent
     {
         // Regular expression to match error patterns.
         // Matches strings like "error CS0103: The name 'InvalidVariable' does not exist in the current context [/path/to/file.cs]" into groups: "error (CS0103): (The name 'InvalidVariable' does not exist in the current context) [/path/to/file.cs]"
-
-        private static readonly Regex ErrorRegex = new(@"error\s+([A-Z]+\d+):\s*(.+?)(?=\s*\[|$)", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.Compiled);
+        private static readonly Regex ErrorRegex = new(@"error\s+([A-Z]+\d+):\s*(.+?)(?=\s*\[|$)", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.Compiled, TimeSpan.FromSeconds(1));
 
         private readonly ILogger<BuildErrorAnalyzer> Logger;
 
@@ -103,7 +102,7 @@ namespace Azure.Tools.GeneratorAgent
             // TODO: Implement LLM-based error message parsing as a fallback
 
             HashSet<(string type, string message)> seenErrors = new HashSet<(string type, string message)>();
-            List<RuleError> errors = new List<RuleError>();
+            List<RuleError> errors = new List<RuleError>(matches.Count);
 
             foreach (Match match in matches)
             {
@@ -112,17 +111,16 @@ namespace Azure.Tools.GeneratorAgent
                     string errorType = match.Groups[1].Value.Trim();
                     string errorMessage = match.Groups[2].Value.Trim();
 
-                    if (string.IsNullOrWhiteSpace(errorType) || string.IsNullOrWhiteSpace(errorMessage))
+                    if (errorType.AsSpan().IsWhiteSpace() || errorMessage.AsSpan().IsWhiteSpace())
                     {
                         continue;
                     }
 
                     (string type, string message) errorKey = (errorType, errorMessage);
-                    if (seenErrors.Contains(errorKey))
+                    if (!seenErrors.Add(errorKey)) // Add returns false if already exists
                     {
                         continue;
                     }
-                    seenErrors.Add(errorKey);
 
                     try
                     {
@@ -140,9 +138,6 @@ namespace Azure.Tools.GeneratorAgent
             return errors;
         }
         
-        /// <summary>
-        /// Takes IEnumerable&lt;RuleError&gt; and calls ErrorAnalyzers.GetFixes method
-        /// </summary>
         public IEnumerable<Fix> GetFixes(IEnumerable<RuleError> errors)
         {
             ArgumentNullException.ThrowIfNull(errors);

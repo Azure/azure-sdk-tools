@@ -6,8 +6,9 @@ import { CodeLineRowNavigationDirection, FULL_DIFF_STYLE, getAIReviewNotifiation
 import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
 import { ConfigService } from 'src/app/_services/config/config.service';
+import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 import { APIRevisionsService } from 'src/app/_services/revisions/revisions.service';
-import { debounceTime, distinctUntilChanged, Subject, take, takeUntil } from 'rxjs';
+import { debounceTime, distinctUntilChanged, Subject, take, takeUntil, combineLatest, of } from 'rxjs';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { PullRequestsService } from 'src/app/_services/pull-requests/pull-requests.service';
 import { PullRequestModel } from 'src/app/_models/pullRequestModel';
@@ -79,6 +80,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
 
   canToggleApproveAPIRevision: boolean = false;
   activeAPIRevisionIsApprovedByCurrentUser: boolean = false;
+  isAPIRevisionApprovalDisabled: boolean = false;
   apiRevisionApprovalMessage: string = '';
   apiRevisionApprovalBtnClass: string = '';
   apiRevisionApprovalBtnLabel: string = '';
@@ -118,7 +120,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   };
 
   constructor(
-    private configService: ConfigService, private route: ActivatedRoute, 
+    private configService: ConfigService, private reviewsService: ReviewsService, private route: ActivatedRoute, 
     private router: Router,  private apiRevisionsService: APIRevisionsService, private commentsService: CommentsService,
     private pullRequestService: PullRequestsService, private messageService: MessageService,
     private signalRService: SignalRService, private notificationsService: NotificationsService) { }
@@ -310,13 +312,44 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   }
 
   setAPIRevisionApprovalStates() {
+    const language = this.review?.language;
+    const packageVersion = this.activeAPIRevision?.packageVersion;
+    
+    if (language) {
+      const isRequired$ = this.reviewsService.getIsReviewByCopilotRequired(language);
+      const isVersionReviewed$ = this.review?.id && packageVersion 
+        ? this.reviewsService.getIsReviewVersionReviewedByCopilot(this.review.id, packageVersion)
+        : of(false);
+        
+      combineLatest([isRequired$, isVersionReviewed$]).pipe(take(1)).subscribe({
+        next: ([isRequired, isVersionReviewed]) => {
+          this.updateApprovalStates(isRequired, isVersionReviewed);
+        },
+        error: (error) => {
+          this.updateApprovalStates(false, false);
+        }
+      });
+    } else {
+      this.updateApprovalStates(false, false);
+    }
+  }
+
+  private updateApprovalStates(isReviewByCopilotRequired: boolean, isVersionReviewedByCopilot: boolean) {
     this.activeAPIRevisionIsApprovedByCurrentUser = this.activeAPIRevision?.approvers.includes(this.userProfile?.userName!)!;
     this.canToggleApproveAPIRevision = (!this.diffAPIRevision || this.diffAPIRevision.approvers.length > 0);
-
+  
+    this.isAPIRevisionApprovalDisabled = isReviewByCopilotRequired && !isVersionReviewedByCopilot && !this.activeAPIRevisionIsApprovedByCurrentUser;
+    
     if (this.canToggleApproveAPIRevision) {
-      this.apiRevisionApprovalBtnClass = (this.activeAPIRevisionIsApprovedByCurrentUser) ? "btn btn-outline-secondary" : "btn btn-success";
-      this.apiRevisionApprovalBtnLabel = (this.activeAPIRevisionIsApprovedByCurrentUser) ? "Revert API Approval" : "Approve";
-      this.apiRevisionApprovalMessage = (this.activeAPIRevisionIsApprovedByCurrentUser) ? "" : "Approves the Current API Revision";
+      if (this.isAPIRevisionApprovalDisabled) {
+        this.apiRevisionApprovalBtnClass = "btn btn-outline-secondary disabled";
+      } else {
+        this.apiRevisionApprovalBtnClass = (this.activeAPIRevisionIsApprovedByCurrentUser) ? "btn btn-outline-secondary" : "btn btn-success";
+      }
+      this.apiRevisionApprovalBtnLabel = (this.activeAPIRevisionIsApprovedByCurrentUser) ? "Revert API Approval" : "Approve";   
+      this.apiRevisionApprovalMessage = this.activeAPIRevisionIsApprovedByCurrentUser ? "" :
+        this.isAPIRevisionApprovalDisabled ? "To approve the current API revision, it must first be reviewed by Copilot" :
+        "Approves the Current API Revision";
     } else {
       this.apiRevisionApprovalBtnClass = "btn btn-outline-secondary";
       this.apiRevisionApprovalBtnLabel = (this.activeAPIRevisionIsApprovedByCurrentUser) ? "Revert API Approval" : "Approve";
@@ -443,6 +476,10 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   }
 
   handleAPIRevisionApprovalAction() {
+    if (this.isAPIRevisionApprovalDisabled) {
+      return;
+    }
+    
     if (!this.activeAPIRevisionIsApprovedByCurrentUser && (this.hasActiveConversation || this.hasFatalDiagnostics)) {
       this.showAPIRevisionApprovalModal = true;
     } else {

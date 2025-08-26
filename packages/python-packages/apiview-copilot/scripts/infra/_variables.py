@@ -6,69 +6,61 @@ from yaml import safe_load
 dotenv.load_dotenv(override=True)
 
 
+# List of variables that require the '-staging' suffix in the staging environment
+VARIABLES_WITH_STAGING_SUFFIX = {
+    "APP_CONFIGURATION_NAME",
+    "APP_SERVICE_PLAN_NAME",
+    "COGNITIVE_SERVICES_NAME",
+    "COSMOS_ACCOUNT_NAME",
+    "KEYVAULT_NAME",
+    "RG_NAME",
+    "SEARCH_INDEX_NAME",
+    "SEARCH_NAME",
+    "WEBAPP_NAME",
+}
+
+# List of variables that are the same in staging and production and will not
+# add a '-staging' suffix
+VARIABLES_SHARED = {
+    "AI_RG",
+    "COSMOS_DB_NAME",
+    "EVALS_RG",
+    "EVALS_SUBSCRIPTION",
+    "EVALS_PROJECT_NAME",
+    "FOUNDRY_ACCOUNT_NAME",
+    "FOUNDRY_API_VERSION",
+    "FOUNDRY_KERNEL_MODEL",
+    "FOUNDRY_PROJECT_NAME",
+    "OPENAI_EMBEDDING_DIMENSIONS",
+    "OPENAI_EMBEDDING_MODEL",
+    "OPENAI_NAME",
+    "RG_LOCATION",
+    "SUBSCRIPTION_ID",
+    "TENANT_ID",
+    "VECTORIZER_PROFILE_NAME",
+}
+
+
 class Variables:
+
     def __init__(self, *, is_staging: bool, path: str = "variables.yaml"):
-        # verify that the file exists
-        if not os.path.isfile(path):
-            raise FileNotFoundError(f"Configuration file not found: {path}")
-        with open(path, "r", encoding="utf-8") as stream:
-            data = safe_load(stream)
-            variables = [
-                "AI_RG",
-                "RG_NAME",
-                "RG_LOCATION",
-                "SUBSCRIPTION_ID",
-                "TENANT_ID",
-                "SEARCH_NAME",
-                "SEARCH_INDEX_NAME",
-                "VECTORIZER_PROFILE_NAME",
-                "COSMOS_ACCOUNT_NAME",
-                "COSMOS_DB_NAME",
-                "COGNITIVE_SERVICES_NAME",
-                "KEYVAULT_NAME",
-                "APP_CONFIGURATION_NAME",
-                "APP_SERVICE_PLAN_NAME",
-                "WEBAPP_NAME",
-                "FOUNDRY_ACCOUNT_NAME",
-                "FOUNDRY_PROJECT_NAME",
-                "FOUNDRY_KERNEL_MODEL",
-                "FOUNDRY_API_VERSION",
-                "OPENAI_NAME",
-                "OPENAI_EMBEDDING_MODEL",
-                "OPENAI_EMBEDDING_DIMENSIONS",
-                "EVALS_RG",
-                "EVALS_SUBSCRIPTION",
-                "EVALS_PROJECT_NAME",
-            ]
-            missing = []
-            for var in variables:
-                val = data.get(var)
-                if val is None:
-                    missing.append(var)
-                elif is_staging and var not in [
-                    "AI_RG",
-                    "RG_LOCATION",
-                    "SUBSCRIPTION_ID",
-                    "TENANT_ID",
-                    "VECTORIZER_PROFILE_NAME",
-                    "COSMOS_DB_NAME",
-                    "OPENAI_NAME",
-                    "OPENAI_RG",
-                    "OPENAI_SUBSCRIPTION_ID",
-                    "OPENAI_EMBEDDING_MODEL",
-                    "OPENAI_EMBEDDING_DIMENSIONS",
-                    "FOUNDRY_ACCOUNT_NAME",
-                    "FOUNDRY_PROJECT_NAME",
-                    "FOUNDRY_KERNEL_MODEL",
-                    "FOUNDRY_API_VERSION",
-                    "EVALS_RG",
-                    "EVALS_SUBSCRIPTION",
-                    "EVALS_PROJECT_NAME",
-                ]:
-                    val = f"{val}-staging"
-                setattr(self, var.lower(), val)
-            if missing:
-                raise ValueError(f"Missing required variables: {', '.join(missing)}")
+        data = {}
+        try:
+            with open(path, "r", encoding="utf-8") as stream:
+                data = safe_load(stream)
+        except FileNotFoundError as exc:
+            raise FileNotFoundError(f"Configuration file not found: {path}") from exc
+
+        missing = []
+        for var in VARIABLES_SHARED.union(VARIABLES_WITH_STAGING_SUFFIX):
+            val = data.get(var)
+            if val is None:
+                missing.append(var)
+            elif var in VARIABLES_WITH_STAGING_SUFFIX and is_staging:
+                val = f"{val}-staging"
+            setattr(self, var.lower(), val)
+        if missing:
+            raise ValueError(f"Missing required variables: {', '.join(missing)}")
         self.search_endpoint = f"https://{self.search_name}.search.windows.net/"
         self.cosmos_endpoint = f"https://{self.cosmos_account_name}.documents.azure.com:443/"
         self.cognitive_services_id = f"/subscriptions/{self.subscription_id}/resourceGroups/{self.rg_name}/providers/Microsoft.CognitiveServices/accounts/{self.cognitive_services_name}"

@@ -1,8 +1,6 @@
 import { TableEntity } from "@azure/data-tables";
 import { v4 as uuidv4 } from "uuid";
-import { Converter } from "./utils";
-import { loadChannelMapping } from "../src/common/channelConfig";
-import { BlobService } from "../src/services/StorageService";
+import { Converter, loadChannelMapping } from "./utils";
 
 interface FeedbackTableEntity extends TableEntity {
     partitionKey: string; // channelId
@@ -144,8 +142,7 @@ async function main() {
         const converter = new FeedbackConverter("Feedback");
         const directory = args[0];
         const readFilePromise = converter.readLocalExcelFiles(directory);
-        const blobService = new BlobService();
-        const channelMapping = await loadChannelMapping(blobService);
+        const channelMapping = await loadChannelMapping();
         await converter.convert(readFilePromise, (row) =>
             converter.convertExcelRowToTableEntity(row, channelMapping)
         );

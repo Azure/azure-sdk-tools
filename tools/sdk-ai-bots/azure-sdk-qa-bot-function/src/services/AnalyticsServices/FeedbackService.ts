@@ -1,5 +1,6 @@
 import { TableEntity } from "@azure/data-tables";
 import { AnalyticsServiceBase } from "./AnalyticsServiceBase";
+import { TableService } from "../StorageService";
 
 // Message role types
 type Role = "user" | "assistant" | "system";
@@ -42,13 +43,12 @@ export class FeedbackService extends AnalyticsServiceBase<
     FeedbackTableEntity,
     FeedbackData
 > {
-    constructor(tableName: string = "feedback") {
-        super(tableName);
-    }
+    private readonly tableName = "Feedback";
+    private tableService = new TableService(this.tableName);
 
     // Deserialization function: Convert from table entity to interface
-    protected deserializeData(entity: FeedbackTableEntity): FeedbackData {
-        return {
+    protected deserializeData(entities: FeedbackTableEntity[]): FeedbackData[] {
+        return entities.map((entity) => ({
             submitTime: entity.submitTime,
             tenantId: entity.tenantId,
             messages: JSON.parse(entity.messages || "[]"), // Deserialize string to array
@@ -58,6 +58,10 @@ export class FeedbackService extends AnalyticsServiceBase<
             link: entity.link,
             postId: entity.postId,
             channelId: entity.partitionKey || "",
-        };
+        }));
+    }
+
+    protected async getEntities(): Promise<FeedbackTableEntity[]> {
+        return this.tableService.queryEntities<FeedbackTableEntity>({});
     }
 }

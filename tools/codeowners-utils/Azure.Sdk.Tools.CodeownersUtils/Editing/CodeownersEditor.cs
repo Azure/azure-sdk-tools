@@ -29,7 +29,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Editing
         /// <param name="sourceOwners">List of source owners to add/update.</param>
         /// <param name="isMgmtPlane">Whether this is a management-plane entry.</param>
         /// <returns>The added or updated CodeownersEntry.</returns>
-        public CodeownersEntry AddOrUpdateEntry(string path = null, string serviceLabel = null, List<string> serviceOwners = null, List<string> sourceOwners = null, bool isMgmtPlane = false)
+        public CodeownersEntry AddOrUpdateEntry(string path = "", string serviceLabel = "", List<string> serviceOwners = null, List<string> sourceOwners = null, bool isMgmtPlane = false)
         {
             // Normalize path
             string normalizedPath = path;
@@ -72,7 +72,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Editing
         /// <param name="sourceOwnersToRemove">List of source owners to remove.</param>
         /// <param name="isMgmtPlane">Whether this is a management-plane entry.</param>
         /// <returns>The updated CodeownersEntry after removal.</returns>
-        public CodeownersEntry RemoveOwners(string path = null, string serviceLabel = null, List<string> serviceOwnersToRemove = null, List<string> sourceOwnersToRemove = null, bool isMgmtPlane = false)
+        public CodeownersEntry RemoveOwners(string path = "", string serviceLabel = "", List<string> serviceOwnersToRemove = null, List<string> sourceOwnersToRemove = null, bool isMgmtPlane = false)
         {
             string normalizedPath = path;
             if (!string.IsNullOrWhiteSpace(path))

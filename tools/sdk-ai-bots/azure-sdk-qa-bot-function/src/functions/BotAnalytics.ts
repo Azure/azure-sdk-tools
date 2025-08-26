@@ -3,23 +3,19 @@ import { FeedbackService } from "../services/AnalyticsServices/FeedbackService";
 import { RecordService } from "../services/AnalyticsServices/RecordService";
 import { ChannelConfigService } from "../services/AnalyticsServices/ChannelConfigService";
 
-const feedbackService = new FeedbackService();
-const recordService = new RecordService();
-const channelConfigService = new ChannelConfigService();
-
 // Register the Azure Function
 app.http("feedbacks", {
     methods: ["GET"],
     authLevel: "function",
-    handler: feedbackService.handler.bind(feedbackService),
+    handler:(req, ctx) => new FeedbackService().handler(req, ctx),
 });
 app.http("records", {
     methods: ["GET"],
     authLevel: "function",
-    handler: recordService.handler.bind(recordService),
+    handler: (req, ctx) => new RecordService().handler(req, ctx),
 });
 app.http("channels", {
     methods: ["GET"],
     authLevel: "function",
-    handler: channelConfigService.handler.bind(channelConfigService),
+    handler: (req, ctx) => new ChannelConfigService().handler(req, ctx),
 });

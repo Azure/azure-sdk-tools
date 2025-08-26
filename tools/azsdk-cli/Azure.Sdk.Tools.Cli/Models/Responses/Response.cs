@@ -7,13 +7,26 @@ namespace Azure.Sdk.Tools.Cli.Models;
 
 public class Response
 {
+    /// <summary>
+    /// ResponseError represents a single error message associated with the response.
+    /// </summary>
     [JsonPropertyName("response_error")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? ResponseError { get; set; }
 
+    /// <summary>
+    /// ResponseErrors represents a list of error messages associated with the response.
+    /// </summary>
     [JsonPropertyName("response_errors")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public List<string> ResponseErrors { get; set; }
+
+    /// <summary>
+    /// NextSteps provides guidance or recommended actions regarding the response.
+    /// </summary>
+    [JsonPropertyName("next_steps")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<string>? NextSteps { get; set; }
 
     protected string ToString(StringBuilder value)
     {
@@ -22,19 +35,28 @@ public class Response
 
     protected string ToString(string value)
     {
-        List<string> errors = [];
+        List<string> messages = [];
         if (!string.IsNullOrEmpty(ResponseError))
         {
-            errors.Add("[ERROR] " + ResponseError);
+            messages.Add("[ERROR] " + ResponseError);
         }
         foreach (var error in ResponseErrors ?? [])
         {
-            errors.Add("[ERROR] " + error);
+            messages.Add("[ERROR] " + error);
         }
 
-        if (errors.Count > 0)
+        if (NextSteps?.Count > 0)
+{
+            messages.Add("[NEXT STEPS]");
+            foreach (var step in NextSteps)
+            {
+                messages.Add(step);
+            }
+        }
+
+        if (messages.Count > 0)
         {
-            value = string.Join(Environment.NewLine, errors);
+            value = string.Join(Environment.NewLine, messages);
         }
 
         return value;

@@ -1,6 +1,6 @@
 ---
 mode: 'agent'
-tools: ['azsdk_check_service_label', 'azsdk_engsys_validate_codeowners_entry_for_service', 'azsdk_engsys_codeowner_update'] 
+tools: ['azsdk_check_service_label', 'azsdk_engsys_validate_codeowners_entry_for_service', 'azsdk_engsys_codeowner_update', 'azsdk_add_and_publicize_org_member'] 
 ---
 
 ## Goal: 
@@ -12,8 +12,7 @@ Use `azsdk_check_service_label` to verify the service label exists:
 - **Exists/InReview**: Proceed to Step 2
 
 ## Step 2: Validate Code Owners  
-Ask user to specify SDK repository they want to validate codeowners for or detect from context.
-
+Ask user to specify SDK repository they want to validate codeowners for or detect from context. Ask the user if their codeowners entry for their service is in a PR, if so get the PR number.
 Repository name mapping:
 - .NET/dotnet: use "azure-sdk-for-net"
 - Python: use "azure-sdk-for-python" 
@@ -51,6 +50,7 @@ When no CODEOWNERS entry exists yet:
    - serviceOwners - **Optional** if no ServiceLabel is present. Can be either owners to add or delete, depending on isAdding.
    - sourceOwners - **Optional** if no path or PRLabel are present. Can be either owners to add or delete, depending on isAdding.
    - isAdding - **Required** Should be true if adding owners to an existing entry, false if deleting owners from an existing entry. Should also be false when adding a brand new entry.
+   - prNumber - **Optional** Ask the user for a PR number, if they don't have one leave it empty.
 1. Provide information to the user about what codeowners is for:
    - [Learn about CODEOWNERS](https://eng.ms/docs/products/azure-developer-experience/develop/supporting-sdk-customers/overview)
    - Service owners is for getting mentioned on issues.
@@ -65,6 +65,8 @@ When no CODEOWNERS entry exists yet:
    - Joining Microsoft and Azure GitHub orgs
    - Setting public visibility
    - Requesting write access
+   If the logged user is an invalid codeowner depending on their status ask them if they want to join the orgs, or set public visibility. If they APPROVE use `azsdk_add_and_publicize_org_member` to help them.
+
 2. **Add new owners** using `azsdk_engsys_codeowner_update` with `isAdding: true`
 3. **Remove invalid + add valid** owners using `azsdk_engsys_codeowner_update`
 

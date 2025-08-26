@@ -8,7 +8,7 @@ Validate service label exists or create new one for SDK release process.
 
 ## Step 1: Get Service Label
 Ask user for their service label. If they don't know their service label provide guidance:
-- Check out the Common Repo [Labels CSV](https://github.com/Azure/azure-sdk-tools/blob/main/tools/github/data/common-labels.csv) file and look for a row who's first column contains your service's name.
+- Check out the [Common Labels CSV](https://github.com/Azure/azure-sdk-tools/blob/main/tools/github/data/common-labels.csv) file and look for a row who's first column contains your service's name.
 
 If they don't have a service label - go to Step 3 for new service label
 

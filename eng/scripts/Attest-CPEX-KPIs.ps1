@@ -51,6 +51,10 @@ foreach ($triage in $triages) {
     $productType = $fields["Custom.ProductType"]
     $url = $triage.url
 
+    if ($productType -eq "Sku") {
+        $productType = "ProductSku"
+    }
+
     AddAttestationEntry $productServiceTreeId $KPI_ID_Onboarding $Complete $productType $url
 
     $lifecycleToDataKpis = @{
@@ -105,6 +109,10 @@ foreach ($releasePlan in $releasePlans) {
     $productType = $fields["Custom.ProductType"]
     $url = $releasePlan.url
 
+    if ($productType -eq "Sku") {
+        $productType = "ProductSku"
+    }
+    
     if ($dataScope -eq 'Yes') {
         switch -Wildcard ($lifecycle) {
             "*Public Preview*" {

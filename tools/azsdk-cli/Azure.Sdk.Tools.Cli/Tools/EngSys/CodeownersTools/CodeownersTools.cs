@@ -348,7 +348,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
 
                     var codeownersEntries = CodeownersParser.ParseCodeownersEntries(codeownersContentList, azureWriteTeamsBlobUrl);
 
-                    matchingEntry = CodeownersHelper.FindMatchingEntries(codeownersEntries, path, serviceLabel);
+                    matchingEntry = CodeownersHelper.FindMatchingEntry(codeownersEntries, path, serviceLabel);
                 }
                 catch (Exception ex)
                 {

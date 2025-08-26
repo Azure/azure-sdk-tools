@@ -15,7 +15,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
     [TestFixture]
     internal class CodeownersHelperTests
     {
-        #region FindMatchingEntries Tests
+        #region FindMatchingEntry Tests
 
         [Test]
         [TestCase("Service Bus", 1, "sdk/servicebus/")]
@@ -30,7 +30,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         [TestCase("SERVICEBUS", 1, "sdk/servicebus/")] // Case and space insensitive exact match
         [TestCase("Service", 0, "")] // Partial match should not work
         [TestCase("Bus", 0, "")] // Partial match should not work
-        public void FindMatchingEntries_ByServiceName_TestCases(string serviceName, int expectedCount, string expectedPath)
+        public void FindMatchingEntry_ByServiceName_TestCases(string serviceName, int expectedCount, string expectedPath)
         {
             // Arrange
             var entries = new List<CodeownersEntry>
@@ -56,7 +56,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             };
 
             // Act
-            var result = CodeownersHelper.FindMatchingEntries(entries, serviceLabel: serviceName);
+            var result = CodeownersHelper.FindMatchingEntry(entries, serviceLabel: serviceName);
 
             // Assert
             if (expectedCount == 0)
@@ -71,7 +71,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         }
 
         [Test]
-        public void FindMatchingEntries_ByServiceName_NullInput_ReturnsEmpty()
+        public void FindMatchingEntry_ByServiceName_NullInput_ReturnsEmpty()
         {
             // Arrange
             var entries = new List<CodeownersEntry>
@@ -85,14 +85,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             };
 
             // Act
-            var result = CodeownersHelper.FindMatchingEntries(entries, serviceLabel: null!);
+            var result = CodeownersHelper.FindMatchingEntry(entries, serviceLabel: null!);
 
             // Assert
             Assert.That(result, Is.Null, "Null service name should return no entries");
         }
 
         [Test]
-        public void FindMatchingEntries_NoMatches_ReturnsEmptyList()
+        public void FindMatchingEntry_NoMatches_ReturnsEmptyList()
         {
             // Arrange
             var entries = new List<CodeownersEntry>
@@ -105,7 +105,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             };
 
             // Act
-            var result = CodeownersHelper.FindMatchingEntries(entries, serviceLabel: "nonexistent");
+            var result = CodeownersHelper.FindMatchingEntry(entries, serviceLabel: "nonexistent");
 
             // Assert
             Assert.That(result, Is.Null);

@@ -10,7 +10,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Editing
     public static class CodeownersHelper
     {
         // High-level lookup and update methods first (call helpers placed below)
-        public static CodeownersEntry FindMatchingEntries(IList<CodeownersEntry> entries, string path = null, string serviceLabel = null)
+        public static CodeownersEntry FindMatchingEntry(IList<CodeownersEntry> entries, string path = null, string serviceLabel = null)
         {
             var mergedCodeownersEntries = new List<CodeownersEntry>(entries);
             for (int i = 0; i < mergedCodeownersEntries.Count; i++)

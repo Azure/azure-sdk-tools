@@ -45,7 +45,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Editing
                 : CodeownersHelper.FindBlock(codeownersContent, standardServiceCategory);
 
             var codeownersEntries = CodeownersParser.ParseCodeownersEntries(codeownersContentList, AzureWriteTeamsBlobUrl, startLine, endLine);
-            var matchingEntry = CodeownersHelper.FindMatchingEntries(codeownersEntries, normalizedPath, serviceLabel);
+            var matchingEntry = CodeownersHelper.FindMatchingEntry(codeownersEntries, normalizedPath, serviceLabel);
 
             CodeownersEntry updatedEntry;
             if (matchingEntry != null)
@@ -87,7 +87,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Editing
                 : CodeownersHelper.FindBlock(codeownersContent, standardServiceCategory);
 
             var codeownersEntries = CodeownersParser.ParseCodeownersEntries(codeownersContentList, AzureWriteTeamsBlobUrl, startLine, endLine);
-            var matchingEntry = CodeownersHelper.FindMatchingEntries(codeownersEntries, normalizedPath, serviceLabel);
+            var matchingEntry = CodeownersHelper.FindMatchingEntry(codeownersEntries, normalizedPath, serviceLabel);
 
             if (matchingEntry == null)
             {

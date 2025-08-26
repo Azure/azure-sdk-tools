@@ -1,4 +1,5 @@
 using APIViewWeb.DTOs;
+using APIViewWeb.Exceptions;
 using APIViewWeb.Helpers;
 using APIViewWeb.Managers;
 using APIViewWeb.Models;
@@ -144,6 +145,11 @@ namespace APIViewWeb.LeanControllers
             catch (AuthorizationFailedException)
             {
                 return new LeanJsonResult(responseContent, StatusCodes.Status401Unauthorized);
+            }
+            catch (DuplicateLineIdException ex)
+            {
+                responseContent.ActionsTaken.Add(ex.Message);
+                return new LeanJsonResult(responseContent, StatusCodes.Status400BadRequest);
             }
             catch (Exception ex)
             {

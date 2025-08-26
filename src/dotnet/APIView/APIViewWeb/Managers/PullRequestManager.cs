@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using ApiView;
+using APIViewWeb.Exceptions;
 using APIViewWeb.Helpers;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers.Interfaces;
@@ -149,6 +150,11 @@ namespace APIViewWeb.Managers
                 codeFileName: codeFileName, originalFileStream: memoryStream,
                 baselineCodeFileName: baselineCodeFileName, baselineStream: baselineStream,
                 project: project, language: language);
+
+            if (_codeFileManager.AreLineIdsDuplicate(codeFile, out string duplicateLineId))
+            {
+                throw new DuplicateLineIdException(codeFile.Language, duplicateLineId);
+            }
 
             if (codeFile.PackageName != null && (packageName == null || packageName != codeFile.PackageName))
             {

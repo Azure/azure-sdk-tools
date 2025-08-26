@@ -14,5 +14,6 @@ namespace APIViewWeb.Managers.Interfaces
         public Task<APICodeFileModel> CreateReviewCodeFileModel(string apiRevisionId, MemoryStream memoryStream, CodeFile codeFile);
         public bool AreAPICodeFilesTheSame(RenderedCodeFile codeFileA, RenderedCodeFile codeFileB);
         public bool AreCodeFilesTheSame(CodeFile codeFileA, CodeFile codeFileB);
+        public bool AreLineIdsDuplicate(CodeFile codeFile, out string duplicateLineId);
     }
 }

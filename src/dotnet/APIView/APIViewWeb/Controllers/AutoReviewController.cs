@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using ApiView;
+using APIViewWeb.Exceptions;
 using APIViewWeb.Filters;
 using APIViewWeb.Helpers;
 using APIViewWeb.LeanModels;
@@ -53,6 +54,12 @@ namespace APIViewWeb.Controllers
                     using var memoryStream = new MemoryStream();
                     var codeFile = await _codeFileManager.CreateCodeFileAsync(originalName: file.FileName, fileStream: openReadStream,
                         runAnalysis: false, memoryStream: memoryStream);
+
+                    if (_codeFileManager.AreLineIdsDuplicate(codeFile, out string duplicateLineId))
+                    {
+                        var duplicateLineIdException = new DuplicateLineIdException(codeFile.Language, duplicateLineId);
+                        return BadRequest(duplicateLineIdException.Message);
+                    }
 
                     (var review, var apiRevision) = await CreateAutomaticRevisionAsync(codeFile: codeFile, label: label, originalName: file.FileName, memoryStream: memoryStream, compareAllRevisions);
                     if (apiRevision != null)

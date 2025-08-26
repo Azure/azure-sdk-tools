@@ -230,6 +230,19 @@ namespace APIViewWeb.Managers
             return result;
         }
 
+        public bool AreLineIdsDuplicate(CodeFile codeFile, out string duplicateLineId)
+        {
+            List<string> duplicateLineIds = codeFile.GetApiLines(skipDocs: true)
+                .Where(line => !string.IsNullOrEmpty(line.lineId))
+                .GroupBy(line => line.lineId)
+                .Where(group => group.Count() > 1)
+                .Select(group => group.Key)
+                .ToList();
+   
+            duplicateLineId = string.Join(", ", duplicateLineIds);
+            return duplicateLineIds.Count > 0;
+        }
+
         private static void InitializeFromCodeFile(APICodeFileModel file, CodeFile codeFile)
         {
             file.Language = codeFile.Language;

@@ -27,7 +27,11 @@ func setupRouter() *gin.Engine {
 }
 
 func main() {
+	// Load environment variables from .env files first
+	config.LoadEnvFile()
+
 	// init resources
+	config.InitEnvironment()
 	config.InitSecrets()
 	config.InitOpenAIClient()
 

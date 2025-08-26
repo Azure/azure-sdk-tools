@@ -54,11 +54,11 @@ public interface ILanguageChecks
 /// </summary>
 public class LanguageChecks : ILanguageChecks 
 {
-    protected readonly IProcessHelper _processHelper;
-    protected readonly INpxHelper _npxHelper;
-    protected readonly IGitHelper _gitHelper;
-    protected readonly ILogger<LanguageChecks> _logger;
-    protected readonly ILanguageSpecificCheckResolver _languageSpecificCheckResolver;
+    private readonly IProcessHelper _processHelper;
+    private readonly INpxHelper _npxHelper;
+    private readonly IGitHelper _gitHelper;
+    private readonly ILogger<LanguageChecks> _logger;
+    private readonly ILanguageSpecificCheckResolver _languageSpecificCheckResolver;
 
     public LanguageChecks(IProcessHelper processHelper, INpxHelper npxHelper, IGitHelper gitHelper, ILogger<LanguageChecks> logger, ILanguageSpecificCheckResolver languageSpecificCheckResolver)
     {

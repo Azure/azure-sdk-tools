@@ -22,9 +22,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     {
         private readonly ILogger<PackageCheckTool> logger;
         private readonly IOutputHelper output;
-        private readonly LanguageChecks languageChecks;
+        private readonly ILanguageChecks languageChecks;
 
-        public PackageCheckTool(ILogger<PackageCheckTool> logger, IOutputHelper output, LanguageChecks languageChecks) : base()
+        public PackageCheckTool(ILogger<PackageCheckTool> logger, IOutputHelper output, ILanguageChecks languageChecks) : base()
         {
             this.logger = logger;
             this.output = output;

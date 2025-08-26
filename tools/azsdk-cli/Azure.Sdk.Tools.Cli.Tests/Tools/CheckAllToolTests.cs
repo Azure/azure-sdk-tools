@@ -38,7 +38,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var pythonCheck = new PythonLanguageSpecificChecks(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _mockPythonLogger.Object);
             
             var languageChecks = new List<ILanguageSpecificChecks> { pythonCheck };
-            var resolver = new LanguageSpecificCheckResolver(languageChecks, _mockResolverLogger.Object);
+            var resolver = new LanguageSpecificCheckResolver(languageChecks, _mockGitHelper.Object, _mockResolverLogger.Object);
             
             _languageChecks = new LanguageChecks(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _mockLanguageChecksLogger.Object, resolver);
             _packageCheckTool = new PackageCheckTool(_mockLogger.Object, _mockOutputHelper.Object, _languageChecks);

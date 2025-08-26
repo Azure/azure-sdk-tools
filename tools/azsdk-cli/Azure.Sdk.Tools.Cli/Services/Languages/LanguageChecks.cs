@@ -6,17 +6,61 @@ using Microsoft.Extensions.Logging;
 namespace Azure.Sdk.Tools.Cli.Services;
 
 /// <summary>
+/// Interface for language repository service operations.
+/// </summary>
+public interface ILanguageChecks
+{
+    /// <summary>
+    /// Analyzes dependencies for the specific package.
+    /// </summary>
+    /// <param name="packagePath">Path to the package directory</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Result of the dependency analysis</returns>
+    Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct);
+
+    /// <summary>
+    /// Validates the changelog for the specific package.
+    /// </summary>
+    /// <param name="packagePath">Path to the package directory</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Result of the changelog validation</returns>
+    Task<CLICheckResponse> ValidateChangelogAsync(string packagePath, CancellationToken ct);
+
+    /// <summary>
+    /// Validates the README for the specific package.
+    /// </summary>
+    /// <param name="packagePath">Path to the package directory</param>
+    /// <returns>Result of the README validation</returns>
+    Task<CLICheckResponse> ValidateReadmeAsync(string packagePath);
+
+    /// <summary>
+    /// Checks spelling in the specific package.
+    /// </summary>
+    /// <param name="packagePath">Path to the package directory</param>
+    /// <returns>Result of the spelling check</returns>
+    Task<CLICheckResponse> CheckSpellingAsync(string packagePath);
+
+    /// <summary>
+    /// Gets the SDK package path for the given repository and package path.
+    /// </summary>
+    /// <param name="repo">Repository root path</param>
+    /// <param name="packagePath">Package path</param>
+    /// <returns>SDK package path</returns>
+    string GetSDKPackagePath(string repo, string packagePath);
+}
+
+/// <summary>
 /// Implementation of language repository service.
 /// </summary>
-public class LanguageChecks 
+public class LanguageChecks : ILanguageChecks 
 {
     protected readonly IProcessHelper _processHelper;
     protected readonly INpxHelper _npxHelper;
     protected readonly IGitHelper _gitHelper;
     protected readonly ILogger<LanguageChecks> _logger;
-    protected readonly LanguageSpecificCheckResolver _languageSpecificCheckResolver;
+    protected readonly ILanguageSpecificCheckResolver _languageSpecificCheckResolver;
 
-    public LanguageChecks(IProcessHelper processHelper, INpxHelper npxHelper, IGitHelper gitHelper, ILogger<LanguageChecks> logger, LanguageSpecificCheckResolver languageSpecificCheckResolver)
+    public LanguageChecks(IProcessHelper processHelper, INpxHelper npxHelper, IGitHelper gitHelper, ILogger<LanguageChecks> logger, ILanguageSpecificCheckResolver languageSpecificCheckResolver)
     {
         _processHelper = processHelper;
         _npxHelper = npxHelper;

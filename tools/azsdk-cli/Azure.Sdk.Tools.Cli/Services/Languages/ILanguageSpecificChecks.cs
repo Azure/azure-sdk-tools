@@ -13,13 +13,6 @@ public interface ILanguageSpecificChecks
     string SupportedLanguage { get; }
 
     /// <summary>
-    /// Determines if this implementation can handle the given package path.
-    /// </summary>
-    /// <param name="packagePath">Path to the package directory</param>
-    /// <returns>True if this implementation can handle the package, false otherwise</returns>
-    bool CanHandle(string packagePath);
-
-    /// <summary>
     /// Analyzes dependencies for the specific package.
     /// </summary>
     /// <param name="packagePath">Path to the package directory</param>

@@ -6,8 +6,8 @@ using Microsoft.Extensions.Logging;
 namespace Azure.Sdk.Tools.Cli.Services;
 
 /// <summary>
-/// Go-specific implementation of language repository service.
-/// Uses tools like go build, go test, go mod, gofmt, etc. for Go development workflows.
+/// JavaScript-specific implementation of language repository service.
+/// Uses tools like npm, yarn, node, eslint, etc. for JavaScript development workflows.
 /// </summary>
 public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
 {
@@ -29,29 +29,6 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
     }
 
     public string SupportedLanguage => "JavaScript";
-
-    public bool CanHandle(string packagePath)
-    {
-        if (string.IsNullOrWhiteSpace(packagePath) || !Directory.Exists(packagePath))
-        {
-            return false;
-        }
-
-        var repositoryPath = _gitHelper.DiscoverRepoRoot(packagePath);
-
-        // Get the repository name from the directory path
-        var repoName = Path.GetFileName(repositoryPath?.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar))?.ToLowerInvariant() ?? "";
-
-        _logger.LogInformation($"Repository name: {repoName}");
-
-        // Extract the language from the repository name
-        if (repoName.Contains("azure-sdk-for-js"))
-        {
-            _logger.LogInformation("Detected language: javascript from repository name");
-            return true;
-        }
-        return false;
-    }
 
     public async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct)
     {

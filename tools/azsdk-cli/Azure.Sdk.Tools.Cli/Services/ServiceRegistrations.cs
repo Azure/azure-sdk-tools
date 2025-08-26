@@ -30,13 +30,13 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IGitHubService, GitHubService>();
 
             // Language Check Services (Composition-based)
-            services.AddSingleton<LanguageChecks>();
+            services.AddSingleton<ILanguageChecks, LanguageChecks>();
             services.AddSingleton<ILanguageSpecificChecks, PythonLanguageSpecificChecks>();
             services.AddSingleton<ILanguageSpecificChecks, JavaLanguageSpecificChecks>();
             services.AddSingleton<ILanguageSpecificChecks, JavaScriptLanguageSpecificChecks>();
             services.AddSingleton<ILanguageSpecificChecks, DotNetLanguageSpecificChecks>();
             services.AddSingleton<ILanguageSpecificChecks, GoLanguageSpecificChecks>();
-            services.AddSingleton<LanguageSpecificCheckResolver>();
+            services.AddSingleton<ILanguageSpecificCheckResolver, LanguageSpecificCheckResolver>();
 
             // Helper classes
             services.AddSingleton<ILogAnalysisHelper, LogAnalysisHelper>();

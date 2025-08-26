@@ -28,30 +28,6 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
 
     public string SupportedLanguage => "Python";
 
-    public bool CanHandle(string packagePath)
-    {
-        if (string.IsNullOrWhiteSpace(packagePath) || !Directory.Exists(packagePath))
-        {
-            return false;
-        }
-
-        var repositoryPath = _gitHelper.DiscoverRepoRoot(packagePath);
-
-        // Get the repository name from the directory path
-        var repoName = Path.GetFileName(repositoryPath?.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar))?.ToLowerInvariant() ?? "";
-
-        _logger.LogInformation($"Repository name: {repoName}");
-
-        // Extract the language from the repository name
-        if (repoName.Contains("azure-sdk-for-python"))
-        {
-            _logger.LogInformation("Detected language: python from repository name");
-            return true;
-        }
-        return false;
-    }
-
-
     public async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct = default)
     {
         try

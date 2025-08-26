@@ -7,11 +7,11 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/keyvault/azsecrets"
+	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
 )
 
 func TestListSecrets(t *testing.T) {
-	keyVaultURL := "https://azuresdkqabotconfig.vault.azure.net"
-
+	config.InitEnvironment()
 	//Create a credential using the NewDefaultAzureCredential type.
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -19,7 +19,7 @@ func TestListSecrets(t *testing.T) {
 	}
 
 	//Establish a connection to the Key Vault client
-	client, err := azsecrets.NewClient(keyVaultURL, cred, nil)
+	client, err := azsecrets.NewClient(config.KEYVAULT_ENDPOINT, cred, nil)
 	if err != nil {
 		t.Fatalf("failed to connect to client: %v", err)
 	}

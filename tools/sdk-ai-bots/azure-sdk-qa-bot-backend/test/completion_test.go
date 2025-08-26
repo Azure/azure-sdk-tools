@@ -8,10 +8,9 @@ import (
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
 )
 
-func TestCompletion(t *testing.T) {
+func TestCompletionAPI(t *testing.T) {
 	config.InitEnvironment()
 	config.InitSecrets()
-	config.InitOpenAIClient()
 	// Define the request
 	messages := []azopenai.ChatRequestMessageClassification{
 		&azopenai.ChatRequestUserMessage{Content: azopenai.NewChatRequestUserMessageContent("What is the capital of France?")},

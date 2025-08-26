@@ -73,4 +73,4 @@ When no CODEOWNERS entry exists yet:
 ## Requirements
 - **MINIMUM**: At least 2 valid code owners at all times
 - **NO EXCEPTIONS**: Cannot proceed with insufficient owners
-- **RESPONSE HANDLING**: If any exception occurs during validation or creation, ALWAYS provide documentation link [Codeowners documentation](https://eng.ms/docs/products/azure-developer-experience/develop/supporting-sdk-customers/codeowners)
+- **RESPONSE HANDLING**: If any exception occurs during validation or creation, ALWAYS provide documentation link [CODEOWNERS documentation](https://eng.ms/docs/products/azure-developer-experience/develop/supporting-sdk-customers/codeowners)

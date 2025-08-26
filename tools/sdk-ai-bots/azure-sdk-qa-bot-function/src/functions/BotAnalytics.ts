@@ -18,7 +18,7 @@ app.http("records", {
     authLevel: "function",
     handler: recordService.handler.bind(recordService),
 });
-app.http("channel-config", {
+app.http("channels", {
     methods: ["GET"],
     authLevel: "function",
     handler: channelConfigService.handler.bind(channelConfigService),

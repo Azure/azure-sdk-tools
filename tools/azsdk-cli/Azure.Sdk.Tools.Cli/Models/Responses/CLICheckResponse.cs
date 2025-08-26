@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Azure.Sdk.Tools.Cli.Helpers;
 
 namespace Azure.Sdk.Tools.Cli.Models;
 
@@ -23,6 +24,16 @@ public class CLICheckResponse: Response
         {
             ResponseError = error;
         }
+    }
+
+    /// <summary>
+    /// Creates a CLICheckResponse from a process result.
+    /// </summary>
+    /// <param name="processResult">The process result to convert</param>
+    /// <returns>CLI check response</returns>
+    public static CLICheckResponse CreateResponseFromProcessResult(ProcessResult processResult)
+    {
+        return new CLICheckResponse(processResult.ExitCode, processResult.Output);
     }
 
     public override string ToString()

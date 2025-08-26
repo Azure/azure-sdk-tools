@@ -58,7 +58,7 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
         try
         {
             var result = await _processHelper.Run(new ProcessOptions(compilerName, ["mod", "init", moduleName], workingDirectory: packagePath), ct);
-            return ChecksHelper.CreateResponseFromProcessResult(result);
+            return CLICheckResponse.CreateResponseFromProcessResult(result);
         }
         catch (Exception ex)
         {
@@ -77,12 +77,12 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
             var updateResult = await _processHelper.Run(new ProcessOptions(compilerName, ["get", "-u", "all"], workingDirectory: packagePath), ct);
             if (updateResult.ExitCode != 0)
             {
-                return ChecksHelper.CreateResponseFromProcessResult(updateResult);
+                return CLICheckResponse.CreateResponseFromProcessResult(updateResult);
             }
 
             // Now tidy, to cleanup any deps that aren't needed
             var tidyResult = await _processHelper.Run(new ProcessOptions(compilerName, ["mod", "tidy"], workingDirectory: packagePath), ct);
-            return ChecksHelper.CreateResponseFromProcessResult(tidyResult);
+            return CLICheckResponse.CreateResponseFromProcessResult(tidyResult);
         }
         catch (Exception ex)
         {
@@ -99,7 +99,7 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
                 formatterNameWindows, ["-w", "."],
                 workingDirectory: packagePath
             ), ct);
-            return ChecksHelper.CreateResponseFromProcessResult(result);
+            return CLICheckResponse.CreateResponseFromProcessResult(result);
         }
         catch (Exception ex)
         {
@@ -113,7 +113,7 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
         try
         {
             var result = await _processHelper.Run(new ProcessOptions(linterName, ["run"], workingDirectory: packagePath), ct);
-            return ChecksHelper.CreateResponseFromProcessResult(result);
+            return CLICheckResponse.CreateResponseFromProcessResult(result);
         }
         catch (Exception ex)
         {
@@ -127,7 +127,7 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
         try
         {
             var result = await _processHelper.Run(new ProcessOptions(compilerName, ["test", "-v", "-timeout", "1h", "./..."], workingDirectory: packagePath), ct);
-            return ChecksHelper.CreateResponseFromProcessResult(result);
+            return CLICheckResponse.CreateResponseFromProcessResult(result);
         }
         catch (Exception ex)
         {
@@ -141,7 +141,7 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
         try
         {
             var result = await _processHelper.Run(new ProcessOptions(compilerName, ["build"], workingDirectory: packagePath), ct);
-            return ChecksHelper.CreateResponseFromProcessResult(result);
+            return CLICheckResponse.CreateResponseFromProcessResult(result);
         }
         catch (Exception ex)
         {

@@ -157,7 +157,7 @@ public class LanguageChecks : ILanguageChecks
             var processResult = await _processHelper.Run(new(command, args, timeout: timeout, workingDirectory: packagePath), ct);
             stopwatch.Stop();
 
-            return ChecksHelper.CreateResponseFromProcessResult(processResult);
+            return CLICheckResponse.CreateResponseFromProcessResult(processResult);
         }
         catch (Exception ex)
         {
@@ -208,7 +208,7 @@ public class LanguageChecks : ILanguageChecks
             var timeout = TimeSpan.FromMinutes(10);
             var processResult = await _processHelper.Run(new(command, args, timeout: timeout, workingDirectory: packagePath), ct: default);
 
-            return ChecksHelper.CreateResponseFromProcessResult(processResult);
+            return CLICheckResponse.CreateResponseFromProcessResult(processResult);
         }
         catch (Exception ex)
         {
@@ -251,7 +251,7 @@ public class LanguageChecks : ILanguageChecks
                 logOutputStream: true 
             ); 
             var processResult = await _npxHelper.Run(npxOptions, ct: default);
-            return ChecksHelper.CreateResponseFromProcessResult(processResult);
+            return CLICheckResponse.CreateResponseFromProcessResult(processResult);
         }
         catch (Exception ex)
         {

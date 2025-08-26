@@ -13,7 +13,7 @@ interface RecordRow {
 
 interface RecordEntity extends TableEntity {
     partitionKey: string; // channelId
-    rowKey: string; // feedbackId (GUID)
+    rowKey: string; // GUID
     submitTime: string;
     channelName: string; // channelName field from channel.yaml
     postId: string; // postId field for easier querying

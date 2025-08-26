@@ -13,7 +13,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
         /// <returns></returns>
         public static RootCommand CreateRootCommand(string[] args, IServiceProvider serviceProvider)
         {
-            var rootCommand = new RootCommand("azsdk cli - A Model Context Protocol (MCP) server that enables various tasks for the Azure SDK Engineering System.");
+            var rootCommand = new RootCommand("azsdk cli - A Model Context Protocol (MCP) server that facilitates tasks for anyone working with the Azure SDK team.");
             rootCommand.AddOption(SharedOptions.ToolOption);
 
             rootCommand.AddGlobalOption(SharedOptions.Debug);

@@ -11,6 +11,7 @@ import yaml
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+from src._settings import SettingsManager
 from src._utils import get_prompt_path
 
 # set before azure.ai.evaluation import to make PF output less noisy
@@ -22,12 +23,25 @@ from azure.ai.evaluation import GroundednessEvaluator, SimilarityEvaluator
 class CustomAPIViewEvaluator:
     """Evaluator for comparing expected and actual APIView comments."""
 
-    def __init__(self, runner: "EvalsRunner"):
-        self.settings = runner.settings
-        self._groundedness_eval = GroundednessEvaluator(model_config=runner._model_config)
-        self._similarity_eval = SimilarityEvaluator(model_config=runner._model_config)
-        self._model_config = runner._model_config
-        self._weights = runner._weights
+    def __init__(self):
+        self.settings = SettingsManager()
+        # for best results, this should always be a different model from the one we are evaluating
+        self._judge_model = "gpt-5-mini"
+        self._model_config: dict[str, str] = {
+            "azure_endpoint": self.settings.get("OPENAI_ENDPOINT"),
+            "api_key": self.settings.get("OPENAI_API_KEY"),
+            "azure_deployment": self._judge_model,
+            "api_version": "2025-03-01-preview",
+        }
+        self._groundedness_eval = GroundednessEvaluator(model_config=self._model_config)
+        self._similarity_eval = SimilarityEvaluator(model_config=self._model_config)
+        self._weights: dict[str, float] = {
+            "exact_match_weight": 0.7,  # Exact match (rule id and line number)
+            "groundedness_weight": 0.2,  # Staying grounded in guidelines
+            "similarity_weight": 0.1,  # Similarity between expected and actual
+            "false_positive_penalty": 0.3,  # Penalty for false positives
+            "fuzzy_match_bonus": 0.2,  # Bonus for fuzzy match (right rule, wrong line)
+        }
 
     def _calculate_overall_score(self, review_eval: dict[str, Any]) -> float:
         """Calculate the overall score based on the review evaluation metrics."""

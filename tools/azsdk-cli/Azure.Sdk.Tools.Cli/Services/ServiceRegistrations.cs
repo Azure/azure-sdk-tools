@@ -28,15 +28,15 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IDevOpsConnection, DevOpsConnection>();
             services.AddSingleton<IDevOpsService, DevOpsService>();
             services.AddSingleton<IGitHubService, GitHubService>();
-            services.AddSingleton<ILanguageRepoServiceFactory, LanguageRepoServiceFactory>();
 
-            // Language Services
-            services.AddSingleton<LanguageRepoService>();
-            services.AddSingleton<PythonLanguageRepoService>();
-            services.AddSingleton<JavaScriptLanguageRepoService>();
-            services.AddSingleton<DotNetLanguageRepoService>();
-            services.AddSingleton<GoLanguageRepoService>();
-            services.AddSingleton<JavaLanguageRepoService>();
+            // Language Check Services (Composition-based)
+            services.AddSingleton<ILanguageChecks, LanguageChecks>();
+            services.AddSingleton<ILanguageSpecificChecks, PythonLanguageSpecificChecks>();
+            services.AddSingleton<ILanguageSpecificChecks, JavaLanguageSpecificChecks>();
+            services.AddSingleton<ILanguageSpecificChecks, JavaScriptLanguageSpecificChecks>();
+            services.AddSingleton<ILanguageSpecificChecks, DotNetLanguageSpecificChecks>();
+            services.AddSingleton<ILanguageSpecificChecks, GoLanguageSpecificChecks>();
+            services.AddSingleton<ILanguageSpecificCheckResolver, LanguageSpecificCheckResolver>();
 
             // Helper classes
             services.AddSingleton<ILogAnalysisHelper, LogAnalysisHelper>();

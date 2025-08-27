@@ -35,8 +35,8 @@ extends:
               - template: /eng/pipelines/templates/variables/image.yml
 
             pool:
-              name: "$(LINUXNEXTPOOL)"
-              image: "$(LINUXNEXTVMIMAGE)"
+              name: "$(LINUXPOOL)"
+              image: "$(LINUXVMIMAGE)"
               os: linux
 
             steps:

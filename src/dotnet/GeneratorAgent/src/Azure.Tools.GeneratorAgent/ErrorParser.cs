@@ -8,23 +8,23 @@ namespace Azure.Tools.GeneratorAgent
     {
         private static readonly Regex ErrorRegex = new(@"error\s+([A-Z]+\d+):\s*(.+?)(?=\s*\[|$)", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.Compiled, TimeSpan.FromSeconds(1));
         
-        private readonly AgentOrchestrator? _agentOrchestrator;
-        private readonly ILogger<ErrorParser> _logger;
+        private readonly AgentOrchestrator? AgentOrchestrator;
+        private readonly ILogger<ErrorParser> Logger;
 
         public ErrorParser(AgentOrchestrator? agentOrchestrator, ILogger<ErrorParser> logger)
         {
-            _agentOrchestrator = agentOrchestrator;
+            AgentOrchestrator = agentOrchestrator;
             ArgumentNullException.ThrowIfNull(logger);
-            _logger = logger;
+            Logger = logger;
         }
 
         public virtual async Task<List<Fix>> AnalyzeErrorsAsync(Result<object> result, CancellationToken cancellationToken)
         {
-            _logger.LogInformation("Analyzing errors...");
+            Logger.LogInformation("Analyzing errors...");
 
             if (result.ProcessException?.Output == null)
             {
-                _logger.LogWarning("No fixable error, skipping error analysis.");
+                Logger.LogWarning("No fixable error, skipping error analysis.");
                 return new List<Fix>();
             }
 
@@ -32,10 +32,10 @@ namespace Azure.Tools.GeneratorAgent
 
             if (errors.Count == 0)
             {
-                _logger.LogInformation("No errors found with regex. Falling back to AI-based parsing.");
-                if (_agentOrchestrator != null)
+                Logger.LogInformation("No errors found with regex. Falling back to AI-based parsing.");
+                if (AgentOrchestrator != null)
                 {
-                    errors = await _agentOrchestrator.AnalyzeErrorsAsync(result.ProcessException.Output, cancellationToken);
+                    errors = await AgentOrchestrator.AnalyzeErrorsAsync(result.ProcessException.Output, cancellationToken);
                 }
             }
 
@@ -46,12 +46,12 @@ namespace Azure.Tools.GeneratorAgent
         {
             if (string.IsNullOrWhiteSpace(output))
             {
-                _logger.LogWarning("No output provided for regex parsing.");
+                Logger.LogWarning("No output provided for regex parsing.");
                 return new List<RuleError>();
             }
 
             MatchCollection matches = ErrorRegex.Matches(output);
-            _logger.LogDebug("Found {MatchCount} potential error matches using regex.", matches.Count);
+            Logger.LogDebug("Found {MatchCount} potential error matches using regex.", matches.Count);
 
             HashSet<(string type, string message)> seenErrors = new();
             List<RuleError> errors = new(matches.Count);
@@ -74,7 +74,7 @@ namespace Azure.Tools.GeneratorAgent
                     }
 
                     errors.Add(new RuleError(errorType, errorMessage));
-                    _logger.LogDebug("Extracted error: {ErrorType} - {ErrorMessage}", errorType, errorMessage);
+                    Logger.LogDebug("Extracted error: {ErrorType} - {ErrorMessage}", errorType, errorMessage);
                 }
             }
 
@@ -88,12 +88,12 @@ namespace Azure.Tools.GeneratorAgent
             try
             {
                 IEnumerable<Fix> fixes = ErrorAnalyzerService.GetFixes(errors);
-                _logger.LogInformation("Generated {FixCount} fixes for errors.", fixes.Count());
+                Logger.LogInformation("Generated {FixCount} fixes for errors.", fixes.Count());
                 return fixes;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to generate fixes for errors.");
+                Logger.LogError(ex, "Failed to generate fixes for errors.");
                 return Array.Empty<Fix>();
             }
         }

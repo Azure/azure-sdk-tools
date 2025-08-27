@@ -47,8 +47,9 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
             var formatterExists = (await _processHelper.Run(new ProcessOptions("echo", ["package main", "|", formatterName]), ct)).ExitCode == 0;
             return compilerExists && linterExists && formatterExists;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogDebug($"Exception occurred while checking dependencies {ex}");
             return false;
         }
     }

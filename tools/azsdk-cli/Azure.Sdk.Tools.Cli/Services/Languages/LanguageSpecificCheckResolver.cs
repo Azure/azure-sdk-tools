@@ -22,24 +22,12 @@ public interface ILanguageSpecificCheckResolver
 /// Uses the Language-Settings.ps1 file in the repository to determine the language.
 /// Uses composition pattern instead of inheritance.
 /// </summary>
-public class LanguageSpecificCheckResolver : ILanguageSpecificCheckResolver
+public class LanguageSpecificCheckResolver(
+    IEnumerable<ILanguageSpecificChecks> _languageChecks,
+    IGitHelper _gitHelper,
+    IPowershellHelper _powershellHelper,
+    ILogger<LanguageSpecificCheckResolver> _logger) : ILanguageSpecificCheckResolver
 {
-    private readonly IEnumerable<ILanguageSpecificChecks> _languageChecks;
-    private readonly IGitHelper _gitHelper;
-    private readonly IPowershellHelper _powershellHelper;
-    private readonly ILogger<LanguageSpecificCheckResolver> _logger;
-
-    public LanguageSpecificCheckResolver(
-        IEnumerable<ILanguageSpecificChecks> languageChecks,
-        IGitHelper gitHelper,
-        IPowershellHelper powershellHelper,
-        ILogger<LanguageSpecificCheckResolver> logger)
-    {
-        _languageChecks = languageChecks ?? throw new ArgumentNullException(nameof(languageChecks));
-        _gitHelper = gitHelper ?? throw new ArgumentNullException(nameof(gitHelper));
-        _powershellHelper = powershellHelper ?? throw new ArgumentNullException(nameof(powershellHelper));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
 
     /// <summary>
     /// Gets the appropriate language-specific check service for the given package path.

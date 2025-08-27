@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.CommandLine;
 using System.CommandLine.Invocation;
+using System.Text.RegularExpressions;
 
 using ModelContextProtocol.Server;
 using Octokit;
@@ -194,20 +195,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                 var codeownersContent = codeownersFileContent.Content;
 
                 // Use CodeownersEditor for manipulation
-                var editor = new CodeownersEditor(codeownersContent);
+                var editor = new CodeownersEditor(codeownersContent, isMgmtPlane);
                 CodeownersEntry updatedEntry;
                 if (isAdding)
                 {
-                    updatedEntry = editor.AddOrUpdateEntry(
+                    updatedEntry = editor.AddOrUpdateCodeownersFile(
                         path: path,
                         serviceLabel: serviceLabel,
                         serviceOwners: serviceOwners,
-                        sourceOwners: sourceOwners,
-                        isMgmtPlane: isMgmtPlane);
+                        sourceOwners: sourceOwners);
                 }
                 else
                 {
-                    updatedEntry = editor.RemoveOwners(
+                    updatedEntry = editor.RemoveOwnersFromCodeownersFile(
                         path: path,
                         serviceLabel: serviceLabel,
                         serviceOwnersToRemove: serviceOwners,
@@ -265,7 +265,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
             else
             {
                 // Create a new branch only if no working branch exists
-                branchName = CodeownersHelper.CreateBranchName(branchPrefix, identifier);
+                branchName = CreateBranchName(branchPrefix, identifier);
                 var createBranchResult = await githubService.CreateBranchAsync(Constants.AZURE_OWNER_PATH, repo, branchName, "main");
                 resultMessages.Add($"Created branch: {branchName} - Status: {createBranchResult}");
             }
@@ -328,7 +328,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                         workingBranch = codeownersPullRequest.Head.Ref;
                     }
                 }
-                
+
                 if (workingBranch.Equals("main", StringComparison.OrdinalIgnoreCase))
                 {
                     throw new Exception($"Cannot make changes on branch: {workingBranch}");
@@ -348,7 +348,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
 
                     var codeownersEntries = CodeownersParser.ParseCodeownersEntries(codeownersContentList, azureWriteTeamsBlobUrl);
 
-                    matchingEntry = CodeownersHelper.FindMatchingEntry(codeownersEntries, path, serviceLabel);
+                    CodeownersEditor codeownersEditor = new CodeownersEditor(codeownersContent);
+
+                    matchingEntry = codeownersEditor.FindMatchingEntry(path, serviceLabel);
                 }
                 catch (Exception ex)
                 {
@@ -444,6 +446,22 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                 return (string.Join(" ", validationErrors), distinctResults);
             }
             return ("", distinctResults);
+        }
+
+        private string CreateBranchName(string prefix, string identifier)
+        {
+            var normalizedIdentifier = identifier
+                .Replace(" - ", "-")
+                .Replace(" ", "-")
+                .Replace("/", "-")
+                .Replace("_", "-")
+                .Replace(".", "-")
+                .Trim('-')
+                .ToLowerInvariant();
+
+            normalizedIdentifier = Regex.Replace(normalizedIdentifier, @"[^a-zA-Z0-9\-]", "");
+
+            return $"{prefix}-{normalizedIdentifier}";
         }
     }
 }

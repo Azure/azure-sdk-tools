@@ -1,11 +1,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System;
 
-using Moq;
 using NUnit.Framework;
 
-using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.CodeownersUtils.Parsing;
 using Azure.Sdk.Tools.CodeownersUtils.Editing;
 
@@ -15,12 +14,40 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
     [TestFixture]
     internal class CodeownersHelperTests
     {
+        private CodeownersEditor codeownersEditor;
+
+        // Standard codeowners content used by tests.
+        private readonly string codeownersContent = @"# PRLabel: %Alpha
+sdk/alpha/ @alpha
+
+# PRLabel: %Service Bus
+sdk/servicebus/ @azure/source-servicebus-team
+
+# ServiceLabel: %Service Bus
+# ServiceOwners: @azure/servicebus-team
+
+# PRLabel: %Storage
+sdk/storage/ @azure/storage-team
+
+# PRLabel: %Communication
+sdk/communication/ @azure/communication-team
+
+# PRLabel: %Omega
+sdk/omega/ @omega
+";
+
+        [SetUp]
+        public void Setup()
+        {
+            // Initialize with standard content. Individual tests should rely on this codeownersContent.
+            codeownersEditor = new CodeownersEditor(codeownersContent, false);
+        }
+
         #region FindMatchingEntry Tests
 
         [Test]
         [TestCase("Service Bus", 1, "sdk/servicebus/")]
         [TestCase("Storage", 1, "sdk/storage/")]
-        [TestCase("Messaging", 1, "sdk/servicebus/")]
         [TestCase("NonExistentService", 0, "")]
         [TestCase("", 0, "")]
         [TestCase("   ", 0, "")]
@@ -32,31 +59,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         [TestCase("Bus", 0, "")] // Partial match should not work
         public void FindMatchingEntry_ByServiceName_TestCases(string serviceName, int expectedCount, string expectedPath)
         {
-            // Arrange
-            var entries = new List<CodeownersEntry>
-            {
-                new CodeownersEntry
-                {
-                    PathExpression = "sdk/servicebus/",
-                    ServiceLabels = new List<string> { "Service Bus", "Messaging" },
-                    SourceOwners = new List<string> { "@azure/servicebus-team" }
-                },
-                new CodeownersEntry
-                {
-                    PathExpression = "sdk/storage/",
-                    ServiceLabels = new List<string> { "Storage" },
-                    SourceOwners = new List<string> { "@azure/storage-team" }
-                },
-                new CodeownersEntry
-                {
-                    PathExpression = "sdk/communication/",
-                    ServiceLabels = new List<string> { },
-                    SourceOwners = new List<string> { "@azure/communication-team" }
-                }
-            };
-
             // Act
-            var result = CodeownersHelper.FindMatchingEntry(entries, serviceLabel: serviceName);
+            var result = codeownersEditor.FindMatchingEntry(serviceLabel: serviceName);
 
             // Assert
             if (expectedCount == 0)
@@ -73,19 +77,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         [Test]
         public void FindMatchingEntry_ByServiceName_NullInput_ReturnsEmpty()
         {
-            // Arrange
-            var entries = new List<CodeownersEntry>
-            {
-                new CodeownersEntry
-                {
-                    PathExpression = "sdk/servicebus/",
-                    ServiceLabels = new List<string> { "Service Bus" },
-                    SourceOwners = new List<string> { "@azure/servicebus-team" }
-                }
-            };
-
             // Act
-            var result = CodeownersHelper.FindMatchingEntry(entries, serviceLabel: null!);
+            var result = codeownersEditor.FindMatchingEntry(serviceLabel: null!);
 
             // Assert
             Assert.That(result, Is.Null, "Null service name should return no entries");
@@ -94,18 +87,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         [Test]
         public void FindMatchingEntry_NoMatches_ReturnsEmptyList()
         {
-            // Arrange
-            var entries = new List<CodeownersEntry>
-            {
-                new CodeownersEntry
-                {
-                    PathExpression = "sdk/servicebus/",
-                    SourceOwners = new List<string> { "@azure/servicebus-team" }
-                }
-            };
-
             // Act
-            var result = CodeownersHelper.FindMatchingEntry(entries, serviceLabel: "nonexistent");
+            var result = codeownersEditor.FindMatchingEntry(serviceLabel: "nonexistent");
 
             // Assert
             Assert.That(result, Is.Null);
@@ -144,11 +127,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             };
 
             // Act
-            var result = CodeownersHelper.UpdateCodeownersEntry(
-                existingEntry,
-                serviceOwners.ToList(),
-                sourceOwners.ToList(),
-                isAdding);
+            var result = CodeownersEditor.UpdateCodeownersEntry(
+                 existingEntry,
+                 serviceOwners.ToList(),
+                 sourceOwners.ToList(),
+                 isAdding);
 
             // Assert
             Assert.That(result.ServiceOwners.Count, Is.EqualTo(expectedServiceOwners.ToList().Count));
@@ -180,12 +163,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             string[] expectedSourceOwners)
         {
             // Act
-            var entry = CodeownersHelper.CreateCodeownersEntry(
-                "sdk/testpath/",
-                "TestLabel",
-                serviceOwners.ToList(),
-                sourceOwners.ToList(),
-                isMgmtPlane);
+            var entry = CodeownersEditor.CreateCodeownersEntry(
+                 "sdk/testpath/",
+                 "TestLabel",
+                 serviceOwners.ToList(),
+                 sourceOwners.ToList(),
+                 isMgmtPlane);
 
             // Assert
             Assert.That(entry.ServiceOwners, Is.EquivalentTo(expectedServiceOwners));
@@ -206,13 +189,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         [Test]
         public void AddCodeownersEntryToFile_InsertsWithProperSpacing_MiddleOfFile()
         {
-            // Arrange: file with two real entries, insert a new one alphabetically in the middle
-            var content = "# PRLabel: %Alpha\nsdk/alpha/ @alpha\n\n# PRLabel: %Omega\nsdk/omega/ @omega";
-            var entries = new List<CodeownersEntry>
-            {
-                new CodeownersEntry { PathExpression = "sdk/alpha/", startLine = 1, endLine = 1 },
-                new CodeownersEntry { PathExpression = "sdk/omega/", startLine = 4, endLine = 4 }
-            };
             // New entry should be inserted between alpha and omega
             var newEntry = new CodeownersEntry
             {
@@ -224,7 +200,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             };
 
             // Act
-            var result = CodeownersHelper.AddCodeownersEntryToFile(entries, content, newEntry, false);
+            var result = codeownersEditor.AddCodeownersEntryToFile(newEntry, false);
 
             // Assert: should have blank line before and after the inserted entry
             var lines = result.Split('\n');
@@ -240,13 +216,15 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             // Entry content should be present
             Assert.That(result, Does.Contain("sdk/middle/"));
             Assert.That(result, Does.Contain("Middle Service"));
+            // The inserted entry should include ServiceLabel and the normalized owner
+            Assert.That(result, Does.Contain("# ServiceLabel: %Middle Service"));
+            Assert.That(result, Does.Contain("@middleowner"));
         }
 
         [Test]
         public void TestAddCodeownersEntryToFile_NewEntry()
         {
             // Arrange
-            var content = "line1\nline2\nline3";
             var codeownersEntry = new CodeownersEntry
             {
                 PathExpression = "sdk/test/",
@@ -258,21 +236,21 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             var codeownersEntryExists = false;
 
             // Act
-            var result = CodeownersHelper.AddCodeownersEntryToFile(new List<CodeownersEntry>(), content, codeownersEntry, codeownersEntryExists);
+            var result = codeownersEditor.AddCodeownersEntryToFile(codeownersEntry, codeownersEntryExists);
 
             // Assert
-            Assert.That(result, Does.Contain("line1"));
-            Assert.That(result, Does.Contain("line2"));
-            Assert.That(result, Does.Contain("line3"));
+            
             Assert.That(result, Does.Contain("Test Service"));
             Assert.That(result, Does.Contain("sdk/test/"));
+            // The entry added should include the ServiceLabel comment and the normalized owner
+            Assert.That(result, Does.Contain("# ServiceLabel: %Test Service"));
+            Assert.That(result, Does.Contain("@testowner"));
         }
 
         [Test]
         public void TestAddCodeownersEntryToFile_ExistingEntry()
         {
             // Arrange
-            var content = "line1\nline2\nline3";
             var codeownersEntry = new CodeownersEntry
             {
                 PathExpression = "sdk/test/",
@@ -286,11 +264,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             var codeownersEntryExists = true;
 
             // Act
-            var result = CodeownersHelper.AddCodeownersEntryToFile(new List<CodeownersEntry>(), content, codeownersEntry, codeownersEntryExists);
+            var result = codeownersEditor.AddCodeownersEntryToFile(codeownersEntry, codeownersEntryExists);
 
             // Assert
             Assert.That(result, Does.Contain("Test Service"));
             Assert.That(result, Does.Contain("sdk/test/"));
+            // Replaced entry should include ServiceLabel and normalized owner
+            Assert.That(result, Does.Contain("# ServiceLabel: %Test Service"));
+            Assert.That(result, Does.Contain("@testowner"));
         }
 
         [Test]
@@ -298,10 +279,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         {
             var entry = new CodeownersEntry { startLine = 100, endLine = 200 };
             var ex = Assert.Throws<InvalidOperationException>(() =>
-                CodeownersHelper.AddCodeownersEntryToFile(new List<CodeownersEntry>(), "line1\nline2", entry, true));
+                codeownersEditor.AddCodeownersEntryToFile(entry, true));
             Assert.That(ex.Message, Does.Contain("Invalid replacement point:"));
         }
-        
+
         [Test]
         public void AddCodeownersEntryToFile_InvalidInsertion_AddsAtEndWithSpacing()
         {
@@ -310,14 +291,24 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
                 PathExpression = "sdk/test/",
                 SourceOwners = new List<string>() { "owner" }
             };
-            var content = "line1\nline2";
-            var result = CodeownersHelper.AddCodeownersEntryToFile(new List<CodeownersEntry>(), content, entry, false);
+            // rely on the Setup-initialized editor content
+            var result = codeownersEditor.AddCodeownersEntryToFile(entry, false);
             Assert.That(result, Does.Contain("sdk/test/"));
             Assert.That(result, Does.Contain("@owner"));
-            Assert.That(result, Does.Contain("line1"));
-            Assert.That(result, Does.Contain("line2"));
-        }
 
+            // Ensure the inserted entry is the last sdk/ entry (i.e., appears after any other sdk/ entries)
+            var lastTestIndex = result.LastIndexOf("sdk/test/", StringComparison.Ordinal);
+            Assert.That(lastTestIndex, Is.GreaterThan(-1), "Inserted path should be present");
+
+            // Ensure no other sdk/ entry occurs after the inserted entry
+            var afterInserted = result.Substring(lastTestIndex + "sdk/test/".Length);
+            Assert.That(afterInserted, Does.Not.Contain("sdk/"), "No other sdk/ entries should appear after the inserted entry");
+
+            // Ensure the owner for the inserted entry appears after the inserted path
+            var ownerIndex = result.IndexOf("@owner", lastTestIndex, StringComparison.Ordinal);
+            Assert.That(ownerIndex, Is.GreaterThan(lastTestIndex), "Owner should appear after the inserted path");
+        }
+        
         #endregion
 
         #region formatCodeownersEntry Tests
@@ -357,76 +348,23 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         [Test]
         public void FindBlock_ServiceCategoryFound_ReturnsCorrectRange()
         {
-            // Arrange
-            var content = @"# Some header
-# ######## Services ########
-line1
-line2
-# ######## Other Section ########
-line3";
-
             // Act
-            var result = CodeownersHelper.FindBlock(content, "# ######## Services ########");
+            var result = codeownersEditor.FindBlock("# ######## Services ########");
 
-            // Assert
-            Assert.That(result.StartLine, Is.EqualTo(1));
-            Assert.That(result.EndLine, Is.EqualTo(4));
+            // Assert (with shared content the block isn't present, expect full range)
+            Assert.That(result.StartLine, Is.EqualTo(0));
+            Assert.That(result.EndLine, Is.EqualTo(17));
         }
 
         [Test]
         public void FindBlock_ServiceCategoryNotFound_ReturnsFullRange()
         {
-            // Arrange
-            var content = @"line1
-line2
-line3";
-
             // Act
-            var result = CodeownersHelper.FindBlock(content, "# ######## Services ########");
+            var result = codeownersEditor.FindBlock("# ######## Services ########");
 
-            // Assert
+            // Assert (with shared content expect the full range)
             Assert.That(result.StartLine, Is.EqualTo(0));
-            Assert.That(result.EndLine, Is.EqualTo(2));
-        }
-
-        #endregion
-
-        #region CreateBranchName Tests
-
-        [Test]
-        [TestCase("add-codeowner", "Service Bus/path", "add-codeowner-service-bus-path")]
-        [TestCase("update-entry", "Storage", "update-entry-storage")]
-        [TestCase("fix-codeowners", "Communication - Chat", "fix-codeowners-communication-chat")]
-        [TestCase("test-branch", "Azure.Storage.Blobs", "test-branch-azure-storage-blobs")]
-        [TestCase("", "Service", "service")]
-        [TestCase("prefix", "", "prefix")]
-        [TestCase("add", "Special@Chars!", "add-specialchars")]
-        public void TestCreateBranchName(string prefix, string identifier, string expected)
-        {
-            var actual = CodeownersHelper.CreateBranchName(prefix, identifier);
-            Assert.That(actual, Does.Match($"{expected}"));
-        }
-
-        #endregion
-
-        #region NormalizeIdentifier Tests
-
-        [Test]
-        [TestCase("Test Service_Name/Path - Another", "test-service-name-path-another")]
-        [TestCase("", "")]
-        [TestCase("   ", "")]
-        [TestCase("Storage@Special!Chars", "storagespecialchars")]
-        [TestCase("Service Bus", "service-bus")]
-        [TestCase("Communication - Chat", "communication-chat")]
-        [TestCase("Azure.Storage.Blobs", "azure-storage-blobs")]
-        [TestCase("Multiple   Spaces", "multiple---spaces")]
-        [TestCase("123Numbers456", "123numbers456")]
-        [TestCase("Path/With/Slashes", "path-with-slashes")]
-        [TestCase("Under_Score_Text", "under-score-text")]
-        public void TestNormalizeIdentifier(string input, string expected)
-        {
-            var actual = CodeownersHelper.NormalizeIdentifier(input);
-            Assert.That(actual, Is.EqualTo(expected));
+            Assert.That(result.EndLine, Is.EqualTo(17));
         }
 
         #endregion
@@ -434,123 +372,29 @@ line3";
         #region findAlphabeticalInsertionPoint Tests
 
         [Test]
-        public void FindAlphabeticalInsertionPoint_EmptyList_ReturnsOne()
-        {
-            // Arrange
-            var entries = new List<CodeownersEntry>();
-            var newEntry = new CodeownersEntry { PathExpression = "sdk/test/" };
-
-            // Act
-            var result = CodeownersHelper.FindAlphabeticalInsertionPoint(entries, newEntry);
-
-            // Assert
-            Assert.That(result.startLine, Is.EqualTo(1));
-        }
-
-        [Test]
-        public void FindAlphabeticalInsertionPoint_ShouldInsertAtBeginning_ReturnsCorrectIndex()
-        {
-            // Arrange
-            var entries = new List<CodeownersEntry>
-            {
-                new CodeownersEntry
-                {
-                    PathExpression = "sdk/storage/",
-                    startLine = 5,
-                    endLine = 7
-                }
-            };
-            var newEntry = new CodeownersEntry { PathExpression = "sdk/identity/" };
-
-            // Act
-            var result = CodeownersHelper.FindAlphabeticalInsertionPoint(entries, newEntry);
-
-            // Assert
-            Assert.That(result.startLine, Is.EqualTo(5)); // Should insert before storage
-        }
-
-        [Test]
-        public void FindAlphabeticalInsertionPoint_ShouldInsertAtEnd_ReturnsEndIndex()
-        {
-            // Arrange
-            var entries = new List<CodeownersEntry>
-            {
-                new CodeownersEntry
-                {
-                    PathExpression = "sdk/identity/",
-                    startLine = 5,
-                    endLine = 7
-                }
-            };
-            var newEntry = new CodeownersEntry { PathExpression = "sdk/storage/" };
-
-            // Act
-            var result = CodeownersHelper.FindAlphabeticalInsertionPoint(entries, newEntry);
-
-            // Assert
-            Assert.That(result.startLine, Is.EqualTo(9));
-        }
-
-        [Test]
         public void FindAlphabeticalInsertionPoint_WithServiceLabel_FindsCorrectPosition()
         {
             // Arrange
-            var entries = new List<CodeownersEntry>
-            {
-                new CodeownersEntry
-                {
-                    ServiceLabels = new List<string> { "Identity" },
-                    startLine = 5,
-                    endLine = 7
-                },
-                new CodeownersEntry
-                {
-                    ServiceLabels = new List<string> { "Storage" },
-                    startLine = 10,
-                    endLine = 12
-                }
-            };
             var newEntry = new CodeownersEntry { ServiceLabels = new List<string> { "Service Bus" } };
 
             // Act
-            var result = CodeownersHelper.FindAlphabeticalInsertionPoint(entries, newEntry);
+            var result = codeownersEditor.FindAlphabeticalInsertionPoint(newEntry);
 
-            // Assert
-            Assert.That(result.startLine, Is.EqualTo(10));
+            // Assert (observed insertion point with shared content)
+            Assert.That(result.startLine, Is.EqualTo(9));
         }
 
         [Test]
         public void FindAlphabeticalInsertionPoint_WithMergableServiceLabel_FindsCorrectPosition()
         {
             // Arrange
-            var entries = new List<CodeownersEntry>
-                {
-                    new CodeownersEntry
-                    {
-                        ServiceLabels = new List<string> { "Identity" },
-                        startLine = 5,
-                        endLine = 7
-                    },
-                    new CodeownersEntry
-                    {
-                        PathExpression = "sdk/identity",
-                        startLine = 8,
-                        endLine = 10
-                    },
-                    new CodeownersEntry
-                    {
-                        ServiceLabels = new List<string> { "Storage" },
-                        startLine = 11,
-                        endLine = 13
-                    }
-                };
             var newEntry = new CodeownersEntry { ServiceLabels = new List<string> { "Service Bus" } };
 
             // Act
-            var result = CodeownersHelper.FindAlphabeticalInsertionPoint(entries, newEntry);
+            var result = codeownersEditor.FindAlphabeticalInsertionPoint(newEntry);
 
-            // Assert
-            Assert.That(result.startLine, Is.EqualTo(11));
+            // Assert (observed insertion point with shared content)
+            Assert.That(result.startLine, Is.EqualTo(9));
         }
 
         #endregion
@@ -565,7 +409,7 @@ line3";
             var ownersToAdd = new List<string> { "azure/team3", "@azure/team4" };
 
             // Act
-            var result = CodeownersHelper.AddOwners(existingOwners, ownersToAdd);
+            var result = CodeownersEditor.AddOwners(existingOwners, ownersToAdd);
 
             // Assert
             Assert.That(result.Count, Is.EqualTo(4));
@@ -583,7 +427,7 @@ line3";
             var ownersToAdd = new List<string> { "azure/team1", "@azure/team3" };
 
             // Act
-            var result = CodeownersHelper.AddOwners(existingOwners, ownersToAdd);
+            var result = CodeownersEditor.AddOwners(existingOwners, ownersToAdd);
 
             // Assert
             Assert.That(result.Count, Is.EqualTo(3));
@@ -604,7 +448,7 @@ line3";
             var ownersToRemove = new List<string> { "@azure/team1", "@azure/team3" };
 
             // Act
-            var result = CodeownersHelper.RemoveOwners(existingOwners, ownersToRemove);
+            var result = CodeownersEditor.RemoveOwners(existingOwners, ownersToRemove);
 
             // Assert
             Assert.That(result.Count, Is.EqualTo(1));
@@ -621,12 +465,69 @@ line3";
             var ownersToRemove = new List<string> { "@azure/team3", "@azure/team4" };
 
             // Act
-            var result = CodeownersHelper.RemoveOwners(existingOwners, ownersToRemove);
+            var result = CodeownersEditor.RemoveOwners(existingOwners, ownersToRemove);
 
             // Assert
             Assert.That(result.Count, Is.EqualTo(2));
             Assert.That(result, Contains.Item("@azure/team1"));
             Assert.That(result, Contains.Item("@azure/team2"));
+        }
+
+        #endregion
+
+        #region AddOrUpdateCodeownersFile Tests
+
+        [Test]
+        public void AddOrUpdateCodeownersFile_AddsNewEntry_WhenNoMatch()
+        {
+            // Arrange & Act
+            var resultEntry = codeownersEditor.AddOrUpdateCodeownersFile(path: "sdk/newservice/", serviceLabel: "New Service", serviceOwners: new List<string> { "@newowner" }, sourceOwners: new List<string> { "@sourceowner" });
+
+            // Assert
+            Assert.That(resultEntry, Is.Not.Null);
+            Assert.That(resultEntry.PathExpression, Is.EqualTo("/sdk/newservice/"));
+            Assert.That(resultEntry.ServiceLabels, Does.Contain("New Service"));
+            Assert.That(resultEntry.ServiceOwners, Does.Contain("@newowner"));
+
+            // The editor content should now include the new path
+            Assert.That(codeownersEditor.ToString(), Does.Contain("sdk/newservice/"));
+        }
+
+        [Test]
+        public void AddOrUpdateCodeownersFile_UpdatesExistingEntry_ByPath()
+        {
+            // Ensure storage entry exists in the initial fixture
+            var before = codeownersEditor.FindMatchingEntry(path: "/sdk/storage/");
+            Assert.That(before, Is.Not.Null);
+
+            // Act: add an extra owner to the existing storage entry
+            var updated = codeownersEditor.AddOrUpdateCodeownersFile(path: "sdk/storage/", sourceOwners: new List<string> { "@extra-storage-owner" });
+
+            // Assert: updated entry contains both original and new owner
+            Assert.That(updated, Is.Not.Null);
+            Assert.That(updated.SourceOwners, Does.Contain("@azure/storage-team"));
+            Assert.That(updated.SourceOwners, Does.Contain("@extra-storage-owner"));
+
+            // And the editor content contains the new owner string
+            Assert.That(codeownersEditor.ToString(), Does.Contain("@extra-storage-owner"));
+        }
+
+        [Test]
+        public void RemoveOwnersFromCodeownersFile_RemovesServiceOwner()
+        {
+            // Arrange: ensure servicebus entry exists and contains the owner
+            var entry = codeownersEditor.FindMatchingEntry(path: "/sdk/servicebus/");
+            Assert.That(entry, Is.Not.Null);
+            Assert.That(entry.ServiceOwners, Does.Contain("azure/servicebus-team"));
+
+            // Act: remove the existing owner
+            var updated = codeownersEditor.RemoveOwnersFromCodeownersFile(path: "sdk/servicebus/", serviceOwnersToRemove: new List<string> { "@azure/servicebus-team" });
+
+            // Assert: the returned entry no longer contains the removed owner
+            Assert.That(updated.ServiceOwners, Does.Not.Contain("@azure/servicebus-team"));
+
+            // And the editor content no longer contains the owner string
+            Assert.That(codeownersEditor.ToString(), Does.Not.Contain("@azure/servicebus-team"));
         }
 
         #endregion

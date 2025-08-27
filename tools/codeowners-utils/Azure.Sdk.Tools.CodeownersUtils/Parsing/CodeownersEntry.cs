@@ -234,7 +234,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
                 var normalizedSourceOwners = sourceOwners
                     .Where(o => !string.IsNullOrWhiteSpace(o))
                     .Select(o => o.Trim())
-                    .Select(o => o.StartsWith("@") ? o.Substring(1) : o)
+                    .Select(o => o.TrimStart('@'))
                     .Select(o => o.Trim())
                     .ToList();
 
@@ -274,7 +274,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
                 var normalizedAzureSdkOwners = azureSDKOwners
                     .Where(o => !string.IsNullOrWhiteSpace(o))
                     .Select(o => o.Trim())
-                    .Select(o => o.StartsWith("@") ? o.Substring(1) : o)
+                    .Select(o => o.TrimStart('@'))
                     .Select(o => o.Trim())
                     .ToList();
 
@@ -300,7 +300,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
                 var normalizedServiceOwners = serviceOwners
                     .Where(o => !string.IsNullOrWhiteSpace(o))
                     .Select(o => o.Trim())
-                    .Select(o => o.StartsWith("@") ? o.Substring(1) : o)
+                    .Select(o => o.TrimStart('@'))
                     .Select(o => o.Trim())
                     .ToList();
 

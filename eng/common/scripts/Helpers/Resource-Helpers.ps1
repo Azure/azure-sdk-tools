@@ -156,8 +156,6 @@ function Get-PurgeableResources {
   }
   catch { }
 
-  Write-Verbose "Retrieving deleted Cognitive Services accounts from subscription $subscriptionId"
-
   # Get deleted Cognitive Services accounts for the current subscription.
   $response = Invoke-AzRestMethod -Method GET -Path "/subscriptions/$subscriptionId/providers/Microsoft.CognitiveServices/deletedAccounts?api-version=2023-05-01" -ErrorAction Ignore
   if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 300 -and $response.Content) {

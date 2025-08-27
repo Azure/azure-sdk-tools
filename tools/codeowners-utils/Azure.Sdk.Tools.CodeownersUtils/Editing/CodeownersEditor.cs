@@ -57,7 +57,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Editing
         }
 
         /// <summary>
-        /// Removes owners from an existing codeowners entry, based on path or service label.
+        /// Updates the CODEOWNERS file and removes owners from an existing codeowners entry, based on path or service label.
         /// Updates the related codeowners content string to include the modified codeowners entry.
         /// Handles all normalization internally.
         /// </summary>

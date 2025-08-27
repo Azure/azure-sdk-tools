@@ -28,6 +28,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(ReadMeGeneratorTool),
             typeof(ReleasePlanTool),
             typeof(ReleaseReadinessTool),
+            typeof(SdkCodeTool),
             typeof(SdkReleaseTool),
             typeof(SpecCommonTools),
             typeof(PullRequestTools),

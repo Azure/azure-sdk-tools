@@ -49,30 +49,15 @@
             </ng-template>
         </li>
         <li class="list-group-item text-center" *ngIf="canRequestNamespaceReview">
-            <ng-container *ngIf="userProfile && preferredApprovers.includes(userProfile?.userName!)">
-                <div class="d-grid gap-2">
-                    <button class="{{namespaceReviewBtnClass}}" type="button"
-                            (click)="handleNamespaceReviewAction()"
-                            [disabled]="isNamespaceReviewRequested || isNamespaceApproved() || isNamespaceReviewInProgress">
-                        <span *ngIf="isNamespaceReviewInProgress" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                        {{namespaceReviewBtnLabel}}
-                    </button>
-                </div>
-                <span *ngIf="namespaceReviewMessage" class="small text-muted mt-2 d-block">{{namespaceReviewMessage}}</span>
-            </ng-container>
-            <span *ngIf="!userProfile || !preferredApprovers.includes(userProfile?.userName!)" class="small text-muted mt-1">
-                <ng-container *ngIf="isNamespaceApproved(); else notApproved">
-                    Namespace review has been approved
-                </ng-container>
-                <ng-template #notApproved>
-                    <ng-container *ngIf="isNamespaceReviewRequested; else noNamespaceReviewRequested">
-                        Namespace review has been requested
-                    </ng-container>
-                    <ng-template #noNamespaceReviewRequested>
-                        Namespace review not yet requested
-                    </ng-template>
-                </ng-template>
-            </span>
+            <div class="d-grid gap-2">
+                <button class="{{namespaceReviewBtnClass}}" type="button"
+                        (click)="handleNamespaceReviewAction()"
+                        [disabled]="isNamespaceReviewRequested || isNamespaceApproved() || isNamespaceReviewInProgress">
+                    <span *ngIf="isNamespaceReviewInProgress" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    {{namespaceReviewBtnLabel}}
+                </button>
+            </div>
+            <span *ngIf="namespaceReviewMessage" class="small text-muted mt-2 d-block">{{namespaceReviewMessage}}</span>
         </li>
     </ul>
     </app-page-options-section>

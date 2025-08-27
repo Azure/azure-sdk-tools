@@ -36,11 +36,21 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             var parentCommand = new Command("run-checks", "Run validation checks for SDK packages");
             
+            // Add the package path option to the parent command so it can be used without subcommands
+            parentCommand.AddOption(SharedOptions.PackagePath);
+            
+            // Set handler for the parent command to default to All checks
+            parentCommand.SetHandler(async (InvocationContext ctx) =>
+            {
+                var packagePath = ctx.ParseResult.GetValueForOption(SharedOptions.PackagePath);
+                await HandleCommandWithOptions(packagePath, PackageCheckType.All, ctx.GetCancellationToken());
+            });
+            
             // Create sub-commands for each check type
             var checkTypeValues = Enum.GetValues<PackageCheckType>();
             foreach (var checkType in checkTypeValues)
             {
-                var subCommand = new Command(checkType.ToString(), $"Run {checkType} validation check");
+                var subCommand = new Command(checkType.ToString().ToLowerInvariant(), $"Run {checkType} validation check");
                 subCommand.AddOption(SharedOptions.PackagePath);
                 
                 subCommand.SetHandler(async (InvocationContext ctx) =>
@@ -60,7 +70,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             // Get the command name which corresponds to the check type
             var commandName = ctx.ParseResult.CommandResult.Command.Name;
             
-            // Parse the command name back to enum
+            // If this is the parent command (run-checks), default to All
+            if (commandName == "run-checks")
+            {
+                var packagePath = ctx.ParseResult.GetValueForOption(SharedOptions.PackagePath);
+                await HandleCommandWithOptions(packagePath, PackageCheckType.All, ct);
+                return;
+            }
+            
+            // Parse the command name back to enum for subcommands
             if (Enum.TryParse<PackageCheckType>(commandName, true, out var checkType))
             {
                 var packagePath = ctx.ParseResult.GetValueForOption(SharedOptions.PackagePath);

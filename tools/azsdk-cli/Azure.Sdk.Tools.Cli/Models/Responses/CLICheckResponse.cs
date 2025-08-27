@@ -26,14 +26,10 @@ public class CLICheckResponse: Response
         }
     }
 
-    /// <summary>
-    /// Creates a CLICheckResponse from a process result.
-    /// </summary>
-    /// <param name="processResult">The process result to convert</param>
-    /// <returns>CLI check response</returns>
-    public static CLICheckResponse CreateResponseFromProcessResult(ProcessResult processResult)
+    public CLICheckResponse(ProcessResult processResult)
     {
-        return new CLICheckResponse(processResult.ExitCode, processResult.Output);
+        ExitCode = processResult.ExitCode;
+        CheckStatusDetails = processResult.Output;
     }
 
     public override string ToString()

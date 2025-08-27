@@ -23,7 +23,7 @@ func (s *FeedbackService) SaveFeedback(feedback model.FeedbackReq) error {
 	timestamp := time.Now()
 	// Get year and month
 	year, month, _ := timestamp.Date()
-	
+
 	// Format: feedback_YYYY_MM.xlsx
 	filename := fmt.Sprintf("feedback_%04d_%02d.xlsx", year, int(month))
 
@@ -98,7 +98,7 @@ func (s *FeedbackService) SaveFeedback(feedback model.FeedbackReq) error {
 
 	// Write to buffer instead of saving to file
 	var buf bytes.Buffer
-	if err := f.Write(&buf); err != nil {
+	if err = f.Write(&buf); err != nil {
 		return fmt.Errorf("failed to write Excel to buffer: %w", err)
 	}
 

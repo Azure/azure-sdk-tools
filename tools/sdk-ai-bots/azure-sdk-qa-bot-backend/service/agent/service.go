@@ -74,7 +74,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 		log.Printf("Request: %s", jsonReq)
 	}
 
-	if err := s.CheckArgs(req); err != nil {
+	if err = s.CheckArgs(req); err != nil {
 		log.Printf("Request validation failed: %v", err)
 		return nil, err
 	}

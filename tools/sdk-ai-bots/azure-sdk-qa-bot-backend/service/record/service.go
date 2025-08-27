@@ -91,7 +91,7 @@ func (s *RecordService) SaveAnswerRecord(record model.AnswerRecordReq) error {
 
 	// Write to buffer instead of saving to file
 	var buf bytes.Buffer
-	if err := f.Write(&buf); err != nil {
+	if err = f.Write(&buf); err != nil {
 		return fmt.Errorf("failed to write Excel to buffer: %w", err)
 	}
 

@@ -941,6 +941,13 @@ namespace APIViewWeb.Managers
         {
             try
             {
+                // Check if auto-approval feature is enabled
+                var autoApprovalEnabled = _configuration.GetValue<bool>("Features:enableAutoApproval", true);
+                if (!autoApprovalEnabled)
+                {
+                    _logger.LogInformation("Auto-approval feature is disabled. Skipping namespace auto-approval processing.");
+                    return;
+                }
                 
                 var pendingReviews = await GetPendingNamespaceReviewsForAutoApproval();
                 

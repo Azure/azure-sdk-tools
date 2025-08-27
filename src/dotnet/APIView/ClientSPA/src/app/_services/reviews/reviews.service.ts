@@ -151,4 +151,5 @@ export class ReviewsService {
     {
       params: params, observe: 'response',
       responseType: 'arraybuffer', withCredentials: true });
-  }}
+  }
+}

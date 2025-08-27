@@ -41,4 +41,9 @@ export class ConfigService {
   get webAppUrl () : string {
     return this.config.webAppUrl;
   }
+
+  getFeatureValue<T>(key: string, defaultValue: T): T {
+    const features = this.config.features || {};
+    return features[key] !== undefined ? features[key] : defaultValue;
+  }
 }

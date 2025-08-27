@@ -200,7 +200,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
 
         public override Command GetCommand()
         {
-            var command = new Command("spec-pr", "Pull request tool");
+            var command = new Command("spec-pr", "Pull request tools");
             var subCommands = new[] {
                 new Command(getPullRequestForCurrentBranchCommandName, "Get pull request for current branch") { repoPathOpt },
                 new Command(createPullRequestCommandName, "Create pull request") { titleOpt, descriptionOpt, repoPathOpt, targetBranchOpt, draftOpt },

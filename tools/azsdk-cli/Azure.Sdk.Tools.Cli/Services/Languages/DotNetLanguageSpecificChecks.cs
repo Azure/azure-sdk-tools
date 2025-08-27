@@ -28,7 +28,7 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
         _logger = logger;
     }
 
-    public string SupportedLanguage => "Dotnet";
+    public string SupportedLanguage => "dotnet";
 
     public async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct)
     {

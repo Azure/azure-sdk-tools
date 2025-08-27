@@ -1,5 +1,5 @@
 Set-StrictMode -Version 3
-. (Join-Path $PSScriptRoot ".." common scripts DevOps-WorkItem-Helpers.ps1)
+. (Join-Path $PSScriptRoot "../common/scripts/Helpers/DevOps-WorkItem-Helpers.ps1")
 
 $Incomplete = 0
 $Complete = 1
@@ -69,8 +69,8 @@ foreach ($triage in $triages) {
         } else {
             Update-AttestationStatusInWorkItem -workItemId $triage.id -fieldName "Custom.DataplaneAttestationStatus" -status "Not applicable"
 
-            if ($lifecycleToDataKpis.ContainsKey($lifecycle)) {
-                foreach ($kpiId in $lifecycleToDataKpis[$lifecycle]) {
+            if ($lifecycleToDataKpis.ContainsKey($productLifecycle)) {
+                foreach ($kpiId in $lifecycleToDataKpis[$productLifecycle]) {
                     AddAttestationEntry $productServiceTreeId $kpiId $NA $productType $url
                 }
             }
@@ -88,8 +88,8 @@ foreach ($triage in $triages) {
             Update-AttestationStatusInWorkItem -workItemId $triage.id -fieldName "Custom.ManagementPlaneAttestationStatus" -status "Complete"
         } else {
             Update-AttestationStatusInWorkItem -workItemId $triage.id -fieldName "Custom.ManagementPlaneAttestationStatus" -status "Not applicable"
-            if ($lifecycleToMgmtKpis.ContainsKey($lifecycle)) {
-                foreach ($kpiId in $lifecycleToMgmtKpis[$lifecycle]) {
+            if ($lifecycleToMgmtKpis.ContainsKey($productLifecycle)) {
+                foreach ($kpiId in $lifecycleToMgmtKpis[$productLifecycle]) {
                     AddAttestationEntry $productServiceTreeId $kpiId $NA $productType $url
                 }
             }

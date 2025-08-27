@@ -38,19 +38,20 @@ function Get-PurgeableGroupResources {
     $purgeableResources += $deletedKeyVaults
   }
 
-  Write-Verbose "Retrieving soft-deleted AI resources for resource group $ResourceGroupName"
+  Write-Verbose "Retrieving AI resources from resource group $ResourceGroupName"
 
-  # Get AI resources that are already in soft-deleted state
+  # Get AI resources that will go into soft-deleted state when the resource group is deleted
   $subscriptionId = (Get-AzContext).Subscription.Id
   $aiResources = @()
 
-  # Get soft-deleted Cognitive Services accounts
-  $response = Invoke-AzRestMethod -Method GET -Path "/subscriptions/$subscriptionId/providers/Microsoft.CognitiveServices/deletedAccounts?api-version=2023-05-01" -ErrorAction Ignore
+  # Get active Cognitive Services accounts from the resource group
+  $response = Invoke-AzRestMethod -Method GET -Path "/subscriptions/$subscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.CognitiveServices/accounts?api-version=2023-05-01" -ErrorAction Ignore
   if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 300 -and $response.Content) {
     $content = $response.Content | ConvertFrom-Json
     
     foreach ($r in $content.value) {
-      $resourceType = switch ($r.properties.kind) {
+      # Most Cognitive Services support soft delete, so include them for potential purging
+      $resourceType = switch ($r.kind) {
         'OpenAI' { 'Azure OpenAI' }
         'ComputerVision' { 'Computer Vision' }
         'CustomVision.Training' { 'Custom Vision Training' }
@@ -63,7 +64,7 @@ function Get-PurgeableGroupResources {
         'SpeechServices' { 'Speech Service' }
         'TextTranslation' { 'Translator' }
         'AIServices' { 'Azure AI Foundry' }
-        default { "Cognitive Services ($($r.properties.kind))" }
+        default { "Cognitive Services ($($r.kind))" }
       }
 
       $aiResources += [pscustomobject] @{
@@ -71,15 +72,14 @@ function Get-PurgeableGroupResources {
         AzsdkName         = $r.name
         Id                = $r.id
         Name              = $r.name
-        Location          = $r.properties.location
-        Kind              = $r.properties.kind
-        DeletionDate      = $r.properties.deletionDate -as [DateTime]
+        Location          = $r.location
+        Kind              = $r.kind
       }
     }
   }
 
-  # Get soft-deleted Machine Learning workspaces
-  $response = Invoke-AzRestMethod -Method GET -Path "/subscriptions/$subscriptionId/providers/Microsoft.MachineLearningServices/deletedWorkspaces?api-version=2023-04-01" -ErrorAction Ignore
+  # Get active Machine Learning workspaces from the resource group
+  $response = Invoke-AzRestMethod -Method GET -Path "/subscriptions/$subscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.MachineLearningServices/workspaces?api-version=2023-04-01" -ErrorAction Ignore
   if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 300 -and $response.Content) {
     $content = $response.Content | ConvertFrom-Json
     
@@ -89,14 +89,13 @@ function Get-PurgeableGroupResources {
         AzsdkName         = $r.name
         Id                = $r.id
         Name              = $r.name
-        Location          = $r.properties.location
-        DeletionDate      = $r.properties.deletionDate -as [DateTime]
+        Location          = $r.location
       }
     }
   }
 
   if ($aiResources) {
-    Write-Verbose "Found $($aiResources.Count) soft-deleted AI resources to potentially purge."
+    Write-Verbose "Found $($aiResources.Count) AI resources to potentially purge after resource group deletion."
     $purgeableResources += $aiResources
   }
 

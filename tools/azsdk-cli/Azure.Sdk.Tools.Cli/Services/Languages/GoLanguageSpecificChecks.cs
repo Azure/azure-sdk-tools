@@ -158,7 +158,7 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
             repo += Path.DirectorySeparatorChar;
         }
 
-        // ex: sdk/messaging/azservicebus
+        // ex: sdk/messaging/azservicebus/
         return packagePath.Replace(repo, "");
     }
 }

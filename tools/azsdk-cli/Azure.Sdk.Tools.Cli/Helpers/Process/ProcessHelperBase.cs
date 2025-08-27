@@ -28,12 +28,20 @@ public abstract class ProcessHelperBase<T>(ILogger<T> logger, IOutputHelper outp
             RedirectStandardError = true,
             RedirectStandardInput = true,
             UseShellExecute = false,
-            CreateNoWindow = true
+            CreateNoWindow = true,
         };
 
         foreach (var arg in options.Args)
         {
             processStartInfo.ArgumentList.Add(arg);
+        }
+
+        if (options.EnvironmentVariables is not null)
+        {
+            foreach (var envVar in options.EnvironmentVariables)
+            {
+                processStartInfo.EnvironmentVariables.Add(envVar.Key, envVar.Value);
+            }
         }
 
         ProcessResult result = new() { ExitCode = 1 };

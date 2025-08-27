@@ -9,6 +9,8 @@ using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Tools;
+using Azure.Sdk.Tools.Cli.Languages.Test;
+using Azure.Sdk.Tools.Cli.Services.Languages.Test;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -37,6 +39,10 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ILanguageSpecificChecks, DotNetLanguageSpecificChecks>();
             services.AddSingleton<ILanguageSpecificChecks, GoLanguageSpecificChecks>();
             services.AddSingleton<ILanguageSpecificCheckResolver, LanguageSpecificCheckResolver>();
+
+            services.AddSingleton<ITestRunnerResolver, TestRunnerResolver>();
+            services.AddSingleton<ITestRunner, JavaScriptTestRunner>();
+            // TODO: test runners for other languages.
 
             // Helper classes
             services.AddSingleton<ILogAnalysisHelper, LogAnalysisHelper>();

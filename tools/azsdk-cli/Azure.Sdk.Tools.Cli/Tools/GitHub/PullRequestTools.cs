@@ -64,7 +64,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
                 {
                     return output.Format("Failed to get repo root path. Please make sure to provide a valid repository path.");
                 }
-                var repoOwner = await gitHelper.GetRepoOwnerNameAsync(repoRootPath, false);
+                var repoOwner = await gitHelper.GetRepoOwnerNameAsync(repoRootPath);
                 var repoName = gitHelper.GetRepoName(repoRootPath);
                 var headBranchName = gitHelper.GetBranchName(repoRootPath);
                 var headBranchRef = $"{repoOwner}:{headBranchName}";
@@ -116,7 +116,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
 
                     var headBranch = $"{headRepoOwner}:{headBranchName}";
                     logger.LogInformation($"Repo name: {repoName}, Head repo owner: {headRepoOwner}, Head branch name: {headBranchName}, Head branch ref: {headBranch}");
-                    logger.LogInformation("Repo name: {repoName}, Head repo owner: {headRepoOwner}, Head branch name: {headBranchName}, Head branch ref: {headBranch}", repoName, headRepoOwner, headBranchName, headBranch);
                     logger.LogInformation("Creating pull request in {targetRepoOwner}:{repoName}", targetRepoOwner, repoName);
                     //Create pull request
                     var createResponse = await gitHubService.CreatePullRequestAsync(repoName, targetRepoOwner, targetBranch, headBranch, title, description, draft);
@@ -141,7 +140,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
         private async Task<List<string>> GetPullRequestCommentsAsync(int pullRequestNumber, string repoPath)
         {
             var repoRootPath = gitHelper.DiscoverRepoRoot(repoPath);
-            var repoOwner = await gitHelper.GetRepoOwnerNameAsync(repoRootPath, false);
+            var repoOwner = await gitHelper.GetRepoOwnerNameAsync(repoRootPath);
             var repoName = gitHelper.GetRepoName(repoRootPath);
             
             var comments = await gitHubService.GetPullRequestCommentsAsync(repoOwner, repoName, pullRequestNumber);
@@ -159,10 +158,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
             try
             {
                 var repoRootPath = gitHelper.DiscoverRepoRoot(repoPath);
-                var repoOwner = await gitHelper.GetRepoOwnerNameAsync(repoRootPath, false);
+                var repoOwner = await gitHelper.GetRepoOwnerNameAsync(repoRootPath);
                 var repoName = gitHelper.GetRepoName(repoRootPath);
                 
-                logger.LogInformation($"Getting pull request details for {pullRequestNumber} in repo {repoName}");
+                logger.LogInformation($"Getting pull request details for {pullRequestNumber} in repo {repoOwner}/{repoName}");
                 var pullRequest = await gitHubService.GetPullRequestAsync(repoOwner, repoName, pullRequestNumber);
                 PullRequestDetails prDetails = new()
                 {
@@ -201,7 +200,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
 
         public override Command GetCommand()
         {
-            var command = new Command("spec-pr", "Pull request tools");
+            var command = new Command("spec-pr", "Pull request tool");
             var subCommands = new[] {
                 new Command(getPullRequestForCurrentBranchCommandName, "Get pull request for current branch") { repoPathOpt },
                 new Command(createPullRequestCommandName, "Create pull request") { titleOpt, descriptionOpt, repoPathOpt, targetBranchOpt, draftOpt },

@@ -38,40 +38,65 @@ function Get-PurgeableGroupResources {
     $purgeableResources += $deletedKeyVaults
   }
 
-  Write-Verbose "Retrieving AI resources from resource group $ResourceGroupName"
+  Write-Verbose "Retrieving soft-deleted AI resources for resource group $ResourceGroupName"
 
-  # Get AI resources that support soft delete
-  $aiResources = @(Get-AzResource -ResourceGroupName $ResourceGroupName -ErrorAction Ignore | Where-Object {
-    ($_.ResourceType -eq 'Microsoft.CognitiveServices/accounts') -or 
-    ($_.ResourceType -eq 'Microsoft.MachineLearningServices/workspaces')
-  } | ForEach-Object {
-    $resource = $_
-    # Add metadata for AI resources that support soft delete
-    if ($resource.ResourceType -eq 'Microsoft.CognitiveServices/accounts') {
-      # Create a simplified object for Cognitive Services resources
-      [pscustomobject] @{
-        AzsdkResourceType = 'Cognitive Services Account'
-        AzsdkName         = $resource.Name
-        Id                = $resource.ResourceId
-        Name              = $resource.Name
-        Location          = $resource.Location
-        ResourceType      = $resource.ResourceType
+  # Get AI resources that are already in soft-deleted state
+  $subscriptionId = (Get-AzContext).Subscription.Id
+  $aiResources = @()
+
+  # Get soft-deleted Cognitive Services accounts
+  $response = Invoke-AzRestMethod -Method GET -Path "/subscriptions/$subscriptionId/providers/Microsoft.CognitiveServices/deletedAccounts?api-version=2023-05-01" -ErrorAction Ignore
+  if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 300 -and $response.Content) {
+    $content = $response.Content | ConvertFrom-Json
+    
+    foreach ($r in $content.value) {
+      $resourceType = switch ($r.properties.kind) {
+        'OpenAI' { 'Azure OpenAI' }
+        'ComputerVision' { 'Computer Vision' }
+        'CustomVision.Training' { 'Custom Vision Training' }
+        'CustomVision.Prediction' { 'Custom Vision Prediction' }
+        'ContentSafety' { 'Content Safety' }
+        'FormRecognizer' { 'Document Intelligence' }
+        'Face' { 'Face API' }
+        'ImmersiveReader' { 'Immersive Reader' }
+        'TextAnalytics' { 'Language Service' }
+        'SpeechServices' { 'Speech Service' }
+        'TextTranslation' { 'Translator' }
+        'AIServices' { 'Azure AI Foundry' }
+        default { "Cognitive Services ($($r.properties.kind))" }
       }
-    } elseif ($resource.ResourceType -eq 'Microsoft.MachineLearningServices/workspaces') {
-      # Create a simplified object for ML workspaces
-      [pscustomobject] @{
-        AzsdkResourceType = 'Machine Learning Workspace'
-        AzsdkName         = $resource.Name
-        Id                = $resource.ResourceId
-        Name              = $resource.Name
-        Location          = $resource.Location
-        ResourceType      = $resource.ResourceType
+
+      $aiResources += [pscustomobject] @{
+        AzsdkResourceType = $resourceType
+        AzsdkName         = $r.name
+        Id                = $r.id
+        Name              = $r.name
+        Location          = $r.properties.location
+        Kind              = $r.properties.kind
+        DeletionDate      = $r.properties.deletionDate -as [DateTime]
       }
     }
-  } | Where-Object { $_ -ne $null })
+  }
+
+  # Get soft-deleted Machine Learning workspaces
+  $response = Invoke-AzRestMethod -Method GET -Path "/subscriptions/$subscriptionId/providers/Microsoft.MachineLearningServices/deletedWorkspaces?api-version=2023-04-01" -ErrorAction Ignore
+  if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 300 -and $response.Content) {
+    $content = $response.Content | ConvertFrom-Json
+    
+    foreach ($r in $content.value) {
+      $aiResources += [pscustomobject] @{
+        AzsdkResourceType = 'Machine Learning Workspace'
+        AzsdkName         = $r.name
+        Id                = $r.id
+        Name              = $r.name
+        Location          = $r.properties.location
+        DeletionDate      = $r.properties.deletionDate -as [DateTime]
+      }
+    }
+  }
 
   if ($aiResources) {
-    Write-Verbose "Found $($aiResources.Count) AI resources to potentially purge."
+    Write-Verbose "Found $($aiResources.Count) soft-deleted AI resources to potentially purge."
     $purgeableResources += $aiResources
   }
 

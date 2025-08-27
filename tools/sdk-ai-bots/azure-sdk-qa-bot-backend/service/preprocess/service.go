@@ -141,7 +141,11 @@ func (s *PreprocessService) ExtractAdditionalInfo(input string) string {
 		log.Printf("Failed to send preprocess request: %v", err)
 		return input
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Printf("Failed to close response body: %v", err)
+		}
+	}()
 
 	// Check the response status
 	if resp.StatusCode != http.StatusOK {

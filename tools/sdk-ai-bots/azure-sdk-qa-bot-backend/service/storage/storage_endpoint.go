@@ -42,7 +42,11 @@ func (s *StorageService) DownloadBlob(container, path string) ([]byte, error) {
 	}
 	// Read the blob content
 	body := resp.Body
-	defer body.Close()
+	defer func() {
+		if err := body.Close(); err != nil {
+			log.Printf("Failed to close response body: %v", err)
+		}
+	}()
 	content, err := io.ReadAll(body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read blob content: %v", err)

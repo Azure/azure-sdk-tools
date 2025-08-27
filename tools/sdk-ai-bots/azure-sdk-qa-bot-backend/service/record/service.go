@@ -52,20 +52,28 @@ func (s *RecordService) SaveAnswerRecord(record model.AnswerRecordReq) error {
 		existingData = true
 	}
 
-	defer f.Close()
+	defer func() {
+		if err := f.Close(); err != nil {
+			log.Printf("Failed to close Excel file: %v", err)
+		}
+	}()
 
 	sheetName := "AnswerRecords"
 
 	// If this is a new file, set up the headers
 	if !existingData {
 		// Rename default sheet to "AnswerRecords"
-		f.SetSheetName("Sheet1", sheetName)
+		if err := f.SetSheetName("Sheet1", sheetName); err != nil {
+			return fmt.Errorf("failed to set sheet name: %w", err)
+		}
 
 		// Set headers
 		headers := []string{"Timestamp", "ChannelName", "ChannelID", "MessageLink"}
 		for i, header := range headers {
 			cell := fmt.Sprintf("%c1", 'A'+i)
-			f.SetCellValue(sheetName, cell, header)
+			if err := f.SetCellValue(sheetName, cell, header); err != nil {
+				return fmt.Errorf("failed to set cell value: %w", err)
+			}
 		}
 	}
 

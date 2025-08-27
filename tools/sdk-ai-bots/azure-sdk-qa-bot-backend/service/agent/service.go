@@ -214,7 +214,11 @@ func getImageDataURI(url string) (string, error) {
 		log.Printf("Failed to download attachment: %v", err)
 		return "", err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Printf("Failed to close response body: %v", err)
+		}
+	}()
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("failed to download attachment, status code: %d", resp.StatusCode)
 	}

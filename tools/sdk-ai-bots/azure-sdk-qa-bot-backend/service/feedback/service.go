@@ -52,20 +52,28 @@ func (s *FeedbackService) SaveFeedback(feedback model.FeedbackReq) error {
 		existingData = true
 	}
 
-	defer f.Close()
+	defer func() {
+		if err := f.Close(); err != nil {
+			log.Printf("Failed to close Excel file: %v", err)
+		}
+	}()
 
 	sheetName := "Feedback"
 
 	// If this is a new file, set up the headers
 	if !existingData {
 		// Rename default sheet to "Feedback"
-		f.SetSheetName("Sheet1", sheetName)
+		if err := f.SetSheetName("Sheet1", sheetName); err != nil {
+			return fmt.Errorf("failed to set sheet name: %w", err)
+		}
 
 		// Set headers
 		headers := []string{"Timestamp", "TenantID", "Messages", "Reaction", "Comment", "Reasons", "Link"}
 		for i, header := range headers {
 			cell := fmt.Sprintf("%c1", 'A'+i)
-			f.SetCellValue(sheetName, cell, header)
+			if err := f.SetCellValue(sheetName, cell, header); err != nil {
+				return fmt.Errorf("failed to set cell value: %w", err)
+			}
 		}
 	}
 
@@ -93,7 +101,9 @@ func (s *FeedbackService) SaveFeedback(feedback model.FeedbackReq) error {
 
 	for i, value := range rowData {
 		cell := fmt.Sprintf("%c%d", 'A'+i, nextRow)
-		f.SetCellValue(sheetName, cell, value)
+		if err := f.SetCellValue(sheetName, cell, value); err != nil {
+			return fmt.Errorf("failed to set cell value: %w", err)
+		}
 	}
 
 	// Write to buffer instead of saving to file

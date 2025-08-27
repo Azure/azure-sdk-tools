@@ -12,7 +12,9 @@ import (
 )
 
 func TestQueryIndex(t *testing.T) {
-	config.InitEnvironment()
+	if err := config.InitEnvironment(); err != nil {
+		t.Fatalf("Failed to initialize environment: %v", err)
+	}
 	config.InitSecrets()
 	searchClient := search.NewSearchClient()
 	req := &model.QueryIndexRequest{

@@ -39,5 +39,8 @@ func main() {
 	utils.ConfigureAzureCompatibleLogging()
 
 	r := setupRouter()
-	r.Run(":8088")
+	err := r.Run(":8088")
+	if err != nil {
+		panic(err)
+	}
 }

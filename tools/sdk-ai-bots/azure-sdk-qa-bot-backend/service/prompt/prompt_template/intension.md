@@ -37,6 +37,9 @@ The question must be classified into one of these categories:
   - how to implement x-ms-pageable in typespec?
   - how to implement allOf in typespec?
 
+- **SDK Generation**: Question about how to generate SDK bease on TypeSpec, such as:
+  - How to generate donet SDK?
+
 ## Intent Scopes
 The question must be classified into one of these categories:
 

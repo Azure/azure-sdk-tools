@@ -5,33 +5,31 @@ using System.CommandLine.Invocation;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
-using Azure.AI.OpenAI;
-using OpenAI.Chat;
 using Azure.Sdk.Tools.Cli.Commands;
+using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Services;
-using Azure.Sdk.Tools.Cli.Configuration;
+using Azure.Sdk.Tools.Cli.Microagents;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package
 {
     // Will add after we decide which tools are exported via the MCP.
     //[McpServerToolType, Description("Generates a README file, using service documentation")]
-    public partial class ReadMeGeneratorTool : MCPTool
+    public class ReadMeGeneratorTool : MCPTool
     {
         private readonly ILogger<ReadMeGeneratorTool> logger;
         private readonly IOutputHelper output;
-        private readonly AzureOpenAIClient openAiClient;
+        private readonly IMicroagentHostService microAgentHostService;
 
-        private Option<string> packagePathOption = new(
-                name: "--package-path",
-                getDefaultValue: () => ".",
-                description: "Path to a module, underneath the 'sdk' folder for your repository (ex: /yoursource/azure-sdk-for-go/sdk/messaging/azservicebus)")
+        private readonly Option<string> packagePathOption = new(
+            name: "--package-path",
+            getDefaultValue: () => ".",
+            description: "Path to a module, underneath the 'sdk' folder for your repository (ex: /yoursource/azure-sdk-for-go/sdk/messaging/azservicebus)")
         {
             IsRequired = true,
         };
 
-        private Option<string> outputPathOption = new(
+        private readonly Option<string> outputPathOption = new(
                 name: "--output-path",
                 getDefaultValue: () => "README.output.md",
                 description: "Path to write the generated README contents")
@@ -39,18 +37,18 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             IsRequired = true,
         };
 
-        private Option<string> templatePathOption = new("--template-path", "Path to the README template file (ie: Templates/ReadMeGenerator/README-template.go.md)")
+        private readonly Option<string> templatePathOption = new("--template-path", "Path to the README template file (ie: Templates/ReadMeGenerator/README-template.go.md)")
         {
             IsRequired = true,
         };
 
-        private Option<string> serviceDocumentationOption = new(
+        private readonly Option<string> serviceDocumentationOption = new(
                 "--service-url", "URL to the service documentation (ex: https://learn.microsoft.com/azure/service-bus-messaging)")
         {
             IsRequired = true
         };
 
-        private Option<string> modelOption = new(
+        private readonly Option<string> modelOption = new(
             name: "--model",
             getDefaultValue: () => "gpt-4.1",
             description: "The OpenAI model to use when generating the readme. Note, this will match the name of your Azure OpenAI model deployment.")
@@ -58,13 +56,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             IsRequired = true,
         };
 
-        public ReadMeGeneratorTool(ILogger<ReadMeGeneratorTool> logger, IOutputHelper output, AzureOpenAIClient openAiClient)
+        public ReadMeGeneratorTool(ILogger<ReadMeGeneratorTool> logger, IOutputHelper output, IMicroagentHostService microAgentHostService)
         {
+            this.CommandHierarchy = [SharedCommandGroups.Generators];
+
             this.logger = logger;
             this.output = output;
-            this.openAiClient = openAiClient;
-
-            this.CommandHierarchy = [SharedCommandGroups.Generators];
+            this.microAgentHostService = microAgentHostService;
         }
 
         public override Command GetCommand()
@@ -93,28 +91,24 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 var outputPath = pr.GetValueForOption(outputPathOption);
                 var model = pr.GetValueForOption(modelOption);
 
-                var chatClient = openAiClient.GetChatClient(model);
-
-                var (repoPath, subPackagePath) = GetPackageInfoFromPath(pr.GetValueForOption(packagePathOption));
-
-                var validReadme = await Generate(
-                    chatClient: chatClient,
-                    repoPath: repoPath,
+                var generator = new ReadmeGenerator(
+                    logger: logger,
+                    output: output,
+                    microAgentHostService: microAgentHostService,
                     templatePath: templatePath,
                     serviceDocumentation: new Uri(serviceDocumentation),
-                    packagePath: subPackagePath,
+                    packagePath: pr.GetValueForOption(packagePathOption),
                     outputPath: outputPath,
-                    ct: ct);
+                    model: model);
 
-                if (!validReadme)
-                {
-                    output.OutputError("The generated readme did not pass validation checks. Please check the output for details.");
-                    ctx.ExitCode = 1;
-                }
-                else
-                {
-                    output.Output($"Readme written to {outputPath}");
-                }
+                await generator.Generate(ct);
+                output.Output($"Readme written to {outputPath}");
+            }
+            catch (ReadmeValidationException ex)
+            {
+                logger.LogError(ex, "ReadmeGeneratorTool failed");
+                output.OutputError($"ReadmeGenerator failed with validation errors: {ex.Message}");
+                ctx.ExitCode = 1;
             }
             catch (Exception ex)
             {
@@ -123,26 +117,46 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 ctx.ExitCode = 1;
             }
         }
+    }
 
-        /// <summary>
-        /// Generates a readme.md file.
-        /// </summary>
+    public partial class ReadmeGenerator
+    {
+        private readonly ILogger<ReadMeGeneratorTool> logger;
+        private readonly IOutputHelper output;
+        private readonly IMicroagentHostService microAgentHostService;
+        private readonly string templatePath;
+        private readonly Uri serviceDocumentation;
+        private readonly string subPackagePath;
+        private readonly string outputPath;
+        private readonly string repoPath;
+        private readonly string model;
+
+        public ReadmeGenerator(
+            ILogger<ReadMeGeneratorTool> logger, IOutputHelper output, IMicroagentHostService microAgentHostService,
+            string templatePath, Uri serviceDocumentation, string packagePath, string outputPath,
+            string model)
+        {
+            this.logger = logger;
+            this.output = output;
+            this.microAgentHostService = microAgentHostService;
+
+            this.templatePath = templatePath;
+            this.serviceDocumentation = serviceDocumentation;
+
+            var (repoPath, subPackagePath) = GetPackageInfoFromPath(packagePath);
+            this.subPackagePath = subPackagePath;
+            this.repoPath = repoPath;
+
+            this.outputPath = outputPath;
+
+            this.model = model;
+        }
+
         /// <summary>
         /// Generates a README.md file using a template, service documentation, and package information.
         /// </summary>
-        /// <param name="chatClient">The OpenAI chat client used to generate README content.</param>
-        /// <param name="templatePath">Path to the README template file.</param>
-        /// <param name="serviceDocumentation">URL to the service documentation for the package.</param>
-        /// <param name="packagePath">The package path, under 'sdk', that houses your package.</param>
-        /// <param name="outputPath">Path to write the generated README contents.</param>
-        /// <param name="repoPath">The root path of the repository containing the package.</param>
         /// <param name="ct">Cancellation token for the operation.</param>
-        /// <returns>
-        /// True if a valid README was generated and passed validation checks;
-        /// false if the README did not pass validation (e.g., due to dead or invalid links).
-        /// </returns>
-        /// <returns>true if a valid readme was generated, false is the readme did not pass validation checks. For instance, dead/invalid links.</returns>
-        async Task<bool> Generate(ChatClient chatClient, string templatePath, Uri serviceDocumentation, string packagePath, string outputPath, string repoPath, CancellationToken ct)
+        public async Task Generate(CancellationToken ct)
         {
             ArgumentException.ThrowIfNullOrEmpty(templatePath);
             ArgumentNullException.ThrowIfNull(serviceDocumentation);
@@ -151,57 +165,92 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
             var readmeText = await File.ReadAllTextAsync(templatePath, ct);
 
-            var messages = new ChatMessage[]{
-                new SystemChatMessage(
-                    """
-                    We're going to create some READMEs.
-                    The parameters are:
-                    * A URL that contains service documentation, to be used when creating key concepts, an introduction blurb and any other places where conceptual docs are needed
-                    * A package path that we can use to generate documentation links
-                    Here are some more rules to follow:
-                    - Do not touch the following sections, or its subsections: Contributing.
-                    - Do not generate sample code.
-                    - Rules for proper readmes can be found here: https://github.com/Azure/azure-sdk/blob/main/docs/policies/README-TEMPLATE.md
-                    """
-                ),
-                new SystemChatMessage($"The readme template is this: {readmeText} which we fill in with the user parameters, which follow:"),
-                new UserChatMessage($"Service URL: {serviceDocumentation}"),
-                new UserChatMessage($"Package path: {packagePath}")
-            };
+            var prompt = $"""
+                We're going to create some READMEs.
+                    
+                The parameters are:
+                * A URL that contains service documentation, to be used when creating key concepts, an introduction blurb and any other places where conceptual docs are needed
+                * A package path that we can use to generate documentation links
+                    
+                Here are some more rules to follow:
+                - Do not touch the following sections, or its subsections: Contributing.
+                - Do not generate sample code.
+                - Rules for proper readmes can be found here: https://github.com/Azure/azure-sdk/blob/main/docs/policies/README-TEMPLATE.md
 
-            var response = await chatClient.CompleteChatAsync(messages);
-            var generatedReadmeText = Customize(response.Value.Content[0].Text);
+                The readme template is this: {readmeText} which we fill in with the user parameters, which follow:
+                Service URL: {serviceDocumentation}
+                Package path: {subPackagePath}
 
-            await File.WriteAllTextAsync(outputPath, generatedReadmeText, ct);
+                Call the check_readme_tool with the readme contents, and follow any returned suggestions.
+                When there are no further suggestions, give me the readme contents.
+                """;
 
-            return await IsValid(repoPath: repoPath, readmePath: outputPath, ct: ct);
+            var result = await this.microAgentHostService.RunAgentToCompletion(new Microagent<ReadmeContents>()
+            {
+                Instructions = prompt,
+                MaxToolCalls = 100,
+                Model = this.model,
+                Tools =
+                [
+                    AgentTool<ReadmeContents, CheckReadmeResult>.FromFunc("check_readme_tool", "Checks a readme to make sure that all the required values have been replaced", CheckReadme),
+                ]
+            }, ct);
+
+            // to guard against hallucinations, make sure this readme _truly_ is correct.
+            var checkReadmeResult = await CheckReadme(result, ct);
+
+            if (checkReadmeResult.Suggestions.Any())
+            {
+                throw new ReadmeValidationException(string.Join(Environment.NewLine, checkReadmeResult.Suggestions));
+            }
+
+            await File.WriteAllTextAsync(outputPath, result.Contents, ct);
         }
 
-        private async Task<bool> IsValid(string repoPath, string readmePath, CancellationToken ct)
+        public record ReadmeContents(string Contents);
+
+        record CheckReadmeResult(IEnumerable<string> Suggestions);
+
+        private async Task<CheckReadmeResult> CheckReadme(ReadmeContents parameters, CancellationToken ct)
         {
-            var valid = true;
+            var suggestions = new List<string>();
+
+            var re = placeholderRegex();
+
+            var placeholderMatches = re.Matches(parameters.Contents);
+
+            if (placeholderMatches != null && placeholderMatches.Count() > 0)
+            {
+                var placeholders = placeholderMatches.Select(m => m.Groups[1].Value).Distinct();
+                suggestions.Add($"The readme contains placeholders ({string.Join(',', placeholders)}) that should be removed and replaced with a proper package name");
+            }
+
+            var localeMatches = localeRegex().Matches(parameters.Contents);
+
+            if (localeMatches != null && localeMatches.Count() > 0)
+            {
+                var locales = localeMatches.Select(m => m.Groups[1].Value);
+                suggestions.Add($"The readme contains links with locales. Keep the link, but remove these locales from links: ({string.Join(',', locales)}).");
+            }
+
+            var tempFile = Path.GetTempFileName();
 
             try
             {
-                var result = await VerifyLinks(repoPath, readmePath, ct);
+                await File.WriteAllTextAsync(tempFile, parameters.Contents, ct);
+                var output = await VerifyLinks(repoPath, tempFile, ct);
 
-                if (result != null)
+                if (output != null)
                 {
-                    logger.LogInformation("[FAIL] Verify-Links.ps1 failed: {Result}", result);
-                    valid = false;
-                }
-                else
-                {
-                    logger.LogInformation($"[PASS] Verify-Links.ps1 passed");
+                    suggestions.Add($"Some links were broken and should be replaced: {output}");
                 }
             }
-            catch (Exception ex)
+            finally
             {
-                logger.LogError(ex, "[ERROR] Verify-Links.ps1 threw an exception");
-                valid = false;
+                try { File.Delete(tempFile); } catch { }
             }
 
-            return valid;
+            return new CheckReadmeResult(suggestions);
         }
 
         /// <summary>
@@ -243,25 +292,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return null;
         }
 
-        /// <summary>
-        /// Check the readme, make sure that none of our rules have been violated.
-        /// </summary>
-        /// <returns></returns>
-        private static string Customize(string generatedReadmeText)
-        {
-            if (TemplatePackagePlaceholderRegex().IsMatch(generatedReadmeText))
-            {
-                // we failed to get rid of the template package placeholder
-                throw new Exception("Template package placeholders were not all removed");
-            }
-
-            // check any links within the package, and fix any en-us ones.
-            generatedReadmeText = generatedReadmeText.Replace("/en-us/", "/");
-
-            return generatedReadmeText;
-        }
-
-        private static (string RepoPath, string SubPath) GetPackageInfoFromPath(string path)
+        public static (string RepoPath, string SubPath) GetPackageInfoFromPath(string path)
         {
             var origPath = Path.GetFullPath(path);
 
@@ -275,8 +306,25 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return (pieces[0], pieces[1]);
         }
 
-        [GeneratedRegex(@"Template Package|<package path>", RegexOptions.IgnoreCase, "")]
-        private static partial Regex TemplatePackagePlaceholderRegex();
+        // Example: 'en-us' from http://hello/en-us/blah
+        [GeneratedRegex(@"https?://[^\s/]+/([a-z]{2}-[a-z]{2})/")]
+        private static partial Regex localeRegex();
+
+        // Example matches:
+        // - '# Azure Template Package client library for Go'
+        // - 'Use the (package) client module `github.com/Azure/azure-sdk-for-go/sdk/(package path)` in your application to:'
+        [GeneratedRegex(@"(Azure Template|\(package path\)|aztemplate)")]
+        private static partial Regex placeholderRegex();
+    }
+
+    /// <summary>
+    /// Exception thrown when README validation fails.
+    /// </summary>
+    public class ReadmeValidationException : Exception
+    {
+        public ReadmeValidationException() { }
+
+        public ReadmeValidationException(string message) : base(message) { }
     }
 }
 

@@ -1,19 +1,25 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-using Azure.AI.OpenAI;
-using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Microagents;
+using System.Reflection;
+using System.Text.Json;
 using Microsoft.Extensions.Azure;
+using ModelContextProtocol.Server;
+using Azure.AI.OpenAI;
+using Azure.Sdk.Tools.Cli.Commands;
+using Azure.Sdk.Tools.Cli.Microagents;
+using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Tools;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
     public static class ServiceRegistrations
-    {    /// <summary>
-         /// This is the function that defines all of the services available to any of the MCPTool instantiations. This
-         /// same collection modification is run within the HostServerTool::CreateAppBuilder.
-         /// </summary>
-         /// <param name="services"></param>
-         /// todo: make this use reflection to populate itself with all of our services and helpers
+    {
+        /// <summary>
+        /// This is the function that defines all of the services available to any of the MCPTool instantiations. This
+        /// same collection modification is run within the HostServerTool::CreateAppBuilder.
+        /// </summary>
+        /// <param name="services"></param>
+        /// todo: make this use reflection to populate itself with all of our services and helpers
         public static void RegisterCommonServices(IServiceCollection services)
         {
             // Services
@@ -22,15 +28,15 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IDevOpsConnection, DevOpsConnection>();
             services.AddSingleton<IDevOpsService, DevOpsService>();
             services.AddSingleton<IGitHubService, GitHubService>();
-            services.AddSingleton<ILanguageRepoServiceFactory, LanguageRepoServiceFactory>();
 
-            // Language Services
-            services.AddSingleton<LanguageRepoService>();
-            services.AddSingleton<PythonLanguageRepoService>();
-            services.AddSingleton<JavaScriptLanguageRepoService>();
-            services.AddSingleton<DotNetLanguageRepoService>();
-            services.AddSingleton<GoLanguageRepoService>();
-            services.AddSingleton<JavaLanguageRepoService>();
+            // Language Check Services (Composition-based)
+            services.AddSingleton<ILanguageChecks, LanguageChecks>();
+            services.AddSingleton<ILanguageSpecificChecks, PythonLanguageSpecificChecks>();
+            services.AddSingleton<ILanguageSpecificChecks, JavaLanguageSpecificChecks>();
+            services.AddSingleton<ILanguageSpecificChecks, JavaScriptLanguageSpecificChecks>();
+            services.AddSingleton<ILanguageSpecificChecks, DotNetLanguageSpecificChecks>();
+            services.AddSingleton<ILanguageSpecificChecks, GoLanguageSpecificChecks>();
+            services.AddSingleton<ILanguageSpecificCheckResolver, LanguageSpecificCheckResolver>();
 
             // Helper classes
             services.AddSingleton<ILogAnalysisHelper, LogAnalysisHelper>();
@@ -69,6 +75,38 @@ namespace Azure.Sdk.Tools.Cli.Services
                         return new AzureOpenAIClient(new Uri(ep), credential, options);
                     });
             });
+        }
+
+        public static void RegisterInstrumentedMcpTools(IServiceCollection services, string[] args)
+        {
+            JsonSerializerOptions? serializerOptions = null;
+            var toolTypes = SharedOptions.GetFilteredToolTypes(args);
+
+            foreach (var toolType in toolTypes)
+            {
+                if (toolType is null)
+                {
+                    continue;
+                }
+
+                foreach (var toolMethod in toolType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance))
+                {
+                    if (toolMethod.GetCustomAttribute<McpServerToolAttribute>() is not null)
+                    {
+                        services.AddSingleton((Func<IServiceProvider, McpServerTool>)(services =>
+                        {
+                            var options = new McpServerToolCreateOptions { Services = services, SerializerOptions = serializerOptions };
+                            var innerTool = toolMethod.IsStatic
+                                ? McpServerTool.Create(toolMethod, options: options)
+                                : McpServerTool.Create(toolMethod, r => ActivatorUtilities.CreateInstance(r.Services, toolType), options);
+
+                            var loggerFactory = services.GetRequiredService<ILoggerFactory>();
+                            var logger = loggerFactory.CreateLogger(toolType);
+                            return new InstrumentedTool(logger, innerTool, toolMethod.Name);
+                        }));
+                    }
+                }
+            }
         }
     }
 }

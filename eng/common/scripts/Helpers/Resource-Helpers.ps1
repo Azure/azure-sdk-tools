@@ -45,51 +45,16 @@ function Get-PurgeableGroupResources {
   $aiResources = @()
 
   # Get active Cognitive Services accounts from the resource group
-  $response = Invoke-AzRestMethod -Method GET -Path "/subscriptions/$subscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.CognitiveServices/accounts?api-version=2023-05-01" -ErrorAction Ignore
-  if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 300 -and $response.Content) {
-    $content = $response.Content | ConvertFrom-Json
-    
-    foreach ($r in $content.value) {
-      # Most Cognitive Services support soft delete, so include them for potential purging
-      $resourceType = switch ($r.kind) {
-        'OpenAI' { 'Azure OpenAI' }
-        'ComputerVision' { 'Computer Vision' }
-        'CustomVision.Training' { 'Custom Vision Training' }
-        'CustomVision.Prediction' { 'Custom Vision Prediction' }
-        'ContentSafety' { 'Content Safety' }
-        'FormRecognizer' { 'Document Intelligence' }
-        'Face' { 'Face API' }
-        'ImmersiveReader' { 'Immersive Reader' }
-        'TextAnalytics' { 'Language Service' }
-        'SpeechServices' { 'Speech Service' }
-        'TextTranslation' { 'Translator' }
-        'AIServices' { 'Azure AI Foundry' }
-        default { "Cognitive Services ($($r.kind))" }
-      }
-
-      $aiResources += [pscustomobject] @{
-        AzsdkResourceType = $resourceType
-        AzsdkName         = $r.name
-        Id                = $r.id
-        Name              = $r.name
-        Location          = $r.location
-        Kind              = $r.kind
-      }
-    }
-  }
-
-  # Get active Machine Learning workspaces from the resource group
-  $response = Invoke-AzRestMethod -Method GET -Path "/subscriptions/$subscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.MachineLearningServices/workspaces?api-version=2023-04-01" -ErrorAction Ignore
+  $response = Invoke-AzRestMethod -Method GET -Path "/subscriptions/$subscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.CognitiveServices/accounts?api-version=2024-10-01" -ErrorAction Ignore
   if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 300 -and $response.Content) {
     $content = $response.Content | ConvertFrom-Json
     
     foreach ($r in $content.value) {
       $aiResources += [pscustomobject] @{
-        AzsdkResourceType = 'Machine Learning Workspace'
+        AzsdkResourceType = "Cognitive Services ($($r.kind))"
         AzsdkName         = $r.name
-        Id                = $r.id
         Name              = $r.name
-        Location          = $r.location
+        Id                = $r.id
       }
     }
   }
@@ -158,67 +123,23 @@ function Get-PurgeableResources {
   Write-Verbose "Retrieving deleted Cognitive Services accounts from subscription $subscriptionId"
 
   # Get deleted Cognitive Services accounts for the current subscription.
-  $response = Invoke-AzRestMethod -Method GET -Path "/subscriptions/$subscriptionId/providers/Microsoft.CognitiveServices/deletedAccounts?api-version=2023-05-01" -ErrorAction Ignore
+  $response = Invoke-AzRestMethod -Method GET -Path "/subscriptions/$subscriptionId/providers/Microsoft.CognitiveServices/deletedAccounts?api-version=2024-10-01" -ErrorAction Ignore
   if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 300 -and $response.Content) {
     $content = $response.Content | ConvertFrom-Json
 
     $deletedCognitiveServices = @()
     foreach ($r in $content.value) {
-      $resourceType = switch ($r.properties.kind) {
-        'OpenAI' { 'Azure OpenAI' }
-        'ComputerVision' { 'Computer Vision' }
-        'CustomVision.Training' { 'Custom Vision Training' }
-        'CustomVision.Prediction' { 'Custom Vision Prediction' }
-        'ContentSafety' { 'Content Safety' }
-        'FormRecognizer' { 'Document Intelligence' }
-        'Face' { 'Face API' }
-        'ImmersiveReader' { 'Immersive Reader' }
-        'TextAnalytics' { 'Language Service' }
-        'SpeechServices' { 'Speech Service' }
-        'TextTranslation' { 'Translator' }
-        'AIServices' { 'Azure AI Foundry' }
-        default { "Cognitive Services ($($r.properties.kind))" }
-      }
-
       $deletedCognitiveServices += [pscustomobject] @{
-        AzsdkResourceType = $resourceType
+        AzsdkResourceType = "Cognitive Services ($($r.kind))"
         AzsdkName         = $r.name
-        Id                = $r.id
         Name              = $r.name
-        Location          = $r.properties.location
-        Kind              = $r.properties.kind
-        DeletionDate      = $r.properties.deletionDate -as [DateTime]
+        Id                = $r.id
       }
     }
 
     if ($deletedCognitiveServices) {
       Write-Verbose "Found $($deletedCognitiveServices.Count) deleted Cognitive Services accounts to potentially purge."
       $purgeableResources += $deletedCognitiveServices
-    }
-  }
-
-  Write-Verbose "Retrieving deleted Machine Learning workspaces from subscription $subscriptionId"
-
-  # Get deleted Machine Learning workspaces for the current subscription.
-  $response = Invoke-AzRestMethod -Method GET -Path "/subscriptions/$subscriptionId/providers/Microsoft.MachineLearningServices/deletedWorkspaces?api-version=2023-04-01" -ErrorAction Ignore
-  if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 300 -and $response.Content) {
-    $content = $response.Content | ConvertFrom-Json
-
-    $deletedMLWorkspaces = @()
-    foreach ($r in $content.value) {
-      $deletedMLWorkspaces += [pscustomobject] @{
-        AzsdkResourceType = 'Machine Learning Workspace'
-        AzsdkName         = $r.name
-        Id                = $r.id
-        Name              = $r.name
-        Location          = $r.properties.location
-        DeletionDate      = $r.properties.deletionDate -as [DateTime]
-      }
-    }
-
-    if ($deletedMLWorkspaces) {
-      Write-Verbose "Found $($deletedMLWorkspaces.Count) deleted Machine Learning workspaces to potentially purge."
-      $purgeableResources += $deletedMLWorkspaces
     }
   }
 
@@ -245,15 +166,17 @@ filter Remove-PurgeableResources {
   }
 
   $subscriptionId = (Get-AzContext).Subscription.Id
+  $verboseFlag = $VerbosePreference -eq 'Continue'
 
   foreach ($r in $Resource) {
-    Log "Attempting to purge $($r.AzsdkResourceType) '$($r.AzsdkName)'"
     switch ($r.AzsdkResourceType) {
       'Key Vault' {
         if ($r.EnablePurgeProtection) {
-          Write-Warning "Key Vault '$($r.VaultName)' has purge protection enabled and may not be purged until $($r.ScheduledPurgeDate)"
+          Write-Verbose "Key Vault '$($r.VaultName)' has purge protection enabled and may not be purged until $($r.ScheduledPurgeDate)" -Verbose:$verboseFlag
           continue
         }
+
+        Log "Attempting to purge $($r.AzsdkResourceType) '$($r.AzsdkName)'"
 
         # Use `-AsJob` to start a lightweight, cancellable job and pass to `Wait-PurgeableResoruceJob` for consistent behavior.
         Remove-AzKeyVault -VaultName $r.VaultName -Location $r.Location -InRemovedState -Force -ErrorAction Continue -AsJob `
@@ -262,16 +185,18 @@ filter Remove-PurgeableResources {
 
       'Managed HSM' {
         if ($r.EnablePurgeProtection) {
-          Write-Warning "Managed HSM '$($r.Name)' has purge protection enabled and may not be purged until $($r.ScheduledPurgeDate)"
+          Write-Verbose "Managed HSM '$($r.Name)' has purge protection enabled and may not be purged until $($r.ScheduledPurgeDate)" -Verbose:$verboseFlag
           continue
         }
+
+        Log "Attempting to purge $($r.AzsdkResourceType) '$($r.AzsdkName)'"
 
         # Use `GetNewClosure()` on the `-Action` ScriptBlock to make sure variables are captured.
         Invoke-AzRestMethod -Method POST -Path "/subscriptions/$subscriptionId/providers/Microsoft.KeyVault/locations/$($r.Location)/deletedManagedHSMs/$($r.Name)/purge?api-version=2023-02-01" -ErrorAction Ignore -AsJob `
         | Wait-PurgeableResourceJob -Resource $r -Timeout $Timeout -PassThru:$PassThru -Action {
           param ( $response )
           if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 300) {
-            Write-Warning "Successfully requested that Managed HSM '$($r.Name)' be purged, but may take a few minutes before it is actually purged."
+            Write-Verbose "Successfully requested that Managed HSM '$($r.Name)' be purged, but may take a few minutes before it is actually purged." -Verbose:$verboseFlag
           }
           elseif ($response.Content) {
             $content = $response.Content | ConvertFrom-Json
@@ -283,38 +208,18 @@ filter Remove-PurgeableResources {
         }.GetNewClosure()
       }
 
-      { $_ -like 'Cognitive Services Account' -or $_ -like 'Azure OpenAI' -or $_ -like 'Computer Vision' -or $_ -like 'Custom Vision*' -or $_ -like 'Content Safety' -or $_ -like 'Document Intelligence' -or $_ -like 'Face API' -or $_ -like 'Immersive Reader' -or $_ -like 'Language Service' -or $_ -like 'Speech Service' -or $_ -like 'Translator' -or $_ -like 'Azure AI Foundry' -or $_ -like 'Cognitive Services*' } {
+      { $_.StartsWith('Cognitive Services') }
+      {
+        Log "Attempting to purge $($r.AzsdkResourceType) '$($r.AzsdkName)'"
         # Use `GetNewClosure()` on the `-Action` ScriptBlock to make sure variables are captured.
-        Invoke-AzRestMethod -Method POST -Path "/subscriptions/$subscriptionId/providers/Microsoft.CognitiveServices/locations/$($r.Location)/deletedAccounts/$($r.Name)/purge?api-version=2023-05-01" -ErrorAction Ignore -AsJob `
+        Invoke-AzRestMethod -Method DELETE -Path "$($r.id)?api-version=2024-10-01" -ErrorAction Ignore -AsJob `
         | Wait-PurgeableResourceJob -Resource $r -Timeout $Timeout -PassThru:$PassThru -Action {
           param ( $response )
-          if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 300) {
-            Write-Warning "Successfully requested that $($r.AzsdkResourceType) '$($r.Name)' be purged, but may take a few minutes before it is actually purged."
-          }
-          elseif ($response.Content) {
-            $content = $response.Content | ConvertFrom-Json
-            if ($content.error) {
-              $err = $content.error
-              Write-Warning "Failed to purge $($r.AzsdkResourceType) '$($r.Name)': ($($err.code)) $($err.message)"
-            }
-          }
-        }.GetNewClosure()
-      }
 
-      'Machine Learning Workspace' {
-        # Use `GetNewClosure()` on the `-Action` ScriptBlock to make sure variables are captured.
-        Invoke-AzRestMethod -Method POST -Path "/subscriptions/$subscriptionId/providers/Microsoft.MachineLearningServices/locations/$($r.Location)/deletedWorkspaces/$($r.Name)/purge?api-version=2023-04-01" -ErrorAction Ignore -AsJob `
-        | Wait-PurgeableResourceJob -Resource $r -Timeout $Timeout -PassThru:$PassThru -Action {
-          param ( $response )
-          if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 300) {
-            Write-Warning "Successfully requested that Machine Learning Workspace '$($r.Name)' be purged, but may take a few minutes before it is actually purged."
-          }
-          elseif ($response.Content) {
-            $content = $response.Content | ConvertFrom-Json
-            if ($content.error) {
-              $err = $content.error
-              Write-Warning "Failed to purge Machine Learning Workspace '$($r.Name)': ($($err.code)) $($err.message)"
-            }
+          if ($response.StatusCode -eq 200 -or $response.StatusCode -eq 202 -or $response.StatusCode -eq 204) {
+            Write-Verbose "Successfully purged $($r.AzsdkResourceType) '$($r.Name)'." -Verbose:$verboseFlag
+          } else {
+            Write-Warning "Failed purging $($r.AzsdkResourceType) '$($r.Name)' with status code $($response.StatusCode)."
           }
         }.GetNewClosure()
       }

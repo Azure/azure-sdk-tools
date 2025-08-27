@@ -37,8 +37,8 @@ namespace APIViewUnitTests
         [Fact]
         public void IsSDKLanguage_Returns_False_For_Null()
         {
-            // Test null separately since the actual implementation doesn't handle null gracefully
-            Assert.Throws<ArgumentNullException>(() => IsSDKLanguageStatic(null));
+            // Test null separately - the actual implementation returns false for null
+            Assert.False(IsSDKLanguageStatic(null));
         }
 
         [Fact]

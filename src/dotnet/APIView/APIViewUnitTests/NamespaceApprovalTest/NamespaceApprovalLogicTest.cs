@@ -29,9 +29,9 @@ namespace APIViewUnitTests
         }
 
         [Fact]
-        public void IsSDKLanguage_Null_ThrowsException()
+        public void IsSDKLanguage_Null_ReturnsFalse()
         {
-            Assert.Throws<ArgumentNullException>(() => IsSDKLanguage(null));
+            Assert.False(IsSDKLanguage(null));
         }
 
         [Fact]

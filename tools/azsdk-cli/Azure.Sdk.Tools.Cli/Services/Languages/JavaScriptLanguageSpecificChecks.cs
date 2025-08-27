@@ -32,7 +32,7 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
 
     public async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct)
     {
-        // Implementation for analyzing dependencies in a Java project
+        // Implementation for analyzing dependencies in a JavaScript project
         return await Task.FromResult(new CLICheckResponse());
     }
 }

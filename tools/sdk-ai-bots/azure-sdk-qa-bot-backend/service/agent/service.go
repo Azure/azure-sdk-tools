@@ -215,7 +215,7 @@ func getImageDataURI(url string) (string, error) {
 		return "", err
 	}
 	defer func() {
-		if err := resp.Body.Close(); err != nil {
+		if err = resp.Body.Close(); err != nil {
 			log.Printf("Failed to close response body: %v", err)
 		}
 	}()

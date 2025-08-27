@@ -142,7 +142,7 @@ func (s *PreprocessService) ExtractAdditionalInfo(input string) string {
 		return input
 	}
 	defer func() {
-		if err := resp.Body.Close(); err != nil {
+		if err = resp.Body.Close(); err != nil {
 			log.Printf("Failed to close response body: %v", err)
 		}
 	}()

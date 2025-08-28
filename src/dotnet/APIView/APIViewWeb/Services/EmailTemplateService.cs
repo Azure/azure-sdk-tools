@@ -7,6 +7,7 @@ using System.Linq;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Helpers;
 using Microsoft.Extensions.Configuration;
+using System.Reflection;
 
 namespace APIViewWeb.Services
 {
@@ -29,15 +30,30 @@ namespace APIViewWeb.Services
 
     public class EmailTemplateService : IEmailTemplateService
     {
-        private readonly IHostEnvironment _hostEnvironment;
         private readonly string _apiviewEndpoint;
         private const int MaxPackageNameLength = 60;
         private const int BusinessDaysForDeadline = 3;
 
-        public EmailTemplateService(IHostEnvironment hostEnvironment, IConfiguration configuration)
+        public EmailTemplateService(IConfiguration configuration)
         {
-            _hostEnvironment = hostEnvironment;
             _apiviewEndpoint = configuration.GetValue<string>("Endpoint");
+        }
+
+        private async Task<string> LoadEmbeddedTemplateAsync(string templateName)
+        {
+            var assembly = typeof(EmailTemplateService).GetTypeInfo().Assembly;
+            var resourceName = $"APIViewWeb.Templates.{templateName}";
+            
+            using (var stream = assembly.GetManifestResourceStream(resourceName))
+            {
+                if (stream == null)
+                    throw new FileNotFoundException($"Template {templateName} not found as embedded resource. Resource name: {resourceName}");
+                    
+                using (var reader = new StreamReader(stream))
+                {
+                    return await reader.ReadToEndAsync();
+                }
+            }
         }
 
         public async Task<string> GetNamespaceReviewRequestEmailAsync(
@@ -46,8 +62,7 @@ namespace APIViewWeb.Services
             IEnumerable<ReviewListItemModel> languageReviews,
             string notes = null)
         {
-            var templatePath = Path.Combine(_hostEnvironment.ContentRootPath, "Templates", "NamespaceReviewRequestEmail.html");
-            var template = await File.ReadAllTextAsync(templatePath);
+            var template = await LoadEmbeddedTemplateAsync("NamespaceReviewRequestEmail.html");
 
             // Calculate deadline (3 business days from now using centralized utility)
             var deadline = DateTimeHelper.CalculateBusinessDays(DateTime.Now, BusinessDaysForDeadline);
@@ -80,8 +95,7 @@ namespace APIViewWeb.Services
             DateTime? originalRequestDate = null,
             DateTime? autoApprovedDate = null)
         {
-            var templatePath = Path.Combine(_hostEnvironment.ContentRootPath, "Templates", "NamespaceReviewApprovedEmail.html");
-            var template = await File.ReadAllTextAsync(templatePath);
+            var template = await LoadEmbeddedTemplateAsync("NamespaceReviewApprovedEmail.html");
 
             // Generate language package names in the simple format
             var languagePackagesHtml = GenerateLanguagePackagesHtml(languageReviews);

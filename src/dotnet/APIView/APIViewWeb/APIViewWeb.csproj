@@ -63,6 +63,7 @@
   <ItemGroup>
     <Content Include="$(GoProcessor)" Condition="Exists($(GoProcessor))" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="$(JavaProcessor)" Condition="Exists($(JavaProcessor))" CopyToOutputDirectory="PreserveNewest" />
+    <EmbeddedResource Include="Templates\**\*.html" />
   </ItemGroup>
 
   <ItemGroup>

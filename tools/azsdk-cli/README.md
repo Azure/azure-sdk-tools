@@ -327,10 +327,14 @@ Release - https://dev.azure.com/azure-sdk/internal/_build?definitionId=7684
     - Add attributes to enable MCP hooks, but MCP server functionality is a pluggable feature, not foundational to the architecture
     - Rapid ad-hoc testing is easier via CLI than MCP, and any tools we build can be consumed by other software/scripts outside of MCP
     - For example, the engsys/azsdk cli app is built around System.CommandLine along with some dependency injection and ASP.net glue + attributes to get it working with the MCP C# sdk
+- Tools SHOULD be implemented as both MCP tools and CLI commands wherever possible.
+  - We expect partners to primarily consume our tools via Copilot and other AI agent tools. First-class MCP support is necessary for this.
+  - CLI support is helpful to enable development and testing scenarios, and to allow customers to use our tools in places where an AI agent is not available
+  - For functionality that differs in implementation between CLI and MCP, create abstractions where possible.
 - Return structured data from all tools/commands. Define response classes that can `ToString()` or `ToJson()` for different output modes (and handle failure flows)
 - Use structured logging with appropriate levels: `LogInformation` for business events, `LogDebug` for diagnostics.
-- Write debug logging to stderr and/or a file in MCP mode to avoid the misleading "FAILURE TO PARSE MESSAGE" type errors in the MCP client logs
-- Support both stdio and http mode for MCP to enable easy debugging with tools like mcp inspector
+- Tools SHOULD NOT log to standard output directly using `Console` APIs. Instead, use available abstractions such as `IOutputService` and the logger. This helps ensure that the output is directed
+  to the right place regardless of whether the tool is being run as an MCP tool or through the CLI directly.
 - Where possible, avoid dependencies/pre-requisites requiring manual setup, prefer being able to set them up within the app (e.g. az login, gh login, etc.)
 - Reusable instructions should be placed under [azsdk instructions](https://github.com/Azure/azure-sdk-tools/tree/main/eng/common/instructions/azsdk-tools) where they will be synced to all azure sdk repositories.
 

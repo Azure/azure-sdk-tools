@@ -41,7 +41,7 @@ stages:
     displayName: Post Package Publish
     # dependsOn: PublishPackage
 
-    ${{ if and(not(length(parameters.ExeMatrix)), eq(parameters.ShouldTag, 'true'), eq(parameters.ShouldPublishExecutables, 'true')) }}:
+    ${{ if and(gt(length(parameters.ExeMatrix), 0), eq(parameters.ShouldTag, 'true'), eq(parameters.ShouldPublishExecutables, 'true')) }}:
       strategy:
         matrix: ${{ parameters.ExeMatrix }}
 
@@ -78,7 +78,7 @@ stages:
           env:
             GH_TOKEN: $(azuresdk-github-pat)
 
-      - ${{ if and(not(length(parameters.ExeMatrix)), eq(parameters.ShouldTag, 'true'), eq(parameters.ShouldPublishExecutables, 'true')) }}:
+      - ${{ if and(gt(length(parameters.ExeMatrix), 0), eq(parameters.ShouldTag, 'true'), eq(parameters.ShouldPublishExecutables, 'true')) }}:
         - task: DownloadPipelineArtifact@2
           displayName: Download $(rid) Binary
           inputs:

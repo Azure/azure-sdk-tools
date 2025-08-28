@@ -275,6 +275,7 @@ namespace APIViewWeb.Managers
             {
                 // Use the existing PageModelHelpers to get preferred approvers
                 var preferredApprovers = PageModelHelpers.GetPreferredApprovers(_configuration, _userProfileCache, user, review);
+
                 if (!preferredApprovers.Any())
                 {
                     return;
@@ -300,6 +301,17 @@ namespace APIViewWeb.Managers
                     if (!string.IsNullOrEmpty(emailAddress))
                     {
                         emailAddresses.Add(emailAddress);
+                    }
+                }
+                
+                // Also include the requesting user's email
+                var requestingUserName = user.GetGitHubLogin();
+                if (!string.IsNullOrEmpty(requestingUserName))
+                {
+                    var requesterEmail = await GetEmailAddress(requestingUserName);
+                    if (!string.IsNullOrEmpty(requesterEmail) && !emailAddresses.Contains(requesterEmail))
+                    {
+                        emailAddresses.Add(requesterEmail);
                     }
                 }
                 

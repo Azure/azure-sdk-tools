@@ -720,9 +720,9 @@ namespace Azure.Sdk.Tools.Cli.Services
                     throw new ArgumentException($"release plan work item with id {workItemId} not found.");
                 }
 
-                if (workItemId == 0 || string.IsNullOrEmpty(status))
+                if (string.IsNullOrEmpty(status))
                 {
-                    throw new ArgumentException("Please provide the work item ID and a status to update the work item.");
+                    throw new ArgumentException("Please provide a status to update the work item.");
                 }
                 var jsonLinkDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument()
                 {

@@ -1,7 +1,6 @@
 Set-StrictMode -Version 3
 . (Join-Path $PSScriptRoot "../common/scripts/Helpers/DevOps-WorkItem-Helpers.ps1")
 
-$Incomplete = 0
 $Complete = 1
 $NA = 3
 
@@ -18,19 +17,20 @@ function InvokeKustoCommand($command) {
     $databaseName = "CPEX_Attestation_DB"
     $accessToken = az account get-access-token --resource "https://api.kusto.windows.net" --query "accessToken" --output tsv
     $headers = @{ Authorization="Bearer $accessToken" }
-    Invoke-RestMethod -Uri "$clusterUri/v1/rest/mgmt" -Headers $headers -Method Post -Body (@{csl=$command; db=$databaseName} | ConvertTo-Json -Depth 3) -ContentType "application/json"
+    $body = @{ csl = $command; db = $databaseName } | ConvertTo-Json -Depth 3
+    Invoke-RestMethod -Uri "$clusterUri/v1/rest/mgmt" -Headers $headers -Method Post -Body $body -ContentType "application/json"
 }
 
 function AddAttestationEntry($targetId, $actionItemId, $status, $targetType, $url) {
     $tableName = "KpiEvidenceStream"
 
     $command = @"
-.append $tableName <|
+.append KpiEvidenceStream <|
 print
-    TargetId = "$targetId",
     ActionItemId = "$actionItemId",
-    Status = int($status),
+    TargetId = "$targetId",
     TargetType = "$targetType",
+    Status = int($status),
     CreatedTime = datetime(now),
     EvidenceUrl = "$url"
 "@
@@ -57,6 +57,7 @@ foreach ($triage in $triages) {
 
     AddAttestationEntry $productServiceTreeId $KPI_ID_Onboarding $Complete $productType $url
 
+    # Maps the current lifecycle stage to the required DATAPLANE KPIs needed to advance to the next lifecycle stages
     $lifecycleToDataKpis = @{
         "In Dev" = @($KPI_ID_Data_Private_Preview, $KPI_ID_Data_Public_Preview, $KPI_ID_Data_GA)
         "Private Preview" = @($KPI_ID_Data_Public_Preview, $KPI_ID_Data_GA)
@@ -77,6 +78,7 @@ foreach ($triage in $triages) {
         }
     }
 
+    # Maps the current lifecycle stage to the required MANGEMENT PLANE KPIs needed to advance to the next lifecycle stages
     $lifecycleToMgmtKpis = @{
         "In Dev" = @($KPI_ID_Mgmt_Private_Preview, $KPI_ID_Mgmt_Public_Preview, $KPI_ID_Mgmt_GA)
         "Private Preview" = @($KPI_ID_Mgmt_Public_Preview, $KPI_ID_Mgmt_GA)

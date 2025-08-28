@@ -1,3 +1,4 @@
+using System;
 using System.CommandLine;
 using System.CommandLine.Parsing;
 using System.IO.Enumeration;
@@ -17,6 +18,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
         public static readonly List<Type> ToolsList = [
             typeof(PackageCheckTool),
             typeof(CleanupTool),
+            typeof(CodeownersTools),
             typeof(GitHubLabelsTool),
             typeof(HostServerTool),
             typeof(LogAnalysisTool),
@@ -33,7 +35,8 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(SpecWorkflowTool),
             typeof(SpecValidationTools),
             typeof(TestAnalysisTool),
-            typeof(TypeSpecTool),
+            typeof(TypeSpecConvertTool),
+            typeof(TypeSpecInitTool),
             typeof(TspClientUpdateTool),
             typeof(TypeSpecPublicRepoValidationTool),
 
@@ -62,9 +65,9 @@ namespace Azure.Sdk.Tools.Cli.Commands
             IsRequired = false,
         };
 
-        public static Option<string> PackagePath = new(["--package-path", "-p"], "Path to the package directory to check") 
-        { 
-            IsRequired = true 
+        public static Option<string> PackagePath = new(["--package-path", "-p"], () => Environment.CurrentDirectory, "Path to the package directory to check. Defaults to the current working directory")
+        {
+            IsRequired = false
         };
 
         public static (string, bool) GetGlobalOptionValues(string[] args)

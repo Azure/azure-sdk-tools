@@ -57,7 +57,8 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
     {
         public string PathExpression { get; set; } = "";
 
-        public bool ContainsWildcard => PathExpression.Contains('*');
+        public bool ContainsWildcard => !string.IsNullOrEmpty(PathExpression) && PathExpression.Contains('*');
+        public bool ContainsDoubleWildcard => !string.IsNullOrEmpty(PathExpression) && PathExpression.Contains("**");
 
         public List<string> SourceOwners { get; set; } = new List<string>();
 
@@ -78,21 +79,45 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
         // the source path/owner line.
         public List<string> AzureSdkOwners { get; set; } = new List<string>();
 
+        public int startLine { get; set; } = -1;
+        public int endLine { get; set; } = -1;
+
         public bool IsValid => !string.IsNullOrWhiteSpace(PathExpression);
 
         public CodeownersEntry()
         {
         }
+
+        public CodeownersEntry(CodeownersEntry other)
+        {
+            if (other == null)
+            {
+                return;
+            }
+
+            PathExpression = other.PathExpression;
+            SourceOwners = other.SourceOwners != null ? new List<string>(other.SourceOwners) : new List<string>();
+            PRLabels = other.PRLabels != null ? new List<string>(other.PRLabels) : new List<string>();
+            ServiceLabels = other.ServiceLabels != null ? new List<string>(other.ServiceLabels) : new List<string>();
+            ServiceOwners = other.ServiceOwners != null ? new List<string>(other.ServiceOwners) : new List<string>();
+            AzureSdkOwners = other.AzureSdkOwners != null ? new List<string>(other.AzureSdkOwners) : new List<string>();
+
+            startLine = other.startLine;
+            endLine = other.endLine;
+        }
+
         public override string ToString()
         {
             return string.Join(
                         Environment.NewLine,
-                        $"PathExpression:{PathExpression}, HasWildcard:{ContainsWildcard}",
+                        $"PathExpression:{PathExpression}, HasWildcard:{ContainsWildcard}, HasDoubleWildcard:{ContainsDoubleWildcard}",
                         $"SourceOwners:{string.Join(", ", SourceOwners)}",
                         $"PRLabels:{string.Join(", ", PRLabels)}",
                         $"ServiceLabels:{string.Join(", ", ServiceLabels)}",
                         $"ServiceOwners:{string.Join(", ", ServiceOwners)}",
-                        $"AzureSdkOwners:{string.Join(", ", AzureSdkOwners)}"
+                        $"AzureSdkOwners:{string.Join(", ", AzureSdkOwners)}",
+                        $"Start line: {startLine}",
+                        $"End line: {endLine}"
                    );
         }
 

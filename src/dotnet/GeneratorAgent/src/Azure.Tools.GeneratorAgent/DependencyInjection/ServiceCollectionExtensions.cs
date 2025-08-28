@@ -4,7 +4,6 @@ using Azure.Identity;
 using Azure.Tools.GeneratorAgent.Authentication;
 using Azure.Tools.GeneratorAgent.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Http;
 using Microsoft.Extensions.Logging;
 
 namespace Azure.Tools.GeneratorAgent.DependencyInjection
@@ -74,7 +73,7 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
                 client.DefaultRequestHeaders.UserAgent.Clear();
                 client.DefaultRequestHeaders.UserAgent.ParseAdd("AzureSDK-TypeSpecGenerator/1.0");
 
-                string? githubToken = EnvironmentVariables.GitHubToken;
+                var githubToken = EnvironmentVariables.GitHubToken;
                 
                 if (string.IsNullOrEmpty(githubToken))
                 {
@@ -113,12 +112,12 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
         /// </summary>
         private static IServiceCollection AddApplicationServices(this IServiceCollection services)
         {
-            // All core services are stateless and can be singletons for better performance
-            services.AddSingleton<ErrorFixerAgent>();      // Thread-safe, uses threadId for isolation
-            services.AddSingleton<ProcessExecutor>();      // Stateless - just executes commands
-            services.AddSingleton<BuildErrorAnalyzer>();   // Stateless - just analyzes errors
+            services.AddSingleton<ErrorFixerAgent>();
+            services.AddSingleton<ProcessExecutor>();
+            services.AddSingleton<BuildErrorAnalyzer>();
+            services.AddSingleton<FixPromptService>();
+            services.AddSingleton<AgentResponseParser>();
 
-            // Factory services create ValidationContext-dependent instances, but factories themselves are stateless
             services.AddSingleton<Func<ValidationContext, ISdkGenerationService>>(provider =>
             {
                 return validationContext => SdkGenerationServiceFactory.CreateSdkGenerationService(
@@ -136,7 +135,6 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
                     validationContext.ValidatedSdkDir);
             });
 
-            // Register factory method for TypeSpecFileService that requires ValidationContext
             services.AddSingleton<Func<ValidationContext, TypeSpecFileService>>(provider =>
             {
                 return validationContext => new TypeSpecFileService(
@@ -147,7 +145,6 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
                     provider.GetRequiredService<Func<ValidationContext, GitHubFileService>>());
             });
 
-            // Register factory method for GitHubFilesService that requires ValidationContext
             services.AddSingleton<Func<ValidationContext, GitHubFileService>>(provider =>
             {
                 return validationContext => 
@@ -171,7 +168,7 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
         /// </summary>
         private static RuntimeEnvironment DetermineRuntimeEnvironment()
         {
-            bool isGitHubActions = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable(EnvironmentVariables.GitHubActions)) ||
+            var isGitHubActions = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable(EnvironmentVariables.GitHubActions)) ||
                                  !string.IsNullOrEmpty(Environment.GetEnvironmentVariable(EnvironmentVariables.GitHubWorkflow));
 
             if (isGitHubActions)
@@ -187,10 +184,10 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
         /// </summary>
         private static TokenCredentialOptions? CreateCredentialOptions()
         {
-            string? tenantId = Environment.GetEnvironmentVariable(EnvironmentVariables.AzureTenantId);
+            var tenantId = Environment.GetEnvironmentVariable(EnvironmentVariables.AzureTenantId);
             Uri? authorityHost = null;
 
-            string? authority = Environment.GetEnvironmentVariable(EnvironmentVariables.AzureAuthorityHost);
+            var authority = Environment.GetEnvironmentVariable(EnvironmentVariables.AzureAuthorityHost);
             if (!string.IsNullOrEmpty(authority) && Uri.TryCreate(authority, UriKind.Absolute, out Uri? parsedAuthority))
             {
                 authorityHost = parsedAuthority;
@@ -201,7 +198,7 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
                 return null;
             }
 
-            TokenCredentialOptions options = new TokenCredentialOptions();
+            var options = new TokenCredentialOptions();
 
             if (authorityHost != null)
             {

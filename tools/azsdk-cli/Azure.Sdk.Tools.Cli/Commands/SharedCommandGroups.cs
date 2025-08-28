@@ -41,18 +41,18 @@ namespace Azure.Sdk.Tools.Cli.Commands
             Options: []
         );
 
-        public static readonly CommandGroup Tsp = new(
+        public static readonly CommandGroup TypeSpec = new(
             Verb: "tsp",
-            Description: "TypeSpec client customization tools",
+            Description: "Tools for setting up or working with TypeSpec projects",
             Options: []
         );
 
-        #if DEBUG
+#if DEBUG
         public static readonly CommandGroup Example = new(
             Verb: "example",
             Description: "Example tool demonstrating framework features",
             Options: []
         );
-        #endif
+#endif
     }
 }

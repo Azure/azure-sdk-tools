@@ -6,14 +6,25 @@ using Microsoft.Extensions.Logging;
 namespace Azure.Sdk.Tools.Cli.Services;
 
 /// <summary>
-/// Python-specific implementation of language repository service.
-/// Uses tools like tox, pip, black, flake8, etc. for Python development workflows.
+/// Python-specific implementation of language checks.
 /// </summary>
-public class PythonLanguageRepoService : LanguageRepoService
+public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
 {
-    public PythonLanguageRepoService(IProcessHelper processHelper, INpxHelper npxHelper, IGitHelper gitHelper, ILogger<PythonLanguageRepoService> logger)
-        : base(processHelper, npxHelper, gitHelper, logger)
+    private readonly IProcessHelper _processHelper;
+    private readonly INpxHelper _npxHelper;
+    private readonly IGitHelper _gitHelper;
+    private readonly ILogger<PythonLanguageSpecificChecks> _logger;
+
+    public PythonLanguageSpecificChecks(
+        IProcessHelper processHelper, 
+        INpxHelper npxHelper, 
+        IGitHelper gitHelper, 
+        ILogger<PythonLanguageSpecificChecks> logger)
     {
+        _processHelper = processHelper;
+        _npxHelper = npxHelper;
+        _gitHelper = gitHelper;
+        _logger = logger;
     }
 
     public override IUpdateLanguageService CreateUpdateService(IServiceProvider serviceProvider)
@@ -21,7 +32,9 @@ public class PythonLanguageRepoService : LanguageRepoService
         throw new NotSupportedException("Python update service is not yet implemented");
     }
 
-    public override async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct = default)
+    public string SupportedLanguage => "Python";
+
+    public async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct = default)
     {
         try
         {

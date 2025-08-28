@@ -426,6 +426,12 @@ namespace Azure.Sdk.Tools.Cli.Services
                     return false;
                 }
 
+                var workItem = await connection.GetWorkItemClient().GetWorkItemAsync(workItemId);
+                if (workItem == null)
+                {
+                    throw new Exception($"Work item {workItemId} not found.");
+                }
+
                 var jsonLinkDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument();
                 // Add work item as child of release plan work item
                 if (!string.IsNullOrEmpty(sdkGenerationPipelineUrl))
@@ -708,6 +714,12 @@ namespace Azure.Sdk.Tools.Cli.Services
             // Update API spec work item status in release plan
             try
             {
+                var workItem = await connection.GetWorkItemClient().GetWorkItemAsync(workItemId);
+                if (workItem == null)
+                {
+                    throw new ArgumentException($"release plan work item with id {workItemId} not found.");
+                }
+
                 if (workItemId == 0 || string.IsNullOrEmpty(status))
                 {
                     throw new ArgumentException("Please provide the work item ID and a status to update the work item.");

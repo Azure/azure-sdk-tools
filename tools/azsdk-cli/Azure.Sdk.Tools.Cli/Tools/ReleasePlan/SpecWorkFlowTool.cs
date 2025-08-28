@@ -272,6 +272,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     }
                 }
 
+                if (workItemId > 0 && pullRequestNumber > 0)
+                {
+                    var apiReadiness = await CheckApiReadyForSDKGeneration(typespecProjectRoot, pullRequestNumber, workItemId);
+                    if (!apiReadiness.Contains("Success"))
+                    {
+                        response.Details.AddRange(apiReadiness.Split("\n"));
+                        response.Status = "Failed";
+                    }
+                }
                 // Return failure details in case of any failure
                 if (response.Status.Equals("Failed"))
                 {

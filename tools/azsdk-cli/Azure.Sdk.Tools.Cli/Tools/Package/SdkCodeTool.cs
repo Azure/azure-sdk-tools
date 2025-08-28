@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
@@ -22,9 +23,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         private const string buildSdkCommandName = "build";
         private const int commandTimeout = 30 * 60 * 1000; // 30 mins
 
-        // Build command options
-        private readonly Option<string> projectPathOpt = new(["--project-path", "-p"], "Absolute path to the SDK project") { IsRequired = true };
-
         // Generate command options
         private readonly Option<string> localSdkRepoPathOpt = new(["--local-sdk-repo-path", "-r"], "Absolute path to the local azure-sdk-for-{language} repository") { IsRequired = false };
         private readonly Option<string> tspConfigPathOpt = new(["--tsp-config-path", "-t"], "Path to the 'tspconfig.yaml' configuration file, it can be a local path or remote HTTPS URL") { IsRequired = false };
@@ -33,21 +31,22 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         private readonly Option<string> tspLocationPathOpt = new(["--tsp-location-path", "-l"], "Absolute path to the 'tsp-location.yaml' configuration file") { IsRequired = false };
         private readonly Option<string> emitterOpt = new(["--emitter-options", "-o"], "Emitter options in key-value format. Example: 'package-version=1.0.0-beta.1'") { IsRequired = false };
 
+        // Public properties
+        public new CommandGroup[] CommandHierarchy { get; init; } = [SharedCommandGroups.Package];
+
         public override Command GetCommand()
         {
-            var command = new Command("code", "Azure SDK code tools");
-            var subCommands = new[]
-            {
-                new Command(generateSdkCommandName, "Generates SDK code for a specified language based on the provided 'tspconfig.yaml' or 'tsp-location.yaml'.") { localSdkRepoPathOpt, tspConfigPathOpt, specCommitShaOpt, specRepoFullNameOpt, tspLocationPathOpt, emitterOpt },
-                new Command(buildSdkCommandName, "Builds SDK code for a specified language and project.") { projectPathOpt },
-            };
+            var parentCommand = new Command("code", "Azure SDK code tools");
+            var generateSubCommand = new Command(generateSdkCommandName, "Generates SDK code for a specified language based on the provided 'tspconfig.yaml' or 'tsp-location.yaml'.") { localSdkRepoPathOpt, tspConfigPathOpt, specCommitShaOpt, specRepoFullNameOpt, tspLocationPathOpt, emitterOpt };
+            var buildSubCommand = new Command(buildSdkCommandName, "Builds SDK code for a specified language and project.");
 
-            foreach (var subCommand in subCommands)
-            {
-                subCommand.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
-                command.AddCommand(subCommand);
-            }
-            return command;
+            generateSubCommand.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
+            buildSubCommand.AddOption(SharedOptions.PackagePath);
+            buildSubCommand.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
+            parentCommand.AddCommand(generateSubCommand);
+            parentCommand.AddCommand(buildSubCommand);
+            
+            return parentCommand;
         }
 
         public async override Task HandleCommand(InvocationContext ctx, CancellationToken ct)
@@ -69,8 +68,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     output.Output(generateResult);
                     break;
                 case buildSdkCommandName:
-                    var projectPath = commandParser.GetValueForOption(projectPathOpt);
-                    var buildResult = await BuildSdkAsync(projectPath, ct);
+                    var packagePath = commandParser.GetValueForOption(SharedOptions.PackagePath);
+                    var buildResult = await BuildSdkAsync(packagePath, ct);
                     ctx.ExitCode = ExitCode;
                     output.Output(buildResult);
                     break;
@@ -126,31 +125,31 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         [McpServerTool(Name = "azsdk_package_build_code"), Description("Build SDK code for a specified project locally.")]
         public async Task<DefaultCommandResponse> BuildSdkAsync(
             [Description("Absolute path to the SDK project.")]
-            string projectPath,
+            string packagePath,
             CancellationToken ct = default)
         {
             try
             {
-                logger.LogInformation($"Building SDK for project path: {projectPath}");
+                logger.LogInformation($"Building SDK for project path: {packagePath}");
 
                 // Validate inputs
-                if (string.IsNullOrEmpty(projectPath) || !Directory.Exists(projectPath))
+                if (string.IsNullOrEmpty(packagePath) || !Directory.Exists(packagePath))
                 {
                     return CreateFailureResponse("Invalid project path. Please provide a valid project path.");
                 }
 
                 // Return if the project is python project
-                if (projectPath.Contains("azure-sdk-for-python", StringComparison.OrdinalIgnoreCase))
+                if (packagePath.Contains("azure-sdk-for-python", StringComparison.OrdinalIgnoreCase))
                 {
                     logger.LogInformation("Python SDK project detected. Skipping build step as Python SDKs do not require a build process.");
                     return CreateSuccessResponse("Python SDK project detected. Skipping build step as Python SDKs do not require a build process.");
                 }
 
                 // Get repository root path from project path
-                string sdkRepoRoot = gitHelper.DiscoverRepoRoot(projectPath);
+                string sdkRepoRoot = gitHelper.DiscoverRepoRoot(packagePath);
                 if (string.IsNullOrEmpty(sdkRepoRoot))
                 {
-                    return CreateFailureResponse($"Failed to discover local sdk repo with project-path: {projectPath}.");
+                    return CreateFailureResponse($"Failed to discover local sdk repo with project-path: {packagePath}.");
                 }
 
                 logger.LogInformation($"Repository root path: {sdkRepoRoot}");
@@ -183,7 +182,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 // TODO: change --module-dir to --project-path
                 var options = new ProcessOptions(
                     fullBuildScriptPath,
-                    new[] { "--module-dir", projectPath },
+                    new[] { "--module-dir", packagePath },
                     logOutputStream: true,
                     workingDirectory: sdkRepoRoot,
                     timeout: TimeSpan.FromMilliseconds(commandTimeout)

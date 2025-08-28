@@ -56,13 +56,11 @@ public class TspClientUpdateToolAutoTests
     {
         Func<string, IUpdateLanguageService> func = (p) => new MockNoChangeLanguageService();
         var tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), new NullOutputService(), func);
-        var run = await tool.UnifiedUpdateAsync("placeholder.tsp", new MockNoChangeLanguageService(), TspStageSelection.All, resume: false, finalize: false, ct: CancellationToken.None);
+        var run = await tool.UnifiedUpdateAsync("placeholder.tsp", new MockNoChangeLanguageService(), ct: CancellationToken.None);
         Assert.That(run.Session, Is.Not.Null, "Session should be created");
-        Assert.That(run.Session!.LastStage, Is.EqualTo(UpdateStage.Diffed), "No changes should stop after diff");
+        Assert.That(run.Session!.LastStage, Is.EqualTo(UpdateStage.Validated), "No changes now proceed through validation");
         Assert.That(run.Session.ApiChangeCount, Is.EqualTo(0));
         Assert.That(run.Terminal, Is.True, "Should be terminal with no changes");
-        Assert.That(run.NextStage, Is.Null, "No next stage expected");
-        Assert.That(run.NeedsFinalize, Is.Null.Or.False, "Finalize not required when no apply ran");
     }
 
     [Test]
@@ -71,21 +69,11 @@ public class TspClientUpdateToolAutoTests
         Func<string, IUpdateLanguageService> func = (p) => new MockChangeLanguageService();
         var tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), new NullOutputService(), func);
         // First pass (auto run) should reach apply dry-run and request finalize
-        var first = await tool.UnifiedUpdate("placeholder-change.tsp", new MockChangeLanguageService(), TspStageSelection.All, resume: false, finalize: false, ct: CancellationToken.None);
+        var first = await tool.UnifiedUpdateAsync("placeholder-change.tsp", new MockChangeLanguageService(), ct: CancellationToken.None);
         Assert.That(first.Session, Is.Not.Null);
         Assert.That(first.Session!.ApiChangeCount, Is.GreaterThan(0), "Should have at least one API change");
-        Assert.That(first.Session.LastStage, Is.EqualTo(UpdateStage.AppliedDryRun), "Should have performed dry-run apply");
-        Assert.That(first.NeedsFinalize, Is.True, "Should indicate finalize needed");
-        Assert.That(first.NextStage, Is.EqualTo("apply"), "Next stage should be apply to finalize");
-        Assert.That(first.Terminal, Is.Null.Or.False, "Not terminal until finalize (validate still pending)");
-
-        // Second pass: finalize only
-        var second = await tool.UnifiedUpdateAsync("placeholder-change.tsp", new MockChangeLanguageService(), TspStageSelection.Apply, resume: true, finalize: true, ct: CancellationToken.None);
-        Assert.That(second.Session, Is.Not.Null);
-        Assert.That(second.Session!.LastStage, Is.EqualTo(UpdateStage.Validated), "Finalize triggers validate automatically in Apply stage");
-        Assert.That(second.NeedsFinalize, Is.Null.Or.False, "Finalize flag should clear");
-        Assert.That(second.Terminal, Is.True, "Should be terminal after validation");
-        Assert.That(second.NextStage, Is.Null, "No next stage after validation");
+        Assert.That(first.Session.LastStage, Is.EqualTo(UpdateStage.Validated), "Single-pass should reach validated");
+        Assert.That(first.Terminal, Is.True, "Terminal after single-pass run");
     }
 
     [Test]
@@ -95,22 +83,12 @@ public class TspClientUpdateToolAutoTests
         var tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), new NullOutputService(), func);
 
         // create a session and attach to tool's private field
-        var session = new UpdateSessionState { SpecPath = "spec.tsp", LastStage = UpdateStage.Applied, Status = "Applied" };
-        var field = typeof(TspClientUpdateTool).GetField("_currentSession", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
-        field.SetValue(tool, session);
-
-        // language service that fails validation first then reports success after fixes
-        int calls = 0;
-        var svc = new TestLanguageServiceFailThenFix(() => calls++);
-
-        // invoke ValidateCore via reflection
-        var method = typeof(TspClientUpdateTool).GetMethod("ValidateCore", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
-        var task = (Task<TspClientUpdateResponse>)method.Invoke(tool, new object?[] { session.SessionId, svc, CancellationToken.None })!;
-        var resp = await task;
-
-        Assert.IsNotNull(resp.Session);
+        // With simplified tool, validation loop is exercised inside UnifiedUpdateAsync; simulate failing then fixing by custom language service
+        int calls = 0; var svc = new TestLanguageServiceFailThenFix(() => calls++);
+        var resp = await tool.UnifiedUpdateAsync("spec.tsp", svc, ct: CancellationToken.None);
+        Assert.That(resp.Session, Is.Not.Null);
         Assert.That(resp.Session!.ValidationAttemptCount, Is.GreaterThanOrEqualTo(1));
-        Assert.That(resp.Session.ProposedPatches.Count, Is.GreaterThan(0));
+        Assert.That(resp.Session.ValidationSuccess, Is.True, "Should eventually validate");
     }
 
     private class TestLanguageServiceFailThenFix : IUpdateLanguageService

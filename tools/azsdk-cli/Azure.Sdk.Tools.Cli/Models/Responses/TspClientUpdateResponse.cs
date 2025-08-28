@@ -22,17 +22,6 @@ public class TspClientUpdateResponse : Response
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? ErrorCode { get; set; }
 
-    [JsonPropertyName("nextStep")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? NextStep { get; set; }
-
-    [JsonPropertyName("nextStage")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? NextStage { get; set; }
-
-    [JsonPropertyName("needsFinalize")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public bool? NeedsFinalize { get; set; }
 
     [JsonPropertyName("terminal")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -47,11 +36,7 @@ public class TspClientUpdateResponse : Response
         }
         if (Session != null)
         {
-            sb.AppendLine($"Session: {Session.SessionId} Status: {Session.Status} API changes: {Session.ApiChanges.Count} Impacted: {Session.ImpactedCustomizations.Count} Next: {NextStep}");
-            if (!string.IsNullOrWhiteSpace(NextStage) || NeedsFinalize == true || Terminal == true)
-            {
-                sb.AppendLine($"NextStage: {NextStage ?? "<none>"} NeedsFinalize: {NeedsFinalize} Terminal: {Terminal}");
-            }
+            sb.AppendLine($"Session: {Session.SessionId} Status: {Session.Status} API changes: {Session.ApiChanges.Count} Impacted: {Session.ImpactedCustomizations.Count} Terminal: {Terminal}");
         }
         if (!string.IsNullOrWhiteSpace(ErrorCode))
         {
@@ -68,10 +53,8 @@ public enum UpdateStage
     Diffed,
     Mapped,
     PatchesProposed,
-    AppliedDryRun,
     Applied,
-    Validated,
-    Stale
+    Validated
 }
 
 public class UpdateSessionState
@@ -91,7 +74,6 @@ public class UpdateSessionState
     [JsonPropertyName("validationSuccess")] public bool? ValidationSuccess { get; set; }
     [JsonPropertyName("validationAttemptCount"), JsonIgnore] public int ValidationAttemptCount { get; set; } = 0;
     [JsonPropertyName("requiresManualIntervention")] public bool RequiresManualIntervention { get; set; } = false;
-    [JsonPropertyName("requiresFinalize")] public bool RequiresFinalize { get; set; } = false;
 }
 
 public class ApiChange

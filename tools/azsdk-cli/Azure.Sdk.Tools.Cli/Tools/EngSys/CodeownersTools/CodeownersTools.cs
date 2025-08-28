@@ -143,7 +143,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
             }
         }
 
-        [McpServerTool(Name = "azsdk_engsys_codeowner_update"), Description("Adds or deletes codeowners for a given service label or path in a repo.")]
+        [McpServerTool(Name = "azsdk_engsys_codeowner_update"), Description("Adds or deletes codeowners for a given service label or path in a repo. When isAdding is false, the inputted users will be removed.")]
         public async Task<string> UpdateCodeowners(
             string repo,
             bool isMgmtPlane,

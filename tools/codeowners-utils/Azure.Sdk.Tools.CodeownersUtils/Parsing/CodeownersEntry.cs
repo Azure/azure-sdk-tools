@@ -233,9 +233,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
                 // Normalize and deduplicate source owners while preserving original casing
                 var normalizedSourceOwners = sourceOwners
                     .Where(o => !string.IsNullOrWhiteSpace(o))
-                    .Select(o => o.Trim())
-                    .Select(o => o.TrimStart('@'))
-                    .Select(o => o.Trim())
+                    .Select(o => o.Trim().TrimStart('@').Trim())
                     .ToList();
 
                 var uniqueSourceOwners = new List<string>();
@@ -273,9 +271,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
             {
                 var normalizedAzureSdkOwners = azureSDKOwners
                     .Where(o => !string.IsNullOrWhiteSpace(o))
-                    .Select(o => o.Trim())
-                    .Select(o => o.TrimStart('@'))
-                    .Select(o => o.Trim())
+                    .Select(o => o.Trim().TrimStart('@').Trim())
                     .ToList();
 
                 var uniqueAzureSdkOwnersList = new List<string>();
@@ -299,9 +295,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
             {
                 var normalizedServiceOwners = serviceOwners
                     .Where(o => !string.IsNullOrWhiteSpace(o))
-                    .Select(o => o.Trim())
-                    .Select(o => o.TrimStart('@'))
-                    .Select(o => o.Trim())
+                    .Select(o => o.Trim().TrimStart('@').Trim())
                     .ToList();
 
                 var uniqueServiceOwners = new List<string>();

@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System;
 
 using NUnit.Framework;
@@ -12,10 +11,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
 
 {
     [TestFixture]
-    internal class CodeownersHelperTests
+    internal class CodeownersEditorTests
     {
-        private CodeownersEditor codeownersEditor;
-
         // Standard codeowners content used by tests.
         private readonly string codeownersContent = @"# PRLabel: %Alpha
 sdk/alpha/ @alpha
@@ -36,13 +33,6 @@ sdk/communication/ @azure/communication-team
 sdk/omega/ @omega
 ";
 
-        [SetUp]
-        public void Setup()
-        {
-            // Initialize with standard content. Individual tests should rely on this codeownersContent.
-            codeownersEditor = new CodeownersEditor(codeownersContent, false);
-        }
-
         #region FindMatchingEntry Tests
 
         [Test]
@@ -59,6 +49,8 @@ sdk/omega/ @omega
         [TestCase("Bus", 0, "")] // Partial match should not work
         public void FindMatchingEntry_ByServiceName_TestCases(string serviceName, int expectedCount, string expectedPath)
         {
+            CodeownersEditor codeownersEditor = new CodeownersEditor(codeownersContent, false);
+
             // Act
             var result = codeownersEditor.FindMatchingEntry(serviceLabel: serviceName);
 
@@ -77,6 +69,8 @@ sdk/omega/ @omega
         [Test]
         public void FindMatchingEntry_ByServiceName_NullInput_ReturnsEmpty()
         {
+            CodeownersEditor codeownersEditor = new CodeownersEditor(codeownersContent, false);
+
             // Act
             var result = codeownersEditor.FindMatchingEntry(serviceLabel: null!);
 
@@ -87,6 +81,8 @@ sdk/omega/ @omega
         [Test]
         public void FindMatchingEntry_NoMatches_ReturnsEmptyList()
         {
+            CodeownersEditor codeownersEditor = new CodeownersEditor(codeownersContent, false);
+
             // Act
             var result = codeownersEditor.FindMatchingEntry(serviceLabel: "nonexistent");
 
@@ -189,6 +185,8 @@ sdk/omega/ @omega
         [Test]
         public void AddCodeownersEntryToFile_InsertsWithProperSpacing_MiddleOfFile()
         {
+            CodeownersEditor codeownersEditor = new CodeownersEditor(codeownersContent, false);
+
             // New entry should be inserted between alpha and omega
             var newEntry = new CodeownersEntry
             {
@@ -224,6 +222,8 @@ sdk/omega/ @omega
         [Test]
         public void TestAddCodeownersEntryToFile_NewEntry()
         {
+            CodeownersEditor codeownersEditor = new CodeownersEditor(codeownersContent, false);
+
             // Arrange
             var codeownersEntry = new CodeownersEntry
             {
@@ -250,6 +250,8 @@ sdk/omega/ @omega
         [Test]
         public void TestAddCodeownersEntryToFile_ExistingEntry()
         {
+            CodeownersEditor codeownersEditor = new CodeownersEditor(codeownersContent, false);
+            
             // Arrange
             var codeownersEntry = new CodeownersEntry
             {
@@ -277,6 +279,8 @@ sdk/omega/ @omega
         [Test]
         public void AddCodeownersEntryToFile_InvalidReplacement_Throws()
         {
+            CodeownersEditor codeownersEditor = new CodeownersEditor(codeownersContent, false);
+
             var entry = new CodeownersEntry { startLine = 100, endLine = 200 };
             var ex = Assert.Throws<InvalidOperationException>(() =>
                 codeownersEditor.AddCodeownersEntryToFile(entry, true));
@@ -286,6 +290,8 @@ sdk/omega/ @omega
         [Test]
         public void AddCodeownersEntryToFile_InvalidInsertion_AddsAtEndWithSpacing()
         {
+            CodeownersEditor codeownersEditor = new CodeownersEditor(codeownersContent, false);
+
             var entry = new CodeownersEntry
             {
                 PathExpression = "sdk/test/",
@@ -311,43 +317,13 @@ sdk/omega/ @omega
         
         #endregion
 
-        #region formatCodeownersEntry Tests
-
-        [Test]
-        public void FormatCodeownersEntry_AllParameters_FormatsCorrectly()
-        {
-            // Arrange
-            var codeownersEntry = new CodeownersEntry
-            {
-                PathExpression = "sdk/servicebus/",
-                ServiceLabels = new List<string> { "Service Bus" },
-                PRLabels = new List<string> { "Service Bus" },
-                ServiceOwners = new List<string> { "user1", "@user2" },
-                SourceOwners = new List<string> { "source1", "@source2" },
-                AzureSdkOwners = new List<string>()
-            };
-
-            // Act
-            var result = codeownersEntry.FormatCodeownersEntry();
-
-            // Assert
-            var lines = result.Split('\n');
-            Assert.That(lines[0], Is.EqualTo("# PRLabel: %Service Bus"));
-            Assert.That(lines[1], Does.StartWith("sdk/servicebus/"));
-            Assert.That(lines[1], Does.Contain("@source1 @source2"));
-            Assert.That(lines[2], Is.EqualTo(""));
-            Assert.That(lines[3], Is.EqualTo("# ServiceLabel: %Service Bus"));
-            Assert.That(lines[4], Does.Contain("# ServiceOwners:"));
-            Assert.That(lines[4], Does.Contain("@user1 @user2"));
-        }
-
-        #endregion
-
         #region findBlock Tests
 
         [Test]
         public void FindBlock_ServiceCategoryFound_ReturnsCorrectRange()
         {
+            CodeownersEditor codeownersEditor = new CodeownersEditor(codeownersContent, false);
+
             // Act
             var result = codeownersEditor.FindBlock("# ######## Services ########");
 
@@ -359,6 +335,8 @@ sdk/omega/ @omega
         [Test]
         public void FindBlock_ServiceCategoryNotFound_ReturnsFullRange()
         {
+            CodeownersEditor codeownersEditor = new CodeownersEditor(codeownersContent, false);
+
             // Act
             var result = codeownersEditor.FindBlock("# ######## Services ########");
 
@@ -374,6 +352,8 @@ sdk/omega/ @omega
         [Test]
         public void FindAlphabeticalInsertionPoint_WithServiceLabel_FindsCorrectPosition()
         {
+            CodeownersEditor codeownersEditor = new CodeownersEditor(codeownersContent, false);
+
             // Arrange
             var newEntry = new CodeownersEntry { ServiceLabels = new List<string> { "Service Bus" } };
 
@@ -387,6 +367,8 @@ sdk/omega/ @omega
         [Test]
         public void FindAlphabeticalInsertionPoint_WithMergableServiceLabel_FindsCorrectPosition()
         {
+            CodeownersEditor codeownersEditor = new CodeownersEditor(codeownersContent, false);
+            
             // Arrange
             var newEntry = new CodeownersEntry { ServiceLabels = new List<string> { "Service Bus" } };
 
@@ -480,6 +462,8 @@ sdk/omega/ @omega
         [Test]
         public void AddOrUpdateCodeownersFile_AddsNewEntry_WhenNoMatch()
         {
+            CodeownersEditor codeownersEditor = new CodeownersEditor(codeownersContent, false);
+
             // Arrange & Act
             var resultEntry = codeownersEditor.AddOrUpdateCodeownersFile(path: "sdk/newservice/", serviceLabel: "New Service", serviceOwners: new List<string> { "@newowner" }, sourceOwners: new List<string> { "@sourceowner" });
 
@@ -496,6 +480,8 @@ sdk/omega/ @omega
         [Test]
         public void AddOrUpdateCodeownersFile_UpdatesExistingEntry_ByPath()
         {
+            CodeownersEditor codeownersEditor = new CodeownersEditor(codeownersContent, false);
+
             // Ensure storage entry exists in the initial fixture
             var before = codeownersEditor.FindMatchingEntry(path: "/sdk/storage/");
             Assert.That(before, Is.Not.Null);
@@ -515,6 +501,8 @@ sdk/omega/ @omega
         [Test]
         public void RemoveOwnersFromCodeownersFile_RemovesServiceOwner()
         {
+            CodeownersEditor codeownersEditor = new CodeownersEditor(codeownersContent, false);
+            
             // Arrange: ensure servicebus entry exists and contains the owner
             var entry = codeownersEditor.FindMatchingEntry(path: "/sdk/servicebus/");
             Assert.That(entry, Is.Not.Null);

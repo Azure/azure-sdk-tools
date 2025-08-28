@@ -12,7 +12,7 @@ namespace Azure.Tools.ErrorAnalyzers
         /// Adds management rule prompts to the builder.
         /// Currently no management rules are defined.
         /// </summary>
-        static partial void AddManagementPrompts(Dictionary<string, AgentPromptFix> builder)
+        static void AddManagementPrompts(Dictionary<string, AgentPromptFix> builder)
         {
             // TODO: Add management rule prompts here when they are defined
             // Example:

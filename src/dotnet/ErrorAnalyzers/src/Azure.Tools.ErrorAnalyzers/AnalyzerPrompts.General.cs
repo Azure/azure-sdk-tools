@@ -12,7 +12,7 @@ namespace Azure.Tools.ErrorAnalyzers
         /// Adds general rule prompts to the builder.
         /// Currently no general rules are defined.
         /// </summary>
-        static partial void AddGeneralPrompts(Dictionary<string, AgentPromptFix> builder)
+        static void AddGeneralPrompts(Dictionary<string, AgentPromptFix> builder)
         {
             // TODO: Add general rule prompts here when they are defined
             // Example:

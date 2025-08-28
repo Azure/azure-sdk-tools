@@ -10,104 +10,101 @@ namespace Azure.Tools.ErrorAnalyzers.Tests
     public class AnalyzerPromptsTests
     {
         [Test]
-        public void TryGetPrompt_WithNullRuleId_ReturnsFalse()
+        public void TryGetPromptFix_WithNullRuleId_ReturnsFalse()
         {
             // Arrange
             string? ruleId = null;
 
             // Act
-            bool result = AnalyzerPrompts.TryGetPrompt(ruleId!, out string prompt);
+            bool result = AnalyzerPrompts.TryGetPromptFix(ruleId!, out AgentPromptFix? fix);
 
             // Assert
             Assert.That(result, Is.False);
-            Assert.That(prompt, Is.EqualTo(string.Empty));
+            Assert.That(fix, Is.Null);
         }
 
         [Test]
-        public void TryGetPrompt_WithEmptyRuleId_ReturnsFalse()
+        public void TryGetPromptFix_WithEmptyRuleId_ReturnsFalse()
         {
             // Arrange
             string ruleId = string.Empty;
 
             // Act
-            bool result = AnalyzerPrompts.TryGetPrompt(ruleId, out string prompt);
+            bool result = AnalyzerPrompts.TryGetPromptFix(ruleId, out AgentPromptFix? fix);
 
             // Assert
             Assert.That(result, Is.False);
-            Assert.That(prompt, Is.EqualTo(string.Empty));
+            Assert.That(fix, Is.Null);
         }
 
         [Test]
-        public void TryGetPrompt_WithWhitespaceRuleId_ReturnsFalse()
+        public void TryGetPromptFix_WithWhitespaceRuleId_ReturnsFalse()
         {
             // Arrange
             string ruleId = "   ";
 
             // Act
-            bool result = AnalyzerPrompts.TryGetPrompt(ruleId, out string prompt);
+            bool result = AnalyzerPrompts.TryGetPromptFix(ruleId, out AgentPromptFix? fix);
 
             // Assert
             Assert.That(result, Is.False);
-            Assert.That(prompt, Is.EqualTo(string.Empty));
+            Assert.That(fix, Is.Null);
         }
 
         [Test]
-        public void TryGetPrompt_WithUnknownRuleId_ReturnsFalse()
+        public void TryGetPromptFix_WithUnknownRuleId_ReturnsFalse()
         {
             // Arrange
             string ruleId = "UNKNOWN_RULE";
 
             // Act
-            bool result = AnalyzerPrompts.TryGetPrompt(ruleId, out string prompt);
+            bool result = AnalyzerPrompts.TryGetPromptFix(ruleId, out AgentPromptFix? fix);
 
             // Assert
             Assert.That(result, Is.False);
-            Assert.That(prompt, Is.EqualTo(string.Empty));
+            Assert.That(fix, Is.Null);
         }
 
         [Test]
-        public void TryGetContext_WithNullParameters_ReturnsFalse()
+        public void TryGetPromptFix_WithValidRuleId_ReturnsTrue()
         {
             // Arrange
-            string? ruleId = null;
-            string? errorMessage = null;
+            string ruleId = "AZC0012"; // This should exist in the prompts
 
             // Act
-            bool result = AnalyzerPrompts.TryGetContext(ruleId!, errorMessage!, out string? context);
+            bool result = AnalyzerPrompts.TryGetPromptFix(ruleId, out AgentPromptFix? fix);
 
             // Assert
-            Assert.That(result, Is.False);
-            Assert.That(context, Is.Null);
+            Assert.That(result, Is.True);
+            Assert.That(fix, Is.Not.Null);
+            Assert.That(fix!.Prompt, Is.Not.Empty);
         }
 
         [Test]
-        public void TryGetContext_WithEmptyParameters_ReturnsFalse()
+        public void TryGetPromptFix_WithValidRuleId_ReturnsCorrectData()
         {
             // Arrange
-            string ruleId = string.Empty;
-            string errorMessage = string.Empty;
+            string ruleId = "AZC0012";
 
             // Act
-            bool result = AnalyzerPrompts.TryGetContext(ruleId, errorMessage, out string? context);
+            bool result = AnalyzerPrompts.TryGetPromptFix(ruleId, out AgentPromptFix? fix);
 
             // Assert
-            Assert.That(result, Is.False);
-            Assert.That(context, Is.Null);
+            Assert.That(result, Is.True);
+            Assert.That(fix, Is.Not.Null);
+            Assert.That(fix!.Prompt, Does.Contain("Fix AZC0012"));
+            Assert.That(fix.Context, Is.Not.Empty);
         }
 
         [Test]
-        public void TryGetContext_WithUnknownRuleId_ReturnsFalse()
+        public void GetAllRuleIds_ReturnsNonEmptyCollection()
         {
-            // Arrange
-            string ruleId = "UNKNOWN_RULE";
-            string errorMessage = "Test error message";
-
             // Act
-            bool result = AnalyzerPrompts.TryGetContext(ruleId, errorMessage, out string? context);
+            var ruleIds = AnalyzerPrompts.GetAllRuleIds();
 
             // Assert
-            Assert.That(result, Is.False);
-            Assert.That(context, Is.Null);
+            Assert.That(ruleIds, Is.Not.Empty);
+            Assert.That(ruleIds, Does.Contain("AZC0012"));
         }
     }
 }

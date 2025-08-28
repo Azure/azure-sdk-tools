@@ -11,7 +11,7 @@ namespace Azure.Tools.ErrorAnalyzers
         /// <summary>
         /// Adds client rule prompts to the builder.
         /// </summary>
-        static partial void AddClientPrompts(Dictionary<string, AgentPromptFix> builder)
+        static void AddClientPrompts(Dictionary<string, AgentPromptFix> builder)
         {
             // AZC0012 - Generic Type Name Violation
             builder["AZC0012"] = new AgentPromptFix(

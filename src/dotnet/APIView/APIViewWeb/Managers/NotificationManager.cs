@@ -269,14 +269,58 @@ namespace APIViewWeb.Managers
             return user.Email;
         }
 
+        /// <summary>
+        /// Get all email recipients for namespace review notifications (approvers + requester)
+        /// </summary>
+        private async Task<List<string>> GetNamespaceReviewEmailRecipientsAsync(ReviewListItemModel review, ClaimsPrincipal requestingUser = null)
+        {
+            var emailAddresses = new List<string>();
+            
+            // Get all preferred approvers (use dummy user if requestingUser is null)
+            var userForApprovers = requestingUser ?? new ClaimsPrincipal();
+            var preferredApprovers = PageModelHelpers.GetPreferredApprovers(_configuration, _userProfileCache, userForApprovers, review);
+
+            // Add preferred approvers' emails
+            foreach (var approverUsername in preferredApprovers)
+            {
+                var approverEmail = await GetEmailAddress(approverUsername);
+                if (!string.IsNullOrEmpty(approverEmail))
+                {
+                    emailAddresses.Add(approverEmail);
+                }
+            }
+            
+            // Add requesting user's email (either from ClaimsPrincipal or from review record)
+            string requesterEmail = null;
+            if (requestingUser != null)
+            {
+                var requestingUserName = requestingUser.GetGitHubLogin();
+                if (!string.IsNullOrEmpty(requestingUserName))
+                {
+                    requesterEmail = await GetEmailAddress(requestingUserName);
+                }
+            }
+            else if (!string.IsNullOrEmpty(review.NamespaceApprovalRequestedBy))
+            {
+                requesterEmail = await GetEmailAddress(review.NamespaceApprovalRequestedBy);
+            }
+            
+            if (!string.IsNullOrEmpty(requesterEmail) && !emailAddresses.Contains(requesterEmail))
+            {
+                emailAddresses.Add(requesterEmail);
+            }
+            
+            return emailAddresses;
+        }
+
         public async Task NotifyApproversOnNamespaceReviewRequest(ClaimsPrincipal user, ReviewListItemModel review, IEnumerable<ReviewListItemModel> languageReviews = null, string notes = "")
         {
             try
             {
-                // Use the existing PageModelHelpers to get preferred approvers
-                var preferredApprovers = PageModelHelpers.GetPreferredApprovers(_configuration, _userProfileCache, user, review);
-
-                if (!preferredApprovers.Any())
+                // Get all email recipients (approvers + requesting user)
+                var emailAddresses = await GetNamespaceReviewEmailRecipientsAsync(review, user);
+                
+                if (!emailAddresses.Any())
                 {
                     return;
                 }
@@ -292,28 +336,6 @@ namespace APIViewWeb.Managers
                     typeSpecUrl,
                     languageReviews ?? Enumerable.Empty<ReviewListItemModel>(),
                     notes);
-                
-                // Get email addresses for preferred approvers
-                var emailAddresses = new List<string>();
-                foreach (var approverUsername in preferredApprovers)
-                {
-                    var emailAddress = await GetEmailAddress(approverUsername);
-                    if (!string.IsNullOrEmpty(emailAddress))
-                    {
-                        emailAddresses.Add(emailAddress);
-                    }
-                }
-                
-                // Also include the requesting user's email
-                var requestingUserName = user.GetGitHubLogin();
-                if (!string.IsNullOrEmpty(requestingUserName))
-                {
-                    var requesterEmail = await GetEmailAddress(requestingUserName);
-                    if (!string.IsNullOrEmpty(requesterEmail) && !emailAddresses.Contains(requesterEmail))
-                    {
-                        emailAddresses.Add(requesterEmail);
-                    }
-                }
                 
                 var emailToList = string.Join("; ", emailAddresses);
                 
@@ -360,9 +382,13 @@ namespace APIViewWeb.Managers
         {
             try
             {
-                // Get the original requester's email
-                var requesterEmail = await GetEmailAddress(review.NamespaceApprovalRequestedBy);
-                if (string.IsNullOrEmpty(requesterEmail)) return;
+                // Get all email recipients (approvers + original requester)
+                var emailAddresses = await GetNamespaceReviewEmailRecipientsAsync(review);
+                
+                if (!emailAddresses.Any())
+                {
+                    return;
+                }
                 
                 var subject = $"Namespace Review Approved: {review.PackageName}";
                 
@@ -376,8 +402,15 @@ namespace APIViewWeb.Managers
                     associatedReviews ?? Enumerable.Empty<ReviewListItemModel>(),
                     isAutoApproved: false);
                 
-                // Send to the original requester
-                await SendEmailAsync(requesterEmail, subject, emailContent);
+                var emailToList = string.Join("; ", emailAddresses);
+                
+                // Console log for debugging
+                Console.WriteLine($"[DEBUG] Manual approval email recipients (Review: {review.Id}, Package: {review.PackageName}): [{emailToList}]");
+                
+                if (!string.IsNullOrEmpty(emailToList))
+                {
+                    await SendEmailAsync(emailToList, subject, emailContent);
+                }
             }
             catch (Exception ex)
             {
@@ -389,9 +422,13 @@ namespace APIViewWeb.Managers
         {
             try
             {
-                // Get the original requester's email
-                var requesterEmail = await GetEmailAddress(review.NamespaceApprovalRequestedBy);
-                if (string.IsNullOrEmpty(requesterEmail)) return;
+                // Get all email recipients (approvers + original requester)
+                var emailAddresses = await GetNamespaceReviewEmailRecipientsAsync(review);
+                
+                if (!emailAddresses.Any())
+                {
+                    return;
+                }
                 
                 var subject = $"Namespace Review Auto-Approved: {review.PackageName}";
                 
@@ -407,8 +444,15 @@ namespace APIViewWeb.Managers
                     originalRequestDate: review.NamespaceApprovalRequestedOn,
                     autoApprovedDate: DateTime.UtcNow);
                 
-                // Send to the original requester
-                await SendEmailAsync(requesterEmail, subject, emailContent);
+                var emailToList = string.Join("; ", emailAddresses);
+                
+                // Console log for debugging
+                Console.WriteLine($"[DEBUG] Auto-approval email recipients (Review: {review.Id}, Package: {review.PackageName}): [{emailToList}]");
+                
+                if (!string.IsNullOrEmpty(emailToList))
+                {
+                    await SendEmailAsync(emailToList, subject, emailContent);
+                }
             }
             catch (Exception ex)
             {

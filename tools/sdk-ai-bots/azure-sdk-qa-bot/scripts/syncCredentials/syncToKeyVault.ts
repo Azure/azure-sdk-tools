@@ -88,20 +88,22 @@ async function run() {
   console.log(`Found ${files.length} user env file(s).`);
 
   // Build plan with base64 content
-  const plan = [] as { file: string; envName: string; secretName: string; content: string }[];
+  const plan = [] as { file: string; envName: string; secretName: string; content: string; b64: string }[];
   for (const f of files) {
     const envName = deriveEnvName(path.basename(f));
     const secretName = `${FIXED_PREFIX}-${envName}`.toUpperCase();
     const content = await fsp.readFile(f, 'utf8');
-    plan.push({ file: f, envName, secretName, content });
+    const b64 = Buffer.from(content, 'utf8').toString('base64');
+    plan.push({ file: f, envName, secretName, content, b64 });
   }
   console.log('\nUpload plan (one secret per file, showing Base64 content):');
   for (const p of plan) {
     console.log('------------------------------------------------------------');
     console.log(`File:        ${path.basename(p.file)}`);
     console.log(`Secret Name: ${p.secretName}`);
-    console.log('Content:');
-    console.log(p.content);
+    console.log(`Base64 Len:  ${p.b64.length}`);
+    console.log('Base64 Content:');
+    console.log(p.b64);
   }
   console.log('------------------------------------------------------------');
   console.log('\nPress Enter to confirm upload, or Ctrl+C to cancel.');

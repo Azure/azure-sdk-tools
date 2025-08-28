@@ -1,8 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using System;
-
 namespace Azure.Tools.ErrorAnalyzers
 {
     /// <summary>
@@ -24,7 +22,7 @@ namespace Azure.Tools.ErrorAnalyzers
         public string Prompt { get; }
 
         /// <summary>
-        /// Optional additional context for the agent.
+        /// Additional context for the agent. Null when no context is available.
         /// </summary>
         public string? Context { get; }
     }

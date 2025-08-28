@@ -26,7 +26,7 @@ Currently, the automation will inspect resource groups and role assignments only
 ### Resource Groups
 
 **NOTE:** Development resources should only be created in the `Azure SDK Test Resources TME` subscription. The other
-subscriptions are intended to be used for CI resources and not manual testing. For mour info see [Subscription-and-Tenant-Usage](https://dev.azure.com/azure-sdk/internal/_wiki/wikis/internal.wiki/206/Subscription-and-Tenant-Usage)
+subscriptions are intended to be used for CI resources and not manual testing. For more info see [Subscription-and-Tenant-Usage](https://dev.azure.com/azure-sdk/internal/_wiki/wikis/internal.wiki/206/Subscription-and-Tenant-Usage)
 
 #### Quick Start Creating Resources
 

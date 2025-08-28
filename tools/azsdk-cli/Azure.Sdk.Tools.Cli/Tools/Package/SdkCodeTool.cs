@@ -31,7 +31,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         private readonly Option<string> specCommitShaOpt = new(["--spec-commit-sha", "-c"], "Commit SHA of the 'azure-rest-api-specs' repository to use. Must be a valid 40-character Git SHA. Required when tspConfigPath is a local file path") { IsRequired = false };
         private readonly Option<string> specRepoFullNameOpt = new(["--spec-repo-full-name", "-s"], "Full name of the repository in 'owner/repo' format. Example: 'Azure/azure-rest-api-specs'. Required when tspConfigPath is a local file path") { IsRequired = false };
         private readonly Option<string> tspLocationPathOpt = new(["--tsp-location-path", "-l"], "Absolute path to the 'tsp-location.yaml' configuration file") { IsRequired = false };
-        private readonly Option<string> emitterOpt = new(["--emitter-options", "-o"], "Emitter optionsn in key-value format. Example: 'package-version=1.0.0-beta.1'") { IsRequired = false };
+        private readonly Option<string> emitterOpt = new(["--emitter-options", "-o"], "Emitter options in key-value format. Example: 'package-version=1.0.0-beta.1'") { IsRequired = false };
 
         public override Command GetCommand()
         {

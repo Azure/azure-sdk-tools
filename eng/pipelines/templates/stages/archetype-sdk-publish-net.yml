@@ -41,6 +41,10 @@ stages:
     displayName: Post Package Publish
     dependsOn: PublishPackage
 
+    ${{ if and(not(length(parameters.myArray)), eq(parameters.ShouldTag, 'true'), eq(parameters.ShouldPublishExecutables, 'true')) }}:
+      strategy:
+        matrix: ${{ parameters.ExeMatrix }}
+
     pool:
       name: $(WINDOWSPOOL)
       image: $(WINDOWSVMIMAGE)
@@ -73,18 +77,17 @@ stages:
           env:
             GH_TOKEN: $(azuresdk-github-pat)
 
-      - ${{ if and(eq(parameters.ShouldTag, 'true'), eq(parameters.ShouldPublishExecutables, 'true')) }}:
-        - ${{ each target in parameters.ExeMatrix }}:
-          - task: DownloadPipelineArtifact@2
-            displayName: Download ${{ target.rid }} Binary
-            inputs:
-              artifact: standalone-${{ target.rid }}
-              path: $(Binaries)
+      - ${{ if and(not(length(parameters.myArray)), eq(parameters.ShouldTag, 'true'), eq(parameters.ShouldPublishExecutables, 'true')) }}:
+        - task: DownloadPipelineArtifact@2
+          displayName: Download $(rid) Binary
+          inputs:
+            artifact: standalone-$(rid)
+            path: $(Binaries)
         - template: ../steps/platform-specific-signing.yml
           parameters:
             BinariesPath: $(Binaries)
-            BuildScriptsPath: $(BuildToolScripts)
-            ExeMatrix: ${{ parameters.ExeMatrix }}
+            RuntimeIdentifier: $(rid)
+            Assembly: $(assembly)
 
         - task: PowerShell@2
           displayName: 'Post to github release'

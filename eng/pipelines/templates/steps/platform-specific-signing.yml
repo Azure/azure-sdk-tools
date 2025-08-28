@@ -1,43 +1,45 @@
 parameters:
-  BinariesPath: ''
-  ExeMatrix: []
+  name: BinariesPath
+  type: string
+  default: ''
+  name: RuntimeIdentifier
+  type: string
+  name: Assembly
+  type: string
 
 steps:
+  # sets variable SigningArtifactDir with output folder
+  - task: PowerShell@2
+    displayName: 'Decompress ${{ parameters.RuntimeIdentifier }}'
+    inputs:
+      targetType: filePath
+      filePath: '$(Build.SourcesDirectory)/azure-sdk-tools/eng/pipelines/templates/scripts/prepare-artifact-for-signing.ps1'
+      arguments: '-Rid "${{ parameters.RuntimeIdentifier }}" -BinariesDirectory "${{ parameters.BinariesPath }}" -AssemblyName "${{ parameters.Assembly }}"'
+      pwsh: true
+      workingDirectory: ${{ parameters.BinariesPath }}
 
-  - ${{ each target in parameters.ExeMatrix }}:
+  - ${{ if startsWith(parameters.RuntimeIdentifier, 'win') }}:
+    - template: pipelines/steps/azd-cli-win-signing.yml@azure-sdk-build-tools
+      parameters:
+        WinPath: $(SigningArtifactDir)
 
-    # sets variable SigningArtifactDir with output folder
-    - task: PowerShell@2
-      displayName: 'Decompress ${{ target.rid }}'
-      inputs:
-        targetType: filePath
-        filePath: '$(Build.SourcesDirectory)/azure-sdk-tools/eng/pipelines/templates/scripts/prepare-artifact-for-signing.ps1'
-        arguments: '-Rid "${{ target.rid }}" -BinariesDirectory "${{ parameters.BinariesPath }}" -AssemblyName "${{ target.assembly }}"'
-        pwsh: true
-        workingDirectory: ${{ parameters.BinariesPath }}
+  - ${{ if startsWith(parameters.RuntimeIdentifier, 'osx') }}:
+    - template: pipelines/steps/azd-cli-mac-signing.yml@azure-sdk-build-tools
+      parameters:
+        MacPath: $(SigningArtifactDir)
 
-    - ${{ if startsWith(target.rid, 'win') }}:
-      - template: pipelines/steps/azd-cli-win-signing.yml@azure-sdk-build-tools
-        parameters:
-          WinPath: $(SigningArtifactDir)
+  - task: PowerShell@2
+    displayName: 'Repackage signed ${{ parameters.RuntimeIdentifier }}'
+    inputs:
+      targetType: filePath
+      filePath: '$(Build.SourcesDirectory)/azure-sdk-tools/eng/pipelines/templates/scripts/assemble-signed-artifact.ps1'
+      arguments: '-Rid "${{ parameters.RuntimeIdentifier }}" -BinariesDirectory "${{ parameters.BinariesPath }}" -SignedFileDirectory "$(SigningArtifactDir)" -AssemblyName "${{ parameters.Assembly }}"'
+      pwsh: true
+      workingDirectory: ${{ parameters.BinariesPath }}
 
-    - ${{ if startsWith(target.rid, 'osx') }}:
-      - template: pipelines/steps/azd-cli-mac-signing.yml@azure-sdk-build-tools
-        parameters:
-          MacPath: $(SigningArtifactDir)
-
-    - task: PowerShell@2
-      displayName: 'Repackage signed ${{ target.rid }}'
-      inputs:
-        targetType: filePath
-        filePath: '$(Build.SourcesDirectory)/azure-sdk-tools/eng/pipelines/templates/scripts/assemble-signed-artifact.ps1'
-        arguments: '-Rid "${{ target.rid }}" -BinariesDirectory "${{ parameters.BinariesPath }}" -SignedFileDirectory "$(SigningArtifactDir)" -AssemblyName "${{ target.assembly }}"'
-        pwsh: true
-        workingDirectory: ${{ parameters.BinariesPath }}
-
-  - ${{ if gt(length(parameters.ExeMatrix), 0) }}:
-    - task: 1ES.PublishPipelineArtifact@1
-      displayName: Publish signed binaries as artifact
-      inputs:
-        artifactName: SignedBinaries
-        targetPath: ${{ parameters.BinariesPath }}
+- ${{ if gt(length(parameters.ExeMatrix), 0) }}:
+  - task: 1ES.PublishPipelineArtifact@1
+    displayName: Publish signed binaries as artifact
+    inputs:
+      artifactName: SignedBinaries
+      targetPath: ${{ parameters.BinariesPath }}

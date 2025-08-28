@@ -1,31 +1,8 @@
 import { TableEntity } from "@azure/data-tables";
 import { v4 as uuidv4 } from "uuid";
-import { Converter } from "./utils";
-import { loadChannelMapping } from "../src/common/channelConfig";
-import { BlobService } from "../src/services/StorageService";
+import { Converter, loadChannelMapping } from "./utils";
 
-// Type definitions (copied from FeedbackHandler to avoid imports)
-export type Role = "user" | "assistant" | "system";
-
-export interface Message {
-    role: Role;
-    content: string;
-}
-
-export interface FeedbackData {
-    timestamp: string;
-    tenantId: string;
-    messages: Message[];
-    reaction: "good" | "bad";
-    comment: string;
-    reasons: string[];
-    link: string;
-    postId: string;
-    channelId: string;
-    feedbackId: string;
-}
-
-export interface FeedbackTableEntity extends TableEntity {
+interface FeedbackTableEntity extends TableEntity {
     partitionKey: string; // channelId
     rowKey: string; // feedbackId (GUID)
     submitTime: string;
@@ -40,7 +17,7 @@ export interface FeedbackTableEntity extends TableEntity {
 }
 
 // Excel row interface (based on the columns: Timestamp TenantID Messages Reaction Comment Reasons Link)
-export interface ExcelFeedbackRow {
+interface ExcelFeedbackRow {
     Timestamp?: string;
     TenantID?: string;
     Messages?: string;
@@ -165,8 +142,7 @@ async function main() {
         const converter = new FeedbackConverter("Feedback");
         const directory = args[0];
         const readFilePromise = converter.readLocalExcelFiles(directory);
-        const blobService = new BlobService();
-        const channelMapping = await loadChannelMapping(blobService);
+        const channelMapping = await loadChannelMapping();
         await converter.convert(readFilePromise, (row) =>
             converter.convertExcelRowToTableEntity(row, channelMapping)
         );

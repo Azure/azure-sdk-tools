@@ -1,8 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
 import { TableEntity } from "@azure/data-tables";
-import { Converter } from "./utils";
-import { loadChannelMapping } from "../src/common/channelConfig";
-import { BlobService } from "../src/services/StorageService";
+import { Converter, loadChannelMapping } from "./utils";
 
 interface RecordRow {
     Timestamp?: string;
@@ -13,7 +11,7 @@ interface RecordRow {
 
 interface RecordEntity extends TableEntity {
     partitionKey: string; // channelId
-    rowKey: string; // feedbackId (GUID)
+    rowKey: string; // GUID
     submitTime: string;
     channelName: string; // channelName field from channel.yaml
     postId: string; // postId field for easier querying
@@ -28,7 +26,7 @@ class RecordConverter extends Converter {
     }
 
     public async init() {
-        this.channelMapping = await loadChannelMapping(new BlobService());
+        this.channelMapping = await loadChannelMapping();
     }
 
     public convertExcelRowToTableEntity(row: RecordRow): RecordEntity {

@@ -4,6 +4,8 @@ import * as readline from "readline";
 import path from "path";
 import fs from "fs";
 import { TableService } from "../src/services/StorageService";
+import { ChannelConfigService } from "../src/services/AnalyticsServices/ChannelConfigService";
+import { HttpRequest, InvocationContext } from "@azure/functions";
 
 export class ExcelHandler {
     public loadExcel<TRow>(buffer: any) {
@@ -138,4 +140,21 @@ export class Converter {
         });
         return buffers;
     }
+}
+
+export async function loadChannelMapping(): Promise<Map<string, string>> {
+    const channelConfigHandler = new ChannelConfigService().handler;
+    const channelMappingResponse = await channelConfigHandler(
+        new HttpRequest({ method: "GET", url: "http://none" }),
+        new InvocationContext({})
+    );
+    const channels = (channelMappingResponse as any).jsonBody.data;
+    const idNameMap = (channels as { id: string; name: string }[]).reduce(
+        (map, channel) => {
+            map.set(channel.id, channel.name);
+            return map;
+        },
+        new Map<string, string>()
+    );
+    return idNameMap;
 }

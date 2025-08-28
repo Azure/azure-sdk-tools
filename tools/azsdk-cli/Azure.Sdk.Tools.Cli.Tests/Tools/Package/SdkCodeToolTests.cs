@@ -342,6 +342,22 @@ public class SdkCodeToolTests
     }
 
     [Test]
+    public async Task BuildSdkAsync_PythonProject_SkipsBuild()
+    {
+        // Arrange - Create a path that contains "azure-sdk-for-python"
+        var pythonProjectPath = Path.Combine(_tempDirectory, "azure-sdk-for-python", "sdk", "storage", "azure-storage-blob");
+        Directory.CreateDirectory(pythonProjectPath);
+
+        // Act
+        var result = await _tool.BuildSdkAsync(pythonProjectPath);
+
+        // Assert
+        Assert.That(result.Result, Is.EqualTo("succeeded"));
+        Assert.That(result.Message, Does.Contain("Python SDK project detected"));
+        Assert.That(result.Message, Does.Contain("Skipping build step"));
+    }
+
+    [Test]
     public async Task BuildSdkAsync_GitHelperFailsToDiscoverRepo_ReturnsFailure()
     {
         // Arrange

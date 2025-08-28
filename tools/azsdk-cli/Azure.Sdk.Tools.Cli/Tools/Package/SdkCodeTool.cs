@@ -131,11 +131,18 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             try
             {
                 logger.LogInformation($"Building SDK for project path: {projectPath}");
-                
+
                 // Validate inputs
-                if (!Directory.Exists(projectPath))
+                if (string.IsNullOrEmpty(projectPath) || !Directory.Exists(projectPath))
                 {
                     return CreateFailureResponse("Invalid project path. Please provide a valid project path.");
+                }
+
+                // Return if the project is python project
+                if (projectPath.Contains("azure-sdk-for-python", StringComparison.OrdinalIgnoreCase))
+                {
+                    logger.LogInformation("Python SDK project detected. Skipping build step as Python SDKs do not require a build process.");
+                    return CreateSuccessResponse("Python SDK project detected. Skipping build step as Python SDKs do not require a build process.");
                 }
 
                 // Get repository root path from project path

@@ -10,7 +10,7 @@ namespace Azure.Sdk.Tools.Cli.Services.Update;
 /// </summary>
 public class JavaUpdateLanguageService : UpdateLanguageServiceBase
 {
-    public JavaUpdateLanguageService(ILanguageRepoService repoService) : base(repoService) { }
+    public JavaUpdateLanguageService(ILanguageSpecificCheckResolver languageSpecificCheckResolver) : base(languageSpecificCheckResolver) { }
 
     private const string CustomizationDirName = "customization";
 

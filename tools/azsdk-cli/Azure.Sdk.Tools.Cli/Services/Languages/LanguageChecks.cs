@@ -1,6 +1,5 @@
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Services.Update;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -48,13 +47,6 @@ public interface ILanguageChecks
     /// <param name="packagePath">Package path</param>
     /// <returns>SDK package path</returns>
     string GetSDKPackagePath(string repo, string packagePath);
-    /// Creates the corresponding update language service for this language.
-    /// Each language repo service knows how to create its own update service,
-    /// eliminating the need for string-based discrimination in factories.
-    /// </summary>
-    /// <param name="serviceProvider">Service provider for dependency injection</param>
-    /// <returns>The update language service for this language</returns>
-    IUpdateLanguageService CreateUpdateService(IServiceProvider serviceProvider);
 }
 
 /// <summary>
@@ -74,24 +66,6 @@ public class LanguageChecks : ILanguageChecks
         _npxHelper = npxHelper;
         _gitHelper = gitHelper;
         _logger = logger;
-    }
-
-    // Default implementation for the base class - throws since unknown languages shouldn't be used
-    public virtual IUpdateLanguageService CreateUpdateService(IServiceProvider serviceProvider)
-    {
-        throw new NotSupportedException("CreateUpdateService not implemented for this language");
-    }
-
-    /// <summary>
-    /// Creates a response from a ProcessResult.
-    /// </summary>
-    /// <param name="result">The process result</param>
-    /// <returns>Success or failure response based on exit code</returns>
-    protected static CLICheckResponse CreateResponseFromProcessResult(ProcessResult result)
-    {
-        return result.ExitCode == 0
-            ? new CLICheckResponse(result.ExitCode, result.Output)
-            : new CLICheckResponse(result.ExitCode, result.Output, "Process failed");
         _languageSpecificCheckResolver = languageSpecificCheckResolver;
     }
 

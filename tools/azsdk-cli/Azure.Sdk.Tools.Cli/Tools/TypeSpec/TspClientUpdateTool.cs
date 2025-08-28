@@ -18,7 +18,6 @@ public class TspClientUpdateTool : MCPTool
     private readonly ILogger<TspClientUpdateTool> logger;
     private readonly IOutputHelper output;
     private readonly Func<string, IUpdateLanguageService> languageServiceFactory;
-
     private readonly Argument<string> specPathArg = new(name: "spec-path", description: "Path to the .tsp specification file") { Arity = ArgumentArity.ExactlyOne };
     private readonly Option<string?> newGenOpt = new(["--new-gen"], () => "./tmpgen", "Directory for regenerated TypeSpec output (optional)");
 
@@ -27,7 +26,7 @@ public class TspClientUpdateTool : MCPTool
         this.logger = logger;
         this.output = output;
         this.languageServiceFactory = languageServiceFactory;
-        CommandHierarchy = [ SharedCommandGroups.Tsp ];
+        CommandHierarchy = [ SharedCommandGroups.TypeSpec ];
     }
 
     public override Command GetCommand()

@@ -10,11 +10,11 @@ namespace Azure.Sdk.Tools.Cli.Services.Update;
 /// </summary>
 public abstract class UpdateLanguageServiceBase : IUpdateLanguageService
 {
-    protected ILanguageRepoService RepoService { get; }
+    protected ILanguageSpecificCheckResolver languageSpecificCheckResolver { get; }
 
-    protected UpdateLanguageServiceBase(ILanguageRepoService repoService)
+    protected UpdateLanguageServiceBase(ILanguageSpecificCheckResolver languageSpecificCheckResolver)
     {
-        RepoService = repoService;
+        this.languageSpecificCheckResolver = languageSpecificCheckResolver;
     }
 
     public abstract Task<Dictionary<string, SymbolInfo>> ExtractSymbolsAsync(string rootPath, CancellationToken ct);
@@ -36,16 +36,31 @@ public abstract class UpdateLanguageServiceBase : IUpdateLanguageService
             // If we cannot resolve a package path, don't hard-fail; treat as success to avoid blocking.
             return ValidationResult.CreateSuccess();
         }
+        // NOTE: We intentionally do NOT depend on a RunTestsAsync method yet. Until the
+        // language-specific validation surface is expanded. When real build/test/lint hooks are
+        // added to ILanguageSpecificChecks, replace this with a composite validation.
 
-        var result = await RepoService.RunTestsAsync(packagePath, ct);
-        var ok = result.ExitCode == 0;
-        if (ok)
+        var checks = await languageSpecificCheckResolver.GetLanguageCheckAsync(packagePath);
+        if (checks == null)
         {
-            return ValidationResult.CreateSuccess();
+            return ValidationResult.CreateSuccess(); // No checks available → do not block.
         }
-        
-        var errorMessage = string.IsNullOrWhiteSpace(result.ResponseError) ? result.CheckStatusDetails : result.ResponseError;
-        return ValidationResult.CreateFailure(errorMessage);
+
+        try
+        {
+            var depResult = await checks.AnalyzeDependenciesAsync(packagePath, ct);
+            if (depResult.ExitCode == 0)
+            {
+                return ValidationResult.CreateSuccess();
+            }
+
+            var errorMessage = string.IsNullOrWhiteSpace(depResult.ResponseError) ? depResult.CheckStatusDetails : depResult.ResponseError;
+            return ValidationResult.CreateFailure(errorMessage ?? "Validation failed");
+        }
+        catch (Exception ex)
+        {
+            return ValidationResult.CreateFailure($"Validation exception: {ex.Message}");
+        }
     }
 
     /// <summary>

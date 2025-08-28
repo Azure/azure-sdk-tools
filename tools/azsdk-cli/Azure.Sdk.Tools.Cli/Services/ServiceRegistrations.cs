@@ -45,22 +45,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             // services.AddSingleton<Update.JavaScriptUpdateLanguageService>();
             // services.AddSingleton<Update.DotNetUpdateLanguageService>();
             // services.AddSingleton<Update.GoUpdateLanguageService>();
-
-            // Self-contained Func that detects repo language and returns the correct IUpdateLanguageService
-            services.AddSingleton<Func<string, Update.IUpdateLanguageService>>(sp => (packagePath) =>
-            {
-                var repoService = sp.GetRequiredService<ILanguageRepoServiceFactory>().GetService(packagePath);
-                return repoService.CreateUpdateService(sp);
-            });
-            // concrete update implementations - register each concrete UpdateLanguageService so
-            // the factory can resolve them via DI when creating per-repo instances.
-            // Example registrations (copy-paste ready):
-            services.AddSingleton<Update.JavaUpdateLanguageService>();
-            // services.AddSingleton<Update.PythonUpdateLanguageService>();
-            // services.AddSingleton<Update.JavaScriptUpdateLanguageService>();
-            // services.AddSingleton<Update.DotNetUpdateLanguageService>();
-            // services.AddSingleton<Update.GoUpdateLanguageService>();
-           
+            
             // Helper classes
             services.AddSingleton<ILogAnalysisHelper, LogAnalysisHelper>();
             services.AddSingleton<IGitHelper, GitHelper>();

@@ -26,12 +26,6 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
         _gitHelper = gitHelper;
         _logger = logger;
     }
-
-    public override IUpdateLanguageService CreateUpdateService(IServiceProvider serviceProvider)
-    {
-        throw new NotSupportedException("Python update service is not yet implemented");
-    }
-
     public string SupportedLanguage => "Python";
 
     public async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct = default)

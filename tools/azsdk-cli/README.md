@@ -333,8 +333,7 @@ Release - https://dev.azure.com/azure-sdk/internal/_build?definitionId=7684
   - For functionality that differs in implementation between CLI and MCP, create abstractions where possible.
 - Return structured data from all tools/commands. Define response classes that can `ToString()` or `ToJson()` for different output modes (and handle failure flows)
 - Use structured logging with appropriate levels: `LogInformation` for business events, `LogDebug` for diagnostics.
-- Tools SHOULD NOT log to standard output directly using `Console` APIs. Instead, use available abstractions such as `IOutputService` and the logger. This helps ensure that the output is directed
-  to the right place regardless of whether the tool is being run as an MCP tool or through the CLI directly.
+- Tools SHOULD NOT log to standard output directly using `Console` APIs. Instead, use available abstractions such as `IOutputService` and the logger. This helps ensure that the output is directed to the right place regardless of whether the tool is being run as an MCP tool or through the CLI directly.
 - Where possible, avoid dependencies/pre-requisites requiring manual setup, prefer being able to set them up within the app (e.g. az login, gh login, etc.)
 - Reusable instructions should be placed under [azsdk instructions](https://github.com/Azure/azure-sdk-tools/tree/main/eng/common/instructions/azsdk-tools) where they will be synced to all azure sdk repositories.
 

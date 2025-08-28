@@ -6,20 +6,23 @@ parameters:
 pool:
   vmImage: 'ubuntu-latest'
 
-trigger:
-- azure-sdk-ai-bot
-- main
 
-pr:
-- azure-sdk-ai-bot
-- azure-sdk-ai-bot-dev
-- main
+schedules:
+  - cron: "0 1 * * 1"  # Runs every Monday at 01:00 UTC
+    displayName: "Weekly Monday Morning Trigger"
+    branches:
+      include:
+        - azure-sdk-ai-bot
+    always: true
+
+trigger: none
+pr: none
 
 stages:
   - stage: 'evaluation'
     jobs:
       - job: 'evaluation'
-        displayName: 'evaluation'
+        displayName: 'online evaluation'
         steps:
           - template: /eng/pipelines/templates/steps/use-python-version.yml
             parameters:
@@ -27,23 +30,6 @@ stages:
           - script: |
               python --version
             displayName: 'check python'
-          - script: |
-              echo "Downloading Go 1.23.0..."
-              curl -LO https://go.dev/dl/go1.23.0.linux-amd64.tar.gz
-
-              echo "Removing existing Go installation..."
-              sudo rm -rf /usr/local/go
-
-              echo "Extracting Go 1.23.0..."
-              sudo tar -C /usr/local -xzf go1.23.0.linux-amd64.tar.gz
-
-              echo "Setting environment variables..."
-              echo "##vso[task.setvariable variable=GOROOT]/usr/local/go"
-              echo "##vso[task.prependpath]/usr/local/go/bin"
-            displayName: 'install go'
-          - script: |
-              go version
-            displayName: 'check go'
           - task: AzureCLI@2
             inputs:
               azureSubscription: 'azure-chat-bot-test'
@@ -57,26 +43,17 @@ stages:
                 echo "$idToken" > "$(Agent.BuildDirectory)/id_token"
                 echo "##vso[task.setvariable variable=AZURE_FEDERATED_TOKEN_FILE]$(Agent.BuildDirectory)/id_token"
                 echo "##vso[task.setvariable variable=SYSTEM_ACCESSTOKEN]$idToken"
-          
-          - script: |
-              go build -o qa-bot-service
-              chmod +x qa-bot-service
-              ./qa-bot-service &
-              sleep 20
-              lsof -ti:8088
-            displayName: 'start backend AI agent service'
-            workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend
-            env:
-              AZURE_CLIENT_ID: $(AZURE_CLIENT_ID)
-              AZURE_TENANT_ID: $(AZURE_TENANT_ID)
-              AZURE_SUBSCRIPTION_ID: $(AZURE_SUBSCRIPTION_ID)
-              AZURE_FEDERATED_TOKEN_FILE: $(AZURE_FEDERATED_TOKEN_FILE)
           - script: |
               pip install -r requirements.txt
             displayName: 'install requirements'
             workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
           - script: |
-              python run.py --evaluation_name_prefix $(Build.BuildId)
+              current_date=$(date +%Y_%m_%d)
+              echo "Current date: $current_date"
+
+              python download-md-dataset.py
+              python convert-md-to-jsonl.py --source_md_path "$(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/online-qa-tests" --dest_jsonl_folder "$(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/online-tests"
+              python run.py --evaluation_name_prefix "performance-evaluation-$current_date" --test_folder "$(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation/online-tests"
             displayName: 'Run Evals'
             workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
             env:
@@ -93,6 +70,7 @@ stages:
               AZURE_COMPLETION_MODEL_NAME: $(AZURE_COMPLETION_MODEL_NAME)
               AZURE_EVALUATION_MODEL_NAME: $(AZURE_EVALUATION_MODEL_NAME)
               AZURE_API_VERSION: $(AZURE_API_VERSION)
+              BOT_SERVICE_ENDPOINT: $(BOT_SERVICE_ENDPOINT)
               STORAGE_BLOB_ACCOUNT: $(STORAGE_BLOB_ACCOUNT)
               AI_ONLINE_PERFORMANCE_EVALUATION_STORAGE_CONTAINER: $(AI_ONLINE_PERFORMANCE_EVALUATION_STORAGE_CONTAINER)
               BOT_CONFIG_CONTAINER: $(BOT_CONFIG_CONTAINER)

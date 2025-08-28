@@ -321,7 +321,7 @@ public class GithubHelper
             {
                 result += $"**ErrorLocation**:\n";
                 List<string> locations = new List<string>();
-
+    
                 foreach (JsonElement element in jsonElement.EnumerateArray())
                 {
                     if (element.ValueKind == JsonValueKind.String)
@@ -385,7 +385,7 @@ public class GithubHelper
             { "DuplicateServiceValidation", " Duplicate Service" },
             { "ExtraLabelValidation", " Extra Label" },
             { "UnnecessarySymbolsValidation", " Unnecessary Symbols" },
-            { "InvalidTagsValidation", " Invalid Tags" },
+            { "MissingGenericsValidation", " Missing Generics" },
             { "CodeFormatValidation", " Code Format" },
             { "EmptyTagsValidation", " Empty Tags" },
             { "ErrorDisplayValidation", " Error Display" }
@@ -406,7 +406,7 @@ public class GithubHelper
             string mappedRule = GetMappedValue(ruleMappings, rule);
             string mappedLanguage = GetMappedValue(languageMappings, language.ToLower());
             issueTitle = $"[{mappedLanguage}][{packageName}]{mappedRule}";
-
+            
             Console.WriteLine($"Searching issue with title: {issueTitle}");
 
             var matchingIssue = allIssues.FirstOrDefault(i => i["title"]?.GetValue<string>() == issueTitle);
@@ -494,19 +494,19 @@ public class GithubHelper
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", githubToken);
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github.v3+json"));
             client.DefaultRequestHeaders.Add("User-Agent", "MyApp/1.0");
-
+ 
             var issueBodyData = new
             {
                 body = body
             };
-
+ 
             StringContent content = new StringContent(JsonSerializer.Serialize(issueBodyData), Encoding.UTF8, "application/json");
-
+ 
             try
             {
                 Console.WriteLine("Sending request to create a new issue...");
                 HttpResponseMessage response = await client.PostAsync(url, content);
-
+ 
                 if (!response.IsSuccessStatusCode)
                 {
                     Console.WriteLine($"Error: Response status code does not indicate success: {response.StatusCode}");
@@ -514,7 +514,7 @@ public class GithubHelper
                     Console.WriteLine($"Error details: {errorContent}");
                     return;
                 }
-
+ 
                 Console.WriteLine("HTTP request successful.");
             }
             catch (HttpRequestException ex)
@@ -531,13 +531,13 @@ public class GithubHelper
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", githubToken);
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github.v3+json"));
             client.DefaultRequestHeaders.Add("User-Agent", "MyApp/1.0");
-
+ 
             var issueData = new
             {
                 title = title,
                 body = body
             };
-
+ 
             StringContent content = new StringContent(JsonSerializer.Serialize(issueData), Encoding.UTF8, "application/json");
 
             try
@@ -605,22 +605,22 @@ public class GithubHelper
             { "DuplicateServiceValidation", "TestDuplicateService" },
             { "ExtraLabelValidation", "TestExtraLabel" },
             { "UnnecessarySymbolsValidation", "TestUnnecessarySymbols" },
-            { "InvalidTagsValidation", "TestInvalidTags" },
+            { "MissingGenericsValidation", "TestMissingGenerics" },
             { "CodeFormatValidation", "TestCodeFormat" },
             { "EmptyTagsValidation", "TestEmptyTags" },
             { "ErrorDisplayValidation", "TestErrorDisplay" }
         };
-
+ 
         string jsonContent = File.ReadAllText(jsonFilePath);
         var jsonArray = JsonSerializer.Deserialize<List<Dictionary<string, object>>>(jsonContent);
-
+ 
         if (jsonArray == null)
         {
             return new List<Dictionary<string, object>>();
         }
-
+ 
         var matchingObjects = new List<Dictionary<string, object>>();
-
+ 
         if (ruleToTestCaseMap.TryGetValue(rule, out string? testCase))
         {
             // Find all TestCase objects whose fields match
@@ -633,7 +633,7 @@ public class GithubHelper
             }
             matchingObjects.AddRange(matchedObjects.ToList());
         }
-
+ 
         return matchingObjects;
     }
 
@@ -649,7 +649,7 @@ public class GithubHelper
         {
             if (data[i].ContainsKey("NO."))
             {
-                data[i]["NO."] = i + 1;
+                data[i]["NO."] = i + 1; 
             }
         }
 
@@ -722,25 +722,25 @@ public class GithubHelper
         var links = new Dictionary<string, string>();
         if (string.IsNullOrEmpty(linkHeader))
             return links;
-
+ 
         foreach (var linkPart in linkHeader.Split(','))
         {
             var parts = linkPart.Split(';');
             if (parts.Length < 2)
                 continue;
-
+ 
             var url = parts[0].Trim('<', '>');
             var relation = parts[1].Trim().Split('=')[1].Trim('"');
             links[relation] = url;
         }
-
+ 
         return links;
     }
     public static List<string> GetSucceedRules()
     {
         string rootDirectory = ConstData.ReportsDirectory;
         string ruleStatusFilePath = Path.Combine(rootDirectory, "RuleStatus.json");
-
+        
 
         List<string> succeedRules = new List<string>();
 
@@ -752,7 +752,7 @@ public class GithubHelper
             {
                 // Parse JSON Array
                 var jsonArray = JsonSerializer.Deserialize<List<Dictionary<string, string>>>(ruleStatusJsonContent);
-
+    
                 if (jsonArray != null)
                 {
                     foreach (var item in jsonArray)
@@ -792,7 +792,7 @@ public class GithubHelper
                     var first = group.First();
                     string note = $"{first.ErrorInfo} - this type of issues appears {group.Count()} times, currently only one is shown here. For more details, please click on the excel download link below to view.";
                     first.Note = note;
-                    return new List<TResult4Json> { first };
+                    return new List<TResult4Json> { first }; 
                 }
                 else
                 {

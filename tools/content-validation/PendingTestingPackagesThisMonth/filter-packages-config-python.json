@@ -1,0 +1,17 @@
+[
+  {
+    "packages": [
+        "azure-mgmt-*",
+        "azure-cognitiveservices-*",
+        "azure-ai-generative",
+        "azure-ai-resources",
+        "azure-ai-vision",
+        "azure-communication-networktraversal",
+        "azure-ai-metricsadvisor",
+        "azure-iot-modelsrepository",
+        "azure-purview-catalog",
+        "azure-media-videoanalyzer-edge",
+        "uamqp"
+    ]
+  }
+]

@@ -52,7 +52,7 @@ public class InconsistentTextFormatValidation : IValidation
                 res.Result = false;
                 res.ErrorLink = testLink;
                 res.NumberOfOccurrences = hTagsInTd.Count;
-                res.ErrorInfo = $"Inconsistent Text Format: `{string.Join(",", errorList)}`";
+                res.ErrorInfo = $"Inconsistent Text Format: `{string.Join("`, `", errorList)}`";
                 res.LocationsOfErrors = formattedList;
             }
         }
@@ -104,7 +104,7 @@ public class InconsistentTextFormatValidation : IValidation
 
         if (!string.IsNullOrEmpty(nearestHTagText))
         {
-            nearestHTagText = nearestHTagText.Replace("\n", "").Replace("\t", "");
+            nearestHTagText = nearestHTagText.Replace("\n", "").Replace("\t", "");            
 
             var aLocators = page.Locator("#side-doc-outline a");
             var aElements = await aLocators.ElementHandlesAsync();

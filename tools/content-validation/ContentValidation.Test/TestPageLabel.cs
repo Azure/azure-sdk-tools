@@ -16,7 +16,7 @@ namespace ContentValidation.Test
 
         public static ConcurrentQueue<TResult> TestUnnecessarySymbolsResults = new ConcurrentQueue<TResult>();
 
-        public static ConcurrentQueue<TResult> TestInvalidTagsResults = new ConcurrentQueue<TResult>();
+        public static ConcurrentQueue<TResult> TestMissingGenericsResults = new ConcurrentQueue<TResult>();
 
         public static IPlaywright playwright;
 
@@ -37,10 +37,10 @@ namespace ContentValidation.Test
 
             ExcelHelper4Test.AddTestResult(TestExtraLabelResults, excelFilePath, sheetName);
             ExcelHelper4Test.AddTestResult(TestUnnecessarySymbolsResults, excelFilePath, sheetName);
-            ExcelHelper4Test.AddTestResult(TestInvalidTagsResults, excelFilePath, sheetName);
+            ExcelHelper4Test.AddTestResult(TestMissingGenericsResults, excelFilePath, sheetName);
             JsonHelper4Test.AddTestResult(TestExtraLabelResults, jsonFilePath);
             JsonHelper4Test.AddTestResult(TestUnnecessarySymbolsResults, jsonFilePath);
-            JsonHelper4Test.AddTestResult(TestInvalidTagsResults, jsonFilePath);
+            JsonHelper4Test.AddTestResult(TestMissingGenericsResults, jsonFilePath);
         }
 
         [Test]
@@ -106,26 +106,26 @@ namespace ContentValidation.Test
         [Test]
         [Category("JavaTest")]
         [TestCaseSource(nameof(TestLinks))]
-        public async Task TestInvalidTags(string testLink)
+        public async Task TestMissingGenerics(string testLink)
         {
             var res = new TResult();
             try
             {
 
-                IValidation Validation = new InvalidTagsValidation(playwright);
+                IValidation Validation = new MissingGenericsValidation(playwright);
 
                 res = await Validation.Validate(testLink);
 
-                res.TestCase = "TestInvalidTags";
+                res.TestCase = "TestMissingGenerics";
                 if (!res.Result)
                 {
-                    TestInvalidTagsResults.Enqueue(res);
+                    TestMissingGenericsResults.Enqueue(res);
                 }
-                pipelineStatusHelper.SavePipelineFailedStatus("InvalidTagsValidation", "succeed");
+                pipelineStatusHelper.SavePipelineFailedStatus("MissingGenericsValidation", "succeed");
             }
             catch
             {
-                pipelineStatusHelper.SavePipelineFailedStatus("InvalidTagsValidation", "failed");
+                pipelineStatusHelper.SavePipelineFailedStatus("MissingGenericsValidation", "failed");
                 throw;
             }
 

@@ -4,7 +4,7 @@ trigger: none
 parameters:
 - name: packages
   displayName: |
-      Comma-delimited list of packages to test against (by default, 'all' to run all). Example: 'azure-communication-chat, azure-communication-common'
+      Comma-delimited list of packages to test against (by default, 'all' to run all). Example: 'azure-communication-chat, azure-communication-common' Notes: If you select "all", two pipelines will be triggered. The first pipeline will be used to obtain the package to be tested, and then the second pipeline will be automatically triggered to run the test. You need to view the results in the automatically triggered pipeline.
   type: string
   default: 'all'
 
@@ -15,30 +15,133 @@ parameters:
   default: 2
 
 stages:
-- stage: ContentValidationTesting
+- stage: FetchLastMonthReleasedPackages
+  displayName: "Fetch last month released packages"
+  condition: eq('${{ parameters.packages }}', 'all')
   jobs:
-  - ${{ if ne(parameters.packages, 'all') }}:
-      - job: content_validation
-        displayName: Content Validation Matrix
-        strategy:
-          matrix:
-            ${{ each pkg in split(parameters.packages, ',') }}:
-              ${{ trim(pkg) }}:
-                packageName: ${{ trim(pkg) }}
-          maxParallel: ${{ parameters.maxParallel }}
-        variables:
-          PackageName: $(packageName)
-        pool:
-          vmImage: ubuntu-latest
-        steps:
-        - template: /eng/pipelines/common/content-validation-for-dotnet.yml
-          parameters:
-            packageName: $(PackageName)
+  - job: fetch
+    displayName: "Getting all packages to be tested"
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - task: UseDotNet@2
+      displayName: 'Install .NET Core SDK'
+      inputs:
+        packageType: 'sdk'
+        version: '8.0.x'
+        installationPath: $(Agent.ToolsDirectory)/dotnet 
 
-  - ${{ if eq(parameters.packages, 'all') }}:
-    - template: /eng/pipelines/dotnet/run-all-packages.yml
-      parameters:
+    - task: DotNetCoreCLI@2
+      displayName: New Manifest for tool
+      inputs:
+        command: custom
+        custom: 'new '
+        arguments: tool-manifest
+
+    - task: DotNetCoreCLI@2
+      displayName: Install Playwright CLI
+      inputs:
+        command: custom
+        custom: 'tool '
+        arguments: install Microsoft.Playwright.CLI
+
+    - task: DotNetCoreCLI@2
+      displayName: Build all projects and libraries
+      inputs:
+        command: 'build'
+        projects: 'content-validation.sln'
+
+    - task: DotNetCoreCLI@2
+      displayName: Run Playwright Install
+      inputs:
+        command: custom
+        custom: 'tool '
+        arguments: run playwright install
+
+    - task: DotNetCoreCLI@2
+      displayName: Running project PendingTestingPackagesThisMonth
+      env:
+        Language: 'DotNet'
+      inputs:
+        command: 'run'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/PendingTestingPackagesThisMonth'
+      name: runPackagesJob
+
+    - pwsh: |
+        $matrixJson = Get-Content "$(System.DefaultWorkingDirectory)/eng/pipelines/packages.json" -Raw
+        Write-Host "##vso[task.setvariable variable=matrixJson;isOutput=true]$matrixJson"
+        Write-Host "DEBUG: matrixJson = $matrixJson"
+      name: setMatrixVar
+
+  - job: triggerSelf
+    displayName: Trigger self pipeline
+    dependsOn: fetch
+    pool:
+      vmImage: ubuntu-latest
+    variables:
+      MATRIX_JSON: $[ dependencies.fetch.outputs['setMatrixVar.matrixJson'] ]
+      MAX_PARALLEL: ${{ parameters.maxParallel }}
+
+    steps:
+    - checkout: self
+      persistCredentials: true
+
+    - task: PowerShell@2
+      displayName: Trigger self pipeline with package matrix
+      env:
+        SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+        MAX_PARALLEL: $(MATRIX_JSON) 
+        MATRIX_JSON: $(MAX_PARALLEL)
+      inputs:
+        targetType: inline
+        script: |
+          $orgUri     = "$(System.CollectionUri)"
+          $proj       = "$(System.TeamProject)"
+          $pipelineId = $(System.DefinitionId)
+          $body = @{
+            resources = @{
+              repositories = @{
+                self = @{
+                  refName = "$(Build.SourceBranch)"
+                }
+              }
+            }
+            templateParameters = @{
+              packages    = $env:MATRIX_JSON
+              maxParallel = $env:MAX_PARALLEL
+            }
+          } | ConvertTo-Json -Depth 10
+
+          Write-Host ">> Triggering pipeline #$pipelineId in $proj with:"
+          Write-Host $body
+
+          Invoke-RestMethod `
+            -Uri    "$orgUri$proj/_apis/pipelines/$pipelineId/runs?api-version=6.0-preview.1" `
+            -Method POST `
+            -Headers @{ Authorization = "Bearer $env:SYSTEM_ACCESSTOKEN" } `
+            -ContentType "application/json" `
+            -Body   $body
+
+
+- stage: ContentValidationTesting
+  condition: ne('${{ parameters.packages }}', 'all')
+  jobs:
+    - job: content_validation_matrix
+      displayName: RunTest
+      strategy:
+        matrix:
+          ${{ each pkg in split(parameters.packages, ',') }}:
+            ${{ trim(pkg) }}:
+              packageName: ${{ trim(pkg) }}
         maxParallel: ${{ parameters.maxParallel }}
+      variables:
+        PackageName: $(packageName)
+      pool:
+        vmImage: ubuntu-latest
+      steps:
+      - template: /eng/pipelines/common/content-validation-for-dotnet.yml
+        parameters:
+          packageName: $(PackageName)
 
 ## Need to confirm, disabled for now
 # - stage: TotalIssuesSummary

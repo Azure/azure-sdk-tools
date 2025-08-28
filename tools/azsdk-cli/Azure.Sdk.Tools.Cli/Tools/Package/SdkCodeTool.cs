@@ -3,6 +3,7 @@ using System.CommandLine.Invocation;
 using System.ComponentModel;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
@@ -261,7 +262,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             var tspLocationDirectory = Path.GetDirectoryName(tspLocationPath);
             var npxOptions = new NpxOptions(
                 "@azure-tools/typespec-client-generator-cli",
-                ["tsp-client", "update", "--save-inputs"],
+                ["tsp-client", "update"],
                 logOutputStream: true,
                 workingDirectory: tspLocationDirectory,
                 timeout: TimeSpan.FromMilliseconds(commandTimeout)
@@ -411,7 +412,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         // Validate commitSha: must be a 40-character hex string
         private bool IsValidSha(string sha)
         {
-            return !string.IsNullOrEmpty(sha) && sha.Length == 40 && sha.All(c => "0123456789abcdefABCDEF".Contains(c));
+            if (!string.IsNullOrEmpty(sha))
+            {
+                var match = Regex.Match(sha, @"^[a-f0-9]{40}$", RegexOptions.IgnoreCase);
+                return match.Success;
+            }
+
+            return false;
         }
 
         // Validate remote GitHub URL with commit SHA

@@ -39,7 +39,7 @@ stages:
 
   - job: PostPackagePublish
     displayName: Post Package Publish
-    dependsOn: PublishPackage
+    # dependsOn: PublishPackage
 
     ${{ if and(not(length(parameters.ExeMatrix)), eq(parameters.ShouldTag, 'true'), eq(parameters.ShouldPublishExecutables, 'true')) }}:
       strategy:

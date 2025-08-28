@@ -18,7 +18,8 @@ public class SdkCodeToolTests
     private const string ValidCommitSha = "1234567890abcdef1234567890abcdef12345678";
     private const string InvalidCommitSha = "abc123";
     private const string DefaultSpecRepo = "Azure/azure-rest-api-specs";
-    private const string RemoteTspConfigUrl = "https://example.com/tspconfig.yaml";
+    private const string RemoteTspConfigUrl = "https://github.com/Azure/azure-rest-api-specs/blob/dee71463cbde1d416c47cf544e34f7966a94ddcb/specification/contosowidgetmanager/Contoso.Management/tspconfig.yaml";
+    private const string InvalidRemoteTspConfigUrl = "https://example.com/tspconfig.yaml";
     private const string TspConfigFileName = "tspconfig.yaml";
     private const string TspLocationFileName = "tsp-location.yaml";
     private const string SpecGenConfigFileName = "spec-gen-sdk-config.json";
@@ -278,6 +279,21 @@ public class SdkCodeToolTests
         // Assert
         Assert.That(result.Result, Is.EqualTo("failed"));
         Assert.That(result.ResponseErrors?.First(), Does.Contain(TspClientInitFailedError));
+    }
+
+    [Test]
+    public async Task GenerateSdk_WithInvalidRemoteUrl_ReturnsFailure()
+    {
+        // Arrange
+        // Mock GitHelper to return valid repo root
+        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory)).Returns(_tempDirectory);
+
+        // Act - Use invalid remote URL that doesn't match GitHub blob pattern
+        var result = await _tool.GenerateSdk(_tempDirectory, InvalidRemoteTspConfigUrl, ValidCommitSha, DefaultSpecRepo, null, null);
+
+        // Assert
+        Assert.That(result.Result, Is.EqualTo("failed"));
+        Assert.That(result.ResponseErrors?.First(), Does.Contain("Invalid remote GitHub URL with commit"));
     }
 
     [Test]

@@ -200,7 +200,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         // Run language-specific script to generate the SDK code from 'tspconfig.yaml'
         private async Task<DefaultCommandResponse> GenerateSdkFromTspConfigAsync(string localSdkRepoPath, string tspConfigPath, string specCommitSha, string specRepoFullName, string emitterOptions, CancellationToken ct)
         {
+            // white spaces will be added by agent when it's a URL
+            tspConfigPath = tspConfigPath.Trim();
+            
             // Validate inputs
+            logger.LogInformation($"Generating SDK at repo: {localSdkRepoPath}");
             if (string.IsNullOrEmpty(localSdkRepoPath) || !Directory.Exists(localSdkRepoPath))
             {
                 return CreateFailureResponse($"The directory for the local sdk repo does not provide or exist at the specified path: {localSdkRepoPath}. Prompt user to clone the matched SDK repository users want to generate SDK against.");
@@ -221,6 +225,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 {
                     return validationResponse;
                 }
+            }
+            else
+            {
+                logger.LogInformation($"Remote 'tspconfig.yaml' URL detected: {tspConfigPath}.");
+                if (!IsValidRemoteGitHubUrlWithCommit(tspConfigPath))
+                {
+                    return CreateFailureResponse($"Invalid remote GitHub URL with commit: {tspConfigPath}. The URL must include a valid commit SHA. Example: https://github.com/Azure/azure-rest-api-specs/blob/dee71463cbde1d416c47cf544e34f7966a94ddcb/specification/contosowidgetmanager/Contoso.Management/tspconfig.yaml");
+                }
+                // For remote tspconfig.yaml case, clear specCommitSha and specRepoFullName
+                specCommitSha = string.Empty;
+                specRepoFullName = string.Empty;
             }
 
             return await RunTspInit(localSdkRepoPath, tspConfigPath, specCommitSha, specRepoFullName, ct);
@@ -258,7 +273,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         // Run tsp-client init command to re-generate the SDK code
         private async Task<DefaultCommandResponse> RunTspInit(string localSdkRepoPath, string tspConfigPath, string specCommitSha, string specRepoFullName, CancellationToken ct)
         {
-            logger.LogInformation($"Running tsp-client init command in directory: {Path.GetDirectoryName(tspConfigPath)}");
+            logger.LogInformation($"Running tsp-client init command.");
 
             // Build arguments list dynamically
             var arguments = new List<string> { "tsp-client", "init", "--update-if-exists", "--tsp-config", tspConfigPath };
@@ -390,6 +405,35 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         private bool IsValidSha(string sha)
         {
             return !string.IsNullOrEmpty(sha) && sha.Length == 40 && sha.All(c => "0123456789abcdefABCDEF".Contains(c));
+        }
+
+        // Validate remote GitHub URL with commit SHA
+        private bool IsValidRemoteGitHubUrlWithCommit(string tspConfigPath)
+        {
+            // Must contain /blob/ pattern
+            if (!tspConfigPath.Contains("/blob/"))
+            {
+                return false;
+            }
+
+            // Extract the part after /blob/ and before the next /
+            var blobIndex = tspConfigPath.IndexOf("/blob/", StringComparison.OrdinalIgnoreCase);
+            if (blobIndex == -1)
+            {
+                return false;
+            }
+
+            var afterBlob = tspConfigPath.Substring(blobIndex + 6);
+            var nextSlashIndex = afterBlob.IndexOf('/');
+            if (nextSlashIndex == -1)
+            {
+                return false;
+            }
+
+            var commitOrBranch = afterBlob.Substring(0, nextSlashIndex);
+            
+            // Validate that it's a 40-character commit SHA, not a branch name
+            return IsValidSha(commitOrBranch);
         }
 
         // Helper method to create failure responses along with setting the failure state

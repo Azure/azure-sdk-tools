@@ -37,7 +37,6 @@ steps:
       pwsh: true
       workingDirectory: ${{ parameters.BinariesPath }}
 
-- ${{ if gt(length(parameters.ExeMatrix), 0) }}:
   - task: 1ES.PublishPipelineArtifact@1
     displayName: Publish signed binaries as artifact
     inputs:

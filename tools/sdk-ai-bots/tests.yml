@@ -7,13 +7,23 @@ pool:
   vmImage: 'ubuntu-latest'
 
 trigger:
-- azure-sdk-ai-bot
-- main
+  branches:
+    include:
+      - azure-sdk-ai-bot
+      - main
+  paths:
+    include:
+      - tools/sdk-ai-bots/azure-sdk-qa-bot-backend/
 
 pr:
-- azure-sdk-ai-bot
-- azure-sdk-ai-bot-dev
-- main
+  branches:
+    include:
+      - azure-sdk-ai-bot
+      - azure-sdk-ai-bot-dev
+      - main
+  paths:
+    include:
+      - tools/sdk-ai-bots/azure-sdk-qa-bot-backend/
 
 stages:
   - stage: 'evaluation'

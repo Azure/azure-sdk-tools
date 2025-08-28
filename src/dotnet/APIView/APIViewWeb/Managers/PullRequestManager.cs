@@ -151,11 +151,6 @@ namespace APIViewWeb.Managers
                 baselineCodeFileName: baselineCodeFileName, baselineStream: baselineStream,
                 project: project, language: language);
 
-            if (_codeFileManager.AreLineIdsDuplicate(codeFile, out string duplicateLineId))
-            {
-                throw new DuplicateLineIdException(codeFile.Language, duplicateLineId);
-            }
-
             if (codeFile.PackageName != null && (packageName == null || packageName != codeFile.PackageName))
             {
                 packageName = codeFile.PackageName;

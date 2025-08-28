@@ -44,8 +44,8 @@ public class PullRequestsControllerTests
     public async Task CreateAPIRevisionIfAPIHasChanges_WithDuplicateLineIdException_ReturnsBadRequest()
     {
         string language = "C#";
-        string duplicateLineId = "duplicate-123";
-        DuplicateLineIdException exception = new(language, duplicateLineId);
+        List<string> duplicateLineIds = new() { "duplicate-123" };
+        DuplicateLineIdException exception = new(language, duplicateLineIds);
 
         _mockPullRequestManager
             .Setup(x => x.CreateAPIRevisionIfAPIHasChanges(
@@ -115,7 +115,8 @@ public class PullRequestsControllerTests
     public async Task CreateAPIRevisionIfAPIHasChanges_WithDifferentLanguageExceptions_ReturnsCorrectErrorMessage(
         string language, string duplicateLineId)
     {
-        DuplicateLineIdException exception = new(language, duplicateLineId);
+        List<string> duplicateLineIds = new() { duplicateLineId };
+        DuplicateLineIdException exception = new(language, duplicateLineIds);
         _mockPullRequestManager
             .Setup(x => x.CreateAPIRevisionIfAPIHasChanges(
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
@@ -140,7 +141,7 @@ public class PullRequestsControllerTests
 
         CreateAPIRevisionAPIResponse responseContent = Assert.IsType<CreateAPIRevisionAPIResponse>(leanJsonResult.Value);
         Assert.Single(responseContent.ActionsTaken);
-        Assert.Contains($"language-specific parser for {language}", responseContent.ActionsTaken[0]);
+        Assert.Contains($"developer of the {language} APIView parser", responseContent.ActionsTaken[0]);
         Assert.Contains($"(IDs: '{duplicateLineId}')", responseContent.ActionsTaken[0]);
     }
 

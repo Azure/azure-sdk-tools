@@ -3,10 +3,9 @@ using System.IO;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
-using ApiView;
 using APIViewWeb;
 using APIViewWeb.Controllers;
-using APIViewWeb.LeanModels;
+using APIViewWeb.Exceptions;
 using APIViewWeb.Managers;
 using APIViewWeb.Managers.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -58,72 +57,6 @@ public class AutoReviewControllerTests
     }
 
     [Fact]
-    public async Task UploadAutoReview_WithDuplicateLineIds_ReturnsBadRequest()
-    {
-        string fileName = "test-file.json";
-        string fileContent = "{ \"test\": \"content\" }";
-        string duplicateLineId = "duplicate-line-123";
-        string language = "C#";
-
-        Mock<IFormFile> mockFile = CreateMockFormFile(fileName, fileContent);
-        CodeFile codeFile = new() { Language = language, Name = fileName };
-
-        _mockCodeFileManager
-            .Setup(x => x.CreateCodeFileAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<MemoryStream>(),
-                It.IsAny<Stream>(), It.IsAny<string>()))
-            .ReturnsAsync(codeFile);
-
-        _mockCodeFileManager
-            .Setup(x => x.AreLineIdsDuplicate(It.IsAny<CodeFile>(), out duplicateLineId))
-            .Returns(true);
-
-        ActionResult result = await _controller.UploadAutoReview(mockFile.Object, "test-label");
-        BadRequestObjectResult badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-        string errorMessage = badRequestResult.Value.ToString();
-
-        Assert.Contains("API review generation failed due to a language parser error", errorMessage);
-        Assert.Contains($"duplicate line identifiers (IDs: '{duplicateLineId}')", errorMessage);
-        Assert.Contains($"language-specific parser for {language}", errorMessage);
-    }
-
-    [Fact]
-    public async Task UploadAutoReview_WithoutDuplicateLineIds_ContinuesProcessing()
-    {
-        string fileName = "test-file.json";
-        string fileContent = "{ \"test\": \"content\" }";
-        string language = "C#";
-
-        Mock<IFormFile> mockFile = CreateMockFormFile(fileName, fileContent);
-        CodeFile codeFile = new() { Language = language, Name = fileName };
-        ReviewListItemModel review = new() { Id = "review-id" };
-        APIRevisionListItemModel apiRevision = new() { Id = "revision-id", IsApproved = true };
-
-        _mockCodeFileManager
-            .Setup(x => x.CreateCodeFileAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<MemoryStream>(),
-                It.IsAny<Stream>(), It.IsAny<string>()))
-            .ReturnsAsync(codeFile);
-
-        string outDuplicateLineId;
-        _mockCodeFileManager
-            .Setup(x => x.AreLineIdsDuplicate(It.IsAny<CodeFile>(), out outDuplicateLineId))
-            .Returns(false);
-
-        _mockReviewManager
-            .Setup(x => x.GetReviewAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool?>()))
-            .ReturnsAsync(review);
-
-        _mockApiRevisionsManager
-            .Setup(x => x.UpdateRevisionMetadataAsync(It.IsAny<APIRevisionListItemModel>(), It.IsAny<string>(),
-                It.IsAny<string>(), It.IsAny<bool>()))
-            .ReturnsAsync(apiRevision);
-
-        ActionResult result = await _controller.UploadAutoReview(mockFile.Object, "test-label");
-        Assert.IsNotType<BadRequestObjectResult>(result);
-        _mockCodeFileManager.Verify(x => x.AreLineIdsDuplicate(codeFile, out It.Ref<string>.IsAny), Times.Once);
-    }
-
-
-    [Fact]
     public async Task UploadAutoReview_WithNullFile_ReturnsInternalServerError()
     {
         ActionResult result = await _controller.UploadAutoReview(null, "test-label");
@@ -132,35 +65,30 @@ public class AutoReviewControllerTests
     }
 
     [Fact]
-    public async Task UploadAutoReview_WithMultipleDuplicateLineIds_ReturnsBadRequestWithAllIds()
+    public async Task UploadAutoReview_WithDuplicateLineIdException_ReturnsBadRequest()
     {
         string fileName = "test-file.json";
         string fileContent = "{ \"test\": \"content\" }";
-        string multipleDuplicateLineIds = "duplicate-123, duplicate-456, duplicate-789";
-        string language = "Python";
+        string language = "C#";
+        List<string> duplicateLineIds = new() { "duplicate-123", "duplicate-456" };
 
         Mock<IFormFile> mockFile = CreateMockFormFile(fileName, fileContent);
-        CodeFile codeFile = new() { Language = language, Name = fileName };
+        DuplicateLineIdException exception = new(language, duplicateLineIds);
 
         _mockCodeFileManager
             .Setup(x => x.CreateCodeFileAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<MemoryStream>(),
                 It.IsAny<Stream>(), It.IsAny<string>()))
-            .ReturnsAsync(codeFile);
-
-        _mockCodeFileManager
-            .Setup(x => x.AreLineIdsDuplicate(It.IsAny<CodeFile>(), out multipleDuplicateLineIds))
-            .Returns(true);
+            .ThrowsAsync(exception);
 
         ActionResult result = await _controller.UploadAutoReview(mockFile.Object, "test-label");
         BadRequestObjectResult badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
         string errorMessage = badRequestResult.Value.ToString();
 
         Assert.Contains("API review generation failed due to a language parser error", errorMessage);
-        Assert.Contains($"duplicate line identifiers (IDs: '{multipleDuplicateLineIds}')", errorMessage);
-        Assert.Contains($"language-specific parser for {language}", errorMessage);
+        Assert.Contains("duplicate line identifiers", errorMessage);
         Assert.Contains("duplicate-123", errorMessage);
         Assert.Contains("duplicate-456", errorMessage);
-        Assert.Contains("duplicate-789", errorMessage);
+        Assert.Contains(language, errorMessage);
     }
 
     private Mock<IFormFile> CreateMockFormFile(string fileName, string content)

@@ -30,53 +30,49 @@ public class CodeFileManagerTests
     }
 
     [Theory]
-    [InlineData(new[] { "line1", "line2", "line3" }, false, "")] // No duplicates
-    [InlineData(new[] { "line1", "line2", "line1", "line3" }, true, "line1")] // Has duplicates
-    [InlineData(new[] { "line1", "line2", "line1", "line2", "line3" }, true, "line1, line2")] // Multiple duplicates, returns all
-    [InlineData(new[] { "", "line1", "", "line2" }, false, "")] // Empty line IDs ignored
-    [InlineData(new[] { "Line1", "line1", "LINE1" }, false, "")] // Case sensitive - no duplicates
-    public void AreLineIdsDuplicate_VariousScenarios_ReturnsExpectedResult(string[] lineIds, bool expectedResult, string expectedDuplicateId)
+    [InlineData(new[] { "line1", "line2", "line3" },  new string[] { })] // No duplicates
+    [InlineData(new[] { "line1", "line2", "line1", "line3" },  new[] { "line1" })] // Has duplicates
+    [InlineData(new[] { "line1", "line2", "line1", "line2", "line3" }, new[] { "line1", "line2" })] // Multiple duplicates, returns all
+    [InlineData(new[] { "", "line1", "", "line2" },  new string[] { })] // Empty line IDs ignored
+    [InlineData(new[] { "Line1", "line1", "LINE1" },  new string[] { })] // Case sensitive - no duplicates
+    public void AreLineIdsDuplicate_VariousScenarios_ReturnsExpectedResult(string[] lineIds, string[] expectedDuplicateId)
     {
         CodeFile codeFile = CreateCodeFileWithLineIds(lineIds);
-        bool result = _codeFileManager.AreLineIdsDuplicate(codeFile, out string duplicateLineId);
-        Assert.Equal(expectedResult, result);
-        Assert.Equal(expectedDuplicateId, duplicateLineId);
+        List<string> result = _codeFileManager.GetDuplicateLineIds(codeFile);
+        Assert.Equal(expectedDuplicateId, result);
     }
 
     [Fact]
     public void AreLineIdsDuplicate_WithNullLineIds_ReturnsFalse()
     {
         CodeFile codeFile = CreateCodeFileWithLineIds(new[] { null, "line1", null, "line2" });
-        bool result = _codeFileManager.AreLineIdsDuplicate(codeFile, out string duplicateLineId);
-        Assert.False(result);
-        Assert.Empty(duplicateLineId);
+        List<string> result = _codeFileManager.GetDuplicateLineIds(codeFile);
+        Assert.Empty(result);
     }
 
     [Fact]
     public void AreLineIdsDuplicate_WithMixedEmptyAndValidIds_IgnoresEmptyIds()
     {
         CodeFile codeFile = CreateCodeFileWithLineIds(new[] { "", "line1", null, "line1", "" });
-        bool result = _codeFileManager.AreLineIdsDuplicate(codeFile, out string duplicateLineId);
-        Assert.True(result);
-        Assert.Equal("line1", duplicateLineId);
+        List<string> result = _codeFileManager.GetDuplicateLineIds(codeFile);
+        Assert.True(result.Count > 0);
+        Assert.Equal("line1", result[0]);
     }
 
     [Fact]
     public void AreLineIdsDuplicate_WithMultipleDuplicates_ReturnsAllDuplicateIds()
     {
-        CodeFile codeFile = CreateCodeFileWithLineIds(["line1", "line2", "line3", "line1", "line2", "line4"]);
-        bool result = _codeFileManager.AreLineIdsDuplicate(codeFile, out string duplicateLineId);
-        Assert.True(result);
-        Assert.Equal("line1, line2", duplicateLineId);
+        CodeFile codeFile = CreateCodeFileWithLineIds(new[] { "line1", "line2", "line3", "line1", "line2", "line4" });
+        List<string> result = _codeFileManager.GetDuplicateLineIds(codeFile);
+        Assert.Equal(new[] { "line1", "line2" }, result);
     }
 
     [Fact]
     public void AreLineIdsDuplicate_WithNoApiLines_ReturnsFalse()
     {
         CodeFile codeFile = new() { Language = "C#", Name = "Test", PackageName = "TestPackage" };
-        bool result = _codeFileManager.AreLineIdsDuplicate(codeFile, out string duplicateLineId);
-        Assert.False(result);
-        Assert.Empty(duplicateLineId);
+        List<string> result = _codeFileManager.GetDuplicateLineIds(codeFile);
+        Assert.Empty(result);
     }
 
 

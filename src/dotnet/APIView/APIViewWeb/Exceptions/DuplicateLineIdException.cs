@@ -1,19 +1,19 @@
 using System;
+using System.Collections.Generic;
 
 namespace APIViewWeb.Exceptions
 {
     public class DuplicateLineIdException : Exception
     {
         public string Language { get; }
-        public string DuplicateLineId { get; }
+        public List<string> DuplicateLineIds { get; }
 
-        public DuplicateLineIdException(string language, string duplicateLineId) 
-            : base($"API review generation failed due to a language parser error. " +
-                   $"The parser generated duplicate line identifiers (IDs: '{duplicateLineId}'), which indicates " +
-                   $"an issue in the language-specific parser for {language}. ")
+        public DuplicateLineIdException(string language, List<string> duplicateLineIds) 
+            : base($"APIView unexpectedly received duplicate line identifiers (IDs: '{string.Join(", ", duplicateLineIds)}')." +
+                   $"Please contact the developer of the {language} APIView parser.")
         {
             Language = language;
-            DuplicateLineId = duplicateLineId;
+            DuplicateLineIds = duplicateLineIds;
         }
     }
 }

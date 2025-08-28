@@ -47,43 +47,44 @@ namespace APIViewWeb.Controllers
         [HttpPost]
         public async Task<ActionResult> UploadAutoReview([FromForm] IFormFile file, string label, bool compareAllRevisions = false, string packageVersion = null, bool setReleaseTag = false)
         {
-            if (file != null)
+            try
             {
-                using (var openReadStream = file.OpenReadStream())
+                if (file != null)
                 {
-                    using var memoryStream = new MemoryStream();
-                    var codeFile = await _codeFileManager.CreateCodeFileAsync(originalName: file.FileName, fileStream: openReadStream,
-                        runAnalysis: false, memoryStream: memoryStream);
-
-                    if (_codeFileManager.AreLineIdsDuplicate(codeFile, out string duplicateLineId))
+                    using (var openReadStream = file.OpenReadStream())
                     {
-                        var duplicateLineIdException = new DuplicateLineIdException(codeFile.Language, duplicateLineId);
-                        return BadRequest(duplicateLineIdException.Message);
-                    }
+                        using var memoryStream = new MemoryStream();
+                        var codeFile = await _codeFileManager.CreateCodeFileAsync(originalName: file.FileName, fileStream: openReadStream,
+                            runAnalysis: false, memoryStream: memoryStream);
 
-                    (var review, var apiRevision) = await CreateAutomaticRevisionAsync(codeFile: codeFile, label: label, originalName: file.FileName, memoryStream: memoryStream, compareAllRevisions);
-                    if (apiRevision != null)
-                    {
-                        apiRevision = await _apiRevisionsManager.UpdateRevisionMetadataAsync(apiRevision, packageVersion ?? codeFile.PackageVersion, label, setReleaseTag);
-                        var reviewUrl = ManagerHelpers.ResolveReviewUrl(reviewId: apiRevision.ReviewId, apiRevisionId: apiRevision.Id, language: apiRevision.Language, configuration: _configuration, languageServices: _languageServices);
+                        (var review, var apiRevision) = await CreateAutomaticRevisionAsync(codeFile: codeFile, label: label, originalName: file.FileName, memoryStream: memoryStream, compareAllRevisions);
+                        if (apiRevision != null)
+                        {
+                            apiRevision = await _apiRevisionsManager.UpdateRevisionMetadataAsync(apiRevision, packageVersion ?? codeFile.PackageVersion, label, setReleaseTag);
+                            var reviewUrl = ManagerHelpers.ResolveReviewUrl(reviewId: apiRevision.ReviewId, apiRevisionId: apiRevision.Id, language: apiRevision.Language, configuration: _configuration, languageServices: _languageServices);
 
-                        if (apiRevision.IsApproved)
-                        {
-                            return Ok(reviewUrl);
-                        }
-                        else if (review.IsApproved)
-                        {
-                            return StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl);
-                        }
-                        else 
-                        {
-                            return StatusCode(statusCode: StatusCodes.Status202Accepted, reviewUrl);
+                            if (apiRevision.IsApproved)
+                            {
+                                return Ok(reviewUrl);
+                            }
+                            else if (review.IsApproved)
+                            {
+                                return StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl);
+                            }
+                            else 
+                            {
+                                return StatusCode(statusCode: StatusCodes.Status202Accepted, reviewUrl);
+                            }
                         }
                     }
-                };
+                }
+                // Return internal server error for any unknown error
+                return StatusCode(statusCode: StatusCodes.Status500InternalServerError);
             }
-            // Return internal server error for any unknown error
-            return StatusCode(statusCode: StatusCodes.Status500InternalServerError);
+            catch (DuplicateLineIdException ex)
+            {
+                return StatusCode(StatusCodes.Status400BadRequest, ex.Message);
+            }
         }
     
         public async Task<ActionResult> GetReviewStatus(string language, string packageName, string reviewId = null, bool? firstReleaseStatusOnly = null, string packageVersion = null)

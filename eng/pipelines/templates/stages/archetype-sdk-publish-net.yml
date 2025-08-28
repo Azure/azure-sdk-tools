@@ -43,7 +43,11 @@ stages:
 
     ${{ if and(gt(length(parameters.ExeMatrix), 0), eq(parameters.ShouldTag, 'true'), eq(parameters.ShouldPublishExecutables, 'true')) }}:
       strategy:
-        matrix: ${{ parameters.ExeMatrix }}
+        matrix:
+          ${{ each entry in parameters.ExeMatrix }}:
+            ${{ entry.rid }}:
+              assembly: ${{ entry.assembly }}
+              rid:    ${{ entry.rid }}
 
     pool:
       name: $(WINDOWSPOOL)

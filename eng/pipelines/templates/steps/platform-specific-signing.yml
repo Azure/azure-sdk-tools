@@ -1,11 +1,11 @@
 parameters:
-  name: BinariesPath
-  type: string
-  default: ''
-  name: RuntimeIdentifier
-  type: string
-  name: Assembly
-  type: string
+  - name: BinariesPath
+    type: string
+    default: ''
+  - name: RuntimeIdentifier
+    type: string
+  - name: Assembly
+    type: string
 
 steps:
   # sets variable SigningArtifactDir with output folder

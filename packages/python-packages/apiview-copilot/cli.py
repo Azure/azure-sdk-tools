@@ -33,6 +33,7 @@ from knack.help_files import helps
 from src._apiview_reviewer import SUPPORTED_LANGUAGES, ApiViewReview
 from src._credential import get_credential
 from src._database_manager import ContainerNames, get_database_manager
+from src._garbage_collector import GarbageCollector
 from src._mention import handle_mention_request
 from src._models import APIViewComment
 from src._search_manager import SearchManager
@@ -419,6 +420,7 @@ def reindex_search(containers: Optional[list[str]] = None):
     Trigger a reindex of the Azure Search index for the ArchAgent Knowledge Base.
     If no container is specified, reindex all containers.
     """
+    containers = containers or ContainerNames.data_containers()
     return SearchManager.run_indexers(container_names=containers)
 
 
@@ -582,6 +584,39 @@ def db_get(container_name: str, id: str):
         print(json.dumps(item, indent=2))
     except Exception as e:
         print(f"Error retrieving item: {e}")
+
+
+def db_delete(container_name: str, id: str):
+    """Soft-delete an item from the database."""
+    db = get_database_manager()
+    container = db.get_container_client(container_name)
+    try:
+        container.delete_item(item=id, partition_key=id)
+        print(f"Item {id} soft-deleted from container {container_name}.")
+    except Exception as e:
+        print(f"Error deleting item: {e}")
+
+
+def db_purge(containers: Optional[list[str]] = None, run_indexer: bool = False):
+    """Purge soft-deleted items from the database."""
+    gc = GarbageCollector()
+    containers = containers or ContainerNames.data_containers()
+    for container_name in containers:
+        try:
+            start_count = gc.get_item_count(container_name)
+            if run_indexer:
+                gc.run_indexer_and_purge(container_name)
+            else:
+                gc.purge_items(container_name)
+            final_count = gc.get_item_count(container_name)
+            if start_count - final_count:
+                print(
+                    f"Soft-deleted items purged from container {container_name}. {start_count - final_count} items removed."
+                )
+            else:
+                print(f"No soft-deleted items to purge from container {container_name}.")
+        except Exception as e:
+            print(f"Error purging container: {e}")
 
 
 def _get_apiview_cosmos_client(container_name: str, environment: str = "production"):
@@ -919,6 +954,8 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("reindex", "reindex_search")
         with CommandGroup(self, "db", "__main__#{}") as g:
             g.command("get", "db_get")
+            g.command("delete", "db_delete")
+            g.command("purge", "db_purge")
         with CommandGroup(self, "metrics", "__main__#{}") as g:
             g.command("report", "report_metrics")
         return OrderedDict(self.command_table)
@@ -1030,7 +1067,7 @@ class CliCommandsLoader(CLICommandsLoader):
                 nargs="*",
                 help="The names of the containers to reindex. If not provided, all containers will be reindexed.",
                 options_list=["--containers", "-c"],
-                choices=[c.value for c in ContainerNames if c != "review-jobs"],
+                choices=ContainerNames.data_containers(),
             )
         with ArgumentsContext(self, "review start-job") as ac:
             ac.argument(
@@ -1066,7 +1103,6 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="Path to a JSON file containing existing comments.",
                 default=None,
             )
-
         with ArgumentsContext(self, "review get-job") as ac:
             ac.argument(
                 "job_id",
@@ -1105,19 +1141,34 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="The thread ID to continue the discussion. If not provided, a new thread will be created.",
                 options_list=["--thread-id", "-t"],
             )
-        with ArgumentsContext(self, "db get") as ac:
+        with ArgumentsContext(self, "db") as ac:
             ac.argument(
                 "container_name",
                 type=str,
                 help="The name of the Cosmos DB container",
-                choices=[c.value for c in ContainerNames],
+                choices=ContainerNames.values(),
                 options_list=["--container-name", "-c"],
             )
             ac.argument(
                 "id",
                 type=str,
-                help="The id of the item to retrieve.",
+                help="The id of the item.",
                 options_list=["--id", "-i"],
+            )
+        with ArgumentsContext(self, "db purge") as ac:
+            ac.argument(
+                "containers",
+                type=str,
+                nargs="*",
+                help="The names of the containers to purge. If not provided, all containers will be purged.",
+                options_list=["--containers", "-c"],
+                choices=ContainerNames.data_containers(),
+            )
+            ac.argument(
+                "run_indexer",
+                help="Whether to run the search indexer before purging.",
+                options_list=["--run-indexer"],
+                action="store_true",
             )
         with ArgumentsContext(self, "apiview") as ac:
             ac.argument(

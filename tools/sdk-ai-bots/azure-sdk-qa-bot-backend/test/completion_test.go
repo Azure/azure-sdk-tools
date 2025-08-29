@@ -3,32 +3,39 @@ package test
 import (
 	"context"
 	"testing"
+	"time"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/ai/azopenai"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
+	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
+	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/agent"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCompletionAPI(t *testing.T) {
+	// Create a context with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
+	defer cancel()
+
 	config.InitConfiguration()
 	config.InitSecrets()
-	// Define the request
-	messages := []azopenai.ChatRequestMessageClassification{
-		&azopenai.ChatRequestUserMessage{Content: azopenai.NewChatRequestUserMessageContent("What is the capital of France?")},
+	config.InitOpenAIClient()
+	service, err := agent.NewCompletionService()
+	require.NoError(t, err)
+	req := model.CompletionReq{
+		TenantID: model.TenantID_AzureSDKQaBot,
+		Message: model.Message{
+			Role:    model.Role_User,
+			Content: "Hello, how can I define different versions for my API?",
+		},
+		History: []model.Message{
+			{
+				Role:    model.Role_User,
+				Content: "Hello, how can I onboard to TypeSpec?",
+			},
+		},
 	}
-
-	model := config.AppConfig.AOAI_CHAT_COMPLETIONS_MODEL
-	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
-		// This is a conversation in progress.
-		// NOTE: all messages count against token usage for this API.
-		Messages:       messages,
-		DeploymentName: &model,
-	}, nil)
-
-	if err != nil {
-		t.Fatalf("Failed to get chat completions: %v", err)
-	}
-	// Print the response
-	for _, choice := range resp.Choices {
-		t.Logf("Response: %s", *choice.Message.Content)
-	}
+	resp, err := service.ChatCompletion(ctx, &req)
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+	require.Greater(t, len(resp.Answer), 0, "Expected non-empty answer")
 }

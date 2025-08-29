@@ -2,13 +2,13 @@ package test
 
 import (
 	"context"
-	"encoding/json"
 	"testing"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/model"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/search"
+	"github.com/stretchr/testify/require"
 )
 
 func TestQueryIndex(t *testing.T) {
@@ -30,31 +30,30 @@ func TestQueryIndex(t *testing.T) {
 		},
 	}
 	resp, err := searchClient.QueryIndex(context.Background(), req)
-	if err != nil {
-		t.Errorf("QueryIndex() got an error: %v", err)
-	}
-	t.Logf("QueryIndex response: %+v", resp)
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+	require.Greater(t, len(resp.Value), 0, "Expected at least one search result")
 }
 
 func TestGetFullContext(t *testing.T) {
+	config.InitConfiguration()
 	config.InitSecrets()
 	searchClient := search.NewSearchClient()
 	resp, err := searchClient.GetCompleteContext(model.Index{
-		Title: "getstarted#installation.md",
+		Title:     "getstarted#installation.md",
+		ContextID: "typespec_azure_docs",
 	})
-	if err != nil {
-		t.Errorf("QueryIndex() got an error: %v", err)
-	}
-	v, _ := json.Marshal(resp)
-	t.Logf("GetFullContext response: %s", v)
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+	require.Greater(t, len(resp), 0, "Expected non-empty context")
 }
 
 func TestAgenticSearch(t *testing.T) {
+	config.InitConfiguration()
 	config.InitSecrets()
 	searchClient := search.NewSearchClient()
 	resp, err := searchClient.AgenticSearch(context.Background(), "how can i install typespec?", nil, "")
-	if err != nil {
-		t.Errorf("AgenticSearch() got an error: %v", err)
-	}
-	t.Logf("AgenticSearch response: %+v", resp)
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+	require.Greater(t, len(resp.References), 0, "Expected at least one search result")
 }

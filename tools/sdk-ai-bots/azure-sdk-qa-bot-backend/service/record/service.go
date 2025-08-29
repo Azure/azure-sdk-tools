@@ -37,7 +37,7 @@ func (s *RecordService) SaveAnswerRecord(record model.AnswerRecordReq) error {
 	var existingData bool
 
 	// Try to download existing Excel file from storage
-	content, err := storageService.DownloadBlob(config.STORAGE_RECORDS_CONTAINER, filename)
+	content, err := storageService.DownloadBlob(config.AppConfig.STORAGE_RECORDS_CONTAINER, filename)
 	if err != nil || len(content) == 0 {
 		log.Printf("Failed to download answer records file or file is empty (creating new): %v", err)
 		// Create new Excel file
@@ -106,6 +106,6 @@ func (s *RecordService) SaveAnswerRecord(record model.AnswerRecordReq) error {
 		return fmt.Errorf("failed to write Excel to buffer: %w", err)
 	}
 
-	err = storageService.PutBlob(config.STORAGE_RECORDS_CONTAINER, filename, buf.Bytes())
+	err = storageService.PutBlob(config.AppConfig.STORAGE_RECORDS_CONTAINER, filename, buf.Bytes())
 	return err
 }

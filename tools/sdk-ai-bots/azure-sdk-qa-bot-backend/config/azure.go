@@ -10,7 +10,7 @@ import (
 var OpenAIClient *azopenai.Client
 
 func InitOpenAIClient() {
-	endpoint := AOAI_CHAT_COMPLETIONS_ENDPOINT
+	endpoint := AppConfig.AOAI_CHAT_COMPLETIONS_ENDPOINT
 	keyCredential := azcore.NewKeyCredential(AOAI_CHAT_COMPLETIONS_API_KEY)
 	client, err := azopenai.NewClientWithKeyCredential(endpoint, keyCredential, nil)
 	if err != nil {

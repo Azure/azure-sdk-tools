@@ -12,9 +12,7 @@ import (
 )
 
 func TestQueryIndex(t *testing.T) {
-	if err := config.InitEnvironment(); err != nil {
-		t.Fatalf("Failed to initialize environment: %v", err)
-	}
+	config.InitConfiguration()
 	config.InitSecrets()
 	searchClient := search.NewSearchClient()
 	req := &model.QueryIndexRequest{
@@ -39,10 +37,6 @@ func TestQueryIndex(t *testing.T) {
 }
 
 func TestGetFullContext(t *testing.T) {
-	err := config.InitEnvironment()
-	if err != nil {
-		t.Fatalf("Failed to initialize environment: %v", err)
-	}
 	config.InitSecrets()
 	searchClient := search.NewSearchClient()
 	resp, err := searchClient.GetCompleteContext(model.Index{
@@ -56,7 +50,6 @@ func TestGetFullContext(t *testing.T) {
 }
 
 func TestAgenticSearch(t *testing.T) {
-	config.InitEnvironment()
 	config.InitSecrets()
 	searchClient := search.NewSearchClient()
 	resp, err := searchClient.AgenticSearch(context.Background(), "how can i install typespec?", nil, "")

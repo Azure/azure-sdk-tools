@@ -11,7 +11,7 @@ import (
 )
 
 func TestListSecrets(t *testing.T) {
-	config.InitEnvironment()
+	config.InitConfiguration()
 	//Create a credential using the NewDefaultAzureCredential type.
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
@@ -19,7 +19,7 @@ func TestListSecrets(t *testing.T) {
 	}
 
 	//Establish a connection to the Key Vault client
-	client, err := azsecrets.NewClient(config.KEYVAULT_ENDPOINT, cred, nil)
+	client, err := azsecrets.NewClient(config.AppConfig.KEYVAULT_ENDPOINT, cred, nil)
 	if err != nil {
 		t.Fatalf("failed to connect to client: %v", err)
 	}

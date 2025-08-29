@@ -30,7 +30,7 @@ type CompletionService struct {
 
 func NewCompletionService() (*CompletionService, error) {
 	return &CompletionService{
-		model: config.AOAI_CHAT_COMPLETIONS_MODEL,
+		model: config.AppConfig.AOAI_CHAT_COMPLETIONS_MODEL,
 	}, nil
 }
 
@@ -130,7 +130,7 @@ func (s *CompletionService) RecongnizeIntension(promptTemplate string, messages 
 
 	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
 		Messages:       messages,
-		DeploymentName: to.Ptr(string(config.AOAI_CHAT_REASONING_MODEL)),
+		DeploymentName: to.Ptr(string(config.AppConfig.AOAI_CHAT_REASONING_MODEL)),
 	}, nil)
 
 	if err != nil {
@@ -242,9 +242,9 @@ func getImageDataURI(url string) (string, error) {
 
 func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.ChatRequestMessageClassification, []azopenai.ChatRequestMessageClassification) {
 	// avoid token limit error, we need to limit the number of messages in the history
-	if len(req.Message.Content) > config.AOAI_CHAT_MAX_TOKENS {
-		log.Printf("Message content is too long, truncating to %d characters", config.AOAI_CHAT_MAX_TOKENS)
-		req.Message.Content = req.Message.Content[:config.AOAI_CHAT_MAX_TOKENS]
+	if len(req.Message.Content) > config.AppConfig.AOAI_CHAT_MAX_TOKENS {
+		log.Printf("Message content is too long, truncating to %d characters", config.AppConfig.AOAI_CHAT_MAX_TOKENS)
+		req.Message.Content = req.Message.Content[:config.AppConfig.AOAI_CHAT_MAX_TOKENS]
 	}
 
 	// Preprocess HTML content if it contains HTML entities or tags
@@ -285,9 +285,9 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 		for _, info := range req.AdditionalInfos {
 			if info.Type == model.AdditionalInfoType_Link {
 				content := info.Content
-				if len(content) > config.AOAI_CHAT_MAX_TOKENS {
-					log.Printf("Link content is too long, truncating to %d characters", config.AOAI_CHAT_MAX_TOKENS)
-					content = content[:config.AOAI_CHAT_MAX_TOKENS]
+				if len(content) > config.AppConfig.AOAI_CHAT_MAX_TOKENS {
+					log.Printf("Link content is too long, truncating to %d characters", config.AppConfig.AOAI_CHAT_MAX_TOKENS)
+					content = content[:config.AppConfig.AOAI_CHAT_MAX_TOKENS]
 				}
 				var msg *azopenai.ChatRequestUserMessage
 				if strings.Contains(content, "graph.microsoft.com") {
@@ -329,9 +329,9 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 		preProcessedMessage := preprocess.NewPreprocessService().ExtractAdditionalInfo(req.Message.Content)
 		log.Println("user message with additional info:", preProcessedMessage)
 		// avoid token limit error, we need to limit the number of messages in the history
-		if len(preProcessedMessage) > config.AOAI_CHAT_MAX_TOKENS {
-			log.Printf("Message content is too long, truncating to %d characters", config.AOAI_CHAT_MAX_TOKENS)
-			preProcessedMessage = preProcessedMessage[:config.AOAI_CHAT_MAX_TOKENS]
+		if len(preProcessedMessage) > config.AppConfig.AOAI_CHAT_MAX_TOKENS {
+			log.Printf("Message content is too long, truncating to %d characters", config.AppConfig.AOAI_CHAT_MAX_TOKENS)
+			preProcessedMessage = preProcessedMessage[:config.AppConfig.AOAI_CHAT_MAX_TOKENS]
 		}
 		currentMessage = preProcessedMessage
 	}
@@ -479,13 +479,13 @@ func (s *CompletionService) buildPrompt(intension *model.IntensionResult, chunks
 	// make sure the tokens of chunks limited in 100000 tokens
 	tokenCnt := 0
 	for i, chunk := range chunks {
-		if len(chunk) > config.AOAI_CHAT_MAX_TOKENS {
-			log.Printf("Chunk %d is too long, truncating to %d characters", i+1, config.AOAI_CHAT_MAX_TOKENS)
-			chunks[i] = chunk[:config.AOAI_CHAT_MAX_TOKENS]
+		if len(chunk) > config.AppConfig.AOAI_CHAT_MAX_TOKENS {
+			log.Printf("Chunk %d is too long, truncating to %d characters", i+1, config.AppConfig.AOAI_CHAT_MAX_TOKENS)
+			chunks[i] = chunk[:config.AppConfig.AOAI_CHAT_MAX_TOKENS]
 		}
 		tokenCnt += len(chunks[i])
-		if tokenCnt > config.AOAI_CHAT_CONTEXT_MAX_TOKENS {
-			log.Printf("%v chunks has exceed max token limit, truncating to %d tokens", i+1, config.AOAI_CHAT_CONTEXT_MAX_TOKENS)
+		if tokenCnt > config.AppConfig.AOAI_CHAT_CONTEXT_MAX_TOKENS {
+			log.Printf("%v chunks has exceed max token limit, truncating to %d tokens", i+1, config.AppConfig.AOAI_CHAT_CONTEXT_MAX_TOKENS)
 			chunks = chunks[:i+1] // truncate the chunks to the current index
 			break
 		}
@@ -571,7 +571,7 @@ func (s *CompletionService) getLLMResult(messages []azopenai.ChatRequestMessageC
 				Strict:      to.Ptr(true),
 			},
 		},
-		TopP: to.Ptr(float32(config.AOAI_CHAT_COMPLETIONS_TOP_P)),
+		TopP: to.Ptr(float32(config.AppConfig.AOAI_CHAT_COMPLETIONS_TOP_P)),
 	}, nil)
 
 	if err != nil {

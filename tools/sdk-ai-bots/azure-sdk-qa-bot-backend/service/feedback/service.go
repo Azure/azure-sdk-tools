@@ -37,7 +37,7 @@ func (s *FeedbackService) SaveFeedback(feedback model.FeedbackReq) error {
 	var existingData bool
 
 	// Try to download existing Excel file from storage
-	content, err := storageService.DownloadBlob(config.STORAGE_FEEDBACK_CONTAINER, filename)
+	content, err := storageService.DownloadBlob(config.AppConfig.STORAGE_FEEDBACK_CONTAINER, filename)
 	if err != nil || len(content) == 0 {
 		log.Printf("Failed to download feedback file or file is empty (creating new): %v", err)
 		// Create new Excel file
@@ -112,6 +112,6 @@ func (s *FeedbackService) SaveFeedback(feedback model.FeedbackReq) error {
 		return fmt.Errorf("failed to write Excel to buffer: %w", err)
 	}
 
-	err = storageService.PutBlob(config.STORAGE_FEEDBACK_CONTAINER, filename, buf.Bytes())
+	err = storageService.PutBlob(config.AppConfig.STORAGE_FEEDBACK_CONTAINER, filename, buf.Bytes())
 	return err
 }

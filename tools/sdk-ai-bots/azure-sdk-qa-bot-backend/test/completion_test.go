@@ -9,17 +9,14 @@ import (
 )
 
 func TestCompletionAPI(t *testing.T) {
-	err := config.InitEnvironment()
-	if err != nil {
-		t.Fatalf("Failed to initialize environment: %v", err)
-	}
+	config.InitConfiguration()
 	config.InitSecrets()
 	// Define the request
 	messages := []azopenai.ChatRequestMessageClassification{
 		&azopenai.ChatRequestUserMessage{Content: azopenai.NewChatRequestUserMessageContent("What is the capital of France?")},
 	}
 
-	model := config.AOAI_CHAT_COMPLETIONS_MODEL
+	model := config.AppConfig.AOAI_CHAT_COMPLETIONS_MODEL
 	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
 		// This is a conversation in progress.
 		// NOTE: all messages count against token usage for this API.

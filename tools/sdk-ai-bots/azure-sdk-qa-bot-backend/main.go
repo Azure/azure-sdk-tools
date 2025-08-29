@@ -31,7 +31,7 @@ func main() {
 	config.LoadEnvFile()
 
 	// init resources
-	config.InitEnvironment()
+	config.InitConfiguration()
 	config.InitSecrets()
 	config.InitOpenAIClient()
 

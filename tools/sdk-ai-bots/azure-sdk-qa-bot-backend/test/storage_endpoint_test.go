@@ -8,7 +8,7 @@ import (
 )
 
 func TestGetBlobs(t *testing.T) {
-	config.InitEnvironment()
+	config.InitConfiguration()
 	// Initialize the storage client
 	storageClient, err := storage.NewStorageService()
 	if err != nil {
@@ -36,7 +36,7 @@ func TestGetBlobs(t *testing.T) {
 }
 
 func TestPutBlob(t *testing.T) {
-	config.InitEnvironment()
+	config.InitConfiguration()
 	// Initialize the storage client
 	storageClient, err := storage.NewStorageService()
 	if err != nil {
@@ -58,7 +58,7 @@ func TestPutBlob(t *testing.T) {
 }
 
 func TestDeleteBlob(t *testing.T) {
-	config.InitEnvironment()
+	config.InitConfiguration()
 	// Initialize the storage client
 	storageClient, err := storage.NewStorageService()
 	if err != nil {

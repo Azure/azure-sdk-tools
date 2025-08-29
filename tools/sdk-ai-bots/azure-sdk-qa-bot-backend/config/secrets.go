@@ -23,7 +23,7 @@ func InitSecrets() {
 	}
 
 	//Establish a connection to the Key Vault client
-	client, err := azsecrets.NewClient(KEYVAULT_ENDPOINT, cred, nil)
+	client, err := azsecrets.NewClient(AppConfig.KEYVAULT_ENDPOINT, cred, nil)
 	if err != nil {
 		log.Fatalf("failed to connect to client: %v", err)
 	}

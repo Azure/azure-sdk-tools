@@ -32,6 +32,21 @@ extends:
               os: linux
 
             steps:
+              - task: AzureCLI@2
+                inputs:
+                  azureSubscription: 'azure-chat-bot-test'
+                  addSpnToEnvironment: true
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  inlineScript: |
+                    echo "##vso[task.setvariable variable=AZURE_CLIENT_ID]$servicePrincipalId"
+                    echo "##vso[task.setvariable variable=AZURE_TENANT_ID]$tenantId"
+                    echo "##vso[task.setvariable variable=AZURE_SUBSCRIPTION_ID]$(az account show --query id -o tsv)"
+                    echo "$idToken" > "$(Agent.BuildDirectory)/id_token"
+                    echo "##vso[task.setvariable variable=AZURE_FEDERATED_TOKEN_FILE]$(Agent.BuildDirectory)/id_token"
+                    echo "##vso[task.setvariable variable=SYSTEM_ACCESSTOKEN]$idToken"
+                    
+
               - task: GoTool@0
                 inputs:
                   version: "1.24.1"
@@ -108,6 +123,8 @@ extends:
                   fi
                 displayName: "Run Tests"
                 workingDirectory: "$(System.DefaultWorkingDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend"
+                env:
+                  AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
 
               - task: PublishTestResults@2
                 condition: always()

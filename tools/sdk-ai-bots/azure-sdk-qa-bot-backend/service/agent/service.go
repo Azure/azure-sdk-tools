@@ -138,10 +138,10 @@ func (s *CompletionService) RecongnizeIntension(promptTemplate string, messages 
 		return nil, model.NewLLMServiceFailureError(err)
 	}
 
-	for _, choice := range resp.Choices {
-		result, err := promptParser.ParseResponse(*choice.Message.Content, "intension.md")
+	if len(resp.Choices) > 0 {
+		result, err := promptParser.ParseResponse(*resp.Choices[0].Message.Content, "intension.md")
 		if err != nil {
-			log.Printf("Failed to parse intension response: %v, content: %s", err, *choice.Message.Content)
+			log.Printf("Failed to parse intension response: %v, content: %s", err, *resp.Choices[0].Message.Content)
 			return nil, err
 		}
 		return result, nil
@@ -229,13 +229,14 @@ func getImageDataURI(url string) (string, error) {
 	}
 	base64Encode := base64.StdEncoding.EncodeToString(body)
 	contentType := resp.Header.Get("Content-Type")
-	if contentType == "image/png" {
+	switch contentType {
+	case "image/png":
 		return fmt.Sprintf("data:image/png;base64,%s", base64Encode), nil
-	} else if contentType == "image/jpeg" {
+	case "image/jpeg":
 		return fmt.Sprintf("data:image/jpeg;base64,%s", base64Encode), nil
-	} else if contentType == "image/gif" {
+	case "image/gif":
 		return fmt.Sprintf("data:image/gif;base64,%s", base64Encode), nil
-	} else {
+	default:
 		return fmt.Sprintf("data:image/png;base64,%s", base64Encode), nil
 	}
 }
@@ -373,108 +374,6 @@ func (s *CompletionService) buildQueryForSearch(req *model.CompletionReq, messag
 	return query, intentResult
 }
 
-func (s *CompletionService) searchRelatedKnowledge(req *model.CompletionReq, query string, existingChunks []model.Index) ([]string, error) {
-	searchStart := time.Now()
-	searchClient := search.NewSearchClient()
-	results, err := searchClient.SearchTopKRelatedDocuments(query, *req.TopK, req.Sources)
-	if err != nil {
-		return nil, fmt.Errorf("failed to search for related documents: %w", err)
-	}
-	log.Printf("Vector Search took: %v", time.Since(searchStart))
-
-	// filter unrelevant results
-	needCompleteFiles := make([]model.Index, 0)
-	needCompleteChunks := make([]model.Index, 0)
-	normalResult := make([]model.Index, 0)
-	for i, result := range results {
-		if result.RerankScore < model.RerankScoreLowRelevanceThreshold {
-			log.Printf("Skipping result with low score: %s/%s, score: %f", result.ContextID, result.Title, result.RerankScore)
-			continue
-		}
-		if result.ContextID == string(model.Source_TypeSpecQA) || result.ContextID == string(model.Source_TypeSpecMigration) {
-			needCompleteChunks = append(needCompleteChunks, result)
-			log.Printf("Vector searched chunk(Q&A): %+v", result)
-			continue
-		}
-		if result.RerankScore >= model.RerankScoreRelevanceThreshold {
-			needCompleteFiles = append(needCompleteFiles, result)
-			log.Printf("Vector searched chunk(high score): %+v", result)
-			continue
-		}
-		// every source first document should be completed
-		if i == 0 || (results[i].ContextID != results[i-1].ContextID) {
-			needCompleteFiles = append(needCompleteFiles, result)
-			log.Printf("Vector searched chunk(first document of source): %+v", result)
-			continue
-		}
-		log.Printf("Vector searched chunk: %+v", result)
-		normalResult = append(normalResult, result)
-	}
-	supplyNum := 5
-	if len(needCompleteFiles) < supplyNum {
-		log.Printf("No results found with high relevance score, supply with normal results")
-		if len(normalResult) < supplyNum {
-			supplyNum = len(normalResult)
-		}
-		needCompleteFiles = normalResult[:supplyNum]
-		normalResult = normalResult[supplyNum:]
-	}
-
-	chunkProcessStart := time.Now()
-	files := make(map[string]bool)
-	chunks := make(map[string]bool)
-	mergedChunks := make([]model.Index, 0)
-	for _, result := range needCompleteFiles {
-		if files[result.Title] {
-			continue
-		}
-		files[result.Title] = true
-		mergedChunks = append(mergedChunks, model.Index{
-			Title:     result.Title,
-			ContextID: result.ContextID,
-			Header1:   result.Header1,
-		})
-		log.Printf("Complete chunk: %s/%s", result.ContextID, result.Title)
-	}
-	mergedChunks = append(mergedChunks, needCompleteChunks...)
-	var wg sync.WaitGroup
-	wg.Add(len(mergedChunks))
-	for i := range mergedChunks {
-		i := i
-		go func() {
-			defer wg.Done()
-			mergedChunks[i] = searchClient.CompleteChunk(mergedChunks[i])
-		}()
-	}
-	wg.Wait()
-
-	result := make([]string, 0)
-	for _, mergedChunk := range mergedChunks {
-		chunk := processDocument(mergedChunk)
-		result = append(result, chunk)
-	}
-	for _, existingChunk := range existingChunks {
-		if files[existingChunk.Title] {
-			continue
-		}
-		chunk := processChunk(existingChunk)
-		result = append(result, chunk)
-		chunks[existingChunk.Chunk] = true
-	}
-	for _, normalChunk := range normalResult {
-		if files[normalChunk.Title] {
-			continue
-		}
-		if chunks[normalChunk.Chunk] {
-			continue
-		}
-		chunk := processChunk(normalChunk)
-		result = append(result, chunk)
-	}
-	log.Printf("Chunk processing took: %v", time.Since(chunkProcessStart))
-	return result, nil
-}
-
 func (s *CompletionService) buildPrompt(intension *model.IntensionResult, chunks []string, promptTemplate string) (string, error) {
 	// make sure the tokens of chunks limited in 100000 tokens
 	tokenCnt := 0
@@ -584,10 +483,10 @@ func (s *CompletionService) getLLMResult(messages []azopenai.ChatRequestMessageC
 	}
 	log.Printf("OpenAI completion took: %v", time.Since(completionStart))
 	promptParser := prompt.DefaultPromptParser{}
-	for _, choice := range resp.Choices {
-		answer, err := promptParser.ParseResponse(*choice.Message.Content, promptTemplate)
+	if len(resp.Choices) > 0 {
+		answer, err := promptParser.ParseResponse(*resp.Choices[0].Message.Content, promptTemplate)
 		if err != nil {
-			log.Printf("ERROR: %s, content:%s", err, *choice.Message.Content)
+			log.Printf("ERROR: %s, content:%s", err, *resp.Choices[0].Message.Content)
 			return nil, err
 		}
 		return answer, nil

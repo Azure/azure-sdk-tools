@@ -30,7 +30,13 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 return false;
 
             var ct = values[0];
-            if (!ct.StartsWith("multipart/mixed", StringComparison.OrdinalIgnoreCase))
+            /*
+             * For the most part, the multipart serialization/deserialization code should be universal across
+             * all the various types of multipart/* payloads.
+             * 
+             * Until we discover otherwise, we'll treat them the same.
+             */
+            if (!ct.StartsWith("multipart/", StringComparison.OrdinalIgnoreCase))
                 return false;
 
             const string key = "boundary=";

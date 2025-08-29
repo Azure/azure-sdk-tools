@@ -81,10 +81,10 @@ public class AutoReviewControllerTests
             .ThrowsAsync(exception);
 
         ActionResult result = await _controller.UploadAutoReview(mockFile.Object, "test-label");
-        BadRequestObjectResult badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+        ObjectResult badRequestResult = Assert.IsType<ObjectResult>(result);
         string errorMessage = badRequestResult.Value.ToString();
 
-        Assert.Contains("API review generation failed due to a language parser error", errorMessage);
+        Assert.Contains("APIView unexpectedly received", errorMessage);
         Assert.Contains("duplicate line identifiers", errorMessage);
         Assert.Contains("duplicate-123", errorMessage);
         Assert.Contains("duplicate-456", errorMessage);

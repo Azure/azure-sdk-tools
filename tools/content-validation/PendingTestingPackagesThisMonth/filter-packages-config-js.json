@@ -1,0 +1,15 @@
+[
+  {
+    "packages": [
+        "@azure-rest/*",
+        "@azure/arm-*",
+        "@azure/create-playwright",
+        "@azure/ai-form-recognizer",
+        "@azure/ai-text-analytics",
+        "@azure/ai-anomaly-detector",
+        "@azure/communication-network-traversal",
+        "@azure/monitor-query",
+        "@azure/video-analyzer-edge"
+    ]
+  }
+]

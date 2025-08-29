@@ -41,7 +41,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
         private readonly Option<string[]> serviceOwnersOption = new(["--service-owners"], "The service owners (space-separated)") { IsRequired = false };
         private readonly Option<string[]> sourceOwnersOption = new(["--source-owners"], "The source owners (space-separated)") { IsRequired = false };
         private readonly Option<bool> isAddingOption = new(["--is-adding"], "Whether to add (true) or remove (false) owners") { IsRequired = false };
-        private readonly Option<string> workingBranchOption = new(["--branch"], "Branch to make edits to, only if provided.") { IsRequired = false };
+        private readonly Option<int> prNumberOption = new(["--pr-number"], "PR number.") { IsRequired = false };
 
         public CodeownersTools(
             IGitHubService githubService,
@@ -76,13 +76,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                     serviceOwnersOption,
                     sourceOwnersOption,
                     isAddingOption,
-                    workingBranchOption,
+                    prNumberOption,
                 },
                 new Command(validateCodeownersEntryCommandName, "Validate codeowners for an existing service entry")
                 {
                     repoOption,
                     serviceLabelOption,
-                    pathOptionOptional
+                    pathOptionOptional,
+                    prNumberOption,
                 }
             };
 
@@ -108,7 +109,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                 var serviceOwnersValue = commandParser.GetValueForOption(serviceOwnersOption);
                 var sourceOwnersValue = commandParser.GetValueForOption(sourceOwnersOption);
                 var isAddingValue = commandParser.GetValueForOption(isAddingOption);
-                var workingBranchValue = commandParser.GetValueForOption(workingBranchOption);
+                var prNumberValue = commandParser.GetValueForOption(prNumberOption);
 
                 var addResult = await UpdateCodeowners(
                     repoValue ?? "",
@@ -118,7 +119,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                     serviceOwnersValue?.ToList() ?? new List<string>(),
                     sourceOwnersValue?.ToList() ?? new List<string>(),
                     isAddingValue,
-                    workingBranchValue ?? "");
+                    prNumberValue);
                 ctx.ExitCode = ExitCode;
                 output.Output(addResult);
                 return;
@@ -128,11 +129,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                 var validateRepo = commandParser.GetValueForOption(repoOption);
                 var validateServiceLabel = commandParser.GetValueForOption(serviceLabelOption);
                 var validateRepoPath = commandParser.GetValueForOption(pathOptionOptional);
+                var prNumberValue = commandParser.GetValueForOption(prNumberOption);
 
                 var validateResult = await ValidateCodeownersEntryForService(
                     validateRepo ?? "",
                     validateServiceLabel,
-                    validateRepoPath);
+                    validateRepoPath,
+                    prNumberValue);
                 ctx.ExitCode = ExitCode;
                 output.Output(validateResult);
                 return;
@@ -154,7 +157,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
             List<string> serviceOwners = null,
             List<string> sourceOwners = null,
             bool isAdding = false,
-            string workingBranch = "")
+            int prNumber = 0)
         {
             try
             {
@@ -167,25 +170,28 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                 // Normalize service path
                 var normalizedPath = CodeownersHelper.NormalizePath(path);
 
-                if (string.IsNullOrEmpty(workingBranch))
-                {
-                    var codeownersPullRequests = (await githubService.SearchPullRequestsByTitleAsync(Constants.AZURE_OWNER_PATH, repo, "[CODEOWNERS]"))
-                        ?? new List<PullRequest?>().AsReadOnly();
+                string workingBranch = "";
+                string repoOwner = "";
 
-                    foreach (var codeownersPullRequest in codeownersPullRequests)
+                // Resolve PR number to actual branch name if provided.
+                if (prNumber > 0)
+                {
+                    var pr = await githubService.GetPullRequestAsync(Constants.AZURE_OWNER_PATH, repo, prNumber);
+                    if (pr == null)
                     {
-                        if (codeownersPullRequest != null &&
-                            ((!string.IsNullOrEmpty(serviceLabel) && codeownersPullRequest.Title.Contains(serviceLabel, StringComparison.OrdinalIgnoreCase)) ||
-                            (!string.IsNullOrEmpty(normalizedPath) && codeownersPullRequest.Title.Contains(normalizedPath, StringComparison.OrdinalIgnoreCase))))
-                        {
-                            workingBranch = codeownersPullRequest.Head.Ref;
-                            break;
-                        }
+                        throw new Exception($"Pull request #{prNumber} could not be found or retrieved from repository '{repo}'.");
                     }
+                    workingBranch = pr.Head.Ref;
+                    repoOwner = pr.Head.Repository.Owner.Login;
+                }
+
+                if (string.IsNullOrEmpty(repoOwner))
+                {
+                    repoOwner = Constants.AZURE_OWNER_PATH;
                 }
 
                 // Get codeowners file contents.
-                var codeownersFileContent = await githubService.GetContentsSingleAsync(Constants.AZURE_OWNER_PATH, repo, Constants.AZURE_CODEOWNERS_PATH, workingBranch);
+                var codeownersFileContent = await githubService.GetContentsSingleAsync(repoOwner, repo, Constants.AZURE_CODEOWNERS_PATH, workingBranch);
 
                 if (codeownersFileContent == null)
                 {
@@ -218,7 +224,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                     $"Update codeowners entry for {identifier}", // Description for commit message, PR title, and description
                     "update-codeowners-entry",                                             // Branch prefix for the action
                     identifier, // Identifier for the PR
-                    workingBranch);
+                    workingBranch,
+                    repoOwner);
 
                 return string.Join("\n", resultMessages.Concat(new[] { codeownersValidationResultMessage }));
             }
@@ -236,7 +243,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
             string description, // used for commit message, PR title, and PR description
             string branchPrefix,
             string identifier,
-            string workingBranch)
+            string workingBranch,
+            string repoOwner)
         {
             List<string> resultMessages = new();
             var branchName = "";
@@ -256,7 +264,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
             }
 
             // After branchName is set
-            var codeownersFileContent = await githubService.GetContentsSingleAsync(Constants.AZURE_OWNER_PATH, repo, Constants.AZURE_CODEOWNERS_PATH, branchName);
+            var codeownersFileContent = await githubService.GetContentsSingleAsync(repoOwner, repo, Constants.AZURE_CODEOWNERS_PATH, branchName);
 
             if (codeownersFileContent == null)
             {
@@ -266,7 +274,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
             var codeownersSha = codeownersFileContent.Sha;
 
             // Use codeownersSha in UpdateFileAsync
-            await githubService.UpdateFileAsync(Constants.AZURE_OWNER_PATH, repo, Constants.AZURE_CODEOWNERS_PATH, description, modifiedContent, codeownersSha, branchName);
+            await githubService.UpdateFileAsync(repoOwner, repo, Constants.AZURE_CODEOWNERS_PATH, description, modifiedContent, codeownersSha, branchName);
 
             var prInfoList = await githubService.CreatePullRequestAsync(repo, Constants.AZURE_OWNER_PATH, "main", branchName, "[CODEOWNERS] " + description, description, true);
             if (prInfoList != null)
@@ -283,7 +291,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
         }
 
         [McpServerTool(Name = "azsdk_engsys_validate_codeowners_entry_for_service"), Description("Validates codeowners in a specific repository for a given service or repo path.")]
-        public async Task<ServiceCodeownersResult> ValidateCodeownersEntryForService(string repoName, string? serviceLabel = null, string? path = null)
+        public async Task<ServiceCodeownersResult> ValidateCodeownersEntryForService(string repoName, string? serviceLabel = null, string? path = null, int prNumber = 0)
         {
             ServiceCodeownersResult response = new() { };
 
@@ -303,17 +311,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
 
                 var normalizedPath = CodeownersHelper.NormalizePath(path);
 
-                var workingBranch = "";
-                var codeownersPullRequests = await githubService.SearchPullRequestsByTitleAsync(Constants.AZURE_OWNER_PATH, repoName, "[CODEOWNERS]");
-
-                foreach (var codeownersPullRequest in codeownersPullRequests)
+                string workingBranch = "";
+                
+                if (prNumber > 0)
                 {
-                    if (codeownersPullRequest != null &&
-                        ((!string.IsNullOrEmpty(serviceLabel) && codeownersPullRequest.Title.Contains(serviceLabel, StringComparison.OrdinalIgnoreCase)) ||
-                        (!string.IsNullOrEmpty(normalizedPath) && codeownersPullRequest.Title.Contains(normalizedPath, StringComparison.OrdinalIgnoreCase))))
+                    var pr = await githubService.GetPullRequestAsync(Constants.AZURE_OWNER_PATH, repoName, prNumber);
+                    if (pr == null)
                     {
-                        workingBranch = codeownersPullRequest.Head.Ref;
+                        response.Message += $"Pull request #{prNumber} not found in repository '{repoName}'.";
+                        return response;
                     }
+                    workingBranch = pr.Head.Ref;
                 }
 
                 workingBranch = string.IsNullOrEmpty(workingBranch) ? "main" : workingBranch;

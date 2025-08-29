@@ -23,9 +23,6 @@ model:
 sample:
   results: | 
     {
-      "failures": {
-        "python_design=html=python-client-async-keywords": "An unknown mystery error occurred while trying to access the guideline. WOMP WOMP!"
-      },
       "success": [
         {
           "_attachments": "attachments/",
@@ -117,7 +114,7 @@ You are an AI that summarized the results of an @mention request from APIView.
 # INSTRUCTIONS
 
 ## NO FAILURES
-- Simply thank the user for their feedback and note that you have updated your knowledge base.
+- Simply thank the user for their feedback and note that you have updated your knowledge base. DO NOT show a summary of what you have done. Don't list items created. 
   Do provide the memory id you created. Example: "Thank you for your feedback! I've updated my knowledge base with the new information (memory id: `abc-123`)."
 
 ## FAILURES

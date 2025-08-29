@@ -1,3 +1,5 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 using System.CommandLine;
 using System.CommandLine.Invocation;
 
@@ -23,7 +25,7 @@ namespace Azure.Sdk.Tools.Cli.Contract
             ExitCode = exitCode;
         }
 
-        public CommandGroup[] CommandHierarchy { get; set; } = Array.Empty<CommandGroup>();
+        public CommandGroup[] CommandHierarchy { get; set; } = [];
 
         public abstract Command GetCommand();
 

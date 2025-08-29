@@ -382,7 +382,7 @@ class FunctionNode(NodeEntityBase):
 
         # after children are added, add the review line
         def_line.add_children(self.children)
-        def_line.line_id = self.namespace_id
+        def_line.add_line_marker(self.namespace_id)
         review_lines.append(def_line)
 
     def generate_tokens(self, review_lines):

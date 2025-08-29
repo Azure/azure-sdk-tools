@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Azure.Sdk.Tools.Cli.Helpers;
 
 namespace Azure.Sdk.Tools.Cli.Models;
 
@@ -23,6 +24,12 @@ public class CLICheckResponse: Response
         {
             ResponseError = error;
         }
+    }
+
+    public CLICheckResponse(ProcessResult processResult)
+    {
+        ExitCode = processResult.ExitCode;
+        CheckStatusDetails = processResult.Output;
     }
 
     public override string ToString()

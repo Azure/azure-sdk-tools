@@ -10,6 +10,7 @@ import sys
 import os
 import argparse
 from pkginfo import get_metadata
+from typing import Dict
 
 import importlib
 import logging
@@ -220,6 +221,8 @@ class StubGenerator:
                 pkg_root_path, pkg_name, version, source_url=self.source_url
             )
 
+        self.check_unique_line_ids(apiview)
+
         if apiview.diagnostics:
             logging.info(
                 "*************** Completed parsing package with errors ***************"
@@ -229,6 +232,29 @@ class StubGenerator:
                 "*************** Completed parsing package and generating tokens ***************"
             )
         return apiview
+
+    def check_unique_line_ids(self, apiview: ApiView):
+        def check_line_ids(review_lines):
+            """Recursively check LineIds in ReviewLines and their Children."""
+            for line in review_lines:
+                if "LineId" in line and line["LineId"]:
+                    line_id = line["LineId"]
+                    if line_id in line_ids:
+                        duplicate_ids.append(line_id)
+                    else:
+                        line_ids.add(line_id)
+
+                # Check children recursively
+                if "Children" in line and line["Children"]:
+                    check_line_ids(line["Children"])
+
+        line_ids: set[str] = set()
+        duplicate_ids: list[str] = []
+        check_line_ids(apiview["ReviewLines"])
+
+        # Raise error with all duplicated ids
+        if duplicate_ids:
+            raise ValueError(f"Duplicate LineIds found: {duplicate_ids}")
 
     def serialize(self, apiview, encoder=APIViewEncoder):
         # Serialize tokens into JSON

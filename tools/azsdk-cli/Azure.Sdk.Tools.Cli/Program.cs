@@ -1,3 +1,5 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 using System.CommandLine;
 using System.CommandLine.Builder;
 using System.CommandLine.Parsing;
@@ -78,19 +80,17 @@ public class Program
 
         // register common services
         ServiceRegistrations.RegisterCommonServices(builder.Services);
-
+        // register MCP tools
+        ServiceRegistrations.RegisterInstrumentedMcpTools(builder.Services, args);
 
         builder.WebHost.ConfigureKestrel(options =>
         {
             options.Listen(System.Net.IPAddress.Loopback, 0); // 0 = dynamic port
         });
 
-        var toolTypes = SharedOptions.GetFilteredToolTypes(args);
-
         builder.Services
             .AddMcpServer()
-            .WithStdioServerTransport()
-            .WithTools(toolTypes);
+            .WithStdioServerTransport();
 
         return builder;
     }

@@ -11,7 +11,7 @@ import shutil
 from subprocess import check_call, run, PIPE
 from pytest import fail, mark
 
-from apistub import ApiView, TokenKind, StubGenerator
+from apistub import ApiView, TokenKind, StubGenerator, ReviewLines
 from apistub.nodes import PylintParser
 
 # Read in all init files from init_files folder and add the paths to INIT_PARAMS in the form of (file_name, file_path)
@@ -114,6 +114,16 @@ class TestApiView:
 
         collect_line_ids(apiview.review_lines)
 
+    def _add_duplicate_line_id(self, apiview: ApiView):
+        # Copy the very last review_line and append it to the end
+        if apiview.review_lines:
+            last_line = apiview.review_lines[-1]
+            # remove all lines but duplicates for faster test run
+            apiview.review_lines = ReviewLines()
+            apiview.review_lines.append(last_line)
+            apiview.review_lines.append(last_line)
+        return apiview
+
     def _dependency_installed(self, dep):
         result = run([sys.executable, "-m", "pip", "show", dep], stdout=PIPE, stderr=PIPE, text=True)
         # return code 1 means the package is not installed
@@ -211,6 +221,15 @@ class TestApiView:
         stub_gen = StubGenerator(pkg_path=PKG_PATH, temp_path=temp_path)
         apiview = stub_gen.generate_tokens()
         self._validate_line_ids(apiview)
+
+        # If there ARE duplicate line IDs, check that StubGenerator will raise an error
+        apiview = self._add_duplicate_line_id(apiview)
+        try:
+            stub_gen.check_unique_line_ids(apiview)
+            # Ensure that unique IDs fails
+            fail(f"No duplicate definition IDs found.")
+        except ValueError:
+            pass
 
     @mark.parametrize("pkg_path, mapping_file", MAPPING_PATHS, ids=MAPPING_IDS)
     def test_mapping_file(self, pkg_path, mapping_file):

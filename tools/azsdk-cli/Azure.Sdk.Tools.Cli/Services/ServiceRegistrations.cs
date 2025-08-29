@@ -38,6 +38,14 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ILanguageSpecificChecks, GoLanguageSpecificChecks>();
             services.AddSingleton<ILanguageSpecificCheckResolver, LanguageSpecificCheckResolver>();
 
+            // Update language services
+            // Register concrete update implementations so ActivatorUtilities can create them with DI
+            services.AddSingleton<Update.JavaUpdateLanguageService>();
+            // services.AddSingleton<Update.PythonUpdateLanguageService>();
+            // services.AddSingleton<Update.JavaScriptUpdateLanguageService>();
+            // services.AddSingleton<Update.DotNetUpdateLanguageService>();
+            // services.AddSingleton<Update.GoUpdateLanguageService>();
+            
             // Helper classes
             services.AddSingleton<ILogAnalysisHelper, LogAnalysisHelper>();
             services.AddSingleton<IGitHelper, GitHelper>();

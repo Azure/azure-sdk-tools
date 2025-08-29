@@ -1,6 +1,4 @@
-using Microsoft.Extensions.Logging;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Models;
 
 namespace Azure.Sdk.Tools.Cli.Services;
 

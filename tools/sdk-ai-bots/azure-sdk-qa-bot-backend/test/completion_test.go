@@ -9,7 +9,10 @@ import (
 )
 
 func TestCompletionAPI(t *testing.T) {
-	config.InitEnvironment()
+	err := config.InitEnvironment()
+	if err != nil {
+		t.Fatalf("Failed to initialize environment: %v", err)
+	}
 	config.InitSecrets()
 	// Define the request
 	messages := []azopenai.ChatRequestMessageClassification{

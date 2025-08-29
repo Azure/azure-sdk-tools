@@ -94,7 +94,10 @@ func (s *RecordService) SaveAnswerRecord(record model.AnswerRecordReq) error {
 
 	for i, value := range rowData {
 		cell := fmt.Sprintf("%c%d", 'A'+i, nextRow)
-		f.SetCellValue(sheetName, cell, value)
+		err = f.SetCellValue(sheetName, cell, value)
+		if err != nil {
+			return fmt.Errorf("failed to set cell value: %w", err)
+		}
 	}
 
 	// Write to buffer instead of saving to file

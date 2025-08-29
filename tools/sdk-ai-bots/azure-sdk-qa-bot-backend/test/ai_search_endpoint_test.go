@@ -39,7 +39,10 @@ func TestQueryIndex(t *testing.T) {
 }
 
 func TestGetFullContext(t *testing.T) {
-	config.InitEnvironment()
+	err := config.InitEnvironment()
+	if err != nil {
+		t.Fatalf("Failed to initialize environment: %v", err)
+	}
 	config.InitSecrets()
 	searchClient := search.NewSearchClient()
 	resp, err := searchClient.GetCompleteContext(model.Index{

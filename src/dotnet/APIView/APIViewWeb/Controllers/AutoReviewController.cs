@@ -71,12 +71,12 @@ namespace APIViewWeb.Controllers
                             {
                                 return StatusCode(statusCode: StatusCodes.Status201Created, reviewUrl);
                             }
-                            else 
+                            else
                             {
                                 return StatusCode(statusCode: StatusCodes.Status202Accepted, reviewUrl);
                             }
                         }
-                    }
+                    };
                 }
                 // Return internal server error for any unknown error
                 return StatusCode(statusCode: StatusCodes.Status500InternalServerError);

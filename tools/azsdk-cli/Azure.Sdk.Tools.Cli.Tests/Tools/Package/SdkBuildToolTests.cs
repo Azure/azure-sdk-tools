@@ -22,7 +22,7 @@ public class SdkBuildToolTests
     private const string InvalidJsonContent = "{ invalid json }";
     
     // Common error message patterns
-    private const string InvalidProjectPathError = "Invalid project path";
+    private const string InvalidProjectPathError = "Path does not exist";
     private const string FailedToDiscoverRepoError = "Failed to discover local sdk repo";
     private const string ConfigFileNotFoundError = "Configuration file not found";
     private const string JsonParsingError = "Error parsing JSON configuration";

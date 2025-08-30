@@ -23,6 +23,8 @@ namespace Azure.Tools.GeneratorAgent.Configuration
         public string Model => Configuration.GetSection("AzureSettings:Model").Value ?? "gpt-4o";
         public string AgentName => Configuration.GetSection("AzureSettings:AgentName").Value ?? "AZC Fixer";
         public string AgentInstructions => Configuration.GetSection("AzureSettings:AgentInstructions").Value ?? "";
+        public string FixPromptTemplate => Configuration.GetSection("AzureSettings:FixPromptTemplate").Value ?? "";
+        public string ErrorAnalysisPromptTemplate => Configuration.GetSection("AzureSettings:ErrorAnalysisPromptTemplate").Value ?? "";
 
         // Timeout and polling configurations
         public TimeSpan IndexingMaxWaitTime => TimeSpan.FromSeconds(
@@ -47,7 +49,7 @@ namespace Azure.Tools.GeneratorAgent.Configuration
 
         // Agent run settings
         public TimeSpan AgentRunMaxWaitTime =>
-            TimeSpan.FromMinutes(int.Parse(Configuration.GetSection("AzureSettings:AgentRunMaxWaitTimeMinutes").Value ?? "10"));
+            TimeSpan.FromSeconds(int.Parse(Configuration.GetSection("AzureSettings:AgentRunMaxWaitTimeSeconds").Value ?? "600"));
         public TimeSpan AgentRunPollingInterval =>
             TimeSpan.FromSeconds(int.Parse(Configuration.GetSection("AzureSettings:AgentRunPollingIntervalSeconds").Value ?? "5"));
         

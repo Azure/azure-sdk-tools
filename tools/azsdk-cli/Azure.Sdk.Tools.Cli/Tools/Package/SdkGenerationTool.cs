@@ -15,13 +15,12 @@ using LibGit2Sharp;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package
 {
-    [McpServerToolType, Description("This type contains the tools to generate SDK code and build SDK code locally.")]
-    public class SdkCodeTool(IGitHelper gitHelper, ILogger<SdkCodeTool> logger, INpxHelper npxHelper, IOutputHelper output, IProcessHelper processHelper) : MCPTool
+    [McpServerToolType, Description("This type contains the tools to generate SDK code locally.")]
+    public class SdkGenerationTool: MCPTool
     {
         // Command names
         private const string generateSdkCommandName = "generate";
-        private const string buildSdkCommandName = "build";
-        private const int commandTimeout = 30 * 60 * 1000; // 30 mins
+        private const int commandTimeoutInMinutes = 30;
 
         // Generate command options
         private readonly Option<string> localSdkRepoPathOpt = new(["--local-sdk-repo-path", "-r"], "Absolute path to the local azure-sdk-for-{language} repository") { IsRequired = false };
@@ -31,59 +30,47 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         private readonly Option<string> tspLocationPathOpt = new(["--tsp-location-path", "-l"], "Absolute path to the 'tsp-location.yaml' configuration file") { IsRequired = false };
         private readonly Option<string> emitterOpt = new(["--emitter-options", "-o"], "Emitter options in key-value format. Example: 'package-version=1.0.0-beta.1'") { IsRequired = false };
 
-        // Public properties
-        public new CommandGroup[] CommandHierarchy { get; init; } = [SharedCommandGroups.Package];
+        private readonly IOutputHelper output;
+        private readonly IProcessHelper processHelper;
+        private readonly IGitHelper gitHelper;
+        private readonly ILogger<SdkGenerationTool> logger;
+        private readonly INpxHelper npxHelper;
+
+        public SdkGenerationTool(IGitHelper gitHelper, ILogger<SdkGenerationTool> logger, INpxHelper npxHelper, IOutputHelper output, IProcessHelper processHelper): base()
+        {
+            this.gitHelper = gitHelper;
+            this.logger = logger;
+            this.npxHelper = npxHelper;
+            this.output = output;
+            this.processHelper = processHelper;
+            CommandHierarchy = [ SharedCommandGroups.Package, SharedCommandGroups.SourceCode ];
+        }
 
         public override Command GetCommand()
         {
-            var parentCommand = new Command("code", "Azure SDK code tools");
-            var generateSubCommand = new Command(generateSdkCommandName, "Generates SDK code for a specified language based on the provided 'tspconfig.yaml' or 'tsp-location.yaml'.") { localSdkRepoPathOpt, tspConfigPathOpt, specCommitShaOpt, specRepoFullNameOpt, tspLocationPathOpt, emitterOpt };
-            var buildSubCommand = new Command(buildSdkCommandName, "Builds SDK code for a specified language and project.");
+            var command = new Command(generateSdkCommandName, "Generates SDK code for a specified language based on the provided 'tspconfig.yaml' or 'tsp-location.yaml'.") { localSdkRepoPathOpt, tspConfigPathOpt, specCommitShaOpt, specRepoFullNameOpt, tspLocationPathOpt, emitterOpt };
+            command.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
 
-            generateSubCommand.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
-            buildSubCommand.AddOption(SharedOptions.PackagePath);
-            buildSubCommand.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
-            parentCommand.AddCommand(generateSubCommand);
-            parentCommand.AddCommand(buildSubCommand);
-            
-            return parentCommand;
+            return command;
         }
 
         public async override Task HandleCommand(InvocationContext ctx, CancellationToken ct)
         {
             var command = ctx.ParseResult.CommandResult.Command.Name;
             var commandParser = ctx.ParseResult;
-
-            switch (command)
-            {
-                case generateSdkCommandName:
-                    var localSdkRepoPath = commandParser.GetValueForOption(localSdkRepoPathOpt);
-                    var tspConfigPath = commandParser.GetValueForOption(tspConfigPathOpt);
-                    var specCommitSha = commandParser.GetValueForOption(specCommitShaOpt);
-                    var specRepoFullName = commandParser.GetValueForOption(specRepoFullNameOpt);
-                    var tspLocationPath = commandParser.GetValueForOption(tspLocationPathOpt);
-                    var emitterOptions = commandParser.GetValueForOption(emitterOpt);
-                    var generateResult = await GenerateSdk(localSdkRepoPath, tspConfigPath, specCommitSha, specRepoFullName, tspLocationPath, emitterOptions, ct);
-                    ctx.ExitCode = ExitCode;
-                    output.Output(generateResult);
-                    break;
-                case buildSdkCommandName:
-                    var packagePath = commandParser.GetValueForOption(SharedOptions.PackagePath);
-                    var buildResult = await BuildSdkAsync(packagePath, ct);
-                    ctx.ExitCode = ExitCode;
-                    output.Output(buildResult);
-                    break;
-                default:
-                    SetFailure();
-                    output.OutputError($"Unknown command: '{command}'");
-                    break;
-            }
-
-            return;
+            var localSdkRepoPath = commandParser.GetValueForOption(localSdkRepoPathOpt);
+            var tspConfigPath = commandParser.GetValueForOption(tspConfigPathOpt);
+            var specCommitSha = commandParser.GetValueForOption(specCommitShaOpt);
+            var specRepoFullName = commandParser.GetValueForOption(specRepoFullNameOpt);
+            var tspLocationPath = commandParser.GetValueForOption(tspLocationPathOpt);
+            var emitterOptions = commandParser.GetValueForOption(emitterOpt);
+            var generateResult = await GenerateSdkAsync(localSdkRepoPath, tspConfigPath, specCommitSha, specRepoFullName, tspLocationPath, emitterOptions, ct);
+            ctx.ExitCode = ExitCode;
+            output.Output(generateResult);
         }
 
         [McpServerTool(Name = "azsdk_package_generate_code"), Description("Generates SDK code for a specified language using either 'tspconfig.yaml' or 'tsp-location.yaml'. Runs locally.")]
-        public async Task<DefaultCommandResponse> GenerateSdk(
+        public async Task<DefaultCommandResponse> GenerateSdkAsync(
             [Description("Absolute path to the local Azure SDK repository. Optional. Example: 'azure-sdk-for-net'. If not provided, the tool attempts to discover the repo from the current working directory.")]
             string localSdkRepoPath,
             [Description("Path to the 'tspconfig.yaml' file. Can be a local file path (requires specCommitSha and specRepoFullName) or a remote HTTPS URL. Optional if running inside a local azure-sdk-{language} repository.")]
@@ -118,88 +105,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error occurred while generating SDK");
-                return CreateFailureResponse($"An error occurred: {ex.Message}");
-            }
-        }
-
-        [McpServerTool(Name = "azsdk_package_build_code"), Description("Build SDK code for a specified project locally.")]
-        public async Task<DefaultCommandResponse> BuildSdkAsync(
-            [Description("Absolute path to the SDK project.")]
-            string packagePath,
-            CancellationToken ct = default)
-        {
-            try
-            {
-                logger.LogInformation($"Building SDK for project path: {packagePath}");
-
-                // Validate inputs
-                if (string.IsNullOrEmpty(packagePath) || !Directory.Exists(packagePath))
-                {
-                    return CreateFailureResponse("Invalid project path. Please provide a valid project path.");
-                }
-
-                // Return if the project is python project
-                if (packagePath.Contains("azure-sdk-for-python", StringComparison.OrdinalIgnoreCase))
-                {
-                    logger.LogInformation("Python SDK project detected. Skipping build step as Python SDKs do not require a build process.");
-                    return CreateSuccessResponse("Python SDK project detected. Skipping build step as Python SDKs do not require a build process.");
-                }
-
-                // Get repository root path from project path
-                string sdkRepoRoot = gitHelper.DiscoverRepoRoot(packagePath);
-                if (string.IsNullOrEmpty(sdkRepoRoot))
-                {
-                    return CreateFailureResponse($"Failed to discover local sdk repo with project-path: {packagePath}.");
-                }
-
-                logger.LogInformation($"Repository root path: {sdkRepoRoot}");
-
-                // Get the build script path and resolve full path
-                string fullBuildScriptPath;
-                try
-                {
-                    var buildScriptPath = await GetScriptPathFromConfigAsync(sdkRepoRoot, "packageOptions/buildScript/path");
-                    logger.LogInformation($"Build script path: {buildScriptPath}");
-
-                    // Resolve the full path of the build script
-                    fullBuildScriptPath = Path.IsPathRooted(buildScriptPath) 
-                        ? buildScriptPath 
-                        : Path.Combine(sdkRepoRoot, buildScriptPath);
-
-                    if (!File.Exists(fullBuildScriptPath))
-                    {
-                        return CreateFailureResponse($"Build script not found at: {fullBuildScriptPath}");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    return CreateFailureResponse($"Failed to get build script path: {ex.Message}");
-                }
-
-                // Run the build script
-                logger.LogInformation($"Executing build script: {fullBuildScriptPath}");
-
-                // TODO: change --module-dir to --project-path
-                var options = new ProcessOptions(
-                    fullBuildScriptPath,
-                    new[] { "--module-dir", packagePath },
-                    logOutputStream: true,
-                    workingDirectory: sdkRepoRoot,
-                    timeout: TimeSpan.FromMilliseconds(commandTimeout)
-                );
-                var buildResult = await processHelper.Run(options, ct);
-                var trimmedBuildResult = (buildResult.Output ?? string.Empty).Trim();
-                if (buildResult.ExitCode != 0)
-                {
-                    return CreateFailureResponse($"Build script failed with exit code {buildResult.ExitCode}. Output:\n{trimmedBuildResult}");
-                }
-
-                logger.LogInformation("Build script execution completed");
-                return CreateSuccessResponse($"Build completed successfully. Output:\n{trimmedBuildResult}");
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Error occurred while building SDK");
                 return CreateFailureResponse($"An error occurred: {ex.Message}");
             }
         }
@@ -264,7 +169,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 ["tsp-client", "update"],
                 logOutputStream: true,
                 workingDirectory: tspLocationDirectory,
-                timeout: TimeSpan.FromMilliseconds(commandTimeout)
+                timeout: TimeSpan.FromMinutes(commandTimeoutInMinutes)
             );
 
             var tspClientResult = await npxHelper.Run(npxOptions, ct);
@@ -302,7 +207,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 arguments.ToArray(),
                 logOutputStream: true,
                 workingDirectory: localSdkRepoPath,
-                timeout: TimeSpan.FromMilliseconds(commandTimeout)
+                timeout: TimeSpan.FromMinutes(commandTimeoutInMinutes)
             );
 
             var tspClientResult = await npxHelper.Run(npxOptions, ct);
@@ -345,67 +250,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             return null;
-        }
-
-        // Gets the script path from the configuration file.
-        private async Task<string> GetScriptPathFromConfigAsync(string repositoryRoot, string jsonPath)
-        {
-            // Construct configuration file path
-            var configFilePath = Path.Combine(repositoryRoot, "eng", "spec-gen-sdk-config.json");
-            logger.LogInformation($"Configuration file path: {configFilePath}");
-
-            if (!File.Exists(configFilePath))
-            {
-                throw new FileNotFoundException($"Configuration file not found at: {configFilePath}");
-            }
-
-            try
-            {
-                // Read and parse the configuration file
-                var configContent = await File.ReadAllTextAsync(configFilePath);
-                using var configJson = JsonDocument.Parse(configContent);
-
-                // Use helper method to navigate JSON path
-                var (found, element) = TryGetJsonElementByPath(configJson.RootElement, jsonPath);
-                if (!found)
-                {
-                    throw new InvalidOperationException($"Property not found at JSON path '{jsonPath}' in configuration file {configFilePath}.");
-                }
-
-                var scriptPath = element.GetString();
-                if (string.IsNullOrEmpty(scriptPath))
-                {
-                    throw new InvalidOperationException($"Script path is empty at JSON path '{jsonPath}' in configuration file {configFilePath}.");
-                }
-
-                return scriptPath;
-            }
-            catch (JsonException ex)
-            {
-                throw new InvalidOperationException($"Error parsing JSON configuration: {ex.Message}", ex);
-            }
-        }
-
-        // Try to get a JSON element by its path
-        private (bool found, JsonElement element) TryGetJsonElementByPath(JsonElement root, string path)
-        {
-            if (string.IsNullOrEmpty(path))
-            {
-                return (false, default);
-            }
-
-            var pathParts = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
-            JsonElement current = root;
-
-            foreach (var part in pathParts)
-            {
-                if (!current.TryGetProperty(part, out current))
-                {
-                    return (false, default);
-                }
-            }
-
-            return (true, current);
         }
 
         // Validate commitSha: must be a 40-character hex string
@@ -455,7 +299,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             SetFailure();
             return new DefaultCommandResponse
             {
-                Result = "failed",
                 ResponseErrors = [message]
             };
         }

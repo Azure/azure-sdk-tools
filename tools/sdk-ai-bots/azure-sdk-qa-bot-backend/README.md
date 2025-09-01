@@ -12,11 +12,14 @@ This service integrates with Microsoft Teams and provides an intelligent chatbot
 
 ## Features
 
-The bot provides intelligent responses by searching through comprehensive knowledge bases including:
+The bot provides intelligent responses by searching through knowledge bases including:
+
 - [TypeSpec documentation](https://typespec.io/docs/)
 - [TypeSpec Azure documentation](https://azure.github.io/typespec-azure/docs/intro/)
+- ......
 
 Additional features include:
+
 - Real-time document search and retrieval
 - Context-aware responses
 - Integration with Microsoft Teams
@@ -27,41 +30,47 @@ Additional features include:
 
 - Go 1.23 or higher
 - Azure subscription with access to the following services:
-  - [Azure AI Search](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/faa080af-c1d8-40ad-9cce-e1a450ca5b57/resourceGroups/typespec_helper/providers/Microsoft.Search/searchServices/typspehelper4search/overview)
-  - [Azure Storage](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/faa080af-c1d8-40ad-9cce-e1a450ca5b57/resourceGroups/typespec_helper/providers/Microsoft.Storage/storageAccounts/typespechelper4storage/overview)
-  - [Azure OpenAI](https://ai.azure.com/build/deployments/model?wsid=/subscriptions/faa080af-c1d8-40ad-9cce-e1a450ca5b57/resourceGroups/typespec_helper/providers/Microsoft.MachineLearningServices/workspaces/typespec-helper&tid=72f988bf-86f1-41af-91ab-2d7cd011db47)
-  - [Azure Key Vault](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/faa080af-c1d8-40ad-9cce-e1a450ca5b57/resourceGroups/typespec_helper/providers/Microsoft.KeyVault/vaults/azuresdkqabotea/overview)
-
+  - Azure App Configuration
+  - Azure App Service
+  - Azure AI Search
+  - Azure Storage
+  - Azure OpenAI
+  - Azure Key Vault
 
 ## Installation and Setup
 
 ### Grant Resource Permissions
 
 1. Configure Required Permissions:
-   - **Assign the following roles to your virtual machine's managed identity/your azure account**
-     - [Storage Blob Data Contributor](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/faa080af-c1d8-40ad-9cce-e1a450ca5b57/resourceGroups/typespec_helper/providers/Microsoft.Storage/storageAccounts/typespechelper4storage/iamAccessControl)
-     - [Key Vault Secrets User](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/faa080af-c1d8-40ad-9cce-e1a450ca5b57/resourceGroups/typespec_helper/providers/Microsoft.KeyVault/vaults/azuresdkqabotea/users)
+   - **Assign the following roles to your azure account**
+     - Storage Blob Data Contributor
+     - Key Vault Secrets User
+     - App Configuration Data Reader
 
 ### Project Setup
+
 1. Clone the repository:
+
    ```bash
    cd tools/sdk-ai-bots/azure-sdk-qa-bot-backend
    ```
 
 2. Install latest Go:
+
    ```bash
    sudo apt install golang-go
    ```
 
 3. Install Azure Cli, reference https://learn.microsoft.com/en-us/cli/azure/install-azure-cli-windows?view=azure-cli-latest&pivots=msi
 
-4. Login toAzure:
+4. Login to Azure:
+
    ```bash
    az login
    ```
-   **Remember Select subscription: Azure SDK Developer Playground**
 
 5. Start the server:
+
    ```bash
    ./run.sh start
    
@@ -82,6 +91,7 @@ The API_KEY could found in the [keyvalut](https://ms.portal.azure.com/#@microsof
 ## Development
 
 ### Project Structure
+
 - `config/` - Configuration and Azure service setup
 - `handler/` - HTTP request handlers
 - `model/` - Data models and constants
@@ -90,6 +100,7 @@ The API_KEY could found in the [keyvalut](https://ms.portal.azure.com/#@microsof
 - `test/` - Test files and API tests
 
 ### Running Tests
+
 ```bash
 go test ./...
 ```

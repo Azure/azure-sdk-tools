@@ -9,7 +9,6 @@ import path, { relative, join } from 'path';
 import { logger } from '../utils/logger.js';
 import { error } from 'console';
 import fs from 'fs';
-import { getLatestStableVersion } from '../utils/version.js';
 
 export async function getNpmPackageInfo(packageDirectory): Promise<NpmPackageInfo> {
     const packageJson = await load(packageDirectory);

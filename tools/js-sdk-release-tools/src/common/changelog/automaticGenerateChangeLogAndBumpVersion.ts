@@ -137,18 +137,13 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string,
 
                     // Since we delete all contents before SDK generation, restore changelog from GitHub main branch
                     logger.info('Restoring changelog from GitHub main branch since no new features or breaking changes detected.');
-                    try {
-                        const changelogPath = path.relative(jsSdkRepoPath, path.join(packageFolderPath, 'CHANGELOG.md')).replace(/\\/g, '/');
-                        const mainBranchChangelog = getGitFileContent('origin/main', changelogPath);
-                        if (mainBranchChangelog.trim()) {
-                            originalChangeLogContent = mainBranchChangelog;
-                            logger.info('Successfully restored changelog from GitHub main branch.');
-                        } else {
-                            logger.warn('No changelog content found on GitHub main branch.');
-                        }
-                    } catch (error) {
-                        logger.warn('Failed to restore changelog from GitHub main branch, using existing changelog.');
-                        logger.debug(`Error details: ${error}`);
+                    const changelogPath = path.relative(jsSdkRepoPath, path.join(packageFolderPath, 'CHANGELOG.md')).replace(/\\/g, '/');
+                    const mainBranchChangelog = getGitFileContent('origin/main', changelogPath);
+                    if (mainBranchChangelog.trim()) {
+                        originalChangeLogContent = mainBranchChangelog;
+                        logger.info('Successfully restored changelog from GitHub main branch.');
+                    } else {
+                        logger.warn('No changelog content found on GitHub main branch.');
                     }
                 } else {
                     newVersion = getNewVersion(stableVersion, usedVersions, changelog.hasBreakingChange, isStableRelease);

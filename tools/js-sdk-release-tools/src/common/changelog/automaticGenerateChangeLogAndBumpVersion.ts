@@ -23,7 +23,7 @@ import { getversionDate } from "../../utils/version.js";
 import { SDKType } from "../types.js"
 import { getApiVersionType } from '../../xlc/apiVersion/apiVersionTypeExtractor.js'
 import { fixChangelogFormat, getApiReviewPath, getNpmPackageName, getSDKType, tryReadNpmPackageChangelog, extractNpmPackage, extractNextVersionPackage, cleanupResources } from '../utils.js';
-import { NpmViewParameters, tryCreateLastestStableNpmViewFromGithub, tryGetNpmView } from '../npmUtils.js';
+import { NpmViewParameters, tryCreateLastestStableNpmViewFromGithub, tryGetNpmView, getGitFileContent } from '../npmUtils.js';
 import { DifferenceDetector } from '../../changelog/v2/DifferenceDetector.js';
 import { ChangelogGenerator } from '../../changelog/v2/ChangelogGenerator.js';
 
@@ -133,6 +133,22 @@ export async function generateChangelogAndBumpVersion(packageFolderPath: string,
                     newVersion = oriVersion;
                     if (oriVersionReleased) {
                         newVersion = isBetaVersion(oriVersion) ? bumpPreviewVersion(oriVersion, usedVersions) : bumpPatchVersion(oriVersion, usedVersions);
+                    }
+
+                    // Since we delete all contents before SDK generation, restore changelog from GitHub main branch
+                    logger.info('Restoring changelog from GitHub main branch since no new features or breaking changes detected.');
+                    try {
+                        const changelogPath = path.relative(jsSdkRepoPath, path.join(packageFolderPath, 'CHANGELOG.md')).replace(/\\/g, '/');
+                        const mainBranchChangelog = getGitFileContent('origin/main', changelogPath);
+                        if (mainBranchChangelog.trim()) {
+                            originalChangeLogContent = mainBranchChangelog;
+                            logger.info('Successfully restored changelog from GitHub main branch.');
+                        } else {
+                            logger.warn('No changelog content found on GitHub main branch.');
+                        }
+                    } catch (error) {
+                        logger.warn('Failed to restore changelog from GitHub main branch, using existing changelog.');
+                        logger.debug(`Error details: ${error}`);
                     }
                 } else {
                     newVersion = getNewVersion(stableVersion, usedVersions, changelog.hasBreakingChange, isStableRelease);

@@ -56,6 +56,28 @@ export interface NpmViewParameters {
     npmPackagePath: string;
 }
 
+/**
+ * Get file content from git repository using git show command
+ * @param tagOrRef - Git tag, branch, or commit reference
+ * @param filePath - Relative path to the file from repository root
+ * @returns File content as string, or empty string if file doesn't exist or command fails
+ */
+export function getGitFileContent(tagOrRef: string, filePath: string): string {
+    try {
+        const gitCommand = `git --no-pager show ${tagOrRef}:${filePath}`;
+        const result = shell.exec(gitCommand, { silent: true });
+        if (result.code === 0) {
+            return result.stdout;
+        } else {
+            logger.warn(`Failed to get file content for ${tagOrRef}:${filePath}. Error: ${result.stderr}`);
+            return '';
+        }
+    } catch (error) {
+        logger.warn(`Exception when getting file content for ${tagOrRef}:${filePath}. Error: ${error}`);
+        return '';
+    }
+}
+
 // TODO: refactor this function to support praparing files from github in general way
 export function tryCreateLastestStableNpmViewFromGithub(NpmViewParameters: NpmViewParameters) {
     const {
@@ -87,8 +109,7 @@ export function tryCreateLastestStableNpmViewFromGithub(NpmViewParameters: NpmVi
         if (file === "CHANGELOG.md") {
             sdkFilePath = relative(sdkRootPath, path.join(packageFolderPath, file)).replace(/\\/g, "/");
             // For CHANGELOG.md, use sdkFilePath directly
-            const gitCommand = `git --no-pager show ${tag}:${sdkFilePath}`;
-            const changelogContent = shell.exec(gitCommand, { silent: true }).stdout;
+            const changelogContent = getGitFileContent(tag, sdkFilePath);
             if (!changelogContent.trim()) {
                 logger.warn(`Warning: CHANGELOG.md content is empty for tag ${tag} at path ${sdkFilePath}.`);
             }
@@ -100,13 +121,9 @@ export function tryCreateLastestStableNpmViewFromGithub(NpmViewParameters: NpmVi
             const nodeApiFilePath = `${sdkFilePath}-node.api.md`;
             const standardApiFilePath = `${sdkFilePath}.api.md`;
 
-            // Generate two git commands
-            const nodeApiGitCommand = `git --no-pager show ${tag}:${nodeApiFilePath}`;
-            const standardApiGitCommand = `git --no-pager show ${tag}:${standardApiFilePath}`;
-
-            // Execute both git commands
-            const nodeApiResult = shell.exec(nodeApiGitCommand, { silent: true }).stdout;
-            const standardApiResult = shell.exec(standardApiGitCommand, { silent: true }).stdout;
+            // Execute both git commands using the common method
+            const nodeApiResult = getGitFileContent(tag, nodeApiFilePath);
+            const standardApiResult = getGitFileContent(tag, standardApiFilePath);
 
             // Use nodeApi result if it has content, otherwise use standardApi result
             let apiViewContent = nodeApiResult.trim() ? nodeApiResult : standardApiResult;

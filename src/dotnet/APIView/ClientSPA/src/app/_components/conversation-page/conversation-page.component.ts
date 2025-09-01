@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Title } from '@angular/platform-browser';
 import { MenuItem } from 'primeng/api';
 import { Subject, takeUntil } from 'rxjs';
 import { REVIEW_ID_ROUTE_PARAM } from 'src/app/_helpers/router-helpers';
@@ -30,7 +31,7 @@ export class ConversationPageComponent {
   private destroy$ = new Subject<void>();
 
   constructor(private route: ActivatedRoute, private reviewsService: ReviewsService, private userProfileService: UserProfileService,
-    private apiRevisionsService: APIRevisionsService, private commentsService: CommentsService
+    private apiRevisionsService: APIRevisionsService, private commentsService: CommentsService, private titleService: Title
   ) {}
 
   ngOnInit() {
@@ -61,6 +62,7 @@ export class ConversationPageComponent {
       .pipe(takeUntil(this.destroy$)).subscribe({
         next: (review: Review) => {
           this.review = review;
+          this.updatePageTitle();
         }
     });
   }
@@ -87,5 +89,13 @@ export class ConversationPageComponent {
   openLatestAPIReivisonForReview() {
     const apiRevision = this.apiRevisions.find(x => x.apiRevisionType === "Automatic") ?? this.apiRevisions[0];
     this.apiRevisionsService.openAPIRevisionPage(apiRevision, this.route);
+  }
+
+  updatePageTitle() {
+    if (this.review?.packageName) {
+      this.titleService.setTitle(this.review.packageName);
+    } else {
+      this.titleService.setTitle('APIView');
+    }
   }
 }

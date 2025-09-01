@@ -1,15 +1,15 @@
-import { getApiVersionTypeFromOperations, getApiVersionTypeFromRestClient, tryFindRestClientPath } from "../../xlc/apiVersion/utils";
+import { getApiVersionTypeFromOperations, getApiVersionTypeFromRestClient, tryFindRestClientPath, getApiVersionTypeFromNpm } from "../../xlc/apiVersion/utils.js";
 
-import { ApiVersionType } from "../../common/types";
-import { IApiVersionTypeExtractor } from "../../common/interfaces";
+import { ApiVersionType } from "../../common/types.js";
+import { IApiVersionTypeExtractor, IModelOnlyChecker } from "../../common/interfaces.js";
 import { join } from "path";
-import { exists, readFile } from "fs-extra";
-import { tryGetNpmView } from "../../common/npmUtils";
-import { getNpmPackageName } from "../../common/utils";
-import { getVersion, isBetaVersion } from "../../utils/version";
-import { logger } from "../../utils/logger";
+import pkg from 'fs-extra';
+const { exists, readFile } = pkg;
+import { logger } from "../../utils/logger.js";
 import { parse } from "yaml"
 import { iterate, MarkDownEx, parseMarkdown } from "@azure-tools/openapi-tools-common";
+import { getNpmPackageName } from "../../common/utils.js";
+import { isBetaVersion } from "../../utils/version.js";
 
 function extractAutorestConfig(readme: MarkDownEx) {
     let isInConfigurationSection = false;
@@ -47,8 +47,13 @@ async function resolveParameterPath(packageRoot: string) {
 }
 
 export const getApiVersionType: IApiVersionTypeExtractor = async (
-    packageRoot: string
+    packageRoot: string,
+    apiVersion?: string
 ): Promise<ApiVersionType> => {
+    if (apiVersion) {
+        return isBetaVersion(apiVersion) ? ApiVersionType.Preview : ApiVersionType.Stable;
+    }
+
     // NOTE: when there's customized code, emitter must put generated code in root/generated folder
     const clientPatterns = ["generated/*Context.ts", "generated/*Client.ts", "src/*Context.ts", "src/*Client.ts"];
     for (const pattern of clientPatterns) {
@@ -56,17 +61,29 @@ export const getApiVersionType: IApiVersionTypeExtractor = async (
         if (typeFromClient !== ApiVersionType.None) return typeFromClient;
     }
 
+    const isModelOnlyPackage = await isModelOnly(packageRoot);
+    if (isModelOnlyPackage) {
+        const packageName = getNpmPackageName(packageRoot);
+        return await getApiVersionTypeFromNpm(packageName);
+    }
+    
     logger.info('Failed to find api version in client, fallback to get api version type in operation\'s parameter');
     const parametersPath = await resolveParameterPath(packageRoot);
-    if (await exists(parametersPath)) {
-        const typeFromOperations = getApiVersionTypeFromOperations(parametersPath);
-        if (typeFromOperations !== ApiVersionType.None) return typeFromOperations;
-    }
+    const typeFromOperations = getApiVersionTypeFromOperations(parametersPath);
+    if (typeFromOperations !== ApiVersionType.None) return typeFromOperations;
+    return ApiVersionType.Stable;
+};
 
-    logger.info('No operation found, fallback to get api version type from latest version in NPM');
-    const packageName = getNpmPackageName(packageRoot);
-    const npmViewResult = await tryGetNpmView(packageName);
-    const latestVersion = getVersion(npmViewResult, "latest");
-    const isBeta = isBetaVersion(latestVersion);
-    return isBeta ? ApiVersionType.Preview : ApiVersionType.Stable;
+export const isModelOnly: IModelOnlyChecker = async (packageRoot: string): Promise<boolean> => {
+    // For LLC, simply check for parameters.ts - its absence indicates a model-only service
+    const parametersPath = await resolveParameterPath(packageRoot);
+    const isParametersExists = await exists(parametersPath);
+    
+    if (!isParametersExists) {
+        logger.warn(`No parameters.ts found in ${packageRoot}, this is a model-only service in LLC`);
+        return true;
+    }
+    
+    logger.info(`Found parameters.ts in ${packageRoot}, this is not a model-only service`);
+    return false;
 };

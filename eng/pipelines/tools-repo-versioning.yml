@@ -4,8 +4,8 @@ trigger: none
 pr: none
 
 pool:
-  name: azsdk-pool-mms-ubuntu-2204-general
-  vmImage: ubuntu-22.04
+  name: azsdk-pool
+  demands: ImageOverride -equals ubuntu-24.04
 
 jobs:
   - job: TagToolsRepo
@@ -41,3 +41,4 @@ jobs:
           azure-sdk-for-python:
           azure-sdk-for-rust:
           autorest.csharp:
+          openapi-diff:

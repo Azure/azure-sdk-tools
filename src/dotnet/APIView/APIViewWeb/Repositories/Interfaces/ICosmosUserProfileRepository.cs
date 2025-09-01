@@ -7,7 +7,8 @@ namespace APIViewWeb.Repositories
 {
     public interface ICosmosUserProfileRepository
     {
-        public Task<UserProfileModel> TryGetUserProfileAsync(string UserName);
-        public Task<Result> UpsertUserProfileAsync(ClaimsPrincipal User, UserProfileModel userModel);
+        public Task<UserProfileModel> TryGetUserProfileAsync(string userName, bool createIfNotExist = true);
+        public Task<Result> UpsertUserProfileAsync(ClaimsPrincipal user, UserProfileModel userModel);
+        public Task<Result> UpsertUserProfileAsync(string userName, UserProfileModel userModel);
     }
 }

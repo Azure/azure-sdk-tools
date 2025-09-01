@@ -2,6 +2,7 @@ import * as winston from 'winston';
 import { default as Transport } from 'winston-transport';
 import { SDKAutomationState } from './sdkAutomationState';
 import { setTimeout } from 'timers/promises';
+import { WorkflowContext } from '../types/Workflow';
 
 export const sdkAutoLogLevels = {
   levels: {
@@ -39,7 +40,8 @@ type WinstonInfo = {
   showInComment?: boolean;
   lineResult?: SDKAutomationState;
 };
-const formatLog = (info: WinstonInfo) => {
+
+export const formatLog = (info: WinstonInfo) => {
   let extra = info.showInComment ? ' C' : '';
   if (info.lineResult) {
     extra = {
@@ -149,3 +151,56 @@ export function vsoLogIssue(message: string, type = "error"): void {
   console.log(`##vso[task.logissue type=${type}]${message}`);
 }
 
+export function vsoLogError(context: WorkflowContext, message, task: string = "spec-gen-sdk"): void {
+  vsoLogErrors(context, [message], task);
+}
+
+export function vsoLogWarning(context: WorkflowContext, message, task: string = "spec-gen-sdk"): void {
+  vsoLogWarnings(context, [message], task);
+}
+
+export function vsoLogErrors(
+  context: WorkflowContext,
+  errors: string[],
+  task: string = "spec-gen-sdk"
+): void {
+  if (context.config.runEnv !== 'azureDevOps') {
+    return;
+  }
+  if (!context.vsoLogs.has(task)) {
+    // Create a new entry with the initial errors
+    context.vsoLogs.set(task, { errors: [...errors] });
+    return;
+  }
+
+  // If the task already exists, merge the new errors into the existing array
+  const logEntry = context.vsoLogs.get(task);
+  if (logEntry?.errors) {
+    logEntry.errors.push(...errors);
+  } else {
+    logEntry!.errors = [...errors];
+  }
+}
+
+export function vsoLogWarnings(
+  context: WorkflowContext,
+  warnings: string[],
+  task: string = "spec-gen-sdk"
+): void {
+  if (context.config.runEnv !== 'azureDevOps') {
+    return;
+  }
+  if (!context.vsoLogs.has(task)) {
+    // Create a new entry with the initial errors
+    context.vsoLogs.set(task, { warnings: [...warnings] });
+    return;
+  }
+
+  // If the task already exists, merge the new errors into the existing array
+  const logEntry = context.vsoLogs.get(task);
+  if (logEntry?.warnings) {
+    logEntry.warnings.push(...warnings);
+  } else {
+    logEntry!.warnings = [...warnings];
+  }
+}

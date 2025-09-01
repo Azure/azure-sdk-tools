@@ -3,6 +3,7 @@ import { Item } from "../../rustdoc-types/output/rustdoc-types";
 import { createDocsReviewLines } from "./utils/generateDocReviewLine";
 import { isConstantItem } from "./utils/typeGuards";
 import { typeToReviewTokens } from "./utils/typeToReviewTokens";
+import { lineIdMap } from "../utils/lineIdUtils";
 
 export function processConstant(item: Item) {
   if (!isConstantItem(item)) return;
@@ -21,11 +22,9 @@ export function processConstant(item: Item) {
   });
   reviewLine.Tokens.push({
     Kind: TokenKind.MemberName,
-    Value: item.name || "null",
+    Value: item.name || "unknown_const",
     HasSuffixSpace: false,
     NavigateToId: item.id.toString(),
-    NavigationDisplayName: item.name,
-    RenderClasses: ["interface"],
   });
   reviewLine.Tokens.push({
     Kind: TokenKind.Punctuation,
@@ -38,7 +37,7 @@ export function processConstant(item: Item) {
   });
   reviewLine.Tokens.push({
     Kind: TokenKind.Text,
-    Value: item.inner.constant.const.expr || "null",
+    Value: item.inner.constant.const.expr || "unknown_const_expr",
     HasSuffixSpace: false,
   });
   reviewLine.Tokens.push({
@@ -56,5 +55,6 @@ export function processConstant(item: Item) {
     });
   }
   reviewLines.push(reviewLine);
+  lineIdMap.set(item.id.toString(), `const_${item.name}`);
   return reviewLines;
 }

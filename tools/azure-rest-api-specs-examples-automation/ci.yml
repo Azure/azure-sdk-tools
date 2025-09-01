@@ -22,62 +22,68 @@ pr:
 
 variables:
 - template: ../../eng/pipelines/templates/variables/globals.yml
+- template: ../../eng/pipelines/templates/variables/image.yml
 - name: GoVersion
   value: '1.23.0'
 
-stages:
-- stage: Build
-  jobs:
-  - job: Build
+jobs:
+- job: Build
 
-    pool:
-      name: "azsdk-pool-mms-ubuntu-2004-general"
-      vmImage: "MMSUbuntu20.04"
+  pool:
+    name: $(LINUXPOOL)
+    image: $(LINUXVMIMAGE)
+    os: linux
 
-    steps:
-    - task: GoTool@0
-      inputs:
-        version: $(GoVersion)
-      displayName: 'Install Golang'
+  steps:
+  - task: GoTool@0
+    inputs:
+      version: $(GoVersion)
+    displayName: 'Install Golang'
 
-    - script: |
-        go mod download golang.org/x/tools@latest
-        go install golang.org/x/tools/cmd/goimports@latest
-      displayName: 'Install Golang tools'
-    
-    - script: |
-        pip install parameterized
-      displayName: 'Install python unittest dependencies'
-      workingDirectory: ./tools/azure-rest-api-specs-examples-automation
+  - task: UseDotNet@2
+    displayName: 'Use .NET Core SDK'
+    inputs:
+      useGlobalJson: true
+      performMultiLevelLookup: true
 
-    - script: |
-        python -m unittest discover .
-      displayName: 'Test automation'
-      workingDirectory: ./tools/azure-rest-api-specs-examples-automation/automation
+  - script: |
+      go mod download golang.org/x/tools@latest
+      go install golang.org/x/tools/cmd/goimports@latest
+    displayName: 'Install Golang tools'
+  
+  - script: |
+      pip install parameterized
+    displayName: 'Install python unittest dependencies'
+    workingDirectory: ./tools/azure-rest-api-specs-examples-automation
 
-    - script: |
-        python -m unittest discover .
-      displayName: 'Test dotnet worker'
-      workingDirectory: ./tools/azure-rest-api-specs-examples-automation/dotnet
+  - script: |
+      python -m unittest discover .
+    displayName: 'Test automation'
+    workingDirectory: ./tools/azure-rest-api-specs-examples-automation/automation
 
-    - script: |
-        export GOPATH=$HOME/go
-        export PATH=$PATH:$GOPATH/bin
-        python -m unittest discover .
-      displayName: 'Test go worker'
-      workingDirectory: ./tools/azure-rest-api-specs-examples-automation/go
+  - script: |
+      python -m unittest discover .
+    displayName: 'Test dotnet worker'
+    workingDirectory: ./tools/azure-rest-api-specs-examples-automation/dotnet
 
-    - script: |
-        python -m unittest discover .
-      displayName: 'Test java worker'
-      workingDirectory: ./tools/azure-rest-api-specs-examples-automation/java
+  - script: |
+      export GOPATH=$HOME/go
+      export PATH=$PATH:$GOPATH/bin
+      python -m unittest discover .
+    displayName: 'Test go worker'
+    workingDirectory: ./tools/azure-rest-api-specs-examples-automation/go
 
-    - script: |
-        python -m unittest discover .
-      displayName: 'Test js worker'
-      workingDirectory: ./tools/azure-rest-api-specs-examples-automation/js
+  - script: |
+      python -m unittest discover .
+    displayName: 'Test java worker'
+    workingDirectory: ./tools/azure-rest-api-specs-examples-automation/java
 
-    - script: |
-        python -m unittest discover .
-      displayName: 'Test python worker'
-      workingDirectory: ./tools/azure-rest-api-specs-examples-automation/python
+  - script: |
+      python -m unittest discover .
+    displayName: 'Test js worker'
+    workingDirectory: ./tools/azure-rest-api-specs-examples-automation/js
+
+  - script: |
+      python -m unittest discover .
+    displayName: 'Test python worker'
+    workingDirectory: ./tools/azure-rest-api-specs-examples-automation/python

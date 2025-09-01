@@ -39,6 +39,7 @@
 
 .btn-outline-primary.disabled, .btn-outline-primary:disabled {
     color: var(--link-color);
+    border-color: var(--link-color);
 }
 
 .btn-link {
@@ -189,6 +190,10 @@
 
 .form-switch .form-check-input:checked {
     background-image: var(--svg-switch);
+}
+
+.form-text {
+    color: var(--base-text-color);
 }
 
 .badge {

@@ -2,17 +2,17 @@
 
 `tsp-client` is a simple command line tool to facilitate generating client libraries from TypeSpec.
 
+## Prerequisites
+
+- [Node.js 18.19 LTS](https://nodejs.org/en/download/) or later is required
+
 ## Installation
 
 ```bash
 npm install -g @azure-tools/typespec-client-generator-cli
 ```
 
-## Prerequisites
-
-Users working with a repository that already accepts this tool can continue to the [Usage](#usage) section.
-
-Repo owners should follow the steps in the [tsp-client repo setup](./repo_setup.md) doc.
+> NOTE: Repo owners should follow the steps in the [tsp-client repo setup](./repo_setup.md) doc.
 
 ## Usage
 
@@ -101,11 +101,6 @@ Example:
 ```bash
 tsp-client convert -o ./Contoso.WidgetManager --swagger-readme < path-to > /readme.md
 ```
-
-### compare
-
-Compares two Swagger definitions to identify the relevant differences between them. This command is useful when comparing an existing Swagger definition with a TypeSpec generated one. The `compare` command requires two parameters: `--lhs` which will typically be the original hand-authored Swagger and `--rhs` which will usually be the folder containing your TypeSpec. The command will generate the Swagger and compare the two definitions. The command will ignore differences in the Swagger that don't
-correspond to differences in the service, allowing you to focus only on differences that are relevant.
 
 ### sort-swagger
 

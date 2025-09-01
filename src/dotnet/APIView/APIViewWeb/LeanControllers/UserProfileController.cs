@@ -1,7 +1,9 @@
 using System.Threading.Tasks;
+using APIViewWeb.Helpers;
 using APIViewWeb.Managers;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -9,35 +11,49 @@ namespace APIViewWeb.LeanControllers
 {
     public class UserProfileController : BaseApiController
     {
-        private readonly ILogger<AuthController> _logger;
         private readonly IUserProfileManager _userProfileManager;
-        private readonly UserPreferenceCache _userPreferenceCache;
+        private readonly UserProfileCache _userProfileCache;
 
-        public UserProfileController(ILogger<AuthController> logger, IUserProfileManager userProfileManager,
-            UserPreferenceCache userPreferenceCache)
+        public UserProfileController(ILogger<AuthController> logger, IUserProfileManager userProfileManager, UserProfileCache userProfileCache)
         {
-            _logger = logger;
             _userProfileManager = userProfileManager;
-            _userPreferenceCache = userPreferenceCache;
+            _userProfileCache = userProfileCache;
         }
 
         [HttpGet]
-        public async Task<ActionResult<UserProfileModel>> GetUserPreference()
+        public async Task<ActionResult<UserProfileModel>> GetUserPreference([FromQuery]string userName = null)
         {
-            var userProfile = await _userProfileManager.TryGetUserProfileAsync(User);
-            var preference = await _userPreferenceCache.GetUserPreferences(User);
-            if (preference != null)
+            userName = userName ?? User.GetGitHubLogin();
+            try 
             {
-                userProfile.Preferences = preference;
+                var userProfile = await _userProfileCache.GetUserProfileAsync(userName, createIfNotExist: false);
+                return new LeanJsonResult(userProfile, StatusCodes.Status200OK);
             }
-            return userProfile;
+            catch
+            {
+                return new LeanJsonResult(null, StatusCodes.Status404NotFound);
+            }
         }
 
-        [Route("preference")]
-        [HttpPut]
-        public ActionResult UpdateUserPreference([FromBody] UserPreferenceModel userPreference)
+        [HttpPut("preference", Name = "UpdateUserPreference")]
+        public async Task<ActionResult> UpdateUserPreference([FromBody] UserPreferenceModel userPreference)
         {
-            _userPreferenceCache.UpdateUserPreference(userPreference, User);
+            if (User.GetGitHubLogin() != userPreference.UserName)
+            {
+                return Forbid();
+            }
+            await _userProfileCache.UpdateUserProfileAsync(userName: User.GetGitHubLogin(), userPreferenceModel: userPreference);
+            return Ok();
+        }
+
+        [HttpPut(Name = "UpdateUserProfile")]
+        public async Task<ActionResult> UpdateUserProfile([FromBody] UserProfileModel userProfile)
+        {
+            if (User.GetGitHubLogin() != userProfile.UserName)
+            {
+                return Forbid();
+            }
+            await _userProfileCache.UpdateUserProfileAsync(userName: User.GetGitHubLogin(), email: userProfile.Email, userPreferenceModel: userProfile.Preferences);
             return Ok();
         }
     }

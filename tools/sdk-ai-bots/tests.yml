@@ -81,6 +81,7 @@ stages:
               AZURE_TENANT_ID: $(AZURE_TENANT_ID)
               AZURE_SUBSCRIPTION_ID: $(AZURE_SUBSCRIPTION_ID)
               AZURE_FEDERATED_TOKEN_FILE: $(AZURE_FEDERATED_TOKEN_FILE)
+              AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
           - script: |
               pip install -r requirements.txt
             displayName: 'install requirements'

@@ -10,6 +10,13 @@ export enum ApiVersionType {
     Preview = 'Preview'
 }
 
+export enum RunMode {
+    Release = 'release',
+    Local = 'local',
+    SpecPullRequest = 'spec-pull-request',
+    Batch = 'batch'
+}
+
 export interface ChangelogResult {
     content: string;
     hasBreakingChange: boolean;
@@ -53,6 +60,9 @@ export interface ModularClientPackageOptions {
     repoUrl: string;
     versionPolicyName: VersionPolicyName;
     local: boolean;
+    apiVersion: string | undefined;
+    sdkReleaseType: string | undefined;
+    runMode: RunMode;
 }
 
 export interface NpmPackageInfo {

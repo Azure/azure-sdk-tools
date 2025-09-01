@@ -265,6 +265,7 @@ The test-proxy is integrated with the following environment variables.
 | Variable                       | Usage                                                                                                                                                                              |
 |--------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `TEST_PROXY_FOLDER`            | if command-line argument `storage-location` is not provided when invoking the proxy, this environment variable is also checked for a valid directory to use as test-proxy context. |
+| `TEST_PROXY_DISABLE_DEFAULT_SANITIZERS` | If this environment variable is set to `true`, the `azure-sdk` default sanitizers will NOT be present by default. |
 | `Logging__LogLevel__Default` | Sets the global log level for .NET tools including the test-proxy. Defaults to `Information`. Possible valid values are <br/><br/>`Debug`, `Information`, `Warning`, `Error`, `Critical`. <br><br> Users are recommended to use this variable, unless globally setting .NET log level negatively affects their test experience. |
 | `Logging__LogLevel__Azure.Sdk.Tools.TestProxy`| Same possible values as `Default`, but sets the log level for **only** the test-proxy. Other .NET tool log levels will remain unaffected.|
 

@@ -173,6 +173,7 @@ namespace Azure.SDK.ChangelogGen
                 typeof(Azure.ResourceManager.ArmClient).Assembly.Location,
                 typeof(Azure.Core.AzureLocation).Assembly.Location,
                 typeof(System.ClientModel.Primitives.ModelReaderWriter).Assembly.Location,
+                typeof(System.Net.IPAddress).Assembly.Location
             };
             List<string> allRefs = runtimeRefs.Concat(azureRefs).ToList();
             Assembly curApi = CompileHelper.Compile("curApi.dll", curApiFileContent, allRefs);

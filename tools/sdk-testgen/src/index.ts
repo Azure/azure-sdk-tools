@@ -14,3 +14,7 @@ const extension = new AutoRestExtension();
 extension.add('test-modeler', testModeler);
 
 extension.run();
+
+export * from './core/model';
+export * from './common/testConfig';
+export * from './util/helper';

@@ -27,4 +27,13 @@ namespace TestReferenceWithInternalsVisibleTo
         internal void InternalMethodWithFriendAttribute()
         { }
     }
+
+    // Output model type that would normally require a model factory
+    // This will be used to test dependency filtering
+    public class ExternalOutputModel
+    {
+        private ExternalOutputModel() { }
+        public string Name { get; }
+        public int Value { get; }
+    }
 }

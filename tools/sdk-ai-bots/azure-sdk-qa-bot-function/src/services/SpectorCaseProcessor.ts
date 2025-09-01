@@ -2,7 +2,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { InvocationContext } from '@azure/functions';
 import { AzureOpenAI} from "openai";
-import { DefaultAzureCredential, getBearerTokenProvider } from "@azure/identity";
 
 // Retry configuration for OpenAI API calls
 const MAX_RETRIES = 5;

@@ -29,6 +29,9 @@ parameters:
   - name: StandaloneExeMatrix
     type: object
     default: []
+  - name: SkipReleaseStage
+    type: boolean
+    default: true
   - name: ReleaseBinaries
     type: boolean
     default: false
@@ -38,9 +41,12 @@ parameters:
   - name: RequireStrongNames
     type: boolean
     default: true
+  - name: PublishEnvironment
+    type: string
+    default: ''
   - name: Use1ESOfficial
     type: boolean
-    default: false
+    default: true
   - name: TestMatrix
     type: object
     default:
@@ -87,6 +93,9 @@ extends:
             displayName: Build and Package
 
             templateContext:
+              sdl:
+                componentgovernance:
+                  enabled: true # Enable CG only on the build job
               outputs:
                 - output: pipelineArtifact
                   displayName: Publish to packages artifact
@@ -164,6 +173,14 @@ extends:
                 name: ${{ test.Pool }}
                 os: ${{ test.Os }}
 
+              templateContext:
+                outputs:
+                  - output: pipelineArtifact
+                    targetPath: '$(Build.ArtifactStagingDirectory)/llm-artifacts'
+                    artifactName: "LLM Artifacts - ${{ test.name }} - $(System.JobAttempt)"
+                    condition: eq(variables['uploadLlmArtifacts'], 'true')
+                    sbomEnabled: false
+
               steps:
                 - template: /eng/pipelines/templates/steps/install-dotnet.yml
 
@@ -187,6 +204,8 @@ extends:
                     testResultsFormat: 'VSTest'
                     mergeTestResults: true
 
+                - template: /eng/pipelines/templates/steps/upload-llm-artifacts.yml
+
           - ${{ if not(eq(length(parameters.DockerDeployments), 0)) }}:
             - template: /eng/pipelines/publish-docker-image-isolated.yml
               parameters:
@@ -194,18 +213,19 @@ extends:
                 Publish: false
                 ImageTag: "${{ parameters.DockerTagPrefix }}$(Build.BuildNumber)"
 
-      - ${{if and(ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
-        - template: pipelines/stages/net-release-to-feed.yml@azure-sdk-build-tools
+      - ${{ if and(ne(parameters.SkipReleaseStage, true), eq(variables['Build.Reason'], 'Manual'), eq(variables['System.TeamProject'], 'internal'))}}:
+        - template: /eng/pipelines/templates/stages/archetype-sdk-publish-net.yml
           parameters:
-            # Publish to https://dev.azure.com/azure-sdk/public/_packaging?_a=feed&feed=azure-sdk-for-net
-            DevOpsFeedId: '29ec6040-b234-4e31-b139-33dc4287b756/fa8c16a3-dbe0-4de2-a297-03065ec1ba3f'
+            Feed: 'public/azure-sdk-for-net'
             ExeMatrix: ${{ parameters.StandaloneExeMatrix }}
             ShouldPublishExecutables: ${{ parameters.ReleaseBinaries }}
             ShouldPublishSymbols: ${{ parameters.ShouldPublishSymbols }}
             RequireStrongNames: ${{ parameters.RequireStrongNames }}
-            Use1ESTemplate: true
+            ${{ if parameters.PublishEnvironment }}:
+              PublishEnvironment: ${{ parameters.PublishEnvironment }}
+            dependsOn: BuildTestAndPackage
 
-      - ${{if and(not(eq(length(parameters.DockerDeployments), 0)), ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal'))}}:
+      - ${{ if and(ne(parameters.SkipReleaseStage, true), not(eq(length(parameters.DockerDeployments), 0)), eq(variables['Build.Reason'], 'Manual'), eq(variables['System.TeamProject'], 'internal'))}}:
         - stage: PublishDockerImages
           displayName: Publish Docker Images
           dependsOn: BuildTestAndPackage

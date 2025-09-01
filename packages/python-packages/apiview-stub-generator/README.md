@@ -20,10 +20,10 @@ Install `apiview-stub-generator` package on a supported Python version. If not r
 
 From the root of the apiview-stub-generator package, run:
 ```
-pip install . --extra-index-url="https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/"
+pip install -r apiview_reqs.txt --index-url="https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/"
 ```
 
-If `--extra-index-url` is not specified, the apiview-stub-generator may not run or you may see the following error:
+If `--index-url` is not specified, the apiview-stub-generator may not run or you may see the following error:
 ```
 ImportError: cannot import name 'IAstroidChecker' from 'pylint.interfaces
 ```
@@ -80,10 +80,8 @@ usage: apistubgen [-h] --pkg-path PKG_PATH [--temp-path TEMP_PATH]
 ### Running tests
 
 ```
-cd packages/python-packages/apiview-stub-generator
-pip install . --extra-index-url="https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-python/pypi/simple/"
-pip install -r dev_requirements.txt
-pytest tests/
+pip install tox
+tox run -e pytest -c .
 ```
 
 #### apistubgentest

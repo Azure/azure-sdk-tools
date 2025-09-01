@@ -27,7 +27,7 @@ func NewStorageService() (*StorageService, error) {
 	}
 
 	// Create a blob client
-	blobClient, err := azblob.NewClient(config.STORAGE_BASE_URL, credential, nil)
+	blobClient, err := azblob.NewClient(config.AppConfig.STORAGE_BASE_URL, credential, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create blob client: %v", err)
 	}
@@ -42,7 +42,11 @@ func (s *StorageService) DownloadBlob(container, path string) ([]byte, error) {
 	}
 	// Read the blob content
 	body := resp.Body
-	defer body.Close()
+	defer func() {
+		if err = body.Close(); err != nil {
+			log.Printf("Failed to close response body: %v", err)
+		}
+	}()
 	content, err := io.ReadAll(body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read blob content: %v", err)
@@ -76,7 +80,7 @@ func (s *StorageService) GetBlobs(container string) []string {
 }
 
 func (s *StorageService) DeleteBlob(container, path string) error {
-	blobUrl := fmt.Sprintf("%s/%s/%s", config.STORAGE_BASE_URL, container, path)
+	blobUrl := fmt.Sprintf("%s/%s/%s", config.AppConfig.STORAGE_BASE_URL, container, path)
 	blobUrl = strings.ReplaceAll(blobUrl, "#", "%23")
 	// Create a blockBlob client
 	blockBlobClient, err := blockblob.NewClient(blobUrl, s.credential, &blockblob.ClientOptions{})

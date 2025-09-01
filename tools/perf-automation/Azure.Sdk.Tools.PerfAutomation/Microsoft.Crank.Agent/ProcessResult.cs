@@ -15,5 +15,7 @@ namespace Microsoft.Crank.Agent
         public string StandardOutput { get; }
         public string StandardError { get; }
         public int ExitCode { get; }
+        public double AverageCpu { get; set; } = -1;
+        public long AverageMemory { get; set; } = -1;
     }
 }

@@ -1,0 +1,42 @@
+# NOTE: Please refer to https://aka.ms/azsdk/engsys/ci-yaml before editing this file.
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - tools/azsdk-cli
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - tools/azsdk-cli
+
+extends:
+  template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
+  parameters:
+    ${{ if eq(variables['Build.SourceBranchName'], 'main') }}:
+      SkipReleaseStage: false
+    PublishEnvironment: 'package-publish'
+    ReleaseBinaries: true
+    ToolDirectory: tools/azsdk-cli/Azure.Sdk.Tools.Cli
+    TestDirectory: tools/azsdk-cli/Azure.Sdk.Tools.Cli.Tests
+    StandaloneExeMatrix:
+    - rid: osx-x64
+      framework: net8.0
+      assembly: azsdk
+    - rid: osx-arm64
+      framework: net8.0
+      assembly: azsdk
+    - rid: win-x64
+      framework: net8.0
+      assembly: azsdk
+    - rid: linux-x64
+      framework: net8.0
+      assembly: azsdk
+    - rid: linux-arm64
+      framework: net8.0
+      assembly: azsdk

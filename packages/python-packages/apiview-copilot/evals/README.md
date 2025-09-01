@@ -10,11 +10,20 @@ This directory contains the evaluation testing for APIView Copilot.
   ```
   AZURE_OPENAI_ENDPOINT=<your-endpoint>
   AZURE_OPENAI_API_KEY=<your-key>
+  AZURE_SUBSCRIPTION_ID=<playground-subscription-id>
+  AZURE_FOUNDRY_RESOURCE_GROUP=openai-shared
+  AZURE_FOUNDRY_PROJECT_NAME=apiview-ai
   ```
 
 > Note: the API key is needed for AI-assisted evaluations. The service does not support Entra ID yet.
 
 ## Running Evaluations
+
+### In DevOps pipeline
+
+Evals runs can be triggered by the [tools - apiview-copilot - tests](https://dev.azure.com/azure-sdk/internal/_build?definitionId=7662&_a=summary) pipeline. Results of the run can be found on the Evaluation tab in the Azure AI Foundry portal for the `apiview-ai` project. 
+
+### Locally
 
 Running evaluations will run evals on test files for the language given and give the choice to record the baseline (aka write the results to `evals/results/language`). 
 
@@ -28,6 +37,12 @@ python run.py --language python
 2. Run a specific test file:
 ```bash
 python run.py --language python --test-file specific_tests.jsonl
+```
+
+or 
+
+```bash
+python run.py --language python --test-file tests/python/specific.jsonl
 ```
 
 3. Change the number of evaluation runs (default is 3):

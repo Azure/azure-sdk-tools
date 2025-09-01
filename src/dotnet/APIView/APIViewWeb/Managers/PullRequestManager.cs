@@ -2,48 +2,53 @@
 // Licensed under the MIT License.
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
+using ApiView;
 using APIViewWeb.Helpers;
+using APIViewWeb.LeanModels;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Octokit;
 
 namespace APIViewWeb.Managers
 {
     public class PullRequestManager : IPullRequestManager
     {
-        static readonly string PR_APIVIEW_BOT_COMMENT_IDENTIFIER = "**API change check**";
-        static readonly string PR_APIVIEW_BOT_COMMENT = "APIView has identified API level changes in this PR and created following API reviews.";
-        static readonly string PR_APIVIEW_BOT_NO_CHANGE_COMMENT = "API changes are not detected in this pull request.";
         static readonly GitHubClient _githubClient = new GitHubClient(new ProductHeaderValue("apiview"));
         
         private readonly TelemetryClient _telemetryClient;
+        private readonly ILogger<PullRequestManager> _logger;
         private readonly ICosmosPullRequestsRepository _pullRequestsRepository;
         private readonly ICosmosAPIRevisionsRepository _apiRevisionsRepository;
-        private readonly IAPIRevisionsManager _apiRevisionManager;
+        private readonly IReviewManager _reviewManager;
+        private readonly IAPIRevisionsManager _apiRevisionsManager;
+        private readonly ICodeFileManager _codeFileManager;
         private readonly IConfiguration _configuration;
+        private readonly IEnumerable<LanguageService> _languageServices;
         private readonly int _pullRequestCleanupDays;
         private readonly bool _isGitClientAvailable;
 
         public PullRequestManager(
-            ICosmosPullRequestsRepository pullRequestsRepository,
-            ICosmosAPIRevisionsRepository apiRevisionsRepository,
-            IAPIRevisionsManager apiRevisionManager,
-            IConfiguration configuration,
-            TelemetryClient telemetryClient
-            )
+            ICosmosPullRequestsRepository pullRequestsRepository, ICosmosAPIRevisionsRepository apiRevisionsRepository,
+            IAPIRevisionsManager apiRevisionsManager, IConfiguration configuration, ICodeFileManager codeFileManager,
+            IReviewManager reviewManager, TelemetryClient telemetryClient, ILogger<PullRequestManager> logger, IEnumerable<LanguageService> languageServices)
         {
             _pullRequestsRepository = pullRequestsRepository;
             _apiRevisionsRepository = apiRevisionsRepository;
-            _apiRevisionManager = apiRevisionManager;
+            _reviewManager = reviewManager;
+            _apiRevisionsManager = apiRevisionsManager;
             _configuration = configuration;
+            _codeFileManager = codeFileManager;
             _telemetryClient = telemetryClient;
+            _languageServices = languageServices;
+            _logger = logger;
 
             var ghToken = _configuration["github-access-token"];
             if (!string.IsNullOrEmpty(ghToken))
@@ -89,39 +94,6 @@ namespace APIViewWeb.Managers
             return pullRequestModel;
         }
 
-        public async Task CreateOrUpdateCommentsOnPR(List<PullRequestModel> pullRequests, string repoOwner, string repoName, int prNumber, string hostName, string commitSha)
-        {
-            var existingComment = await GetExistingCommentForPackage(repoOwner, repoName, prNumber);
-            var bldr = new StringBuilder(PR_APIVIEW_BOT_COMMENT_IDENTIFIER);
-            bldr.Append(Environment.NewLine).Append(Environment.NewLine);
-            if (pullRequests.Count > 0)
-            {
-                bldr.Append(PR_APIVIEW_BOT_COMMENT).Append(Environment.NewLine).Append(Environment.NewLine);
-                // Include API review revisions generated with same exact Commit Sha as latest commit SHA to exclude any stale reviews that are not modified in latest commit.
-                // This will ensure comment shows only the reviews modified byu latest commit.
-                foreach (var p in pullRequests.Where(p => p.Commits.LastOrDefault() == commitSha))
-                {
-                    var revisionLink = ManagerHelpers.ResolveReviewUrl(pullRequest: p, hostName: hostName);
-                    bldr.Append('[').Append(p.PackageName).Append("](").Append(revisionLink).Append(')');
-                    bldr.Append(Environment.NewLine);
-                }
-                bldr.Append(Environment.NewLine);
-            }
-            else
-            {
-                bldr.Append(PR_APIVIEW_BOT_NO_CHANGE_COMMENT);
-            }
-
-            if (existingComment != null)
-            {
-                await _githubClient.Issue.Comment.Update(repoOwner, repoName, existingComment.Id, bldr.ToString());
-            }
-            else
-            {
-                await _githubClient.Issue.Comment.Create(repoOwner, repoName, prNumber, bldr.ToString());
-            }
-        }
-
         public async Task CleanupPullRequestData()
         {
             var telemetry = new RequestTelemetry { Name = "Cleaning up Reviews created for pull requests" };
@@ -158,24 +130,91 @@ namespace APIViewWeb.Managers
             }
         }
 
-        private async Task<IssueComment> GetExistingCommentForPackage(string repoOwner, string repoName, int pr)
+        public async Task<string> CreateAPIRevisionIfAPIHasChanges(
+            string buildId, string artifactName, string originalFileName, string commitSha, string repoName,
+            string packageName, int prNumber, string hostName, CreateAPIRevisionAPIResponse responseContent,
+            string codeFileName = null, string baselineCodeFileName = null, string language = null,
+            string project = "internal")
         {
-            IReadOnlyList<IssueComment> comments = null;
+            language = LanguageServiceHelpers.MapLanguageAlias(language: language);
+            originalFileName = originalFileName ?? codeFileName;
+
+            // Get Code File to find the actual package name emitted by parser
+            // We should deprecate package name param and use PackageName in CodeFile
+            using var memoryStream = new MemoryStream();
+            using var baselineStream = new MemoryStream();
+            var codeFile = await _codeFileManager.GetCodeFileAsync(
+                repoName: repoName, buildId: buildId, artifactName: artifactName,
+                packageName: packageName, originalFileName: originalFileName,
+                codeFileName: codeFileName, originalFileStream: memoryStream,
+                baselineCodeFileName: baselineCodeFileName, baselineStream: baselineStream,
+                project: project, language: language);
+
+            if (codeFile.PackageName != null && (packageName == null || packageName != codeFile.PackageName))
+            {
+                packageName = codeFile.PackageName;
+            }
+
+            var repoInfo = repoName.Split("/");
+            var pullRequestModel = await GetPullRequestModelAsync(prNumber, repoName, packageName, originalFileName, language);
+            if (pullRequestModel == null)
+            {
+                return "";
+            }
+            if (pullRequestModel.Commits.Any(c => c == commitSha))
+            {
+                // PR commit is already processed. No need to reprocess it again.
+                responseContent.ActionsTaken.Add("CommitSha for this request has been previously processed. Return with no further actions.");
+                return !string.IsNullOrEmpty(pullRequestModel.ReviewId) ? ManagerHelpers.ResolveReviewUrl(reviewId: pullRequestModel.ReviewId, apiRevisionId: pullRequestModel.APIRevisionId, language: pullRequestModel.Language, configuration: _configuration, languageServices: _languageServices) : "";
+            }
+
+            pullRequestModel.Commits.Add(commitSha);
+            responseContent.ActionsTaken.Add($"Pull Request data for PR updated with new CommitSha '{commitSha}' in memory - not yet saved to database.");
+
             try
             {
-                comments = await _githubClient.Issue.Comment.GetAllForIssue(repoOwner, repoName, pr);
+                CodeFile baseLineCodeFile = null;
+                if (baselineStream.Length > 0)
+                {
+                    baselineStream.Position = 0;
+                    baseLineCodeFile = await CodeFile.DeserializeAsync(stream: baselineStream);
+                }
+                if (codeFile != null)
+                {
+                    await CreateAPIRevisionIfRequired(codeFile: codeFile, originalFileName: originalFileName, memoryStream: memoryStream, pullRequestModel: pullRequestModel,
+                        baselineCodeFile: baseLineCodeFile, baseLineStream: baselineStream, baselineFileName: baselineCodeFileName, responseContent: responseContent);
+                }
+                else
+                {
+                    var warningMessage = "Failed to download artifact. Please recheck build id and artifact path values in API change detection request.";
+                    _logger.LogWarning(warningMessage);
+                    _telemetryClient.TrackTrace(warningMessage, SeverityLevel.Warning, new Dictionary<string, string>
+                    {
+                        { "BuildId", buildId },
+                        { "artifactName", artifactName }
+                    });
+                }
+
+                //Add pull request info only if API revision is created
+                if (!string.IsNullOrEmpty(pullRequestModel.APIRevisionId))
+                {
+                    // Update pull request metadata in DB
+                    await UpsertPullRequestAsync(pullRequestModel);
+                    responseContent.ActionsTaken.Add($"Pull Request data changes saved to database.");
+                }
+                else
+                {
+                    responseContent.ActionsTaken.Add("Pull Request data has no APIRevisionId, changes not saved to database.");
+                }
             }
-            catch (Exception ex)
+            finally
             {
-                _telemetryClient.TrackException(ex);
+                memoryStream.Dispose();
+                baselineStream.Dispose();
             }
-            if (comments != null)
-            {
-                // Check for comment created for current package.
-                // GitHub issue comment unfortunately doesn't have any key to verify. So we need to check actual body to find the comment.
-                return comments.Where(c => c.Body.Contains(PR_APIVIEW_BOT_COMMENT_IDENTIFIER)).LastOrDefault();
-            }
-            return null;
+
+            // Return review URL created for current package if exists
+            return string.IsNullOrEmpty(pullRequestModel.APIRevisionId) ? "" : ManagerHelpers.ResolveReviewUrl(reviewId: pullRequestModel.ReviewId, apiRevisionId: pullRequestModel.APIRevisionId, language: pullRequestModel.Language, configuration: _configuration, languageServices: _languageServices);
         }
 
         private async Task<bool> IsPullRequestEligibleForCleanup(PullRequestModel prModel)
@@ -200,12 +239,192 @@ namespace APIViewWeb.Managers
                 var apiRevision = await _apiRevisionsRepository.GetAPIRevisionAsync(pullRequestModel.APIRevisionId);
                 if (apiRevision != null && !apiRevision.Approvers.Any())
                 {
-                    await _apiRevisionManager.SoftDeleteAPIRevisionAsync(userName: "azure-sdk", apiRevision: apiRevision, notes: "Deleted by PullRequest CleanUp Automation");
+                    await _apiRevisionsManager.SoftDeleteAPIRevisionAsync(userName: ApiViewConstants.AzureSdkBotName, apiRevision: apiRevision, notes: "Deleted by PullRequest CleanUp Automation");
                 }
             }
 
             pullRequestModel.IsOpen = false;
             await _pullRequestsRepository.UpsertPullRequestAsync(pullRequestModel);
+        }
+
+        private async Task CreateAPIRevisionIfRequired(CodeFile codeFile, string originalFileName, MemoryStream memoryStream,
+            PullRequestModel pullRequestModel, CodeFile baselineCodeFile, MemoryStream baseLineStream, string baselineFileName, CreateAPIRevisionAPIResponse responseContent)
+        {
+            // fetch review for the package or create brand new review
+            var review = await _reviewManager.GetReviewAsync(language: codeFile.Language, packageName: codeFile.PackageName);
+            if (review == null)
+            {
+                review = await _reviewManager.CreateReviewAsync(language: codeFile.Language, packageName: codeFile.PackageName, isClosed: false);
+                responseContent.ActionsTaken.Add($"No existing review with packageName: '{codeFile.PackageName}' and language: '{codeFile.Language}'.");
+                responseContent.ActionsTaken.Add($"Created a new Review with Id: '{review.Id}'.");
+            }
+            pullRequestModel.ReviewId = review.Id;
+            responseContent.ActionsTaken.Add($"Pull Request data ReviewId set to '{pullRequestModel.ReviewId}' in memory - not yet saved to database.");
+
+            // Base line file is sent in request only for swagger and TypeSpec
+            if (baselineCodeFile == null)
+            {
+                await CreateUpdateRevisionWithoutBaseline(prModel: pullRequestModel, codeFile: codeFile, memoryStream: memoryStream, review: review,
+                    originalFileName: originalFileName, responseContent: responseContent);
+            }
+            else
+            {
+                await CreateUpdateRevisionWithBaseline(prModel: pullRequestModel, codeFile: codeFile, baselineCodeFile: baselineCodeFile, memoryStream: memoryStream,
+                    baselineMemoryStream: baseLineStream, review: review, originalFileName: baselineFileName, responseContent: responseContent);
+            }
+        }
+
+        private async Task CreateUpdateRevisionWithoutBaseline(PullRequestModel prModel, CodeFile codeFile, MemoryStream memoryStream,
+            ReviewListItemModel review, string originalFileName, CreateAPIRevisionAPIResponse responseContent)
+        {
+            var apiRevisions = (await _apiRevisionsManager.GetAPIRevisionsAsync(reviewId: review.Id)).OrderByDescending(r => r.LastUpdatedOn);
+            // If a revision already exists for PR then just update the code file for that revision.
+            if (revisionAlreadyExistsForPR(prModel, false))
+            {
+                if (await UpdateExistingAPIRevisionCodeFile(apiRevisions: apiRevisions, revisionId: prModel.APIRevisionId, memoryStream: memoryStream, codeFile: codeFile,
+                    originalFileName: originalFileName, responseContent: responseContent)) 
+                {
+                    responseContent.ActionsTaken.Add($"Updated the CodeFile of the existing APIRevision: '{prModel.APIRevisionId}'");
+                    return;
+                }   
+            }
+
+            //Create new API revision if PR has API changes            
+            if (await prHasAPIChanges(apiRevisions, codeFile))
+            {
+                var newAPIRevision = await _apiRevisionsManager.CreateAPIRevisionAsync(
+                    userName: prModel.CreatedBy, reviewId: review.Id, apiRevisionType: APIRevisionType.PullRequest,
+                    label: $"Created for PR {prModel.PullRequestNumber}", memoryStream: memoryStream, codeFile: codeFile, originalName: originalFileName, prNumber: prModel.PullRequestNumber);
+
+                responseContent.ActionsTaken.Add("Pull Request has changes in the API surface when compared to the last updated existing APIRevision.");
+                responseContent.ActionsTaken.Add($"Created new APIRevision with id '{newAPIRevision.Id}'.");
+
+                prModel.APIRevisionId = newAPIRevision.Id;
+                responseContent.ActionsTaken.Add($"Pull Request data APIRevisionId set to '{prModel.APIRevisionId}' in memory - not yet saved to database.");
+            } 
+        }
+
+        private static bool revisionAlreadyExistsForPR(PullRequestModel prModel, bool baseline)
+        {
+            if (baseline)
+            {
+                return !string.IsNullOrEmpty(prModel.BaselineAPIRevisionId);
+            }
+            return !string.IsNullOrEmpty(prModel.APIRevisionId);
+        }
+
+        private async Task<bool> prHasAPIChanges(IEnumerable<APIRevisionListItemModel> apiRevisions, CodeFile codeFile)
+        {
+            var renderedCodeFile = new RenderedCodeFile(codeFile);
+            if (apiRevisions != null && apiRevisions.Any())
+            {
+                // checked if the new apiRevision matches any automatic apiRevision
+                var autoAPIRevisions = apiRevisions.Where(r => r.APIRevisionType == APIRevisionType.Automatic);
+                foreach (var autoAPIRevision in autoAPIRevisions)
+                {
+                    if (await _apiRevisionsManager.AreAPIRevisionsTheSame(autoAPIRevision, renderedCodeFile))
+                    {
+                        // no change in api surface level from existing revision
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Check to see if there is an existing APIRevision for the same PR. If yes, update the codeFile for the existing APIRevision
+        /// </summary>
+        /// <param name="apiRevisions"></param>
+        /// <param name="revisionId"></param>
+        /// <param name="memoryStream"></param>
+        /// <param name="codeFile"></param>
+        /// <param name="originalFileName"></param>
+        /// <param name="responseContent"></param>
+        /// <returns>true if update happened otherwise false</returns>
+        private async Task<bool> UpdateExistingAPIRevisionCodeFile(IEnumerable<APIRevisionListItemModel> apiRevisions,
+            string revisionId, MemoryStream memoryStream, CodeFile codeFile, string originalFileName, CreateAPIRevisionAPIResponse responseContent)
+        {
+            var apiRevision = apiRevisions.FirstOrDefault(v => v.Id == revisionId);
+            if (apiRevision != default(APIRevisionListItemModel))
+            {
+                //Update the code file if revision already exists
+                var codeModel = await _codeFileManager.CreateReviewCodeFileModel(
+                       apiRevisionId: revisionId, memoryStream: memoryStream, codeFile: codeFile);
+                codeModel.FileName = originalFileName;
+                apiRevision.Files[0] = codeModel;
+                await _apiRevisionsManager.UpdateAPIRevisionAsync(apiRevision);
+                return true;
+            }
+            return false;
+        }
+
+        private async Task CreateUpdateRevisionWithBaseline(PullRequestModel prModel, CodeFile codeFile, CodeFile baselineCodeFile,
+            MemoryStream memoryStream, MemoryStream baselineMemoryStream, ReviewListItemModel review, string originalFileName, CreateAPIRevisionAPIResponse responseContent)
+        {
+            var apiRevisions = (await _apiRevisionsManager.GetAPIRevisionsAsync(reviewId: review.Id)).OrderByDescending(r => r.LastUpdatedOn);
+            // If a revision already exists for PR then just update the code file for that revision.
+            bool createNewBaselineRevision = true;
+            bool createNewModifiedRevision = true;
+            if (revisionAlreadyExistsForPR(prModel, true))
+            {
+                if (await UpdateExistingAPIRevisionCodeFile(apiRevisions: apiRevisions, revisionId: prModel.BaselineAPIRevisionId, memoryStream: baselineMemoryStream,
+                    codeFile: baselineCodeFile, originalFileName: originalFileName, responseContent: responseContent))
+                {
+                    responseContent.ActionsTaken.Add($"Updated the CodeFile of the existing BaseLine APIRevision: '{prModel.BaselineAPIRevisionId}'");
+                    createNewBaselineRevision = false;
+                }   
+            }
+            if (revisionAlreadyExistsForPR(prModel, false))
+            {
+                if (await UpdateExistingAPIRevisionCodeFile(apiRevisions: apiRevisions, revisionId: prModel.APIRevisionId, memoryStream: memoryStream, codeFile: codeFile,
+                    originalFileName: originalFileName, responseContent: responseContent))
+                {
+                    responseContent.ActionsTaken.Add($"Updated the CodeFile of the existing APIRevision: '{prModel.APIRevisionId}'");
+                    createNewModifiedRevision = false;
+                }
+            }
+
+            // Create baseline revision
+            if (createNewBaselineRevision)
+            {
+                var newAPIRevision = await _apiRevisionsManager.CreateAPIRevisionAsync(
+                    userName: prModel.CreatedBy, reviewId: review.Id, apiRevisionType: APIRevisionType.PullRequest,
+                    label: $"Baseline for PR {prModel.PullRequestNumber}", memoryStream: baselineMemoryStream, codeFile: baselineCodeFile,
+                    originalName: originalFileName);
+                responseContent.ActionsTaken.Add($"Created new Baseline APIRevisions with Id '{newAPIRevision.Id}'.");
+
+                prModel.BaselineAPIRevisionId = newAPIRevision.Id;
+                responseContent.ActionsTaken.Add($"Pull Request data BaselineAPIRevisionId set to '{prModel.BaselineAPIRevisionId}' in memory - not yet saved to database.");
+                
+            }
+
+            // Create modified revision
+            if (createNewModifiedRevision)
+            {
+                var newAPIRevision = await _apiRevisionsManager.CreateAPIRevisionAsync(
+                    userName: prModel.CreatedBy, reviewId: review.Id, apiRevisionType: APIRevisionType.PullRequest,
+                    label: $"Created for PR {prModel.PullRequestNumber}", memoryStream: memoryStream, codeFile: codeFile,
+                    originalName: originalFileName);
+                responseContent.ActionsTaken.Add($"Created new APIRevision with id '{newAPIRevision.Id}'.");
+
+                prModel.APIRevisionId = newAPIRevision.Id;
+                responseContent.ActionsTaken.Add($"Pull Request data APIRevisionId set to '{prModel.APIRevisionId}' in memory - not yet saved to database.");
+
+            }
+
+            //Calculate the diff if it's for swagger as an async task.
+            //No need to await for diff calculation processing to be completed to respond to HTTP request
+            _ = Task.Run(async () =>
+            {
+                var revisions = await _apiRevisionsManager.GetAPIRevisionsAsync(reviewId: review.Id);
+                var modifiedRevision = revisions.FirstOrDefault(r => r.Id == prModel.APIRevisionId);
+                var baseline = revisions.Where(r => r.Id == prModel.BaselineAPIRevisionId);
+                if (modifiedRevision != default(APIRevisionListItemModel))
+                {
+                    await _apiRevisionsManager.GetLineNumbersOfHeadingsOfSectionsWithDiff(review.Id, modifiedRevision, baseline);
+                }
+            });
         }
     }
 }

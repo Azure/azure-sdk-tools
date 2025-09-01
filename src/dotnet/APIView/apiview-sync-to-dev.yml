@@ -15,8 +15,8 @@ stages:
       - job: 'BlobCopy'
         displayName: 'Sync API reviews'
         pool:
-          name: azsdk-pool-mms-win-2022-general
-          vmImage: windows-2022
+          name: azsdk-pool
+          demands: ImageOverride -equals windows-2022
 
         strategy:
           matrix:

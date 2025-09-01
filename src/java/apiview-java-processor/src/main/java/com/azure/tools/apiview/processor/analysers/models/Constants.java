@@ -3,6 +3,7 @@ package com.azure.tools.apiview.processor.analysers.models;
 public class Constants {
 
     public static final String APIVIEW_JSON_SCHEMA = "https://raw.githubusercontent.com/Azure/azure-sdk-tools/00aacf7f4e224e008702c3e77ecde46d25434e44/tools/apiview/parsers/apiview-treestyle-parser-schema/CodeFile.json";
+    public static final String APIVIEW_JSON_SCHEMA_RESOURCE = "/CodeFile.json";
 
     /************************************************************************************
      * Mode Flags

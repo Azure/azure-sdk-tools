@@ -1,0 +1,730 @@
+Package parsed using Swift APIView (version 0.2.2)
+
+
+package AzureCommunicationUICalling {
+	public class ButtonViewData: ObservableObject {
+		@Published public var onClick: ((ButtonViewData) -> Void)?
+		@Published public var visible: Bool
+		@Published public var enabled: Bool
+		public init(visible: Bool = true , enabled: Bool = true , onClick: ((ButtonViewData) -> Void)? = nil)
+	}
+	
+	public class CallCompositeObjectThingyUICompositeThingamajig {
+		public class Events {
+			public var onError: ((CallCompositeError) -> Void)?
+			public var onRemoteParticipantJoined: (([CommunicationIdentifier]) -> Void)?
+			public var onPictureInPictureChanged: ((_isPictureInPicture: Bool) -> Void)?
+			public var onCallStateChanged: ((CallState) -> Void)?
+			public var onDismissed: ((CallCompositeDismissed) -> Void)?
+			public var onUserReportedIssue: ((CallCompositeUserReportedIssue) -> Void)?
+			public var onIncomingCall: ((IncomingCall) -> Void)?
+			public var onIncomingCallCancelled: ((IncomingCallCancelled) -> Void)?
+			public var onIncomingCallAcceptedFromCallKit: ((_callId: String) -> Void)?
+			public var onRemoteParticipantLeft: (([CommunicationIdentifier]) -> Void)?
+		}
+		public let events: Events
+		public var debugInfo: DebugInfo
+		public var callState: CallState
+		@available(*, deprecated, message: "Use init with CommunicationTokenCredential instead.") 
+		public init(withOptions: CallCompositeOptions? = nil)
+		public init(credential: CommunicationTokenCredential, withOptions: CallCompositeOptions? = nil)
+		public func dismiss()
+		public func handlePushNotification(pushNotification: PushNotification, completionHandler: ((Result<Void, Error>) -> Void)? = nil)
+		public static func reportIncomingCall(pushNotification: PushNotification, callKitOptions: CallKitOptions, completionHandler: ((Result<Void, Error>) -> Void)? = nil)
+		public func registerPushNotifications(deviceRegistrationToken: Data, completionHandler: ((Result<Void, Error>) -> Void)? = nil)
+		public func unregisterPushNotifications(completionHandler: ((Result<Void, Error>) -> Void)? = nil)
+		public func accept(incomingCallId: String, callKitRemoteInfo: CallKitRemoteInfo? = nil, localOptions: LocalOptions? = nil)
+		public func reject(incomingCallId: String, completionHandler: ((Result<Void, Error>) -> Void)? = nil)
+		public func hold(completionHandler: ((Result<Void, Error>) -> Void)? = nil)
+		public func resume(completionHandler: ((Result<Void, Error>) -> Void)? = nil)
+		@available(*, deprecated, message: """
+Use CallComposite init with CommunicationTokenCredential
+and launch(locator: JoinLocator, localOptions: LocalOptions? = nil) instead.
+""") 
+		public func launch(remoteOptions: RemoteOptions, localOptions: LocalOptions? = nil)
+		public func launch(locator: JoinLocator, callKitRemoteInfo: CallKitRemoteInfo? = nil, localOptions: LocalOptions? = nil)
+		public func launch(participants: [CommunicationIdentifier], callKitRemoteInfo: CallKitRemoteInfo? = nil, localOptions: LocalOptions? = nil)
+		public func launch(callIdAcceptedFromCallKit: String, localOptions: LocalOptions? = nil)
+		public func set(remoteParticipantViewData: ParticipantViewData, for: CommunicationIdentifier, completionHandler: ((Result<Void, SetParticipantViewDataError>) -> Void)? = nil)
+		public var isHidden: Bool { get set (isHidden)}
+	}
+	
+	extension CallComposite {
+	}
+	
+	public enum CallCompositeAudioVideoMode {
+		case audioAndVideo
+		case audioOnly
+	}
+	
+	public struct CallCompositeDismissed {
+		public let errorCode: String?
+		public let error: Error?
+	}
+	
+	extension CallCompositeDismissed: Equatable {
+		public static func ==(lhs: CallCompositeDismissed, rhs: CallCompositeDismissed) -> Bool
+	}
+	
+	public struct CallCompositeError {
+		public let code: String
+		public let error: Error?
+	}
+	
+	extension CallCompositeError: Equatable {
+		public static func ==(lhs: CallCompositeError, rhs: CallCompositeError) -> Bool
+	}
+	
+	public struct CallCompositeErrorCode {
+		public static let callJoin: String = "callJoin"
+		public static let callEnd: String = "callEnd"
+		public static let cameraFailure: String = "cameraFailure"
+		public static let tokenExpired: String = "tokenExpired"
+		public static let microphonePermissionNotGranted: String = "microphonePermissionNotGranted"
+		public static let networkConnectionNotAvailable: String = "networkConnectionNotAvailable"
+		public static let captionsNotActive: String = "captionsNotActive"
+		public static let captionsStartFailedSpokenLanguageNotSupported: String = "captionsStartFailedSpokenLanguageNotSupported"
+		public static let captionsStartFailedCallNotConnected: String = "captionsStartFailedCallNotConnected"
+		public static let communicationTokenCredentialNotSet: String = "communicationTokenCredentialNotSet"
+	}
+	
+	public struct CallCompositeOptions {
+		@available(*, deprecated, message: "Use init without callScreenOptions and setupScreenOptions arguments.") 
+		public init(theme: ThemeOptions? = nil, localization: LocalizationOptions? = nil, setupScreenOrientation: OrientationOptions? = nil, callingScreenOrientation: OrientationOptions? = nil, enableMultitasking: Bool = false , enableSystemPictureInPictureWhenMultitasking: Bool = false , callScreenOptions: CallScreenOptions? = nil, callKitOptions: CallKitOptions? = nil, displayName: String? = nil, disableInternalPushForIncomingCall: Bool = false , setupScreenOptions: SetupScreenOptions? = nil, capabilitiesChangedNotificationMode: CapabilitiesChangedNotificationMode? = nil, userId: CommunicationIdentifier? = nil)
+		public init(theme: ThemeOptions? = nil, localization: LocalizationOptions? = nil, setupScreenOrientation: OrientationOptions? = nil, callingScreenOrientation: OrientationOptions? = nil, enableMultitasking: Bool = false , enableSystemPictureInPictureWhenMultitasking: Bool = false , callKitOptions: CallKitOptions? = nil, displayName: String? = nil, disableInternalPushForIncomingCall: Bool = false , capabilitiesChangedNotificationMode: CapabilitiesChangedNotificationMode? = nil, userId: CommunicationIdentifier? = nil)
+	}
+	
+	public struct CallCompositeUserReportedIssue {
+		public let userMessage: String
+		public let debugInfo: DebugInfo
+		public init(userMessage: String, debugInfo: DebugInfo)
+	}
+	
+	extension CallCompositeUserReportedIssue: Equatable {
+		public static func ==(lhs: CallCompositeUserReportedIssue, rhs: CallCompositeUserReportedIssue) -> Bool
+	}
+	
+	public enum CallError: String, Error {
+		case callIsNotInProgress
+	}
+	
+	public struct CallHistoryRecord {
+		public let callStartedOn: Date
+		public let callIds: [String]
+	}
+	
+	public struct CallKitOptions {
+		public let providerConfig: CXProviderConfiguration
+		public let isCallHoldSupported: Bool
+		public let configureAudioSession: (() -> Error?)?
+		public let provideRemoteInfo: ((Caller) -> CallKitRemoteInfo)?
+		public init(providerConfig: CXProviderConfiguration, isCallHoldSupported: Bool = true , provideRemoteInfo: ((Caller) -> CallKitRemoteInfo)? = nil, configureAudioSession: (() -> Error?)? = nil)
+		public init()
+	}
+	
+	public struct CallKitRemoteInfo {
+		public let displayName: String
+		public let handle: CXHandle
+		public init(displayName: String, handle: CXHandle)
+	}
+	
+	public struct CallScreenControlBarOptions {
+		public let leaveCallConfirmationMode: LeaveCallConfirmationMode
+		public let cameraButton: ButtonViewData?
+		public let microphoneButton: ButtonViewData?
+		public let audioDeviceButton: ButtonViewData?
+		public let liveCaptionsButton: ButtonViewData?
+		public let liveCaptionsToggleButton: ButtonViewData?
+		public let spokenLanguageButton: ButtonViewData?
+		public let captionsLanguageButton: ButtonViewData?
+		public let shareDiagnosticsButton: ButtonViewData?
+		public let reportIssueButton: ButtonViewData?
+		public let customButtons: [CustomButtonViewData]
+		public init(leaveCallConfirmationMode: LeaveCallConfirmationMode = .alwaysEnabled, cameraButton: ButtonViewData? = nil, microphoneButton: ButtonViewData? = nil, audioDeviceButton: ButtonViewData? = nil, liveCaptionsButton: ButtonViewData? = nil, liveCaptionsToggleButton: ButtonViewData? = nil, spokenLanguageButton: ButtonViewData? = nil, captionsLanguageButton: ButtonViewData? = nil, shareDiagnosticsButton: ButtonViewData? = nil, reportIssueButton: ButtonViewData? = nil, customButtons: [CustomButtonViewData] = [])
+	}
+	
+	public class CallScreenHeaderViewData: ObservableObject {
+		@Published public var title: String?
+		@Published public var subtitle: String?
+		public let customButtons: [CustomButtonViewData]
+		public init(title: String? = nil, subtitle: String? = nil, customButtons: [CustomButtonViewData] = [])
+	}
+	
+	public struct CallScreenOptions {
+		public let controlBarOptions: CallScreenControlBarOptions?
+		public let headerViewData: CallScreenHeaderViewData?
+		public init(controlBarOptions: CallScreenControlBarOptions? = nil, headerViewData: CallScreenHeaderViewData? = nil)
+	}
+	
+	public struct CallState: Equatable, RequestStringConvertible {
+		public var requestString: String
+		public var callEndReasonCodeInt: Int?
+		public var callEndReasonSubCodeInt: Int?
+		public var callId: String?
+		public static func ==(lhs: CallState, rhs: CallState) -> Bool
+		public static let none: CallState = . init(rawValue: "none")
+		public static let earlyMedia: CallState = . init(rawValue: "earlyMedia")
+		public static let connecting: CallState = . init(rawValue: "connecting")
+		public static let ringing: CallState = . init(rawValue: "ringing")
+		public static let connected: CallState = . init(rawValue: "connected")
+		public static let localHold: CallState = . init(rawValue: "localHold")
+		public static let disconnecting: CallState = . init(rawValue: "disconnecting")
+		public static let disconnected: CallState = . init(rawValue: "disconnected")
+		public static let inLobby: CallState = . init(rawValue: "inLobby")
+		public static let remoteHold: CallState = . init(rawValue: "remoteHold")
+	}
+	
+	extension AzureCommunicationCalling.CallState {
+	}
+	
+	public struct Caller {
+		public let displayName: String
+		public let identifier: CommunicationIdentifier
+	}
+	
+	public struct CapabilitiesChangedNotificationMode: Equatable, RequestStringConvertible {
+		public var requestString: String
+		public static func ==(lhs: CapabilitiesChangedNotificationMode, rhs: CapabilitiesChangedNotificationMode) -> Bool
+		public static let always: CapabilitiesChangedNotificationMode = . init(rawValue: "always")
+		public static let never: CapabilitiesChangedNotificationMode = . init(rawValue: "never")
+	}
+	
+	public struct CaptionsOptions {
+		public init(captionsOn: Bool = false , spokenLanguage: String? = nil)
+	}
+	
+	public enum CommunicationTokenCredentialError: String, Error {
+		case communicationTokenCredentialNotSet
+	}
+	
+	public class CustomButtonViewData: ObservableObject {
+		public let id: String
+		@Published public var image: UIImage
+		@Published public var title: String
+		@Published public var onClick: (CustomButtonViewData) -> Void
+		@Published public var enabled: Bool
+		@Published public var visible: Bool
+		public init(id: String, image: UIImage, title: String, enabled: Bool = true , visible: Bool = true , onClick: @escaping (CustomButtonViewData) -> Void)
+	}
+	
+	public struct DebugInfo {
+		public let callHistoryRecords: [CallHistoryRecord]
+		public let logFiles: [URL]
+		public let versions: Versions
+	}
+	
+	public struct IncomingCall {
+		public let callId: String
+		public let callerDisplayName: String
+		public let callerIdentifier: CommunicationIdentifier
+	}
+	
+	public struct IncomingCallCancelled {
+		public let callId: String
+		public let code: Int
+		public let subCode: Int
+	}
+	
+	public enum IncomingCallError: String, Error {
+		case callIdNotFound
+	}
+	
+	public enum JoinLocator {
+		case groupCall(groupId: UUID)
+		case teamsMeeting(teamsLink: String)
+		case teamsMeetingId(meetingId: String, meetingPasscode: String)
+		case roomCall(roomId: String)
+	}
+	
+	public struct LeaveCallConfirmationMode: Equatable, RequestStringConvertible {
+		public var requestString: String
+		public static func ==(lhs: LeaveCallConfirmationMode, rhs: LeaveCallConfirmationMode) -> Bool
+		public static let alwaysEnabled: LeaveCallConfirmationMode = . init(rawValue: "always_enabled")
+		public static let alwaysDisabled: LeaveCallConfirmationMode = . init(rawValue: "always_disabled")
+	}
+	
+	public struct LocalOptions {
+		public init(participantViewData: ParticipantViewData? = nil, setupScreenViewData: SetupScreenViewData? = nil, cameraOn: Bool? = false , microphoneOn: Bool? = false , skipSetupScreen: Bool? = false , audioVideoMode: CallCompositeAudioVideoMode = .audioAndVideo, captionsOptions: CaptionsOptions? = nil, setupScreenOptions: SetupScreenOptions? = nil, callScreenOptions: CallScreenOptions? = nil)
+	}
+	
+	public struct LocalizationOptions {
+		public init(locale: Locale, localizableFilename: String = "Localizable", layoutDirection: LayoutDirection = .leftToRight)
+	}
+	
+	public struct OrientationOptions: Equatable, RequestStringConvertible {
+		public var requestString: String
+		public static func ==(lhs: OrientationOptions, rhs: OrientationOptions) -> Bool
+		public static let portrait: OrientationOptions = . init(rawValue: "portrait")
+		public static let landscape: OrientationOptions = . init(rawValue: "landscape")
+		public static let landscapeRight: OrientationOptions = . init(rawValue: "landscapeRight")
+		public static let landscapeLeft: OrientationOptions = . init(rawValue: "landscapeLeft")
+		public static let allButUpsideDown: OrientationOptions = . init(rawValue: "allButUpsideDown")
+	}
+	
+	public struct ParticipantViewData {
+		public init(avatar: UIImage? = nil, displayName: String? = nil)
+	}
+	
+	public struct PushNotification {
+		public let callId: String
+		public let eventType: PushNotificationEventType
+		public let from: CommunicationIdentifier
+		public let to: CommunicationIdentifier
+		public let fromDisplayName: String
+		public let hasIncomingVideo: Bool
+		public init(data: [AnyHashable: Any])
+	}
+	
+	public struct PushNotificationEventType: Equatable, RequestStringConvertible {
+		public var requestString: String
+		public static func ==(lhs: PushNotificationEventType, rhs: PushNotificationEventType) -> Bool
+		public static let incomingCall: PushNotificationEventType = . init(rawValue: "incomingCall")
+		public static let incomingGroupCall: PushNotificationEventType = . init(rawValue: "incomingGroupCall")
+		public static let incomingPstnCall: PushNotificationEventType = . init(rawValue: "incomingPstnCall")
+		public static let stopRinging: PushNotificationEventType = . init(rawValue: "stopRinging")
+	}
+	
+	extension AzureCommunicationCalling.PushNotificationEventType {
+	}
+	
+	@available(*, deprecated, message: """
+Use CallComposite init with CommunicationTokenCredential
+and launch(locator: JoinLocator, localOptions: LocalOptions? = nil) instead.
+""") 
+	public struct RemoteOptions {
+		public let locator: JoinLocator
+		public let credential: CommunicationTokenCredential
+		public let displayName: String?
+		public init(for: JoinLocator, credential: CommunicationTokenCredential, displayName: String? = nil)
+	}
+	
+	public enum SetParticipantViewDataError: String, Error {
+		case participantNotInCall
+	}
+	
+	public struct SetupScreenOptions {
+		@available(*, deprecated, message: "Use init with ButtonsOptions arguments.") 
+		public init(cameraButtonEnabled: Bool = true , microphoneButtonEnabled: Bool = true )
+		public init(cameraButton: ButtonViewData? = nil, microphoneButton: ButtonViewData? = nil, audioDeviceButton: ButtonViewData? = nil)
+	}
+	
+	public struct SetupScreenViewData {
+		public init(title: String, subtitle: String? = nil)
+	}
+	
+	public struct SupportedLocale {
+		public static let ar = Locale(identifier: "ar")
+		public static let arSA = Locale(identifier: "ar-SA")
+		public static let zh = Locale(identifier: "zh")
+		public static let zhHans = Locale(identifier: "zh-Hans")
+		public static let zhHansCN = Locale(identifier: "zh-Hans-CN")
+		public static let zhHant = Locale(identifier: "zh-Hant")
+		public static let zhHantTW = Locale(identifier: "zh-Hant-TW")
+		public static let nl = Locale(identifier: "nl")
+		public static let nlNL = Locale(identifier: "nl-NL")
+		public static let en = Locale(identifier: "en")
+		public static let enGB = Locale(identifier: "en-GB")
+		public static let enUS = Locale(identifier: "en-US")
+		public static let fi = Locale(identifier: "fi")
+		public static let fiFI = Locale(identifier: "fi-FI")
+		public static let fr = Locale(identifier: "fr")
+		public static let frFR = Locale(identifier: "fr-FR")
+		public static let de = Locale(identifier: "de")
+		public static let deDE = Locale(identifier: "de-DE")
+		public static let he = Locale(identifier: "he")
+		public static let heIL = Locale(identifier: "he-IL")
+		public static let it = Locale(identifier: "it")
+		public static let itIT = Locale(identifier: "it-IT")
+		public static let ja = Locale(identifier: "ja")
+		public static let jaJP = Locale(identifier: "ja-JP")
+		public static let ko = Locale(identifier: "ko")
+		public static let koKR = Locale(identifier: "ko-KR")
+		public static let nb = Locale(identifier: "nb")
+		public static let nbNO = Locale(identifier: "nb-NO")
+		public static let pl = Locale(identifier: "pl")
+		public static let plPL = Locale(identifier: "pl-PL")
+		public static let pt = Locale(identifier: "pt")
+		public static let ptBR = Locale(identifier: "pt-BR")
+		public static let ru = Locale(identifier: "ru")
+		public static let ruRU = Locale(identifier: "ru-RU")
+		public static let es = Locale(identifier: "es")
+		public static let esES = Locale(identifier: "es-ES")
+		public static let sv = Locale(identifier: "sv")
+		public static let svSE = Locale(identifier: "sv-SE")
+		public static let tr = Locale(identifier: "tr")
+		public static let trTR = Locale(identifier: "tr-TR")
+		public static var values: [Locale]
+	}
+	
+	public protocol ThemeOptions {
+		var colorSchemeOverride: UIUserInterfaceStyle { get }
+		var primaryColor: UIColor { get }
+		var primaryColorTint10: UIColor { get }
+		var primaryColorTint20: UIColor { get }
+		var primaryColorTint30: UIColor { get }
+		var foregroundOnPrimaryColor: UIColor { get }
+	}
+	
+	public extension ThemeOptions {
+		var colorSchemeOverride: UIUserInterfaceStyle
+		var primaryColor: UIColor
+		var primaryColorTint10: UIColor
+		var primaryColorTint20: UIColor
+		var primaryColorTint30: UIColor
+		var foregroundOnPrimaryColor: UIColor
+	}
+	
+	public struct Versions {
+		public let callingUIVersion: String
+	}
+	
+\\ Non-package extensions 
+	extension AVAudioSession.RecordPermission {
+	}
+	
+	extension AVAuthorizationStatus {
+	}
+	
+	extension AppStateReducerTests {
+	}
+	
+	extension AudioDevicesListViewModelTests {
+	}
+	
+	extension AudioSessionReducerTests {
+	}
+	
+	extension AvatarManagerTests {
+	}
+	
+	extension AzureCommunicationCalling.CallParticipantRole {
+	}
+	
+	extension AzureCommunicationCalling.CapabilitiesChangedEventArgs {
+	}
+	
+	extension AzureCommunicationCalling.CapabilitiesChangedReason {
+	}
+	
+	extension AzureCommunicationCalling.CapabilityResolutionReason {
+	}
+	
+	extension AzureCommunicationCalling.CaptionsResultType {
+	}
+	
+	extension AzureCommunicationCalling.CaptionsType {
+	}
+	
+	extension AzureCommunicationCalling.CommunicationCaptionsReceivedEventArgs {
+	}
+	
+	extension AzureCommunicationCalling.DiagnosticQuality {
+	}
+	
+	extension AzureCommunicationCalling.ParticipantCapability {
+	}
+	
+	extension AzureCommunicationCalling.ParticipantCapabilityType {
+	}
+	
+	extension AzureCommunicationCalling.RemoteParticipant {
+	}
+	
+	extension AzureCommunicationCalling.RemoteVideoStream {
+	}
+	
+	extension AzureCommunicationCalling.TeamsCaptionsReceivedEventArgs {
+	}
+	
+	extension AzureCommunicationCalling.VideoStreamSourceType {
+	}
+	
+	extension BannerTextViewModelTests {
+	}
+	
+	extension BannerViewModelTests {
+	}
+	
+	extension BottomToastDiagnosticViewModelTests {
+	}
+	
+	extension CallCompositeInternalError {
+	}
+	
+	extension CallDiagnosticsReducerTests {
+	}
+	
+	extension CallDiagnosticsViewModelTests {
+	}
+	
+	extension CallEndReason {
+	}
+	
+	extension CallHistoryRepositoryTests {
+	}
+	
+	extension CallHistoryServiceTests {
+	}
+	
+	extension CallingMiddlewareHandler {
+	}
+	
+	extension CallingMiddlewareHandlerTests {
+	}
+	
+	extension CallingMiddlewareTests {
+	}
+	
+	extension CallingReducerTests {
+	}
+	
+	extension CallingSDKEventsHandler: CallDelegate, RecordingCallFeatureDelegate, TranscriptionCallFeatureDelegate, DominantSpeakersCallFeatureDelegate, MediaDiagnosticsDelegate, NetworkDiagnosticsDelegate, CaptionsCallFeatureDelegate, CapabilitiesCallFeatureDelegate {
+	}
+	
+	extension CallingSDKInitializer: CallAgentDelegate {
+		public func callAgent(_: CallAgent, didUpdateCalls: CallsUpdatedEventArgs)
+		public func callAgent(_: CallAgent, didRecieveIncomingCall: AzureCommunicationCalling.IncomingCall)
+	}
+	
+	extension CallingSDKInitializer: IncomingCallDelegate {
+	}
+	
+	extension CallingSDKWrapper {
+	}
+	
+	extension CallingSDKWrapper: DeviceManagerDelegate {
+	}
+	
+	extension CallingServiceTests {
+	}
+	
+	extension CallingStatus {
+	}
+	
+	extension CallingView {
+	}
+	
+	extension CallingViewModel: Identifiable {
+	}
+	
+	extension CallingViewModelTests {
+	}
+	
+	extension CameraFacing {
+	}
+	
+	extension ColorThemeProvider: ColorProviding {
+	}
+	
+	extension CompositeErrorManagerTests {
+	}
+	
+	extension CompositeExitManagerTests {
+	}
+	
+	extension CompositeLocalVideoStream {
+	}
+	
+	extension CompositeStateManagerTests {
+	}
+	
+	extension CompositeViewModelFactory {
+	}
+	
+	extension CompositeViewModelFactoryProtocol {
+	}
+	
+	extension CompositeViewModelFactoryTests {
+	}
+	
+	extension ControlBarViewModel: AccessibilityProviderNotificationsObserver {
+	}
+	
+	extension ControlBarViewModelTests {
+	}
+	
+	extension DiagnosticConfigTests {
+	}
+	
+	extension DrawerViewControllerProtocol where Self : UIViewController {
+	}
+	
+	extension EnvironmentValues {
+	}
+	
+	extension ErrorReducerTests {
+	}
+	
+	extension Fonts {
+	}
+	
+	extension InfoHeaderViewModel: AccessibilityProviderNotificationsObserver {
+	}
+	
+	extension InfoHeaderViewModelTests {
+	}
+	
+	extension JoiningCallActivityViewModelTests {
+	}
+	
+	extension LifeCycleReducerTests {
+	}
+	
+	extension LoadingOverlayViewModelTests {
+	}
+	
+	extension LobbyOverlayViewModelTests {
+	}
+	
+	extension LobbyWaitingHeaderViewModelTests {
+	}
+	
+	extension LocalUserReducerTests {
+	}
+	
+	extension LocalUserState.AudioDeviceSelectionStatus {
+	}
+	
+	extension LocalVideoViewModelTests {
+	}
+	
+	extension LocalizationProviderTests {
+	}
+	
+	extension MessageBarDiagnosticViewModel: Equatable {
+	}
+	
+	extension MessageBarDiagnosticViewModelTests {
+	}
+	
+	extension Middleware {
+	}
+	
+	extension Middleware where State == AppState {
+	}
+	
+	extension NavigationReducerTests {
+	}
+	
+	extension NavigationRouterTests {
+	}
+	
+	extension OnHoldOverlayViewModelTests {
+	}
+	
+	extension OverlayViewModelProtocol {
+	}
+	
+	extension ParticipantCellViewModelTests {
+	}
+	
+	extension ParticipantGridViewModelTests {
+	}
+	
+	extension ParticipantMenuViewModelTests {
+	}
+	
+	extension ParticipantState {
+	}
+	
+	extension ParticipantsListCellViewModel {
+	}
+	
+	extension ParticipantsListViewModelTests {
+	}
+	
+	extension PermissionReducerTests {
+	}
+	
+	private extension PermissionsManager {
+	}
+	
+	extension PipManager: AVPictureInPictureControllerDelegate {
+		public func pictureInPictureControllerDidStopPictureInPicture(_: AVPictureInPictureController)
+		public func pictureInPictureControllerWillStartPictureInPicture(_: AVPictureInPictureController)
+		public func pictureInPictureControllerDidStartPictureInPicture(_: AVPictureInPictureController)
+		public func pictureInPictureController(_: AVPictureInPictureController, restoreUserInterfaceForPictureInPictureStopWithCompletionHandler: @escaping (Bool) -> Void)
+		public func pictureInPictureController(_: AVPictureInPictureController, failedToStartPictureInPictureWithError: Error)
+	}
+	
+	extension PreviewAreaViewModelTests {
+	}
+	
+	extension Reducer {
+	}
+	
+	extension Reducer where State == AudioSessionState, Actions == AudioSessionAction {
+	}
+	
+	extension Reducer where State == ButtonViewDataState, Actions == ButtonViewDataAction {
+	}
+	
+	extension Reducer where State == CallDiagnosticsState, Actions == Action {
+	}
+	
+	extension Reducer where State == CallScreenInfoHeaderState, Actions == CallScreenInfoHeaderAction {
+	}
+	
+	extension Reducer where State == CallingState, Actions == Action {
+	}
+	
+	extension Reducer where State == CaptionsState, Actions == CaptionsAction {
+	}
+	
+	extension Reducer where State == ErrorState, Actions == Action {
+	}
+	
+	extension Reducer where State == LifeCycleState, Actions == LifecycleAction {
+	}
+	
+	extension Reducer where State == LocalUserState, Actions == LocalUserAction {
+	}
+	
+	extension Reducer where State == NavigationState, Actions == Action {
+	}
+	
+	extension Reducer where State == PermissionState, Actions == PermissionAction {
+	}
+	
+	extension Reducer where State == RemoteParticipantsState, Actions == Action {
+	}
+	
+	extension Reducer where State == ToastNotificationState, Actions == ToastNotificationAction {
+	}
+	
+	extension Reducer where State == VisibilityState, Actions == VisibilityAction {
+	}
+	
+	extension RemoteParticipantsManagerTests {
+	}
+	
+	extension RemoteParticipantsReducerTests {
+	}
+	
+	extension SetupControlBarViewModelTests {
+	}
+	
+	extension SetupViewModel: Identifiable {
+	}
+	
+	extension SetupViewModelTests {
+	}
+	
+	extension Store where State == AppState, Action == AzureCommunicationUICalling.Action {
+	}
+	
+	extension SupportFormViewModel: Equatable {
+	}
+	
+	extension ToastNotificationReducerTests {
+	}
+	
+	extension UIColor {
+	}
+	
+	extension UIFont {
+	}
+	
+	extension UIImage {
+	}
+}

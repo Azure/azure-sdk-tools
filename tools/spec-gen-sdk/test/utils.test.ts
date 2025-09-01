@@ -1,9 +1,9 @@
 import { parseSemverVersionString } from '../src/utils/parseSemverVersionString';
 import { removeAnsiEscapeCodes, diffStringArrays, extractPathFromSpecConfig } from '../src/utils/utils';
-import * as typespecUtils from '../src/utils/typespecUtils';
 import { findMarkdownCodeBlocks, findSwaggerToSDKConfiguration } from '../src/utils/readme';
-import path from 'path';
-import fs from 'fs';
+import * as path from 'node:path';
+import * as fs from 'node:fs';
+import { describe, it, expect } from 'vitest';
 
 // To invoke these tests, run `npm run test-utils` from the "private/openapi-sdk-automation" directory.
 describe('parseSemverVersionString', () => {
@@ -148,33 +148,6 @@ describe('Remove AnsiEscape Codes', () => {
   })
 })
 
-describe('getTypeSpecProjectServiceName', () => {
-  it('test getTypeSpecProjectServiceName', () => {
-    const outputFolder = '{azure-resource-provider-folder}/Language/{version-status}/{version}/analyzetext.json';
-    const res = typespecUtils.getTypeSpecProjectServiceName(outputFolder);
-    expect(res).toEqual('Language');
-  })
-
-  it('test getTypeSpecProjectServiceName when output service-name ', () => {
-    const outputFolder = '{azure-resource-provider-folder}/{service-name}/{version-status}/{version}/analyzetext.json';
-    const res = typespecUtils.getTypeSpecProjectServiceName(outputFolder);
-    expect(res).toEqual('{service-name}');
-  })
-})
-
-describe('getTypeSpecProjectResourceProvider', () => {
-  it('test getTypeSpecProjectResourceProvider 1', () => {
-    const typespecProject = 'specification/cognitiveservices/OpenAI.Inference';
-    const res = typespecUtils.getTypeSpecProjectResourceProvider(typespecProject);
-    expect(res).toEqual('OpenAI.Inference');
-  })
-  it('test getTypeSpecProjectResourceProvider 2', () => {
-    const typespecProject = 'specification/cognitiveservices/ContentSafety/a/b/c';
-    const res = typespecUtils.getTypeSpecProjectResourceProvider(typespecProject);
-    expect(res).toEqual('ContentSafety/a/b/c');
-  })
-})
-
 describe('test diffStringArrays between breakingchanges from generate script and present suppressions', () => {
   it('test diffStringArrays if both same', () => {
     const left = [
@@ -275,6 +248,6 @@ describe('extract and format the prefix from spec config path', () => {
       const tspConfigPath = undefined;
       const readmePath = undefined;
       const result = extractPathFromSpecConfig(tspConfigPath, readmePath);
-      expect(result).toEqual('');
+      expect(result).toMatch(/no-readme-tspconfig-\d+/);
     });
   });

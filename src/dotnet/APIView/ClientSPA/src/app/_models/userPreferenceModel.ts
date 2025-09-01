@@ -1,6 +1,13 @@
+export enum ScrollBarSize {
+    Small = 'small',
+    Medium = 'medium',
+    Large = 'large'
+}
+
 export class UserPreferenceModel {
     userName : string
     language : string []
+    approvedLanguages: string []
     theme : string
     hideReviewPageOptions : boolean
     hideSamplesPageOptions : boolean
@@ -12,11 +19,13 @@ export class UserPreferenceModel {
     showSystemComments: boolean
     useBetaIndexPage: boolean
     disableCodeLinesLazyLoading: boolean
+    scrollBarSize: ScrollBarSize
 
 
     constructor() {
         this.userName = '';
-        this.language = []
+        this.language = [];
+        this.approvedLanguages = [];
         this.theme = '';
         this.hideReviewPageOptions  = false;
         this.hideSamplesPageOptions  = false;
@@ -28,6 +37,6 @@ export class UserPreferenceModel {
         this.showSystemComments = true;
         this.useBetaIndexPage = false;
         this.disableCodeLinesLazyLoading = false;
-
+        this.scrollBarSize = ScrollBarSize.Small;
     }
 }

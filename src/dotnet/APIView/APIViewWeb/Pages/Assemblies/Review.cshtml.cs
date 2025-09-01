@@ -17,7 +17,6 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Configuration;
 using Microsoft.TeamFoundation.Common;
-using ApiView;
 
 namespace APIViewWeb.Pages.Assemblies
 {
@@ -31,10 +30,11 @@ namespace APIViewWeb.Pages.Assemblies
         private readonly IBlobCodeFileRepository _codeFileRepository;
         private readonly ICommentsManager _commentsManager;
         private readonly INotificationManager _notificationManager;
-        public readonly UserPreferenceCache _preferenceCache;
+        public readonly UserProfileCache _userProfileCache;
         private readonly ICosmosUserProfileRepository _userProfileRepository;
         private readonly IConfiguration _configuration;
         private readonly IHubContext<SignalRHub> _signalRHubContext;
+        private readonly IEnumerable<LanguageService> _languageServices;
 
         public ReviewPageModel(
             IReviewManager reviewManager,
@@ -43,10 +43,11 @@ namespace APIViewWeb.Pages.Assemblies
             IBlobCodeFileRepository codeFileRepository,
             ICommentsManager commentsManager,
             INotificationManager notificationManager,
-            UserPreferenceCache preferenceCache,
+            UserProfileCache userProfileCache,
             ICosmosUserProfileRepository userProfileRepository,
             IConfiguration configuration,
-            IHubContext<SignalRHub> signalRHub)
+            IHubContext<SignalRHub> signalRHub,
+            IEnumerable<LanguageService> languageServices)
         {
             _reviewManager = reviewManager;
             _apiRevisionsManager = reviewRevisionManager;
@@ -54,10 +55,11 @@ namespace APIViewWeb.Pages.Assemblies
             _codeFileRepository = codeFileRepository;
             _commentsManager = commentsManager;
             _notificationManager = notificationManager;
-            _preferenceCache = preferenceCache;
+            _userProfileCache = userProfileCache;
             _userProfileRepository = userProfileRepository;
             _configuration = configuration;
             _signalRHubContext = signalRHub;
+            _languageServices = languageServices;
         }
 
         public ReviewContentModel ReviewContent { get; set; }
@@ -86,15 +88,15 @@ namespace APIViewWeb.Pages.Assemblies
             await GetReviewPageModelPropertiesAsync(id, revisionId, DiffRevisionId, ShowDiffOnly);
 
             ReviewContent = await PageModelHelpers.GetReviewContentAsync(configuration: _configuration,
-                reviewManager: _reviewManager, preferenceCache: _preferenceCache, userProfileRepository: _userProfileRepository,
-                reviewRevisionsManager: _apiRevisionsManager, commentManager: _commentsManager, codeFileRepository: _codeFileRepository,
-                signalRHubContext: _signalRHubContext, user: User, reviewId: id, revisionId: revisionId, diffRevisionId: DiffRevisionId,
-                showDocumentation: (ShowDocumentation ?? false), showDiffOnly: ShowDiffOnly, diffContextSize: REVIEW_DIFF_CONTEXT_SIZE,
-                diffContextSeperator: DIFF_CONTEXT_SEPERATOR);
+                reviewManager: _reviewManager, userProfileCache: _userProfileCache, reviewRevisionsManager: _apiRevisionsManager,
+                commentManager: _commentsManager, codeFileRepository: _codeFileRepository, signalRHubContext: _signalRHubContext,
+                user: User, reviewId: id, revisionId: revisionId, diffRevisionId: DiffRevisionId, showDocumentation: (ShowDocumentation ?? false),
+                showDiffOnly: ShowDiffOnly, diffContextSize: REVIEW_DIFF_CONTEXT_SIZE, diffContextSeperator: DIFF_CONTEXT_SEPERATOR);
 
             if (ReviewContent.Directive == ReviewContentModelDirective.RedirectToSPAUI)
             {
-                var uri = $"https://spa.{Request.Host}/review/{id}?activeApiRevisionId={ReviewContent.ActiveAPIRevision.Id}";
+                var uri = ManagerHelpers.ResolveReviewUrl(reviewId: id, apiRevisionId: ReviewContent.ActiveAPIRevision.Id,
+                    language: ReviewContent.ActiveAPIRevision.Language, configuration: _configuration, languageServices: _languageServices, diffRevisionId: DiffRevisionId);
                 return Redirect(uri);
             }
 
@@ -150,11 +152,10 @@ namespace APIViewWeb.Pages.Assemblies
                 foreach (var review in correspondingReviews)
                 {
                     var reviewContent = await PageModelHelpers.GetReviewContentAsync(configuration: _configuration,
-                        reviewManager: _reviewManager, preferenceCache: _preferenceCache, userProfileRepository: _userProfileRepository,
-                        reviewRevisionsManager: _apiRevisionsManager, commentManager: _commentsManager, codeFileRepository: _codeFileRepository,
-                        signalRHubContext: _signalRHubContext, user: User, review: review, revisionId: null, diffRevisionId: null,
-                        showDocumentation: (ShowDocumentation ?? false), showDiffOnly: ShowDiffOnly, diffContextSize: REVIEW_DIFF_CONTEXT_SIZE,
-                        diffContextSeperator: DIFF_CONTEXT_SEPERATOR);
+                        reviewManager: _reviewManager, userProfileCache: _userProfileCache, reviewRevisionsManager: _apiRevisionsManager,
+                        commentManager: _commentsManager, codeFileRepository: _codeFileRepository, signalRHubContext: _signalRHubContext,
+                        user: User, review: review, revisionId: null, diffRevisionId: null, showDocumentation: (ShowDocumentation ?? false),
+                        showDiffOnly: ShowDiffOnly, diffContextSize: REVIEW_DIFF_CONTEXT_SIZE, diffContextSeperator: DIFF_CONTEXT_SEPERATOR);
 
                     ReviewContent.CrossLanguageViewContent.Add(review.Language, reviewContent);
                 }
@@ -421,21 +422,21 @@ namespace APIViewWeb.Pages.Assemblies
         /// <returns></returns>
         private async Task GetReviewPageModelPropertiesAsync(string id, string revisionId = null, string diffRevisionId = null, bool diffOnly = false)
         {
-            UserPreference = await _preferenceCache.GetUserPreferences(User) ?? new UserPreferenceModel();
+            var userProfile = await _userProfileCache.GetUserProfileAsync(User.GetGitHubLogin());
             Comments = await _commentsManager.GetReviewCommentsAsync(id);
             DiffRevisionId = (DiffRevisionId == null) ? diffRevisionId : DiffRevisionId;
             ShowDiffOnly = (ShowDiffOnly == false) ? diffOnly : ShowDiffOnly;
 
             if (ShowDocumentation.HasValue)
             {
-                UserPreference.ShowDocumentation = ShowDocumentation.Value;
-                _preferenceCache.UpdateUserPreference(UserPreference, User);
+                userProfile.Preferences.ShowDocumentation = ShowDocumentation.Value;
+                await _userProfileCache.UpdateUserProfileAsync(User.GetGitHubLogin(), userProfile.Email, userProfile.Preferences);
             }
             else
             {
-                ShowDocumentation = UserPreference.ShowDocumentation;
+                ShowDocumentation = userProfile.Preferences.ShowDocumentation;
             }
-
+            UserPreference = userProfile.Preferences;
         }
 
         /// <summary>

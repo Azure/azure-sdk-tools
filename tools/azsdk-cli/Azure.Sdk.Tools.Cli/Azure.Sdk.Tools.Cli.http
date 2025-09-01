@@ -1,0 +1,6 @@
+@Azure.Sdk.Tools.Cli_HostAddress = http://localhost:5178
+
+GET {{Azure.Sdk.Tools.Cli_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

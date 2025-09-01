@@ -1,6 +1,6 @@
 import { ApiModel } from "@microsoft/api-extractor-model";
 import { readFile, writeFile } from "node:fs/promises";
-import { generateApiview } from "./generate";
+import { generateApiView } from "./generate";
 
 function getPackageVersion(fileName: string) {
   const match = fileName.match(/.*_(?<version>.*)\.api\.json/);
@@ -36,12 +36,12 @@ async function main() {
   );
 
   const result = JSON.stringify(
-    generateApiview({
+    generateApiView({
       meta: {
         Name,
         PackageName,
         PackageVersion,
-        ParserVersion: "2.0.5",
+        ParserVersion: "2.0.6",
         Language: "JavaScript",
       },
       dependencies,

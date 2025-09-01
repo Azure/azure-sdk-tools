@@ -2,18 +2,21 @@ import { app, HttpRequest, HttpResponseInit, InvocationContext, Timer } from '@a
 import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
-import { StorageService } from '../services/StorageService';
+import { BlobService } from '../services/StorageService';
 import { SpectorCaseProcessor } from '../services/SpectorCaseProcessor';
+import { ConfigurationLoader, RepositoryConfig } from '../services/ConfigurationLoader';
+import { SearchService } from '../services/SearchService';
 
 /**
  * Daily sync knowledge function that processes documentation from various repositories
  * and uploads processed content to blob storage for the Azure SDK QA Bot.
  * 
  * This function:
- * 1. Clones/updates multiple documentation repositories
- * 2. Processes markdown files to extract content
- * 3. Uploads processed content to Azure Blob Storage
- * 4. Cleans up temporary files
+ * 1. Loads configuration from knowledge-config.json
+ * 2. Clones/updates multiple documentation repositories
+ * 3. Processes markdown files to extract content
+ * 4. Uploads processed content to Azure Blob Storage
+ * 5. Cleans up temporary files
  * 
  * Triggered daily via timer or manually via HTTP request
  */
@@ -25,75 +28,26 @@ interface DocumentationSource {
     name?: string;
     fileNameLowerCase?: boolean;
     ignoredPaths?: string[];
+    isSpectorTest?: boolean;
 }
 
-// Configuration for repository setup
-interface RepositoryConfig {
-    name: string;
-    url: string;
-    path: string;
-    branch: string;
-    sparseCheckout?: string[];
-    authType?: 'public' | 'token' | 'ssh';
-    sshHost?: string;
-    token?: string;
+
+// Model for processed markdown file result
+interface ProcessedMarkdownFile {
+    filename: string;
+    content: string;
+    blobPath: string;
+    isValid: boolean; // Indicates if the file should be processed further
 }
 
-const documentationSources: DocumentationSource[] = [
-    {
-        path: "docs/typespec/website/src/content/docs/docs",
-        folder: "typespec_docs",
-        name: "TypeSpec",
-        fileNameLowerCase: true,
-    },
-    {
-        path: "docs/typespec-azure/website/src/content/docs/docs",
-        folder: "typespec_azure_docs",
-        name: "TypeSpec Azure",
-        fileNameLowerCase: true,
-    },
-    {
-        path: "docs/azure-rest-api-specs.wiki",
-        folder: "azure_rest_api_specs_wiki",
-    },
-    {
-        path: "docs/azure-sdk-for-python.wiki",
-        folder: "azure_sdk_for_python_wiki",
-    },
-    {
-        path: "docs/azure-sdk-for-python/doc",
-        folder: "azure_sdk_for_python_docs",
-    },
-    {
-        path: "docs/api-guidelines",
-        folder: "azure_api_guidelines",
-    },
-    {
-        path: "docs/resource-provider-contract",
-        folder: "azure_resource_manager_rpc",
-    },
-    {
-        path: "docs/azure-sdk-docs-eng.ms",
-        folder: "azure-sdk-docs-eng",
-    },
-    {
-        path: "docs/azure-sdk",
-        folder: "azure-sdk-guidelines",
-        ignoredPaths: ["docs/redirects"]
-    },
-    {
-        path: "docs/typespec/packages/http-specs/specs/generated",
-        folder: "typespec_http_specs",
-        name: "TypeSpec HTTP Spector Cases",
-        fileNameLowerCase: true,
-    },
-    {
-        path: "docs/typespec-azure/packages/azure-http-specs/specs/generated",
-        folder: "typespec_azure_http_specs",
-        name: "TypeSpec Azure HTTP Spector Cases",
-        fileNameLowerCase: true,
-    },
-];
+// Result interface for source directory processing
+interface ProcessSourceDirectoryResult {
+    totalProcessed: number;
+    changedDocuments: number;
+    unchangedDocuments: number;
+    changedFiles: ProcessedMarkdownFile[];  // Files that changed and need to be uploaded/updated
+    unchangedFiles: ProcessedMarkdownFile[]; // Files that didn't change
+}
 
 /**
  * Timer-triggered function that runs daily to sync knowledge base
@@ -148,13 +102,27 @@ async function processDailySyncKnowledge(context: InvocationContext): Promise<vo
     const docsDir = path.join(workingDir, 'docs');
     const tempDocsDir = path.join(workingDir, 'temp_docs');
     
+    // Initialize services
+    const blobService = new BlobService();
+    const searchService = new SearchService();
+    
     try {
+        // Load configuration
+        context.log('Loading knowledge configuration...');
+        const documentationSources = ConfigurationLoader.getDocumentationSources(context);
+        
         // Create working directories
         if (fs.existsSync(workingDir)) {
             fs.rmSync(workingDir, { recursive: true, force: true });
         }
         fs.mkdirSync(workingDir, { recursive: true });
         fs.mkdirSync(docsDir, { recursive: true });
+        
+        context.log('Loading existing blob metadata for change detection...');
+        
+        // Load existing blob metadata for change detection
+        const containerName = process.env.STORAGE_KNOWLEDGE_CONTAINER;
+        const existingBlobs = await blobService.listBlobsWithProperties(containerName);
         
         context.log('Setting up documentation repositories...');
         
@@ -167,6 +135,12 @@ async function processDailySyncKnowledge(context: InvocationContext): Promise<vo
         await preprocessSpectorCases(docsDir, context);
 
         context.log('Processing documentation sources...');
+        
+        let totalProcessed = 0;
+        let changedDocuments = 0;
+        let unchangedDocuments = 0;
+        const allChangedFiles: ProcessedMarkdownFile[] = [];
+        const allUnchangedFiles: ProcessedMarkdownFile[] = [];
         
         // Process each documentation source
         for (const source of documentationSources) {
@@ -191,25 +165,59 @@ async function processDailySyncKnowledge(context: InvocationContext): Promise<vo
             
             // Process files in source directory
             try {
-                await processSourceDirectory(sourceDir, source, targetDir, context);
+                const result = await processSourceDirectory(
+                    sourceDir, 
+                    source, 
+                    targetDir, 
+                    existingBlobs,
+                    searchService,
+                    blobService,
+                    context
+                );
+                
+                totalProcessed += result.totalProcessed;
+                changedDocuments += result.changedDocuments;
+                unchangedDocuments += result.unchangedDocuments;
+                allChangedFiles.push(...result.changedFiles);
+                allUnchangedFiles.push(...result.unchangedFiles);
             } catch (error) {
                 context.error(`Error processing source directory: ${error}`);
                 throw error;
             }
         }
         
-        // Upload files to blob storage
-        const currentFiles = await uploadFilesToBlobStorage(tempDocsDir, documentationSources, context);
+        context.log(`Processing completed: ${totalProcessed} total, ${changedDocuments} changed, ${unchangedDocuments} unchanged`);
+        context.log(`Files that changed: ${allChangedFiles.length}, Files that remained unchanged: ${allUnchangedFiles.length}`);
+
+        // Delete the AI Search index for changed files
+        await deleteAISearchIndex(searchService, allChangedFiles, context);
+
+        // Upload files to blob storage (only for changed documents)
+        await uploadFilesToBlobStorage(allChangedFiles, context);
         
         // Clean up expired blobs
-        await cleanupExpiredBlobs(currentFiles, context);
-        
+        await cleanupExpiredBlobs(allChangedFiles.concat(allUnchangedFiles), context);
         context.log('Daily sync knowledge processing completed');
         
     } finally {
         // Cleanup working directory
         if (fs.existsSync(workingDir)) {
             fs.rmSync(workingDir, { recursive: true, force: true });
+        }
+    }
+}
+
+/**
+ * Delete AI Search index for changed files
+ */
+async function deleteAISearchIndex(searchService: SearchService, changeFiles: ProcessedMarkdownFile[], context: InvocationContext) {
+    for (const processed of changeFiles) {
+        // Delete existing chunks from AI Search if document title exists
+        try {
+            await searchService.deleteDocumentChunksByFileName(processed.filename, context);
+            context.log(`Deleted AI search chunks for: "${processed.blobPath}"`);
+        } catch (error) {
+            context.warn(`Failed to delete chunks for: "${processed.blobPath}": ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
 }
@@ -332,73 +340,8 @@ async function setupDocumentationRepositories(docsDir: string, context: Invocati
     // Setup SSH configuration first
     await setupSSHConfig(context);
     
-    const repositories = [
-        {
-            name: 'TypeSpec',
-            url: 'https://github.com/microsoft/typespec.git',
-            path: 'typespec',
-            branch: 'main',
-            sparseCheckout: ['website/src/content/docs/docs', 'packages/http-specs/specs']
-        },
-        {
-            name: 'TypeSpec Azure',
-            url: 'https://github.com/Azure/typespec-azure.git',
-            path: 'typespec-azure',
-            branch: 'main',
-            sparseCheckout: ['website/src/content/docs/docs', 'packages/azure-http-specs/specs']
-        },
-        {
-            name: 'Azure REST API Specs Wiki',
-            url: 'https://github.com/Azure/azure-rest-api-specs.wiki.git',
-            path: 'azure-rest-api-specs.wiki',
-            branch: 'master'
-        },
-        {
-            name: 'Azure SDK for Python Wiki',
-            url: 'https://github.com/Azure/azure-sdk-for-python.wiki.git',
-            path: 'azure-sdk-for-python.wiki',
-            branch: 'master'
-        },
-        {
-            name: 'Azure SDK for Python',
-            url: 'https://github.com/Azure/azure-sdk-for-python.git',
-            path: 'azure-sdk-for-python',
-            branch: 'main',
-            sparseCheckout: ['doc']
-        },
-        {
-            name: 'Azure API Guidelines',
-            url: 'https://github.com/microsoft/api-guidelines.git',
-            path: 'api-guidelines',
-            branch: 'vNext',
-            sparseCheckout: ['azure'],
-        },
-        {
-            name: 'Azure Resource Provider Contract',
-            url: 'git@github-microsoft:cloud-and-ai-microsoft/resource-provider-contract.git',
-            path: 'resource-provider-contract',
-            branch: 'master',
-            sparseCheckout: ['v1.0'],
-            authType: 'ssh',
-            sshHost: 'github-microsoft'
-        },
-        {
-            name: 'Azure SDK Engineering System',
-            url: 'https://dev.azure.com/azure-sdk/internal/_git/azure-sdk-docs-eng.ms',
-            path: 'azure-sdk-docs-eng.ms',
-            branch: 'main',
-            sparseCheckout: ['docs'],
-            authType: 'token',
-            token: process.env.AZURE_SDK_ENG_HUB_TOKEN
-        },
-        {
-            name: 'Azure SDK',
-            url: 'https://github.com/Azure/azure-sdk.git',
-            path: 'azure-sdk',
-            branch: 'main',
-            sparseCheckout: ['docs'],
-        }
-    ] as RepositoryConfig[];
+    // Load repository configurations from the config file
+    const repositories = ConfigurationLoader.getRepositoryConfigs(context);
     
     for (const repo of repositories) {
         try {
@@ -448,17 +391,26 @@ async function processSourceDirectory(
     sourceDir: string,
     source: DocumentationSource,
     targetDir: string,
+    existingBlobs: Map<string, any>,
+    searchService: SearchService,
+    blobService: BlobService,
     context: InvocationContext
-): Promise<void> {
+): Promise<ProcessSourceDirectoryResult> {
     
-    function walkDirectory(dir: string): void {
+    let totalProcessed = 0;
+    let changedDocuments = 0;
+    let unchangedDocuments = 0;
+    const changedFiles: ProcessedMarkdownFile[] = [];
+    const unchangedFiles: ProcessedMarkdownFile[] = [];
+    
+    async function walkDirectory(dir: string): Promise<void> {
         const entries = fs.readdirSync(dir, { withFileTypes: true });
         
         for (const entry of entries) {
             const fullPath = path.join(dir, entry.name);
             
             if (entry.isDirectory()) {
-                walkDirectory(fullPath);
+                await walkDirectory(fullPath);
             } else if (entry.name.endsWith('.md') || entry.name.endsWith('.mdx')) {
                 const relativePath = path.relative(sourceDir, fullPath);
 
@@ -472,8 +424,31 @@ async function processSourceDirectory(
                     continue;
                 }
                 
+                totalProcessed++;
+                
                 try {
-                    processMarkdownFile(fullPath, source, targetDir, sourceDir);
+                    // Use the shared processMarkdownFile logic to get processed content and blob path
+                    const processed = processMarkdownFile(fullPath, source, sourceDir);
+                    
+                    // Skip if the file is not valid for processing (e.g., azure-sdk-guidelines case)
+                    if (!processed.isValid) {
+                        continue;
+                    }
+
+                    // Check if content has changed by comparing MD5
+                    if (blobService.hasContentChanged(processed.blobPath, processed.content, existingBlobs)) {
+                        context.log(`Content changed for: ${processed.blobPath}`);
+                        changedDocuments++;
+                        changedFiles.push(processed);
+                        
+                        // Create target file and write processed content
+                        const targetFilePath = path.join(targetDir, processed.filename);
+                        fs.writeFileSync(targetFilePath, processed.content);
+                    } else {
+                        context.log(`Content unchanged for: ${processed.blobPath}`);
+                        unchangedDocuments++;
+                        unchangedFiles.push(processed);
+                    }
                 } catch (error) {
                     context.error(`Error processing file ${fullPath}:`, error);
                     throw error;
@@ -482,7 +457,15 @@ async function processSourceDirectory(
         }
     }
     
-    walkDirectory(sourceDir);
+    await walkDirectory(sourceDir);
+    
+    return { 
+        totalProcessed, 
+        changedDocuments, 
+        unchangedDocuments, 
+        changedFiles, 
+        unchangedFiles 
+    };
 }
 
 /**
@@ -537,7 +520,7 @@ async function createReleaseNotesIndex(
     
     // Create index content
     const indexTitle = `# ${source.folder} - Recent Version Release Notes\n`;
-    const description = `This contains latest release version and changes of ${source.name || source.folder}\n\n`;
+    const description = `This contains latest release version and changes of ${source.folder}\n\n`;
     let content = indexTitle + description;
     
     // Add content from each release note file
@@ -641,33 +624,51 @@ function extractReleaseInfo(content: string): { title: string; releaseDate: stri
 function processMarkdownFile(
     filePath: string,
     source: DocumentationSource,
-    targetDir: string,
     sourceDir: string
-): void {
+): ProcessedMarkdownFile {
     const content = fs.readFileSync(filePath, 'utf-8');
     
     // Process file content
-    const processed = convertMarkdown(content, filePath, source, sourceDir);
-    
+    const processed = convertMarkdown(content);
+
     if (!processed.filename) {
         // If no filename was found in frontmatter, generate one from file path
         const relativePath = path.relative(sourceDir, filePath);
         processed.filename = relativePath.replace(/[/\\]/g, '#');
-        
         if (source.folder === 'azure-sdk-guidelines') {
-            return; // Skip processing empty filename case for azure-sdk-guidelines
+            // Skip processing empty filename case for azure-sdk-guidelines
+            return { 
+                filename: '',
+                content: '',
+                blobPath: '',
+                isValid: false
+            };
+        }
+        if (source.isSpectorTest) {
+            // remove generated prefix
+            processed.filename = processed.filename.replace(/^generated#/, '');
         }
     }
+
+    // Create blob path based on source folder and file name
+    let fileName = processed.filename;
+    if (source.fileNameLowerCase) {
+        fileName = fileName.toLowerCase().replace(/\s+/g, '-');
+    }
+    const blobPath = path.join(source.folder, fileName).replace(/\\/g, '/');
     
-    // Create target file and write processed content
-    const targetFilePath = path.join(targetDir, processed.filename);
-    fs.writeFileSync(targetFilePath, processed.content);
+    return {
+        filename: processed.filename,
+        content: processed.content,
+        blobPath: blobPath,
+        isValid: true
+    };
 }
 
 /**
- * Convert markdown similar to Go version
+ * Convert markdown
  */
-function convertMarkdown(content: string, filePath: string, source: DocumentationSource, sourceDir: string): { title: string; filename: string; content: string } {
+function convertMarkdown(content: string): { filename: string; content: string } {
     let title = '';
     let filename = '';
     let foundTitle = false;
@@ -715,7 +716,6 @@ function convertMarkdown(content: string, filePath: string, source: Documentatio
     }
     
     return {
-        title,
         filename,
         content: contentLines.join('\n')
     };
@@ -738,52 +738,30 @@ function extractSections(content: string): string {
 }
 
 /**
- * Upload files to blob storage
+ * Upload changed files to blob storage using the ProcessedMarkdownFile information
  */
-async function uploadFilesToBlobStorage(tempDocsDir: string, sources: DocumentationSource[], context: InvocationContext): Promise<string[]> {
+async function uploadFilesToBlobStorage(
+    changedFiles: ProcessedMarkdownFile[], 
+    context: InvocationContext
+) {
     try {
-        const storageService = new StorageService();
-        const containerName = process.env.STORAGE_KNOWLEDGE_CONTAINER || 'knowledge';
+        const blobService = new BlobService();
+        const containerName = process.env.STORAGE_KNOWLEDGE_CONTAINER;
         
-        const currentFiles: string[] = [];
         let uploadedCount = 0;
-        for (const source of sources) {
-            const targetDir = path.join(tempDocsDir, source.folder);
-            
-            if (!fs.existsSync(targetDir)) {
-                context.warn(`Target directory not found: ${targetDir}`);
-                continue;
+        
+        // Upload only changed files
+        for (const file of changedFiles) {
+            if (file.isValid) {
+                await blobService.putBlob(context, containerName, file.blobPath, file.content);
+                uploadedCount++;
             }
-            
-            function walkTargetDirectory(dir: string): void {
-                const entries = fs.readdirSync(dir, { withFileTypes: true });
-                
-                for (const entry of entries) {
-                    const fullPath = path.join(dir, entry.name);
-                    
-                    if (entry.isDirectory()) {
-                        walkTargetDirectory(fullPath);
-                    } else {
-                        let fileName = entry.name;
-                        if (source.fileNameLowerCase) {
-                            fileName = fileName.toLowerCase().replace(/\s+/g, '-');
-                        }
-                        const blobPath = path.join(source.folder, fileName);
-                        const content = fs.readFileSync(fullPath);
-                        storageService.putBlob(context, containerName, blobPath, content);
-                        uploadedCount++;
-                        currentFiles.push(blobPath);
-                    }
-                }
-            }
-            
-            walkTargetDirectory(targetDir);
         }
         
-        context.log(`Successfully uploaded ${uploadedCount} files to blob storage`);
-        return currentFiles;
+        context.log(`Successfully uploaded ${uploadedCount} changed files to blob storage`);
+        return;
     } catch (error) {
-        context.error('Error uploading files to blob storage:', error);
+        context.error('Error uploading changed files to blob storage:', error);
         throw error;
     }
 }
@@ -791,14 +769,41 @@ async function uploadFilesToBlobStorage(tempDocsDir: string, sources: Documentat
 /**
  * Clean up expired blobs
  */
-async function cleanupExpiredBlobs(currentFiles: string[], context: InvocationContext): Promise<void> {
+async function cleanupExpiredBlobs(currentFiles: ProcessedMarkdownFile[], context: InvocationContext): Promise<void> {
     try {
-        const storageService = new StorageService();
-        const containerName = process.env.STORAGE_KNOWLEDGE_CONTAINER || 'knowledge';
+        const blobService = new BlobService();
+        const containerName = process.env.STORAGE_KNOWLEDGE_CONTAINER;
         
         context.log('Cleaning up expired blobs...');
         
-        const deletedCount = await storageService.deleteExpiredBlobs(context, containerName, currentFiles);
+        // Get all existing blobs
+        const allBlobs = await blobService.listBlobs(containerName);
+        
+        // Create a set of current file blob paths for efficient lookup
+        const currentFileBlobPaths = new Set(
+            currentFiles
+                .filter(file => file.isValid)
+                .map(file => file.blobPath)
+        );
+        
+        let deletedCount = 0;
+        
+        for (const blobPath of allBlobs) {
+            // Skip static files
+            if (blobPath.startsWith('static_')) {
+                continue;
+            }
+            
+            // Delete if not in current files
+            if (!currentFileBlobPaths.has(blobPath)) {
+                try {
+                    await blobService.deleteBlob(context, containerName, blobPath);
+                    deletedCount++;
+                } catch (error) {
+                    context.warn(`Failed to delete blob ${blobPath}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                }
+            }
+        }
         
         context.log(`Cleaned up ${deletedCount} expired blobs`);
     } catch (error) {

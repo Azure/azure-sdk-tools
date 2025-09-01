@@ -4,7 +4,7 @@ reports=no
 load-plugins=pylint_guidelines_checker
 
 # PYLINT DIRECTORY IGNORE LIST
-ignore=_vendor,_generated,samples,examples,test,tests,doc,.tox
+ignore=_vendor,_generated,samples,examples,test,tests,doc,.tox,build,dist
 
 [MESSAGES CONTROL]
 # Ignore ALL standard pylint checks.

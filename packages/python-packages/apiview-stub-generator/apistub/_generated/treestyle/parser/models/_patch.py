@@ -160,6 +160,7 @@ class ReviewLines(list):
         children: Optional[List["ReviewLine"]] = None,
         is_context_end_line: Optional[bool] = False,
         related_to_line: Optional[str] = None,
+        is_handwritten: bool = False,
     ):
         return ReviewLine(
             line_id=line_id,
@@ -167,6 +168,7 @@ class ReviewLines(list):
             children=children,
             is_context_end_line=is_context_end_line,
             related_to_line=related_to_line,
+            is_handwritten=is_handwritten,
         )
 
     def set_blank_lines(
@@ -237,7 +239,9 @@ class ReviewLine(ReviewLineImpl):
         children: Optional[List["ReviewLine"]] = None,
         is_context_end_line: Optional[bool] = False,
         related_to_line: Optional[str] = None,
+        is_handwritten: bool = False,
     ):
+        self.is_handwritten = is_handwritten
         super().__init__(
             tokens=tokens,
             line_id=line_id,
@@ -250,7 +254,17 @@ class ReviewLine(ReviewLineImpl):
     def add_children(self, children):
         self.children = children
 
-    def add_token(self, token):
+    def add_token(self, token, *, render_classes=None):
+        # For each handwritten line, all ReviewTokens' renderClasses should include "handwritten"
+        if self.is_handwritten:
+            if not render_classes:
+                token.render_classes = ["handwritten"]
+            else:
+                # Create a new list to ensure mutability and assignment back to the object
+                token.render_classes = render_classes + ["handwritten"]
+        else:
+            token.render_classes = render_classes
+
         self.tokens.append(token)
 
     def add_whitespace(self, count: Optional[int] = None):
@@ -301,9 +315,7 @@ class ReviewLine(ReviewLineImpl):
         )
         if navigation_display_name:
             token.navigation_display_name = navigation_display_name
-        if render_classes:
-            token.render_classes = render_classes
-        self.add_token(token)
+        self.add_token(token, render_classes=render_classes)
 
     def add_keyword(self, keyword, has_prefix_space=False, has_suffix_space=True):
         self.add_token(

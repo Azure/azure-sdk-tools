@@ -2,7 +2,6 @@ import yargs from "yargs/yargs";
 import { hideBin } from "yargs/helpers";
 import { checkDebugLogging, Logger, printBanner, usageText } from "./log.js";
 import {
-  compareCommand,
   convertCommand,
   generateCommand,
   generateConfigFilesCommand,
@@ -23,6 +22,12 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const packageJson = JSON.parse(await readFile(joinPaths(__dirname, "..", "package.json"), "utf8"));
 
+/**
+ * Prints the command preamble, including the version and banner.
+ * This is called at the start of each command to provide context.
+ *
+ * @param argv The parsed arguments from yargs.
+ */
 function commandPreamble(argv: any) {
   checkDebugLogging(argv);
   printBanner();
@@ -121,6 +126,15 @@ const parser = yargs(hideBin(process.argv))
         .option("emitter-package-json-path", {
           type: "string",
           description: "Alternate path for emitter-package.json file",
+        })
+        .option("trace", {
+          type: "array",
+          description: "Enable tracing during compile",
+        })
+        .option("update-if-exists", {
+          type: "boolean",
+          description: "Update the library if it exists, keeping extra tsp-location.yaml data",
+          default: false,
         });
     },
     async (argv: any) => {
@@ -158,6 +172,10 @@ const parser = yargs(hideBin(process.argv))
         .option("skip-install", {
           type: "boolean",
           description: "Skip installing dependencies",
+        })
+        .option("trace", {
+          type: "array",
+          description: "Enable tracing during compile",
         });
     },
     async (argv: any) => {
@@ -197,6 +215,10 @@ const parser = yargs(hideBin(process.argv))
         .option("skip-install", {
           type: "boolean",
           description: "Skip installing dependencies",
+        })
+        .option("trace", {
+          type: "array",
+          description: "Enable tracing during compile",
         });
     },
     async (argv: any) => {
@@ -256,11 +278,10 @@ const parser = yargs(hideBin(process.argv))
     "generate-lock-file",
     "Generate a lock file under the eng/ directory from an existing emitter-package.json",
     (yargs: any) => {
-      return yargs
-        .option("emitter-package-json-path", {
-          type: "string",
-          description: "Alternate path for emitter-package.json file",
-        });
+      return yargs.option("emitter-package-json-path", {
+        type: "string",
+        description: "Alternate path for emitter-package.json file",
+      });
     },
     async (argv: any) => {
       argv["output-dir"] = resolveOutputDir(argv);
@@ -279,18 +300,6 @@ const parser = yargs(hideBin(process.argv))
     async (argv: any) => {
       commandPreamble(argv);
       await sortSwaggerCommand(argv);
-    },
-  )
-  .command(
-    "compare",
-    "Compare two Swaggers for functional equivalency. This is typically used to compare a source Swagger with a TypeSpec project or TypeSpec generated Swagger to ensure that the TypeSpec project is functionally equivalent to the source Swagger.",
-    (yargs: any) => {
-      return yargs.help(false);
-    },
-    async (argv: any) => {
-      argv["output-dir"] = resolveOutputDir(argv);
-      const rawArgs = process.argv.slice(3);
-      await compareCommand(argv, rawArgs);
     },
   )
   .command(

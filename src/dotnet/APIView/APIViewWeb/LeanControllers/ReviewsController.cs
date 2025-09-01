@@ -1,50 +1,52 @@
+using System.Collections.Generic;
+using System.Net.Http;
+using System.Text.Json;
+using System.Threading.Tasks;
+using APIViewWeb.Extensions;
 using APIViewWeb.Helpers;
+using APIViewWeb.Hubs;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers;
-using APIViewWeb.Extensions;
+using APIViewWeb.Managers.Interfaces;
+using APIViewWeb.Models;
 using APIViewWeb.Repositories;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using System.Threading.Tasks;
-using APIViewWeb.Managers.Interfaces;
-using Microsoft.Extensions.Configuration;
-using APIViewWeb.Hubs;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.AspNetCore.Hosting;
-using System.Collections.Generic;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace APIViewWeb.LeanControllers
 {
     public class ReviewsController : BaseApiController
     {
-        private readonly ILogger<ReviewsController> _logger;
         private readonly IReviewManager _reviewManager;
         private readonly IAPIRevisionsManager _apiRevisionsManager;
         private readonly ICommentsManager _commentsManager;
         private readonly IBlobCodeFileRepository _codeFileRepository;
         private readonly IConfiguration _configuration;
-        public readonly UserPreferenceCache _preferenceCache;
-        private readonly ICosmosUserProfileRepository _userProfileRepository;
+        public readonly UserProfileCache _userProfileCache;
         private readonly IHubContext<SignalRHub> _signalRHubContext;
         private readonly INotificationManager _notificationManager;
+        private readonly IEnumerable<LanguageService> _languageServices;
         private readonly IWebHostEnvironment _env;
 
         public ReviewsController(ILogger<ReviewsController> logger,
             IAPIRevisionsManager reviewRevisionsManager, IReviewManager reviewManager,
             ICommentsManager commentManager, IBlobCodeFileRepository codeFileRepository,
-            IConfiguration configuration, UserPreferenceCache preferenceCache,
-            ICosmosUserProfileRepository userProfileRepository, IHubContext<SignalRHub> signalRHub,
-            INotificationManager notificationManager, IWebHostEnvironment env)
+            IConfiguration configuration, UserProfileCache userProfileCache,
+            IEnumerable<LanguageService> languageServices,
+            IHubContext<SignalRHub> signalRHub, INotificationManager notificationManager,
+            IWebHostEnvironment env)
         {
-            _logger = logger;
             _apiRevisionsManager = reviewRevisionsManager;
             _reviewManager = reviewManager;
             _commentsManager = commentManager;
             _codeFileRepository = codeFileRepository;
             _configuration = configuration;
-            _preferenceCache = preferenceCache;
-            _userProfileRepository = userProfileRepository;
+            _userProfileCache = userProfileCache;
+            _languageServices = languageServices;
             _signalRHubContext = signalRHub;
             _notificationManager = notificationManager;
             _env = env;
@@ -80,11 +82,18 @@ namespace APIViewWeb.LeanControllers
             return StatusCode(StatusCodes.Status404NotFound);
         }
 
+        [HttpGet("allowedApprovers", Name = "AllowedApprovers")]
+        public ActionResult<HashSet<string>> GetAllowedApproversAsync()
+        {
+            var allowedApprovers = _configuration["approvers"];
+            return new LeanJsonResult(allowedApprovers, StatusCodes.Status200OK);
+        }
+
         [HttpGet("{reviewId}/preferredApprovers", Name = "PreferredApprovers")]
         public async Task<ActionResult<HashSet<string>>> GetPreferredApproversAsync(string reviewId)
         {
             var review = await _reviewManager.GetReviewAsync(User, reviewId);
-            HashSet<string> preferredApprovers = await PageModelHelpers.GetPreferredApprovers(_configuration, _preferenceCache, _userProfileRepository, User, review);
+            HashSet<string> preferredApprovers = PageModelHelpers.GetPreferredApprovers(_configuration, _userProfileCache, User, review);
             return new LeanJsonResult(preferredApprovers, StatusCodes.Status200OK);
         }
 
@@ -112,11 +121,18 @@ namespace APIViewWeb.LeanControllers
         /// </summary>
         /// <param name="reviewId"></param>
         /// <param name="apiRevisionId"></param>
+        /// <param name="approvalRequest"></param>
         /// <returns></returns>
         [HttpPost("{reviewId}/{apiRevisionId}", Name = "ToggleReviewApproval")]
-        public async Task<ActionResult> ToggleReviewApprovalAsync(string reviewId, string apiRevisionId)
+        public async Task<ActionResult> ToggleReviewApprovalAsync(string reviewId, string apiRevisionId, [FromBody] ApprovalRequest approvalRequest)
         {
-            var updatedReview = await _reviewManager.ToggleReviewApprovalAsync(User, reviewId, apiRevisionId);
+            ReviewListItemModel currentReview = await _reviewManager.GetReviewAsync(User, reviewId);
+            if (currentReview.IsApproved == approvalRequest.Approve)
+            {
+                return new LeanJsonResult(currentReview, StatusCodes.Status200OK);
+            }
+
+            ReviewListItemModel updatedReview = await _reviewManager.ToggleReviewApprovalAsync(User, reviewId, apiRevisionId);
             await _signalRHubContext.Clients.All.SendAsync("ReviewUpdated", updatedReview);
             return new LeanJsonResult(updatedReview, StatusCodes.Status200OK);
         }
@@ -169,6 +185,12 @@ namespace APIViewWeb.LeanControllers
             {
                 var comments = await _commentsManager.GetCommentsAsync(reviewId, commentType: CommentType.APIRevision);
                 var activeRevisionReviewCodeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(revisionId: activeAPIRevision.Id, codeFileId: activeAPIRevision.Files[0].FileId);
+
+                if (activeRevisionReviewCodeFile.ContentGenerationInProgress)
+                {
+                    var languageServices = LanguageServiceHelpers.GetLanguageService(activeAPIRevision.Language, _languageServices);
+                    return new LeanJsonResult("Content generation in progress", StatusCodes.Status202Accepted, languageServices.ReviewGenerationPipelineUrl);
+                }
 
                 var codePanelRawData = new CodePanelRawData()
                 {

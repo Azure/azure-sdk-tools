@@ -8,6 +8,7 @@ import { MenuItem, SortEvent } from 'primeng/api';
 import { environment } from 'src/environments/environment';
 import { CookieService } from 'ngx-cookie-service';
 import { UserProfile } from 'src/app/_models/userProfile';
+import { getSupportedLanguages } from 'src/app/_helpers/common-helpers';
 
 @Component({
   selector: 'app-reviews-list',
@@ -65,7 +66,7 @@ export class ReviewsListComponent implements OnInit, AfterViewInit {
       this.filters = JSON.parse(filtersAsStrings);
     }
     this.loadReviews(0, this.pageSize * 2, true, this.filters); // Initial load of 2 pages
-    this.createLanguageFilters();
+    this.languages = getSupportedLanguages();
     this.createContextMenuItems();
   }
 
@@ -124,25 +125,6 @@ export class ReviewsListComponent implements OnInit, AfterViewInit {
   createContextMenuItems() {
     this.contextMenuItems = [
       { label: 'View', icon: 'pi pi-folder-open', command: () => this.viewReview(this.selectedReview) },
-    ];
-  }
-
-  createLanguageFilters() {
-    this.languages = [
-        { label: "C", data: "C" },
-        { label: "C#", data: "C#" },
-        { label: "C++", data: "C++" },
-        { label: "Go", data: "Go" },
-        { label: "Java", data: "Java" },
-        { label: "JavaScript", data: "JavaScript" },
-        { label: "Json", data: "Json" },
-        { label: "Kotlin", data: "Kotlin" },
-        { label: "Python", data: "Python" },
-        { label: "Rust", data: "Rust" },
-        { label: "Swagger", data: "Swagger" },
-        { label: "Swift", data: "Swift" },
-        { label: "TypeSpec", data: "TypeSpec" },
-        { label: "Xml", data: "Xml" }
     ];
   }
 

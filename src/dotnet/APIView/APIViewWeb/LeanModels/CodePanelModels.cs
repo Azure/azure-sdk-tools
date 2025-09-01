@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using ApiView;
 using System.Text;
-using APIView.Model.V2;
 
 namespace APIViewWeb.LeanModels
 {
@@ -15,6 +14,7 @@ namespace APIViewWeb.LeanModels
         public CodeFile diffRevisionCodeFile { get; set; }
         public bool ApplySkipDiff { get; set; }
         public bool SkipDocsWhenDiffing { get; set; }
+        public bool IsFirstCodeLineAdded { get; set; } // Used to determine if the first CodePanelRowData of type CodeLine has been added
     }
 
     public class CodePanelRowData

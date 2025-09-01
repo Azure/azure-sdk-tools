@@ -52,7 +52,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
             IDictionary<string, string> environmentVariables = null,
             StringBuilder outputBuilder = null,
             StringBuilder errorBuilder = null,
-            bool throwOnError = true
+            bool throwOnError = true,
+            bool trackStatistics = false
             )
         {
             if (IsWindows && _requiresShellOnWindows.Contains(filename))
@@ -74,7 +75,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 throwOnError: false,
                 log: true,
                 captureOutput: true,
-                captureError: true);
+                captureError: true,
+                trackStatistics: trackStatistics);
 
             outputBuilder?.Append(result.StandardOutput);
             errorBuilder?.Append(result.StandardError);

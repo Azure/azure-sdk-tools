@@ -7,7 +7,7 @@
 @using APIViewWeb.Models
 @{
     ViewData["Title"] = "Reviews";
-    var userPreference = PageModelHelpers.GetUserPreference(Model._preferenceCache, User);
+    var userPreference = PageModelHelpers.GetUserPreference(Model._userProfileCache, User);
     TempData["UserPreference"] = userPreference;
 }
 <div class="container-fluid sticky-top nav-cst-theme">
@@ -19,7 +19,7 @@
             </div>
         </div>
         <div class="col-md-2 px-0 d-sm-flex flex-row justify-content-sm-end">
-            @if (userPreference.HideIndexPageOptions.HasValue && userPreference.HideIndexPageOptions == true)
+            @if (userPreference.HideIndexPageOptions)
             {
             <input type="checkbox" class="btn-check" id="index-right-offcanvas-toggle" autocomplete="off">
             }
@@ -35,7 +35,7 @@
 @{
     var offCanvasClass = " show-right-offcanvas";
     var mainContainerClass = " move-main-content-container-left";
-    if (userPreference.HideIndexPageOptions.HasValue && userPreference.HideIndexPageOptions == true)
+    if (userPreference.HideIndexPageOptions)
     {
         offCanvasClass = String.Empty;
         mainContainerClass = string.Empty;

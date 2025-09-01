@@ -5,6 +5,7 @@ import config from './config/config.js';
 import { LogMiddleware } from './middleware/LogMiddleware.js';
 import { logger } from './logging/logger.js';
 import { getTurnContextLogMeta } from './logging/utils.js';
+import { isAzureAppService } from './common/shared.js';
 
 const adapter = new TeamsAdapter(config);
 adapter.use(new LogMiddleware());
@@ -37,7 +38,7 @@ const onTurnErrorHandler = async (context, error) => {
       // Send a message to the user
       const errorMessage =
         `The bot encountered an error or bug.` +
-        (process.env.IS_LOCAL === 'true' ? `\nError: ${error}. Stack: ${(error as Error)?.stack}` : '');
+        (!(await isAzureAppService()) ? `\nError: ${error}. Stack: ${(error as Error)?.stack}` : '');
       await context.sendActivity(errorMessage);
       logger.warn(`Sent error to teams. Error: ${error}`, { meta });
     }

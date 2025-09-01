@@ -141,7 +141,11 @@ func (s *PreprocessService) ExtractAdditionalInfo(input string) string {
 		log.Printf("Failed to send preprocess request: %v", err)
 		return input
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err = resp.Body.Close(); err != nil {
+			log.Printf("Failed to close response body: %v", err)
+		}
+	}()
 
 	// Check the response status
 	if resp.StatusCode != http.StatusOK {
@@ -170,11 +174,6 @@ func (s *PreprocessService) ExtractAdditionalInfo(input string) string {
 
 	// Return the preprocessed text
 	return preprocessResp.Text
-}
-
-// Common image file extensions
-var imageExtensions = []string{
-	"png", "jpg", "jpeg", "gif", "bmp", "webp", "svg", "tiff", "ico", "heif", "heic",
 }
 
 // extractImageLinks parses the input text and extracts URLs that appear to be image links

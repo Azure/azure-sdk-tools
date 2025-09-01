@@ -27,7 +27,11 @@ func setupRouter() *gin.Engine {
 }
 
 func main() {
+	// Load environment variables from .env files first
+	config.LoadEnvFile()
+
 	// init resources
+	config.InitConfiguration()
 	config.InitSecrets()
 	config.InitOpenAIClient()
 
@@ -35,5 +39,8 @@ func main() {
 	utils.ConfigureAzureCompatibleLogging()
 
 	r := setupRouter()
-	r.Run(":8088")
+	err := r.Run(":8088")
+	if err != nil {
+		panic(err)
+	}
 }

@@ -1,5 +1,23 @@
 # @azure-tools/typespec-bump-deps
 
+## 0.9.10
+
+### Patch Changes
+
+- Include spector and spec-api in packages
+
+## 0.9.9
+
+### Patch Changes
+
+- Include http-specs and azure-http-specs in packages
+
+## 0.9.8
+
+### Patch Changes
+
+- Regular release
+
 ## 0.9.7
 
 ### Patch Changes

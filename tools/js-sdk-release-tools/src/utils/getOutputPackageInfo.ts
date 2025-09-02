@@ -1,4 +1,4 @@
-import {RunningEnvironment} from "./runningEnvironment";
+import {RunningEnvironment} from "./runningEnvironment.js";
 
 export function getOutputPackageInfo(runningEnvironment: RunningEnvironment | undefined, readmeMd: string | undefined, typespecProject: string | undefined) {
     let outputPackageInfo: any;

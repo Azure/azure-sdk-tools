@@ -4,6 +4,7 @@ import { ConversationMessage, Prompt } from './ConversationHandler.js';
 import { LinkContentExtractor } from './LinkContentExtractor.js';
 import { RemoteContent } from './RemoteContent.js';
 import { logger } from '../logging/logger.js';
+import { LoggingAnalyzer } from './LoggingAnalyzer.js';
 
 export interface MessageWithRemoteContent {
   user: string;
@@ -20,11 +21,10 @@ export interface MessageWithRemoteContent {
 
 export class PromptGenerator {
   private readonly urlRegex = /https?:\/\/[^\s"'<>]+/g;
-  private linkContentExtractor: LinkContentExtractor;
+  private linkContentExtractor = new LinkContentExtractor();
+  private loggingAnalyzer = new LoggingAnalyzer();
 
-  constructor() {
-    this.linkContentExtractor = new LinkContentExtractor();
-  }
+  constructor() {}
 
   public async generateFullPrompt(
     prompt: Prompt,
@@ -47,12 +47,17 @@ export class PromptGenerator {
       ...(prompt.images || []),
       ...conversationMessages.flatMap((m) => m.prompt?.images || []),
     ]);
-    const linkContents = await this.linkContentExtractor.extract(
-      links.map((link) => new URL(link)),
-      meta
-    );
+    const urls = links.map((link) => new URL(link));
+    const isPipelineUrl = (url: URL) =>
+      url.hostname.startsWith('dev.azure.com') && url.pathname.startsWith('/azure-sdk/public/_build');
+    const pipelineUrls = urls.filter(isPipelineUrl);
+    const nonPipelineUrls = urls.filter((url) => !isPipelineUrl(url));
+    const linkContents: RemoteContent[][] = await Promise.all([
+      this.linkContentExtractor.extract(nonPipelineUrls, meta),
+      this.loggingAnalyzer.analyzePipelineLog(pipelineUrls, meta),
+    ]);
     const additionalInfo = {
-      links: linkContents,
+      links: linkContents.flat(),
       images: Array.from(imagesSet).map((image) => ({ text: '', id: '', url: new URL(image) })),
     };
     const user = prompt.userName || '';

@@ -1,0 +1,41 @@
+parameters:
+  - name: REPO
+    type: string
+    default: "Azure/azure-sdk-for-js"
+
+  - name: CLONE_LOCATION
+    type: string
+    default: "$(Agent.BuildDirectory)/js_repo"
+
+steps:
+  - template: /eng/pipelines/templates/steps/install-dotnet.yml
+
+  - task: NodeTool@0
+    inputs:
+      versionSpec: "20.x"
+    displayName: "Use Node 20.x"
+
+  - pwsh: |
+      git clone https://github.com/${{ parameters.REPO }} ${{ parameters.CLONE_LOCATION }} --depth 1 --branch main
+    displayName: Clone Repo
+
+  - template: /eng/pipelines/templates/steps/test-proxy-local-tool.yml
+    parameters:
+      runProxy: true
+      rootFolder: ${{ parameters.CLONE_LOCATION }}
+
+  - pwsh: |
+      npm install -g @microsoft/rush@5.109.2
+      rush update
+      rush build -t .
+    displayName: 'Install Rush, build and install proxy tests project'
+    workingDirectory: ${{ parameters.CLONE_LOCATION }}/sdk/test-utils/recorder
+    env:
+      PROXY_MANUAL_START: "true"
+
+  - pwsh: |
+      rushx test:node
+    displayName: 'Invoke Tests'
+    workingDirectory: ${{ parameters.CLONE_LOCATION }}/sdk/test-utils/recorder
+    env:
+      PROXY_MANUAL_START: "true"

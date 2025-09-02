@@ -19,13 +19,13 @@ import {
     patchFunction,
 } from "typescript-codegen-breaking-change-detector";
 
-import { IntersectionDeclaration } from "parse-ts-to-ast/build/declarations/IntersectionDeclaration";
-import { TypeLiteralDeclaration } from "parse-ts-to-ast/build/declarations/TypeLiteralDeclaration";
+import { IntersectionDeclaration } from "parse-ts-to-ast/build/declarations/IntersectionDeclaration.js";
+import { TypeLiteralDeclaration } from "parse-ts-to-ast/build/declarations/TypeLiteralDeclaration.js";
 import { join } from "path";
-import { SDKType } from "../common/types";
-import { logger } from "../utils/logger";
-import { TSExportedMetaData } from "./extractMetaData";
-import { RestLevelClientChangelogPostProcessor } from "./RestLevelClientChangelogPostProcessor";
+import { SDKType } from "../common/types.js";
+import { logger } from "../utils/logger.js";
+import { TSExportedMetaData } from "./extractMetaData.js";
+import { RestLevelClientChangelogPostProcessor } from "./RestLevelClientChangelogPostProcessor.js";
 import { Node, SyntaxKind } from "ts-morph";
 
 export interface ChangelogItem {
@@ -256,6 +256,7 @@ export class Changelog {
     }
 }
 
+// NOTE: done in v2
 // todo: special rules for HLC convert to Modular, will use a more generic method to replace
 function getRenamedOperationGroupFromToMap(from: TSExportedMetaData): { [id: string]: string } {
     const map: { [id: string]: string } = {};

@@ -120,11 +120,12 @@ export class APIRevisionsService {
     });
   }
 
-  toggleAPIRevisionApproval(reviewId: string, apiRevisionId: string) : Observable<APIRevision> {
+  toggleAPIRevisionApproval(reviewId: string, apiRevisionId: string, approve: boolean) : Observable<APIRevision> {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
     });
-    return this.http.post<APIRevision>(this.baseUrl + `/${reviewId}/${apiRevisionId}`, {},
+
+    return this.http.post<APIRevision>(this.baseUrl + `/${reviewId}/${apiRevisionId}`, { approve: approve },
     { 
       headers: headers,
       withCredentials: true,
@@ -166,6 +167,28 @@ export class APIRevisionsService {
 
     return this.http.post<APIRevision>(`${this.baseUrl}/${reviewId}/${apiRevisionId}/reviewers`, reviewersArray, {
       headers: headers,
+      withCredentials: true,
+    });
+  }
+
+  generateAIReview(
+    reviewId: string, 
+    activeApiRevisionId: string, 
+    diffApiRevisionId: string | undefined = undefined
+  ): Observable<number> {
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+    });
+    let params = new HttpParams();
+    params = params.append('activeApiRevisionId', activeApiRevisionId);
+    if (diffApiRevisionId) {
+      params = params.append('diffApiRevisionId', diffApiRevisionId);
+    }
+
+    return this.http.post<number>(this.baseUrl + `/${reviewId}/generateReview`, {},
+    { 
+      headers: headers,
+      params: params,
       withCredentials: true,
     });
   }

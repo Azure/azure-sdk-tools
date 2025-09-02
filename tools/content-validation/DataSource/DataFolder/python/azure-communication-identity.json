@@ -1,0 +1,27 @@
+[
+  {
+    "version": "view=azure-python",
+    "url": [
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/communication?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/overview/azure/communication-identity-readme?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-identity/azure.communication.identity?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-identity/azure.communication.identity.aio?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-identity/azure.communication.identity.aio.communicationidentityclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-identity/azure.communication.identity.communicationidentifier?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-identity/azure.communication.identity.communicationidentityclient?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-identity/azure.communication.identity.communicationuseridentifier?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-identity/azure.communication.identity.communicationuserproperties?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-identity/azure.communication.identity.microsoftteamsappidentifier?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-identity/azure.communication.identity.microsoftteamsappproperties?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-identity/azure.communication.identity.microsoftteamsuseridentifier?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-identity/azure.communication.identity.microsoftteamsuserproperties?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-identity/azure.communication.identity.phonenumberidentifier?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-identity/azure.communication.identity.phonenumberproperties?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-identity/azure.communication.identity.unknownidentifier?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-identity/azure.communication.identity.communicationcloudenvironment?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-identity/azure.communication.identity.communicationidentifierkind?view=azure-python\u0026branch=main",
+      "https://learn.microsoft.com/en-us/python/api/azure-communication-identity/azure.communication.identity.communicationtokenscope?view=azure-python\u0026branch=main"
+    ]
+  }
+]

@@ -1,8 +1,74 @@
 # Release
 
+## 2025-08-05 - 0.9.1
+
+- Support SDK breaking change flagging for V2 folder structure by detecting management plane TypeSpec projects containing 'resource-manager' in the path
+
+## 2025-07-25 - 0.9.0
+
+- Added 'generateFromTypeSpec' property to ExecutionReport
+- Restructure code directory and add unit test in test/ folder
+
+## 2025-06-03 - 0.8.1
+
+- Created stagedArtifacts folder all the time if it's been set to the execution report
+
+## 2025-05-22 - 0.8.0
+
+- Added a parameter to optionally skip SDK generation from OpenAPI specs
+- Reported 'NotEnabled' status when both SDK configuration files are provided but the language emitter isn't enabled in tspconfig
+- Migrated test framework to vitest and added more tests for workflow
+
+## 2025-05-20 - 0.7.2
+
+- Corrected the key in the suppression files map
+
+## 2025-05-19 - 0.7.1
+
+- Fixed a bug in processing breaking change suppressions
+
+## 2025-05-16 - 0.7.0
+
+- Update apiViewArtifact to point to staged artifact location
+- Retire sdkApiViewArtifactFolder
+
+## 2025-05-06 - 0.6.1
+
+- Turned duplicated SDK config error into warning and continued SDK generation based on TypeSpecs
+- Assigned value to language while constructing PackageData object
+
+## 2025-05-02 - 0.6.0
+
+- Normalize the log message with prefixes
+- Report more info in the summary line of log for telemetry purpose
+- Removed unused codes
+
+## 2025-04-24 - 0.5.1
+
+- Move service name variable into the package object
+
+## 2025-04-22 - 0.5.0
+
+- Output service names and artifact staging folder in execution report.
+
+## 2025-04-17 - 0.4.2
+
+- Refactor sdk-suppressions.yaml link
+- Remove render template's sdk-suppressions link only
+
+## 2025-04-17 - 0.4.1
+
+- Added pull request link to the generated html report
+- Added captureTransport to each script log
+
+## 2025-04-10 - 0.4.0
+
+- Added run-mode input parameter
+- Deprecated is-triggered-by-pipeline parameter
+
 ## 2025-04-03 - 0.3.5
 
-- Exclude '-pr' in the language value when spec repo is private repo
+- Excluded '-pr' in the language value when spec repo is private repo
 
 ## 2025-04-02 - 0.3.4
 

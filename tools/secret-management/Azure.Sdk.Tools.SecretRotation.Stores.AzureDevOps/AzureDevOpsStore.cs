@@ -93,7 +93,9 @@ public abstract class AzureDevOpsStore : SecretStore
 
         this.logger.LogDebug("Getting token and devops client for 'dev.azure.com/{Organization}'", this.organization);
 
+#pragma warning disable CS0618 // Type or member is obsolete
         UsernamePasswordCredential serviceAccountCredential = new (this.serviceAccountName, serviceAccountPassword, this.serviceAccountTenantId, AzureCliApplicationId);
+#pragma warning restore CS0618 // Type or member is obsolete
 
         AccessToken token = await GetDevopsAadBearerTokenAsync(serviceAccountCredential);
 

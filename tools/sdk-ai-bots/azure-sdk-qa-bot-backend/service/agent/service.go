@@ -30,7 +30,7 @@ type CompletionService struct {
 
 func NewCompletionService() (*CompletionService, error) {
 	return &CompletionService{
-		model: config.AOAI_CHAT_COMPLETIONS_MODEL,
+		model: config.AppConfig.AOAI_CHAT_COMPLETIONS_MODEL,
 	}, nil
 }
 
@@ -74,7 +74,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 		log.Printf("Request: %s", jsonReq)
 	}
 
-	if err := s.CheckArgs(req); err != nil {
+	if err = s.CheckArgs(req); err != nil {
 		log.Printf("Request validation failed: %v", err)
 		return nil, err
 	}
@@ -130,7 +130,7 @@ func (s *CompletionService) RecongnizeIntension(promptTemplate string, messages 
 
 	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
 		Messages:       messages,
-		DeploymentName: to.Ptr(string(config.AOAI_CHAT_REASONING_MODEL)),
+		DeploymentName: to.Ptr(string(config.AppConfig.AOAI_CHAT_REASONING_MODEL)),
 	}, nil)
 
 	if err != nil {
@@ -138,10 +138,10 @@ func (s *CompletionService) RecongnizeIntension(promptTemplate string, messages 
 		return nil, model.NewLLMServiceFailureError(err)
 	}
 
-	for _, choice := range resp.Choices {
-		result, err := promptParser.ParseResponse(*choice.Message.Content, "intension.md")
+	if len(resp.Choices) > 0 {
+		result, err := promptParser.ParseResponse(*resp.Choices[0].Message.Content, "intension.md")
 		if err != nil {
-			log.Printf("Failed to parse intension response: %v, content: %s", err, *choice.Message.Content)
+			log.Printf("Failed to parse intension response: %v, content: %s", err, *resp.Choices[0].Message.Content)
 			return nil, err
 		}
 		return result, nil
@@ -214,7 +214,11 @@ func getImageDataURI(url string) (string, error) {
 		log.Printf("Failed to download attachment: %v", err)
 		return "", err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err = resp.Body.Close(); err != nil {
+			log.Printf("Failed to close response body: %v", err)
+		}
+	}()
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("failed to download attachment, status code: %d", resp.StatusCode)
 	}
@@ -225,22 +229,23 @@ func getImageDataURI(url string) (string, error) {
 	}
 	base64Encode := base64.StdEncoding.EncodeToString(body)
 	contentType := resp.Header.Get("Content-Type")
-	if contentType == "image/png" {
+	switch contentType {
+	case "image/png":
 		return fmt.Sprintf("data:image/png;base64,%s", base64Encode), nil
-	} else if contentType == "image/jpeg" {
+	case "image/jpeg":
 		return fmt.Sprintf("data:image/jpeg;base64,%s", base64Encode), nil
-	} else if contentType == "image/gif" {
+	case "image/gif":
 		return fmt.Sprintf("data:image/gif;base64,%s", base64Encode), nil
-	} else {
+	default:
 		return fmt.Sprintf("data:image/png;base64,%s", base64Encode), nil
 	}
 }
 
 func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.ChatRequestMessageClassification, []azopenai.ChatRequestMessageClassification) {
 	// avoid token limit error, we need to limit the number of messages in the history
-	if len(req.Message.Content) > config.AOAI_CHAT_MAX_TOKENS {
-		log.Printf("Message content is too long, truncating to %d characters", config.AOAI_CHAT_MAX_TOKENS)
-		req.Message.Content = req.Message.Content[:config.AOAI_CHAT_MAX_TOKENS]
+	if len(req.Message.Content) > config.AppConfig.AOAI_CHAT_MAX_TOKENS {
+		log.Printf("Message content is too long, truncating to %d characters", config.AppConfig.AOAI_CHAT_MAX_TOKENS)
+		req.Message.Content = req.Message.Content[:config.AppConfig.AOAI_CHAT_MAX_TOKENS]
 	}
 
 	// Preprocess HTML content if it contains HTML entities or tags
@@ -281,9 +286,9 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 		for _, info := range req.AdditionalInfos {
 			if info.Type == model.AdditionalInfoType_Link {
 				content := info.Content
-				if len(content) > config.AOAI_CHAT_MAX_TOKENS {
-					log.Printf("Link content is too long, truncating to %d characters", config.AOAI_CHAT_MAX_TOKENS)
-					content = content[:config.AOAI_CHAT_MAX_TOKENS]
+				if len(content) > config.AppConfig.AOAI_CHAT_MAX_TOKENS {
+					log.Printf("Link content is too long, truncating to %d characters", config.AppConfig.AOAI_CHAT_MAX_TOKENS)
+					content = content[:config.AppConfig.AOAI_CHAT_MAX_TOKENS]
 				}
 				var msg *azopenai.ChatRequestUserMessage
 				if strings.Contains(content, "graph.microsoft.com") {
@@ -325,9 +330,9 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 		preProcessedMessage := preprocess.NewPreprocessService().ExtractAdditionalInfo(req.Message.Content)
 		log.Println("user message with additional info:", preProcessedMessage)
 		// avoid token limit error, we need to limit the number of messages in the history
-		if len(preProcessedMessage) > config.AOAI_CHAT_MAX_TOKENS {
-			log.Printf("Message content is too long, truncating to %d characters", config.AOAI_CHAT_MAX_TOKENS)
-			preProcessedMessage = preProcessedMessage[:config.AOAI_CHAT_MAX_TOKENS]
+		if len(preProcessedMessage) > config.AppConfig.AOAI_CHAT_MAX_TOKENS {
+			log.Printf("Message content is too long, truncating to %d characters", config.AppConfig.AOAI_CHAT_MAX_TOKENS)
+			preProcessedMessage = preProcessedMessage[:config.AppConfig.AOAI_CHAT_MAX_TOKENS]
 		}
 		currentMessage = preProcessedMessage
 	}
@@ -369,119 +374,17 @@ func (s *CompletionService) buildQueryForSearch(req *model.CompletionReq, messag
 	return query, intentResult
 }
 
-func (s *CompletionService) searchRelatedKnowledge(req *model.CompletionReq, query string, existingChunks []model.Index) ([]string, error) {
-	searchStart := time.Now()
-	searchClient := search.NewSearchClient()
-	results, err := searchClient.SearchTopKRelatedDocuments(query, *req.TopK, req.Sources)
-	if err != nil {
-		return nil, fmt.Errorf("failed to search for related documents: %w", err)
-	}
-	log.Printf("Vector Search took: %v", time.Since(searchStart))
-
-	// filter unrelevant results
-	needCompleteFiles := make([]model.Index, 0)
-	needCompleteChunks := make([]model.Index, 0)
-	normalResult := make([]model.Index, 0)
-	for i, result := range results {
-		if result.RerankScore < model.RerankScoreLowRelevanceThreshold {
-			log.Printf("Skipping result with low score: %s/%s, score: %f", result.ContextID, result.Title, result.RerankScore)
-			continue
-		}
-		if result.ContextID == string(model.Source_TypeSpecQA) || result.ContextID == string(model.Source_TypeSpecMigration) {
-			needCompleteChunks = append(needCompleteChunks, result)
-			log.Printf("Vector searched chunk(Q&A): %+v", result)
-			continue
-		}
-		if result.RerankScore >= model.RerankScoreRelevanceThreshold {
-			needCompleteFiles = append(needCompleteFiles, result)
-			log.Printf("Vector searched chunk(high score): %+v", result)
-			continue
-		}
-		// every source first document should be completed
-		if i == 0 || (results[i].ContextID != results[i-1].ContextID) {
-			needCompleteFiles = append(needCompleteFiles, result)
-			log.Printf("Vector searched chunk(first document of source): %+v", result)
-			continue
-		}
-		log.Printf("Vector searched chunk: %+v", result)
-		normalResult = append(normalResult, result)
-	}
-	supplyNum := 5
-	if len(needCompleteFiles) < supplyNum {
-		log.Printf("No results found with high relevance score, supply with normal results")
-		if len(normalResult) < supplyNum {
-			supplyNum = len(normalResult)
-		}
-		needCompleteFiles = normalResult[:supplyNum]
-		normalResult = normalResult[supplyNum:]
-	}
-
-	chunkProcessStart := time.Now()
-	files := make(map[string]bool)
-	chunks := make(map[string]bool)
-	mergedChunks := make([]model.Index, 0)
-	for _, result := range needCompleteFiles {
-		if files[result.Title] {
-			continue
-		}
-		files[result.Title] = true
-		mergedChunks = append(mergedChunks, model.Index{
-			Title:     result.Title,
-			ContextID: result.ContextID,
-			Header1:   result.Header1,
-		})
-		log.Printf("Complete chunk: %s/%s", result.ContextID, result.Title)
-	}
-	mergedChunks = append(mergedChunks, needCompleteChunks...)
-	var wg sync.WaitGroup
-	wg.Add(len(mergedChunks))
-	for i := range mergedChunks {
-		i := i
-		go func() {
-			defer wg.Done()
-			mergedChunks[i] = searchClient.CompleteChunk(mergedChunks[i])
-		}()
-	}
-	wg.Wait()
-
-	result := make([]string, 0)
-	for _, mergedChunk := range mergedChunks {
-		chunk := processDocument(mergedChunk)
-		result = append(result, chunk)
-	}
-	for _, existingChunk := range existingChunks {
-		if files[existingChunk.Title] {
-			continue
-		}
-		chunk := processChunk(existingChunk)
-		result = append(result, chunk)
-		chunks[existingChunk.Chunk] = true
-	}
-	for _, normalChunk := range normalResult {
-		if files[normalChunk.Title] {
-			continue
-		}
-		if chunks[normalChunk.Chunk] {
-			continue
-		}
-		chunk := processChunk(normalChunk)
-		result = append(result, chunk)
-	}
-	log.Printf("Chunk processing took: %v", time.Since(chunkProcessStart))
-	return result, nil
-}
-
 func (s *CompletionService) buildPrompt(intension *model.IntensionResult, chunks []string, promptTemplate string) (string, error) {
 	// make sure the tokens of chunks limited in 100000 tokens
 	tokenCnt := 0
 	for i, chunk := range chunks {
-		if len(chunk) > config.AOAI_CHAT_MAX_TOKENS {
-			log.Printf("Chunk %d is too long, truncating to %d characters", i+1, config.AOAI_CHAT_MAX_TOKENS)
-			chunks[i] = chunk[:config.AOAI_CHAT_MAX_TOKENS]
+		if len(chunk) > config.AppConfig.AOAI_CHAT_MAX_TOKENS {
+			log.Printf("Chunk %d is too long, truncating to %d characters", i+1, config.AppConfig.AOAI_CHAT_MAX_TOKENS)
+			chunks[i] = chunk[:config.AppConfig.AOAI_CHAT_MAX_TOKENS]
 		}
 		tokenCnt += len(chunks[i])
-		if tokenCnt > config.AOAI_CHAT_CONTEXT_MAX_TOKENS {
-			log.Printf("%v chunks has exceed max token limit, truncating to %d tokens", i+1, config.AOAI_CHAT_CONTEXT_MAX_TOKENS)
+		if tokenCnt > config.AppConfig.AOAI_CHAT_CONTEXT_MAX_TOKENS {
+			log.Printf("%v chunks has exceed max token limit, truncating to %d tokens", i+1, config.AppConfig.AOAI_CHAT_CONTEXT_MAX_TOKENS)
 			chunks = chunks[:i+1] // truncate the chunks to the current index
 			break
 		}
@@ -567,7 +470,7 @@ func (s *CompletionService) getLLMResult(messages []azopenai.ChatRequestMessageC
 				Strict:      to.Ptr(true),
 			},
 		},
-		TopP: to.Ptr(float32(config.AOAI_CHAT_COMPLETIONS_TOP_P)),
+		TopP: to.Ptr(float32(config.AppConfig.AOAI_CHAT_COMPLETIONS_TOP_P)),
 	}, nil)
 
 	if err != nil {
@@ -580,10 +483,10 @@ func (s *CompletionService) getLLMResult(messages []azopenai.ChatRequestMessageC
 	}
 	log.Printf("OpenAI completion took: %v", time.Since(completionStart))
 	promptParser := prompt.DefaultPromptParser{}
-	for _, choice := range resp.Choices {
-		answer, err := promptParser.ParseResponse(*choice.Message.Content, promptTemplate)
+	if len(resp.Choices) > 0 {
+		answer, err := promptParser.ParseResponse(*resp.Choices[0].Message.Content, promptTemplate)
 		if err != nil {
-			log.Printf("ERROR: %s, content:%s", err, *choice.Message.Content)
+			log.Printf("ERROR: %s, content:%s", err, *resp.Choices[0].Message.Content)
 			return nil, err
 		}
 		return answer, nil

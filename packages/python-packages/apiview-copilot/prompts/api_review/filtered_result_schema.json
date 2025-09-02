@@ -1,0 +1,58 @@
+{
+  "type": "json_schema",
+  "json_schema": {
+    "name": "filtered_result",
+    "strict": true,
+    "schema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "rule_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Unique guideline ID or IDs that were violated."
+        },
+        "line_no": {
+          "type": "integer",
+          "description": "Line number of the violation. MUST be identical to the input."
+        },
+        "bad_code": {
+          "type": "string",
+          "description": "the original code that was bad. MUST be identical to the input."
+        },
+        "suggestion": {
+          "type": ["string", "null"],
+          "description": "the suggested code which fixes the bad code. MUST be identical to the input."
+        },
+        "comment": {
+          "type": "string",
+          "description": "a comment about the violation. MUST be identical to the input."
+        },
+        "source": {
+          "type": "string",
+          "description": "the source of the comment. MUST be identical to the input."
+        },
+        "status": {
+          "type": "string",
+          "description": "status of the comment, can be 'KEEP' or 'REMOVE'"
+        },
+        "status_reason": {
+          "type": "string",
+          "description": "the reasoning used to determine the status of the comment. This should be a short sentence explaining why the comment was kept or removed."
+        }
+      },
+      "required": [
+        "rule_ids",
+        "line_no",
+        "bad_code",
+        "suggestion",
+        "comment",
+        "source",
+        "status",
+        "status_reason"
+      ]
+    }
+  }
+}

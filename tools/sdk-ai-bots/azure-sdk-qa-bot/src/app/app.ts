@@ -1,8 +1,6 @@
 import { ActivityTypes, MemoryStorage, TurnContext } from 'botbuilder';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
-
-// See https://aka.ms/teams-ai-library to learn more about the Teams AI library.
 import { Application, ActionPlanner, PromptManager } from '@microsoft/teams-ai';
 import { RAGModel } from '../models/RAGModel.js';
 import { logger } from '../logging/logger.js';

@@ -4,7 +4,6 @@
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using AzureRagService;
 using Hubbup.MikLabelModel;
 using Azure.Identity;
 using System;
@@ -12,8 +11,9 @@ using Azure.AI.OpenAI;
 using OpenAI.Chat;
 using Azure.Search.Documents.Indexes;
 using Microsoft.Extensions.Configuration;
-using IssueLabelerService;
 using Azure.Core;
+using IssueLabelerService;
+using Azure.Storage.Blobs;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWebApplication()
@@ -37,8 +37,8 @@ var host = new HostBuilder()
         services.ConfigureFunctionsApplicationInsights();
 
         
-        var configService = new ConfigurationService(configRoot);
-        services.AddSingleton<ConfigurationService>(configService);
+        var configService = new Configuration(configRoot);
+        services.AddSingleton<Configuration>(configService);
         
         var config = configService.GetDefault();
 
@@ -51,13 +51,18 @@ var host = new HostBuilder()
 
         services.AddSingleton(combinedConfig);
 
-        services.AddSingleton<ChatClient>(sp =>
+        services.AddSingleton<AzureOpenAIClient>(sp =>
         {
             var openAIEndpoint = new Uri(config.OpenAIEndpoint);
             
             var openAIClient = new AzureOpenAIClient(openAIEndpoint, credential);
-            var modelName = config.OpenAIModelName;
-            return openAIClient.GetChatClient(modelName);
+            return openAIClient;
+        });
+
+        services.AddSingleton<BlobServiceClient>(sp =>
+        {
+            var blobServiceEndpoint = new Uri(config.BlobAccountUri);
+            return new BlobServiceClient(blobServiceEndpoint, credential);
         });
 
         services.AddSingleton<SearchIndexClient>(sp =>
@@ -69,6 +74,8 @@ var host = new HostBuilder()
         services.AddSingleton<TriageRag>();
         services.AddSingleton<IModelHolderFactoryLite, ModelHolderFactoryLite>();
         services.AddSingleton<ILabelerLite, LabelerLite>();
+        services.AddSingleton<LabelerFactory>();
+        services.AddSingleton<AnswerFactory>();
     })
     .Build();
 

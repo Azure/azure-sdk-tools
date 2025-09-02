@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!-- Use a framework your build host supports; net461+ is safest -->
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <!-- We don’t want a normal runtime reference -->
+    <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
+    <NoWarn>RS2008</NoWarn>
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Core Roslyn bits for writing analyzers -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.8.0" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.8.0" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4" PrivateAssets="all" />
+  </ItemGroup>
+</Project>

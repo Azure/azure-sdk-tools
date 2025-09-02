@@ -3,7 +3,6 @@
 
 using APIView;
 using APIView.Model.V2;
-using APIView.TreeToken;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -45,7 +44,6 @@ namespace ApiView
         public string CrossLanguagePackageId { get; set; }
         public CodeFileToken[] Tokens { get; set; } = Array.Empty<CodeFileToken>();
         // APIForest will be removed once server changes are added to dereference this property
-        public List<APITreeNode> APIForest { get; set; } = new List<APITreeNode>();
         public List<CodeFileToken[]> LeafSections { get; set; }
         public NavigationItem[] Navigation { get; set; }
         public CodeDiagnostic[] Diagnostics { get; set; }
@@ -55,6 +53,9 @@ namespace ApiView
             set => _versionString = value;
         }
         public List<ReviewLine> ReviewLines { get; set; } = [];
+
+        // Thisis set to true when the content generation is in progress for this code file.
+        public bool ContentGenerationInProgress { get; set; } = false;
 
         public override string ToString()
         {
@@ -155,6 +156,32 @@ namespace ApiView
                 line.AppendApiTextToBuilder(sb, 0, skipDocs, GetIndentationForLanguage(Language));
             }
             return sb.ToString();
+        }
+
+        /// <summary>
+        /// Generates an abridged text representation of API surface
+        /// </summary>
+        public string GetApiOutlineText(bool skipDocs = true)
+        {
+            StringBuilder sb = new();
+            foreach (var line in ReviewLines)
+            {
+                line.AppendApiTextToBuilder(sb, 0, skipDocs, GetIndentationForLanguage(Language), TokensFilter.Outline);
+            }
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Generates a list of API lines with line text and their line id.
+        /// </summary>
+        public List<(string lineText, string lineId)> GetApiLines(bool skipDocs = true)
+        {
+            List<(string lineText, string lineId)> builder = new List<(string lineText, string lineId)>();
+            foreach (var line in ReviewLines)
+            {
+                line.AppendApiTextToBuilder(builder, 0, skipDocs, GetIndentationForLanguage(Language));
+            }
+            return builder;
         }
 
         public static int GetIndentationForLanguage(string language)

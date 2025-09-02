@@ -24,10 +24,10 @@ type SearchClient struct {
 
 func NewSearchClient() *SearchClient {
 	return &SearchClient{
-		BaseUrl: config.AI_SEARCH_BASE_URL,
+		BaseUrl: config.AppConfig.AI_SEARCH_BASE_URL,
 		ApiKey:  config.AI_SEARCH_APIKEY,
-		Index:   config.AI_SEARCH_INDEX,
-		Agent:   config.AI_SEARCH_AGENT,
+		Index:   config.AppConfig.AI_SEARCH_INDEX,
+		Agent:   config.AppConfig.AI_SEARCH_AGENT,
 	}
 }
 

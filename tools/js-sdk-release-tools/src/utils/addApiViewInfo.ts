@@ -2,12 +2,17 @@ import fs from "fs";
 import path from "path";
 
 export function addApiViewInfo(outputPackageInfo: any, packagePath: string, changedPackageDirectory: string) {
-    if (fs.existsSync(path.join(packagePath, 'temp'))) {
-        for (const file of fs.readdirSync(path.join(packagePath, 'temp'))) {
-            if (file.endsWith('.api.json')) {
-                outputPackageInfo['apiViewArtifact']= path.join(changedPackageDirectory, 'temp', file);
-                outputPackageInfo['language']= 'JavaScript';
-            }
-        }
+    const tempDir = path.join(packagePath, 'temp');
+    if (!fs.existsSync(tempDir)) return;
+    
+    const files = fs.readdirSync(tempDir);
+    
+    // Prefer -node.api.json files, fall back to .api.json files
+    const apiFile = files.find(file => file.endsWith('-node.api.json')) || 
+                    files.find(file => file.endsWith('.api.json'));
+    
+    if (apiFile) {
+        outputPackageInfo.apiViewArtifact = path.join(changedPackageDirectory, 'temp', apiFile);
+        outputPackageInfo.language = 'JavaScript';
     }
 }

@@ -29,7 +29,6 @@ namespace APIViewWeb
             if (language != null)
             {
                 queryBuilder.Append($" AND IS_DEFINED(c.Language) AND c.Language = '{language}'");
-
             }
             var requests = await GetPullRequestFromQueryAsync(queryBuilder.ToString());
             return requests.Count > 0 ? requests[0] : null;

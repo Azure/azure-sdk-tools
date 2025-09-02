@@ -1,3 +1,10 @@
+import {
+  AzureCliCredential,
+  ManagedIdentityCredential,
+  TokenCredential,
+} from '@azure/identity';
+import { logger } from '../logging/logger.js';
+
 const mentionLinkToIgnore = new URL('http://schema.skype.com/Mention');
 
 function normalizeUrl(link: string) {
@@ -19,4 +26,14 @@ export function parseConversationId(id: string): { channelId: string; postId: st
     }
   });
   return { postId, channelId };
+}
+
+export async function isAzureAppService(): Promise<boolean> {
+  const isLocal = process.env.IS_LOCAL === 'true';
+  logger.info('Running in Azure App Service: ' + !isLocal);
+  return !isLocal;
+}
+
+export async function getAzureCredential(botId: string): Promise<TokenCredential> {
+  return (await isAzureAppService()) ? new ManagedIdentityCredential(botId) : new AzureCliCredential();
 }

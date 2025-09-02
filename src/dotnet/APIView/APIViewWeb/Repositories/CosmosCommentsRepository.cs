@@ -31,6 +31,18 @@ namespace APIViewWeb
             return await GetCommentsFromQueryAsync(query.ToString());
         }
 
+        public async Task<IEnumerable<CommentItemModel>> GetCommentsForAPIRevisionAsync(string apiRevisionId, string createdBy = null)
+        {
+            StringBuilder query = new StringBuilder($"SELECT * FROM Comments c WHERE c.APIRevisionId = '{apiRevisionId}'");
+            if (!string.IsNullOrEmpty(createdBy))
+            {
+                query.Append($" AND c.CreatedBy = '{createdBy}'");
+            }
+            query.Append($" AND c.IsDeleted = false");
+            return await GetCommentsFromQueryAsync(query.ToString());
+        }
+
+
         public async Task UpsertCommentAsync(CommentItemModel commentModel)
         {
             await _commentsContainer.UpsertItemAsync(commentModel, new PartitionKey(commentModel.ReviewId));

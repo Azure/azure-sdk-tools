@@ -1,16 +1,16 @@
-import { ModularClientPackageOptions, NpmPackageInfo, PackageResult } from '../../common/types';
-import { buildPackage, createArtifact } from '../../common/rushUtils';
-import { initPackageResult, updateChangelogResult, updateNpmPackageResult } from '../../common/packageResultUtils';
+import { ModularClientPackageOptions, NpmPackageInfo, PackageResult } from '../../common/types.js';
+import { buildPackage, createArtifact, tryBuildSamples } from '../../common/rushUtils.js';
+import { initPackageResult, updateChangelogResult, updateNpmPackageResult } from '../../common/packageResultUtils.js';
 import { posix } from 'node:path';
-
-import { createOrUpdateCiYaml } from '../../common/ciYamlUtils';
-import { generateChangelogAndBumpVersion } from '../../common/changlog/automaticGenerateChangeLogAndBumpVersion';
-import { generateTypeScriptCodeFromTypeSpec } from './utils/typeSpecUtils';
-import { getGeneratedPackageDirectory } from '../../common/utils';
-import { getNpmPackageInfo } from '../../common/npmUtils';
-import { logger } from '../../utils/logger';
-import { exists, remove } from 'fs-extra';
+import { createOrUpdateCiYaml } from '../../common/ciYamlUtils.js';
+import { generateChangelogAndBumpVersion } from '../../common/changelog/automaticGenerateChangeLogAndBumpVersion.js';
+import { generateTypeScriptCodeFromTypeSpec } from './utils/typeSpecUtils.js';
+import { getGeneratedPackageDirectory, specifyApiVersionToGenerateSDKByTypeSpec, cleanUpPackageDirectory } from '../../common/utils.js';
+import { getNpmPackageInfo } from '../../common/npmUtils.js';
+import { logger } from '../../utils/logger.js';
+import { exists } from 'fs-extra';
 import unixify from 'unixify';
+import { codeOwnersAndIgnoreLinkGenerator } from '../../common/codeOwnersAndIgnoreLink/codeOwnersAndIgnoreLinkGenerator.js';
 
 // !!!IMPORTANT:
 // this function should be used ONLY in
@@ -26,23 +26,27 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
 
     try {
         const packageDirectory = await getGeneratedPackageDirectory(options.typeSpecDirectory, options.sdkRepoRoot);
+        const relativePackageDirToSdkRoot = posix.relative(posix.normalize(options.sdkRepoRoot), posix.normalize(packageDirectory));
+        await codeOwnersAndIgnoreLinkGenerator(relativePackageDirToSdkRoot, options.typeSpecDirectory);
         const packageJsonPath = posix.join(packageDirectory, 'package.json');
         let originalNpmPackageInfo: undefined | NpmPackageInfo;
         if (await exists(packageJsonPath)) originalNpmPackageInfo = await getNpmPackageInfo(packageDirectory);
 
-        await remove(packageDirectory);
-
+        await cleanUpPackageDirectory(packageDirectory, options.runMode);
+        if (options.apiVersion) {
+            specifyApiVersionToGenerateSDKByTypeSpec(options.typeSpecDirectory, options.apiVersion);
+        }
         await generateTypeScriptCodeFromTypeSpec(options, originalNpmPackageInfo?.version, packageDirectory);
-        const relativePackageDirToSdkRoot = posix.relative(posix.normalize(options.sdkRepoRoot), posix.normalize(packageDirectory));
-
+ 
         await buildPackage(packageDirectory, options, packageResult, rushScript, rushxScript);
 
         // changelog generation will compute package version and bump it in package.json,
         // so changelog generation should be put before any task needs package.json's version,
         // TODO: consider to decouple version bump and changelog generation
         // TODO: to be compatible with current tool, input relative generated package dir
-        const changelog = await generateChangelogAndBumpVersion(relativePackageDirToSdkRoot);
+        const changelog = await generateChangelogAndBumpVersion(relativePackageDirToSdkRoot, options);
         updateChangelogResult(packageResult, changelog);
+        await tryBuildSamples(packageDirectory, rushxScript, options.sdkRepoRoot, options.runMode);
 
         const npmPackageInfo = await getNpmPackageInfo(packageDirectory);
         const relativeTypeSpecDirToSpecRoot = posix.relative(
@@ -56,7 +60,7 @@ export async function generateAzureSDKPackage(options: ModularClientPackageOptio
             relativePackageDirToSdkRoot
         );
 
-        const artifactPath = await createArtifact(packageDirectory, rushxScript);
+        const artifactPath = await createArtifact(packageDirectory, rushxScript, options.sdkRepoRoot);
         const relativeArtifactPath = posix.relative(unixify(options.sdkRepoRoot), unixify(artifactPath));
         packageResult.artifacts.push(relativeArtifactPath);
 

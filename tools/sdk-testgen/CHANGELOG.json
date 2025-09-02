@@ -2,6 +2,18 @@
   "name": "@autorest/testmodeler",
   "entries": [
     {
+      "version": "2.6.3",
+      "tag": "@autorest/testmodeler_v2.6.3",
+      "date": "Thu, 27 May 2025 08:20:31 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Export types for downstream."
+          }
+        ]
+      }
+    },
+    {
       "version": "2.6.2",
       "tag": "@autorest/testmodeler_v2.6.2",
       "date": "Thu, 14 May 2024 08:36:29 GMT",

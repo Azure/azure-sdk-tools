@@ -40,7 +40,7 @@ function ProcessPRMergeStatuses([array]$prData, [switch]$noMerge) {
   for ($retry = 1; $retry -le 5; $retry++) {
     $currPRSet = $prData
     $prData = @()
-    foreach ($pr in ($currPRSet | Where-Object { $_.Retry -ne $false })) {
+    foreach ($pr in $currPRSet) {
       $prData += GetOrSetMergeablePR -repoOwner $pr.RepoOwner -repoName $pr.RepoName -prNumber $pr.Number
     }
 

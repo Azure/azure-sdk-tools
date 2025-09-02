@@ -48,7 +48,7 @@ This document contains code examples showing how to fix violations of the Azure 
 - [do-not-import-asyncio](#do-not-import-asyncio)
 - [invalid-use-of-overload](#invalid-use-of-overload)
 - [do-not-hardcode-connection-verify](#do-not-hardcode-connection-verify)
-- [do-not-log-exceptions](#do-not-log-exceptions)
+- [do-not-log-exceptions-if-not-debug](#do-not-log-exceptions-if-not-debug)
 - [unapproved-client-method-name-prefix](#unapproved-client-method-name-prefix)
 - [do-not-hardcode-dedent](#do-not-hardcode-dedent)
 - [client-lro-methods-use-polling](#client-lro-methods-use-polling)
@@ -57,6 +57,7 @@ This document contains code examples showing how to fix violations of the Azure 
 - [missing-logging-policy](#missing-logging-policy)
 - [missing-retry-policy](#missing-retry-policy)
 - [missing-distributed-tracing-policy](#missing-distributed-tracing-policy)
+- [do-not-use-logging-exception](#do-not-use-logging-exception)
 
 ## client-method-should-not-use-static-method
 
@@ -857,8 +858,8 @@ logger = logging.getLogger(__name__)
 try:
     # some operation
 except Exception as e:
-    logger.debug(f"Operation failed: {e}")  # Log at debug level before raising
-    # Or just don't log the exception details at all
+    logger.debug(f"Operation failed: {e.__name__}")
+    # Don't log the exception details as-is before raising
     raise BlobError("Operation failed") from e
 ```
 
@@ -960,7 +961,7 @@ def create_client(verify_ssl=True):
     # ...
 ```
 
-## do-not-log-exceptions
+## do-not-log-exceptions-if-not-debug
 
 ❌ **Incorrect**:
 ```python
@@ -1163,4 +1164,21 @@ def create_configuration(**kwargs):
     config.logging_policy = NetworkTraceLoggingPolicy(**kwargs)
     config.distributed_tracing_policy = DistributedTracingPolicy(**kwargs)
     return config
+```
+
+## do-not-use-logging-exception
+❌ **Incorrect**:
+```python
+import logging
+
+logging.exception("An error occurred")  # Using logging.exception directly
+```
+✅ **Correct**:
+```python
+import logging
+logger = logging.getLogger(__name__)
+try:
+    # some operation
+except Exception as e:
+    logger.debug("An error occurred", exc_info=e)  # Using logger.debug with exc_info
 ```

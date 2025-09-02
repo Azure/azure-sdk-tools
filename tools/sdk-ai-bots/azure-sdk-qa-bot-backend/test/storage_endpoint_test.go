@@ -3,42 +3,37 @@ package test
 import (
 	"testing"
 
+	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/service/storage"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGetBlobs(t *testing.T) {
+	config.InitConfiguration()
 	// Initialize the storage client
 	storageClient, err := storage.NewStorageService()
-	if err != nil {
-		t.Fatalf("Failed to create storage client: %v", err)
-	}
+	require.NoError(t, err)
 
 	// Define the container name and prefix
 	containerName := "test"
 
 	// Call the GetBlobs method
 	blobs := storageClient.GetBlobs(containerName)
-	if err != nil {
-		t.Fatalf("Failed to get blobs: %v", err)
-	}
 
 	// Check if the blobs are not empty
-	if len(blobs) == 0 {
-		t.Fatal("No blobs found")
-	}
+	require.NotEmpty(t, blobs)
 
 	// Print the blob names
 	for _, blob := range blobs {
-		t.Logf("Blob name: %s", blob)
+		require.NotEmpty(t, blob)
 	}
 }
 
 func TestPutBlob(t *testing.T) {
+	config.InitConfiguration()
 	// Initialize the storage client
 	storageClient, err := storage.NewStorageService()
-	if err != nil {
-		t.Fatalf("Failed to create storage client: %v", err)
-	}
+	require.NoError(t, err)
 
 	// Define the container name, blob name, and content
 	containerName := "test"
@@ -47,19 +42,14 @@ func TestPutBlob(t *testing.T) {
 
 	// Call the PutBlob method
 	err = storageClient.PutBlob(containerName, blobName, content)
-	if err != nil {
-		t.Fatalf("Failed to put blob: %v", err)
-	}
-
-	t.Logf("Blob %s uploaded successfully to container %s", blobName, containerName)
+	require.NoError(t, err)
 }
 
 func TestDeleteBlob(t *testing.T) {
+	config.InitConfiguration()
 	// Initialize the storage client
 	storageClient, err := storage.NewStorageService()
-	if err != nil {
-		t.Fatalf("Failed to create storage client: %v", err)
-	}
+	require.NoError(t, err)
 
 	// Define the container name and blob name
 	containerName := "test"
@@ -67,9 +57,5 @@ func TestDeleteBlob(t *testing.T) {
 
 	// Call the DeleteBlob method
 	err = storageClient.DeleteBlob(containerName, blobName)
-	if err != nil {
-		t.Fatalf("Failed to delete blob: %v", err)
-	}
-
-	t.Logf("Blob %s deleted successfully from container %s", blobName, containerName)
+	require.NoError(t, err)
 }

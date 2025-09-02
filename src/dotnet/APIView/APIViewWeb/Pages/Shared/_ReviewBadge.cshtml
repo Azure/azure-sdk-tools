@@ -139,7 +139,7 @@
 <div class="col-1">
     @if (TempData["page"].Equals("api"))
     {
-        if (Model.UserPreference != null && Model.UserPreference.HideReviewPageOptions.HasValue && Model.UserPreference.HideReviewPageOptions == true)
+        if (Model.UserPreference != null && Model.UserPreference.HideReviewPageOptions)
         {
             <input type="checkbox" class="btn-check" id="review-right-offcanvas-toggle" autocomplete="off">
         }
@@ -151,7 +151,7 @@
     }
     @if (TempData["page"].Equals("revisions"))
     {
-        if (Model.UserPreference != null && Model.UserPreference.HideRevisionsPageOptions.HasValue && Model.UserPreference.HideRevisionsPageOptions == true)
+        if (Model.UserPreference != null && Model.UserPreference.HideRevisionsPageOptions)
         {
             <input type="checkbox" class="btn-check" id="revisions-right-offcanvas-toggle" autocomplete="off">
         }
@@ -163,7 +163,7 @@
     }
     @if (TempData["page"].Equals("samples"))
     {
-        if (Model.UserPreference != null && Model.UserPreference.HideSamplesPageOptions.HasValue && Model.UserPreference.HideSamplesPageOptions == true)
+        if (Model.UserPreference != null && Model.UserPreference.HideSamplesPageOptions)
         {
             <input type="checkbox" class="btn-check" id="samples-right-offcanvas-toggle" autocomplete="off">
         }

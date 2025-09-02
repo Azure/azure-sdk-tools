@@ -22,53 +22,57 @@
 ###########
 # CODEOWNERS Linter pipeline
 ###########
-/eng/common/pipelines/codeowners-linter.yml @kurtzeborn @JimSuplizio @weshaggard
-
-###########
-# GitHub Tools
-###########
-/tools/github/                         @jsquire @ronniegeraghty
-/tools/issue-labeler/                  @jsquire @jeo02
+/eng/common/pipelines/codeowners-linter.yml @weshaggard
 
 ###########
 # Eng Sys Tools
 ###########
 /tools/                                 @azure/azure-sdk-eng
 /tools/azure-rest-api-specs-examples-automation/ @weidongxu-microsoft
-/tools/codeowners-utils/                @JimSuplizio
-/tools/github-event-processor/          @JimSuplizio @benbp @jsquire @ronniegeraghty
-/tools/github-team-user-store/          @JimSuplizio @weshaggard
+/tools/codeowners-utils/                @weshaggard
+/tools/fxlister/                        @KrzysztofCwalina
+/tools/github/                          @jsquire @ronniegeraghty
+/tools/github-event-processor/          @benbp @jsquire @ronniegeraghty
+/tools/github-team-user-store/          @weshaggard
+/tools/issue-labeler/                   @jsquire @jeo02 @radhgupta
 /tools/js-sdk-release-tools/            @qiaozha @MaryGao @wanlwanl
-/tools/mock-service-host/               @raych1 @tadelesh
 /tools/perf-automation/                 @mikeharder @benbp
+/tools/perf-automation/**/*Rust*.cs     @heaths @LarryOsterman @RickWinter
 /tools/pipeline-generator/              @weshaggard @benbp
 /tools/pipeline-witness/                @hallipr
-/tools/sdk-ai-bots/                     @raych1
+/tools/sdk-sample-generator             @deyaaeldeen
 /tools/sdk-testgen/                     @lirenhe @tadelesh
 /tools/spec-gen-sdk/                    @raych1 @chidozieononiwu
 /tools/test-proxy/                      @scbedd @mikeharder @benbp
-/tools/tsp-client/                      @catalinaperalta
+/tools/tsp-client/                      @catalinaperalta @timotheeguerin
 /tools/typespec-bump-deps/              @weidongxu-microsoft
+/tools/content-validation/              @xiangyan99 @zedy-wj
+/tools/perf-regression-finder/          @sa7936 @m-redding @jsquire
+
+# PRLabel: %azsdk-cli
+/tools/azsdk-cli/                       @benbp @scbedd @praveenkuttappan @smw-ms @Jeo02 @maririos @richardpark-msft
 
 ###########
 # Stress
 ###########
-/eng/common/scripts/stress-testing/     @benbp @ckairen @richardpark-msft
-/tools/stress-cluster/                  @benbp @ckairen @richardpark-msft
+/eng/common/scripts/stress-testing/     @benbp @richardpark-msft
+/tools/stress-cluster/                  @benbp @richardpark-msft
 
 ###########
 # .NET Client Tools
 ###########
-/src/dotnet/Azure.ClientSdk.Analyzers/  @jsquire @JoshLove-msft @christothes @annelo-msft @KrzysztofCwalina @tg-msft @m-nash
-/src/dotnet/APIView/                    @chidozieononiwu
+/src/dotnet/                            @azure/azsdknet @jsquire
+/src/dotnet/APIView/                    @tjprescott @AlitzelMendez @helen229 @praveenkuttappan @chidozieononiwu
+/tools/net-changelog-gen-mgmt           @ArthurMa1978 @ArcturusZhang
+/tools/snippet-generator/               @Azure/azsdknet @jsquire
 
 ###########
 # APIView parsers
 ###########
-/tools/apiview/                           @chidozieononiwu
+/tools/apiview/                           @tjprescott @AlitzelMendez @helen229 @praveenkuttappan @chidozieononiwu
 /tools/apiview/emitters/typespec-apiview/ @tjprescott
 /tools/apiview/parsers/cpp-api-parser/    @LarryOsterman
-/tools/apiview/parsers/csharp-api-parser/ @christothes
+/tools/apiview/parsers/csharp-api-parser/ @azure/azsdknet @jsquire
 /tools/apiview/parsers/js-api-parser/     @jeremymeng @maorleger
 /src/swift/                               @tjprescott
 /src/java/apiview-java-processor/         @JonathanGiles
@@ -79,3 +83,13 @@
 # Pylint checkers
 ###########
 /tools/pylint-extensions/azure-pylint-guidelines-checker/ @l0lawrence
+
+###########
+# Azure SDK Q&A Bot
+###########
+/tools/sdk-ai-bots/                                 @lirenhe @wanlwanl @chunyu3 @JiaqiZhang-Dev
+/tools/sdk-ai-bots/azure-sdk-qa-bot-backend         @JiaqiZhang-Dev
+/tools/sdk-ai-bots/azure-sdk-qa-bot                 @wanlwanl
+/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation      @chunyu3
+/tools/sdk-ai-bots/azure-sdk-qa-bot-function        @JiaqiZhang-Dev @wanlwanl
+/tools/sdk-ai-bots/azure-sdk-qa-bot-backend-shared  @wanlwanl

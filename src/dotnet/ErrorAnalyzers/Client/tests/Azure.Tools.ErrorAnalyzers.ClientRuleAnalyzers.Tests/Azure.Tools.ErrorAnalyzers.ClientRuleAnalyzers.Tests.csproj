@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+    <PackageReference Include="NUnit" Version="4.0.1" />
+    <PackageReference Include="NUnit3TestAdapter" Version="4.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Azure.Tools.ErrorAnalyzers.ClientRuleAnalyzers\Azure.Tools.ErrorAnalyzers.ClientRuleAnalyzers.csproj" />
+    <ProjectReference Include="..\..\..\Core\src\Azure.Tools.ErrorAnalyzers\Azure.Tools.ErrorAnalyzers.csproj" />
+  </ItemGroup>
+
+</Project>

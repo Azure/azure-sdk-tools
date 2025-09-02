@@ -6,18 +6,18 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/ai/azopenai"
 	"github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/config"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCompletion(t *testing.T) {
-	// Initialize the OpenAI client
+	config.InitConfiguration()
 	config.InitSecrets()
 	config.InitOpenAIClient()
 	// Define the request
 	messages := []azopenai.ChatRequestMessageClassification{
 		&azopenai.ChatRequestUserMessage{Content: azopenai.NewChatRequestUserMessageContent("What is the capital of France?")},
 	}
-
-	model := config.AOAI_CHAT_COMPLETIONS_MODEL
+	model := config.AppConfig.AOAI_CHAT_COMPLETIONS_MODEL
 	resp, err := config.OpenAIClient.GetChatCompletions(context.TODO(), azopenai.ChatCompletionsOptions{
 		// This is a conversation in progress.
 		// NOTE: all messages count against token usage for this API.
@@ -25,11 +25,6 @@ func TestCompletion(t *testing.T) {
 		DeploymentName: &model,
 	}, nil)
 
-	if err != nil {
-		t.Fatalf("Failed to get chat completions: %v", err)
-	}
-	// Print the response
-	for _, choice := range resp.Choices {
-		t.Logf("Response: %s", *choice.Message.Content)
-	}
+	require.NoError(t, err)
+	require.NotEmpty(t, resp.Choices)
 }

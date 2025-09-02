@@ -2,7 +2,6 @@ import 'reflect-metadata';
 import * as _ from 'lodash';
 import * as fs from 'fs';
 import * as path from 'path';
-import { ApiScenarioLoader } from 'oav/dist/lib/apiScenario/apiScenarioLoader';
 import {
     ArraySchema,
     BinarySchema,
@@ -31,7 +30,6 @@ import {
 import { AutorestExtensionHost, Session, startSession } from '@autorest/extension-base';
 import { Config, OavStepType, testScenarioVariableDefault } from '../common/constant';
 import { Helper } from '../util/helper';
-import { Scenario, ScenarioDefinition, Step, StepArmTemplate, StepRestCall } from 'oav/dist/lib/apiScenario/apiScenarioTypes';
 import { TestConfig } from '../common/testConfig';
 
 export enum ExtensionName {
@@ -47,10 +45,6 @@ export interface ExampleExtension {
     // eslint-disable-next-line
     'x-ms-original-file'?: string;
 }
-
-export type StepArmTemplateModel = StepArmTemplate & { armTemplatePayloadString?: string };
-
-export type StepRestCallModel = StepRestCall & { exampleModel: ExampleModel; outputVariablesModel: Record<string, OutputVariableModel[]> };
 
 /**
  * Generally a test group should be generated into one test source file.
@@ -81,21 +75,12 @@ export class ExampleGroup {
 
 export class TestModel {
     mockTest: MockTestDefinitionModel = new MockTestDefinitionModel();
-    scenarioTests: TestDefinitionModel[] = [];
 }
 
 export interface TestCodeModel extends CodeModel {
     testModel?: TestModel;
 }
 
-export type TestScenarioModel = Scenario & {
-    requiredVariablesDefault?: { [variable: string]: string };
-};
-
-export type TestDefinitionModel = ScenarioDefinition & {
-    useArmTemplate: boolean;
-    requiredVariablesDefault: { [variable: string]: string };
-};
 export class ExampleValue {
     language: Languages;
     schema: Schema;
@@ -517,184 +502,6 @@ export class TestCodeModeler {
         return undefined;
     }
 
-    private initiateOavVariables(scope: Record<string, any>) {
-        // set default values for requiredVariables
-        if (scope.requiredVariables) {
-            if (!scope.requiredVariablesDefault) {
-                scope.requiredVariablesDefault = {};
-            }
-            const defaults = {
-                ...testScenarioVariableDefault,
-                ...this.testConfig.getValue(Config.scenarioVariableDefaults),
-            };
-            for (const variable of scope.requiredVariables) {
-                scope.requiredVariablesDefault[variable] = _.get(defaults, variable, '');
-            }
-            if (scope['scope'] && (scope['scope'] as string).toLocaleLowerCase() === 'resourcegroup') {
-                scope.requiredVariablesDefault['resourceGroupName'] = _.get(defaults, 'resourceGroupName', '');
-            }
-        }
-
-        // format variable names
-        if (scope.variables) {
-            for (const [k, v] of Object.entries(scope.variables)) {
-                if (!/^\w+$/.test(k)) {
-                    const formatedName = Helper.toCamelCase(k);
-                    delete Object.assign(scope.variables, { [formatedName]: v })[k];
-                }
-            }
-        }
-    }
-
-    public initiateArmTemplate(testDef: TestDefinitionModel, stepModel: StepArmTemplateModel) {
-        testDef.useArmTemplate = true;
-        const scriptContentKey = 'scriptContent';
-        for (const resource of stepModel.armTemplatePayload?.resources || []) {
-            const scriptContentValue = resource.properties?.[scriptContentKey];
-            if (scriptContentValue && typeof scriptContentValue === 'string') {
-                // align new line character for scriptContent across win/os/linux
-                resource.properties[scriptContentKey] = scriptContentValue.split('\r\n').join('\n');
-            }
-        }
-        if (this.testConfig.getValue(Config.addArmTemplatePayloadString) && stepModel.armTemplatePayload) {
-            stepModel.armTemplatePayloadString = JSON.stringify(stepModel.armTemplatePayload, null, '  ');
-        }
-    }
-
-    public initiateRestCall(session, step: StepRestCallModel) {
-        const operationInfo = this.findOperationByOperationId(step.operationId);
-        if (operationInfo) {
-            const { operation, operationGroup } = operationInfo;
-            if (this.testConfig.getValue(Config.useExampleModel)) {
-                step.exampleModel = this.createExampleModel(
-                    session,
-                    {
-                        parameters: step.parameters,
-                        responses: step.responses,
-                    },
-                    step.exampleFile,
-                    operation,
-                    operationGroup,
-                );
-
-                // Change outputVariables' json point to model.
-                if (step.outputVariables) {
-                    step.outputVariablesModel = {};
-                    for (const [variableName, variableConfig] of Object.entries(step.outputVariables)) {
-                        // JsonPointer use '/' to seperate the token and only can point to one value. Token is a number or a string.
-                        const valueParts = variableConfig.fromResponse.split('/');
-                        // The root schema is from the http body. We only get value from the '200' response for now.
-                        let currentSchema = findResponseSchema(operation, '200')?.schema;
-                        step.outputVariablesModel[variableName] = [];
-                        for (let i = 1; i < valueParts.length; i++) {
-                            const valuePart = valueParts[i];
-                            const index = parseInt(valuePart);
-                            if (!isNaN(index)) {
-                                // Number token get index value from array. We just need to record the index value.
-                                step.outputVariablesModel[variableName].push(new OutputVariableModel(OutputVariableModelType.index, index));
-                                // If the value is from an defined array, then update the current schema. If the value is from an any/anyObject param, then left schema to be undefined.
-                                if (currentSchema?.type === SchemaType.Array) {
-                                    currentSchema = (currentSchema as ArraySchema).elementType;
-                                } else {
-                                    currentSchema = undefined;
-                                }
-                            } else {
-                                if (currentSchema?.type === SchemaType.Object) {
-                                    // String token get param value from object.
-                                    let found = false;
-                                    // Look up param in object
-                                    for (const property of (currentSchema as ObjectSchema).properties) {
-                                        if (property.serializedName === valuePart) {
-                                            step.outputVariablesModel[variableName].push(new OutputVariableModel(OutputVariableModelType.object, property.language));
-                                            currentSchema = property.schema;
-                                            found = true;
-                                            break;
-                                        }
-                                    }
-                                    if (!found) {
-                                        // Continue to look up in parent object
-                                        if ((currentSchema as ObjectSchema).parents) {
-                                            for (const parentObject of (currentSchema as ObjectSchema).parents?.all) {
-                                                for (const property of (parentObject as ObjectSchema).properties) {
-                                                    if (property.serializedName === valuePart) {
-                                                        step.outputVariablesModel[variableName].push(new OutputVariableModel(OutputVariableModelType.object, property.language));
-                                                        currentSchema = property.schema;
-                                                        found = true;
-                                                        break;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                } else {
-                                    // String token get param value from any/anyObject.
-                                    step.outputVariablesModel[variableName].push(new OutputVariableModel(OutputVariableModelType.key, valuePart));
-                                    currentSchema = undefined;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Remove oav operation to save size of codeModel.
-            // Don't do this if oav operation is used in future.
-            if (Object.prototype.hasOwnProperty.call(step, 'operation')) {
-                step.operation = undefined;
-            }
-        }
-    }
-
-    public initiateTestDefinition(session: Session<TestCodeModel>, testDef: TestDefinitionModel, codeModelRestcallOnly = false) {
-        this.initiateOavVariables(testDef);
-        testDef.useArmTemplate = false;
-
-        for (const step of testDef.prepareSteps) {
-            this.processStep(session, step, codeModelRestcallOnly, testDef);
-        }
-
-        for (const scenario of testDef.scenarios as TestScenarioModel[]) {
-            for (const step of scenario.steps) {
-                this.processStep(session, step, codeModelRestcallOnly, testDef);
-            }
-            this.initiateOavVariables(scenario);
-        }
-
-        for (const step of testDef.cleanUpSteps) {
-            this.processStep(session, step, codeModelRestcallOnly, testDef);
-        }
-    }
-
-    private processStep(session: Session<TestCodeModel>, step: Step, codeModelRestcallOnly: boolean, testDef: TestDefinitionModel) {
-        this.initiateOavVariables(step);
-        if (step.type === OavStepType.restCall) {
-            const stepModel = step as StepRestCallModel;
-            this.initiateRestCall(session, stepModel);
-            if (codeModelRestcallOnly && !stepModel.exampleModel) {
-                throw new Error(`Can't find operationId ${step.operationId}[step ${step.step}] in codeModel!`);
-            }
-        } else if (step.type === OavStepType.armTemplate) {
-            testDef.useArmTemplate = true;
-            this.initiateArmTemplate(testDef, step as StepArmTemplateModel);
-        }
-    }
-
-    public async loadTestResources(session: Session<TestCodeModel>) {
-        try {
-            let fileRoot = this.testConfig.getSwaggerFolder() || '';
-            if (fileRoot.endsWith('/') || fileRoot.endsWith('\\')) {
-                fileRoot = fileRoot.substring(0, fileRoot.length - 1);
-            }
-            if (Array.isArray(this.testConfig.config[Config.testResources])) {
-                await this.loadTestResourcesFromConfig(session, fileRoot);
-            } else {
-                await this.loadAvailableTestResources(session, fileRoot);
-            }
-        } catch (error) {
-            session.warning(`Exception occured when load test resource scenario: ${error.stack}`, ['Test Modeler']);
-        }
-    }
-
     public createApiScenarioLoaderOption(fileRoot: string) {
         const options = {
             useJsonParser: false,
@@ -706,49 +513,4 @@ export class TestCodeModeler {
         return { ...options, ...this.testConfig.getValue(Config.apiScenarioLoaderOption, {}) };
     }
 
-    public async loadTestResourcesFromConfig(session: Session<TestCodeModel>, fileRoot: string) {
-        const codemodelRestCallOnly = this.testConfig.getValue(Config.scenarioCodeModelRestCallOnly);
-        for (const testResource of this.testConfig.getValue(Config.testResources)) {
-            const testFile = typeof testResource === 'string' ? testResource : testResource[Config.test];
-            try {
-                const opts = this.createApiScenarioLoaderOption(fileRoot);
-                const loader = ApiScenarioLoader.create(opts);
-                const testDef = (await loader.load(testFile, opts.swaggerFilePaths)) as TestDefinitionModel;
-                this.initiateTestDefinition(session, testDef, codemodelRestCallOnly);
-                this.codeModel.testModel.scenarioTests.push(testDef);
-            } catch (error) {
-                session.warning(`Exception occured when load testdef ${testFile}: ${error}`, ['Test Modeler']);
-            }
-        }
-    }
-
-    public async loadAvailableTestResources(session: Session<TestCodeModel>, fileRoot: string) {
-        const scenariosFolders = ['scenarios', 'test-scenarios'];
-        const codemodelRestCallOnly = this.testConfig.getValue(Config.scenarioCodeModelRestCallOnly);
-        for (const apiFolder of this.testConfig.getInputFileFolders()) {
-            for (const scenariosFolder of scenariosFolders) {
-                const scenarioPath = path.join(fileRoot, apiFolder, scenariosFolder);
-                // currently loadAvailableTestResources only support scenario scanning from local file system
-                if (fs.existsSync(scenarioPath) && fs.lstatSync(scenarioPath).isDirectory()) {
-                    for (const scenarioFile of fs.readdirSync(scenarioPath)) {
-                        if (!scenarioFile.endsWith('.yaml') && !scenarioFile.endsWith('.yml')) {
-                            continue;
-                        }
-                        let scenarioPathName = path.join(apiFolder, scenariosFolder, scenarioFile);
-                        try {
-                            const opts = this.createApiScenarioLoaderOption(fileRoot);
-                            const loader = ApiScenarioLoader.create(opts);
-                            scenarioPathName = scenarioPathName.split('\\').join('/');
-                            const testDef = (await loader.load(scenarioPathName, opts.swaggerFilePaths)) as TestDefinitionModel;
-
-                            this.initiateTestDefinition(session, testDef, codemodelRestCallOnly);
-                            this.codeModel.testModel.scenarioTests.push(testDef);
-                        } catch (error) {
-                            session.warning(`${scenarioPathName} is not a valid api scenario: ${error.stack}`, ['Test Modeler']);
-                        }
-                    }
-                }
-            }
-        }
-    }
 }

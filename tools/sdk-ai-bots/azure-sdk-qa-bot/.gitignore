@@ -1,4 +1,7 @@
 # TeamsFx files
+# Force include env folder to override parent gitignore rules
+!env/
+!env/**
 env/.env.*.user
 env/.env.local
 .localConfigs
@@ -21,3 +24,5 @@ lib/
 
 # Dev tool directories
 /devTools/
+
+azsdk-cli/

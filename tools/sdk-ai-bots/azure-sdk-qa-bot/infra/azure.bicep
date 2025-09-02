@@ -10,7 +10,7 @@ param ragApiKey string
 
 // Resources
 @maxLength(20)
-@minLength(4)
+@minLength(5)
 @description('Used to generate names for all resources in this file')
 param resourceBaseName string
 
@@ -20,6 +20,11 @@ param identityName string = resourceBaseName
 param logAnalyticsName string = resourceBaseName
 param location string = resourceGroup().location
 param webAppSKU string
+
+// Docker Configuration
+param dockerImageTag string
+param dockerRegistryUrl string = '${resourceBaseName}.azurecr.io'  // Use the ACR we create
+param dockerImageName string = '${dockerRegistryUrl}/azure-sdk-qa-bot:${dockerImageTag}'
 
 // Bot
 @maxLength(42)
@@ -35,6 +40,32 @@ param typespecHelperStorageResourceGroupName string = 'typespec_helper'
 resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   location: location
   name: identityName
+}
+
+// Azure Container Registry
+resource acr 'Microsoft.ContainerRegistry/registries@2023-07-01' = {
+  name: resourceBaseName
+  location: location
+  sku: {
+    name: 'Standard'
+  }
+  properties: {
+    adminUserEnabled: false
+    publicNetworkAccess: 'Enabled'
+    networkRuleBypassOptions: 'AzureServices'
+    zoneRedundancy: 'Disabled'
+  }
+}
+
+// Grant the managed identity AcrPull role on the container registry
+resource acrPullRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(acr.id, identity.id, 'AcrPull')
+  scope: acr
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d') // AcrPull role
+    principalId: identity.properties.principalId
+    principalType: 'ServicePrincipal'
+  }
 }
 
 // Resource Group Delete Lock to prevent accidental deletion
@@ -62,7 +93,7 @@ resource serverfarm 'Microsoft.Web/serverfarms@2021-02-01' = {
 
 // Web App that hosts your bot
 resource webApp 'Microsoft.Web/sites@2021-02-01' = {
-  kind: 'app,linux'
+  kind: 'app,linux,container'
   location: location
   name: webAppName
   properties: {
@@ -70,12 +101,18 @@ resource webApp 'Microsoft.Web/sites@2021-02-01' = {
     httpsOnly: true
     siteConfig: {
       alwaysOn: true
-      linuxFxVersion: 'NODE|20-lts'
+      linuxFxVersion: 'DOCKER|${dockerImageName}'
+      acrUseManagedIdentityCreds: true
+      acrUserManagedIdentityID: identity.properties.clientId
       appSettings: [
         // Web app
         {
-          name: 'WEBSITE_RUN_FROM_PACKAGE'
-          value: '1' // Run Azure App Service from a package file
+          name: 'WEBSITES_ENABLE_APP_SERVICE_STORAGE'
+          value: 'false'
+        }
+        {
+          name: 'WEBSITES_PORT'
+          value: '3978'
         }
         {
           name: 'RUNNING_ON_AZURE'
@@ -107,6 +144,10 @@ resource webApp 'Microsoft.Web/sites@2021-02-01' = {
         {
           name: 'AZURE_TABLE_NAME_FOR_CONVERSATION'
           value: azureTableNameForConversation
+        }
+        {
+          name: 'AZURE_CLIENT_ID'
+          value: identity.properties.clientId
         }
       ]
       ftpsState: 'FtpsOnly'

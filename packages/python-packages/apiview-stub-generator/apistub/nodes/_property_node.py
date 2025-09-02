@@ -52,11 +52,29 @@ class PropertyNode(NodeEntityBase):
         if self.read_only:
             self.display_name += "   # Read-only"
 
+    def check_handwritten(self):
+        """Check if the property object is handwritten by checking if its getter's source file
+         is named "_patch.py".
+
+        :return: True if the object is handwritten, False if generated.
+        :rtype: bool
+        """
+        try:
+            # Handle property objects by checking their getter function
+            if self.obj.fget:
+                source_file = inspect.getfile(self.obj.fget)
+                return source_file.endswith("_patch.py")
+            return False
+        except (TypeError, OSError):
+            # inspect.getfile() can raise TypeError for built-in objects
+            # or OSError if the source file cannot be found
+            return False
+
     def generate_tokens(self, review_lines):
         """Generates token for the node and it's children recursively and add it to apiview
         :param review_lines: ReviewLines
         """
-        review_line = review_lines.create_review_line()
+        review_line = review_lines.create_review_line(is_handwritten=self.is_handwritten)
         review_line.add_keyword("property")
         review_line.add_line_marker(self.namespace_id)
         review_line.add_text(self.name, has_suffix_space=False)

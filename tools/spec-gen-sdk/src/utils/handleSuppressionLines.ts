@@ -1,7 +1,7 @@
 
 import { diffStringArrays } from './utils';
 import { SdkSuppressionsYml, SdkPackageSuppressionsEntry } from '../types/sdkSuppressions';
-import { WorkflowContext } from '../automation/workflow';
+import { WorkflowContext } from '../types/Workflow';
 
 export type SDKSuppressionContentList = Map<string, {content: SdkSuppressionsYml| null, sdkSuppressionFilePath: string | undefined, errors: string[]}>
 /**

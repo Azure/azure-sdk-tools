@@ -56,6 +56,11 @@ type Pkg struct {
 //   - modulePath is the import path of the module containing the package
 //   - moduleRoot is the root directory of the module on disk i.e., the directory containing its go.mod
 func NewPkg(dir, modulePath, moduleRoot string) (*Pkg, error) {
+	// ensure that all directories are using the same path separator
+	// character else the below call to strings.Cut() will fail
+	dir = filepath.ToSlash(dir)
+	moduleRoot = filepath.ToSlash(moduleRoot)
+
 	pk := &Pkg{
 		modulePath:  modulePath,
 		c:           newContent(),

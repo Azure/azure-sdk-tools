@@ -36,6 +36,7 @@ public class ExampleTool : MCPTool
     private readonly AzureOpenAIClient openAIClient;
     private readonly IProcessHelper processHelper;
     private readonly IPowershellHelper powershellHelper;
+    private readonly TokenUsageHelper tokenUsageHelper;
 
     // CLI Options and Arguments
     private readonly Argument<string> aiInputArg = new(
@@ -81,6 +82,7 @@ public class ExampleTool : MCPTool
         IGitHubService gitHubService,
         IProcessHelper processHelper,
         IPowershellHelper powershellHelper,
+        TokenUsageHelper tokenUsageHelper,
         AzureOpenAIClient openAIClient
     ) : base()
     {
@@ -92,6 +94,7 @@ public class ExampleTool : MCPTool
         this.openAIClient = openAIClient;
         this.processHelper = processHelper;
         this.powershellHelper = powershellHelper;
+        this.tokenUsageHelper = tokenUsageHelper;
 
         // Set command hierarchy - results in: azsdk example
         CommandHierarchy = [
@@ -294,6 +297,8 @@ public class ExampleTool : MCPTool
             };
 
             var response = await chatClient.CompleteChatAsync(messages, cancellationToken: ct);
+            tokenUsageHelper.Add(model, response.Value.Usage.InputTokenCount, response.Value.Usage.OutputTokenCount);
+            tokenUsageHelper.LogCost();
 
             return new ExampleServiceResponse
             {

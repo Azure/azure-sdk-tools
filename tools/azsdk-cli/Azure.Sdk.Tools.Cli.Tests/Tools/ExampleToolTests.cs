@@ -58,6 +58,7 @@ internal class ExampleToolTests
             mockGitHubService,
             mockProcessHelper.Object,
             mockPowershellHelper.Object,
+            tokenUsageHelper: new TokenUsageHelper(mockOutput.Object),
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             null
 #pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.

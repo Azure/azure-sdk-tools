@@ -28,31 +28,31 @@ public class PipelineAnalysisTool : MCPTool
     private readonly IDevOpsService devopsService;
     private readonly IAzureAgentServiceFactory azureAgentServiceFactory;
     private readonly ILogAnalysisHelper logAnalysisHelper;
-    private ITestHelper testHelper;
-    private readonly IOutputHelper output;
+    private readonly ITestHelper testHelper;
     private readonly ILogger<PipelineAnalysisTool> logger;
+    private readonly IOutputHelper output;
+    private readonly TokenUsageHelper tokenUsageHelper;
 
     private IAzureAgentService azureAgentService;
-    private TokenUsageHelper usage;
     private bool initialized = false;
 
     private readonly HttpClient httpClient = new();
-    private BuildHttpClient _buildClient;
+    private BuildHttpClient buildClientValue;
     private BuildHttpClient buildClient
     {
         get
         {
             Initialize();
-            return _buildClient;
+            return buildClientValue;
         }
     }
-    private TestResultsHttpClient _testClient;
+    private TestResultsHttpClient testClientValue;
     private TestResultsHttpClient testClient
     {
         get
         {
             Initialize();
-            return _testClient;
+            return testClientValue;
         }
     }
 
@@ -70,8 +70,9 @@ public class PipelineAnalysisTool : MCPTool
         IAzureAgentServiceFactory azureAgentServiceFactory,
         ILogAnalysisHelper logAnalysisHelper,
         ITestHelper testHelper,
+        ILogger<PipelineAnalysisTool> logger,
         IOutputHelper output,
-        ILogger<PipelineAnalysisTool> logger
+        TokenUsageHelper tokenUsageHelper
     ) : base()
     {
         this.azureService = azureService;
@@ -79,8 +80,9 @@ public class PipelineAnalysisTool : MCPTool
         this.azureAgentServiceFactory = azureAgentServiceFactory;
         this.logAnalysisHelper = logAnalysisHelper;
         this.testHelper = testHelper;
-        this.output = output;
         this.logger = logger;
+        this.output = output;
+        this.tokenUsageHelper = tokenUsageHelper;
 
         CommandHierarchy =
         [
@@ -116,14 +118,14 @@ public class PipelineAnalysisTool : MCPTool
         {
             var result = await AnalyzePipelineFailureLogs(project ?? projectFromLink, buildId, [logId], analyzeWithAgent, ct);
             ctx.ExitCode = ExitCode;
-            usage?.LogCost();
+            tokenUsageHelper.LogCost();
             output.Output(result);
         }
         else
         {
             var result = await AnalyzePipeline(project ?? projectFromLink, buildId, analyzeWithAgent, ct);
             ctx.ExitCode = ExitCode;
-            usage?.LogCost();
+            tokenUsageHelper.LogCost();
             output.Output(result);
         }
     }
@@ -174,14 +176,14 @@ public class PipelineAnalysisTool : MCPTool
             var token = azureService.GetCredential(Constants.MICROSOFT_CORP_TENANT).GetToken(new TokenRequestContext(tokenScope), CancellationToken.None);
             var tokenCredential = new VssOAuthAccessTokenCredential(token.Token);
             var connection = new VssConnection(new Uri(Constants.AZURE_SDK_DEVOPS_BASE_URL), tokenCredential);
-            _buildClient = connection.GetClient<BuildHttpClient>();
-            _testClient = connection.GetClient<TestResultsHttpClient>();
+            buildClientValue = connection.GetClient<BuildHttpClient>();
+            testClientValue = connection.GetClient<TestResultsHttpClient>();
         }
         else
         {
             var connection = new VssConnection(new Uri(Constants.AZURE_SDK_DEVOPS_BASE_URL), null);
-            _buildClient = connection.GetClient<BuildHttpClient>();
-            _testClient = connection.GetClient<TestResultsHttpClient>();
+            buildClientValue = connection.GetClient<BuildHttpClient>();
+            testClientValue = connection.GetClient<TestResultsHttpClient>();
         }
 
         initialized = true;
@@ -400,7 +402,7 @@ public class PipelineAnalysisTool : MCPTool
                 return response;
             }
 
-            var (result, _usage) = await azureAgentService.QueryFiles(logs, session, "Why did this pipeline fail?", ct);
+            var result = await azureAgentService.QueryFiles(logs, session, "Why did this pipeline fail?", ct);
             // Sometimes chat gpt likes to wrap the json in markdown
             if (result.StartsWith("```json"))
             {
@@ -415,9 +417,6 @@ public class PipelineAnalysisTool : MCPTool
             {
                 File.Delete(log);
             }
-
-
-            usage = usage != null ? usage + _usage : _usage;
 
             try
             {

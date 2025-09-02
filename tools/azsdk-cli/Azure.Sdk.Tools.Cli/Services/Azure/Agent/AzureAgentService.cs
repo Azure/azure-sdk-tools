@@ -8,10 +8,16 @@ public interface IAzureAgentService
     string ProjectEndpoint { get; }
 
     Task DeleteAgents(CancellationToken ct);
-    Task<(string, TokenUsageHelper)> QueryFiles(List<string> files, string session, string query, CancellationToken ct);
+    Task<string> QueryFiles(List<string> files, string session, string query, CancellationToken ct);
 }
 
-public class AzureAgentService(IAzureService azureService, ILogger<AzureAgentService> logger, string? _projectEndpoint, string? _model) : IAzureAgentService
+public class AzureAgentService(
+    IAzureService azureService,
+    ILogger<AzureAgentService> logger,
+    TokenUsageHelper tokenUsageHelper,
+    string? _projectEndpoint,
+    string? _model
+) : IAzureAgentService
 {
     public string ProjectEndpoint { get; } = _projectEndpoint ?? defaultProjectEndpoint;
     private static readonly string defaultProjectEndpoint = "https://azsdk-engsys-ai.services.ai.azure.com/api/projects/azsdk-engsys-ai";
@@ -68,7 +74,7 @@ Again, the entire response **MUST BE VALID JSON**";
         }
     }
 
-    public async Task<(string, TokenUsageHelper)> QueryFiles(List<string> files, string session, string query, CancellationToken ct)
+    public async Task<string> QueryFiles(List<string> files, string session, string query, CancellationToken ct)
     {
         List<string> uploaded = [];
         foreach (var file in files)
@@ -135,10 +141,12 @@ Again, the entire response **MUST BE VALID JSON**";
             }
         }
 
+        tokenUsageHelper.Add(model, run.Usage.PromptTokens, run.Usage.CompletionTokens);
+
         // NOTE: in the future we will want to keep these around if the user wants to keep querying the file in a session
         logger.LogDebug("Deleting temporary resources: agent {AgentId}, vector store {VectorStoreId}, {fileCount} files", agent.Id, vectorStore.Id, uploaded.Count);
+        await DeleteAgents(ct);
 
-        var tokenUsage = new TokenUsageHelper(model, run.Usage.PromptTokens, run.Usage.CompletionTokens);
-        return (string.Join("\n", response), tokenUsage);
+        return string.Join("\n", response);
     }
 }

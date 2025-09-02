@@ -3,7 +3,7 @@ using Azure.Tools.GeneratorAgent.Configuration;
 using Microsoft.Extensions.Logging;
 using Azure.Tools.ErrorAnalyzers;
 
-namespace Azure.Tools.GeneratorAgent
+namespace Azure.Tools.GeneratorAgent.Agent
 {
     internal class AgentProcessor
     {
@@ -11,19 +11,19 @@ namespace Azure.Tools.GeneratorAgent
         private readonly ILogger<AgentProcessor> Logger;
         private readonly AgentResponseParser ResponseParser;
         private readonly AgentManager AgentManager;
-        private readonly ThreadManager ThreadManager;
+        private readonly AgentThreadManager AgentThreadManager;
         private readonly AppSettings AppSettings;
         
         // Lazy property that gets the agent ID on demand
         private string AgentId => AgentManager.GetAgent().Id;
 
-        public AgentProcessor(PersistentAgentsClient client, ILogger<AgentProcessor> logger, AgentResponseParser responseParser, AgentManager agentManager, ThreadManager threadManager, AppSettings appSettings)
+        public AgentProcessor(PersistentAgentsClient client, ILogger<AgentProcessor> logger, AgentResponseParser responseParser, AgentManager agentManager, AgentThreadManager agentThreadManager, AppSettings appSettings)
         {
             Client = client;
             Logger = logger;
             ResponseParser = responseParser;
             AgentManager = agentManager;
-            ThreadManager = threadManager;
+            AgentThreadManager = agentThreadManager;
             AppSettings = appSettings;
         }
 
@@ -44,9 +44,9 @@ namespace Azure.Tools.GeneratorAgent
                     var prompt = fixPromptService.ConvertFixToPrompt(fix);
 
                     await Client.Messages.CreateMessageAsync(threadId, MessageRole.User, prompt, cancellationToken: cancellationToken).ConfigureAwait(false);
-                    await ThreadManager.ProcessAgentRunAsync(threadId, AgentId, cancellationToken).ConfigureAwait(false);
+                    await AgentThreadManager.ProcessAgentRunAsync(threadId, AgentId, cancellationToken).ConfigureAwait(false);
 
-                    var response = await ThreadManager.ReadResponseAsync(threadId, cancellationToken).ConfigureAwait(false);
+                    var response = await AgentThreadManager.ReadResponseAsync(threadId, cancellationToken).ConfigureAwait(false);
                     var agentResponse = ResponseParser.ParseResponse(response);
 
                     finalUpdatedContent = agentResponse.Content;
@@ -75,9 +75,9 @@ namespace Azure.Tools.GeneratorAgent
                 var analysisPrompt = string.Format(AppSettings.ErrorAnalysisPromptTemplate, errorLogs);
 
                 await Client.Messages.CreateMessageAsync(threadId, MessageRole.User, analysisPrompt, cancellationToken: cancellationToken).ConfigureAwait(false);
-                await ThreadManager.ProcessAgentRunAsync(threadId, AgentId, cancellationToken).ConfigureAwait(false);
+                await AgentThreadManager.ProcessAgentRunAsync(threadId, AgentId, cancellationToken).ConfigureAwait(false);
 
-                var response = await ThreadManager.ReadResponseAsync(threadId, cancellationToken).ConfigureAwait(false);
+                var response = await AgentThreadManager.ReadResponseAsync(threadId, cancellationToken).ConfigureAwait(false);
                 var ruleErrors = ResponseParser.ParseErrors(response);
 
                 Logger.LogInformation("AI-based error analysis completed. Found {Count} errors.", ruleErrors.Count);

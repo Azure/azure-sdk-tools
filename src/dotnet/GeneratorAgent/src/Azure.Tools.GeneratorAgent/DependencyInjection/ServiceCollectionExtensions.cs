@@ -1,6 +1,7 @@
 using Azure.AI.Agents.Persistent;
 using Azure.Core;
 using Azure.Identity;
+using Azure.Tools.GeneratorAgent.Agent;
 using Azure.Tools.GeneratorAgent.Authentication;
 using Azure.Tools.GeneratorAgent.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -112,59 +113,51 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
         /// </summary>
         private static IServiceCollection AddApplicationServices(this IServiceCollection services)
         {
-            services.AddSingleton<ProcessExecutor>();
-            services.AddSingleton<BuildErrorAnalyzer>();
+            services.AddSingleton<ProcessExecutionService>();
+            services.AddSingleton<FixGeneratorService>();
             services.AddSingleton<FixPromptService>();
             services.AddSingleton<AgentResponseParser>();
 
             services.AddSingleton<AgentManager>();
             services.AddSingleton<AgentProcessor>();
-            services.AddSingleton<FileManager>();
-            services.AddSingleton<ThreadManager>();
-            services.AddSingleton<ErrorParser>();
+            services.AddSingleton<AgentFileManager>();
+            services.AddSingleton<AgentThreadManager>();
+            services.AddSingleton<ErrorParsingService>();
 
             services.AddSingleton<AgentOrchestrator>();
 
-            services.AddSingleton<Func<ValidationContext, ISdkGenerationService>>(provider =>
+            services.AddSingleton<Func<ValidationContext, LocalLibraryGenerationService>>(provider =>
             {
-                return validationContext => SdkGenerationServiceFactory.CreateSdkGenerationService(
-                    validationContext,
+                return validationContext => new LocalLibraryGenerationService(
                     provider.GetRequiredService<AppSettings>(),
-                    provider.GetRequiredService<ILoggerFactory>(),
-                    provider.GetRequiredService<ProcessExecutor>());
+                    provider.GetRequiredService<ILoggerFactory>().CreateLogger<LocalLibraryGenerationService>(),
+                    provider.GetRequiredService<ProcessExecutionService>(),
+                    validationContext);
             });
 
-            services.AddSingleton<Func<ValidationContext, SdkBuildService>>(provider =>
+            services.AddSingleton<Func<ValidationContext, LibraryBuildService>>(provider =>
             {
-                return validationContext => new SdkBuildService(
-                    provider.GetRequiredService<ILogger<SdkBuildService>>(),
-                    provider.GetRequiredService<ProcessExecutor>(),
+                return validationContext => new LibraryBuildService(
+                    provider.GetRequiredService<ILogger<LibraryBuildService>>(),
+                    provider.GetRequiredService<ProcessExecutionService>(),
                     validationContext.ValidatedSdkDir);
             });
 
             services.AddSingleton<Func<ValidationContext, TypeSpecFileService>>(provider =>
             {
                 return validationContext => new TypeSpecFileService(
-                    provider.GetRequiredService<AppSettings>(),
                     provider.GetRequiredService<ILogger<TypeSpecFileService>>(),
-                    provider.GetRequiredService<ILoggerFactory>(),
                     validationContext,
                     provider.GetRequiredService<Func<ValidationContext, GitHubFileService>>());
             });
 
             services.AddSingleton<Func<ValidationContext, GitHubFileService>>(provider =>
             {
-                return validationContext => 
-                {
-                    var httpClientFactory = provider.GetRequiredService<IHttpClientFactory>();
-                    var httpClient = httpClientFactory.CreateClient(nameof(GitHubFileService));
-                    
-                    return new GitHubFileService(
-                        provider.GetRequiredService<AppSettings>(),
-                        provider.GetRequiredService<ILogger<GitHubFileService>>(),
-                        validationContext,
-                        httpClient);
-                };
+                return validationContext => new GitHubFileService(
+                    provider.GetRequiredService<AppSettings>(),
+                    provider.GetRequiredService<ILogger<GitHubFileService>>(),
+                    validationContext,
+                    provider.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(GitHubFileService)));
             });
 
             return services;

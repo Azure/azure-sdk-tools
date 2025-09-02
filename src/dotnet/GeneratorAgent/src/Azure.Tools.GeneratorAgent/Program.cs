@@ -1,5 +1,6 @@
 ﻿using System.CommandLine;
 using Azure.Tools.ErrorAnalyzers;
+using Azure.Tools.GeneratorAgent.Agent;
 using Azure.Tools.GeneratorAgent.Configuration;
 using Azure.Tools.GeneratorAgent.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
@@ -100,25 +101,35 @@ namespace Azure.Tools.GeneratorAgent
                 await agentOrchestrator.InitializeAgentEnvironmentAsync(typeSpecFiles, cancellationToken).ConfigureAwait(false);
 
                 // Step 4: Compile Typespec 
-                Func<ValidationContext, ISdkGenerationService> sdkServiceFactory = ServiceProvider.GetRequiredService<Func<ValidationContext, ISdkGenerationService>>();
-                ISdkGenerationService sdkGenerationService = sdkServiceFactory(validationContext);
+                Func<ValidationContext, LocalLibraryGenerationService> sdkServiceFactory = ServiceProvider.GetRequiredService<Func<ValidationContext, LocalLibraryGenerationService>>();
+                LocalLibraryGenerationService sdkGenerationService = sdkServiceFactory(validationContext);
                 Result<object> compileResult = await sdkGenerationService.CompileTypeSpecAsync(cancellationToken).ConfigureAwait(false);
 
                 // Step 5: Compile Generated SDK
-                Func<ValidationContext, SdkBuildService> sdkBuildServiceFactory = ServiceProvider.GetRequiredService<Func<ValidationContext, SdkBuildService>>();
-                SdkBuildService sdkBuildService = sdkBuildServiceFactory(validationContext);
-                Result<object> buildResult = await sdkBuildService.BuildSdkAsync(cancellationToken).ConfigureAwait(false);
+                Func<ValidationContext, LibraryBuildService> libraryBuildServiceFactory = ServiceProvider.GetRequiredService<Func<ValidationContext, LibraryBuildService>>();
+                LibraryBuildService libraryBuildService = libraryBuildServiceFactory(validationContext);
+                Result<object> buildResult = await libraryBuildService.BuildSdkAsync(cancellationToken).ConfigureAwait(false);
 
                 // Step 6: Analyze all errors and get fixes (singleton)
-                BuildErrorAnalyzer analyzer = ServiceProvider.GetRequiredService<BuildErrorAnalyzer>();
+                FixGeneratorService analyzer = ServiceProvider.GetRequiredService<FixGeneratorService>();
                 List<Fix> allFixes = await analyzer.AnalyzeAndGetFixesAsync(compileResult, buildResult, cancellationToken);
-
-                // Step 7: Send fixes to AgentProcessor if List<Fix> is not empty
-                if (allFixes.Count > 0)
+                if (allFixes.Count == 0)
                 {
-                    await agentOrchestrator.FixCodeAsync(allFixes, cancellationToken).ConfigureAwait(false);
+                    Logger.LogInformation("No errors found. Compilation successful!");
+                    return ExitCodeSuccess;
                 }
 
+                // Step 7: Send fixes to AgentProcessor if List<Fix> is not empty
+                string updatedClientTspContent = await agentOrchestrator.FixCodeAsync(allFixes, cancellationToken).ConfigureAwait(false);
+                if (string.IsNullOrWhiteSpace(updatedClientTspContent))
+                {
+                    Logger.LogWarning("Agent returned empty content for client.tsp");
+                    return ExitCodeFailure;
+                }
+
+                //Step 8: Update Client.tsp
+                await fileService.UpdateTypeSpecFileAsync("client.tsp", updatedClientTspContent, cancellationToken).ConfigureAwait(false);
+                
                 return ExitCodeSuccess;
             }
             catch (OperationCanceledException)

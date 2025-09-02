@@ -2,13 +2,13 @@ using Microsoft.Extensions.Logging;
 using Azure.Tools.ErrorAnalyzers;
 using Azure.Tools.GeneratorAgent.Configuration;
 
-namespace Azure.Tools.GeneratorAgent
+namespace Azure.Tools.GeneratorAgent.Agent
 {
     internal class AgentOrchestrator
     {
         private readonly AgentProcessor AgentProcessor;
-        private readonly FileManager FileManager;
-        private readonly ThreadManager ThreadManager;
+        private readonly AgentFileManager FileManager;
+        private readonly AgentThreadManager AgentThreadManager;
         private readonly AgentManager AgentManager;
         private readonly ILogger<AgentOrchestrator> Logger;
         private readonly FixPromptService FixPromptService;
@@ -16,22 +16,22 @@ namespace Azure.Tools.GeneratorAgent
 
         public AgentOrchestrator(
             AgentProcessor agentProcessor,
-            FileManager fileManager,
-            ThreadManager threadManager,
+            AgentFileManager fileManager,
+            AgentThreadManager agentThreadManager,
             AgentManager agentManager,
             ILogger<AgentOrchestrator> logger,
             FixPromptService fixPromptService)
         {
             ArgumentNullException.ThrowIfNull(agentProcessor);
             ArgumentNullException.ThrowIfNull(fileManager);
-            ArgumentNullException.ThrowIfNull(threadManager);
+            ArgumentNullException.ThrowIfNull(agentThreadManager);
             ArgumentNullException.ThrowIfNull(agentManager);
             ArgumentNullException.ThrowIfNull(logger);
             ArgumentNullException.ThrowIfNull(fixPromptService);
 
             AgentProcessor = agentProcessor;
             FileManager = fileManager;
-            ThreadManager = threadManager;
+            AgentThreadManager = agentThreadManager;
             AgentManager = agentManager;
             Logger = logger;
             FixPromptService = fixPromptService;
@@ -59,7 +59,7 @@ namespace Azure.Tools.GeneratorAgent
             try
             {
                 // Generate a new thread ID for FixCodeAsync
-                var fixThreadId = await ThreadManager.CreateThreadAsync(cancellationToken);
+                var fixThreadId = await AgentThreadManager.CreateThreadAsync(cancellationToken);
 
                 // Call AgentProcessor to fix the code
                 var result = await AgentProcessor.FixCodeAsync(fixes, fixThreadId, FixPromptService, cancellationToken);
@@ -80,7 +80,7 @@ namespace Azure.Tools.GeneratorAgent
             try
             {
                 // Generate a new thread ID for AnalyzeErrorsAsync
-                var analyzeThreadId = await ThreadManager.CreateThreadAsync(cancellationToken);
+                var analyzeThreadId = await AgentThreadManager.CreateThreadAsync(cancellationToken);
 
                 // Call AgentProcessor to analyze errors
                 var errors = await AgentProcessor.AnalyzeErrorsAsync(errorLogs, analyzeThreadId, cancellationToken);

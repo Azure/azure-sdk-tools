@@ -1,4 +1,5 @@
 using Azure.AI.Agents.Persistent;
+using Azure.Tools.GeneratorAgent.Agent;
 using Azure.Tools.GeneratorAgent.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;

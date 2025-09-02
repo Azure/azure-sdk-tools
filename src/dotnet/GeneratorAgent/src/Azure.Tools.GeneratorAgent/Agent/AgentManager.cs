@@ -2,7 +2,7 @@ using Azure.AI.Agents.Persistent;
 using Azure.Tools.GeneratorAgent.Configuration;
 using Microsoft.Extensions.Logging;
 
-namespace Azure.Tools.GeneratorAgent
+namespace Azure.Tools.GeneratorAgent.Agent
 {
     internal class AgentManager : IAsyncDisposable
     {

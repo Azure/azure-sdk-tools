@@ -3,7 +3,7 @@ using Azure.Tools.GeneratorAgent.Models;
 using Microsoft.Extensions.Logging;
 using Azure.Tools.ErrorAnalyzers;
 
-namespace Azure.Tools.GeneratorAgent
+namespace Azure.Tools.GeneratorAgent.Agent
 {
     /// <summary>
     /// Service for parsing and processing AI agent responses in plain text JSON format
@@ -153,7 +153,13 @@ namespace Azure.Tools.GeneratorAgent
                     return trimmed;
                 }
 
-                var jsonContent = trimmed.Substring(startIndex + 1, endIndex - startIndex - 1).Trim();
+                int length = endIndex - startIndex - 1;
+                if (length <= 0)
+                {
+                    Logger.LogWarning("Malformed markdown code block: calculated JSON content length is not positive (startIndex: {StartIndex}, endIndex: {EndIndex})", startIndex, endIndex);
+                    return trimmed;
+                }
+                var jsonContent = trimmed.Substring(startIndex + 1, length).Trim();
                 Logger.LogDebug("Extracted JSON from markdown code block. Length: {Length}", jsonContent.Length);
                 return jsonContent;
             }
@@ -167,7 +173,13 @@ namespace Azure.Tools.GeneratorAgent
                     var endIndex = trimmed.LastIndexOf("```");
                     if (endIndex > startIndex)
                     {
-                        var jsonContent = trimmed.Substring(startIndex + 1, endIndex - startIndex - 1).Trim();
+                        int length = endIndex - startIndex - 1;
+                        if (length <= 0)
+                        {
+                            Logger.LogWarning("Malformed markdown code block: calculated content length is not positive (startIndex: {StartIndex}, endIndex: {EndIndex})", startIndex, endIndex);
+                            return trimmed;
+                        }
+                        var jsonContent = trimmed.Substring(startIndex + 1, length).Trim();
                         Logger.LogDebug("Extracted content from generic markdown code block. Length: {Length}", jsonContent.Length);
                         return jsonContent;
                     }

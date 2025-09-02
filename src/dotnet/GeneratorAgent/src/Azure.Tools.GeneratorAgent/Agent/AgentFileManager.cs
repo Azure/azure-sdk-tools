@@ -3,15 +3,15 @@ using Azure.Tools.GeneratorAgent.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Text;
 
-namespace Azure.Tools.GeneratorAgent
+namespace Azure.Tools.GeneratorAgent.Agent
 {
-    internal class FileManager
+    internal class AgentFileManager
     {
         private readonly PersistentAgentsClient Client;
-        private readonly ILogger<FileManager> Logger;
+        private readonly ILogger<AgentFileManager> Logger;
         private readonly AppSettings AppSettings;
 
-        public FileManager(PersistentAgentsClient client, ILogger<FileManager> logger, AppSettings appSettings)
+        public AgentFileManager(PersistentAgentsClient client, ILogger<AgentFileManager> logger, AppSettings appSettings)
         {
             ArgumentNullException.ThrowIfNull(client);
             ArgumentNullException.ThrowIfNull(logger);
@@ -216,7 +216,7 @@ namespace Azure.Tools.GeneratorAgent
 
         protected virtual async Task<string> CreateVectorStoreInternalAsync(List<string> fileIds, CancellationToken ct)
         {
-            var storeName = $"azc-{DateTime.Now:yyyyMMddHHmmss}";
+            var storeName = $"azc-{DateTime.Now:yyyyMMddHHmmss}-{Guid.NewGuid()}";
 
             Logger.LogInformation("Creating vector store '{StoreName}' with {Count} files...", storeName, fileIds.Count);
 

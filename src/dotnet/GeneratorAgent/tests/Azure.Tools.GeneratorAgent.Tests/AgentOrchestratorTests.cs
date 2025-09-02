@@ -1,3 +1,4 @@
+using Azure.Tools.GeneratorAgent.Agent;
 using Azure.Tools.GeneratorAgent.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
@@ -16,8 +17,8 @@ namespace Azure.Tools.GeneratorAgent.Tests
             // Arrange & Act & Assert
             var ex = Assert.Throws<ArgumentNullException>(() => new AgentOrchestrator(
                 agentProcessor: null!,
-                fileManager: CreateMockFileManager(),
-                threadManager: CreateMockThreadManager(),
+                fileManager: CreateMockAgentFileManager(),
+                agentThreadManager: CreateMockAgentThreadManager(),
                 agentManager: CreateMockAgentManager(),
                 fixPromptService: CreateMockFixPromptService(),
                 logger: Mock.Of<ILogger<AgentOrchestrator>>()));
@@ -26,13 +27,13 @@ namespace Azure.Tools.GeneratorAgent.Tests
         }
 
         [Test]
-        public void Constructor_WithNullFileManager_ThrowsArgumentNullException()
+        public void Constructor_WithNullAgentFileManager_ThrowsArgumentNullException()
         {
             // Arrange & Act & Assert
             var ex = Assert.Throws<ArgumentNullException>(() => new AgentOrchestrator(
                 agentProcessor: CreateMockAgentProcessor(),
                 fileManager: null!,
-                threadManager: CreateMockThreadManager(),
+                agentThreadManager: CreateMockAgentThreadManager(),
                 agentManager: CreateMockAgentManager(),
                 fixPromptService: CreateMockFixPromptService(),
                 logger: Mock.Of<ILogger<AgentOrchestrator>>()));
@@ -41,18 +42,18 @@ namespace Azure.Tools.GeneratorAgent.Tests
         }
 
         [Test]
-        public void Constructor_WithNullThreadManager_ThrowsArgumentNullException()
+        public void Constructor_WithNullAgentThreadManager_ThrowsArgumentNullException()
         {
             // Arrange & Act & Assert
             var ex = Assert.Throws<ArgumentNullException>(() => new AgentOrchestrator(
                 agentProcessor: CreateMockAgentProcessor(),
-                fileManager: CreateMockFileManager(),
-                threadManager: null!,
+                fileManager: CreateMockAgentFileManager(),
+                agentThreadManager: null!,
                 agentManager: CreateMockAgentManager(),
                 fixPromptService: CreateMockFixPromptService(),
                 logger: Mock.Of<ILogger<AgentOrchestrator>>()));
             
-            Assert.That(ex.ParamName!, Is.EqualTo("threadManager"));
+            Assert.That(ex.ParamName!, Is.EqualTo("agentThreadManager"));
         }
 
         [Test]
@@ -61,8 +62,8 @@ namespace Azure.Tools.GeneratorAgent.Tests
             // Arrange & Act & Assert
             var ex = Assert.Throws<ArgumentNullException>(() => new AgentOrchestrator(
                 agentProcessor: CreateMockAgentProcessor(),
-                fileManager: CreateMockFileManager(),
-                threadManager: CreateMockThreadManager(),
+                fileManager: CreateMockAgentFileManager(),
+                agentThreadManager: CreateMockAgentThreadManager(),
                 agentManager: null!,
                 fixPromptService: CreateMockFixPromptService(),
                 logger: Mock.Of<ILogger<AgentOrchestrator>>()));
@@ -76,8 +77,8 @@ namespace Azure.Tools.GeneratorAgent.Tests
             // Arrange & Act & Assert
             var ex = Assert.Throws<ArgumentNullException>(() => new AgentOrchestrator(
                 agentProcessor: CreateMockAgentProcessor(),
-                fileManager: CreateMockFileManager(),
-                threadManager: CreateMockThreadManager(),
+                fileManager: CreateMockAgentFileManager(),
+                agentThreadManager: CreateMockAgentThreadManager(),
                 agentManager: CreateMockAgentManager(),
                 fixPromptService: null!,
                 logger: Mock.Of<ILogger<AgentOrchestrator>>()));
@@ -91,8 +92,8 @@ namespace Azure.Tools.GeneratorAgent.Tests
             // Arrange & Act & Assert
             var ex = Assert.Throws<ArgumentNullException>(() => new AgentOrchestrator(
                 agentProcessor: CreateMockAgentProcessor(),
-                fileManager: CreateMockFileManager(),
-                threadManager: CreateMockThreadManager(),
+                fileManager: CreateMockAgentFileManager(),
+                agentThreadManager: CreateMockAgentThreadManager(),
                 agentManager: CreateMockAgentManager(),
                 fixPromptService: CreateMockFixPromptService(),
                 logger: null!));
@@ -105,8 +106,8 @@ namespace Azure.Tools.GeneratorAgent.Tests
         {
             // Arrange
             var agentProcessor = CreateMockAgentProcessor();
-            var fileManager = CreateMockFileManager();
-            var threadManager = CreateMockThreadManager();
+            var AgentFileManager = CreateMockAgentFileManager();
+            var agentThreadManager = CreateMockAgentThreadManager();
             var agentManager = CreateMockAgentManager();
             var fixPromptService = CreateMockFixPromptService();
             var logger = Mock.Of<ILogger<AgentOrchestrator>>();
@@ -114,8 +115,8 @@ namespace Azure.Tools.GeneratorAgent.Tests
             // Act & Assert - should not throw
             var orchestrator = new AgentOrchestrator(
                 agentProcessor: agentProcessor,
-                fileManager: fileManager,
-                threadManager: threadManager,
+                fileManager: AgentFileManager,
+                agentThreadManager: agentThreadManager,
                 agentManager: agentManager,
                 fixPromptService: fixPromptService,
                 logger: logger);
@@ -170,23 +171,23 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 Mock.Of<ILogger<AgentProcessor>>(),
                 new AgentResponseParser(Mock.Of<ILogger<AgentResponseParser>>()),
                 CreateMockAgentManager(),
-                CreateMockThreadManager(),
+                CreateMockAgentThreadManager(),
                 CreateTestAppSettings());
         }
 
-        private static FileManager CreateMockFileManager()
+        private static AgentFileManager CreateMockAgentFileManager()
         {
-            return new FileManager(
+            return new AgentFileManager(
                 Mock.Of<PersistentAgentsClient>(),
-                Mock.Of<ILogger<FileManager>>(),
+                Mock.Of<ILogger<AgentFileManager>>(),
                 CreateTestAppSettings());
         }
 
-        private static ThreadManager CreateMockThreadManager()
+        private static AgentThreadManager CreateMockAgentThreadManager()
         {
-            return new ThreadManager(
+            return new AgentThreadManager(
                 Mock.Of<PersistentAgentsClient>(),
-                Mock.Of<ILogger<ThreadManager>>(),
+                Mock.Of<ILogger<AgentThreadManager>>(),
                 CreateTestAppSettings());
         }
 
@@ -209,8 +210,8 @@ namespace Azure.Tools.GeneratorAgent.Tests
         {
             return new AgentOrchestrator(
                 agentProcessor: CreateMockAgentProcessor(),
-                fileManager: CreateMockFileManager(),
-                threadManager: CreateMockThreadManager(),
+                fileManager: CreateMockAgentFileManager(),
+                agentThreadManager: CreateMockAgentThreadManager(),
                 agentManager: CreateMockAgentManager(),
                 fixPromptService: CreateMockFixPromptService(),
                 logger: Mock.Of<ILogger<AgentOrchestrator>>());

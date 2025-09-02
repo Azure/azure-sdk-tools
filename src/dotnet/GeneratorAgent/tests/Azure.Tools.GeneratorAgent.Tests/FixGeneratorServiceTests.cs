@@ -1,8 +1,5 @@
 using Azure.Tools.ErrorAnalyzers;
 using Azure.Tools.GeneratorAgent.Exceptions;
-using Azure.Tools.GeneratorAgent.Configuration;
-using Azure.AI.Agents.Persistent;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
@@ -11,44 +8,44 @@ using NUnit.Framework;
 namespace Azure.Tools.GeneratorAgent.Tests
 {
     [TestFixture]
-    public class BuildErrorAnalyzerTests
+    public class FixGeneratorServiceTests
     {
         #region Constructor Tests
 
         [Test]
         public void Constructor_WithNullLogger_ThrowsArgumentNullException()
         {
-            var errorParser = CreateMockErrorParser();
+            var ErrorParsingService = CreateMockErrorParsingService();
 
-            var ex = Assert.Throws<ArgumentNullException>(() => new BuildErrorAnalyzer(null!, errorParser.Object));
+            var ex = Assert.Throws<ArgumentNullException>(() => new FixGeneratorService(null!, ErrorParsingService.Object));
             Assert.That(ex?.ParamName, Is.EqualTo("logger"));
         }
 
         [Test]
-        public void Constructor_WithNullErrorParser_ThrowsArgumentNullException()
+        public void Constructor_WithNullErrorParsingService_ThrowsArgumentNullException()
         {
-            var logger = NullLogger<BuildErrorAnalyzer>.Instance;
+            var logger = NullLogger<FixGeneratorService>.Instance;
 
-            var ex = Assert.Throws<ArgumentNullException>(() => new BuildErrorAnalyzer(logger, null!));
-            Assert.That(ex?.ParamName, Is.EqualTo("errorParser"));
+            var ex = Assert.Throws<ArgumentNullException>(() => new FixGeneratorService(logger, null!));
+            Assert.That(ex?.ParamName, Is.EqualTo("errorParsingService"));
         }
 
         [Test]
         public void Constructor_WithValidParameters_DoesNotThrow()
         {
-            var logger = NullLogger<BuildErrorAnalyzer>.Instance;
-            var errorParser = CreateMockErrorParser();
+            var logger = NullLogger<FixGeneratorService>.Instance;
+            var ErrorParsingService = CreateMockErrorParsingService();
 
-            Assert.DoesNotThrow(() => new BuildErrorAnalyzer(logger, errorParser.Object));
+            Assert.DoesNotThrow(() => new FixGeneratorService(logger, ErrorParsingService.Object));
         }
 
         [Test]
         public void Constructor_WithValidParameters_AssignsProperties()
         {
-            var logger = NullLogger<BuildErrorAnalyzer>.Instance;
-            var errorParser = CreateMockErrorParser();
+            var logger = NullLogger<FixGeneratorService>.Instance;
+            var ErrorParsingService = CreateMockErrorParsingService();
             
-            var analyzer = new BuildErrorAnalyzer(logger, errorParser.Object);
+            var analyzer = new FixGeneratorService(logger, ErrorParsingService.Object);
             
             // Verify dependencies are properly assigned by calling a method
             Assert.DoesNotThrowAsync(async () => 
@@ -62,7 +59,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         [Test]
         public async Task AnalyzeAndGetFixesAsync_WithNullResults_ReturnsEmptyList()
         {
-            var analyzer = CreateBuildErrorAnalyzer();
+            var analyzer = CreateFixGeneratorService();
 
             var result = await analyzer.AnalyzeAndGetFixesAsync(null, null, CancellationToken.None);
 
@@ -73,7 +70,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         [Test]
         public async Task AnalyzeAndGetFixesAsync_WithSuccessfulResults_ReturnsEmptyList()
         {
-            var analyzer = CreateBuildErrorAnalyzer();
+            var analyzer = CreateFixGeneratorService();
             var successResult = CreateSuccessResult();
 
             var result = await analyzer.AnalyzeAndGetFixesAsync(successResult, successResult, CancellationToken.None);
@@ -83,53 +80,53 @@ namespace Azure.Tools.GeneratorAgent.Tests
         }
 
         [Test]
-        public async Task AnalyzeAndGetFixesAsync_WithCompileFailure_CallsErrorParserForCompileResult()
+        public async Task AnalyzeAndGetFixesAsync_WithCompileFailure_CallsErrorParsingServiceForCompileResult()
         {
-            var mockErrorParser = CreateMockErrorParser();
+            var mockErrorParsingService = CreateMockErrorParsingService();
             var mockFixes = CreateMockFixes(2);
-            mockErrorParser.Setup(p => p.AnalyzeErrorsAsync(It.IsAny<Result<object>>(), It.IsAny<CancellationToken>()))
+            mockErrorParsingService.Setup(p => p.AnalyzeErrorsAsync(It.IsAny<Result<object>>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(mockFixes);
             
-            var analyzer = CreateBuildErrorAnalyzer(errorParser: mockErrorParser);
+            var analyzer = CreateFixGeneratorService(ErrorParsingService: mockErrorParsingService);
             var compileResult = CreateFailureResult(CreateTypeSpecCompilationException());
 
             var result = await analyzer.AnalyzeAndGetFixesAsync(compileResult, null, CancellationToken.None);
 
             Assert.That(result, Is.Not.Null);
             Assert.That(result.Count, Is.EqualTo(2));
-            mockErrorParser.Verify(p => p.AnalyzeErrorsAsync(compileResult, CancellationToken.None), Times.Once);
+            mockErrorParsingService.Verify(p => p.AnalyzeErrorsAsync(compileResult, CancellationToken.None), Times.Once);
         }
 
         [Test]
-        public async Task AnalyzeAndGetFixesAsync_WithBuildFailure_CallsErrorParserForBuildResult()
+        public async Task AnalyzeAndGetFixesAsync_WithBuildFailure_CallsErrorParsingServiceForBuildResult()
         {
-            var mockErrorParser = CreateMockErrorParser();
+            var mockErrorParsingService = CreateMockErrorParsingService();
             var mockFixes = CreateMockFixes(3);
-            mockErrorParser.Setup(p => p.AnalyzeErrorsAsync(It.IsAny<Result<object>>(), It.IsAny<CancellationToken>()))
+            mockErrorParsingService.Setup(p => p.AnalyzeErrorsAsync(It.IsAny<Result<object>>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(mockFixes);
             
-            var analyzer = CreateBuildErrorAnalyzer(errorParser: mockErrorParser);
+            var analyzer = CreateFixGeneratorService(ErrorParsingService: mockErrorParsingService);
             var buildResult = CreateFailureResult(CreateDotNetBuildException());
 
             var result = await analyzer.AnalyzeAndGetFixesAsync(null, buildResult, CancellationToken.None);
 
             Assert.That(result, Is.Not.Null);
             Assert.That(result.Count, Is.EqualTo(3));
-            mockErrorParser.Verify(p => p.AnalyzeErrorsAsync(buildResult, CancellationToken.None), Times.Once);
+            mockErrorParsingService.Verify(p => p.AnalyzeErrorsAsync(buildResult, CancellationToken.None), Times.Once);
         }
 
         [Test]
-        public async Task AnalyzeAndGetFixesAsync_WithBothFailures_CallsErrorParserForBothResults()
+        public async Task AnalyzeAndGetFixesAsync_WithBothFailures_CallsErrorParsingServiceForBothResults()
         {
-            var mockErrorParser = CreateMockErrorParser();
+            var mockErrorParsingService = CreateMockErrorParsingService();
             var compileFixes = CreateMockFixes(2, "Compile");
             var buildFixes = CreateMockFixes(3, "Build");
             
-            mockErrorParser.SetupSequence(p => p.AnalyzeErrorsAsync(It.IsAny<Result<object>>(), It.IsAny<CancellationToken>()))
+            mockErrorParsingService.SetupSequence(p => p.AnalyzeErrorsAsync(It.IsAny<Result<object>>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(compileFixes)
                 .ReturnsAsync(buildFixes);
             
-            var analyzer = CreateBuildErrorAnalyzer(errorParser: mockErrorParser);
+            var analyzer = CreateFixGeneratorService(ErrorParsingService: mockErrorParsingService);
             var compileResult = CreateFailureResult(CreateTypeSpecCompilationException());
             var buildResult = CreateFailureResult(CreateDotNetBuildException());
 
@@ -137,33 +134,33 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             Assert.That(result, Is.Not.Null);
             Assert.That(result.Count, Is.EqualTo(5)); // 2 + 3 fixes
-            mockErrorParser.Verify(p => p.AnalyzeErrorsAsync(It.IsAny<Result<object>>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
+            mockErrorParsingService.Verify(p => p.AnalyzeErrorsAsync(It.IsAny<Result<object>>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
         }
 
         [Test]
-        public async Task AnalyzeAndGetFixesAsync_WithNonFailureResults_DoesNotCallErrorParser()
+        public async Task AnalyzeAndGetFixesAsync_WithNonFailureResults_DoesNotCallErrorParsingService()
         {
-            var mockErrorParser = CreateMockErrorParser();
-            var analyzer = CreateBuildErrorAnalyzer(errorParser: mockErrorParser);
+            var mockErrorParsingService = CreateMockErrorParsingService();
+            var analyzer = CreateFixGeneratorService(ErrorParsingService: mockErrorParsingService);
             var successResult = CreateSuccessResult();
 
             var result = await analyzer.AnalyzeAndGetFixesAsync(successResult, successResult, CancellationToken.None);
 
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.Empty);
-            mockErrorParser.Verify(p => p.AnalyzeErrorsAsync(It.IsAny<Result<object>>(), It.IsAny<CancellationToken>()), Times.Never);
+            mockErrorParsingService.Verify(p => p.AnalyzeErrorsAsync(It.IsAny<Result<object>>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Test]
         public async Task AnalyzeAndGetFixesAsync_LogsTotalFixesGenerated()
         {
             var mockLogger = CreateMockLogger();
-            var mockErrorParser = CreateMockErrorParser();
+            var mockErrorParsingService = CreateMockErrorParsingService();
             var mockFixes = CreateMockFixes(5);
-            mockErrorParser.Setup(p => p.AnalyzeErrorsAsync(It.IsAny<Result<object>>(), It.IsAny<CancellationToken>()))
+            mockErrorParsingService.Setup(p => p.AnalyzeErrorsAsync(It.IsAny<Result<object>>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(mockFixes);
             
-            var analyzer = CreateBuildErrorAnalyzer(logger: mockLogger, errorParser: mockErrorParser);
+            var analyzer = CreateFixGeneratorService(logger: mockLogger, ErrorParsingService: mockErrorParsingService);
             var compileResult = CreateFailureResult(CreateTypeSpecCompilationException());
 
             await analyzer.AnalyzeAndGetFixesAsync(compileResult, null, CancellationToken.None);
@@ -180,28 +177,28 @@ namespace Azure.Tools.GeneratorAgent.Tests
         }
 
         [Test]
-        public async Task AnalyzeAndGetFixesAsync_WithCancellationToken_PassesToErrorParser()
+        public async Task AnalyzeAndGetFixesAsync_WithCancellationToken_PassesToErrorParsingService()
         {
-            var mockErrorParser = CreateMockErrorParser();
+            var mockErrorParsingService = CreateMockErrorParsingService();
             var cts = new CancellationTokenSource();
             var cancellationToken = cts.Token;
             
-            var analyzer = CreateBuildErrorAnalyzer(errorParser: mockErrorParser);
+            var analyzer = CreateFixGeneratorService(ErrorParsingService: mockErrorParsingService);
             var compileResult = CreateFailureResult(CreateTypeSpecCompilationException());
 
             await analyzer.AnalyzeAndGetFixesAsync(compileResult, null, cancellationToken);
 
-            mockErrorParser.Verify(p => p.AnalyzeErrorsAsync(compileResult, cancellationToken), Times.Once);
+            mockErrorParsingService.Verify(p => p.AnalyzeErrorsAsync(compileResult, cancellationToken), Times.Once);
         }
 
         [Test]
         public void AnalyzeAndGetFixesAsync_WithCancelledToken_ThrowsOperationCanceledException()
         {
-            var mockErrorParser = CreateMockErrorParser();
-            mockErrorParser.Setup(p => p.AnalyzeErrorsAsync(It.IsAny<Result<object>>(), It.IsAny<CancellationToken>()))
+            var mockErrorParsingService = CreateMockErrorParsingService();
+            mockErrorParsingService.Setup(p => p.AnalyzeErrorsAsync(It.IsAny<Result<object>>(), It.IsAny<CancellationToken>()))
                 .ThrowsAsync(new OperationCanceledException());
             
-            var analyzer = CreateBuildErrorAnalyzer(errorParser: mockErrorParser);
+            var analyzer = CreateFixGeneratorService(ErrorParsingService: mockErrorParsingService);
             var compileResult = CreateFailureResult(CreateTypeSpecCompilationException());
             var cts = new CancellationTokenSource();
             cts.Cancel();
@@ -211,14 +208,14 @@ namespace Azure.Tools.GeneratorAgent.Tests
         }
 
         [Test]
-        public void AnalyzeAndGetFixesAsync_WhenErrorParserThrows_PropagatesException()
+        public void AnalyzeAndGetFixesAsync_WhenErrorParsingServiceThrows_PropagatesException()
         {
-            var mockErrorParser = CreateMockErrorParser();
+            var mockErrorParsingService = CreateMockErrorParsingService();
             var expectedException = new InvalidOperationException("Error parser failed");
-            mockErrorParser.Setup(p => p.AnalyzeErrorsAsync(It.IsAny<Result<object>>(), It.IsAny<CancellationToken>()))
+            mockErrorParsingService.Setup(p => p.AnalyzeErrorsAsync(It.IsAny<Result<object>>(), It.IsAny<CancellationToken>()))
                 .ThrowsAsync(expectedException);
             
-            var analyzer = CreateBuildErrorAnalyzer(errorParser: mockErrorParser);
+            var analyzer = CreateFixGeneratorService(ErrorParsingService: mockErrorParsingService);
             var compileResult = CreateFailureResult(CreateTypeSpecCompilationException());
 
             var ex = Assert.ThrowsAsync<InvalidOperationException>(async () =>
@@ -228,13 +225,13 @@ namespace Azure.Tools.GeneratorAgent.Tests
         }
 
         [Test]
-        public async Task AnalyzeAndGetFixesAsync_WithEmptyFixesFromErrorParser_ReturnsEmptyList()
+        public async Task AnalyzeAndGetFixesAsync_WithEmptyFixesFromErrorParsingService_ReturnsEmptyList()
         {
-            var mockErrorParser = CreateMockErrorParser();
-            mockErrorParser.Setup(p => p.AnalyzeErrorsAsync(It.IsAny<Result<object>>(), It.IsAny<CancellationToken>()))
+            var mockErrorParsingService = CreateMockErrorParsingService();
+            mockErrorParsingService.Setup(p => p.AnalyzeErrorsAsync(It.IsAny<Result<object>>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<Fix>());
             
-            var analyzer = CreateBuildErrorAnalyzer(errorParser: mockErrorParser);
+            var analyzer = CreateFixGeneratorService(ErrorParsingService: mockErrorParsingService);
             var compileResult = CreateFailureResult(CreateTypeSpecCompilationException());
 
             var result = await analyzer.AnalyzeAndGetFixesAsync(compileResult, null, CancellationToken.None);
@@ -253,10 +250,10 @@ namespace Azure.Tools.GeneratorAgent.Tests
             // This test verifies that the static constructor has run by checking that
             // ErrorAnalyzerService has providers registered. We create a new analyzer 
             // instance to ensure static constructor runs.
-            var logger = NullLogger<BuildErrorAnalyzer>.Instance;
-            var errorParser = CreateMockErrorParser();
+            var logger = NullLogger<FixGeneratorService>.Instance;
+            var ErrorParsingService = CreateMockErrorParsingService();
             
-            var analyzer = new BuildErrorAnalyzer(logger, errorParser.Object);
+            var analyzer = new FixGeneratorService(logger, ErrorParsingService.Object);
 
             // If the static constructor ran properly, the analyzer should be constructible
             Assert.That(analyzer, Is.Not.Null);
@@ -266,30 +263,30 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public void StaticConstructor_RegistersClientAnalyzerProvider()
         {
             // Verify that creating the analyzer doesn't throw, indicating providers are registered
-            var logger = NullLogger<BuildErrorAnalyzer>.Instance;
-            var errorParser = CreateMockErrorParser();
+            var logger = NullLogger<FixGeneratorService>.Instance;
+            var ErrorParsingService = CreateMockErrorParsingService();
 
-            Assert.DoesNotThrow(() => new BuildErrorAnalyzer(logger, errorParser.Object));
+            Assert.DoesNotThrow(() => new FixGeneratorService(logger, ErrorParsingService.Object));
         }
 
         [Test]
         public void StaticConstructor_RegistersGeneralAnalyzerProvider()
         {
             // Verify that creating the analyzer doesn't throw, indicating providers are registered
-            var logger = NullLogger<BuildErrorAnalyzer>.Instance;
-            var errorParser = CreateMockErrorParser();
+            var logger = NullLogger<FixGeneratorService>.Instance;
+            var ErrorParsingService = CreateMockErrorParsingService();
 
-            Assert.DoesNotThrow(() => new BuildErrorAnalyzer(logger, errorParser.Object));
+            Assert.DoesNotThrow(() => new FixGeneratorService(logger, ErrorParsingService.Object));
         }
 
         [Test]
         public void StaticConstructor_RegistersManagementAnalyzerProvider()
         {
             // Verify that creating the analyzer doesn't throw, indicating providers are registered
-            var logger = NullLogger<BuildErrorAnalyzer>.Instance;
-            var errorParser = CreateMockErrorParser();
+            var logger = NullLogger<FixGeneratorService>.Instance;
+            var ErrorParsingService = CreateMockErrorParsingService();
 
-            Assert.DoesNotThrow(() => new BuildErrorAnalyzer(logger, errorParser.Object));
+            Assert.DoesNotThrow(() => new FixGeneratorService(logger, ErrorParsingService.Object));
         }
 
         #endregion
@@ -300,12 +297,12 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public async Task IntegrationTest_AnalyzeAndGetFixesAsync_WithRealScenario()
         {
             var mockLogger = CreateMockLogger();
-            var mockErrorParser = CreateMockErrorParser();
+            var mockErrorParsingService = CreateMockErrorParsingService();
             var expectedFixes = CreateMockFixes(3, "Integration");
-            mockErrorParser.Setup(p => p.AnalyzeErrorsAsync(It.IsAny<Result<object>>(), It.IsAny<CancellationToken>()))
+            mockErrorParsingService.Setup(p => p.AnalyzeErrorsAsync(It.IsAny<Result<object>>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(expectedFixes);
             
-            var analyzer = CreateBuildErrorAnalyzer(logger: mockLogger, errorParser: mockErrorParser);
+            var analyzer = CreateFixGeneratorService(logger: mockLogger, ErrorParsingService: mockErrorParsingService);
             var compileResult = CreateFailureResult(CreateTypeSpecCompilationException());
             var buildResult = CreateFailureResult(CreateDotNetBuildException());
 
@@ -315,8 +312,8 @@ namespace Azure.Tools.GeneratorAgent.Tests
             Assert.That(result.Count, Is.EqualTo(6)); // 3 + 3 fixes
             
             // Verify both results were processed
-            mockErrorParser.Verify(p => p.AnalyzeErrorsAsync(compileResult, CancellationToken.None), Times.Once);
-            mockErrorParser.Verify(p => p.AnalyzeErrorsAsync(buildResult, CancellationToken.None), Times.Once);
+            mockErrorParsingService.Verify(p => p.AnalyzeErrorsAsync(compileResult, CancellationToken.None), Times.Once);
+            mockErrorParsingService.Verify(p => p.AnalyzeErrorsAsync(buildResult, CancellationToken.None), Times.Once);
             
             // Verify logging occurred
             mockLogger.Verify(
@@ -336,15 +333,15 @@ namespace Azure.Tools.GeneratorAgent.Tests
         [Test]
         public void AnalyzeAndGetFixesAsync_WithPartialFailure_ContinuesProcessing()
         {
-            var mockErrorParser = CreateMockErrorParser();
+            var mockErrorParsingService = CreateMockErrorParsingService();
             var validFixes = CreateMockFixes(2);
             
             // Setup to succeed on first call, fail on second
-            mockErrorParser.SetupSequence(p => p.AnalyzeErrorsAsync(It.IsAny<Result<object>>(), It.IsAny<CancellationToken>()))
+            mockErrorParsingService.SetupSequence(p => p.AnalyzeErrorsAsync(It.IsAny<Result<object>>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(validFixes)
                 .ThrowsAsync(new InvalidOperationException("Second call failed"));
             
-            var analyzer = CreateBuildErrorAnalyzer(errorParser: mockErrorParser);
+            var analyzer = CreateFixGeneratorService(ErrorParsingService: mockErrorParsingService);
             var compileResult = CreateFailureResult(CreateTypeSpecCompilationException());
             var buildResult = CreateFailureResult(CreateDotNetBuildException());
 
@@ -359,25 +356,25 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
         #region Helper Methods
 
-        private BuildErrorAnalyzer CreateBuildErrorAnalyzer(
-            Mock<ILogger<BuildErrorAnalyzer>>? logger = null,
-            Mock<ErrorParser>? errorParser = null)
+        private FixGeneratorService CreateFixGeneratorService(
+            Mock<ILogger<FixGeneratorService>>? logger = null,
+            Mock<ErrorParsingService>? ErrorParsingService = null)
         {
-            var loggerInstance = logger?.Object ?? NullLogger<BuildErrorAnalyzer>.Instance;
-            var errorParserInstance = errorParser?.Object ?? CreateMockErrorParser().Object;
+            var loggerInstance = logger?.Object ?? NullLogger<FixGeneratorService>.Instance;
+            var ErrorParsingServiceInstance = ErrorParsingService?.Object ?? CreateMockErrorParsingService().Object;
             
-            return new BuildErrorAnalyzer(loggerInstance, errorParserInstance);
+            return new FixGeneratorService(loggerInstance, ErrorParsingServiceInstance);
         }
 
-        private Mock<ILogger<BuildErrorAnalyzer>> CreateMockLogger()
+        private Mock<ILogger<FixGeneratorService>> CreateMockLogger()
         {
-            return new Mock<ILogger<BuildErrorAnalyzer>>();
+            return new Mock<ILogger<FixGeneratorService>>();
         }
 
-        private Mock<ErrorParser> CreateMockErrorParser()
+        private Mock<ErrorParsingService> CreateMockErrorParsingService()
         {
             // Create a mock that directly uses null for AgentOrchestrator since it won't be called in tests
-            var mock = new Mock<ErrorParser>(null, Mock.Of<ILogger<ErrorParser>>());
+            var mock = new Mock<ErrorParsingService>(null, Mock.Of<ILogger<ErrorParsingService>>());
             mock.CallBase = false; // Don't call base methods
             mock.Setup(p => p.AnalyzeErrorsAsync(It.IsAny<Result<object>>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<Fix>());

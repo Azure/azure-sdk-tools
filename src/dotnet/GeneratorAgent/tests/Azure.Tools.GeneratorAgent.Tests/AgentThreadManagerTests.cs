@@ -1,4 +1,5 @@
 using Azure.AI.Agents.Persistent;
+using Azure.Tools.GeneratorAgent.Agent;
 using Azure.Tools.GeneratorAgent.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -9,18 +10,18 @@ using NUnit.Framework;
 namespace Azure.Tools.GeneratorAgent.Tests
 {
     [TestFixture]
-    internal class ThreadManagerTests
+    internal class AgentAgentThreadManagerTests
     {
-        private class TestableThreadManager : ThreadManager
+        private class TestableAgentThreadManager : AgentThreadManager
         {
             private readonly string MockThreadId;
             private readonly string MockResponse;
             private readonly bool ShouldThrowOnRun;
             private readonly bool ShouldTimeout;
 
-            public TestableThreadManager(
+            public TestableAgentThreadManager(
                 PersistentAgentsClient client,
-                ILogger<ThreadManager> logger,
+                ILogger<AgentThreadManager> logger,
                 AppSettings appSettings,
                 string mockThreadId = "test-thread-123",
                 string mockResponse = "Test response",
@@ -46,19 +47,19 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public void Constructor_WithValidParameters_ShouldNotThrow()
         {
             var client = new Mock<PersistentAgentsClient>().Object;
-            var logger = NullLogger<ThreadManager>.Instance;
+            var logger = NullLogger<AgentThreadManager>.Instance;
             var appSettings = CreateTestAppSettings();
 
-            Assert.DoesNotThrow(() => new ThreadManager(client, logger, appSettings));
+            Assert.DoesNotThrow(() => new AgentThreadManager(client, logger, appSettings));
         }
 
         [Test]
         public void Constructor_WithNullClient_ShouldThrowArgumentNullException()
         {
-            var logger = NullLogger<ThreadManager>.Instance;
+            var logger = NullLogger<AgentThreadManager>.Instance;
             var appSettings = CreateTestAppSettings();
 
-            var ex = Assert.Throws<ArgumentNullException>(() => new ThreadManager(null!, logger, appSettings));
+            var ex = Assert.Throws<ArgumentNullException>(() => new AgentThreadManager(null!, logger, appSettings));
             Assert.That(ex!.ParamName, Is.EqualTo("client"));
         }
 
@@ -68,7 +69,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var client = new Mock<PersistentAgentsClient>().Object;
             var appSettings = CreateTestAppSettings();
 
-            var ex = Assert.Throws<ArgumentNullException>(() => new ThreadManager(client, null!, appSettings));
+            var ex = Assert.Throws<ArgumentNullException>(() => new AgentThreadManager(client, null!, appSettings));
             Assert.That(ex!.ParamName, Is.EqualTo("logger"));
         }
 
@@ -76,9 +77,9 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public void Constructor_WithNullAppSettings_ShouldThrowArgumentNullException()
         {
             var client = new Mock<PersistentAgentsClient>().Object;
-            var logger = NullLogger<ThreadManager>.Instance;
+            var logger = NullLogger<AgentThreadManager>.Instance;
 
-            var ex = Assert.Throws<ArgumentNullException>(() => new ThreadManager(client, logger, null!));
+            var ex = Assert.Throws<ArgumentNullException>(() => new AgentThreadManager(client, logger, null!));
             Assert.That(ex!.ParamName, Is.EqualTo("appSettings"));
         }
 
@@ -89,7 +90,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         [Test]
         public void CreateThreadAsync_WithValidClient_ShouldReturnThreadId()
         {
-            var testableManager = CreateTestableThreadManager();
+            var testableManager = CreateTestableAgentThreadManager();
 
             var mockThreadId = testableManager.GetMockThreadId();
 
@@ -101,7 +102,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         [Test]
         public void CreateThreadAsync_WithCancellationToken_ShouldComplete()
         {
-            var testableManager = CreateTestableThreadManager();
+            var testableManager = CreateTestableAgentThreadManager();
             var cts = new CancellationTokenSource();
 
             var mockThreadId = testableManager.GetMockThreadId();
@@ -113,7 +114,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         [Test]
         public void CreateThreadAsync_WithCancelledToken_ShouldRespectCancellation()
         {
-            var testableManager = CreateTestableThreadManager();
+            var testableManager = CreateTestableAgentThreadManager();
             var cts = new CancellationTokenSource();
             cts.Cancel();
 
@@ -132,7 +133,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public void ReadResponseAsync_WithMockResponse_ShouldReturnResponse()
         {
             var expectedResponse = "Test assistant response";
-            var testableManager = CreateTestableThreadManager(mockResponse: expectedResponse);
+            var testableManager = CreateTestableAgentThreadManager(mockResponse: expectedResponse);
 
             var mockResponse = testableManager.GetMockResponse();
 
@@ -143,7 +144,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         [Test]
         public void ReadResponseAsync_WithEmptyResponse_ShouldHandleEmptyString()
         {
-            var testableManager = CreateTestableThreadManager(mockResponse: "");
+            var testableManager = CreateTestableAgentThreadManager(mockResponse: "");
 
             var mockResponse = testableManager.GetMockResponse();
 
@@ -153,7 +154,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         [Test]
         public void ReadResponseAsync_WithNullThreadId_ShouldThrowArgumentNullException()
         {
-            var testableManager = CreateTestableThreadManager();
+            var testableManager = CreateTestableAgentThreadManager();
 
             Assert.ThrowsAsync<ArgumentNullException>(async () =>
                 await testableManager.ReadResponseAsync(null!, CancellationToken.None));
@@ -162,7 +163,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         [Test]
         public void ReadResponseAsync_WithEmptyThreadId_ShouldThrowArgumentException()
         {
-            var testableManager = CreateTestableThreadManager();
+            var testableManager = CreateTestableAgentThreadManager();
 
             Assert.ThrowsAsync<ArgumentException>(async () =>
                 await testableManager.ReadResponseAsync("", CancellationToken.None));
@@ -175,7 +176,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         [Test]
         public void ProcessAgentRunAsync_WithValidParameters_ShouldComplete()
         {
-            var testableManager = CreateTestableThreadManager(shouldThrowOnRun: false);
+            var testableManager = CreateTestableAgentThreadManager(shouldThrowOnRun: false);
 
             var shouldThrow = testableManager.GetShouldThrowOnRun();
             Assert.That(shouldThrow, Is.False);
@@ -186,7 +187,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         [Test]
         public void ProcessAgentRunAsync_WithFailedRunConfiguration_ShouldIndicateFailure()
         {
-            var testableManager = CreateTestableThreadManager(shouldThrowOnRun: true);
+            var testableManager = CreateTestableAgentThreadManager(shouldThrowOnRun: true);
 
             var shouldThrow = testableManager.GetShouldThrowOnRun();
             Assert.That(shouldThrow, Is.True);
@@ -195,7 +196,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         [Test]
         public void ProcessAgentRunAsync_WithTimeoutConfiguration_ShouldIndicateTimeout()
         {
-            var testableManager = CreateTestableThreadManager(shouldTimeout: true);
+            var testableManager = CreateTestableAgentThreadManager(shouldTimeout: true);
 
             var shouldTimeout = testableManager.GetShouldTimeout();
             Assert.That(shouldTimeout, Is.True);
@@ -204,7 +205,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         [Test]
         public void ProcessAgentRunAsync_WithNullThreadId_ShouldThrowArgumentNullException()
         {
-            var testableManager = CreateTestableThreadManager();
+            var testableManager = CreateTestableAgentThreadManager();
 
             Assert.ThrowsAsync<ArgumentNullException>(async () =>
                 await testableManager.ProcessAgentRunAsync(null!, "test-agent-id", CancellationToken.None));
@@ -213,7 +214,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         [Test]
         public void ProcessAgentRunAsync_WithNullAgentId_ShouldThrowArgumentNullException()
         {
-            var testableManager = CreateTestableThreadManager();
+            var testableManager = CreateTestableAgentThreadManager();
 
             Assert.ThrowsAsync<ArgumentNullException>(async () =>
                 await testableManager.ProcessAgentRunAsync("test-thread-id", null!, CancellationToken.None));
@@ -222,7 +223,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         [Test]
         public void ProcessAgentRunAsync_WithEmptyThreadId_ShouldThrowArgumentException()
         {
-            var testableManager = CreateTestableThreadManager();
+            var testableManager = CreateTestableAgentThreadManager();
 
             Assert.ThrowsAsync<ArgumentException>(async () =>
                 await testableManager.ProcessAgentRunAsync("", "test-agent-id", CancellationToken.None));
@@ -231,7 +232,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         [Test]
         public void ProcessAgentRunAsync_WithEmptyAgentId_ShouldThrowArgumentException()
         {
-            var testableManager = CreateTestableThreadManager();
+            var testableManager = CreateTestableAgentThreadManager();
 
             Assert.ThrowsAsync<ArgumentException>(async () =>
                 await testableManager.ProcessAgentRunAsync("test-thread-id", "", CancellationToken.None));
@@ -242,10 +243,10 @@ namespace Azure.Tools.GeneratorAgent.Tests
         #region AppSettings Integration Tests
 
         [Test]
-        public void ThreadManager_WithCustomAppSettings_ShouldUseConfiguredValues()
+        public void AgentThreadManager_WithCustomAppSettings_ShouldUseConfiguredValues()
         {
             var customAppSettings = CreateTestAppSettings(maxWaitTimeSeconds: 60, pollingIntervalSeconds: 2);
-            var testableManager = CreateTestableThreadManager(appSettings: customAppSettings);
+            var testableManager = CreateTestableAgentThreadManager(appSettings: customAppSettings);
 
             Assert.That(customAppSettings, Is.Not.Null);
             Assert.That(customAppSettings.AgentRunMaxWaitTime.TotalSeconds, Is.EqualTo(60));
@@ -253,10 +254,10 @@ namespace Azure.Tools.GeneratorAgent.Tests
         }
 
         [Test]
-        public void ThreadManager_WithDefaultAppSettings_ShouldUseDefaultValues()
+        public void AgentThreadManager_WithDefaultAppSettings_ShouldUseDefaultValues()
         {
             var defaultAppSettings = CreateTestAppSettings();
-            var testableManager = CreateTestableThreadManager(appSettings: defaultAppSettings);
+            var testableManager = CreateTestableAgentThreadManager(appSettings: defaultAppSettings);
 
             Assert.That(defaultAppSettings, Is.Not.Null);
             Assert.That(defaultAppSettings.AgentRunMaxWaitTime.TotalSeconds, Is.EqualTo(30));
@@ -268,30 +269,30 @@ namespace Azure.Tools.GeneratorAgent.Tests
         #region Parameter Validation Tests
 
         [Test]
-        public void ThreadManager_WithAllValidParameters_ShouldCreateSuccessfully()
+        public void AgentThreadManager_WithAllValidParameters_ShouldCreateSuccessfully()
         {
             var client = new Mock<PersistentAgentsClient>().Object;
-            var logger = NullLogger<ThreadManager>.Instance;
+            var logger = NullLogger<AgentThreadManager>.Instance;
             var appSettings = CreateTestAppSettings();
 
-            var threadManager = new ThreadManager(client, logger, appSettings);
+            var AgentThreadManager = new AgentThreadManager(client, logger, appSettings);
 
-            Assert.That(threadManager, Is.Not.Null);
-            Assert.That(threadManager, Is.InstanceOf<ThreadManager>());
+            Assert.That(AgentThreadManager, Is.Not.Null);
+            Assert.That(AgentThreadManager, Is.InstanceOf<AgentThreadManager>());
         }
 
         [Test]
-        public void ThreadManager_ParameterValidation_ShouldEnforceNonNullConstraints()
+        public void AgentThreadManager_ParameterValidation_ShouldEnforceNonNullConstraints()
         {
             var client = new Mock<PersistentAgentsClient>().Object;
-            var logger = NullLogger<ThreadManager>.Instance;
+            var logger = NullLogger<AgentThreadManager>.Instance;
             var appSettings = CreateTestAppSettings();
 
-            Assert.DoesNotThrow(() => new ThreadManager(client, logger, appSettings));
+            Assert.DoesNotThrow(() => new AgentThreadManager(client, logger, appSettings));
 
-            Assert.Throws<ArgumentNullException>(() => new ThreadManager(null!, logger, appSettings));
-            Assert.Throws<ArgumentNullException>(() => new ThreadManager(client, null!, appSettings));
-            Assert.Throws<ArgumentNullException>(() => new ThreadManager(client, logger, null!));
+            Assert.Throws<ArgumentNullException>(() => new AgentThreadManager(null!, logger, appSettings));
+            Assert.Throws<ArgumentNullException>(() => new AgentThreadManager(client, null!, appSettings));
+            Assert.Throws<ArgumentNullException>(() => new AgentThreadManager(client, logger, null!));
         }
 
         #endregion
@@ -299,11 +300,11 @@ namespace Azure.Tools.GeneratorAgent.Tests
         #region Mock Data Verification Tests
 
         [Test]
-        public void TestableThreadManager_MockData_ShouldReturnExpectedValues()
+        public void TestableAgentThreadManager_MockData_ShouldReturnExpectedValues()
         {
             var expectedThreadId = "custom-thread-456";
             var expectedResponse = "Custom test response";
-            var testableManager = CreateTestableThreadManager(
+            var testableManager = CreateTestableAgentThreadManager(
                 mockThreadId: expectedThreadId,
                 mockResponse: expectedResponse);
 
@@ -314,9 +315,9 @@ namespace Azure.Tools.GeneratorAgent.Tests
         }
 
         [Test]
-        public void TestableThreadManager_ErrorScenarios_ShouldConfigureCorrectly()
+        public void TestableAgentThreadManager_ErrorScenarios_ShouldConfigureCorrectly()
         {
-            var testableManager = CreateTestableThreadManager(
+            var testableManager = CreateTestableAgentThreadManager(
                 shouldThrowOnRun: true,
                 shouldTimeout: true);
 
@@ -328,7 +329,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
         #region Helper Methods
 
-        private TestableThreadManager CreateTestableThreadManager(
+        private TestableAgentThreadManager CreateTestableAgentThreadManager(
             string mockThreadId = "test-thread-123",
             string mockResponse = "Test response",
             bool shouldThrowOnRun = false,
@@ -336,10 +337,10 @@ namespace Azure.Tools.GeneratorAgent.Tests
             AppSettings? appSettings = null)
         {
             var client = new Mock<PersistentAgentsClient>().Object;
-            var logger = NullLogger<ThreadManager>.Instance;
+            var logger = NullLogger<AgentThreadManager>.Instance;
             var settings = appSettings ?? CreateTestAppSettings();
 
-            return new TestableThreadManager(
+            return new TestableAgentThreadManager(
                 client,
                 logger,
                 settings,

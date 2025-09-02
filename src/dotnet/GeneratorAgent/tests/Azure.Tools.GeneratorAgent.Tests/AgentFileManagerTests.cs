@@ -1,4 +1,5 @@
 using Azure.AI.Agents.Persistent;
+using Azure.Tools.GeneratorAgent.Agent;
 using Azure.Tools.GeneratorAgent.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -9,18 +10,18 @@ using NUnit.Framework;
 namespace Azure.Tools.GeneratorAgent.Tests
 {
     [TestFixture]
-    internal class FileManagerTests
+    internal class AgentFileManagerTests
     {
-        private class TestableFileManager : FileManager
+        private class TestableAgentFileManager : AgentFileManager
         {
             private readonly List<string> MockUploadedFileIds;
             private readonly string MockVectorStoreId;
             private readonly bool ShouldFailUpload;
             private readonly bool ShouldTimeout;
 
-            public TestableFileManager(
+            public TestableAgentFileManager(
                 PersistentAgentsClient client,
-                ILogger<FileManager> logger,
+                ILogger<AgentFileManager> logger,
                 AppSettings appSettings,
                 List<string>? mockUploadedFileIds = null,
                 string mockVectorStoreId = "test-vector-store-123",
@@ -75,19 +76,19 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public void Constructor_WithValidParameters_ShouldNotThrow()
         {
             var client = new Mock<PersistentAgentsClient>().Object;
-            var logger = NullLogger<FileManager>.Instance;
+            var logger = NullLogger<AgentFileManager>.Instance;
             var appSettings = CreateTestAppSettings();
 
-            Assert.DoesNotThrow(() => new FileManager(client, logger, appSettings));
+            Assert.DoesNotThrow(() => new AgentFileManager(client, logger, appSettings));
         }
 
         [Test]
         public void Constructor_WithNullClient_ShouldThrowArgumentNullException()
         {
-            var logger = NullLogger<FileManager>.Instance;
+            var logger = NullLogger<AgentFileManager>.Instance;
             var appSettings = CreateTestAppSettings();
 
-            var ex = Assert.Throws<ArgumentNullException>(() => new FileManager(null!, logger, appSettings));
+            var ex = Assert.Throws<ArgumentNullException>(() => new AgentFileManager(null!, logger, appSettings));
             Assert.That(ex!.ParamName, Is.EqualTo("client"));
         }
 
@@ -97,7 +98,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var client = new Mock<PersistentAgentsClient>().Object;
             var appSettings = CreateTestAppSettings();
 
-            var ex = Assert.Throws<ArgumentNullException>(() => new FileManager(client, null!, appSettings));
+            var ex = Assert.Throws<ArgumentNullException>(() => new AgentFileManager(client, null!, appSettings));
             Assert.That(ex!.ParamName, Is.EqualTo("logger"));
         }
 
@@ -105,9 +106,9 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public void Constructor_WithNullAppSettings_ShouldThrowArgumentNullException()
         {
             var client = new Mock<PersistentAgentsClient>().Object;
-            var logger = NullLogger<FileManager>.Instance;
+            var logger = NullLogger<AgentFileManager>.Instance;
 
-            var ex = Assert.Throws<ArgumentNullException>(() => new FileManager(client, logger, null!));
+            var ex = Assert.Throws<ArgumentNullException>(() => new AgentFileManager(client, logger, null!));
             Assert.That(ex!.ParamName, Is.EqualTo("appSettings"));
         }
 
@@ -119,7 +120,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public void UploadFilesAsync_WithValidTspFiles_ShouldReturnExpectedResults()
         {
             var testFiles = CreateTestTspFiles();
-            var testableManager = CreateTestableFileManager();
+            var testableManager = CreateTestableAgentFileManager();
 
             var mockFileIds = testableManager.GetMockUploadedFileIds();
             var mockVectorStoreId = testableManager.GetMockVectorStoreId();
@@ -133,7 +134,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public void UploadFilesAsync_WithEmptyFiles_ShouldHandleEmptyInput()
         {
             var emptyFiles = new Dictionary<string, string>();
-            var testableManager = CreateTestableFileManager(mockUploadedFileIds: new List<string>());
+            var testableManager = CreateTestableAgentFileManager(mockUploadedFileIds: new List<string>());
 
             var mockFileIds = testableManager.GetMockUploadedFileIds();
 
@@ -145,7 +146,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public void UploadFilesAsync_WithNonTspFiles_ShouldFilterCorrectly()
         {
             var mixedFiles = CreateMixedFiles();
-            var testableManager = CreateTestableFileManager();
+            var testableManager = CreateTestableAgentFileManager();
 
             // Test should filter to only .tsp files
             var testFiles = mixedFiles.Where(kvp => kvp.Key.EndsWith(".tsp", StringComparison.OrdinalIgnoreCase));
@@ -156,7 +157,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public void UploadFilesAsync_WithFailureConfiguration_ShouldIndicateFailure()
         {
             var testFiles = CreateTestTspFiles();
-            var testableManager = CreateTestableFileManager(shouldFailUpload: true);
+            var testableManager = CreateTestableAgentFileManager(shouldFailUpload: true);
 
             var shouldFail = testableManager.GetShouldFailUpload();
             Assert.That(shouldFail, Is.True);
@@ -166,7 +167,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public void UploadFilesAsync_WithTimeoutConfiguration_ShouldIndicateTimeout()
         {
             var testFiles = CreateTestTspFiles();
-            var testableManager = CreateTestableFileManager(shouldTimeout: true);
+            var testableManager = CreateTestableAgentFileManager(shouldTimeout: true);
 
             var shouldTimeout = testableManager.GetShouldTimeout();
             Assert.That(shouldTimeout, Is.True);
@@ -175,7 +176,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         [Test]
         public void UploadFilesAsync_WithNullFiles_ShouldThrowArgumentNullException()
         {
-            var testableManager = CreateTestableFileManager();
+            var testableManager = CreateTestableAgentFileManager();
 
             Assert.ThrowsAsync<ArgumentNullException>(async () =>
                 await testableManager.UploadFilesAsync(null!, CancellationToken.None));
@@ -185,7 +186,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public void UploadFilesAsync_WithCancelledToken_ShouldRespectCancellation()
         {
             var testFiles = CreateTestTspFiles();
-            var testableManager = CreateTestableFileManager();
+            var testableManager = CreateTestableAgentFileManager();
             var cts = new CancellationTokenSource();
             cts.Cancel();
 
@@ -251,7 +252,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public void VectorStore_WithValidConfiguration_ShouldReturnExpectedId()
         {
             var expectedVectorStoreId = "custom-vector-store-456";
-            var testableManager = CreateTestableFileManager(mockVectorStoreId: expectedVectorStoreId);
+            var testableManager = CreateTestableAgentFileManager(mockVectorStoreId: expectedVectorStoreId);
 
             var vectorStoreId = testableManager.GetMockVectorStoreId();
 
@@ -263,7 +264,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         [Test]
         public void VectorStore_WithDefaultConfiguration_ShouldReturnDefaultId()
         {
-            var testableManager = CreateTestableFileManager();
+            var testableManager = CreateTestableAgentFileManager();
 
             var vectorStoreId = testableManager.GetMockVectorStoreId();
 
@@ -275,12 +276,12 @@ namespace Azure.Tools.GeneratorAgent.Tests
         #region AppSettings Integration Tests
 
         [Test]
-        public void FileManager_WithCustomIndexingSettings_ShouldUseConfiguredValues()
+        public void AgentFileManager_WithCustomIndexingSettings_ShouldUseConfiguredValues()
         {
             var customAppSettings = CreateTestAppSettings(
                 indexingMaxWaitTimeSeconds: 120,
                 indexingPollingIntervalSeconds: 5);
-            var testableManager = CreateTestableFileManager(appSettings: customAppSettings);
+            var testableManager = CreateTestableAgentFileManager(appSettings: customAppSettings);
 
             Assert.That(customAppSettings, Is.Not.Null);
             Assert.That(customAppSettings.IndexingMaxWaitTime.TotalSeconds, Is.EqualTo(120));
@@ -288,10 +289,10 @@ namespace Azure.Tools.GeneratorAgent.Tests
         }
 
         [Test]
-        public void FileManager_WithDefaultIndexingSettings_ShouldUseDefaultValues()
+        public void AgentFileManager_WithDefaultIndexingSettings_ShouldUseDefaultValues()
         {
             var defaultAppSettings = CreateTestAppSettings();
-            var testableManager = CreateTestableFileManager(appSettings: defaultAppSettings);
+            var testableManager = CreateTestableAgentFileManager(appSettings: defaultAppSettings);
 
             // Verify that default AppSettings work correctly
             Assert.That(defaultAppSettings, Is.Not.Null);
@@ -304,9 +305,9 @@ namespace Azure.Tools.GeneratorAgent.Tests
         #region Error Handling Tests
 
         [Test]
-        public void FileManager_WithUploadFailureScenario_ShouldConfigureCorrectly()
+        public void AgentFileManager_WithUploadFailureScenario_ShouldConfigureCorrectly()
         {
-            var testableManager = CreateTestableFileManager(shouldFailUpload: true);
+            var testableManager = CreateTestableAgentFileManager(shouldFailUpload: true);
 
             var shouldFail = testableManager.GetShouldFailUpload();
             Assert.That(shouldFail, Is.True);
@@ -316,9 +317,9 @@ namespace Azure.Tools.GeneratorAgent.Tests
         }
 
         [Test]
-        public void FileManager_WithTimeoutScenario_ShouldConfigureCorrectly()
+        public void AgentFileManager_WithTimeoutScenario_ShouldConfigureCorrectly()
         {
-            var testableManager = CreateTestableFileManager(shouldTimeout: true);
+            var testableManager = CreateTestableAgentFileManager(shouldTimeout: true);
 
             var shouldTimeout = testableManager.GetShouldTimeout();
             Assert.That(shouldTimeout, Is.True);
@@ -328,9 +329,9 @@ namespace Azure.Tools.GeneratorAgent.Tests
         }
 
         [Test]
-        public void FileManager_WithBothErrorScenarios_ShouldConfigureCorrectly()
+        public void AgentFileManager_WithBothErrorScenarios_ShouldConfigureCorrectly()
         {
-            var testableManager = CreateTestableFileManager(
+            var testableManager = CreateTestableAgentFileManager(
                 shouldFailUpload: true,
                 shouldTimeout: true);
 
@@ -346,32 +347,32 @@ namespace Azure.Tools.GeneratorAgent.Tests
         #region Parameter Validation Tests
 
         [Test]
-        public void FileManager_WithAllValidParameters_ShouldCreateSuccessfully()
+        public void AgentFileManager_WithAllValidParameters_ShouldCreateSuccessfully()
         {
             var client = new Mock<PersistentAgentsClient>().Object;
-            var logger = NullLogger<FileManager>.Instance;
+            var logger = NullLogger<AgentFileManager>.Instance;
             var appSettings = CreateTestAppSettings();
 
-            var fileManager = new FileManager(client, logger, appSettings);
+            var AgentFileManager = new AgentFileManager(client, logger, appSettings);
 
-            Assert.That(fileManager, Is.Not.Null);
-            Assert.That(fileManager, Is.InstanceOf<FileManager>());
+            Assert.That(AgentFileManager, Is.Not.Null);
+            Assert.That(AgentFileManager, Is.InstanceOf<AgentFileManager>());
         }
 
         [Test]
-        public void FileManager_ParameterValidation_ShouldEnforceNonNullConstraints()
+        public void AgentFileManager_ParameterValidation_ShouldEnforceNonNullConstraints()
         {
             var client = new Mock<PersistentAgentsClient>().Object;
-            var logger = NullLogger<FileManager>.Instance;
+            var logger = NullLogger<AgentFileManager>.Instance;
             var appSettings = CreateTestAppSettings();
 
             // Test all valid parameters work
-            Assert.DoesNotThrow(() => new FileManager(client, logger, appSettings));
+            Assert.DoesNotThrow(() => new AgentFileManager(client, logger, appSettings));
 
             // Test each null parameter fails appropriately
-            Assert.Throws<ArgumentNullException>(() => new FileManager(null!, logger, appSettings));
-            Assert.Throws<ArgumentNullException>(() => new FileManager(client, null!, appSettings));
-            Assert.Throws<ArgumentNullException>(() => new FileManager(client, logger, null!));
+            Assert.Throws<ArgumentNullException>(() => new AgentFileManager(null!, logger, appSettings));
+            Assert.Throws<ArgumentNullException>(() => new AgentFileManager(client, null!, appSettings));
+            Assert.Throws<ArgumentNullException>(() => new AgentFileManager(client, logger, null!));
         }
 
         #endregion
@@ -382,7 +383,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public void IntegrationTest_FileUploadAndVectorStoreCreation_ShouldWorkTogether()
         {
             var testFiles = CreateTestTspFiles();
-            var testableManager = CreateTestableFileManager();
+            var testableManager = CreateTestableAgentFileManager();
 
             var fileIds = testableManager.GetMockUploadedFileIds();
             var vectorStoreId = testableManager.GetMockVectorStoreId();
@@ -402,7 +403,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public void IntegrationTest_FileFilteringAndUpload_ShouldProcessCorrectFiles()
         {
             var mixedFiles = CreateMixedFiles();
-            var testableManager = CreateTestableFileManager();
+            var testableManager = CreateTestableAgentFileManager();
 
             // Simulate the filtering that happens in UploadFilesAsync
             var relevantFiles = mixedFiles.Where(kvp => kvp.Key.EndsWith(".tsp", StringComparison.OrdinalIgnoreCase));
@@ -418,7 +419,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
         #region Helper Methods
 
-        private TestableFileManager CreateTestableFileManager(
+        private TestableAgentFileManager CreateTestableAgentFileManager(
             List<string>? mockUploadedFileIds = null,
             string mockVectorStoreId = "test-vector-store-123",
             bool shouldFailUpload = false,
@@ -426,10 +427,10 @@ namespace Azure.Tools.GeneratorAgent.Tests
             AppSettings? appSettings = null)
         {
             var client = new Mock<PersistentAgentsClient>().Object;
-            var logger = NullLogger<FileManager>.Instance;
+            var logger = NullLogger<AgentFileManager>.Instance;
             var settings = appSettings ?? CreateTestAppSettings();
 
-            return new TestableFileManager(
+            return new TestableAgentFileManager(
                 client,
                 logger,
                 settings,

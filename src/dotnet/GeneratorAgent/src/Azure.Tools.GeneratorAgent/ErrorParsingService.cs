@@ -1,17 +1,18 @@
 using Azure.Tools.ErrorAnalyzers;
+using Azure.Tools.GeneratorAgent.Agent;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 
 namespace Azure.Tools.GeneratorAgent
 {
-    internal class ErrorParser
+    internal class ErrorParsingService
     {
-        private static readonly Regex ErrorRegex = new(@"error\s+([A-Z]+\d+):\s*(.+?)(?=\s*\[|$)", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.Compiled, TimeSpan.FromSeconds(1));
+        private static readonly Regex ErrorRegex = new(@"error\s+([A-Z]+\d+):\s*([^\[]+)", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.Compiled, TimeSpan.FromSeconds(1));
         
         private readonly AgentOrchestrator? AgentOrchestrator;
-        private readonly ILogger<ErrorParser> Logger;
+        private readonly ILogger<ErrorParsingService> Logger;
 
-        public ErrorParser(AgentOrchestrator? agentOrchestrator, ILogger<ErrorParser> logger)
+        public ErrorParsingService(AgentOrchestrator? agentOrchestrator, ILogger<ErrorParsingService> logger)
         {
             AgentOrchestrator = agentOrchestrator;
             ArgumentNullException.ThrowIfNull(logger);

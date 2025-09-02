@@ -1,14 +1,8 @@
 ﻿using System.CommandLine;
-using System.Linq;
-using Azure;
-using Azure.AI.Agents.Persistent;
-using Azure.Core;
-using Azure.Identity;
-using Azure.Tools.GeneratorAgent.Authentication;
-using Azure.Tools.GeneratorAgent.Configuration;
-using Azure.Tools.GeneratorAgent.Security;
-using Azure.Tools.GeneratorAgent.Exceptions;
 using Azure.Tools.ErrorAnalyzers;
+using Azure.Tools.GeneratorAgent.Configuration;
+using Azure.Tools.GeneratorAgent.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Azure.Tools.GeneratorAgent
@@ -18,20 +12,17 @@ namespace Azure.Tools.GeneratorAgent
         private const int ExitCodeSuccess = 0;
         private const int ExitCodeFailure = 1;
 
-        private readonly ToolConfiguration ToolConfig;
-        private readonly ILoggerFactory LoggerFactory;
+        private readonly IServiceProvider ServiceProvider;
         private readonly ILogger<Program> Logger;
         private readonly CommandLineConfiguration CommandLineConfig;
 
-        internal Program(ToolConfiguration toolConfig, ILoggerFactory loggerFactory)
+        internal Program(IServiceProvider serviceProvider)
         {
-            ArgumentNullException.ThrowIfNull(toolConfig);
-            ArgumentNullException.ThrowIfNull(loggerFactory);
+            ArgumentNullException.ThrowIfNull(serviceProvider);
             
-            ToolConfig = toolConfig;
-            LoggerFactory = loggerFactory;
-            Logger = LoggerFactory.CreateLogger<Program>();
-            CommandLineConfig = new CommandLineConfiguration(LoggerFactory.CreateLogger<CommandLineConfiguration>());
+            ServiceProvider = serviceProvider;
+            Logger = ServiceProvider.GetRequiredService<ILogger<Program>>();
+            CommandLineConfig = new CommandLineConfiguration(ServiceProvider.GetRequiredService<ILogger<CommandLineConfiguration>>());
         }
 
         public static async Task<int> Main(string[] args)
@@ -39,7 +30,14 @@ namespace Azure.Tools.GeneratorAgent
             ToolConfiguration toolConfig = new ToolConfiguration();
             using ILoggerFactory loggerFactory = toolConfig.CreateLoggerFactory();
 
-            Program program = new Program(toolConfig, loggerFactory);
+            ServiceCollection services = new ServiceCollection();
+            services.AddSingleton(loggerFactory);
+            services.AddLogging();
+            services.AddGeneratorAgentServices(toolConfig);
+
+            await using ServiceProvider serviceProvider = services.BuildServiceProvider();
+            
+            Program program = new Program(serviceProvider);
             return await program.RunAsync(args).ConfigureAwait(false);
         }
 
@@ -57,6 +55,9 @@ namespace Azure.Tools.GeneratorAgent
                 return validationResult;
             }
 
+            ValidationContext validationContext = ValidationContext.CreateFromValidatedInputs(
+                typespecPath!, commitId!, sdkPath);
+
             using CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
             Console.CancelKeyPress += (_, eventArgs) =>
             {
@@ -67,7 +68,7 @@ namespace Azure.Tools.GeneratorAgent
 
             try
             {
-                return await ExecuteGenerationAsync(typespecPath, commitId, sdkPath, cancellationTokenSource.Token).ConfigureAwait(false);
+                return await ExecuteGenerationAsync(validationContext, cancellationTokenSource.Token).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
@@ -81,43 +82,42 @@ namespace Azure.Tools.GeneratorAgent
             }
         }
 
-        private async Task<int> ExecuteGenerationAsync(string? typespecdir, string? commitId, string sdkdir, CancellationToken cancellationToken)
+        private async Task<int> ExecuteGenerationAsync(ValidationContext validationContext, CancellationToken cancellationToken)
         {
             try
             {
-                // Step 1: Create AppSettings
-                ILogger<AppSettings> appSettingsLogger = LoggerFactory.CreateLogger<AppSettings>();
-                AppSettings appSettings = ToolConfig.CreateAppSettings(appSettingsLogger);
-                ProcessExecutor processExecutor = new ProcessExecutor(LoggerFactory.CreateLogger<ProcessExecutor>());
+                // Step 1: Get services from DI container
+                AppSettings appSettings = ServiceProvider.GetRequiredService<AppSettings>();
+                
+                // Step 2: Get TypeSpec files (from local or GitHub)
+                Func<ValidationContext, TypeSpecFileService> fileServiceFactory = ServiceProvider.GetRequiredService<Func<ValidationContext, TypeSpecFileService>>();
+                TypeSpecFileService fileService = fileServiceFactory(validationContext);
 
-                // Step 2: Create and Initialize ErrorFixer Agent
-                ErrorFixerAgent agent = CreateErrorFixerAgent(appSettings);
-                string threadId = await agent.InitializeAgentEnvironmentAsync(typespecdir!, cancellationToken).ConfigureAwait(false);
+                Dictionary<string, string> typeSpecFiles = await fileService.GetTypeSpecFilesAsync(cancellationToken).ConfigureAwait(false);
 
-                // Step 3: Compile Typespec 
-                ISdkGenerationService sdkGenerationService = SdkGenerationServiceFactory.CreateSdkGenerationService(
-                    typespecdir,
-                    commitId,
-                    sdkdir,
-                    appSettings,
-                    LoggerFactory,
-                    processExecutor);
+                // Step 3: Initialize ErrorFixer Agent with files in memory (singleton)
+                ErrorFixerAgent agent = ServiceProvider.GetRequiredService<ErrorFixerAgent>();
+                string threadId = await agent.InitializeAgentEnvironmentAsync(typeSpecFiles, cancellationToken).ConfigureAwait(false);
+
+                // Step 4: Compile Typespec 
+                Func<ValidationContext, ISdkGenerationService> sdkServiceFactory = ServiceProvider.GetRequiredService<Func<ValidationContext, ISdkGenerationService>>();
+                ISdkGenerationService sdkGenerationService = sdkServiceFactory(validationContext);
                 Result<object> compileResult = await sdkGenerationService.CompileTypeSpecAsync(cancellationToken).ConfigureAwait(false);
 
-                // Step 4: Compile Generated SDK
-                SdkBuildService sdkBuildService = new SdkBuildService(
-                    LoggerFactory.CreateLogger<SdkBuildService>(), 
-                    processExecutor, 
-                    sdkdir);
+                // Step 5: Compile Generated SDK
+                Func<ValidationContext, SdkBuildService> sdkBuildServiceFactory = ServiceProvider.GetRequiredService<Func<ValidationContext, SdkBuildService>>();
+                SdkBuildService sdkBuildService = sdkBuildServiceFactory(validationContext);
                 Result<object> buildResult = await sdkBuildService.BuildSdkAsync(cancellationToken).ConfigureAwait(false);
 
-                // Step 5: Analyze all errors and get fixes
-                BuildErrorAnalyzer analyzer = new BuildErrorAnalyzer(LoggerFactory.CreateLogger<BuildErrorAnalyzer>());
+                // Step 6: Analyze all errors and get fixes (singleton)
+                BuildErrorAnalyzer analyzer = ServiceProvider.GetRequiredService<BuildErrorAnalyzer>();
                 List<Fix> allFixes = analyzer.AnalyzeAndGetFixes(compileResult, buildResult);
-                
-                // Step 6:                     
-                // TODO: Send fixes to ErrorFixerAgent
-                // await agent.ProcessFixesAsync(allFixes, threadId, cancellationToken);
+
+                // Step 7: Send fixes to ErrorFixerAgent if List<Fix> is not empty
+                if (allFixes.Count > 0)
+                {
+                    await agent.FixCodeAsync(allFixes, threadId, cancellationToken).ConfigureAwait(false);
+                }
 
                 return ExitCodeSuccess;
             }
@@ -156,60 +156,6 @@ namespace Azure.Tools.GeneratorAgent
                 Logger.LogError(ex, "Error occurred during SDK generation");
                 return ExitCodeFailure;
             }
-        }
-
-        private ErrorFixerAgent CreateErrorFixerAgent(AppSettings appSettings)
-        {
-            RuntimeEnvironment environment = DetermineRuntimeEnvironment();
-            TokenCredentialOptions? credentialOptions = CreateCredentialOptions();
-
-            CredentialFactory credentialFactory = new CredentialFactory(LoggerFactory.CreateLogger<CredentialFactory>());
-            TokenCredential credential = credentialFactory.CreateCredential(environment, credentialOptions);
-
-            PersistentAgentsClient client = new PersistentAgentsClient(
-                appSettings.ProjectEndpoint,
-                credential);
-
-            return new ErrorFixerAgent(appSettings, LoggerFactory.CreateLogger<ErrorFixerAgent>(), client);
-        }
-
-        private static RuntimeEnvironment DetermineRuntimeEnvironment()
-        {
-            bool isGitHubActions = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable(EnvironmentVariables.GitHubActions)) ||
-                                 !string.IsNullOrEmpty(Environment.GetEnvironmentVariable(EnvironmentVariables.GitHubWorkflow));
-
-            if (isGitHubActions)
-            {
-                return RuntimeEnvironment.DevOpsPipeline;
-            }
-
-            return RuntimeEnvironment.LocalDevelopment;
-        }
-
-        private static TokenCredentialOptions? CreateCredentialOptions()
-        {
-            string? tenantId = Environment.GetEnvironmentVariable(EnvironmentVariables.AzureTenantId);
-            Uri? authorityHost = null;
-
-            string? authority = Environment.GetEnvironmentVariable(EnvironmentVariables.AzureAuthorityHost);
-            if (!string.IsNullOrEmpty(authority) && Uri.TryCreate(authority, UriKind.Absolute, out Uri? parsedAuthority))
-            {
-                authorityHost = parsedAuthority;
-            }
-
-            if (tenantId == null && authorityHost == null)
-            {
-                return null;
-            }
-
-            TokenCredentialOptions options = new TokenCredentialOptions();
-
-            if (authorityHost != null)
-            {
-                options.AuthorityHost = authorityHost;
-            }
-
-            return options;
         }
     }
 }

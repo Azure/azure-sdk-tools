@@ -9,40 +9,30 @@ namespace Azure.Tools.GeneratorAgent
     internal static class SdkGenerationServiceFactory
     {
         public static ISdkGenerationService CreateSdkGenerationService(
-            string? typeSpecDir,
-            string? commitId,
-            string sdkDir,
+            ValidationContext validationContext,
             AppSettings appSettings,
             ILoggerFactory loggerFactory,
             ProcessExecutor processExecutor)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(sdkDir);
+            ArgumentNullException.ThrowIfNull(validationContext);
             ArgumentNullException.ThrowIfNull(appSettings);
             ArgumentNullException.ThrowIfNull(loggerFactory);
             ArgumentNullException.ThrowIfNull(processExecutor);
 
-            if (string.IsNullOrWhiteSpace(commitId))
+            if (string.IsNullOrWhiteSpace(validationContext.ValidatedCommitId))
             {
-                return CreateForLocalPath(typeSpecDir!, sdkDir, appSettings, loggerFactory, processExecutor);
+                return CreateForLocalPath(validationContext, appSettings, loggerFactory, processExecutor);
             }
             
-            return CreateForGitHubCommit(commitId, typeSpecDir!, sdkDir, appSettings, loggerFactory, processExecutor);
+            return CreateForGitHubCommit(validationContext, appSettings, loggerFactory, processExecutor);
         }
 
         private static ISdkGenerationService CreateForLocalPath(
-            string typeSpecDir,
-            string sdkDir,
+            ValidationContext validationContext,
             AppSettings appSettings,
             ILoggerFactory loggerFactory,
             ProcessExecutor processExecutor)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(typeSpecDir);
-
-            ValidationContext validationContext = ValidationContext.CreateFromValidatedInputs(
-                typeSpecDir, 
-                string.Empty,
-                sdkDir);
-
             return new LocalTypeSpecSdkGenerationService(
                 appSettings,
                 loggerFactory.CreateLogger<LocalTypeSpecSdkGenerationService>(),
@@ -51,20 +41,11 @@ namespace Azure.Tools.GeneratorAgent
         }
 
         private static ISdkGenerationService CreateForGitHubCommit(
-            string commitId,
-            string typespecSpecDirectory,
-            string sdkOutputDirectory,
+            ValidationContext validationContext,
             AppSettings appSettings,
             ILoggerFactory loggerFactory,
             ProcessExecutor processExecutor)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(typespecSpecDirectory);
-
-            ValidationContext validationContext = ValidationContext.CreateFromValidatedInputs(
-                typespecSpecDirectory, 
-                commitId, 
-                sdkOutputDirectory);
-
             return new GitHubTypeSpecSdkGenerationService(
                 appSettings,
                 loggerFactory.CreateLogger<GitHubTypeSpecSdkGenerationService>(),

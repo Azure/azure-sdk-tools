@@ -1,372 +1,389 @@
-using System.Reflection;
 using Azure.AI.Agents.Persistent;
+using Azure.Tools.ErrorAnalyzers;
 using Azure.Tools.GeneratorAgent.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using NUnit.Framework;
-using System.ClientModel.Primitives;
-using System.ClientModel;
 
 namespace Azure.Tools.GeneratorAgent.Tests
 {
     [TestFixture]
-    public class ErrorFixerAgentTests
+    internal class ErrorFixerAgentTests
     {
-        private AppSettings CreateTestAppSettings(
-            string model = "test-model",
-            string agentName = "test-agent", 
-            string agentInstructions = "test instructions",
-            string projectEndpoint = "https://test.example.com")
-        {
-            var configMock = new Mock<IConfiguration>();
-            var mockLogger = new Mock<ILogger<AppSettings>>();
-            
-            var testId = Guid.NewGuid().ToString("N")[..8];
-            var uniqueModel = $"{model}-{testId}";
-            var uniqueAgentName = $"{agentName}-{testId}";
-            
-
-            var defaultSection = new Mock<IConfigurationSection>();
-            defaultSection.Setup(s => s.Value).Returns((string?)null);
-            configMock.Setup(c => c.GetSection(It.IsAny<string>())).Returns(defaultSection.Object);
-            
-            var modelSection = new Mock<IConfigurationSection>();
-            modelSection.Setup(s => s.Value).Returns(uniqueModel);
-            configMock.Setup(c => c.GetSection("AzureSettings:Model")).Returns(modelSection.Object);
-
-            var nameSection = new Mock<IConfigurationSection>();
-            nameSection.Setup(s => s.Value).Returns(uniqueAgentName);
-            configMock.Setup(c => c.GetSection("AzureSettings:AgentName")).Returns(nameSection.Object);
-
-            var instructionsSection = new Mock<IConfigurationSection>();
-            instructionsSection.Setup(s => s.Value).Returns(agentInstructions);
-            configMock.Setup(c => c.GetSection("AzureSettings:AgentInstructions")).Returns(instructionsSection.Object);
-
-            var endpointSection = new Mock<IConfigurationSection>();
-            endpointSection.Setup(s => s.Value).Returns(projectEndpoint);
-            configMock.Setup(c => c.GetSection("AzureSettings:ProjectEndpoint")).Returns(endpointSection.Object);
-
-            return new AppSettings(configMock.Object, mockLogger.Object);
-        }
-
         private class TestableErrorFixerAgent : ErrorFixerAgent
         {
             private readonly PersistentAgent MockAgent;
-            private readonly Mock<PersistentAgentsClient>? MockClient;
-            
-            public TestableErrorFixerAgent(AppSettings appSettings, ILogger<ErrorFixerAgent> logger, PersistentAgent mockAgent, Mock<PersistentAgentsClient>? mockClient = null) 
-                : base(appSettings, logger, mockClient?.Object ?? Mock.Of<PersistentAgentsClient>())
+
+            public TestableErrorFixerAgent(
+                AppSettings appSettings,
+                ILogger<ErrorFixerAgent> logger,
+                PersistentAgentsClient client,
+                FixPromptService fixPromptService,
+                AgentResponseParser responseParser,
+                PersistentAgent mockAgent)
+                : base(appSettings, logger, client, fixPromptService, responseParser)
             {
                 MockAgent = mockAgent;
-                MockClient = mockClient;
-            }
-            
-            internal override PersistentAgent CreateAgent()
-            {
-                return MockAgent;
             }
 
-            public async Task<string> TestInitializeAgentEnvironmentAsync(string typeSpecDir, CancellationToken ct = default)
-                => await InitializeAgentEnvironmentAsync(typeSpecDir, ct);
+            internal override PersistentAgent CreateAgent() => MockAgent;
+
+            public async Task<string> TestInitializeAgentEnvironmentAsync(Dictionary<string, string> typeSpecFiles, CancellationToken ct = default)
+                => await InitializeAgentEnvironmentAsync(typeSpecFiles, ct);
 
             public async ValueTask TestDisposeAsync() => await DisposeAsync();
         }
 
-        private Mock<PersistentAgent> CreateAgentMock(string agentId = "test-agent-id")
-        {
-            var agentMock = new Mock<PersistentAgent>(MockBehavior.Loose);
-            agentMock.SetupAllProperties();
-            return agentMock;
-        }
-
-        private ErrorFixerAgent CreateErrorFixerAgent(
-            AppSettings? appSettings = null,
-            ILogger<ErrorFixerAgent>? logger = null,
-            PersistentAgentsClient? client = null)
-        {
-            var mockAgent = CreateAgentMock().Object;
-            return new TestableErrorFixerAgent(
-                appSettings ?? CreateTestAppSettings(),
-                logger ?? NullLogger<ErrorFixerAgent>.Instance,
-                mockAgent);
-        }
-
-        private TestableErrorFixerAgent CreateTestableErrorFixerAgent(
-            AppSettings? appSettings = null,
-            ILogger<ErrorFixerAgent>? logger = null,
-            Mock<PersistentAgentsClient>? mockClient = null)
-        {
-            var mockAgent = CreateAgentMock().Object;
-            return new TestableErrorFixerAgent(
-                appSettings ?? CreateTestAppSettings(),
-                logger ?? NullLogger<ErrorFixerAgent>.Instance,
-                mockAgent,
-                mockClient);
-        }
+        #region Constructor Tests
 
         [Test]
         public void Constructor_WithValidParameters_ShouldNotThrow()
         {
-            // Arrange
             var appSettings = CreateTestAppSettings();
             var logger = NullLogger<ErrorFixerAgent>.Instance;
-            var mockAgent = CreateAgentMock().Object;
+            var client = new Mock<PersistentAgentsClient>().Object;
+            var fixPromptService = CreateMockFixPromptService();
+            var responseParser = CreateMockResponseParser();
 
-            // Act & Assert
-            Assert.DoesNotThrow(() => new TestableErrorFixerAgent(appSettings, logger, mockAgent));
+            Assert.DoesNotThrow(() => new ErrorFixerAgent(appSettings, logger, client, fixPromptService, responseParser));
         }
 
         [Test]
         public void Constructor_WithNullAppSettings_ShouldThrowArgumentNullException()
         {
-            // Arrange
             var logger = NullLogger<ErrorFixerAgent>.Instance;
-            var mockAgent = CreateAgentMock().Object;
+            var client = new Mock<PersistentAgentsClient>().Object;
+            var fixPromptService = CreateMockFixPromptService();
+            var responseParser = CreateMockResponseParser();
 
-            // Act & Assert
-            Assert.Throws<ArgumentNullException>(() => new TestableErrorFixerAgent(null!, logger, mockAgent));
+            var ex = Assert.Throws<ArgumentNullException>(() => new ErrorFixerAgent(null!, logger, client, fixPromptService, responseParser));
+            Assert.That(ex!.ParamName, Is.EqualTo("appSettings"));
         }
 
         [Test]
         public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
         {
-            // Arrange
             var appSettings = CreateTestAppSettings();
-            var mockAgent = CreateAgentMock().Object;
+            var client = new Mock<PersistentAgentsClient>().Object;
+            var fixPromptService = CreateMockFixPromptService();
+            var responseParser = CreateMockResponseParser();
 
-            // Act & Assert
-            Assert.Throws<ArgumentNullException>(() => new TestableErrorFixerAgent(appSettings, null!, mockAgent));
+            var ex = Assert.Throws<ArgumentNullException>(() => new ErrorFixerAgent(appSettings, null!, client, fixPromptService, responseParser));
+            Assert.That(ex!.ParamName, Is.EqualTo("logger"));
         }
 
         [Test]
         public void Constructor_WithNullClient_ShouldThrowArgumentNullException()
         {
-            // Arrange
             var appSettings = CreateTestAppSettings();
             var logger = NullLogger<ErrorFixerAgent>.Instance;
+            var fixPromptService = CreateMockFixPromptService();
+            var responseParser = CreateMockResponseParser();
 
-            // Act & Assert
-            Assert.Throws<ArgumentNullException>(() => new ErrorFixerAgent(appSettings, logger, null!));
+            var ex = Assert.Throws<ArgumentNullException>(() => new ErrorFixerAgent(appSettings, logger, null!, fixPromptService, responseParser));
+            Assert.That(ex!.ParamName, Is.EqualTo("client"));
         }
 
         [Test]
-        public void FixCodeAsync_ShouldNotThrow()
+        public void Constructor_WithNullFixPromptService_ShouldThrowArgumentNullException()
         {
-            // Arrange
             var appSettings = CreateTestAppSettings();
-            var agent = CreateErrorFixerAgent(appSettings);
+            var logger = NullLogger<ErrorFixerAgent>.Instance;
+            var client = new Mock<PersistentAgentsClient>().Object;
+            var responseParser = CreateMockResponseParser();
 
-            // Act & Assert
-            Assert.DoesNotThrowAsync(async () => await agent.FixCodeAsync(CancellationToken.None));
+            var ex = Assert.Throws<ArgumentNullException>(() => new ErrorFixerAgent(appSettings, logger, client, null!, responseParser));
+            Assert.That(ex!.ParamName, Is.EqualTo("fixPromptService"));
         }
 
         [Test]
-        public async Task FixCodeAsync_WithCancellationToken_ShouldComplete()
+        public void Constructor_WithNullResponseParser_ShouldThrowArgumentNullException()
         {
-            // Arrange
             var appSettings = CreateTestAppSettings();
-            var agent = CreateErrorFixerAgent(appSettings);
-            var cts = new CancellationTokenSource();
+            var logger = NullLogger<ErrorFixerAgent>.Instance;
+            var client = new Mock<PersistentAgentsClient>().Object;
+            var fixPromptService = CreateMockFixPromptService();
 
-            // Act
-            await agent.FixCodeAsync(cts.Token);
-
-            // Assert - No exception should be thrown
-            Assert.Pass("FixCodeAsync completed successfully");
+            var ex = Assert.Throws<ArgumentNullException>(() => new ErrorFixerAgent(appSettings, logger, client, fixPromptService, null!));
+            Assert.That(ex!.ParamName, Is.EqualTo("responseParser"));
         }
 
-        [Test]
-        public void InitializeAgentEnvironmentAsync_WithNonExistentDirectory_ShouldThrowDirectoryNotFoundException()
-        {
-            // Arrange
-            var agent = CreateTestableErrorFixerAgent();
-            var nonExistentDir = Path.Combine(Path.GetTempPath(), $"test_nonexistent_{Guid.NewGuid()}");
+        #endregion
 
-            // Act & Assert
-            Assert.ThrowsAsync<DirectoryNotFoundException>(
-                async () => await agent.TestInitializeAgentEnvironmentAsync(nonExistentDir));
-        }
+        #region CreateAgent Tests
 
         [Test]
-        public void InitializeAgentEnvironmentAsync_WithEmptyDirectory_ShouldThrowInvalidOperationException()
+        public void CreateAgent_WithValidConfiguration_ShouldCreateAgent()
         {
-            // Arrange
-            var agent = CreateTestableErrorFixerAgent();
-            var tempDir = Path.Combine(Path.GetTempPath(), $"test_empty_{Guid.NewGuid()}");
-            
-            try
-            {
-                Directory.CreateDirectory(tempDir);
+            var mockAgent = CreateMockAgent();
+            var agent = CreateTestableAgent(mockAgent.Object);
 
-                // Act & Assert
-                var ex = Assert.ThrowsAsync<InvalidOperationException>(
-                    async () => await agent.TestInitializeAgentEnvironmentAsync(tempDir));
-                
-                Assert.That(ex!.Message, Does.Contain("No TypeSpec files"));
-            }
-            finally
-            {
-                // Cleanup - Use retry logic to handle potential file locks
-                CleanupDirectory(tempDir);
-            }
-        }
+            var createdAgent = agent.CreateAgent();
 
-        [Test]
-        public void CreateAgent_WithValidSettings_ShouldReturnAgent()
-        {
-            // Arrange
-            var appSettings = CreateTestAppSettings();
-            var mockClient = new Mock<PersistentAgentsClient>();
-            var mockAdministration = new Mock<PersistentAgentsAdministrationClient>();
-            var mockAgent = CreateAgentMock().Object;
-            
-            var agent = new TestableErrorFixerAgent(appSettings, NullLogger<ErrorFixerAgent>.Instance, mockAgent, mockClient);
-
-            // Act
-            var createdAgent = agent.GetType().GetMethod("CreateAgent", BindingFlags.NonPublic | BindingFlags.Instance)?.Invoke(agent, null);
-
-            // Assert
             Assert.That(createdAgent, Is.Not.Null);
-            Assert.That(createdAgent, Is.EqualTo(mockAgent));
+            Assert.That(createdAgent, Is.EqualTo(mockAgent.Object));
+        }
+
+        #endregion
+
+        #region FixCodeAsync Tests
+
+        [Test]
+        public void FixCodeAsync_WithNullFixes_ShouldThrowNullReferenceException()
+        {
+            var agent = CreateTestableAgent();
+            var threadId = "test-thread-id";
+
+            var ex = Assert.ThrowsAsync<NullReferenceException>(
+                async () => await agent.FixCodeAsync(null!, threadId));
         }
 
         [Test]
-        public async Task DisposeAsync_WhenAgentNotCreated_ShouldNotThrow()
+        public void FixCodeAsync_WithNullThreadId_ShouldThrowNullReferenceException()
         {
-            // Arrange
-            var agent = CreateTestableErrorFixerAgent();
+            var agent = CreateTestableAgent();
+            var fixes = CreateValidFixesList();
 
-            // Act & Assert
+            Assert.ThrowsAsync<NullReferenceException>(
+                async () => await agent.FixCodeAsync(fixes, null!));
+        }
+
+        [Test]
+        public void FixCodeAsync_WithEmptyThreadId_ShouldThrowNullReferenceException()
+        {
+            var agent = CreateTestableAgent();
+            var fixes = CreateValidFixesList();
+
+            Assert.ThrowsAsync<NullReferenceException>(
+                async () => await agent.FixCodeAsync(fixes, ""));
+        }
+
+        [Test]
+        public void FixCodeAsync_WithEmptyFixesList_ShouldThrowInvalidOperationException()
+        {
+            var agent = CreateTestableAgent();
+            var fixes = new List<Fix>();
+            var threadId = "test-thread-id";
+
+            var ex = Assert.ThrowsAsync<InvalidOperationException>(
+                async () => await agent.FixCodeAsync(fixes, threadId));
+
+            Assert.That(ex!.Message, Does.Contain("No fixes were successfully applied"));
+        }
+
+        #endregion
+
+        #region InitializeAgentEnvironmentAsync Tests
+
+        [Test]
+        public void InitializeAgentEnvironmentAsync_WithNullTypeSpecFiles_ShouldThrowArgumentNullException()
+        {
+            var agent = CreateTestableAgent();
+
+            var ex = Assert.ThrowsAsync<ArgumentNullException>(
+                async () => await agent.TestInitializeAgentEnvironmentAsync(null!));
+
+            Assert.That(ex!.ParamName, Is.EqualTo("source"));
+        }
+
+        [Test]
+        public void InitializeAgentEnvironmentAsync_WithEmptyTypeSpecFiles_ShouldThrowInvalidOperationException()
+        {
+            var agent = CreateTestableAgent();
+            var typeSpecFiles = new Dictionary<string, string>();
+
+            var ex = Assert.ThrowsAsync<InvalidOperationException>(
+                async () => await agent.TestInitializeAgentEnvironmentAsync(typeSpecFiles));
+
+            Assert.That(ex!.Message, Does.Contain("No TypeSpec files provided"));
+        }
+
+        [Test]
+        public void InitializeAgentEnvironmentAsync_WithNonTypeSpecFiles_ShouldThrowInvalidOperationException()
+        {
+            var agent = CreateTestableAgent();
+            var typeSpecFiles = new Dictionary<string, string>
+            {
+                { "readme.md", "# README" },
+                { "config.json", "{ \"test\": true }" }
+            };
+
+            var ex = Assert.ThrowsAsync<InvalidOperationException>(
+                async () => await agent.TestInitializeAgentEnvironmentAsync(typeSpecFiles));
+
+            Assert.That(ex!.Message, Does.Contain("No TypeSpec files provided"));
+        }
+
+        [Test]
+        public void InitializeAgentEnvironmentAsync_WithCancelledToken_ShouldThrowInvalidOperationException()
+        {
+            var agent = CreateTestableAgent();
+            var typeSpecFiles = new Dictionary<string, string>
+            {
+                { "main.tsp", "model Test {}" }
+            };
+            var cts = new CancellationTokenSource();
+            cts.Cancel();
+
+            Assert.ThrowsAsync<InvalidOperationException>(
+                async () => await agent.TestInitializeAgentEnvironmentAsync(typeSpecFiles, cts.Token));
+        }
+
+        #endregion
+
+        #region DisposeAsync Tests
+
+        [Test]
+        public void DisposeAsync_WithoutInitialization_ShouldNotThrow()
+        {
+            var agent = CreateTestableAgent();
+
             Assert.DoesNotThrowAsync(async () => await agent.TestDisposeAsync());
         }
 
         [Test]
-        public async Task DisposeAsync_WhenCalledMultipleTimes_ShouldOnlyDisposeOnce()
+        public void DisposeAsync_CalledMultipleTimes_ShouldNotThrow()
         {
-            // Arrange
-            var agent = CreateTestableErrorFixerAgent();
+            var agent = CreateTestableAgent();
 
-            // Act
-            await agent.TestDisposeAsync();
-            await agent.TestDisposeAsync(); // Second call
-
-            // Assert - Should not throw and should handle multiple calls gracefully
-            Assert.Pass("Multiple dispose calls handled correctly");
-        }
-
-        [Test]
-        public async Task DisposeAsync_WithCreatedAgent_ShouldAttemptCleanup()
-        {
-            // Arrange
-            var mockLogger = new Mock<ILogger<ErrorFixerAgent>>();
-            var agent = CreateTestableErrorFixerAgent(logger: mockLogger.Object);
-            
-            _ = agent.GetType().GetMethod("CreateAgent", BindingFlags.NonPublic | BindingFlags.Instance)?.Invoke(agent, null);
-
-            // Act
-            await agent.TestDisposeAsync();
-
-            Assert.Pass("Dispose completed without exceptions");
-        }
-
-        [Test]
-        public void Agent_Property_WhenAccessedMultipleTimes_ShouldReturnSameInstance()
-        {
-            // Arrange
-            var agent = CreateTestableErrorFixerAgent();
-            
-            var agentProperty = agent.GetType().BaseType?.GetField("Agent", BindingFlags.NonPublic | BindingFlags.Instance);
-            var lazyAgent = agentProperty?.GetValue(agent) as Lazy<PersistentAgent>;
-
-            // Act
-            var firstAccess = lazyAgent?.Value;
-            var secondAccess = lazyAgent?.Value;
-
-            // Assert
-            Assert.That(firstAccess, Is.Not.Null);
-            Assert.That(secondAccess, Is.Not.Null);
-            Assert.That(firstAccess, Is.EqualTo(secondAccess), "Lazy<T> should return the same instance on multiple accesses");
-        }
-
-        [Test]
-        public void Constructor_InitializesAllFields()
-        {
-            // Arrange
-            var appSettings = CreateTestAppSettings();
-            var logger = new Mock<ILogger<ErrorFixerAgent>>();
-            var client = new Mock<PersistentAgentsClient>();
-            var mockAgent = CreateAgentMock().Object;
-
-            // Act
-            var agent = new TestableErrorFixerAgent(appSettings, logger.Object, mockAgent);
-
-            // Assert - Verify object was created successfully
-            Assert.That(agent, Is.Not.Null);
-            
-            // Verify that the agent can be accessed without throwing
-            Assert.DoesNotThrow(() => {
-                var agentProperty = agent.GetType().BaseType?.GetField("Agent", BindingFlags.NonPublic | BindingFlags.Instance);
-                var lazyAgent = agentProperty?.GetValue(agent) as Lazy<PersistentAgent>;
-                _ = lazyAgent?.Value;
+            Assert.DoesNotThrowAsync(async () =>
+            {
+                await agent.TestDisposeAsync();
+                await agent.TestDisposeAsync();
             });
         }
 
         [Test]
-        public void Constructor_WithDifferentAppSettings_ShouldUseCorrectValues()
+        public void DisposeAsync_AfterAgentCreation_ShouldNotThrow()
         {
-            // Arrange
-            var customSettings = CreateTestAppSettings(
-                model: "custom-model",
-                agentName: "custom-agent",
-                agentInstructions: "custom instructions",
-                projectEndpoint: "https://custom.endpoint.com"
-            );
-            var logger = NullLogger<ErrorFixerAgent>.Instance;
-            var mockAgent = CreateAgentMock().Object;
+            var agent = CreateTestableAgent();
+            agent.CreateAgent();
 
-            // Act
-            var agent = new TestableErrorFixerAgent(customSettings, logger, mockAgent);
-
-            // Assert
-            Assert.That(agent, Is.Not.Null);
-            
-            var appSettingsField = agent.GetType().BaseType?.GetField("AppSettings", BindingFlags.NonPublic | BindingFlags.Instance);
-            var retrievedSettings = appSettingsField?.GetValue(agent) as AppSettings;
-            
-            Assert.That(retrievedSettings, Is.Not.Null);
-            
-            // Check that the values contain our custom values (they will have unique ID appended)
-            Assert.That(retrievedSettings.Model, Does.StartWith("custom-model-"));
-            Assert.That(retrievedSettings.AgentName, Does.StartWith("custom-agent-"));
-            Assert.That(retrievedSettings.AgentInstructions, Is.EqualTo("custom instructions"));
+            Assert.DoesNotThrowAsync(async () => await agent.TestDisposeAsync());
         }
 
-        private void CleanupDirectory(string directoryPath)
+        [Test]
+        public void DisposeAsync_AfterFixCodeAsync_ShouldNotThrow()
         {
-            if (!Directory.Exists(directoryPath))
-                return;
+            var agent = CreateTestableAgent();
+            var fixes = CreateValidFixesList();
+            var threadId = "test-thread-id";
 
-            for (int attempt = 0; attempt < 3; attempt++)
+            Assert.DoesNotThrowAsync(async () =>
             {
                 try
                 {
-                    Directory.Delete(directoryPath, true);
-                    return;
+                    await agent.FixCodeAsync(fixes, threadId);
                 }
-                catch (IOException) when (attempt < 2)
+                catch
                 {
-                    // Wait and retry - file might be locked
-                    Thread.Sleep(50);
                 }
-                catch (UnauthorizedAccessException) when (attempt < 2)
-                {
-                    // Wait and retry - file might be locked
-                    Thread.Sleep(50);
-                }
-            }
+                await agent.TestDisposeAsync();
+            });
         }
 
+        #endregion
+
+        #region Helper Methods
+
+        private TestableErrorFixerAgent CreateTestableAgent(PersistentAgent? mockAgent = null)
+        {
+            var appSettings = CreateTestAppSettings();
+            var logger = NullLogger<ErrorFixerAgent>.Instance;
+            var client = new Mock<PersistentAgentsClient>().Object;
+            var fixPromptService = CreateMockFixPromptService();
+            var responseParser = CreateMockResponseParser();
+            var agent = mockAgent ?? CreateMockAgent().Object;
+
+            return new TestableErrorFixerAgent(
+                appSettings,
+                logger,
+                client,
+                fixPromptService,
+                responseParser,
+                agent);
+        }
+
+        private AppSettings CreateTestAppSettings()
+        {
+            var configMock = new Mock<IConfiguration>();
+            var mockLogger = new Mock<ILogger<AppSettings>>();
+
+            var testId = Guid.NewGuid().ToString("N")[..8];
+
+            var defaultSection = new Mock<IConfigurationSection>();
+            defaultSection.Setup(s => s.Value).Returns((string?)null);
+            configMock.Setup(c => c.GetSection(It.IsAny<string>())).Returns(defaultSection.Object);
+
+            var modelSection = new Mock<IConfigurationSection>();
+            modelSection.Setup(s => s.Value).Returns($"test-model-{testId}");
+            configMock.Setup(c => c.GetSection("AzureSettings:Model")).Returns(modelSection.Object);
+
+            var nameSection = new Mock<IConfigurationSection>();
+            nameSection.Setup(s => s.Value).Returns($"test-agent-{testId}");
+            configMock.Setup(c => c.GetSection("AzureSettings:AgentName")).Returns(nameSection.Object);
+
+            var instructionsSection = new Mock<IConfigurationSection>();
+            instructionsSection.Setup(s => s.Value).Returns("test instructions");
+            configMock.Setup(c => c.GetSection("AzureSettings:AgentInstructions")).Returns(instructionsSection.Object);
+
+            var endpointSection = new Mock<IConfigurationSection>();
+            endpointSection.Setup(s => s.Value).Returns("https://test.example.com");
+            configMock.Setup(c => c.GetSection("AzureSettings:ProjectEndpoint")).Returns(endpointSection.Object);
+
+            return new AppSettings(configMock.Object, mockLogger.Object);
+        }
+
+        private FixPromptService CreateMockFixPromptService()
+        {
+            var mockLogger = new Mock<ILogger<FixPromptService>>();
+            var appSettings = CreateMockAppSettings();
+            return new FixPromptService(mockLogger.Object, appSettings);
+        }
+
+        private AppSettings CreateMockAppSettings()
+        {
+            var mockConfiguration = new Mock<IConfiguration>();
+            var mockLogger = new Mock<ILogger<AppSettings>>();
+            
+            // Set up required configuration values
+            var projectEndpointSection = new Mock<IConfigurationSection>();
+            projectEndpointSection.Setup(s => s.Value).Returns("https://test.endpoint.com");
+            mockConfiguration.Setup(c => c.GetSection("AzureSettings:ProjectEndpoint")).Returns(projectEndpointSection.Object);
+            
+            // Set up agent instructions
+            var agentInstructionsSection = new Mock<IConfigurationSection>();
+            agentInstructionsSection.Setup(s => s.Value).Returns("You are an expert Azure SDK developer and TypeSpec author. Your primary goal is to resolve all AZC analyzer and TypeSpec compilation errors in the TypeSpec files and produce a valid, compilable result that strictly follows Azure SDK and TypeSpec guidelines.\n\n### SYSTEM INSTRUCTIONS\n- All files (e.g., main.tsp, client.tsp) are available via FileSearchTool. Retrieve any file content by filename as needed.\n- Never modify main.tsp—only client.tsp may be changed.");
+            mockConfiguration.Setup(c => c.GetSection("AzureSettings:AgentInstructions")).Returns(agentInstructionsSection.Object);
+            
+            return new AppSettings(mockConfiguration.Object, mockLogger.Object);
+        }
+
+        private AgentResponseParser CreateMockResponseParser()
+        {
+            var mockLogger = new Mock<ILogger<AgentResponseParser>>();
+            return new AgentResponseParser(mockLogger.Object);
+        }
+
+        private Mock<PersistentAgent> CreateMockAgent()
+        {
+            var mockAgent = new Mock<PersistentAgent>();
+            return mockAgent;
+        }
+
+        private static List<Fix> CreateValidFixesList()
+        {
+            var mockErrors = new List<RuleError>
+            {
+                new RuleError("AZC0012", "Type name 'Client' is too generic")
+            };
+            
+            var analyzer = new BuildErrorAnalyzer(new Mock<ILogger<BuildErrorAnalyzer>>().Object);
+            return analyzer.GetFixes(mockErrors).ToList();
+        }
+
+        #endregion
     }
 }

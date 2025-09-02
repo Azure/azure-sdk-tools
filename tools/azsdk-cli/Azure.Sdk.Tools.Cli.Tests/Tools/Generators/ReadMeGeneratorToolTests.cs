@@ -1,12 +1,12 @@
-using System.ClientModel;
-using System.ClientModel.Primitives;
 using System.CommandLine;
 using System.CommandLine.Parsing;
 using Azure.AI.OpenAI;
+using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Services;
-using Azure.Sdk.Tools.Cli.Tests.MockServices;
+using Azure.Sdk.Tools.Cli.Tests.Mocks.Helpers;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
-using Azure.Sdk.Tools.Cli.Tools;
+using Azure.Sdk.Tools.Cli.Tools.Package;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -19,7 +19,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators
         [Test]
         public async Task TestReadmeGeneratorTool()
         {
-            var testClients = SetupOpenAIMocks();
+            var testClients = SetupMocks();
             (DirectoryInfo root, string packagePath) = await CreateFakeLanguageRepo();
 
             var readmeOutputPath = Path.GetTempFileName();
@@ -35,8 +35,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators
                 Assert.Multiple(() =>
                 {
                     Assert.That(exitCode, Is.EqualTo(0), "Command should execute successfully");
-                    Assert.That(testClients.OutputService.Outputs.First().Method, Is.EqualTo("Output"));
-                    Assert.That(testClients.OutputService.Outputs.First().OutputValue, Is.EqualTo($"Readme written to {readmeOutputPath}"));
+                    Assert.That(testClients.OutputHelper.Outputs.First().Method, Is.EqualTo("Output"));
+                    Assert.That(testClients.OutputHelper.Outputs.First().OutputValue, Is.EqualTo($"Readme written to {readmeOutputPath}"));
                 });
 
                 Assert.That(File.Exists(readmeOutputPath), Is.True, "Readme output file should be created");
@@ -64,7 +64,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators
                 Assert.Ignore("Skipping test as AZURE_SDK_FOR_GO_PATH is not set");
             }
 
-            var (sp, outputServiceMock) = CreateServiceProvider();
+            var (sp, OutputHelperMock) = CreateServiceProvider();
 
             var tool = ActivatorUtilities.CreateInstance<ReadMeGeneratorTool>(sp);
             var command = tool.GetCommand();
@@ -78,9 +78,54 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators
 
             Assert.Multiple(() =>
             {
-                Assert.That(outputServiceMock.Outputs.First().Method, Is.EqualTo("Output"));
-                Assert.That(outputServiceMock.Outputs.First().OutputValue, Is.EqualTo($"Readme written to {readmeOutputPath}"));
+                Assert.That(OutputHelperMock.Outputs.First().Method, Is.EqualTo("Output"));
+                Assert.That(OutputHelperMock.Outputs.First().OutputValue, Is.EqualTo($"Readme written to {readmeOutputPath}"));
             });
+        }
+
+        /// <summary>
+        /// These tests all correspond to "LLM needs to do more work" type of returns from the tool, like removing 
+        /// hardcoded locales, like 'en-us', or having it regenerate if some of the templates tokens make it through
+        /// and weren't replaced.
+        /// </summary>
+        /// <returns></returns>
+        [TestCase(
+            "Bad link, still has locale in it: https://learn.microsoft.com/fr-fr/blahblah", 
+            "The readme contains links with locales. Keep the link, but remove these locales from links: (fr-fr).", TestName = "Links with locales in them")]
+        [TestCase(
+            "Still referencing aztemplate and (package path)",
+            "The readme contains placeholders (aztemplate,(package path)) that should be removed and replaced with a proper package name")]
+        [TestCase(
+            "Still referencing placeholder (package path)",
+            "The readme contains placeholders ((package path)) that should be removed and replaced with a proper package name")]
+        public async Task TestBadReadmeContent(string readmeContent, string expectedFeedback)
+        {
+            var testClients = SetupMocks(readmeContent);
+            (DirectoryInfo root, string packagePath) = await CreateFakeLanguageRepo();
+
+            var readmeOutputPath = Path.GetTempFileName();
+            var readmeTemplatePath = Path.Combine(AppContext.BaseDirectory, "TestAssets", "README-template.go.md");
+
+            try
+            {
+                var tool = ActivatorUtilities.CreateInstance<ReadMeGeneratorTool>(testClients.ServiceProvider);
+                var command = tool.GetCommand();
+
+                int exitCode = command.Invoke($"--output-path \"{readmeOutputPath}\" --service-url \"https://learn.microsoft.com/azure/service-bus-messaging\" --template-path {readmeTemplatePath} --package-path {packagePath}");
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(exitCode, Is.EqualTo(1), "Command should fail, as the final readme doesn't pass validation");
+                    Assert.That(testClients.OutputHelper.Outputs.First().Method, Is.EqualTo("OutputError"));
+                    Assert.That(testClients.OutputHelper.Outputs.First().OutputValue, Is.EqualTo($"ReadmeGenerator failed with validation errors: {expectedFeedback}"));
+                });
+
+                Assert.That(File.Exists(readmeOutputPath), Is.True, "Readme output file should be created");
+            }
+            finally
+            {
+                Directory.Delete(root.FullName, true);
+            }
         }
 
         /// <summary>
@@ -88,57 +133,42 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators
         /// </summary>
         /// <param name="customizeServices">Optional Action you can use to register your own client instances</param>
         /// <returns></returns>
-        private static (ServiceProvider, MockOutputService) CreateServiceProvider(Action<ServiceCollection>? customizeServices = default)
+        private static (ServiceProvider, MockOutputHelper) CreateServiceProvider(Action<ServiceCollection>? customizeServices = default)
         {
             var serviceCollection = new ServiceCollection();
-            var outputService = new MockOutputService();
+            var OutputHelper = new MockOutputHelper();
 
-            
+
             serviceCollection.AddLogging();     // so our ILogger<T>'s will be available.
 
-            
+
             ServiceRegistrations.RegisterCommonServices(serviceCollection);
-            serviceCollection.AddSingleton<IOutputService>(outputService);
+            serviceCollection.AddSingleton<IOutputHelper>(OutputHelper);
 
             customizeServices?.Invoke(serviceCollection);
 
             var sp = serviceCollection.BuildServiceProvider();
-            return (sp, outputService);
+            return (sp, OutputHelper);
         }
-        
-        private static TestClients SetupOpenAIMocks()
+
+        private static TestClients SetupMocks(string readmeContents = "This is a test response for the readme generation.")
         {
             var (openAIClientMock, chatClientMock) = OpenAIMockHelper.Create("gpt-4.1");
 
-            // basically - create a model using the appropriate OpenAI*ModelFactory
-            // then return it, wrapped in a ClientResult. This is really similar to the online samples
-            // except it's ClientResult (instead of Response).
-            var chatCompletion = OpenAIChatModelFactory.ChatCompletion(
-                content: new ChatMessageContent("This is a test response for the readme generation.")
-            );
+            var serviceMock = new Mock<IMicroagentHostService>();
+            serviceMock.Setup(svc => svc.RunAgentToCompletion(
+                It.IsAny<Microagent<ReadmeGenerator.ReadmeContents>>(), It.IsAny<CancellationToken>())
+            ).Returns(() => Task.FromResult(new ReadmeGenerator.ReadmeContents(readmeContents)));
 
-            chatClientMock
-                .Setup(ccm => ccm.CompleteChatAsync(It.IsAny<ChatMessage[]>()))     // NOTE: I'm not checking the chat message input - I already know what I'm sending.
-                .Returns(() =>
-                {
-                    return Task.FromResult(
-                        ClientResult.FromValue(chatCompletion, Mock.Of<PipelineResponse>())
-                    );
-                });
-
-            var (serviceProvider, outputService) = CreateServiceProvider((sc) =>
+            var (serviceProvider, OutputHelper) = CreateServiceProvider((sc) =>
             {
                 sc.AddLogging((lb) => lb.AddConsole());
-                sc.AddSingleton(openAIClientMock.Object);
-
-                // register the mocks too, if you want to grab them later.
-                sc.AddSingleton(chatClientMock);
-                sc.AddSingleton(openAIClientMock);
+                sc.AddSingleton(serviceMock.Object);
             });
 
-            return new TestClients(openAIClientMock, chatClientMock, serviceProvider, outputService);
+            return new TestClients(openAIClientMock, chatClientMock, serviceProvider, OutputHelper);
         }
-        
+
         private static async Task<(DirectoryInfo root, string packagePath)> CreateFakeLanguageRepo()
         {
             var root = Directory.CreateTempSubdirectory("readme-generator-tool-test");
@@ -156,7 +186,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators
             Mock<AzureOpenAIClient> OpenAIClient,
             Mock<ChatClient> ChatClient,
             ServiceProvider ServiceProvider,
-            MockOutputService OutputService
+            MockOutputHelper OutputHelper
         );
     }
 }

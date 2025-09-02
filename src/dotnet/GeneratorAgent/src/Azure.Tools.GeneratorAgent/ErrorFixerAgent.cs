@@ -1,10 +1,8 @@
+using System.Text;
 using Azure.AI.Agents.Persistent;
+using Azure.Tools.ErrorAnalyzers;
 using Azure.Tools.GeneratorAgent.Configuration;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
-using System.Text;
-using System.Text.Json.Serialization;
-using System.Linq;
 
 namespace Azure.Tools.GeneratorAgent
 {
@@ -14,37 +12,43 @@ namespace Azure.Tools.GeneratorAgent
         private readonly ILogger<ErrorFixerAgent> Logger;
         private readonly PersistentAgentsClient Client;
         private readonly Lazy<PersistentAgent> Agent;
-        private readonly SemaphoreSlim ConcurrencyLimiter;
+        private readonly FixPromptService FixPromptService;
+        private readonly AgentResponseParser ResponseParser;
         private volatile bool Disposed = false;
 
         public ErrorFixerAgent(
             AppSettings appSettings,
             ILogger<ErrorFixerAgent> logger,
-            PersistentAgentsClient client)
+            PersistentAgentsClient client,
+            FixPromptService fixPromptService,
+            AgentResponseParser responseParser)
         {
             ArgumentNullException.ThrowIfNull(appSettings);
             ArgumentNullException.ThrowIfNull(logger);
             ArgumentNullException.ThrowIfNull(client);
+            ArgumentNullException.ThrowIfNull(fixPromptService);
+            ArgumentNullException.ThrowIfNull(responseParser);
 
             AppSettings = appSettings;
             Logger = logger;
             Client = client;
             Agent = new Lazy<PersistentAgent>(() => CreateAgent());
+            FixPromptService = fixPromptService;
+            ResponseParser = responseParser;
 
-            ConcurrencyLimiter = new SemaphoreSlim(Environment.ProcessorCount, Environment.ProcessorCount);
         }
 
         internal virtual PersistentAgent CreateAgent()
         {
             Logger.LogInformation("Creating AZC Fixer agent...");
 
-            Response<PersistentAgent> response = Client.Administration.CreateAgent(
+            var response = Client.Administration.CreateAgent(
                 model: AppSettings.Model,
                 name: AppSettings.AgentName,
                 instructions: AppSettings.AgentInstructions,
                 tools: new[] { new FileSearchToolDefinition() });
 
-            PersistentAgent agent = response.Value;
+            var agent = response.Value;
             if (string.IsNullOrEmpty(agent?.Id))
             {
                 throw new InvalidOperationException("Failed to create AZC Fixer agent");
@@ -54,96 +58,262 @@ namespace Azure.Tools.GeneratorAgent
             return agent;
         }
 
-        public async Task FixCodeAsync(CancellationToken ct)
-        {
-            PersistentAgent agent = Agent.Value;
 
-            // TODO: Implement the code fixing logic here
-            await Task.CompletedTask.ConfigureAwait(false);
+        /// <summary>
+        /// Processes a list of fixes by converting them to prompts and processing them sequentially,
+        /// building upon the state maintained in the conversation thread.
+        /// </summary>
+        public async Task<string> FixCodeAsync(List<Fix> fixes, string threadId, CancellationToken cancellationToken = default)
+        {            
+            Logger.LogInformation("Starting code fix process with {Count} fixes using thread {ThreadId}", fixes.Count, threadId);
+
+            var finalUpdatedContent = (string?)null;
+            var processedCount = 0;
+
+            try
+            {
+                // Process each fix sequentially to maintain conversation context
+                // Each fix builds upon the previous one's result
+                for (var i = 0; i < fixes.Count; i++)
+                {
+                    var fix = fixes[i];
+                    var fixTypeName = fix switch
+                    {
+                        AgentPromptFix => nameof(AgentPromptFix),
+                        _ => fix.GetType().Name // Fallback
+                    };
+                    
+                    Logger.LogInformation("Processing fix {Current}/{Total}: {FixType}", 
+                        i + 1, fixes.Count, fixTypeName);
+                    try
+                    {
+                        // Apply single fix and get the updated TypeSpec content
+                        // This maintains conversation state so the AI agent can see previous changes
+                        finalUpdatedContent = await ProcessSingleFixWithStateAsync(fix, threadId, i + 1, cancellationToken).ConfigureAwait(false);
+                        processedCount++;
+                        
+                        Logger.LogDebug("Successfully applied fix {Current}/{Total}. Content length: {Length}", 
+                            i + 1, fixes.Count, finalUpdatedContent?.Length ?? 0);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.LogError(ex, "Failed to apply fix {Current}/{Total}: {FixType}", 
+                            i + 1, fixes.Count, fixTypeName);
+                        
+                        // TODO: Add configuration for whether to stop on first failure or continue
+                        throw; // For now, fail fast on any fix failure
+                    }
+                    
+                    // Small delay between fixes to avoid overwhelming the AI service
+                    if (i < fixes.Count - 1)
+                    {
+                        await Task.Delay(AppSettings.DelayBetweenFixesMs, cancellationToken).ConfigureAwait(false);
+                    }
+                }
+                
+                Logger.LogInformation("Successfully processed all {Count} fixes. Final content length: {Length}", 
+                    fixes.Count, finalUpdatedContent?.Length ?? 0);
+                
+                return finalUpdatedContent ?? throw new InvalidOperationException("No fixes were successfully applied");
+            }
+            catch (Exception ex) when (!(ex is OperationCanceledException))
+            {
+                 Logger.LogError(ex, "Failed to complete code fix process for thread {ThreadId}. Processed {ProcessedCount}/{TotalCount} fixes", 
+                    threadId, processedCount, fixes.Count);
+                throw;
+            }
         }
 
-        public async Task<string> InitializeAgentEnvironmentAsync(string typeSpecDir, CancellationToken ct = default)
+        /// <summary>
+        /// Processes a single fix and returns the updated client.tsp content
+        /// </summary>
+        private async Task<string> ProcessSingleFixWithStateAsync(Fix fix, string threadId, int fixNumber, CancellationToken cancellationToken)
         {
-            List<string> uploadedFilesIds = await UploadTspAsync(typeSpecDir, ct);
-            if (uploadedFilesIds.Count == 0)
-                throw new InvalidOperationException("No TypeSpec files (*.tsp) found in the directory. Cannot proceed with AZC error fixing.");
+            try
+            {
+                // Convert fix to structured prompt with violation details
+                var prompt = FixPromptService.ConvertFixToPrompt(fix);
+                
+                // Send prompt to AI agent (maintains conversation history)
+                await Client.Messages.CreateMessageAsync(threadId, MessageRole.User, prompt, cancellationToken: cancellationToken).ConfigureAwait(false);
+                
+                // Execute AI agent run to process the fix request
+                await ProcessAgentRunAsync(threadId, cancellationToken).ConfigureAwait(false);
+                
+                // Read agent's response containing updated TypeSpec code
+                var response = await ReadResponseAsync(threadId, cancellationToken).ConfigureAwait(false);
+                
+                // Parse response and extract corrected client.tsp content
+                var agentResponse = ResponseParser.ParseResponse(response);
+                
+                Logger.LogInformation("Updated client.tsp content for fix #{FixNumber} ({Length} characters):\n{UpdatedContent}", 
+                    fixNumber, agentResponse.Content.Length, agentResponse.Content);
+                
+                // Return corrected content for next fix to build upon
+                return agentResponse.Content;
+            }
+            catch (Exception ex) when (!(ex is OperationCanceledException))
+            {
+                Logger.LogError(ex, "Failed to process fix #{FixNumber}: {FixType}", fixNumber, fix.GetType().Name);
+                throw;
+            }
+        }
 
-            await WaitForIndexingAsync(uploadedFilesIds, ct);
-            string vectorStoreId = await CreateVectorStoreAsync(uploadedFilesIds, ct);
+        /// <summary>
+        /// Processes an agent run and waits for completion
+        /// </summary>
+        private async Task ProcessAgentRunAsync(string threadId, CancellationToken cancellationToken)
+        {
+            var agent = Agent.Value;
+            var runResponse = await Client.Runs.CreateRunAsync(threadId, agent.Id, cancellationToken: cancellationToken).ConfigureAwait(false);
+            var run = runResponse.Value;
+            
+            Logger.LogDebug("Created run {RunId} for thread {ThreadId}", run.Id, threadId);
+            
+            var maxWaitTime = AppSettings.AgentRunMaxWaitTime;
+            var pollingInterval = AppSettings.AgentRunPollingInterval;
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            
+            RunStatus status;
+            do
+            {
+                await Task.Delay(pollingInterval, cancellationToken).ConfigureAwait(false);
+                var runUpdateResponse = await Client.Runs.GetRunAsync(threadId, run.Id, cancellationToken: cancellationToken).ConfigureAwait(false);
+                run = runUpdateResponse.Value;
+                status = run.Status;
+                
+                Logger.LogDebug("Run {RunId} status: {Status} (elapsed: {Elapsed:F1}s)", 
+                    run.Id, status, stopwatch.Elapsed.TotalSeconds);
+                
+                if (stopwatch.Elapsed > maxWaitTime)
+                {
+                    Logger.LogError("Agent run {RunId} timed out after {Elapsed:F1}s", 
+                        run.Id, stopwatch.Elapsed.TotalSeconds);
+                    throw new TimeoutException($"Agent run timed out after {stopwatch.Elapsed.TotalSeconds:F1} seconds");
+                }
+            }
+            while (status == RunStatus.Queued || status == RunStatus.InProgress);
+            
+            if (status != RunStatus.Completed)
+            {
+                Logger.LogError("Agent run {RunId} failed with status: {Status}", run.Id, status);
+                throw new InvalidOperationException($"Agent run failed with status: {status}");
+            }
+        }
+
+        /// <summary>
+        /// Reads the latest response from the agent thread
+        /// </summary>
+        private async Task<string> ReadResponseAsync(string threadId, CancellationToken cancellationToken)
+        {
+            var messages = Client.Messages.GetMessagesAsync(threadId, order: ListSortOrder.Descending, cancellationToken: cancellationToken);
+            var assistantResponses = new List<string>();
+
+            await foreach (var message in messages.ConfigureAwait(false))
+            {
+                Logger.LogDebug("Message role: {Role}", message.Role);
+                
+                if (message.Role != MessageRole.User)
+                {
+                    foreach (MessageTextContent content in message.ContentItems.OfType<MessageTextContent>())
+                    {
+                        Logger.LogDebug("Assistant message content: {Text}", content.Text);
+                        assistantResponses.Add(content.Text);
+                    }
+                    break;
+                }
+            }
+
+            if (assistantResponses.Count == 0)
+            {
+                throw new InvalidOperationException("No assistant response found in thread messages");
+            }
+
+            return string.Join("\n", assistantResponses);
+        }
+
+        public async Task<string> InitializeAgentEnvironmentAsync(
+            Dictionary<string, string> typeSpecFiles, 
+            CancellationToken ct = default)
+        {
+            var uploadedFilesIds = await UploadTspFromMemoryAsync(typeSpecFiles, ct);
+            var uploadedFilesList = uploadedFilesIds.ToList();
+            
+            if (uploadedFilesList.Count == 0)
+            {
+                throw new InvalidOperationException("No TypeSpec files provided. Cannot proceed with AZC error fixing.");
+            }
+
+            await WaitForIndexingAsync(uploadedFilesList, ct);
+            var vectorStoreId = await CreateVectorStoreAsync(uploadedFilesList, ct);
             await UpdateAgentVectorStoreAsync(vectorStoreId, ct);
 
-            PersistentAgentThread thread = await Client.Threads.CreateThreadAsync(cancellationToken: ct);
+            var threadResponse = await Client.Threads.CreateThreadAsync(cancellationToken: ct).ConfigureAwait(false);
+            var thread = threadResponse.Value;
             Logger.LogInformation("Created new thread with ID: {ThreadId}", thread.Id);
 
             return thread.Id;
         }
 
-        private async Task<List<string>> UploadTspAsync(string typeSpecDir, CancellationToken ct)
+        private async Task<IEnumerable<string>> UploadTspFromMemoryAsync(
+            Dictionary<string, string> typeSpecFiles, 
+            CancellationToken ct)
         {
-            string[] tspFiles = Directory.GetFiles(typeSpecDir, "*.tsp", SearchOption.AllDirectories);
+            var relevantFiles = typeSpecFiles.Where(kvp => 
+                kvp.Key.EndsWith(".tsp", StringComparison.OrdinalIgnoreCase));
 
-            IEnumerable<Task<string?>> uploadTasks = tspFiles.Select(async file =>
-            {
-                await ConcurrencyLimiter.WaitAsync(ct);
-                try
-                {
-                    return await UploadSingleFileAsync(file, ct);
-                }
-                finally
-                {
-                    ConcurrencyLimiter.Release();
-                }
-            });
+            var uploadTasks = relevantFiles.Select(file =>
+                UploadSingleFileFromMemoryAsync(file.Key, file.Value, ct));
 
-            string?[] results = await Task.WhenAll(uploadTasks);
-            List<string> uploadedFilesIds = results.Where(id => !string.IsNullOrEmpty(id)).Select(id => id!).ToList();
+            var results = await Task.WhenAll(uploadTasks);
+            var uploadedFilesIds = results.Where(id => !string.IsNullOrEmpty(id)).Select(id => id!);
 
-            Logger.LogInformation("Successfully uploaded {Count}/{Total} TypeSpec files as text files", uploadedFilesIds.Count, tspFiles.Length);
+            Logger.LogInformation("Successfully uploaded TypeSpec files from memory");
             return uploadedFilesIds;
         }
 
-        private async Task<string?> UploadSingleFileAsync(string filePath, CancellationToken ct)
+        private async Task<string?> UploadSingleFileFromMemoryAsync(
+            string fileName, 
+            string content, 
+            CancellationToken ct)
         {
             try
             {
-                string fileName = Path.GetFileNameWithoutExtension(filePath);
-                string txtFileName = $"{fileName}.txt";
+                var txtFileName = Path.ChangeExtension(fileName, "txt");
 
-                // Read the .tsp file content and upload as .txt since .tsp is not supported
-                string content = await File.ReadAllTextAsync(filePath, ct);
-                using MemoryStream contentStream = new MemoryStream(Encoding.UTF8.GetBytes(content));
+                using var contentStream = new MemoryStream(Encoding.UTF8.GetBytes(content));
                 
-                Response<PersistentAgentFileInfo>? uploaded = await Client.Files.UploadFileAsync(
+                var uploaded = await Client.Files.UploadFileAsync(
                     contentStream,
                     PersistentAgentFilePurpose.Agents,
                     txtFileName,
                     cancellationToken: ct
-                );
+                ).ConfigureAwait(false);
 
                 if (uploaded?.Value?.Id != null)
                 {
-                    Logger.LogDebug("Uploaded TypeSpec file as text: {OriginalFile} -> {FileName} -> {FileId}",
-                        Path.GetFileName(filePath), txtFileName, uploaded.Value.Id);
+                    Logger.LogDebug("Uploaded TypeSpec file from memory: {FileName} -> {FileId}",
+                        fileName, uploaded.Value.Id);
                     return uploaded.Value.Id;
                 }
                 else
                 {
-                    Logger.LogWarning("Failed to upload file: {FileName}", fileName);
+                    Logger.LogWarning("Failed to upload file from memory: {FileName}", fileName);
                     return null;
                 }
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Error uploading file: {FilePath}", filePath);
+                Logger.LogError(ex, "Error uploading file from memory: {FileName}", fileName);
                 return null;
             }
         }
 
         private async Task WaitForIndexingAsync(List<string> uploadedFilesIds, CancellationToken ct)
         {
-            TimeSpan maxWaitTime = AppSettings.IndexingMaxWaitTime;
-            TimeSpan pollingInterval = AppSettings.IndexingPollingInterval;
-            System.Diagnostics.Stopwatch stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            var maxWaitTime = AppSettings.IndexingMaxWaitTime;
+            var pollingInterval = AppSettings.IndexingPollingInterval;
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
             Logger.LogInformation("Waiting for {Count} files to be indexed... (timeout: {Timeout}s, polling interval: {Interval}s)", 
                 uploadedFilesIds.Count, maxWaitTime.TotalSeconds, pollingInterval.TotalSeconds);
@@ -151,19 +321,19 @@ namespace Azure.Tools.GeneratorAgent
             const int batchSize = 10;
             while (stopwatch.Elapsed < maxWaitTime)
             {
-                List<(string FileId, PersistentAgentFileInfo? File)> results = new List<(string FileId, PersistentAgentFileInfo? File)>();
+                var results = new List<(string FileId, PersistentAgentFileInfo? File)>();
                 
                 for (int i = 0; i < uploadedFilesIds.Count; i += batchSize)
                 {
-                    IEnumerable<string> batch = uploadedFilesIds.Skip(i).Take(batchSize);
-                    IEnumerable<Task<(string FileId, PersistentAgentFileInfo? File)>> checkTasks = batch.Select(fileId => CheckFileStatusAsync(fileId, ct));
-                    (string FileId, PersistentAgentFileInfo? File)[] batchResults = await Task.WhenAll(checkTasks);
+                    var batch = uploadedFilesIds.Skip(i).Take(batchSize);
+                    var checkTasks = batch.Select(fileId => CheckFileStatusAsync(fileId, ct));
+                    var batchResults = await Task.WhenAll(checkTasks);
                     results.AddRange(batchResults);
                 }
                 
-                bool allIndexed = true;
-                List<string>? pendingFiles = Logger.IsEnabled(LogLevel.Debug) ? new List<string>() : null;
-                Dictionary<string, int>? currentStatusCounts = Logger.IsEnabled(LogLevel.Information) ? new Dictionary<string, int>() : null;
+                var allIndexed = true;
+                var pendingFiles = Logger.IsEnabled(LogLevel.Debug) ? new List<string>() : null;
+                var currentStatusCounts = Logger.IsEnabled(LogLevel.Information) ? new Dictionary<string, int>() : null;
                 
                 foreach ((string FileId, PersistentAgentFileInfo? File) result in results)
                 {
@@ -179,7 +349,7 @@ namespace Azure.Tools.GeneratorAgent
                     }
                     else
                     {
-                        string status = result.File?.Status.ToString() ?? "Unknown";
+                        var status = result.File?.Status.ToString() ?? "Unknown";
                         if (currentStatusCounts != null)
                         {
                             currentStatusCounts[status] = currentStatusCounts.GetValueOrDefault(status) + 1;
@@ -201,7 +371,7 @@ namespace Azure.Tools.GeneratorAgent
 
                 if (Logger.IsEnabled(LogLevel.Information) && currentStatusCounts != null)
                 {
-                    string statusSummary = string.Join(", ", currentStatusCounts.Select(kvp => $"{kvp.Key}: {kvp.Value}"));
+                    var statusSummary = string.Join(", ", currentStatusCounts.Select(kvp => $"{kvp.Key}: {kvp.Value}"));
                     Logger.LogInformation("Indexing status summary: {StatusSummary} | Elapsed: {Elapsed:F1}s", 
                         statusSummary, stopwatch.Elapsed.TotalSeconds);
                 }
@@ -218,12 +388,12 @@ namespace Azure.Tools.GeneratorAgent
                     Logger.LogDebug("Still waiting for: {PendingFiles}", string.Join(", ", pendingFiles));
                 }
 
-                await Task.Delay(pollingInterval, ct);
+                await Task.Delay(pollingInterval, ct).ConfigureAwait(false);
             }
 
-            (string FileId, PersistentAgentFileInfo? File)[] finalResults = await Task.WhenAll(uploadedFilesIds.Select(id => CheckFileStatusAsync(id, ct)));
+            var finalResults = await Task.WhenAll(uploadedFilesIds.Select(id => CheckFileStatusAsync(id, ct))).ConfigureAwait(false);
             
-            bool allProcessed = finalResults.All(r => r.File?.Status.ToString().Equals("Processed", StringComparison.OrdinalIgnoreCase) == true);
+            var allProcessed = finalResults.All(r => r.File?.Status.ToString()?.Equals("Processed", StringComparison.OrdinalIgnoreCase) == true);
             if (allProcessed)
             {
                 Logger.LogInformation("All {Count} files indexed successfully in {Duration:F1}s (completed during final check)", 
@@ -231,12 +401,12 @@ namespace Azure.Tools.GeneratorAgent
                 return;
             }
 
-            Dictionary<string, int> finalSummary = finalResults
+            var finalSummary = finalResults
                 .Where(r => r.File != null)
                 .GroupBy(r => r.File!.Status.ToString() ?? "Unknown")
                 .ToDictionary(g => g.Key ?? "Unknown", g => g.Count());
             
-            string finalStatusSummary = string.Join(", ", finalSummary.Select(kvp => $"{kvp.Key}: {kvp.Value}"));
+            var finalStatusSummary = string.Join(", ", finalSummary.Select(kvp => $"{kvp.Key}: {kvp.Value}"));
             
             throw new TimeoutException(
                 $"Timeout after {maxWaitTime.TotalSeconds}s while waiting for file indexing to complete. " +
@@ -248,7 +418,7 @@ namespace Azure.Tools.GeneratorAgent
         {
             try
             {
-                PersistentAgentFileInfo file = await Client.Files.GetFileAsync(fileId, cancellationToken: ct);
+                var file = await Client.Files.GetFileAsync(fileId, cancellationToken: ct).ConfigureAwait(false);
                 return (fileId, file);
             }
             catch (Azure.RequestFailedException ex) when (ex.Status == 404)
@@ -277,10 +447,10 @@ namespace Azure.Tools.GeneratorAgent
 
         private async Task UpdateAgentVectorStoreAsync(string vectorStoreId, CancellationToken ct)
         {
-            PersistentAgent agent = Agent.Value;
+            var agent = Agent.Value;
 
             // Replace the FileSearchToolResource with a new one containing only the latest store
-            Response<PersistentAgent> updated = await Client.Administration.UpdateAgentAsync(
+            var updated = await Client.Administration.UpdateAgentAsync(
                 agent.Id,
                 toolResources: new ToolResources
                 {
@@ -290,7 +460,7 @@ namespace Azure.Tools.GeneratorAgent
                     }
                 },
                 cancellationToken: ct
-            );
+            ).ConfigureAwait(false);
 
             Logger.LogInformation("Agent vector store updated to: {VectorStoreId}", vectorStoreId);
         }
@@ -298,7 +468,7 @@ namespace Azure.Tools.GeneratorAgent
 
         private async Task<string> CreateVectorStoreAsync(List<string> fileIds, CancellationToken ct)
         {
-            string storeName = $"azc-{DateTime.Now:yyyyMMddHHmmss}";
+            var storeName = $"azc-{DateTime.Now:yyyyMMddHHmmss}";
 
             Logger.LogInformation("Creating vector store '{StoreName}' with {Count} files...", storeName, fileIds.Count);
 
@@ -306,23 +476,23 @@ namespace Azure.Tools.GeneratorAgent
                 fileIds,
                 name: storeName,
                 cancellationToken: ct
-            );
+            ).ConfigureAwait(false);
 
             Logger.LogInformation("Created vector store: {Name} ({Id})", store.Value.Name, store.Value.Id);
 
             Logger.LogDebug("Waiting 5 seconds for vector store to be ready...");
-            await Task.Delay(5000, ct);
+            await Task.Delay(5000, ct).ConfigureAwait(false);
 
             return store.Value.Id;
         }
 
         private async Task DeleteAgentsAsync(CancellationToken ct)
         {
-            List<Task> deleteTasks = new List<Task>();
+            var deleteTasks = new List<Task>();
 
-            await foreach (PersistentAgent agent in Client.Administration.GetAgentsAsync(cancellationToken: ct))
+            await foreach (PersistentAgent agent in Client.Administration.GetAgentsAsync(cancellationToken: ct).ConfigureAwait(false))
             {
-                Task deleteTask = Client.Administration.DeleteAgentAsync(agent.Id, ct)
+                var deleteTask = Client.Administration.DeleteAgentAsync(agent.Id, ct)
                     .ContinueWith(t =>
                     {
                         if (t.IsFaulted)
@@ -361,6 +531,7 @@ namespace Azure.Tools.GeneratorAgent
                     Logger.LogError(ex, "Error deleting agents during disposal");
                 }
             }
+
         }
     }
 }

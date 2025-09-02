@@ -321,6 +321,20 @@ namespace APIViewWeb.Managers
             return apiRevision;
         }
 
+
+        public async Task<string> GetOutlineAPIRevisionsAsync(string activeApiRevisionId)
+        {
+            APIRevisionListItemModel activeApiRevision = await GetAPIRevisionAsync(activeApiRevisionId);
+            RenderedCodeFile activeCodeFile = await _codeFileRepository.GetCodeFileAsync(activeApiRevision, false);
+            return activeCodeFile.CodeFile.GetApiOutlineText();
+        }
+
+        public async Task<string> GetApiRevisionText(APIRevisionListItemModel activeApiRevision)
+        {
+            RenderedCodeFile activeRevisionCodeFile = await _codeFileRepository.GetCodeFileAsync(activeApiRevision);
+            return activeRevisionCodeFile.CodeFile.GetApiText();
+        }
+
         /// <summary>
         /// Add API Revision to Review
         /// </summary>

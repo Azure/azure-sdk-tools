@@ -39,6 +39,11 @@ jobs:
                 Ours: '@("specification")'
                 Merge: '@("specification/common-types")'
                 AcceptTheirsForFinalMerge: true
+              RPSaaSCanary:
+                Theirs: '@("**")'
+                Ours: '@("specification")'
+                Merge: '@("specification/common-types")'
+                AcceptTheirsForFinalMerge: true
               RPSaaSDev:
                 Theirs: '@("**")'
                 Ours: '@("specification")'

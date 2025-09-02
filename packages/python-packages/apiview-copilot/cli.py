@@ -30,12 +30,13 @@ from colorama import Fore, Style
 from knack import CLI, ArgumentsContext, CLICommandsLoader
 from knack.commands import CommandGroup
 from knack.help_files import helps
-from src._apiview_reviewer import ApiViewReview
+from src._apiview_reviewer import SUPPORTED_LANGUAGES, ApiViewReview
 from src._credential import get_credential
 from src._database_manager import ContainerNames, get_database_manager
 from src._mention import handle_mention_request
 from src._models import APIViewComment
 from src._search_manager import SearchManager
+from src._settings import SettingsManager
 from src._utils import get_language_pretty_name, get_prompt_path
 from src.agent._agent import get_main_agent, invoke_agent
 
@@ -262,16 +263,12 @@ def deconstruct_test_case(language: str, test_case: str, test_file: str):
     print(f"Deconstructed test case '{test_case}' into {deconstructed_apiview} and {deconstructed_expected}.")
 
 
-def deploy_flask_app(
-    app_name: Optional[str] = None,
-    resource_group: Optional[str] = None,
-    subscription_id: Optional[str] = None,
-):
+def deploy_flask_app():
     """Command to deploy the Flask app."""
     # pylint: disable=import-outside-toplevel
     from scripts.deploy_app import deploy_app_to_azure
 
-    deploy_app_to_azure(app_name, resource_group, subscription_id)
+    deploy_app_to_azure()
 
 
 def generate_review(
@@ -366,10 +363,9 @@ def review_job_start(
     if comments_obj is not None:
         payload["comments"] = comments_obj
 
-    app_name = os.getenv("AZURE_APP_NAME")
-    if not app_name:
-        raise ValueError("AZURE_APP_NAME environment variable is not set.")
-    api_endpoint = f"https://{app_name}.azurewebsites.net/api-review/start"
+    settings = SettingsManager()
+    base_url = settings.get("WEBAPP_ENDPOINT")
+    api_endpoint = f"{base_url}/api-review/start"
 
     resp = requests.post(api_endpoint, json=payload, timeout=60)
     if resp.status_code == 202:
@@ -380,10 +376,9 @@ def review_job_start(
 
 def review_job_get(job_id: str):
     """Get the status/result of an API review job."""
-    app_name = os.getenv("AZURE_APP_NAME")
-    if not app_name:
-        raise ValueError("AZURE_APP_NAME environment variable is not set.")
-    api_endpoint = f"https://{app_name}.azurewebsites.net/api-review"
+    settings = SettingsManager()
+    base_url = settings.get("WEBAPP_ENDPOINT")
+    api_endpoint = f"{base_url}/api-review"
     url = f"{api_endpoint.rstrip('/')}/{job_id}"
     resp = requests.get(url, timeout=10)
     if resp.status_code == 200:
@@ -434,8 +429,9 @@ def review_summarize(language: str, target: str, base: str = None):
     payload = {"language": language, "target": target}
     if base:
         payload["base"] = base
-    app_name = os.getenv("AZURE_APP_NAME")
-    api_endpoint = f"https://{app_name}.azurewebsites.net/api-review/summarize"
+    settings = SettingsManager()
+    base_url = settings.get("WEBAPP_ENDPOINT")
+    api_endpoint = f"{base_url}/api-review/summarize"
     response = requests.post(api_endpoint, json=payload, timeout=60)
     if response.status_code == 200:
         summary = response.json().get("summary")
@@ -458,11 +454,9 @@ def handle_agent_chat(thread_id: Optional[str] = None, remote: bool = False):
         messages = []
         current_thread_id = thread_id
         if remote:
-            app_name = os.getenv("AZURE_APP_NAME")
-            if not app_name:
-                print(f"{BOLD}AZURE_APP_NAME environment variable is not set.{RESET}")
-                return
-            api_endpoint = f"https://{app_name}.azurewebsites.net/agent/chat"
+            settings = SettingsManager()
+            base_url = settings.get("WEBAPP_ENDPOINT")
+            api_endpoint = f"{base_url}/agent/chat"
             session = requests.Session()
             while True:
                 try:
@@ -535,7 +529,6 @@ def handle_agent_chat(thread_id: Optional[str] = None, remote: bool = False):
 def handle_agent_mention(comments_path: str, remote: bool = False):
     """
     Handles @mention requests from the agent.
-    This function is a placeholder for the actual implementation.
     """
     # load comments from the comments_path
     comments = []
@@ -555,11 +548,9 @@ def handle_agent_mention(comments_path: str, remote: bool = False):
     pretty_language = get_language_pretty_name(language)
 
     if remote:
-        app_name = os.getenv("AZURE_APP_NAME")
-        if not app_name:
-            print("AZURE_APP_NAME environment variable is not set.")
-            return
-        api_endpoint = f"https://{app_name}.azurewebsites.net/api-review/mention"
+        settings = SettingsManager()
+        base_url = settings.get("WEBAPP_ENDPOINT")
+        api_endpoint = f"{base_url}/api-review/mention"
         try:
             resp = requests.post(
                 api_endpoint,
@@ -665,8 +656,7 @@ def get_apiview_comments(review_id: str, environment: str = "production", use_ap
             token = credential.get_token(scope)
             response = requests.get(
                 endpoint,
-                headers={"Content-Type": "application/json",
-                        "Authorization": f"Bearer {token.token}"},
+                headers={"Content-Type": "application/json", "Authorization": f"Bearer {token.token}"},
                 timeout=30,
             )
 
@@ -903,20 +893,6 @@ def report_metrics(start_date: str, end_date: str, environment: str = "productio
         return report
 
 
-SUPPORTED_LANGUAGES = [
-    "android",
-    "clang",
-    "cpp",
-    "dotnet",
-    "golang",
-    "ios",
-    "java",
-    "python",
-    "rust",
-    "typescript",
-]
-
-
 class CliCommandsLoader(CLICommandsLoader):
     """Loader for CLI commands related to APIView and review management."""
 
@@ -1024,22 +1000,6 @@ class CliCommandsLoader(CLICommandsLoader):
             ac.argument("language", type=str, help="The language for the test case.")
             ac.argument("test_case", type=str, help="The specific test case to deconstruct.")
             ac.argument("test_file", type=str, help="The full path to the JSONL test file.")
-        with ArgumentsContext(self, "app deploy") as ac:
-            ac.argument(
-                "app_name",
-                options_list=["--app-name"],
-                help="The name of the Azure App Service. Env var: AZURE_APP_NAME",
-            )
-            ac.argument(
-                "resource_group",
-                options_list=["--resource-group"],
-                help="The Azure resource group containing the App Service. Env var: AZURE_RESOURCE_GROUP",
-            )
-            ac.argument(
-                "subscription_id",
-                options_list=["--subscription-id"],
-                help="The Azure subscription ID. Env var: AZURE_SUBSCRIPTION_ID",
-            )
         with ArgumentsContext(self, "search") as ac:
             ac.argument(
                 "path",
@@ -1205,7 +1165,7 @@ class CliCommandsLoader(CLICommandsLoader):
 
 def run_cli():
     """Run the CLI application."""
-    cli = CLI(cli_name="apiviewcopilot", commands_loader_cls=CliCommandsLoader)
+    cli = CLI(cli_name="avc", commands_loader_cls=CliCommandsLoader)
     exit_code = cli.invoke(sys.argv[1:])
     sys.exit(exit_code)
 

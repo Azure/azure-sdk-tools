@@ -1,9 +1,6 @@
-using System;
-using System.IO;
-using System.Threading;
 using Azure.Tools.GeneratorAgent.Configuration;
-using Azure.Tools.GeneratorAgent.Security;
 using Azure.Tools.GeneratorAgent.Exceptions;
+using Azure.Tools.GeneratorAgent.Security;
 using Microsoft.Extensions.Logging;
 
 namespace Azure.Tools.GeneratorAgent
@@ -153,7 +150,7 @@ namespace Azure.Tools.GeneratorAgent
 
         private async Task<Result<object>> RunPowerShellGenerationScriptAsync(string azureSdkPath, CancellationToken cancellationToken)
         {
-            Logger.LogInformation("Running PowerShell generation script \n");
+            Logger.LogInformation("Running PowerShell generation script");
 
             string scriptPath = Path.Combine(azureSdkPath, AppSettings.PowerShellScriptPath);
 
@@ -226,12 +223,7 @@ namespace Azure.Tools.GeneratorAgent
                             result.ProcessException.ExitCode ?? -1,
                             result.ProcessException));
                 }
-
-                if (result.Value is string buildOutput && !string.IsNullOrEmpty(buildOutput))
-                {
-                    Logger.LogInformation("dotnet build output: {Output}", buildOutput);
-                }
-
+                
                 return result;
             }
             catch (Exception ex) when (ex is not OperationCanceledException)

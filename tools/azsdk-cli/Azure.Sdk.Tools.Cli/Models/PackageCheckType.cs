@@ -28,5 +28,10 @@ public enum PackageCheckType
     /// <summary>
     /// Run cspell.
     /// </summary>
-    Cspell
+    Cspell,
+    
+    /// <summary>
+    /// Fix changelog issues using microagent tools.
+    /// </summary>
+    ChangelogFix
 }

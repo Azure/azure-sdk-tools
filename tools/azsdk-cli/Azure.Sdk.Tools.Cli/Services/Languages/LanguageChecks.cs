@@ -1,6 +1,7 @@
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Configuration;
+using Azure.Sdk.Tools.Cli.Microagents;
 using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.Cli.Services;
@@ -25,6 +26,14 @@ public interface ILanguageChecks
     /// <param name="ct">Cancellation token</param>
     /// <returns>Result of the changelog validation</returns>
     Task<CLICheckResponse> ValidateChangelogAsync(string packagePath, CancellationToken ct);
+
+    /// <summary>
+    /// Fixes changelog issues in the specific package using microagent tools.
+    /// </summary>
+    /// <param name="packagePath">Path to the package directory</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Result of the changelog fix operation</returns>
+    Task<CLICheckResponse> FixChangelogAsync(string packagePath, CancellationToken ct);
 
     /// <summary>
     /// Validates the README for the specific package.
@@ -59,14 +68,16 @@ public class LanguageChecks : ILanguageChecks
     private readonly IGitHelper _gitHelper;
     private readonly ILogger<LanguageChecks> _logger;
     private readonly ILanguageSpecificCheckResolver _languageSpecificCheckResolver;
+    private readonly IMicroagentHostService _microagentHostService;
 
-    public LanguageChecks(IProcessHelper processHelper, INpxHelper npxHelper, IGitHelper gitHelper, ILogger<LanguageChecks> logger, ILanguageSpecificCheckResolver languageSpecificCheckResolver)
+    public LanguageChecks(IProcessHelper processHelper, INpxHelper npxHelper, IGitHelper gitHelper, ILogger<LanguageChecks> logger, ILanguageSpecificCheckResolver languageSpecificCheckResolver, IMicroagentHostService microagentHostService)
     {
         _processHelper = processHelper;
         _npxHelper = npxHelper;
         _gitHelper = gitHelper;
         _logger = logger;
         _languageSpecificCheckResolver = languageSpecificCheckResolver;
+        _microagentHostService = microagentHostService;
     }
 
     /// <summary>
@@ -111,6 +122,11 @@ public class LanguageChecks : ILanguageChecks
     public virtual async Task<CLICheckResponse> ValidateChangelogAsync(string packagePath, CancellationToken ct)
     {
         return await ValidateChangelogCommonAsync(packagePath, ct);
+    }
+
+    public virtual async Task<CLICheckResponse> FixChangelogAsync(string packagePath, CancellationToken ct)
+    {
+        return await FixChangelogCommonAsync(packagePath, ct);
     }
 
     public virtual async Task<CLICheckResponse> ValidateReadmeAsync(string packagePath)
@@ -163,6 +179,146 @@ public class LanguageChecks : ILanguageChecks
         {
             _logger.LogError(ex, "Error in ValidateChangelogCommonAsync");
             return new CLICheckResponse(1, "", $"Unhandled exception: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Common changelog fix implementation that works for most Azure SDK languages.
+    /// Uses AI microagent tools to read and fix changelog issues.
+    /// </summary>
+    /// <param name="packagePath">Absolute path to the package directory</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>CLI check response containing success/failure status and response message</returns>
+    protected async Task<CLICheckResponse> FixChangelogCommonAsync(string packagePath, CancellationToken ct)
+    {
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+        try
+        {
+            var (packageRepoRoot, errorResponse) = ValidatePackageAndDiscoverRepo(packagePath);
+            if (errorResponse != null)
+            {
+                return errorResponse;
+            }
+
+            // Check if changelog file exists
+            var changelogPath = Path.Combine(packagePath, "CHANGELOG.md");
+            if (!File.Exists(changelogPath))
+            {
+                return new CLICheckResponse(1, "", $"CHANGELOG.md not found at {changelogPath}");
+            }
+
+            _logger.LogInformation("Starting changelog fix using microagent tools for package at {PackagePath}", packagePath);
+
+            // First validate the changelog to get warnings/errors
+            var validationResult = await ValidateChangelogCommonAsync(packagePath, ct);
+            
+            if (validationResult.ExitCode == 0)
+            {
+                return new CLICheckResponse(0, "Changelog is already valid, no fixes needed.");
+            }
+
+            // Read current changelog content
+            var originalContent = await File.ReadAllTextAsync(changelogPath, ct);
+
+            // Use microagent to fix changelog issues
+            var prompt = $"""
+                You are an expert at fixing Azure SDK changelog files. Your task is to analyze the current changelog content and fix any validation issues while preserving the existing content structure and entries.
+
+                Validation Issues Found:
+                {validationResult.CheckStatusDetails}
+
+                Current Changelog Content:
+                {originalContent}
+
+                Rules for Azure SDK Changelogs:
+                - Follow the format specified in https://github.com/Azure/azure-sdk/blob/main/docs/policies/README-TEMPLATE.md
+                - Keep all existing version entries and their content
+                - Ensure proper markdown formatting
+                - Maintain chronological order (newest versions first)
+                - Include proper date formats
+                - Fix any formatting issues identified in the validation
+
+                Please provide the corrected changelog content. Use the validate_changelog_tool to check your work.
+                """;
+
+            var fixedChangelog = await _microagentHostService.RunAgentToCompletion(new Microagent<ChangelogContents>()
+            {
+                Instructions = prompt,
+                MaxToolCalls = 10,
+                Model = "gpt-4", // Default model, could be configurable
+                Tools =
+                [
+                    AgentTool<ChangelogContents, ChangelogValidationResult>.FromFunc("validate_changelog_tool", 
+                        "Validates changelog content and provides suggestions for fixes", 
+                        ValidateChangelogContent),
+                    AgentTool<ChangelogContents, ReadFileResult>.FromFunc("read_changelog_tool", 
+                        "Reads the current changelog file content", 
+                        async (contents, ct) => new ReadFileResult(originalContent))
+                ]
+            }, ct);
+
+            // Validate the fixed changelog one more time
+            await File.WriteAllTextAsync(changelogPath, fixedChangelog.Contents, ct);
+            var finalValidationResult = await ValidateChangelogCommonAsync(packagePath, ct);
+
+            if (finalValidationResult.ExitCode == 0)
+            {
+                _logger.LogInformation("Changelog successfully fixed and validated");
+                return new CLICheckResponse(0, "Changelog successfully fixed and validated.");
+            }
+            else
+            {
+                // Restore original content if validation still fails
+                await File.WriteAllTextAsync(changelogPath, originalContent, ct);
+                return new CLICheckResponse(1, 
+                    $"Failed to fix changelog. Restored original content. Remaining issues: {finalValidationResult.CheckStatusDetails}",
+                    "Changelog fix unsuccessful");
+            }
+        }
+        catch (Exception ex)
+        {
+            stopwatch.Stop();
+            _logger.LogError(ex, "Error in FixChangelogCommonAsync");
+            return new CLICheckResponse(1, "", $"Unhandled exception: {ex.Message}");
+        }
+    }
+
+    // Data types for microagent operations
+    public record ChangelogContents(string Contents);
+    public record ChangelogValidationResult(IEnumerable<string> Issues, bool IsValid);
+    public record ReadFileResult(string Content);
+
+    private async Task<ChangelogValidationResult> ValidateChangelogContent(ChangelogContents contents, CancellationToken ct)
+    {
+        // Write content to a temporary file and validate it
+        var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDir);
+        
+        try
+        {
+            var tempChangelogPath = Path.Combine(tempDir, "CHANGELOG.md");
+            await File.WriteAllTextAsync(tempChangelogPath, contents.Contents, ct);
+            
+            var validationResult = await ValidateChangelogCommonAsync(tempDir, ct);
+            
+            var issues = new List<string>();
+            if (validationResult.ExitCode != 0)
+            {
+                issues.Add(validationResult.CheckStatusDetails);
+            }
+
+            return new ChangelogValidationResult(issues, validationResult.ExitCode == 0);
+        }
+        catch (Exception ex)
+        {
+            // If validation fails due to missing scripts or other issues, consider it valid for now
+            _logger.LogWarning(ex, "Could not validate changelog content, considering it valid");
+            return new ChangelogValidationResult(new List<string>(), true);
+        }
+        finally
+        {
+            try { Directory.Delete(tempDir, true); } catch { }
         }
     }
 

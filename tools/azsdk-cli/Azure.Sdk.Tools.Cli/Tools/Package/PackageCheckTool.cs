@@ -97,7 +97,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             output.Output(result);
         }
 
-        [McpServerTool(Name = "azsdk_package_run_check"), Description("Run validation checks for SDK packages. Provide package path and check type (All, Changelog, Dependency, Readme, Cspell).")]
+        [McpServerTool(Name = "azsdk_package_run_check"), Description("Run validation checks for SDK packages. Provide package path and check type (All, Changelog, ChangelogFix, Dependency, Readme, Cspell).")]
         public async Task<CLICheckResponse> RunPackageCheck(string packagePath, PackageCheckType checkType, CancellationToken ct = default)
         {
             try
@@ -113,6 +113,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 {
                     PackageCheckType.All => await RunAllChecks(packagePath, ct),
                     PackageCheckType.Changelog => await RunChangelogValidation(packagePath, ct),
+                    PackageCheckType.ChangelogFix => await RunChangelogFix(packagePath, ct),
                     PackageCheckType.Dependency => await RunDependencyCheck(packagePath, ct),
                     PackageCheckType.Readme => await RunReadmeValidation(packagePath),
                     PackageCheckType.Cspell => await RunSpellingValidation(packagePath),
@@ -192,6 +193,21 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             {
                 SetFailure(1);
                 return new CLICheckResponse(result.ExitCode, result.CheckStatusDetails, "Changelog validation failed");
+            }
+
+            return result;
+        }
+
+        private async Task<CLICheckResponse> RunChangelogFix(string packagePath, CancellationToken ct)
+        {
+            logger.LogInformation("Running changelog fix");
+
+            var result = await languageChecks.FixChangelogAsync(packagePath, ct);
+
+            if (result.ExitCode != 0)
+            {
+                SetFailure(1);
+                return new CLICheckResponse(result.ExitCode, result.CheckStatusDetails, "Changelog fix failed");
             }
 
             return result;

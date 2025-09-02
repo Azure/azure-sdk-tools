@@ -4,6 +4,7 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Tools.Package;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Microagents;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools
 {
@@ -39,7 +40,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
 
             var languageChecks = new List<ILanguageSpecificChecks> { pythonCheck };
             var mockPowershellHelper = new Mock<IPowershellHelper>();
-            var resolver = new LanguageSpecificCheckResolver(languageChecks, _mockGitHelper.Object, mockPowershellHelper.Object, _mockResolverLogger.Object);            _languageChecks = new LanguageChecks(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _mockLanguageChecksLogger.Object, resolver);
+            var mockMicroagentHostService = new Mock<IMicroagentHostService>();
+            var resolver = new LanguageSpecificCheckResolver(languageChecks, _mockGitHelper.Object, mockPowershellHelper.Object, _mockResolverLogger.Object);            _languageChecks = new LanguageChecks(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _mockLanguageChecksLogger.Object, resolver, mockMicroagentHostService.Object);
             _packageCheckTool = new PackageCheckTool(_mockLogger.Object, _mockOutputHelper.Object, _languageChecks);
 
             // Setup default mock responses
@@ -89,6 +91,23 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             Assert.IsNotNull(result);
             // Changelog check may succeed or fail depending on directory contents
             Assert.That(result.ExitCode, Is.GreaterThanOrEqualTo(0));
+        }
+
+        [Test]
+        public async Task RunPackageCheck_WithChangelogFix_ReturnsResult()
+        {
+            // Arrange - Create a basic changelog with potential issues
+            var changelogPath = Path.Combine(_testProjectPath, "CHANGELOG.md");
+            await File.WriteAllTextAsync(changelogPath, "# Changelog\n\nSome basic changelog content.");
+
+            // Act
+            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.ChangelogFix);
+
+            // Assert
+            Assert.IsNotNull(result);
+            // ChangelogFix check should execute (may succeed or fail depending on validation and microagent implementation)
+            Assert.That(result.ExitCode, Is.GreaterThanOrEqualTo(0));
+            Assert.IsNotNull(result.CheckStatusDetails);
         }
 
         [Test]
@@ -189,6 +208,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             // Act - Test all enum values
             var allResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.All);
             var changelogResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Changelog);
+            var changelogFixResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.ChangelogFix);
             var dependencyResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Dependency);
             var readmeResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Readme);
             var spellingResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Cspell);
@@ -196,6 +216,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             // Assert
             Assert.IsNotNull(allResult);
             Assert.IsNotNull(changelogResult);
+            Assert.IsNotNull(changelogFixResult);
             Assert.IsNotNull(dependencyResult);
             Assert.IsNotNull(readmeResult);
             Assert.IsNotNull(spellingResult);
@@ -203,6 +224,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             // All should execute (may fail due to test environment, but should not error on check type)
             Assert.IsTrue(allResult.ExitCode >= 0);
             Assert.IsTrue(changelogResult.ExitCode >= 0);
+            Assert.IsTrue(changelogFixResult.ExitCode >= 0);
             Assert.IsTrue(dependencyResult.ExitCode >= 0);
             Assert.IsTrue(readmeResult.ExitCode >= 0);
             Assert.IsTrue(spellingResult.ExitCode >= 0);

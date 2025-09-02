@@ -49,8 +49,6 @@ namespace APIViewWeb.Pages.Assemblies
         {
             var userId = User.GetGitHubLogin();
             
-            var isConfiguredApprover = IsUserConfiguredApprover(userId);
-            
             UserProfileModel userProfile = null;
             var approvedLanguages = new string[0];
             try
@@ -281,53 +279,6 @@ namespace APIViewWeb.Pages.Assemblies
             ApprovedAPIRevisions.OrderByDescending(r => r.ChangeHistory.First(c => c.ChangeAction == APIRevisionChangeAction.Approved).ChangedOn);
 
             return Page();
-        }
-
-        /// <summary>
-        /// Check if the current user is configured as an approver in the application settings
-        /// </summary>
-        private bool IsUserConfiguredApprover(string userId)
-        {
-            var approverConfig = _configuration["approvers"];
-            System.Diagnostics.Debug.WriteLine($"Approver config: '{approverConfig}'");
-            if (string.IsNullOrEmpty(approverConfig))
-                return false;
-            
-            var configuredApprovers = approverConfig.Split(',').Select(a => a.Trim()).ToHashSet();
-            System.Diagnostics.Debug.WriteLine($"Configured approvers: {string.Join(", ", configuredApprovers)}");
-            var result = configuredApprovers.Contains(userId);
-            System.Diagnostics.Debug.WriteLine($"User '{userId}' is configured approver: {result}");
-            return result;
-        }
-
-        /// <summary>
-        /// Check if the current user can approve a specific review based on configuration and user preferences
-        /// </summary>
-        private bool CanUserApproveReview(ReviewListItemModel review)
-        {
-            try
-            {
-                var preferredApprovers = PageModelHelpers.GetPreferredApprovers(_configuration, _userProfileCache, User, review);
-                return preferredApprovers.Contains(User.GetGitHubLogin());
-            }
-            catch (Exception ex) when (ex.Message.Contains("AAD groups are being resolved"))
-            {
-                // For local testing, assume the user can approve TypeSpec reviews
-                return review.Language?.Equals("TypeSpec", StringComparison.OrdinalIgnoreCase) == true;
-            }
-        }
-
-        /// <summary>
-        /// Get all reviews without namespace approval for proactive review
-        /// Limited to SDK languages (C#, Java, Python, Go, JavaScript) and maximum 15 results
-        /// Results are cached for 5 minutes to improve performance
-        /// OPTIMIZED: Uses batch processing to minimize database calls
-        /// </summary>
-        private async Task<List<APIRevisionListItemModel>> GetReviewsWithoutNamespaceApproval()
-        {
-            // Disabled with UI; retain method for future use without being invoked
-            await Task.CompletedTask;
-            return new List<APIRevisionListItemModel>();
         }
     }
 }

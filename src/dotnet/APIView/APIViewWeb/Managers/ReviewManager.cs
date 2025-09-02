@@ -357,7 +357,7 @@ namespace APIViewWeb.Managers
             var typeSpecReview = await _reviewsRepository.GetReviewAsync(reviewId);
             
             // Only allow for TypeSpec reviews
-            if (typeSpecReview.Language != "TypeSpec")
+            if (typeSpecReview.Language != ApiViewConstants.TypeSpecLanguage)
             {
                 throw new InvalidOperationException("Namespace review can only be requested for TypeSpec reviews");
             }
@@ -402,7 +402,7 @@ namespace APIViewWeb.Managers
                 try
                 {
                     var review = await _reviewsRepository.GetReviewAsync(reviewId);
-                    if (review != null && LanguageHelper.IsSDKLanguageOrTypeSpec(review.Language) && review.Language != "TypeSpec")
+                    if (review != null && LanguageHelper.IsSDKLanguage(review.Language))
                     {
                         languageReviews.Add(review);
                     }
@@ -493,7 +493,7 @@ namespace APIViewWeb.Managers
                             {
                                 // Verify this is a language review (not another TypeSpec review)
                                 var review = await _reviewsRepository.GetReviewAsync(pr.ReviewId);
-                                if (review != null && LanguageHelper.IsSDKLanguageOrTypeSpec(review.Language) && review.Language != "TypeSpec")
+                                if (review != null && LanguageHelper.IsSDKLanguage(review.Language))
                                 {
                                     relatedReviewIds.Add(pr.ReviewId);
                                 }
@@ -673,7 +673,7 @@ namespace APIViewWeb.Managers
             try
             {
                 // Find the TypeSpec review for this package
-                var typeSpecReview = await _reviewsRepository.GetReviewAsync("TypeSpec", packageName, false);
+                var typeSpecReview = await _reviewsRepository.GetReviewAsync(ApiViewConstants.TypeSpecLanguage, packageName, false);
                 if (typeSpecReview == null || typeSpecReview.IsDeleted || typeSpecReview.IsApproved)
                     return;
 
@@ -702,7 +702,7 @@ namespace APIViewWeb.Managers
         private async Task<bool> AreAllRelatedSDKReviewsApproved(string packageBaseName)
         {
             // The 5 supported SDK languages
-            var sdkLanguages = new[] { "C#", "Java", "Python", "Go", "JavaScript" };
+            var sdkLanguages = ApiViewConstants.SdkLanguages;
             var foundReviews = new List<ReviewListItemModel>();
 
             foreach (var language in sdkLanguages)
@@ -833,7 +833,7 @@ namespace APIViewWeb.Managers
                 using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30)))
                 {
                     // Get all reviews that have namespace approval requests with single optimized query
-                    var sdkLanguages = new[] { "C#", "Java", "Python", "Go", "JavaScript" };
+                    var sdkLanguages = ApiViewConstants.SdkLanguages;
                     var allNamespaceReviews = await _reviewsRepository.GetPendingNamespaceApprovalReviewsAsync(sdkLanguages);
 
                     // For each review, add it to the results
@@ -879,7 +879,7 @@ namespace APIViewWeb.Managers
         public async Task<ReviewListItemModel> CheckAndUpdateNamespaceReviewStatusAsync(ReviewListItemModel typeSpecReview)
         {
             // Only process TypeSpec reviews that have pending namespace review status
-            if (typeSpecReview.Language != "TypeSpec" || typeSpecReview.NamespaceReviewStatus != NamespaceReviewStatus.Pending)
+            if (typeSpecReview.Language != ApiViewConstants.TypeSpecLanguage || typeSpecReview.NamespaceReviewStatus != NamespaceReviewStatus.Pending)
             {
                 return typeSpecReview;
             }
@@ -887,7 +887,7 @@ namespace APIViewWeb.Managers
             try
             {
                 // Find all related SDK API revisions for this package
-                var sdkLanguages = new[] { "C#", "Java", "Python", "Go", "JavaScript" };
+                var sdkLanguages = ApiViewConstants.SdkLanguages;
                 var relatedRevisions = new List<APIRevisionListItemModel>();
 
                 foreach (var language in sdkLanguages)
@@ -961,7 +961,7 @@ namespace APIViewWeb.Managers
                     var reviewsInGroup = prGroup.Value;
                     
                     // Find the TypeSpec review as the primary review for this group
-                    var typeSpecReview = reviewsInGroup.FirstOrDefault(r => r.Language == "TypeSpec");
+                    var typeSpecReview = reviewsInGroup.FirstOrDefault(r => r.Language == ApiViewConstants.TypeSpecLanguage);
                     
                     // Check if any review in this group should be auto-approved
                     var shouldAutoApproveGroup = false;
@@ -993,7 +993,7 @@ namespace APIViewWeb.Managers
         private async Task<List<ReviewListItemModel>> GetPendingNamespaceReviewsForAutoApproval()
         {
             // Get all reviews (including TypeSpec) that have pending namespace approval
-            var allLanguages = new[] { "C#", "Java", "Python", "Go", "JavaScript", "TypeSpec" };
+            var allLanguages = ApiViewConstants.AllSupportedLanguages;
             var pendingReviews = await _reviewsRepository.GetPendingNamespaceApprovalReviewsAsync(allLanguages);
             return pendingReviews.ToList();
         }
@@ -1116,7 +1116,7 @@ namespace APIViewWeb.Managers
                 {
                     // Get language reviews (exclude TypeSpec and Swagger from the associated list)
                     var associatedLanguageReviews = allReviewsInGroup
-                        .Where(r => r.Language != "TypeSpec" && r.Language != "Swagger")
+                        .Where(r => r.Language != ApiViewConstants.TypeSpecLanguage && r.Language != ApiViewConstants.SwaggerLanguage)
                         .ToList();
                     
                     await _notificationManager.NotifyStakeholdersOfAutoApproval(typeSpecReview, associatedLanguageReviews);

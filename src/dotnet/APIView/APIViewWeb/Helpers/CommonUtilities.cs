@@ -10,8 +10,8 @@ namespace APIViewWeb.Helpers
     /// <summary>
     /// General utility class for date/time operations and common helper methods
     /// </summary>
-    public static class DateTimeHelper
-    {
+    //public static class DateTimeHelper
+   // {
         /*
         /// <summary>
         /// Calculate business days from a start date, excluding weekends
@@ -37,11 +37,9 @@ namespace APIViewWeb.Helpers
             return currentDate;
         }
         */
-    }
+   // }
 
-    /// <summary>
-    /// String manipulation and validation utilities
-    /// </summary>
+
 
 
     /// <summary>
@@ -56,8 +54,7 @@ namespace APIViewWeb.Helpers
         /// <returns>True if the language is an SDK language</returns>
         public static bool IsSDKLanguage(string language)
         {
-            var sdkLanguages = new[] { "C#", "Java", "Python", "Go", "JavaScript" };
-            return sdkLanguages.Contains(language);
+            return ApiViewConstants.SdkLanguages.Contains(language);
         }
 
         /// <summary>
@@ -67,8 +64,7 @@ namespace APIViewWeb.Helpers
         /// <returns>True if the language is an SDK language or TypeSpec</returns>
         public static bool IsSDKLanguageOrTypeSpec(string language)
         {
-            var supportedLanguages = new[] { "TypeSpec", "C#", "Java", "Python", "Go", "JavaScript" };
-            return supportedLanguages.Contains(language);
+            return ApiViewConstants.AllSupportedLanguages.Contains(language);
         }
     }
 

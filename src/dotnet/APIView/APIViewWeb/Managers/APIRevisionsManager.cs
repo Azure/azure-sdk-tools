@@ -532,7 +532,7 @@ namespace APIViewWeb.Managers
             await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
             await _notificationManager.NotifySubscribersOnNewRevisionAsync(review, apiRevision, user);
 
-            if (!String.IsNullOrEmpty(review.Language) && review.Language == "Swagger")
+            if (!String.IsNullOrEmpty(review.Language) && review.Language == ApiViewConstants.SwaggerLanguage)
             {
                 if (awaitComputeDiff)
                 {
@@ -696,7 +696,7 @@ namespace APIViewWeb.Managers
                         await _reviewsRepository.UpsertReviewAsync(review);
                         await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
 
-                        if (!String.IsNullOrEmpty(review.Language) && review.Language == "Swagger")
+                        if (!String.IsNullOrEmpty(review.Language) && review.Language == ApiViewConstants.SwaggerLanguage)
                         {
                             // Trigger diff calculation using updated code file from sandboxing pipeline
                             await GetLineNumbersOfHeadingsOfSectionsWithDiff(review.Id, apiRevision);

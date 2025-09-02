@@ -1,15 +1,10 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using Azure.Sdk.Tools.Cli.Models;
-namespace Azure.Sdk.Tools.Cli.Services.ClientUpdate;
+namespace Azure.Sdk.Tools.Cli.Services.Update;
 
 public interface IClientUpdateLanguageService
 {
-    /// <summary>
-    /// The canonical language identifier supported by this implementation (e.g. "java", "python").
-    /// </summary>
-    string SupportedLanguage { get; }
-
     // Extract public API symbols from a generated code tree
     Task<Dictionary<string, SymbolInfo>> ExtractSymbolsAsync(string rootPath, CancellationToken ct);
 

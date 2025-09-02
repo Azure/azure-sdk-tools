@@ -24,6 +24,7 @@ public class TspClientUpdateToolAutoTests
     // Language service that produces no API changes
     private class MockNoChangeLanguageService : IClientUpdateLanguageService
     {
+    public string SupportedLanguage => "java";
         public Task<Dictionary<string, SymbolInfo>> ExtractSymbolsAsync(string rootPath, CancellationToken ct) => Task.FromResult(new Dictionary<string, SymbolInfo>());
         public Task<List<ApiChange>> DiffAsync(Dictionary<string, SymbolInfo> oldSymbols, Dictionary<string, SymbolInfo> newSymbols) => Task.FromResult(new List<ApiChange>());
         public Task<string?> GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct) => Task.FromResult<string?>(null); // none
@@ -36,37 +37,39 @@ public class TspClientUpdateToolAutoTests
     // Language service that produces a single API change
     private class MockChangeLanguageService : IClientUpdateLanguageService
     {
+    public string SupportedLanguage => "java";
         public Task<Dictionary<string, SymbolInfo>> ExtractSymbolsAsync(string rootPath, CancellationToken ct) => Task.FromResult(new Dictionary<string, SymbolInfo>());
         public Task<List<ApiChange>> DiffAsync(Dictionary<string, SymbolInfo> oldSymbols, Dictionary<string, SymbolInfo> newSymbols)
             => Task.FromResult(new List<ApiChange> {
                 new ApiChange { Kind = "MethodAdded", Symbol = "S1", Detail = "Added method S1" }
             });
-    public Task<string?> GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct) => Task.FromResult<string?>(null); // none
-    public Task<List<CustomizationImpact>> AnalyzeCustomizationImpactAsync(ClientUpdateSessionState session, string? customizationRoot, IEnumerable<ApiChange> apiChanges, CancellationToken ct) => Task.FromResult(new List<CustomizationImpact>());
-    public Task<List<PatchProposal>> ProposePatchesAsync(ClientUpdateSessionState session, IEnumerable<CustomizationImpact> impacts, CancellationToken ct) => Task.FromResult(new List<PatchProposal>());
-    public Task<ValidationResult> ValidateAsync(ClientUpdateSessionState session, CancellationToken ct) => Task.FromResult(ValidationResult.CreateSuccess());
-    public Task<List<PatchProposal>> ProposeFixesAsync(ClientUpdateSessionState session, List<string> validationErrors, CancellationToken ct) => Task.FromResult(new List<PatchProposal>());
+        public Task<string?> GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct) => Task.FromResult<string?>(null); // none
+        public Task<List<CustomizationImpact>> AnalyzeCustomizationImpactAsync(ClientUpdateSessionState session, string? customizationRoot, IEnumerable<ApiChange> apiChanges, CancellationToken ct) => Task.FromResult(new List<CustomizationImpact>());
+        public Task<List<PatchProposal>> ProposePatchesAsync(ClientUpdateSessionState session, IEnumerable<CustomizationImpact> impacts, CancellationToken ct) => Task.FromResult(new List<PatchProposal>());
+        public Task<ValidationResult> ValidateAsync(ClientUpdateSessionState session, CancellationToken ct) => Task.FromResult(ValidationResult.CreateSuccess());
+        public Task<List<PatchProposal>> ProposeFixesAsync(ClientUpdateSessionState session, List<string> validationErrors, CancellationToken ct) => Task.FromResult(new List<PatchProposal>());
     }
 
 
     [Test]
-    public async Task Auto_NoChanges_TerminatesAtDiff()
+    public async Task Auto_NoChanges_TerminatesAtValidation()
     {
-    Func<string, IClientUpdateLanguageService> func = (p) => new MockNoChangeLanguageService();
-        var tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), new NullOutputService(), func);
-        var run = await tool.UnifiedUpdateAsync("placeholder.tsp", new MockNoChangeLanguageService(), packagePath: null, ct: CancellationToken.None);
+        var svc = new MockNoChangeLanguageService();
+        var resolver = new SingleResolver(svc);
+        var tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), new NullOutputService(), resolver);
+        var run = await tool.UnifiedUpdateAsync("placeholder.tsp", packagePath: null, ct: CancellationToken.None);
         Assert.That(run.Session, Is.Not.Null, "Session should be created");
         Assert.That(run.Session!.LastStage, Is.EqualTo(UpdateStage.Validated), "No changes now proceed through validation");
         Assert.That(run.Session.ApiChangeCount, Is.EqualTo(0));
     }
 
     [Test]
-    public async Task Auto_WithChanges_DryRunThenFinalize()
+    public async Task Auto_WithChanges_Validated()
     {
-    Func<string, IClientUpdateLanguageService> func = (p) => new MockChangeLanguageService();
-        var tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), new NullOutputService(), func);
-        // First pass (auto run) should reach apply dry-run and request finalize
-        var first = await tool.UnifiedUpdateAsync("placeholder-change.tsp", new MockChangeLanguageService(), packagePath: null, ct: CancellationToken.None);
+        var svc = new MockChangeLanguageService();
+        var resolver = new SingleResolver(svc);
+        var tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), new NullOutputService(), resolver);
+        var first = await tool.UnifiedUpdateAsync("placeholder-change.tsp", packagePath: null, ct: CancellationToken.None);
         Assert.That(first.Session, Is.Not.Null);
         Assert.That(first.Session!.ApiChangeCount, Is.GreaterThan(0), "Should have at least one API change");
         Assert.That(first.Session.LastStage, Is.EqualTo(UpdateStage.Validated), "Single-pass should reach validated");
@@ -75,13 +78,12 @@ public class TspClientUpdateToolAutoTests
     [Test]
     public async Task Validation_Failure_Then_AutoFixes_Applied()
     {
-    Func<string, IClientUpdateLanguageService> func = (p) => new MockNoChangeLanguageService();
-        var tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), new NullOutputService(), func);
+    var tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), new NullOutputService(), new SingleResolver(new MockNoChangeLanguageService()));
 
-        // create a session and attach to tool's private field
-        // With simplified tool, validation loop is exercised inside UnifiedUpdateAsync; simulate failing then fixing by custom language service
+        // With simplified tool, validation loop is exercised inside UnifiedUpdateAsync; we need a tool constructed with failing-then-fixing service
         int calls = 0; var svc = new TestLanguageServiceFailThenFix(() => calls++);
-        var resp = await tool.UnifiedUpdateAsync("spec.tsp", svc, packagePath: null, ct: CancellationToken.None);
+        tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), new NullOutputService(), new SingleResolver(svc));
+        var resp = await tool.UnifiedUpdateAsync("spec.tsp", packagePath: null, ct: CancellationToken.None);
         Assert.That(resp.Session, Is.Not.Null);
         Assert.That(resp.Session!.ValidationAttemptCount, Is.GreaterThanOrEqualTo(1));
         Assert.That(resp.Session.ValidationSuccess, Is.True, "Should eventually validate");
@@ -91,7 +93,7 @@ public class TspClientUpdateToolAutoTests
     {
         private readonly Func<int> _next;
         public TestLanguageServiceFailThenFix(Func<int> next) { _next = next; }
-        public string Language => "java";
+        public string SupportedLanguage => "java";
         public Task<Dictionary<string, SymbolInfo>> ExtractSymbolsAsync(string rootPath, CancellationToken ct) => Task.FromResult(new Dictionary<string, SymbolInfo>());
         public Task<List<ApiChange>> DiffAsync(Dictionary<string, SymbolInfo> oldSymbols, Dictionary<string, SymbolInfo> newSymbols) => Task.FromResult(new List<ApiChange>());
         public Task<string?> GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct) => Task.FromResult<string?>(null);
@@ -112,5 +114,12 @@ public class TspClientUpdateToolAutoTests
             var p = new PatchProposal { File = "src/Example.java", Diff = "--- a/src/Example.java\n+++ b/src/Example.java\n// fix", Rationale = "Auto-fix" };
             return Task.FromResult(new List<PatchProposal> { p });
         }
+    }
+
+    private class SingleResolver : IClientUpdateLanguageServiceResolver
+    {
+        private readonly IClientUpdateLanguageService _svc;
+        public SingleResolver(IClientUpdateLanguageService svc) { _svc = svc; }
+        public Task<IClientUpdateLanguageService?> ResolveAsync(string? packagePath, CancellationToken ct = default) => Task.FromResult<IClientUpdateLanguageService?>(_svc);
     }
 }

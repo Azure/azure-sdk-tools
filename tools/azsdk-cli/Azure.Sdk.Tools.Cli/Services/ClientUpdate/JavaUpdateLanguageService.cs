@@ -11,6 +11,8 @@ public class JavaUpdateLanguageService : ClientUpdateLanguageServiceBase
 {
     public JavaUpdateLanguageService(ILanguageSpecificCheckResolver languageSpecificCheckResolver) : base(languageSpecificCheckResolver) { }
 
+    public override string SupportedLanguage => "java";
+
     private const string CustomizationDirName = "customization";
 
     public override Task<Dictionary<string, SymbolInfo>> ExtractSymbolsAsync(string rootPath, CancellationToken ct)

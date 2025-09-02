@@ -40,9 +40,10 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ILanguageSpecificCheckResolver, LanguageSpecificCheckResolver>();
 
             // Client update language services
-            services.AddSingleton<JavaUpdateLanguageService>();
-            // Future: services.AddSingleton<PythonClientUpdateLanguageService>(); etc.
-            
+            services.AddSingleton<IClientUpdateLanguageService, JavaUpdateLanguageService>();
+            services.AddSingleton<IClientUpdateLanguageServiceResolver, ClientUpdateLanguageServiceResolver>();
+            // Future: services.AddSingleton<IClientUpdateLanguageService, PythonClientUpdateLanguageService>(); etc.
+
             // Helper classes
             services.AddSingleton<ILogAnalysisHelper, LogAnalysisHelper>();
             services.AddSingleton<IGitHelper, GitHelper>();

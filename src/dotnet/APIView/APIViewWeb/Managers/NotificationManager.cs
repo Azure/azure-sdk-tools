@@ -215,33 +215,37 @@ namespace APIViewWeb.Managers
 
         private async Task SendUserEmailsAsync<T>(T model, UserProfileModel user, string htmlContent) where T : BaseListitemModel 
         {
-            // Always send email to a test address when test address is configured.
-            if (string.IsNullOrEmpty(user.Email))
-            {
-                _telemetryClient.TrackTrace($"Email address is not available for user {user.UserName}. Not sending email.");
-                return;
-            }
-
+            // SendEmailAsync already handles email validation
             await SendEmailAsync(user.Email, $"Notification from APIView - {model.PackageName}", htmlContent);
         }
         private async Task SendEmailsAsync(ReviewListItemModel review, ClaimsPrincipal user, string htmlContent, ISet<string> notifiedUsers)
         {
             var initiatingUserEmail = GetUserEmail(user);
-            // Find email address of already tagged users in comment
+            
+            // Get emails for notified users concurrently
             HashSet<string> notifiedEmails = new HashSet<string>();
-            if (notifiedUsers != null)
+            if (notifiedUsers?.Any() == true)
             {
-                foreach (var username in notifiedUsers)
+                // Create all email fetch tasks concurrently
+                var emailTasks = notifiedUsers
+                    .Select(async username => new { Username = username, Email = await GetEmailAddress(username) })
+                    .ToArray();
+                
+                // Await all tasks at once
+                var emailResults = await Task.WhenAll(emailTasks);
+                
+                // Process results and add valid emails
+                foreach (var result in emailResults)
                 {
-                    var email = await GetEmailAddress(username);
-                    if (string.IsNullOrEmpty(email))
+                    if (string.IsNullOrEmpty(result.Email))
                     {
-                        _telemetryClient.TrackTrace($"Email address is not available for user {username}, review {review.Id}. Not sending email.");
+                        _telemetryClient.TrackTrace($"Email address is not available for user {result.Username}, review {review.Id}. Not sending email.");
                         continue;
                     }
-                    notifiedEmails.Add(email);
+                    notifiedEmails.Add(result.Email);
                 }
-            }           
+            }
+            
             var subscribers = review.Subscribers.ToList()
                     .Where(e => e != initiatingUserEmail && !notifiedEmails.Contains(e)) // don't include the initiating user and tagged users in the comment
                     .ToList();
@@ -263,10 +267,8 @@ namespace APIViewWeb.Managers
 
         private async Task<string> GetEmailAddress(string username)
         {
-            if (string.IsNullOrEmpty(username))
-                return "";
             var user = await _userProfileRepository.TryGetUserProfileAsync(username);
-            return user.Email;
+            return user?.Email ?? "";
         }
 
         /// <summary>
@@ -281,14 +283,16 @@ namespace APIViewWeb.Managers
             var preferredApprovers = PageModelHelpers.GetPreferredApprovers(_configuration, _userProfileCache, userForApprovers, review);
 
             // Add preferred approvers' emails
-            foreach (var approverUsername in preferredApprovers)
-            {
-                var approverEmail = await GetEmailAddress(approverUsername);
-                if (!string.IsNullOrEmpty(approverEmail))
-                {
-                    emailAddresses.Add(approverEmail);
-                }
-            }
+            // Create all tasks first (starts them concurrently)
+            var emailTasks = preferredApprovers
+                .Select(approverUsername => GetEmailAddress(approverUsername))
+                .ToArray();
+                
+            // Await all tasks at once
+            var approverEmails = await Task.WhenAll(emailTasks);
+            
+            // Filter out null/empty emails
+            emailAddresses.AddRange(approverEmails.Where(email => !string.IsNullOrEmpty(email)));
             
             // Add requesting user's email (either from ClaimsPrincipal or from review record)
             string requesterEmail = null;
@@ -339,10 +343,7 @@ namespace APIViewWeb.Managers
                 
                 var emailToList = string.Join("; ", emailAddresses);
                 
-                if (!string.IsNullOrEmpty(emailToList))
-                {
-                    await SendEmailAsync(emailToList, subject, emailContent);
-                }
+                await SendEmailAsync(emailToList, subject, emailContent);
             }
             catch (Exception ex)
             {
@@ -404,13 +405,7 @@ namespace APIViewWeb.Managers
                 
                 var emailToList = string.Join("; ", emailAddresses);
                 
-                // Console log for debugging
-                Console.WriteLine($"[DEBUG] Manual approval email recipients (Review: {review.Id}, Package: {review.PackageName}): [{emailToList}]");
-                
-                if (!string.IsNullOrEmpty(emailToList))
-                {
-                    await SendEmailAsync(emailToList, subject, emailContent);
-                }
+                await SendEmailAsync(emailToList, subject, emailContent);
             }
             catch (Exception ex)
             {
@@ -449,10 +444,7 @@ namespace APIViewWeb.Managers
                 // Console log for debugging
                 Console.WriteLine($"[DEBUG] Auto-approval email recipients (Review: {review.Id}, Package: {review.PackageName}): [{emailToList}]");
                 
-                if (!string.IsNullOrEmpty(emailToList))
-                {
-                    await SendEmailAsync(emailToList, subject, emailContent);
-                }
+                await SendEmailAsync(emailToList, subject, emailContent);
             }
             catch (Exception ex)
             {

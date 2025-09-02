@@ -102,6 +102,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   namespaceReviewBtnClass: string = '';
   namespaceReviewBtnLabel: string = '';
   namespaceReviewMessage: string = '';
+  namespaceReviewEnabled: boolean = false; // Feature flag from Azure App Configuration
 
   codeLineSearchText: FormControl = new FormControl('');
 
@@ -132,8 +133,10 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     private pullRequestService: PullRequestsService, private messageService: MessageService,
     private signalRService: SignalRService, private notificationsService: NotificationsService) { }
 
-  ngOnInit() {
+  async ngOnInit() {
     this.activeAPIRevision?.assignedReviewers.map(revision => this.selectedApprovers.push(revision.assingedTo));
+
+    this.namespaceReviewEnabled = await this.configService.getEnableNamespaceReview().toPromise() || false;
 
     this.codeLineSearchText.valueChanges.pipe(
       debounceTime(500),
@@ -371,15 +374,11 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   }
 
   setNamespaceReviewStates() {
-    // Check if namespace review feature is enabled
-    const namespaceReviewEnabled = this.configService.getFeatureValue<boolean>('enableNamespaceReview', true);
-
     // Only show namespace review request for TypeSpec language AND if feature is enabled
-    this.canRequestNamespaceReview = this.review?.language === 'TypeSpec' && namespaceReviewEnabled;
+    this.canRequestNamespaceReview = this.review?.language === 'TypeSpec' && this.namespaceReviewEnabled;
     // Always keep the button available for requesting namespace review
     this.isNamespaceReviewRequested = false;
 
-    // CRITICAL FIX: If we were in progress and now have a pending/approved status, reset loading state
     if (this.isNamespaceReviewInProgress && (this.review?.namespaceReviewStatus === 'pending' || this.review?.namespaceReviewStatus === 'approved')) {
       this.isNamespaceReviewInProgress = false;
     }

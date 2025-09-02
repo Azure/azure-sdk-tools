@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using APIViewWeb.Extensions;
 using APIViewWeb.Helpers;
@@ -16,13 +18,9 @@ using Microsoft.Extensions.Logging;
 
 namespace APIViewWeb.LeanControllers
 {
-    public class RequestNamespaceReviewModel
-    {
-        public List<string> AssociatedReviewIds { get; set; } = new List<string>();
-    }
-
     public class ReviewsController : BaseApiController
     {
+        private readonly ILogger<ReviewsController> _logger;
         private readonly IReviewManager _reviewManager;
         private readonly IAPIRevisionsManager _apiRevisionsManager;
         private readonly ICommentsManager _commentsManager;
@@ -42,6 +40,7 @@ namespace APIViewWeb.LeanControllers
             IHubContext<SignalRHub> signalRHub, INotificationManager notificationManager,
             IWebHostEnvironment env)
         {
+            _logger = logger;
             _apiRevisionsManager = reviewRevisionsManager;
             _reviewManager = reviewManager;
             _commentsManager = commentManager;
@@ -99,6 +98,18 @@ namespace APIViewWeb.LeanControllers
             return new LeanJsonResult(preferredApprovers, StatusCodes.Status200OK);
         }
 
+        [HttpGet("enableNamespaceReview", Name = "EnableNamespaceReview")]
+        public ActionResult<bool> GetEnableNamespaceReviewAsync()
+        {
+            var enableNamespaceReview = _configuration["EnableNamespaceReview"];
+            if (bool.TryParse(enableNamespaceReview, out bool isEnabled))
+            {
+                return new LeanJsonResult(isEnabled, StatusCodes.Status200OK);
+            }
+            // Default to false if not configured or invalid value
+            return new LeanJsonResult(false, StatusCodes.Status200OK);
+        }
+
         /// <summary>
         /// Create a Reviews
         /// </summary>
@@ -136,14 +147,22 @@ namespace APIViewWeb.LeanControllers
         /// Endpoint used by Client SPA for Requesting Namespace Review
         /// </summary>
         /// <param name="reviewId"></param>
-        /// <param name="request">The request containing notes for the namespace review</param>
+        /// <param name="associatedReviewIds">Array of review IDs for associated language reviews to update</param>
         /// <returns></returns>
         [HttpPost("{reviewId}/requestNamespaceReview", Name = "RequestNamespaceReview")]
-        public async Task<ActionResult> RequestNamespaceReviewAsync(string reviewId, [FromBody] RequestNamespaceReviewModel request)
+        public async Task<ActionResult> RequestNamespaceReviewAsync(string reviewId, [FromBody] string[] associatedReviewIds)
         {
-            var associatedReviewIds = request?.AssociatedReviewIds ?? new List<string>();
-            var updatedReview = await _reviewManager.RequestNamespaceReviewAsync(User, reviewId, associatedReviewIds);
-            return new LeanJsonResult(updatedReview, StatusCodes.Status200OK);
+            try
+            {
+                var reviewIds = associatedReviewIds?.ToList() ?? new List<string>();
+                var updatedReview = await _reviewManager.RequestNamespaceReviewAsync(User, reviewId, reviewIds);
+                return new LeanJsonResult(updatedReview, StatusCodes.Status200OK);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error: " + ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
         }
 
         /// <summary>

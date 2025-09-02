@@ -105,7 +105,7 @@ namespace APIViewWeb.LeanModels
         public string PackageName { get; set; }
         public string Language { get; set; }
     }
-    
+
     public class ReviewListItemModel : BaseListitemModel
     {
         public HashSet<string> Subscribers { get; set; } = new HashSet<string>();

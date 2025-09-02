@@ -1,8 +1,5 @@
 {
     "apiUrl": "api/",
     "hubUrl": "hubs/",
-    "webAppUrl": "http://localhost:5000/",
-    "features": {
-        "enableNamespaceReview": true
-    }
+    "webAppUrl": "http://localhost:5000/"
 }

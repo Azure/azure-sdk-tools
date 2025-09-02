@@ -46,4 +46,9 @@ export class ConfigService {
     const features = this.config.features || {};
     return features[key] !== undefined ? features[key] : defaultValue;
   }
+
+  // Get EnableNamespaceReview from Azure App Configuration via API
+  getEnableNamespaceReview() {
+    return this.http.get<boolean>(`${this.apiUrl}reviews/enableNamespaceReview`);
+  }
 }

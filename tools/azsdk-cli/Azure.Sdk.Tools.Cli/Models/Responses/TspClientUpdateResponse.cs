@@ -12,7 +12,7 @@ public class TspClientUpdateResponse : Response
 {
     [JsonPropertyName("session")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public UpdateSessionState? Session { get; set; }
+    public ClientUpdateSessionState? Session { get; set; }
 
     [JsonPropertyName("message")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -23,10 +23,6 @@ public class TspClientUpdateResponse : Response
     public string? ErrorCode { get; set; }
 
 
-    [JsonPropertyName("terminal")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public bool? Terminal { get; set; }
-
     public override string ToString()
     {
         var sb = new StringBuilder();
@@ -36,7 +32,7 @@ public class TspClientUpdateResponse : Response
         }
         if (Session != null)
         {
-            sb.AppendLine($"Session: {Session.SessionId} Status: {Session.Status} API changes: {Session.ApiChanges.Count} Impacted: {Session.ImpactedCustomizations.Count} Terminal: {Terminal}");
+            sb.AppendLine($"Session: {Session.SessionId} Status: {Session.Status} API changes: {Session.ApiChanges.Count} Impacted: {Session.ImpactedCustomizations.Count}");
         }
         if (!string.IsNullOrWhiteSpace(ErrorCode))
         {
@@ -57,10 +53,11 @@ public enum UpdateStage
     Validated
 }
 
-public class UpdateSessionState
+public class ClientUpdateSessionState
 {
     [JsonPropertyName("sessionId")] public string SessionId { get; set; } = Guid.NewGuid().ToString("n");
     [JsonPropertyName("specPath")] public string SpecPath { get; set; } = string.Empty;
+    [JsonPropertyName("packagePath")] public string PackagePath { get; set; } = string.Empty;
     [JsonPropertyName("oldGeneratedPath")] public string OldGeneratedPath { get; set; } = string.Empty;
     [JsonPropertyName("newGeneratedPath")] public string NewGeneratedPath { get; set; } = string.Empty;
     [JsonPropertyName("customizationRoot")] public string? CustomizationRoot { get; set; }

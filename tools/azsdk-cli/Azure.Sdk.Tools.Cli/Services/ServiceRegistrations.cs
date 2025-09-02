@@ -9,6 +9,7 @@ using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Tools;
+using Azure.Sdk.Tools.Cli.Services.ClientUpdate;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -38,13 +39,9 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ILanguageSpecificChecks, GoLanguageSpecificChecks>();
             services.AddSingleton<ILanguageSpecificCheckResolver, LanguageSpecificCheckResolver>();
 
-            // Update language services
-            // Register concrete update implementations so ActivatorUtilities can create them with DI
-            services.AddSingleton<Update.JavaUpdateLanguageService>();
-            // services.AddSingleton<Update.PythonUpdateLanguageService>();
-            // services.AddSingleton<Update.JavaScriptUpdateLanguageService>();
-            // services.AddSingleton<Update.DotNetUpdateLanguageService>();
-            // services.AddSingleton<Update.GoUpdateLanguageService>();
+            // Client update language services
+            services.AddSingleton<JavaUpdateLanguageService>();
+            // Future: services.AddSingleton<PythonClientUpdateLanguageService>(); etc.
             
             // Helper classes
             services.AddSingleton<ILogAnalysisHelper, LogAnalysisHelper>();

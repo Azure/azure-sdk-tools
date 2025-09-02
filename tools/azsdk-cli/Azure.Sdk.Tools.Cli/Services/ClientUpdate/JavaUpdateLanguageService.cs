@@ -2,13 +2,12 @@
 // Licensed under the MIT License.
 using Azure.Sdk.Tools.Cli.Models;
 
-namespace Azure.Sdk.Tools.Cli.Services.Update;
+namespace Azure.Sdk.Tools.Cli.Services.ClientUpdate;
 
 /// <summary>
-/// Java-specific update language service. Composes Java repo operations via ILanguageRepoService and
-/// implements update semantics for symbol extraction, diff, mapping, and patch proposal.
+/// Java-specific update language service.
 /// </summary>
-public class JavaUpdateLanguageService : UpdateLanguageServiceBase
+public class JavaUpdateLanguageService : ClientUpdateLanguageServiceBase
 {
     public JavaUpdateLanguageService(ILanguageSpecificCheckResolver languageSpecificCheckResolver) : base(languageSpecificCheckResolver) { }
 
@@ -24,7 +23,7 @@ public class JavaUpdateLanguageService : UpdateLanguageServiceBase
         return Task.FromResult(new List<ApiChange>());
     }
 
-    public override Task<string?> GetCustomizationRootAsync(UpdateSessionState session, string generationRoot, CancellationToken ct)
+    public override Task<string?> GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct)
     {
         try
         {
@@ -51,13 +50,13 @@ public class JavaUpdateLanguageService : UpdateLanguageServiceBase
         return Task.FromResult<string?>(null);
     }
 
-    public override Task<List<CustomizationImpact>> AnalyzeCustomizationImpactAsync(UpdateSessionState session, string? customizationRoot, IEnumerable<ApiChange> apiChanges, CancellationToken ct)
+    public override Task<List<CustomizationImpact>> AnalyzeCustomizationImpactAsync(ClientUpdateSessionState session, string? customizationRoot, IEnumerable<ApiChange> apiChanges, CancellationToken ct)
     {
         // Stub: TODO no impacted files
         return Task.FromResult(new List<CustomizationImpact>());
     }
 
-    public override Task<List<PatchProposal>> ProposePatchesAsync(UpdateSessionState session, IEnumerable<CustomizationImpact> impacts, CancellationToken ct)
+    public override Task<List<PatchProposal>> ProposePatchesAsync(ClientUpdateSessionState session, IEnumerable<CustomizationImpact> impacts, CancellationToken ct)
     {
     // Stub: create a trivial placeholder patch for each impacted file.
         var proposals = impacts

@@ -7,7 +7,7 @@ using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Models;
 using ModelContextProtocol.Server;
-using Azure.Sdk.Tools.Cli.Services.Update;
+using Azure.Sdk.Tools.Cli.Services.ClientUpdate;
 using Azure.Sdk.Tools.Cli.Helpers;
 
 namespace Azure.Sdk.Tools.Cli.Tools;
@@ -17,11 +17,11 @@ public class TspClientUpdateTool : MCPTool
 {
     private readonly ILogger<TspClientUpdateTool> logger;
     private readonly IOutputHelper output;
-    private readonly Func<string, IUpdateLanguageService> languageServiceFactory;
+    private readonly Func<string, IClientUpdateLanguageService> languageServiceFactory;
     private readonly Argument<string> specPathArg = new(name: "spec-path", description: "Path to the .tsp specification file") { Arity = ArgumentArity.ExactlyOne };
     private readonly Option<string?> newGenOpt = new(["--new-gen"], () => "./tmpgen", "Directory for regenerated TypeSpec output (optional)");
 
-    public TspClientUpdateTool(ILogger<TspClientUpdateTool> logger, IOutputHelper output, Func<string, IUpdateLanguageService> languageServiceFactory)
+    public TspClientUpdateTool(ILogger<TspClientUpdateTool> logger, IOutputHelper output, Func<string, IClientUpdateLanguageService> languageServiceFactory)
     {
         this.logger = logger;
         this.output = output;
@@ -43,7 +43,7 @@ public class TspClientUpdateTool : MCPTool
     public override Task HandleCommand(InvocationContext ctx, CancellationToken ct) => Task.CompletedTask;
 
     [McpServerTool(Name = "azsdk_tsp_update"), Description("Update pipeline")] 
-    public async Task<TspClientUpdateResponse> UnifiedUpdateAsync(string specPath, IUpdateLanguageService languageService, CancellationToken ct = default)
+    public async Task<TspClientUpdateResponse> UnifiedUpdateAsync(string specPath, IClientUpdateLanguageService languageService, string? packagePath = null, CancellationToken ct = default)
     {
         try
         {
@@ -51,7 +51,7 @@ public class TspClientUpdateTool : MCPTool
             {
                 return new TspClientUpdateResponse { ResponseError = "Spec path required", ErrorCode = "MissingSpec" };
             }
-            var session = new UpdateSessionState { SpecPath = specPath };
+            var session = new ClientUpdateSessionState { SpecPath = specPath, PackagePath = packagePath ?? string.Empty };
 
             // Regenerate (placeholder)
             session.LastStage = UpdateStage.Regenerated;
@@ -63,18 +63,25 @@ public class TspClientUpdateTool : MCPTool
             session.ApiChangeCount = apiChanges.Count;
             session.LastStage = UpdateStage.Diffed;
             session.Status = "Diffed";
-            // Continue pipeline even if no API changes so validation & auto-fix logic can run.
+
+            // Short-circuit: no API changes -> skip Map/Propose and go validate (still useful for drift checks)
+            if (apiChanges.Count == 0)
+            {
+                session.Status = "NoApiChanges"; // informational; will be replaced by validation result
+                return await ValidateWithAutoFixAsync(session, languageService, ct);
+            }
 
             // Map
-            var customizationRoot = session.NewGeneratedPath; // placeholder path usage
+            var customizationRoot = await languageService.GetCustomizationRootAsync(session, session.NewGeneratedPath, ct);
             var impacts = await languageService.AnalyzeCustomizationImpactAsync(session, customizationRoot, session.ApiChanges, ct);
             session.ImpactedCustomizations = impacts;
             session.LastStage = UpdateStage.Mapped;
             session.Status = "Mapped";
-            // Even if no impacts, continue through remaining stages for a consistent single-pass experience.
             if (impacts.Count == 0)
             {
-                session.Status = "NoCustomizationImpact"; // informational; continue
+                // Short-circuit: no impacted customization files -> skip propose and validate
+                session.Status = "NoCustomizationImpact"; // informational
+                return await ValidateWithAutoFixAsync(session, languageService, ct);
             }
 
             // Propose
@@ -84,39 +91,12 @@ public class TspClientUpdateTool : MCPTool
             session.Status = "PatchesProposed";
             if (patches.Count == 0)
             {
-                session.Status = "NoPatchesProposed"; // informational; continue to validation
+                session.Status = "NoPatchesProposed"; // informational
+                return await ValidateWithAutoFixAsync(session, languageService, ct);
             }
 
-            // Apply
-            session.LastStage = UpdateStage.Applied;
-            session.Status = "Applied";
-
-            // Validate (with limited auto-fix loop)
-            const int MAX_ATTEMPTS = 3;
-            while (true)
-            {
-                var result = await languageService.ValidateAsync(session, ct);
-                session.ValidationAttemptCount++;
-                session.ValidationSuccess = result.Success;
-                session.ValidationErrors = result.Errors;
-                session.LastStage = UpdateStage.Validated;
-                session.Status = result.Success ? "Validated" : "ValidationFailed";
-                if (result.Success)
-                {
-                    return Done(session, "Update pipeline complete.");
-                }
-                if (session.ValidationAttemptCount >= MAX_ATTEMPTS)
-                {
-                    session.RequiresManualIntervention = true;
-                    return Done(session, "Validation failed – manual intervention required.");
-                }
-                var fixes = await languageService.ProposeFixesAsync(session, result.Errors, ct);
-                if (fixes.Count == 0)
-                {
-                    continue; // retry (simulated) until attempts exhausted
-                }
-                session.ProposedPatches.AddRange(fixes);
-            }
+            // Patches exist (not yet applied in this simplified pipeline) -> proceed to validation
+            return await ValidateWithAutoFixAsync(session, languageService, ct);
         }
         catch (Exception ex)
         {
@@ -125,11 +105,40 @@ public class TspClientUpdateTool : MCPTool
         }
     }
 
-    private static TspClientUpdateResponse Done(UpdateSessionState s, string message) => new()
+    private static async Task<TspClientUpdateResponse> ValidateWithAutoFixAsync(ClientUpdateSessionState session, IClientUpdateLanguageService languageService, CancellationToken ct)
+    {
+        const int MAX_ATTEMPTS = 3;
+        while (true)
+        {
+            var result = await languageService.ValidateAsync(session, ct);
+            session.ValidationAttemptCount++;
+            session.ValidationSuccess = result.Success;
+            session.ValidationErrors = result.Errors;
+            session.LastStage = UpdateStage.Validated;
+            session.Status = result.Success ? "Validated" : "ValidationFailed";
+            if (result.Success)
+            {
+                return CompleteClientUpdate(session, "Update pipeline complete.");
+            }
+            if (session.ValidationAttemptCount >= MAX_ATTEMPTS)
+            {
+                session.RequiresManualIntervention = true;
+                return CompleteClientUpdate(session, "Validation failed – manual intervention required.");
+            }
+            var fixes = await languageService.ProposeFixesAsync(session, result.Errors, ct);
+            if (fixes.Count == 0)
+            {
+                session.RequiresManualIntervention = true;
+                return CompleteClientUpdate(session, "Validation failed and no fixes could be proposed – manual intervention required.");
+            }
+            session.ProposedPatches.AddRange(fixes);
+        }
+    }
+
+    private static TspClientUpdateResponse CompleteClientUpdate(ClientUpdateSessionState s, string message) => new()
     {
         Session = s,
-        Message = message,
-        Terminal = true
+    Message = message
     };
 
     private async Task HandleUnified(InvocationContext ctx, CancellationToken ct)
@@ -139,7 +148,7 @@ public class TspClientUpdateTool : MCPTool
         try
         {
             var svc = languageServiceFactory(packagePath);
-            var resp = await UnifiedUpdateAsync(spec, svc, ct);
+            var resp = await UnifiedUpdateAsync(spec, svc, packagePath, ct);
             output.Output(resp);
         }
         catch (Exception ex)

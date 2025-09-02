@@ -1,5 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
 using System.Text.Json.Serialization;
-using System.Collections.Generic;
 namespace Azure.Sdk.Tools.Cli.Models;
 
 /// <summary>

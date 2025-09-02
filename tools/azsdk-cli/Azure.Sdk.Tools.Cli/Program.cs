@@ -3,10 +3,14 @@
 using System.CommandLine;
 using System.CommandLine.Builder;
 using System.CommandLine.Parsing;
+using OpenTelemetry;
+using OpenTelemetry.Trace;
 using Azure.Sdk.Tools.Cli.Commands;
+using Azure.Sdk.Tools.Cli.Core;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Configuration;
 
 namespace Azure.Sdk.Tools.Cli;
 
@@ -38,6 +42,14 @@ public class Program
         // pass unmatched ASP.NET config values like --ASPNET_URLS to the builder. It'll just quietly ignore everything
         // it doesn't recognize.
         WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+        builder.Services.AddOpenTelemetry()
+            .WithTracing(b => b.AddSource(Constants.TOOLS_ACTIVITY_SOURCE)
+                .AddConsoleExporter()
+                .AddAspNetCoreInstrumentation()
+                .AddHttpClientInstrumentation()
+                .AddProcessor(new TelemetryProcessor()))
+            .UseOtlpExporter();
 
         var (outputFormat, debug) = SharedOptions.GetGlobalOptionValues(args);
 

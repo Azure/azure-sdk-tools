@@ -933,9 +933,11 @@ namespace APIViewWeb.Managers
         }
 
 
+        /*
         /// <summary>
         /// Process pending namespace reviews for auto-approval after 3 business days with no open comments
         /// Groups reviews by pull request number and sends one consolidated email per TypeSpec namespace
+        /// TODO: Auto-approval feature is currently disabled - commenting out for future use
         /// </summary>
         public async Task ProcessPendingNamespaceAutoApprovals()
         {
@@ -983,6 +985,7 @@ namespace APIViewWeb.Managers
                 _telemetryClient.TrackException(ex);
             }
         }
+        */
 
         /// <summary>
         /// Get all reviews with pending namespace approval status
@@ -995,8 +998,10 @@ namespace APIViewWeb.Managers
             return pendingReviews.ToList();
         }
 
+        /*
         /// <summary>
         /// Check if a review should be auto-approved (3 business days passed + no open comments)
+        /// TODO: Auto-approval feature is currently disabled - commenting out for future use
         /// </summary>
         private async Task<bool> ShouldAutoApprove(ReviewListItemModel review)
         {
@@ -1028,69 +1033,72 @@ namespace APIViewWeb.Managers
             
             return shouldApprove;
         }
+        */
 
         /// <summary>
         /// Get open/unresolved comments for a review
         /// </summary>
-        private async Task<IEnumerable<CommentItemModel>> GetOpenComments(string reviewId)
-        {
-            var comments = await _commentManager.GetCommentsAsync(reviewId);
-            return comments.Where(c => !c.IsResolved && !c.IsDeleted);
-        }
+        // private async Task<IEnumerable<CommentItemModel>> GetOpenComments(string reviewId)
+        // {
+        //     var comments = await _commentManager.GetCommentsAsync(reviewId);
+        //     return comments.Where(c => !c.IsResolved && !c.IsDeleted);
+        // }
 
         /// <summary>
         /// Group reviews by their timestamp and service to identify related reviews
         /// Reviews with same NamespaceApprovalRequestedOn timestamp are likely from the same logical request
         /// </summary>
-        private Dictionary<string, List<ReviewListItemModel>> GroupReviewsByPullRequestNumbers(List<ReviewListItemModel> pendingReviews)
-        {
-            var timestampGroups = new Dictionary<string, List<ReviewListItemModel>>();
-            var reviewsWithoutTimestamp = new List<ReviewListItemModel>();
+        // private Dictionary<string, List<ReviewListItemModel>> GroupReviewsByPullRequestNumbers(List<ReviewListItemModel> pendingReviews)
+        // {
+        //     var timestampGroups = new Dictionary<string, List<ReviewListItemModel>>();
+        //     var reviewsWithoutTimestamp = new List<ReviewListItemModel>();
 
-            // Group by NamespaceApprovalRequestedOn timestamp and service name
-            foreach (var review in pendingReviews)
-            {
-                try
-                {
-                    if (review.NamespaceApprovalRequestedOn.HasValue)
-                    {
-                        // Extract service name from package name for grouping
-                        var serviceName = StringHelper.ExtractServiceName(review.PackageName);
+        //     // Group by NamespaceApprovalRequestedOn timestamp and service name
+        //     foreach (var review in pendingReviews)
+        //     {
+        //         try
+        //         {
+        //             if (review.NamespaceApprovalRequestedOn.HasValue)
+        //             {
+        //                 // Extract service name from package name for grouping
+        //                 var serviceName = StringHelper.ExtractServiceName(review.PackageName);
                         
-                        // Create timestamp key with service name - precise to the minute to group related requests
-                        var timestampKey = $"{serviceName}_{review.NamespaceApprovalRequestedOn.Value:yyyy-MM-dd_HH-mm}";
+        //                 // Create timestamp key with service name - precise to the minute to group related requests
+        //                 var timestampKey = $"{serviceName}_{review.NamespaceApprovalRequestedOn.Value:yyyy-MM-dd_HH-mm}";
                         
-                        if (!timestampGroups.ContainsKey(timestampKey))
-                        {
-                            timestampGroups[timestampKey] = new List<ReviewListItemModel>();
-                        }
-                        timestampGroups[timestampKey].Add(review);
-                    }
-                    else
-                    {
-                        // No timestamp, handle individually
-                        reviewsWithoutTimestamp.Add(review);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _telemetryClient.TrackException(ex);
-                    reviewsWithoutTimestamp.Add(review);
-                }
-            }
+        //                 if (!timestampGroups.ContainsKey(timestampKey))
+        //                 {
+        //                     timestampGroups[timestampKey] = new List<ReviewListItemModel>();
+        //                 }
+        //                 timestampGroups[timestampKey].Add(review);
+        //             }
+        //             else
+        //             {
+        //                 // No timestamp, handle individually
+        //                 reviewsWithoutTimestamp.Add(review);
+        //             }
+        //         }
+        //         catch (Exception ex)
+        //         {
+        //             _telemetryClient.TrackException(ex);
+        //             reviewsWithoutTimestamp.Add(review);
+        //         }
+        //     }
 
-            // Add individual reviews for those without timestamps
-            foreach (var review in reviewsWithoutTimestamp)
-            {
-                var individualKey = $"individual_{review.Id}";
-                timestampGroups[individualKey] = new List<ReviewListItemModel> { review };
-            }
+        //     // Add individual reviews for those without timestamps
+        //     foreach (var review in reviewsWithoutTimestamp)
+        //     {
+        //         var individualKey = $"individual_{review.Id}";
+        //         timestampGroups[individualKey] = new List<ReviewListItemModel> { review };
+        //     }
 
-            return timestampGroups;
-        }
+        //     return timestampGroups;
+        // }
 
+        /*
         /// <summary>
         /// Auto-approve all reviews in a group and send one consolidated notification
+        /// TODO: Auto-approval feature is currently disabled - commenting out for future use
         /// </summary>
         private async Task AutoApproveNamespaceGroup(List<ReviewListItemModel> allReviewsInGroup, ReviewListItemModel typeSpecReview)
         {
@@ -1127,5 +1135,6 @@ namespace APIViewWeb.Managers
                 _telemetryClient.TrackException(ex);
             }
         }
+        */
     }
 }

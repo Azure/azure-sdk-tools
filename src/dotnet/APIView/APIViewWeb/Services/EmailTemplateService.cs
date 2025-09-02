@@ -32,7 +32,8 @@ namespace APIViewWeb.Services
     {
         private readonly string _apiviewEndpoint;
         private const int MaxPackageNameLength = 60;
-        private const int BusinessDaysForDeadline = 3;
+        // TODO: 3 days auto-approval feature is temporarily disabled
+        // private const int BusinessDaysForDeadline = 3;
 
         public EmailTemplateService(IConfiguration configuration)
         {
@@ -64,8 +65,16 @@ namespace APIViewWeb.Services
         {
             var template = await LoadEmbeddedTemplateAsync("NamespaceReviewRequestEmail.html");
 
+            // TODO: 3 days auto-approval feature is temporarily disabled
+            // Uncomment the code below to re-enable deadline calculation
+            
+            /*
             // Calculate deadline (3 business days from now using centralized utility)
             var deadline = DateTimeHelper.CalculateBusinessDays(DateTime.Now, BusinessDaysForDeadline);
+            */
+            
+            // Manual review required (no automatic approval deadline)
+            var deadlineText = "Manual review required - no automatic approval";
 
             // Generate language links HTML like the pending namespace approval tab
             var languageLinksHtml = GenerateLanguageLinksHtml(languageReviews);
@@ -84,7 +93,7 @@ namespace APIViewWeb.Services
                 .Replace("{{TypeSpecUrl}}", typeSpecUrl)
                 .Replace("{{LanguageLinks}}", languageLinksHtml)
                 .Replace("{{NotesSection}}", notesSectionHtml)
-                .Replace("{{ApprovalDeadline}}", deadline.ToString("MMMM dd, yyyy"));
+                .Replace("{{ApprovalDeadline}}", deadlineText);
         }
 
         public async Task<string> GetNamespaceReviewApprovedEmailAsync(
@@ -101,7 +110,9 @@ namespace APIViewWeb.Services
             var languagePackagesHtml = GenerateLanguagePackagesHtml(languageReviews);
 
             // Generate auto-approval section if needed
+            // TODO: Auto-approval feature is currently disabled - commenting out for future use
             var autoApprovalSectionHtml = "";
+            /*
             if (isAutoApproved)
             {
                 autoApprovalSectionHtml = $@"
@@ -114,6 +125,7 @@ namespace APIViewWeb.Services
                         </div>
                     </div>";
             }
+            */
 
             // Replace all placeholders
             return template
@@ -149,7 +161,7 @@ namespace APIViewWeb.Services
             foreach (var review in languageReviews)
             {
                 var truncatedName = review.PackageName.Length > MaxPackageNameLength 
-                    ? review.PackageName.Substring(0, MaxPackageNameLength) + "..." 
+                    ? review.PackageName[..MaxPackageNameLength] + "..." 
                     : review.PackageName;
 
                 // Build HTML that matches the pending namespace approval tab format

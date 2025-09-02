@@ -166,8 +166,7 @@ function IsApiviewStatusCheckRequired($packageInfo)
         return &$IsApiviewStatusCheckRequiredFn $packageInfo
     }
 
-    # API review is required for both client and management plane packages
-    if (($packageInfo.SdkType -eq "client" -or $packageInfo.SdkType -eq "mgmt") -and $packageInfo.IsNewSdk) {
+    if ($packageInfo.SdkType -eq "client" -and $packageInfo.IsNewSdk) {
         return $true
     }
     return $false

@@ -12,8 +12,10 @@ namespace APIViewWeb.Helpers
     /// </summary>
     public static class DateTimeHelper
     {
+        /*
         /// <summary>
         /// Calculate business days from a start date, excluding weekends
+        /// TODO: Auto-approval feature is currently disabled - commenting out for future use
         /// </summary>
         /// <param name="startDate">The starting date</param>
         /// <param name="businessDays">Number of business days to add</param>
@@ -34,6 +36,7 @@ namespace APIViewWeb.Helpers
 
             return currentDate;
         }
+        */
     }
 
     /// <summary>
@@ -152,19 +155,25 @@ namespace APIViewWeb.Helpers
         }
     }
 
+    /*
     /// <summary>
     /// Backward compatibility alias for existing code
+    /// TODO: Auto-approval feature is currently disabled - commenting out for future use
     /// </summary>
     [Obsolete("Use DateTimeHelper instead for better organization")]
     public static class BusinessDayCalculator
     {
         /// <summary>
         /// Calculate business days from a start date, excluding weekends
+        /// TODO: Auto-approval feature is currently disabled - commenting out for future use
         /// </summary>
         /// <param name="startDate">The starting date</param>
         /// <param name="businessDays">Number of business days to add</param>
         /// <returns>The calculated date after adding the specified business days</returns>
         public static DateTime CalculateBusinessDays(DateTime startDate, int businessDays)
+        {
             => DateTimeHelper.CalculateBusinessDays(startDate, businessDays);
+        }
     }
+    */
 }

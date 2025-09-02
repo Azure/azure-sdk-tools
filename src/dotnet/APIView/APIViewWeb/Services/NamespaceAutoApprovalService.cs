@@ -24,8 +24,12 @@ namespace APIViewWeb.Services
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _logger.LogInformation("Namespace Auto-Approval Service started");
+            _logger.LogInformation("Namespace Auto-Approval Service started (but auto-approval feature is disabled)");
 
+            // TODO: 3 days auto-approval feature is temporarily disabled
+            // Uncomment the code below to re-enable this feature
+            
+            /*
             while (!stoppingToken.IsCancellationRequested)
             {
                 try
@@ -44,8 +48,15 @@ namespace APIViewWeb.Services
                 // Run every 6 hours
                 await Task.Delay(TimeSpan.FromHours(6), stoppingToken);
             }
+            */
             
-            _logger.LogInformation("Namespace Auto-Approval Service stopped");
+            _logger.LogInformation("Auto-approval feature is disabled. Service will not process any auto-approvals.");
+            
+            // Keep the service alive but do nothing
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                await Task.Delay(TimeSpan.FromHours(1), stoppingToken);
+            }
         }
     }
 }

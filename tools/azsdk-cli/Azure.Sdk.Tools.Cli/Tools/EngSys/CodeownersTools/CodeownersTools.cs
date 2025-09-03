@@ -30,7 +30,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
         private const string azureWriteTeamsBlobUrl = "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/azure-sdk-write-teams-blob";
 
         // Command names
-        private const string updateCodeownersCommandName = "update";
+        private const string addCodeownersCommandName = "add";
+        private const string removeCodeownersCommandName = "remove";
         private const string validateCodeownersEntryCommandName = "validate";
 
         // Core command options
@@ -65,7 +66,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
             var command = new Command("codeowners", "A tool to validate and modify codeowners.");
             var subCommands = new[]
             {
-                new Command(updateCodeownersCommandName, "Update codeowners in a repository")
+                new Command(addCodeownersCommandName, "Updates codeowners in a repository")
                 {
                     repoOption,
                     isMgmtPlaneOption,
@@ -73,7 +74,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                     serviceLabelOption,
                     serviceOwnersOption,
                     sourceOwnersOption,
-                    isAddingOption,
+                    workingBranchOption,
+                },
+                new Command(removeCodeownersCommandName, "Removes codeowners in a repository")
+                {
+                    repoOption,
+                    isMgmtPlaneOption,
+                    pathOptionOptional,
+                    serviceLabelOption,
+                    serviceOwnersOption,
+                    sourceOwnersOption,
                     workingBranchOption,
                 },
                 new Command(validateCodeownersEntryCommandName, "Validate codeowners for an existing service entry")
@@ -97,7 +107,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
             var command = ctx.ParseResult.CommandResult.Command.Name;
             var commandParser = ctx.ParseResult;
 
-            if (command == updateCodeownersCommandName)
+            if (command == addCodeownersCommandName)
             {
                 var repoValue = commandParser.GetValueForOption(repoOption);
                 var isMgmtPlaneValue = commandParser.GetValueForOption(isMgmtPlaneOption);
@@ -105,17 +115,37 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                 var serviceLabelValue = commandParser.GetValueForOption(serviceLabelOption);
                 var serviceOwnersValue = commandParser.GetValueForOption(serviceOwnersOption);
                 var sourceOwnersValue = commandParser.GetValueForOption(sourceOwnersOption);
-                var isAddingValue = commandParser.GetValueForOption(isAddingOption);
                 var workingBranchValue = commandParser.GetValueForOption(workingBranchOption);
 
-                var addResult = await UpdateCodeowners(
-                    repoValue ?? "",
+                var addResult = await AddCodeowners(
+                    repoValue,
                     isMgmtPlaneValue,
                     pathValue ?? "",
                     serviceLabelValue ?? "",
                     serviceOwnersValue?.ToList() ?? new List<string>(),
                     sourceOwnersValue?.ToList() ?? new List<string>(),
-                    isAddingValue,
+                    workingBranchValue ?? "");
+                ctx.ExitCode = ExitCode;
+                output.Output(addResult);
+                return;
+            }
+            else if (command == removeCodeownersCommandName)
+            {
+                var repoValue = commandParser.GetValueForOption(repoOption);
+                var isMgmtPlaneValue = commandParser.GetValueForOption(isMgmtPlaneOption);
+                var pathValue = commandParser.GetValueForOption(pathOptionOptional);
+                var serviceLabelValue = commandParser.GetValueForOption(serviceLabelOption);
+                var serviceOwnersValue = commandParser.GetValueForOption(serviceOwnersOption);
+                var sourceOwnersValue = commandParser.GetValueForOption(sourceOwnersOption);
+                var workingBranchValue = commandParser.GetValueForOption(workingBranchOption);
+
+                var addResult = await RemoveCodeowners(
+                    repoValue,
+                    isMgmtPlaneValue,
+                    pathValue ?? "",
+                    serviceLabelValue ?? "",
+                    serviceOwnersValue?.ToList() ?? new List<string>(),
+                    sourceOwnersValue?.ToList() ?? new List<string>(),
                     workingBranchValue ?? "");
                 ctx.ExitCode = ExitCode;
                 output.Output(addResult);
@@ -143,15 +173,56 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
             }
         }
 
-        [McpServerTool(Name = "azsdk_engsys_codeowner_update"), Description("Adds or deletes codeowners for a given service label or path in a repo. When isAdding is false, the inputted users will be removed.")]
-        public async Task<string> UpdateCodeowners(
+        [McpServerTool(Name = "azsdk_engsys_add_codeowners"), Description("Adds codeowners for a given service label or path in a repo.")]
+        public async Task<string> AddCodeowners(
             string repo,
             bool isMgmtPlane,
             string path = "",
             string serviceLabel = "",
             List<string> serviceOwners = null,
             List<string> sourceOwners = null,
-            bool isAdding = false,
+            string workingBranch = ""
+        )
+        {
+            try
+            {
+                return await UpdateCodeowners(repo, isMgmtPlane, true, path, serviceLabel, serviceOwners, sourceOwners, workingBranch);
+            }
+            catch (Exception ex)
+            {
+                return $"Error: {ex}";
+            }
+        }
+
+        [McpServerTool(Name = "azsdk_engsys_add_codeowners"), Description("Removes codeowners for a given service label or path in a repo.")]
+        public async Task<string> RemoveCodeowners(
+            string repo,
+            bool isMgmtPlane,
+            string path = "",
+            string serviceLabel = "",
+            List<string> serviceOwners = null,
+            List<string> sourceOwners = null,
+            string workingBranch = ""
+        )
+        {
+            try
+            {
+                return await UpdateCodeowners(repo, isMgmtPlane, false, path, serviceLabel, serviceOwners, sourceOwners, workingBranch);
+            }
+            catch (Exception ex)
+            {
+                return $"Error: {ex}";
+            }
+        }
+
+        private async Task<string> UpdateCodeowners(
+            string repo,
+            bool isMgmtPlane,
+            bool isAdding,
+            string path,
+            string serviceLabel,
+            List<string> serviceOwners,
+            List<string> sourceOwners,
             string workingBranch = "")
         {
             try

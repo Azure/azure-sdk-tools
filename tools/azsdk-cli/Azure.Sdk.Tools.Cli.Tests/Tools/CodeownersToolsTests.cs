@@ -43,7 +43,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public async Task Update_InvalidInputs_Throws()
         {
             // both serviceLabel and path empty -> method throws
-            var result = await _tool.UpdateCodeowners("repo", false, "", "", new List<string>(), new List<string>(), false);
+            var result = await _tool.AddCodeowners("repo", false, "", "", new List<string>(), new List<string>());
 
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Contains("Service label:  and Path:  are both invalid. At least one must be valid"));
@@ -65,7 +65,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
 
             var tool = new CodeownersTools(gh.Object, _mockOutput.Object, _mockLogger.Object, _mockCodeownersValidator.Object);
 
-            var result = await tool.UpdateCodeowners("repo", false, "", "NonExistService", new List<string>(), new List<string>(), true);
+            var result = await tool.AddCodeowners("repo", false, "", "NonExistService", new List<string>(), new List<string>());
 
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Contains("Error: "));
@@ -93,7 +93,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             validator.Setup(v => v.ValidateCodeOwnerAsync(It.IsAny<string>(), It.IsAny<bool>())).ReturnsAsync(new CodeownersValidationResult { Username = "user", IsValidCodeOwner = true });
 
             var tool = new CodeownersTools(gh.Object, _mockOutput.Object, _mockLogger.Object, validator.Object);
-            var result = await tool.UpdateCodeowners("repoName", false, "/sdk/myservice/", "MyService", new List<string> { "@oldowner", "@newowner" }, new List<string>() { "@newowner", "@newowner2" }, true);
+            var result = await tool.AddCodeowners("repoName", false, "/sdk/myservice/", "MyService", new List<string> { "@oldowner", "@newowner" }, new List<string>() { "@newowner", "@newowner2" });
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Contains("URL:") || result.Contains("Created"));
         }
@@ -121,7 +121,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
 
             var tool = new CodeownersTools(gh.Object, _mockOutput.Object, _mockLogger.Object, validator.Object);
             // Remove @removeowner, keep @oldowner
-            var result = await tool.UpdateCodeowners("repoName", false, "/sdk/myservice/", "MyService", new List<string> { "@oldowner" }, new List<string>(), false);
+            var result = await tool.RemoveCodeowners("repoName", false, "/sdk/myservice/", "MyService", new List<string> { "@oldowner" }, new List<string>());
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Contains("URL:") || result.Contains("Created"));
         }
@@ -162,7 +162,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
 
             var tool = new CodeownersTools(gh.Object, _mockOutput.Object, _mockLogger.Object, validator.Object);
 
-            var result = await tool.UpdateCodeowners("repoName", false, "/sdk/newsvc/", "NewSvc", new List<string> { "@a", "@b" }, new List<string> { "@s1", "@s2" }, true);
+            var result = await tool.AddCodeowners("repoName", false, "/sdk/newsvc/", "NewSvc", new List<string> { "@a", "@b" }, new List<string> { "@s1", "@s2" });
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Contains("URL:") || result.Contains("Created"));
         }
@@ -198,7 +198,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
 
             var tool = new CodeownersTools(gh.Object, _mockOutput.Object, _mockLogger.Object, validator.Object);
 
-            var result = await tool.UpdateCodeowners("repoName", false, "/sdk/newsvc/", "NewSvc", new List<string> { "@a", "@b" }, new List<string> { "@s1", "@s2" }, true);
+            var result = await tool.AddCodeowners("repoName", false, "/sdk/newsvc/", "NewSvc", new List<string> { "@a", "@b" }, new List<string> { "@s1", "@s2" });
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Contains("Failed to create pull request") || result.Contains("Error") || result.Contains("Error: Failed to create pull request"));
         }

@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using Azure.Sdk.Tools.Cli.Models;
+using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.Cli.Services.ClientUpdate;
 
@@ -9,19 +10,20 @@ namespace Azure.Sdk.Tools.Cli.Services.ClientUpdate;
 /// </summary>
 public class JavaUpdateLanguageService : ClientUpdateLanguageServiceBase
 {
-    public JavaUpdateLanguageService(ILanguageSpecificCheckResolver languageSpecificCheckResolver) : base(languageSpecificCheckResolver) { }
+    private readonly ILogger<JavaUpdateLanguageService> _logger;
+
+    public JavaUpdateLanguageService(ILanguageSpecificCheckResolver languageSpecificCheckResolver, ILogger<JavaUpdateLanguageService> logger) : base(languageSpecificCheckResolver)
+    {
+        _logger = logger;
+    }
 
     public override string SupportedLanguage => "java";
 
     private const string CustomizationDirName = "customization";
 
-    public override Task<Dictionary<string, SymbolInfo>> ExtractSymbolsAsync(string rootPath, CancellationToken ct)
+    public override Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath)
     {
-        return Task.FromResult(new Dictionary<string, SymbolInfo>());
-    }
-
-    public override Task<List<ApiChange>> DiffAsync(Dictionary<string, SymbolInfo> oldSymbols, Dictionary<string, SymbolInfo> newSymbols)
-    {
+        // TODO: implement file-level diff between oldGenerationPath and newGenerationPath.
         return Task.FromResult(new List<ApiChange>());
     }
 
@@ -40,15 +42,18 @@ public class JavaUpdateLanguageService : ClientUpdateLanguageServiceBase
             var packageRoot = Directory.GetParent(generationRoot)?.FullName; // parent of 'src'
             if (!string.IsNullOrEmpty(packageRoot) && Directory.Exists(packageRoot))
             {
-                var customizationDir = Path.Combine(packageRoot, CustomizationDirName);
-                var customizationSourceRoot = Path.Combine(customizationDir, "src", "main", "java");
+                // canonical customization root: <packageRoot>/customization/src/main/java
+                var customizationSourceRoot = Path.Combine(packageRoot, CustomizationDirName, "src", "main", "java");
                 if (Directory.Exists(customizationSourceRoot))
                 {
                     return Task.FromResult<string?>(customizationSourceRoot);
                 }
             }
         }
-        catch { /* swallow heuristic errors */ }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Failed to resolve Java customization root from generationRoot '{GenerationRoot}'", generationRoot);
+        }
         return Task.FromResult<string?>(null);
     }
 
@@ -65,8 +70,7 @@ public class JavaUpdateLanguageService : ClientUpdateLanguageServiceBase
             .Select(i => new PatchProposal
             {
                 File = i.File,
-                Diff = $"--- a/{i.File}\n+++ b/{i.File}\n// TODO: computed diff placeholder\n",
-                Rationale = "Placeholder: language service proposal"
+                Diff = $"--- a/{i.File}\n+++ b/{i.File}\n// TODO: computed diff placeholder\n"
             })
             .ToList();
         return Task.FromResult(proposals);

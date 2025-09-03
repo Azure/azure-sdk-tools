@@ -22,7 +22,6 @@ public class TspClientUpdateResponse : Response
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? ErrorCode { get; set; }
 
-
     public override string ToString()
     {
         var sb = new StringBuilder();
@@ -32,7 +31,7 @@ public class TspClientUpdateResponse : Response
         }
         if (Session != null)
         {
-            sb.AppendLine($"Session: {Session.SessionId} Status: {Session.Status} API changes: {Session.ApiChanges.Count} Impacted: {Session.ImpactedCustomizations.Count}");
+            sb.AppendLine($"Session: {Session.SessionId} Stage: {Session.LastStage} Manual?: {Session.RequiresManualIntervention}");
         }
         if (!string.IsNullOrWhiteSpace(ErrorCode))
         {
@@ -44,67 +43,60 @@ public class TspClientUpdateResponse : Response
 
 public enum UpdateStage
 {
+    /// <summary>
+    /// Session object created; no work performed yet.
+    /// </summary>
     Initialized,
+    /// <summary>
+    /// TypeSpec (or language) client re-generated into <see cref="ClientUpdateSessionState.NewGeneratedPath"/>.
+    /// </summary>
     Regenerated,
+    /// <summary>
+    /// A diff between old and new generations has been produced and API changes collected.
+    /// </summary>
     Diffed,
+    /// <summary>
+    /// Customization files analyzed and mapped to impacted API changes.
+    /// </summary>
     Mapped,
+    /// <summary>
+    /// Patch proposals created for impacted customizations (but not yet applied).
+    /// </summary>
     PatchesProposed,
+    /// <summary>
+    /// Proposed patches applied to the customization sources.
+    /// </summary>
     Applied,
+    /// <summary>
+    /// Post-apply validation (build / tests / lint) executed and results captured.
+    /// </summary>
     Validated
 }
 
 public class ClientUpdateSessionState
 {
+    /// <summary>
+    /// Stable id to correlate multi-step invocations.
+    /// </summary>
     [JsonPropertyName("sessionId")] public string SessionId { get; set; } = Guid.NewGuid().ToString("n");
+    /// <summary>
+    /// Path to the source spec (.tsp) used for regeneration.
+    /// </summary>
     [JsonPropertyName("specPath")] public string SpecPath { get; set; } = string.Empty;
-    [JsonPropertyName("packagePath")] public string PackagePath { get; set; } = string.Empty;
-    [JsonPropertyName("oldGeneratedPath")] public string OldGeneratedPath { get; set; } = string.Empty;
+    /// <summary>
+    /// Path containing (or destined to contain) the latest regenerated output; also used for validation.
+    /// </summary>
     [JsonPropertyName("newGeneratedPath")] public string NewGeneratedPath { get; set; } = string.Empty;
+    /// <summary>
+    /// Root folder of user customizations (may be null when none exist).
+    /// </summary>
     [JsonPropertyName("customizationRoot")] public string? CustomizationRoot { get; set; }
-    [JsonPropertyName("status"), JsonIgnore] public string Status { get; set; } = "Initialized";
+    /// <summary>
+    /// Latest completed pipeline stage for progress / resumability.
+    /// </summary>
     [JsonPropertyName("lastStage")] public UpdateStage LastStage { get; set; } = UpdateStage.Initialized;
-    [JsonPropertyName("apiChangeCount"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public int ApiChangeCount { get; set; } = 0;
-    [JsonPropertyName("apiChanges"), JsonIgnore] public List<ApiChange> ApiChanges { get; set; } = new();
-    [JsonPropertyName("impactedCustomizations"), JsonIgnore] public List<CustomizationImpact> ImpactedCustomizations { get; set; } = new();
-    [JsonPropertyName("proposedPatches"), JsonIgnore] public List<PatchProposal> ProposedPatches { get; set; } = new();
-    [JsonPropertyName("validationErrors"), JsonIgnore] public List<string> ValidationErrors { get; set; } = new();
-    [JsonPropertyName("validationSuccess")] public bool? ValidationSuccess { get; set; }
-    [JsonPropertyName("validationAttemptCount"), JsonIgnore] public int ValidationAttemptCount { get; set; } = 0;
+    /// <summary>
+    /// True when automation halted and requires user action.
+    /// </summary>
     [JsonPropertyName("requiresManualIntervention")] public bool RequiresManualIntervention { get; set; } = false;
-}
-
-public class ApiChange
-{
-    [JsonPropertyName("kind")] public string Kind { get; set; } = string.Empty; // Enum name style e.g. MethodAdded, MethodRemoved, MethodSignatureChanged
-    [JsonPropertyName("symbol")] public string Symbol { get; set; } = string.Empty; // Primary stable symbol id (usually old id if removed, new id otherwise)
-    [JsonPropertyName("oldId")] public string? OldId { get; set; } // When symbol id changed (rename / move)
-    [JsonPropertyName("newId")] public string? NewId { get; set; }
-    [JsonPropertyName("detail")] public string Detail { get; set; } = string.Empty; // Human summary
-    [JsonPropertyName("oldSignature")] public string? OldSignature { get; set; }
-    [JsonPropertyName("newSignature")] public string? NewSignature { get; set; }
-    [JsonPropertyName("returnTypeChanged")] public bool? ReturnTypeChanged { get; set; }
-    [JsonPropertyName("parameterDiffs")] public List<ParameterDiff>? ParameterDiffs { get; set; }
-    [JsonPropertyName("breaking")] public bool? Breaking { get; set; }
-}
-
-public class ParameterDiff
-{
-    [JsonPropertyName("name")] public string Name { get; set; } = string.Empty; // Current (new) name when applicable
-    [JsonPropertyName("changeType")] public string ChangeType { get; set; } = string.Empty; // Added, Removed, Renamed, TypeChanged
-    [JsonPropertyName("oldName")] public string? OldName { get; set; }
-    [JsonPropertyName("newName")] public string? NewName { get; set; }
-    [JsonPropertyName("oldType")] public string? OldType { get; set; }
-    [JsonPropertyName("newType")] public string? NewType { get; set; }
-}
-
-public class CustomizationImpact
-{
-    [JsonPropertyName("file")] public string File { get; set; } = string.Empty;
-    [JsonPropertyName("reasons")] public List<string> Reasons { get; set; } = new();
-}
-public class PatchProposal
-{
-    [JsonPropertyName("file")] public string File { get; set; } = string.Empty;
-    [JsonPropertyName("diff")] public string Diff { get; set; } = string.Empty; // unified diff text
-    [JsonPropertyName("rationale")] public string? Rationale { get; set; }
 }

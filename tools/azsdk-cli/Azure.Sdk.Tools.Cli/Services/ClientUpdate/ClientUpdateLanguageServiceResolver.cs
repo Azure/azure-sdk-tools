@@ -11,15 +11,36 @@ namespace Azure.Sdk.Tools.Cli.Services.ClientUpdate;
 /// </summary>
 public interface IClientUpdateLanguageServiceResolver
 {
+    /// <summary>
+    /// Attempts to resolve an <see cref="IClientUpdateLanguageService"/> for the supplied generated package path.
+    /// </summary>
+    /// <param name="packagePath">Root directory of a generated SDK package whose language needs to be inferred. May be <c>null</c> or non-existent.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>
+    /// Matching language service when the language can be determined and a service is registered;
+    /// otherwise the first registered service (best-effort fallback), or <c>null</c> if none are registered.
+    /// </returns>
     Task<IClientUpdateLanguageService?> ResolveAsync(string? packagePath, CancellationToken ct = default);
 }
 
+/// <summary>
+/// Default implementation of <see cref="IClientUpdateLanguageServiceResolver"/> which uses the shared
+/// <see cref="ILanguageSpecificCheckResolver"/> to detect a package's language, then matches the language
+/// against registered <see cref="IClientUpdateLanguageService.SupportedLanguage"/> values. Provides defensive
+/// fallbacks (first registered service) when detection fails or an exact service is not available.
+/// </summary>
 public class ClientUpdateLanguageServiceResolver : IClientUpdateLanguageServiceResolver
 {
     private readonly IEnumerable<IClientUpdateLanguageService> _services;
     private readonly ILanguageSpecificCheckResolver _languageCheckResolver;
     private readonly ILogger<ClientUpdateLanguageServiceResolver> _logger;
 
+    /// <summary>
+    /// Creates a new resolver instance.
+    /// </summary>
+    /// <param name="services">All registered client update language services (at least one recommended).</param>
+    /// <param name="languageCheckResolver">Resolver used to infer the language from a generated package path.</param>
+    /// <param name="logger">Logger for diagnostics and fallback reporting.</param>
     public ClientUpdateLanguageServiceResolver(IEnumerable<IClientUpdateLanguageService> services,
         ILanguageSpecificCheckResolver languageCheckResolver,
         ILogger<ClientUpdateLanguageServiceResolver> logger)
@@ -29,6 +50,7 @@ public class ClientUpdateLanguageServiceResolver : IClientUpdateLanguageServiceR
         _logger = logger;
     }
 
+    /// <inheritdoc />
     public async Task<IClientUpdateLanguageService?> ResolveAsync(string? packagePath, CancellationToken ct = default)
     {
         // Fallback if path missing

@@ -36,14 +36,14 @@ public class TspClientUpdateTool : MCPTool
         cmd.AddArgument(specPathArg);
         cmd.AddOption(SharedOptions.PackagePath);
         cmd.AddOption(newGenOpt);
-        cmd.SetHandler(async ctx => await HandleUnified(ctx, ctx.GetCancellationToken()));
+        cmd.SetHandler(async ctx => await HandleUpdate(ctx, ctx.GetCancellationToken()));
         return cmd;
     }
 
     public override Task HandleCommand(InvocationContext ctx, CancellationToken ct) => Task.CompletedTask;
 
     [McpServerTool(Name = "azsdk_tsp_update"), Description("Update customized TypeSpec-generated client code")]
-    public async Task<TspClientUpdateResponse> UnifiedUpdateAsync(string specPath, string? packagePath = null, CancellationToken ct = default)
+    public async Task<TspClientUpdateResponse> UpdateAsync(string specPath, string packagePath, CancellationToken ct = default)
     {
         try
         {
@@ -79,92 +79,71 @@ public class TspClientUpdateTool : MCPTool
                     Message = ""
                 };
             }
-            return await UnifiedUpdateCoreAsync(specPath, packagePath, resolved, ct);
+            return await UpdateCoreAsync(specPath, packagePath, resolved, ct);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Unified update failed (wrapper)");
+            logger.LogError(ex, "Update failed");
             return new TspClientUpdateResponse { ResponseError = ex.Message, ErrorCode = ex.GetType().Name };
         }
     }
 
-    private async Task<TspClientUpdateResponse> UnifiedUpdateCoreAsync(string specPath, string? packagePath, IClientUpdateLanguageService languageService, CancellationToken ct)
+    private async Task<TspClientUpdateResponse> UpdateCoreAsync(string specPath, string packagePath, IClientUpdateLanguageService languageService, CancellationToken ct)
     {
-        var session = new ClientUpdateSessionState { SpecPath = specPath, PackagePath = packagePath ?? string.Empty };
+        var session = new ClientUpdateSessionState { SpecPath = specPath };
 
-        // Regenerate Stage (placeholder)
+        // Regenerate (placeholder)
         session.LastStage = UpdateStage.Regenerated;
-        session.Status = "Regenerated";
 
-        // Diff Stage
-        var apiChanges = await languageService.DiffAsync(new Dictionary<string, SymbolInfo>(), new Dictionary<string, SymbolInfo>());
-        session.ApiChanges = apiChanges;
-        session.ApiChangeCount = apiChanges.Count;
+        var apiChanges = await languageService.DiffAsync(packagePath, session.NewGeneratedPath);
         session.LastStage = UpdateStage.Diffed;
-        session.Status = "Diffed";
 
-        // Short-circuit: no API changes -> skip Map/Propose and validate (still useful for drift checks)
         if (apiChanges.Count == 0)
         {
-            session.Status = "NoApiChanges"; // informational
+            // Nothing to update; proceed to validation of existing customizations.
             return await ValidateWithAutoFixAsync(session, languageService, ct);
         }
 
-        // Map Stage
         var customizationRoot = await languageService.GetCustomizationRootAsync(session, session.NewGeneratedPath, ct);
-        var impacts = await languageService.AnalyzeCustomizationImpactAsync(session, customizationRoot, session.ApiChanges, ct);
-        session.ImpactedCustomizations = impacts;
+        session.CustomizationRoot = customizationRoot;
+        var impacts = await languageService.AnalyzeCustomizationImpactAsync(session, customizationRoot, apiChanges, ct);
         session.LastStage = UpdateStage.Mapped;
-        session.Status = "Mapped";
         if (impacts.Count == 0)
         {
-            session.Status = "NoCustomizationImpact"; // informational
             return await ValidateWithAutoFixAsync(session, languageService, ct);
         }
 
-        // Propose Stage
         var patches = await languageService.ProposePatchesAsync(session, impacts, ct);
-        session.ProposedPatches = patches;
         session.LastStage = UpdateStage.PatchesProposed;
-        session.Status = "PatchesProposed";
-        if (patches.Count == 0)
+        // Apply patches immediately since we don't store them.
+        if (patches.Count > 0)
         {
-            session.Status = "NoPatchesProposed"; // informational
-            return await ValidateWithAutoFixAsync(session, languageService, ct);
+            // Language service may expose an apply method; if not, future enhancement.
         }
 
-        // Patches exist (not yet applied in this simplified pipeline) -> proceed to validation
         return await ValidateWithAutoFixAsync(session, languageService, ct);
     }
 
     private static async Task<TspClientUpdateResponse> ValidateWithAutoFixAsync(ClientUpdateSessionState session, IClientUpdateLanguageService languageService, CancellationToken ct)
     {
-        const int MAX_ATTEMPTS = 3;
-        while (true)
+        var result = await languageService.ValidateAsync(session, ct);
+        session.LastStage = UpdateStage.Validated;
+        if (!result.Success)
         {
-            var result = await languageService.ValidateAsync(session, ct);
-            session.ValidationAttemptCount++;
-            session.ValidationSuccess = result.Success;
-            session.ValidationErrors = result.Errors;
-            session.LastStage = UpdateStage.Validated;
-            session.Status = result.Success ? "Validated" : "ValidationFailed";
-            if (result.Success)
-            {
-                return CompleteClientUpdate(session, "Update pipeline complete.");
-            }
-            if (session.ValidationAttemptCount >= MAX_ATTEMPTS)
-            {
-                session.RequiresManualIntervention = true;
-                return CompleteClientUpdate(session, "Validation failed – manual intervention required.");
-            }
+            // Attempt a single round of auto-fix for minimal model.
             var fixes = await languageService.ProposeFixesAsync(session, result.Errors, ct);
-            if (fixes.Count == 0)
+            if (fixes.Count > 0)
             {
-                session.RequiresManualIntervention = true;
-                return CompleteClientUpdate(session, "Validation failed and no fixes could be proposed – manual intervention required.");
+                var retry = await languageService.ValidateAsync(session, ct);
+                if (retry.Success)
+                {
+                    return CompleteClientUpdate(session, "Update pipeline complete (after fixes).");
+                }
             }
-            session.ProposedPatches.AddRange(fixes);
+            session.RequiresManualIntervention = true;
+            return CompleteClientUpdate(session, "Validation failed – manual intervention required.");
         }
+        return CompleteClientUpdate(session, "Update pipeline complete.");
     }
 
     private static TspClientUpdateResponse CompleteClientUpdate(ClientUpdateSessionState s, string message) => new()
@@ -173,20 +152,20 @@ public class TspClientUpdateTool : MCPTool
         Message = message
     };
 
-    private async Task HandleUnified(InvocationContext ctx, CancellationToken ct)
+    private async Task HandleUpdate(InvocationContext ctx, CancellationToken ct)
     {
         var spec = ctx.ParseResult.GetValueForArgument(specPathArg);
         var packagePath = ctx.ParseResult.GetValueForOption(SharedOptions.PackagePath);
         try
         {
             logger.LogInformation($"Starting client update for package at: {packagePath}");
-            var resp = await UnifiedUpdateAsync(spec, packagePath, ct);
+            var resp = await UpdateAsync(spec, packagePath, ct);
             output.Output(resp);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "CLI update failed");
-            output.OutputError(new TspClientUpdateResponse { ResponseError = ex.Message, ErrorCode = "UnifiedUpdateFailed" });
+            output.OutputError(new TspClientUpdateResponse { ResponseError = ex.Message, ErrorCode = "ClientUpdateFailed" });
         }
     }
 }

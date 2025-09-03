@@ -38,7 +38,7 @@ public interface ILanguageChecks
     /// </summary>
     /// <param name="packagePath">Path to the package directory</param>
     /// <returns>Result of the spelling check</returns>
-    Task<CLICheckResponse> CheckSpellingAsync(string packagePath);
+    Task<CLICheckResponse> CheckSpellingAsync(string packagePath, CancellationToken ct = default);
 
     /// <summary>
     /// Gets the SDK package path for the given repository and package path.
@@ -118,9 +118,9 @@ public class LanguageChecks : ILanguageChecks
         return await ValidateReadmeCommonAsync(packagePath, ct);
     }
 
-    public virtual async Task<CLICheckResponse> CheckSpellingAsync(string packagePath)
+    public virtual async Task<CLICheckResponse> CheckSpellingAsync(string packagePath, CancellationToken ct)
     {
-        return await CheckSpellingCommonAsync(packagePath);
+        return await CheckSpellingCommonAsync(packagePath, ct);
     }
 
     /// <summary>
@@ -225,7 +225,7 @@ public class LanguageChecks : ILanguageChecks
     /// </summary>
     /// <param name="packagePath">Absolute path to the package directory</param>
     /// <returns>CLI check response containing success/failure status and response message</returns>
-    protected async Task<CLICheckResponse> CheckSpellingCommonAsync(string packagePath)
+    protected async Task<CLICheckResponse> CheckSpellingCommonAsync(string packagePath, CancellationToken ct = default)
     {
         try
         {
@@ -246,13 +246,12 @@ public class LanguageChecks : ILanguageChecks
             // Convert absolute path to relative path from repo root
             var relativePath = Path.GetRelativePath(packageRepoRoot, packagePath);
 
-
             var npxOptions = new NpxOptions(
                 null,
                 ["cspell", "lint", "--config", cspellConfigPath, "--root", packageRepoRoot, $"." + Path.DirectorySeparatorChar + relativePath + Path.DirectorySeparatorChar + "**"],
                 logOutputStream: true
             );
-            var processResult = await _npxHelper.Run(npxOptions, ct: default);
+            var processResult = await _npxHelper.Run(npxOptions, ct: ct);
             return new CLICheckResponse(processResult);
         }
         catch (Exception ex)

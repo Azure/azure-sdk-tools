@@ -115,7 +115,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     PackageCheckType.Changelog => await RunChangelogValidation(packagePath, ct),
                     PackageCheckType.Dependency => await RunDependencyCheck(packagePath, ct),
                     PackageCheckType.Readme => await RunReadmeValidation(packagePath, ct),
-                    PackageCheckType.Cspell => await RunSpellingValidation(packagePath),
+                    PackageCheckType.Cspell => await RunSpellingValidation(packagePath, ct),
                     _ => throw new ArgumentOutOfRangeException(
                         nameof(checkType),
                         checkType,
@@ -213,11 +213,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return result;
         }
 
-        private async Task<CLICheckResponse> RunSpellingValidation(string packagePath)
+        private async Task<CLICheckResponse> RunSpellingValidation(string packagePath, CancellationToken ct = default)
         {
             logger.LogInformation("Running spelling validation");
 
-            var result = await languageChecks.CheckSpellingAsync(packagePath);
+            var result = await languageChecks.CheckSpellingAsync(packagePath, ct);
             return result;
         }
 

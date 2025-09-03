@@ -297,11 +297,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 {
                     return "No SDK information provided to update the release plan.";
                 }
-
                 logger.LogInformation($"Updating SDK details in release plan work item ID: {releasePlanWorkItemId}");
                 logger.LogDebug($"SDK details to update: {sdkDetails}");
                 // Fix for CS8600: Ensure sdkDetails is not null before deserialization
-                List<SDKInfo>? SdkInfos = JsonSerializer.Deserialize<List<SDKInfo>>(sdkDetails);
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+                List<SDKInfo>? SdkInfos = JsonSerializer.Deserialize<List<SDKInfo>>(sdkDetails, options);
                 if (SdkInfos == null)
                 {
                     return "Failed to deserialize SDK details.";

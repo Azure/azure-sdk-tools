@@ -83,9 +83,17 @@ public class SdkBuildToolTests
     [Test]
     public async Task BuildSdkAsync_PythonProject_SkipsBuild()
     {
-        // Arrange - Create a path that contains "azure-sdk-for-python"
-        var pythonProjectPath = Path.Combine(_tempDirectory, "azure-sdk-for-python", "sdk", "storage", "azure-storage-blob");
+        // Arrange - Create a path and mock GitHelper to return Python repo URI
+        var pythonProjectPath = Path.Combine(_tempDirectory, "sdk", "storage", "azure-storage-blob");
         Directory.CreateDirectory(pythonProjectPath);
+        
+        // Mock GitHelper to return a Python SDK remote URI
+        _mockGitHelper
+            .Setup(x => x.DiscoverRepoRoot(pythonProjectPath))
+            .Returns(_tempDirectory);
+        _mockGitHelper
+            .Setup(x => x.GetRepoRemoteUri(pythonProjectPath))
+            .Returns(new Uri("https://github.com/Azure/azure-sdk-for-python.git"));
 
         // Act
         var result = await _tool.BuildSdkAsync(pythonProjectPath);
@@ -116,6 +124,9 @@ public class SdkBuildToolTests
     {
         // Arrange
         _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory)).Returns(_tempDirectory);
+        _mockGitHelper
+            .Setup(x => x.GetRepoRemoteUri(_tempDirectory))
+            .Returns(new Uri("https://github.com/Azure/azure-sdk-for-net.git"));
 
         // Act - Check for eng/spec-gen-sdk-config.json
         var result = await _tool.BuildSdkAsync(_tempDirectory);
@@ -129,6 +140,9 @@ public class SdkBuildToolTests
     {
         // Arrange - Create invalid JSON config file to test real JSON parsing
         _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory)).Returns(_tempDirectory);
+        _mockGitHelper
+            .Setup(x => x.GetRepoRemoteUri(_tempDirectory))
+            .Returns(new Uri("https://github.com/Azure/azure-sdk-for-net.git"));
         
         var engDir = Path.Combine(_tempDirectory, EngDirectoryName);
         Directory.CreateDirectory(engDir);

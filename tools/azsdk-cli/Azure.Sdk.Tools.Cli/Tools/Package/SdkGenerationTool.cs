@@ -19,8 +19,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     public class SdkGenerationTool: MCPTool
     {
         // Command names
-        private const string generateSdkCommandName = "generate";
-        private const int commandTimeoutInMinutes = 30;
+        private const string GenerateSdkCommandName = "generate";
+        private const int CommandTimeoutInMinutes = 30;
 
         // Generate command options
         private readonly Option<string> localSdkRepoPathOpt = new(["--local-sdk-repo-path", "-r"], "Absolute path to the local azure-sdk-for-{language} repository") { IsRequired = false };
@@ -48,7 +48,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
         public override Command GetCommand()
         {
-            var command = new Command(generateSdkCommandName, "Generates SDK code for a specified language based on the provided 'tspconfig.yaml' or 'tsp-location.yaml'.") { localSdkRepoPathOpt, tspConfigPathOpt, specCommitShaOpt, specRepoFullNameOpt, tspLocationPathOpt, emitterOpt };
+            var command = new Command(GenerateSdkCommandName, "Generates SDK code for a specified language based on the provided 'tspconfig.yaml' or 'tsp-location.yaml'.") { localSdkRepoPathOpt, tspConfigPathOpt, specCommitShaOpt, specRepoFullNameOpt, tspLocationPathOpt, emitterOpt };
             command.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
 
             return command;
@@ -169,7 +169,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 ["tsp-client", "update"],
                 logOutputStream: true,
                 workingDirectory: tspLocationDirectory,
-                timeout: TimeSpan.FromMinutes(commandTimeoutInMinutes)
+                timeout: TimeSpan.FromMinutes(CommandTimeoutInMinutes)
             );
 
             var tspClientResult = await npxHelper.Run(npxOptions, ct);
@@ -207,7 +207,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 arguments.ToArray(),
                 logOutputStream: true,
                 workingDirectory: localSdkRepoPath,
-                timeout: TimeSpan.FromMinutes(commandTimeoutInMinutes)
+                timeout: TimeSpan.FromMinutes(CommandTimeoutInMinutes)
             );
 
             var tspClientResult = await npxHelper.Run(npxOptions, ct);

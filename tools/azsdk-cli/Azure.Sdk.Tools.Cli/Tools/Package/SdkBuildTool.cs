@@ -19,8 +19,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     public class SdkBuildTool: MCPTool
     {
         // Command names
-        private const string buildSdkCommandName = "build";
-        private const int commandTimeoutInMinutes = 30;
+        private const string BuildSdkCommandName = "build";
+        private const string AzureSdkForPythonRepoName = "azure-sdk-for-python";
+        private const int CommandTimeoutInMinutes = 30;
 
         private readonly IOutputHelper output;
         private readonly IProcessHelper processHelper;
@@ -38,7 +39,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
         public override Command GetCommand()
         {
-            var command = new Command(buildSdkCommandName, "Builds SDK source code for a specified language and project.");
+            var command = new Command(BuildSdkCommandName, "Builds SDK source code for a specified language and project.");
             command.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
             command.AddOption(SharedOptions.PackagePath);
 
@@ -76,13 +77,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     return CreateFailureResponse($"Path does not exist: {packagePath}");
                 }
 
-                // Return if the project is python project
-                if (packagePath.Contains("azure-sdk-for-python", StringComparison.OrdinalIgnoreCase))
-                {
-                    logger.LogInformation("Python SDK project detected. Skipping build step as Python SDKs do not require a build process.");
-                    return CreateSuccessResponse("Python SDK project detected. Skipping build step as Python SDKs do not require a build process.");
-                }
-
                 // Get repository root path from project path
                 string sdkRepoRoot = gitHelper.DiscoverRepoRoot(packagePath);
                 if (string.IsNullOrEmpty(sdkRepoRoot))
@@ -91,6 +85,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 }
 
                 logger.LogInformation($"Repository root path: {sdkRepoRoot}");
+
+                // Return if the project is python project
+                if (gitHelper.GetRepoRemoteUri(packagePath).ToString().Contains(AzureSdkForPythonRepoName, StringComparison.OrdinalIgnoreCase))
+                {
+                    logger.LogInformation("Python SDK project detected. Skipping build step as Python SDKs do not require a build process.");
+                    return CreateSuccessResponse("Python SDK project detected. Skipping build step as Python SDKs do not require a build process.");
+                }
 
                 // Get the build script path and resolve full path
                 string fullBuildScriptPath;
@@ -123,7 +124,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     ["--module-dir", packagePath],
                     logOutputStream: true,
                     workingDirectory: sdkRepoRoot,
-                    timeout: TimeSpan.FromMinutes(commandTimeoutInMinutes)
+                    timeout: TimeSpan.FromMinutes(CommandTimeoutInMinutes)
                 );
                 var buildResult = await processHelper.Run(options, ct);
                 var trimmedBuildResult = (buildResult.Output ?? string.Empty).Trim();

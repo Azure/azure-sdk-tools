@@ -170,8 +170,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         /// <returns>For invalid directories, or failures, an appropriate TspToolResponse, otherwise null</returns>
         private TspToolResponse CheckAndCreateDirectory(string fullOutputDirectory)
         {
-            Console.WriteLine($"Full output directory = {fullOutputDirectory}");
-
             if (!Directory.Exists(fullOutputDirectory))
             {
                 Directory.CreateDirectory(fullOutputDirectory);

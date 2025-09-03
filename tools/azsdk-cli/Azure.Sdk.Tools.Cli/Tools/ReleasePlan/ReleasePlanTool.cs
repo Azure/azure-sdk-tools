@@ -297,7 +297,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 {
                     return "No SDK information provided to update the release plan.";
                 }
-
+                // Ideally property name should be in camel case but to support different case in input from agent, replacing property names here.
+                sdkDetails = sdkDetails.Replace("\"Language\"", "\"language\"").Replace("\"PackageName\"", "\"packageName\"");
                 logger.LogInformation($"Updating SDK details in release plan work item ID: {releasePlanWorkItemId}");
                 logger.LogDebug($"SDK details to update: {sdkDetails}");
                 // Fix for CS8600: Ensure sdkDetails is not null before deserialization

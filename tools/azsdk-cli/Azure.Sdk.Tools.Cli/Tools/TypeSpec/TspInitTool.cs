@@ -3,7 +3,6 @@
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.ComponentModel;
-using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using ModelContextProtocol.Server;
@@ -20,12 +19,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
     public class TypeSpecInitTool : MCPTool
     {
         private readonly INpxHelper npxHelper;
+        private readonly IGitHelper gitHelper;
         private readonly ILogger<TypeSpecInitTool> logger;
         private readonly IOutputHelper output;
 
-        public TypeSpecInitTool(INpxHelper npxHelper, ILogger<TypeSpecInitTool> logger, IOutputHelper output)
+        public TypeSpecInitTool(INpxHelper npxHelper, IGitHelper gitHelper, ILogger<TypeSpecInitTool> logger, IOutputHelper output)
         {
             this.npxHelper = npxHelper;
+            this.gitHelper = gitHelper;
             this.logger = logger;
             this.output = output;
             CommandHierarchy = [SharedCommandGroups.TypeSpec];
@@ -76,11 +77,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         }
 
         public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
-        {
-            await HandleInitCommandAsync(ctx, ct);
-        }
-
-        private async Task HandleInitCommandAsync(InvocationContext ctx, CancellationToken ct)
         {
             try
             {
@@ -146,18 +142,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                     };
                 }
 
-                // Validate outputDirectory using FileHelper
-                var validationResult = FileHelper.ValidateEmptyDirectory(outputDirectory);
-                if (validationResult != null)
+                var fullOutputDir = Path.GetFullPath(outputDirectory.Trim());
+
+                if (CheckAndCreateDirectory(fullOutputDir) is TspToolResponse resp)
                 {
-                    SetFailure();
-                    return new TspToolResponse
-                    {
-                        ResponseError = $"Failed: Invalid --output-directory, {validationResult}"
-                    };
+                    return resp;
                 }
 
-                var fullOutputDir = Path.GetFullPath(outputDirectory.Trim());
                 return await RunTspInitAsync(outputDirectory: fullOutputDir, template: template, serviceNamespace: normalizedServiceName, isCli, ct);
             }
             catch (Exception ex)
@@ -169,6 +160,51 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                     ResponseError = $"Failed: An error occurred trying to initialize TypeSpec project in '{outputDirectory}': {ex.Message}"
                 };
             }
+        }
+
+        /// <summary>
+        /// Checks the output directory to ensure it's under the azure-rest-api-specs repo, and creates if it necessary. 
+        /// Fails if the output directory is non-empty.
+        /// </summary>
+        /// <param name="fullOutputDirectory">A full path to the output directory, as returned by <see cref="Path.GetFullPath"/></param>
+        /// <returns>For invalid directories, or failures, an appropriate TspToolResponse, otherwise null</returns>
+        private TspToolResponse CheckAndCreateDirectory(string fullOutputDirectory)
+        {
+            Console.WriteLine($"Full output directory = {fullOutputDirectory}");
+
+            if (!Directory.Exists(fullOutputDirectory))
+            {
+                Directory.CreateDirectory(fullOutputDirectory);
+            }
+
+            if (FileHelper.ValidateEmptyDirectory(fullOutputDirectory) is string validationResult)
+            {
+                SetFailure();
+                return new TspToolResponse
+                {
+                    ResponseError = $"Failed: Invalid --output-directory, {validationResult}"
+                };
+            }
+
+            if (gitHelper.GetRepoName(fullOutputDirectory) is string repoName && repoName != "azure-rest-api-specs")
+            {
+                SetFailure();
+                return new TspToolResponse
+                {
+                    ResponseError = $"Failed: Invalid --output-directory, must be within the azure-rest-api-specs repo"
+                };
+            }
+
+            if (!fullOutputDirectory.Contains(Path.DirectorySeparatorChar + "specification" + Path.DirectorySeparatorChar))
+            {
+                SetFailure();
+                return new TspToolResponse
+                {
+                    ResponseError = $"Failed: Invalid --output-directory, must be under <azure-rest-api-specs>{Path.DirectorySeparatorChar}specifications"
+                };
+            }
+
+            return null;
         }
 
         private async Task<TspToolResponse> RunTspInitAsync(string outputDirectory, string template, string serviceNamespace, bool isCli, CancellationToken ct)
@@ -207,7 +243,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             return new TspToolResponse
             {
                 IsSuccessful = true,
-                TypeSpecProjectPath = outputDirectory
+                TypeSpecProjectPath = outputDirectory,
+                NextSteps = [
+                    $"Your project has been generated at {outputDirectory}. From here you can build and edit the project using these commands:",
+                    $"  1. cd {outputDirectory}",
+                    "  2. Install dependencies: npx tsp install",
+                    "  3. Compile the TypeSpec for your service: npx tsp compile ."
+                ]
             };
         }
     }

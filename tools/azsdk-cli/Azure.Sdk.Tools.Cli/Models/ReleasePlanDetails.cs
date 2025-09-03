@@ -1,6 +1,5 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-using System.Text.Json.Serialization;
 using Microsoft.VisualStudio.Services.WebApi.Patch.Json;
 
 namespace Azure.Sdk.Tools.Cli.Models
@@ -131,7 +130,6 @@ namespace Azure.Sdk.Tools.Cli.Models
 
     public class SDKInfo
     {
-
         public string Language { get; set; } = string.Empty;
         public string GenerationPipelineUrl { get; set; } = string.Empty;
         public string SdkPullRequestUrl {  get; set; } = string.Empty;

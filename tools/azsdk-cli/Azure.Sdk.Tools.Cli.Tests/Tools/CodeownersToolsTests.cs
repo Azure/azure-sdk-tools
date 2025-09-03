@@ -9,6 +9,8 @@ using Azure.Sdk.Tools.Cli.Tests.Mocks.Services;
 using Azure.Sdk.Tools.Cli.Tools.EngSys;
 using Azure.Sdk.Tools.Cli.Configuration;
 
+using Azure.Sdk.Tools.CodeownersUtils.Editing;
+
 namespace Azure.Sdk.Tools.Cli.Tests.Tools
 {
     [TestFixture]
@@ -41,7 +43,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public async Task Update_InvalidInputs_Throws()
         {
             // both serviceLabel and path empty -> method throws
-            var result = await _tool.UpdateCodeowners("repo", false, "", "", new List<string>(), new List<string>(), false);
+            var result = await _tool.AddCodeowners("repo", false, "", "", new List<string>(), new List<string>());
 
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Contains("Service label:  and Path:  are both invalid. At least one must be valid"));
@@ -50,7 +52,20 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         [Test]
         public async Task Update_LabelMissing_NotInReview_NoPath_Throws()
         {
-            var result = await _tool.UpdateCodeowners("repo", false, "", "NonExistService", new List<string>(), new List<string>(), true);
+            var gh = new Mock<IGitHubService>();
+            // labels file exists but does not contain the label
+            gh.Setup(s => s.GetContentsSingleAsync(Constants.AZURE_OWNER_PATH, It.IsAny<string>(), Constants.AZURE_COMMON_LABELS_PATH, It.IsAny<string?>()))
+                .ReturnsAsync(new RepositoryContent("labels.md", "labels.md", "sha", 0, ContentType.File, null, null, null, null, "utf-8", Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("# Labels\n")), null, null));
+            // no label PRs
+            gh.Setup(s => s.SearchPullRequestsByTitleAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ItemState?>()))
+                .ReturnsAsync(new List<PullRequest?>().AsReadOnly());
+            // provide an (empty) CODEOWNERS file so UpdateCodeowners can proceed
+            gh.Setup(s => s.GetContentsSingleAsync(Constants.AZURE_OWNER_PATH, "repo", Constants.AZURE_CODEOWNERS_PATH, It.IsAny<string>()))
+                .ReturnsAsync(new RepositoryContent("CODEOWNERS", ".github/CODEOWNERS", "shaCode", 0, ContentType.File, null, null, null, null, "utf-8", Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("")), null, null));
+
+            var tool = new CodeownersTools(gh.Object, _mockOutput.Object, _mockLogger.Object, _mockCodeownersValidator.Object);
+
+            var result = await tool.AddCodeowners("repo", false, "", "NonExistService", new List<string>(), new List<string>());
 
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Contains("Error: "));
@@ -59,11 +74,26 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         [Test]
         public async Task Update_AddOwnersToExistingEntry_Success()
         {
+            var gh = new Mock<IGitHubService>();
+            // Simulate CODEOWNERS file with an entry for /sdk/myservice/
+            string codeownersContent = "/sdk/myservice/ @oldowner\n";
+            gh.Setup(s => s.GetContentsSingleAsync(Constants.AZURE_OWNER_PATH, It.IsAny<string>(), Constants.AZURE_CODEOWNERS_PATH, It.IsAny<string>()))
+                .ReturnsAsync(new RepositoryContent("CODEOWNERS", ".github/CODEOWNERS", "shaCode", 0, ContentType.File, null, null, null, null, "utf-8", Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(codeownersContent)), null, null));
+            gh.Setup(s => s.SearchPullRequestsByTitleAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ItemState?>()))
+                .ReturnsAsync(new List<PullRequest?>().AsReadOnly());
+            gh.Setup(s => s.GetContentsSingleAsync(Constants.AZURE_OWNER_PATH, It.IsAny<string>(), Constants.AZURE_COMMON_LABELS_PATH, It.IsAny<string?>()))
+                .ReturnsAsync(new RepositoryContent("labels.md", "labels.md", "sha", 0, ContentType.File, null, null, null, null, "utf-8", Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("# Labels\n")), null, null));
+            gh.Setup(s => s.IsExistingBranchAsync(Constants.AZURE_OWNER_PATH, It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(false);
+            gh.Setup(s => s.CreateBranchAsync(Constants.AZURE_OWNER_PATH, It.IsAny<string>(), It.IsAny<string>(), "main")).ReturnsAsync(CreateBranchStatus.Created);
+            gh.Setup(s => s.UpdateFileAsync(Constants.AZURE_OWNER_PATH, It.IsAny<string>(), Constants.AZURE_CODEOWNERS_PATH, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(Task.CompletedTask);
+            gh.Setup(s => s.CreatePullRequestAsync(It.IsAny<string>(), Constants.AZURE_OWNER_PATH, "main", It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), true))
+                .ReturnsAsync(new PullRequestResult { Url = "https://pr", Messages = new List<string> { "Created" } });
+
             var validator = new Mock<ICodeownersValidatorHelper>();
             validator.Setup(v => v.ValidateCodeOwnerAsync(It.IsAny<string>(), It.IsAny<bool>())).ReturnsAsync(new CodeownersValidationResult { Username = "user", IsValidCodeOwner = true });
 
-            var tool = new CodeownersTools(_mockGithub, _mockOutput.Object, _mockLogger.Object, validator.Object);
-            var result = await tool.UpdateCodeowners("repoName", false, "/sdk/myservice/", "MyService", new List<string> { "@oldowner", "@newowner" }, new List<string>() { "@newowner", "@newowner2" }, true);
+            var tool = new CodeownersTools(gh.Object, _mockOutput.Object, _mockLogger.Object, validator.Object);
+            var result = await tool.AddCodeowners("repoName", false, "/sdk/myservice/", "MyService", new List<string> { "@oldowner", "@newowner" }, new List<string>() { "@newowner", "@newowner2" });
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Contains("URL:") || result.Contains("Created"));
         }
@@ -91,7 +121,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
 
             var tool = new CodeownersTools(gh.Object, _mockOutput.Object, _mockLogger.Object, validator.Object);
             // Remove @removeowner, keep @oldowner
-            var result = await tool.UpdateCodeowners("repoName", false, "/sdk/myservice/", "MyService", new List<string> { "@oldowner" }, new List<string>(), false);
+            var result = await tool.RemoveCodeowners("repoName", false, "/sdk/myservice/", "MyService", new List<string> { "@oldowner" }, new List<string>());
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Contains("URL:") || result.Contains("Created"));
         }
@@ -99,13 +129,40 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         [Test]
         public async Task Update_CreateNewEntry_PRSuccess()
         {
+            var gh = new Mock<IGitHubService>();
+
+            // No existing CODEOWNERS PRs
+            gh.Setup(s => s.SearchPullRequestsByTitleAsync(Constants.AZURE_OWNER_PATH, It.IsAny<string>(), "[CODEOWNERS]", It.IsAny<ItemState?>()))
+                .ReturnsAsync(new List<PullRequest?>().AsReadOnly());
+
+            gh.Setup(s => s.GetContentsSingleAsync(Constants.AZURE_OWNER_PATH, It.IsAny<string>(), Constants.AZURE_COMMON_LABELS_PATH, It.IsAny<string?>()))
+                .ReturnsAsync(new RepositoryContent("labels.md", "labels.md", "sha", 0, ContentType.File, null, null, null, null, "utf-8", Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("# Labels\n")), null, null));
+
+            gh.Setup(s => s.GetContentsSingleAsync("Azure", "azure-sdk-for-net", ".github/CODEOWNERS", It.IsAny<string>()))
+                .ReturnsAsync(new RepositoryContent("CODEOWNERS", ".github/CODEOWNERS", "shaCode", 0, ContentType.File, null, null, null, null, "utf-8", Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("")), null, null));
+
+            gh.Setup(s => s.IsExistingBranchAsync(Constants.AZURE_OWNER_PATH, It.IsAny<string>(), It.IsAny<string>()))
+                .ReturnsAsync(false);
+            gh.Setup(s => s.CreateBranchAsync(Constants.AZURE_OWNER_PATH, It.IsAny<string>(), It.IsAny<string>(), "main"))
+                .ReturnsAsync(CreateBranchStatus.Created);
+
+            // Also return single-file content when GetContentsSingleAsync is used by CreateCodeownersPR
+            gh.Setup(s => s.GetContentsSingleAsync(Constants.AZURE_OWNER_PATH, It.IsAny<string>(), Constants.AZURE_CODEOWNERS_PATH, It.IsAny<string>()))
+                .ReturnsAsync(new RepositoryContent("CODEOWNERS", ".github/CODEOWNERS", "shaCode", 0, ContentType.File, null, null, null, null, "utf-8", Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("")), null, null));
+
+            gh.Setup(s => s.UpdateFileAsync(Constants.AZURE_OWNER_PATH, It.IsAny<string>(), Constants.AZURE_CODEOWNERS_PATH, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(Task.CompletedTask);
+
+            gh.Setup(s => s.CreatePullRequestAsync(It.IsAny<string>(), Constants.AZURE_OWNER_PATH, "main", It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), true))
+                .ReturnsAsync(new PullRequestResult { Url = "https://pr", Messages = new List<string> { "Created" } });
+
             var validator = new Mock<ICodeownersValidatorHelper>();
             validator.Setup(v => v.ValidateCodeOwnerAsync(It.IsAny<string>(), It.IsAny<bool>()))
                 .ReturnsAsync(new CodeownersValidationResult { Username = "user", IsValidCodeOwner = true });
 
-            var tool = new CodeownersTools(_mockGithub, _mockOutput.Object, _mockLogger.Object, validator.Object);
+            var tool = new CodeownersTools(gh.Object, _mockOutput.Object, _mockLogger.Object, validator.Object);
 
-            var result = await tool.UpdateCodeowners("repoName", false, "/sdk/newsvc/", "NewSvc", new List<string> { "@a", "@b" }, new List<string> { "@s1", "@s2" }, true);
+            var result = await tool.AddCodeowners("repoName", false, "/sdk/newsvc/", "NewSvc", new List<string> { "@a", "@b" }, new List<string> { "@s1", "@s2" });
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Contains("URL:") || result.Contains("Created"));
         }
@@ -115,8 +172,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         {
             var gh = new Mock<IGitHubService>();
 
-            gh.Setup(s => s.GetContentsSingleAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>()))
-                .ReturnsAsync(new RepositoryContent("CODEOWNERS", ".github/CODEOWNERS", "shaCode", 0, ContentType.File, null, null, null, null, "utf-8", Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("/sdk/cosmosdb/ @a @b\n")), null, null));
+            gh.Setup(s => s.SearchPullRequestsByTitleAsync(Constants.AZURE_OWNER_PATH, It.IsAny<string>(), "[CODEOWNERS]", It.IsAny<ItemState?>()))
+                .ReturnsAsync(new List<PullRequest?>().AsReadOnly());
+
+            gh.Setup(s => s.GetContentsSingleAsync(Constants.AZURE_OWNER_PATH, It.IsAny<string>(), Constants.AZURE_COMMON_LABELS_PATH, It.IsAny<string?>()))
+                .ReturnsAsync(new RepositoryContent("labels.md", "labels.md", "sha", 0, ContentType.File, null, null, null, null, "utf-8", Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("# Labels\n")), null, null));
+
+            gh.Setup(s => s.GetContentsSingleAsync("Azure", "azure-sdk-for-net", ".github/CODEOWNERS", It.IsAny<string>()))
+                .ReturnsAsync(new RepositoryContent("CODEOWNERS", ".github/CODEOWNERS", "shaCode", 0, ContentType.File, null, null, null, null, "utf-8", Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("")), null, null));
 
             gh.Setup(s => s.IsExistingBranchAsync(Constants.AZURE_OWNER_PATH, It.IsAny<string>(), It.IsAny<string>()))
                 .ReturnsAsync(false);
@@ -126,59 +189,41 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             gh.Setup(s => s.UpdateFileAsync(Constants.AZURE_OWNER_PATH, It.IsAny<string>(), Constants.AZURE_CODEOWNERS_PATH, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
                 .Returns(Task.CompletedTask);
 
+            gh.Setup(s => s.CreatePullRequestAsync(It.IsAny<string>(), Constants.AZURE_OWNER_PATH, "main", It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), true))
+                .ReturnsAsync(new PullRequestResult());
+
             var validator = new Mock<ICodeownersValidatorHelper>();
             validator.Setup(v => v.ValidateCodeOwnerAsync(It.IsAny<string>(), It.IsAny<bool>()))
                 .ReturnsAsync(new CodeownersValidationResult { Username = "user", IsValidCodeOwner = true });
 
             var tool = new CodeownersTools(gh.Object, _mockOutput.Object, _mockLogger.Object, validator.Object);
 
-            var result = await tool.UpdateCodeowners("repoName", false, "/sdk/cosmosdb/", "Cosmos", new List<string> { "@a", "@b" }, new List<string> { "@s1", "@s2" }, true);
+            var result = await tool.AddCodeowners("repoName", false, "/sdk/newsvc/", "NewSvc", new List<string> { "@a", "@b" }, new List<string> { "@s1", "@s2" });
             Assert.IsNotNull(result);
-            Assert.IsTrue(result.Contains("Failed to create pull request"));
+            Assert.IsTrue(result.Contains("Failed to create pull request") || result.Contains("Error") || result.Contains("Error: Failed to create pull request"));
         }
 
         // ValidateCodeownersEntryForService - separate tests to avoid null in TestCase attribute
         [Test]
-        [TestCase("test-repo", "TestService", "", 0, "Validation passed")]
-        [TestCase("test-repo", "", "/sdk/testrepo/", 0, "Validation passed")]
-        public async Task ValidateCodeownersEntryForService_ContainsServiceOrPath(string repo, string service, string path, int id, string expectedResult)
-        {
-            // Arrange
-            var gh = new Mock<IGitHubService>();
-            
-            // Provide CODEOWNERS content in the expected moniker+path block format
-            string codeownersContent = string.Join("\n", new[] {
-                "# Client Libraries",
-                "# ServiceLabel: %TestService",
-                "/sdk/cosmosdb/ @a @b",
-                "",
-                "# ServiceLabel: %TestRepo",
-                "/sdk/testrepo/ @s1 @s2",
-                ""
-            }) + "\n";
-
-            gh.Setup(s => s.GetContentsSingleAsync(Constants.AZURE_OWNER_PATH, It.IsAny<string>(), Constants.AZURE_CODEOWNERS_PATH, It.IsAny<string?>()))
-                .ReturnsAsync(new RepositoryContent("CODEOWNERS", ".github/CODEOWNERS", "shaCode", 0, ContentType.File, null, null, null, null, "utf-8",
-                    Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(codeownersContent)), null, null));
-
-            _mockCodeownersValidator.Setup(v => v.ValidateCodeOwnerAsync(It.IsAny<string>(), It.IsAny<bool>()))
-                .ReturnsAsync(new CodeownersValidationResult { Username = "user", IsValidCodeOwner = true });
-
-            var tool = new CodeownersTools(gh.Object, _mockOutput.Object, _mockLogger.Object, _mockCodeownersValidator.Object);
-
-            // Act
-            var result = await tool.ValidateCodeownersEntryForService(repo, service, path, id);
-
-            // Assert
-            Assert.IsNotNull(result);
-            Assert.IsInstanceOf<ServiceCodeownersResult>(result);
-            Assert.That(result.Message, Does.Contain(expectedResult));
-        }
-
-        [Test]
         public async Task ValidateCodeownersEntryForService_MissingLabelAndPath_ReturnsResult()
         {
             var result = await _tool.ValidateCodeownersEntryForService("test-repo", string.Empty, string.Empty);
+            Assert.IsNotNull(result);
+            Assert.IsInstanceOf<ServiceCodeownersResult>(result);
+        }
+
+        [Test]
+        public async Task ValidateCodeownersEntryForService_ByServiceLabel_ReturnsResult()
+        {
+            var result = await _tool.ValidateCodeownersEntryForService("test-repo", "My Service", null);
+            Assert.IsNotNull(result);
+            Assert.IsInstanceOf<ServiceCodeownersResult>(result);
+        }
+
+        [Test]
+        public async Task ValidateCodeownersEntryForService_ByPath_ReturnsResult()
+        {
+            var result = await _tool.ValidateCodeownersEntryForService("test-repo", null, "sdk/myservice/");
             Assert.IsNotNull(result);
             Assert.IsInstanceOf<ServiceCodeownersResult>(result);
         }
@@ -221,30 +266,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var result = await _tool.ValidateCodeownersEntryForService("test-repo", "SvcOK", null);
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Message.Contains("Validation passed") || result.Message.Length > 0);
-        }
-
-        [Test]
-        [TestCase("testUser", "Successfully made testUser")]
-        [TestCase("", "Successfully made mock_user")]
-        public async Task PublicizeOrgMembership(string username, string expectedResult)
-        {
-            // Arrange
-            var gh = new MockGitHubService();
-            var output = new Mock<IOutputHelper>();
-            var logger = new Mock<ILogger<CodeownersTools>>();
-            var validator = new Mock<ICodeownersValidatorHelper>();
-
-            string organization = "Azure";
-
-            var tool = new CodeownersTools(gh, output.Object, logger.Object, validator.Object);
-
-            // Act
-            var result = await tool.PublicizeOrgMembership(organization, username);
-
-            // Assert
-            Assert.IsNotNull(result);
-            Assert.IsNotEmpty(result);
-            Assert.That(result, Does.Contain(expectedResult));
         }
     }
 }

@@ -197,7 +197,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
         {
             var lines = new List<string>();
 
-            bool addSeperationLine = false;
+            bool addSeparationLine = false;
 
             string path = this.PathExpression ?? string.Empty;
             List<string> serviceLabels = this.ServiceLabels ?? new List<string>();
@@ -223,19 +223,17 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
                     .Where(lbl => !string.IsNullOrWhiteSpace(lbl))
                     .Select(lbl => lbl.StartsWith("%") ? lbl : $"%{lbl}");
                 lines.Add($"# PRLabel: {string.Join(" ", formattedPRLabels)}");
-                addSeperationLine = true;
+                addSeparationLine = true;
             }
 
             // Add the path and source owners line
             if (!string.IsNullOrEmpty(path) && sourceOwners != null && sourceOwners.Count > 0)
             {
-                addSeperationLine = true;
+                addSeparationLine = true;
                 // Normalize and deduplicate source owners while preserving original casing
                 var normalizedSourceOwners = sourceOwners
                     .Where(o => !string.IsNullOrWhiteSpace(o))
-                    .Select(o => o.Trim())
-                    .Select(o => o.StartsWith("@") ? o.Substring(1) : o)
-                    .Select(o => o.Trim())
+                    .Select(o => o.Trim().TrimStart('@').Trim())
                     .ToList();
 
                 var uniqueSourceOwners = new List<string>();
@@ -254,7 +252,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
                 lines.Add(pathLine);
             }
 
-            if (addSeperationLine)
+            if (addSeparationLine)
             {
                 lines.Add("");
             }
@@ -273,9 +271,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
             {
                 var normalizedAzureSdkOwners = azureSDKOwners
                     .Where(o => !string.IsNullOrWhiteSpace(o))
-                    .Select(o => o.Trim())
-                    .Select(o => o.StartsWith("@") ? o.Substring(1) : o)
-                    .Select(o => o.Trim())
+                    .Select(o => o.Trim().TrimStart('@').Trim())
                     .ToList();
 
                 var uniqueAzureSdkOwnersList = new List<string>();
@@ -299,9 +295,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Parsing
             {
                 var normalizedServiceOwners = serviceOwners
                     .Where(o => !string.IsNullOrWhiteSpace(o))
-                    .Select(o => o.Trim())
-                    .Select(o => o.StartsWith("@") ? o.Substring(1) : o)
-                    .Select(o => o.Trim())
+                    .Select(o => o.Trim().TrimStart('@').Trim())
                     .ToList();
 
                 var uniqueServiceOwners = new List<string>();

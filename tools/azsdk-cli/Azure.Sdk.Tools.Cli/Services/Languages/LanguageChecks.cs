@@ -2,6 +2,7 @@ using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Microagents;
+using Azure.Sdk.Tools.Cli.Microagents.Tools;
 using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.Cli.Services;
@@ -235,9 +236,10 @@ public class LanguageChecks : ILanguageChecks
                 - Follow the format specified in https://github.com/Azure/azure-sdk/blob/main/docs/policies/README-TEMPLATE.md
                 - Keep all existing version entries and their content
                 - Ensure proper markdown formatting
-                - Maintain chronological order (newest versions first)
+                - Maintain chronological order (newest versions first), the most recent release should be set to today's date (use GetCurrentDate tool to get the current date)
                 - Include proper date formats
                 - Fix any formatting issues identified in the validation
+                - Add changelog content based on the latest git changes using the ReadChangedFilesTool, do not add content to the changelog regarding the changes made to the changelog itself.
 
                 Please provide the corrected changelog content. Use the validate_changelog_tool to check your work.
                 """;
@@ -250,11 +252,16 @@ public class LanguageChecks : ILanguageChecks
                 Tools =
                 [
                     AgentTool<ChangelogContents, ChangelogValidationResult>.FromFunc("validate_changelog_tool", 
-                        "Validates changelog content and provides suggestions for fixes", 
-                        ValidateChangelogContent),
+                        "Validates changelog content by writing it to the file and running full validation", 
+                        async (contents, ct) => await ValidateChangelogContentWithFile(contents, changelogPath, packagePath, ct)),
                     AgentTool<ChangelogContents, ReadFileResult>.FromFunc("read_changelog_tool", 
                         "Reads the current changelog file content", 
-                        async (contents, ct) => new ReadFileResult(originalContent))
+                        async (contents, ct) => {
+                            var currentContent = await File.ReadAllTextAsync(changelogPath, ct);
+                            return new ReadFileResult(currentContent);
+                        }),
+                    new ReadChangedFilesTool(packagePath, _processHelper, _gitHelper),
+                    new GetDateTool()
                 ]
             }, ct);
 
@@ -288,19 +295,20 @@ public class LanguageChecks : ILanguageChecks
     public record ChangelogContents(string Contents);
     public record ChangelogValidationResult(IEnumerable<string> Issues, bool IsValid);
     public record ReadFileResult(string Content);
+    public record GitChangedFilesResult(IEnumerable<string> ChangedFiles, IEnumerable<string> StagedFiles, IEnumerable<string> UntrackedFiles);
 
-    private async Task<ChangelogValidationResult> ValidateChangelogContent(ChangelogContents contents, CancellationToken ct)
+    private async Task<ChangelogValidationResult> ValidateChangelogContentWithFile(ChangelogContents contents, string changelogPath, string packagePath, CancellationToken ct)
     {
-        // Write content to a temporary file and validate it
-        var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-        Directory.CreateDirectory(tempDir);
+        // Save current content as backup
+        var originalContent = await File.ReadAllTextAsync(changelogPath, ct);
         
         try
         {
-            var tempChangelogPath = Path.Combine(tempDir, "CHANGELOG.md");
-            await File.WriteAllTextAsync(tempChangelogPath, contents.Contents, ct);
+            // Write the new content to the actual file
+            await File.WriteAllTextAsync(changelogPath, contents.Contents, ct);
             
-            var validationResult = await ValidateChangelogCommonAsync(tempDir, ct);
+            // Run full validation on the actual file
+            var validationResult = await ValidateChangelogCommonAsync(packagePath, ct);
             
             var issues = new List<string>();
             if (validationResult.ExitCode != 0)
@@ -312,13 +320,12 @@ public class LanguageChecks : ILanguageChecks
         }
         catch (Exception ex)
         {
-            // If validation fails due to missing scripts or other issues, consider it valid for now
-            _logger.LogWarning(ex, "Could not validate changelog content, considering it valid");
-            return new ChangelogValidationResult(new List<string>(), true);
+            return new ChangelogValidationResult(new[] { $"Validation error: {ex.Message}" }, false);
         }
         finally
         {
-            try { Directory.Delete(tempDir, true); } catch { }
+            // Always restore the original content after validation
+            await File.WriteAllTextAsync(changelogPath, originalContent, ct);
         }
     }
 

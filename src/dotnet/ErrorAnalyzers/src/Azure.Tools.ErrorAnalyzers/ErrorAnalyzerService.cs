@@ -15,14 +15,22 @@ namespace Azure.Tools.ErrorAnalyzers
     {
         /// <summary>
         /// Attempts to generate a fix for a single error.
+        /// Uses fallback mechanism for unknown error types.
         /// </summary>
         public static Fix? GetFix(RuleError error)
         {
             ArgumentNullException.ThrowIfNull(error);
 
-            if (!AnalyzerPrompts.TryGetPromptFix(error.type, out var fix) || fix is null)
+            AgentPromptFix? fix;
+
+            // Try to get specific fix for known rules
+            if (!AnalyzerPrompts.TryGetPromptFix(error.type, out fix) || fix is null)
             {
-                return null;
+                // Fall back to general error analysis for unknown types
+                if (!AnalyzerPrompts.TryGetPromptFix("__FALLBACK__", out fix) || fix is null)
+                {
+                    return null; // This should not happen unless fallback is missing
+                }
             }
 
             // Format context if available, otherwise keep it null
@@ -68,7 +76,10 @@ namespace Azure.Tools.ErrorAnalyzers
         public static IReadOnlyCollection<string> GetRegisteredRules()
         {
             // Return all available rule IDs from the compile-time dictionary
-            return AnalyzerPrompts.GetAllRuleIds();
+            // Exclude the fallback mechanism from the public API
+            return AnalyzerPrompts.GetAllRuleIds()
+                .Where(id => id != "__FALLBACK__")
+                .ToArray();
         }
     }
 }

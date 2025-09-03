@@ -21,6 +21,12 @@ namespace Azure.Tools.ErrorAnalyzers
         /// </summary>
         internal static bool TryGetPromptFix(string ruleId, out AgentPromptFix? fix)
         {
+            if (string.IsNullOrWhiteSpace(ruleId))
+            {
+                fix = null;
+                return false;
+            }
+            
             return AllPrompts.TryGetValue(ruleId, out fix);
         }
 

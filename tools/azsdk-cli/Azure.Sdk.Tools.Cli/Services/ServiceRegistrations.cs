@@ -9,6 +9,7 @@ using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Tools;
+using Azure.Sdk.Tools.Cli.Services.ClientUpdate;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -37,6 +38,11 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ILanguageSpecificChecks, DotNetLanguageSpecificChecks>();
             services.AddSingleton<ILanguageSpecificChecks, GoLanguageSpecificChecks>();
             services.AddSingleton<ILanguageSpecificCheckResolver, LanguageSpecificCheckResolver>();
+
+            // Client update language services
+            services.AddSingleton<IClientUpdateLanguageService, JavaUpdateLanguageService>();
+            services.AddSingleton<IClientUpdateLanguageServiceResolver, ClientUpdateLanguageServiceResolver>();
+            // Future: services.AddSingleton<IClientUpdateLanguageService, PythonClientUpdateLanguageService>(); etc.
 
             // Helper classes
             services.AddSingleton<ILogAnalysisHelper, LogAnalysisHelper>();

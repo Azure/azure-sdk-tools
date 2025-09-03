@@ -6,7 +6,7 @@ namespace Azure.Sdk.Tools.Cli.Models.AiCompletion
     public class CompletionRequest
     {
         [JsonPropertyName("tenant_id")]
-        public string TenantId { get; set; } = "azure_sdk_qa_bot";
+        public TenantId TenantId { get; set; } = TenantId.AzureSDKQaBot;
 
         [JsonPropertyName("prompt_template")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

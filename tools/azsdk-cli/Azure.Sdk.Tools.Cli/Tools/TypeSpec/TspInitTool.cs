@@ -163,7 +163,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         }
 
         /// <summary>
-        /// Checks the output directory to ensure it's under the azure-rest-api-specs repo, and creates if it necessary. 
+        /// Checks the output directory to ensure it's under the azure-rest-api-specs repo, and creates it if necessary. 
         /// Fails if the output directory is non-empty.
         /// </summary>
         /// <param name="fullOutputDirectory">A full path to the output directory, as returned by <see cref="Path.GetFullPath"/></param>

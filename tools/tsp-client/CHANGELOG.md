@@ -1,5 +1,22 @@
 # Release
 
+## 2025-08-15 - 0.28.1
+
+- Fix bug when using `emitter-output-dir` in tspconfig.yaml, always pass the repo root path for the `{output-dir}` variable.
+
+## 2025-08-13 - 0.28.0
+
+- Support `emitter-output-dir` when generating a client library. `emitter-output-dir` will be given preference over client library path parsing with the `package-dir` option under the emitter.
+- Add a warning when `package-dir` is used to explain that support for this option will be deprecated in the future.
+
+## 2025-08-05 - 0.27.0
+
+- Support multiple emitter language repositories through a global `tspclientconfig.yaml` file checked in under `<repo root>/eng`. If this file is added to a language repository the default emitter used for a library might change based on the emitters configured in their tspconfig.yaml and the order of emitters listed in the `tspclientconfig.yaml` file.
+
+## 2025-07-29 - 0.26.1
+
+- Support an `--update-if-exists` flag when using `tsp-client init`. This flag will update the tsp-location.yaml file based on new inputs to the command and keep any other existing config in the file.
+
 ## 2025-07-21 - 0.26.0
 
 - Fix bug when discovering entrypoint files to only accept `main.tsp` or `client.tsp` unless otherwise specified in tsp-location.yaml.

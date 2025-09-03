@@ -1,11 +1,14 @@
 import { joinPaths, normalizeSlashes } from "@typespec/compiler";
 import { randomUUID } from "node:crypto";
-import { access, constants, mkdir, writeFile } from "node:fs/promises";
+import { access, constants, mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Logger } from "./log.js";
 import { TspLocation } from "./typespec.js";
-import { normalizeDirectory } from "./fs.js";
+import { normalizeDirectory, readTspLocation } from "./fs.js";
+import { parse as parseYaml } from "yaml";
+
+const defaultTspClientConfigPath = joinPaths("eng", "tspclientconfig.yaml");
 
 export function formatAdditionalDirectories(additionalDirectories?: string[]): string {
   let additionalDirOutput = "\n";
@@ -35,7 +38,7 @@ export async function makeSparseSpecDir(repoRoot: string): Promise<string> {
 
 export function getServiceDir(configYaml: any, emitter: string): string {
   // Check if service-dir is defined in the emitter specific configurations in tspconfig.yaml.
-  // Default to the top level service-dir parameter in tspconfig.yaml.
+  // If not present, default to the top level service-dir parameter in tspconfig.yaml.
   const serviceDir =
     configYaml?.options?.[emitter]?.["service-dir"] ??
     configYaml?.parameters?.["service-dir"]?.default;
@@ -101,4 +104,56 @@ export async function writeTspLocationYaml(
     tspLocationContent += `\nemitterPackageJsonPath: ${tspLocation.emitterPackageJsonPath}`;
   }
   await writeFile(joinPaths(projectPath, "tsp-location.yaml"), tspLocationContent);
+}
+
+export async function updateExistingTspLocation(
+  tspLocationData: TspLocation,
+  projectPath: string,
+): Promise<TspLocation> {
+  try {
+    const existingTspLocation = await readTspLocation(projectPath);
+
+    // Used to update tsp-location.yaml data by iterating over properties
+    const updatedTspLocation = { ...existingTspLocation };
+
+    // Define the properties that can be updated
+    const updatableProperties: (keyof TspLocation)[] = [
+      "repo",
+      "commit",
+      "directory",
+      "entrypointFile",
+      "additionalDirectories",
+      "emitterPackageJsonPath",
+    ];
+
+    // Update each property if it has a valid value
+    for (const property of updatableProperties) {
+      const value = tspLocationData[property];
+      if (value !== undefined && value !== "<replace with your value>") {
+        (updatedTspLocation as any)[property] = value;
+      }
+    }
+
+    return updatedTspLocation;
+  } catch (error) {
+    Logger.debug(`Will create a new tsp-location.yaml. Error reading tsp-location.yaml: ${error}`);
+    return tspLocationData;
+  }
+}
+
+export interface TspClientConfig {
+  supportedEmitters?: Array<{ name: string; path: string }>;
+}
+
+export async function parseTspClientRepoConfig(
+  repoRoot: string,
+): Promise<TspClientConfig | undefined> {
+  const configPath = joinPaths(repoRoot, defaultTspClientConfigPath);
+  try {
+    const data = await readFile(configPath, "utf8");
+    return parseYaml(data) as TspClientConfig;
+  } catch (err) {
+    Logger.debug(`Did not find a tspclientconfig.yaml at ${configPath}. Error: ${err}`);
+    return undefined;
+  }
 }

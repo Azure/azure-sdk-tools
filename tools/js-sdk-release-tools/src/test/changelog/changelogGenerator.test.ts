@@ -1072,40 +1072,6 @@ export interface DataProduct {
             expect(items).toHaveLength(0);
         });
 
-        test("Model Ends with 'NextOptionalParams' Property Type Changed Should Be Ignored Due to Not Exposed", async () => {
-            const baselineApiView = `
-\`\`\`ts
-// @public
-export interface DataProductNextOptionalParams {
-    version: number;
-}
-\`\`\`
-`;
-            const currentApiView = `
-\`\`\`ts
-// @public
-export interface DataProductDataProductNextOptionalParams {
-    version: string;
-}
-\`\`\`
-`;
-            const changelogItems = await generateChangelogItems(
-                {
-                    apiView: baselineApiView,
-                    sdkType: SDKType.ModularClient,
-                },
-                {
-                    apiView: currentApiView,
-                    sdkType: SDKType.ModularClient,
-                },
-            );
-            const items = getItemsByCategory(
-                changelogItems,
-                ChangelogItemCategory.ModelPropertyTypeChanged,
-            );
-            expect(items).toHaveLength(0);
-        });
-
         test("Model Property Optional To Required", async () => {
             const baselineApiView = `
 \`\`\`ts
@@ -1776,6 +1742,105 @@ export function processData(data: string): string;
 
 describe("Breaking change detection from high level client to modular client", () => {});
 
+describe("Generic Interface Detection", () => {
+    test("should not detect breaking change for renamed generic interface with same structure", async () => {
+        const baselineApiView = `
+\`\`\` ts
+// @public
+export interface GenericInterface<T> {
+    data: T;
+    id: string;
+}
+\`\`\`
+            `;
+
+        const currentApiView = `
+\`\`\` ts
+// @public
+export interface GenericInterfaceNameChange<T> {
+    data: T;
+    id: string;
+}
+\`\`\`
+            `;
+
+       const changelogItems = await generateChangelogItems(
+                {
+                    apiView: baselineApiView,
+                    sdkType: SDKType.ModularClient,
+                },
+                {
+                    apiView: currentApiView,
+                    sdkType: SDKType.ModularClient,
+                },
+            );
+        
+        expect(
+            getItemsByCategory(
+                changelogItems,
+                ChangelogItemCategory.ModelRemoved,
+            ).length,
+        ).toBe(1);
+        expect(
+            getItemsByCategory(
+                changelogItems,
+                ChangelogItemCategory.ModelAdded,
+            ).length,
+        ).toBe(1);
+        
+        // Verify breaking changes detected
+        const totalBreakingChanges = [...changelogItems.breakingChanges.keys()].flatMap(
+            (category) => changelogItems.breakingChanges.get(category) ?? [],
+        ).length;
+        expect(totalBreakingChanges).toBe(1);
+        
+        // Verify new features detected
+        const totalNewFeatures = [...changelogItems.features.keys()].flatMap(
+            (category) => changelogItems.features.get(category) ?? [],
+        ).length;
+        expect(totalNewFeatures).toBe(1);
+    });
+
+    test("should just ignore inner changes", async () => {
+        const baselineApiView = `
+\`\`\` ts
+// @public
+export interface GenericInterface<T> {
+    data: T;
+    id: string;
+}
+\`\`\`
+            `;
+
+        const currentApiView = `
+\`\`\` ts
+// @public
+export interface GenericInterface<T> {
+    data: T;
+    id: number;
+}
+\`\`\`
+            `;
+
+        const changelogItems = await generateChangelogItems(
+            {
+                apiView: baselineApiView,
+                sdkType: SDKType.ModularClient,
+            },
+            {
+                apiView: currentApiView,
+                sdkType: SDKType.ModularClient,
+            },
+        );
+        expect(
+            getItemsByCategory(
+                changelogItems,
+                ChangelogItemCategory.ModelPropertyTypeChanged,
+            ).length,
+        ).toBe(0); 
+    });
+});
+
 describe("Changelog reading", () => {
     test("Read changelog that doesn't exist", () => {
         const content = tryReadNpmPackageChangelog(
@@ -1793,5 +1858,256 @@ describe("Changelog reading", () => {
         } finally {
             removeSync(changelogPath);
         }
+    });
+});
+
+describe("Should Be Ignored Due to Not Exposed", () => {
+    const getActualChangelogItems = (
+            map: Map<ChangelogItemCategory, string[]>,
+        ) => {
+            const items: string[] = [];
+            map.forEach((value) => items.push(...value));
+            items.sort();
+            return items;
+        };
+
+    test("models ending with 'NextOptionalParams'", async () => {
+        const baselineApiView = `
+\`\`\`ts
+// @public
+export interface DataProductNextOptionalParams {
+    version: number;
+}
+\`\`\`
+`;
+        const currentApiView = `
+\`\`\`ts
+// @public
+export interface DataProductDataProductNextOptionalParams {
+    version: string;
+}
+\`\`\`
+`;
+        const changelogItems = await generateChangelogItems(
+            {
+                apiView: baselineApiView,
+                sdkType: SDKType.ModularClient,
+            },
+            {
+                apiView: currentApiView,
+                sdkType: SDKType.ModularClient,
+            },
+        );
+        // Verify no feature changes detected
+        const actualFeatures = getActualChangelogItems(changelogItems.features);
+        expect(actualFeatures).toHaveLength(0);  
+
+        // Verify no breaking changes detected
+        const actualBreakingChanges = getActualChangelogItems(changelogItems.breakingChanges);
+        expect(actualBreakingChanges).toHaveLength(0);
+    });
+
+    test("Removed Interface ends with 'Headers'", async () => {
+        const baselineApiView = `
+\`\`\`ts
+// @public
+export interface DataProductHeaders {
+    readonly id?: string;
+}
+\`\`\`
+`;
+        const currentApiView = `
+\`\`\`ts
+\`\`\`
+`;
+        const changelogItems = await generateChangelogItems(
+            {
+                apiView: baselineApiView,
+                sdkType: SDKType.ModularClient,
+            },
+            {
+                apiView: currentApiView,
+                sdkType: SDKType.ModularClient,
+            },
+        );
+        // Verify no feature changes detected
+        const actualFeatures = getActualChangelogItems(changelogItems.features);
+        expect(actualFeatures).toHaveLength(0);  
+
+        // Verify no breaking changes detected
+        const actualBreakingChanges = getActualChangelogItems(changelogItems.breakingChanges);
+        expect(actualBreakingChanges).toHaveLength(0);
+    });
+
+    test("Removed Interface ends with 'Result'", async () => {
+        const baselineApiView = `
+\`\`\`ts
+// @public
+export interface DataProductResult {
+    readonly id?: string;
+    name: string;
+    description?: string;
+}
+\`\`\`
+`;
+        const currentApiView = `
+\`\`\`ts
+\`\`\`
+`;
+        const changelogItems = await generateChangelogItems(
+            {
+                apiView: baselineApiView,
+                sdkType: SDKType.ModularClient,
+            },
+            {
+                apiView: currentApiView,
+                sdkType: SDKType.ModularClient,
+            },
+        );
+        // Verify no feature changes detected
+        const actualFeatures = getActualChangelogItems(changelogItems.features);
+        expect(actualFeatures).toHaveLength(0);  
+
+        // Verify no breaking changes detected
+        const actualBreakingChanges = getActualChangelogItems(changelogItems.breakingChanges);
+        expect(actualBreakingChanges).toHaveLength(0);
+    });
+
+    test("Removed function getContinuationToken", async () => {
+        const baselineApiView = `
+\`\`\`ts
+// @public
+export function getContinuationToken(name: string, type: DataProductType): DataProduct;
+\`\`\`
+`;
+        const currentApiView = `
+\`\`\`ts
+\`\`\`
+`;
+        const changelogItems = await generateChangelogItems(
+            {
+                apiView: baselineApiView,
+                sdkType: SDKType.ModularClient,
+            },
+            {
+                apiView: currentApiView,
+                sdkType: SDKType.ModularClient,
+            },
+        );
+        // Verify no feature changes detected
+        const actualFeatures = getActualChangelogItems(changelogItems.features);
+        expect(actualFeatures).toHaveLength(0);  
+
+        // Verify no breaking changes detected
+        const actualBreakingChanges = getActualChangelogItems(changelogItems.breakingChanges);
+        expect(actualBreakingChanges).toHaveLength(0);
+    });
+
+    test("Removed Type Alias Ends with 'Response'", async () => {
+        const baselineApiView = `
+\`\`\`ts
+// @public
+export type DataProductResponse = "Active" | "Inactive" | "Pending";
+\`\`\`
+`;
+        const currentApiView = `
+\`\`\`ts
+\`\`\`
+`;
+        const changelogItems = await generateChangelogItems(
+            {
+                apiView: baselineApiView,
+                sdkType: SDKType.ModularClient,
+            },
+            {
+                apiView: currentApiView,
+                sdkType: SDKType.ModularClient,
+            },
+        );
+        // Verify no feature changes detected
+        const actualFeatures = getActualChangelogItems(changelogItems.features);
+        expect(actualFeatures).toHaveLength(0);  
+
+        // Verify no breaking changes detected
+        const actualBreakingChanges = getActualChangelogItems(changelogItems.breakingChanges);
+        expect(actualBreakingChanges).toHaveLength(0);
+    });
+
+    test("Interface with ignored target names - property remove", async () => {
+        const baselineApiView = `
+\`\`\`ts
+// @public
+export interface DataProduct {
+    resumeFrom: string;
+    $host: string;
+    endpoint: string;
+    normalProperty: number;
+}
+\`\`\`
+`;
+        const currentApiView = `
+\`\`\`ts
+// @public
+export interface DataProduct {
+    normalProperty: number;
+}
+\`\`\`
+`;
+        const changelogItems = await generateChangelogItems(
+            {
+                apiView: baselineApiView,
+                sdkType: SDKType.ModularClient,
+            },
+            {
+                apiView: currentApiView,
+                sdkType: SDKType.ModularClient,
+            },
+        );
+        // Verify no feature changes detected
+        const actualFeatures = getActualChangelogItems(changelogItems.features);
+        expect(actualFeatures).toHaveLength(0);  
+
+        // Verify no breaking changes detected
+        const actualBreakingChanges = getActualChangelogItems(changelogItems.breakingChanges);
+        expect(actualBreakingChanges).toHaveLength(0);
+    });
+
+    test("Class with ignored target names - property remove", async () => {
+        const baselineApiView = `
+\`\`\`ts
+// @public
+export class DataProductClient {
+    constructor(credential: TokenCredential, subscriptionId: string);
+    readonly resumeFrom: string;
+    readonly $host: string;
+    readonly endpoint: string;
+}
+\`\`\`
+`;
+        const currentApiView = `
+\`\`\`ts
+// @public
+export class DataProductClient {
+    constructor(credential: TokenCredential, subscriptionId: string);
+}
+\`\`\`
+`;
+        const changelogItems = await generateChangelogItems(
+            {
+                apiView: baselineApiView,
+                sdkType: SDKType.ModularClient,
+            },
+            {
+                apiView: currentApiView,
+                sdkType: SDKType.ModularClient,
+            },
+        );
+        // Verify no feature changes detected
+        const actualFeatures = getActualChangelogItems(changelogItems.features);
+        expect(actualFeatures).toHaveLength(0);  
+
+        // Verify no breaking changes detected
+        const actualBreakingChanges = getActualChangelogItems(changelogItems.breakingChanges);
+        expect(actualBreakingChanges).toHaveLength(0);
     });
 });

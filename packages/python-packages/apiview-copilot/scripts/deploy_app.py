@@ -1,15 +1,25 @@
-from dotenv import load_dotenv
+# -------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for
+# license information.
+# --------------------------------------------------------------------------
+
+"""
+Deploy the current repository to Azure App Service.
+This script zips the current repository and deploys it to an Azure App Service.
+"""
+
 import os
-import zipfile
 import subprocess
-from typing import Optional
 import sys
+import zipfile
+
+from dotenv import load_dotenv
+from src._settings import SettingsManager
 
 load_dotenv(override=True)
 
-RESOURCE_GROUP = os.getenv("AZURE_RESOURCE_GROUP")
-SUBSCRIPTION_ID = os.getenv("AZURE_SUBSCRIPTION_ID")
-APP_NAME = os.getenv("AZURE_APP_NAME")
+settings = SettingsManager()
 
 
 def _zip_current_repo(output_filename: str):
@@ -30,26 +40,11 @@ def _zip_current_repo(output_filename: str):
     print(f"Repository zipped to {output_filename}")
 
 
-def deploy_app_to_azure(
-    app_name: Optional[str] = None,
-    resource_group: Optional[str] = None,
-    subscription_id: Optional[str] = None,
-):
+def deploy_app_to_azure():
     """Deploy the zipped repository to Azure App Service using Azure CLI."""
-    app_name = app_name or APP_NAME
-    resource_group = resource_group or RESOURCE_GROUP
-    subscription_id = subscription_id or SUBSCRIPTION_ID
-    missing_vars = []
-
-    if not app_name:
-        missing_vars.append("AZURE_APP_NAME")
-    if not resource_group:
-        missing_vars.append("AZURE_RESOURCE_GROUP")
-    if not subscription_id:
-        missing_vars.append("AZURE_SUBSCRIPTION_ID")
-
-    if missing_vars:
-        raise ValueError(f"Missing required environment variables: {', '.join(missing_vars)}")
+    app_name = settings.get("WEBAPP_NAME")
+    resource_group = settings.get("RG_NAME")
+    subscription_id = settings.get("SUBSCRIPTION_ID")
 
     zip_file = "repo.zip"
     _zip_current_repo(zip_file)
@@ -91,7 +86,7 @@ def deploy_app_to_azure(
     # After deployment, set the startup command from startup.txt
     startup_file = "startup.txt"
     if os.path.exists(startup_file):
-        with open(startup_file, "r") as f:
+        with open(startup_file, "r", encoding="utf-8") as f:
             startup_command = f.read().strip()
         print(f"Setting Azure App Service startup command to: {startup_command}")
         cmd = [

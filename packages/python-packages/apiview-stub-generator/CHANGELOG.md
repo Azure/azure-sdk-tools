@@ -1,5 +1,15 @@
 # Release History
 
+## Version 0.3.22 (2025-08-25)
+Fixed a bug where duplicate line IDs were not being raised by the parses, causing Copilot APIView issues.
+
+## Version 0.3.21 (2025-08-08)
+Fixed a bug where the LineId for the kwarg marker was the same as the function LineId.
+Fixed an issue with Model base class inherited methods being shown.
+
+## Version 0.3.20 (2025-07-28)
+Added a feature to distinguish handwritten code from generated code by applying specific CSS to handwritten lines.
+
 ## Version 0.3.19 (2025-07-17)
 Fixed an issue with APIView not running in src directories where the package name differs from the directory name.
 

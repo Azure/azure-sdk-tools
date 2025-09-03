@@ -2,7 +2,7 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
-using Azure.Sdk.Tools.Cli.Tools;
+using Azure.Sdk.Tools.Cli.Tools.ReleasePlan;
 using Microsoft.Azure.Pipelines.WebApi;
 using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.Build.WebApi;
@@ -15,7 +15,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
     internal class SpecWorkflowToolTests
     {
         private Mock<IDevOpsService> mockDevOpsService;
-        private Mock<IOutputService> mockOutputService;
+        private Mock<IOutputHelper> mockOutputService;
         private Mock<IGitHubService> mockGitHubService;
         private Mock<IGitHelper> mockGitHelper;
         private Mock<ITypeSpecHelper> mockTypeSpecHelper;
@@ -26,7 +26,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public void Setup()
         {
             mockDevOpsService = new Mock<IDevOpsService>();
-            mockOutputService = new Mock<IOutputService>();
+            mockOutputService = new Mock<IOutputHelper>();
             mockGitHubService = new Mock<IGitHubService>();
             mockGitHelper = new Mock<IGitHelper>();
             mockTypeSpecHelper = new Mock<ITypeSpecHelper>();
@@ -54,7 +54,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         [Test]
         public async Task GenerateSDK_WhenPackageNameEmpty()
         {
-            var releasePlan = new ReleasePlan
+            var releasePlan = new ReleasePlanDetails
             {
                 SDKInfo = new List<SDKInfo>
                 {
@@ -85,7 +85,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public async Task GenerateSDK_WhenLanguageNotInReleasePlan()
         {
             // Test 1: Different language than requested
-            var releasePlan = new ReleasePlan
+            var releasePlan = new ReleasePlanDetails
             {
                 SDKInfo = new List<SDKInfo>
                 {
@@ -112,7 +112,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             Assert.That(result, Does.Contain("does not have a language specified"));
 
             // Test 2: Empty language
-            var releasePlanWithEmptyLanguage = new ReleasePlan
+            var releasePlanWithEmptyLanguage = new ReleasePlanDetails
             {
                 SDKInfo = new List<SDKInfo>
                 {
@@ -142,7 +142,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         [Test]
         public async Task GenerateSDK_WhenSDKInfoListIsEmpty()
         {
-            var releasePlan = new ReleasePlan
+            var releasePlan = new ReleasePlanDetails
             {
                 SDKInfo = new List<SDKInfo>() // Empty list - no SDK info at all
             };
@@ -166,7 +166,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public async Task GenerateSdk_Uses_WorkItemApi()
         {
             // Test 1: Different language than requested
-            var releasePlan = new ReleasePlan
+            var releasePlan = new ReleasePlanDetails
             {
                 SDKInfo = new List<SDKInfo>
                 {
@@ -188,16 +188,16 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 .Returns("specification/testcontoso/Contoso.Management");
             mockTypeSpecHelper.Setup(x => x.IsValidTypeSpecProjectPath(It.IsAny<string>()))
                 .Returns(true);
-            var labels = new List<Octokit.Label>
+            var labels = new List<Label>
             {
                new Label(1, "", SpecWorkflowTool.ARM_SIGN_OFF_LABEL, "", "", "", false)
             };
             mockGitHubService.Setup(x => x.GetPullRequestAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()))
                 .ReturnsAsync(
-                new Octokit.PullRequest(123, null, null,null,null,null,null,null,123,ItemState.Open,null,null,DateTimeOffset.Now, DateTimeOffset.Now,DateTimeOffset.Now, null,null, null, null,null,null,false, null,null,null,null,0,1,1,1,1,null,false,null,null,null, labels,null));
+                new Octokit.PullRequest(123, null, null, null, null, null, null, null, 123, ItemState.Open, null, null, DateTimeOffset.Now, DateTimeOffset.Now, DateTimeOffset.Now, null, null, null, null, null, null, false, null, null, null, null, 0, 1, 1, 1, 1, null, false, null, null, null, labels, null));
 
             mockDevOpsService.Setup(x => x.RunSDKGenerationPipelineAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()))
-                .ReturnsAsync( new Build()
+                .ReturnsAsync(new Build()
                 {
                     Id = 100,
                     Status = BuildStatus.InProgress,
@@ -221,7 +221,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 .Returns("specification/testcontoso/Contoso.Management");
             mockTypeSpecHelper.Setup(x => x.IsValidTypeSpecProjectPath(It.IsAny<string>()))
                 .Returns(true);
-            
+
             mockDevOpsService.Setup(x => x.RunSDKGenerationPipelineAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()))
                 .ReturnsAsync(new Build()
                 {

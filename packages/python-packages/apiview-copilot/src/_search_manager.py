@@ -1,41 +1,31 @@
-from collections import deque
+# -------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for
+# license information.
+# --------------------------------------------------------------------------
+
+"""
+Module for managing search operations in APIView Copilot.
+"""
+
 import copy
-import os
-from typing import List, Dict, Optional
+from collections import deque
+from typing import Dict, List, Optional
 
-from azure.cosmos import CosmosClient
 from azure.search.documents import SearchClient, SearchItemPaged
-from azure.search.documents.models import (
-    VectorizableTextQuery,
-    QueryType,
-    QueryAnswerType,
-    QueryAnswerResult,
-    QueryCaptionType,
-    SemanticErrorMode,
-)
 from azure.search.documents.indexes import SearchIndexerClient
-
+from azure.search.documents.models import (
+    QueryAnswerResult,
+    QueryAnswerType,
+    QueryCaptionType,
+    QueryType,
+    SemanticErrorMode,
+    VectorizableTextQuery,
+)
 from src._credential import get_credential
-from src._models import Guideline, Example, Memory
-from src._database_manager import get_database_manager, ContainerNames
-
-
-if "APPSETTING_WEBSITE_SITE_NAME" not in os.environ:
-    # running on dev machine, loadenv
-    import dotenv
-
-    dotenv.load_dotenv()
-
-# Cosmos DB
-COSMOS_ACC_NAME = os.environ.get("AZURE_COSMOS_ACC_NAME")
-COSMOS_DB_NAME = os.environ.get("AZURE_COSMOS_DB_NAME")
-COSMOS_ENDPOINT = f"https://{COSMOS_ACC_NAME}.documents.azure.com:443/"
-
-# Azure AI Search
-AZURE_SEARCH_NAME = os.environ.get("AZURE_SEARCH_NAME")
-SEARCH_ENDPOINT = f"https://{AZURE_SEARCH_NAME}.search.windows.net"
-
-CREDENTIAL = get_credential()
+from src._database_manager import ContainerNames, get_database_manager
+from src._models import Example, Guideline, Memory
+from src._settings import SettingsManager
 
 
 class SearchItem:
@@ -222,6 +212,7 @@ class ContextItem:
         self.is_exception = getattr(item, "is_exception", None)
         self.examples = []
         self.score = score
+        self.normalized_score = None  # Will be set after normalization
         for ex_id in getattr(item, "related_examples", []):
             example = copy.deepcopy(examples.get(ex_id)) if examples else None
             if example is not None:
@@ -264,7 +255,7 @@ class ContextItem:
         markdown += f"## {self.title}\n\n"
 
         if self.is_exception:
-            markdown += f"**THIS IS AN EXCEPTION TO ESTABLISHED GUIDELINES**\n\n"
+            markdown += "**THIS IS AN EXCEPTION TO ESTABLISHED GUIDELINES**\n\n"
 
         markdown += f"{self.content}\n\n"
 
@@ -291,26 +282,21 @@ class ContextItem:
 
 
 class SearchManager:
+    """Manages search operations using Azure Search."""
 
     def __init__(self, *, language: str, include_general_guidelines: bool = False):
         self.language = language
         self.filter_expression = f"language eq '{language}'"
         if include_general_guidelines:
             self.filter_expression += " or language eq '' or language eq null"
-        self._ensure_env_vars(["AZURE_SEARCH_NAME"])
-        self.client = SearchClient(endpoint=SEARCH_ENDPOINT, index_name="archagent-index", credential=CREDENTIAL)
+        self._settings = SettingsManager()
+        self._search_endpoint = self._settings.get("SEARCH_ENDPOINT")
+        self._credential = get_credential()
+        self._index_name = self._settings.get("SEARCH_INDEX_NAME")
+        self.client = SearchClient(
+            endpoint=self._search_endpoint, index_name=self._index_name, credential=self._credential
+        )
         self.language_guidelines = self._fetch_language_guidelines(language)
-
-    def _ensure_env_vars(self, vars: List[str]):
-        """
-        Ensures that the given environment variables are set.
-        """
-        missing = []
-        for var in vars:
-            if os.getenv(var) is None:
-                missing.append(var)
-        if missing:
-            raise ValueError(f"Environment variables not set: {', '.join(missing)}")
 
     def _fetch_language_guidelines(self, language: str) -> SearchResult:
         """
@@ -331,7 +317,6 @@ class SearchManager:
         Internal method to perform a search on the Azure Search index.
         This method is used by the public search methods to perform the actual search.
         """
-        self._ensure_env_vars(["AZURE_SEARCH_NAME"])
         result = self.client.search(
             search_text=query,
             filter=filter,
@@ -347,18 +332,21 @@ class SearchManager:
         return SearchResult(result)
 
     def search_guidelines(self, query: str, *, top: int = 20) -> SearchResult:
+        """Searches for guidelines in the Azure Search index."""
         filter = "kind eq 'guidelines'"
         if self.filter_expression:
             filter = f"({filter}) and ({self.filter_expression})"
         return self._search(query, filter=filter, top=top)
 
     def search_examples(self, query: str, *, top: int = 20) -> SearchResult:
+        """Searches for examples in the Azure Search index."""
         filter = "kind eq 'examples'"
         if self.filter_expression:
             filter = f"({filter}) and ({self.filter_expression})"
         return self._search(query, filter=filter, top=top)
 
     def search_api_view_comments(self, query: str, *, top: int = 20) -> SearchResult:
+        """Searches for APIView comments in the Azure Search index."""
         filter = "kind eq 'memories'"
         if self.filter_expression:
             filter = f"({filter}) and ({self.filter_expression})"
@@ -514,15 +502,17 @@ class SearchManager:
         """
         Reindex one or more Azure Search indexers. If container_names is None, reindex all known indexers.
         """
-        INDEXED_CONTAINERS = [x for x in ContainerNames.values() if x not in ["review-jobs"]]
+        indexed_containers = [x for x in ContainerNames.values() if x not in ["review-jobs"]]
         if not container_names:
-            indexers_to_run = [f"{name}-indexer" for name in INDEXED_CONTAINERS]
+            indexers_to_run = [f"{name}-indexer" for name in indexed_containers]
         else:
             # Map container names to indexer names (simple mapping: container_name + '-indexer')
             indexers_to_run = [f"{name}-indexer" for name in container_names]
 
-        client = SearchIndexerClient(endpoint=SEARCH_ENDPOINT, credential=CREDENTIAL)
         results = {}
+        settings = SettingsManager()
+        search_endpoint = settings.get("SEARCH_ENDPOINT")
+        client = SearchIndexerClient(endpoint=search_endpoint, credential=get_credential())
         for indexer_name in indexers_to_run:
             try:
                 status = client.get_indexer_status(indexer_name)

@@ -1,29 +1,32 @@
-from contextlib import asynccontextmanager
+# -------------------------------------------------------------------------
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License. See License.txt in the project root for
+# license information.
+# --------------------------------------------------------------------------
+
+"""Plugin for database operations."""
+
+from contextlib import AsyncExitStack, asynccontextmanager
 from datetime import timedelta
-import os
-from semantic_kernel.functions import kernel_function
-from semantic_kernel.agents import AzureAIAgent, AzureAIAgentSettings, RunPollingOptions
 from typing import Optional
 
-from azure.identity import DefaultAzureCredential
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
+from azure.identity import DefaultAzureCredential
 
-from src._models import Guideline, Example, Memory
-from src._database_manager import get_database_manager, ContainerNames
-
-
-from contextlib import AsyncExitStack
+# pylint: disable=no-name-in-module
+from semantic_kernel.agents import AzureAIAgent, RunPollingOptions
+from semantic_kernel.functions import kernel_function
+from src._database_manager import ContainerNames, get_database_manager
+from src._models import Example, Guideline, Memory
 
 
 @asynccontextmanager
 async def get_delete_agent():
-    from src.agent._agent import create_kernel
+    """Agent for handling database delete requests."""
+    # pylint: disable=import-outside-toplevel
+    from src.agent._agent import _get_agent_settings, create_kernel
 
-    ai_agent_settings = AzureAIAgentSettings(
-        endpoint=os.getenv("AZURE_AI_AGENT_ENDPOINT"),
-        model_deployment_name=os.getenv("AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME"),
-        api_version=os.getenv("AZURE_AI_AGENT_API_VERSION"),
-    )
+    ai_agent_settings = _get_agent_settings()
     ai_instructions = f"""
 You are an agent that processes database delete requests for guidelines, examples, memories or review jobs.
 
@@ -63,13 +66,15 @@ You must ensure you adhere to the following guidelines.
 
 @asynccontextmanager
 async def get_create_agent():
-    from src.agent._agent import _SUPPORTED_LANGUAGES, create_kernel
-
-    ai_agent_settings = AzureAIAgentSettings(
-        endpoint=os.getenv("AZURE_AI_AGENT_ENDPOINT"),
-        model_deployment_name=os.getenv("AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME"),
-        api_version=os.getenv("AZURE_AI_AGENT_API_VERSION"),
+    """Agent for handling database create requests."""
+    # pylint: disable=import-outside-toplevel
+    from src._apiview_reviewer import SUPPORTED_LANGUAGES
+    from src.agent._agent import (
+        _get_agent_settings,
+        create_kernel,
     )
+
+    ai_agent_settings = _get_agent_settings()
     guideline_schema = Guideline.model_json_schema()
     example_schema = Example.model_json_schema()
     memory_schema = Memory.model_json_schema()
@@ -82,7 +87,7 @@ You must ensure you adhere to the following guidelines.
 
 ## General
 - The only valid container names are: {', '.join([c.value for c in ContainerNames])}
-- The only valid language values are: {', '.join(_SUPPORTED_LANGUAGES)}
+- The only valid language values are: {', '.join(SUPPORTED_LANGUAGES)}
 - cpp means C++
 - dotnet means C#
 - ios means Swift
@@ -164,14 +169,12 @@ For specific fields:
 
 @asynccontextmanager
 async def get_retrieve_agent():
-    from src.agent._agent import create_kernel
+    """Agent for handling database retrieval requests."""
+    # pylint: disable=import-outside-toplevel
+    from src.agent._agent import _get_agent_settings, create_kernel
 
-    ai_agent_settings = AzureAIAgentSettings(
-        endpoint=os.getenv("AZURE_AI_AGENT_ENDPOINT"),
-        model_deployment_name=os.getenv("AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME"),
-        api_version=os.getenv("AZURE_AI_AGENT_API_VERSION"),
-    )
-    ai_instructions = f"""
+    ai_agent_settings = _get_agent_settings()
+    ai_instructions = """
 You are an agent that processes database get or retrieval requests for guidelines, examples, memories, or review jobs.
 """
     credentials = DefaultAzureCredential()
@@ -196,13 +199,11 @@ You are an agent that processes database get or retrieval requests for guideline
 
 @asynccontextmanager
 async def get_link_agent():
-    from src.agent._agent import create_kernel
+    """Agent for handling database linking and unlinking requests."""
+    # pylint: disable=import-outside-toplevel
+    from src.agent._agent import _get_agent_settings, create_kernel
 
-    ai_agent_settings = AzureAIAgentSettings(
-        endpoint=os.getenv("AZURE_AI_AGENT_ENDPOINT"),
-        model_deployment_name=os.getenv("AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME"),
-        api_version=os.getenv("AZURE_AI_AGENT_API_VERSION"),
-    )
+    ai_agent_settings = _get_agent_settings()
     ai_instructions = f"""
 You are an agent that processes database requests to link or unlink guidelines, examples, memories or review jobs.
 
@@ -246,6 +247,7 @@ You must ensure you adhere to the following guidelines.
 
 
 class DatabaseCreatePlugin:
+    """Plugin for creating database items."""
 
     @kernel_function(description="Create a new Guideline in the database.")
     async def create_guideline(
@@ -348,6 +350,7 @@ class DatabaseCreatePlugin:
 
 
 class DatabaseRetrievePlugin:
+    """Plugin for retrieving database items."""
 
     @kernel_function(description="Retrieve a memory from the database by its ID.")
     async def get_memory(self, memory_id: str):
@@ -364,7 +367,7 @@ class DatabaseRetrievePlugin:
         """
         Retrieve the Memory schema.
         """
-        return Memory.model_json_schema(indent=2)
+        return Memory.model_json_schema()
 
     @kernel_function(description="Retrieve an example from the database by its ID.")
     async def get_example(self, example_id: str):
@@ -381,7 +384,7 @@ class DatabaseRetrievePlugin:
         """
         Retrieve the Example schema.
         """
-        return Example.model_json_schema(indent=2)
+        return Example.model_json_schema()
 
     @kernel_function(description="Retrieve a guideline from the database by its ID.")
     async def get_guideline(self, guideline_id: str):
@@ -398,13 +401,16 @@ class DatabaseRetrievePlugin:
         """
         Retrieve the Guideline schema.
         """
-        return Guideline.model_json_schema(indent=2)
+        return Guideline.model_json_schema()
 
 
 class DatabaseLinkUnlinkPlugin:
+    """Plugin for linking and unlinking database items."""
 
     @kernel_function(
-        description="Link one or more target items to a source item by adding their IDs to a related field in the source item."
+        description="""
+        Link one or more target items to a source item by adding their IDs to a related field in the source item.
+        """
     )
     async def link_items(
         self,
@@ -474,7 +480,9 @@ class DatabaseLinkUnlinkPlugin:
         return {"status": "done", "source_id": source_id, "source_field": source_field, **results}
 
     @kernel_function(
-        description="Unlink one or more target items from a source item by removing their IDs from a related field in the source item."
+        description="""
+        Unlink one or more target items from a source item by removing their IDs from a related field in the source item.
+        """
     )
     async def unlink_items(
         self,
@@ -486,7 +494,8 @@ class DatabaseLinkUnlinkPlugin:
         target_field: str,
     ):
         """
-        Unlink one or more target items from a source item by removing their IDs from a related field in the source item.
+        Unlink one or more target items from a source item by removing their IDs from a related field
+        in the source item.
         Args:
             source_id (str): The ID of the source item.
             source_container (str): The container name of the source item.
@@ -546,9 +555,11 @@ class DatabaseLinkUnlinkPlugin:
 
 
 class DatabaseDeletePlugin:
+    """Plugin for deleting database items."""
 
     @kernel_function(description="Delete a Guideline from the database by its ID.")
     async def delete_guideline(self, id: str):
+        """Delete a guideline from the database by its ID."""
         db = get_database_manager()
         try:
             db.guidelines.delete(id)
@@ -558,6 +569,7 @@ class DatabaseDeletePlugin:
 
     @kernel_function(description="Delete a Memory from the database by its ID.")
     async def delete_memory(self, id: str):
+        """Delete a memory from the database by its ID."""
         db = get_database_manager()
         try:
             db.memories.delete(id)
@@ -567,6 +579,7 @@ class DatabaseDeletePlugin:
 
     @kernel_function(description="Delete an Example from the database by its ID.")
     async def delete_example(self, id: str):
+        """Delete an example from the database by its ID."""
         db = get_database_manager()
         try:
             db.examples.delete(id)
@@ -576,6 +589,7 @@ class DatabaseDeletePlugin:
 
     @kernel_function(description="Delete a Review Job from the database by its ID.")
     async def delete_review_job(self, id: str):
+        """Delete a review job from the database by its ID."""
         db = get_database_manager()
         try:
             db.review_jobs.delete(id)

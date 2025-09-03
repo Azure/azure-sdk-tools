@@ -14,12 +14,12 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         public string GetBranchName(string path);
         public string GetMergeBaseCommitSha(string path, string targetBranch);
         public string DiscoverRepoRoot(string path);
+        public string GetRepoName(string path);
     }
     public class GitHelper(IGitHubService gitHubService, ILogger<GitHelper> logger) : IGitHelper
     {
         private readonly ILogger<GitHelper> logger = logger;
         private readonly IGitHubService gitHubService = gitHubService;
-
 
         public string GetMergeBaseCommitSha(string path, string targetBranchName)
         {
@@ -31,7 +31,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
                 // Find the merge base (common ancestor) (git merge-base main HEAD)
                 var mergeBaseCommit = repo.ObjectDatabase.FindMergeBase(currentBranch.Tip, targetBranch.Tip);
-                logger.LogInformation($"Current branch  :{currentBranch.FriendlyName}, Target branch SHA: {mergeBaseCommit?.Sha}");
+                logger.LogDebug($"Git merge base analysis - Current branch: {currentBranch.FriendlyName}, Target branch SHA: {mergeBaseCommit?.Sha}");
                 return mergeBaseCommit?.Sha ?? "";
             }
         }
@@ -69,7 +69,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             if(findForkParent) {
                 // Check if the repo is a fork and get the parent repo
                 var parentRepoUrl = await gitHubService.GetGitHubParentRepoUrlAsync(repoOwner, repoName);
-                logger.LogInformation($"Parent repo URL: {parentRepoUrl}");
+                logger.LogDebug($"Parent repo URL: {parentRepoUrl}");
                 if (!string.IsNullOrEmpty(parentRepoUrl))
                 {
                     var parentSegments = new Uri(parentRepoUrl).Segments;
@@ -100,6 +100,12 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             // The repository root is the parent directory of .git
             var gitDir = new DirectoryInfo(repoPath);
             return gitDir.Parent?.FullName ?? throw new InvalidOperationException("Unable to determine repository root");
+        }
+
+        public string GetRepoName(string path)
+        {
+            var repoRoot = DiscoverRepoRoot(path);
+            return new DirectoryInfo(repoRoot).Name ?? throw new InvalidOperationException($"Unable to determine repository name for path: {path}");
         }
     }
 }

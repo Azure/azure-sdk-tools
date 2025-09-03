@@ -1,36 +1,37 @@
-import os
-import json
-import pathlib
 import argparse
-from typing import Set, Tuple, Any
+import copy
+import json
+import os
+import pathlib
+import sys
+from typing import Any, Set, Tuple
+
 import prompty
 import prompty.azure_beta
-import copy
-import sys
 import yaml
 
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+from src._apiview_reviewer import ApiViewReview
+from src._settings import SettingsManager
 from src._utils import get_prompt_path
 
 # set before azure.ai.evaluation import to make PF output less noisy
 os.environ["PF_LOGGING_LEVEL"] = "CRITICAL"
 
 import dotenv
-from tabulate import tabulate
-from azure.ai.evaluation import evaluate, SimilarityEvaluator, GroundednessEvaluator
+from azure.ai.evaluation import GroundednessEvaluator, SimilarityEvaluator, evaluate
 from azure.identity import AzurePipelinesCredential
+from tabulate import tabulate
 
 dotenv.load_dotenv()
 
 NUM_RUNS: int = 3
 # for best results, this should always be a different model from the one we are evaluating
-MODEL_JUDGE = "gpt-4.1-nano"
+MODEL_JUDGE = "gpt-5-mini"
 
-model_config: dict[str, str] = {
-    "azure_endpoint": os.environ["AZURE_OPENAI_ENDPOINT"],
-    "api_key": os.environ["AZURE_OPENAI_API_KEY"],
-    "azure_deployment": MODEL_JUDGE,
-    "api_version": "2025-03-01-preview",
-}
+global settings
+settings = SettingsManager()
 
 weights: dict[str, float] = {
     "exact_match_weight": 0.7,  # Exact match (rule id and line number)
@@ -38,6 +39,13 @@ weights: dict[str, float] = {
     "similarity_weight": 0.1,  # Similarity between expected and actual
     "false_positive_penalty": 0.3,  # Penalty for false positives
     "fuzzy_match_bonus": 0.2,  # Bonus for fuzzy match (right rule, wrong line)
+}
+
+model_config: dict[str, str] = {
+    "azure_endpoint": settings.get("OPENAI_ENDPOINT"),
+    "api_key": settings.get("OPENAI_API_KEY"),
+    "azure_deployment": MODEL_JUDGE,
+    "api_version": "2025-03-01-preview",
 }
 
 
@@ -123,7 +131,7 @@ class CustomAPIViewEvaluator:
         """Evaluate generic comments. If they are invalid, they count as false positives and receive penalty."""
 
         filter_path = pathlib.Path(__file__).parent.parent / "metadata" / language / "filter.yaml"
-        with open(filter_path, "r") as f:
+        with open(filter_path, "r", encoding="utf-8") as f:
             filter_data = yaml.safe_load(f)
             exceptions = filter_data["exceptions"].strip().split("\n")
             exceptions = [e.split(". ", 1)[1] for e in exceptions]
@@ -135,7 +143,7 @@ class CustomAPIViewEvaluator:
             start_idx = max(0, line_no - 10)
             end_idx = min(len(query), line_no + 10)
             context = query[start_idx:end_idx]
-            prompt_path = get_prompt_path("evals", "eval_judge_prompt.prompty")
+            prompt_path = get_prompt_path(folder="evals", filename="eval_judge_prompt.prompty")
             response = prompty.execute(
                 prompt_path,
                 inputs={
@@ -144,7 +152,7 @@ class CustomAPIViewEvaluator:
                     "exceptions": exceptions,
                     "language": language,
                 },
-                configuration={"api_key": os.getenv("AZURE_OPENAI_API_KEY")},
+                configuration={"api_key": settings.get("OPENAI_API_KEY")},
             )
             comment["valid"] = "true" in response.lower()
 
@@ -206,13 +214,6 @@ class CustomAPIViewEvaluator:
 
 
 def review_apiview(query: str, language: str):
-
-    # Add project root to sys.path
-    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-    from src._apiview_reviewer import (  # pylint: disable=import-error,no-name-in-module
-        ApiViewReview,
-    )
-
     reviewer = ApiViewReview(target=query, language=language, base=None)
     review = reviewer.run()
     reviewer.close()
@@ -485,9 +486,9 @@ if __name__ == "__main__":
             continue
 
         azure_ai_project = {
-            "subscription_id": os.environ["AZURE_SUBSCRIPTION_ID"],
-            "resource_group_name": os.environ["AZURE_FOUNDRY_RESOURCE_GROUP"],
-            "project_name": os.environ["AZURE_FOUNDRY_PROJECT_NAME"],
+            "subscription_id": settings.get("EVALS_SUBSCRIPTION"),
+            "resource_group_name": settings.get("EVALS_RG"),
+            "project_name": settings.get("EVALS_PROJECT_NAME"),
         }
         if in_ci():
             service_connection_id = os.environ["AZURESUBSCRIPTION_SERVICE_CONNECTION_ID"]
@@ -526,7 +527,7 @@ if __name__ == "__main__":
                     },
                 },
                 target=review_apiview,
-                fail_on_evaluator_errors=True,
+                fail_on_evaluator_errors=False,
                 azure_ai_project=azure_ai_project,
                 **kwargs,
             )

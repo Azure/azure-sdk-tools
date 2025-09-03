@@ -111,9 +111,7 @@ export function getNpmPackageName(packageRoot: string): string {
     return packageName;
 }
 
-export function getApiReviewPath(packageRoot: string): string {
-    const NODE_API_MD_SUFFIX = '-node.api.md';
-    const API_REVIEW_SUFFIX = '.api.md';
+export function getApiReviewBasePath(packageRoot: string): string {
     const sdkType = getSDKType(packageRoot);
     const npmPackageName = getNpmPackageName(packageRoot);
     let apiReviewPath: string;
@@ -130,6 +128,13 @@ export function getApiReviewPath(packageRoot: string): string {
             const packageName = npmPackageName.split('/')[1];
             apiReviewPath = path.join(packageRoot, 'review', `${packageName}`);
     }
+    return apiReviewPath;
+}
+
+export function getApiReviewPath(packageRoot: string): string {
+    const NODE_API_MD_SUFFIX = '-node.api.md';
+    const API_REVIEW_SUFFIX = '.api.md';
+    const apiReviewPath = getApiReviewBasePath(packageRoot);
 
     // First check if node.api.md exists
     const nodePath = `${apiReviewPath}${NODE_API_MD_SUFFIX}`;
@@ -424,4 +429,48 @@ export async function getPackageNameFromTspConfig(typeSpecDirectory: string): Pr
     }
     
     return undefined;
+}
+
+/**
+ * Extracts an npm package to the changelog-temp directory
+ * @param packageFolderPath - Path to the package folder
+ * @param packageName - Name of the npm package
+ * @param version - Version of the package to extract
+ */
+export function extractNpmPackage(packageFolderPath: string, packageName: string, version: string): void {
+    shell.mkdir(path.join(packageFolderPath, 'changelog-temp'));
+    shell.cd(path.join(packageFolderPath, 'changelog-temp'));
+    // TODO: consider get all npm package from github instead
+    shell.exec(`npm pack ${packageName}@${version}`, { silent: true });
+    const files = shell.ls('*.tgz');
+    shell.exec(`tar -xzf ${files[0]}`);
+    shell.cd(packageFolderPath);
+}
+
+/**
+ * Extracts the next version npm package to the changelog-temp/next directory
+ * @param packageFolderPath - Path to the package folder
+ * @param packageName - Name of the npm package
+ * @param nextVersion - Next version of the package to extract
+ */
+export function extractNextVersionPackage(packageFolderPath: string, packageName: string, nextVersion: string): void {
+    shell.cd(path.join(packageFolderPath, 'changelog-temp'));
+    shell.mkdir(path.join(packageFolderPath, 'changelog-temp', 'next'));
+    shell.cd(path.join(packageFolderPath, 'changelog-temp', 'next'));
+    // TODO: consider get all npm package from github instead
+    shell.exec(`npm pack ${packageName}@${nextVersion}`, { silent: true });
+    const files = shell.ls('*.tgz');
+    shell.exec(`tar -xzf ${files[0]}`);
+    shell.cd(packageFolderPath);
+}
+
+/**
+ * Cleans up temporary resources and restores the original working directory
+ * @param packageFolderPath - Path to the package folder
+ * @param jsSdkRepoPath - Path to the JS SDK repository
+ */
+export function cleanupResources(packageFolderPath: string, jsSdkRepoPath: string): void {
+    shell.rm('-r', `${path.join(packageFolderPath, 'changelog-temp')}`);
+    shell.rm('-r', `${path.join(packageFolderPath, '~/.tmp-breaking-change-detect')}`);
+    shell.cd(jsSdkRepoPath);
 }

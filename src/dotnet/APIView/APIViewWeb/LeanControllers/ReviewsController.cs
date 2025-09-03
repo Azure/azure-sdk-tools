@@ -8,6 +8,7 @@ using APIViewWeb.Hubs;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Managers;
 using APIViewWeb.Managers.Interfaces;
+using APIViewWeb.Models;
 using APIViewWeb.Repositories;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -15,6 +16,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using APIViewWeb.DTOs;
 
 namespace APIViewWeb.LeanControllers
 {
@@ -134,11 +136,18 @@ namespace APIViewWeb.LeanControllers
         /// </summary>
         /// <param name="reviewId"></param>
         /// <param name="apiRevisionId"></param>
+        /// <param name="approvalRequest"></param>
         /// <returns></returns>
         [HttpPost("{reviewId}/{apiRevisionId}", Name = "ToggleReviewApproval")]
-        public async Task<ActionResult> ToggleReviewApprovalAsync(string reviewId, string apiRevisionId)
+        public async Task<ActionResult> ToggleReviewApprovalAsync(string reviewId, string apiRevisionId, [FromBody] ApprovalRequest approvalRequest)
         {
-            var updatedReview = await _reviewManager.ToggleReviewApprovalAsync(User, reviewId, apiRevisionId);
+            ReviewListItemModel currentReview = await _reviewManager.GetReviewAsync(User, reviewId);
+            if (currentReview.IsApproved == approvalRequest.Approve)
+            {
+                return new LeanJsonResult(currentReview, StatusCodes.Status200OK);
+            }
+
+            ReviewListItemModel updatedReview = await _reviewManager.ToggleReviewApprovalAsync(User, reviewId, apiRevisionId);
             await _signalRHubContext.Clients.All.SendAsync("ReviewUpdated", updatedReview);
             return new LeanJsonResult(updatedReview, StatusCodes.Status200OK);
         }
@@ -237,6 +246,85 @@ namespace APIViewWeb.LeanControllers
             }
 
             return new LeanJsonResult("Invalid APIRevision", StatusCodes.Status500InternalServerError);
+        }
+
+        ///<summary>
+        ///Retrieve Cross Language Content for specified revisions
+        ///</summary>
+        ///<param name="apiRevisionId"></param>
+        ///<param name="apiCodeFileId"></param>
+        ///<returns></returns>
+        [Route("crossLanguageContent")]
+        [HttpGet]
+        public async Task<ActionResult<CrossLanguageContentDto>> GetReviewContentAsync([FromQuery] string apiRevisionId, [FromQuery] string apiCodeFileId)
+        {
+            var results = new List<CrossLanguageContentDto>();
+
+            var revisionReviewCodeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(revisionId: apiRevisionId, codeFileId: apiCodeFileId);
+            var processingData = new CrossLanguageProcessingDto();
+            await CodeFileHelpers.GrabCrossLanguageReviewLines(processingData, revisionReviewCodeFile.ReviewLines);
+            var contentData = new CrossLanguageContentDto();
+            contentData.Content = processingData.Content;
+            contentData.APIRevisionId = apiRevisionId;
+            contentData.Language = revisionReviewCodeFile.Language;
+
+            return new LeanJsonResult(contentData, StatusCodes.Status200OK);
+        }
+
+        /// <summary>
+        /// Get whether Copilot review is required for approval
+        /// </summary>
+        /// <param name="language">The programming language of the review</param>
+        /// <returns>Boolean indicating if Copilot review is required</returns>
+        [HttpGet("isReviewByCopilotRequired")]
+        public ActionResult<bool> GetIsReviewByCopilotRequired([FromQuery] string language)
+        {
+            string value = _configuration["CopilotReviewIsRequired"];
+
+            if (string.IsNullOrEmpty(value))
+            {
+                return Ok(false);
+            }
+
+            if (bool.TryParse(value, out bool isRequired))
+            {
+                return Ok(isRequired);
+            }
+
+            // If value is "*", Copilot review is required for all languages
+            if (value.Trim() == "*")
+            {
+                return Ok(true);
+            }
+            
+            if (!string.IsNullOrEmpty(language))
+            {
+                string[] supportedLanguages = value.Split(',')
+                    .Where(lang => !string.IsNullOrEmpty(lang))
+                    .Select(lang => lang.Trim().ToLowerInvariant())
+                    .ToArray();
+                
+                string normalizedLanguage = language.Trim().ToLowerInvariant();
+                return Ok(supportedLanguages.Contains(normalizedLanguage));
+            }
+            
+            return Ok(false);
+        }
+
+
+        /// <summary>
+        /// Check if a specific review version has been reviewed by Copilot
+        /// </summary>
+        /// <param name="reviewId">The ID of the review.</param>
+        /// <param name="packageVersion">The package version to check for Copilot review.</param>
+        [HttpGet("{reviewId}/isReviewVersionReviewedByCopilot")]
+        public async Task<ActionResult<bool>> GetIsReviewVersionReviewedByCopilot(string reviewId, [FromQuery] string packageVersion)
+        {
+            IEnumerable<APIRevisionListItemModel> apiRevisions = await _apiRevisionsManager.GetAPIRevisionsAsync(reviewId);
+
+            bool isReviewed = apiRevisions.Any(revision => revision.PackageVersion == packageVersion && revision.HasAutoGeneratedComments);
+
+            return Ok(isReviewed);
         }
     }
 }

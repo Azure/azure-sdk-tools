@@ -143,7 +143,7 @@ export const runSdkAutoCustomScript = async (
   return result.status;
 };
 
-const listenOnStream = (
+export const listenOnStream = (
   context: WorkflowContext,
   result: StatusContainer,
   prefix: string,

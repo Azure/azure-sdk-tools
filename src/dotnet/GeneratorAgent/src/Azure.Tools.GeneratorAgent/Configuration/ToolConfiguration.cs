@@ -1,8 +1,8 @@
 using System.Reflection;
+using Azure.Tools.GeneratorAgent;
 using Azure.Tools.GeneratorAgent.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Azure.Tools.GeneratorAgent;
 
 internal class ToolConfiguration
 {
@@ -29,9 +29,9 @@ internal class ToolConfiguration
                 .SetMinimumLevel(LogLevel.Information));
     }
 
-    public virtual AppSettings CreateAppSettings()
+    public virtual AppSettings CreateAppSettings(ILogger<AppSettings> logger)
     {
-        return new AppSettings(_configuration);
+        return new AppSettings(_configuration, logger);
     }
 
     private IConfiguration CreateConfigurationInternal()

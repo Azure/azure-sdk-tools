@@ -10,6 +10,13 @@ namespace Azure.Tools.GeneratorAgent
         public static readonly string EnvironmentName = $"{Prefix}ENVIRONMENT";
         public static readonly string AzureTenantId = $"{Prefix}TENANT_ID";
         public static readonly string AzureAuthorityHost = $"{Prefix}AUTHORITY_HOST";
+        
+        /// <summary>
+        /// Gets the GitHub token from environment variables.
+        /// Checks AZURE_GENERATOR_GITHUB_TOKEN first, then falls back to GITHUB_TOKEN.
+        /// </summary>
+        public static string? GitHubToken => Environment.GetEnvironmentVariable($"{Prefix}GITHUB_TOKEN") 
+                                           ?? Environment.GetEnvironmentVariable("GITHUB_TOKEN");
 
     }
 }

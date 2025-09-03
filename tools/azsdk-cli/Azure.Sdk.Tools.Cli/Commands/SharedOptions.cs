@@ -2,35 +2,47 @@ using System.CommandLine;
 using System.CommandLine.Parsing;
 using System.IO.Enumeration;
 using Azure.Sdk.Tools.Cli.Tools;
-using Azure.Sdk.Tools.Cli.Tools.HelloWorldTool;
-using Azure.Sdk.Tools.Cli.Tools.HostServer;
-using Azure.Sdk.Tools.Cli.Tools.SdkRelease;
-using Azure.Sdk.Tools.Cli.Tools.ReleaseReadiness;
+using Azure.Sdk.Tools.Cli.Tools.EngSys;
+using Azure.Sdk.Tools.Cli.Tools.GitHub;
+using Azure.Sdk.Tools.Cli.Tools.Package;
+using Azure.Sdk.Tools.Cli.Tools.Pipeline;
+using Azure.Sdk.Tools.Cli.Tools.ReleasePlan;
+using Azure.Sdk.Tools.Cli.Tools.Example;
+using Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 
 namespace Azure.Sdk.Tools.Cli.Commands
 {
     public static class SharedOptions
     {
         public static readonly List<Type> ToolsList = [
+            typeof(PackageCheckTool),
             typeof(CleanupTool),
-            typeof(DownloadPromptsTool),
-            typeof(LogAnalysisTool),
-            typeof(FileValidationTool),
+            typeof(CodeownersTools),
+            typeof(GitHubLabelsTool),
             typeof(HostServerTool),
+            typeof(LogAnalysisTool),
+            typeof(PipelineTool),
             typeof(PipelineAnalysisTool),
             typeof(PipelineTestsTool),
+            typeof(QuokkaTool),
+            typeof(ReadMeGeneratorTool),
             typeof(ReleasePlanTool),
             typeof(ReleaseReadinessTool),
             typeof(SdkReleaseTool),
             typeof(SpecCommonTools),
-            typeof(SpecPullRequestTools),
+            typeof(PullRequestTools),
             typeof(SpecWorkflowTool),
             typeof(SpecValidationTools),
             typeof(TestAnalysisTool),
+            typeof(TypeSpecConvertTool),
+            typeof(TypeSpecInitTool),
+            typeof(TypeSpecPublicRepoValidationTool),
+
             #if DEBUG
-            // only add this tool in debug mode
+            // only add these tools in debug mode
+            typeof(ExampleTool),
             typeof(HelloWorldTool),
-            #endif
+#endif
         ];
 
         public static Option<string> ToolOption = new("--tools")
@@ -49,6 +61,11 @@ namespace Azure.Sdk.Tools.Cli.Commands
         {
             Description = "Enable debug logging",
             IsRequired = false,
+        };
+
+        public static Option<string> PackagePath = new(["--package-path", "-p"], "Path to the package directory to check")
+        {
+            IsRequired = true
         };
 
         public static (string, bool) GetGlobalOptionValues(string[] args)

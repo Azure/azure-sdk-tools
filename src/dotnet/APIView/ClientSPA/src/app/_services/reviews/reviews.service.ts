@@ -6,6 +6,7 @@ import { PaginatedResult } from 'src/app/_models/pagination';
 import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
 import { ConfigService } from '../config/config.service';
+import { CrossLanguageContentDto } from 'src/app/_models/codePanelModels';
 
 @Injectable({
   providedIn: 'root'
@@ -99,7 +100,7 @@ export class ReviewsService {
     );
   }
 
-  toggleReviewApproval(reviewId: string, apiRevisionId: string) : Observable<Review> {
+  toggleReviewApproval(reviewId: string, apiRevisionId: string, approve: boolean) : Observable<Review> {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
     });

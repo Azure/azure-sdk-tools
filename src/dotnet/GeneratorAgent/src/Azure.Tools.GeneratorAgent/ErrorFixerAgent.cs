@@ -2,6 +2,7 @@ using System.Text;
 using Azure.AI.Agents.Persistent;
 using Azure.Tools.ErrorAnalyzers;
 using Azure.Tools.GeneratorAgent.Configuration;
+using Azure.Tools.GeneratorAgent.Models;
 using Microsoft.Extensions.Logging;
 
 namespace Azure.Tools.GeneratorAgent
@@ -311,60 +312,56 @@ namespace Azure.Tools.GeneratorAgent
 
         private async Task WaitForIndexingAsync(List<string> uploadedFilesIds, CancellationToken ct)
         {
-            var maxWaitTime = AppSettings.IndexingMaxWaitTime;
             var pollingInterval = AppSettings.IndexingPollingInterval;
-            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            var cts = new CancellationTokenSource(AppSettings.IndexingMaxWaitTime);
+            var pollingCt = CancellationTokenSource.CreateLinkedTokenSource(ct, cts.Token);
 
-            Logger.LogInformation("Waiting for {Count} files to be indexed... (timeout: {Timeout}s, polling interval: {Interval}s)", 
-                uploadedFilesIds.Count, maxWaitTime.TotalSeconds, pollingInterval.TotalSeconds);
+            List<IndexAgentFileOperation> indexingOperations = new();
+            foreach (var fileId in uploadedFilesIds)
+            {
+                indexingOperations.Add(new IndexAgentFileOperation(Client, fileId, Logger));
+            }
 
             const int batchSize = 10;
-            while (stopwatch.Elapsed < maxWaitTime)
+
+            while (!pollingCt.IsCancellationRequested)
             {
-                var results = new List<(string FileId, PersistentAgentFileInfo? File)>();
-                
-                for (int i = 0; i < uploadedFilesIds.Count; i += batchSize)
+                await Task.Delay(pollingInterval, ct).ConfigureAwait(false);
+
+                for (int i = 0; i < indexingOperations.Count; i += batchSize)
                 {
-                    var batch = uploadedFilesIds.Skip(i).Take(batchSize);
-                    var checkTasks = batch.Select(fileId => CheckFileStatusAsync(fileId, ct));
-                    var batchResults = await Task.WhenAll(checkTasks);
-                    results.AddRange(batchResults);
+                    var batch = indexingOperations.Skip(i).Take(batchSize);
+                    var checkTasks = batch.Select(op => op.UpdateStatusAsync(ct));
+                    await Task.WhenAll(checkTasks);
                 }
                 
-                var allIndexed = true;
-                var pendingFiles = Logger.IsEnabled(LogLevel.Debug) ? new List<string>() : null;
+                var allOperationsCompleted = true;
                 var currentStatusCounts = Logger.IsEnabled(LogLevel.Information) ? new Dictionary<string, int>() : null;
                 
-                foreach ((string FileId, PersistentAgentFileInfo? File) result in results)
+                foreach (var operation in indexingOperations)
                 {
-                    if (result.File == null)
+                    if (operation.HasCompleted && operation.HasValue)
                     {
-                        Logger.LogWarning("Could not retrieve status for file: {FileId}", result.FileId);
-                        allIndexed = false;
-                        pendingFiles?.Add(result.FileId);
                         if (currentStatusCounts != null)
                         {
-                            currentStatusCounts["Unknown"] = currentStatusCounts.GetValueOrDefault("Unknown") + 1;
+                            var statusString = operation.Value.Status.ToString() ?? "Unknown";
+                            currentStatusCounts[statusString] = currentStatusCounts.GetValueOrDefault(statusString) + 1;
+                        }
+
+                        var status = operation.Value.Status;
+
+                        if (status == FileState.Deleted)
+                        {
+                            Logger.LogWarning("File {Filename} (ID: {FileId}) was deleted during processing",
+                                operation.Value.Filename, operation.FileId);
                         }
                     }
                     else
                     {
-                        var status = result.File?.Status.ToString() ?? "Unknown";
+                        allOperationsCompleted = false;
                         if (currentStatusCounts != null)
                         {
-                            currentStatusCounts[status] = currentStatusCounts.GetValueOrDefault(status) + 1;
-                        }
-                        
-                        Logger.LogDebug("File {Filename} (ID: {FileId}) status: {Status}", 
-                            result.File?.Filename, result.FileId, status);
-
-                        if (!status.Equals("Processed", StringComparison.OrdinalIgnoreCase))
-                        {
-                            allIndexed = false;
-                            if (result.File != null)
-                            {
-                                pendingFiles?.Add($"{result.File.Filename}({status})");
-                            }
+                            currentStatusCounts["Unknown"] = currentStatusCounts.GetValueOrDefault("Unknown") + 1;
                         }
                     }
                 }
@@ -372,77 +369,18 @@ namespace Azure.Tools.GeneratorAgent
                 if (Logger.IsEnabled(LogLevel.Information) && currentStatusCounts != null)
                 {
                     var statusSummary = string.Join(", ", currentStatusCounts.Select(kvp => $"{kvp.Key}: {kvp.Value}"));
-                    Logger.LogInformation("Indexing status summary: {StatusSummary} | Elapsed: {Elapsed:F1}s", 
-                        statusSummary, stopwatch.Elapsed.TotalSeconds);
+                    Logger.LogInformation("Indexing status summary: {StatusSummary}", statusSummary);
                 }
 
-                if (allIndexed)
+                if (allOperationsCompleted)
                 {
-                    Logger.LogInformation("All {Count} files indexed successfully in {Duration:F1}s", 
-                        uploadedFilesIds.Count, stopwatch.Elapsed.TotalSeconds);
                     return;
                 }
-
-                if (Logger.IsEnabled(LogLevel.Debug) && pendingFiles?.Count <= 3)
-                {
-                    Logger.LogDebug("Still waiting for: {PendingFiles}", string.Join(", ", pendingFiles));
-                }
-
-                await Task.Delay(pollingInterval, ct).ConfigureAwait(false);
             }
-
-            var finalResults = await Task.WhenAll(uploadedFilesIds.Select(id => CheckFileStatusAsync(id, ct))).ConfigureAwait(false);
-            
-            var allProcessed = finalResults.All(r => r.File?.Status.ToString()?.Equals("Processed", StringComparison.OrdinalIgnoreCase) == true);
-            if (allProcessed)
-            {
-                Logger.LogInformation("All {Count} files indexed successfully in {Duration:F1}s (completed during final check)", 
-                    uploadedFilesIds.Count, stopwatch.Elapsed.TotalSeconds);
-                return;
-            }
-
-            var finalSummary = finalResults
-                .Where(r => r.File != null)
-                .GroupBy(r => r.File!.Status.ToString() ?? "Unknown")
-                .ToDictionary(g => g.Key ?? "Unknown", g => g.Count());
-            
-            var finalStatusSummary = string.Join(", ", finalSummary.Select(kvp => $"{kvp.Key}: {kvp.Value}"));
             
             throw new TimeoutException(
-                $"Timeout after {maxWaitTime.TotalSeconds}s while waiting for file indexing to complete. " +
-                $"Final status: {finalStatusSummary}. " +
+                $"Timeout while waiting for file indexing to complete. " +
                 $"This may indicate the Azure AI service is experiencing delays or the files require more processing time.");
-        }
-
-        private async Task<(string FileId, PersistentAgentFileInfo? File)> CheckFileStatusAsync(string fileId, CancellationToken ct)
-        {
-            try
-            {
-                var file = await Client.Files.GetFileAsync(fileId, cancellationToken: ct).ConfigureAwait(false);
-                return (fileId, file);
-            }
-            catch (Azure.RequestFailedException ex) when (ex.Status == 404)
-            {
-                Logger.LogWarning("File not found (404): {FileId} - it may have been deleted or not yet available", fileId);
-                return (fileId, null);
-            }
-            catch (Azure.RequestFailedException ex) when (ex.Status >= 400 && ex.Status < 500)
-            {
-                Logger.LogWarning("Client error ({StatusCode}) checking file {FileId}: {Message}", 
-                    ex.Status, fileId, ex.Message);
-                return (fileId, null);
-            }
-            catch (Azure.RequestFailedException ex) when (ex.Status >= 500)
-            {
-                Logger.LogWarning("Server error ({StatusCode}) checking file {FileId}: {Message} - will retry", 
-                    ex.Status, fileId, ex.Message);
-                return (fileId, null);
-            }
-            catch (Exception ex)
-            {
-                Logger.LogWarning(ex, "Unexpected error checking status for file: {FileId}", fileId);
-                return (fileId, null);
-            }
         }
 
         private async Task UpdateAgentVectorStoreAsync(string vectorStoreId, CancellationToken ct)

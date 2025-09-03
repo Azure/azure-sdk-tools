@@ -51,7 +51,7 @@ export class ReviewPageComponent implements OnInit {
   diffAPIRevision : APIRevision | undefined = undefined;
   latestSampleRevision: SamplesRevision | undefined = undefined;
   revisionSidePanel : boolean | undefined = undefined;
-  crosslanguageRevisionSidePanel : boolean | undefined = undefined; 
+  crosslanguageRevisionSidePanel : boolean | undefined = undefined;
   conversationSidePanel : boolean | undefined = undefined;
   reviewPageNavigation : TreeNode[] = [];
   language: string | undefined;
@@ -349,7 +349,7 @@ export class ReviewPageComponent implements OnInit {
         }),
       ).subscribe({
           next: (response: any) => {
-            
+
           }
         });
   }

@@ -104,11 +104,13 @@ export class ReviewsService {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
     });
-    return this.http.post<Review>(this.baseUrl + `/${reviewId}/${apiRevisionId}`, {},
+
+    return this.http.post<Review>(this.baseUrl + `/${reviewId}/${apiRevisionId}`, { approve: approve },
     {
       headers: headers,
       withCredentials: true,
-    });  }
+    });
+  }
 
   requestNamespaceReview(reviewId: string, associatedReviewIds: string[] = [], notes: string = '') : Observable<Review> {
     const headers = new HttpHeaders({
@@ -151,6 +153,31 @@ export class ReviewsService {
     return this.http.get(this.baseUrl + `/${reviewId}/content`,
     {
       params: params, observe: 'response',
-      responseType: 'arraybuffer', withCredentials: true });
+      responseType: 'arraybuffer', withCredentials: true
+    });
+  }
+
+  getCrossLanguageContent(apiRevisionId: string, apiCodeFileId: string) : Observable<CrossLanguageContentDto> {
+    let params = new HttpParams();
+    params = params.append('apiRevisionId', apiRevisionId);
+    params = params.append('apiCodeFileId', apiCodeFileId);
+    return this.http.get<CrossLanguageContentDto>(this.baseUrl + `/crossLanguageContent`,
+    {
+      params: params, withCredentials: true
+    });
+  }
+
+  getIsReviewByCopilotRequired(language?: string): Observable<boolean> {
+    const url = `${this.baseUrl}/isReviewByCopilotRequired`;
+    const params = language ? `?language=${encodeURIComponent(language)}` : '';
+    return this.http.get<boolean>(`${url}${params}`, { withCredentials: true });
+  }
+
+  getIsReviewVersionReviewedByCopilot(reviewId: string, packageVersion?: string): Observable<boolean> {
+    let url = `${this.baseUrl}/${reviewId}/isReviewVersionReviewedByCopilot`;
+    if (packageVersion) {
+      url += `?packageVersion=${encodeURIComponent(packageVersion)}`;
+    }
+    return this.http.get<boolean>(url, { withCredentials: true });
   }
 }

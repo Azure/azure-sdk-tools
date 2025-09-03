@@ -3,6 +3,35 @@ import { ReviewLine } from "../models/apiview-models";
 
 export const lineIdMap = new Map<string, string>();
 
+/**
+ * Sanitizes a string for use in line IDs while preserving meaningful distinctions
+ * @param input The input string to sanitize
+ * @returns A sanitized string suitable for line IDs
+ */
+export function sanitizeForLineId(input: string): string {
+  return input
+    // Replace reference symbols with meaningful text
+    .replace(/&mut\s+/g, "refmut_")
+    .replace(/&\s*/g, "ref_")
+    // Replace generic brackets with meaningful separators
+    .replace(/</g, "_of_")
+    .replace(/>/g, "_")
+    // Replace common punctuation with meaningful separators
+    .replace(/\s+/g, "_") // spaces to underscores
+    .replace(/:/g, "_")   // colons to underscores
+    .replace(/,/g, "_")   // commas to underscores
+    .replace(/\(/g, "_")  // parentheses
+    .replace(/\)/g, "_")
+    .replace(/\[/g, "_")  // brackets
+    .replace(/\]/g, "_")
+    .replace(/\{/g, "_")  // braces
+    .replace(/\}/g, "_")
+    // Clean up multiple consecutive underscores
+    .replace(/_+/g, "_")
+    // Remove leading/trailing underscores
+    .replace(/^_+|_+$/g, "");
+}
+
 function postProcessLineIdMap(reviewLines: ReviewLine[], updatedLineIdMap: Map<string, string>) {
   function recurse(lines: ReviewLine[], prefix: string) {
     for (const line of lines) {

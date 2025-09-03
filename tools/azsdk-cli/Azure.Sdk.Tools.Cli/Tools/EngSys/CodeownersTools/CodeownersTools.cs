@@ -164,8 +164,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                 var validateRepo = commandParser.GetValueForOption(repoOption);
                 var validateServiceLabel = commandParser.GetValueForOption(serviceLabelOption);
                 var validateRepoPath = commandParser.GetValueForOption(pathOptionOptional);
-                var workingBranchValue = commandParser.GetValueForOption(workingBranchOption);
-
+                
                 var validateResult = await ValidateCodeownersEntryForService(
                     validateRepo ?? "",
                     validateServiceLabel,

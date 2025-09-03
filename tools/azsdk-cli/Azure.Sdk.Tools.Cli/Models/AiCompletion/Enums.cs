@@ -1,9 +1,10 @@
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
+using Azure.Sdk.Tools.Cli.Models.seraialize;
 
 namespace Azure.Sdk.Tools.Cli.Models.AiCompletion
 {
-    [JsonConverter(typeof(JsonStringEnumConverter<TenantId>))]
+    [JsonConverter(typeof(JsonStringEnumWithEnumMemberConverter<TenantId>))]
     public enum TenantId
     {
         [EnumMember(Value = "azure_sdk_qa_bot")]
@@ -19,7 +20,7 @@ namespace Azure.Sdk.Tools.Cli.Models.AiCompletion
         AzureSDKOnboarding
     }
 
-    [JsonConverter(typeof(JsonStringEnumConverter<Source>))]
+    [JsonConverter(typeof(JsonStringEnumWithEnumMemberConverter<Source>))]
     public enum Source
     {
         [EnumMember(Value = "typespec_docs")]
@@ -62,7 +63,7 @@ namespace Azure.Sdk.Tools.Cli.Models.AiCompletion
         TypeSpecHttpSpecs
     }
 
-    [JsonConverter(typeof(JsonStringEnumConverter<Role>))]
+    [JsonConverter(typeof(JsonStringEnumWithEnumMemberConverter<Role>))]
     public enum Role
     {
         [EnumMember(Value = "user")]
@@ -75,7 +76,7 @@ namespace Azure.Sdk.Tools.Cli.Models.AiCompletion
         System
     }
 
-    [JsonConverter(typeof(JsonStringEnumConverter<AdditionalInfoType>))]
+    [JsonConverter(typeof(JsonStringEnumWithEnumMemberConverter<AdditionalInfoType>))]
     public enum AdditionalInfoType
     {
         [EnumMember(Value = "link")]
@@ -85,7 +86,7 @@ namespace Azure.Sdk.Tools.Cli.Models.AiCompletion
         Image
     }
 
-    [JsonConverter(typeof(JsonStringEnumConverter<QuestionScope>))]
+    [JsonConverter(typeof(JsonStringEnumWithEnumMemberConverter<QuestionScope>))]
     public enum QuestionScope
     {
         [EnumMember(Value = "unknown")]

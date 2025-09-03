@@ -159,7 +159,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                 // Build request
                 var request = new CompletionRequest
                 {
-                    TenantId = "azure_sdk_qa_bot",
+                    TenantId = TenantId.AzureSDKQaBot,
                     Message = new Message
                     {
                         Role = Role.User,
@@ -280,7 +280,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                 // Build request
                 var request = new CompletionRequest
                 {
-                    TenantId = "azure_sdk_qa_bot",
+                    TenantId = TenantId.AzureSDKQaBot,
                     Message = new Message
                     {
                         Role = Role.User,

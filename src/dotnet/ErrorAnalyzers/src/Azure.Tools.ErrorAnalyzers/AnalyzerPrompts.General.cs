@@ -22,19 +22,15 @@ namespace Azure.Tools.ErrorAnalyzers
                 You are analyzing an error that doesn't have a specific handler. This could be from various sources including:
                 • TypeSpec compiler errors
                 • .NET compiler errors (C#/VB.NET)
-                • Roslyn analyzer errors
+                • Analyzer errors
                 • MSBuild errors
-                • Custom analyzer errors
-                • Azure SDK specific errors
 
                 ANALYSIS APPROACH:
                 1. IDENTIFY ERROR SOURCE:
                    - Look at the error code pattern to determine the source:
                      * TypeSpec: Usually starts with letters (e.g., "invalid-template", "duplicate-declaration")
                      * C# Compiler: Usually CS#### format (e.g., "CS0103", "CS1002")
-                     * MSBuild: Usually MSB#### format (e.g., "MSB3644", "MSB4181")
-                     * Analyzer: Usually custom prefix + numbers (e.g., "AZC####", "CA####", "IDE####")
-                     * Azure SDK: May have AZC, ARM, or service-specific prefixes
+                     * Analyzer: Usually custom prefix + numbers (e.g., "AZC####")
 
                 2. UNDERSTAND THE ERROR:
                    - Read the error message carefully to understand what's wrong
@@ -53,12 +49,6 @@ namespace Azure.Tools.ErrorAnalyzers
                    - Verify syntax correctness
                    - Look for missing references or assemblies
                    - Check for type mismatches or accessibility issues
-
-                   For MSBuild Errors:
-                   - Check project file syntax and references
-                   - Verify package versions and compatibility
-                   - Look for missing dependencies or targets
-                   - Check for path or file access issues
 
                    For Analyzer Errors:
                    - Follow the specific rule guidelines mentioned in the error

@@ -50,6 +50,46 @@ function postProcessLineIdMap(reviewLines: ReviewLine[], updatedLineIdMap: Map<s
   }
 }
 
+/**
+ * Validates that all line IDs are unique and throws an error if duplicates are found.
+ * This is a defensive measure to catch any edge cases not handled by sanitization.
+ * @param reviewLines The review lines to validate
+ * @throws Error if duplicate line IDs are found
+ */
+export function ensureUniqueLineIds(reviewLines: ReviewLine[]): void {
+  const usedLineIds = new Set<string>();
+  const duplicates: string[] = [];
+
+  function validateLineIds(line: ReviewLine): void {
+    if (line.LineId) {
+      if (usedLineIds.has(line.LineId)) {
+        duplicates.push(line.LineId);
+      } else {
+        usedLineIds.add(line.LineId);
+      }
+    }
+
+    // Process children recursively
+    if (line.Children && Array.isArray(line.Children)) {
+      line.Children.forEach(validateLineIds);
+    }
+  }
+
+  // Process all review lines
+  if (reviewLines && Array.isArray(reviewLines)) {
+    reviewLines.forEach(validateLineIds);
+  }
+
+  // If duplicates were found, throw an error
+  if (duplicates.length > 0) {
+    const uniqueDuplicates = [...new Set(duplicates)];
+    throw new Error(
+      `Duplicate line IDs detected: ${uniqueDuplicates.join(', ')}. ` +
+      `This will cause Copilot review failures. Please fix the line ID generation logic.`
+    );
+  }
+}
+
 export function updateReviewLinesWithStableLineIds(reviewLines: ReviewLine[]) {
   const updatedLineIdMap = new Map<string, string>();
   postProcessLineIdMap(reviewLines, updatedLineIdMap);
@@ -76,4 +116,7 @@ export function updateReviewLinesWithStableLineIds(reviewLines: ReviewLine[]) {
     }
   }
   updateLineIdReferences(reviewLines);
+  
+  // Final validation: ensure all line IDs are unique before serialization
+  ensureUniqueLineIds(reviewLines);
 }

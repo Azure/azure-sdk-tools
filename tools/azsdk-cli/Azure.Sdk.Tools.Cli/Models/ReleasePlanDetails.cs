@@ -132,13 +132,9 @@ namespace Azure.Sdk.Tools.Cli.Models
     public class SDKInfo
     {
 
-        [JsonPropertyName("language")]
         public string Language { get; set; } = string.Empty;
-        [JsonPropertyName("generationPipelineUrl")]
         public string GenerationPipelineUrl { get; set; } = string.Empty;
-        [JsonPropertyName("sdkPullRequestUrl")]
         public string SdkPullRequestUrl {  get; set; } = string.Empty;
-        [JsonPropertyName("packageName")]
         public string PackageName { get; set; } = string.Empty;
     }
 }

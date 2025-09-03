@@ -283,7 +283,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         }
 
         [McpServerTool(Name = "azsdk_update_sdk_details_in_release_plan"), Description("Update the SDK details in the release plan work item. This tool is called to update SDK language and package name in the release plan work item." +
-            " sdkDetails parameter is a JSON of list of SDKInfo and each SDKInfo contains language and packageName as properties.")]
+            " sdkDetails parameter is a JSON of list of SDKInfo and each SDKInfo contains Language and PackageName as properties.")]
         public async Task<string> UpdateSDKDetailsInReleasePlan(int releasePlanWorkItemId, string sdkDetails)
         {
             try
@@ -297,12 +297,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 {
                     return "No SDK information provided to update the release plan.";
                 }
-                // Ideally property name should be in camel case but to support different case in input from agent, replacing property names here.
-                sdkDetails = sdkDetails.Replace("\"Language\"", "\"language\"").Replace("\"PackageName\"", "\"packageName\"");
                 logger.LogInformation($"Updating SDK details in release plan work item ID: {releasePlanWorkItemId}");
                 logger.LogDebug($"SDK details to update: {sdkDetails}");
                 // Fix for CS8600: Ensure sdkDetails is not null before deserialization
-                List<SDKInfo>? SdkInfos = JsonSerializer.Deserialize<List<SDKInfo>>(sdkDetails);
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+                List<SDKInfo>? SdkInfos = JsonSerializer.Deserialize<List<SDKInfo>>(sdkDetails, options);
                 if (SdkInfos == null)
                 {
                     return "Failed to deserialize SDK details.";

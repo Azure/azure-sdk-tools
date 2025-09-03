@@ -283,7 +283,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         }
 
         [McpServerTool(Name = "azsdk_update_sdk_details_in_release_plan"), Description("Update the SDK details in the release plan work item. This tool is called to update SDK language and package name in the release plan work item." +
-            " sdkDetails parameter is a JSON of list of SDKInfo and each SDKInfo contains Language and PackageName as properties.")]
+            " sdkDetails parameter is a JSON of list of SDKInfo and each SDKInfo contains language and packageName as properties.")]
         public async Task<string> UpdateSDKDetailsInReleasePlan(int releasePlanWorkItemId, string sdkDetails)
         {
             try

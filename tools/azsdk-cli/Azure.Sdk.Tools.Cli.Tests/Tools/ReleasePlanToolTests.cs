@@ -178,5 +178,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             // Verify the environment helper was called
             environmentHelperMock.Verify(x => x.GetBooleanVariable("AZSDKTOOLS_AGENT_TESTING", false), Times.Once);
         }
+
+        [Test]
+        public async Task Test_Update_SDK_Details_In_Release_Plan()
+        {
+            string sdkDetails = "[{\"language\":\".NET\",\"packageName\":\"Azure.ResourceManager.Contoso\"},{\"language\":\"Python\",\"packageName\":\"azure-mgmt-contoso\"},{\"language\":\"Java\",\"packageName\":\"com.azure.resourcemanager.contoso\"},{\"language\":\"JavaScript\",\"packageName\":\"@azure/arm-contoso\"},{\"language\":\"Go\",\"packageName\":\"sdk/resourcemanager/contoso/armcontoso\"}]";
+            var updateStatus = await releasePlanTool.UpdateSDKDetailsInReleasePlan(100, sdkDetails);
+            Assert.True(updateStatus.Contains("Updated SDK details in release plan"));
+        }
     }
 }

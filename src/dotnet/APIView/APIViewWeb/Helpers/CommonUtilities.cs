@@ -7,12 +7,13 @@ using System.Text.RegularExpressions;
 
 namespace APIViewWeb.Helpers
 {
+    /*
     /// <summary>
     /// General utility class for date/time operations and common helper methods
+    /// TODO: Auto-approval feature is currently disabled - commenting out for future use
     /// </summary>
-    //public static class DateTimeHelper
-   // {
-        /*
+    public static class DateTimeHelper
+    {
         /// <summary>
         /// Calculate business days from a start date, excluding weekends
         /// TODO: Auto-approval feature is currently disabled - commenting out for future use
@@ -36,8 +37,8 @@ namespace APIViewWeb.Helpers
 
             return currentDate;
         }
-        */
-   // }
+    }
+    */
 
 
 
@@ -85,7 +86,7 @@ namespace APIViewWeb.Helpers
         /// <returns>The calculated date after adding the specified business days</returns>
         public static DateTime CalculateBusinessDays(DateTime startDate, int businessDays)
         {
-            => DateTimeHelper.CalculateBusinessDays(startDate, businessDays);
+            return DateTimeHelper.CalculateBusinessDays(startDate, businessDays);
         }
     }
     */

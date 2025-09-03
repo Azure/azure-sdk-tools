@@ -76,8 +76,8 @@ namespace APIViewWeb
                 SELECT * FROM Reviews r 
                 WHERE r.Language IN ({languageList}) 
                 AND r.NamespaceReviewStatus = 'Pending'
-                AND IS_DEFINED(r.NamespaceApprovalRequestedBy) 
-                AND IS_DEFINED(r.NamespaceApprovalRequestedOn)";
+                AND IS_DEFINED(r.NamespaceApprovalRequestedOn)
+                AND (NOT IS_DEFINED(r.IsDeleted) OR r.IsDeleted = false)";
             
             var itemQueryIterator = _reviewsContainer.GetItemQueryIterator<ReviewListItemModel>(queryText);
             var reviews = new List<ReviewListItemModel>();

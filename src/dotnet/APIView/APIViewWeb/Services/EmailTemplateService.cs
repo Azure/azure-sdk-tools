@@ -73,8 +73,9 @@ namespace APIViewWeb.Services
             var deadline = DateTimeHelper.CalculateBusinessDays(DateTime.Now, BusinessDaysForDeadline);
             */
             
-            // Manual review required (no automatic approval deadline)
-            var deadlineText = "Manual review required - no automatic approval";
+            // TODO: Auto-approval feature is disabled - commenting out deadline text
+            // var deadlineText = "Manual review required - no automatic approval";
+            var deadlineText = "";
 
             // Generate language links HTML like the pending namespace approval tab
             var languageLinksHtml = GenerateLanguageLinksHtml(languageReviews);

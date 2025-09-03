@@ -104,7 +104,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   namespaceReviewBtnClass: string = '';
   namespaceReviewBtnLabel: string = '';
   namespaceReviewMessage: string = '';
-  namespaceReviewEnabled: boolean = false; // Feature flag from Azure App Configuration
+  namespaceReviewEnabled: boolean = true; // Feature flag from Azure App Configuration
 
   codeLineSearchText: FormControl = new FormControl('');
 
@@ -138,8 +138,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   async ngOnInit() {
     this.activeAPIRevision?.assignedReviewers.map(revision => this.selectedApprovers.push(revision.assingedTo));
 
-    this.namespaceReviewEnabled = await this.configService.getEnableNamespaceReview().toPromise() || false;
-
+    this.namespaceReviewEnabled = true;
     this.codeLineSearchText.valueChanges.pipe(
       debounceTime(500),
       distinctUntilChanged(),
@@ -366,7 +365,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
         : of(false);
 
       combineLatest([isRequired$, isVersionReviewed$]).pipe(take(1)).subscribe({
-        next: ([isRequired, isVersionReviewed]) => {
+        next: ([isRequired, isVersionReviewed]: [boolean, boolean]) => {
           this.updateApprovalStates(isRequired, isVersionReviewed);
         },
         error: (error) => {

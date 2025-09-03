@@ -34,6 +34,26 @@ namespace APIViewWeb.Pages.Assemblies
         
         // Track namespace approval request info for associated revisions
         public Dictionary<string, (DateTime RequestedOn, string RequestedBy)> NamespaceApprovalInfo { get; set; } = new Dictionary<string, (DateTime, string)>();
+
+        /// <summary>
+        /// Updates the latest revisions dictionary with the newest revision for a given review ID
+        /// </summary>
+        private void UpdateLatestRevisionForNamespaceReview(Dictionary<string, APIRevisionListItemModel> latestRevisions, APIRevisionListItemModel revision)
+        {
+            if (!latestRevisions.ContainsKey(revision.ReviewId))
+            {
+                latestRevisions[revision.ReviewId] = revision;
+            }
+            else
+            {
+                // Compare and keep the latest revision (most recent CreatedOn)
+                var existingRevision = latestRevisions[revision.ReviewId];
+                if (revision.CreatedOn > existingRevision.CreatedOn)
+                {
+                    latestRevisions[revision.ReviewId] = revision;
+                }
+            }
+        }
         
         public RequestedReviews(IAPIRevisionsManager apiRevisionsManager, IReviewManager reviewManager, IPullRequestManager pullRequestManager, UserProfileCache userProfileCache, IConfiguration configuration, IMemoryCache cache, TelemetryClient telemetryClient)
         {
@@ -50,14 +70,12 @@ namespace APIViewWeb.Pages.Assemblies
             var userId = User.GetGitHubLogin();
             
             UserProfileModel userProfile = null;
-            var approvedLanguages = new string[0];
             try
             {
                 using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5)))
                 {
                     userProfile = await _userProfileCache.GetUserProfileAsync(userId);
                 }
-                approvedLanguages = userProfile?.Preferences?.ApprovedLanguages?.ToArray() ?? new string[0];
             }
             catch (OperationCanceledException) { }
             catch (InvalidOperationException ex) when (ex.Message.Contains("DefaultTempDataSerializer")) { }
@@ -70,14 +88,6 @@ namespace APIViewWeb.Pages.Assemblies
                 {
                     assignedRevisions = await _apiRevisionsManager.GetAPIRevisionsAssignedToUser(userId);
                 }
-            }
-            catch (OperationCanceledException)
-            {
-                assignedRevisions = new List<APIRevisionListItemModel>();
-            }
-            catch (InvalidOperationException ex) when (ex.Message.Contains("DefaultTempDataSerializer"))
-            {
-                assignedRevisions = new List<APIRevisionListItemModel>();
             }
             catch (Exception)
             {
@@ -105,7 +115,7 @@ namespace APIViewWeb.Pages.Assemblies
             {
                 using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10)))
                 {
-                    allNamespaceApprovalReviews = await _reviewManager.GetPendingNamespaceApprovalsBatchAsync(User, 30);
+                    allNamespaceApprovalReviews = await _reviewManager.GetPendingNamespaceApprovalsBatchAsync(30);
                     
                     // Debug: Log what the page model received
                     _telemetryClient.TrackTrace($"[NAMESPACE DEBUG] Page model received {allNamespaceApprovalReviews.Count} namespace approval reviews");
@@ -115,8 +125,6 @@ namespace APIViewWeb.Pages.Assemblies
                     }
                 }
             }
-            catch (OperationCanceledException) { }
-            catch (Exception ex) when (ex.Message.Contains("AAD groups are being resolved")) { }
             catch (Exception) { }
             
             // Store namespace approval info for these reviews
@@ -163,7 +171,6 @@ namespace APIViewWeb.Pages.Assemblies
                     }
                 }
             }
-            catch (OperationCanceledException) { }
             catch (Exception) { }
 
             // Group revisions by ReviewId and track the latest one for namespace approval
@@ -216,19 +223,7 @@ namespace APIViewWeb.Pages.Assemblies
                 {
                     // Allow all users to see namespace approvals
                     // Only keep the latest revision per review for namespace approval
-                    if (!latestRevisionsForNamespaceReviews.ContainsKey(apiRevision.ReviewId))
-                    {
-                        latestRevisionsForNamespaceReviews[apiRevision.ReviewId] = apiRevision;
-                    }
-                    else
-                    {
-                        // Compare and keep the latest revision (most recent CreatedOn)
-                        var existingRevision = latestRevisionsForNamespaceReviews[apiRevision.ReviewId];
-                        if (apiRevision.CreatedOn > existingRevision.CreatedOn)
-                        {
-                            latestRevisionsForNamespaceReviews[apiRevision.ReviewId] = apiRevision;
-                        }
-                    }
+                    UpdateLatestRevisionForNamespaceReview(latestRevisionsForNamespaceReviews, apiRevision);
                 }
             }
             
@@ -245,7 +240,7 @@ namespace APIViewWeb.Pages.Assemblies
                         var latestRevision = revisions?.OrderByDescending(r => r.CreatedOn).FirstOrDefault();
                         if (latestRevision != null)
                         {
-                            latestRevisionsForNamespaceReviews[namespaceReview.Id] = latestRevision;
+                            UpdateLatestRevisionForNamespaceReview(latestRevisionsForNamespaceReviews, latestRevision);
                             _telemetryClient.TrackTrace($"[NAMESPACE DEBUG] Added missing revision for namespace review {namespaceReview.Id}: {latestRevision.Id}");
                         }
                         else
@@ -276,7 +271,9 @@ namespace APIViewWeb.Pages.Assemblies
             
             ReviewsWithoutNamespaceApproval = new List<APIRevisionListItemModel>();
             
-            ApprovedAPIRevisions.OrderByDescending(r => r.ChangeHistory.First(c => c.ChangeAction == APIRevisionChangeAction.Approved).ChangedOn);
+            var orderedApprovedAPIRevs = ApprovedAPIRevisions.OrderByDescending(r => 
+                r.ChangeHistory.FirstOrDefault(c => c.ChangeAction == APIRevisionChangeAction.Approved)?.ChangedOn ?? DateTime.MinValue);
+            ApprovedAPIRevisions = orderedApprovedAPIRevs;
 
             return Page();
         }

@@ -18,6 +18,7 @@ using System.Text.Json;
 using APIViewWeb.LeanModels;
 using APIViewWeb.Helpers;
 using APIViewWeb.Services;
+using Microsoft.Extensions.Logging;
 
 namespace APIViewWeb.Managers
 {
@@ -34,6 +35,7 @@ namespace APIViewWeb.Managers
         private readonly TelemetryClient _telemetryClient;
         private readonly IEmailTemplateService _emailTemplateService;
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ILogger<NotificationManager> _logger;
 
         private const string ENDPOINT_SETTING = "Endpoint";
 
@@ -43,7 +45,8 @@ namespace APIViewWeb.Managers
             UserProfileCache userProfileCache,
             TelemetryClient telemetryClient,
             IEmailTemplateService emailTemplateService,
-            IHttpClientFactory httpClientFactory)
+            IHttpClientFactory httpClientFactory,
+            ILogger<NotificationManager> logger)
         {
             _configuration = configuration;
             _apiviewEndpoint = configuration.GetValue<string>(ENDPOINT_SETTING);
@@ -56,6 +59,7 @@ namespace APIViewWeb.Managers
             _telemetryClient = telemetryClient;
             _emailTemplateService = emailTemplateService;
             _httpClientFactory = httpClientFactory;
+            _logger = logger;
         }
 
         public async Task NotifySubscribersOnComment(ClaimsPrincipal user, CommentItemModel comment)
@@ -295,23 +299,14 @@ namespace APIViewWeb.Managers
             emailAddresses.AddRange(approverEmails.Where(email => !string.IsNullOrEmpty(email)));
             
             // Add requesting user's email (either from ClaimsPrincipal or from review record)
-            string requesterEmail = null;
-            if (requestingUser != null)
+            string requesterUsername = requestingUser?.GetGitHubLogin() ?? review.NamespaceApprovalRequestedBy;
+            if (!string.IsNullOrEmpty(requesterUsername))
             {
-                var requestingUserName = requestingUser.GetGitHubLogin();
-                if (!string.IsNullOrEmpty(requestingUserName))
+                string requesterEmail = await GetEmailAddress(requesterUsername);
+                if (!string.IsNullOrEmpty(requesterEmail) && !emailAddresses.Contains(requesterEmail))
                 {
-                    requesterEmail = await GetEmailAddress(requestingUserName);
+                    emailAddresses.Add(requesterEmail);
                 }
-            }
-            else if (!string.IsNullOrEmpty(review.NamespaceApprovalRequestedBy))
-            {
-                requesterEmail = await GetEmailAddress(review.NamespaceApprovalRequestedBy);
-            }
-            
-            if (!string.IsNullOrEmpty(requesterEmail) && !emailAddresses.Contains(requesterEmail))
-            {
-                emailAddresses.Add(requesterEmail);
             }
             
             return emailAddresses;
@@ -324,7 +319,7 @@ namespace APIViewWeb.Managers
                 // Get all email recipients (approvers + requesting user)
                 var emailAddresses = await GetNamespaceReviewEmailRecipientsAsync(review, user);
                 
-                if (!emailAddresses.Any())
+                if (emailAddresses.Count == 0)
                 {
                     return;
                 }
@@ -355,7 +350,7 @@ namespace APIViewWeb.Managers
         {
             if (string.IsNullOrEmpty(_emailSenderServiceUrl))
             {
-                _telemetryClient.TrackTrace($"Email sender service URL is not configured. Email will not be sent to {emailToList} with subject: {subject}");
+                _logger.LogTrace("Email sender service URL is not configured. Email will not be sent to {EmailToList} with subject: {Subject}", emailToList, subject);
                 return;
             }
             
@@ -366,11 +361,11 @@ namespace APIViewWeb.Managers
             try
             {
                 var requestBodyJson = JsonSerializer.Serialize(requestBody);
-                _telemetryClient.TrackTrace($"Sending email address request to logic apps. request: {requestBodyJson}");
+                _logger.LogTrace("Sending email address request to logic apps. request: {RequestBody}", requestBodyJson);
                 var response = await httpClient.PostAsync(_emailSenderServiceUrl, new StringContent(requestBodyJson, Encoding.UTF8, "application/json"));
                 if (response.StatusCode != HttpStatusCode.OK && response.StatusCode != HttpStatusCode.Accepted)
                 {
-                   _telemetryClient.TrackTrace($"Failed to send email to user {emailToList} with subject: {subject}, status code: {response.StatusCode}, Details: {response.ToString}");
+                   _logger.LogTrace("Failed to send email to user {EmailToList} with subject: {Subject}, status code: {StatusCode}, Details: {ResponseDetails}", emailToList, subject, response.StatusCode, response.ToString());
                 }
             }
             catch (Exception ex)

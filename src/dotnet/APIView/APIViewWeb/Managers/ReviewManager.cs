@@ -487,17 +487,22 @@ namespace APIViewWeb.Managers
                         // Look up pull requests in azure-rest-api-specs repository (most common for TypeSpec)
                         var pullRequests = await _pullRequestsRepository.GetPullRequestsAsync(prNumber, "azure-rest-api-specs");
                         
-                        foreach (var pr in pullRequests)
+                        // Get all review IDs from pull requests first to batch the database calls
+                        var reviewIdsToCheck = pullRequests
+                            .Where(pr => !string.IsNullOrEmpty(pr.ReviewId) && pr.ReviewId != typeSpecReviewId)
+                            .Select(pr => pr.ReviewId)
+                            .Distinct()
+                            .ToList();
+
+                        if (reviewIdsToCheck.Any())
                         {
-                            if (!string.IsNullOrEmpty(pr.ReviewId) && pr.ReviewId != typeSpecReviewId)
-                            {
-                                // Verify this is a language review (not another TypeSpec review)
-                                var review = await _reviewsRepository.GetReviewAsync(pr.ReviewId);
-                                if (review != null && LanguageHelper.IsSDKLanguage(review.Language))
-                                {
-                                    relatedReviewIds.Add(pr.ReviewId);
-                                }
-                            }
+                            // Batch get reviews and filter out TypeSpec reviews
+                            var languageReviews = await _reviewsRepository.GetReviewsAsync(reviewIdsToCheck);
+                            var sdkLanguageReviews = languageReviews
+                                .Where(r => r != null && r.Language != ApiViewConstants.TypeSpecLanguage && LanguageHelper.IsSDKLanguage(r.Language))
+                                .Select(r => r.Id);
+                            
+                            relatedReviewIds.AddRange(sdkLanguageReviews);
                         }
                     }
                     catch (Exception ex)
@@ -757,24 +762,21 @@ namespace APIViewWeb.Managers
                     try
                     {
                         var revisions = await _apiRevisionsManager.GetAPIRevisionsAsync(review.Id);
-                        foreach (var revision in revisions)
-                        {
-                            // Check if the revision has original files and can be updated
-                            if (revision.Files.Any(f => f.HasOriginal) && 
-                                languageService.CanUpdate(revision.Files.First().VersionString))
-                            {
-                                // Add to the batch for pipeline processing
-                                eligibleReviews.Add(new APIRevisionGenerationPipelineParamModel
-                                {
-                                    ReviewID = review.Id,
-                                    RevisionID = revision.Id,
-                                    FileID = revision.Files.First().FileId,
-                                    FileName = revision.Files.First().FileName
-                                });
+                        // Find the first revision that has original files and can be updated
+                        APIRevisionListItemModel firstRevision = revisions.FirstOrDefault(r => 
+                            r.Files.Any(f => f.HasOriginal) && 
+                            languageService.CanUpdate(r.Files.First().VersionString));
 
-                                // Break to avoid multiple revisions per review in the same batch
-                                break;
-                            }
+                        if (firstRevision != null)
+                        {
+                            // Add to the batch for pipeline processing
+                            eligibleReviews.Add(new APIRevisionGenerationPipelineParamModel
+                            {
+                                ReviewID = review.Id,
+                                RevisionID = firstRevision.Id,
+                                FileID = firstRevision.Files.First().FileId,
+                                FileName = firstRevision.Files.First().FileName
+                            });
                         }
                     }
                     catch (Exception ex)
@@ -820,12 +822,10 @@ namespace APIViewWeb.Managers
         /// Get all pending namespace approval requests in a single optimized database query
         /// This queries review records directly with database-level filtering for better performance
         /// </summary>
-        /// <param name="user">Current user to check permissions</param>
         /// <param name="limit">Maximum number of results to return (default 100)</param>
         /// <returns>List of reviews that have pending namespace approval requests</returns>
-        public async Task<List<ReviewListItemModel>> GetPendingNamespaceApprovalsBatchAsync(ClaimsPrincipal user, int limit = 100)
+        public async Task<List<ReviewListItemModel>> GetPendingNamespaceApprovalsBatchAsync(int limit = 100)
         {
-            var userId = user.GetGitHubLogin();
             var pendingApprovals = new List<ReviewListItemModel>();
 
             try
@@ -836,18 +836,8 @@ namespace APIViewWeb.Managers
                     var sdkLanguages = ApiViewConstants.SdkLanguages;
                     var allNamespaceReviews = await _reviewsRepository.GetPendingNamespaceApprovalReviewsAsync(sdkLanguages);
 
-                    // For each review, add it to the results
-                    foreach (var review in allNamespaceReviews.Take(limit))
-                    {
-                        try
-                        {
-                            pendingApprovals.Add(review);
-                        }
-                        catch (Exception)
-                        {
-                            // Continue with other reviews
-                        }
-                    }
+                    // Add all reviews up to the limit
+                    pendingApprovals.AddRange(allNamespaceReviews.Take(limit));
 
                     // Sort to show all reviews by request time
                     var sortedApprovals = pendingApprovals
@@ -870,68 +860,6 @@ namespace APIViewWeb.Managers
             }
         }
 
-        /// <summary>
-        /// Check and update namespace review status based on associated API revisions
-        /// This should be called when loading a TypeSpec review page to check if all related SDK revisions are approved
-        /// </summary>
-        /// <param name="typeSpecReview">The TypeSpec review to check</param>
-        /// <returns>Updated review with correct namespace status</returns>
-        public async Task<ReviewListItemModel> CheckAndUpdateNamespaceReviewStatusAsync(ReviewListItemModel typeSpecReview)
-        {
-            // Only process TypeSpec reviews that have pending namespace review status
-            if (typeSpecReview.Language != ApiViewConstants.TypeSpecLanguage || typeSpecReview.NamespaceReviewStatus != NamespaceReviewStatus.Pending)
-            {
-                return typeSpecReview;
-            }
-
-            try
-            {
-                // Find all related SDK API revisions for this package
-                var sdkLanguages = ApiViewConstants.SdkLanguages;
-                var relatedRevisions = new List<APIRevisionListItemModel>();
-
-                foreach (var language in sdkLanguages)
-                {
-                    try
-                    {
-                        // Find review with the same package name in each SDK language
-                        var relatedReview = await _reviewsRepository.GetReviewAsync(language, typeSpecReview.PackageName, false);
-                        if (relatedReview != null && !relatedReview.IsDeleted)
-                        {
-                            // Get all API revisions for this review
-                            // Since namespace approval is now tracked at review level, all revisions of this review are considered namespace-related
-                            var apiRevisions = await _apiRevisionsManager.GetAPIRevisionsAsync(relatedReview.Id);
-                            var activeRevisions = apiRevisions.Where(r => !r.IsDeleted).ToList();
-                            
-                            relatedRevisions.AddRange(activeRevisions);
-                        }
-                    }
-                    catch (Exception)
-                    {
-                        // Continue if we can't find a review for this language
-                        continue;
-                    }
-                }
-
-                // Check if we have any related revisions and if all are approved
-                if (relatedRevisions.Any() && relatedRevisions.All(r => r.IsApproved))
-                {
-                    // All related SDK revisions are approved, update status to Approved
-                    typeSpecReview.NamespaceReviewStatus = NamespaceReviewStatus.Approved;
-                    
-                    await _reviewsRepository.UpsertReviewAsync(typeSpecReview);
-                }
-            }
-            catch (Exception ex)
-            {
-                // Log the error but don't fail the page load
-                _logger.LogWarning(ex, "Error checking namespace review status for TypeSpec review");
-                _telemetryClient.TrackException(ex);
-            }
-
-            return typeSpecReview;
-        }
-
 
         /*
         /// <summary>
@@ -944,7 +872,7 @@ namespace APIViewWeb.Managers
             try
             {
                 // Check if auto-approval feature is enabled
-                var autoApprovalEnabled = _configuration.GetValue<bool>("Features:enableAutoApproval", true);
+                var autoApprovalEnabled = _configuration.GetValue<bool>("Features:enableAutoApproval", false);
                 if (!autoApprovalEnabled)
                 {
                     _logger.LogInformation("Auto-approval feature is disabled. Skipping namespace auto-approval processing.");
@@ -971,6 +899,7 @@ namespace APIViewWeb.Managers
                         if (shouldApprove)
                         {
                             shouldAutoApproveGroup = true;
+                            break;
                         }
                     }     
                     if (shouldAutoApproveGroup)
@@ -1035,19 +964,15 @@ namespace APIViewWeb.Managers
         }
         */
 
-        /// <summary>
-        /// Get open/unresolved comments for a review
-        /// </summary>
+        // Get open/unresolved comments for a review
         // private async Task<IEnumerable<CommentItemModel>> GetOpenComments(string reviewId)
         // {
         //     var comments = await _commentManager.GetCommentsAsync(reviewId);
         //     return comments.Where(c => !c.IsResolved && !c.IsDeleted);
         // }
 
-        /// <summary>
-        /// Group reviews by their timestamp and service to identify related reviews
-        /// Reviews with same NamespaceApprovalRequestedOn timestamp are likely from the same logical request
-        /// </summary>
+        // Group reviews by their timestamp and service to identify related reviews
+        // Reviews with same NamespaceApprovalRequestedOn timestamp are likely from the same logical request
         // private Dictionary<string, List<ReviewListItemModel>> GroupReviewsByPullRequestNumbers(List<ReviewListItemModel> pendingReviews)
         // {
         //     var timestampGroups = new Dictionary<string, List<ReviewListItemModel>>();

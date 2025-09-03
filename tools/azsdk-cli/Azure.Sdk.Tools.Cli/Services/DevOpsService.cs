@@ -454,9 +454,27 @@ namespace Azure.Sdk.Tools.Cli.Services
                             Value = sdkPullRequestUrl
                         });
                 }
+                int maxTryCount = 5, retryCount = 0;
 
-                await connection.GetWorkItemClient().UpdateWorkItemAsync(jsonLinkDocument, workItemId);
-                return true;
+                while (retryCount < maxTryCount)
+                {
+                    try
+                    {
+                        // DevOps SDK internally caches the revision number of the work item and throws conflict error if it is outdated.
+                        // Work around is to fetch the work item again before updating it.
+                        await connection.GetWorkItemClient().GetWorkItemAsync(workItemId);
+                        await connection.GetWorkItemClient().UpdateWorkItemAsync(jsonLinkDocument, workItemId);
+                        return true;
+                    }
+                    catch (Exception)
+                    {
+                        // Retry once if there is a conflict error
+                        logger.LogWarning($"Conflict error while updating work item {workItemId}, retrying update work item again.");
+                        retryCount++;
+                        Thread.Sleep(2000 * retryCount);
+                    }
+                }
+                return false;
             }
             catch (Exception ex)
             {

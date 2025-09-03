@@ -426,6 +426,12 @@ namespace Azure.Sdk.Tools.Cli.Services
                     return false;
                 }
 
+                var workItem = await connection.GetWorkItemClient().GetWorkItemAsync(workItemId);
+                if (workItem == null)
+                {
+                    throw new Exception($"Work item {workItemId} not found.");
+                }
+
                 var jsonLinkDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument();
                 // Add work item as child of release plan work item
                 if (!string.IsNullOrEmpty(sdkGenerationPipelineUrl))
@@ -448,9 +454,31 @@ namespace Azure.Sdk.Tools.Cli.Services
                             Value = sdkPullRequestUrl
                         });
                 }
+                int maxTryCount = 5, retryCount = 0;
 
-                await connection.GetWorkItemClient().UpdateWorkItemAsync(jsonLinkDocument, workItemId);
-                return true;
+                while (retryCount < maxTryCount)
+                {
+                    try
+                    {
+                        // DevOps SDK internally caches the revision number of the work item and throws conflict error if it is outdated.
+                        // Work around is to fetch the work item again before updating it.
+                        await connection.GetWorkItemClient().GetWorkItemAsync(workItemId);
+                        await connection.GetWorkItemClient().UpdateWorkItemAsync(jsonLinkDocument, workItemId);
+                        return true;
+                    }
+                    catch (Exception ex)
+                    {
+                        // Retry once if there is a conflict error
+                        logger.LogWarning($"Conflict error while updating work item {workItemId}, retrying update work item again.");
+                        retryCount++;
+                        if (retryCount == maxTryCount)
+                        {
+                            throw new Exception($"Failed to update DevOps work item after multiple retries. Error: {ex.Message}");
+                        }
+                        await Task.Delay(1000 * retryCount); // Exponential backoff
+                    }                    
+                }
+                return false;
             }
             catch (Exception ex)
             {
@@ -708,9 +736,15 @@ namespace Azure.Sdk.Tools.Cli.Services
             // Update API spec work item status in release plan
             try
             {
-                if (workItemId == 0 || string.IsNullOrEmpty(status))
+                var workItem = await connection.GetWorkItemClient().GetWorkItemAsync(workItemId);
+                if (workItem == null)
                 {
-                    throw new ArgumentException("Please provide the work item ID and a status to update the work item.");
+                    throw new ArgumentException($"release plan work item with id {workItemId} not found.");
+                }
+
+                if (string.IsNullOrEmpty(status))
+                {
+                    throw new ArgumentException("Please provide a status to update the work item.");
                 }
                 var jsonLinkDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument()
                 {

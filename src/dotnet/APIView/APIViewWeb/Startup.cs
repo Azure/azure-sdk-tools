@@ -126,7 +126,8 @@ namespace APIViewWeb
             services.AddSingleton<UserProfileCache>();
 
             // Background services
-            services.AddHostedService<NamespaceAutoApprovalService>();
+            // TODO: Re-enable when auto-approval feature is needed
+            // services.AddHostedService<NamespaceAutoApprovalService>();
 
             services.AddSingleton<LanguageService, JsonLanguageService>();
             services.AddSingleton<LanguageService, CSharpLanguageService>();

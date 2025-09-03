@@ -43,7 +43,7 @@ namespace APIViewWeb.Services
         private async Task<string> LoadEmbeddedTemplateAsync(string templateName)
         {
             var assembly = typeof(EmailTemplateService).GetTypeInfo().Assembly;
-            var resourceName = $"APIViewWeb.Templates.{templateName}";
+            var resourceName = $"APIViewWeb.EmailTemplates.{templateName}";
             
             using (var stream = assembly.GetManifestResourceStream(resourceName))
             {

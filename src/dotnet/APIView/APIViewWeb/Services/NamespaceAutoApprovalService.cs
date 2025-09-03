@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 
 namespace APIViewWeb.Services
 {
+    // TODO: 3 days auto-approval feature is temporarily disabled - entire class commented out
+    /*
     /// <summary>
     /// Background service that automatically approves namespace reviews after 3 business days with no open comments
     /// </summary>
@@ -24,12 +26,12 @@ namespace APIViewWeb.Services
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _logger.LogInformation("Namespace Auto-Approval Service started (but auto-approval feature is disabled)");
+
 
             // TODO: 3 days auto-approval feature is temporarily disabled
             // Uncomment the code below to re-enable this feature
             
-            /*
+            
             while (!stoppingToken.IsCancellationRequested)
             {
                 try
@@ -48,7 +50,7 @@ namespace APIViewWeb.Services
                 // Run every 6 hours
                 await Task.Delay(TimeSpan.FromHours(6), stoppingToken);
             }
-            */
+            
             
             _logger.LogInformation("Auto-approval feature is disabled. Service will not process any auto-approvals.");
             
@@ -59,4 +61,5 @@ namespace APIViewWeb.Services
             }
         }
     }
+    */
 }

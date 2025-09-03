@@ -200,7 +200,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                 SetFailure();
                 return new TspToolResponse
                 {
-                    ResponseError = $"Failed: Invalid --output-directory, must be under <azure-rest-api-specs>{Path.DirectorySeparatorChar}specifications"
+                    ResponseError = $"Failed: Invalid --output-directory, must be under <azure-rest-api-specs>{Path.DirectorySeparatorChar}specification"
                 };
             }
 

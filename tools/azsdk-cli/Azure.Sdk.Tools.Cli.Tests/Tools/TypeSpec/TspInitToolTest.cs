@@ -135,7 +135,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 {
                     Assert.That(result.IsSuccessful, Is.False);
                     Assert.That(result.ResponseError, Does.Contain("Invalid --output-directory"));
-                    Assert.That(result.ResponseError, Does.Contain($"must be under <azure-rest-api-specs>{Path.DirectorySeparatorChar}specifications"));
+                    Assert.That(result.ResponseError, Does.Contain($"must be under <azure-rest-api-specs>{Path.DirectorySeparatorChar}specification"));
                 });
             }
             finally

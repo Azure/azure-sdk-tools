@@ -7,7 +7,7 @@ import { runCommand, runCommandOptions } from './utils.js';
 export async function formatSdk(packageDirectory: string) {
     logger.info(`Start to format code in '${packageDirectory}'.`);
     const hasSampleFolder = await exists(path.join(packageDirectory, "samples-dev"));
-    const samplesDev = hasSampleFolder ? ' \"samples-dev/*.ts\"' : '';
+    const samplesDev = hasSampleFolder ? ' \"samples-dev/**/*.ts\"' : '';
     const hasTestFolder = await exists(path.join(packageDirectory, "test"));
     const test = hasTestFolder ? ' \"test/**/*.{ts,cts,mts}\"' : '';
     const cwd = packageDirectory;

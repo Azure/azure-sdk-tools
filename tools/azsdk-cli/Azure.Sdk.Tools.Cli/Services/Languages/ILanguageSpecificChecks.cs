@@ -19,4 +19,12 @@ public interface ILanguageSpecificChecks
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Result of the dependency analysis</returns>
     Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Lints code for the specific package.
+    /// </summary>
+    /// <param name="packagePath">Path to the package directory</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Result of the lint code check</returns>
+    Task<CLICheckResponse> LintCodeAsync(string packagePath, CancellationToken cancellationToken = default);
 }

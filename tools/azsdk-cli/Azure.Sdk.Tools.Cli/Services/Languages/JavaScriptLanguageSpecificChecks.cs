@@ -35,4 +35,10 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
         // Implementation for analyzing dependencies in a JavaScript project
         return await Task.FromResult(new CLICheckResponse());
     }
+
+    public async Task<CLICheckResponse> LintCodeAsync(string packagePath, CancellationToken ct = default)
+    {
+        // Implementation for linting code in a JavaScript project
+        return await Task.FromResult(new CLICheckResponse());
+    }
 }

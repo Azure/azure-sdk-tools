@@ -97,7 +97,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             output.Output(result);
         }
 
-        [McpServerTool(Name = "azsdk_package_run_check"), Description("Run validation checks for SDK packages. Provide package path and check type (All, Changelog, Dependency, Readme, Cspell).")]
+        [McpServerTool(Name = "azsdk_package_run_check"), Description("Run validation checks for SDK packages. Provide package path and check type (All, Changelog, Dependency, Readme, Cspell, LintCode).")]
         public async Task<CLICheckResponse> RunPackageCheck(string packagePath, PackageCheckType checkType, CancellationToken ct = default)
         {
             try
@@ -116,6 +116,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     PackageCheckType.Dependency => await RunDependencyCheck(packagePath, ct),
                     PackageCheckType.Readme => await RunReadmeValidation(packagePath, ct),
                     PackageCheckType.Cspell => await RunSpellingValidation(packagePath, ct),
+                    PackageCheckType.LintCode => await RunLintCodeCheck(packagePath, ct),
                     _ => throw new ArgumentOutOfRangeException(
                         nameof(checkType),
                         checkType,
@@ -169,6 +170,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 overallSuccess = false;
             }
 
+            // Run lint code check
+            var lintCodeCheckResult = await languageChecks.LintCodeAsync(packagePath, ct);
+            results.Add(lintCodeCheckResult);
+            if (lintCodeCheckResult.ExitCode != 0)
+            {
+                overallSuccess = false;
+            }
+
             if (!overallSuccess)
             {
                 SetFailure(1);
@@ -218,6 +227,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             logger.LogInformation("Running spelling validation");
 
             var result = await languageChecks.CheckSpellingAsync(packagePath, ct);
+            return result;
+        }
+
+        private async Task<CLICheckResponse> RunLintCodeCheck(string packagePath, CancellationToken ct = default)
+        {
+            logger.LogInformation("Running lint code check");
+
+            var result = await languageChecks.LintCodeAsync(packagePath, ct);
             return result;
         }
 

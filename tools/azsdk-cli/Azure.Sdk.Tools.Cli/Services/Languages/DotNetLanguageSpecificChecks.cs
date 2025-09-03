@@ -35,4 +35,10 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
         // Implementation for analyzing dependencies in a .NET project
         return await Task.FromResult(new CLICheckResponse());
     }
+
+    public async Task<CLICheckResponse> LintCodeAsync(string packagePath, CancellationToken ct = default)
+    {
+        // Implementation for linting code in a .NET project
+        return await Task.FromResult(new CLICheckResponse());
+    }
 }

@@ -10,6 +10,14 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// </summary>
 public interface ILanguageChecks
 {
+        /// <summary>
+    /// Lints code for the specific package.
+    /// </summary>
+    /// <param name="packagePath">Path to the package directory</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Result of the dependency analysis</returns>
+    Task<CLICheckResponse> LintCodeAsync(string packagePath, CancellationToken ct);
+
     /// <summary>
     /// Analyzes dependencies for the specific package.
     /// </summary>
@@ -106,6 +114,23 @@ public class LanguageChecks : ILanguageChecks
         }
 
         return await languageSpecificCheck.AnalyzeDependenciesAsync(packagePath, ct);
+    }
+
+    public virtual async Task<CLICheckResponse> LintCodeAsync(string packagePath, CancellationToken ct)
+    {
+        var languageSpecificCheck = await _languageSpecificCheckResolver.GetLanguageCheckAsync(packagePath);
+
+        if (languageSpecificCheck == null)
+        {
+            _logger.LogError("No language-specific check handler found for package at {PackagePath}. Supported languages may not include this package type.", packagePath);
+            return new CLICheckResponse(
+                exitCode: 1,
+                checkStatusDetails: $"No language-specific check handler found for package at {packagePath}. Supported languages may not include this package type.",
+                error: "Unsupported package type"
+            );
+        }
+
+        return await languageSpecificCheck.LintCodeAsync(packagePath, ct);
     }
 
     public virtual async Task<CLICheckResponse> ValidateChangelogAsync(string packagePath, CancellationToken ct)

@@ -466,13 +466,17 @@ namespace Azure.Sdk.Tools.Cli.Services
                         await connection.GetWorkItemClient().UpdateWorkItemAsync(jsonLinkDocument, workItemId);
                         return true;
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
                         // Retry once if there is a conflict error
                         logger.LogWarning($"Conflict error while updating work item {workItemId}, retrying update work item again.");
                         retryCount++;
-                        Thread.Sleep(2000 * retryCount);
-                    }
+                        if (retryCount == maxTryCount)
+                        {
+                            throw new Exception($"Failed to update DevOps work item after multiple retries. Error: {ex.Message}");
+                        }
+                        await Task.Delay(1000 * retryCount); // Exponential backoff
+                    }                    
                 }
                 return false;
             }

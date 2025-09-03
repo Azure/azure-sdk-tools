@@ -9,7 +9,7 @@ Plugin for performing API reviews using the ApiViewReview class.
 """
 
 import json
-import os
+from typing import Optional
 
 import requests
 from semantic_kernel.functions import kernel_function
@@ -21,16 +21,19 @@ class ApiViewClient:
     """Client for interacting with the API View service."""
 
     def __init__(self):
-        self.environment = os.getenv("ENVIRONMENT").lower()
+        self.environment = "staging"
 
-    async def get_revision_text(self, revision_id: str) -> str:
+    async def get_revision_text(self, review_id: str, revision_id: Optional[str]) -> str:
         """
         Get the text of an API revision.
         Args:
+            review_id (str): The ID of the API review to retrieve.
             revision_id (str): The ID of the API revision to retrieve.
         """
-        response = await self.send_request(f"/api/apirevisions/{revision_id}/getRevisionText")
-        return response.text
+        endpoint = f"/api/apirevisions/{review_id}/getRevisionText"
+        if revision_id:
+            endpoint.append(f"?apiRevisionId={revision_id}")
+        return await self.send_request(endpoint)
 
     async def get_revision_outline(self, revision_id: str) -> str:
         """
@@ -38,8 +41,7 @@ class ApiViewClient:
         Args:
             revision_id (str): The ID of the API revision to retrieve.
         """
-        response = await self.send_request(f"/api/apirevisions/{revision_id}/outline")
-        return response.text
+        return await self.send_request(f"/api/apirevisions/{revision_id}/outline")
 
     async def get_review_comments(self, review_id: str) -> str:
         """
@@ -48,8 +50,7 @@ class ApiViewClient:
             review_id (str): The ID of the API review to retrieve comments for.
         """
         # FIXME: This should target a revision ID, not a review ID
-        response = await self.send_request(f"/api/comments/{review_id}")
-        return response.text
+        return await self.send_request(f"/api/comments/{review_id}")
 
     async def send_request(self, endpoint: str):
         apiview_endpoints = {
@@ -122,7 +123,7 @@ class ApiReviewPlugin:
             revision_id (str): The ID of the API revision to retrieve.
         """
         client = ApiViewClient()
-        return client.get_revision_text(revision_id)
+        return await client.get_revision_text(revision_id)
 
     @kernel_function(description="Get the outline for a given API revision")
     async def get_apiview_revision_outline(self, *, revision_id: str) -> str:
@@ -132,7 +133,7 @@ class ApiReviewPlugin:
             revision_id (str): The ID of the API revision to retrieve.
         """
         client = ApiViewClient()
-        return client.get_revision_outline(revision_id)
+        return await client.get_revision_outline(revision_id)
 
     @kernel_function(description="Retrieves any existing comments for a given API review")
     async def get_apiview_revision_comments(self, *, review_id: str) -> str:
@@ -142,4 +143,4 @@ class ApiReviewPlugin:
             review_id (str): The ID of the API review to retrieve comments for.
         """
         client = ApiViewClient()
-        return client.get_review_comments(review_id)
+        return await client.get_review_comments(review_id)

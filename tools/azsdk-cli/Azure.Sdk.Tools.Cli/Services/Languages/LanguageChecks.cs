@@ -239,7 +239,8 @@ public class LanguageChecks : ILanguageChecks
                 - Maintain chronological order (newest versions first), the most recent release should be set to today's date (use GetCurrentDate tool to get the current date)
                 - Include proper date formats
                 - Fix any formatting issues identified in the validation
-                - Add changelog content based on the latest git changes using the ReadChangedFilesTool, do not add content to the changelog regarding the changes made to the changelog itself.
+
+                The most recent changelog entry should be updated with the latest changes. These changes can be found by using the ReadChangedFilesTool to get the list of changed files. Do not add content to the changelog entry regarding the updates we are making to the changelog itself.
 
                 Please provide the corrected changelog content. Use the validate_changelog_tool to check your work.
                 """;

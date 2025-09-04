@@ -22,21 +22,24 @@ namespace Azure.Tools.GeneratorAgent.Agent
             AppSettings = appSettings;
         }
 
-        public async Task<(IEnumerable<string> UploadedFileIds, string VectorStoreId)> UploadFilesAsync(Dictionary<string, string> files, CancellationToken cancellationToken)
+        public async Task<(List<string> UploadedFileIds, string VectorStoreId)> UploadFilesAsync(Dictionary<string, string> files, CancellationToken cancellationToken)
         {
             var relevantFiles = files.Where(kvp => kvp.Key.EndsWith(".tsp", StringComparison.OrdinalIgnoreCase));
 
             var uploadTasks = relevantFiles.Select(file => UploadSingleFileAsync(file.Key, file.Value, cancellationToken));
 
             var results = await Task.WhenAll(uploadTasks);
-            var uploadedFileIds = results.Where(id => !string.IsNullOrEmpty(id)).Select(id => id!);
+            
+            var uploadedFileIds = results
+                .Where(id => !string.IsNullOrEmpty(id))
+                .Select(id => id!)
+                .ToList();
 
-            var uploadedFilesList = uploadedFileIds.ToList();
-            await WaitForIndexingAsync(uploadedFilesList, cancellationToken);
+            await WaitForIndexingAsync(uploadedFileIds, cancellationToken);
 
-            var vectorStoreId = await CreateVectorStoreAsync(uploadedFilesList, cancellationToken);
+            var vectorStoreId = await CreateVectorStoreAsync(uploadedFileIds, cancellationToken);
 
-            Logger.LogInformation("Successfully uploaded {Count} TypeSpec files.", uploadedFileIds.Count());
+            Logger.LogInformation("Successfully uploaded {Count} TypeSpec files.", uploadedFileIds.Count);
             return (uploadedFileIds, vectorStoreId);
         }
 
@@ -228,8 +231,8 @@ namespace Azure.Tools.GeneratorAgent.Agent
 
             Logger.LogInformation("Created vector store: {Name} ({Id})", store.Value.Name, store.Value.Id);
 
-            Logger.LogDebug("Waiting 5 seconds for vector store to be ready...");
-            await Task.Delay(5000, ct).ConfigureAwait(false);
+            Logger.LogDebug("Waiting {WaitTime}ms for vector store to be ready...", AppSettings.VectorStoreReadyWaitTime);
+            await Task.Delay(AppSettings.VectorStoreReadyWaitTime, ct).ConfigureAwait(false);
 
             return store.Value.Id;
         }

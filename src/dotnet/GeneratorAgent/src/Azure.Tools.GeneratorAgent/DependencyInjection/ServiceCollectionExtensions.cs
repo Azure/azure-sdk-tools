@@ -117,13 +117,11 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
             services.AddSingleton<FixGeneratorService>();
             services.AddSingleton<FixPromptService>();
 
-            services.AddSingleton<AgentManager>();
-            services.AddSingleton<AgentProcessor>();
+            services.AddSingleton<AgentConversationProcessor>();
             services.AddSingleton<AgentFileManager>();
-            services.AddSingleton<AgentThreadManager>();
             services.AddSingleton<ErrorParsingService>();
 
-            services.AddSingleton<AgentOrchestrator>();
+            services.AddSingleton<ErrorFixerAgent>();
 
             services.AddSingleton<Func<ValidationContext, LocalLibraryGenerationService>>(provider =>
             {

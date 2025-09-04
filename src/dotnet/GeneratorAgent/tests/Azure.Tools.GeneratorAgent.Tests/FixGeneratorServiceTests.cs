@@ -373,7 +373,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
         private Mock<ErrorParsingService> CreateMockErrorParsingService()
         {
-            // Create a mock that directly uses null for AgentOrchestrator since it won't be called in tests
+            // Create a mock that directly uses null for ErrorFixerAgent since it won't be called in tests
             var mock = new Mock<ErrorParsingService>(null, Mock.Of<ILogger<ErrorParsingService>>());
             mock.CallBase = false; // Don't call base methods
             mock.Setup(p => p.AnalyzeErrorsAsync(It.IsAny<Result<object>>(), It.IsAny<CancellationToken>()))

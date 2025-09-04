@@ -23,7 +23,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         }
 
         [Test]
-        public void Constructor_WithNullAgentOrchestrator_ShouldCreateInstance()
+        public void Constructor_WithNullErrorFixerAgent_ShouldCreateInstance()
         {
             var logger = NullLogger<ErrorParsingService>.Instance;
 
@@ -80,7 +80,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         }
 
         [Test]
-        public async Task AnalyzeErrorsAsync_WithNoRegexMatches_FallsBackToAgentOrchestrator()
+        public async Task AnalyzeErrorsAsync_WithNoRegexMatches_FallsBackToErrorFixerAgent()
         {
             var ErrorParsingService = CreateErrorParsingService(null);
             var errorOutput = "some error without standard format";
@@ -93,7 +93,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         }
 
         [Test]
-        public async Task AnalyzeErrorsAsync_WithNoRegexMatchesAndNullAgentOrchestrator_ReturnsEmptyList()
+        public async Task AnalyzeErrorsAsync_WithNoRegexMatchesAndNullErrorFixerAgent_ReturnsEmptyList()
         {
             var ErrorParsingService = CreateErrorParsingService(null);
             var errorOutput = "some error without standard format";
@@ -106,7 +106,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         }
 
         [Test]
-        public async Task AnalyzeErrorsAsync_WithCancellationToken_PassesTokenToAgentOrchestrator()
+        public async Task AnalyzeErrorsAsync_WithCancellationToken_PassesTokenToErrorFixerAgent()
         {
             var ErrorParsingService = CreateErrorParsingService(null);
             var errorOutput = "some error without standard format";
@@ -135,7 +135,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         }
 
         [Test]
-        public async Task AnalyzeErrorsAsync_WhenAgentOrchestratorThrows_PropagatesException()
+        public async Task AnalyzeErrorsAsync_WhenErrorFixerAgentThrows_PropagatesException()
         {
             var ErrorParsingService = CreateErrorParsingService(null);
             var errorOutput = "some error without standard format";
@@ -561,10 +561,10 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
         #region Helper Methods
 
-        private ErrorParsingService CreateErrorParsingService(AgentOrchestrator? agentOrchestrator = null, ILogger<ErrorParsingService>? logger = null)
+        private ErrorParsingService CreateErrorParsingService(ErrorFixerAgent? errorFixerAgent = null, ILogger<ErrorParsingService>? logger = null)
         {
             var loggerInstance = logger ?? NullLogger<ErrorParsingService>.Instance;
-            return new ErrorParsingService(agentOrchestrator, loggerInstance);
+            return new ErrorParsingService(errorFixerAgent, loggerInstance);
         }
 
         private Result<object> CreateResultWithOutput(string output)

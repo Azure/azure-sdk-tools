@@ -97,8 +97,8 @@ namespace Azure.Tools.GeneratorAgent
                 Dictionary<string, string> typeSpecFiles = await fileService.GetTypeSpecFilesAsync(cancellationToken).ConfigureAwait(false);
 
                 // Step 3: Initialize ErrorFixer Agent with files in memory
-                AgentOrchestrator agentOrchestrator = ServiceProvider.GetRequiredService<AgentOrchestrator>();
-                await agentOrchestrator.InitializeAgentEnvironmentAsync(typeSpecFiles, cancellationToken).ConfigureAwait(false);
+                ErrorFixerAgent errorFixerAgent = ServiceProvider.GetRequiredService<ErrorFixerAgent>();
+                await errorFixerAgent.InitializeAgentEnvironmentAsync(typeSpecFiles, cancellationToken).ConfigureAwait(false);
 
                 // Step 4: Compile Typespec 
                 Func<ValidationContext, LocalLibraryGenerationService> sdkServiceFactory = ServiceProvider.GetRequiredService<Func<ValidationContext, LocalLibraryGenerationService>>();
@@ -120,7 +120,7 @@ namespace Azure.Tools.GeneratorAgent
                 }
 
                 // Step 7: Send fixes to AgentProcessor if List<Fix> is not empty
-                string updatedClientTspContent = await agentOrchestrator.FixCodeAsync(allFixes, cancellationToken).ConfigureAwait(false);
+                string updatedClientTspContent = await errorFixerAgent.FixCodeAsync(allFixes, cancellationToken).ConfigureAwait(false);
                 if (string.IsNullOrWhiteSpace(updatedClientTspContent))
                 {
                     Logger.LogWarning("Agent returned empty content for client.tsp");

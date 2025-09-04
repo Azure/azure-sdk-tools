@@ -9,41 +9,41 @@ namespace Azure.Tools.GeneratorAgent
     {
         private static readonly Regex ErrorRegex = new(@"error\s+([A-Z]+\d+):\s*([^\[]+)", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.Compiled, TimeSpan.FromSeconds(1));
         
-        private readonly AgentOrchestrator? AgentOrchestrator;
+        private readonly ErrorFixerAgent? ErrorFixerAgent;
         private readonly ILogger<ErrorParsingService> Logger;
 
-        public ErrorParsingService(AgentOrchestrator? agentOrchestrator, ILogger<ErrorParsingService> logger)
+        public ErrorParsingService(ErrorFixerAgent? errorFixerAgent, ILogger<ErrorParsingService> logger)
         {
-            AgentOrchestrator = agentOrchestrator;
+            ErrorFixerAgent = errorFixerAgent;
             ArgumentNullException.ThrowIfNull(logger);
             Logger = logger;
         }
 
-        public virtual async Task<List<Fix>> AnalyzeErrorsAsync(Result<object> result, CancellationToken cancellationToken)
+        public virtual async Task<IEnumerable<Fix>> AnalyzeErrorsAsync(Result<object> result, CancellationToken cancellationToken)
         {
             Logger.LogInformation("Analyzing errors...");
 
             if (result.ProcessException?.Output == null)
             {
                 Logger.LogWarning("No fixable error, skipping error analysis.");
-                return new List<Fix>();
+                return Enumerable.Empty<Fix>();
             }
 
-            List<RuleError> errors = ParseWithRegex(result.ProcessException.Output);
+            var errors = ParseWithRegex(result.ProcessException.Output);
 
-            if (errors.Count == 0)
+            if (!errors.Any())
             {
                 Logger.LogInformation("No errors found with regex. Falling back to AI-based parsing.");
-                if (AgentOrchestrator != null)
+                if (ErrorFixerAgent != null)
                 {
-                    errors = await AgentOrchestrator.AnalyzeErrorsAsync(result.ProcessException.Output, cancellationToken);
+                    errors = await ErrorFixerAgent.AnalyzeErrorsAsync(result.ProcessException.Output, cancellationToken);
                 }
             }
 
-            return GenerateFixes(errors).ToList();
+            return GenerateFixes(errors);
         }
 
-        private List<RuleError> ParseWithRegex(string output)
+        private IEnumerable<RuleError> ParseWithRegex(string output)
         {
             if (string.IsNullOrWhiteSpace(output))
             {
@@ -88,14 +88,15 @@ namespace Azure.Tools.GeneratorAgent
 
             try
             {
-                IEnumerable<Fix> fixes = ErrorAnalyzerService.GetFixes(errors);
-                Logger.LogInformation("Generated {FixCount} fixes for errors.", fixes.Count());
-                return fixes;
+                var fixes = ErrorAnalyzerService.GetFixes(errors);
+                var materializedFixes = fixes.ToList();
+                Logger.LogInformation("Generated {FixCount} fixes for errors.", materializedFixes.Count);
+                return materializedFixes;
             }
             catch (Exception ex)
             {
                 Logger.LogError(ex, "Failed to generate fixes for errors.");
-                return Array.Empty<Fix>();
+                return Enumerable.Empty<Fix>();
             }
         }
     }

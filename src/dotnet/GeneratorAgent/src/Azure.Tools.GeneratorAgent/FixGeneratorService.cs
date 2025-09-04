@@ -22,20 +22,27 @@ namespace Azure.Tools.GeneratorAgent
         /// </summary>
         public async Task<List<Fix>> AnalyzeAndGetFixesAsync(Result<object>? compileResult, Result<object>? buildResult, CancellationToken cancellationToken)
         {
-            List<Fix> allFixes = new List<Fix>();
+            // Build enumerable chain without intermediate collections - optimized approach
+            var fixTasks = new List<Task<IEnumerable<Fix>>>();
 
             if (compileResult?.IsFailure == true)
             {
-                allFixes.AddRange(await ErrorParsingService.AnalyzeErrorsAsync(compileResult, cancellationToken));
+                fixTasks.Add(ErrorParsingService.AnalyzeErrorsAsync(compileResult, cancellationToken));
             }
 
             if (buildResult?.IsFailure == true)
             {
-                allFixes.AddRange(await ErrorParsingService.AnalyzeErrorsAsync(buildResult, cancellationToken));
+                fixTasks.Add(ErrorParsingService.AnalyzeErrorsAsync(buildResult, cancellationToken));
             }
 
-            Logger.LogInformation("Total fixes generated: {TotalFixCount}", allFixes.Count);
-            return allFixes;
+            // Process all tasks and flatten results efficiently
+            var allFixResults = await Task.WhenAll(fixTasks);
+            var finalFixes = allFixResults
+                .SelectMany(fixes => fixes)  // Flatten enumerable chain
+                .ToList();
+            
+            Logger.LogInformation("Total fixes generated: {TotalFixCount}", finalFixes.Count);
+            return finalFixes;
         }
     }
 }

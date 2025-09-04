@@ -171,8 +171,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                 var normalizedPath = CodeownersHelper.NormalizePath(path);
 
                 string workingBranch = "";
-                string repoOwner = "";
-
+                
                 // Resolve PR number to actual branch name if provided.
                 if (prNumber > 0)
                 {
@@ -182,16 +181,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                         throw new Exception($"Pull request #{prNumber} could not be found or retrieved from repository '{repo}'.");
                     }
                     workingBranch = pr.Head.Ref;
-                    repoOwner = pr.Head.Repository.Owner.Login;
-                }
-
-                if (string.IsNullOrEmpty(repoOwner))
-                {
-                    repoOwner = Constants.AZURE_OWNER_PATH;
                 }
 
                 // Get codeowners file contents.
-                var codeownersFileContent = await githubService.GetContentsSingleAsync(repoOwner, repo, Constants.AZURE_CODEOWNERS_PATH, workingBranch);
+                var codeownersFileContent = await githubService.GetContentsSingleAsync(Constants.AZURE_OWNER_PATH, repo, Constants.AZURE_CODEOWNERS_PATH, workingBranch);
 
                 if (codeownersFileContent == null)
                 {
@@ -224,8 +217,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                     $"Update codeowners entry for {identifier}", // Description for commit message, PR title, and description
                     "update-codeowners-entry",                                             // Branch prefix for the action
                     identifier, // Identifier for the PR
-                    workingBranch,
-                    repoOwner);
+                    workingBranch);
 
                 return string.Join("\n", resultMessages.Concat(new[] { codeownersValidationResultMessage }));
             }
@@ -243,8 +235,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
             string description, // used for commit message, PR title, and PR description
             string branchPrefix,
             string identifier,
-            string workingBranch,
-            string repoOwner)
+            string workingBranch)
         {
             List<string> resultMessages = new();
             var branchName = "";
@@ -264,7 +255,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
             }
 
             // After branchName is set
-            var codeownersFileContent = await githubService.GetContentsSingleAsync(repoOwner, repo, Constants.AZURE_CODEOWNERS_PATH, branchName);
+            var codeownersFileContent = await githubService.GetContentsSingleAsync(Constants.AZURE_OWNER_PATH, repo, Constants.AZURE_CODEOWNERS_PATH, branchName);
 
             if (codeownersFileContent == null)
             {
@@ -274,7 +265,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
             var codeownersSha = codeownersFileContent.Sha;
 
             // Use codeownersSha in UpdateFileAsync
-            await githubService.UpdateFileAsync(repoOwner, repo, Constants.AZURE_CODEOWNERS_PATH, description, modifiedContent, codeownersSha, branchName);
+            await githubService.UpdateFileAsync(Constants.AZURE_OWNER_PATH, repo, Constants.AZURE_CODEOWNERS_PATH, description, modifiedContent, codeownersSha, branchName);
 
             var prInfoList = await githubService.CreatePullRequestAsync(repo, Constants.AZURE_OWNER_PATH, "main", branchName, "[CODEOWNERS] " + description, description, true);
             if (prInfoList != null)

@@ -23,6 +23,7 @@ import { AIReviewJobCompletedDto } from 'src/app/_dtos/aiReviewJobCompletedDto';
 import { NotificationsService } from 'src/app/_services/notifications/notifications.service';
 import { SiteNotification } from 'src/app/_models/notificationsModel';
 import { SiteNotificationDto, SiteNotificationStatus } from 'src/app/_dtos/siteNotificationDto';
+import { AzureEngSemanticVersion } from 'src/app/_models/azureEngSemanticVersion';
 
 @Component({
   selector: 'app-review-page-options',
@@ -78,6 +79,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   subscribeSwitch : boolean = false;
   showLineNumbersSwitch : boolean = true;
   disableCodeLinesLazyLoading: boolean = false;
+  isCopilotReviewSupported: boolean = true;
 
   canToggleApproveAPIRevision: boolean = false;
   activeAPIRevisionIsApprovedByCurrentUser: boolean = false;
@@ -163,6 +165,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     if (changes['activeAPIRevision'] && changes['activeAPIRevision'].currentValue != undefined) {
       this.setMarkedAsViewSwitch();
       this.selectedApprovers = this.activeAPIRevision!.assignedReviewers.map(reviewer => reviewer.assingedTo);
+      this.isCopilotReviewSupported = this.isCopilotReviewSupportedForPackage();
       this.setAPIRevisionApprovalStates();
       this.setPullRequestsInfo();
       if (this.activeAPIRevision?.copilotReviewInProgress) {
@@ -658,5 +661,37 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  private isPreviewVersion(): boolean {
+    if (!this.activeAPIRevision) return false;
+
+    try {
+      return new AzureEngSemanticVersion(
+        this.activeAPIRevision.packageVersion,
+        this.activeAPIRevision.language
+      ).isPrerelease;
+    } catch {
+      return false;
+    }
+  }
+
+  private shouldDisableApproval(isReviewByCopilotRequired: boolean, isVersionReviewedByCopilot: boolean): boolean {
+    if (!this.isCopilotReviewSupported) return false;
+    if (this.isPreviewVersion()) return false;
+    if (this.activeAPIRevisionIsApprovedByCurrentUser) return false;
+
+    return isReviewByCopilotRequired && !isVersionReviewedByCopilot;
+  }
+
+  private isCopilotReviewSupportedForPackage(): boolean {
+    if (!this.review?.packageName || !this.review?.language) {
+      return true;
+    }
+
+    const isAzureRestPackage = this.review.packageName.startsWith("@azure-rest");
+    const isJavaScript = this.review.language == "JavaScript";
+
+    return !(isAzureRestPackage && isJavaScript);
   }
 }

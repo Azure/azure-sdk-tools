@@ -127,7 +127,7 @@
                     <i class="bi bi-clipboard"></i>
                     {{ copyReviewTextButtonText }}
                 </button>
-                <ng-container *ngIf="review && userProfile && preferredApprovers.includes(userProfile?.userName!)">
+                <ng-container *ngIf="review && userProfile && preferredApprovers.includes(userProfile?.userName!) && isCopilotReviewSupported">
                     <button type="button" class="btn btn-outline-primary" tooltipPosition="top" [disabled]="generateAIReviewButtonText == 'Generating review...'" (click)="generateAIReview()">
                         <i *ngIf="aiReviewGenerationState === 'NotStarted' || aiReviewGenerationState == 'Completed'" class="bi bi-stars"></i>
                         <div *ngIf="aiReviewGenerationState == 'InProgress'" class="spinner-grow spinner-grow-sm" role="status">

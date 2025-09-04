@@ -272,6 +272,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     }
                 }
 
+                if (workItemId > 0 && pullRequestNumber > 0)
+                {
+                    var apiReadiness = await CheckApiReadyForSDKGeneration(typespecProjectRoot, pullRequestNumber, workItemId);
+                    response.Details.AddRange(apiReadiness.Split("\n"));
+                }
                 // Return failure details in case of any failure
                 if (response.Status.Equals("Failed"))
                 {
@@ -476,8 +481,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             var appendedBody = string.IsNullOrEmpty(pr.Body)
                 ? links
                 : $"{pr.Body}\n{links}";
-
-            await githubService.UpdatePullRequestAsync(repoOwner, repoName, prNumber, pr.Title, appendedBody, pr.State.Value);
+            try
+            {
+                await githubService.UpdatePullRequestAsync(repoOwner, repoName, prNumber, pr.Title, appendedBody, pr.State.Value);
+            }
+            catch (Exception ex)
+            {
+                // This should not be a hard error when context is not updated in PR description
+                logger.LogError($"Failed to update pull request description for {repoOwner}/{repoName}#{prNumber}, Error: {ex.Message}");
+                return;
+            }
         }
 
         public override Command GetCommand()

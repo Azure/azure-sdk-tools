@@ -529,7 +529,6 @@ def handle_agent_chat(thread_id: Optional[str] = None, remote: bool = False):
 def handle_agent_mention(comments_path: str, remote: bool = False):
     """
     Handles @mention requests from the agent.
-    This function is a placeholder for the actual implementation.
     """
     # load comments from the comments_path
     comments = []

@@ -12,7 +12,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
     {
         private Mock<ILogger<PackageCheckTool>> _mockLogger;
         private Mock<IOutputHelper> _mockOutputHelper;
-        private Mock<ILanguageRepoServiceFactory> _mockLanguageRepoServiceFactory;
+        private Mock<IProcessHelper> _mockProcessHelper;
+        private Mock<INpxHelper> _mockNpxHelper;
+        private Mock<IGitHelper> _mockGitHelper;
+        private Mock<ILogger<LanguageChecks>> _mockLanguageChecksLogger;
+        private Mock<ILogger<PythonLanguageSpecificChecks>> _mockPythonLogger;
+        private Mock<ILogger<LanguageSpecificCheckResolver>> _mockResolverLogger;
+        private LanguageChecks _languageChecks;
         private PackageCheckTool _packageCheckTool;
         private string _testProjectPath;
 
@@ -21,9 +27,27 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         {
             _mockLogger = new Mock<ILogger<PackageCheckTool>>();
             _mockOutputHelper = new Mock<IOutputHelper>();
-            _mockLanguageRepoServiceFactory = new Mock<ILanguageRepoServiceFactory>();
+            _mockProcessHelper = new Mock<IProcessHelper>();
+            _mockNpxHelper = new Mock<INpxHelper>();
+            _mockGitHelper = new Mock<IGitHelper>();
+            _mockLanguageChecksLogger = new Mock<ILogger<LanguageChecks>>();
+            _mockPythonLogger = new Mock<ILogger<PythonLanguageSpecificChecks>>();
+            _mockResolverLogger = new Mock<ILogger<LanguageSpecificCheckResolver>>();
 
-            _packageCheckTool = new PackageCheckTool(_mockLogger.Object, _mockOutputHelper.Object, _mockLanguageRepoServiceFactory.Object);
+            // Create language-specific check implementations with mocked dependencies
+            var pythonCheck = new PythonLanguageSpecificChecks(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _mockPythonLogger.Object);
+
+            var languageChecks = new List<ILanguageSpecificChecks> { pythonCheck };
+            var mockPowershellHelper = new Mock<IPowershellHelper>();
+            var resolver = new LanguageSpecificCheckResolver(languageChecks, _mockGitHelper.Object, mockPowershellHelper.Object, _mockResolverLogger.Object);            _languageChecks = new LanguageChecks(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _mockLanguageChecksLogger.Object, resolver);
+            _packageCheckTool = new PackageCheckTool(_mockLogger.Object, _mockOutputHelper.Object, _languageChecks);
+
+            // Setup default mock responses
+            var defaultProcessResult = new ProcessResult { ExitCode = 0, OutputDetails = new List<(StdioLevel, string)>() };
+            _mockProcessHelper.Setup(x => x.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()))
+                             .ReturnsAsync(defaultProcessResult);
+            _mockNpxHelper.Setup(x => x.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()))
+                         .ReturnsAsync(defaultProcessResult);
 
             // Create a temporary test directory
             _testProjectPath = Path.Combine(Path.GetTempPath(), "PackageCheckToolTest");

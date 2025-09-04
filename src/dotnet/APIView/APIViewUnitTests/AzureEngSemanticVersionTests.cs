@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Xunit;
+using APIView.Model.V2;
 
 namespace APIViewUnitTests
 {
@@ -80,6 +81,44 @@ namespace APIViewUnitTests
             Assert.Equal(20200828, pythonAlphaVer.PrereleaseNumber);
             Assert.Equal("009", pythonAlphaVer.BuildNumber);
             Assert.Equal(pythonAlphaVerString, pythonAlphaVer.ToString());
+        }
+
+        [Theory]
+        // Test prerelease detection - any version with prelabel is prerelease
+        [InlineData("1.0.0-beta.1", "csharp", true)]
+        [InlineData("1.0.0-alpha.1", "csharp", true)]
+        [InlineData("1.0.0-rc.1", "csharp", true)]
+        [InlineData("1.0.0-preview.1", "csharp", true)]
+        // Test case insensitivity 
+        [InlineData("1.0.0-BETA.1", "csharp", true)]
+        // Test Python specific format (no separators)
+        [InlineData("1.0.0b1", "python", true)]
+        [InlineData("1.0.0a1", "python", true)]
+        [InlineData("1.0.0rc1", "python", true)]
+        // Test 0.x versions are considered prerelease even without prelabel
+        [InlineData("0.1.0", "csharp", true)]
+        [InlineData("0.9.99", "python", true)]
+        // Test stable versions
+        [InlineData("1.0.0", "csharp", false)]
+        [InlineData("2.5.1", "python", false)]
+        // Test that language doesn't affect prerelease detection for standard formats
+        [InlineData("1.0.0-beta.1", "javascript", true)]
+        [InlineData("1.0.0", "unknown", false)]
+        public void IsPrerelease_ShouldDetectCorrectly(string version, string language, bool expectedIsPrerelease)
+        {
+            var semanticVersion = new AzureEngSemanticVersion(version, language);
+            Assert.Equal(expectedIsPrerelease, semanticVersion.IsPrerelease);
+        }
+
+        [Theory]
+        // Test edge cases and malformed versions
+        [InlineData("", "csharp", false)]
+        [InlineData("1", "csharp", false)]
+        [InlineData("not-a-version", "csharp", false)]
+        public void IsPrerelease_EdgeCases_ShouldHandleCorrectly(string version, string language, bool expectedIsPrerelease)
+        {
+            var semanticVersion = new AzureEngSemanticVersion(version, language);
+            Assert.Equal(expectedIsPrerelease, semanticVersion.IsPrerelease);
         }
     }
 }

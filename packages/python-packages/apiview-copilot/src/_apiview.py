@@ -54,59 +54,46 @@ def get_apiview_cosmos_client(container_name: str, environment: str = "productio
         sys.exit(1)
 
 
-def get_apiview_comments(review_id: str, environment: str = "production", use_api: bool = False) -> dict:
+def get_apiview_comments(review_id: str, environment: str = "production") -> dict:
     """
     Retrieves comments for a specific APIView review and returns them grouped by element ID and
     sorted by CreatedOn time. Omits resolved and deleted comments, and removes unnecessary fields.
     """
     comments = []
-    try:
-        if use_api:
-            if not review_id:
-                raise ValueError("When using the API, `--review-id` must be provided.")
-            apiview_endpoints = {
-                "production": "https://apiview.dev",
-                "staging": "https://apiviewstagingtest.com",
-            }
-            endpoint_root = apiview_endpoints.get(environment)
-            endpoint = f"{endpoint_root}/api/Comments/{review_id}?commentType=APIRevision&isDeleted=false"
-            apiview_scopes = {
-                "production": "api://apiview/.default",
-                "staging": "api://apiviewstaging/.default",
-            }
-            credential = get_credential()
-            scope = apiview_scopes.get(environment)
-            token = credential.get_token(scope)
-            response = requests.get(
-                endpoint,
-                headers={"Content-Type": "application/json", "Authorization": f"Bearer {token.token}"},
-                timeout=30,
-            )
+    if not review_id:
+        raise ValueError("When using the API, `--review-id` must be provided.")
+    apiview_endpoints = {
+        "production": "https://apiview.dev",
+        "staging": "https://apiviewstagingtest.com",
+    }
+    endpoint_root = apiview_endpoints.get(environment)
+    endpoint = f"{endpoint_root}/api/Comments/{review_id}?commentType=APIRevision&isDeleted=false"
+    apiview_scopes = {
+        "production": "api://apiview/.default",
+        "staging": "api://apiviewstaging/.default",
+    }
+    credential = get_credential()
+    scope = apiview_scopes.get(environment)
+    token = credential.get_token(scope)
+    response = requests.get(
+        endpoint,
+        headers={"Content-Type": "application/json", "Authorization": f"Bearer {token.token}"},
+        timeout=30,
+    )
 
-            if response.status_code != 200:
-                print(f"Error retrieving comments: {response.status_code} - {response.text}")
-                return {}
-            try:
-                comments = response.json()
-            except Exception as json_exc:
-                content = response.content.decode("utf-8")
-                if "Please login using your GitHub account" in content:
-                    print("Error: API is still requesting authentication via Github.")
-                    return {}
-                else:
-                    print(f"Error parsing comments JSON: {json_exc}")
-                    return {}
-        else:
-            container = get_apiview_cosmos_client(container_name="Comments", environment=environment)
-            result = container.query_items(
-                # pylint: disable=line-too-long
-                query=f"SELECT {', '.join(APIVIEW_COMMENT_SELECT_FIELDS)} FROM c WHERE c.ReviewId = @review_id AND c.IsResolved = false AND c.IsDeleted = false",
-                parameters=[{"name": "@review_id", "value": review_id}],
-            )
-            comments = list(result)
-    except Exception as e:
-        print(f"Error retrieving comments for review {review_id}: {e}")
+    if response.status_code != 200:
+        print(f"Error retrieving comments: {response.status_code} - {response.text}")
         return {}
+    try:
+        comments = response.json()
+    except Exception as json_exc:
+        content = response.content.decode("utf-8")
+        if "Please login using your GitHub account" in content:
+            print("Error: API is still requesting authentication via Github.")
+            return {}
+        else:
+            print(f"Error parsing comments JSON: {json_exc}")
+            return {}
 
     conversations = {}
     if comments:

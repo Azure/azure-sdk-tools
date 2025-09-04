@@ -615,12 +615,12 @@ def db_purge(containers: Optional[list[str]] = None, run_indexer: bool = False):
             print(f"Error purging container: {e}")
 
 
-def get_apiview_comments(review_id: str, environment: str = "production", use_api: bool = False) -> dict:
+def get_apiview_comments(review_id: str, environment: str = "production") -> dict:
     """
     Retrieves comments for a specific APIView review and returns them grouped by element ID and
     sorted by CreatedOn time. Omits resolved and deleted comments, and removes unnecessary fields.
     """
-    return _get_apiview_comments(review_id, environment, use_api)
+    return _get_apiview_comments(review_id, environment)
 
 
 def get_active_reviews(start_date: str, end_date: str, language: str, environment: str = "production") -> list:
@@ -912,11 +912,6 @@ class CliCommandsLoader(CLICommandsLoader):
                 options_list=["--environment"],
                 default="production",
                 choices=["production", "staging"],
-            )
-            ac.argument(
-                "use_api",
-                action="store_true",
-                help="Use the APIView API to retrieve comments instead of Cosmos DB.",
             )
         with ArgumentsContext(self, "metrics report") as ac:
             ac.argument("start_date", help="The start date for the metrics report (YYYY-MM-DD).")

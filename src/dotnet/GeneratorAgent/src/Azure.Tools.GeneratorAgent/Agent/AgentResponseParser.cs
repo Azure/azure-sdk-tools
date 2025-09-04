@@ -7,8 +7,14 @@ namespace Azure.Tools.GeneratorAgent.Agent
     /// <summary>
     /// Static helper methods for parsing AI agent responses in plain text JSON format
     /// </summary>
-    internal static class AgentResponseParserHelpers
+    internal static class AgentResponseParser
     {
+        private static readonly JsonSerializerOptions JsonOptions = new()
+        {
+            PropertyNameCaseInsensitive = true,
+            AllowTrailingCommas = true
+        };
+
         /// <summary>
         /// Parses the agent's response and extracts the updated client.tsp content from JSON
         /// </summary>
@@ -24,12 +30,7 @@ namespace Azure.Tools.GeneratorAgent.Agent
                 // Extract JSON from markdown code blocks if present
                 var jsonContent = ExtractJsonFromResponse(rawResponse);
 
-                // Parse as JSON
-                var response = JsonSerializer.Deserialize<AgentTypeSpecResponse>(jsonContent, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true,
-                    AllowTrailingCommas = true
-                });
+                var response = JsonSerializer.Deserialize<AgentTypeSpecResponse>(jsonContent, JsonOptions);
 
                 if (response == null)
                 {
@@ -57,7 +58,7 @@ namespace Azure.Tools.GeneratorAgent.Agent
         /// <summary>
         /// Parses the agent's error responses into a list of RuleError objects
         /// </summary>
-        public static List<RuleError> ParseErrors(string rawResponse)
+        public static IEnumerable<RuleError> ParseErrors(string rawResponse)
         {
             if (string.IsNullOrWhiteSpace(rawResponse))
             {
@@ -69,20 +70,15 @@ namespace Azure.Tools.GeneratorAgent.Agent
                 // Extract JSON from markdown code blocks if present
                 var jsonContent = ExtractJsonFromResponse(rawResponse);
 
-                // Deserialize the response
-                var response = JsonSerializer.Deserialize<AgentErrorResponse>(jsonContent, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true,
-                    AllowTrailingCommas = true
-                });
+                // Deserialize using shared static options (avoids allocation per call)
+                var response = JsonSerializer.Deserialize<AgentErrorResponse>(jsonContent, JsonOptions);
 
                 if (response == null || response.Errors == null || !response.Errors.Any())
                 {
                     throw new InvalidOperationException("No errors found in the agent response");
                 }
 
-                // Map errors to RuleError objects
-                return response.Errors.Select(e => new RuleError(e.Type, e.Message)).ToList();
+                return response.Errors.Select(e => new RuleError(e.Type, e.Message));
             }
             catch (JsonException ex)
             {
@@ -120,27 +116,38 @@ namespace Azure.Tools.GeneratorAgent.Agent
 
         private static string ExtractFromMarkdownBlock(string trimmed, string startMarker)
         {
-            // Find the start of content (after start marker)
-            var startIndex = trimmed.IndexOf('\n');
-            if (startIndex == -1)
+            // Find where the actual JSON content starts after the marker
+            var contentStart = startMarker.Length;
+            
+            // Skip any whitespace (spaces, newlines, tabs) after the start marker
+            while (contentStart < trimmed.Length && char.IsWhiteSpace(trimmed[contentStart]))
             {
-                throw new InvalidOperationException($"Malformed markdown code block: no newline after {startMarker}");
+                contentStart++;
+            }
+            
+            // If we've consumed the entire string, return empty
+            if (contentStart >= trimmed.Length)
+            {
+                return string.Empty;
             }
 
             // Find the end of content (before closing ```)
             var endIndex = trimmed.LastIndexOf("```");
-            if (endIndex == -1 || endIndex <= startIndex)
+            
+            // If no closing backticks found or they're at the start, use everything after contentStart
+            if (endIndex == -1 || endIndex <= contentStart)
             {
-                throw new InvalidOperationException("Malformed markdown code block: no closing ```");
+                return trimmed.Substring(contentStart).Trim();
             }
 
-            int length = endIndex - startIndex - 1;
+            // Extract content between contentStart and closing backticks
+            var length = endIndex - contentStart;
             if (length <= 0)
             {
-                throw new InvalidOperationException($"Malformed markdown code block: calculated content length is not positive (startIndex: {startIndex}, endIndex: {endIndex})");
+                return trimmed.Substring(contentStart).Trim();
             }
 
-            return trimmed.Substring(startIndex + 1, length).Trim();
+            return trimmed.Substring(contentStart, length).Trim();
         }
     }
 }

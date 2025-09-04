@@ -29,7 +29,7 @@ public interface ILanguageChecks
     Task<CLICheckResponse> ValidateChangelogAsync(string packagePath, CancellationToken ct);
 
     /// <summary>
-    /// Fixes changelog issues in the specific package using microagent tools.
+    /// Fixes changelog issues in the specific package using tools.
     /// </summary>
     /// <param name="packagePath">Path to the package directory</param>
     /// <param name="ct">Cancellation token</param>

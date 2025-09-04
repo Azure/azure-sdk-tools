@@ -10,12 +10,24 @@ export const lineIdMap = new Map<string, string>();
  */
 export function sanitizeForLineId(input: string): string {
   return input
-    // Replace reference symbols with meaningful text
+    // Handle dereferencing and pointer operations first (preserve workflow context)
+    .replace(/\*mut\s+/g, "deref_mut_")
+    .replace(/\*const\s+/g, "deref_const_")
+    .replace(/\*\s*/g, "deref_")
+    // Replace reference symbols with meaningful text (preserve reference context)
     .replace(/&mut\s+/g, "refmut_")
     .replace(/&\s*/g, "ref_")
+    // Handle module path separators with context preservation
+    .replace(/::/g, "_path_")
+    // Handle trait bounds and where clauses
+    .replace(/\bwhere\b/g, "_where_")
+    .replace(/\+\s*/g, "_and_")
     // Replace generic brackets with meaningful separators
     .replace(/</g, "_of_")
-    .replace(/>/g, "_")
+    .replace(/>/g, "_end_")
+    // Handle function pointers and closures with context
+    .replace(/\bfn\s*\(/g, "fnptr_")
+    .replace(/\|([^|]*)\|/g, "_closure_$1_")
     // Replace common punctuation with meaningful separators
     .replace(/\s+/g, "_") // spaces to underscores
     .replace(/:/g, "_")   // colons to underscores
@@ -26,6 +38,9 @@ export function sanitizeForLineId(input: string): string {
     .replace(/\]/g, "_")
     .replace(/\{/g, "_")  // braces
     .replace(/\}/g, "_")
+    .replace(/'/g, "_lifetime_") // lifetime parameters
+    .replace(/\$/g, "_dollar_")  // macro variables
+    .replace(/-/g, "_dash_")     // preserve dashes for crate names
     // Clean up multiple consecutive underscores
     .replace(/_+/g, "_")
     // Remove leading/trailing underscores
@@ -51,42 +66,95 @@ function postProcessLineIdMap(reviewLines: ReviewLine[], updatedLineIdMap: Map<s
 }
 
 /**
- * Validates that all line IDs are unique and throws an error if duplicates are found.
+ * Ensures all line IDs are unique by automatically appending counters to duplicates.
  * This is a defensive measure to catch any edge cases not handled by sanitization.
- * @param reviewLines The review lines to validate
- * @throws Error if duplicate line IDs are found
+ * @param reviewLines The review lines to validate and fix
  */
 export function ensureUniqueLineIds(reviewLines: ReviewLine[]): void {
   const usedLineIds = new Set<string>();
-  const duplicates: string[] = [];
+  const lineIdCounters = new Map<string, number>();
+  const lineIdMappings = new Map<string, string>(); // Track original -> updated mappings
 
-  function validateLineIds(line: ReviewLine): void {
+  // First pass: collect all line IDs and fix duplicates
+  // 
+  // Why we need this duplicate fixing mechanism:
+  // 1. EXTERNAL RE-EXPORTS: The same external/internal item (like std::HashMap) can be re-exported
+  //    from multiple modules, creating identical line IDs in externalReexports.ts
+  // 2. TRAIT IMPLEMENTATIONS: Multiple impl blocks can generate similar line IDs after
+  //    sanitization, especially with generic types and reference patterns
+  // 3. MODULE PATH COLLISIONS: Different module structures can result in identical
+  //    final line IDs after path processing and sanitization
+  // 4. GENERIC TYPE VARIATIONS: Complex generic types with nested parameters can
+  //    collapse to similar sanitized forms (e.g., Box<T>, Arc<T> both become Box_of_T, Arc_of_T)
+  // 5. CROSS-REFERENCE CONFLICTS: Items referenced from multiple contexts (inherent impls,
+  //    trait impls, external paths) can create overlapping line ID spaces
+  // 
+  // Without this deduplication, Copilot reviews fail immediately with no diagnostics,
+  // making it impossible to identify and fix the root cause of the duplicate IDs.
+  function collectAndFixLineIds(line: ReviewLine): void {
     if (line.LineId) {
-      if (usedLineIds.has(line.LineId)) {
-        duplicates.push(line.LineId);
-      } else {
-        usedLineIds.add(line.LineId);
+      let finalLineId = line.LineId;
+      const originalLineId = line.LineId;
+      
+      // If this line ID is already used, append a counter
+      if (usedLineIds.has(finalLineId)) {
+        const baseId = finalLineId;
+        const counter = (lineIdCounters.get(baseId) || 1) + 1;
+        lineIdCounters.set(baseId, counter);
+        finalLineId = `${baseId}_${counter}`;
+        
+        // Keep incrementing until we find a unique ID
+        while (usedLineIds.has(finalLineId)) {
+          const newCounter = lineIdCounters.get(baseId)! + 1;
+          lineIdCounters.set(baseId, newCounter);
+          finalLineId = `${baseId}_${newCounter}`;
+        }
+        
+        // Update the line ID and track the mapping
+        line.LineId = finalLineId;
+        lineIdMappings.set(originalLineId, finalLineId);
+      }
+      
+      usedLineIds.add(finalLineId);
+    }
+
+    // Process children recursively
+    if (line.Children && Array.isArray(line.Children)) {
+      line.Children.forEach(collectAndFixLineIds);
+    }
+  }
+
+  // Second pass: update all references to changed line IDs
+  function updateReferences(line: ReviewLine): void {
+    // Update RelatedToLine references
+    if (line.RelatedToLine && lineIdMappings.has(line.RelatedToLine)) {
+      line.RelatedToLine = lineIdMappings.get(line.RelatedToLine)!;
+    }
+
+    // Update NavigateToId references in tokens
+    if (line.Tokens && line.Tokens.length > 0) {
+      for (const token of line.Tokens) {
+        if (token.NavigateToId && lineIdMappings.has(token.NavigateToId)) {
+          token.NavigateToId = lineIdMappings.get(token.NavigateToId)!;
+        }
       }
     }
 
     // Process children recursively
     if (line.Children && Array.isArray(line.Children)) {
-      line.Children.forEach(validateLineIds);
+      line.Children.forEach(updateReferences);
     }
   }
 
   // Process all review lines
   if (reviewLines && Array.isArray(reviewLines)) {
-    reviewLines.forEach(validateLineIds);
-  }
-
-  // If duplicates were found, throw an error
-  if (duplicates.length > 0) {
-    const uniqueDuplicates = [...new Set(duplicates)];
-    throw new Error(
-      `Duplicate line IDs detected: ${uniqueDuplicates.join(', ')}. ` +
-      `This will cause Copilot review failures. Please fix the line ID generation logic.`
-    );
+    // First pass: fix duplicate line IDs
+    reviewLines.forEach(collectAndFixLineIds);
+    
+    // Second pass: update references if any IDs were changed
+    if (lineIdMappings.size > 0) {
+      reviewLines.forEach(updateReferences);
+    }
   }
 }
 

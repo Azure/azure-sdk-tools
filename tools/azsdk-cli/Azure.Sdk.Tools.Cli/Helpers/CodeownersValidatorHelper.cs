@@ -100,5 +100,4 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             }
         }
     }
-
 }

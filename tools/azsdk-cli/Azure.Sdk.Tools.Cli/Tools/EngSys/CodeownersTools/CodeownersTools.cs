@@ -30,8 +30,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
         private const string azureWriteTeamsBlobUrl = "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/azure-sdk-write-teams-blob";
 
         // Command names
-        private const string updateCodeownersCommandName = "update";
+        private const string addCodeownersCommandName = "add";
+        private const string removeCodeownersCommandName = "remove";
         private const string validateCodeownersEntryCommandName = "validate";
+        private const string publicizeOrgMembershipCommandName = "azsdk_publicize_org_membership";
 
         // Core command options
         private readonly Option<string> repoOption = new(["--repo", "-r"], "The repository name") { IsRequired = true };
@@ -40,8 +42,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
         private readonly Option<string> serviceLabelOption = new(["--service-label"], "The service label") { IsRequired = false };
         private readonly Option<string[]> serviceOwnersOption = new(["--service-owners"], "The service owners (space-separated)") { IsRequired = false };
         private readonly Option<string[]> sourceOwnersOption = new(["--source-owners"], "The source owners (space-separated)") { IsRequired = false };
-        private readonly Option<bool> isAddingOption = new(["--is-adding"], "Whether to add (true) or remove (false) owners") { IsRequired = false };
         private readonly Option<string> workingBranchOption = new(["--branch"], "Branch to make edits to, only if provided.") { IsRequired = false };
+        private readonly Option<string> organizationOption = new(["--organization", "-o"], "The GitHub organization name") { IsRequired = true };
+        private readonly Option<string> usernameOption = new(["--username", "-u"], "The GitHub username (defaults to current authenticated user)") { IsRequired = false };
 
         public CodeownersTools(
             IGitHubService githubService,
@@ -65,7 +68,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
             var command = new Command("codeowners", "A tool to validate and modify codeowners.");
             var subCommands = new[]
             {
-                new Command(updateCodeownersCommandName, "Update codeowners in a repository")
+                new Command(addCodeownersCommandName, "Updates codeowners in a repository")
                 {
                     repoOption,
                     isMgmtPlaneOption,
@@ -73,14 +76,29 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                     serviceLabelOption,
                     serviceOwnersOption,
                     sourceOwnersOption,
-                    isAddingOption,
+                    workingBranchOption,
+                },
+                new Command(removeCodeownersCommandName, "Removes codeowners in a repository")
+                {
+                    repoOption,
+                    isMgmtPlaneOption,
+                    pathOptionOptional,
+                    serviceLabelOption,
+                    serviceOwnersOption,
+                    sourceOwnersOption,
                     workingBranchOption,
                 },
                 new Command(validateCodeownersEntryCommandName, "Validate codeowners for an existing service entry")
                 {
                     repoOption,
                     serviceLabelOption,
-                    pathOptionOptional
+                    pathOptionOptional,
+                    workingBranchOption
+                },
+                new Command(publicizeOrgMembershipCommandName, "Make GitHub organization membership public")
+                {
+                    organizationOption,
+                    usernameOption
                 }
             };
 
@@ -97,7 +115,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
             var command = ctx.ParseResult.CommandResult.Command.Name;
             var commandParser = ctx.ParseResult;
 
-            if (command == updateCodeownersCommandName)
+            if (command == addCodeownersCommandName)
             {
                 var repoValue = commandParser.GetValueForOption(repoOption);
                 var isMgmtPlaneValue = commandParser.GetValueForOption(isMgmtPlaneOption);
@@ -105,17 +123,37 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                 var serviceLabelValue = commandParser.GetValueForOption(serviceLabelOption);
                 var serviceOwnersValue = commandParser.GetValueForOption(serviceOwnersOption);
                 var sourceOwnersValue = commandParser.GetValueForOption(sourceOwnersOption);
-                var isAddingValue = commandParser.GetValueForOption(isAddingOption);
                 var workingBranchValue = commandParser.GetValueForOption(workingBranchOption);
 
-                var addResult = await UpdateCodeowners(
-                    repoValue ?? "",
+                var addResult = await AddCodeowners(
+                    repoValue,
                     isMgmtPlaneValue,
                     pathValue ?? "",
                     serviceLabelValue ?? "",
                     serviceOwnersValue?.ToList() ?? new List<string>(),
                     sourceOwnersValue?.ToList() ?? new List<string>(),
-                    isAddingValue,
+                    workingBranchValue ?? "");
+                ctx.ExitCode = ExitCode;
+                output.Output(addResult);
+                return;
+            }
+            else if (command == removeCodeownersCommandName)
+            {
+                var repoValue = commandParser.GetValueForOption(repoOption);
+                var isMgmtPlaneValue = commandParser.GetValueForOption(isMgmtPlaneOption);
+                var pathValue = commandParser.GetValueForOption(pathOptionOptional);
+                var serviceLabelValue = commandParser.GetValueForOption(serviceLabelOption);
+                var serviceOwnersValue = commandParser.GetValueForOption(serviceOwnersOption);
+                var sourceOwnersValue = commandParser.GetValueForOption(sourceOwnersOption);
+                var workingBranchValue = commandParser.GetValueForOption(workingBranchOption);
+
+                var addResult = await RemoveCodeowners(
+                    repoValue,
+                    isMgmtPlaneValue,
+                    pathValue ?? "",
+                    serviceLabelValue ?? "",
+                    serviceOwnersValue?.ToList() ?? new List<string>(),
+                    sourceOwnersValue?.ToList() ?? new List<string>(),
                     workingBranchValue ?? "");
                 ctx.ExitCode = ExitCode;
                 output.Output(addResult);
@@ -126,13 +164,26 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                 var validateRepo = commandParser.GetValueForOption(repoOption);
                 var validateServiceLabel = commandParser.GetValueForOption(serviceLabelOption);
                 var validateRepoPath = commandParser.GetValueForOption(pathOptionOptional);
-
+                
                 var validateResult = await ValidateCodeownersEntryForService(
                     validateRepo ?? "",
                     validateServiceLabel,
-                    validateRepoPath);
+                    validateRepoPath
+                    );
                 ctx.ExitCode = ExitCode;
                 output.Output(validateResult);
+                return;
+            }
+            else if (command == publicizeOrgMembershipCommandName)
+            {
+                var organization = commandParser.GetValueForOption(organizationOption);
+                var username = commandParser.GetValueForOption(usernameOption);
+
+                var result = await PublicizeOrgMembership(
+                    organization ?? "",
+                    username ?? "");
+                output.Output(result);
+                ctx.ExitCode = ExitCode;
                 return;
             }
             else
@@ -143,15 +194,56 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
             }
         }
 
-        [McpServerTool(Name = "azsdk_engsys_codeowner_update"), Description("Adds or deletes codeowners for a given service label or path in a repo. When isAdding is false, the inputted users will be removed.")]
-        public async Task<string> UpdateCodeowners(
+        [McpServerTool(Name = "azsdk_engsys_add_codeowners"), Description("Adds codeowners for a given service label or path in a repo.")]
+        public async Task<string> AddCodeowners(
             string repo,
             bool isMgmtPlane,
             string path = "",
             string serviceLabel = "",
             List<string> serviceOwners = null,
             List<string> sourceOwners = null,
-            bool isAdding = false,
+            string workingBranch = ""
+        )
+        {
+            try
+            {
+                return await UpdateCodeowners(repo, isMgmtPlane, true, path, serviceLabel, serviceOwners, sourceOwners, workingBranch);
+            }
+            catch (Exception ex)
+            {
+                return $"Error: {ex}";
+            }
+        }
+
+        [McpServerTool(Name = "azsdk_engsys_add_codeowners"), Description("Removes codeowners for a given service label or path in a repo.")]
+        public async Task<string> RemoveCodeowners(
+            string repo,
+            bool isMgmtPlane,
+            string path = "",
+            string serviceLabel = "",
+            List<string> serviceOwners = null,
+            List<string> sourceOwners = null,
+            string workingBranch = ""
+        )
+        {
+            try
+            {
+                return await UpdateCodeowners(repo, isMgmtPlane, false, path, serviceLabel, serviceOwners, sourceOwners, workingBranch);
+            }
+            catch (Exception ex)
+            {
+                return $"Error: {ex}";
+            }
+        }
+
+        private async Task<string> UpdateCodeowners(
+            string repo,
+            bool isMgmtPlane,
+            bool isAdding,
+            string path,
+            string serviceLabel,
+            List<string> serviceOwners,
+            List<string> sourceOwners,
             string workingBranch = "")
         {
             try
@@ -301,24 +393,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
         public async Task<ServiceCodeownersResult> ValidateCodeownersEntryForService(string repoName, string? serviceLabel = null, string? path = null)
         {
             ServiceCodeownersResult response = new() { };
-
             try
             {
                 if (string.IsNullOrEmpty(repoName))
                 {
                     throw new Exception("Must provide a repository name. Ex. azure-sdk-for-net");
                 }
-
                 serviceLabel = serviceLabel?.Trim();
                 path = path?.Trim();
                 if (string.IsNullOrEmpty(serviceLabel) && string.IsNullOrEmpty(path))
                 {
                     throw new Exception("Must provide a service label or a repository path.");
                 }
-
                 var workingBranch = "";
                 var codeownersPullRequests = await githubService.SearchPullRequestsByTitleAsync(Constants.AZURE_OWNER_PATH, repoName, "[CODEOWNERS]");
-
                 foreach (var codeownersPullRequest in codeownersPullRequests)
                 {
                     if (codeownersPullRequest != null &&
@@ -328,12 +416,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                         workingBranch = codeownersPullRequest.Head.Ref;
                     }
                 }
-
                 if (workingBranch.Equals("main", StringComparison.OrdinalIgnoreCase))
                 {
                     throw new Exception($"Cannot make changes on branch: {workingBranch}");
                 }
-
                 CodeownersEntry? matchingEntry;
                 try
                 {
@@ -345,11 +431,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                     var codeownersContent = contents.Content;
                     var codeownersSha = contents.Sha;
                     var codeownersContentList = codeownersContent.Split("\n").ToList();
-
                     var codeownersEntries = CodeownersParser.ParseCodeownersEntries(codeownersContentList, azureWriteTeamsBlobUrl);
-
                     CodeownersEditor codeownersEditor = new CodeownersEditor(codeownersContent);
-
                     matchingEntry = codeownersEditor.FindMatchingEntry(path, serviceLabel);
                 }
                 catch (Exception ex)
@@ -357,14 +440,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                     response.Message += $"Error finding service in CODEOWNERS file. Error {ex}";
                     return response;
                 }
-
                 // Validate Owners
                 if (matchingEntry != null)
                 {
                     var validationResponse = await ValidateMinimumOwnerRequirements(matchingEntry);
                     string? validationErrors = validationResponse.validationErrors;
                     List<CodeownersValidationResult>? codeownersValidationResults = validationResponse.codeownersValidationResults;
-
                     if (!string.IsNullOrEmpty(validationErrors))
                     {
                         response.Message = validationErrors ?? string.Empty;
@@ -462,6 +543,51 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
             normalizedIdentifier = Regex.Replace(normalizedIdentifier, @"[^a-zA-Z0-9\-]", "");
 
             return $"{prefix}-{normalizedIdentifier}";
+        }
+        
+        [McpServerTool(Name = "azsdk_publicize_org_membership"), Description("Makes a user's GitHub organization membership public.")]
+        public async Task<string> PublicizeOrgMembership(
+            string organization,
+            string username = "")
+        {
+            try
+            {
+                // If no username provided, use the authenticated user
+                if (string.IsNullOrEmpty(username))
+                {
+                    var currentUser = await githubService.GetCurrentUserAsync();
+                    if (currentUser == null)
+                    {
+                        throw new Exception("Could not retrieve current authenticated user. Ensure you're logged into GitHub.");
+                    }
+                    username = currentUser.Login;
+                }
+
+                // Validate that the user is a member of the organization first
+                var isMember = await githubService.IsUserMemberOfOrgAsync(organization, username);
+                if (!isMember)
+                {
+                    throw new Exception($"User '{username}' is not a member of organization '{organization}' or membership cannot be verified. User must be added to the organization first.");
+                }
+
+                // Make membership public
+                var publicResult = await githubService.MakeOrgMembershipPublicAsync(organization, username);
+
+                if (publicResult)
+                {
+                    return $"Successfully made {username}'s membership in '{organization}' public.";
+                }
+                else
+                {
+                    throw new Exception($"Failed to make membership public for {username} in organization '{organization}'.");
+                }
+            }
+            catch (Exception ex)
+            {
+                SetFailure();
+                logger.LogError($"Error publicizing GitHub organization membership: {ex}");
+                return $"Error: {ex.Message}";
+            }
         }
     }
 }

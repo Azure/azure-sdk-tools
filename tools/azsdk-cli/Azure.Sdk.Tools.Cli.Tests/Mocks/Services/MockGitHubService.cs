@@ -120,6 +120,22 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(true);
         }
 
+        public Task<User?> GetCurrentUserAsync()
+        {
+            var user = CreateMockUser("mock_user", 0);
+            return Task.FromResult(user);
+        }
+
+        public Task<bool> IsUserMemberOfOrgAsync(string organization, string username)
+        {
+            return Task.FromResult(true);
+        }
+
+        public Task<bool> MakeOrgMembershipPublicAsync(string organization, string username)
+        {
+            return Task.FromResult(true);
+        }
+
         private RepositoryContent CreateMockRepositoryContent(string name, string path, string encodedContent)
         {
             return new RepositoryContent(

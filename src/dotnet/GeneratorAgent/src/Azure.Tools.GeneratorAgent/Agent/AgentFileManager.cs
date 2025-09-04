@@ -24,9 +24,9 @@ namespace Azure.Tools.GeneratorAgent.Agent
 
         public async Task<(List<string> UploadedFileIds, string VectorStoreId)> UploadFilesAsync(Dictionary<string, string> files, CancellationToken cancellationToken)
         {
-            var relevantFiles = files.Where(kvp => kvp.Key.EndsWith(".tsp", StringComparison.OrdinalIgnoreCase));
-
-            var uploadTasks = relevantFiles.Select(file => UploadSingleFileAsync(file.Key, file.Value, cancellationToken));
+            var uploadTasks = files
+                .Where(kvp => kvp.Key.EndsWith(".tsp", StringComparison.OrdinalIgnoreCase))
+                .Select(file => UploadSingleFileAsync(file.Key, file.Value, cancellationToken));
 
             var results = await Task.WhenAll(uploadTasks);
             

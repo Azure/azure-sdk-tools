@@ -39,14 +39,14 @@ export const getApiVersionType: IApiVersionTypeExtractor = async (
 
 export const isModelOnly: IModelOnlyChecker = async (packageRoot: string): Promise<boolean> => {
     // For MLC, simply check for parameters.ts - its absence indicates a model-only service
-    const parametersPath = join(packageRoot, "src/rest/parameters.ts");
+    const parametersPath = join(packageRoot, "src/api/index.ts");
     const isParametersExists = await exists(parametersPath);
     
     if (!isParametersExists) {
-        logger.warn(`No parameters.ts found in ${packageRoot}, this is a model-only service in Modular client`);
+        logger.warn(`No index.ts found in ${packageRoot}, this is a model-only service in Modular client`);
         return true;
     }
-    
-    logger.info(`Found parameters.ts in ${packageRoot}, this is not a model-only service`);
+
+    logger.info(`Found index.ts in ${packageRoot}, this is not a model-only service`);
     return false;
 };

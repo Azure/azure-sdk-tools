@@ -119,7 +119,7 @@ def get_active_reviews(start_date: str, end_date: str, language: str, environmen
     try:
         container = get_apiview_cosmos_client(container_name="Comments", environment=environment)
         start_epoch = _to_epoch_seconds(start_date)
-        end_epoch = _to_epoch_seconds(end_date)
+        end_epoch = _to_epoch_seconds(end_date, end_of_day=True)
         result = container.query_items(
             query=f"SELECT {', '.join(APIVIEW_COMMENT_SELECT_FIELDS)} FROM c WHERE c._ts >= @start_date AND c._ts <= @end_date",
             parameters=[
@@ -152,19 +152,31 @@ def get_active_reviews(start_date: str, end_date: str, language: str, environmen
         reviews_container = get_apiview_cosmos_client(container_name="Reviews", environment=environment)
 
         # Build a parameterized OR query to fetch matching reviews and filter by language.
+        params = []
         clauses = []
-        for rid in review_ids:
-            clauses.append(f'c.id = "{rid}"')
+        for i, rid in enumerate(review_ids):
+            param_name = f"@id_{i}"
+            clauses.append(f"c.id = {param_name}")
+            params.append({"name": param_name, "value": rid})
 
-        language = get_language_pretty_name(language)
-        query = f"SELECT c.id, c.PackageName FROM c WHERE ({' OR '.join(clauses)}) AND c.Language = \"{language}\""
+        pretty_language = get_language_pretty_name(language)
+        params.append({"name": "@language", "value": pretty_language})
 
-        # Execute and materialize results
-        results = list(reviews_container.query_items(query=query, enable_cross_partition_query=True))
+        # Compose query with parameterized OR clauses and language filter
+        query = f"SELECT c.id, c.PackageName FROM c WHERE ({' OR '.join(clauses)}) AND c.Language = @language"
+
+        # Execute and materialize results; enable cross-partition in case Reviews is partitioned
+        results = list(reviews_container.query_items(query=query, parameters=params, enable_cross_partition_query=True))
+
+        # Build id_to_name map (supporting missing PackageName gracefully)
+        id_to_name = {r.get("id"): r.get("PackageName") for r in results}
     except Exception as e:
         print(f"Error retrieving review names from Reviews container: {e}")
-        return []
-    return results
+        # on error, fall back to returning ids with None names
+        id_to_name = {}
+
+    # Build ordered list of dicts (preserving original review_ids order)
+    return [{"ReviewId": rid, "Name": id_to_name.get(rid)} for rid in review_ids]
 
 
 def _to_epoch_seconds(date_str: str, *, end_of_day: bool = False) -> int:

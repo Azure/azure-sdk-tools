@@ -1,16 +1,13 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-
-using Octokit;
-
 namespace Azure.Sdk.Tools.Cli.Helpers
 {
-    public interface IReleasePlanHelper
+    public interface IInputSanitizer
     {
         public string SanitizeName(string languageId);
     }
-    public class ReleasePlanHelper : IReleasePlanHelper
+    public class InputSanitizer : IInputSanitizer
     {
         public string SanitizeName(string languageId)
         {

@@ -169,7 +169,6 @@ namespace Azure.Tools.GeneratorAgent.Tests
             return new AgentProcessor(
                 Mock.Of<PersistentAgentsClient>(),
                 Mock.Of<ILogger<AgentProcessor>>(),
-                new AgentResponseParser(Mock.Of<ILogger<AgentResponseParser>>()),
                 CreateMockAgentManager(),
                 CreateMockAgentThreadManager(),
                 CreateTestAppSettings());

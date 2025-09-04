@@ -9,7 +9,6 @@ namespace Azure.Tools.GeneratorAgent.Agent
     {
         private readonly PersistentAgentsClient Client;
         private readonly ILogger<AgentProcessor> Logger;
-        private readonly AgentResponseParser ResponseParser;
         private readonly AgentManager AgentManager;
         private readonly AgentThreadManager AgentThreadManager;
         private readonly AppSettings AppSettings;
@@ -17,11 +16,10 @@ namespace Azure.Tools.GeneratorAgent.Agent
         // Lazy property that gets the agent ID on demand
         private string AgentId => AgentManager.GetAgent().Id;
 
-        public AgentProcessor(PersistentAgentsClient client, ILogger<AgentProcessor> logger, AgentResponseParser responseParser, AgentManager agentManager, AgentThreadManager agentThreadManager, AppSettings appSettings)
+        public AgentProcessor(PersistentAgentsClient client, ILogger<AgentProcessor> logger, AgentManager agentManager, AgentThreadManager agentThreadManager, AppSettings appSettings)
         {
             Client = client;
             Logger = logger;
-            ResponseParser = responseParser;
             AgentManager = agentManager;
             AgentThreadManager = agentThreadManager;
             AppSettings = appSettings;
@@ -47,10 +45,18 @@ namespace Azure.Tools.GeneratorAgent.Agent
                     await AgentThreadManager.ProcessAgentRunAsync(threadId, AgentId, cancellationToken).ConfigureAwait(false);
 
                     var response = await AgentThreadManager.ReadResponseAsync(threadId, cancellationToken).ConfigureAwait(false);
-                    var agentResponse = ResponseParser.ParseResponse(response);
-
-                    finalUpdatedContent = agentResponse.Content;
-                    processedCount++;
+                    
+                    try
+                    {
+                        var agentResponse = AgentResponseParserHelpers.ParseResponse(response);
+                        finalUpdatedContent = agentResponse.Content;
+                        processedCount++;
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.LogError(ex, "Failed to parse agent response for fix {FixIndex}/{TotalCount}. Response: {Response}", i + 1, fixes.Count, response);
+                        throw;
+                    }
                 }
 
                 Logger.LogInformation("Successfully processed all {Count} fixes. Final content length: {Length}", fixes.Count, finalUpdatedContent?.Length ?? 0);
@@ -78,10 +84,18 @@ namespace Azure.Tools.GeneratorAgent.Agent
                 await AgentThreadManager.ProcessAgentRunAsync(threadId, AgentId, cancellationToken).ConfigureAwait(false);
 
                 var response = await AgentThreadManager.ReadResponseAsync(threadId, cancellationToken).ConfigureAwait(false);
-                var ruleErrors = ResponseParser.ParseErrors(response);
-
-                Logger.LogInformation("AI-based error analysis completed. Found {Count} errors.", ruleErrors.Count);
-                return ruleErrors;
+                
+                try
+                {
+                    var ruleErrors = AgentResponseParserHelpers.ParseErrors(response);
+                    Logger.LogInformation("AI-based error analysis completed. Found {Count} errors.", ruleErrors.Count);
+                    return ruleErrors;
+                }
+                catch (Exception parseEx)
+                {
+                    Logger.LogError(parseEx, "Failed to parse AI error analysis response for thread {ThreadId}. Response: {Response}", threadId, response);
+                    return new List<RuleError>();
+                }
             }
             catch (Exception ex)
             {

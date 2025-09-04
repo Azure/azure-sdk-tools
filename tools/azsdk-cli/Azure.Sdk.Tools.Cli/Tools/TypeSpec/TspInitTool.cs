@@ -113,8 +113,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                 logger.LogInformation("Initializing TypeSpec project: {outputDirectory}, template: {template}, serviceNamespace: {serviceNamespace}",
                     outputDirectory, template, serviceNamespace);
 
-
-
                 // Validate template
                 if (string.IsNullOrWhiteSpace(template) || !templateMap.ContainsKey(template))
                 {
@@ -189,7 +187,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                 SetFailure();
                 return new TspToolResponse
                 {
-                    ResponseError = $"Failed: Invalid --output-directory, must be within the azure-rest-api-specs or azure-rest-api-specs-pr repo"
+                    ResponseError = $"Failed: Invalid --output-directory, must be under the azure-rest-api-specs or azure-rest-api-specs-pr repo"
                 };
             }
 

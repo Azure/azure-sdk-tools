@@ -108,7 +108,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 Assert.Multiple(() =>
                 {
                     Assert.That(result.IsSuccessful, Is.False);
-                    Assert.That(result.ResponseError, Is.EqualTo($"Failed: Invalid --output-directory, must be under <azure-rest-api-specs or azure-rest-api-specs-pr>{Path.DirectorySeparatorChar}specification"));
+                    Assert.That(result.ResponseError, Is.EqualTo($"Failed: Invalid --output-directory, must be under the azure-rest-api-specs or azure-rest-api-specs-pr repo"
+));
                 });
             }
             finally

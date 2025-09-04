@@ -1,7 +1,0 @@
-# Environment files
-.env
-.env.*
-!/.env.example
-
-# Generated configuration files
-infra/azure.parameters.generated.json

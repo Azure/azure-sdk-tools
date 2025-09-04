@@ -37,7 +37,7 @@ namespace APIViewWeb.Services
 
         public EmailTemplateService(IConfiguration configuration)
         {
-            _apiviewEndpoint = configuration["Endpoint"];
+            _apiviewEndpoint = configuration.GetValue<string>("Endpoint");
         }
 
         private async Task<string> LoadEmbeddedTemplateAsync(string templateName)

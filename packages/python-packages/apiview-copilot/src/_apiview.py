@@ -1,9 +1,11 @@
 import sys
+from datetime import datetime, timezone
 
 import requests
 from azure.cosmos import CosmosClient
 from azure.cosmos.exceptions import CosmosHttpResponseError
 from src._credential import get_credential
+from src._utils import get_language_pretty_name
 
 _APIVIEW_COMMENT_SELECT_FIELDS = [
     "id",
@@ -122,22 +124,98 @@ def get_apiview_comments(review_id: str, environment: str = "production", use_ap
 
 def get_active_reviews(start_date: str, end_date: str, language: str, environment: str = "production") -> list:
     """
-    Lists active APIView reviews in the specified environment during the specified period.
+    Lists distinct active APIView review IDs in the specified environment during the specified period.
+
+    Returns:
+        list[str] - ordered list of unique ReviewId values for comments that match the query window/language.
     """
-    reviews = []
     try:
-        container = get_apiview_cosmos_client(container_name="Reviews", environment=environment)
+        container = get_apiview_cosmos_client(container_name="Comments", environment=environment)
+        start_epoch = _to_epoch_seconds(start_date)
+        end_epoch = _to_epoch_seconds(end_date)
         result = container.query_items(
-            query=f"SELECT {APIVIEW_COMMENT_SELECT_FIELDS} FROM c WHERE c.IsClosed = false AND c.CreatedOn >= @start_date AND c.CreatedOn <= @end_date AND c.Language = @language",
+            query=f"SELECT {', '.join(APIVIEW_COMMENT_SELECT_FIELDS)} FROM c WHERE c._ts >= @start_date AND c._ts <= @end_date",
             parameters=[
-                {"name": "@start_date", "value": start_date},
-                {"name": "@end_date", "value": end_date},
-                {"name": "@language", "value": language},
+                {"name": "@start_date", "value": start_epoch},
+                {"name": "@end_date", "value": end_epoch},
             ],
             enable_cross_partition_query=True,
         )
-        reviews = list(result)
+        comments = list(result)
     except Exception as e:
         print(f"Error retrieving active reviews: {e}")
         return []
-    return reviews
+
+    # Extract distinct ReviewId values preserving first-seen order
+    review_ids: list = []
+    seen: set = set()
+    for comment in comments:
+        review_id = comment.get("ReviewId")
+        if not review_id:
+            continue
+        if review_id not in seen:
+            seen.add(review_id)
+            review_ids.append(review_id)
+
+    if not review_ids:
+        return []
+
+    # Now extract the review names for those IDs from the "Reviews" container
+    try:
+        reviews_container = get_apiview_cosmos_client(container_name="Reviews", environment=environment)
+
+        # Build a parameterized OR query to fetch matching reviews and filter by language.
+        clauses = []
+        for rid in review_ids:
+            clauses.append(f'c.id = "{rid}"')
+
+        language = get_language_pretty_name(language)
+        query = f"SELECT c.id, c.PackageName FROM c WHERE ({' OR '.join(clauses)}) AND c.Language = \"{language}\""
+
+        # Execute and materialize results
+        results = list(reviews_container.query_items(query=query, enable_cross_partition_query=True))
+    except Exception as e:
+        print(f"Error retrieving review names from Reviews container: {e}")
+        return []
+    return results
+
+
+def _to_epoch_seconds(date_str: str, *, end_of_day: bool = False) -> int:
+    """
+    Convert a date string to epoch seconds (UTC).
+
+    Accepted inputs:
+      - "YYYY-MM-DD"                -> treated as midnight UTC (or end of day if end_of_day=True)
+      - full ISO-8601 datetime e.g. "2025-08-01T12:34:56Z" or "2025-08-01T12:34:56+00:00"
+
+    Returns integer seconds since the epoch (UTC).
+
+    Raises:
+      ValueError if the input format cannot be parsed.
+    """
+    # Fast path for simple YYYY-MM-DD
+    if len(date_str) == 10 and date_str.count("-") == 2:
+        try:
+            year, month, day = map(int, date_str.split("-"))
+        except Exception as exc:
+            raise ValueError(f"Invalid date: {date_str}") from exc
+        if end_of_day:
+            dt = datetime(year, month, day, 23, 59, 59, 999999, tzinfo=timezone.utc)
+        else:
+            dt = datetime(year, month, day, 0, 0, 0, 0, tzinfo=timezone.utc)
+        return int(dt.timestamp())
+
+    # Otherwise try ISO parsing
+    try:
+        # datetime.fromisoformat handles offsets like +00:00 but not trailing 'Z' in some versions.
+        ds = date_str
+        if ds.endswith("Z"):
+            ds = ds[:-1] + "+00:00"
+        dt = datetime.fromisoformat(ds)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        else:
+            dt = dt.astimezone(timezone.utc)
+        return int(dt.timestamp())
+    except Exception as exc:
+        raise ValueError(f"Unrecognized date format: {date_str}") from exc

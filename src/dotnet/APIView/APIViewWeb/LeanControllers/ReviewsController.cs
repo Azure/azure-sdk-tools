@@ -155,11 +155,11 @@ namespace APIViewWeb.LeanControllers
         /// <summary>
         /// Endpoint used by Client SPA for Requesting Namespace Review
         /// </summary>
-        /// <param name="reviewId"></param>
-        /// <param name="associatedReviewIds">Array of review IDs for associated language reviews to update</param>
+        /// <param name="reviewId">The TypeSpec review ID to request namespace approval for</param>
+        /// <param name="associatedReviewIds"></param>
         /// <returns></returns>
         [HttpPost("{reviewId}/requestNamespaceReview", Name = "RequestNamespaceReview")]
-        public async Task<ActionResult> RequestNamespaceReviewAsync(string reviewId, [FromBody] string[] associatedReviewIds)
+        public async Task<ActionResult> RequestNamespaceReviewAsync(string reviewId, [FromBody] List<string> associatedReviewIds)
         {
             try
             {

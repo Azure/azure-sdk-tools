@@ -36,6 +36,10 @@ namespace Azure.Sdk.Tools.TestProxy
 
         private static bool _insecure;
         internal static bool Insecure => _insecure;
+        // default this to off so that we don't recognize this new mode unless explicitly asked to
+        // this value will be checked within Record and Playback controllers to determine if they should use
+        // a specific default recording etc.
+        public static bool StandardProxyMode { get; set; } = false;
 
         public Startup(IConfiguration configuration) { }
 
@@ -102,6 +106,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     System.Console.WriteLine("Config verb requires a subcommand after the \"config\" verb.\n\nCorrect Usage: \"Azure.Sdk.Tools.TestProxy config locate|show|create -a path/to/assets.json\"");
                     break;
                 case StartOptions startOptions:
+                    StandardProxyMode = startOptions.StandardProxyMode;
                     StartServer(startOptions);
                     break;
                 case PushOptions pushOptions:

@@ -11,6 +11,11 @@ namespace Azure.Sdk.Tools.Cli.Helpers
     {
         public string SanitizeName(string languageId)
         {
+            if (string.IsNullOrEmpty(languageId))
+            {
+                return string.Empty;
+            }
+
             var lang = languageId.ToLower();
             return lang switch
             {

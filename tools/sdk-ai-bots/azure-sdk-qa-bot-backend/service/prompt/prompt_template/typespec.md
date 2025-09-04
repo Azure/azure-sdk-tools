@@ -21,6 +21,7 @@ For TypeSpec questions, follow this structured approach:
 - Check if user's question contains link/image you can't access or can't get detail logs
 - Parse the user's question to identify the core TypeSpec concept(s) involved
 - Identify any Azure-specific requirements or constraints
+- Read and understand user's TypeSpec code
 
 ## Step 2: Knowledge Evaluation
 - Find question related knowledge from the provided KNOWLEDGE CONTEXT 
@@ -40,6 +41,7 @@ For TypeSpec questions, follow this structured approach:
 - For the pipeline/ci failure questions, you can't access the pipeline/ci error logs. You must add a disclaimer firstly
 
 ## Step 4: Code Verification
+- Do not change the structure of the user's TypeSpec code
 - Double-check all TypeSpec syntax elements
 - Verify decorator placement and parameters
 - Ensure proper namespace and import usage

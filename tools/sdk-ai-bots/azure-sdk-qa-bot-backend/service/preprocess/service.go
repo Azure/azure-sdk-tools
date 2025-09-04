@@ -71,8 +71,11 @@ func (s *PreprocessService) PreprocessHTMLContent(input string) string {
 	// First decode HTML entities and Unicode escapes
 	decoded := s.DecodeHTMLContent(input)
 
-	log.Printf("HTML preprocessed: %s", decoded)
-	return decoded
+	// Then remove HTML tags while preserving the text content
+	cleaned := s.CleanHTMLTags(decoded)
+
+	log.Printf("HTML preprocessed: %s", cleaned)
+	return cleaned
 }
 
 type PreprocessRequest struct {

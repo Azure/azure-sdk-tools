@@ -73,7 +73,6 @@ extends:
                     echo "##vso[task.setvariable variable=AZURE_SUBSCRIPTION_ID]$(az account show --query id -o tsv)"
                     echo "$idToken" > "$(Agent.BuildDirectory)/id_token"
                     echo "##vso[task.setvariable variable=AZURE_FEDERATED_TOKEN_FILE]$(Agent.BuildDirectory)/id_token"
-                    echo "##vso[task.setvariable variable=SYSTEM_ACCESSTOKEN]$idToken"
               
               - script: |
                   go build -o qa-bot-service

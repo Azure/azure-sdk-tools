@@ -90,7 +90,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators
         /// </summary>
         /// <returns></returns>
         [TestCase(
-            "Bad link, still has locale in it: https://learn.microsoft.com/fr-fr/blahblah", 
+            "Bad link, still has locale in it: https://learn.microsoft.com/fr-fr/blahblah",
             "The readme contains links with locales. Keep the link, but remove these locales from links: (fr-fr).", TestName = "Links with locales in them")]
         [TestCase(
             "Still referencing aztemplate and (package path)",
@@ -138,9 +138,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators
             var serviceCollection = new ServiceCollection();
             var OutputHelper = new MockOutputHelper();
 
-
             serviceCollection.AddLogging();     // so our ILogger<T>'s will be available.
-
 
             ServiceRegistrations.RegisterCommonServices(serviceCollection);
             serviceCollection.AddSingleton<IOutputHelper>(OutputHelper);

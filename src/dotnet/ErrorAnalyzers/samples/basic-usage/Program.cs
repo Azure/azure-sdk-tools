@@ -1,7 +1,4 @@
 using Azure.Tools.ErrorAnalyzers;
-using Azure.Tools.ErrorAnalyzers.ClientRuleAnalyzers;
-using Azure.Tools.ErrorAnalyzers.GeneralRuleAnalyzers;
-using Azure.Tools.ErrorAnalyzers.ManagementRuleAnalyzers;
 
 namespace BasicUsage;
 
@@ -13,12 +10,9 @@ class Program
         Console.WriteLine("========================================");
         Console.WriteLine();
         
-        // Step 1: Register analyzers
-        Console.WriteLine("1. Registering analyzers...");
-        ErrorAnalyzerService.RegisterProvider(new ClientAnalyzerProvider());
-        ErrorAnalyzerService.RegisterProvider(new GeneralAnalyzerProvider());
-        ErrorAnalyzerService.RegisterProvider(new ManagementAnalyzerProvider());
-        Console.WriteLine("   ✓ Done");
+        // Step 1: No registration needed! All rules are automatically available.
+        Console.WriteLine("1. All rules are automatically available - no registration required!");
+        Console.WriteLine("   ✓ Ready to analyze errors");
         Console.WriteLine();
 
         // Step 2: Test with sample errors
@@ -48,14 +42,14 @@ class Program
                     Console.WriteLine("Generated Prompt:");
                     Console.WriteLine("----------------");
                     Console.WriteLine(promptFix.Prompt);
-                    Console.WriteLine();
-                    Console.WriteLine("Context:");
-                    Console.WriteLine("--------");
-                    Console.WriteLine(promptFix.Context);
-                }
-                else
-                {
-                    Console.WriteLine("No prompt generated");
+                    
+                    if (!string.IsNullOrEmpty(promptFix.Context))
+                    {
+                        Console.WriteLine();
+                        Console.WriteLine("Context:");
+                        Console.WriteLine("--------");
+                        Console.WriteLine(promptFix.Context);
+                    }
                 }
             }
             else

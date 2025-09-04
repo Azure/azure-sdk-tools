@@ -30,8 +30,8 @@ def handle_thread_resolution_request(*, comments: list[str], language: str, pack
 
     action_results = _parse_action(language=language, code=code, package_name=package_name, comments=comments)
     # FIXME: Allowed action_results: record_result, record_exception, no_action, unclear
-    recommendation = action_results.get("recommendation")
-    if recommendation == "record_result":
+    action = action_results.get("action")
+    if action == "record_result":
         plan = _parse_plan(
             language=language,
             code=code,
@@ -41,7 +41,7 @@ def handle_thread_resolution_request(*, comments: list[str], language: str, pack
         )
         results = _execute_plan(plan=plan, is_exception=False, package_name=package_name)
         return _summarize_results(results)
-    elif recommendation == "record_exception":
+    elif action == "record_exception":
         plan = _parse_plan(
             language=language,
             code=code,
@@ -51,19 +51,9 @@ def handle_thread_resolution_request(*, comments: list[str], language: str, pack
         )
         results = _execute_plan(plan=plan, is_exception=True, package_name=package_name)
         return _summarize_results(results)
-    elif recommendation == "record_exception":
-        plan = _parse_plan(
-            language=language,
-            code=code,
-            package_name=package_name,
-            comments=comments,
-            reasoning=action_results.get("reasoning", ""),
-        )
-        results = _execute_plan(plan=plan)
-        return _summarize_results(results)
-    elif recommendation == "no_action":
+    elif action == "no_action":
         return f"No action required: {action_results.get('reasoning')}"
-    elif recommendation == "unclear":
+    elif action == "unclear":
         return f"Indeterminate: {action_results.get('reasoning')}"
     else:
         return "Something went wrong!"

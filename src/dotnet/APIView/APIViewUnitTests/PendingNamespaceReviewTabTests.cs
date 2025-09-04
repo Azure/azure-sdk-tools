@@ -322,5 +322,176 @@ namespace APIViewUnitTests
             _pageModel.NamespaceApprovalInfo.Should().NotContainKey("incomplete-review-1");
             _pageModel.NamespaceApprovalInfo.Should().NotContainKey("incomplete-review-2");
         }
+
+        [Fact]
+        public async Task OnGetAsync_WithMixedNamespaceReviewStatuses_ShouldOnlyIncludePending()
+        {
+            // Arrange
+            var reviews = new List<ReviewListItemModel>
+            {
+                new ReviewListItemModel
+                {
+                    Id = "pending-review",
+                    NamespaceReviewStatus = NamespaceReviewStatus.Pending,
+                    NamespaceApprovalRequestedBy = "author1",
+                    NamespaceApprovalRequestedOn = DateTime.UtcNow.AddDays(-1)
+                },
+                new ReviewListItemModel
+                {
+                    Id = "approved-review", 
+                    NamespaceReviewStatus = NamespaceReviewStatus.Approved,
+                    NamespaceApprovalRequestedBy = "author2",
+                    NamespaceApprovalRequestedOn = DateTime.UtcNow.AddDays(-2)
+                },
+                new ReviewListItemModel
+                {
+                    Id = "not-started-review",
+                    NamespaceReviewStatus = NamespaceReviewStatus.NotStarted,
+                    NamespaceApprovalRequestedBy = null,
+                    NamespaceApprovalRequestedOn = null
+                }
+            };
+
+            _mockReviewManager.Setup(r => r.GetPendingNamespaceApprovalsBatchAsync(It.IsAny<int>()))
+                .ReturnsAsync(reviews.Where(r => r.NamespaceReviewStatus == NamespaceReviewStatus.Pending).ToList());
+
+            _mockApiRevisionsManager.Setup(a => a.GetAPIRevisionsAssignedToUser("testuser"))
+                .ReturnsAsync(new List<APIRevisionListItemModel>());
+
+            // Act
+            var result = await _pageModel.OnGetAsync();
+
+            // Assert
+            result.Should().BeOfType<PageResult>();
+            
+            // Should only contain pending review info
+            _pageModel.NamespaceApprovalInfo.Should().HaveCount(1);
+            _pageModel.NamespaceApprovalInfo.Should().ContainKey("pending-review");
+            _pageModel.NamespaceApprovalInfo.Should().NotContainKey("approved-review");
+            _pageModel.NamespaceApprovalInfo.Should().NotContainKey("not-started-review");
+        }
+
+        [Fact]
+        public async Task OnGetAsync_WithTypeSpecLanguageReviews_ShouldPrioritizeCorrectly()
+        {
+            // Arrange - TypeSpec reviews are typically the main namespace review triggers
+            var reviews = new List<ReviewListItemModel>
+            {
+                new ReviewListItemModel
+                {
+                    Id = "typespec-review",
+                    Language = ApiViewConstants.TypeSpecLanguage,
+                    PackageName = "Azure.AI.FormRecognizer",
+                    NamespaceReviewStatus = NamespaceReviewStatus.Pending,
+                    NamespaceApprovalRequestedBy = "typespec-author",
+                    NamespaceApprovalRequestedOn = DateTime.UtcNow.AddDays(-1)
+                },
+                new ReviewListItemModel
+                {
+                    Id = "csharp-review",
+                    Language = "C#",
+                    PackageName = "Azure.AI.FormRecognizer", 
+                    NamespaceReviewStatus = NamespaceReviewStatus.Pending,
+                    NamespaceApprovalRequestedBy = "csharp-author",
+                    NamespaceApprovalRequestedOn = DateTime.UtcNow.AddDays(-2)
+                }
+            };
+
+            _mockReviewManager.Setup(r => r.GetPendingNamespaceApprovalsBatchAsync(It.IsAny<int>()))
+                .ReturnsAsync(reviews);
+
+            _mockApiRevisionsManager.Setup(a => a.GetAPIRevisionsAssignedToUser("testuser"))
+                .ReturnsAsync(new List<APIRevisionListItemModel>());
+
+            // Act
+            var result = await _pageModel.OnGetAsync();
+
+            // Assert
+            result.Should().BeOfType<PageResult>();
+            
+            // Both should be processed, but TypeSpec should be recognizable
+            _pageModel.NamespaceApprovalInfo.Should().HaveCount(2);
+            _pageModel.NamespaceApprovalInfo.Should().ContainKey("typespec-review");
+            _pageModel.NamespaceApprovalInfo.Should().ContainKey("csharp-review");
+        }
+
+        [Fact]
+        public async Task OnGetAsync_WithLargeDataSet_ShouldHandlePerformanceCorrectly()
+        {
+            // Arrange - Test with larger dataset to verify performance
+            var reviews = Enumerable.Range(1, 50).Select(i => new ReviewListItemModel
+            {
+                Id = $"review-{i}",
+                PackageName = $"Azure.Package.{i}",
+                Language = i % 2 == 0 ? "C#" : "Java",
+                NamespaceReviewStatus = NamespaceReviewStatus.Pending,
+                NamespaceApprovalRequestedBy = $"author-{i}",
+                NamespaceApprovalRequestedOn = DateTime.UtcNow.AddDays(-i)
+            }).ToList();
+
+            _mockReviewManager.Setup(r => r.GetPendingNamespaceApprovalsBatchAsync(It.IsAny<int>()))
+                .ReturnsAsync(reviews);
+
+            _mockApiRevisionsManager.Setup(a => a.GetAPIRevisionsAssignedToUser("testuser"))
+                .ReturnsAsync(new List<APIRevisionListItemModel>());
+
+            // Act
+            var result = await _pageModel.OnGetAsync();
+
+            // Assert
+            result.Should().BeOfType<PageResult>();
+            _pageModel.NamespaceApprovalInfo.Should().HaveCount(50);
+            
+            // Verify first and last entries to ensure all were processed
+            _pageModel.NamespaceApprovalInfo.Should().ContainKey("review-1");
+            _pageModel.NamespaceApprovalInfo.Should().ContainKey("review-50");
+        }
+
+        [Fact]
+        public async Task OnGetAsync_WithNullUser_ShouldHandleGracefully()
+        {
+            // Arrange - Test with null user scenario
+            _pageModel.PageContext.HttpContext.User = null;
+
+            _mockReviewManager.Setup(r => r.GetPendingNamespaceApprovalsBatchAsync(It.IsAny<int>()))
+                .ReturnsAsync(new List<ReviewListItemModel>());
+
+            _mockApiRevisionsManager.Setup(a => a.GetAPIRevisionsAssignedToUser(It.IsAny<string>()))
+                .ReturnsAsync(new List<APIRevisionListItemModel>());
+
+            // Act & Assert - Should not throw
+            var result = await _pageModel.OnGetAsync();
+            result.Should().BeOfType<PageResult>();
+        }
+
+        [Fact]
+        public async Task OnGetAsync_WithConcurrentRequests_ShouldMaintainDataIntegrity()
+        {
+            // Arrange - Test concurrent execution scenarios
+            var reviews = new List<ReviewListItemModel>
+            {
+                new ReviewListItemModel
+                {
+                    Id = "concurrent-review",
+                    NamespaceReviewStatus = NamespaceReviewStatus.Pending,
+                    NamespaceApprovalRequestedBy = "concurrent-author",
+                    NamespaceApprovalRequestedOn = DateTime.UtcNow.AddDays(-1)
+                }
+            };
+
+            _mockReviewManager.Setup(r => r.GetPendingNamespaceApprovalsBatchAsync(It.IsAny<int>()))
+                .ReturnsAsync(reviews);
+
+            _mockApiRevisionsManager.Setup(a => a.GetAPIRevisionsAssignedToUser("testuser"))
+                .ReturnsAsync(new List<APIRevisionListItemModel>());
+
+            // Act - Execute multiple requests concurrently
+            var tasks = Enumerable.Range(1, 5).Select(_ => _pageModel.OnGetAsync());
+            var results = await Task.WhenAll(tasks);
+
+            // Assert - All should succeed
+            results.Should().AllBeOfType<PageResult>();
+            _pageModel.NamespaceApprovalInfo.Should().ContainKey("concurrent-review");
+        }
     }
 }

@@ -185,7 +185,7 @@ public class LanguageChecks : ILanguageChecks
 
     /// <summary>
     /// Common changelog fix implementation that works for most Azure SDK languages.
-    /// Uses AI microagent tools to read and fix changelog issues.
+    /// Uses AI tools to read and fix changelog issues.
     /// </summary>
     /// <param name="packagePath">Absolute path to the package directory</param>
     /// <param name="ct">Cancellation token</param>
@@ -222,6 +222,9 @@ public class LanguageChecks : ILanguageChecks
             // Read current changelog content
             var originalContent = await File.ReadAllTextAsync(changelogPath, ct);
 
+            // Extract the most recent changelog entry
+            var mostRecentEntry = ExtractMostRecentChangelogEntry(originalContent);
+
             // Use microagent to fix changelog issues
             var prompt = $"""
                 You are an expert at fixing Azure SDK changelog files. Your task is to analyze the current changelog content and fix any validation issues while preserving the existing content structure and entries.
@@ -229,18 +232,19 @@ public class LanguageChecks : ILanguageChecks
                 Validation Issues Found:
                 {validationResult.CheckStatusDetails}
 
-                Current Changelog Content:
-                {originalContent}
+                Most Recent Changelog Entry (focus on fixing this):
+                {mostRecentEntry}
 
                 Rules for Azure SDK Changelogs:
                 - Follow the format specified in https://github.com/Azure/azure-sdk/blob/main/docs/policies/README-TEMPLATE.md
-                - Keep all existing version entries and their content
-                - Ensure proper markdown formatting
-                - Maintain chronological order (newest versions first), the most recent release should be set to today's date (use GetCurrentDate tool to get the current date)
-                - Include proper date formats
-                - Fix any formatting issues identified in the validation
+                - The most recent release should be set to today's date (use GetCurrentDate tool to get the current date)
 
-                The most recent changelog entry should be updated with the latest changes. These changes can be found by using the ReadChangedFilesTool to get the list of changed files. Do not add content to the changelog entry regarding the updates we are making to the changelog itself.
+                Your task:
+                1. Fix the issues in the most recent changelog entry shown above
+                2. Update the most recent entry with the latest code changes (use ReadChangedFilesTool to get changed files and recent commits.)
+                3. Replace the updated entry back into the full changelog content
+                4. Do not add content to the changelog entry regarding the updates we are making to the changelog itself
+                5. Return the complete corrected changelog content
 
                 Please provide the corrected changelog content. Use the validate_changelog_tool to check your work.
                 """;
@@ -296,7 +300,8 @@ public class LanguageChecks : ILanguageChecks
     public record ChangelogContents(string Contents);
     public record ChangelogValidationResult(IEnumerable<string> Issues, bool IsValid);
     public record ReadFileResult(string Content);
-    public record GitChangedFilesResult(IEnumerable<string> ChangedFiles, IEnumerable<string> StagedFiles, IEnumerable<string> UntrackedFiles);
+    public record GitCommitInfo(string Hash, string Author, string Date, string Subject, string Body);
+    public record GitChangedFilesResult(IEnumerable<string> ChangedFiles, IEnumerable<string> StagedFiles, IEnumerable<string> UntrackedFiles, IEnumerable<GitCommitInfo> RecentCommits);
 
     private async Task<ChangelogValidationResult> ValidateChangelogContentWithFile(ChangelogContents contents, string changelogPath, string packagePath, CancellationToken ct)
     {
@@ -328,6 +333,49 @@ public class LanguageChecks : ILanguageChecks
             // Always restore the original content after validation
             await File.WriteAllTextAsync(changelogPath, originalContent, ct);
         }
+    }
+
+    /// <summary>
+    /// Extracts the most recent changelog entry from the changelog content.
+    /// </summary>
+    /// <param name="changelogContent">The full changelog content</param>
+    /// <returns>The most recent changelog entry</returns>
+    private string ExtractMostRecentChangelogEntry(string changelogContent)
+    {
+        if (string.IsNullOrWhiteSpace(changelogContent))
+        {
+            return string.Empty;
+        }
+
+        var lines = changelogContent.Split('\n');
+        var entryLines = new List<string>();
+        bool foundFirstEntry = false;
+        bool foundSecondEntry = false;
+
+        foreach (var line in lines)
+        {
+            // Check if this line is a version header (starts with ## and contains version info)
+            if (line.TrimStart().StartsWith("## ") && (line.Contains("[") || line.Contains("(")))
+            {
+                if (!foundFirstEntry)
+                {
+                    foundFirstEntry = true;
+                    entryLines.Add(line);
+                }
+                else
+                {
+                    // Found the second entry, stop here
+                    foundSecondEntry = true;
+                    break;
+                }
+            }
+            else if (foundFirstEntry && !foundSecondEntry)
+            {
+                entryLines.Add(line);
+            }
+        }
+
+        return foundFirstEntry ? string.Join("\n", entryLines).Trim() : "No recent changelog entry found";
     }
 
     /// <summary>

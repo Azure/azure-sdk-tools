@@ -19,14 +19,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
     public class TypeSpecInitTool : MCPTool
     {
         private readonly INpxHelper npxHelper;
+        private readonly ITypeSpecHelper typespecHelper;
         private readonly IGitHelper gitHelper;
         private readonly ILogger<TypeSpecInitTool> logger;
         private readonly IOutputHelper output;
 
-        public TypeSpecInitTool(INpxHelper npxHelper, IGitHelper gitHelper, ILogger<TypeSpecInitTool> logger, IOutputHelper output)
+        public TypeSpecInitTool(INpxHelper npxHelper, ITypeSpecHelper typespecHelper, ILogger<TypeSpecInitTool> logger, IOutputHelper output)
         {
             this.npxHelper = npxHelper;
-            this.gitHelper = gitHelper;
+            this.typespecHelper = typespecHelper;
             this.logger = logger;
             this.output = output;
             CommandHierarchy = [SharedCommandGroups.TypeSpec];
@@ -184,12 +185,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                 };
             }
 
-            if (gitHelper.GetRepoName(fullOutputDirectory) is string repoName && repoName != "azure-rest-api-specs")
+            if (!typespecHelper.IsRepoPathForSpecRepo(fullOutputDirectory))
             {
                 SetFailure();
                 return new TspToolResponse
                 {
-                    ResponseError = $"Failed: Invalid --output-directory, must be within the azure-rest-api-specs repo"
+                    ResponseError = $"Failed: Invalid --output-directory, must be within the azure-rest-api-specs or azure-rest-api-specs-pr repo"
                 };
             }
 
@@ -198,7 +199,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                 SetFailure();
                 return new TspToolResponse
                 {
-                    ResponseError = $"Failed: Invalid --output-directory, must be under <azure-rest-api-specs>{Path.DirectorySeparatorChar}specification"
+                    ResponseError = $"Failed: Invalid --output-directory, must be under <azure-rest-api-specs or azure-rest-api-specs-pr>{Path.DirectorySeparatorChar}specification"
                 };
             }
 
@@ -245,7 +246,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                 NextSteps = [
                     $"Your project has been generated at {outputDirectory}. From here you can build and edit the project using these commands:",
                     $"  1. cd {outputDirectory}",
-                    "  2. Install dependencies: npx tsp install",
+                    "  2. Install dependencies: npm ci",
                     "  3. Compile the TypeSpec for your service: npx tsp compile ."
                 ]
             };

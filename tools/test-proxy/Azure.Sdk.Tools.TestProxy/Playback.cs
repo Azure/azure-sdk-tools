@@ -26,6 +26,10 @@ namespace Azure.Sdk.Tools.TestProxy
             _logger = loggerFactory.CreateLogger<Playback>();
         }
 
+        // when doing anything in the universal mode (name pending feedback), we need to use a static recording id
+        // so that we can still tie to a specific recording even if the client has no idea what the id should be.
+        private static string universalRecordingId;
+
         [HttpPost]
         public async Task Start()
         {

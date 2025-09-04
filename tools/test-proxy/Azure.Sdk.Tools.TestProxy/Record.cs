@@ -25,6 +25,9 @@ namespace Azure.Sdk.Tools.TestProxy
             _logger = loggerFactory.CreateLogger<Record>();
         }
 
+        // when doing anything in the universal mode (name pending feedback), we need to use a static recording id
+        // so that we can still tie to a specific recording even if the client has no idea what the id should be.
+        internal static string UniversalRecordingId; // made internal so Startup can read it
 
         [HttpPost]
         public async Task Start()
@@ -55,6 +58,29 @@ namespace Azure.Sdk.Tools.TestProxy
             }
         }
 
+        [HttpPost]
+        public async Task StartUniversal()
+        {
+            if (!Startup.StandardProxyMode)
+            {
+                throw new HttpException(HttpStatusCode.BadRequest, "The /Record/StartUniversal endpoint is only available when the proxy is started in 'standard' mode. Re-run the proxy with --standard-proxy-mode.");
+            }
+
+            DebugLogger.LogAdminRequestDetails(_logger, Request);
+
+            // If already active just return existing id so clients can discover it.
+            if (!string.IsNullOrEmpty(UniversalRecordingId))
+            {
+                if (!Response.Headers.ContainsKey("x-recording-id"))
+                {
+                    Response.Headers["x-recording-id"] = UniversalRecordingId;
+                }
+                return;
+            }
+
+            await _recordingHandler.StartRecordingAsync(null, Response, null);
+            UniversalRecordingId = Response.Headers["x-recording-id"].ToString();
+        }
 
         [HttpPost]
         public async Task Push()
@@ -91,6 +117,26 @@ namespace Azure.Sdk.Tools.TestProxy
 
             await _recordingHandler.StopRecording(id, variables: variables, saveRecording: save);
         }
+
+        [HttpPost]
+        public async Task StopUniversal()
+        {
+            if (!Startup.StandardProxyMode)
+            {
+                throw new HttpException(HttpStatusCode.BadRequest, "The /Record/StopUniversal endpoint is only available when the proxy is started in 'standard' mode. Re-run the proxy with --standard-proxy-mode.");
+            }
+
+            if (string.IsNullOrEmpty(UniversalRecordingId))
+            {
+                return; // nothing active
+            }
+
+            DebugLogger.LogAdminRequestDetails(_logger, Request);
+            await _recordingHandler.StopRecording(UniversalRecordingId);
+            UniversalRecordingId = null;
+        }
+
+
         public async Task HandleRequest()
         {
             string id = RecordingHandler.GetHeader(Request, "x-recording-id");

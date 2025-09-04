@@ -259,6 +259,27 @@ namespace Azure.Sdk.Tools.TestProxy
 
             DebugLogger.ConfigureLogger(loggerFactory);
 
+            // Universal recording interception (record-only for now)
+            app.Use(async (context, next) =>
+            {
+                if (StandardProxyMode && !string.IsNullOrEmpty(Record.UniversalRecordingId))
+                {
+                    var path = context.Request.Path.HasValue ? context.Request.Path.Value : string.Empty;
+                    // bypass for admin/controller endpoints
+                    if (!path.StartsWith("/Record", StringComparison.OrdinalIgnoreCase) &&
+                        !path.StartsWith("/Playback", StringComparison.OrdinalIgnoreCase) &&
+                        !path.StartsWith("/Admin", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // todo: store a Record/Playback boolean when changing UniversalRecordingId
+                        // so that we can know whether to route to Record or Playback here.
+                        var handler = context.RequestServices.GetRequiredService<RecordingHandler>();
+                        await handler.HandleRecordRequestAsync(Record.UniversalRecordingId, context.Request, context.Response);
+                        return;
+                    }
+                }
+                await next();
+            });
+
             MapRecording(app);
             app.UseRouting();
             app.UseEndpoints(endpoints => endpoints.MapControllers());

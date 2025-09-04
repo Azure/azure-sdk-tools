@@ -661,91 +661,134 @@ namespace APIViewWeb.Managers
             review.IsApproved = changeUpdate.ChangeStatus;
             await _reviewsRepository.UpsertReviewAsync(review);
             
-            // If this review was approved (first release), check if we should auto-approve namespace for related TypeSpec
-            if (changeUpdate.ChangeStatus && LanguageHelper.IsSDKLanguage(review.Language))
+            // If this review was approved and has pending namespace status with a timestamp, check if we should approve the TypeSpec namespace
+            if (changeUpdate.ChangeStatus && 
+                LanguageHelper.IsSDKLanguage(review.Language) && 
+                review.NamespaceReviewStatus == NamespaceReviewStatus.Pending &&
+                review.NamespaceApprovalRequestedOn.HasValue)
             {
-                await CheckAndAutoApproveNamespaceForTypeSpec(review.PackageName, userId);
+                await CheckAndApproveNamespaceForTypeSpec(review);
             }
             
             return review;
         }
 
         /// <summary>
-        /// Check if all related SDK reviews are approved and if so, automatically approve namespace for TypeSpec review
+        /// Get all reviews with a specific namespace timestamp regardless of status
         /// </summary>
-        /// <param name="packageName"></param>
-        /// <param name="userId"></param>
-        /// <returns></returns>
-        private async Task CheckAndAutoApproveNamespaceForTypeSpec(string packageName, string userId)
+        /// <param name="namespaceTimestamp">The namespace approval requested timestamp</param>
+        /// <returns>List of reviews with the specified timestamp</returns>
+        private async Task<List<ReviewListItemModel>> GetReviewsWithNamespaceTimestamp(DateTime namespaceTimestamp)
         {
-            // Get the base package name (e.g., "contoso" from "contoso.widget")
-            var packageBaseName = packageName?.Split('.').FirstOrDefault()?.ToLower();
-            if (string.IsNullOrEmpty(packageBaseName))
-                return;
-
             try
             {
-                // Find the TypeSpec review for this package
-                var typeSpecReview = await _reviewsRepository.GetReviewAsync(ApiViewConstants.TypeSpecLanguage, packageName, false);
-                if (typeSpecReview == null || typeSpecReview.IsDeleted || typeSpecReview.IsApproved)
-                    return;
+                // Get all reviews that have namespace approval requests
+                var allLanguages = ApiViewConstants.AllSupportedLanguages;
+                var allNamespaceReviews = await _reviewsRepository.GetPendingNamespaceApprovalReviewsAsync(allLanguages);
 
-                // Check if all related SDK reviews are approved
-                var allSDKReviewsApproved = await AreAllRelatedSDKReviewsApproved(packageBaseName);
-                
-                if (allSDKReviewsApproved)
-                {
-                    await _reviewsRepository.UpsertReviewAsync(typeSpecReview);
-                }
+                // Filter to reviews with the exact same timestamp (within a small tolerance for precision)
+                var matchingReviews = allNamespaceReviews
+                    .Where(r => r.NamespaceApprovalRequestedOn.HasValue &&
+                               Math.Abs((r.NamespaceApprovalRequestedOn.Value - namespaceTimestamp).TotalSeconds) < 5 &&
+                               !r.IsDeleted)
+                    .ToList();
+
+                return matchingReviews;
             }
             catch (Exception ex)
             {
-                // Log the error but don't fail the original approval
-                // This is a nice-to-have feature, not critical
-                _logger.LogWarning(ex, "Error in auto-namespace approval for package: {PackageName}", packageName);
                 _telemetryClient.TrackException(ex);
+                return new List<ReviewListItemModel>();
             }
         }
 
         /// <summary>
-        /// Check if all related SDK reviews for a package are approved
+        /// Find related reviews (SDK languages + TypeSpec) via pull request relationships
         /// </summary>
-        /// <param name="packageBaseName">Base package name (e.g., "contoso" from "contoso.widget")</param>
-        /// <returns>True if all existing SDK reviews are approved</returns>
-        private async Task<bool> AreAllRelatedSDKReviewsApproved(string packageBaseName)
+        /// <param name="reviewId">The review ID to find related reviews for</param>
+        /// <returns>List of related reviews (SDK + TypeSpec) via pull requests, or empty list if none found</returns>
+        private async Task<List<ReviewListItemModel>> FindRelatedReviewsByPullRequest(string reviewId)
         {
-            // The 5 supported SDK languages
-            var sdkLanguages = ApiViewConstants.SdkLanguages;
-            var foundReviews = new List<ReviewListItemModel>();
-
-            foreach (var language in sdkLanguages)
+            var relatedReviews = new List<ReviewListItemModel>();
+            
+            try
             {
-                try
+                var relatedReviewIds = await FindRelatedReviewsByPullRequestAsync(reviewId);
+                
+                foreach (var relatedId in relatedReviewIds)
                 {
-                    // Get all reviews for this language
-                    var reviews = await _reviewsRepository.GetReviewsAsync(language: language, isClosed: false);
-                    
-                    // Find reviews that match the package base name
-                    var matchingReviews = reviews.Where(r => 
-                        !r.IsDeleted && 
-                        r.PackageName.ToLower().StartsWith(packageBaseName))
-                        .ToList();
-                    
-                    foundReviews.AddRange(matchingReviews);
+                    try
+                    {
+                        var review = await _reviewsRepository.GetReviewAsync(relatedId);
+                        if (review != null && 
+                            LanguageHelper.IsSDKLanguageOrTypeSpec(review.Language) &&
+                            !review.IsDeleted)
+                        {
+                            relatedReviews.Add(review);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _telemetryClient.TrackException(ex);
+                    }
                 }
-                catch (Exception)
-                {
-                    // Continue if we can't get reviews for this language
-                    continue;
-                }
+                
+                return relatedReviews;
             }
+            catch (Exception ex)
+            {
+                _telemetryClient.TrackException(ex);
+                return new List<ReviewListItemModel>();
+            }
+        }
 
-            // If no SDK reviews found, we can't auto-approve
-            if (!foundReviews.Any())
-                return false;
+        /// <summary>
+        /// Check if all related SDK reviews are approved and if so, approve namespace for TypeSpec review
+        /// Uses namespace request timestamp to efficiently check if all related reviews are approved
+        /// </summary>
+        /// <param name="approvedReview">The review that was just approved</param>
+        /// <returns></returns>
+        private async Task CheckAndApproveNamespaceForTypeSpec(ReviewListItemModel approvedReview)
+        {
+            try
+            {
+                var namespaceRequestTimestamp = approvedReview.NamespaceApprovalRequestedOn.Value;
 
-            // Check if ALL found SDK reviews are approved
-            return foundReviews.All(review => review.IsApproved);
+                // Check if any reviews with the same timestamp are still pending
+                var pendingSdkReviews = await GetReviewsWithNamespaceTimestamp(namespaceRequestTimestamp);
+                
+                // If any others still pending, return
+                if (pendingSdkReviews.Any())
+                    return;
+
+                List<ReviewListItemModel> relatedReviews = await FindRelatedReviewsByPullRequest(approvedReview.Id);
+
+                // Get all the approved SDK reviews for the email notification
+                var sdkLanguageReviews = relatedReviews.Where(r => 
+                    LanguageHelper.IsSDKLanguage(r.Language) && 
+                    !r.IsDeleted && 
+                    r.IsApproved).ToList();
+
+                // Approve the TypeSpec namespace
+                var typeSpecReview = relatedReviews.FirstOrDefault(r => 
+                    r.Language == ApiViewConstants.TypeSpecLanguage && 
+                    r.NamespaceReviewStatus == NamespaceReviewStatus.Pending &&
+                    !r.IsDeleted);
+
+                if (typeSpecReview == null)
+                    return;
+
+                typeSpecReview.NamespaceReviewStatus = NamespaceReviewStatus.Approved;
+                await _reviewsRepository.UpsertReviewAsync(typeSpecReview);
+
+                // Send notification emails
+                await _notificationManager.NotifyStakeholdersOfAutoApproval(typeSpecReview, sdkLanguageReviews);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error in namespace approval check for review: {ReviewId}", approvedReview.Id);
+                _telemetryClient.TrackException(ex);
+            }
         }
 
         /// <summary>

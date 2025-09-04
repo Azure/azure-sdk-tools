@@ -11,7 +11,7 @@ The simplest way to get started:
 ```
 AZURE_APP_CONFIG_ENDPOINT="https://avc-appconfig-staging.azconfig.io"
 ENVIRONMENT_NAME="staging"
-OPENAI_ENDPOINT="https://avc-openai-staging.openai.azure.com/"
+OPENAI_ENDPOINT="https://azsdk-engsys-openai.openai.azure.com/"
 ```
 3. Create one or more test files in plain-text for the language of choice. Store them in `scratch/apiviews/<lang>/`.
 4. Generate a review using `avc review generate -l <LANG> -t <PATH_TO_TARGET_FILE> [-b <PATH_TO_BASE_FILE>] [--debug-log] [--remote]`.

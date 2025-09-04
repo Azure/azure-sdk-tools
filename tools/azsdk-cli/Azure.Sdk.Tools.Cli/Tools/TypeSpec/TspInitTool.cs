@@ -20,7 +20,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
     {
         private readonly INpxHelper npxHelper;
         private readonly ITypeSpecHelper typespecHelper;
-        private readonly IGitHelper gitHelper;
         private readonly ILogger<TypeSpecInitTool> logger;
         private readonly IOutputHelper output;
 
@@ -246,7 +245,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                 NextSteps = [
                     $"Your project has been generated at {outputDirectory}. From here you can build and edit the project using these commands:",
                     $"  1. cd {outputDirectory}",
-                    "  2. Install dependencies: npm ci",
+                    "  2. Install dependencies: npx ci",
                     "  3. Compile the TypeSpec for your service: npx tsp compile ."
                 ]
             };

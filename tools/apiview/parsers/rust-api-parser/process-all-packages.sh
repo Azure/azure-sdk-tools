@@ -3,7 +3,7 @@
 # Script to process all Rust API reports and generate APIView outputs
 # Uses ts-node for development mode processing
 
-echo "🚀 Processing all Rust API reports with duplicate line ID fixes..."
+echo "🚀 Processing all Rust API reports..."
 echo "📁 Input folder: ./inputs/"
 echo "📁 Output folder: ./outputs/"
 
@@ -60,5 +60,4 @@ else
     echo ""
     echo "🎉 All packages processed successfully!"
     echo "✅ All outputs are available in the ./outputs/ directory"
-    echo "✅ Duplicate line ID fixes have been applied to all packages"
 fi

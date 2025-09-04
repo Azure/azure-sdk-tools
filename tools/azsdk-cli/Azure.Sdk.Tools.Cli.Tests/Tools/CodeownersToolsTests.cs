@@ -271,5 +271,29 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             Assert.IsNotNull(result);
             Assert.IsTrue(result.Message.Contains("Validation passed") || result.Message.Length > 0);
         }
+
+        [Test]
+        [TestCase("testUser", "Successfully made testUser")]
+        [TestCase("", "Successfully made mock_user")]
+        public async Task PublicizeOrgMembership(string username, string expectedResult)
+        {
+            // Arrange
+            var gh = new MockGitHubService();
+            var output = new Mock<IOutputHelper>();
+            var logger = new Mock<ILogger<CodeownersTools>>();
+            var validator = new Mock<ICodeownersValidatorHelper>();
+
+            string organization = "Azure";
+
+            var tool = new CodeownersTools(gh, output.Object, logger.Object, validator.Object);
+
+            // Act
+            var result = await tool.PublicizeOrgMembership(organization, username);
+
+            // Assert
+            Assert.IsNotNull(result);
+            Assert.IsNotEmpty(result);
+            Assert.That(result, Does.Contain(expectedResult));
+        }
     }
 }

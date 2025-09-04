@@ -253,6 +253,31 @@ async def handle_mention(request: MentionRequest):
         raise HTTPException(status_code=500, detail="Internal server error") from e
 
 
+@app.post("/api-review/resolve", response_model=AgentChatResponse)
+async def handle_thread_resolution(request: MentionRequest):
+    """Handle thread resolution in API reviews."""
+    logger.info(
+        "Received /api-review/resolve request: language=%s, package_name=%s, comments_count=%d",
+        request.language,
+        request.package_name,
+        len(request.comments) if request.comments else 0,
+    )
+    try:
+        pretty_language = get_language_pretty_name(request.language)
+        response = handle_mention_request(
+            comments=request.comments,
+            language=pretty_language,
+            package_name=request.package_name,
+            code=request.code,
+        )
+        return AgentChatResponse(
+            response=response, thread_id="", messages=[]  # No thread ID for this endpoint  # No messages to return
+        )
+    except HTTPException as e:
+        logger.error("Error in /api-review/resolve: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error") from e
+
+
 # Start the cleanup thread when the app starts
 cleanup_thread = threading.Thread(target=cleanup_job_store, daemon=True)
 cleanup_thread.start()

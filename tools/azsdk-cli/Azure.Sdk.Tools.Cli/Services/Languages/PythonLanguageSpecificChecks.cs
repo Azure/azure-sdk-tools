@@ -99,7 +99,7 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
 
             // Run azpysdk pylint command
             var command = "azpysdk";
-            var args = new[] { "pylint", packagePath };
+            var args = new[] { "pylint", "--isolate", packagePath };
 
             _logger.LogInformation("Executing command: {Command} {Arguments}", command, string.Join(" ", args));
             var timeout = TimeSpan.FromMinutes(10);

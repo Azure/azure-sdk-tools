@@ -1,8 +1,15 @@
 # pylint: disable=too-many-lines, redefined-outer-name, reimported
+import os
 import re
 import sys
 from typing import List, Literal, Optional
 from uuid import uuid4
+
+try:
+    from _variables import Variables
+except ImportError:
+    # for CI or when run as a module
+    from scripts.infra._variables import Variables
 
 from azure.appconfiguration import (
     AzureAppConfigurationClient,
@@ -92,7 +99,6 @@ from azure.search.documents.indexes.models import (
     VectorSearch,
     VectorSearchProfile,
 )
-from scripts.infra._variables import Variables
 
 # pyright: reportCallIssue=false
 # pyright: reportArgumentType=false
@@ -872,6 +878,14 @@ def create_unified_search_index(v: Variables):
                 stored=True,
                 sortable=False,
             ),
+            SearchField(
+                name="isDeleted",
+                type=SFDT.Boolean,
+                searchable=False,
+                filterable=True,
+                stored=True,
+                facetable=True,
+            ),
         ]
         index = SearchIndex(
             name=index_name,
@@ -1264,7 +1278,12 @@ def check_assignee(v):
 
 
 if __name__ == "__main__":
-    v = Variables(is_staging=False)
+    env_name = os.getenv("ENVIRONMENT_NAME")
+    if env_name not in ("production", "staging"):
+        print("❌ ENVIRONMENT_NAME environment variable must be set to 'production' or 'staging'")
+        sys.exit(1)
+    print(f"✅ Creating resources for ENVIRONMENT_NAME: {env_name}")
+    v = Variables(is_staging=env_name == "staging")
     check_credential()
     check_assignee(v)
     create_resource_group(v)

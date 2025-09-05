@@ -37,6 +37,8 @@ public class Program
     public static WebApplicationBuilder CreateAppBuilder(string[] args)
     {
         var isCLI = IsCLI(args);
+        var (outputFormat, debug) = SharedOptions.GetGlobalOptionValues(args);
+        var logLevel = debug ? LogLevel.Debug : LogLevel.Information;
 
         // Any args that ASP.NET doesn't recognize will be _ignored_ by the CreateBuilder, so we don't need to ONLY
         // pass unmatched ASP.NET config values like --ASPNET_URLS to the builder. It'll just quietly ignore everything
@@ -44,14 +46,14 @@ public class Program
         WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
         builder.Services.AddOpenTelemetry()
-            .WithTracing(b => b.AddSource(Constants.TOOLS_ACTIVITY_SOURCE)
-                .AddConsoleExporter()
-                .AddAspNetCoreInstrumentation()
-                .AddHttpClientInstrumentation()
-                .AddProcessor(new TelemetryProcessor()))
+            .WithTracing(b => {
+                b.AddSource(Constants.TOOLS_ACTIVITY_SOURCE)
+                    .AddAspNetCoreInstrumentation()
+                    .AddHttpClientInstrumentation()
+                    .AddProcessor(new TelemetryProcessor());
+                if (debug) { b.AddConsoleExporter(); }
+            })
             .UseOtlpExporter();
-
-        var (outputFormat, debug) = SharedOptions.GetGlobalOptionValues(args);
 
         // Log everything to stderr in mcp mode so the client doesn't try to interpret stdout messages that aren't json rpc
         var logErrorThreshold = isCLI ? LogLevel.Error : LogLevel.Debug;
@@ -74,8 +76,6 @@ public class Program
         });
 
         // add the console logger
-        var logLevel = debug ? LogLevel.Debug : LogLevel.Information;
-
         builder.Services.AddLogging(l =>
         {
             l.AddConsole();

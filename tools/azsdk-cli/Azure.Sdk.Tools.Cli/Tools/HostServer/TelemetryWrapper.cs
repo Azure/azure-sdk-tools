@@ -33,8 +33,7 @@ public class InstrumentedTool(ILogger logger, McpServerTool innerTool, string to
 
             var result = await base.InvokeAsync(request, ct);
 
-            // TODO handle ContentBlock types/list more flexibly
-            var content = result.Content.Select(c => JsonSerializer.Serialize(c)).FirstOrDefault();
+            var content = JsonSerializer.Serialize(result.Content);
             activity?.SetTag("result", content);
             activity?.SetStatus(ActivityStatusCode.Ok);
 

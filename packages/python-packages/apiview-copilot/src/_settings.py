@@ -11,7 +11,7 @@ load_dotenv(override=True)
 
 
 import logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()
 
 
 class SettingsManager:
@@ -39,6 +39,7 @@ class SettingsManager:
             raise ValueError("ENVIRONMENT_NAME must be set in the environment.")
         self.label = self.label.strip().lower()
         logger.warning(f"Using App Configuration endpoint: {self.app_config_endpoint} with OpenAI endpoint: {os.getenv('OPENAI_ENDPOINT')}")
+        print(f"Using App Configuration endpoint: {self.app_config_endpoint} with OpenAI endpoint: {os.getenv('OPENAI_ENDPOINT')}")
         self.app_config_client = AzureAppConfigurationClient(self.app_config_endpoint, self.credential)
         self._keyvault_clients = {}
         self._cache = {}
@@ -49,6 +50,7 @@ class SettingsManager:
         if cache_key in self._cache:
             return self._cache[cache_key]
         logger.warning(f"Fetching key '{key}' with label '{self.label}' from App Configuration.")
+        print(f"Fetching key '{key}' with label '{self.label}' from App Configuration.")
         setting = self.app_config_client.get_configuration_setting(key=key, label=self.label)
         value = setting.value
         content_type = getattr(setting, "content_type", None)

@@ -14,6 +14,16 @@ parameters:
   - name: JavaScriptArtifactRegistry
     type: string
     default: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js@local/npm/registry/'
+  
+  - name: runStagingPublish
+    type: boolean
+    default: true
+  - name: runTestUIPublish
+    type: boolean
+    default: true
+  - name: runProductionPublish
+    type: boolean
+    default: true
 
 trigger:
   branches:
@@ -312,7 +322,7 @@ extends:
               #      testResultsFormat: 'VSTest'
               #      mergeTestResults: true
 
-      - ${{ if eq(variables['System.TeamProject'], 'internal') }}:
+      - ${{ if and(eq(variables['System.TeamProject'], 'internal'), eq(parameters.runStagingPublish, true)) }}:
         - stage: Staging_Publish
           displayName: Pre-Prod
           dependsOn: Build
@@ -369,7 +379,7 @@ extends:
                   enableCustomDeployment: true
                   DeploymentType: zipDeploy
 
-      - ${{ if and(in(variables['Build.Reason'], 'Manual', ''), eq(variables['System.TeamProject'], 'internal')) }}:
+      - ${{ if and(eq(parameters.runTestUIPublish, true), in(variables['Build.Reason'], 'Manual', ''), eq(variables['System.TeamProject'], 'internal')) }}:
         - stage: Test_UI_Publish
           displayName: Publish Test UI
           dependsOn: Build
@@ -428,6 +438,7 @@ extends:
                         enableCustomDeployment: true
                         DeploymentType: zipDeploy
 
+      - ${{ if and(eq(parameters.runProductionPublish, true), in(variables['Build.Reason'], 'Manual', ''), eq(variables['System.TeamProject'], 'internal')) }}:
         - stage: Production_Publish
           displayName: Prod
           dependsOn: Staging_Publish

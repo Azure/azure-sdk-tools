@@ -269,7 +269,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
             }
 
             // Check if we have a working branch from SDK generation
-            if (!string.IsNullOrEmpty(workingBranch) && await githubService.IsExistingBranchAsync(Constants.AZURE_OWNER_PATH, repo, workingBranch))
+            if (!string.IsNullOrEmpty(workingBranch) && await githubService.IsExistingBranchAsync(repoOwner, repo, workingBranch))
             {
                 branchName = workingBranch;
                 resultMessages.Add($"Using existing branch: {branchName}");
@@ -295,7 +295,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
             // Use codeownersSha in UpdateFileAsync
             await githubService.UpdateFileAsync(repoOwner, repo, Constants.AZURE_CODEOWNERS_PATH, description, modifiedContent, codeownersSha, branchName);
 
-            var prInfoList = await githubService.CreatePullRequestAsync(repo, Constants.AZURE_OWNER_PATH, "main", branchName, "[CODEOWNERS] " + description, description);
+            var prInfoList = await githubService.CreatePullRequestAsync(repo, repoOwner, "main", branchName, "[CODEOWNERS] " + description, description);
             if (prInfoList != null)
             {
                 resultMessages.Add($"URL: {prInfoList.Url}");
@@ -329,7 +329,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                 }
 
                 string workingBranch = "";
-                
+                string repoOwner = Constants.AZURE_OWNER_PATH;
+
                 if (prNumber > 0)
                 {
                     var pr = await githubService.GetPullRequestAsync(Constants.AZURE_OWNER_PATH, repoName, prNumber);
@@ -339,6 +340,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                         return response;
                     }
                     workingBranch = pr.Head.Ref;
+                    repoOwner = pr.Head.Repository.Owner.Login;
                 }
 
                 if (workingBranch.Equals("main", StringComparison.OrdinalIgnoreCase))
@@ -349,10 +351,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                 CodeownersEntry? matchingEntry;
                 try
                 {
-                    var contents = await githubService.GetContentsSingleAsync("Azure", "azure-sdk-for-net", ".github/CODEOWNERS", workingBranch);
+                    var contents = await githubService.GetContentsSingleAsync(repoOwner, repoName, ".github/CODEOWNERS", workingBranch);
                     if (contents == null)
                     {
-                        throw new Exception("Could not retrieve upstream CODEOWNERS (azure-sdk-for-net) for the requested branch.");
+                        throw new Exception($"Could not retrieve upstream CODEOWNERS ({repoName}) for the requested branch.");
                     }
                     var codeownersContent = contents.Content;
                     var codeownersSha = contents.Sha;

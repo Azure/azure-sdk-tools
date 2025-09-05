@@ -263,10 +263,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
 
             if (!hasPushPermissions)
             {
-                var originalRepoOwner = repoOwner; // Store for messaging
+                resultMessages.Add($"GitHub token does not have permission to push to {repoOwner} repository, opening a new PR on a branch in the main repo");
                 repoOwner = Constants.AZURE_OWNER_PATH;
                 workingBranch = "";
-                resultMessages.Add($"GitHub token does not have permission to push to {repoOwner} repository, opening a new PR on a branch in the main repo");
             }
 
             // Check if we have a working branch from SDK generation

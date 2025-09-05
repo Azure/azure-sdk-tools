@@ -41,14 +41,9 @@ export const getApiVersionType: IApiVersionTypeExtractor = async (
 };
 
 export const isModelOnly: IModelOnlyChecker = async (packageRoot: string): Promise<boolean> => {
-    // First check locally for parameters.ts - its absence indicates a model-only service
+    // Check locally for parameters.ts
     const parametersPath = join(packageRoot, "src/rest/parameters.ts");
     const isParametersExists = await exists(parametersPath);
-    
-    if (!isParametersExists) {
-        logger.warn(`No parameters.ts found in ${packageRoot}, this is a model-only service in Modular client`);
-        return true;
-    }
     
     // Get npm view to find the latest stable version
     const packageName = getNpmPackageName(packageRoot);
@@ -64,8 +59,7 @@ export const isModelOnly: IModelOnlyChecker = async (packageRoot: string): Promi
         return false;
     }
     
-    // Additionally, check if src/api exists in the GitHub repository
-    // If src/api doesn't exist in GitHub, it's still model-only even if parameters.ts exists locally
+    // Check if src/api exists in the GitHub repository
     const hasOperationsInGithub = await checkDirectoryExistsInGithub(
         packageRoot,
         "src/api",
@@ -73,11 +67,13 @@ export const isModelOnly: IModelOnlyChecker = async (packageRoot: string): Promi
         stableVersion
     );
     
-    if (!hasOperationsInGithub) {
-        logger.warn(`No src/api directory found in GitHub for ${packageName}, this is a model-only service`);
+    // Only return true (model-only) if BOTH conditions are met:
+    // 1. No parameters.ts found locally AND 2. No src/api directory found in GitHub
+    if (!isParametersExists && !hasOperationsInGithub) {
+        logger.warn(`No parameters.ts found in ${packageRoot} and no src/api directory found in GitHub for ${packageName}, this is a model-only service`);
         return true;
     }
     
-    logger.info(`Found parameters.ts locally and src/api in GitHub for ${packageRoot}, this is not a model-only service`);
+    logger.info(`Found parameters.ts locally or src/api in GitHub for ${packageRoot}, this is not a model-only service`);
     return false;
 };

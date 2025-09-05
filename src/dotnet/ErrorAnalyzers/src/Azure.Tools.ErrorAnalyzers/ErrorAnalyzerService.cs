@@ -17,21 +17,12 @@ namespace Azure.Tools.ErrorAnalyzers
         /// Attempts to generate a fix for a single error.
         /// Uses fallback mechanism for unknown error types.
         /// </summary>
-        public static Fix? GetFix(RuleError error)
+        public static Fix GetFix(RuleError error)
         {
             ArgumentNullException.ThrowIfNull(error);
 
-            AgentPromptFix? fix;
-
-            // Try to get specific fix for known rules
-            if (!AnalyzerPrompts.TryGetPromptFix(error.type, out fix) || fix is null)
-            {
-                // Fall back to general error analysis for unknown types
-                if (!AnalyzerPrompts.TryGetPromptFix(AnalyzerPrompts.FallbackRuleId, out fix) || fix is null)
-                {
-                    return null; // This should not happen unless fallback is missing
-                }
-            }
+            // Get fix with automatic fallback for unknown rules
+            var fix = AnalyzerPrompts.GetPromptFix(error.type);
 
             // Format context if available, otherwise keep it null
             string? context = null;
@@ -61,11 +52,7 @@ namespace Azure.Tools.ErrorAnalyzers
 
             foreach (var error in errors)
             {
-                var fix = GetFix(error);
-                if (fix is not null)
-                {
-                    yield return fix;
-                }
+                yield return GetFix(error);
             }
         }
 

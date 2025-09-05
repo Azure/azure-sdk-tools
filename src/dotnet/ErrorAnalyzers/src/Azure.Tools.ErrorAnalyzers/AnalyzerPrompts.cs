@@ -22,17 +22,17 @@ namespace Azure.Tools.ErrorAnalyzers
         private static readonly FrozenDictionary<string, AgentPromptFix> AllPrompts = CreateAllPrompts();
 
         /// <summary>
-        /// Tries to get the prompt and context for the specified rule ID.
+        /// Gets the prompt and context for the specified rule ID.
+        /// Returns fallback prompt for unknown rule IDs.
         /// </summary>
-        internal static bool TryGetPromptFix(string ruleId, out AgentPromptFix? fix)
+        internal static AgentPromptFix GetPromptFix(string ruleId)
         {
             if (string.IsNullOrEmpty(ruleId))
             {
-                fix = null;
-                return false;
+                return AllPrompts[FallbackRuleId];
             }
             
-            return AllPrompts.TryGetValue(ruleId, out fix);
+            return AllPrompts.TryGetValue(ruleId, out var fix) ? fix : AllPrompts[FallbackRuleId];
         }
 
         /// <summary>

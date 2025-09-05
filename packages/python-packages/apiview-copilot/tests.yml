@@ -53,7 +53,7 @@ extends:
 
                     exit $?
                 env:
-                  AZURE_APP_CONFIG_ENDPOINT: $(evals-appconfig-endpoint)
+                  AZURE_APP_CONFIG_ENDPOINT: https://avc-appconfig-staging.azconfig.io/
                   ENVIRONMENT_NAME: staging
-                  OPENAI_ENDPOINT: $(evals-openai-endpoint)
+                  OPENAI_ENDPOINT: https://azsdk-engsys-openai.openai.azure.com/
                   SYSTEM_ACCESSTOKEN: $(System.AccessToken)

@@ -35,7 +35,7 @@ class SettingsManager:
             raise ValueError("ENVIRONMENT_NAME must be set in the environment.")
         self.label = self.label.strip().lower()
 
-        print(f"Using App Configuration endpoint: {self.app_config_endpoint.encode()} with OpenAI endpoint: {os.getenv('OPENAI_ENDPOINT').encode()}")
+        print(f"Using App Configuration endpoint: {self.app_config_endpoint} with OpenAI endpoint: {os.getenv('OPENAI_ENDPOINT')}")
         self.credential.get_token = self.get_token_wrapper
         self.credential.get_token_info = self.get_token_wrapper
 

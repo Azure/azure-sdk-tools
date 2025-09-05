@@ -120,6 +120,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(true);
         }
 
+        public Task<bool> HasPushPermission(string owner, string repo)
+        {
+            return Task.FromResult(true);
+        }
+
         private RepositoryContent CreateMockRepositoryContent(string name, string path, string encodedContent)
         {
             return new RepositoryContent(

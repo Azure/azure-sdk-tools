@@ -56,3 +56,4 @@ extends:
                   AZURE_APP_CONFIG_ENDPOINT: $(evals-appconfig-endpoint)
                   ENVIRONMENT_NAME: staging
                   OPENAI_ENDPOINT: $(evals-openai-endpoint)
+                  SYSTEM_ACCESSTOKEN: $(System.AccessToken)

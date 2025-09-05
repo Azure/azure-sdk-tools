@@ -24,7 +24,13 @@ export async function getNpmPackageInfo(packageDirectory): Promise<NpmPackageInf
 }
 
 export function getNpmPackageName(info: NpmPackageInfo) {
-    return info.name.replace('@azure/', 'azure-');
+    if (info.name.startsWith('@azure-rest/')) {
+        return info.name.replace('@azure-rest/', 'azure-rest-');
+    } else if (info.name.startsWith('@azure/')) {
+        return info.name.replace('@azure/', 'azure-');
+    } else {
+        return info.name;
+    }
 }
 
 export function getNpmPackageSafeName(info: NpmPackageInfo) {

@@ -16,7 +16,7 @@ class Program
         
         // Show available rules (fallback is not exposed publicly)
         var availableRules = ErrorAnalyzerService.GetRegisteredRules();
-        Console.WriteLine($"   ✓ {availableRules.Count} specific rules available");
+        Console.WriteLine($"   ✓ {availableRules.Count()} specific rules available");
         Console.WriteLine();
 
         // Step 2: Test with sample errors

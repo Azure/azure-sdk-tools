@@ -27,7 +27,7 @@ namespace Azure.Tools.ErrorAnalyzers
             if (!AnalyzerPrompts.TryGetPromptFix(error.type, out fix) || fix is null)
             {
                 // Fall back to general error analysis for unknown types
-                if (!AnalyzerPrompts.TryGetPromptFix("__FALLBACK__", out fix) || fix is null)
+                if (!AnalyzerPrompts.TryGetPromptFix(AnalyzerPrompts.FallbackRuleId, out fix) || fix is null)
                 {
                     return null; // This should not happen unless fallback is missing
                 }
@@ -73,13 +73,12 @@ namespace Azure.Tools.ErrorAnalyzers
         /// Gets all available rule IDs.
         /// Returns all compile-time registered rules for maximum compatibility.
         /// </summary>
-        public static IReadOnlyCollection<string> GetRegisteredRules()
+        public static IEnumerable<string> GetRegisteredRules()
         {
             // Return all available rule IDs from the compile-time dictionary
             // Exclude the fallback mechanism from the public API
             return AnalyzerPrompts.GetAllRuleIds()
-                .Where(id => id != "__FALLBACK__")
-                .ToArray();
+                .Where(id => id != AnalyzerPrompts.FallbackRuleId);
         }
     }
 }

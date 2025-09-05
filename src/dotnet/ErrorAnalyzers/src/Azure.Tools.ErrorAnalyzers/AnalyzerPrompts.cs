@@ -12,6 +12,11 @@ namespace Azure.Tools.ErrorAnalyzers
     internal static partial class AnalyzerPrompts
     {
         /// <summary>
+        /// The rule ID used for fallback analysis of unknown error types.
+        /// </summary>
+        internal const string FallbackRuleId = "__FALLBACK__";
+
+        /// <summary>
         /// Gets the frozen dictionary of all available prompts for maximum performance.
         /// </summary>
         private static readonly FrozenDictionary<string, AgentPromptFix> AllPrompts = CreateAllPrompts();
@@ -21,7 +26,7 @@ namespace Azure.Tools.ErrorAnalyzers
         /// </summary>
         internal static bool TryGetPromptFix(string ruleId, out AgentPromptFix? fix)
         {
-            if (string.IsNullOrWhiteSpace(ruleId))
+            if (string.IsNullOrEmpty(ruleId))
             {
                 fix = null;
                 return false;

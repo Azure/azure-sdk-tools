@@ -15,22 +15,22 @@ namespace Azure.Tools.ErrorAnalyzers
         static void AddGeneralPrompts(Dictionary<string, AgentPromptFix> builder)
         {
             // Fallback prompt for unknown/unhandled errors from any source
-            builder["__FALLBACK__"] = new AgentPromptFix(
+            builder[FallbackRuleId] = new AgentPromptFix(
                 prompt: """
                 TASK: Analyze and Fix Unknown Error
 
                 You are analyzing an error that doesn't have a specific handler. This could be from various sources including:
                 • TypeSpec compiler errors
-                • .NET compiler errors (C#/VB.NET)
-                • Analyzer errors
+                • .NET compiler errors
+                • Azure Analyzer errors
                 • MSBuild errors
 
                 ANALYSIS APPROACH:
                 1. IDENTIFY ERROR SOURCE:
                    - Look at the error code pattern to determine the source:
                      * TypeSpec: Usually starts with letters (e.g., "invalid-template", "duplicate-declaration")
-                     * C# Compiler: Usually CS#### format (e.g., "CS0103", "CS1002")
-                     * Analyzer: Usually custom prefix + numbers (e.g., "AZC####")
+                     * .NET Compiler: Usually CS#### format (e.g., "CS0103", "CS1002")
+                     * Azure Analyzer: Usually custom prefix + numbers (e.g., "AZC####")
 
                 2. UNDERSTAND THE ERROR:
                    - Read the error message carefully to understand what's wrong
@@ -44,13 +44,13 @@ namespace Azure.Tools.ErrorAnalyzers
                    - Ensure proper imports and namespaces
                    - Check for TypeSpec-specific naming conventions
 
-                   For C# Compiler Errors:
+                   For .NET Compiler Errors:
                    - Check for missing using statements
                    - Verify syntax correctness
                    - Look for missing references or assemblies
                    - Check for type mismatches or accessibility issues
 
-                   For Analyzer Errors:
+                   For Azure Analyzer Errors:
                    - Follow the specific rule guidelines mentioned in the error
                    - Check for code style or best practice violations
                    - Look for Azure SDK guideline compliance issues

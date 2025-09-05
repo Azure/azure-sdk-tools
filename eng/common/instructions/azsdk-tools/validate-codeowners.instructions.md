@@ -13,6 +13,7 @@ Use `azsdk_check_service_label` to verify the service label exists:
 
 ## Step 2: Validate Code Owners
 Ask user to specify SDK repository they want to validate codeowners for or detect from context.
+ALWAYS ask the user if their codeowners entry for their service is in a PR, if so get the PR number.
 
 Repository name mapping:
 - .NET/dotnet: use "azure-sdk-for-net"
@@ -51,6 +52,7 @@ When no CODEOWNERS entry exists yet:
    - serviceOwners - **Optional** if no ServiceLabel is present. Can be either owners to add or delete, depending on isAdding.
    - sourceOwners - **Optional** if no path or PRLabel are present. Can be either owners to add or delete, depending on isAdding.
    - isAdding - **Required** Should be true if adding owners to an existing entry, false if deleting owners from an existing entry. Should also be false when adding a brand new entry.
+   - prNumber - **Optional** Before trying to create a new entry ALWAYS ask the user if they have a PR in the Azure repo where we can commit changes to if they have we need the number of it, if they don't have one leave it empty.
 1. Provide information to the user about what codeowners is for:
    - [Learn about CODEOWNERS](https://eng.ms/docs/products/azure-developer-experience/develop/supporting-sdk-customers/overview)
    - Service owners is for getting mentioned on issues.

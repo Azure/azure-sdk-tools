@@ -156,7 +156,7 @@ export class ReviewsService {
   getIsReviewByCopilotRequired(language?: string): Observable<boolean> {
     const url = `${this.baseUrl}/isReviewByCopilotRequired`;
     const params = language ? `?language=${encodeURIComponent(language)}` : '';
-    return this.http.get<boolean>(`${url}${params}`);
+    return this.http.get<boolean>(`${url}${params}`, { withCredentials: true });
   }
 
   getIsReviewVersionReviewedByCopilot(reviewId: string, packageVersion?: string): Observable<boolean> {
@@ -164,6 +164,6 @@ export class ReviewsService {
     if (packageVersion) {
       url += `?packageVersion=${encodeURIComponent(packageVersion)}`;
     }
-    return this.http.get<boolean>(url);
+    return this.http.get<boolean>(url, { withCredentials: true });
   }
 }

@@ -9,6 +9,7 @@ using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Tools;
+using Azure.Sdk.Tools.Cli.Services.ClientUpdate;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -28,15 +29,20 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IDevOpsConnection, DevOpsConnection>();
             services.AddSingleton<IDevOpsService, DevOpsService>();
             services.AddSingleton<IGitHubService, GitHubService>();
-            services.AddSingleton<ILanguageRepoServiceFactory, LanguageRepoServiceFactory>();
 
-            // Language Services
-            services.AddSingleton<LanguageRepoService>();
-            services.AddSingleton<PythonLanguageRepoService>();
-            services.AddSingleton<JavaScriptLanguageRepoService>();
-            services.AddSingleton<DotNetLanguageRepoService>();
-            services.AddSingleton<GoLanguageRepoService>();
-            services.AddSingleton<JavaLanguageRepoService>();
+            // Language Check Services (Composition-based)
+            services.AddSingleton<ILanguageChecks, LanguageChecks>();
+            services.AddSingleton<ILanguageSpecificChecks, PythonLanguageSpecificChecks>();
+            services.AddSingleton<ILanguageSpecificChecks, JavaLanguageSpecificChecks>();
+            services.AddSingleton<ILanguageSpecificChecks, JavaScriptLanguageSpecificChecks>();
+            services.AddSingleton<ILanguageSpecificChecks, DotNetLanguageSpecificChecks>();
+            services.AddSingleton<ILanguageSpecificChecks, GoLanguageSpecificChecks>();
+            services.AddSingleton<ILanguageSpecificCheckResolver, LanguageSpecificCheckResolver>();
+
+            // Client update language services
+            services.AddSingleton<IClientUpdateLanguageService, JavaUpdateLanguageService>();
+            services.AddSingleton<IClientUpdateLanguageServiceResolver, ClientUpdateLanguageServiceResolver>();
+            // Future: services.AddSingleton<IClientUpdateLanguageService, PythonClientUpdateLanguageService>(); etc.
 
             // Helper classes
             services.AddSingleton<ILogAnalysisHelper, LogAnalysisHelper>();
@@ -45,10 +51,10 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ITypeSpecHelper, TypeSpecHelper>();
             services.AddSingleton<ISpecPullRequestHelper, SpecPullRequestHelper>();
             services.AddSingleton<IUserHelper, UserHelper>();
-            services.AddSingleton<ICodeownersHelper, CodeownersHelper>();
             services.AddSingleton<ICodeownersValidatorHelper, CodeownersValidatorHelper>();
             services.AddSingleton<IEnvironmentHelper, EnvironmentHelper>();
             services.AddSingleton<ISdkRepoConfigHelper, SdkRepoConfigHelper>();
+            services.AddSingleton<IInputSanitizer, InputSanitizer>();
 
             // Process Helper Classes
             services.AddSingleton<INpxHelper, NpxHelper>();

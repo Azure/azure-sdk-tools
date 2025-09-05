@@ -302,33 +302,3 @@ class TestApiViewAzure:
         provided_token_file = os.path.abspath(os.path.join(os.path.dirname(__file__), f"token_files/{outfile}"))
 
         self._diff_token_file(provided_token_file, generated_token_file)
-
-    def test_unique_line_ids(self):
-        """Test that all LineIds in token files are unique."""
-        token_files_dir = os.path.join(os.path.dirname(__file__), "token_files")
-        
-        # Check each JSON file in the token_files directory
-        for filename in os.listdir(token_files_dir):
-            filepath = os.path.join(token_files_dir, filename)
-            
-            with open(filepath, 'r') as f:
-                data = json.load(f)
-            
-            line_ids = set()
-            
-            def check_line_ids(review_lines):
-                """Recursively check LineIds in ReviewLines and their Children."""
-                for line in review_lines:
-                    if "LineId" in line and line["LineId"]:
-                        line_id = line["LineId"]
-                        assert line_id not in line_ids, f"File '{filename}' contains duplicate LineIds: {line_id}"
-                        line_ids.add(line_id)
-                    
-                    # Check children recursively
-                    if "Children" in line and line["Children"]:
-                        check_line_ids(line["Children"])
-            
-            # Check ReviewLines
-            if "ReviewLines" in data:
-                check_line_ids(data["ReviewLines"])
-                

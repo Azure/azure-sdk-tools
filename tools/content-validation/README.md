@@ -36,7 +36,7 @@ This quickstart will show you how to use this tool to fetch all test data and ru
 
 The above steps can help you quickly run content validation tests for a single package locally. 
 
-However, the goal of this tool is to automatically (regularly) run tests after deployment, automatically create issues on GitHub for failed tests, and finally generate a test report in markdown form. For the content of this part, please refer to the [deployment.md](/docs/deployment.md) file.
+However, the goal of this tool is to automatically (regularly) run tests after deployment, automatically create issues on GitHub for failed tests, and finally generate a test report in markdown form.
 
 ## Index
 

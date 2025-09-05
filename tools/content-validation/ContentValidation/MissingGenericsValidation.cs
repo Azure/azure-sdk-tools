@@ -2,11 +2,11 @@ using Microsoft.Playwright;
 
 namespace UtilityLibraries;
 
-public class InvalidTagsValidation : IValidation
+public class MissingGenericsValidation : IValidation
 {
     private IPlaywright _playwright;
 
-    public InvalidTagsValidation(IPlaywright playwright)
+    public MissingGenericsValidation(IPlaywright playwright)
     {
         _playwright = playwright;
     }
@@ -19,8 +19,7 @@ public class InvalidTagsValidation : IValidation
         var res = new TResult();
         var allTags = await page.QuerySelectorAllAsync("body *");
 
-        List<string> invalidTags = new List<string>();
-        List<string> allTagNames = new List<string>();
+        HashSet<string> missingGenericType = new HashSet<string>();
         List<string> errorList = new List<string>();
 
         HashSet<string> validHtmlTags = new HashSet<string>
@@ -31,33 +30,29 @@ public class InvalidTagsValidation : IValidation
 
         var tagNames = await page.EvaluateAsync<string[]>("() => Array.from(document.querySelectorAll('body *'), el => el.tagName.toLowerCase())");
 
+        var tagNameCounts = new Dictionary<string, int>();
         foreach (var tagName in tagNames)
         {
-            allTagNames.Add(tagName);
             if (!validHtmlTags.Contains(tagName))
             {
-                try
+                if (!tagNameCounts.ContainsKey(tagName))
                 {
-                    var context = await page.EvaluateAsync<string>($"() => {{ const element = document.querySelector('body {tagName}'); return element ? element.parentElement.innerHTML : ''; }}");
-                    if (context.Length > 100)
-                    {
-                        errorList.Add(tagName);
-                    }
-                    else if (context.Length > 0 && context != "")
-                    {
-                        errorList.Add(context);
-                    }
-                    else
-                    {
-                        errorList.Add(tagName);
-                    }
+                    tagNameCounts[tagName] = 0;
                 }
-                catch
+                else
                 {
-                    errorList.Add(tagName);
+                    tagNameCounts[tagName]++;
                 }
-                invalidTags.Add(tagName);
 
+                var count = tagNameCounts[tagName];
+                var context = await page.EvaluateAsync<string>($"() => {{ const element = document.querySelectorAll('body {tagName}')[{count}]; return element ? element.parentElement.innerHTML : ''; }}");
+                errorList.Add(context);
+
+                // Extract the missing generic type from the context
+                var extractedType = context.Contains('<') 
+                    ? context.Substring(0, context.IndexOf('<')).Trim().Split(new[] { ' ', '(', ')' }, StringSplitOptions.RemoveEmptyEntries).Last()  
+                    : context;
+                missingGenericType.Add(extractedType);
             }
         }
 
@@ -66,12 +61,12 @@ public class InvalidTagsValidation : IValidation
             .Select((group, Index) => $"{Index + 1}. Appears {group.Count()} times ,  {group.Key}")
             .ToList();
 
-        if (invalidTags.Count > 0)
+        if (missingGenericType.Count > 0)
         {
             res.Result = false;
             res.ErrorLink = testLink;
-            res.NumberOfOccurrences = invalidTags.Count;
-            res.ErrorInfo = "Invalid tags found: " + string.Join(",", invalidTags);
+            res.NumberOfOccurrences = missingGenericType.Count;
+            res.ErrorInfo = "Missing generic: " + string.Join(",", missingGenericType);
             res.LocationsOfErrors = formattedList;
         }
 

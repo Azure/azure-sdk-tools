@@ -4,8 +4,6 @@
 
 The `GetAllDataSource` project is designed to retrieve test data sources for validating SDK documentation pages. It supports fetching data for all pages that need verification on the [Microsoft Learn website](https://learn.microsoft.com/en-us/).  
 
-> **Note:** Currently, this project supports SDK documentation for Python, Java, JavaScript, and .NET.
-
 ## Features
 
 - Fetches SDK documentation links for multiple programming languages.

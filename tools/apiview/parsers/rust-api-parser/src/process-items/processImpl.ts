@@ -13,6 +13,7 @@ import { typeToReviewTokens } from "./utils/typeToReviewTokens";
 import { processGenericArgs, processGenerics } from "./utils/processGenerics";
 import { getAPIJson } from "../main";
 import { lineIdMap } from "../utils/lineIdUtils";
+import { sanitizeForLineId } from "../utils/lineIdUtils";
 
 // Interface for the result of processing implementations
 export interface ImplProcessResult {
@@ -147,7 +148,7 @@ function processOtherTraitImpls(impls: number[], prefixId: string): ReviewLine[]
     if (matchingToken) {
       matchingToken.NavigationDisplayName = tokenStringForDisplay;
     }
-    lineIdMap.set(lineId, prefixId + tokenStringForDisplay.replace(/[^a-zA-Z0-9]+/g, "_"));
+    lineIdMap.set(lineId, prefixId + sanitizeForLineId(tokenStringForDisplay));
 
     const closingLine: ReviewLine = {
       RelatedToLine: lineId,

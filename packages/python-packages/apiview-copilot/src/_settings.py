@@ -36,6 +36,8 @@ class SettingsManager:
         self.label = self.label.strip().lower()
 
         print(f"Using App Configuration endpoint: {self.app_config_endpoint} with OpenAI endpoint: {os.getenv('OPENAI_ENDPOINT')}")
+        self.original_get_token = self.credential.get_token
+        self.original_get_token_info = self.credential.get_token_info
         self.credential.get_token = self.get_token_wrapper
         self.credential.get_token_info = self.get_token_wrapper
 
@@ -46,9 +48,9 @@ class SettingsManager:
     def get_token_wrapper(self, *scopes, **kwargs):
         print(f"Acquiring token for scopes: {scopes}")
         try:
-            return self.credential.get_token(*scopes, **kwargs)
+            return self.credential.original_get_token(*scopes, **kwargs)
         except:
-            return self.credential.get_token_info(*scopes, **kwargs)
+            return self.credential.original_get_token_info(*scopes, **kwargs)
 
     def get(self, key):
         key = key.strip().lower()

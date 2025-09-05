@@ -23,17 +23,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         private const string AzureSdkForPythonRepoName = "azure-sdk-for-python";
         private const int CommandTimeoutInMinutes = 30;
 
-        private readonly IOutputHelper output;
-        private readonly IProcessHelper processHelper;
-        private readonly IGitHelper gitHelper;
-        private readonly ILogger<SdkBuildTool> logger;
+        private readonly IOutputHelper _output;
+        private readonly IProcessHelper _processHelper;
+        private readonly IGitHelper _gitHelper;
+        private readonly ISdkRepoConfigHelper _sdkRepoConfigHelper;
+        private readonly ILogger<SdkBuildTool> _logger;
 
-        public SdkBuildTool(IGitHelper gitHelper, ILogger<SdkBuildTool> logger, IOutputHelper output, IProcessHelper processHelper): base()
+        public SdkBuildTool(IGitHelper gitHelper, ILogger<SdkBuildTool> logger, IOutputHelper output, IProcessHelper processHelper, ISdkRepoConfigHelper sdkRepoConfigHelper): base()
         {
-            this.gitHelper = gitHelper;
-            this.logger = logger;
-            this.output = output;
-            this.processHelper = processHelper;
+            _gitHelper = gitHelper;
+            _logger = logger;
+            _output = output;
+            _processHelper = processHelper;
+            _sdkRepoConfigHelper = sdkRepoConfigHelper;
             CommandHierarchy = [ SharedCommandGroups.Package, SharedCommandGroups.SourceCode ];
         }
 
@@ -53,7 +55,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             var packagePath = commandParser.GetValueForOption(SharedOptions.PackagePath);
             var buildResult = await BuildSdkAsync(packagePath, ct);
             ctx.ExitCode = ExitCode;
-            output.Output(buildResult);
+            _output.Output(buildResult);
         }
 
         [McpServerTool(Name = "azsdk_package_build_code"), Description("Build SDK code for a specified project locally.")]
@@ -64,7 +66,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             try
             {
-                logger.LogInformation($"Building SDK for project path: {packagePath}");
+                _logger.LogInformation($"Building SDK for project path: {packagePath}");
 
                 // Validate inputs
                 if (string.IsNullOrEmpty(packagePath))
@@ -78,130 +80,100 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 }
 
                 // Get repository root path from project path
-                string sdkRepoRoot = gitHelper.DiscoverRepoRoot(packagePath);
+                string sdkRepoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
                 if (string.IsNullOrEmpty(sdkRepoRoot))
                 {
                     return CreateFailureResponse($"Failed to discover local sdk repo with project-path: {packagePath}.");
                 }
 
-                logger.LogInformation($"Repository root path: {sdkRepoRoot}");
+                _logger.LogInformation($"Repository root path: {sdkRepoRoot}");
 
                 // Return if the project is python project
-                if (gitHelper.GetRepoRemoteUri(packagePath).ToString().Contains(AzureSdkForPythonRepoName, StringComparison.OrdinalIgnoreCase))
+                if (_gitHelper.GetRepoRemoteUri(sdkRepoRoot).ToString().Contains(AzureSdkForPythonRepoName, StringComparison.OrdinalIgnoreCase))
                 {
-                    logger.LogInformation("Python SDK project detected. Skipping build step as Python SDKs do not require a build process.");
+                    _logger.LogInformation("Python SDK project detected. Skipping build step as Python SDKs do not require a build process.");
                     return CreateSuccessResponse("Python SDK project detected. Skipping build step as Python SDKs do not require a build process.");
                 }
 
-                // Get the build script path and resolve full path
-                string fullBuildScriptPath;
+                // Get the build configuration (command or script path)
+                ProcessOptions options;
                 try
                 {
-                    var buildScriptPath = await GetScriptPathFromConfigAsync(sdkRepoRoot, "packageOptions/buildScript/path");
-                    logger.LogInformation($"Build script path: {buildScriptPath}");
+                    var repoName = _gitHelper.GetRepoName(sdkRepoRoot);
+                    _logger.LogDebug($"Repo name is {repoName}, repo root: {sdkRepoRoot}");
+                    var (configType, configValue) = await _sdkRepoConfigHelper.GetBuildConfigurationAsync(sdkRepoRoot, repoName);
 
-                    // Resolve the full path of the build script
-                    fullBuildScriptPath = Path.IsPathRooted(buildScriptPath) 
-                        ? buildScriptPath 
-                        : Path.Combine(sdkRepoRoot, buildScriptPath);
-
-                    if (!File.Exists(fullBuildScriptPath))
+                    if (configType == BuildConfigType.Command)
                     {
-                        return CreateFailureResponse($"Build script not found at: {fullBuildScriptPath}");
+                        // Execute as command
+                        var variables = new Dictionary<string, string>
+                        {
+                            { "packagePath", packagePath }
+                        };
+
+                        var substitutedCommand = _sdkRepoConfigHelper.SubstituteCommandVariables(configValue, variables);
+                        _logger.LogInformation($"Executing build command: {substitutedCommand}");
+
+                        var commandParts = _sdkRepoConfigHelper.ParseCommand(substitutedCommand);
+                        if (commandParts.Length == 0)
+                        {
+                            return CreateFailureResponse($"Invalid build command: {substitutedCommand}");
+                        }
+
+                        options = new ProcessOptions(
+                            commandParts[0],
+                            commandParts.Skip(1).ToArray(),
+                            logOutputStream: true,
+                            workingDirectory: packagePath,
+                            timeout: TimeSpan.FromMinutes(CommandTimeoutInMinutes)
+                        );
+                    }
+                    else // BuildConfigType.ScriptPath
+                    {
+                        // Execute as script file
+                        var fullBuildScriptPath = Path.IsPathRooted(configValue)
+                            ? configValue
+                            : Path.Combine(sdkRepoRoot, configValue);
+
+                        if (!File.Exists(fullBuildScriptPath))
+                        {
+                            return CreateFailureResponse($"Build script not found at: {fullBuildScriptPath}");
+                        }
+
+                        _logger.LogInformation($"Executing build script file: {fullBuildScriptPath}");
+
+                        // TODO: change --module-dir to --project-path
+                        options = new ProcessOptions(
+                            fullBuildScriptPath,
+                            ["--module-dir", packagePath],
+                            logOutputStream: true,
+                            workingDirectory: sdkRepoRoot,
+                            timeout: TimeSpan.FromMinutes(CommandTimeoutInMinutes)
+                        );
                     }
                 }
                 catch (Exception ex)
                 {
-                    return CreateFailureResponse($"Failed to get build script path: {ex.Message}");
+                    return CreateFailureResponse($"Failed to get build configuration: {ex.Message}");
                 }
 
-                // Run the build script
-                logger.LogInformation($"Executing build script: {fullBuildScriptPath}");
-
-                // TODO: change --module-dir to --project-path
-                var options = new ProcessOptions(
-                    fullBuildScriptPath,
-                    ["--module-dir", packagePath],
-                    logOutputStream: true,
-                    workingDirectory: sdkRepoRoot,
-                    timeout: TimeSpan.FromMinutes(CommandTimeoutInMinutes)
-                );
-                var buildResult = await processHelper.Run(options, ct);
+                // Run the build script or command
+                _logger.LogInformation($"Executing build process...");
+                var buildResult = await _processHelper.Run(options, ct);
                 var trimmedBuildResult = (buildResult.Output ?? string.Empty).Trim();
                 if (buildResult.ExitCode != 0)
                 {
-                    return CreateFailureResponse($"Build script failed with exit code {buildResult.ExitCode}. Output:\n{trimmedBuildResult}");
+                    return CreateFailureResponse($"Build process failed with exit code {buildResult.ExitCode}. Output:\n{trimmedBuildResult}");
                 }
 
-                logger.LogInformation("Build script execution completed");
+                _logger.LogInformation("Build process execution completed");
                 return CreateSuccessResponse($"Build completed successfully. Output:\n{trimmedBuildResult}");
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error occurred while building SDK");
+                _logger.LogError(ex, "Error occurred while building SDK");
                 return CreateFailureResponse($"An error occurred: {ex.Message}");
             }
-        }
-
-        // Gets the script path from the configuration file.
-        private async Task<string> GetScriptPathFromConfigAsync(string repositoryRoot, string jsonPath)
-        {
-            // Construct configuration file path
-            var configFilePath = Path.Combine(repositoryRoot, "eng", "spec-gen-sdk-config.json");
-            logger.LogInformation($"Configuration file path: {configFilePath}");
-
-            if (!File.Exists(configFilePath))
-            {
-                throw new FileNotFoundException($"Configuration file not found at: {configFilePath}");
-            }
-
-            try
-            {
-                // Read and parse the configuration file
-                var configContent = await File.ReadAllTextAsync(configFilePath);
-                using var configJson = JsonDocument.Parse(configContent);
-
-                // Use helper method to navigate JSON path
-                var (found, element) = TryGetJsonElementByPath(configJson.RootElement, jsonPath);
-                if (!found)
-                {
-                    throw new InvalidOperationException($"Property not found at JSON path '{jsonPath}' in configuration file {configFilePath}.");
-                }
-
-                var scriptPath = element.GetString();
-                if (string.IsNullOrEmpty(scriptPath))
-                {
-                    throw new InvalidOperationException($"Script path is empty at JSON path '{jsonPath}' in configuration file {configFilePath}.");
-                }
-
-                return scriptPath;
-            }
-            catch (JsonException ex)
-            {
-                throw new InvalidOperationException($"Error parsing JSON configuration: {ex.Message}", ex);
-            }
-        }
-
-        // Try to get a JSON element by its path
-        private (bool found, JsonElement element) TryGetJsonElementByPath(JsonElement root, string path)
-        {
-            if (string.IsNullOrEmpty(path))
-            {
-                return (false, default);
-            }
-
-            var pathParts = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
-            JsonElement current = root;
-
-            foreach (var part in pathParts)
-            {
-                if (!current.TryGetProperty(part, out current))
-                {
-                    return (false, default);
-                }
-            }
-
-            return (true, current);
         }
 
         // Helper method to create failure responses along with setting the failure state

@@ -36,6 +36,10 @@ namespace Azure.Sdk.Tools.TestProxy
 
         private static bool _insecure;
         internal static bool Insecure => _insecure;
+        // default this to off so that we don't recognize this new mode unless explicitly asked to
+        // this value will be checked within Record and Playback controllers to determine if they should use
+        // a specific default recording etc.
+        public static bool StandardProxyMode { get; set; } = false;
 
         public Startup(IConfiguration configuration) { }
 
@@ -102,6 +106,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     System.Console.WriteLine("Config verb requires a subcommand after the \"config\" verb.\n\nCorrect Usage: \"Azure.Sdk.Tools.TestProxy config locate|show|create -a path/to/assets.json\"");
                     break;
                 case StartOptions startOptions:
+                    StandardProxyMode = startOptions.StandardProxyMode;
                     StartServer(startOptions);
                     break;
                 case PushOptions pushOptions:
@@ -253,6 +258,27 @@ namespace Azure.Sdk.Tools.TestProxy
             app.UseMiddleware<ShutdownTimerMiddleware>();
 
             DebugLogger.ConfigureLogger(loggerFactory);
+
+            // Universal recording interception (record-only for now)
+            app.Use(async (context, next) =>
+            {
+                if (StandardProxyMode && !string.IsNullOrEmpty(Record.UniversalRecordingId))
+                {
+                    var path = context.Request.Path.HasValue ? context.Request.Path.Value : string.Empty;
+                    // bypass for admin/controller endpoints
+                    if (!path.StartsWith("/Record", StringComparison.OrdinalIgnoreCase) &&
+                        !path.StartsWith("/Playback", StringComparison.OrdinalIgnoreCase) &&
+                        !path.StartsWith("/Admin", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // todo: store a Record/Playback boolean when changing UniversalRecordingId
+                        // so that we can know whether to route to Record or Playback here.
+                        var handler = context.RequestServices.GetRequiredService<RecordingHandler>();
+                        await handler.HandleRecordRequestAsync(Record.UniversalRecordingId, context.Request, context.Response);
+                        return;
+                    }
+                }
+                await next();
+            });
 
             MapRecording(app);
             app.UseRouting();

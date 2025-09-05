@@ -295,7 +295,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
             // Use codeownersSha in UpdateFileAsync
             await githubService.UpdateFileAsync(repoOwner, repo, Constants.AZURE_CODEOWNERS_PATH, description, modifiedContent, codeownersSha, branchName);
 
-            var prInfoList = await githubService.CreatePullRequestAsync(repo, repoOwner, "main", branchName, "[CODEOWNERS] " + description, description);
+            var prInfoList = await githubService.CreatePullRequestAsync(repo, Constants.AZURE_OWNER_PATH, "main", branchName, "[CODEOWNERS] " + description, description);
             if (prInfoList != null)
             {
                 resultMessages.Add($"URL: {prInfoList.Url}");

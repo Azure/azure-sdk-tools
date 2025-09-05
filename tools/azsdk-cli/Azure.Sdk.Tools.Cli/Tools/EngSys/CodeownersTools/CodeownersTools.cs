@@ -259,10 +259,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
         {
             List<string> resultMessages = new();
             var branchName = "";
-            var currentUsername = (await githubService.GetGitUserDetailsAsync()).Login;
+            var hasPushPermissions = await githubService.HasPushPermission(repoOwner, repo);
 
-            if (repoOwner != Constants.AZURE_OWNER_PATH && repoOwner != currentUsername)
+            if (!hasPushPermissions)
             {
+                var originalRepoOwner = repoOwner; // Store for messaging
                 repoOwner = Constants.AZURE_OWNER_PATH;
                 workingBranch = "";
                 resultMessages.Add($"GitHub token does not have permission to push to {repoOwner} repository, opening a new PR on a branch in the main repo");

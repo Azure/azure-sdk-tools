@@ -100,6 +100,7 @@ public class GitConnection
         public Task<RepositoryContent> GetContentsSingleAsync(string owner, string repoName, string path, string? branch = null);
         public Task<HashSet<string>?> GetPublicOrgMembership(string username);
         public Task<bool> HasWritePermission(string owner, string repo, string username);
+        public Task<bool> HasPushPermission(string owner, string repo);
     }
 
     public class GitHubService : GitConnection, IGitHubService
@@ -122,7 +123,7 @@ public class GitConnection
         {
             var pullRequest = await gitHubClient.PullRequest.Get(repoOwner, repoName, pullRequestNumber);
             return pullRequest;
-        }        
+        }
         public async Task UpdatePullRequestAsync(string repoOwner, string repoName, int pullRequestNumber, string title, string body, ItemState state)
         {
             // This method now accepts title, body, and state directly, so caller must fetch the PR first if needed.
@@ -547,6 +548,20 @@ public class GitConnection
             {
                 logger.LogError(ex, "Error validating permissions for user: {Username}", username);
                 throw;
+            }
+        }
+        
+        public async Task<bool> HasPushPermission(string owner, string repo)
+        {
+            try
+            {
+                var repository = await gitHubClient.Repository.Get(owner, repo);
+                return repository.Permissions?.Push ?? false;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error checking push permissions for repo: {Owner}/{Repo}", owner, repo);
+                return false;
             }
         }
     }

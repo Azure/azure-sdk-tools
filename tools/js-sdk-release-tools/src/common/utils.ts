@@ -207,9 +207,18 @@ export async function loadTspConfig(typeSpecDirectory: string): Promise<Exclude<
 // e.g. sdk/mongocluster/arm-mongocluster
 export async function getGeneratedPackageDirectory(typeSpecDirectory: string, sdkRepoRoot: string): Promise<string> {
     const tspConfig = await resolveOptions(typeSpecDirectory);
+    const emitterOptions = tspConfig.options?.[emitterName];
+    // Try to get package directory from emitter-output-dir first    
+    const emitterOutputDir = emitterOptions?.['emitter-output-dir'];
+    if (emitterOutputDir) {
+        // emitterOutputDir from resolved options should already be an absolute path
+        // Convert to relative path from sdkRepoRoot for consistency
+        const relativePath = path.relative(sdkRepoRoot, emitterOutputDir);
+        return posix.normalize(relativePath);
+    }
+
     let packageDir = tspConfig.configFile.parameters?.["package-dir"]?.default;
     let serviceDir = tspConfig.configFile.parameters?.["service-dir"]?.default;
-    const emitterOptions = tspConfig.options?.[emitterName];
     const serviceDirFromEmitter = emitterOptions?.['service-dir'];
     if (serviceDirFromEmitter) {
         serviceDir = serviceDirFromEmitter;
@@ -227,7 +236,6 @@ export async function getGeneratedPackageDirectory(typeSpecDirectory: string, sd
     const packageDirFromRoot = posix.join(sdkRepoRoot, serviceDir, packageDir);
     return packageDirFromRoot;
 }
-
 
 export async function runCommand(
     command: string,

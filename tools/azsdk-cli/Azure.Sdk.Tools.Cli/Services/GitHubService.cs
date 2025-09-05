@@ -561,7 +561,7 @@ public class GitConnection
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error checking push permissions for repo: {Owner}/{Repo}", owner, repo);
-                return false;
+                throw;
             }
         }
     }

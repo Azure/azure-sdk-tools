@@ -10,10 +10,6 @@ from dotenv import load_dotenv
 load_dotenv(override=True)
 
 
-import logging
-logger = logging.getLogger()
-
-
 class SettingsManager:
     _instance = None
     _lock = threading.Lock()
@@ -38,18 +34,27 @@ class SettingsManager:
         if not self.label:
             raise ValueError("ENVIRONMENT_NAME must be set in the environment.")
         self.label = self.label.strip().lower()
-        logger.warning(f"Using App Configuration endpoint: {self.app_config_endpoint} with OpenAI endpoint: {os.getenv('OPENAI_ENDPOINT')}")
-        print(f"Using App Configuration endpoint: {self.app_config_endpoint} with OpenAI endpoint: {os.getenv('OPENAI_ENDPOINT')}")
+
+        print(f"Using App Configuration endpoint: {self.app_config_endpoint.encode()} with OpenAI endpoint: {os.getenv('OPENAI_ENDPOINT').encode()}")
+        self.credential.get_token = self.get_token_wrapper
+        self.credential.get_token_info = self.get_token_wrapper
+
         self.app_config_client = AzureAppConfigurationClient(self.app_config_endpoint, self.credential)
         self._keyvault_clients = {}
         self._cache = {}
+
+    def get_token_wrapper(self, *scopes, **kwargs):
+        print(f"Acquiring token for scopes: {scopes}")
+        try:
+            return self.credential.get_token(*scopes, **kwargs)
+        except:
+            return self.credential.get_token_info(*scopes, **kwargs)
 
     def get(self, key):
         key = key.strip().lower()
         cache_key = (key, self.label)
         if cache_key in self._cache:
             return self._cache[cache_key]
-        logger.warning(f"Fetching key '{key}' with label '{self.label}' from App Configuration.")
         print(f"Fetching key '{key}' with label '{self.label}' from App Configuration.")
         setting = self.app_config_client.get_configuration_setting(key=key, label=self.label)
         value = setting.value

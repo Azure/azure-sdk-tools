@@ -7,12 +7,12 @@ import { runCommand, runCommandOptions } from './utils.js';
 export async function formatSdk(packageDirectory: string) {
     logger.info(`Start to format code in '${packageDirectory}'.`);
     const hasSampleFolder = await exists(path.join(packageDirectory, "samples-dev"));
-    const samplesDev = hasSampleFolder ? ' \"samples-dev/**/*.ts\"' : '';
+    const samplesDev = hasSampleFolder ? ` "samples-dev/**/*.ts"` : '';
     const hasTestFolder = await exists(path.join(packageDirectory, "test"));
-    const test = hasTestFolder ? ' \"test/**/*.{ts,cts,mts}\"' : '';
+    const test = hasTestFolder ? ` "test/**/*.{ts,cts,mts}"` : '';
     const cwd = packageDirectory;
     const options = { ...runCommandOptions, cwd };
-    const formatCommand = `run vendored prettier --write --config ../../../.prettierrc.json --ignore-path ../../../.prettierignore \"src/**/*.{ts,cts,mts}\"${test} \"*.{js,cjs,mjs,json}\"${samplesDev}`;
+    const formatCommand = `run vendored prettier --write --config ../../../.prettierrc.json --ignore-path ../../../.prettierignore "src/**/*.{ts,cts,mts}"${test} "*.{js,cjs,mjs,json}"${samplesDev}`;
 
     try {
         await runCommand(`npm`, ['exec', '--', 'dev-tool', formatCommand], options, true, 300, true);

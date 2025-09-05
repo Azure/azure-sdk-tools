@@ -1016,7 +1016,6 @@ function UpdateValidationStatus($pkgvalidationDetails, $BuildDefinition, $Pipeli
     return $true
 }
 
-
 function Get-LanguageDevOpsName($LanguageShort)
 {
     switch ($LanguageShort.ToLower()) 
@@ -1073,4 +1072,68 @@ function Update-ReleaseStatusInReleasePlan($releasePlanWorkItemId, $status, $ver
     Write-Host "Updating Release Plan [$releasePlanWorkItemId] with status [$status] for language [$LanguageShort]."
     $workItem = UpdateWorkItem -id $releasePlanWorkItemId -fields $fields
     Write-Host "Updated release status for [$LanguageShort] in Release Plan [$releasePlanWorkItemId]"
+}
+function Get-ReleasePlansForCPEXAttestation()
+{
+  $fields = @()
+  $fields += "Custom.ProductServiceTreeID"
+  $fields += "Custom.ReleasePlanType"
+  $fields += "Custom.ProductType"
+  $fields += "Custom.DataScope"
+  $fields += "Custom.MgmtScope"
+
+  $fieldList = ($fields | ForEach-Object { "[$_]"}) -join ", "
+  $query = "SELECT ${fieldList} FROM WorkItems WHERE [System.WorkItemType] = 'Release Plan'"
+  $query += " AND [System.State] = 'Finished'"
+  $query += " AND [Custom.AttestationStatus] IN ('', 'Pending')"
+  $query += " AND [System.Tags] NOT CONTAINS 'Release Planner App Test'"
+  $query += " AND [System.Tags] NOT CONTAINS 'Release Planner Test App'"
+  $query += " AND [System.Tags] NOT CONTAINS 'non-APEX tracking'"
+  $query += " AND [System.Tags] NOT CONTAINS 'out of scope APEX'"
+  $query += " AND [System.Tags] NOT CONTAINS 'APEX out of scope'"
+  $query += " AND [System.Tags] NOT CONTAINS 'validate APEX out of scope'"
+  $query += " AND [Custom.ProductServiceTreeID] <> ''"
+  $query += " AND [Custom.ProductLifecycle] <> ''"
+  $query += " AND [Custom.ProductType] IN ('Feature', 'Offering', 'Sku')"
+
+  $workItems = Invoke-Query $fields $query
+  return $workItems
+}
+
+function Get-TriagesForCPEXAttestation()
+{
+  $fields = @()
+  $fields += "Custom.ProductServiceTreeID"
+  $fields += "Custom.ProductType"
+  $fields += "Custom.ProductLifecycle"
+  $fields += "Custom.DataScope"
+  $fields += "Custom.MgmtScope"
+  $fields += "Custom.DataplaneAttestationStatus"
+  $fields += "Custom.ManagementPlaneAttestationStatus"
+
+  $fieldList = ($fields | ForEach-Object { "[$_]"}) -join ", "
+  $query = "SELECT ${fieldList} FROM WorkItems WHERE [System.WorkItemType] = 'Triage'"
+  $query += " AND [System.State] IN ('Completed', 'New', 'Triage updated')"
+  $query += " AND ([Custom.DataplaneAttestationStatus] IN ('', 'Pending') OR [Custom.ManagementPlaneAttestationStatus] IN ('', 'Pending'))"
+  $query += " AND [System.Tags] NOT CONTAINS 'Release Planner App Test'"
+  $query += " AND [System.Tags] NOT CONTAINS 'Release Planner Test App'"
+  $query += " AND [System.Tags] NOT CONTAINS 'non-APEX tracking'"
+  $query += " AND [System.Tags] NOT CONTAINS 'out of scope APEX'"
+  $query += " AND [System.Tags] NOT CONTAINS 'APEX out of scope'"
+  $query += " AND [System.Tags] NOT CONTAINS 'validate APEX out of scope'"
+  $query += " AND [Custom.ProductServiceTreeID] <> ''"
+  $query += " AND [Custom.ProductLifecycle] <> ''"
+  $query += " AND [Custom.ProductType] IN ('Feature', 'Offering', 'Sku')"
+
+  $workItems = Invoke-Query $fields $query
+  return $workItems 
+}
+
+function Update-AttestationStatusInWorkItem($workItemId, $fieldName, $status)
+{
+  $fields = @()
+  $fields += "${fieldName}=${status}"
+
+  $workItem = UpdateWorkItem -id $workItemId -fields $fields
+  return $true
 }

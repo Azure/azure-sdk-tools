@@ -15,8 +15,6 @@ public class SdkGenerationToolTests
 {
     #region Test Constants
     
-    private const string ValidCommitSha = "1234567890abcdef1234567890abcdef12345678";
-    private const string InvalidCommitSha = "abc123";
     private const string DefaultSpecRepo = "Azure/azure-rest-api-specs";
     private const string RemoteTspConfigUrl = "https://github.com/Azure/azure-rest-api-specs/blob/dee71463cbde1d416c47cf544e34f7966a94ddcb/specification/contosowidgetmanager/Contoso.Management/tspconfig.yaml";
     private const string InvalidRemoteTspConfigUrl = "https://example.com/tspconfig.yaml";
@@ -30,8 +28,6 @@ public class SdkGenerationToolTests
     // Common error message patterns
     private const string BothPathsEmptyError = "Both 'tspconfig.yaml' and 'tsp-location.yaml' paths aren't provided";
     private const string FileNotExistError = "does not exist";
-    private const string InvalidShaWithRepoDiscoveryError = "Invalid commit SHA provided and failed to discover local azure-rest-api-specs repo";
-    private const string RepoNameNotProvidedError = "repository name is not provided";
     private const string DirectoryNotExistError = "does not provide or exist";
     private const string TspClientInitFailedError = "tsp-client init failed";
     
@@ -91,7 +87,7 @@ public class SdkGenerationToolTests
     public async Task GenerateSdkAsync_BothPathsEmpty_ReturnsFailure()
     {
         // Act
-        var result = await _tool.GenerateSdkAsync("/some/path", null, null, null, null, null);
+        var result = await _tool.GenerateSdkAsync("/some/path", null, null, null);
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain(BothPathsEmptyError));
@@ -111,7 +107,7 @@ public class SdkGenerationToolTests
             .ReturnsAsync(expectedResult);
 
         // Act
-        var result = await _tool.GenerateSdkAsync("/some/path", null, null, null, tspLocationPath, null);
+        var result = await _tool.GenerateSdkAsync("/some/path", null, tspLocationPath, null);
 
         // Assert
         Assert.That(result.Result, Is.EqualTo("succeeded"));
@@ -126,7 +122,7 @@ public class SdkGenerationToolTests
         var tspLocationPath = Path.Combine(_tempDirectory, "nonexistent-" + TspLocationFileName);
 
         // Act
-        var result = await _tool.GenerateSdkAsync("/some/path", null, null, null, tspLocationPath, null);
+        var result = await _tool.GenerateSdkAsync("/some/path", null, tspLocationPath, null);
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain(FileNotExistError));
@@ -146,7 +142,7 @@ public class SdkGenerationToolTests
             .ReturnsAsync(expectedResult);
 
         // Act
-        var result = await _tool.GenerateSdkAsync(_tempDirectory, RemoteTspConfigUrl, InvalidCommitSha, DefaultSpecRepo, null, null);
+        var result = await _tool.GenerateSdkAsync(_tempDirectory, RemoteTspConfigUrl, null, null);
 
         // Assert
         Assert.That(result.Result, Is.EqualTo("succeeded"));
@@ -163,6 +159,7 @@ public class SdkGenerationToolTests
         
         // Mock GitHelper to return valid repo root
         _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory)).Returns(_tempDirectory);
+        _mockGitHelper.Setup(x => x.GetGitHubRepoFullName(tspConfigPath)).Returns(DefaultSpecRepo);
 
         var expectedResult = new ProcessResult { ExitCode = 0 };
         expectedResult.AppendStdout(ProcessSuccessOutput);
@@ -170,47 +167,13 @@ public class SdkGenerationToolTests
             .Setup(x => x.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedResult);
 
-        // Act - Use a valid SHA for this test
-        var result = await _tool.GenerateSdkAsync(_tempDirectory, tspConfigPath, ValidCommitSha, DefaultSpecRepo, null, null);
+        // Act
+        var result = await _tool.GenerateSdkAsync(_tempDirectory, tspConfigPath, null, null);
 
         // Assert
         Assert.That(result.Result, Is.EqualTo("succeeded"));
         Assert.That(result.Message, Does.Contain(SdkGenerationSuccessMessage));
         _mockNpxHelper.Verify(x => x.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()), Times.Once);
-    }
-
-    [Test]
-    public async Task GenerateSdkAsync_WithLocalTspConfigPath_EmptySpecCommitSha_ReturnsFailure()
-    {
-        // Arrange
-        var tspConfigPath = Path.Combine(_tempDirectory, TspConfigFileName);
-        File.WriteAllText(tspConfigPath, TestTspConfigContent);
-        
-        // Mock GitHelper to return valid repo root
-        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory)).Returns(_tempDirectory);
-
-        // Act
-        var result = await _tool.GenerateSdkAsync(_tempDirectory, tspConfigPath, null, DefaultSpecRepo, null, null);
-
-        // Assert
-        Assert.That(result.ResponseErrors?.First(), Does.Contain(InvalidShaWithRepoDiscoveryError));
-    }
-
-    [Test]
-    public async Task GenerateSdkAsync_WithLocalTspConfigPath_InvalidSpecCommitSha_ReturnsError()
-    {
-        // Arrange
-        var tspConfigPath = Path.Combine(_tempDirectory, TspConfigFileName);
-        File.WriteAllText(tspConfigPath, TestTspConfigContent);
-        
-        // Mock GitHelper to return valid repo root
-        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory)).Returns(_tempDirectory);
-
-        // Act - Use an invalid SHA
-        var result = await _tool.GenerateSdkAsync(_tempDirectory, tspConfigPath, InvalidCommitSha, DefaultSpecRepo, null, null);
-
-        // Assert
-        Assert.That(result.ResponseErrors?.First(), Does.Contain(InvalidShaWithRepoDiscoveryError));
     }
 
     [Test]
@@ -221,27 +184,10 @@ public class SdkGenerationToolTests
         _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory)).Returns(_tempDirectory);
         
         // Act - Use a non-existent file path
-        var result = await _tool.GenerateSdkAsync(_tempDirectory, "/nonexistent/" + TspConfigFileName, ValidCommitSha, DefaultSpecRepo, null, null);
+        var result = await _tool.GenerateSdkAsync(_tempDirectory, "/nonexistent/" + TspConfigFileName, null, null);
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain(FileNotExistError));
-    }
-
-    [Test]
-    public async Task GenerateSdkAsync_WithLocalTspConfigPath_EmptySpecRepoFullName_ReturnsError()
-    {
-        // Arrange
-        var tspConfigPath = Path.Combine(_tempDirectory, TspConfigFileName);
-        File.WriteAllText(tspConfigPath, TestTspConfigContent);
-        
-        // Mock GitHelper to return valid repo root
-        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory)).Returns(_tempDirectory);
-
-        // Act - Use empty repo name
-        var result = await _tool.GenerateSdkAsync(_tempDirectory, tspConfigPath, ValidCommitSha, null, null, null);
-
-        // Assert
-        Assert.That(result.ResponseErrors?.First(), Does.Contain(RepoNameNotProvidedError));
     }
 
     [Test]
@@ -258,7 +204,7 @@ public class SdkGenerationToolTests
             .ReturnsAsync(failedResult);
 
         // Act
-        var result = await _tool.GenerateSdkAsync(_tempDirectory, RemoteTspConfigUrl, InvalidCommitSha, DefaultSpecRepo, null, null);
+        var result = await _tool.GenerateSdkAsync(_tempDirectory, RemoteTspConfigUrl, null, null);
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain(TspClientInitFailedError));
@@ -272,7 +218,7 @@ public class SdkGenerationToolTests
         _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory)).Returns(_tempDirectory);
 
         // Act - Use invalid remote URL that doesn't match GitHub blob pattern
-        var result = await _tool.GenerateSdkAsync(_tempDirectory, InvalidRemoteTspConfigUrl, ValidCommitSha, DefaultSpecRepo, null, null);
+        var result = await _tool.GenerateSdkAsync(_tempDirectory, InvalidRemoteTspConfigUrl, null, null);
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain("Invalid remote GitHub URL with commit"));
@@ -290,7 +236,7 @@ public class SdkGenerationToolTests
             .ThrowsAsync(new InvalidOperationException("Test exception"));
 
         // Act - Now remote URLs work properly
-        var result = await _tool.GenerateSdkAsync(_tempDirectory, RemoteTspConfigUrl, ValidCommitSha, DefaultSpecRepo, null, null);
+        var result = await _tool.GenerateSdkAsync(_tempDirectory, RemoteTspConfigUrl, null, null);
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain("Test exception"));
@@ -300,7 +246,7 @@ public class SdkGenerationToolTests
     public async Task GenerateSdkAsync_WithInvalidSdkRepoPath_ReturnsError()
     {
         // Act - Use a non-existent directory path
-        var result = await _tool.GenerateSdkAsync("/this/path/does/not/exist", RemoteTspConfigUrl, ValidCommitSha, DefaultSpecRepo, null, null);
+        var result = await _tool.GenerateSdkAsync("/this/path/does/not/exist", RemoteTspConfigUrl, null, null);
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain(DirectoryNotExistError));

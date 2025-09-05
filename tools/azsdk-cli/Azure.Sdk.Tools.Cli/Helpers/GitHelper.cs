@@ -15,6 +15,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         public string GetMergeBaseCommitSha(string path, string targetBranch);
         public string DiscoverRepoRoot(string path);
         public string GetRepoName(string path);
+        public string GetGitHubRepoFullName(string path);
     }
 
     public class GitHelper(IGitHubService gitHubService, ILogger<GitHelper> logger) : IGitHelper
@@ -88,6 +89,29 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             }
 
             throw new InvalidOperationException("Unable to determine repository owner.");
+        }
+
+        // Get the full name of github repo in the format of "{owner/name}", e.g. "Azure/azure-rest-api-specs"
+        public string GetGitHubRepoFullName(string path)
+        {
+            if (!string.IsNullOrEmpty(path))
+            {
+                var repoRoot = DiscoverRepoRoot(path);
+                var uri = GetRepoRemoteUri(repoRoot);
+                var segments = uri.Segments;
+
+                if (segments.Length < 2)
+                {
+                    throw new InvalidOperationException($"Unable to parse repository owner and name from remote URL: {uri}");
+                }
+
+                string repoOwner = segments[^2].TrimEnd('/');
+                string repoName = segments[^1].TrimEnd(".git".ToCharArray());
+
+                return $"{repoOwner}/{repoName}";
+            }
+
+            throw new ArgumentException("Invalid repository path.", nameof(path));       
         }
 
         public string DiscoverRepoRoot(string path)

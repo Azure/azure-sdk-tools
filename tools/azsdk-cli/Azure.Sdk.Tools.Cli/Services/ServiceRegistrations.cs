@@ -53,6 +53,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IUserHelper, UserHelper>();
             services.AddSingleton<ICodeownersValidatorHelper, CodeownersValidatorHelper>();
             services.AddSingleton<IEnvironmentHelper, EnvironmentHelper>();
+            services.AddSingleton<IInputSanitizer, InputSanitizer>();
 
             // Process Helper Classes
             services.AddSingleton<INpxHelper, NpxHelper>();

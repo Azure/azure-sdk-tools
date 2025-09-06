@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using Azure.Tools.GeneratorAgent.Configuration;
+using Azure.Tools.GeneratorAgent.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;

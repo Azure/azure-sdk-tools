@@ -8,7 +8,7 @@ using NUnit.Framework;
 namespace Azure.Tools.GeneratorAgent.Tests
 {
     [TestFixture]
-    public class ProcessExecutorTests
+    public class ProcessExecutionServiceTests
     {
         private sealed class TestEnvironmentFixture : IDisposable
         {
@@ -28,14 +28,14 @@ namespace Azure.Tools.GeneratorAgent.Tests
             public CancellationToken CancellationToken => _cancellationTokenSource.Token;
             public string UniqueId => _uniqueId;
 
-            public Mock<ILogger<ProcessExecutor>> CreateMockLogger()
+            public Mock<ILogger<ProcessExecutionService>> CreateMockLogger()
             {
-                return new Mock<ILogger<ProcessExecutor>>();
+                return new Mock<ILogger<ProcessExecutionService>>();
             }
 
-            public ProcessExecutor CreateProcessExecutor(Mock<ILogger<ProcessExecutor>>? mockLogger = null)
+            public ProcessExecutionService CreateProcessExecutionService(Mock<ILogger<ProcessExecutionService>>? mockLogger = null)
             {
-                return new ProcessExecutor((mockLogger ?? CreateMockLogger()).Object);
+                return new ProcessExecutionService((mockLogger ?? CreateMockLogger()).Object);
             }
 
             public string CreateValidCommand()
@@ -87,7 +87,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             public string CreateValidWorkingDirectory()
             {
-                var tempDir = Path.Combine(Path.GetTempPath(), $"ProcessExecutorTest_{_uniqueId}");
+                var tempDir = Path.Combine(Path.GetTempPath(), $"ProcessExecutionServiceTest_{_uniqueId}");
                 Directory.CreateDirectory(tempDir);
                 _tempDirectories.Add(tempDir);
                 return tempDir;
@@ -164,7 +164,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
             using var fixture = new TestEnvironmentFixture();
             var mockLogger = fixture.CreateMockLogger();
 
-            var executor = new ProcessExecutor(mockLogger.Object);
+            var executor = new ProcessExecutionService(mockLogger.Object);
 
             Assert.That(executor, Is.Not.Null);
         }
@@ -172,7 +172,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         [Test]
         public void Constructor_WithNullLogger_ThrowsArgumentNullException()
         {
-            var exception = Assert.Throws<ArgumentNullException>(() => new ProcessExecutor(null!));
+            var exception = Assert.Throws<ArgumentNullException>(() => new ProcessExecutionService(null!));
 
             Assert.That(exception.ParamName, Is.EqualTo("logger"));
         }
@@ -185,7 +185,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public async Task ExecuteAsync_WithValidCommand_ReturnsSuccessResult()
         {
             using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutor();
+            var executor = fixture.CreateProcessExecutionService();
             var command = fixture.CreateValidCommand();
             var arguments = fixture.CreateEchoArguments("test message");
             var workingDir = fixture.CreateValidWorkingDirectory();
@@ -210,7 +210,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public async Task ExecuteAsync_WithNullArguments_UsesEmptyArguments()
         {
             using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutor();
+            var executor = fixture.CreateProcessExecutionService();
             var command = fixture.CreateValidCommand();
             var workingDir = fixture.CreateValidWorkingDirectory();
 
@@ -227,7 +227,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public async Task ExecuteAsync_WithEmptyArguments_Succeeds()
         {
             using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutor();
+            var executor = fixture.CreateProcessExecutionService();
             var command = fixture.CreateValidCommand();
             var arguments = fixture.CreateEmptyArguments();
             var workingDir = fixture.CreateValidWorkingDirectory();
@@ -245,7 +245,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public async Task ExecuteAsync_WithNullWorkingDirectory_Succeeds()
         {
             using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutor();
+            var executor = fixture.CreateProcessExecutionService();
             var command = fixture.CreateValidCommand();
             var arguments = fixture.CreateValidArguments();
 
@@ -262,7 +262,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public async Task ExecuteAsync_WithMultilineOutput_CapturesAllLines()
         {
             using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutor();
+            var executor = fixture.CreateProcessExecutionService();
             var command = fixture.CreateValidCommand();
             var arguments = fixture.CreateMultilineArguments();
             var workingDir = fixture.CreateValidWorkingDirectory();
@@ -286,7 +286,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public async Task ExecuteAsync_WithTimeout_CompletesWithinTimeout()
         {
             using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutor();
+            var executor = fixture.CreateProcessExecutionService();
             var command = fixture.CreateValidCommand();
             var arguments = fixture.CreateEchoArguments();
             var workingDir = fixture.CreateValidWorkingDirectory();
@@ -310,7 +310,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public void ExecuteAsync_WithNullCommand_ThrowsArgumentException()
         {
             using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutor();
+            var executor = fixture.CreateProcessExecutionService();
             var arguments = fixture.CreateValidArguments();
             var workingDir = fixture.CreateValidWorkingDirectory();
 
@@ -328,7 +328,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public void ExecuteAsync_WithEmptyCommand_ThrowsArgumentException()
         {
             using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutor();
+            var executor = fixture.CreateProcessExecutionService();
             var arguments = fixture.CreateValidArguments();
             var workingDir = fixture.CreateValidWorkingDirectory();
 
@@ -346,7 +346,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public void ExecuteAsync_WithWhitespaceCommand_ThrowsArgumentException()
         {
             using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutor();
+            var executor = fixture.CreateProcessExecutionService();
             var arguments = fixture.CreateValidArguments();
             var workingDir = fixture.CreateValidWorkingDirectory();
 
@@ -364,7 +364,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public void ExecuteAsync_WithDisallowedCommand_ThrowsUnauthorizedAccessException()
         {
             using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutor();
+            var executor = fixture.CreateProcessExecutionService();
             var command = fixture.CreateDisallowedCommand();
             var arguments = fixture.CreateValidArguments();
             var workingDir = fixture.CreateValidWorkingDirectory();
@@ -383,7 +383,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public void ExecuteAsync_WithInvalidWorkingDirectory_ThrowsSecurityException()
         {
             using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutor();
+            var executor = fixture.CreateProcessExecutionService();
             var command = fixture.CreateValidCommand();
             var arguments = fixture.CreateValidArguments();
             var invalidDir = fixture.CreateInvalidWorkingDirectory();
@@ -402,7 +402,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public async Task ExecuteAsync_WithFailingCommand_ReturnsFailureResult()
         {
             using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutor();
+            var executor = fixture.CreateProcessExecutionService();
             var command = fixture.CreateValidCommand();
             var arguments = fixture.CreateErrorArguments("test error", 1);
             var workingDir = fixture.CreateValidWorkingDirectory();
@@ -427,7 +427,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public async Task ExecuteAsync_WithNonExistentCommand_ReturnsFailureResult()
         {
             using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutor();
+            var executor = fixture.CreateProcessExecutionService();
             var command = fixture.CreateNonExistentCommand();
             var arguments = fixture.CreateNonExistentArguments();
             var workingDir = fixture.CreateValidWorkingDirectory();
@@ -450,7 +450,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public async Task ExecuteAsync_WithTimeoutExceeded_ReturnsTimeoutFailure()
         {
             using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutor();
+            var executor = fixture.CreateProcessExecutionService();
             var command = fixture.CreateValidCommand();
             var arguments = fixture.CreateLongRunningArguments(10);
             var workingDir = fixture.CreateValidWorkingDirectory();
@@ -480,7 +480,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public void ExecuteAsync_WithCancellation_ThrowsOperationCanceledException()
         {
             using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutor();
+            var executor = fixture.CreateProcessExecutionService();
             var command = fixture.CreateValidCommand();
             var arguments = fixture.CreateLongRunningArguments(10);
             var workingDir = fixture.CreateValidWorkingDirectory();
@@ -498,7 +498,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public void ExecuteAsync_WithTimeoutAndCancellation_HandlesCorrectly()
         {
             using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutor();
+            var executor = fixture.CreateProcessExecutionService();
             var command = fixture.CreateValidCommand();
             var arguments = fixture.CreateLongRunningArguments(10);
             var workingDir = fixture.CreateValidWorkingDirectory();
@@ -523,7 +523,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         {
             using var fixture = new TestEnvironmentFixture();
             var mockLogger = fixture.CreateMockLogger();
-            var executor = fixture.CreateProcessExecutor(mockLogger);
+            var executor = fixture.CreateProcessExecutionService(mockLogger);
             var command = fixture.CreateValidCommand();
             var arguments = fixture.CreateEchoArguments();
             var workingDir = fixture.CreateValidWorkingDirectory();
@@ -549,7 +549,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         {
             using var fixture = new TestEnvironmentFixture();
             var mockLogger = fixture.CreateMockLogger();
-            var executor = fixture.CreateProcessExecutor(mockLogger);
+            var executor = fixture.CreateProcessExecutionService(mockLogger);
             var command = fixture.CreateValidCommand();
             var arguments = fixture.CreateErrorArguments("test error", 1);
             var workingDir = fixture.CreateValidWorkingDirectory();
@@ -575,7 +575,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         {
             using var fixture = new TestEnvironmentFixture();
             var mockLogger = fixture.CreateMockLogger();
-            var executor = fixture.CreateProcessExecutor(mockLogger);
+            var executor = fixture.CreateProcessExecutionService(mockLogger);
             var command = fixture.CreateNonExistentCommand();
             var arguments = fixture.CreateNonExistentArguments();
             var workingDir = fixture.CreateValidWorkingDirectory();
@@ -601,7 +601,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         {
             using var fixture = new TestEnvironmentFixture();
             var mockLogger = fixture.CreateMockLogger();
-            var executor = fixture.CreateProcessExecutor(mockLogger);
+            var executor = fixture.CreateProcessExecutionService(mockLogger);
             var command = fixture.CreateNonExistentCommand();
             var arguments = fixture.CreateNonExistentArguments();
             var workingDir = fixture.CreateValidWorkingDirectory();
@@ -627,7 +627,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         {
             using var fixture = new TestEnvironmentFixture();
             var mockLogger = fixture.CreateMockLogger();
-            var executor = fixture.CreateProcessExecutor(mockLogger);
+            var executor = fixture.CreateProcessExecutionService(mockLogger);
             var command = fixture.CreateValidCommand();
             var arguments = fixture.CreateLongRunningArguments(10);
             var workingDir = fixture.CreateValidWorkingDirectory();
@@ -658,13 +658,13 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public void CreateProcess_WithValidParameters_CreatesProcessCorrectly()
         {
             using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutor();
+            var executor = fixture.CreateProcessExecutionService();
             var command = fixture.CreateValidCommand();
             var arguments = fixture.CreateValidArguments();
             var workingDir = fixture.CreateValidWorkingDirectory();
 
             // Use reflection to access protected method
-            var method = typeof(ProcessExecutor).GetMethod("CreateProcess", 
+            var method = typeof(ProcessExecutionService).GetMethod("CreateProcess", 
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             var process = (Process)method!.Invoke(executor, [command, arguments, workingDir])!;
 
@@ -686,12 +686,12 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public void CreateProcess_WithNullWorkingDirectory_UsesCurrentDirectory()
         {
             using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutor();
+            var executor = fixture.CreateProcessExecutionService();
             var command = fixture.CreateValidCommand();
             var arguments = fixture.CreateValidArguments();
 
             // Use reflection to access protected method
-            var method = typeof(ProcessExecutor).GetMethod("CreateProcess", 
+            var method = typeof(ProcessExecutionService).GetMethod("CreateProcess", 
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             var process = (Process)method!.Invoke(executor, [command, arguments, null])!;
 
@@ -708,7 +708,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public async Task ExecuteAsync_WithWin32ExceptionNativeErrorCode2_ReturnsSpecificFailure()
         {
             using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutor();
+            var executor = fixture.CreateProcessExecutionService();
             var command = fixture.CreateNonExistentCommand();
             var arguments = fixture.CreateNonExistentArguments();
             var workingDir = fixture.CreateValidWorkingDirectory();
@@ -734,8 +734,8 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var mockLogger = fixture.CreateMockLogger();
             
             // Create a testable executor that can simulate unexpected exceptions
-            var executor = new TestableProcessExecutor(mockLogger.Object);
-            var command = "simulate-error"; // This will trigger the exception in TestableProcessExecutor
+            var executor = new TestableProcessExecutionService(mockLogger.Object);
+            var command = "simulate-error"; // This will trigger the exception in TestableProcessExecutionService
             var arguments = fixture.CreateValidArguments();
             var workingDir = fixture.CreateValidWorkingDirectory();
 
@@ -757,7 +757,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public async Task ExecuteAsync_ConcurrentExecution_HandlesCorrectly()
         {
             using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutor();
+            var executor = fixture.CreateProcessExecutionService();
             var command = fixture.CreateValidCommand();
             var workingDir = fixture.CreateValidWorkingDirectory();
 
@@ -790,11 +790,11 @@ namespace Azure.Tools.GeneratorAgent.Tests
         #region Helper Classes
 
         /// <summary>
-        /// Testable version of ProcessExecutor for simulating specific scenarios
+        /// Testable version of ProcessExecutionService for simulating specific scenarios
         /// </summary>
-        private class TestableProcessExecutor : ProcessExecutor
+        private class TestableProcessExecutionService : ProcessExecutionService
         {
-            public TestableProcessExecutor(ILogger<ProcessExecutor> logger) : base(logger) { }
+            public TestableProcessExecutionService(ILogger<ProcessExecutionService> logger) : base(logger) { }
 
             protected override Process CreateProcess(string command, string arguments, string? workingDirectory)
             {
@@ -816,7 +816,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public async Task ExecuteAsync_WithVeryLongArguments_HandlesCorrectly()
         {
             using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutor();
+            var executor = fixture.CreateProcessExecutionService();
             var command = fixture.CreateValidCommand();
             var longMessage = new string('x', 1000);
             var arguments = fixture.CreateEchoArguments(longMessage);
@@ -839,7 +839,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public async Task ExecuteAsync_WithZeroTimeout_CompletesSuccessfully()
         {
             using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutor();
+            var executor = fixture.CreateProcessExecutionService();
             var command = fixture.CreateValidCommand();
             var arguments = fixture.CreateEchoArguments();
             var workingDir = fixture.CreateValidWorkingDirectory();
@@ -860,7 +860,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public async Task ExecuteAsync_OutputTrimming_RemovesTrailingWhitespace()
         {
             using var fixture = new TestEnvironmentFixture();
-            var executor = fixture.CreateProcessExecutor();
+            var executor = fixture.CreateProcessExecutionService();
             var command = fixture.CreateValidCommand();
             var arguments = "-Command \"Write-Output 'Test'; Write-Output ''\""; // Extra newline
             var workingDir = fixture.CreateValidWorkingDirectory();

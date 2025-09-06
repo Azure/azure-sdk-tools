@@ -8,11 +8,11 @@ using Microsoft.Extensions.Logging;
 
 namespace Azure.Tools.GeneratorAgent
 {
-    internal class ProcessExecutor
+    internal class ProcessExecutionService
     {
-        private readonly ILogger<ProcessExecutor> Logger;
+        private readonly ILogger<ProcessExecutionService> Logger;
 
-        public ProcessExecutor(ILogger<ProcessExecutor> logger)
+        public ProcessExecutionService(ILogger<ProcessExecutionService> logger)
         {
             ArgumentNullException.ThrowIfNull(logger);
             Logger = logger;

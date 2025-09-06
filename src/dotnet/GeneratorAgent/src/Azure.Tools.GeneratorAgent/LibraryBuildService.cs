@@ -5,25 +5,25 @@ using Microsoft.Extensions.Logging;
 namespace Azure.Tools.GeneratorAgent
 {
     /// <summary>
-    /// Service responsible for building the generated SDK and capturing build logs.
+    /// Service responsible for building the generated Library and capturing build logs.
     /// </summary>
-    internal class SdkBuildService
+    internal class LibraryBuildService
     {
-        private readonly ILogger<SdkBuildService> Logger;
-        private readonly ProcessExecutor ProcessExecutor;
+        private readonly ILogger<LibraryBuildService> Logger;
+        private readonly ProcessExecutionService ProcessExecutionService;
         private readonly string SdkOutputDir;
 
-        public SdkBuildService(
-            ILogger<SdkBuildService> logger,
-            ProcessExecutor processExecutor,
+        public LibraryBuildService(
+            ILogger<LibraryBuildService> logger,
+            ProcessExecutionService processExecutionService,
             string sdkOutputDir)
         {
             ArgumentNullException.ThrowIfNull(logger);
-            ArgumentNullException.ThrowIfNull(processExecutor);
+            ArgumentNullException.ThrowIfNull(processExecutionService);
             ArgumentException.ThrowIfNullOrWhiteSpace(sdkOutputDir);
 
             Logger = logger;
-            ProcessExecutor = processExecutor;
+            ProcessExecutionService = processExecutionService;
             SdkOutputDir = sdkOutputDir;
         }
 
@@ -47,7 +47,7 @@ namespace Azure.Tools.GeneratorAgent
                     throw new ArgumentException($"Build arguments validation failed: {argValidation.Exception?.Message}");
                 }
 
-                Result<object> buildResult = await ProcessExecutor.ExecuteAsync(
+                Result<object> buildResult = await ProcessExecutionService.ExecuteAsync(
                     SecureProcessConfiguration.DotNetExecutable,
                     argValidation.Value!,
                     SdkOutputDir,

@@ -46,6 +46,6 @@ public class NpxOptions : ProcessOptions, IProcessOptions
         {
             return args;
         }
-        return [$"--package={package}", "--", .. args];
+        return ["--yes", $"--package={package}", "--", .. args];
     }
 }

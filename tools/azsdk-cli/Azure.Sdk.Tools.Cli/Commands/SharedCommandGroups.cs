@@ -41,6 +41,12 @@ namespace Azure.Sdk.Tools.Cli.Commands
             Options: []
         );
 
+        public static readonly CommandGroup SourceCode = new(
+            Verb: "source-code",
+            Description: "Source code generation and build commands",
+            Options: []
+        );
+
         public static readonly CommandGroup TypeSpec = new(
             Verb: "tsp",
             Description: "Tools for setting up or working with TypeSpec projects",

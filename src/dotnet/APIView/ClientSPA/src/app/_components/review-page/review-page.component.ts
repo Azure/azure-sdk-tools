@@ -12,6 +12,7 @@ import { APIRevisionsService } from 'src/app/_services/revisions/revisions.servi
 import { UserProfileService } from 'src/app/_services/user-profile/user-profile.service';
 import { WorkerService } from 'src/app/_services/worker/worker.service';
 import { CodePanelComponent } from '../code-panel/code-panel.component';
+import { ReviewPageOptionsComponent } from '../review-page-options/review-page-options.component';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { ACTIVE_API_REVISION_ID_QUERY_PARAM, DIFF_API_REVISION_ID_QUERY_PARAM, DIFF_STYLE_QUERY_PARAM, REVIEW_ID_ROUTE_PARAM, SCROLL_TO_NODE_QUERY_PARAM } from 'src/app/_helpers/router-helpers';
 import { CodePanelData, CodePanelRowData, CodePanelRowDatatype, CrossLanguageContentDto } from 'src/app/_models/codePanelModels';
@@ -32,6 +33,7 @@ import { environment } from 'src/environments/environment';
 })
 export class ReviewPageComponent implements OnInit {
   @ViewChild(CodePanelComponent) codePanelComponent!: CodePanelComponent;
+  @ViewChild(ReviewPageOptionsComponent) reviewPageOptionsComponent!: ReviewPageOptionsComponent;
 
   reviewId : string | null = null;
   activeApiRevisionId : string | null = null;
@@ -49,7 +51,7 @@ export class ReviewPageComponent implements OnInit {
   diffAPIRevision : APIRevision | undefined = undefined;
   latestSampleRevision: SamplesRevision | undefined = undefined;
   revisionSidePanel : boolean | undefined = undefined;
-  crosslanguageRevisionSidePanel : boolean | undefined = undefined; 
+  crosslanguageRevisionSidePanel : boolean | undefined = undefined;
   conversationSidePanel : boolean | undefined = undefined;
   reviewPageNavigation : TreeNode[] = [];
   language: string | undefined;
@@ -113,7 +115,6 @@ export class ReviewPageComponent implements OnInit {
           this.showLineNumbers = false;
         }
       });
-      
     this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
       const navigationState = this.router.getCurrentNavigation()?.extras.state;
       if (!navigationState || !navigationState['skipStateUpdate']) {
@@ -159,7 +160,7 @@ export class ReviewPageComponent implements OnInit {
         icon: 'bi bi-chat-left-dots',
         tooltip: 'Conversations',
         badge: (this.numberOfActiveConversation > 0) ? this.numberOfActiveConversation.toString() : undefined,
-        command: () => { 
+        command: () => {
             if (this.getLoadingStatus() === 'completed') {
               this.conversationSidePanel = !this.conversationSidePanel;
             }
@@ -169,7 +170,7 @@ export class ReviewPageComponent implements OnInit {
         icon: 'bi bi-puzzle',
         tooltip: 'Samples',
         command: () => {
-          if (this.latestSampleRevision) {          
+          if (this.latestSampleRevision) {
             this.router.navigate(['/samples', this.reviewId],
             { queryParams: { activeSamplesRevisionId: this.latestSampleRevision?.id } });
           }
@@ -300,7 +301,7 @@ export class ReviewPageComponent implements OnInit {
       pageRevisions.push(this.diffApiRevisionId);
     }
 
-    this.apiRevisionsService.getAPIRevisions(noOfItemsRead, pageSize, this.reviewId!, undefined, undefined, 
+    this.apiRevisionsService.getAPIRevisions(noOfItemsRead, pageSize, this.reviewId!, undefined, undefined,
       undefined, "createdOn", undefined, undefined, undefined, true, pageRevisions)
       .pipe(
         takeUntil(this.destroyLoadAPIRevision$),
@@ -348,7 +349,7 @@ export class ReviewPageComponent implements OnInit {
         }),
       ).subscribe({
           next: (response: any) => {
-            
+
           }
         });
   }
@@ -517,7 +518,7 @@ export class ReviewPageComponent implements OnInit {
         this.activeAPIRevision = apiRevision;
         const activeAPIRevisionIndex = this.apiRevisions.findIndex(x => x.id === this.activeAPIRevision!.id);
         this.apiRevisions[activeAPIRevisionIndex] = this.activeAPIRevision!;
-      } 
+      }
     });
   }
 
@@ -543,6 +544,29 @@ export class ReviewPageComponent implements OnInit {
       this.reviewsService.toggleReviewApproval(this.reviewId!, this.activeApiRevisionId!, true).pipe(take(1)).subscribe({
         next: (review: Review) => {
           this.review = review;
+        }
+      });
+    }
+  }
+
+  handleNamespaceApprovalEmitter(value: boolean) {
+    if (value) {
+      // Collect associated review IDs from the review page options component
+      // Each pull request has a reviewId that corresponds to the individual language review to update
+      const associatedReviewIds = this.reviewPageOptionsComponent?.pullRequestsOfAssociatedAPIRevisions
+        ?.map(pr => pr.reviewId)
+        ?.filter(reviewId => reviewId !== this.reviewId) || [];
+
+      this.reviewsService.requestNamespaceReview(this.reviewId!, associatedReviewIds).pipe(take(1)).subscribe({
+        next: (review: Review) => {
+          this.review = review;
+        },
+        error: (error) => {
+          console.error('Error requesting namespace review:', error);
+          // Reset loading state in the options component on error
+          if (this.reviewPageOptionsComponent) {
+            this.reviewPageOptionsComponent.resetNamespaceReviewLoadingState();
+          }
         }
       });
     }
@@ -581,7 +605,7 @@ export class ReviewPageComponent implements OnInit {
   handleCopyReviewTextEmitter(event: boolean) {
     this.codePanelComponent.copyReviewTextToClipBoard(event);
   }
-  
+
   handleCodeLineSearchTextEmitter(searchText: string) {
     this.codeLineSearchText = searchText;
   }
@@ -652,7 +676,7 @@ export class ReviewPageComponent implements OnInit {
   }
 
   getLoadingStatus() : 'loading' | 'completed' | 'failed' {
-    if (this.codePanelComponent?.isLoading) 
+    if (this.codePanelComponent?.isLoading)
     {
       return 'loading';
     }
@@ -687,7 +711,7 @@ export class ReviewPageComponent implements OnInit {
       this.titleService.setTitle('APIView');
     }
   }
-  
+
   ngOnDestroy() {
     this.workerService.terminateWorker();
     this.destroy$.next();

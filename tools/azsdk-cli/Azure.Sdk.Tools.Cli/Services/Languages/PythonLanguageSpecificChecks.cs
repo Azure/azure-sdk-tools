@@ -98,7 +98,7 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
             _logger.LogInformation("Using Python snippet updater script: {ScriptPath}", scriptPath);
 
             // Check if Python is available
-            var pythonCheckResult = await _processHelper.Run(new("python", new[] { "--version" }, timeout: TimeSpan.FromSeconds(10)), cancellationToken);
+            var pythonCheckResult = await _processHelper.Run(new("python", ["--version"], timeout: TimeSpan.FromSeconds(10)), cancellationToken);
             if (pythonCheckResult.ExitCode != 0)
             {
                 _logger.LogError("Python is not installed or not available in PATH");

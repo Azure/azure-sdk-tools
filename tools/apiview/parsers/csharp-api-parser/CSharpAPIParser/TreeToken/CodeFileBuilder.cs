@@ -16,7 +16,6 @@ namespace CSharpAPIParser.TreeToken
     public class CodeFileBuilder
     {
         private static readonly char[] _newlineChars = new char[] { '\r', '\n' };
-        private Dictionary<string, int> _lineIdCounts = new Dictionary<string, int>(1000);
 
         SymbolDisplayFormat _defaultDisplayFormat = new SymbolDisplayFormat(
             SymbolDisplayGlobalNamespaceStyle.Omitted,
@@ -471,7 +470,7 @@ namespace CSharpAPIParser.TreeToken
                     {
                         // GetId() is not unique for attribute class. for e.g. attribute class id is something like "System.FlagsAttribute"
                         // So, using a unique id for attribute line
-                        LineId = $"{attribute.AttributeClass.GetId()}.{relatedTo}",
+                        LineId = $"{attribute.AttributeClass.GetId()}({attribute.ConstructorArguments.FirstOrDefault().Value}).{relatedTo}",
                         IsHidden = isHidden
                     };
 
@@ -864,13 +863,13 @@ namespace CSharpAPIParser.TreeToken
         string GetLineId(ISymbol member)
         {
             string lineId = member.GetId();
-            if (!_lineIdCounts.TryGetValue(lineId, out var count))
+            var value = (IsExplicitInterfaceImplementation(member), member) switch
             {
-                count = 0;
-            }
-
-            _lineIdCounts[lineId] = count += 1;
-            return count > 1 ? $"{lineId}_{count}" : lineId;
+                (true, IMethodSymbol method) => $"{method.ExplicitInterfaceImplementations.First().ContainingType.GetId()}.{lineId}",
+                (true, IPropertySymbol prop) => $"{prop.ExplicitInterfaceImplementations.First().ContainingType.GetId()}.{lineId}",
+                (_, _) => lineId
+            };
+            return value;
         }
     }
 }

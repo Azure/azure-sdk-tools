@@ -22,6 +22,18 @@ from azure.mgmt.cosmosdb.models import SqlRoleAssignmentCreateUpdateParameters
 from src._credential import get_credential
 
 
+def get_current_user_object_id():
+    """Retrieve the current user's object ID from Microsoft Graph API."""
+    import requests
+
+    credential = get_credential()
+    token = credential.get_token("https://graph.microsoft.com/.default")
+    headers = {"Authorization": f"Bearer {token.token}"}
+    resp = requests.get("https://graph.microsoft.com/v1.0/me", headers=headers, timeout=20)
+    resp.raise_for_status()
+    return resp.json()["id"]
+
+
 def assign_cosmosdb_roles(
     *,
     principal_id: str,
@@ -213,3 +225,49 @@ def revoke_cosmosdb_roles(
         rg_name=rg_name,
         scope=f"/subscriptions/{subscription_id}/resourceGroups/{rg_name}/providers/Microsoft.DocumentDB/databaseAccounts/{cosmos_account_name}",
     )
+
+
+def assign_keyvault_access(*, principal_id: str, subscription_id: str, rg_name: str, vault_name: str, tenant_id: str):
+    """
+    Grants KeyVault access by creating an AccessPolicyEntry
+    """
+    from azure.mgmt.keyvault import KeyVaultManagementClient
+    from azure.mgmt.keyvault.models import AccessPolicyEntry, Permissions
+
+    credential = get_credential()
+    client = KeyVaultManagementClient(credential, subscription_id)
+
+    policy = AccessPolicyEntry(
+        tenant_id=tenant_id,
+        object_id=principal_id,
+        permissions=Permissions(keys=["get", "list"], secrets=["get", "list", "set"], certificates=["get", "list"]),
+    )
+    vault = client.vaults.get(rg_name, vault_name)
+    # if the policy already exists for the principal_id we shouldn't add another
+    for p in vault.properties.access_policies:
+        if p.object_id == principal_id:
+            print(f"✅ KeyVault access policy already exists for {principal_id}")
+            return
+    vault.properties.access_policies.append(policy)
+    return_val = client.vaults.begin_create_or_update(rg_name, vault_name, vault).result()
+    print(f"✅ KeyVault access policy created for {principal_id}")
+    return return_val
+
+
+def revoke_keyvault_access(*, principal_id: str, subscription_id: str, rg_name: str, vault_name: str):
+    """
+    Revokes KeyVault access by deleting an AccessPolicyEntry
+    """
+    from azure.mgmt.keyvault import KeyVaultManagementClient
+
+    credential = get_credential()
+    client = KeyVaultManagementClient(credential, subscription_id)
+    vault = client.vaults.get(rg_name, vault_name)
+    original_len = len(vault.properties.access_policies)
+    vault.properties.access_policies = [p for p in vault.properties.access_policies if p.object_id != principal_id]
+    return_val = client.vaults.begin_create_or_update(rg_name, vault_name, vault).result()
+    if len(vault.properties.access_policies) < original_len:
+        print(f"✅ KeyVault access policy revoked for {principal_id}")
+    else:
+        print(f"ℹ️ No KeyVault access policy found to revoke for {principal_id}")
+    return return_val

@@ -646,11 +646,15 @@ def grant_permissions(assignee_id: str = None):
     """
     Grants permissions for running AVC locally.
     """
-    from src._permissions import PrincipalType, assign_cosmosdb_roles, assign_rbac_roles
+    from src._permissions import (
+        PrincipalType,
+        assign_cosmosdb_roles,
+        assign_keyvault_access,
+        assign_rbac_roles,
+        get_current_user_object_id,
+    )
 
     if not assignee_id:
-        from scripts.apiview_permissions import get_current_user_object_id
-
         assignee_id = get_current_user_object_id()
 
     if not assignee_id:
@@ -688,6 +692,16 @@ def grant_permissions(assignee_id: str = None):
             cosmos_account_name=cosmos_name,
         )
 
+        # grant KeyVault access
+        keyvault_name = "avc-vault" if rg_name == "apiview-copilot" else "avc-vault-staging"
+        assign_keyvault_access(
+            principal_id=assignee_id,
+            subscription_id=subscription_id,
+            rg_name=rg_name,
+            vault_name=keyvault_name,
+            tenant_id="72f988bf-86f1-41af-91ab-2d7cd011db47",
+        )
+
     rg_name = "azsdk-engsys-ai"
     # grant permissions for Cognitive Services OpenAI User on the OpenAI resource
     assign_rbac_roles(
@@ -717,11 +731,14 @@ def revoke_permissions(assignee_id: str = None):
     """
     from azure.mgmt.resource import ManagementLockClient
     from src._credential import get_credential
-    from src._permissions import PrincipalType, revoke_cosmosdb_roles, revoke_rbac_roles
+    from src._permissions import (
+        get_current_user_object_id,
+        revoke_cosmosdb_roles,
+        revoke_keyvault_access,
+        revoke_rbac_roles,
+    )
 
     if not assignee_id:
-        from scripts.apiview_permissions import get_current_user_object_id
-
         assignee_id = get_current_user_object_id()
 
     if not assignee_id:
@@ -756,6 +773,11 @@ def revoke_permissions(assignee_id: str = None):
             subscription_id=subscription_id,
             rg_name=rg_name,
             cosmos_account_name=cosmos_name,
+        )
+
+        keyvault_name = "avc-vault" if rg_name == "apiview-copilot" else "avc-vault-staging"
+        revoke_keyvault_access(
+            principal_id=assignee_id, subscription_id=subscription_id, rg_name=rg_name, vault_name=keyvault_name
         )
 
     rg_name = "azsdk-engsys-ai"

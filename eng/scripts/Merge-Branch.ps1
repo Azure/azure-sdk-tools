@@ -67,7 +67,7 @@ if ($Theirs.Length) {
 # update paths matching "ours", except for "merge", to their pre-merge state
 if ($Ours.Length) {
     Write-Verbose "git restore --ours --worktree -- $ourIncludes $mergeExcludes"
-    git restore --ours --worktreed -- $ourIncludes $mergeExcludes
+    git restore --ours --worktree -- $ourIncludes $mergeExcludes
     if ($LASTEXITCODE) { ErrorExit $LASTEXITCODE }
     Write-Verbose "git add -A"
     git add -A

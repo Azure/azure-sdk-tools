@@ -79,13 +79,13 @@ namespace Azure.Tools.GeneratorAgent
 
                 Dictionary<string, string> typeSpecFiles = new(contents.Length);
 
-                IEnumerable<GitHubContent> tspFiles = contents
-                    .Where(c => string.Equals(c.Type, "file", StringComparison.Ordinal) && 
-                               c.Name.EndsWith(".tsp", StringComparison.OrdinalIgnoreCase) &&
-                               !string.IsNullOrEmpty(c.DownloadUrl));
+                // Get all files 
+                IEnumerable<GitHubContent> allFiles = contents
+                    .Where(c => string.Equals(c.Type, "file", StringComparison.Ordinal) &&
+                            !string.IsNullOrEmpty(c.DownloadUrl));
 
-                IEnumerable<Task<(string FileName, string Content)>> downloadTasks = tspFiles
-                    .Select(tspFile => DownloadFileContentAsync(tspFile.Name, tspFile.DownloadUrl, cancellationToken));
+                IEnumerable<Task<(string FileName, string Content)>> downloadTasks = allFiles
+                    .Select(file => DownloadFileContentAsync(file.Name, file.DownloadUrl, cancellationToken));
 
                 (string FileName, string Content)[] downloadedFiles = await Task.WhenAll(downloadTasks).ConfigureAwait(false);
 

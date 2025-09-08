@@ -16,6 +16,7 @@ namespace CSharpAPIParser.TreeToken
     public class CodeFileBuilder
     {
         private static readonly char[] _newlineChars = new char[] { '\r', '\n' };
+        private Dictionary<string, int> _lineIdCounts = new Dictionary<string, int>(1000);
 
         SymbolDisplayFormat _defaultDisplayFormat = new SymbolDisplayFormat(
             SymbolDisplayGlobalNamespaceStyle.Omitted,
@@ -68,7 +69,7 @@ namespace CSharpAPIParser.TreeToken
         }
 
         public CodeFile Build(IAssemblySymbol assemblySymbol, bool runAnalysis, List<DependencyInfo>? dependencies)
-        {  
+        {
             _assembly = assemblySymbol;
             var analyzer = new Analyzer();
 
@@ -224,7 +225,7 @@ namespace CSharpAPIParser.TreeToken
                 IsContextEndLine = true
             });
             //Add an empty line in the review after current name space.
-            reviewLines.Add(new ReviewLine() { IsHidden = isHidden, RelatedToLine = namespaceLine.LineId});
+            reviewLines.Add(new ReviewLine() { IsHidden = isHidden, RelatedToLine = namespaceLine.LineId });
         }
 
         private void BuildNamespaceName(ReviewLine namespaceLine, INamespaceSymbol namespaceSymbol)
@@ -421,14 +422,16 @@ namespace CSharpAPIParser.TreeToken
         private void BuildMember(List<ReviewLine> reviewLines, ISymbol member, bool inHiddenScope)
         {
             bool isHidden = IsHiddenFromIntellisense(member) || inHiddenScope;
+            // Use the specialized id format only for explicit interface implementations; otherwise use the default display
+            string lineId = GetLineId(member);
             var reviewLine = new ReviewLine()
             {
-                LineId = member.GetId(),
+                LineId = lineId,
                 IsHidden = isHidden
             };
 
-            BuildDocumentation(reviewLines, member, isHidden, member.GetId());
-            BuildAttributes(reviewLines, member.GetAttributes(), isHidden, member.GetId());
+            BuildDocumentation(reviewLines, member, isHidden, lineId);
+            BuildAttributes(reviewLines, member.GetAttributes(), isHidden, lineId);
             reviewLines.Add(reviewLine);
             DisplayName(reviewLine, member);
             reviewLine.Tokens.Last().HasSuffixSpace = false;
@@ -841,7 +844,7 @@ namespace CSharpAPIParser.TreeToken
 
             protected override void AddBitwiseOr()
             {
-                if(_tokenList.Count > 0)
+                if (_tokenList.Count > 0)
                     _tokenList.Last().HasSuffixSpace = true;
                 _tokenList.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.BarToken));
             }
@@ -857,6 +860,18 @@ namespace CSharpAPIParser.TreeToken
             {
                 AddNonNullConstantValue(type, typedConstantValue);
             }
+        }
+
+        string GetLineId(ISymbol member)
+        {
+            string lineId = member.GetId();
+            if (!_lineIdCounts.TryGetValue(lineId, out var count))
+            {
+                count = 0;
+            }
+
+            _lineIdCounts[lineId] = count += 1;
+            return count > 1 ? $"{lineId}_{count}" : lineId;
         }
     }
 }

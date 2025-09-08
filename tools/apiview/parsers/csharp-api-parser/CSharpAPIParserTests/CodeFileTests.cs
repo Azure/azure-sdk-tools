@@ -1,14 +1,11 @@
 using System.Reflection;
 using ApiView;
-using System;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using Newtonsoft.Json.Schema;
 using Newtonsoft.Json.Linq;
 using System.Text.Json.Serialization;
 using APIView.Model.V2;
 using Microsoft.CodeAnalysis;
-using NuGet.ContentModel;
 
 
 namespace CSharpAPIParserTests
@@ -120,6 +117,35 @@ namespace CSharpAPIParserTests
             Assert.NotNull(methodLine);
             Assert.Equal(23, methodLine.Tokens.Count);
             Assert.Equal("public virtual Task<Response<BlobContainerClient>> UndeleteBlobContainerAsync(string deletedContainerName, string deletedContainerVersion, CancellationToken cancellationToken = default);", methodLine.ToString().Trim());
+        }
+
+         [Fact]
+        public void NoDuplicateLineIds()
+        {
+            var lines = coreCodeFile.ReviewLines;
+            HashSet<string> lineIds = new HashSet<string>();
+
+            foreach (var line in lines)
+            {
+                if (!string.IsNullOrEmpty(line.LineId))
+                {
+                    Assert.True(lineIds.Add(line.LineId), $"Duplicate lineId found: {line.LineId}");
+                }
+                foreach (var child in line.Children)
+                {
+                    if (!string.IsNullOrEmpty(child.LineId))
+                    {
+                        Assert.True(lineIds.Add(child.LineId), $"Duplicate lineId found: {child.LineId}");
+                    }
+                    foreach (var grandChild in child.Children)
+                    {
+                        if (!string.IsNullOrEmpty(grandChild.LineId))
+                        {
+                            Assert.True(lineIds.Add(grandChild.LineId), $"Duplicate lineId found: {grandChild.LineId}");
+                        }
+                    }
+                }
+            }
         }
 
         public static IEnumerable<object[]> PackageCodeFiles => new List<object[]>

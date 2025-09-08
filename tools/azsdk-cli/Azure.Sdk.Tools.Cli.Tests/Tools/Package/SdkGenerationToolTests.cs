@@ -252,6 +252,96 @@ public class SdkGenerationToolTests
         Assert.That(result.ResponseErrors?.First(), Does.Contain(DirectoryNotExistError));
     }
 
+    [Test]
+    public async Task GenerateSdkAsync_WithLocalTspConfigAndEmitterOptions_PassesOptionsToNpx()
+    {
+        // Arrange
+        var tspConfigPath = Path.Combine(_tempDirectory, TspConfigFileName);
+        File.WriteAllText(tspConfigPath, TestTspConfigContent);
+        var emitterOptions = "package-version=1.0.0-beta.1";
+        
+        // Mock GitHelper to return valid repo root
+        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory)).Returns(_tempDirectory);
+        _mockGitHelper.Setup(x => x.GetGitHubRepoFullName(tspConfigPath)).Returns(DefaultSpecRepo);
+
+        var expectedResult = new ProcessResult { ExitCode = 0 };
+        expectedResult.AppendStdout(ProcessSuccessOutput);
+        _mockNpxHelper
+            .Setup(x => x.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedResult);
+
+        // Act
+        var result = await _tool.GenerateSdkAsync(_tempDirectory, tspConfigPath, null, emitterOptions);
+
+        // Assert
+        Assert.That(result.Result, Is.EqualTo("succeeded"));
+        _mockNpxHelper.Verify(x => x.Run(
+            It.Is<NpxOptions>(opts => 
+                opts.Args.Contains("--repo") &&
+                opts.Args.Contains(DefaultSpecRepo) &&
+                opts.Args.Contains("--emitter-options") &&
+                opts.Args.Contains(emitterOptions)),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public async Task GenerateSdkAsync_WithRemoteTspConfigAndEmitterOptions_PassesOptionsToNpx()
+    {
+        // Arrange
+        var emitterOptions = "package-version=1.0.0-beta.1";
+        
+        // Mock GitHelper to return valid repo root
+        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory)).Returns(_tempDirectory);
+
+        var expectedResult = new ProcessResult { ExitCode = 0 };
+        expectedResult.AppendStdout(ProcessSuccessOutput);
+        _mockNpxHelper
+            .Setup(x => x.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedResult);
+
+        // Act
+        var result = await _tool.GenerateSdkAsync(_tempDirectory, RemoteTspConfigUrl, null, emitterOptions);
+
+        // Assert
+        Assert.That(result.Result, Is.EqualTo("succeeded"));
+        _mockNpxHelper.Verify(x => x.Run(
+            It.Is<NpxOptions>(opts => 
+                opts.Args.Contains("--emitter-options") &&
+                opts.Args.Contains(emitterOptions) &&
+                !opts.Args.Contains("--repo")), // Remote URLs should not include --repo
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Test]
+    public async Task GenerateSdkAsync_WithLocalTspConfigNoEmitterOptions_DoesNotPassEmitterOptionsToNpx()
+    {
+        // Arrange
+        var tspConfigPath = Path.Combine(_tempDirectory, TspConfigFileName);
+        File.WriteAllText(tspConfigPath, TestTspConfigContent);
+        
+        // Mock GitHelper to return valid repo root
+        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory)).Returns(_tempDirectory);
+        _mockGitHelper.Setup(x => x.GetGitHubRepoFullName(tspConfigPath)).Returns(DefaultSpecRepo);
+
+        var expectedResult = new ProcessResult { ExitCode = 0 };
+        expectedResult.AppendStdout(ProcessSuccessOutput);
+        _mockNpxHelper
+            .Setup(x => x.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedResult);
+
+        // Act
+        var result = await _tool.GenerateSdkAsync(_tempDirectory, tspConfigPath, null, null);
+
+        // Assert
+        Assert.That(result.Result, Is.EqualTo("succeeded"));
+        _mockNpxHelper.Verify(x => x.Run(
+            It.Is<NpxOptions>(opts => 
+                opts.Args.Contains("--repo") &&
+                opts.Args.Contains(DefaultSpecRepo) &&
+                !opts.Args.Contains("--emitter-options")), // Should not include emitter options when null
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
     #endregion
 
     #region Command Tests

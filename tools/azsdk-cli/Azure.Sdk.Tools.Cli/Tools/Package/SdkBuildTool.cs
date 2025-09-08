@@ -15,7 +15,7 @@ using LibGit2Sharp;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package
 {
-    [McpServerToolType, Description("This type contains the tools to build SDK code locally.")]
+    [McpServerToolType, Description("This type contains the tools to build/compile SDK code locally.")]
     public class SdkBuildTool: MCPTool
     {
         // Command names
@@ -58,7 +58,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             _output.Output(buildResult);
         }
 
-        [McpServerTool(Name = "azsdk_package_build_code"), Description("Build SDK code for a specified project locally.")]
+        [McpServerTool(Name = "azsdk_package_build_code"), Description("Build/compile SDK code for a specified project locally.")]
         public async Task<DefaultCommandResponse> BuildSdkAsync(
             [Description("Absolute path to the SDK project.")]
             string packagePath,

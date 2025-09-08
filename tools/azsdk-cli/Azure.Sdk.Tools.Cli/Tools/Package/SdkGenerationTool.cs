@@ -67,13 +67,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
         [McpServerTool(Name = "azsdk_package_generate_code"), Description("Generates SDK code for a specified language using either 'tspconfig.yaml' or 'tsp-location.yaml'. Runs locally.")]
         public async Task<DefaultCommandResponse> GenerateSdkAsync(
-            [Description("Absolute path to the local Azure SDK repository. Optional. Example: 'azure-sdk-for-net'. If not provided, the tool attempts to discover the repo from the current working directory.")]
+            [Description("Absolute path to the local Azure SDK repository. REQUIRED. Example: 'path/to/azure-sdk-for-net'. If not provided, the tool attempts to discover the repo from the current working directory.")]
             string localSdkRepoPath,
-            [Description("Path to the 'tspconfig.yaml' file. Can be a local file path or a remote HTTPS URL. Optional if running inside a local azure-sdk-{language} repository, for example, inside 'azure-sdk-for-net' repository.")]
+            [Description("Path to the 'tspconfig.yaml' file. Can be a local file path or a remote HTTPS URL. Optional if running inside a local cloned azure-sdk-{language} repository, for example, inside 'azure-sdk-for-net' repository.")]
             string? tspConfigPath,
-            [Description("Path to 'tsp-location.yaml'. Optional. May be left empty if running inside a local azure-rest-api-specs repository.")]
+            [Description("Path to 'tsp-location.yaml'. Optional. May be left empty if running inside a local cloned 'azure-rest-api-specs' repository.")]
             string? tspLocationPath,
-            [Description("Emitter options in key-value format. Optional. Example: 'package-version=1.0.0-beta.1'.")]
+            [Description("Emitter options in key-value format. Optional. Leave empty for defaults. Example: 'package-version=1.0.0-beta.1'.")]
             string? emitterOptions,
             CancellationToken ct = default)
         {
@@ -141,7 +141,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 }
             }
 
-            return await RunTspInit(localSdkRepoPath, tspConfigPath, specRepoFullName, ct);
+            return await RunTspInit(localSdkRepoPath, tspConfigPath, specRepoFullName, emitterOptions, ct);
         }
 
         // Run tsp-client update command to re-generate the SDK code
@@ -174,12 +174,24 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         }
 
         // Run tsp-client init command to re-generate the SDK code
-        private async Task<DefaultCommandResponse> RunTspInit(string localSdkRepoPath, string tspConfigPath, string specRepoFullName, CancellationToken ct)
+        private async Task<DefaultCommandResponse> RunTspInit(string localSdkRepoPath, string tspConfigPath, string specRepoFullName, string emitterOptions, CancellationToken ct)
         {
             _logger.LogInformation($"Running tsp-client init command.");
 
             // Build arguments list dynamically
             var arguments = new List<string> { "tsp-client", "init", "--update-if-exists", "--tsp-config", tspConfigPath };
+            
+            if (!string.IsNullOrEmpty(specRepoFullName))
+            {
+                arguments.Add("--repo");
+                arguments.Add(specRepoFullName);
+            }
+
+            if (!string.IsNullOrEmpty(emitterOptions))
+            {
+                arguments.Add("--emitter-options");
+                arguments.Add(emitterOptions);
+            }
 
             var npxOptions = new NpxOptions(
                 "@azure-tools/typespec-client-generator-cli",

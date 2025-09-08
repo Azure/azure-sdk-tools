@@ -59,10 +59,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         [McpServerTool(Name = "azsdk_get_release_plan_for_spec_pr"), Description("Get release plan for API spec pull request. This tool should be used only if work item Id is unknown.")]
         public async Task<string> GetReleasePlanForPullRequest(string pullRequestLink)
         {
-            var response = new GenericResponse()
-            {
-                Status = "Failed"
-            };
+            var response = new GenericResponse();
 
             try
             {

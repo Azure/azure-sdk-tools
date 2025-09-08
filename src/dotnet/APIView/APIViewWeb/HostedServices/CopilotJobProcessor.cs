@@ -149,11 +149,10 @@ namespace APIViewWeb.HostedServices
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "Error processing Copilot job {JobId}, ReviewId: {ReviewId}, APIRevisionId: {APIRevisionId}", 
-                    jobInfo.JobId, jobInfo.APIRevision.ReviewId, jobInfo.APIRevision.Id);
-                
                 jobInfo.APIRevision.CopilotReviewInProgress = false;
                 await _apiRevisionsManager.UpdateAPIRevisionAsync(jobInfo.APIRevision);
+                _logger.LogError(e, "Error processing Copilot job {JobId}, ReviewId: {ReviewId}, APIRevisionId: {APIRevisionId}", 
+                    jobInfo.JobId, jobInfo.APIRevision.ReviewId, jobInfo.APIRevision.Id);
                 throw;
             }
         }

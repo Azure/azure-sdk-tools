@@ -15,15 +15,14 @@ namespace Azure.Tools.ErrorAnalyzers
     {
         /// <summary>
         /// Attempts to generate a fix for a single error.
+        /// Uses fallback mechanism for unknown error types.
         /// </summary>
-        public static Fix? GetFix(RuleError error)
+        public static Fix GetFix(RuleError error)
         {
             ArgumentNullException.ThrowIfNull(error);
 
-            if (!AnalyzerPrompts.TryGetPromptFix(error.type, out var fix) || fix is null)
-            {
-                return null;
-            }
+            // Get fix with automatic fallback for unknown rules
+            var fix = AnalyzerPrompts.GetPromptFix(error.type);
 
             // Format context if available, otherwise keep it null
             string? context = null;
@@ -53,11 +52,7 @@ namespace Azure.Tools.ErrorAnalyzers
 
             foreach (var error in errors)
             {
-                var fix = GetFix(error);
-                if (fix is not null)
-                {
-                    yield return fix;
-                }
+                yield return GetFix(error);
             }
         }
 
@@ -65,10 +60,12 @@ namespace Azure.Tools.ErrorAnalyzers
         /// Gets all available rule IDs.
         /// Returns all compile-time registered rules for maximum compatibility.
         /// </summary>
-        public static IReadOnlyCollection<string> GetRegisteredRules()
+        public static IEnumerable<string> GetRegisteredRules()
         {
             // Return all available rule IDs from the compile-time dictionary
-            return AnalyzerPrompts.GetAllRuleIds();
+            // Exclude the fallback mechanism from the public API
+            return AnalyzerPrompts.GetAllRuleIds()
+                .Where(id => id != AnalyzerPrompts.FallbackRuleId);
         }
     }
 }

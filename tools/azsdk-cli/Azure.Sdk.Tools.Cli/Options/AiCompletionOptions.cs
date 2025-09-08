@@ -28,7 +28,7 @@ namespace Azure.Sdk.Tools.Cli.Options
     /// Timeout for HTTP requests in seconds. Default is 30 seconds.
     /// </summary>
     [Range(1, 300)]
-    public int TimeoutSeconds { get; set; } = 30;
+    public int TimeoutSeconds { get; set; } = 300;
 
     /// <summary>
     /// Maximum number of retry attempts for failed requests. Default is 3.

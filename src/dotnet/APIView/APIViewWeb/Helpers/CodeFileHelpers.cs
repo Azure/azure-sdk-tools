@@ -524,7 +524,7 @@ namespace APIViewWeb.Helpers
                 if (line.IsDocumentation || line.Processed || (!line.IsActiveRevisionLine && line.IsSkippedFromDiff()))
                     continue;
 
-                //Check if diff revision has a line at same level with same Line Id. This is to handle where a API was removed and added back in different order.
+                //Check if diff revision has a line at same level with same Line Id. This is to handle where an API was removed and added back in different order.
                 // This will also ensure added and modified lines are visible next to each other in the review.
                 ReviewLine relatedLine = line.IsActiveRevisionLine ? diffLines.FirstOrDefault(l => !string.IsNullOrEmpty(l.LineId) && l.LineId == line.LineId) :
                     activeLines.FirstOrDefault(l => !string.IsNullOrEmpty(l.LineId) && l.LineId == line.LineId);

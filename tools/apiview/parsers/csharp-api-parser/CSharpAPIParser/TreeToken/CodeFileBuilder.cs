@@ -422,7 +422,6 @@ namespace CSharpAPIParser.TreeToken
         private void BuildMember(List<ReviewLine> reviewLines, ISymbol member, bool inHiddenScope)
         {
             bool isHidden = IsHiddenFromIntellisense(member) || inHiddenScope;
-            // Use the specialized id format only for explicit interface implementations; otherwise use the default display
             string lineId = GetLineId(member);
             var reviewLine = new ReviewLine()
             {

@@ -105,6 +105,13 @@ helps[
     short-summary: Commands for reporting metrics.
 """
 
+helps[
+    "permissions"
+] = """
+    type: group
+    short-summary: Commands for managing permissions.
+"""
+
 # COMMANDS
 
 
@@ -635,6 +642,151 @@ def report_metrics(start_date: str, end_date: str, environment: str = "productio
     return get_metrics_report(start_date, end_date, environment, markdown)
 
 
+def grant_permissions(assignee_id: str = None):
+    """
+    Grants permissions for running AVC locally.
+    """
+    from src._permissions import PrincipalType, assign_cosmosdb_roles, assign_rbac_roles
+
+    if not assignee_id:
+        from scripts.apiview_permissions import get_current_user_object_id
+
+        assignee_id = get_current_user_object_id()
+
+    if not assignee_id:
+        print("Error: Could not determine the current user ID. Provide `--assignee-id` or run `az login`.")
+
+    subscription_id = "a18897a6-7e44-457d-9260-f2854c0aca42"
+
+    # grant permissions for App Configuration Data Reader
+    for rg_name in ["apiview-copilot", "apiview-copilot-staging"]:
+        assign_rbac_roles(
+            roles=["App Configuration Data Reader"],
+            principal_id=assignee_id,
+            principal_type=PrincipalType.USER,
+            subscription_id=subscription_id,
+            rg_name=rg_name,
+        )
+
+        # grant permissions for Search Index Data Reader
+        assign_rbac_roles(
+            roles=["Search Index Data Reader"],
+            principal_id=assignee_id,
+            principal_type=PrincipalType.USER,
+            subscription_id=subscription_id,
+            rg_name=rg_name,
+        )
+
+        # grant CosmosDB permissions
+        cosmos_name = "avc-cosmos" if rg_name == "apiview-copilot" else "avc-cosmos-staging"
+        assign_cosmosdb_roles(
+            principal_id=assignee_id,
+            principal_type=PrincipalType.USER,
+            subscription_id=subscription_id,
+            rg_name=rg_name,
+            role_kind="readOnly",
+            cosmos_account_name=cosmos_name,
+        )
+
+    rg_name = "azsdk-engsys-ai"
+    # grant permissions for Cognitive Services OpenAI User on the OpenAI resource
+    assign_rbac_roles(
+        roles=["Cognitive Services OpenAI User"],
+        principal_id=assignee_id,
+        principal_type=PrincipalType.USER,
+        subscription_id=subscription_id,
+        rg_name=rg_name,
+        scope=f"/subscriptions/{subscription_id}/resourceGroups/{rg_name}/providers/Microsoft.CognitiveServices/accounts/azsdk-engsys-openai",
+    )
+
+    # grant permissions for Azure AI User on the Foundry resource
+    assign_rbac_roles(
+        roles=["Azure AI User"],
+        principal_id=assignee_id,
+        principal_type=PrincipalType.USER,
+        subscription_id=subscription_id,
+        rg_name=rg_name,
+        scope=f"/subscriptions/{subscription_id}/resourceGroups/{rg_name}/providers/Microsoft.CognitiveServices/accounts/azsdk-engsys-ai",
+    )
+    print("✅ Permissions granted. Please run `az logout` and then `az login` to refresh your access.")
+
+
+def revoke_permissions(assignee_id: str = None):
+    """
+    Revokes permissions for running AVC locally.
+    """
+    from azure.mgmt.resource import ManagementLockClient
+    from src._credential import get_credential
+    from src._permissions import PrincipalType, revoke_cosmosdb_roles, revoke_rbac_roles
+
+    if not assignee_id:
+        from scripts.apiview_permissions import get_current_user_object_id
+
+        assignee_id = get_current_user_object_id()
+
+    if not assignee_id:
+        print("Error: Could not determine the current user ID. Provide `--assignee-id` or run `az login`.")
+
+    subscription_id = "a18897a6-7e44-457d-9260-f2854c0aca42"
+    credential = get_credential()
+    lock_client = ManagementLockClient(credential, subscription_id)
+
+    # temporarily delete the delete locks
+    for rg_name in ["apiview-copilot", "apiview-copilot-staging", "azsdk-engsys-ai"]:
+        locks = lock_client.management_locks.list_at_resource_group_level(rg_name)
+        for lock in locks:
+            if lock.level == "CanNotDelete":
+                lock_client.management_locks.delete_at_resource_group_level(rg_name, lock.name)
+                print(f"✅ Removed 'CanNotDelete' lock '{lock.name}' from resource group '{rg_name}'...")
+
+    for rg_name in ["apiview-copilot", "apiview-copilot-staging"]:
+        revoke_rbac_roles(
+            roles=[
+                "App Configuration Data Reader",
+                "Search Index Data Reader",
+                "DocumentDB Account Contributor",
+            ],
+            principal_id=assignee_id,
+            subscription_id=subscription_id,
+            rg_name=rg_name,
+        )
+        cosmos_name = "avc-cosmos" if rg_name == "apiview-copilot" else "avc-cosmos-staging"
+        revoke_cosmosdb_roles(
+            principal_id=assignee_id,
+            subscription_id=subscription_id,
+            rg_name=rg_name,
+            cosmos_account_name=cosmos_name,
+        )
+
+    rg_name = "azsdk-engsys-ai"
+    revoke_rbac_roles(
+        roles=["Cognitive Services OpenAI User"],
+        principal_id=assignee_id,
+        subscription_id=subscription_id,
+        rg_name=rg_name,
+        scope=f"/subscriptions/{subscription_id}/resourceGroups/{rg_name}/providers/Microsoft.CognitiveServices/accounts/azsdk-engsys-openai",
+    )
+    revoke_rbac_roles(
+        roles=["Azure AI User"],
+        principal_id=assignee_id,
+        subscription_id=subscription_id,
+        rg_name=rg_name,
+        scope=f"/subscriptions/{subscription_id}/resourceGroups/{rg_name}/providers/Microsoft.CognitiveServices/accounts/azsdk-engsys-ai",
+    )
+
+    # recreate the deleted locks
+    for rg_name in ["apiview-copilot", "apiview-copilot-staging", "azsdk-engsys-ai"]:
+        lock_name = f"lock-{rg_name}"
+        lock_client.management_locks.create_or_update_at_resource_group_level(
+            rg_name,
+            lock_name=lock_name,
+            parameters={
+                "level": "CanNotDelete",
+            },
+        )
+        print(f"✅ Re-created 'CanNotDelete' lock for resource group '{rg_name}'...")
+
+
 class CliCommandsLoader(CLICommandsLoader):
     """Loader for CLI commands related to APIView and review management."""
 
@@ -666,6 +818,9 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("purge", "db_purge")
         with CommandGroup(self, "metrics", "__main__#{}") as g:
             g.command("report", "report_metrics")
+        with CommandGroup(self, "permissions", "__main__#{}") as g:
+            g.command("grant", "grant_permissions")
+            g.command("revoke", "revoke_permissions")
         return OrderedDict(self.command_table)
 
     # ARGUMENT REGISTRATION
@@ -919,6 +1074,14 @@ class CliCommandsLoader(CLICommandsLoader):
             ac.argument(
                 "environment",
                 help="The APIView environment from which to calculate the metrics report. Defaults to 'production'.",
+            )
+        with ArgumentsContext(self, "permissions") as ac:
+            ac.argument(
+                "assignee_id",
+                type=str,
+                help="The user ID of the assignee. If not provided, defaults to the current user.",
+                options_list=["--assignee-id", "-a"],
+                default=None,
             )
         super(CliCommandsLoader, self).load_arguments(command)
 

@@ -25,8 +25,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 
         // Command line options and arguments
         private readonly Argument<string> _questionArgument = new("question", "The question to ask the AI agent");
-        private readonly Option<string[]> _sourcesOption = new("--sources", "Documentation sources to search (e.g., typespec_docs, azure_api_guidelines)") { AllowMultipleArgumentsPerToken = true };
-        private readonly Option<int> _topKOption = new("--top-k", () => 10, "Number of documents to search (1-100)");
         private readonly Option<bool> _includeContextOption = new("--include-context", () => false, "Include full search context in the response");
         private readonly Option<string> _endpointOption = new("--endpoint", "Override the AI completion endpoint");
         private readonly Option<string> _apiKeyOption = new("--api-key", "Override the API key");
@@ -44,8 +42,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             var command = new Command("ai-completion", "Query the Azure SDK QA Bot AI agent for answers about TypeSpec, Azure SDK, and API guidelines");
 
             command.AddArgument(_questionArgument);
-            command.AddOption(_sourcesOption);
-            command.AddOption(_topKOption);
             command.AddOption(_includeContextOption);
             command.AddOption(_endpointOption);
             command.AddOption(_apiKeyOption);
@@ -58,8 +54,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
         {
             var question = ctx.ParseResult.GetValueForArgument(_questionArgument);
-            var sources = ctx.ParseResult.GetValueForOption(_sourcesOption)?.ToList();
-            var topK = ctx.ParseResult.GetValueForOption(_topKOption);
             var includeContext = ctx.ParseResult.GetValueForOption(_includeContextOption);
             var endpoint = ctx.ParseResult.GetValueForOption(_endpointOption);
             var apiKey = ctx.ParseResult.GetValueForOption(_apiKeyOption);
@@ -78,10 +72,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 
                 var response = await QueryAzureSDKDocumentation(
                   question,
-                  sources,
                   conversationHistory: null,
                   includeFullContext: includeContext,
-                  topK: topK,
                   ct: ct);
 
                 if (response.IsSuccessful)
@@ -106,31 +98,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         [McpServerTool(Name = "azsdk_ai_qa_completion")]
         [Description(@"Query the Azure SDK QA Bot AI agent for answers about TypeSpec, Azure SDK, and API guidelines.
             Pass in a `question` to get an AI-generated response with references.
-            Optionally specify `sources` to limit which documentation sources to search. Valid sources include:
-            - 'typespec_docs': TypeSpec documentation
-            - 'typespec_azure_docs': TypeSpec Azure documentation  
-            - 'azure_rest_api_specs_wiki': Azure REST API specifications wiki
-            - 'azure_sdk_for_python_docs': Azure SDK for Python documentation
-            - 'azure_api_guidelines': Azure API guidelines
-            - 'azure_resource_manager_rpc': Azure Resource Manager RPC documentation
-            - 'azure_sdk_guidelines': Azure SDK guidelines
-            - 'typespec_azure_http_specs': TypeSpec Azure HTTP specifications
-            - 'typespec_http_specs': TypeSpec HTTP specifications
             Optionally include `conversationHistory` for context-aware responses.
             Optionally set `includeFullContext` to get the full search context used.
-            Optionally specify `topK` to control how many documents to search (default: 10).
             Returns an answer with supporting references and documentation links.")]
         public async Task<AiCompletionToolResponse> QueryAzureSDKDocumentation(
             [Description("The question to ask the AI agent")]
             string question,
-            [Description("List of documentation sources to search (optional)")]
-            List<string>? sources = null,
             [Description("Previous conversation messages for context (optional)")]
             List<MessageInput>? conversationHistory = null,
             [Description("Whether to include full search context in the response")]
             bool includeFullContext = false,
-            [Description("Number of documents to search (1-100, default: 10)")]
-            int topK = 10,
             CancellationToken ct = default)
         {
             try
@@ -142,15 +119,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                     return new AiCompletionToolResponse
                     {
                         ResponseError = "Question cannot be empty"
-                    };
-                }
-
-                if (topK < 1 || topK > 100)
-                {
-                    SetFailure();
-                    return new AiCompletionToolResponse
-                    {
-                        ResponseError = "TopK must be between 1 and 100"
                     };
                 }
 
@@ -166,22 +134,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                         Content = question
                     },
                     WithFullContext = includeFullContext,
-                    TopK = topK
                 };
-
-                // Map sources if provided
-                if (sources?.Any() == true)
-                {
-                    request.Sources = MapSources(sources);
-                    if (request.Sources.Count == 0)
-                    {
-                        _logger.LogWarning("No valid sources found in the provided list");
-                    }
-                    else
-                    {
-                        _logger.LogDebug("Using sources: {Sources}", string.Join(", ", sources.Where(s => request.Sources.Any(rs => rs.ToString().Contains(s)))));
-                    }
-                }
 
                 // Map conversation history if provided
                 if (conversationHistory?.Any() == true)
@@ -243,14 +196,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             string question,
             [Description("Additional context items (links or images) to include")]
             List<AdditionalContextInput> additionalContext,
-            [Description("List of documentation sources to search (optional)")]
-            List<string>? sources = null,
             [Description("Previous conversation messages for context (optional)")]
             List<MessageInput>? conversationHistory = null,
             [Description("Whether to include full search context in the response")]
             bool includeFullContext = false,
-            [Description("Number of documents to search (1-100, default: 10)")]
-            int topK = 10,
             CancellationToken ct = default)
         {
             try
@@ -287,7 +236,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                         Content = question
                     },
                     WithFullContext = includeFullContext,
-                    TopK = topK
                 };
 
                 // Map additional context
@@ -297,12 +245,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                     Content = ac.Content ?? string.Empty,
                     Link = ac.Link ?? string.Empty
                 }).ToList();
-
-                // Map sources if provided
-                if (sources?.Any() == true)
-                {
-                    request.Sources = MapSources(sources);
-                }
 
                 // Map conversation history if provided
                 if (conversationHistory?.Any() == true)

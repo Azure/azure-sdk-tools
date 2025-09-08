@@ -13,11 +13,12 @@ param (
   [string]$ParserPath = ""
 )
 
+. "${PSScriptRoot}/../common/scripts/logging.ps1"
 
 Write-Host "Review Details Json: $($ReviewDetailsJson)"
 $reviews = ConvertFrom-Json $ReviewDetailsJson
 Write-Host $reviews
-$wasApiviewTokenFileCreated = $false
+$apiviewTokenFileCreationFailed = $false
 if ($reviews -ne $null)
 {
     foreach($r in $reviews)
@@ -47,15 +48,15 @@ if ($reviews -ne $null)
             &($reviewGenScriptPath) -SourcePath $codeDir/$($r.FileName) -OutPath $CodeFileDirectory -ParserPath $ParserPath
         }
 
-        if ((Get-ChildItem -Path $CodeFileDirectory -Recurse | Measure-Object).Count -gt 0)
+        if ((Get-ChildItem -Path $CodeFileDirectory -Recurse | Measure-Object).Count -eq 0)
         {
-            $wasApiviewTokenFileCreated = $true
+            $apiviewTokenFileCreationFailed = $true
         }
     }
-    if (-not $wasApiviewTokenFileCreated)
+    if ($apiviewTokenFileCreationFailed)
     {
-        Write-Host "No Apiview Token files were created"
-        exit 1;
+        LogWarning "One or more APIView Token files were not created"
+        Write-Host "##vso[task.complete result=SucceededWithIssues;]Step Completed with Issues"
     }
 }
 else

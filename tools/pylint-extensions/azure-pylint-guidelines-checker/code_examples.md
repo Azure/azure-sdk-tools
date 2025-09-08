@@ -728,6 +728,27 @@ def create_blob(self, name, data, *, content_type=None, **kwargs):
     """
 ```
 
+## docstring-kwargs-keyword
+
+❌ **Incorrect**:
+```python
+def process_data(**kwargs):
+    """Process data with various options.
+    
+    :keyword kwargs: Additional arguments.  # Should not use "kwargs" as keyword name
+    """
+```
+
+✅ **Correct**:
+```python
+def process_data(*, option1=None, option2=None, **kwargs):
+    """Process data with various options.
+    
+    :keyword str option1: First processing option.
+    :keyword int option2: Second processing option.
+    """
+```
+
 ## do-not-import-legacy-six
 
 ❌ **Incorrect**:

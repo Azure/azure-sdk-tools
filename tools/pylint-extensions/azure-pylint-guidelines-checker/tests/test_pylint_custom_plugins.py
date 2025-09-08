@@ -3084,6 +3084,55 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
         with self.assertNoMessages():
             self.checker.visit_functiondef(node)
 
+    def test_docstring_kwargs_error(self):
+        # Test that using "kwargs" as keyword argument triggers error
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "docstring_kwargs_test.py")
+        )
+        node = astroid.parse(file.read())
+        file.close()
+        
+        # test_docstring_kwargs_incorrect - should trigger error
+        function_node = node.body[0]
+        with self.assertAddsMessages(
+            pylint.testutils.MessageTest(
+                msg_id="docstring-kwargs-keyword",
+                line=4,
+                node=function_node,
+                col_offset=0,
+                end_line=4,
+                end_col_offset=30,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id="docstring-keyword-should-match-keyword-only",
+                line=4,
+                node=function_node,
+                args="kwargs",
+                col_offset=0,
+                end_line=4,
+                end_col_offset=30,
+            ),
+        ):
+            self.checker.visit_functiondef(function_node)
+
+    def test_docstring_kwargs_correct(self):
+        # Test that proper kwargs documentation does not trigger error
+        file = open(
+            os.path.join(TEST_FOLDER, "test_files", "docstring_kwargs_test.py")
+        )
+        node = astroid.parse(file.read())
+        file.close()
+        
+        # test_docstring_kwargs_correct_expanded - should not trigger error
+        function_node_expanded = node.body[1]
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(function_node_expanded)
+            
+        # test_docstring_other_keyword - should not trigger error
+        function_node_other = node.body[2]
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(function_node_other)
+
 
 class TestDoNotImportLegacySix(pylint.testutils.CheckerTestCase):
     """Test that we are blocking disallowed imports and allowing allowed imports."""

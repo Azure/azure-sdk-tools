@@ -46,7 +46,8 @@ public class Program
         WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
         builder.Services.AddOpenTelemetry()
-            .WithTracing(b => {
+            .WithTracing(b =>
+            {
                 b.AddSource(Constants.TOOLS_ACTIVITY_SOURCE)
                     .AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()
@@ -63,15 +64,13 @@ public class Program
             consoleLogOptions.LogToStandardErrorThreshold = logErrorThreshold;
         });
 
-        // Skip verbose azure client logging
+        // Skip azure client logging noise
         builder.Logging.AddFilter((category, level) =>
         {
-            var isAzureClient = category!.StartsWith("Azure.", StringComparison.Ordinal);
-            var isToolsClient = category!.StartsWith("Azure.Sdk.Tools.", StringComparison.Ordinal);
-            if (isAzureClient && !isToolsClient)
-            {
-                return level >= LogLevel.Warning;
-            }
+            if (null == category) { return level >= logErrorThreshold; }
+            var isAzureClient = category.StartsWith("Azure.", StringComparison.Ordinal);
+            var isToolsClient = category.StartsWith("Azure.Sdk.Tools.", StringComparison.Ordinal);
+            if (isAzureClient && !isToolsClient) { return level >= LogLevel.Error; }
             return level >= logErrorThreshold;
         });
 

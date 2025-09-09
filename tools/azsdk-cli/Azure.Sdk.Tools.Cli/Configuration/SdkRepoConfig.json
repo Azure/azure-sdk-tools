@@ -1,4 +1,6 @@
 {
+  "_description": "Configuration file for SDK repository settings. Defines the relative path to the 'swagger_to_sdk_config.json' file in SDK language repos. The 'swagger_to_sdk_config.json' file contains language-specific settings for init, generate, and package process.",
+  "_usage": "This file is used by SdkBuildTool and SdkPostGenerateTool to determine how to build and post-generate SDK packages for different languages.",
   "azure-sdk-for-go": {
     "configFilePath": "eng/swagger_to_sdk_config.json"
   },

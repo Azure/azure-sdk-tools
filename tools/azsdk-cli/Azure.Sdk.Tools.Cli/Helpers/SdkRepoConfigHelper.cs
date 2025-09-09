@@ -256,8 +256,24 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 _logger.LogDebug($"Loading SDK repository configuration from: {_sdkRepoConfigPath}");
                 var content = await File.ReadAllTextAsync(_sdkRepoConfigPath);
                 
-                _cachedConfig = JsonSerializer.Deserialize<Dictionary<string, SdkRepoConfiguration>>(content) 
-                    ?? new Dictionary<string, SdkRepoConfiguration>();
+                // Parse the JSON and filter out properties that start with underscore (comments)
+                using var document = JsonDocument.Parse(content);
+                var filteredConfig = new Dictionary<string, SdkRepoConfiguration>();
+                
+                foreach (var property in document.RootElement.EnumerateObject())
+                {
+                    // Skip properties that start with underscore (like _description, _usage)
+                    if (!property.Name.StartsWith("_"))
+                    {
+                        var config = JsonSerializer.Deserialize<SdkRepoConfiguration>(property.Value.GetRawText());
+                        if (config != null)
+                        {
+                            filteredConfig[property.Name] = config;
+                        }
+                    }
+                }
+                
+                _cachedConfig = filteredConfig;
 
                 _logger.LogInformation("Successfully loaded configuration for {Count} repositories", _cachedConfig.Count);
                 return _cachedConfig;

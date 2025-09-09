@@ -88,8 +88,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
                 _logger.LogInformation($"Repository root path: {sdkRepoRoot}");
 
+                string sdkRepoName = _gitHelper.GetRepoName(sdkRepoRoot);
+                _logger.LogInformation($"Repository name: {sdkRepoName}");
+
                 // Return if the project is python project
-                if (_gitHelper.GetRepoRemoteUri(sdkRepoRoot).ToString().Contains(AzureSdkForPythonRepoName, StringComparison.OrdinalIgnoreCase))
+                if (sdkRepoName.Contains(AzureSdkForPythonRepoName, StringComparison.OrdinalIgnoreCase))
                 {
                     _logger.LogInformation("Python SDK project detected. Skipping build step as Python SDKs do not require a build process.");
                     return CreateSuccessResponse("Python SDK project detected. Skipping build step as Python SDKs do not require a build process.");
@@ -99,9 +102,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 ProcessOptions options;
                 try
                 {
-                    var repoName = _gitHelper.GetRepoName(sdkRepoRoot);
-                    _logger.LogDebug($"Repo name is {repoName}, repo root: {sdkRepoRoot}");
-                    var (configType, configValue) = await _sdkRepoConfigHelper.GetBuildConfigurationAsync(sdkRepoRoot, repoName);
+                    var (configType, configValue) = await _sdkRepoConfigHelper.GetBuildConfigurationAsync(sdkRepoRoot, sdkRepoName);
 
                     if (configType == BuildConfigType.Command)
                     {

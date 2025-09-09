@@ -125,7 +125,7 @@ public class SdkGenerationToolTests
         var result = await _tool.GenerateSdkAsync("/some/path", null, tspLocationPath, null);
 
         // Assert
-        Assert.That(result.ResponseErrors?.First(), Does.Contain(FileNotExistError));
+        Assert.That(result.ResponseErrors?.First(), Does.Contain("does not exist"));
     }
 
     [Test]
@@ -159,7 +159,7 @@ public class SdkGenerationToolTests
         
         // Mock GitHelper to return valid repo root
         _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory)).Returns(_tempDirectory);
-        _mockGitHelper.Setup(x => x.GetGitHubRepoFullName(tspConfigPath)).Returns(DefaultSpecRepo);
+        _mockGitHelper.Setup(x => x.GetGitHubRepoFullNameAsync(tspConfigPath, true)).ReturnsAsync(DefaultSpecRepo);
 
         var expectedResult = new ProcessResult { ExitCode = 0 };
         expectedResult.AppendStdout(ProcessSuccessOutput);
@@ -262,7 +262,7 @@ public class SdkGenerationToolTests
         
         // Mock GitHelper to return valid repo root
         _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory)).Returns(_tempDirectory);
-        _mockGitHelper.Setup(x => x.GetGitHubRepoFullName(tspConfigPath)).Returns(DefaultSpecRepo);
+        _mockGitHelper.Setup(x => x.GetGitHubRepoFullNameAsync(tspConfigPath, false)).ReturnsAsync(DefaultSpecRepo);
 
         var expectedResult = new ProcessResult { ExitCode = 0 };
         expectedResult.AppendStdout(ProcessSuccessOutput);
@@ -275,8 +275,15 @@ public class SdkGenerationToolTests
 
         // Assert
         Assert.That(result.Result, Is.EqualTo("succeeded"));
+        
+        // Verify the NPX arguments match expected pattern
         _mockNpxHelper.Verify(x => x.Run(
             It.Is<NpxOptions>(opts => 
+                opts.Args.Contains("tsp-client") &&
+                opts.Args.Contains("init") &&
+                opts.Args.Contains("--update-if-exists") &&
+                opts.Args.Contains("--tsp-config") &&
+                opts.Args.Contains(tspConfigPath) &&
                 opts.Args.Contains("--repo") &&
                 opts.Args.Contains(DefaultSpecRepo) &&
                 opts.Args.Contains("--emitter-options") &&
@@ -321,7 +328,7 @@ public class SdkGenerationToolTests
         
         // Mock GitHelper to return valid repo root
         _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory)).Returns(_tempDirectory);
-        _mockGitHelper.Setup(x => x.GetGitHubRepoFullName(tspConfigPath)).Returns(DefaultSpecRepo);
+        _mockGitHelper.Setup(x => x.GetGitHubRepoFullNameAsync(tspConfigPath, false)).ReturnsAsync(DefaultSpecRepo);
 
         var expectedResult = new ProcessResult { ExitCode = 0 };
         expectedResult.AppendStdout(ProcessSuccessOutput);
@@ -334,8 +341,15 @@ public class SdkGenerationToolTests
 
         // Assert
         Assert.That(result.Result, Is.EqualTo("succeeded"));
+        
+        // Verify the NPX arguments match expected pattern but don't include emitter options
         _mockNpxHelper.Verify(x => x.Run(
             It.Is<NpxOptions>(opts => 
+                opts.Args.Contains("tsp-client") &&
+                opts.Args.Contains("init") &&
+                opts.Args.Contains("--update-if-exists") &&
+                opts.Args.Contains("--tsp-config") &&
+                opts.Args.Contains(tspConfigPath) &&
                 opts.Args.Contains("--repo") &&
                 opts.Args.Contains(DefaultSpecRepo) &&
                 !opts.Args.Contains("--emitter-options")), // Should not include emitter options when null

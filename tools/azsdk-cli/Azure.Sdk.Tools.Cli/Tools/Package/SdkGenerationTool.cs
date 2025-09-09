@@ -69,7 +69,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         public async Task<DefaultCommandResponse> GenerateSdkAsync(
             [Description("Absolute path to the local Azure SDK repository. REQUIRED. Example: 'path/to/azure-sdk-for-net'. If not provided, the tool attempts to discover the repo from the current working directory.")]
             string localSdkRepoPath,
-            [Description("Path to the 'tspconfig.yaml' file. Can be a local file path or a remote HTTPS URL. Optional if running inside a local cloned azure-sdk-{language} repository, for example, inside 'azure-sdk-for-net' repository.")]
+            [Description("Path to the 'tspconfig.yaml' file. Can be a local file path or a remote HTTPS URL. Optional if running inside a local cloned azure-sdk-for-{language} repository, for example, inside 'azure-sdk-for-net' repository.")]
             string? tspConfigPath,
             [Description("Path to 'tsp-location.yaml'. Optional. May be left empty if running inside a local cloned 'azure-rest-api-specs' repository.")]
             string? tspLocationPath,
@@ -88,6 +88,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 // Handle tsp-location.yaml case
                 if (!string.IsNullOrEmpty(tspLocationPath))
                 {
+                    if (!tspLocationPath.EndsWith("tsp-location.yaml", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return CreateFailureResponse($"The specified 'tsp-location.yaml' path is invalid: {tspLocationPath}. It must be an absolute path to local 'tsp-location.yaml' file.");
+                    }
                     return await RunTspUpdate(tspLocationPath, ct);
                 }
 
@@ -130,10 +134,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 {
                     return CreateFailureResponse($"The 'tspconfig.yaml' file does not exist at the specified path: {tspConfigPath}. Prompt user to clone the azure-rest-api-specs repository locally if it does not have a local copy.");
                 }
-                specRepoFullName = _gitHelper.GetGitHubRepoFullName(tspConfigPath);
+                specRepoFullName = await _gitHelper.GetGitHubRepoFullNameAsync(tspConfigPath, findUpstreamParent: false);
             }
             else
             {
+                // specRepoFullName doesn't need to be set in this case
                 _logger.LogInformation($"Remote 'tspconfig.yaml' URL detected: {tspConfigPath}.");
                 if (!IsValidRemoteGitHubUrlWithCommit(tspConfigPath))
                 {
@@ -216,12 +221,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         // Validate remote GitHub URL with commit SHA
         private bool IsValidRemoteGitHubUrlWithCommit(string tspConfigPath)
         {
-            // Must contain /blob/ pattern
-            if (!tspConfigPath.Contains("/blob/"))
-            {
-                return false;
-            }
-
             // Extract the part after /blob/ and before the next /
             var blobIndex = tspConfigPath.IndexOf("/blob/", StringComparison.OrdinalIgnoreCase);
             if (blobIndex == -1)

@@ -82,20 +82,20 @@ public class SdkBuildToolTests
         Assert.That(result.ResponseErrors?.First(), Does.Contain(InvalidProjectPathError));
     }
 
-    [Test]
+        [Test]
     public async Task BuildSdkAsync_PythonProject_SkipsBuild()
     {
-        // Arrange - Create a path and mock GitHelper to return Python repo URI
-        var pythonProjectPath = Path.Combine(_tempDirectory, "sdk", "storage", "azure-storage-blob");
+        // Arrange
+        var pythonProjectPath = Path.Combine(_tempDirectory, "test-python-sdk");
         Directory.CreateDirectory(pythonProjectPath);
         
-        // Mock GitHelper to return a Python SDK remote URI
+        // Mock GitHelper to return a Python SDK repo name
         _mockGitHelper
             .Setup(x => x.DiscoverRepoRoot(pythonProjectPath))
             .Returns(_tempDirectory);
         _mockGitHelper
-            .Setup(x => x.GetRepoRemoteUri(_tempDirectory))
-            .Returns(new Uri("https://github.com/Azure/azure-sdk-for-python.git"));
+            .Setup(x => x.GetRepoName(_tempDirectory))
+            .Returns("azure-sdk-for-python");
 
         // Act
         var result = await _tool.BuildSdkAsync(pythonProjectPath);

@@ -3,10 +3,16 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.CommandLine;
+using System.CommandLine.Parsing;
 
 namespace Azure.Sdk.Tools.Cli.Helpers
 {
-    public interface ISdkRepoConfigHelper
+    /// <summary>
+    /// Interface for accessing and processing Azure SDK repository configuration from swagger_to_sdk_config.json files.
+    /// Supports reading build configurations, processing command templates, and navigating JSON configuration structures.
+    /// </summary>
+    public interface ISpecGenSdkConfigHelper
     {
         // Config value retrieval methods
         Task<T> GetConfigValueFromRepoAsync<T>(string repositoryRoot, string jsonPath);
@@ -17,16 +23,29 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         string[] ParseCommand(string command);
     }
 
-    public class SdkRepoConfigHelper : ISdkRepoConfigHelper
+    /// <summary>
+    /// Helper class for reading and processing configuration from the standardized "swagger_to_sdk_config.json" file 
+    /// located at "eng/swagger_to_sdk_config.json" in Azure SDK repositories. This configuration file defines build 
+    /// scripts, commands, and package options used during SDK generation from OpenAPI specifications.
+    /// 
+    /// Provides functionality to:
+    /// - Extract build configuration (commands or script paths) for SDK compilation
+    /// - Substitute template variables in build commands (e.g., {packagePath})
+    /// - Parse command strings into executable components
+    /// - Navigate JSON configuration paths to retrieve specific values
+    /// 
+    /// Configuration schema reference: https://github.com/Azure/azure-sdk-tools/blob/main/tools/spec-gen-sdk/src/types/SwaggerToSdkConfigSchema.json
+    /// </summary>
+    public class SpecGenSdkConfigHelper : ISpecGenSdkConfigHelper
     {
         // Constants
         private const string BuildCommandJsonPath = "packageOptions/buildScript/command";
         private const string BuildScriptPathJsonPath = "packageOptions/buildScript/path";
         private const string SpecToSdkConfigPath = "eng/swagger_to_sdk_config.json";
 
-        private readonly ILogger<SdkRepoConfigHelper> _logger;
+        private readonly ILogger<SpecGenSdkConfigHelper> _logger;
 
-        public SdkRepoConfigHelper(ILogger<SdkRepoConfigHelper> logger)
+        public SpecGenSdkConfigHelper(ILogger<SpecGenSdkConfigHelper> logger)
         {
             this._logger = logger;
         }
@@ -144,39 +163,17 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 return Array.Empty<string>();
             }
 
-            var parts = new List<string>();
-            var inQuotes = false;
-            var currentPart = new StringBuilder();
+            // Use System.CommandLine.Parser
+            var parser = new Parser(new RootCommand());
+            var result = parser.Parse(command);
+            
+            // Get all tokens
+            var tokens = result.Tokens
+                .Select(t => t.Value)
+                .ToArray();
 
-            for (int i = 0; i < command.Length; i++)
-            {
-                char c = command[i];
-                
-                if (c == '"')
-                {
-                    inQuotes = !inQuotes;
-                }
-                else if (char.IsWhiteSpace(c) && !inQuotes)
-                {
-                    if (currentPart.Length > 0)
-                    {
-                        parts.Add(currentPart.ToString());
-                        currentPart.Clear();
-                    }
-                }
-                else
-                {
-                    currentPart.Append(c);
-                }
-            }
-
-            if (currentPart.Length > 0)
-            {
-                parts.Add(currentPart.ToString());
-            }
-
-            _logger.LogDebug("Parsed command into {Count} parts: {Parts}", parts.Count, string.Join(", ", parts));
-            return parts.ToArray();
+            _logger.LogDebug("Parsed command into {Count} parts: {Parts}", tokens.Length, string.Join(", ", tokens));
+            return tokens;
         }
 
         // Try to get a JSON element by its path

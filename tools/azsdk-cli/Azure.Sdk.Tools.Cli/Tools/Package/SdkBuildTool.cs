@@ -26,16 +26,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         private readonly IOutputHelper _output;
         private readonly IProcessHelper _processHelper;
         private readonly IGitHelper _gitHelper;
-        private readonly ISdkRepoConfigHelper _sdkRepoConfigHelper;
+        private readonly ISpecGenSdkConfigHelper _specGenSdkConfigHelper;
         private readonly ILogger<SdkBuildTool> _logger;
 
-        public SdkBuildTool(IGitHelper gitHelper, ILogger<SdkBuildTool> logger, IOutputHelper output, IProcessHelper processHelper, ISdkRepoConfigHelper sdkRepoConfigHelper): base()
+        public SdkBuildTool(IGitHelper gitHelper, ILogger<SdkBuildTool> logger, IOutputHelper output, IProcessHelper processHelper, ISpecGenSdkConfigHelper specGenSdkConfigHelper): base()
         {
             _gitHelper = gitHelper;
             _logger = logger;
             _output = output;
             _processHelper = processHelper;
-            _sdkRepoConfigHelper = sdkRepoConfigHelper;
+            _specGenSdkConfigHelper = specGenSdkConfigHelper;
             CommandHierarchy = [ SharedCommandGroups.Package, SharedCommandGroups.SourceCode ];
         }
 
@@ -102,55 +102,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 ProcessOptions options;
                 try
                 {
-                    var (configType, configValue) = await _sdkRepoConfigHelper.GetBuildConfigurationAsync(sdkRepoRoot);
-
-                    if (configType == BuildConfigType.Command)
-                    {
-                        // Execute as command
-                        var variables = new Dictionary<string, string>
-                        {
-                            { "packagePath", packagePath }
-                        };
-
-                        var substitutedCommand = _sdkRepoConfigHelper.SubstituteCommandVariables(configValue, variables);
-                        _logger.LogInformation($"Executing build command: {substitutedCommand}");
-
-                        var commandParts = _sdkRepoConfigHelper.ParseCommand(substitutedCommand);
-                        if (commandParts.Length == 0)
-                        {
-                            return CreateFailureResponse($"Invalid build command: {substitutedCommand}");
-                        }
-
-                        options = new ProcessOptions(
-                            commandParts[0],
-                            commandParts.Skip(1).ToArray(),
-                            logOutputStream: true,
-                            workingDirectory: packagePath,
-                            timeout: TimeSpan.FromMinutes(CommandTimeoutInMinutes)
-                        );
-                    }
-                    else // BuildConfigType.ScriptPath
-                    {
-                        // Execute as script file
-                        var fullBuildScriptPath = Path.IsPathRooted(configValue)
-                            ? configValue
-                            : Path.Combine(sdkRepoRoot, configValue);
-
-                        if (!File.Exists(fullBuildScriptPath))
-                        {
-                            return CreateFailureResponse($"Build script not found at: {fullBuildScriptPath}");
-                        }
-
-                        _logger.LogInformation($"Executing build script file: {fullBuildScriptPath}");
-
-                        options = new ProcessOptions(
-                            fullBuildScriptPath,
-                            ["--package-path", packagePath],
-                            logOutputStream: true,
-                            workingDirectory: sdkRepoRoot,
-                            timeout: TimeSpan.FromMinutes(CommandTimeoutInMinutes)
-                        );
-                    }
+                    options = await CreateProcessOptions(sdkRepoRoot, packagePath);
                 }
                 catch (Exception ex)
                 {
@@ -194,6 +146,60 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 Result = "succeeded",
                 Message = message
             };
+        }
+
+        // Create process options for building the SDK based on configuration
+        private async Task<ProcessOptions> CreateProcessOptions(string sdkRepoRoot, string packagePath)
+        {
+            var (configType, configValue) = await _specGenSdkConfigHelper.GetBuildConfigurationAsync(sdkRepoRoot);
+
+            if (configType == BuildConfigType.Command)
+            {
+                // Execute as command
+                var variables = new Dictionary<string, string>
+                {
+                    { "packagePath", packagePath }
+                };
+
+                var substitutedCommand = _specGenSdkConfigHelper.SubstituteCommandVariables(configValue, variables);
+                _logger.LogInformation($"Executing build command: {substitutedCommand}");
+
+                var commandParts = _specGenSdkConfigHelper.ParseCommand(substitutedCommand);
+                if (commandParts.Length == 0)
+                {
+                    throw new InvalidOperationException($"Invalid build command: {substitutedCommand}");
+                }
+
+                return new ProcessOptions(
+                    commandParts[0],
+                    commandParts.Skip(1).ToArray(),
+                    logOutputStream: true,
+                    workingDirectory: packagePath,
+                    timeout: TimeSpan.FromMinutes(CommandTimeoutInMinutes)
+                );
+            }
+            else // BuildConfigType.ScriptPath
+            {
+                // Execute as script file
+                var fullBuildScriptPath = Path.IsPathRooted(configValue)
+                    ? configValue
+                    : Path.Combine(sdkRepoRoot, configValue);
+
+                if (!File.Exists(fullBuildScriptPath))
+                {
+                    throw new FileNotFoundException($"Build script not found at: {fullBuildScriptPath}");
+                }
+
+                _logger.LogInformation($"Executing build script file: {fullBuildScriptPath}");
+
+                return new ProcessOptions(
+                    fullBuildScriptPath,
+                    ["--package-path", packagePath],
+                    logOutputStream: true,
+                    workingDirectory: sdkRepoRoot,
+                    timeout: TimeSpan.FromMinutes(CommandTimeoutInMinutes)
+                );
+            }
         }
     }
 }

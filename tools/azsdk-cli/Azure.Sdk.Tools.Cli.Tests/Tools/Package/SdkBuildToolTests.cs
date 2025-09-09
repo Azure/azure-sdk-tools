@@ -32,7 +32,7 @@ public class SdkBuildToolTests
     private Mock<IGitHelper> _mockGitHelper;
     private Mock<IOutputHelper> _mockOutputHelper;
     private Mock<IProcessHelper> _mockProcessHelper;
-    private Mock<ISdkRepoConfigHelper> _mockSdkRepoConfigHelper;
+    private Mock<ISpecGenSdkConfigHelper> _mockSpecGenSdkConfigHelper;
     private TestLogger<SdkBuildTool> _logger;
     private string _tempDirectory;
 
@@ -43,7 +43,7 @@ public class SdkBuildToolTests
         _mockGitHelper = new Mock<IGitHelper>();
         _mockOutputHelper = new Mock<IOutputHelper>();
         _mockProcessHelper = new Mock<IProcessHelper>();
-        _mockSdkRepoConfigHelper = new Mock<ISdkRepoConfigHelper>();
+        _mockSpecGenSdkConfigHelper = new Mock<ISpecGenSdkConfigHelper>();
         _logger = new TestLogger<SdkBuildTool>();
 
         // Create temp directory for tests
@@ -56,7 +56,7 @@ public class SdkBuildToolTests
             _logger,
             _mockOutputHelper.Object,
             _mockProcessHelper.Object,
-            _mockSdkRepoConfigHelper.Object
+            _mockSpecGenSdkConfigHelper.Object
         );
     }
 
@@ -131,8 +131,8 @@ public class SdkBuildToolTests
             .Setup(x => x.GetRepoRemoteUri(_tempDirectory))
             .Returns(new Uri("https://github.com/Azure/azure-sdk-for-net.git"));
 
-        // Mock the SdkRepoConfigHelper to throw an exception for missing config
-        _mockSdkRepoConfigHelper
+        // Mock the SpecGenSdkConfigHelper to throw an exception for missing config
+        _mockSpecGenSdkConfigHelper
             .Setup(x => x.GetBuildConfigurationAsync(_tempDirectory))
             .ThrowsAsync(new InvalidOperationException("Neither 'packageOptions/buildScript/command' nor 'packageOptions/buildScript/path' found in configuration."));
 
@@ -153,8 +153,8 @@ public class SdkBuildToolTests
             .Setup(x => x.GetRepoRemoteUri(_tempDirectory))
             .Returns(new Uri("https://github.com/Azure/azure-sdk-for-net.git"));
 
-        // Mock the SdkRepoConfigHelper to throw a JSON parsing exception
-        _mockSdkRepoConfigHelper
+        // Mock the SpecGenSdkConfigHelper to throw a JSON parsing exception
+        _mockSpecGenSdkConfigHelper
             .Setup(x => x.GetBuildConfigurationAsync(_tempDirectory))
             .ThrowsAsync(new InvalidOperationException("Error parsing JSON configuration: Invalid JSON"));
 
@@ -179,8 +179,8 @@ public class SdkBuildToolTests
             .Setup(x => x.GetRepoRemoteUri(_tempDirectory))
             .Returns(new Uri("https://github.com/Azure/azure-sdk-for-net.git"));
 
-        // Mock the SdkRepoConfigHelper to throw when config file is not found
-        _mockSdkRepoConfigHelper
+        // Mock the SpecGenSdkConfigHelper to throw when config file is not found
+        _mockSpecGenSdkConfigHelper
             .Setup(x => x.GetBuildConfigurationAsync(_tempDirectory))
             .ThrowsAsync(new FileNotFoundException("Configuration file not found"));
 
@@ -191,7 +191,7 @@ public class SdkBuildToolTests
         Assert.That(result.ResponseErrors?.First(), Does.Contain("Configuration file not found"));
         _mockGitHelper.Verify(x => x.DiscoverRepoRoot(_tempDirectory), Times.Once);
         _mockGitHelper.Verify(x => x.GetRepoName(_tempDirectory), Times.Once);
-        _mockSdkRepoConfigHelper.Verify(x => x.GetBuildConfigurationAsync(_tempDirectory), Times.Once);
+        _mockSpecGenSdkConfigHelper.Verify(x => x.GetBuildConfigurationAsync(_tempDirectory), Times.Once);
     }
 
     #endregion

@@ -121,23 +121,23 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         // Get the repository name from the local path
         public string GetRepoName(string path)
         {
-            if (!string.IsNullOrEmpty(path))
+            if (string.IsNullOrEmpty(path))
             {
-                var repoRoot = DiscoverRepoRoot(path);
-                var uri = GetRepoRemoteUri(repoRoot);
-                var segments = uri.Segments;
+                throw new ArgumentException("Invalid repository path.", nameof(path));
+            }
+            
+            var repoRoot = DiscoverRepoRoot(path);
+            var uri = GetRepoRemoteUri(repoRoot);
+            var segments = uri.Segments;
 
-                if (segments.Length < 2)
-                {
-                    throw new InvalidOperationException($"Unable to parse repository owner and name from remote URL: {uri}");
-                }
-
-                string repoName = segments[^1].TrimEnd(".git".ToCharArray());
-
-                return repoName;
+            if (segments.Length < 2)
+            {
+                throw new InvalidOperationException($"Unable to parse repository owner and name from remote URL: {uri}");
             }
 
-            throw new ArgumentException("Invalid repository path.", nameof(path));
+            string repoName = segments[^1].TrimEnd(".git".ToCharArray());
+
+            return repoName;
         }
     }
 }

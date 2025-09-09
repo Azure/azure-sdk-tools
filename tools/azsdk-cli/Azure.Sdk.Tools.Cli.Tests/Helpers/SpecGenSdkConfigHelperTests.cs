@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 namespace Azure.Sdk.Tools.Cli.Tests.Helpers;
 
 [TestFixture]
-public class SdkRepoConfigHelperTests
+public class SpecGenSdkConfigHelperTests
 {
     #region Test Constants
 
@@ -21,23 +21,23 @@ public class SdkRepoConfigHelperTests
 
     #endregion
 
-    private SdkRepoConfigHelper _helper;
-    private TestLogger<SdkRepoConfigHelper> _logger;
+    private SpecGenSdkConfigHelper _helper;
+    private TestLogger<SpecGenSdkConfigHelper> _logger;
     private string _tempDirectory;
     private string _configFilePath;
 
     [SetUp]
     public void Setup()
     {
-        _logger = new TestLogger<SdkRepoConfigHelper>();
-        _tempDirectory = Path.Combine(Path.GetTempPath(), "SdkRepoConfigHelperTests", Guid.NewGuid().ToString());
+        _logger = new TestLogger<SpecGenSdkConfigHelper>();
+        _tempDirectory = Path.Combine(Path.GetTempPath(), "SpecGenSdkConfigHelperTests", Guid.NewGuid().ToString());
         Directory.CreateDirectory(_tempDirectory);
 
         // Create the swagger_to_sdk_config.json file at the expected location
         var engDir = Path.Combine(_tempDirectory, "eng");
         Directory.CreateDirectory(engDir);
         _configFilePath = Path.Combine(engDir, "swagger_to_sdk_config.json");
-        _helper = new SdkRepoConfigHelper(_logger);
+        _helper = new SpecGenSdkConfigHelper(_logger);
     }
 
     [TearDown]

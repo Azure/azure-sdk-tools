@@ -21,6 +21,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         private Mock<ITypeSpecHelper> mockTypeSpecHelper;
         private ILogger<SpecWorkflowTool> logger;
         private SpecWorkflowTool specWorkflowTool;
+        private IInputSanitizer inputSanitizer;
 
         [SetUp]
         public void Setup()
@@ -31,6 +32,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             mockGitHelper = new Mock<IGitHelper>();
             mockTypeSpecHelper = new Mock<ITypeSpecHelper>();
             logger = new TestLogger<SpecWorkflowTool>();
+            inputSanitizer = new InputSanitizer();
 
             mockOutputService.Setup(x => x.Format(It.IsAny<GenericResponse>()))
                            .Returns((GenericResponse r) => string.Join(", ", r.Details));
@@ -47,7 +49,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 mockGitHelper.Object,
                 mockTypeSpecHelper.Object,
                 mockOutputService.Object,
-                logger
+                logger,
+                inputSanitizer
             );
         }
 

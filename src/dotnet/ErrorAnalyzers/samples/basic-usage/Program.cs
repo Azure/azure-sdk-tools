@@ -13,6 +13,10 @@ class Program
         // Step 1: No registration needed! All rules are automatically available.
         Console.WriteLine("1. All rules are automatically available - no registration required!");
         Console.WriteLine("   ✓ Ready to analyze errors");
+        
+        // Show available rules (fallback is not exposed publicly)
+        var availableRules = ErrorAnalyzerService.GetRegisteredRules();
+        Console.WriteLine($"   ✓ {availableRules.Count()} specific rules available");
         Console.WriteLine();
 
         // Step 2: Test with sample errors

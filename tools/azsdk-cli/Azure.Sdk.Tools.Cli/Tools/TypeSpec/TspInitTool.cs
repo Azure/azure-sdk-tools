@@ -3,7 +3,6 @@
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.ComponentModel;
-using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using ModelContextProtocol.Server;
@@ -20,13 +19,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
     public class TypeSpecInitTool : MCPTool
     {
         private readonly INpxHelper npxHelper;
+        private readonly ITypeSpecHelper typespecHelper;
         private readonly ILogger<TypeSpecInitTool> logger;
         private readonly IOutputHelper output;
         private readonly ITypeSpecDocsService docsService;
 
-        public TypeSpecInitTool(INpxHelper npxHelper, ILogger<TypeSpecInitTool> logger, IOutputHelper output, ITypeSpecDocsService docsService)
+        public TypeSpecInitTool(INpxHelper npxHelper, ITypeSpecHelper typespecHelper, ILogger<TypeSpecInitTool> logger, IOutputHelper output, ITypeSpecDocsService docsService)
         {
             this.npxHelper = npxHelper;
+            this.typespecHelper = typespecHelper;
             this.logger = logger;
             this.output = output;
             this.docsService = docsService;
@@ -79,11 +80,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 
         public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
         {
-            await HandleInitCommandAsync(ctx, ct);
-        }
-
-        private async Task HandleInitCommandAsync(InvocationContext ctx, CancellationToken ct)
-        {
             try
             {
                 var outputDirectory = ctx.ParseResult.GetValueForOption(outputDirectoryArg);
@@ -119,8 +115,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                 logger.LogInformation("Initializing TypeSpec project: {outputDirectory}, template: {template}, serviceNamespace: {serviceNamespace}",
                     outputDirectory, template, serviceNamespace);
 
-
-
                 // Validate template
                 if (string.IsNullOrWhiteSpace(template) || !templateMap.ContainsKey(template))
                 {
@@ -148,18 +142,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                     };
                 }
 
-                // Validate outputDirectory using FileHelper
-                var validationResult = FileHelper.ValidateEmptyDirectory(outputDirectory);
-                if (validationResult != null)
+                var fullOutputDir = Path.GetFullPath(outputDirectory.Trim());
+
+                if (CheckAndCreateDirectory(fullOutputDir) is TspToolResponse resp)
                 {
-                    SetFailure();
-                    return new TspToolResponse
-                    {
-                        ResponseError = $"Failed: Invalid --output-directory, {validationResult}"
-                    };
+                    return resp;
                 }
 
-                var fullOutputDir = Path.GetFullPath(outputDirectory.Trim());
                 return await RunTspInitAsync(outputDirectory: fullOutputDir, template: template, serviceNamespace: normalizedServiceName, isCli, ct);
             }
             catch (Exception ex)
@@ -171,6 +160,49 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                     ResponseError = $"Failed: An error occurred trying to initialize TypeSpec project in '{outputDirectory}': {ex.Message}"
                 };
             }
+        }
+
+        /// <summary>
+        /// Checks the output directory to ensure it's under the azure-rest-api-specs repo, and creates it if necessary. 
+        /// Fails if the output directory is non-empty.
+        /// </summary>
+        /// <param name="fullOutputDirectory">A full path to the output directory, as returned by <see cref="Path.GetFullPath"/></param>
+        /// <returns>For invalid directories, or failures, an appropriate TspToolResponse, otherwise null</returns>
+        private TspToolResponse CheckAndCreateDirectory(string fullOutputDirectory)
+        {
+            if (!Directory.Exists(fullOutputDirectory))
+            {
+                Directory.CreateDirectory(fullOutputDirectory);
+            }
+
+            if (FileHelper.ValidateEmptyDirectory(fullOutputDirectory) is string validationResult)
+            {
+                SetFailure();
+                return new TspToolResponse
+                {
+                    ResponseError = $"Failed: Invalid --output-directory, {validationResult}"
+                };
+            }
+
+            if (!typespecHelper.IsRepoPathForSpecRepo(fullOutputDirectory))
+            {
+                SetFailure();
+                return new TspToolResponse
+                {
+                    ResponseError = $"Failed: Invalid --output-directory, must be under the azure-rest-api-specs or azure-rest-api-specs-pr repo"
+                };
+            }
+
+            if (!fullOutputDirectory.Contains(Path.DirectorySeparatorChar + "specification" + Path.DirectorySeparatorChar))
+            {
+                SetFailure();
+                return new TspToolResponse
+                {
+                    ResponseError = $"Failed: Invalid --output-directory, must be under <azure-rest-api-specs or azure-rest-api-specs-pr>{Path.DirectorySeparatorChar}specification"
+                };
+            }
+
+            return null;
         }
 
         private async Task<TspToolResponse> RunTspInitAsync(string outputDirectory, string template, string serviceNamespace, bool isCli, CancellationToken ct)
@@ -209,7 +241,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             return new TspToolResponse
             {
                 IsSuccessful = true,
-                TypeSpecProjectPath = outputDirectory
+                TypeSpecProjectPath = outputDirectory,
+                NextSteps = [
+                    $"Your project has been generated at {outputDirectory}. From here you can build and edit the project using these commands:",
+                    $"  1. cd {outputDirectory}",
+                    "  2. Install dependencies: npx ci",
+                    "  3. Compile the TypeSpec for your service: npx tsp compile ."
+                ]
             };
         }
 

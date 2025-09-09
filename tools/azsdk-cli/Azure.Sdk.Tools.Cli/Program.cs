@@ -56,22 +56,21 @@ public class Program
             })
             .UseOtlpExporter();
 
-        // Log everything to stderr in mcp mode so the client doesn't try to interpret stdout messages that aren't json rpc
-        var logErrorThreshold = isCLI ? LogLevel.Error : LogLevel.Debug;
-
         builder.Logging.AddConsole(consoleLogOptions =>
         {
+            // Log everything to stderr in mcp mode so the client doesn't try to interpret stdout messages that aren't json rpc
+            var logErrorThreshold = isCLI ? LogLevel.Error : LogLevel.Debug;
             consoleLogOptions.LogToStandardErrorThreshold = logErrorThreshold;
         });
 
         // Skip azure client logging noise
         builder.Logging.AddFilter((category, level) =>
         {
-            if (null == category) { return level >= logErrorThreshold; }
+            if (null == category) { return level >= logLevel; }
             var isAzureClient = category.StartsWith("Azure.", StringComparison.Ordinal);
             var isToolsClient = category.StartsWith("Azure.Sdk.Tools.", StringComparison.Ordinal);
             if (isAzureClient && !isToolsClient) { return level >= LogLevel.Error; }
-            return level >= logErrorThreshold;
+            return level >= logLevel;
         });
 
         // add the console logger

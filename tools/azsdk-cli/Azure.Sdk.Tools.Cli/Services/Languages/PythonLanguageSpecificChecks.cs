@@ -25,7 +25,6 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
         _gitHelper = gitHelper;
         _logger = logger;
     }
-
     public string SupportedLanguage => "Python";
 
     public async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct = default)

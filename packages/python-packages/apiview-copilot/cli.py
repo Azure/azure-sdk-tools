@@ -658,7 +658,7 @@ def grant_permissions(assignee_id: str = None):
         assignee_id = get_current_user_object_id()
 
     if not assignee_id:
-        print("Error: Could not determine the current user ID. Provide `--assignee-id` or run `az login`.")
+        raise ValueError("Error: Could not determine the current user ID. Provide `--assignee-id` or run `az login`.")
 
     subscription_id = "a18897a6-7e44-457d-9260-f2854c0aca42"
 
@@ -742,7 +742,7 @@ def revoke_permissions(assignee_id: str = None):
         assignee_id = get_current_user_object_id()
 
     if not assignee_id:
-        print("Error: Could not determine the current user ID. Provide `--assignee-id` or run `az login`.")
+        raise ValueError("Error: Could not determine the current user ID. Provide `--assignee-id` or run `az login`.")
 
     subscription_id = "a18897a6-7e44-457d-9260-f2854c0aca42"
     credential = get_credential()

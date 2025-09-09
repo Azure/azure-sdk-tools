@@ -103,6 +103,10 @@ def assign_rbac_roles(
             sys.exit(1)
 
 
+COSMOS_DATA_READER_ROLE_ID = "00000000-0000-0000-0000-000000000001"
+COSMOS_DATA_CONTRIBUTOR_ROLE_ID = "00000000-0000-0000-0000-000000000002"
+
+
 def _assign_cosmosdb_builtin_roles(
     *,
     kind: Literal["readOnly", "readWrite"],
@@ -119,10 +123,10 @@ def _assign_cosmosdb_builtin_roles(
     role_id = None
     # Assign well-known Role ID for "Cosmos DB Built-in Data Contributor"
     if kind == "readWrite":
-        role_id = f"{cosmos_account.id}/sqlRoleDefinitions/00000000-0000-0000-0000-000000000002"
+        role_id = f"{cosmos_account.id}/sqlRoleDefinitions/{COSMOS_DATA_CONTRIBUTOR_ROLE_ID}"
         role_name = "Data Contributor (built-in)"
     elif kind == "readOnly":
-        role_id = f"{cosmos_account.id}/sqlRoleDefinitions/00000000-0000-0000-0000-000000000001"
+        role_id = f"{cosmos_account.id}/sqlRoleDefinitions/{COSMOS_DATA_READER_ROLE_ID}"
         role_name = "Data Reader (built-in)"
     if not role_name or not role_id:
         return
@@ -130,7 +134,7 @@ def _assign_cosmosdb_builtin_roles(
         results = list(cosmos_mgmt_client.sql_resources.list_sql_role_assignments(rg_name, cosmos_account_name))
         for result in results:
             if result.role_definition_id == role_id and result.principal_id == principal_id:
-                print(f"✅ Cosmos role '{role_name}' role already assigned to {principal_id}.")
+                print(f"✅ Cosmos role '{role_name}' already assigned to {principal_id}.")
                 return
         # Otherwise we must assign the role
         role_assignment_params = SqlRoleAssignmentCreateUpdateParameters(
@@ -145,9 +149,9 @@ def _assign_cosmosdb_builtin_roles(
             cosmos_account_name,
             role_assignment_params,
         ).result()
-        print(f"✅ Assigned Cosmos role '{role_name}' role to {principal_id}.")
+        print(f"✅ Assigned Cosmos role '{role_name}' to {principal_id}.")
     except ResourceExistsError:
-        print(f"✅ 'Cosmos role {role_name}' role already assigned to {principal_id}.")
+        print(f"✅ 'Cosmos role {role_name}' already assigned to {principal_id}.")
     except Exception as e:
         print(f"❌ An error occurred: {e}")
         sys.exit(1)

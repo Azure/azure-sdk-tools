@@ -8,7 +8,7 @@ RUN go mod download
 RUN go vet -v
 RUN go test -v
 
-RUN go build -o go-backend
+RUN CGO_ENABLED=0 go build -o go-backend
 
 # Expose port for Go service
 EXPOSE 8088

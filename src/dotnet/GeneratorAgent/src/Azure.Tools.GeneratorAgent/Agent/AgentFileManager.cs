@@ -22,25 +22,24 @@ namespace Azure.Tools.GeneratorAgent.Agent
             AppSettings = appSettings;
         }
 
-        public async Task<(List<string> UploadedFileIds, string VectorStoreId)> UploadFilesAsync(Dictionary<string, string> files, CancellationToken cancellationToken)
+        public async Task<string> UploadFilesAsync(Dictionary<string, string> files, CancellationToken cancellationToken)
         {
             var uploadTasks = files
                 .Where(kvp => kvp.Key.EndsWith(".tsp", StringComparison.OrdinalIgnoreCase))
                 .Select(file => UploadSingleFileAsync(file.Key, file.Value, cancellationToken));
 
             var results = await Task.WhenAll(uploadTasks);
-            
+
             var uploadedFileIds = results
                 .Where(id => !string.IsNullOrEmpty(id))
-                .Select(id => id!)
-                .ToList();
+                .Select(id => id!);
 
             await WaitForIndexingAsync(uploadedFileIds, cancellationToken);
 
             var vectorStoreId = await CreateVectorStoreAsync(uploadedFileIds, cancellationToken);
 
-            Logger.LogInformation("Successfully uploaded {Count} TypeSpec files.", uploadedFileIds.Count);
-            return (uploadedFileIds, vectorStoreId);
+            Logger.LogInformation("Successfully uploaded TypeSpec files.");
+            return vectorStoreId;
         }
 
         protected virtual async Task<string?> UploadSingleFileAsync(string fileName, string content, CancellationToken cancellationToken)
@@ -76,24 +75,40 @@ namespace Azure.Tools.GeneratorAgent.Agent
             }
         }
 
-        protected virtual async Task WaitForIndexingAsync(List<string> uploadedFilesIds, CancellationToken ct)
+        protected virtual async Task WaitForIndexingAsync(IEnumerable<string> uploadedFilesIds, CancellationToken ct)
         {
             var maxWaitTime = AppSettings.IndexingMaxWaitTime;
             var pollingInterval = AppSettings.IndexingPollingInterval;
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
-            Logger.LogInformation("Waiting for {Count} files to be indexed... (timeout: {Timeout}s, polling interval: {Interval}s)", 
-                uploadedFilesIds.Count, maxWaitTime.TotalSeconds, pollingInterval.TotalSeconds);
+            Logger.LogInformation("Waiting for files to be indexed... (timeout: {Timeout}s, polling interval: {Interval}s)", 
+                maxWaitTime.TotalSeconds, pollingInterval.TotalSeconds);
 
             const int batchSize = 10;
             while (stopwatch.Elapsed < maxWaitTime)
             {
                 var results = new List<(string FileId, PersistentAgentFileInfo? File)>();
+                var totalCount = 0;
                 
-                for (int i = 0; i < uploadedFilesIds.Count; i += batchSize)
+                var batch = new List<string>(batchSize);
+                foreach (var fileId in uploadedFilesIds)
                 {
-                    var batch = uploadedFilesIds.Skip(i).Take(batchSize);
-                    var checkTasks = batch.Select(fileId => CheckFileStatusAsync(fileId, ct));
+                    batch.Add(fileId);
+                    totalCount++;
+                    
+                    if (batch.Count == batchSize)
+                    {
+                        var checkTasks = batch.Select(id => CheckFileStatusAsync(id, ct));
+                        var batchResults = await Task.WhenAll(checkTasks);
+                        results.AddRange(batchResults);
+                        batch.Clear();
+                    }
+                }
+                
+                // Process remaining items in the last batch
+                if (batch.Count > 0)
+                {
+                    var checkTasks = batch.Select(id => CheckFileStatusAsync(id, ct));
                     var batchResults = await Task.WhenAll(checkTasks);
                     results.AddRange(batchResults);
                 }
@@ -146,7 +161,7 @@ namespace Azure.Tools.GeneratorAgent.Agent
                 if (allIndexed)
                 {
                     Logger.LogInformation("All {Count} files indexed successfully in {Duration:F1}s", 
-                        uploadedFilesIds.Count, stopwatch.Elapsed.TotalSeconds);
+                        totalCount, stopwatch.Elapsed.TotalSeconds);
                     return;
                 }
 
@@ -163,8 +178,8 @@ namespace Azure.Tools.GeneratorAgent.Agent
             var allProcessed = finalResults.All(r => r.File?.Status.ToString()?.Equals("Processed", StringComparison.OrdinalIgnoreCase) == true);
             if (allProcessed)
             {
-                Logger.LogInformation("All {Count} files indexed successfully in {Duration:F1}s (completed during final check)", 
-                    uploadedFilesIds.Count, stopwatch.Elapsed.TotalSeconds);
+                Logger.LogInformation("All files indexed successfully in {Duration:F1}s (completed during final check)", 
+                    stopwatch.Elapsed.TotalSeconds);
                 return;
             }
 
@@ -180,7 +195,6 @@ namespace Azure.Tools.GeneratorAgent.Agent
                 $"Final status: {finalStatusSummary}. " +
                 $"This may indicate the Azure AI service is experiencing delays or the files require more processing time.");
         }
-
         private async Task<(string FileId, PersistentAgentFileInfo? File)> CheckFileStatusAsync(string fileId, CancellationToken ct)
         {
             try
@@ -212,19 +226,15 @@ namespace Azure.Tools.GeneratorAgent.Agent
             }
         }
 
-        private async Task<string> CreateVectorStoreAsync(List<string> fileIds, CancellationToken ct)
+        protected virtual async Task<string> CreateVectorStoreAsync(IEnumerable<string> fileIds, CancellationToken ct)
         {
-            return await CreateVectorStoreInternalAsync(fileIds, ct).ConfigureAwait(false);
-        }
-
-        protected virtual async Task<string> CreateVectorStoreInternalAsync(List<string> fileIds, CancellationToken ct)
-        {
+            var fileIdsList = fileIds.ToList();
             var storeName = $"azc-{DateTime.Now:yyyyMMddHHmmss}-{Guid.NewGuid()}";
 
-            Logger.LogInformation("Creating vector store '{StoreName}' with {Count} files...", storeName, fileIds.Count);
+            Logger.LogInformation("Creating vector store '{StoreName}' with {Count} files...", storeName, fileIdsList.Count);
 
             var store = await Client.VectorStores.CreateVectorStoreAsync(
-                fileIds,
+                fileIdsList,
                 name: storeName,
                 cancellationToken: ct
             ).ConfigureAwait(false);

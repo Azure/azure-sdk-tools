@@ -113,7 +113,7 @@ namespace Azure.Tools.GeneratorAgent.Agent
             Logger.LogInformation("Initializing agent environment...");
 
             // Step 1: Upload files
-            var (uploadedFileIds, vectorStoreId) = await FileManager.UploadFilesAsync(typeSpecFiles, cancellationToken);
+            var vectorStoreId = await FileManager.UploadFilesAsync(typeSpecFiles, cancellationToken);
 
             // Step 2: Update Agent Vector Store (this will trigger agent creation if needed)
             await UpdateAgentVectorStoreAsync(vectorStoreId, cancellationToken);

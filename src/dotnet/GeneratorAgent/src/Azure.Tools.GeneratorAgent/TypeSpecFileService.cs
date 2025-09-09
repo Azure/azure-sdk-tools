@@ -74,7 +74,7 @@ namespace Azure.Tools.GeneratorAgent
                     typeSpecFiles[fileName] = content;
                 }
 
-                Logger.LogInformation("Successfully read {Count} TypeSpec files from local directory", typeSpecFiles.Count);
+                Logger.LogInformation("Successfully read {Count} TypeSpec files from local directory\n", typeSpecFiles.Count);
                 return typeSpecFiles;
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
@@ -97,15 +97,13 @@ namespace Azure.Tools.GeneratorAgent
                 // Get files from GitHub
                 Dictionary<string, string> result = await GitHubFileService.GetTypeSpecFilesAsync(cancellationToken);
 
-                Logger.LogInformation("Successfully fetched {Count} TypeSpec files from GitHub", result.Count);
-
                 // Create secure temporary directory for compilation
                 if (result.Count > 0)
                 {
                     string tempDirectory = await CreateSecureTempDirectoryFromGitHubFiles(result, cancellationToken);
                     ValidationContext.UpdateTypeSpecDirForCompilation(tempDirectory);
-                    
-                    Logger.LogInformation("Created secure temporary directory for TypeSpec compilation: {TempDir}", tempDirectory);
+
+                    Logger.LogInformation("Successfully read {Count} TypeSpec files from Github Repository\n", result.Count);
                 }
 
                 return result;

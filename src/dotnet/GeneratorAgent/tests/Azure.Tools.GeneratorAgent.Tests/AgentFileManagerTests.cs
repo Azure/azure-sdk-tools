@@ -58,13 +58,13 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 return fileId;
             }
 
-            protected override async Task<string> CreateVectorStoreInternalAsync(List<string> fileIds, CancellationToken ct)
+            protected override async Task<string> CreateVectorStoreAsync(IEnumerable<string> fileIds, CancellationToken ct)
             {
                 await Task.Delay(10, ct);
                 return MockVectorStoreId;
             }
 
-            protected override async Task WaitForIndexingAsync(List<string> uploadedFilesIds, CancellationToken ct)
+            protected override async Task WaitForIndexingAsync(IEnumerable<string> uploadedFilesIds, CancellationToken ct)
             {
                 await Task.Delay(10, ct);
             }

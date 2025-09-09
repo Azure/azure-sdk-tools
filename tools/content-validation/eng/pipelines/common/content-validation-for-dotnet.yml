@@ -10,6 +10,9 @@ parameters:
 - name: language
   type: string
   default: 'DotNet'
+- name: rules
+  type: string
+  default: ""
 
 steps:
 - task: UseDotNet@2
@@ -93,6 +96,7 @@ steps:
   env:
     PackageName: ${{ parameters.packageName }}
     Language: ${{ parameters.language }}
+    Rules: ${{ parameters.rules }}
     GitHubToken: $(GITHUB_PAT)
     Owner: $(GITHUB_OWNER)
     Repo: $(GITHUB_REPO)

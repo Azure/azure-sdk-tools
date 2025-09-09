@@ -25,7 +25,6 @@ public class SdkRepoConfigHelperTests
     private TestLogger<SdkRepoConfigHelper> _logger;
     private string _tempDirectory;
     private string _configFilePath;
-    private string _repoConfigFilePath;
 
     [SetUp]
     public void Setup()
@@ -34,24 +33,11 @@ public class SdkRepoConfigHelperTests
         _tempDirectory = Path.Combine(Path.GetTempPath(), "SdkRepoConfigHelperTests", Guid.NewGuid().ToString());
         Directory.CreateDirectory(_tempDirectory);
 
-        // Create a test SdkRepoConfig.json file in the expected location relative to temp directory
-        var configDir = Path.Combine(_tempDirectory, "Configuration");
-        Directory.CreateDirectory(configDir);
-        _configFilePath = Path.Combine(configDir, "SdkRepoConfig.json");
-
-        var sdkRepoConfig = new Dictionary<string, SdkRepoConfiguration>
-        {
-            { TestRepoName, new SdkRepoConfiguration { ConfigFilePath = TestConfigPath } }
-        };
-        File.WriteAllText(_configFilePath, JsonSerializer.Serialize(sdkRepoConfig, new JsonSerializerOptions { WriteIndented = true }));
-
-        // Create the helper instance using the test config
-        _helper = new TestSdkRepoConfigHelper(_logger, _configFilePath);
-
-        // Create test repository config file
-        var repoConfigDir = Path.Combine(_tempDirectory, "eng");
-        Directory.CreateDirectory(repoConfigDir);
-        _repoConfigFilePath = Path.Combine(_tempDirectory, TestConfigPath);
+        // Create the swagger_to_sdk_config.json file at the expected location
+        var engDir = Path.Combine(_tempDirectory, "eng");
+        Directory.CreateDirectory(engDir);
+        _configFilePath = Path.Combine(engDir, "swagger_to_sdk_config.json");
+        _helper = new SdkRepoConfigHelper(_logger);
     }
 
     [TearDown]
@@ -62,36 +48,6 @@ public class SdkRepoConfigHelperTests
             Directory.Delete(_tempDirectory, true);
         }
     }
-
-    #region Configuration Loading Tests
-
-    [Test]
-    public async Task GetConfigFilePathForRepoAsync_ValidRepo_ReturnsCorrectPath()
-    {
-        // Act
-        var result = await _helper.GetConfigFilePathForRepoAsync(TestRepoName);
-
-        // Assert
-        Assert.That(result, Is.EqualTo(TestConfigPath));
-    }
-
-    [Test]
-    public void GetConfigFilePathForRepoAsync_InvalidRepo_ThrowsException()
-    {
-        // Act & Assert
-        var ex = Assert.ThrowsAsync<InvalidOperationException>(() => _helper.GetConfigFilePathForRepoAsync("nonexistent-repo"));
-        Assert.That(ex.Message, Does.Contain("No configuration found for repository"));
-    }
-
-    [Test]
-    public void GetRepoConfigurationAsync_EmptyRepoName_ThrowsArgumentException()
-    {
-        // Act & Assert
-        Assert.ThrowsAsync<ArgumentException>(() => _helper.GetRepoConfigurationAsync(""));
-        Assert.ThrowsAsync<ArgumentException>(() => _helper.GetRepoConfigurationAsync(string.Empty));
-    }
-
-    #endregion
 
     #region Build Configuration Tests
 
@@ -109,10 +65,10 @@ public class SdkRepoConfigHelperTests
                 }
             }
         };
-        File.WriteAllText(_repoConfigFilePath, JsonSerializer.Serialize(configContent, new JsonSerializerOptions { WriteIndented = true }));
+        File.WriteAllText(_configFilePath, JsonSerializer.Serialize(configContent, new JsonSerializerOptions { WriteIndented = true }));
 
         // Act
-        var result = await _helper.GetBuildConfigurationAsync(_tempDirectory, TestRepoName);
+        var result = await _helper.GetBuildConfigurationAsync(_tempDirectory);
 
         // Assert
         Assert.That(result.type, Is.EqualTo(BuildConfigType.Command));
@@ -133,10 +89,10 @@ public class SdkRepoConfigHelperTests
                 }
             }
         };
-        File.WriteAllText(_repoConfigFilePath, JsonSerializer.Serialize(configContent, new JsonSerializerOptions { WriteIndented = true }));
+        File.WriteAllText(_configFilePath, JsonSerializer.Serialize(configContent, new JsonSerializerOptions { WriteIndented = true }));
 
         // Act
-        var result = await _helper.GetBuildConfigurationAsync(_tempDirectory, TestRepoName);
+        var result = await _helper.GetBuildConfigurationAsync(_tempDirectory);
 
         // Assert
         Assert.That(result.type, Is.EqualTo(BuildConfigType.ScriptPath));
@@ -158,10 +114,10 @@ public class SdkRepoConfigHelperTests
                 }
             }
         };
-        File.WriteAllText(_repoConfigFilePath, JsonSerializer.Serialize(configContent, new JsonSerializerOptions { WriteIndented = true }));
+        File.WriteAllText(_configFilePath, JsonSerializer.Serialize(configContent, new JsonSerializerOptions { WriteIndented = true }));
 
         // Act
-        var result = await _helper.GetBuildConfigurationAsync(_tempDirectory, TestRepoName);
+        var result = await _helper.GetBuildConfigurationAsync(_tempDirectory);
 
         // Assert
         Assert.That(result.type, Is.EqualTo(BuildConfigType.Command));
@@ -179,10 +135,10 @@ public class SdkRepoConfigHelperTests
                 other = "value"
             }
         };
-        File.WriteAllText(_repoConfigFilePath, JsonSerializer.Serialize(configContent, new JsonSerializerOptions { WriteIndented = true }));
+        File.WriteAllText(_configFilePath, JsonSerializer.Serialize(configContent, new JsonSerializerOptions { WriteIndented = true }));
 
         // Act & Assert
-        var ex = Assert.ThrowsAsync<InvalidOperationException>(() => _helper.GetBuildConfigurationAsync(_tempDirectory, TestRepoName));
+        var ex = Assert.ThrowsAsync<InvalidOperationException>(() => _helper.GetBuildConfigurationAsync(_tempDirectory));
         Assert.That(ex.Message, Does.Contain("Neither 'packageOptions/buildScript/command' nor 'packageOptions/buildScript/path' found"));
     }
 
@@ -190,7 +146,7 @@ public class SdkRepoConfigHelperTests
     public void GetBuildConfigurationAsync_ConfigFileNotFound_ThrowsException()
     {
         // Act & Assert
-        var ex = Assert.ThrowsAsync<FileNotFoundException>(() => _helper.GetBuildConfigurationAsync(_tempDirectory, TestRepoName));
+        var ex = Assert.ThrowsAsync<FileNotFoundException>(() => _helper.GetBuildConfigurationAsync(_tempDirectory));
         Assert.That(ex.Message, Does.Contain("Configuration file not found"));
     }
 
@@ -212,10 +168,10 @@ public class SdkRepoConfigHelperTests
                 }
             }
         };
-        File.WriteAllText(_repoConfigFilePath, JsonSerializer.Serialize(configContent, new JsonSerializerOptions { WriteIndented = true }));
+        File.WriteAllText(_configFilePath, JsonSerializer.Serialize(configContent, new JsonSerializerOptions { WriteIndented = true }));
 
         // Act
-        var result = await _helper.GetConfigValueFromRepoAsync<string>(_tempDirectory, TestRepoName, BuildCommandJsonPath);
+        var result = await _helper.GetConfigValueFromRepoAsync<string>(_tempDirectory, BuildCommandJsonPath);
 
         // Assert
         Assert.That(result, Is.EqualTo("dotnet build {packagePath}"));
@@ -233,10 +189,10 @@ public class SdkRepoConfigHelperTests
                 buildOptions = buildOptions
             }
         };
-        File.WriteAllText(_repoConfigFilePath, JsonSerializer.Serialize(configContent, new JsonSerializerOptions { WriteIndented = true }));
+        File.WriteAllText(_configFilePath, JsonSerializer.Serialize(configContent, new JsonSerializerOptions { WriteIndented = true }));
 
         // Act
-        var result = await _helper.GetConfigValueFromRepoAsync<Dictionary<string, string>>(_tempDirectory, TestRepoName, "packageOptions/buildOptions");
+        var result = await _helper.GetConfigValueFromRepoAsync<Dictionary<string, string>>(_tempDirectory, "packageOptions/buildOptions");
 
         // Assert
         Assert.That(result["configuration"], Is.EqualTo("Release"));
@@ -248,10 +204,10 @@ public class SdkRepoConfigHelperTests
     {
         // Arrange
         var configContent = new { other = "value" };
-        File.WriteAllText(_repoConfigFilePath, JsonSerializer.Serialize(configContent, new JsonSerializerOptions { WriteIndented = true }));
+        File.WriteAllText(_configFilePath, JsonSerializer.Serialize(configContent, new JsonSerializerOptions { WriteIndented = true }));
 
         // Act & Assert
-        var ex = Assert.ThrowsAsync<InvalidOperationException>(() => _helper.GetConfigValueFromRepoAsync<string>(_tempDirectory, TestRepoName, "nonexistent/path"));
+        var ex = Assert.ThrowsAsync<InvalidOperationException>(() => _helper.GetConfigValueFromRepoAsync<string>(_tempDirectory, "nonexistent/path"));
         Assert.That(ex.Message, Does.Contain("Property not found at JSON path"));
     }
 
@@ -426,21 +382,4 @@ public class SdkRepoConfigHelperTests
     }
 
     #endregion
-}
-
-/// <summary>
-/// Test version of SdkRepoConfigHelper that allows injecting a custom config file path
-/// </summary>
-public class TestSdkRepoConfigHelper : SdkRepoConfigHelper
-{
-    private readonly string _configFilePath;
-
-    public TestSdkRepoConfigHelper(ILogger<SdkRepoConfigHelper> logger, string configFilePath) : base(logger)
-    {
-        _configFilePath = configFilePath;
-        
-        // Use reflection to set the private configFilePath field
-        var field = typeof(SdkRepoConfigHelper).GetField("configFilePath", BindingFlags.NonPublic | BindingFlags.Instance);
-        field?.SetValue(this, _configFilePath);
-    }
 }

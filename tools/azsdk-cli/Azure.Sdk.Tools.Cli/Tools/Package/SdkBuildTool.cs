@@ -102,7 +102,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 ProcessOptions options;
                 try
                 {
-                    var (configType, configValue) = await _sdkRepoConfigHelper.GetBuildConfigurationAsync(sdkRepoRoot, sdkRepoName);
+                    var (configType, configValue) = await _sdkRepoConfigHelper.GetBuildConfigurationAsync(sdkRepoRoot);
 
                     if (configType == BuildConfigType.Command)
                     {
@@ -143,10 +143,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
                         _logger.LogInformation($"Executing build script file: {fullBuildScriptPath}");
 
-                        // TODO: change --module-dir to --project-path
                         options = new ProcessOptions(
                             fullBuildScriptPath,
-                            ["--module-dir", packagePath],
+                            ["--package-path", packagePath],
                             logOutputStream: true,
                             workingDirectory: sdkRepoRoot,
                             timeout: TimeSpan.FromMinutes(CommandTimeoutInMinutes)

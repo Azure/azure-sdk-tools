@@ -133,7 +133,7 @@ public class SdkBuildToolTests
 
         // Mock the SdkRepoConfigHelper to throw an exception for missing config
         _mockSdkRepoConfigHelper
-            .Setup(x => x.GetBuildConfigurationAsync(_tempDirectory, "azure-sdk-for-net"))
+            .Setup(x => x.GetBuildConfigurationAsync(_tempDirectory))
             .ThrowsAsync(new InvalidOperationException("Neither 'packageOptions/buildScript/command' nor 'packageOptions/buildScript/path' found in configuration."));
 
         // Act
@@ -155,7 +155,7 @@ public class SdkBuildToolTests
 
         // Mock the SdkRepoConfigHelper to throw a JSON parsing exception
         _mockSdkRepoConfigHelper
-            .Setup(x => x.GetBuildConfigurationAsync(_tempDirectory, "azure-sdk-for-net"))
+            .Setup(x => x.GetBuildConfigurationAsync(_tempDirectory))
             .ThrowsAsync(new InvalidOperationException("Error parsing JSON configuration: Invalid JSON"));
 
         // Act
@@ -181,7 +181,7 @@ public class SdkBuildToolTests
 
         // Mock the SdkRepoConfigHelper to throw when config file is not found
         _mockSdkRepoConfigHelper
-            .Setup(x => x.GetBuildConfigurationAsync(_tempDirectory, "azure-sdk-for-net"))
+            .Setup(x => x.GetBuildConfigurationAsync(_tempDirectory))
             .ThrowsAsync(new FileNotFoundException("Configuration file not found"));
 
         // Act
@@ -191,7 +191,7 @@ public class SdkBuildToolTests
         Assert.That(result.ResponseErrors?.First(), Does.Contain("Configuration file not found"));
         _mockGitHelper.Verify(x => x.DiscoverRepoRoot(_tempDirectory), Times.Once);
         _mockGitHelper.Verify(x => x.GetRepoName(_tempDirectory), Times.Once);
-        _mockSdkRepoConfigHelper.Verify(x => x.GetBuildConfigurationAsync(_tempDirectory, "azure-sdk-for-net"), Times.Once);
+        _mockSdkRepoConfigHelper.Verify(x => x.GetBuildConfigurationAsync(_tempDirectory), Times.Once);
     }
 
     #endregion

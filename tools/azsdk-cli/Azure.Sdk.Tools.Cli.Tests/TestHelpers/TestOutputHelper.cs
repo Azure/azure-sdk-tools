@@ -3,10 +3,11 @@ using Azure.Sdk.Tools.Cli.Helpers;
 namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Helpers;
 
 /// <summary>
-/// A really simple mock that just accumulates all the outputs into a List, which you can assert on
+/// An IOutputHelper implementation that can be used in test.
+/// It accumulates all the outputs into a List, which you can assert on
 /// after the test is complete.
 /// </summary>
-internal class MockOutputHelper : IOutputHelper
+internal class TestOutputHelper : IOutputHelper
 {
     /// <summary>
     /// All the collected outputs, in the order they were added.
@@ -15,7 +16,7 @@ internal class MockOutputHelper : IOutputHelper
     public IEnumerable<(string Method, object OutputValue)> Outputs => outputs;
     private readonly List<(string Method, object OutputValue)> outputs;
 
-    public MockOutputHelper()
+    public TestOutputHelper()
     {
         outputs = [];
     }

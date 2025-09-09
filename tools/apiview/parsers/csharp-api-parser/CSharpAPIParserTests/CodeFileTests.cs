@@ -119,32 +119,26 @@ namespace CSharpAPIParserTests
             Assert.Equal("public virtual Task<Response<BlobContainerClient>> UndeleteBlobContainerAsync(string deletedContainerName, string deletedContainerVersion, CancellationToken cancellationToken = default);", methodLine.ToString().Trim());
         }
 
-         [Fact]
+        [Fact]
         public void NoDuplicateLineIds()
         {
             var lines = coreCodeFile.ReviewLines;
             HashSet<string> lineIds = new HashSet<string>();
 
+            AssertNoDupes(lines, lineIds);
+
+            Assert.True(lineIds.Count > 10);
+        }
+
+        private void AssertNoDupes(List<ReviewLine> lines, HashSet<string> lineIds)
+        {
             foreach (var line in lines)
             {
                 if (!string.IsNullOrEmpty(line.LineId))
                 {
                     Assert.True(lineIds.Add(line.LineId), $"Duplicate lineId found: {line.LineId}");
                 }
-                foreach (var child in line.Children)
-                {
-                    if (!string.IsNullOrEmpty(child.LineId))
-                    {
-                        Assert.True(lineIds.Add(child.LineId), $"Duplicate lineId found: {child.LineId}");
-                    }
-                    foreach (var grandChild in child.Children)
-                    {
-                        if (!string.IsNullOrEmpty(grandChild.LineId))
-                        {
-                            Assert.True(lineIds.Add(grandChild.LineId), $"Duplicate lineId found: {grandChild.LineId}");
-                        }
-                    }
-                }
+                AssertNoDupes(line.Children, lineIds);
             }
         }
 
@@ -161,7 +155,7 @@ namespace CSharpAPIParserTests
         {
             // If current line is for class then next line at same level is expected to be a end of context line
             var lines = codeFile.ReviewLines;
-            foreach(var namespaceLine in lines)
+            foreach (var namespaceLine in lines)
             {
                 Assert.NotNull(namespaceLine);
                 bool expectEndOfContext = false;
@@ -179,7 +173,7 @@ namespace CSharpAPIParserTests
                         t.RenderClasses.Contains("struct") ||
                         t.RenderClasses.Contains("interface")) && !classLines[i].Tokens.Any(t => t.Value == "abstract"));
                 }
-            }            
+            }
         }
 
         [Fact]
@@ -306,7 +300,7 @@ namespace Microsoft.Extensions.Azure {
 
         [Fact]
         public void VerifyAttributeHAsRelatedLine()
-        {            
+        {
             Assert.Equal(11, CountAttributeRelatedToProperty(storageCodeFile.ReviewLines));
         }
 
@@ -316,7 +310,7 @@ namespace Microsoft.Extensions.Azure {
 
             foreach (var line in lines)
             {
-                if(line.LineId != null && line.LineId.StartsWith("System.FlagsAttribute.") && !string.IsNullOrEmpty(line.RelatedToLine))
+                if (line.LineId != null && line.LineId.StartsWith("System.FlagsAttribute.") && !string.IsNullOrEmpty(line.RelatedToLine))
                 {
                     count++;
                 }

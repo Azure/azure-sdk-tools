@@ -8,7 +8,6 @@ using System.Text.Json.Nodes;
 using UtilityLibraries;
 
 namespace ReportHelper;
-
 public class ExcelHelper4Test
 {
     private static readonly object LockObj = new object();
@@ -361,7 +360,7 @@ public class GithubHelper
         return mappings.ContainsKey(key) ? mappings[key] : key;
     }
 
-    public static async Task CreateOrUpdateGitHubIssue(string owner, string repo, string githubToken, string packageName, string language)
+    public static async Task CreateOrUpdateGitHubIssue(string owner, string repo, string githubToken, string packageName, string language, List<string> syncIssuesRules)
     {
         string apiUrl = $"https://api.github.com/repos/{owner}/{repo}/issues";
 
@@ -401,6 +400,12 @@ public class GithubHelper
 
         foreach (var rule in succeedRules)
         {
+            // Skip rules that are not in syncIssuesRules, only choired rules will create/update issues.
+            if (!syncIssuesRules.Contains(rule))
+            {
+                continue;
+            }
+
             string issueTitle = "";
 
             string mappedRule = GetMappedValue(ruleMappings, rule);
@@ -575,7 +580,7 @@ public class GithubHelper
 
         if (matchingFiles.Length == 0)
         {
-            if (searchPattern.Contains("DiffIssues"))
+            if(searchPattern.Contains("DiffIssues"))
             {
                 Console.WriteLine("No diff issue matching files found. There are no new issues to report.");
             }
@@ -671,7 +676,7 @@ public class GithubHelper
                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("token", githubToken);
                 string? linkHeader = null;
 
-                while (true)
+                while(true)
                 {
                     HttpResponseMessage response = client.GetAsync(apiUrl).Result;
                     response.EnsureSuccessStatusCode();
@@ -846,7 +851,7 @@ public class pipelineStatusHelper
                 if (ruleStatus.ContainsKey(rule))
                 {
                     ruleExists = true;
-                    if (status == "failed")
+                    if(status == "failed")
                     {
                         ruleStatus[rule] = status;
                         File.WriteAllText(pipelineStatusfilePath, "failed, please check the detail of error info.");
@@ -859,7 +864,7 @@ public class pipelineStatusHelper
             {
                 rulesStatusList.Add(new Dictionary<string, string> { { rule, status } });
             }
-
+            
             string jsonContent = JsonSerializer.Serialize(rulesStatusList, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(filePath, jsonContent);
         }

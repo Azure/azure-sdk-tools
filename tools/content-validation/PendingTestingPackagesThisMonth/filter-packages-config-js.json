@@ -1,8 +1,6 @@
 [
   {
     "packages": [
-        "@azure-rest/*",
-        "@azure/arm-*",
         "@azure/create-playwright",
         "@azure/ai-form-recognizer",
         "@azure/ai-text-analytics",

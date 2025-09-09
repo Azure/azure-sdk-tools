@@ -1,8 +1,6 @@
 [
   {
     "packages": [
-        "azure-mgmt-*",
-        "azure-cognitiveservices-*",
         "azure-ai-generative",
         "azure-ai-resources",
         "azure-ai-vision",

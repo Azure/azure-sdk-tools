@@ -9,11 +9,11 @@ namespace PendingTestingPackagesThisMonth
     public class PendingTestingPackagesThisMonth
     {
         private static readonly string RELEASE_PACKAGES_URL_PREFIX = "https://github.com/Azure/azure-sdk/tree/main/_data/releases/";
-        private static readonly string PENDING_TEST_PACKAGES_LIST_LOCATION = "../eng/pipelines/packages.json";
         private static readonly string FILTER_PACKAGES_FOR_PYTHON_PATH = "filter-packages-config-python.json";
         private static readonly string FILTER_PACKAGES_FOR_JAVA_PATH = "filter-packages-config-java.json";
         private static readonly string FILTER_PACKAGES_FOR_JAVASCRIPT_PATH = "filter-packages-config-js.json";
         private static readonly string FILTER_PACKAGES_FOR_NET_PATH = "filter-packages-config-dotnet.json";
+        private static string? PENDING_TEST_PACKAGES_LIST_LOCATION;
         private IPlaywright _playwright;
 
         public PendingTestingPackagesThisMonth(IPlaywright playwright)
@@ -26,6 +26,7 @@ namespace PendingTestingPackagesThisMonth
             using IHost host = Host.CreateApplicationBuilder(args).Build();
             IConfiguration config = host.Services.GetRequiredService<IConfiguration>();
             string? language = config["Language"];
+            PENDING_TEST_PACKAGES_LIST_LOCATION = "../" + config["PackagesListFilePath"];
 
             // Initialize Playwright instance.
             if (string.IsNullOrEmpty(language))
@@ -112,20 +113,11 @@ namespace PendingTestingPackagesThisMonth
                 var configJson = JsonSerializer.Deserialize<List<Dictionary<string, List<string>>>>(configContent);
                 var packages = configJson?.FirstOrDefault()?["packages"] ?? new List<string>();
 
-                if (packages.Contains("azure-mgmt-*"))
-                {
-                    result.RemoveWhere(packageName => packageName.StartsWith("azure-mgmt-"));
-                }
-                if (packages.Contains("azure-cognitiveservices-*"))
-                {
-                    result.RemoveWhere(packageName => packageName.StartsWith("azure-cognitiveservices-"));
-                }
+                result.RemoveWhere(packageName => packageName.StartsWith("azure-mgmt-"));
+                result.RemoveWhere(packageName => packageName.StartsWith("azure-cognitiveservices-"));
                 foreach (var pkg in packages)
                 {
-                    if (pkg != "azure-mgmt-*" && pkg != "azure-cognitiveservices-*")
-                    {
-                        result.Remove(pkg);
-                    }
+                    result.Remove(pkg);
                 }
             }
             else
@@ -152,16 +144,10 @@ namespace PendingTestingPackagesThisMonth
                 var configJson = JsonSerializer.Deserialize<List<Dictionary<string, List<string>>>>(configContent);
                 var packages = configJson?.FirstOrDefault()?["packages"] ?? new List<string>();
 
-                if (packages.Contains("azure-resourcemanager-*"))
-                {
-                    result.RemoveWhere(packageName => packageName.StartsWith("azure-resourcemanager-"));
-                }
+                result.RemoveWhere(packageName => packageName.StartsWith("azure-resourcemanager-"));
                 foreach (var pkg in packages)
                 {
-                    if (pkg != "azure-resourcemanager-*")
-                    {
-                        result.Remove(pkg);
-                    }
+                    result.Remove(pkg);
                 }
             }
             else
@@ -188,16 +174,10 @@ namespace PendingTestingPackagesThisMonth
                 var configJson = JsonSerializer.Deserialize<List<Dictionary<string, List<string>>>>(configContent);
                 var packages = configJson?.FirstOrDefault()?["packages"] ?? new List<string>();
 
-                if (packages.Contains("Azure.ResourceManager.*"))
-                {
-                    result.RemoveWhere(packageName => packageName.StartsWith("Azure.ResourceManager."));
-                }
+                result.RemoveWhere(packageName => packageName.StartsWith("Azure.ResourceManager."));
                 foreach (var pkg in packages)
                 {
-                    if (pkg != "Azure.ResourceManager.*")
-                    {
-                        result.Remove(pkg);
-                    }
+                    result.Remove(pkg);
                 }
             }
             else
@@ -227,20 +207,11 @@ namespace PendingTestingPackagesThisMonth
                 var configJson = JsonSerializer.Deserialize<List<Dictionary<string, List<string>>>>(configContent);
                 var packages = configJson?.FirstOrDefault()?["packages"] ?? new List<string>();
 
-                if (packages.Contains("@azure-rest/*"))
-                {
-                    result.RemoveWhere(packageName => packageName.StartsWith("@azure-rest/"));
-                }
-                if (packages.Contains("@azure/arm-*"))
-                {
-                    result.RemoveWhere(packageName => packageName.StartsWith("@azure/arm-"));
-                }
+                result.RemoveWhere(packageName => packageName.StartsWith("@azure-rest/"));
+                result.RemoveWhere(packageName => packageName.StartsWith("@azure/arm-"));
                 foreach (var pkg in packages)
                 {
-                    if (pkg != "@azure-rest/*" && pkg != "@azure/arm-*")
-                    {
-                        result.Remove(pkg);
-                    }
+                    result.Remove(pkg);
                 }
             }
             else

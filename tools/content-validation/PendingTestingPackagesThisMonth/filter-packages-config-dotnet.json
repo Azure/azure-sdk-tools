@@ -1,7 +1,6 @@
 [
   {
     "packages": [
-        "Azure.ResourceManager.*",
         "Microsoft.Azure.WebJobs.Extensions.EventHubs",
         "Microsoft.Azure.WebJobs.Extensions.Tables",
         "Microsoft.Azure.WebJobs.Extensions.ServiceBus",

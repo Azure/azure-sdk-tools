@@ -44,32 +44,32 @@ Again, the entire response **MUST BE VALID JSON**";
 
     public async Task DeleteAgents(CancellationToken ct = default)
     {
-        logger.LogInformation("Deleting agents in project '{ProjectEndpoint}'", ProjectEndpoint);
+        logger.LogDebug("Deleting agents in project '{ProjectEndpoint}'", ProjectEndpoint);
         AsyncPageable<PersistentAgent> agents = client.Administration.GetAgentsAsync(cancellationToken: ct);
         await foreach (var agent in agents)
         {
-            logger.LogInformation("Deleting agent {AgentId} ({AgentName})", agent.Id, agent.Name);
+            logger.LogDebug("Deleting agent {AgentId} ({AgentName})", agent.Id, agent.Name);
             await client.Administration.DeleteAgentAsync(agent.Id, ct);
         }
 
         AsyncPageable<PersistentAgentThread> threads = client.Threads.GetThreadsAsync(cancellationToken: ct);
         await foreach (var thread in threads)
         {
-            logger.LogInformation("Deleting thread {ThreadId}", thread.Id);
+            logger.LogDebug("Deleting thread {ThreadId}", thread.Id);
             await client.Threads.DeleteThreadAsync(thread.Id, ct);
         }
 
         AsyncPageable<PersistentAgentsVectorStore> vectorStores = client.VectorStores.GetVectorStoresAsync(cancellationToken: ct);
         await foreach (var vectorStore in vectorStores)
         {
-            logger.LogInformation("Deleting vector store {VectorStoreId} ({VectorStoreName})", vectorStore.Id, vectorStore.Name);
+            logger.LogDebug("Deleting vector store {VectorStoreId} ({VectorStoreName})", vectorStore.Id, vectorStore.Name);
             await client.VectorStores.DeleteVectorStoreAsync(vectorStore.Id, ct);
         }
 
         var files = await client.Files.GetFilesAsync(cancellationToken: ct);
         foreach (var file in files.Value)
         {
-            logger.LogInformation("Deleting file {FileId} ({FileName})", file.Id, file.Filename);
+            logger.LogDebug("Deleting file {FileId} ({FileName})", file.Id, file.Filename);
             await client.Files.DeleteFileAsync(file.Id, ct);
         }
     }
@@ -144,7 +144,7 @@ Again, the entire response **MUST BE VALID JSON**";
         tokenUsageHelper.Add(model, run.Usage.PromptTokens, run.Usage.CompletionTokens);
 
         // NOTE: in the future we will want to keep these around if the user wants to keep querying the file in a session
-        logger.LogDebug("Deleting temporary resources: agent {AgentId}, vector store {VectorStoreId}, {fileCount} files", agent.Id, vectorStore.Id, uploaded.Count);
+        logger.LogInformation("Deleting temporary resources: agent {AgentId}, vector store {VectorStoreId}, {fileCount} files", agent.Id, vectorStore.Id, uploaded.Count);
         await DeleteAgents(ct);
 
         return string.Join("\n", response);

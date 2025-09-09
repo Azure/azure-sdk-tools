@@ -1,7 +1,18 @@
+param (
+    [Parameter(Mandatory = $false)]
+    [string] $TableName = "KpiEvidenceStream",
+
+    [Parameter(Mandatory = $false)]
+    [string] $ReleasePlanWorkItemId,
+
+    [Parameter(Mandatory = $false)]
+    [string] $TriageWorkItemId
+)
+
 Set-StrictMode -Version 3
 . (Join-Path $PSScriptRoot "../common/scripts/Helpers/DevOps-WorkItem-Helpers.ps1")
 
-$Complete = 1
+$Completed = 1
 $NA = 3
 
 $KPI_ID_Onboarding = "ba2c80d5-b8be-465f-8948-283229082fd1"
@@ -22,10 +33,8 @@ function InvokeKustoCommand($command) {
 }
 
 function AddAttestationEntry($targetId, $actionItemId, $status, $targetType, $url) {
-    $tableName = "KpiEvidenceStream"
-
     $command = @"
-.append KpiEvidenceStream <|
+.append $TableName <|
 print
     ActionItemId = "$actionItemId",
     TargetId = "$targetId",
@@ -38,7 +47,7 @@ print
     InvokeKustoCommand $command
 }
 
-$triages =  Get-TriagesForCPEXAttestation
+$triages =  Get-TriagesForCPEXAttestation -triageWorkItemId $TriageWorkItemId
 
 foreach ($triage in $triages) {
     $fields = $triage.fields
@@ -55,7 +64,7 @@ foreach ($triage in $triages) {
         $productType = "ProductSku"
     }
 
-    AddAttestationEntry $productServiceTreeId $KPI_ID_Onboarding $Complete $productType $url
+    AddAttestationEntry $productServiceTreeId $KPI_ID_Onboarding $Completed $productType $url
 
     # Maps the current lifecycle stage to the required DATAPLANE KPIs needed to advance to the next lifecycle stages
     $lifecycleToDataKpis = @{
@@ -66,7 +75,7 @@ foreach ($triage in $triages) {
 
     if ($dataAttestationStatus -ne "Completed") {
         if ($dataScope -eq "Yes") {
-            Update-AttestationStatusInWorkItem -workItemId $triage.id -fieldName "Custom.DataplaneAttestationStatus" -status "Complete"
+            Update-AttestationStatusInWorkItem -workItemId $triage.id -fieldName "Custom.DataplaneAttestationStatus" -status "Completed"
         } else {
             Update-AttestationStatusInWorkItem -workItemId $triage.id -fieldName "Custom.DataplaneAttestationStatus" -status "Not applicable"
 
@@ -87,7 +96,7 @@ foreach ($triage in $triages) {
 
     if ($mgmtAttestationStatus -ne "Completed") {
         if ($mgmtScope -eq "Yes") {
-            Update-AttestationStatusInWorkItem -workItemId $triage.id -fieldName "Custom.ManagementPlaneAttestationStatus" -status "Complete"
+            Update-AttestationStatusInWorkItem -workItemId $triage.id -fieldName "Custom.ManagementPlaneAttestationStatus" -status "Completed"
         } else {
             Update-AttestationStatusInWorkItem -workItemId $triage.id -fieldName "Custom.ManagementPlaneAttestationStatus" -status "Not applicable"
             if ($lifecycleToMgmtKpis.ContainsKey($productLifecycle)) {
@@ -100,7 +109,7 @@ foreach ($triage in $triages) {
 
 }
 
-$releasePlans = Get-ReleasePlansForCPEXAttestation
+$releasePlans = Get-ReleasePlansForCPEXAttestation -releasePlanWorkItemId $ReleasePlanWorkItemId
 
 foreach ($releasePlan in $releasePlans) {
     $fields = $releasePlan.fields
@@ -118,13 +127,13 @@ foreach ($releasePlan in $releasePlans) {
     if ($dataScope -eq 'Yes') {
         switch -Wildcard ($lifecycle) {
             "*Public Preview*" {
-                AddAttestationEntry $productServiceTreeId $KPI_ID_Data_Public_Preview $Complete $productType $url
+                AddAttestationEntry $productServiceTreeId $KPI_ID_Data_Public_Preview $Completed $productType $url
             }
             "*Private Preview*" {
-                AddAttestationEntry $productServiceTreeId $KPI_ID_Data_Private_Preview $Complete $productType $url
+                AddAttestationEntry $productServiceTreeId $KPI_ID_Data_Private_Preview $Completed $productType $url
             }
             "*GA*" {
-                AddAttestationEntry $productServiceTreeId $KPI_ID_Data_GA $Complete $productType $url
+                AddAttestationEntry $productServiceTreeId $KPI_ID_Data_GA $Completed $productType $url
             }
             default {
                 Write-Output "Release Plan ID $($releasePlan.id): Dataplane in scope, unknown lifecycle $($lifecycle)"
@@ -135,13 +144,13 @@ foreach ($releasePlan in $releasePlans) {
     if ($mgmtScope -eq 'Yes') {
         switch -Wildcard ($lifecycle) {
             "*Public Preview*" {
-                AddAttestationEntry $productServiceTreeId $KPI_ID_Mgmt_Public_Preview $Complete $productType $url
+                AddAttestationEntry $productServiceTreeId $KPI_ID_Mgmt_Public_Preview $Completed $productType $url
             }
             "*Private Preview*" {
-                AddAttestationEntry $productServiceTreeId $KPI_ID_Mgmt_Private_Preview $Complete $productType $url
+                AddAttestationEntry $productServiceTreeId $KPI_ID_Mgmt_Private_Preview $Completed $productType $url
             }
             "*GA*" {
-                AddAttestationEntry $productServiceTreeId $KPI_ID_Mgmt_GA $Complete $productType $url
+                AddAttestationEntry $productServiceTreeId $KPI_ID_Mgmt_GA $Completed $productType $url
             }
             default {
                 Write-Output "Release Plan ID $($releasePlan.id): Management plane in scope, unknown lifecycle $($lifecycle)"

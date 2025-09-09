@@ -103,7 +103,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var npxHelper = new Mock<INpxHelper>().Object;
             var logger = new Mock<ILogger<TypeSpecInitTool>>().Object;
             var outputService = new Mock<IOutputHelper>().Object;
-            var tool = new TypeSpecInitTool(npxHelper, CreateTypeSpecHelper(false), logger, outputService);
+            var docsService = new Mock<ITypeSpecDocsService>().Object;
+            var tool = new TypeSpecInitTool(npxHelper, CreateTypeSpecHelper(false), logger, outputService, docsService);
             var tempDir = Path.Combine(Path.GetTempPath(), $"test-nonexistent-{Guid.NewGuid()}");
 
             try
@@ -129,7 +130,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var npxHelper = new Mock<INpxHelper>().Object;
             var logger = new Mock<ILogger<TypeSpecInitTool>>().Object;
             var outputService = new Mock<IOutputHelper>().Object;
-            var tool = new TypeSpecInitTool(npxHelper, CreateTypeSpecHelper(true), logger, outputService);
+            var docsService = new Mock<ITypeSpecDocsService>().Object;
+            var tool = new TypeSpecInitTool(npxHelper, CreateTypeSpecHelper(true), logger, outputService, docsService);
             var tempDir = Path.Combine(Path.GetTempPath(), $"test-nonexistent-{Guid.NewGuid()}");
 
             try

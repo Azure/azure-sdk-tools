@@ -20,8 +20,8 @@ public class AzureAgentService(
 ) : IAzureAgentService
 {
     public string ProjectEndpoint { get; } = _projectEndpoint ?? defaultProjectEndpoint;
-    private static readonly string defaultProjectEndpoint = "https://azsdk-engsys-ai.services.ai.azure.com/api/projects/azsdk-engsys-ai";
-    private readonly string model = _model ?? "gpt-4.1-mini";
+    private static readonly string defaultProjectEndpoint = "https://azsdk-engsys-openai.services.ai.azure.com/api/projects/azsdk-engsys-openai-foundry";
+    private readonly string model = _model ?? "o3-mini";
 
     private readonly PersistentAgentsClient client = new(_projectEndpoint ?? defaultProjectEndpoint, azureService.GetCredential());
 

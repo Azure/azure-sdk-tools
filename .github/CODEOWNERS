@@ -47,7 +47,7 @@
 /tools/tsp-client/                      @catalinaperalta
 /tools/typespec-bump-deps/              @weidongxu-microsoft
 /tools/content-validation/              @xiangyan99 @zedy-wj
-/tools/perf-regression-finder/          @sa7936 @m-redding @jsquire
+/tools/perf-regression-finder/          @m-redding @jsquire
 
 # PRLabel: %azsdk-cli
 /tools/azsdk-cli/                       @benbp @scbedd @praveenkuttappan @smw-ms @Jeo02 @maririos @richardpark-msft @l0lawrence @timovv @samvaity

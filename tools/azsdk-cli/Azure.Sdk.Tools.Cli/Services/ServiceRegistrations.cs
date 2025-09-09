@@ -22,12 +22,16 @@ namespace Azure.Sdk.Tools.Cli.Services
         /// todo: make this use reflection to populate itself with all of our services and helpers
         public static void RegisterCommonServices(IServiceCollection services)
         {
+            // HTTP client services
+            services.AddHttpClient();
+            
             // Services
             services.AddSingleton<IAzureService, AzureService>();
             services.AddSingleton<IAzureAgentServiceFactory, AzureAgentServiceFactory>();
             services.AddSingleton<IDevOpsConnection, DevOpsConnection>();
             services.AddSingleton<IDevOpsService, DevOpsService>();
             services.AddSingleton<IGitHubService, GitHubService>();
+            services.AddSingleton<ITypeSpecDocsService, TypeSpecDocsService>();
 
             // Language Check Services (Composition-based)
             services.AddSingleton<ILanguageChecks, LanguageChecks>();

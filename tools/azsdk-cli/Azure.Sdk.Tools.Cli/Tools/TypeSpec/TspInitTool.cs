@@ -22,12 +22,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         private readonly INpxHelper npxHelper;
         private readonly ILogger<TypeSpecInitTool> logger;
         private readonly IOutputHelper output;
+        private readonly ITypeSpecDocsService docsService;
 
-        public TypeSpecInitTool(INpxHelper npxHelper, ILogger<TypeSpecInitTool> logger, IOutputHelper output)
+        public TypeSpecInitTool(INpxHelper npxHelper, ILogger<TypeSpecInitTool> logger, IOutputHelper output, ITypeSpecDocsService docsService)
         {
             this.npxHelper = npxHelper;
             this.logger = logger;
             this.output = output;
+            this.docsService = docsService;
             CommandHierarchy = [SharedCommandGroups.TypeSpec];
         }
 
@@ -209,6 +211,77 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                 IsSuccessful = true,
                 TypeSpecProjectPath = outputDirectory
             };
+        }
+
+        [McpServerTool(Name = "azsdk_list_typespec_topics"),
+         Description("Use this tool to list all available TypeSpec and TypeSpec Azure documentation topics with their descriptions.")]
+        public async Task<ListTypeSpecTopicsResponse> ListTypeSpecTopicsAsync(
+            CancellationToken ct = default)
+        {
+            try
+            {
+                logger.LogInformation("Fetching TypeSpec documentation topics");
+                var response = await docsService.GetTopicsAsync(ct);
+
+                if (!response.IsSuccessful)
+                {
+                    SetFailure();
+                }
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error fetching TypeSpec topics");
+                SetFailure();
+                return new ListTypeSpecTopicsResponse
+                {
+                    IsSuccessful = false,
+                    ResponseError = $"Failed to fetch TypeSpec topics: {ex.Message}"
+                };
+            }
+        }
+
+        [McpServerTool(Name = "azsdk_get_typespec_topics_docs"),
+         Description("Use this tool to fetch the documentation content for specified TypeSpec and TypeSpec Azure topics. Call azsdk_list_typespec_topics first to see available topics.")]
+        public async Task<GetTypeSpecTopicsDocsResponse> GetTypeSpecTopicsDocsAsync(
+            [Description("List of topic names to fetch documentation for. Use azsdk_list_typespec_topics to see available topics.")]
+            List<string> topics,
+            CancellationToken ct = default)
+        {
+            try
+            {
+                if (topics == null || !topics.Any())
+                {
+                    SetFailure();
+                    return new GetTypeSpecTopicsDocsResponse
+                    {
+                        IsSuccessful = false,
+                        ResponseError = "Topics list is required and cannot be empty"
+                    };
+                }
+
+                logger.LogInformation("Fetching documentation for {Count} TypeSpec topics", topics.Count);
+
+                var response = await docsService.GetTopicDocsAsync(topics, ct);
+
+                if (!response.IsSuccessful)
+                {
+                    SetFailure();
+                }
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error fetching TypeSpec documentation");
+                SetFailure();
+                return new GetTypeSpecTopicsDocsResponse
+                {
+                    IsSuccessful = false,
+                    ResponseError = $"Failed to fetch TypeSpec documentation: {ex.Message}"
+                };
+            }
         }
     }
 }

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Azure.Sdk.Tools.Cli.Tools.TypeSpec;
 using Moq;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Services;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools
 {
@@ -16,7 +17,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var npxHelper = new Mock<INpxHelper>().Object;
             var logger = new Mock<ILogger<TypeSpecInitTool>>().Object;
             var outputService = new Mock<IOutputHelper>().Object;
-            var tool = new TypeSpecInitTool(npxHelper, logger, outputService);
+            var docsService = new Mock<ITypeSpecDocsService>().Object;
+            var tool = new TypeSpecInitTool(npxHelper, logger, outputService, docsService);
 
             // Act
             var command = tool.GetCommand();
@@ -34,7 +36,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var npxHelper = new Mock<INpxHelper>().Object;
             var logger = new Mock<ILogger<TypeSpecInitTool>>().Object;
             var outputService = new Mock<IOutputHelper>().Object;
-            var tool = new TypeSpecInitTool(npxHelper, logger, outputService);
+            var docsService = new Mock<ITypeSpecDocsService>().Object;
+            var tool = new TypeSpecInitTool(npxHelper, logger, outputService, docsService);
 
             var result = await tool.InitTypeSpecProjectAsync(outputDirectory: "never-used", template: "invalid-template", serviceNamespace: "MyService", isCli: false);
 
@@ -52,7 +55,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var npxHelper = new Mock<INpxHelper>().Object;
             var logger = new Mock<ILogger<TypeSpecInitTool>>().Object;
             var outputService = new Mock<IOutputHelper>().Object;
-            var tool = new TypeSpecInitTool(npxHelper, logger, outputService);
+            var docsService = new Mock<ITypeSpecDocsService>().Object;
+            var tool = new TypeSpecInitTool(npxHelper, logger, outputService, docsService);
 
             var result = await tool.InitTypeSpecProjectAsync(outputDirectory: "never-used", template: "azure-core", serviceNamespace: "", isCli: false);
 
@@ -69,7 +73,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var npxHelper = new Mock<INpxHelper>().Object;
             var logger = new Mock<ILogger<TypeSpecInitTool>>().Object;
             var outputService = new Mock<IOutputHelper>().Object;
-            var tool = new TypeSpecInitTool(npxHelper, logger, outputService);
+            var docsService = new Mock<ITypeSpecDocsService>().Object;
+            var tool = new TypeSpecInitTool(npxHelper, logger, outputService, docsService);
 
             var result = await tool.InitTypeSpecProjectAsync(outputDirectory: Path.Combine(Path.GetTempPath(), $"test-nonexistent-{Guid.NewGuid()}"), template: "azure-core", serviceNamespace: "MyService", isCli: false);
 

@@ -159,7 +159,7 @@ public class SdkGenerationToolTests
         
         // Mock GitHelper to return valid repo root
         _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory)).Returns(_tempDirectory);
-        _mockGitHelper.Setup(x => x.GetGitHubRepoFullNameAsync(tspConfigPath, true)).ReturnsAsync(DefaultSpecRepo);
+        _mockGitHelper.Setup(x => x.GetRepoFullNameAsync(tspConfigPath, true)).ReturnsAsync(DefaultSpecRepo);
 
         var expectedResult = new ProcessResult { ExitCode = 0 };
         expectedResult.AppendStdout(ProcessSuccessOutput);
@@ -262,7 +262,7 @@ public class SdkGenerationToolTests
         
         // Mock GitHelper to return valid repo root
         _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory)).Returns(_tempDirectory);
-        _mockGitHelper.Setup(x => x.GetGitHubRepoFullNameAsync(tspConfigPath, false)).ReturnsAsync(DefaultSpecRepo);
+        _mockGitHelper.Setup(x => x.GetRepoFullNameAsync(tspConfigPath, false)).ReturnsAsync(DefaultSpecRepo);
 
         var expectedResult = new ProcessResult { ExitCode = 0 };
         expectedResult.AppendStdout(ProcessSuccessOutput);
@@ -328,7 +328,7 @@ public class SdkGenerationToolTests
         
         // Mock GitHelper to return valid repo root
         _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory)).Returns(_tempDirectory);
-        _mockGitHelper.Setup(x => x.GetGitHubRepoFullNameAsync(tspConfigPath, false)).ReturnsAsync(DefaultSpecRepo);
+        _mockGitHelper.Setup(x => x.GetRepoFullNameAsync(tspConfigPath, false)).ReturnsAsync(DefaultSpecRepo);
 
         var expectedResult = new ProcessResult { ExitCode = 0 };
         expectedResult.AppendStdout(ProcessSuccessOutput);

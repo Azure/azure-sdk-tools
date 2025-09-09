@@ -10,7 +10,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
     {
         // Get the owner 
         public Task<string> GetRepoOwnerNameAsync(string path, bool findUpstreamParent = true);
-        public Task<string> GetGitHubRepoFullNameAsync(string path, bool findUpstreamParent = true);
+        public Task<string> GetRepoFullNameAsync(string path, bool findUpstreamParent = true);
         public Uri GetRepoRemoteUri(string path);
         public string GetBranchName(string path);
         public string GetMergeBaseCommitSha(string path, string targetBranch);
@@ -91,8 +91,8 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             throw new InvalidOperationException("Unable to determine repository owner.");
         }
 
-        // Get the full name of github repo in the format of "{owner/name}", e.g. "Azure/azure-rest-api-specs"
-        public async Task<string> GetGitHubRepoFullNameAsync(string path, bool findUpstreamParent = true)
+        // Get the full name of repo in the format of "{owner/name}", e.g. "Azure/azure-rest-api-specs"
+        public async Task<string> GetRepoFullNameAsync(string path, bool findUpstreamParent = true)
         {
             if (!string.IsNullOrEmpty(path))
             {

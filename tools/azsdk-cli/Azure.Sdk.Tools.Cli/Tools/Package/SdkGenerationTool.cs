@@ -134,7 +134,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 {
                     return CreateFailureResponse($"The 'tspconfig.yaml' file does not exist at the specified path: {tspConfigPath}. Prompt user to clone the azure-rest-api-specs repository locally if it does not have a local copy.");
                 }
-                specRepoFullName = await _gitHelper.GetGitHubRepoFullNameAsync(tspConfigPath, findUpstreamParent: false);
+                specRepoFullName = await _gitHelper.GetRepoFullNameAsync(tspConfigPath, findUpstreamParent: false);
             }
             else
             {

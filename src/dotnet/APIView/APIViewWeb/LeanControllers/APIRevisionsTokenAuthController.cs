@@ -56,23 +56,28 @@ public class APIRevisionsTokenAuthController : ControllerBase
     /// <param name="apiRevisionId">The specific API revision ID (required when selectionType is Specific)</param>
     /// <param name="selectionType">How to select the API revision</param>
     /// <returns>Plain text representation of the API review</returns>
-    [HttpGet("{reviewId}/getRevisionText", Name = "GetAPIRevisionText")]
+    [HttpGet("getRevisionText", Name = "GetAPIRevisionText")]
     public async Task<ActionResult<string>> GetAPIRevisionTextAsync(
-        string reviewId,
         [FromQuery] string apiRevisionId = null,
+        [FromQuery] string reviewId = null,
         [FromQuery] APIRevisionSelectionType selectionType = APIRevisionSelectionType.Specific)
     {
         try
         {
+            if (selectionType == APIRevisionSelectionType.Specific && string.IsNullOrEmpty(apiRevisionId))
+            {
+                return BadRequest("apiRevisionId is required when selectionType is Specific");
+            }
+
+            if (selectionType != APIRevisionSelectionType.Specific && string.IsNullOrEmpty(reviewId))
+            {
+                return BadRequest($"reviewId is required when selectionType is {selectionType}");
+            }
+
             APIRevisionListItemModel activeApiRevision = null;
             switch (selectionType)
             {
                 case APIRevisionSelectionType.Specific:
-                    if (string.IsNullOrEmpty(apiRevisionId))
-                    {
-                        return BadRequest("apiRevisionId is required when selectionType is Specific");
-                    }
-
                     activeApiRevision = await _apiRevisionsManager.GetAPIRevisionAsync(User, apiRevisionId);
                     break;
                 case APIRevisionSelectionType.Latest:

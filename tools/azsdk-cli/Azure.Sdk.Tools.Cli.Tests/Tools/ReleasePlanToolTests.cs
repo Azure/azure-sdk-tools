@@ -100,7 +100,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             Assert.IsNotNull(releaseplan);
             Assert.True(releaseplan.Contains("Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem"));
 
-            releaseplan = await releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "12345678-1234-5678-9012-123456789012", "12345678-1234-5678-9012-123456789012", "2025-01-01-preview", "https://github.com/Azure/azure-rest-api-specs/pull/35446", "beta", isTestReleasePlan: true);
+            releaseplan = await releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "12345678-1234-5678-9012-123456789012", "12345678-1234-5678-9012-123456789012", "2025-01-01-preview", "https://github.com/Azure/azure-rest-api-specs-pr/pull/35446", "beta", isTestReleasePlan: true);
             Assert.IsNotNull(releaseplan);
             Assert.True(releaseplan.Contains("Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem"));
         }
@@ -177,6 +177,25 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
 
             // Verify the environment helper was called
             environmentHelperMock.Verify(x => x.GetBooleanVariable("AZSDKTOOLS_AGENT_TESTING", false), Times.Once);
+        }
+
+        [Test]
+        public async Task Test_Get_Release_Plan_For_Pull_Request_with_valid_inputs()
+        {
+            var releaseplan = await releasePlanTool.GetReleasePlanForPullRequest("https://github.com/Azure/azure-rest-api-specs/pull/35446");
+            Assert.True(releaseplan.Contains("Status: Success"));
+            Assert.True(releaseplan.Contains("Release Plan"));
+
+            releaseplan = await releasePlanTool.GetReleasePlanForPullRequest("https://github.com/Azure/azure-rest-api-specs-pr/pull/35446");
+            Assert.True(releaseplan.Contains("Status: Success"));
+            Assert.True(releaseplan.Contains("Release Plan"));
+        }
+
+        [Test]
+        public async Task Test_Get_Release_Plan_For_Pull_Request_with_invalid_pr_link()
+        {
+            var releaseplan = await releasePlanTool.GetReleasePlanForPullRequest("invalid-pr-link");
+            Assert.True(releaseplan.Contains("Failed to get release plan details"));
         }
 
         [Test]

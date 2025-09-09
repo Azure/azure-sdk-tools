@@ -5,6 +5,17 @@ pool:
   name: azsdk-pool
   demands: ImageOverride -equals ubuntu-24.04
 
+parameters:
+- name: TableName
+  type: string
+  default: 'KpiEvidenceStream'
+- name: ReleasePlanWorkItemId
+  type: string
+  default: ''
+- name: TriageWorkItemId
+  type: string
+  default: ''
+
 jobs:
   - job: AttestCPEXKPIs
     steps:
@@ -15,3 +26,7 @@ jobs:
           azureSubscription: opensource-api-connection
           scriptType: pscore
           scriptPath: eng/scripts/Attest-CPEX-KPIs.ps1
+          arguments: >
+            -TableName "$(TableName)"
+            -ReleasePlanWorkItemId "$(ReleasePlanWorkItemId)"
+            -TriageWorkItemId "$(TriageWorkItemId)"

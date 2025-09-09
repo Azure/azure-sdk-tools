@@ -25,6 +25,7 @@ using System.Text.Json;
 using Microsoft.Extensions.Logging.Console;
 using Microsoft.Extensions.Options;
 using Azure.Sdk.Tools.TestProxy.Common.AutoShutdown;
+using Azure.Sdk.Tools.TestProxy.Models;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -36,10 +37,6 @@ namespace Azure.Sdk.Tools.TestProxy
 
         private static bool _insecure;
         internal static bool Insecure => _insecure;
-        // default this to off so that we don't recognize this new mode unless explicitly asked to
-        // this value will be checked within Record and Playback controllers to determine if they should use
-        // a specific default recording etc.
-        public static bool StandardProxyMode { get; set; } = false;
 
         public Startup(IConfiguration configuration) { }
 
@@ -47,6 +44,7 @@ namespace Azure.Sdk.Tools.TestProxy
         public static StoreResolver Resolver;
         public static IAssetsStore DefaultStore;
         public static string[] storedArgs;
+        public static ServerRecordingConfiguration ProxyConfiguration { get; } = new ServerRecordingConfiguration();
 
         private static string resolveRepoLocation(string storageLocation = null)
         {
@@ -106,7 +104,14 @@ namespace Azure.Sdk.Tools.TestProxy
                     System.Console.WriteLine("Config verb requires a subcommand after the \"config\" verb.\n\nCorrect Usage: \"Azure.Sdk.Tools.TestProxy config locate|show|create -a path/to/assets.json\"");
                     break;
                 case StartOptions startOptions:
-                    StandardProxyMode = startOptions.StandardProxyMode;
+                    if (startOptions.StandardProxyMode) {
+                        // default to record, but when the 
+                        ProxyConfiguration.Mode = UniversalRecordingMode.Record;
+                    }
+                    else
+                    {
+                        ProxyConfiguration.Mode = UniversalRecordingMode.Azure;
+                    }
                     StartServer(startOptions);
                     break;
                 case PushOptions pushOptions:
@@ -262,7 +267,7 @@ namespace Azure.Sdk.Tools.TestProxy
             // Universal recording interception (record-only for now)
             app.Use(async (context, next) =>
             {
-                if (StandardProxyMode && !string.IsNullOrEmpty(Record.UniversalRecordingId))
+                if (!ProxyConfiguration.Mode.Equals(UniversalRecordingMode.Azure) && !string.IsNullOrEmpty(ProxyConfiguration.RecordingId))
                 {
                     var path = context.Request.Path.HasValue ? context.Request.Path.Value : string.Empty;
                     // bypass for admin/controller endpoints
@@ -273,7 +278,7 @@ namespace Azure.Sdk.Tools.TestProxy
                         // todo: store a Record/Playback boolean when changing UniversalRecordingId
                         // so that we can know whether to route to Record or Playback here.
                         var handler = context.RequestServices.GetRequiredService<RecordingHandler>();
-                        await handler.HandleRecordRequestAsync(Record.UniversalRecordingId, context.Request, context.Response);
+                        await handler.HandleRecordRequestAsync(ProxyConfiguration.RecordingId, context.Request, context.Response);
                         return;
                     }
                 }

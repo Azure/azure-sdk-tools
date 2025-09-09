@@ -1,6 +1,7 @@
 using Azure.Core;
 using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
+using Azure.Sdk.Tools.TestProxy.Models;
 using Azure.Sdk.Tools.TestProxy.Store;
 using Azure.Sdk.Tools.TestProxy.Transforms;
 using Azure.Sdk.Tools.TestProxy.Vendored;
@@ -1250,7 +1251,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public static Uri GetRequestUri(HttpRequest request)
         {
-            if (!Startup.StandardProxyMode) 
+            if (Startup.ProxyConfiguration.Equals(UniversalRecordingMode.Azure)) 
             {
                 // Instead of obtaining the Path of the request from request.Path, we use this
                 // more complicated method obtaining the raw string from the httpcontext. Unfortunately,

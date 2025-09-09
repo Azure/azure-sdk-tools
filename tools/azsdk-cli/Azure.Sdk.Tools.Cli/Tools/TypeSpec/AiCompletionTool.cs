@@ -283,41 +283,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             }
         }
 
-        private List<Source> MapSources(List<string> sources)
-        {
-            var mapped = new List<Source>();
-            var sourceMapping = new Dictionary<string, Source>(StringComparer.OrdinalIgnoreCase)
-            {
-                ["typespec_docs"] = Source.TypeSpec,
-                ["typespec_azure_docs"] = Source.TypeSpecAzure,
-                ["azure_rest_api_specs_wiki"] = Source.AzureRestAPISpec,
-                ["azure_sdk_for_python_docs"] = Source.AzureSDKForPython,
-                ["azure_sdk_for_python_wiki"] = Source.AzureSDKForPythonWiki,
-                ["static_typespec_qa"] = Source.TypeSpecQA,
-                ["azure_api_guidelines"] = Source.AzureAPIGuidelines,
-                ["azure_resource_manager_rpc"] = Source.AzureResourceManagerRPC,
-                ["static_typespec_migration_docs"] = Source.TypeSpecMigration,
-                ["azure-sdk-docs-eng"] = Source.AzureSDKDocsEng,
-                ["azure-sdk-guidelines"] = Source.AzureSDKGuidelines,
-                ["typespec_azure_http_specs"] = Source.TypeSpecAzureHttpSpecs,
-                ["typespec_http_specs"] = Source.TypeSpecHttpSpecs
-            };
-
-            foreach (var source in sources)
-            {
-                if (sourceMapping.TryGetValue(source, out var enumSource))
-                {
-                    mapped.Add(enumSource);
-                }
-                else
-                {
-                    _logger.LogWarning("Unknown source: {Source}", source);
-                }
-            }
-
-            return mapped;
-        }
-
         private List<Message> MapHistory(List<MessageInput> history)
         {
             return history.Select(h => new Message

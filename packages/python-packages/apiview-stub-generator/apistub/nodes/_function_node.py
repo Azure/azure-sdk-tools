@@ -195,7 +195,7 @@ class FunctionNode(NodeEntityBase):
                 if match:
                     self.special_kwarg.argtype = match.argtype
 
-            # retrieve the special **args type from docstrings
+            # retrieve the special *args type from docstrings
             if self.special_vararg and not self.special_vararg.argtype:
                 match = parsed_docstring.pos_args.get(self.special_vararg.argname, None)
                 if match:

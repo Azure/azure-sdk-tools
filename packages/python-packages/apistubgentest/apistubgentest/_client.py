@@ -221,7 +221,7 @@ class DocstringTypeHintClient:
         :param Any \\**kwargs: Optional parameters.
         :rtype: str
         """
-
+        pass
     def with_incorrect_dict_kwargs_docstring(self, **kwargs: Any) -> str:
         """ With incorrect docstring param kwargs
 

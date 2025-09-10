@@ -201,9 +201,42 @@ class DocstringTypeHintClient:
 
     def with_datetime_typehint(self, date):
         """ With datetime
-        
+
         :param datetime date: Datetime
         :rtype: datetime
+        """
+        pass
+
+    def with_explicit_kwargs_docstring(self, **kwargs: Any):
+        """ With kwargs
+
+        :keyword Any \\**kwargs: Optional parameters.
+        :rtype: str
+        """
+        pass
+
+    def with_incorrect_param_kwargs_docstring(self, **kwargs: Any):
+        """ With incorrect docstring param kwargs
+
+        :param Any \\**kwargs: Optional parameters.
+        :rtype: str
+        """
+
+    def with_incorrect_dict_kwargs_docstring(self, **kwargs: Any):
+        """ With incorrect docstring param kwargs
+
+        :keyword kwargs: Optional parameters.
+        :paramtype kwargs: Any
+        :rtype: str
+        """
+        pass
+
+    def with_incorrect_dict_kwargs_docstring2(self, **kwargs: Any):
+        """ With incorrect docstring param kwargs
+
+        :keyword **kwargs: Optional parameters.
+        :paramtype **kwargs: Any
+        :rtype: str
         """
         pass
 

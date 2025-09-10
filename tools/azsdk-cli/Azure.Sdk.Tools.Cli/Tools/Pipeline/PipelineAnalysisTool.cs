@@ -118,14 +118,14 @@ public class PipelineAnalysisTool : MCPTool
         {
             var result = await AnalyzePipelineFailureLogs(project ?? projectFromLink, buildId, [logId], analyzeWithAgent, ct);
             ctx.ExitCode = ExitCode;
-            tokenUsageHelper.LogCost();
+            tokenUsageHelper.LogUsage();
             output.Output(result);
         }
         else
         {
             var result = await AnalyzePipeline(project ?? projectFromLink, buildId, analyzeWithAgent, ct);
             ctx.ExitCode = ExitCode;
-            tokenUsageHelper.LogCost();
+            tokenUsageHelper.LogUsage();
             output.Output(result);
         }
     }

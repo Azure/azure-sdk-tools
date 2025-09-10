@@ -315,7 +315,7 @@ public class ExampleTool : MCPTool
 
             var response = await chatClient.CompleteChatAsync(messages, cancellationToken: ct);
             tokenUsageHelper.Add(model, response.Value.Usage.InputTokenCount, response.Value.Usage.OutputTokenCount);
-            tokenUsageHelper.LogCost();
+            tokenUsageHelper.LogUsage();
 
             return new ExampleServiceResponse
             {
@@ -519,7 +519,7 @@ public class ExampleTool : MCPTool
             if (n < 2)
             {
                 SetFailure();
-                return new DefaultCommandResponse { ResponseError = "--fibonacci must be >= 2 to exercise the micro-agent (trivial cases are disallowed)" };
+                return new DefaultCommandResponse { ResponseError = "--fibonacci must be >= 2 to run the micro-agent" };
             }
 
             var advanceTool = AgentTool<Fibonacci, Fibonacci>.FromFunc(
@@ -551,12 +551,12 @@ public class ExampleTool : MCPTool
 
             var resultValue = await microagentHostService.RunAgentToCompletion(agent, ct);
 
-            tokenUsageHelper.LogCost();
+            tokenUsageHelper.LogUsage();
             return new DefaultCommandResponse { Result = $"Fibonacci({n}) = {resultValue}" };
         }
         catch (Exception ex)
         {
-            tokenUsageHelper.LogCost();
+            tokenUsageHelper.LogUsage();
             logger.LogError(ex, "Error demonstrating micro-agent Fibonacci for n={n}", n);
             SetFailure();
             return new DefaultCommandResponse { ResponseError = $"Failed to compute Fibonacci({n}): {ex.Message}" };

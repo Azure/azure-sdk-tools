@@ -30,6 +30,33 @@ def normalize_all_literals(value: str) -> str:
     return literal_regex.sub(normalize_literal_match, value)
 
 
+def process_literal_args(obj, args):
+    """Unified function to handle Literal type arguments with proper quote normalization.
+    """
+    processed_args = []
+    obj_str = str(obj)
+
+    # Check if this is a Literal type (either direct or nested)
+    is_literal = (obj_str.startswith("typing.Literal[") or
+                 "Literal[" in obj_str)
+
+    for arg in args:
+        arg_string = str(arg)
+
+        if is_literal and obj_str.startswith(("typing.Literal[")):
+            # If individual string literal arg and not enum, return normalized string
+            if isinstance(arg, str) and not hasattr(arg, '__module__'):
+                # Plain string literal, add quotes
+                arg_string = f'"{arg}"'
+        elif "Literal[" in arg_string:
+            # Normalize nested literal
+            arg_string = normalize_all_literals(arg_string)
+
+        processed_args.append(arg_string)
+
+    return processed_args
+
+
 # Monkey patch NodeNG's as_string method
 def as_string(self, preserve_quotes=False) -> str:
     """Get the source code that this node represents."""
@@ -138,16 +165,10 @@ def get_qualified_name(obj, namespace: str) -> str:
     # newer versions of Python extract inner types into __args__
     # and are no longer part of the name
     if hasattr(obj, "__args__"):
-        for arg in obj.__args__ or []:
-            arg_string = str(arg)
-            # Check if obj contains Literal expressions and normalize quotes first
-            if str(obj).startswith("typing.Literal["):
-                # If Literal arg is str and not enum, add double quotes
-                if isinstance(arg, str) and not hasattr(arg, '__module__'):
-                    arg_string = "\"" + arg + "\""
-            elif "Literal[" in arg_string:
-                # If nested Literal, use regex to replace ' with "
-                arg_string = normalize_all_literals(arg_string)
+        # Process all arguments with unified Literal handling
+        processed_args = process_literal_args(obj, obj.__args__ or [])
+
+        for arg_string in processed_args:
             if keyword_regex.match(arg_string):
                 value = keyword_regex.search(arg_string).group(2)
                 if value == "NoneType":
@@ -172,7 +193,7 @@ def get_qualified_name(obj, namespace: str) -> str:
         value = value[len(module_name) + 1 :]
 
     if args and "[" not in value:
-        arg_string = ", ".join(str(arg) for arg in args)
+        arg_string = ", ".join(args)
         value = f"{value}[{arg_string}]"
     if wrap_optional:
         value = f"Optional[{value}]"

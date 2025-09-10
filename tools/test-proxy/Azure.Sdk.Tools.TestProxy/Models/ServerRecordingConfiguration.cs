@@ -2,9 +2,9 @@ namespace Azure.Sdk.Tools.TestProxy.Models
 {
     public enum UniversalRecordingMode
     {
-        Record,     // implies requests that do not match /Admin should be directed to Record.HandleRequest()
-        Playback,   // implies requests that do not match /Admin should be directed to Playback.HandleRequest()
-        Azure       // implies the custom requirements for Azure SDK test recordings EG x-recording-upstream-base-uri and "standard" proxy mode
+        Record,     // Requests that do not match /Admin should be directed to Record.HandleRequest()
+        Playback,   // Requests that do not match /Admin should be directed to Playback.HandleRequest()
+        Azure       // Azure mode, where direction to /Record/HandleRequest() or /Playback/HandleRequest() is determined by x-recording-mode header presence
     }
 
     public class ServerRecordingConfiguration

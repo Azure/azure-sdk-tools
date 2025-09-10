@@ -13,26 +13,19 @@ from src._settings import SettingsManager
 # set before azure.ai.evaluation import to make PF output less noisy
 os.environ["PF_LOGGING_LEVEL"] = "CRITICAL"
 
-from azure.ai.evaluation import GroundednessEvaluator, evaluate
+from azure.ai.evaluation import evaluate
 from azure.identity import AzurePipelinesCredential
 from tabulate import tabulate
 
-DEFAULT_NUM_RUNS: int = 3
+DEFAULT_NUM_RUNS: int = 1
 
 
 def _review_apiview(query: str, language: str):
     """Internal global callable for evals framework."""
-    # FIXME: Re-enable
-    # reviewer = ApiViewReview(target=query, language=language, base=None)
-    # review = reviewer.run()
-    # reviewer.close()
-    # return {"actual": review.model_dump_json()}
-
-    print("⚠️ WARNING: Loading cached APIReview!")
-    test_path = pathlib.Path(__file__).parent.parent / "evals" / "results" / "python" / "tiny.json"
-    with open(test_path, "r", encoding="utf-8") as f:
-        test_data = json.load(f)
-    return {"actual": json.dumps(test_data[0]["actual"])}
+    reviewer = ApiViewReview(target=query, language=language, base=None)
+    review = reviewer.run()
+    reviewer.close()
+    return {"actual": review.model_dump_json()}
 
 
 class EvalRunner:

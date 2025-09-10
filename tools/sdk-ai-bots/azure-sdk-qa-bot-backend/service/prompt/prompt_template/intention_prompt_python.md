@@ -37,14 +37,11 @@ The question must be classified into one of these categories:
     - SDK client configuration for sovereign clouds
 
 - **just-post**: Questions including:
-    - Ask for review about PR of azure-sdk-for-python repo 
+    - Ask for review about PR of azure-sdk-for-python repo
     - Announcement for upcoming changes of SDK repo or eng tools
+    - Announcement that something doesn't work and fix is underway
     - Release Kickoff
 
-- **unknown**: Questions that:
-    - Lack sufficient context to determine the specific development or usage context
-    - Are unclear or ambiguous about the Python SDK context
-    - Don't relate directly to Azure Python SDK development or usage processes
 
 ## Response Format
 Respond with a JSON object using this structure (no markdown formatting needed):

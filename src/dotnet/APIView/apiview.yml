@@ -95,16 +95,6 @@ extends:
               os: windows
 
             steps:
-              - script: |
-                  echo "=== Variable Debug ==="
-                  echo "runProductionPublish (direct): $(runProductionPublish)"
-                  echo "runStagingPublish (direct): $(runStagingPublish)"  
-                  echo "runTestUIPublish (direct): $(runTestUIPublish)"
-                  echo "=== Testing Conditions ==="
-                  echo "runProductionPublish == true: ${{ eq(variables.runProductionPublish, true) }}"
-                  echo "runProductionPublish == 'true': ${{ eq(variables.runProductionPublish, 'true') }}"
-                displayName: 'Debug All Variables'
-
               - task: NodeTool@0
                 inputs:
                   versionSpec: '$(NodeVersion)'
@@ -325,7 +315,7 @@ extends:
         - stage: Staging_Publish
           displayName: Pre-Prod
           dependsOn: Build
-          condition: and(succeeded(), or(eq(variables['runStagingPublish'], true), eq(variables['runStagingPublish'], 'true')))
+          condition: and(succeeded(), coalesce(variables['runStagingPublish'], true))
 
           variables:
             - name: 'apiUrl'
@@ -383,7 +373,7 @@ extends:
         - stage: Test_UI_Publish
           displayName: Publish Test UI
           dependsOn: Build
-          condition: and(succeeded(), or(eq(variables['runTestUIPublish'], true), eq(variables['runTestUIPublish'], 'true')))
+          condition: and(succeeded(), coalesce(variables['runTestUIPublish'], true))
 
           variables:
             - name: 'apiUrl'
@@ -443,7 +433,7 @@ extends:
         - stage: Production_Publish
           displayName: Prod
           dependsOn: Staging_Publish
-          condition: or(eq(variables['runProductionPublish'], true), eq(variables['runProductionPublish'], 'true'))
+          condition: coalesce(variables['runProductionPublish'], true)
 
           variables:
             - name: 'apiUrl'

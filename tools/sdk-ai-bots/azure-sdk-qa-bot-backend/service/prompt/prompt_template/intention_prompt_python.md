@@ -38,7 +38,8 @@ The question must be classified into one of these categories:
 
 - **just-post**: Questions including:
     - Ask for review about PR of azure-sdk-for-python repo 
-    - Announcement for upcoming changes of SDK repo or eng tools or monthly kickoff
+    - Announcement for upcoming changes of SDK repo or eng tools
+    - Release Kickoff
 
 - **unknown**: Questions that:
     - Lack sufficient context to determine the specific development or usage context
@@ -74,3 +75,11 @@ Response:
   "question": "What's the way to find the link of release pipeline that associated with a specific python sdk",
   "category": "sdk-release",
 }
+
+Original: "Welcome to the September Release Kickoff!"
+Response:
+{
+  "question": "Announce Release Kickoff and share some info",
+  "category": "just-post",
+}
+

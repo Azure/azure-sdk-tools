@@ -11,13 +11,9 @@ import yaml
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+from azure.ai.evaluation import GroundednessEvaluator, SimilarityEvaluator
 from src._settings import SettingsManager
 from src._utils import get_prompt_path
-
-# set before azure.ai.evaluation import to make PF output less noisy
-os.environ["PF_LOGGING_LEVEL"] = "CRITICAL"
-
-from azure.ai.evaluation import GroundednessEvaluator, SimilarityEvaluator
 
 
 class CustomAPIViewEvaluator:

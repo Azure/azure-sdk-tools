@@ -1,11 +1,7 @@
 import argparse
-import os
 
 import dotenv
 from evals._custom import EvalRunner
-
-# set before azure.ai.evaluation import to make PF output less noisy
-os.environ["PF_LOGGING_LEVEL"] = "CRITICAL"
 
 dotenv.load_dotenv()
 

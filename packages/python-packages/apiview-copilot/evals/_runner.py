@@ -6,15 +6,11 @@ from typing import Any, Set
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+from azure.ai.evaluation import evaluate
+from azure.identity import AzurePipelinesCredential
 from evals._custom import CustomAPIViewEvaluator
 from src._apiview_reviewer import ApiViewReview
 from src._settings import SettingsManager
-
-# set before azure.ai.evaluation import to make PF output less noisy
-os.environ["PF_LOGGING_LEVEL"] = "CRITICAL"
-
-from azure.ai.evaluation import evaluate
-from azure.identity import AzurePipelinesCredential
 from tabulate import tabulate
 
 DEFAULT_NUM_RUNS: int = 1
@@ -139,7 +135,7 @@ class EvalRunner:
                     "testcase": row["inputs.testcase"],
                     "expected": json.loads(row["inputs.response"]),
                     "actual": json.loads(row["outputs.actual"]),
-                    # "expected_comments": row["outputs.metrics.expected_comments"],
+                    "expected_comments": row["outputs.metrics.expected_comments"],
                     "comments_found": row["outputs.metrics.comments_found"],
                     "valid_generic_comments": row["outputs.metrics.valid_generic_comments"],
                     "invalid_generic_comments": row["outputs.metrics.invalid_generic_comments"],
@@ -239,7 +235,6 @@ class EvalRunner:
                 row["outputs.metrics.groundedness"] = 5
                 row["outputs.metrics.similarity"] = 5
                 return 100.0
-
             return 0.0
 
         exact_match_score = row["outputs.metrics.true_positives"] / row["outputs.metrics.expected_comments"]
@@ -308,8 +303,7 @@ class EvalRunner:
             ground = result["groundedness"]
             sim = result["similarity"]
             valid_generic = result["valid_generic_comments"]
-            # comments_found = f"{result['comments_found']} / {result['expected_comments']}"
-            comments_found = f"{result['comments_found']}"
+            comments_found = f"{result['comments_found']} / {result['expected_comments']}"
 
             terminal_row = [testcase]
             if testcase in baseline_results:

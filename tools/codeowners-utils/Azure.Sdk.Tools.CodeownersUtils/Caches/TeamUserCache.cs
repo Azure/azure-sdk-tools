@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.CodeownersUtils.Constants;
 using Azure.Sdk.Tools.CodeownersUtils.Utils;
+using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.CodeownersUtils.Caches
 {
@@ -55,7 +56,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Caches
                     // succeed regardless of casing.
                     return list.ToDictionary((keyItem) => keyItem.Key, (valueItem) => valueItem.Value, StringComparer.InvariantCultureIgnoreCase);
                 }
-                Console.WriteLine($"Error! Unable to deserialize json team/user data from {TeamUserStorageURI}. rawJson={rawJson}");
+                Log.Logger.LogError("Error! Unable to deserialize json team/user data from {StorageUri}. rawJson={RawJson}", TeamUserStorageURI, rawJson);
                 return new Dictionary<string, List<string>>();
             }
             return _teamUserDict;
@@ -78,7 +79,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Caches
                 {
                     return TeamUserDict[teamWithoutOrg];
                 }
-                Console.WriteLine($"Warning: TeamUserDictionary did not contain a team entry for {teamWithoutOrg}");
+                Log.Logger.LogWarning("Warning: TeamUserDictionary did not contain a team entry for {Team}", teamWithoutOrg);
             }
             return new List<string>();
         }

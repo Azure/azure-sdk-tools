@@ -60,32 +60,8 @@ extends:
   parameters:
     GenerateBaselines: true
     stages:
-      - stage: 'VariableTest'
-        displayName: 'Test Variables'
-        dependsOn: []
-        condition: or(eq(variables['runProductionPublish'], true), eq(variables['runProductionPublish'], 'true'))
-
-        jobs:
-          - job: 'TestJob'
-            pool:
-              name: $(WINDOWSPOOL)
-              image: $(WINDOWSVMIMAGE)
-              os: windows
-
-            steps:
-              - script: |
-                  echo "=== Variable Debug ==="
-                  echo "runProductionPublish (direct): $(runProductionPublish)"
-                  echo "runStagingPublish (direct): $(runStagingPublish)"  
-                  echo "runTestUIPublish (direct): $(runTestUIPublish)"
-                  echo "=== Testing Conditions ==="
-                  echo "runProductionPublish == true: ${{ eq(variables.runProductionPublish, true) }}"
-                  echo "runProductionPublish == 'true': ${{ eq(variables.runProductionPublish, 'true') }}"
-                displayName: 'Debug All Variables'
-
       - stage: 'Build'
         displayName: 'Build and Test'
-        dependsOn: VariableTest
 
         variables:
           - name: 'WebClientProjectDirectory'
@@ -127,6 +103,16 @@ extends:
               os: windows
 
             steps:
+              - script: |
+                  echo "=== Variable Debug ==="
+                  echo "runProductionPublish (direct): $(runProductionPublish)"
+                  echo "runStagingPublish (direct): $(runStagingPublish)"  
+                  echo "runTestUIPublish (direct): $(runTestUIPublish)"
+                  echo "=== Testing Conditions ==="
+                  echo "runProductionPublish == true: ${{ eq(variables.runProductionPublish, true) }}"
+                  echo "runProductionPublish == 'true': ${{ eq(variables.runProductionPublish, 'true') }}"
+                displayName: 'Debug All Variables'
+
               - task: NodeTool@0
                 inputs:
                   versionSpec: '$(NodeVersion)'

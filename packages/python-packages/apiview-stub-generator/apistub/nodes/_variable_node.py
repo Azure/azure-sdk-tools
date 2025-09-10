@@ -1,5 +1,5 @@
 import inspect
-from ._base_node import NodeEntityBase
+from ._base_node import NodeEntityBase, normalize_literal_quotes
 
 
 class VariableNode(NodeEntityBase):

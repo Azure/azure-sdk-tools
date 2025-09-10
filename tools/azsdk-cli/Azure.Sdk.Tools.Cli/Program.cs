@@ -66,7 +66,7 @@ public class Program
         // Skip azure client logging noise
         builder.Logging.AddFilter((category, level) =>
         {
-            if (null == category) { return level >= logLevel; }
+            if (debug || null == category) { return level >= logLevel; }
             var isAzureClient = category.StartsWith("Azure.", StringComparison.Ordinal);
             var isToolsClient = category.StartsWith("Azure.Sdk.Tools.", StringComparison.Ordinal);
             if (isAzureClient && !isToolsClient) { return level >= LogLevel.Error; }

@@ -1,0 +1,62 @@
+name: Sync Knowledge Sources
+
+trigger: none
+pr: none
+
+schedules:
+- cron: "0 2 * * *"  # Daily at 2 AM UTC
+  displayName: Daily knowledge sync
+  branches:
+    include:
+    - main
+
+variables:
+  - group: Release Secrets for GitHub
+  - template: /eng/pipelines/templates/variables/image.yml
+  - template: /eng/pipelines/templates/variables/globals.yml
+  - name: workingDirectory
+    value: '$(System.DefaultWorkingDirectory)/knowledge_sources'
+
+extends:
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  parameters:
+    stages:
+    - stage: SyncKnowledge
+      displayName: 'Sync Knowledge Sources'
+      jobs:
+      - job: BuildAndSync
+        displayName: 'Build and Execute Knowledge Sync'
+        pool:
+          name: $(LINUXPOOL)
+          image: $(LINUXVMIMAGE)
+          os: linux
+        steps:
+        - checkout: self
+          fetchDepth: 1
+          
+        - task: NodeTool@0
+          displayName: 'Setup Node.js'
+          inputs:
+            versionSpec: '20.x'
+            
+        - script: |
+            cd tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge
+            npm ci
+          displayName: 'Install dependencies'
+          
+        - script: |
+            cd tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge
+            npm run build
+          displayName: 'Build TypeScript project'
+          
+        - script: |
+            cd tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge
+            npm run start
+          displayName: 'Execute knowledge sync'
+          env:
+            # Azure App Configuration
+            AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
+
+            # Set working directory for temp files
+            TMPDIR: $(Agent.TempDirectory)
+            HOME: $(Agent.HomeDirectory)

@@ -10,8 +10,4 @@ curl --proxy http://localhost:5000 http://httpbin.org/get
 
 curl -X POST http://localhost:5000/Record/StopUniversal -v
 
-# curl --proxy http://localhost:5000 -X POST "http://httpbin.org/post" `
-#      -H "Content-Type: application/json" `
-#      -d '{"x-recording-file":"sdk/testrecord.json"}' -v
-
-
+curl -X POST http://localhost:5000/Record/StopUniversal

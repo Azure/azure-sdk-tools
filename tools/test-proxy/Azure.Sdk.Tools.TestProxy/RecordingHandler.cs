@@ -1288,7 +1288,48 @@ namespace Azure.Sdk.Tools.TestProxy
             }
             else
             {
-                throw new NotImplementedException("Need to handle this in standard proxy mode!");
+                // remember from above, if we use UriBuilder or similar, we get auto-decoding of escaped characters in the path/query, which will break 
+                // some requests.
+                var feat = request.HttpContext.Features.Get<IHttpRequestFeature>();
+                var rawTarget = feat?.RawTarget ?? string.Empty;
+
+                // If client sent absolute-form to the proxy, we already have the full URL.
+                if (!string.IsNullOrEmpty(rawTarget) &&
+                    (rawTarget.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                     rawTarget.StartsWith("https://", StringComparison.OrdinalIgnoreCase)))
+                {
+                    return new Uri(rawTarget, UriKind.Absolute);
+                }
+
+                // ensure we have a usable Host (required to build authority)
+                if (!request.Host.HasValue)
+                {
+                    throw new HttpException(HttpStatusCode.BadRequest, "Missing Host header on proxied request.");
+                }
+
+                // build the authority part from Scheme + Host, preserving original host/port
+                var authority = $"{request.Scheme}://{request.Host.ToUriComponent()}";
+
+                //  - "*" (asterisk-form, e.g., OPTIONS *) -> return just the authority
+                //  - "host:port" (authority-form, e.g., CONNECT) -> treat as authority; not typical for HTTP proxying here
+                if (rawTarget == "*")
+                {
+                    return new Uri(authority, UriKind.Absolute);
+                }
+
+                // If it's authority-form like "host:443" (CONNECT), we could decide what to do;
+                // for HTTP-only proxying, reject for now.
+                if (!string.IsNullOrEmpty(rawTarget) && !rawTarget.StartsWith("/"))
+                {
+                    // Not starting with "/" and not absolute -> likely authority-form; reject.
+                    throw new HttpException(HttpStatusCode.BadRequest, $"Unsupported request-target for HTTP proxy: '{rawTarget}'.");
+                }
+
+                // Origin-form (normal proxied HTTP request): combine authority + raw path/query verbatim.
+                // Avoid UriBuilder since it can normalize/decode; concatenate instead.
+                var combined = authority.TrimEnd('/') + (rawTarget.StartsWith("/") ? rawTarget : "/" + rawTarget);
+
+                return new Uri(combined, UriKind.Absolute);
             }
         }
 

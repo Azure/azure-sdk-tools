@@ -17,13 +17,13 @@ parameters:
   
   - name: runStagingPublish
     type: boolean
-    default: true
+    default: ${{ coalesce(variables.runStagingPublish, true) }}
   - name: runTestUIPublish
     type: boolean
-    default: true
+    default: ${{ coalesce(variables.runTestUIPublish, true) }}
   - name: runProductionPublish
     type: boolean
-    default: true
+    default: ${{ coalesce(variables.runProductionPublish, true) }}
 
 trigger:
   branches:

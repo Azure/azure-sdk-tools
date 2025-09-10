@@ -4,6 +4,9 @@ using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tests.Mocks.Services;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.ReleasePlan;
+using Azure.Sdk.Tools.Cli.Tools.Example;
+using System.Text.Json;
+using Azure.Sdk.Tools.Cli.Models;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools
 {
@@ -97,12 +100,22 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         {
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
             var releaseplan = await releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "12345678-1234-5678-9012-123456789012", "12345678-1234-5678-9012-123456789012", "2025-01-01", "https://github.com/Azure/azure-rest-api-specs/pull/35446", "beta", isTestReleasePlan: true);
-            Assert.IsNotNull(releaseplan);
-            Assert.True(releaseplan.Contains("ReleasePlanDetails"));
+
+            var releaseplanObj = JsonSerializer.Deserialize<ReleasePlanDetails>(releaseplan);
+            Assert.IsNotNull(releaseplanObj);
+            Assert.IsNotNull(releaseplanObj.WorkItemId);
+            Assert.IsNotNull(releaseplanObj.ReleasePlanId);
+            Assert.IsNotNull(releaseplanObj.ReleasePlanLink);
+
 
             releaseplan = await releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "12345678-1234-5678-9012-123456789012", "12345678-1234-5678-9012-123456789012", "2025-01-01-preview", "https://github.com/Azure/azure-rest-api-specs-pr/pull/35446", "beta", isTestReleasePlan: true);
-            Assert.IsNotNull(releaseplan);
-            Assert.True(releaseplan.Contains("ReleasePlanDetails"));
+
+            releaseplanObj = JsonSerializer.Deserialize<ReleasePlanDetails>(releaseplan);
+            Assert.IsNotNull(releaseplanObj);
+            Assert.IsNotNull(releaseplanObj.WorkItemId);
+            Assert.IsNotNull(releaseplanObj.ReleasePlanId);
+            Assert.IsNotNull(releaseplanObj.ReleasePlanLink);
+
         }
 
         [Test]
@@ -135,8 +148,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 isTestReleasePlan: false); // This should be overridden to true by environment variable
 
             // Assert
-            Assert.IsNotNull(releaseplan);
-            Assert.True(releaseplan.Contains("ReleasePlanDetails"));
+            var releaseplanObj = JsonSerializer.Deserialize<ReleasePlanDetails>(releaseplan);
+            Assert.IsNotNull(releaseplanObj);
+            Assert.IsNotNull(releaseplanObj.WorkItemId);
+            Assert.IsNotNull(releaseplanObj.ReleasePlanId);
+            Assert.IsNotNull(releaseplanObj.ReleasePlanLink);
 
             // Verify the environment helper was called
             environmentHelperMock.Verify(x => x.GetBooleanVariable("AZSDKTOOLS_AGENT_TESTING", false), Times.Once);
@@ -172,8 +188,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 isTestReleasePlan: false);
 
             // Assert
-            Assert.IsNotNull(releaseplan);
-            Assert.True(releaseplan.Contains("ReleasePlanDetails"));
+            var releaseplanObj = JsonSerializer.Deserialize<ReleasePlanDetails>(releaseplan);
+            Assert.IsNotNull(releaseplanObj);
+            Assert.IsNotNull(releaseplanObj.WorkItemId);
+            Assert.IsNotNull(releaseplanObj.ReleasePlanId);
+            Assert.IsNotNull(releaseplanObj.ReleasePlanLink);
 
             // Verify the environment helper was called
             environmentHelperMock.Verify(x => x.GetBooleanVariable("AZSDKTOOLS_AGENT_TESTING", false), Times.Once);

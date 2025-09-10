@@ -33,46 +33,6 @@ namespace Azure.Sdk.Tools.Cli.Models
         public string SDKLanguages { get; set; } = string.Empty;
         public bool IsSpecApproved { get; set; } = false;
         public int ApiSpecWorkItemId { get; set; } = 0;
-        public override string ToString()
-        {
-            var sdkInfoFormatted = SDKInfo != null && SDKInfo.Any()
-                ? string.Join("\n    ", SDKInfo.Select(s => s.ToString()))
-                : "None";
-
-            var specPullRequestsFormatted = SpecPullRequests != null && SpecPullRequests.Any()
-                ? string.Join(", ", SpecPullRequests)
-                : "None";
-
-            return $@"ReleasePlanDetails:
-            WorkItemId: {WorkItemId}
-            WorkItemUrl: {WorkItemUrl}
-            WorkItemHtmlUrl: {WorkItemHtmlUrl}
-            ServiceTreeId: {ServiceTreeId}
-            ProductTreeId: {ProductTreeId}
-            ProductName: {ProductName}
-            Title: {Title}
-            Description: {Description}
-            Owner: {Owner}
-            Status: {Status}
-            SpecPullRequests: [{specPullRequestsFormatted}]
-            SDKReleaseMonth: {SDKReleaseMonth}
-            IsManagementPlane: {IsManagementPlane}
-            IsDataPlane: {IsDataPlane}
-            SpecAPIVersion: {SpecAPIVersion}
-            SpecType: {SpecType}
-            ReleasePlanLink: {ReleasePlanLink}
-            IsTestReleasePlan: {IsTestReleasePlan}
-            ReleasePlanId: {ReleasePlanId}
-            SDKReleaseType: {SDKReleaseType}
-            SDKInfo:
-            {sdkInfoFormatted}
-            ReleasePlanSubmittedByEmail: {ReleasePlanSubmittedByEmail}
-            IsCreatedByAgent: {IsCreatedByAgent}
-            ActiveSpecPullRequest: {ActiveSpecPullRequest}
-            SDKLanguages: {SDKLanguages}
-            IsSpecApproved: {IsSpecApproved}
-            ApiSpecWorkItemId: {ApiSpecWorkItemId}";
-        }
 
         public Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument GetPatchDocument()
         {
@@ -174,13 +134,5 @@ namespace Azure.Sdk.Tools.Cli.Models
         public string GenerationPipelineUrl { get; set; } = string.Empty;
         public string SdkPullRequestUrl { get; set; } = string.Empty;
         public string PackageName { get; set; } = string.Empty;
-        public override string ToString()
-        {
-            return $@"SDKInfo:
-            Language: {Language}
-            GenerationPipelineUrl: {GenerationPipelineUrl}
-            SdkPullRequestUrl: {SdkPullRequestUrl}
-            PackageName: {PackageName}";
-        }
     }
 }

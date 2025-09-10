@@ -296,7 +296,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                         releasePlan.ReleasePlanLink = releasePlanLink;
                     }
 
-                    return output.Format(releasePlan);
+                    return JsonSerializer.Serialize(releasePlan, new JsonSerializerOptions { WriteIndented = true });
                 }
             }
             catch (Exception ex)

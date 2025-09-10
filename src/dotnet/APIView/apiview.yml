@@ -62,6 +62,7 @@ extends:
     stages:
       - stage: 'Build'
         displayName: 'Build and Test'
+        condition: or(eq(variables['runProductionPublish'], true), eq(variables['runProductionPublish'], 'true'))
 
         variables:
           - name: 'WebClientProjectDirectory'
@@ -442,7 +443,7 @@ extends:
         - stage: Production_Publish
           displayName: Prod
           dependsOn: Staging_Publish
-          condition: eq(variables['runProductionPublish'], true)
+          condition: or(eq(variables['runProductionPublish'], true), eq(variables['runProductionPublish'], 'true'))
 
           variables:
             - name: 'apiUrl'

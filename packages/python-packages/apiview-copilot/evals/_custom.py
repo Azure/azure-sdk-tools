@@ -24,17 +24,15 @@ class CustomAPIViewEvaluator:
     """Evaluator for comparing expected and actual APIView comments."""
 
     def __init__(self):
-        self.settings = SettingsManager()
+        settings = SettingsManager()
         # for best results, this should always be a different model from the one we are evaluating
-        self._judge_model = "gpt-5-mini"
+        self._judge_model = "gpt-4.1"
         self._model_config: dict[str, str] = {
-            "azure_endpoint": self.settings.get("OPENAI_ENDPOINT"),
-            "api_key": self.settings.get("OPENAI_API_KEY"),
+            "azure_endpoint": settings.get("OPENAI_ENDPOINT"),
+            "api_key": settings.get("OPENAI_API_KEY"),
             "azure_deployment": self._judge_model,
             "api_version": "2025-03-01-preview",
         }
-        self._groundedness_eval = GroundednessEvaluator(model_config=self._model_config)
-        self._similarity_eval = SimilarityEvaluator(model_config=self._model_config)
         self._weights: dict[str, float] = {
             "exact_match_weight": 0.7,  # Exact match (rule id and line number)
             "groundedness_weight": 0.2,  # Staying grounded in guidelines
@@ -119,6 +117,7 @@ class CustomAPIViewEvaluator:
             exceptions = filter_data["exceptions"].strip().split("\n")
             exceptions = [e.split(". ", 1)[1] for e in exceptions]
 
+        settings = SettingsManager()
         for comment in generic_comments:
             if comment.get("source") != "generic":
                 continue
@@ -135,7 +134,7 @@ class CustomAPIViewEvaluator:
                     "exceptions": exceptions,
                     "language": language,
                 },
-                configuration={"api_key": self.settings.get("OPENAI_API_KEY")},
+                configuration={"api_key": settings.get("OPENAI_API_KEY")},
             )
             comment["valid"] = "true" in response.lower()
 
@@ -143,14 +142,17 @@ class CustomAPIViewEvaluator:
         actual = [c for c in actual["comments"] if c["rule_ids"]]
         if not actual:
             return {"groundedness": 0.0, "groundedness_reason": "No comments found."}
-        groundedness = self._groundedness_eval(response=json.dumps(actual), context=context)
+        groundedness = GroundednessEvaluator(model_config=self._model_config)(
+            response=json.dumps(actual), context=context
+        )
         return groundedness
 
     def _similarity(self, expected: dict[str, Any], actual: dict[str, Any], query: str) -> None:
         actual = [c for c in actual["comments"] if c["rule_ids"]]
         if not actual:
             return {"similarity": 0.0}
-        similarity = self._similarity_eval(
+
+        similarity = SimilarityEvaluator(model_config=self._model_config)(
             response=json.dumps(actual),
             query=query,
             ground_truth=json.dumps([c for c in expected["comments"] if c["rule_ids"]]),

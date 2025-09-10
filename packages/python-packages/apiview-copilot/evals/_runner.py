@@ -29,10 +29,10 @@ def _review_apiview(query: str, language: str):
     # return {"actual": review.model_dump_json()}
 
     print("⚠️ WARNING: Loading cached APIReview!")
-    test_path = pathlib.Path(__file__).parent.parent / "scratch" / "eval" / "test.jsonl"
+    test_path = pathlib.Path(__file__).parent.parent / "evals" / "results" / "python" / "tiny.json"
     with open(test_path, "r", encoding="utf-8") as f:
         test_data = json.load(f)
-        return {"actual": test_data["actual"]}
+    return {"actual": json.dumps(test_data[0]["actual"])}
 
 
 class EvalRunner:
@@ -56,8 +56,7 @@ class EvalRunner:
 
     def run(self):
         """Run the evaluation."""
-        # FIXME: Re-enable
-        # custom_eval = CustomAPIViewEvaluator()
+        custom_eval = CustomAPIViewEvaluator()
         rule_ids = set()
 
         all_results = {}
@@ -92,14 +91,7 @@ class EvalRunner:
                 result = evaluate(
                     data=str(file),
                     evaluators={
-                        "metrics": GroundednessEvaluator(
-                            model_config={
-                                "azure_endpoint": self.settings.get("OPENAI_ENDPOINT"),
-                                "api_key": self.settings.get("OPENAI_API_KEY"),
-                                "azure_deployment": "gpt-5-mini",
-                                "api_version": "2025-03-01-preview",
-                            }
-                        )
+                        "metrics": custom_eval,
                     },
                     evaluator_config={
                         "metrics": {
@@ -186,7 +178,10 @@ class EvalRunner:
                     baseline_data = json.load(f)
                     for result in baseline_data[:-1]:  # Skip summary
                         baseline_results[result["testcase"]] = result
-                    baseline_results["average_score"] = baseline_data[-1]["average_score"]
+                        try:
+                            baseline_results["average_score"] = baseline_data[-1]["average_score"]
+                        except KeyError:
+                            baseline_results["average_score"] = 0.0
 
             self.output_table(baseline_results, test_results, name)
 
@@ -240,7 +235,6 @@ class EvalRunner:
 
     def calculate_overall_score(self, row: dict[str, Any]) -> float:
         """Calculate weighted score based on various metrics."""
-        return 1.0
         if row["outputs.metrics.expected_comments"] == 0:
             # tests with no violations are all or nothing
             # but still give credit if no violations found, but valid generic comments found

@@ -49,10 +49,10 @@ export async function lintFix(packageDirectory: string) {
     await runCommand('pnpm', ['build', '--filter', `@azure/eslint-plugin-azure-sdk...`], runCommandOptions);
     logger.info("Build @azure/eslint-plugin-azure-sdk package successfully.");
     logger.info(`Start to fix lint errors in '${packageDirectory}'.`);
-    const lintFixCommand = `run vendored eslint package.json api-extractor.json src ${test}${samplesDev} --fix --fix-type [problem,suggestion]`;
+    const lintFixCommand = `run vendored eslint package.json api-extractor.json src${test}${samplesDev} --fix --fix-type [problem,suggestion]`;
 
     try {
-        await runCommand(`npm`, ['exec', '--', 'dev-tool', lintFixCommand], options, true, 300, true);
+        await runCommand(`npm`, ['exec', '--', 'dev-tool', lintFixCommand], options, true, 1200, true);
         logger.info(`Fix the automatically repairable lint errors successfully.`);
     } catch (error) {
         logger.warn(`Failed to fix lint errors due to: ${(error as Error)?.stack ?? error}`);

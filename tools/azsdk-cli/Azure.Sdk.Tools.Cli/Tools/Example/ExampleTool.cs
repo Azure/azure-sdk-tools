@@ -17,7 +17,18 @@ namespace Azure.Sdk.Tools.Cli.Tools.Example;
 
 #if DEBUG
 [McpServerToolType, Description("Example tool demonstrating various framework features and service integrations")]
-public class ExampleTool : MCPTool
+public class ExampleTool(
+    ILogger<ExampleTool> logger,
+    IOutputHelper output,
+    IAzureService azureService,
+    IDevOpsService devOpsService,
+    IGitHubService gitHubService,
+    IMicroagentHostService microagentHostService,
+    IProcessHelper processHelper,
+    IPowershellHelper powershellHelper,
+    TokenUsageHelper tokenUsageHelper,
+    AzureOpenAIClient openAIClient
+) : MCPMultiCommandTool
 {
     // Sub-command constants
     private const string AzureSubCommand = "azure";
@@ -29,17 +40,11 @@ public class ExampleTool : MCPTool
     private const string PowershellSubCommand = "powershell";
     private const string MicroagentSubCommand = "microagent";
 
-    // Dependencies injected via constructor
-    private readonly ILogger<ExampleTool> logger;
-    private readonly IOutputHelper output;
-    private readonly IAzureService azureService;
-    private readonly IDevOpsService devOpsService;
-    private readonly IGitHubService gitHubService;
-    private readonly AzureOpenAIClient openAIClient;
-    private readonly IProcessHelper processHelper;
-    private readonly IPowershellHelper powershellHelper;
-    private readonly TokenUsageHelper tokenUsageHelper;
-    private readonly IMicroagentHostService microagentHostService;
+    // azsdk example demo <sub-command>
+    public override CommandGroup[] CommandHierarchy { get; set; } = [
+        SharedCommandGroups.Example,
+        SharedCommandGroups.Demo
+    ];
 
     // CLI Options and Arguments
     private readonly Argument<string> aiInputArg = new(
@@ -78,95 +83,49 @@ public class ExampleTool : MCPTool
 
     private readonly Option<string> tenantOption = new(["--tenant", "-t"], "Tenant ID");
     private readonly Option<string> languageOption = new(["--language", "-l"], "Programming language of the repository");
-    private readonly Option<string> promptOption = new(["--prompt", "-p"], "AI prompt text");
     private readonly Option<bool> forceFailureOption = new(["--force-failure", "-f"], () => false, "Force an error for demonstration");
-    private readonly Option<bool> verboseOption = new(["--verbose", "-v"], () => false, "Enable verbose logging");
 
-    public ExampleTool(
-        ILogger<ExampleTool> logger,
-        IOutputHelper output,
-        IAzureService azureService,
-        IDevOpsService devOpsService,
-        IGitHubService gitHubService,
-        IProcessHelper processHelper,
-        IPowershellHelper powershellHelper,
-        TokenUsageHelper tokenUsageHelper,
-        IMicroagentHostService microagentHostService,
-        AzureOpenAIClient openAIClient
-    ) : base()
+    public override List<Command> GetCommands()
     {
-        this.logger = logger;
-        this.output = output;
-        this.azureService = azureService;
-        this.devOpsService = devOpsService;
-        this.gitHubService = gitHubService;
-        this.openAIClient = openAIClient;
-        this.processHelper = processHelper;
-        this.powershellHelper = powershellHelper;
-        this.tokenUsageHelper = tokenUsageHelper;
-        this.microagentHostService = microagentHostService;
-
-        // Set command hierarchy - results in: azsdk example
-        CommandHierarchy = [
-            SharedCommandGroups.Example
-        ];
-    }
-
-    public override Command GetCommand()
-    {
-        var parentCommand = new Command("demo", "Comprehensive demonstration of framework features");
-
         // Azure service example sub-command
         var azureCmd = new Command(AzureSubCommand, "Demonstrate Azure service integration");
         azureCmd.AddOption(tenantOption);
-        azureCmd.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
 
         // DevOps service example sub-command
         var devopsCmd = new Command(DevOpsSubCommand, "Demonstrate DevOps service integration");
         devopsCmd.AddArgument(packageArgument);
         devopsCmd.AddOption(languageOption);
-        devopsCmd.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
 
         // GitHub service example sub-command
         var githubCmd = new Command(GitHubSubCommand, "Demonstrate GitHub service integration");
-        githubCmd.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
 
         // AI service example sub-command
         var aiCmd = new Command(AISubCommand, "Demonstrate AI service integration");
         aiCmd.AddArgument(aiInputArg);
-        aiCmd.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
 
         // Error handling example sub-command
         var errorCmd = new Command(ErrorSubCommand, "Demonstrate error handling patterns");
         errorCmd.AddArgument(errorInputArg);
         errorCmd.AddOption(forceFailureOption);
-        errorCmd.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
 
         // Process execution example sub-command
         var processCmd = new Command(ProcessSubCommand, "Demonstrate spawning an external process (echo)");
         processCmd.AddArgument(processSleepArg);
-        processCmd.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
 
         // PowerShell helper example sub-command
         var powershellCmd = new Command(PowershellSubCommand, "Demonstrate PowerShell helper running a temp script with a parameter");
         powershellCmd.AddArgument(powershellMessageArg);
-        powershellCmd.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
 
         // Microagent Fibonacci demo sub-command
         var microagentCmd = new Command(MicroagentSubCommand, "Demonstrate micro-agent looping tool calls to compute Fibonacci");
         microagentCmd.AddOption(fibonacciIndexOption);
-        microagentCmd.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
 
-        parentCommand.Add(azureCmd);
-        parentCommand.Add(devopsCmd);
-        parentCommand.Add(githubCmd);
-        parentCommand.Add(aiCmd);
-        parentCommand.Add(errorCmd);
-        parentCommand.Add(processCmd);
-        parentCommand.Add(powershellCmd);
-        parentCommand.Add(microagentCmd);
-
-        return parentCommand;
+        var commands = new List<Command> { azureCmd, devopsCmd, githubCmd, aiCmd, errorCmd, processCmd, powershellCmd, microagentCmd };
+        foreach (var cmd in commands)
+        {
+            cmd.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
+        }
+        return commands;
     }
 
     public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)

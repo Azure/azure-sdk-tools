@@ -59,10 +59,10 @@ internal class ExampleToolTests
             mockAzureService.Object,
             mockDevOpsService.Object,
             mockGitHubService,
+            mockMicroagentHostService.Object,
             mockProcessHelper.Object,
             mockPowershellHelper.Object,
             tokenUsageHelper: new TokenUsageHelper(mockOutput.Object),
-            mockMicroagentHostService.Object,
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             null
 #pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
@@ -154,13 +154,7 @@ internal class ExampleToolTests
     [Test]
     public void GetCommand_ReturnsCommandWithCorrectSubCommands()
     {
-        var command = tool.GetCommand();
-
-        Assert.That(command.Name, Is.EqualTo("demo"));
-        Assert.That(command.Description, Does.Contain("Comprehensive demonstration"));
-        Assert.That(command.Subcommands.Count, Is.EqualTo(8));
-
-        var subCommandNames = command.Subcommands.Select(sc => sc.Name).ToList();
+        var subCommandNames = tool.GetCommands().Select(c => c.Name).ToList();
         Assert.That(subCommandNames, Does.Contain("azure"));
         Assert.That(subCommandNames, Does.Contain("devops"));
         Assert.That(subCommandNames, Does.Contain("github"));

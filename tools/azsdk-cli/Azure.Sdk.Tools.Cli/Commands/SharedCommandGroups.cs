@@ -59,6 +59,12 @@ namespace Azure.Sdk.Tools.Cli.Commands
             Description: "Example tool demonstrating framework features",
             Options: []
         );
+
+        public static readonly CommandGroup Demo = new(
+            Verb: "demo",
+            Description: "Demo commands exercising services and helpers",
+            Options: []
+        );
 #endif
     }
 }

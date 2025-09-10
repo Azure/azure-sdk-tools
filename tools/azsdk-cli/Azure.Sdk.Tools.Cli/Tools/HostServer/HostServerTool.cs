@@ -6,7 +6,7 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 using Azure.Sdk.Tools.Cli.Commands;
 
-namespace Azure.Sdk.Tools.Cli.Tools
+namespace Azure.Sdk.Tools.Cli.Tools.HostServer
 {
     public class HostServerTool : MCPTool
     {

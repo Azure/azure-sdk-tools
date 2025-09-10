@@ -7,7 +7,7 @@ using System.Text.Json;
 using static Azure.Sdk.Tools.Cli.Telemetry.TelemetryConstants;
 using Azure.Sdk.Tools.Cli.Telemetry;
 
-namespace Azure.Sdk.Tools.Cli.Tools;
+namespace Azure.Sdk.Tools.Cli.Tools.HostServer;
 
 public class InstrumentedTool(ITelemetryService telemetryService, ILogger logger, McpServerTool innerTool) : DelegatingMcpServerTool(innerTool)
 {

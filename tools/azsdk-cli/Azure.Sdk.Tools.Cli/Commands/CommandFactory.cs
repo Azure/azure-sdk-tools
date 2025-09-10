@@ -31,7 +31,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             var toolTypes = SharedOptions.GetFilteredToolTypes(args);
 
             var toolInstances = toolTypes
-                .Select(t => (MCPTool)ActivatorUtilities.CreateInstance(serviceProvider, t))
+                .Select(t => (MCPToolBase)ActivatorUtilities.CreateInstance(serviceProvider, t))
                 .ToList();
 
             PopulateToolHierarchy(rootCommand, toolInstances);
@@ -39,20 +39,23 @@ namespace Azure.Sdk.Tools.Cli.Commands
             return rootCommand;
         }
 
-        private static void PopulateToolHierarchy(RootCommand rootCommand, List<MCPTool> toolList)
+        private static void PopulateToolHierarchy(RootCommand rootCommand, List<MCPToolBase> toolList)
         {
             var parentMap = new Dictionary<string, Command>(StringComparer.OrdinalIgnoreCase);
 
-            foreach (MCPTool tool in toolList)
+            foreach (MCPToolBase tool in toolList)
             {
-                var leaf = tool.GetCommand();
+                var subCommands = tool.GetCommandInstances();
                 var hierarchy = tool.CommandHierarchy;
                 Command previousParent = rootCommand;
 
                 if (hierarchy.Length == 0)
                 {
                     // if there is no hierarchy, add the command directly to the root command
-                    rootCommand.AddCommand(leaf);
+                    foreach (var cmd in subCommands)
+                    {
+                        rootCommand.AddCommand(cmd);
+                    }
                     continue;
                 }
 
@@ -89,7 +92,10 @@ namespace Azure.Sdk.Tools.Cli.Commands
                     if (i == hierarchy.Length - 1)
                     {
                         // if we're at the end of the hierarchy, add the leaf command
-                        currentNode.AddCommand(leaf);
+                        foreach (var cmd in subCommands)
+                        {
+                            currentNode.AddCommand(cmd);
+                        }
                     }
                     else
                     {

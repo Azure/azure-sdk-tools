@@ -34,7 +34,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Example
             this.logger = logger;
             this.output = output;
 
-            // Set command hierarchy - results in: azsdk example hello-world
+            // azsdk example hello-world
             CommandHierarchy = [
                 SharedCommandGroups.Example
             ];

@@ -35,7 +35,7 @@ export async function generateMgmt(options: {
     runningEnvironment?: RunningEnvironment;
     apiVersion: string | undefined;
     sdkReleaseType: string | undefined;
-    runMode: RunMode;
+    runMode?: RunMode;
 }) {
     logger.info(`Start to generate SDK from '${options.readmeMd}'.`);
     let cmd = '';

@@ -15,14 +15,6 @@ parameters:
     type: string
     default: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js@local/npm/registry/'
   
-variables:
-  - name: runStagingPublish
-    value: true
-  - name: runTestUIPublish
-    value: true
-  - name: runProductionPublish
-    value: true
-
 trigger:
   branches:
     include:
@@ -122,7 +114,6 @@ extends:
                 inputs:
                   version: '$(GoVersion)'
                 displayName: "Use Go $(GoVersion)"
-
               - script: |
                   npm install -g @angular/cli@16.1.8
                 workingDirectory: $(SPAClientProjectDirectory)
@@ -334,7 +325,7 @@ extends:
         - stage: Staging_Publish
           displayName: Pre-Prod
           dependsOn: Build
-          condition: eq(variables['runStagingPublish'], true)
+          condition: and(succeeded(), or(eq(variables['runStagingPublish'], true), eq(variables['runStagingPublish'], 'true')))
 
           variables:
             - name: 'apiUrl'
@@ -392,7 +383,7 @@ extends:
         - stage: Test_UI_Publish
           displayName: Publish Test UI
           dependsOn: Build
-          condition: eq(variables['runTestUIPublish'], true)
+          condition: and(succeeded(), or(eq(variables['runTestUIPublish'], true), eq(variables['runTestUIPublish'], 'true')))
 
           variables:
             - name: 'apiUrl'

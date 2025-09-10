@@ -112,10 +112,11 @@ extends:
               #   env:
               #     SSH_AUTH_SOCK: $(SSH_AUTH_SOCK)
 
-              # Clone Azure SDK Engineering Docs (Token authentication required)
+              # Clone Azure SDK Engineering Docs (Token authentication required)  
               - script: |
                   cd $(workingDirectory)
-                  git clone --branch main https://$(azuresdk-github-pat)@dev.azure.com/azure-sdk/internal/_git/azure-sdk-docs-eng.ms azure-sdk-docs-eng
+                  # Use git with token authentication for Azure DevOps
+                  git -c http.extraheader="AUTHORIZATION: bearer $(azuresdk-github-pat)" clone --branch main https://dev.azure.com/azure-sdk/internal/_git/azure-sdk-docs-eng.ms azure-sdk-docs-eng
                   echo "Cloned Azure SDK Engineering Docs repository"
                 displayName: 'Clone Azure SDK Engineering Docs repository'
 

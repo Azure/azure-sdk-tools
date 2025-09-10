@@ -161,4 +161,9 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
         // ex: sdk/messaging/azservicebus/
         return packagePath.Replace(repo, "");
     }
+
+    public async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, CancellationToken cancellationToken = default)
+    {
+        return await Task.FromResult(new CLICheckResponse());
+    }
 }

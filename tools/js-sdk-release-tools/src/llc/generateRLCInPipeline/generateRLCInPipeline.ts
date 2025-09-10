@@ -273,7 +273,9 @@ export async function generateRLCInPipeline(options: {
             logger.info(`Start to update.`);
             execSync('pnpm install', {stdio: 'inherit'});
 
-            await lintFix(packagePath);
+            if(options.runMode === RunMode.Local || options.runMode === RunMode.Release){
+                await lintFix(packagePath);
+            }
                         
             logger.info(`Start to build '${packageName}', except for tests and samples, which may be written manually.`);
             // To build generated codes except test and sample, we need to change tsconfig.json.

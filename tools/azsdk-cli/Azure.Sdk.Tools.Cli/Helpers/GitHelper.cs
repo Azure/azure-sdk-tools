@@ -16,6 +16,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         public string DiscoverRepoRoot(string path);
         public string GetRepoName(string path);
     }
+
     public class GitHelper(IGitHubService gitHubService, ILogger<GitHelper> logger) : IGitHelper
     {
         private readonly ILogger<GitHelper> logger = logger;
@@ -66,7 +67,8 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 repoName = segments[^1].TrimEnd(".git".ToCharArray());
             }
 
-            if(findUpstreamParent) {
+            if (findUpstreamParent)
+            {
                 // Check if the repo is a fork and get the parent repo
                 var parentRepoUrl = await gitHubService.GetGitHubParentRepoUrlAsync(repoOwner, repoName);
                 logger.LogDebug($"Parent repo URL: {parentRepoUrl}");
@@ -86,7 +88,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             }
 
             throw new InvalidOperationException("Unable to determine repository owner.");
-        }        
+        }
 
         public string DiscoverRepoRoot(string path)
         {
@@ -95,7 +97,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             {
                 throw new InvalidOperationException($"No git repository found at or above the path: {path}");
             }
-            
+
             // Repository.Discover returns the path to .git directory
             // The repository root is the parent directory of .git
             var gitDir = new DirectoryInfo(repoPath);

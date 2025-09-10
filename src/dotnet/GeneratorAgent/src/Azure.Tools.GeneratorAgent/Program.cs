@@ -111,14 +111,15 @@ namespace Azure.Tools.GeneratorAgent
                 Result<object> buildResult = await libraryBuildService.BuildSdkAsync(cancellationToken).ConfigureAwait(false);
 
                 // Step 6: Analyze all errors and get fixes (singleton)
-                FixGeneratorService analyzer = ServiceProvider.GetRequiredService<FixGeneratorService>();
-                List<Fix> allFixes = await analyzer.AnalyzeAndGetFixesAsync(compileResult, buildResult, cancellationToken).ConfigureAwait(false);
-                if (allFixes.Count == 0)
+                if (compileResult?.IsFailure != true && buildResult?.IsFailure != true)
                 {
-                    Logger.LogInformation("No errors found. Compilation successful!");
+                    Logger.LogInformation("No errors found. Compilation and build successful!");
                     return ExitCodeSuccess;
                 }
 
+                FixGeneratorService analyzer = ServiceProvider.GetRequiredService<FixGeneratorService>();
+                List<Fix> allFixes = await analyzer.AnalyzeAndGetFixesAsync(compileResult, buildResult, cancellationToken).ConfigureAwait(false);
+            
                 // Step 7: Send fixes to AgentProcessor if List<Fix> is not empty
                 string updatedClientTspContent = await errorFixerAgent.FixCodeAsync(allFixes, cancellationToken).ConfigureAwait(false);
                 if (string.IsNullOrWhiteSpace(updatedClientTspContent))

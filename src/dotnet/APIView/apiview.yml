@@ -15,15 +15,13 @@ parameters:
     type: string
     default: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js@local/npm/registry/'
   
+variables:
   - name: runStagingPublish
-    type: boolean
-    default: true
+    value: true
   - name: runTestUIPublish
-    type: boolean
-    default: true
+    value: true
   - name: runProductionPublish
-    type: boolean
-    default: true
+    value: true
 
 trigger:
   branches:
@@ -322,10 +320,11 @@ extends:
               #      testResultsFormat: 'VSTest'
               #      mergeTestResults: true
 
-      - ${{ if and(eq(variables['System.TeamProject'], 'internal'), eq(parameters.runStagingPublish, true)) }}:
+      - ${{ if eq(variables['System.TeamProject'], 'internal') }}:
         - stage: Staging_Publish
           displayName: Pre-Prod
           dependsOn: Build
+          condition: eq(parameters.runStagingPublish, true)
 
           variables:
             - name: 'apiUrl'
@@ -379,10 +378,11 @@ extends:
                   enableCustomDeployment: true
                   DeploymentType: zipDeploy
 
-      - ${{ if and(eq(parameters.runTestUIPublish, true), in(variables['Build.Reason'], 'Manual', ''), eq(variables['System.TeamProject'], 'internal')) }}:
+      - ${{ if and(in(variables['Build.Reason'], 'Manual', ''), eq(variables['System.TeamProject'], 'internal')) }}:
         - stage: Test_UI_Publish
           displayName: Publish Test UI
           dependsOn: Build
+          condition: eq(parameters.runTestUIPublish, true)
 
           variables:
             - name: 'apiUrl'
@@ -438,10 +438,11 @@ extends:
                         enableCustomDeployment: true
                         DeploymentType: zipDeploy
 
-      - ${{ if and(eq(parameters.runProductionPublish, true), in(variables['Build.Reason'], 'Manual', ''), eq(variables['System.TeamProject'], 'internal')) }}:
+      - ${{ if and(in(variables['Build.Reason'], 'Manual', ''), eq(variables['System.TeamProject'], 'internal')) }}:
         - stage: Production_Publish
           displayName: Prod
           dependsOn: Staging_Publish
+          condition: eq(parameters.runProductionPublish, true)
 
           variables:
             - name: 'apiUrl'

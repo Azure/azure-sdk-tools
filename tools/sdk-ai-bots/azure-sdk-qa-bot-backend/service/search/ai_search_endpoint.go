@@ -114,11 +114,10 @@ func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources [
 				Kind:   "text",
 			},
 		},
-		QueryType:             "semantic",
-		SemanticConfiguration: "vector-1741167123942-semantic-configuration",
-		Captions:              "extractive",
-		Answers:               "extractive|count-3",
-		QueryLanguage:         "en-us",
+		QueryType:     "semantic",
+		Captions:      "extractive",
+		Answers:       "extractive|count-3",
+		QueryLanguage: "en-us",
 	}
 
 	// If no sources specified, search all at once

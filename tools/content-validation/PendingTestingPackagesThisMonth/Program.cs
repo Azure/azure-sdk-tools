@@ -13,7 +13,6 @@ namespace PendingTestingPackagesThisMonth
         private static readonly string FILTER_PACKAGES_FOR_JAVA_PATH = "filter-packages-config-java.json";
         private static readonly string FILTER_PACKAGES_FOR_JAVASCRIPT_PATH = "filter-packages-config-js.json";
         private static readonly string FILTER_PACKAGES_FOR_NET_PATH = "filter-packages-config-dotnet.json";
-        private static string? PENDING_TEST_PACKAGES_LIST_LOCATION;
         private IPlaywright _playwright;
 
         public PendingTestingPackagesThisMonth(IPlaywright playwright)
@@ -26,7 +25,7 @@ namespace PendingTestingPackagesThisMonth
             using IHost host = Host.CreateApplicationBuilder(args).Build();
             IConfiguration config = host.Services.GetRequiredService<IConfiguration>();
             string? language = config["Language"];
-            PENDING_TEST_PACKAGES_LIST_LOCATION = "../" + config["PackagesListFilePath"];
+            string packagesListFilePath = "../" + config["PackagesListFilePath"];
 
             // Initialize Playwright instance.
             if (string.IsNullOrEmpty(language))
@@ -52,10 +51,10 @@ namespace PendingTestingPackagesThisMonth
                 : $"{currentDate.Year}-{currentDate.Month - 1:D2}";
             var dataUrl = $"{RELEASE_PACKAGES_URL_PREFIX}{folderName}/{language.ToLower()}.yml";
 
-            var packages = await data.FetchPackages(dataUrl, language);
+            var packages = await data.FetchPackages(dataUrl, language, packagesListFilePath);
         }
 
-        public async Task<string> FetchPackages(string testLink, string language)
+        public async Task<string> FetchPackages(string testLink, string language, string packagesListFilePath)
         {
             var browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true });
             var page = await browser.NewPageAsync();
@@ -82,10 +81,10 @@ namespace PendingTestingPackagesThisMonth
 
             HashSet<string> filteredResult = language.ToLower() switch
             {
-                "python" => await PythonFilterPackages(result),
-                "java" => await JavaFilterPackages(result),
-                "dotnet" => await DotNetFilterPackages(result),
-                "js" => await JavaScriptFilterPackages(result),
+                "python" => await PythonFilterPackages(result, packagesListFilePath),
+                "java" => await JavaFilterPackages(result, packagesListFilePath),
+                "dotnet" => await DotNetFilterPackages(result, packagesListFilePath),
+                "js" => await JavaScriptFilterPackages(result, packagesListFilePath),
                 _ => result
             };
 
@@ -102,7 +101,7 @@ namespace PendingTestingPackagesThisMonth
             return jsonResult == null ? throw new InvalidOperationException("Failed to serialize packages to JSON.") : jsonResult;
         }
 
-        public async Task<HashSet<string>> PythonFilterPackages(HashSet<string> result)
+        public async Task<HashSet<string>> PythonFilterPackages(HashSet<string> result, string packagesListFilePath)
         {
             var configPath = Path.Combine(Directory.GetCurrentDirectory(), FILTER_PACKAGES_FOR_PYTHON_PATH);
 
@@ -127,13 +126,13 @@ namespace PendingTestingPackagesThisMonth
 
             var joinedResult = string.Join(",", result);
 
-            var outputPath = Path.Combine(Directory.GetCurrentDirectory(), PENDING_TEST_PACKAGES_LIST_LOCATION);
+            var outputPath = Path.Combine(Directory.GetCurrentDirectory(), packagesListFilePath);
             await File.WriteAllTextAsync(outputPath, joinedResult);
 
             return result;
         }
 
-        public async Task<HashSet<string>> JavaFilterPackages(HashSet<string> result)
+        public async Task<HashSet<string>> JavaFilterPackages(HashSet<string> result, string packagesListFilePath)
         {
             var configPath = Path.Combine(Directory.GetCurrentDirectory(), FILTER_PACKAGES_FOR_JAVA_PATH);
 
@@ -157,13 +156,13 @@ namespace PendingTestingPackagesThisMonth
 
             var joinedResult = string.Join(",", result);
 
-            var outputPath = Path.Combine(Directory.GetCurrentDirectory(), PENDING_TEST_PACKAGES_LIST_LOCATION);
+            var outputPath = Path.Combine(Directory.GetCurrentDirectory(), packagesListFilePath);
             await File.WriteAllTextAsync(outputPath, joinedResult);
 
             return result;
         }
 
-        public async Task<HashSet<string>> DotNetFilterPackages(HashSet<string> result)
+        public async Task<HashSet<string>> DotNetFilterPackages(HashSet<string> result, string packagesListFilePath)
         {
             var configPath = Path.Combine(Directory.GetCurrentDirectory(), FILTER_PACKAGES_FOR_NET_PATH);
 
@@ -190,13 +189,13 @@ namespace PendingTestingPackagesThisMonth
 
             var joinedResult = string.Join(",", updatedPackages);
 
-            var outputPath = Path.Combine(Directory.GetCurrentDirectory(), PENDING_TEST_PACKAGES_LIST_LOCATION);
+            var outputPath = Path.Combine(Directory.GetCurrentDirectory(), packagesListFilePath);
             await File.WriteAllTextAsync(outputPath, joinedResult);
 
             return result;
         }
 
-        public async Task<HashSet<string>> JavaScriptFilterPackages(HashSet<string> result)
+        public async Task<HashSet<string>> JavaScriptFilterPackages(HashSet<string> result, string packagesListFilePath)
         {
             var configPath = Path.Combine(Directory.GetCurrentDirectory(), FILTER_PACKAGES_FOR_JAVASCRIPT_PATH);
 
@@ -224,7 +223,7 @@ namespace PendingTestingPackagesThisMonth
 
             var joinedResult = string.Join(",", updatedPackages);
 
-            var outputPath = Path.Combine(Directory.GetCurrentDirectory(), PENDING_TEST_PACKAGES_LIST_LOCATION);
+            var outputPath = Path.Combine(Directory.GetCurrentDirectory(), packagesListFilePath);
             await File.WriteAllTextAsync(outputPath, joinedResult);
 
             return result;

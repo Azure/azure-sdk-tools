@@ -59,7 +59,7 @@ namespace DataSource
                     if (pkgDict.TryGetValue(package, out var entry) && entry != null)
                     {
                         readme = entry.readme;
-                        if (langKey == "javascript" || langKey == "dotnet")
+                        if ( (langKey == "javascript" || langKey == "dotnet") && !string.IsNullOrEmpty(entry.csvPackage))
                         {
                             package = entry.csvPackage;
                         }
@@ -637,7 +637,7 @@ namespace DataSource
             Console.WriteLine(jsonString);
             File.WriteAllText("../ContentValidation.Test/appsettings.json", jsonString);
         }
-
+        
         static string ToPascalWithDots(string input)
         {
             var parts = input

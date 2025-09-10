@@ -1,13 +1,9 @@
 package preprocess
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"html"
-	"io"
 	"log"
-	"net/http"
 	"regexp"
 	"strings"
 
@@ -106,77 +102,6 @@ func (s *PreprocessService) PreprocessInput(tenantID model.TenantID, input strin
 		}
 	}
 	return input
-}
-
-func (s *PreprocessService) ExtractAdditionalInfo(input string) string {
-	// Extract image links from the input
-	imageLinks := extractImageLinks(input)
-
-	// Create the request payload
-	req := PreprocessRequest{
-		Text:   input,
-		Images: imageLinks,
-	}
-
-	// Serialize the request to JSON
-	reqBody, err := json.Marshal(req)
-	if err != nil {
-		log.Printf("Failed to marshal preprocess request: %v", err)
-		return input // Return original input in case of error
-	}
-
-	// Create a new HTTP request
-	preprocessURL := "http://localhost:3000/api/prompts/preprocess"
-	httpReq, err := http.NewRequest("POST", preprocessURL, bytes.NewReader(reqBody))
-	if err != nil {
-		log.Printf("Failed to create preprocess request: %v", err)
-		return input
-	}
-
-	// Set headers
-	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("x-api-key", config.PREPROCESS_ENV_LOCAL_KEY)
-
-	// Send the request
-	client := &http.Client{}
-	resp, err := client.Do(httpReq)
-	if err != nil {
-		log.Printf("Failed to send preprocess request: %v", err)
-		return input
-	}
-	defer func() {
-		if err = resp.Body.Close(); err != nil {
-			log.Printf("Failed to close response body: %v", err)
-		}
-	}()
-
-	// Check the response status
-	if resp.StatusCode != http.StatusOK {
-		log.Printf("Preprocess API returned non-OK status: %d", resp.StatusCode)
-		return input
-	}
-
-	// Read and parse the response
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Printf("Failed to read preprocess response body: %v", err)
-		return input
-	}
-
-	var preprocessResp PreprocessResponse
-	err = json.Unmarshal(respBody, &preprocessResp)
-	if err != nil {
-		log.Printf("Failed to unmarshal preprocess response: %v", err)
-		return input
-	}
-
-	// If there are warnings, log them
-	if len(preprocessResp.Warnings) > 0 {
-		log.Printf("Preprocess warnings: %v", preprocessResp.Warnings)
-	}
-
-	// Return the preprocessed text
-	return preprocessResp.Text
 }
 
 // extractImageLinks parses the input text and extracts URLs that appear to be image links

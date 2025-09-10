@@ -14,16 +14,6 @@ parameters:
   - name: JavaScriptArtifactRegistry
     type: string
     default: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js@local/npm/registry/'
-  
-  - name: runStagingPublish
-    type: boolean
-    default: ${{ coalesce(variables.runStagingPublish, true) }}
-  - name: runTestUIPublish
-    type: boolean
-    default: ${{ coalesce(variables.runTestUIPublish, true) }}
-  - name: runProductionPublish
-    type: boolean
-    default: ${{ coalesce(variables.runProductionPublish, true) }}
 
 trigger:
   branches:
@@ -322,7 +312,7 @@ extends:
               #      testResultsFormat: 'VSTest'
               #      mergeTestResults: true
 
-      - ${{ if and(eq(variables['System.TeamProject'], 'internal'), eq(parameters.runStagingPublish, true)) }}:
+      - ${{ if and(eq(variables['System.TeamProject'], 'internal'), eq(coalesce(variables['runStagingPublish'], 'true'), 'true')) }}:
         - stage: Staging_Publish
           displayName: Pre-Prod
           dependsOn: Build
@@ -379,7 +369,7 @@ extends:
                   enableCustomDeployment: true
                   DeploymentType: zipDeploy
 
-      - ${{ if and(eq(parameters.runTestUIPublish, true), in(variables['Build.Reason'], 'Manual', ''), eq(variables['System.TeamProject'], 'internal')) }}:
+      - ${{ if and(eq(coalesce(variables['runTestUIPublish'], 'true'), 'true'), in(variables['Build.Reason'], 'Manual', ''), eq(variables['System.TeamProject'], 'internal')) }}:
         - stage: Test_UI_Publish
           displayName: Publish Test UI
           dependsOn: Build
@@ -438,7 +428,7 @@ extends:
                         enableCustomDeployment: true
                         DeploymentType: zipDeploy
 
-      - ${{ if and(eq(parameters.runProductionPublish, true), in(variables['Build.Reason'], 'Manual', ''), eq(variables['System.TeamProject'], 'internal')) }}:
+      - ${{ if and(eq(coalesce(variables['runProductionPublish'], 'true'), 'true'), in(variables['Build.Reason'], 'Manual', ''), eq(variables['System.TeamProject'], 'internal')) }}:
         - stage: Production_Publish
           displayName: Prod
           dependsOn: Staging_Publish

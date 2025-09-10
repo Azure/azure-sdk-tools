@@ -20,9 +20,9 @@ namespace Azure.Tools.GeneratorAgent.Agent
         /// </summary>
         public static AgentTypeSpecResponse ParseResponse(string rawResponse)
         {
-            if (string.IsNullOrWhiteSpace(rawResponse))
+            if (rawResponse == null)
             {
-                throw new ArgumentException("Agent response is empty or null", nameof(rawResponse));
+                throw new ArgumentException("Agent response is null", nameof(rawResponse));
             }
 
             try
@@ -60,9 +60,9 @@ namespace Azure.Tools.GeneratorAgent.Agent
         /// </summary>
         public static IEnumerable<RuleError> ParseErrors(string rawResponse)
         {
-            if (string.IsNullOrWhiteSpace(rawResponse))
+            if (rawResponse == null)
             {
-                throw new ArgumentException("Agent response is empty or null", nameof(rawResponse));
+                throw new ArgumentException("Agent response is null", nameof(rawResponse));
             }
 
             try
@@ -91,11 +91,6 @@ namespace Azure.Tools.GeneratorAgent.Agent
         /// </summary>
         private static string ExtractJsonFromResponse(string rawResponse)
         {
-            if (string.IsNullOrWhiteSpace(rawResponse))
-            {
-                return rawResponse;
-            }
-
             var trimmed = rawResponse.Trim();
             
             // Check if response is wrapped in markdown code blocks

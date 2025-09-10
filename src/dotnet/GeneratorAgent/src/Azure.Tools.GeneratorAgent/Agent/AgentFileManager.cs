@@ -28,15 +28,15 @@ namespace Azure.Tools.GeneratorAgent.Agent
                 .Where(kvp => kvp.Key.EndsWith(".tsp", StringComparison.OrdinalIgnoreCase))
                 .Select(file => UploadSingleFileAsync(file.Key, file.Value, cancellationToken));
 
-            var results = await Task.WhenAll(uploadTasks);
+            var results = await Task.WhenAll(uploadTasks).ConfigureAwait(false);
 
             var uploadedFileIds = results
                 .Where(id => !string.IsNullOrEmpty(id))
                 .Select(id => id!);
 
-            await WaitForIndexingAsync(uploadedFileIds, cancellationToken);
+            await WaitForIndexingAsync(uploadedFileIds, cancellationToken).ConfigureAwait(false);
 
-            var vectorStoreId = await CreateVectorStoreAsync(uploadedFileIds, cancellationToken);
+            var vectorStoreId = await CreateVectorStoreAsync(uploadedFileIds, cancellationToken).ConfigureAwait(false);
 
             Logger.LogInformation("Successfully uploaded TypeSpec files.");
             return vectorStoreId;
@@ -99,7 +99,7 @@ namespace Azure.Tools.GeneratorAgent.Agent
                     if (batch.Count == batchSize)
                     {
                         var checkTasks = batch.Select(id => CheckFileStatusAsync(id, ct));
-                        var batchResults = await Task.WhenAll(checkTasks);
+                        var batchResults = await Task.WhenAll(checkTasks).ConfigureAwait(false);
                         results.AddRange(batchResults);
                         batch.Clear();
                     }
@@ -109,7 +109,7 @@ namespace Azure.Tools.GeneratorAgent.Agent
                 if (batch.Count > 0)
                 {
                     var checkTasks = batch.Select(id => CheckFileStatusAsync(id, ct));
-                    var batchResults = await Task.WhenAll(checkTasks);
+                    var batchResults = await Task.WhenAll(checkTasks).ConfigureAwait(false);
                     results.AddRange(batchResults);
                 }
                 
@@ -195,6 +195,7 @@ namespace Azure.Tools.GeneratorAgent.Agent
                 $"Final status: {finalStatusSummary}. " +
                 $"This may indicate the Azure AI service is experiencing delays or the files require more processing time.");
         }
+        
         private async Task<(string FileId, PersistentAgentFileInfo? File)> CheckFileStatusAsync(string fileId, CancellationToken ct)
         {
             try
@@ -209,13 +210,13 @@ namespace Azure.Tools.GeneratorAgent.Agent
             }
             catch (Azure.RequestFailedException ex) when (ex.Status >= 400 && ex.Status < 500)
             {
-                Logger.LogWarning("Client error ({StatusCode}) checking file {FileId}: {Message}", 
+                Logger.LogWarning("Client error ({StatusCode}) checking file {FileId}: {Message}",
                     ex.Status, fileId, ex.Message);
                 return (fileId, null);
             }
             catch (Azure.RequestFailedException ex) when (ex.Status >= 500)
             {
-                Logger.LogWarning("Server error ({StatusCode}) checking file {FileId}: {Message} - will retry", 
+                Logger.LogWarning("Server error ({StatusCode}) checking file {FileId}: {Message} - will retry",
                     ex.Status, fileId, ex.Message);
                 return (fileId, null);
             }

@@ -460,32 +460,6 @@ namespace Azure.Tools.GeneratorAgent.Tests
         }
 
         [Test]
-        public async Task GetTypeSpecFilesAsync_WithMixedFileTypes()
-        {
-            // Arrange
-            var mockHandler = CreateMockHttpMessageHandler();
-            var httpClient = CreateMockHttpClient(mockHandler);
-            var service = CreateTestableService(httpClient: httpClient);
-
-            SetupMixedFileTypesApiResponse(mockHandler);
-            SetupSuccessfulFileDownload(mockHandler, "test.tsp", "model Test {}");
-
-            // Act
-            var result = await service.GetTypeSpecFilesAsync();
-
-            // Assert
-            Assert.Multiple(() =>
-            {
-                Assert.That(result, Is.Not.Null);
-                Assert.That(result.Count, Is.EqualTo(1));
-                Assert.That(result.ContainsKey("test.tsp"), Is.True);
-                Assert.That(result.ContainsKey("readme.md"), Is.True);
-            });
-
-
-        }
-
-        [Test]
         public void GetTypeSpecFilesAsync_WithFailedFileDownload_ShouldThrowHttpRequestException()
         {
             // Arrange

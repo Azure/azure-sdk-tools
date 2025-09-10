@@ -46,12 +46,12 @@ namespace Azure.Tools.GeneratorAgent
             if (string.IsNullOrWhiteSpace(ValidationContext.ValidatedCommitId))
             {
                 // Local case
-                return await GetLocalTypeSpecFilesAsync(ValidationContext.ValidatedTypeSpecDir, cancellationToken);
+                return await GetLocalTypeSpecFilesAsync(ValidationContext.ValidatedTypeSpecDir, cancellationToken).ConfigureAwait(false);
             }
             else
             {
                 // GitHub case
-                return await GetGitHubTypeSpecFilesAsync(cancellationToken);
+                return await GetGitHubTypeSpecFilesAsync(cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -70,7 +70,7 @@ namespace Azure.Tools.GeneratorAgent
                 foreach (string filePath in allFiles)
                 {
                     string fileName = Path.GetFileName(filePath);
-                    string content = await File.ReadAllTextAsync(filePath, Encoding.UTF8, cancellationToken);
+                    string content = await File.ReadAllTextAsync(filePath, Encoding.UTF8, cancellationToken).ConfigureAwait(false);
                     typeSpecFiles[fileName] = content;
                 }
 
@@ -95,12 +95,12 @@ namespace Azure.Tools.GeneratorAgent
                 GitHubFileService = GitHubServiceFactory(ValidationContext);
 
                 // Get files from GitHub
-                Dictionary<string, string> result = await GitHubFileService.GetTypeSpecFilesAsync(cancellationToken);
+                Dictionary<string, string> result = await GitHubFileService.GetTypeSpecFilesAsync(cancellationToken).ConfigureAwait(false);
 
                 // Create secure temporary directory for compilation
                 if (result.Count > 0)
                 {
-                    string tempDirectory = await CreateSecureTempDirectoryFromGitHubFiles(result, cancellationToken);
+                    string tempDirectory = await CreateSecureTempDirectoryFromGitHubFiles(result, cancellationToken).ConfigureAwait(false);
                     ValidationContext.UpdateTypeSpecDirForCompilation(tempDirectory);
 
                     Logger.LogInformation("Successfully read {Count} TypeSpec files from Github Repository\n", result.Count);
@@ -143,7 +143,7 @@ namespace Azure.Tools.GeneratorAgent
                 TempDirectories.Add(tempPath);
 
                 // Security: Write files with validation
-                await WriteFilesSecurely(tempPath, githubFiles, cancellationToken);
+                await WriteFilesSecurely(tempPath, githubFiles, cancellationToken).ConfigureAwait(false);
 
                 Logger.LogInformation("Created secure temp directory: {TempPath} with {FileCount} files", tempPath, githubFiles.Count);
                 return tempPath;
@@ -151,7 +151,7 @@ namespace Azure.Tools.GeneratorAgent
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 // Security: Always cleanup on failure
-                await CleanupTempDirectorySecurely(tempPath);
+                await CleanupTempDirectorySecurely(tempPath).ConfigureAwait(false);
                 
                 Logger.LogError(ex, "Failed to create secure temp directory: {TempPath}", tempPath);
                 throw new InvalidOperationException($"Failed to create secure temporary TypeSpec directory: {ex.Message}", ex);
@@ -219,7 +219,7 @@ namespace Azure.Tools.GeneratorAgent
                 }
 
                 // Write file with proper encoding
-                await File.WriteAllTextAsync(filePath, kvp.Value, Encoding.UTF8, cancellationToken);
+                await File.WriteAllTextAsync(filePath, kvp.Value, Encoding.UTF8, cancellationToken).ConfigureAwait(false);
                 Logger.LogDebug("Securely wrote file: {FilePath} ({Size} characters)", filePath, kvp.Value.Length);
             }
         }
@@ -291,7 +291,7 @@ namespace Azure.Tools.GeneratorAgent
 
             try
             {
-                await File.WriteAllTextAsync(filePath, content, Encoding.UTF8, cancellationToken);
+                await File.WriteAllTextAsync(filePath, content, Encoding.UTF8, cancellationToken).ConfigureAwait(false);
                 Logger.LogInformation("Securely updated TypeSpec file: {FilePath} ({Size} characters)", filePath, content.Length);
             }
             catch (Exception ex) when (ex is not OperationCanceledException and not SecurityException)

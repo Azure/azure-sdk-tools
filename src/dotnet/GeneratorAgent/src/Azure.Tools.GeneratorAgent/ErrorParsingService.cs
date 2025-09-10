@@ -36,7 +36,7 @@ namespace Azure.Tools.GeneratorAgent
                 Logger.LogInformation("No errors found with regex. Falling back to AI-based parsing.");
                 if (ErrorFixerAgent != null)
                 {
-                    errors = await ErrorFixerAgent.AnalyzeErrorsAsync(result.ProcessException.Output, cancellationToken);
+                    errors = await ErrorFixerAgent.AnalyzeErrorsAsync(result.ProcessException.Output, cancellationToken).ConfigureAwait(false);
                 }
             }
 

@@ -117,7 +117,6 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
             services.AddSingleton<FixGeneratorService>();
             services.AddSingleton<FixPromptService>();
 
-            services.AddSingleton<AgentConversationProcessor>();
             services.AddSingleton<AgentFileManager>();
             services.AddSingleton<ErrorParsingService>();
 

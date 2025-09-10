@@ -112,7 +112,7 @@ namespace Azure.Tools.GeneratorAgent
 
                 // Step 6: Analyze all errors and get fixes (singleton)
                 FixGeneratorService analyzer = ServiceProvider.GetRequiredService<FixGeneratorService>();
-                List<Fix> allFixes = await analyzer.AnalyzeAndGetFixesAsync(compileResult, buildResult, cancellationToken);
+                List<Fix> allFixes = await analyzer.AnalyzeAndGetFixesAsync(compileResult, buildResult, cancellationToken).ConfigureAwait(false);
                 if (allFixes.Count == 0)
                 {
                     Logger.LogInformation("No errors found. Compilation successful!");

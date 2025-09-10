@@ -37,13 +37,13 @@ namespace Azure.Tools.GeneratorAgent
                 currentTypeSpecDir,
                 ValidationContext.IsGitHubWorkflow ? "GitHub" : "Local");
 
-            Result<object> installResult = await InstallTypeSpecDependencies(cancellationToken);
+            Result<object> installResult = await InstallTypeSpecDependencies(cancellationToken).ConfigureAwait(false);
             if (installResult.IsFailure)
             {
                 return installResult;
             }
 
-            Result<object> compileResult = await CompileTypeSpec(cancellationToken);
+            Result<object> compileResult = await CompileTypeSpec(cancellationToken).ConfigureAwait(false);
             if (compileResult.IsFailure)
             {
                 return compileResult;

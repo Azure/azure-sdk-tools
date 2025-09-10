@@ -12,30 +12,15 @@ namespace Azure.Tools.GeneratorAgent.Tests
     public class ErrorFixerAgentTests
     {
         [Test]
-        public void Constructor_WithNullConversationProcessor_ThrowsArgumentNullException()
-        {
-            // Arrange & Act & Assert
-            var ex = Assert.Throws<ArgumentNullException>(() => new ErrorFixerAgent(
-                conversationProcessor: null!,
-                fileManager: CreateMockAgentFileManager(),
-                client: Mock.Of<PersistentAgentsClient>(),
-                appSettings: CreateTestAppSettings(),
-                logger: Mock.Of<ILogger<ErrorFixerAgent>>(),
-                fixPromptService: CreateMockFixPromptService()));
-            
-            Assert.That(ex.ParamName!, Is.EqualTo("conversationProcessor"));
-        }
-
-        [Test]
         public void Constructor_WithNullAgentFileManager_ThrowsArgumentNullException()
         {
             // Arrange & Act & Assert
             var ex = Assert.Throws<ArgumentNullException>(() => new ErrorFixerAgent(
-                conversationProcessor: CreateMockConversationProcessor(),
                 fileManager: null!,
                 client: Mock.Of<PersistentAgentsClient>(),
                 appSettings: CreateTestAppSettings(),
                 logger: Mock.Of<ILogger<ErrorFixerAgent>>(),
+                loggerFactory: Mock.Of<ILoggerFactory>(),
                 fixPromptService: CreateMockFixPromptService()));
             
             Assert.That(ex.ParamName!, Is.EqualTo("fileManager"));
@@ -46,14 +31,14 @@ namespace Azure.Tools.GeneratorAgent.Tests
         {
             // Arrange & Act & Assert
             var ex = Assert.Throws<ArgumentNullException>(() => new ErrorFixerAgent(
-                conversationProcessor: CreateMockConversationProcessor(),
                 fileManager: CreateMockAgentFileManager(),
                 client: null!,
                 appSettings: CreateTestAppSettings(),
                 logger: Mock.Of<ILogger<ErrorFixerAgent>>(),
+                loggerFactory: Mock.Of<ILoggerFactory>(),
                 fixPromptService: CreateMockFixPromptService()));
             
-            Assert.That(ex.ParamName!, Is.EqualTo("client"));
+            Assert.That(ex.ParamName, Is.EqualTo("client"));
         }
 
         [Test]
@@ -61,14 +46,14 @@ namespace Azure.Tools.GeneratorAgent.Tests
         {
             // Arrange & Act & Assert
             var ex = Assert.Throws<ArgumentNullException>(() => new ErrorFixerAgent(
-                conversationProcessor: CreateMockConversationProcessor(),
                 fileManager: CreateMockAgentFileManager(),
                 client: Mock.Of<PersistentAgentsClient>(),
                 appSettings: null!,
                 logger: Mock.Of<ILogger<ErrorFixerAgent>>(),
+                loggerFactory: Mock.Of<ILoggerFactory>(),
                 fixPromptService: CreateMockFixPromptService()));
             
-            Assert.That(ex.ParamName!, Is.EqualTo("appSettings"));
+            Assert.That(ex.ParamName, Is.EqualTo("appSettings"));
         }
 
         [Test]
@@ -76,14 +61,29 @@ namespace Azure.Tools.GeneratorAgent.Tests
         {
             // Arrange & Act & Assert
             var ex = Assert.Throws<ArgumentNullException>(() => new ErrorFixerAgent(
-                conversationProcessor: CreateMockConversationProcessor(),
                 fileManager: CreateMockAgentFileManager(),
                 client: Mock.Of<PersistentAgentsClient>(),
                 appSettings: CreateTestAppSettings(),
                 logger: null!,
+                loggerFactory: Mock.Of<ILoggerFactory>(),
                 fixPromptService: CreateMockFixPromptService()));
             
-            Assert.That(ex.ParamName!, Is.EqualTo("logger"));
+            Assert.That(ex.ParamName, Is.EqualTo("logger"));
+        }
+
+        [Test]
+        public void Constructor_WithNullLoggerFactory_ThrowsArgumentNullException()
+        {
+            // Arrange & Act & Assert
+            var ex = Assert.Throws<ArgumentNullException>(() => new ErrorFixerAgent(
+                fileManager: CreateMockAgentFileManager(),
+                client: Mock.Of<PersistentAgentsClient>(),
+                appSettings: CreateTestAppSettings(),
+                logger: Mock.Of<ILogger<ErrorFixerAgent>>(),
+                loggerFactory: null!,
+                fixPromptService: CreateMockFixPromptService()));
+            
+            Assert.That(ex.ParamName, Is.EqualTo("loggerFactory"));
         }
 
         [Test]
@@ -91,34 +91,34 @@ namespace Azure.Tools.GeneratorAgent.Tests
         {
             // Arrange & Act & Assert
             var ex = Assert.Throws<ArgumentNullException>(() => new ErrorFixerAgent(
-                conversationProcessor: CreateMockConversationProcessor(),
                 fileManager: CreateMockAgentFileManager(),
                 client: Mock.Of<PersistentAgentsClient>(),
                 appSettings: CreateTestAppSettings(),
                 logger: Mock.Of<ILogger<ErrorFixerAgent>>(),
+                loggerFactory: Mock.Of<ILoggerFactory>(),
                 fixPromptService: null!));
             
-            Assert.That(ex.ParamName!, Is.EqualTo("fixPromptService"));
+            Assert.That(ex.ParamName, Is.EqualTo("fixPromptService"));
         }
 
         [Test]
         public void Constructor_WithValidParameters_SetsAllDependencies()
         {
             // Arrange
-            var conversationProcessor = CreateMockConversationProcessor();
             var AgentFileManager = CreateMockAgentFileManager();
             var client = Mock.Of<PersistentAgentsClient>();
             var appSettings = CreateTestAppSettings();
             var fixPromptService = CreateMockFixPromptService();
             var logger = Mock.Of<ILogger<ErrorFixerAgent>>();
+            var loggerFactory = Mock.Of<ILoggerFactory>();
 
             // Act & Assert - should not throw
             var errorFixerAgent = new ErrorFixerAgent(
-                conversationProcessor: conversationProcessor,
                 fileManager: AgentFileManager,
                 client: client,
                 appSettings: appSettings,
                 logger: logger,
+                loggerFactory: loggerFactory,
                 fixPromptService: fixPromptService);
 
             Assert.That(errorFixerAgent, Is.Not.Null);
@@ -134,7 +134,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var ex = Assert.ThrowsAsync<ArgumentNullException>(async () => 
                 await errorFixerAgent.InitializeAgentEnvironmentAsync(null!, CancellationToken.None));
             
-            Assert.That(ex.ParamName!, Is.EqualTo("typeSpecFiles"));
+            Assert.That(ex.ParamName, Is.EqualTo("typeSpecFiles"));
         }
 
         [Test]
@@ -147,7 +147,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var ex = Assert.ThrowsAsync<ArgumentNullException>(async () => 
                 await errorFixerAgent.FixCodeAsync(null!, CancellationToken.None));
             
-            Assert.That(ex.ParamName!, Is.EqualTo("fixes"));
+            Assert.That(ex.ParamName, Is.EqualTo("fixes"));
         }
 
         [Test]
@@ -160,14 +160,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var ex = Assert.ThrowsAsync<ArgumentNullException>(async () => 
                 await errorFixerAgent.AnalyzeErrorsAsync(null!, CancellationToken.None));
             
-            Assert.That(ex.ParamName!, Is.EqualTo("errorLogs"));
-        }
-        private static AgentConversationProcessor CreateMockConversationProcessor()
-        {
-            return new AgentConversationProcessor(
-                Mock.Of<PersistentAgentsClient>(),
-                Mock.Of<ILogger<AgentConversationProcessor>>(),
-                CreateTestAppSettings());
+            Assert.That(ex.ParamName, Is.EqualTo("errorLogs"));
         }
 
         private static AgentFileManager CreateMockAgentFileManager()
@@ -188,11 +181,11 @@ namespace Azure.Tools.GeneratorAgent.Tests
         private static ErrorFixerAgent CreateValidErrorFixerAgent()
         {
             return new ErrorFixerAgent(
-                conversationProcessor: CreateMockConversationProcessor(),
                 fileManager: CreateMockAgentFileManager(),
                 client: Mock.Of<PersistentAgentsClient>(),
                 appSettings: CreateTestAppSettings(),
                 logger: Mock.Of<ILogger<ErrorFixerAgent>>(),
+                loggerFactory: Mock.Of<ILoggerFactory>(),
                 fixPromptService: CreateMockFixPromptService());
         }
 

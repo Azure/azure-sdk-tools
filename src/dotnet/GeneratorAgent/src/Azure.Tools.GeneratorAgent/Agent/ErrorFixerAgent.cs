@@ -7,42 +7,44 @@ namespace Azure.Tools.GeneratorAgent.Agent
 {
     internal class ErrorFixerAgent : IAsyncDisposable
     {
-        private readonly AgentConversationProcessor ConversationProcessor;
         private readonly AgentFileManager FileManager;
         private readonly PersistentAgentsClient Client;
         private readonly AppSettings AppSettings;
         private readonly ILogger<ErrorFixerAgent> Logger;
+        private readonly ILoggerFactory LoggerFactory;
         private readonly FixPromptService FixPromptService;
         private readonly Lazy<PersistentAgent> Agent;
-        private volatile bool Disposed = false;
-        
+        private volatile bool _disposed = false;
+
+        private AgentConversationProcessor? ConversationProcessor;
+
         private string AgentId => Agent.Value.Id;
 
         public ErrorFixerAgent(
-            AgentConversationProcessor conversationProcessor,
             AgentFileManager fileManager,
             PersistentAgentsClient client,
             AppSettings appSettings,
             ILogger<ErrorFixerAgent> logger,
+            ILoggerFactory loggerFactory,
             FixPromptService fixPromptService)
         {
-            ArgumentNullException.ThrowIfNull(conversationProcessor);
             ArgumentNullException.ThrowIfNull(fileManager);
             ArgumentNullException.ThrowIfNull(client);
             ArgumentNullException.ThrowIfNull(appSettings);
             ArgumentNullException.ThrowIfNull(logger);
+            ArgumentNullException.ThrowIfNull(loggerFactory);
             ArgumentNullException.ThrowIfNull(fixPromptService);
 
-            ConversationProcessor = conversationProcessor;
             FileManager = fileManager;
             Client = client;
             AppSettings = appSettings;
             Logger = logger;
+            LoggerFactory = loggerFactory;
             FixPromptService = fixPromptService;
             Agent = new Lazy<PersistentAgent>(() => CreateAgent());
         }
 
-        private PersistentAgent CreateAgent()
+                private PersistentAgent CreateAgent()
         {
             Logger.LogInformation("Creating Generator Agent...");
 
@@ -62,6 +64,102 @@ namespace Azure.Tools.GeneratorAgent.Agent
             return agent;
         }
 
+        public virtual async Task InitializeAgentEnvironmentAsync(Dictionary<string, string> typeSpecFiles, CancellationToken cancellationToken = default)
+        {
+            ArgumentNullException.ThrowIfNull(typeSpecFiles);
+
+            Logger.LogInformation("Initializing agent environment...");
+
+            // Step 1: Upload files
+            var vectorStoreId = await FileManager.UploadFilesAsync(typeSpecFiles, cancellationToken).ConfigureAwait(false);
+
+            // Step 2: Update Agent Vector Store (this will trigger agent creation if needed)
+            await UpdateAgentVectorStoreAsync(vectorStoreId, cancellationToken).ConfigureAwait(false);
+
+            // Step 3: Create conversation processor once for the lifetime of this agent
+            Logger.LogInformation("Creating conversation processor for agent {AgentId}", AgentId);
+            ConversationProcessor = await AgentConversationProcessor.CreateAsync(
+                Client,
+                LoggerFactory,
+                AppSettings,
+                AgentId,
+                cancellationToken).ConfigureAwait(false);
+
+            Logger.LogInformation("Agent environment initialized successfully with agent {AgentId}.", AgentId);
+        }
+
+        public virtual async Task<string> FixCodeAsync(List<Fix> fixes, CancellationToken cancellationToken = default)
+        {
+            ArgumentNullException.ThrowIfNull(fixes);
+
+            if (ConversationProcessor == null)
+            {
+                throw new InvalidOperationException("Agent environment must be initialized before calling FixCodeAsync. Call InitializeAgentEnvironmentAsync first.");
+            }
+
+            try
+            {
+                Logger.LogInformation("Starting code fix process with {Count} fixes", fixes.Count);
+
+                // Use the existing conversation processor to maintain context
+                var result = await ConversationProcessor.FixCodeAsync(fixes, FixPromptService, cancellationToken).ConfigureAwait(false);
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Code fix failed for agent {AgentId}", AgentId);
+                throw;
+            }
+        }
+
+        public virtual async Task<IEnumerable<RuleError>> AnalyzeErrorsAsync(string errorLogs, CancellationToken cancellationToken = default)
+        {
+            ArgumentNullException.ThrowIfNull(errorLogs);
+
+            if (ConversationProcessor == null)
+            {
+                throw new InvalidOperationException("Agent environment must be initialized before calling AnalyzeErrorsAsync. Call InitializeAgentEnvironmentAsync first.");
+            }
+
+            try
+            {
+                Logger.LogInformation("Starting error analysis");
+
+                // Use the existing conversation processor to maintain context
+                var errors = await ConversationProcessor.AnalyzeErrorsAsync(errorLogs, cancellationToken).ConfigureAwait(false);
+
+                return errors;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error analysis failed for agent {AgentId}", AgentId);
+                throw;
+            }
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            _disposed = true;
+
+            if (Agent.IsValueCreated)
+            {
+                try
+                {
+                    await DeleteAgentsAsync(CancellationToken.None).ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex, "Error deleting agents during disposal");
+                }
+            }
+        }
+ 
         private async Task UpdateAgentVectorStoreAsync(string vectorStoreId, CancellationToken cancellationToken)
         {
             ArgumentNullException.ThrowIfNull(vectorStoreId);
@@ -104,85 +202,6 @@ namespace Azure.Tools.GeneratorAgent.Agent
             }
 
             await Task.WhenAll(deleteTasks).ConfigureAwait(false);
-        }
-
-        public virtual async Task InitializeAgentEnvironmentAsync(Dictionary<string, string> typeSpecFiles, CancellationToken cancellationToken = default)
-        {
-            ArgumentNullException.ThrowIfNull(typeSpecFiles);
-            
-            Logger.LogInformation("Initializing agent environment...");
-
-            // Step 1: Upload files
-            var vectorStoreId = await FileManager.UploadFilesAsync(typeSpecFiles, cancellationToken);
-
-            // Step 2: Update Agent Vector Store (this will trigger agent creation if needed)
-            await UpdateAgentVectorStoreAsync(vectorStoreId, cancellationToken);
-
-            Logger.LogInformation("Agent environment initialized successfully with agent {AgentId}.", AgentId);
-        }
-
-        public virtual async Task<string> FixCodeAsync(List<Fix> fixes, CancellationToken cancellationToken = default)
-        {
-            ArgumentNullException.ThrowIfNull(fixes);
-            
-            try
-            {
-                // Generate a new thread ID for FixCodeAsync
-                var fixThreadId = await ConversationProcessor.CreateThreadAsync(cancellationToken);
-
-                // Call ConversationProcessor to fix the code
-                var result = await ConversationProcessor.FixCodeAsync(fixes, fixThreadId, AgentId, FixPromptService, cancellationToken);
-
-                return result;
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Code fix failed for agent {AgentId}", AgentId);
-                throw;
-            }
-        }
-
-        public virtual async Task<IEnumerable<RuleError>> AnalyzeErrorsAsync(string errorLogs, CancellationToken cancellationToken = default)
-        {
-            ArgumentNullException.ThrowIfNull(errorLogs);
-            
-            try
-            {
-                // Generate a new thread ID for AnalyzeErrorsAsync
-                var analyzeThreadId = await ConversationProcessor.CreateThreadAsync(cancellationToken);
-
-                // Call ConversationProcessor to analyze errors
-                var errors = await ConversationProcessor.AnalyzeErrorsAsync(errorLogs, analyzeThreadId, AgentId, cancellationToken);
-
-                return errors;
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Error analysis failed for agent {AgentId}", AgentId);
-                throw;
-            }
-        }
-
-        public async ValueTask DisposeAsync()
-        {
-            if (Disposed)
-            {
-                return;
-            }
-
-            Disposed = true;
-
-            if (Agent.IsValueCreated)
-            {
-                try
-                {
-                    await DeleteAgentsAsync(CancellationToken.None).ConfigureAwait(false);
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogError(ex, "Error deleting agents during disposal");
-                }
-            }
         }
     }
 }

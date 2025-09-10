@@ -36,7 +36,7 @@ namespace Azure.Tools.GeneratorAgent
             }
 
             // Process all tasks and flatten results efficiently
-            var allFixResults = await Task.WhenAll(fixTasks);
+            var allFixResults = await Task.WhenAll(fixTasks).ConfigureAwait(false);
             var finalFixes = allFixResults
                 .SelectMany(fixes => fixes)  // Flatten enumerable chain
                 .ToList();

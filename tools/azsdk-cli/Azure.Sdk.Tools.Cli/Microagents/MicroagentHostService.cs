@@ -1,10 +1,11 @@
 using System.ComponentModel;
 using Azure.AI.OpenAI;
+using Azure.Sdk.Tools.Cli.Helpers;
 using OpenAI.Chat;
 
 namespace Azure.Sdk.Tools.Cli.Microagents;
 
-public class MicroagentHostService(AzureOpenAIClient openAI, ILogger<MicroagentHostService> logger) : IMicroagentHostService
+public class MicroagentHostService(AzureOpenAIClient openAI, ILogger<MicroagentHostService> logger, TokenUsageHelper tokenUsageHelper) : IMicroagentHostService
 {
     private const string ExitToolName = "Exit";
 
@@ -60,6 +61,7 @@ public class MicroagentHostService(AzureOpenAIClient openAI, ILogger<MicroagentH
             // Request the chat completion
             logger.LogDebug("Sending conversation history with {MessageCount} messages to model '{Model}'", conversationHistory.Count, agentDefinition.Model);
             var response = await chatClient.CompleteChatAsync(conversationHistory, chatCompletionOptions, ct);
+            tokenUsageHelper.Add(agentDefinition.Model, response.Value.Usage.InputTokenCount, response.Value.Usage.OutputTokenCount);
 
             var toolCall = response.Value.ToolCalls.Single();
             logger.LogInformation("Model called tool '{ToolName}'", toolCall.FunctionName);

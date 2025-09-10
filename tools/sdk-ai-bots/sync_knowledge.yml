@@ -109,7 +109,7 @@ extends:
         # Clone Azure SDK Engineering Docs (Token authentication required)
         - script: |
             cd $(workingDirectory)
-            git clone --branch main https://${repo.token}@dev.azure.com/azure-sdk/internal/_git/azure-sdk-docs-eng.ms azure-sdk-docs-eng
+            git clone --branch main https://$(azuresdk-github-pat)@dev.azure.com/azure-sdk/internal/_git/azure-sdk-docs-eng.ms azure-sdk-docs-eng
             echo "Cloned Azure SDK Engineering Docs repository"
           displayName: 'Clone Azure SDK Engineering Docs repository'
 

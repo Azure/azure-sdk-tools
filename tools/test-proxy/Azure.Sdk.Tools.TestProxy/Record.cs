@@ -58,25 +58,34 @@ namespace Azure.Sdk.Tools.TestProxy
         [HttpPost]
         public async Task StartUniversal()
         {
+            var body = await HttpRequestInteractions.GetBody(Request);
+
+            if (body == null && (Startup.ProxyConfiguration.Mode.Equals(UniversalRecordingMode.Record) || Startup.ProxyConfiguration.Mode.Equals(UniversalRecordingMode.Playback)))
+            {
+                throw new HttpException(HttpStatusCode.BadRequest, "Provide a application/json body containing x-recording-file and x-recording-assets-file");
+            }
+
             if (Startup.ProxyConfiguration.Mode.Equals(UniversalRecordingMode.Azure))
             {
                 throw new HttpException(HttpStatusCode.BadRequest, "The /Record/StartUniversal endpoint is only available when the proxy is started in 'standard' mode. Re-run the proxy with --standard-proxy-mode.");
             }
 
-            DebugLogger.LogAdminRequestDetails(_logger, Request);
+            string file = HttpRequestInteractions.GetBodyKey(body, "x-recording-file", allowNulls: false);
+            var assetsJson = RecordingHandler.GetAssetsJsonLocation(
+                HttpRequestInteractions.GetBodyKey(body, "x-recording-assets-file", allowNulls: true),
+                _recordingHandler.ContextDirectory);
 
-            // If already active just return existing id so clients can discover it.
-            if (!string.IsNullOrEmpty(Startup.ProxyConfiguration.RecordingId))
+            DebugLogger.LogAdminRequestDetails(_logger, Request);
+            _logger.LogDebug($"Attempting to start recording for {file} {assetsJson ?? string.Empty}");
+
+            if (string.IsNullOrWhiteSpace(file))
             {
-                if (!Response.Headers.ContainsKey("x-recording-id"))
-                {
-                    Response.Headers["x-recording-id"] = Startup.ProxyConfiguration.RecordingId;
-                }
-                return;
+                throw new HttpException(HttpStatusCode.BadRequest, "If providing a body to /Record/Start, the key 'x-recording-file' must be provided. If attempting to start an in-memory recording, provide NO body.");
             }
 
-            await _recordingHandler.StartRecordingAsync(null, Response, null);
-            Startup.ProxyConfiguration.RecordingId = Response.Headers["x-recording-id"].ToString();
+            await _recordingHandler.StartRecordingAsync(file, Response, assetsJson);
+
+            Startup.ProxyConfiguration.RecordingId = Response.Headers["x-recording-id"];
         }
 
         [HttpPost]

@@ -1,8 +1,17 @@
-$env:HTTP_PROXY="http://localhost:5000"
-
 if (-not $env:PROXY_MANUAL_START) {
     test-proxy start --standard-proxy-mode
 }
 
-curl http://localhost:5000/Record/StartUniversal
-curl http://httpbin.org/get
+curl -X POST http://localhost:5000/Record/StartUniversal `
+     -H "Content-Type: application/json" `
+     -d '{"x-recording-file":"sdk/testrecord.json"}' -v
+
+curl --proxy http://localhost:5000 http://httpbin.org/get
+
+curl -X POST http://localhost:5000/Record/StopUniversal -v
+
+# curl --proxy http://localhost:5000 -X POST "http://httpbin.org/post" `
+#      -H "Content-Type: application/json" `
+#      -d '{"x-recording-file":"sdk/testrecord.json"}' -v
+
+

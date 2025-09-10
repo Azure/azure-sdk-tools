@@ -315,7 +315,7 @@ extends:
         - stage: Staging_Publish
           displayName: Pre-Prod
           dependsOn: Build
-          condition: and(succeeded(), coalesce(variables['runStagingPublish'], true))
+          condition: and(succeeded(), eq(coalesce(variables['runStagingPublish'], 'true'), 'true'))
 
           variables:
             - name: 'apiUrl'
@@ -373,7 +373,7 @@ extends:
         - stage: Test_UI_Publish
           displayName: Publish Test UI
           dependsOn: Build
-          condition: and(succeeded(), coalesce(variables['runTestUIPublish'], true))
+          condition: and(succeeded(), eq(coalesce(variables['runTestUIPublish'], 'true'), 'true'))
 
           variables:
             - name: 'apiUrl'
@@ -433,7 +433,7 @@ extends:
         - stage: Production_Publish
           displayName: Prod
           dependsOn: Staging_Publish
-          condition: coalesce(variables['runProductionPublish'], true)
+          condition: eq(coalesce(variables['runProductionPublish'], 'true'), 'true')
 
           variables:
             - name: 'apiUrl'

@@ -10,75 +10,80 @@ schedules:
     include:
     - main
 
+variables:
+  - template: /eng/pipelines/templates/variables/image.yml
+  - template: /eng/pipelines/templates/variables/globals.yml
+  - name: workingDirectory
+    value: '$(System.DefaultWorkingDirectory)/knowledge_sources'
+
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
   parameters:
     stages:
-      - stage:
-        variables:
-          - template: /eng/pipelines/templates/variables/image.yml
-          - template: /eng/pipelines/templates/variables/globals.yml
+      - stage: SyncKnowledgeSources
+        displayName: 'Sync Knowledge Sources'
+        jobs:
+          - job: CloneRepositories
+            displayName: 'Clone Knowledge Repositories'
+            pool:
+              name: "$(LINUXPOOL)"
+              image: "$(LINUXVMIMAGE)"
+              os: linux
+            steps:
+              - script: |
+                  mkdir -p $(workingDirectory)
+                  cd $(workingDirectory)
+                  echo "Working directory created: $(pwd)"
+                displayName: 'Create working directory'
 
-        pool:
-          name: "$(LINUXPOOL)"
-          image: "$(LINUXVMIMAGE)"
-          os: linux
+              # Clone TypeSpec documentation
+              - script: |
+                  cd $(workingDirectory)
+                  git clone --branch main https://github.com/microsoft/typespec.git typespec
+                  echo "Cloned TypeSpec repository"
+                displayName: 'Clone TypeSpec repository'
 
-        steps:
-        - script: |
-            mkdir -p $(workingDirectory)
-            cd $(workingDirectory)
-            echo "Working directory created: $(pwd)"
-          displayName: 'Create working directory'
+              # Clone TypeSpec Azure documentation
+              - script: |
+                  cd $(workingDirectory)
+                  git clone --branch main https://github.com/Azure/typespec-azure.git typespec-azure
+                  echo "Cloned TypeSpec Azure repository"
+                displayName: 'Clone TypeSpec Azure repository'
 
-        # Clone TypeSpec documentation
-        - script: |
-            cd $(workingDirectory)
-            git clone --branch main https://github.com/microsoft/typespec.git typespec
-            echo "Cloned TypeSpec repository"
-          displayName: 'Clone TypeSpec repository'
+              # Clone Azure REST API Specs Wiki
+              - script: |
+                  cd $(workingDirectory)
+                  git clone --branch master https://github.com/Azure/azure-rest-api-specs.wiki.git azure-rest-api-specs-wiki
+                  echo "Cloned Azure REST API Specs Wiki"
+                displayName: 'Clone Azure REST API Specs Wiki'
 
-        # Clone TypeSpec Azure documentation
-        - script: |
-            cd $(workingDirectory)
-            git clone --branch main https://github.com/Azure/typespec-azure.git typespec-azure
-            echo "Cloned TypeSpec Azure repository"
-          displayName: 'Clone TypeSpec Azure repository'
+              # Clone Azure SDK for Python
+              - script: |
+                  cd $(workingDirectory)
+                  git clone --branch main https://github.com/Azure/azure-sdk-for-python.git azure-sdk-for-python
+                  echo "Cloned Azure SDK for Python repository"
+                displayName: 'Clone Azure SDK for Python repository'
 
-        # Clone Azure REST API Specs Wiki
-        - script: |
-            cd $(workingDirectory)
-            git clone --branch master https://github.com/Azure/azure-rest-api-specs.wiki.git azure-rest-api-specs-wiki
-            echo "Cloned Azure REST API Specs Wiki"
-          displayName: 'Clone Azure REST API Specs Wiki'
+              # Clone Azure SDK for Python Wiki
+              - script: |
+                  cd $(workingDirectory)
+                  git clone --branch master https://github.com/Azure/azure-sdk-for-python.wiki.git azure-sdk-for-python-wiki
+                  echo "Cloned Azure SDK for Python Wiki"
+                displayName: 'Clone Azure SDK for Python Wiki'
 
-        # Clone Azure SDK for Python
-        - script: |
-            cd $(workingDirectory)
-            git clone --branch main https://github.com/Azure/azure-sdk-for-python.git azure-sdk-for-python
-            echo "Cloned Azure SDK for Python repository"
-          displayName: 'Clone Azure SDK for Python repository'
+              # Clone Microsoft API Guidelines
+              - script: |
+                  cd $(workingDirectory)
+                  git clone --branch vNext https://github.com/microsoft/api-guidelines.git api-guidelines
+                  echo "Cloned Microsoft API Guidelines repository"
+                displayName: 'Clone Microsoft API Guidelines repository'
 
-        # Clone Azure SDK for Python Wiki
-        - script: |
-            cd $(workingDirectory)
-            git clone --branch master https://github.com/Azure/azure-sdk-for-python.wiki.git azure-sdk-for-python-wiki
-            echo "Cloned Azure SDK for Python Wiki"
-          displayName: 'Clone Azure SDK for Python Wiki'
-
-        # Clone Microsoft API Guidelines
-        - script: |
-            cd $(workingDirectory)
-            git clone --branch vNext https://github.com/microsoft/api-guidelines.git api-guidelines
-            echo "Cloned Microsoft API Guidelines repository"
-          displayName: 'Clone Microsoft API Guidelines repository'
-
-        # Clone Azure SDK General Guidelines
-        - script: |
-            cd $(workingDirectory)
-            git clone --branch main https://github.com/Azure/azure-sdk.git azure-sdk
-            echo "Cloned Azure SDK repository"
-          displayName: 'Clone Azure SDK repository'
+              # Clone Azure SDK General Guidelines
+              - script: |
+                  cd $(workingDirectory)
+                  git clone --branch main https://github.com/Azure/azure-sdk.git azure-sdk
+                  echo "Cloned Azure SDK repository"
+                displayName: 'Clone Azure SDK repository'
 
         # # Setup SSH for GitHub Microsoft access
         # - task: InstallSSHKey@0
@@ -106,16 +111,16 @@ extends:
         #   env:
         #     SSH_AUTH_SOCK: $(SSH_AUTH_SOCK)
 
-        # Clone Azure SDK Engineering Docs (Token authentication required)
-        - script: |
-            cd $(workingDirectory)
-            git clone --branch main https://$(azuresdk-github-pat)@dev.azure.com/azure-sdk/internal/_git/azure-sdk-docs-eng.ms azure-sdk-docs-eng
-            echo "Cloned Azure SDK Engineering Docs repository"
-          displayName: 'Clone Azure SDK Engineering Docs repository'
+              # Clone Azure SDK Engineering Docs (Token authentication required)
+              - script: |
+                  cd $(workingDirectory)
+                  git clone --branch main https://$(azuresdk-github-pat)@dev.azure.com/azure-sdk/internal/_git/azure-sdk-docs-eng.ms azure-sdk-docs-eng
+                  echo "Cloned Azure SDK Engineering Docs repository"
+                displayName: 'Clone Azure SDK Engineering Docs repository'
 
-        # Cleanup
-        - script: |
-            rm -rf $(workingDirectory)
-            echo "Cleanup completed"
-          displayName: 'Cleanup working directory'
-          condition: always()
+              # Cleanup
+              - script: |
+                  rm -rf $(workingDirectory)
+                  echo "Cleanup completed"
+                displayName: 'Cleanup working directory'
+                condition: always()

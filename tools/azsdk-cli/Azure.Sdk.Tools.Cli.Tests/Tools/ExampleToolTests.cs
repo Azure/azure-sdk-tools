@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using Moq;
+using NUnit.Framework;
 using NUnit.Framework.Internal;
 using Azure.Core;
 using Azure.Sdk.Tools.Cli.Helpers;
@@ -22,6 +23,7 @@ internal class ExampleToolTests
     private MockGitHubService? mockGitHubService;
     private Mock<IProcessHelper>? mockProcessHelper;
     private Mock<IPowershellHelper>? mockPowershellHelper;
+    private Mock<Azure.Sdk.Tools.Cli.Microagents.IMicroagentHostService>? mockMicroagentHostService;
 
     [SetUp]
     public void Setup()
@@ -33,6 +35,7 @@ internal class ExampleToolTests
         mockGitHubService = new MockGitHubService();
         mockProcessHelper = new Mock<IProcessHelper>();
         mockPowershellHelper = new Mock<IPowershellHelper>();
+        mockMicroagentHostService = new Mock<Azure.Sdk.Tools.Cli.Microagents.IMicroagentHostService>();
 
         // Set up Azure service mock to return a mock credential
         var mockCredential = new Mock<TokenCredential>();
@@ -59,6 +62,7 @@ internal class ExampleToolTests
             mockProcessHelper.Object,
             mockPowershellHelper.Object,
             tokenUsageHelper: new TokenUsageHelper(mockOutput.Object),
+            mockMicroagentHostService.Object,
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             null
 #pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
@@ -154,7 +158,7 @@ internal class ExampleToolTests
 
         Assert.That(command.Name, Is.EqualTo("demo"));
         Assert.That(command.Description, Does.Contain("Comprehensive demonstration"));
-        Assert.That(command.Subcommands.Count, Is.EqualTo(7));
+        Assert.That(command.Subcommands.Count, Is.EqualTo(8));
 
         var subCommandNames = command.Subcommands.Select(sc => sc.Name).ToList();
         Assert.That(subCommandNames, Does.Contain("azure"));
@@ -164,6 +168,7 @@ internal class ExampleToolTests
         Assert.That(subCommandNames, Does.Contain("error"));
         Assert.That(subCommandNames, Does.Contain("process"));
         Assert.That(subCommandNames, Does.Contain("powershell"));
+        Assert.That(subCommandNames, Does.Contain("microagent"));
     }
 
     [Test]
@@ -237,7 +242,6 @@ internal class ExampleToolTests
     {
         mockPowershellHelper!.Setup(p => p.Run(It.IsAny<PowershellOptions>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ProcessResult { ExitCode = 0, });
-
         var result = await tool.DemonstratePowershellExecution("foobar");
 
         Assert.That(result.ResponseError, Is.Null);
@@ -245,5 +249,17 @@ internal class ExampleToolTests
         Assert.That(result.Operation, Is.EqualTo("RunTempScript"));
         Assert.That(result.Result, Is.Empty);
         Assert.That(result.Details?["exit_code"], Is.EqualTo("0"));
+    }
+
+    [Test]
+    public async Task DemonstrateMicroagentFibonacci_Success()
+    {
+        mockMicroagentHostService!.Setup(m => m.RunAgentToCompletion(It.IsAny<Azure.Sdk.Tools.Cli.Microagents.Microagent<int>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(13);
+
+        var response = await tool.DemonstrateMicroagentFibonacci(7);
+
+        Assert.That(response.ResponseError, Is.Null);
+        Assert.That(response.Result as string, Does.Contain("Fibonacci(7) = 13"));
     }
 }

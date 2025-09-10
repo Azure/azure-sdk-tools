@@ -81,10 +81,10 @@ public class APIRevisionsControllerTests
     }
 
     [Fact]
-    public async Task GetAPIRevisionTextAsync_SpecificType_WithoutId_ReturnsBadRequest()
+    public async Task GetAPIRevisionTextAsync_SpecificType_WithoutRevisionId_ReturnsBadRequest()
     {
         string reviewId = "review123";
-        ActionResult<string> result = await _controller.GetAPIRevisionTextAsync(null, reviewId);
+        ActionResult<string> result = await _controller.GetAPIRevisionTextAsync(null, reviewId, APIRevisionSelectionType.Specific);
 
         BadRequestObjectResult badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
         Assert.Equal("apiRevisionId is required when selectionType is Specific",

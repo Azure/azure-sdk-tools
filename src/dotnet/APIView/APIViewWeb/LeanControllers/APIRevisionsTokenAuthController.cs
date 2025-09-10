@@ -116,6 +116,13 @@ public class APIRevisionsTokenAuthController : ControllerBase
                 return new LeanJsonResult(null, StatusCodes.Status204NoContent);
             }
 
+            if ((selectionType == APIRevisionSelectionType.Specific && !string.IsNullOrEmpty(reviewId) && activeApiRevision.ReviewId != reviewId) || 
+                (selectionType != APIRevisionSelectionType.Specific && !string.IsNullOrEmpty(apiRevisionId) && activeApiRevision.Id != apiRevisionId))
+            {
+                return BadRequest(
+                    $"Mismatch between reviewId and apiRevisionId: The API revision '{apiRevisionId}' does not belong to review '{reviewId}'. Ensure the revision ID corresponds to the specified review.");
+            }
+
             string reviewText = await _apiRevisionsManager.GetApiRevisionText(activeApiRevision);
             return new LeanJsonResult(reviewText, StatusCodes.Status200OK);
         }

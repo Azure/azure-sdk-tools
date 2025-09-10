@@ -36,8 +36,8 @@ public class CommentsTokenAuthController : ControllerBase
     /// </summary>
     /// <param name="apiRevisionId"></param>
     /// <returns></returns>
-    [HttpGet("getVisibleComments", Name = "GetVisibleComments")]
-    public async Task<ActionResult<List<ApiViewAgentComment>>> GetVisibleComments([FromQuery, Required] string apiRevisionId)
+    [HttpGet("getRevisionComments", Name = "getRevisionComments")]
+    public async Task<ActionResult<List<ApiViewAgentComment>>> GetRevisionComments([FromQuery, Required] string apiRevisionId)
     {
         APIRevisionListItemModel apiRevision = await _apiRevisionsManager.GetAPIRevisionAsync(apiRevisionId);
         RenderedCodeFile codeFile = await _codeFileRepository.GetCodeFileAsync(apiRevision, false);

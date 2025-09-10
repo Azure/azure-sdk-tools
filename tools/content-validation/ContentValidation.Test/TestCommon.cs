@@ -10,13 +10,12 @@ namespace ContentValidation.Test
     [Parallelizable(ParallelScope.All)]
     public class TestCommon
     {
-        public static List<string> TestLinksOfCodeFormatValidation { get; set; }
         public static List<string> TestLinksOfEmptyTagsValidation { get; set; }
         public static List<string> TestLinksOfErrorDisplayValidation { get; set; }
         public static List<string> TestLinksOfExtraLabelValidation { get; set; }
         public static List<string> TestLinksOfGarbledTextValidation { get; set; }
         public static List<string> TestLinksOfInconsistentTextFormatValidation { get; set; }
-        public static List<string> TestLinksOfInvalidTagsValidation { get; set; }
+        public static List<string> TestLinksOfMissingGenericsValidation { get; set; }
         public static List<string> TestLinksOfMissingContentValidation { get; set; }
         public static List<string> TestLinksOfTypeAnnotationValidation { get; set; }
         public static List<string> TestLinksOfUnnecessarySymbolsValidation { get; set; }
@@ -27,10 +26,6 @@ namespace ContentValidation.Test
         static TestCommon()
         {
             playwright = Playwright.CreateAsync().GetAwaiter().GetResult();
-            TestLinksOfCodeFormatValidation = new List<string>()
-            {
-                "https://learn.microsoft.com/en-us/dotnet/api/azure.ai.metricsadvisor.administration?view=azure-dotnet"
-            };
             TestLinksOfEmptyTagsValidation = new List<string>()
             {
                 "https://learn.microsoft.com/en-us/dotnet/api/azure.ai.metricsadvisor.administration.azureblobdatafeedsource?view=azure-dotnet"
@@ -51,7 +46,7 @@ namespace ContentValidation.Test
             {
                 "https://learn.microsoft.com/en-us/java/api/com.azure.data.tables.models.listentitiesoptions?view=azure-java-stable",
             };
-            TestLinksOfInvalidTagsValidation = new List<string>()
+            TestLinksOfMissingGenericsValidation = new List<string>()
             {
                 "https://learn.microsoft.com/en-us/python/api/azure-ai-language-questionanswering/azure.ai.language.questionanswering.authoring.aio.authoringclient?view=azure-python&branch=main"
             };
@@ -68,34 +63,6 @@ namespace ContentValidation.Test
                 "https://learn.microsoft.com/en-us/python/api/azure-monitor-query/azure.monitor.query.aio.logsqueryclient?view=azure-python&branch=main"
             };
         }
-
-        [Test]
-        [Category("CommonTest")]
-        [TestCaseSource(nameof(TestLinksOfCodeFormatValidation))]
-        public async Task TestCodeFormatValidation(string testLink)
-        {
-
-            IValidation Validation = new CodeFormatValidation(playwright);
-
-            var res = new TResult();
-
-            try
-            {
-                res = await Validation.Validate(testLink);
-                res.TestCase = "TestCodeFormat";
-                if (!res.Result)
-                {
-                    TestCommonResults.Enqueue(res);
-                }
-            }
-            catch
-            {
-                throw;
-            }
-
-            Assert.That(res.Result, Is.True, res.FormatErrorMessage());
-        }
-
 
         [Test]
         [Category("CommonTest")]
@@ -239,18 +206,18 @@ namespace ContentValidation.Test
 
         [Test]
         [Category("CommonTest")]
-        [TestCaseSource(nameof(TestLinksOfInvalidTagsValidation))]
-        public async Task TestInvalidTagsValidation(string testLink)
+        [TestCaseSource(nameof(TestLinksOfMissingGenericsValidation))]
+        public async Task TestMissingGenericsValidation(string testLink)
         {
 
-            IValidation Validation = new InvalidTagsValidation(playwright);
+            IValidation Validation = new MissingGenericsValidation(playwright);
 
             var res = new TResult();
 
             try
             {
                 res = await Validation.Validate(testLink);
-                res.TestCase = "TestInvalidTags";
+                res.TestCase = "TestMissingGenerics";
                 if (!res.Result)
                 {
                     TestCommonResults.Enqueue(res);
@@ -349,4 +316,3 @@ namespace ContentValidation.Test
         }
     }
 }
-

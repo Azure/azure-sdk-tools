@@ -50,9 +50,40 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             var remote = repo.Network?.Remotes["origin"];
             if (remote != null)
             {
-                return new Uri(remote.Url);
+                var url = ConvertSshToHttpsUrl(remote.Url);
+                return new Uri(url);
             }
             throw new InvalidOperationException("Unable to determine remote URL.");
+        }
+
+        /// <summary>
+        /// Converts SSH GitHub URLs to HTTPS format
+        /// </summary>
+        /// <param name="gitUrl">The Git URL (SSH or HTTPS)</param>
+        /// <returns>HTTPS formatted Git URL</returns>
+        private static string ConvertSshToHttpsUrl(string gitUrl)
+        {
+            if (string.IsNullOrEmpty(gitUrl))
+            {
+                return gitUrl;
+            }
+
+            // If it's already HTTPS, return as-is
+            if (gitUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            {
+                return gitUrl;
+            }
+
+            // Handle GitHub SSH URLs (e.g., git@github.com:Azure/azure-rest-api-specs.git)
+            if (gitUrl.StartsWith("git@github.com:", StringComparison.OrdinalIgnoreCase))
+            {
+                // Convert SSH URL to HTTPS URL
+                // git@github.com:Azure/azure-rest-api-specs.git -> https://github.com/Azure/azure-rest-api-specs.git
+                return gitUrl.Replace("git@github.com:", "https://github.com/");
+            }
+
+            // Return as-is if it's not a recognized format
+            return gitUrl;
         }
 
         public async Task<string> GetRepoOwnerNameAsync(string path, bool findUpstreamParent = true)

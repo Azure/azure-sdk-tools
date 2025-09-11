@@ -181,9 +181,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             else // BuildConfigType.ScriptPath
             {
                 // Execute as script file
+                // Always resolve relative paths against sdkRepoRoot, then normalize
                 var fullBuildScriptPath = Path.IsPathRooted(configValue)
                     ? configValue
                     : Path.Combine(sdkRepoRoot, configValue);
+                
+                // Normalize the final path
+                fullBuildScriptPath = Path.GetFullPath(fullBuildScriptPath);
 
                 if (!File.Exists(fullBuildScriptPath))
                 {
@@ -192,9 +196,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
                 _logger.LogInformation($"Executing build script file: {fullBuildScriptPath}");
 
-                return new ProcessOptions(
+                return new PowershellOptions(
                     fullBuildScriptPath,
-                    ["--package-path", packagePath],
+                    ["-PackagePath", packagePath],
                     logOutputStream: true,
                     workingDirectory: sdkRepoRoot,
                     timeout: TimeSpan.FromMinutes(CommandTimeoutInMinutes)

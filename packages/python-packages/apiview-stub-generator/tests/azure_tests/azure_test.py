@@ -16,12 +16,12 @@ import json
 import zipfile
 
 SDK_PARAMS = [
-    ("azure-healthinsights-radiologyinsights", "1.1.0", "healthinsights", "azure.healthinsights.radiologyinsights", "whl"),
-    ("azure-healthinsights-radiologyinsights", "1.1.0", "healthinsights", "azure.healthinsights.radiologyinsights", "src"),
-    ("azure-healthinsights-radiologyinsights", "1.1.0", "healthinsights", "azure.healthinsights.radiologyinsights", "sdist"),
     ("azure-core", "1.32.0", "core", "azure.core", "src"),
     ("azure-core", "1.32.0", "core", "azure.core", "whl"),
     ("azure-core", "1.32.0", "core", "azure.core", "sdist"),
+    ("azure-healthinsights-radiologyinsights", "1.1.0", "healthinsights", "azure.healthinsights.radiologyinsights", "whl"),
+    ("azure-healthinsights-radiologyinsights", "1.1.0", "healthinsights", "azure.healthinsights.radiologyinsights", "src"),
+    ("azure-healthinsights-radiologyinsights", "1.1.0", "healthinsights", "azure.healthinsights.radiologyinsights", "sdist"),
     ("azure-ai-documentintelligence", "1.0.1", "documentintelligence", "azure.ai.documentintelligence", "whl"),
     ("azure-ai-documentintelligence", "1.0.1", "documentintelligence", "azure.ai.documentintelligence", "src"),
     ("azure-ai-documentintelligence", "1.0.1", "documentintelligence", "azure.ai.documentintelligence", "sdist"),

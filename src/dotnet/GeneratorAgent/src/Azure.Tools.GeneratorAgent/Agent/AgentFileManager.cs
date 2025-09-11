@@ -7,6 +7,9 @@ namespace Azure.Tools.GeneratorAgent.Agent
 {
     internal class AgentFileManager
     {
+        private const string UnknownStatus = "Unknown";
+        private const string ProcessedStatus = "Processed";
+        
         private readonly PersistentAgentsClient Client;
         private readonly ILogger<AgentFileManager> Logger;
         private readonly AppSettings AppSettings;
@@ -38,7 +41,7 @@ namespace Azure.Tools.GeneratorAgent.Agent
 
             var vectorStoreId = await CreateVectorStoreAsync(uploadedFileIds, cancellationToken).ConfigureAwait(false);
 
-            Logger.LogInformation("Successfully uploaded TypeSpec files.");
+                        Logger.LogDebug("Files added to vector store successfully: {VectorStoreId}", vectorStoreId);
             return vectorStoreId;
         }
 
@@ -81,8 +84,8 @@ namespace Azure.Tools.GeneratorAgent.Agent
             var pollingInterval = AppSettings.IndexingPollingInterval;
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
-            Logger.LogInformation("Waiting for files to be indexed... (timeout: {Timeout}s, polling interval: {Interval}s)", 
-                maxWaitTime.TotalSeconds, pollingInterval.TotalSeconds);
+            Logger.LogDebug("Waiting for {Count} files to be indexed... (timeout: {Timeout}s)", 
+                uploadedFilesIds.Count(), maxWaitTime.TotalSeconds);
 
             const int batchSize = 10;
             while (stopwatch.Elapsed < maxWaitTime)
@@ -126,12 +129,12 @@ namespace Azure.Tools.GeneratorAgent.Agent
                         pendingFiles?.Add(result.FileId);
                         if (currentStatusCounts != null)
                         {
-                            currentStatusCounts["Unknown"] = currentStatusCounts.GetValueOrDefault("Unknown") + 1;
+                            currentStatusCounts[UnknownStatus] = currentStatusCounts.GetValueOrDefault(UnknownStatus) + 1;
                         }
                     }
                     else
                     {
-                        var status = result.File?.Status.ToString() ?? "Unknown";
+                        var status = result.File?.Status.ToString() ?? UnknownStatus;
                         if (currentStatusCounts != null)
                         {
                             currentStatusCounts[status] = currentStatusCounts.GetValueOrDefault(status) + 1;
@@ -140,7 +143,7 @@ namespace Azure.Tools.GeneratorAgent.Agent
                         Logger.LogDebug("File {Filename} (ID: {FileId}) status: {Status}", 
                             result.File?.Filename, result.FileId, status);
 
-                        if (!status.Equals("Processed", StringComparison.OrdinalIgnoreCase))
+                        if (!status.Equals(ProcessedStatus, StringComparison.OrdinalIgnoreCase))
                         {
                             allIndexed = false;
                             if (result.File != null)
@@ -151,16 +154,16 @@ namespace Azure.Tools.GeneratorAgent.Agent
                     }
                 }
 
-                if (Logger.IsEnabled(LogLevel.Information) && currentStatusCounts != null)
+                if (Logger.IsEnabled(LogLevel.Debug) && currentStatusCounts != null)
                 {
                     var statusSummary = string.Join(", ", currentStatusCounts.Select(kvp => $"{kvp.Key}: {kvp.Value}"));
-                    Logger.LogInformation("Indexing status summary: {StatusSummary} | Elapsed: {Elapsed:F1}s", 
+                    Logger.LogDebug("Indexing status: {StatusSummary} | Elapsed: {Elapsed:F1}s", 
                         statusSummary, stopwatch.Elapsed.TotalSeconds);
                 }
 
                 if (allIndexed)
                 {
-                    Logger.LogInformation("All {Count} files indexed successfully in {Duration:F1}s", 
+                    Logger.LogDebug("All {Count} files indexed successfully in {Duration:F1}s", 
                         totalCount, stopwatch.Elapsed.TotalSeconds);
                     return;
                 }
@@ -175,18 +178,18 @@ namespace Azure.Tools.GeneratorAgent.Agent
 
             var finalResults = await Task.WhenAll(uploadedFilesIds.Select(id => CheckFileStatusAsync(id, ct))).ConfigureAwait(false);
             
-            var allProcessed = finalResults.All(r => r.File?.Status.ToString()?.Equals("Processed", StringComparison.OrdinalIgnoreCase) == true);
+            var allProcessed = !finalResults.Any(r => !r.File?.Status.ToString()?.Equals(ProcessedStatus, StringComparison.OrdinalIgnoreCase));
             if (allProcessed)
             {
-                Logger.LogInformation("All files indexed successfully in {Duration:F1}s (completed during final check)", 
+                Logger.LogInformation("All files indexed successfully in {Duration:F1}s (completed during final check)",
                     stopwatch.Elapsed.TotalSeconds);
                 return;
             }
 
             var finalSummary = finalResults
                 .Where(r => r.File != null)
-                .GroupBy(r => r.File!.Status.ToString() ?? "Unknown")
-                .ToDictionary(g => g.Key ?? "Unknown", g => g.Count());
+                .GroupBy(r => r.File!.Status.ToString() ?? UnknownStatus)
+                .ToDictionary(g => g.Key, g => g.Count());
             
             var finalStatusSummary = string.Join(", ", finalSummary.Select(kvp => $"{kvp.Key}: {kvp.Value}"));
             
@@ -232,7 +235,7 @@ namespace Azure.Tools.GeneratorAgent.Agent
             var fileIdsList = fileIds.ToList();
             var storeName = $"azc-{DateTime.Now:yyyyMMddHHmmss}-{Guid.NewGuid()}";
 
-            Logger.LogInformation("Creating vector store '{StoreName}' with {Count} files...", storeName, fileIdsList.Count);
+            Logger.LogDebug("Creating vector store '{StoreName}' with {Count} files...", storeName, fileIdsList.Count);
 
             var store = await Client.VectorStores.CreateVectorStoreAsync(
                 fileIdsList,

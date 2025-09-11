@@ -128,6 +128,44 @@ class TestTypeHints:
             expected = [expected, ""]
             _check(actual, expected, client)
 
+    """ Ensure explicitly documented kwargs does not result in duplicate/incorrect typehints. """
+
+    def test_explicit_kwargs_docstring(self):
+        client = DocstringTypeHintClient
+        node = FunctionNode("test", None, apiview=MockApiView, obj=client.with_explicit_kwargs_docstring)
+        actual = _render_lines(_tokenize(node))
+        expected = [
+            "def with_explicit_kwargs_docstring(self, **kwargs: Any) -> str", ""
+        ]
+        _check(actual, expected, client)
+
+    def test_incorrect_param_kwargs_docstring(self):
+        client = DocstringTypeHintClient
+        node = FunctionNode("test", None, apiview=MockApiView, obj=client.with_incorrect_param_kwargs_docstring)
+        actual = _render_lines(_tokenize(node))
+        expected = [
+            "def with_incorrect_param_kwargs_docstring(self, **kwargs: Any) -> str", ""
+        ]
+        _check(actual, expected, client)
+
+    def test_incorrect_dict_kwargs_docstring(self):
+        client = DocstringTypeHintClient
+        node = FunctionNode("test", None, apiview=MockApiView, obj=client.with_incorrect_dict_kwargs_docstring)
+        actual = _render_lines(_tokenize(node))
+        expected = [
+            "def with_incorrect_dict_kwargs_docstring(self, **kwargs: Any) -> str", ""
+        ]
+        _check(actual, expected, client)
+
+    def test_incorrect_dict_kwargs_docstring2(self):
+        client = DocstringTypeHintClient
+        node = FunctionNode("test", None, apiview=MockApiView, obj=client.with_incorrect_dict_kwargs_docstring2)
+        actual = _render_lines(_tokenize(node))
+        expected = [
+            "def with_incorrect_dict_kwargs_docstring2(self, **kwargs: Any) -> str", ""
+        ]
+        _check(actual, expected, client)
+
 
 class TestDefaultValues:
     """Ensure that simple default values appear correctly."""

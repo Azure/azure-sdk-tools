@@ -58,22 +58,37 @@ describe('Rest client file fallbacks', () => {
         });
         test("Model only spec", async () => {
             const mockNpmUtils = await import("../../common/npmUtils.js");
-            let count = 0;
-            const spy = vi
+            let npmViewCount = 0;
+            
+            const npmViewSpy = vi
                 .spyOn(mockNpmUtils, "tryGetNpmView")
                 .mockImplementation(async () => {
-                    count++;
-                    if (count === 1)
-                        return { "dist-tags": { latest: "1.0.0-beta.1" } };
+                    npmViewCount++;
+                    // First getApiVersionType call:
+                    if (npmViewCount === 1) 
+                        return { "dist-tags": { latest: "1.0.0" } }; // For isModelOnly check
+                    if (npmViewCount === 2)
+                        return { "dist-tags": { latest: "1.0.0-beta.1" } }; // For getApiVersionTypeFromNpm - should return Preview
+                    // Second getApiVersionType call:
+                    if (npmViewCount === 3)
+                        return { "dist-tags": { latest: "1.0.0" } }; // For isModelOnly check  
+                    if (npmViewCount === 4)
+                        return { "dist-tags": { latest: "1.0.0" } }; // For getApiVersionTypeFromNpm - should return Stable
                     return { "dist-tags": { latest: "1.0.0" } };
                 });
 
+            const githubCheckSpy = vi
+                .spyOn(mockNpmUtils, "checkDirectoryExistsInGithub")
+                .mockImplementation(async () => false); // Always return false to indicate model-only package
+
             const root = join(__dirname, "testCases/mlc-model-only/");
             const version1 = await getApiVersionType(root);
-            expect(version1).toBe(ApiVersionType.Preview);
+            expect(version1).toBe(ApiVersionType.Preview); // Beta version from npm
             const version2 = await getApiVersionType(root);
-            expect(version2).toBe(ApiVersionType.Stable);
-            spy.mockRestore();
+            expect(version2).toBe(ApiVersionType.Stable); // Stable version from npm
+            
+            npmViewSpy.mockRestore();
+            githubCheckSpy.mockRestore();
         });
     });    
     describe('RLC', () => {

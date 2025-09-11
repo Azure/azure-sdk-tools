@@ -454,9 +454,31 @@ namespace Azure.Sdk.Tools.Cli.Services
                             Value = sdkPullRequestUrl
                         });
                 }
+                int maxTryCount = 5, retryCount = 0;
 
-                await connection.GetWorkItemClient().UpdateWorkItemAsync(jsonLinkDocument, workItemId);
-                return true;
+                while (retryCount < maxTryCount)
+                {
+                    try
+                    {
+                        // DevOps SDK internally caches the revision number of the work item and throws conflict error if it is outdated.
+                        // Work around is to fetch the work item again before updating it.
+                        await connection.GetWorkItemClient().GetWorkItemAsync(workItemId);
+                        await connection.GetWorkItemClient().UpdateWorkItemAsync(jsonLinkDocument, workItemId);
+                        return true;
+                    }
+                    catch (Exception ex)
+                    {
+                        // Retry once if there is a conflict error
+                        logger.LogWarning($"Conflict error while updating work item {workItemId}, retrying update work item again.");
+                        retryCount++;
+                        if (retryCount == maxTryCount)
+                        {
+                            throw new Exception($"Failed to update DevOps work item after multiple retries. Error: {ex.Message}");
+                        }
+                        await Task.Delay(1000 * retryCount); // Exponential backoff
+                    }                    
+                }
+                return false;
             }
             catch (Exception ex)
             {
@@ -532,7 +554,8 @@ namespace Azure.Sdk.Tools.Cli.Services
                  { "ConfigPath", $"{typespecProjectRoot}/tspconfig.yaml" },
                  { "ApiVersion", apiVersion },
                  { "SdkReleaseType", sdkReleaseType },
-                 { "CreatePullRequest", "true" }
+                 { "CreatePullRequest", "true" },
+                 { "ReleasePlanWorkItemId", $"{workItemId}"}
             };
             var build = await RunPipelineAsync(pipelineDefinitionId, templateParams, branchRef);
             var pipelineRunUrl = GetPipelineUrl(build.Id);

@@ -1,0 +1,568 @@
+default:
+  tenant: azure_sdk_qa_bot
+  endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+channels:
+  # production
+  - name: TypeSpec Discussion
+    id: 19:906c1efbbec54dc8949ac736633e6bdf@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Language - Python
+    id: 19:b97d98e6d22c41e0970a1150b484d935@thread.skype
+    tenant: python_channel_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Advocacy
+    id: 19:26246b2b12de4207979a2bd5ece12dfa@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+  
+  - name: AI Discussion
+    id: 19:fd384098f0b24a4ab24fa96f56752daa@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: API Spec Review
+    id: 19:0351f5f9404446e4b4fd4eaf2c27448d@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: APIView
+    id: 19:3adeba4aa1164f1c889e148b1b3e3ddd@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: AutoRest - Engineering
+    id: 19:987876ab02634aaeaded0fb0de9f338a@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: AutoRest - Partners
+    id: 19:e7dbf9972a574495a05cf2b9f0b3efbc@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: AutoRest - TypeSpec Validation Progress
+    id: 19:dd1c205a09d34be096ce4d187c89cdb1@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Azure Core
+    id: 19:97e6cbbb188d4f8e9e7ce0f189f362ae@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Azure Developer CLI
+    id: 19:de2a0321a5634346b2fe1e02c42304c4@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Azure MCP
+    id: 19:QTW6Ai42VjqkZuS0hEsVWYhyXRtZHQ20MZ5KKzQ7ap81@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Azure SDK Onboarding
+    id: 19:de3fce22c2994be18cac50502c55f717@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Blog
+    id: 19:d0d9e0818c5c4321bfbf8499f5fcc1b3@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Board Games
+    id: 19:62dac4175be34ebd890764c3ebdced01@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: brownbag sessions
+    id: 19:75b00b4739654670a2ba17138f3f7a6f@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Cadl dogfood days
+    id: 19:eec55d4a1abe44d19d319166ba0444d5@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: ChatGPT Hackathon
+    id: 19:49895cc313704b4f9b7d746cc2162660@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Code Generation - .NET
+    id: 19:acbd512e57bd475198ea6bf4564599e3@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Codegen Engineering
+    id: 19:47641bb807aa4b70882d1b239b350712@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Culture of Recognition
+    id: 19:71ad5ee9d8ce47739bf92c49c8179067@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Design and Architecture
+    id: 19:9a079a90c29848528df3cf117608256b@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: DevEx Agent
+    id: 19:6d2c19322c254a80bcc521675134da03@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Docs Hackathon Discussion
+    id: 19:9e68880946854fc2b89ee0528186a7d3@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Documentation
+    id: 19:9662dea83b9f494aa4b76fed5d20acaf@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Dogfooding
+    id: 19:0b64b9e3eee34f80896583b51d0d7dbf@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: DPG Support
+    id: 19:4844af8fce9742a98d06e1debf60bab2@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: E2E Scenarios vTeam
+    id: 19:96dee3a979394d76914ed3ad943ccaa6@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Engineering System 🛠️
+    id: 19:59dbfadafb5e41c4890e2cd3d74cc7ba@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Explorer Interns 2022
+    id: 19:0b7c30026c9745a2a7aa37da58c9985a@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Gaming
+    id: 19:de205c703e0c4692a68d1603d669cd2f@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: General
+    id: 19:f6d52ac6465c40ea80dc86b8be3825aa@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Inventory Data Clean Up - Data Plane
+    id: 19:6bae32f8a6cc4f80b577c496dd577df5@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Inventory Data Clean Up - MGMT Plane
+    id: 19:d1018d9db4134908afa1c102e0951145@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Language - C
+    id: 19:f6e9c4bfec9246feb4920537e08c0a4d@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Language - Cᐩᐩ
+    id: 19:a5180a2de11a40cb83a822f588d60c15@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+  
+  - name: Language - DotNet
+    id: 19:7b87fb348f224b37b6206fa9d89a105b@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+  
+  - name: Language - Go
+    id: 19:104f00188bb64ef48d1b4d94ccb7a361@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+  
+  - name: Language - Java
+    id: 19:5e673e41085f4a7eaaf20823b85b2b53@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Language - JavaScript - Reviews
+    id: 19:408c5f1322ee4303b02b5da9c5ff6137@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Language - Mobile
+    id: 19:ae8aa86450294f31872cb9e2b1b13290@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Language - Python - Reviews
+    id: 19:4175567f1e154a80ab5b88cbd22ea92f@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Language - Rust
+    id: 19:93ad56ee1ff149eb9f233bcf6432399e@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Language – JS ＆ TS 🥷
+    id: 19:344f6b5b36ba414daa15473942c7477b@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Low level - Java
+    id: 19:81cca6fc32bc49568b6bd1cbeacec979@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Mgmt Plane SDK Release Owners
+    id: 19:5bebdbb77b744de393f53992f30c2adb@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Non-Azure SDK effort
+    id: 19:e01613f5c2e74d11aac9779f9f41fece@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Open Source
+    id: 19:4b4bf9df6caf48208833ca55d9f45d4c@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Partner Release Pipelines
+    id: 19:c89f67e32f5941d78a3710a692cf7717@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Performance
+    id: 19:fb6be7c26de84c4e9af977d25d4e5bfd@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: PM Team
+    id: 19:e0f9f76038664baca397703c7d489461@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Productivity
+    id: 19:081c12067f1f48b5a65f3073f38494f8@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Python Messaging Services V-Team
+    id: 19:fcca3aeb568b413086c0df07ae8f7632@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Python Test V-Team
+    id: 19:efc4d4ce475b44be9564f060ecb02746@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Python Track2 Management SDK
+    id: 19:5425863290e7422cb17eb25eb112d9bb@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Release
+    id: 19:dc2e34377e494a9292d89fbc34125eae@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Remote Team
+    id: 19:06c24b4cd35c4812ab30619802a9cd4c@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: SDK Design Training
+    id: 19:7f047c60fcb14576a341b833dde5060e@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: SDK release support
+    id: 19:084875bb626242ed95f3ac8dddfaa12a@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Service - ACR
+    id: 19:fa83d46ba4754b34ae022feac54a3190@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Service - AMQP
+    id: 19:0fe0a294234c47aab230911d747e8deb@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Service - Azconfig
+    id: 19:c0bc4ce065d745baa932ce8924766f57@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Service - Azure.Identity
+    id: 19:85462ed2792e424bb248555e238caa8c@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Service - AzureML
+    id: 19:54b39748ccce4dcf86436e544b424c03@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Service - Batch
+    id: 19:d297aa04bf6b44e098dc68862373ac83@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Service - Cognitive Search
+    id: 19:6e21d177901849058b25d5e0a94d763b@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Service - Cognitive Services
+    id: 19:f8d4c26058d14f9db91265e707fb8027@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Service - Communication Services
+    id: 19:f1bb3928922845faa2c2c56acb34d089@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Service - Compute
+    id: 19:a3639d72bfc84a53a9e88d1829b98e4a@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Service - Cosmos
+    id: 19:c25e770fe32b40b6be5f8b7bbfd15734@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Service - Document Intelligence
+    id: 19:88f2d9dea2344075b5d4bc34d82a3d1c@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Service - Event Grid
+    id: 19:8872a16f64a646aba48faf549c92ed62@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Service - Event Hubs
+    id: 19:d322f6aac3de4e3f8ab83507361d2b0a@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Service - Face
+    id: 19:31e2afde5cd641f9885402e3260fe29d@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Service - HDInsight
+    id: 19:bb8afdf1e2ae4e108c54ba1b43ea7508@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Service - IoT
+    id: 19:5934660ae7f74c39a7f2464bb8a16a6b@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Service - KeyVault
+    id: 19:eed5a67bbf6649238d7f802f324aa2ea@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Service - Language (Cognitive)
+    id: 19:932da56130f3427abf190aa6585143f1@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Service - Maps
+    id: 19:9788f14e85794022a51b292e8291b37a@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Service - Metrics Advisor
+    id: 19:11b7faed215e4d22bfe8b60d4a716474@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Service - Monitor
+    id: 19:b2dd6134b536406db0c0e39aa16b2f5b@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Service - OpenAI
+    id: 19:b862b40f3d33452abd4f043b31588ea6@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Service - Schema Registry
+    id: 19:f88a08aeeafd44a18ba3a9f77c1b0d2b@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Service - Service Bus
+    id: 19:3a40668de20641ada5c0c6d7a08689a7@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Service - Storage
+    id: 19:5a5cd5c35c2049879dfda379bba223f7@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Service - Synapse
+    id: 19:9dea3ac7aff445408d38096fb3cc4d05@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Service - Tables
+    id: 19:fe536eb80b0c4bb0a8ceb68e706df0d0@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Service - Text Analytics
+    id: 19:d6ff4003f5c848a2a2d6dcdfc0ebd497@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Service - Vision [Carbon]
+    id: 19:25918508d5f9471c8f492993d3e6ef33@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Service - Web PubSub
+    id: 19:2a573f56a9af4f369e0eed24dc1b7c9b@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Service API Toolset
+    id: 19:9efda948665d481086766c0b7572abc3@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Shanghai Team
+    id: 19:20713a38a61343128bc4f5bf0bfbf365@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Smoke-Tests
+    id: 19:8ae31a54c8d34662a5200c7b4fe8de3e@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Social
+    id: 19:7fc4b69521d045199cf09b69891b5d42@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: StackOverflow
+    id: 19:cab7d19546f44b42920b3993bc5b7325@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Stress (testing)
+    id: 19:bfcee903e491431e9dac2af2fbb61fc2@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Support
+    id: 19:ee7ef4e4d4fb4c0b90f9f0e1fae90ffe@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: System Status
+    id: 19:56d01539812f49708cd36b94ba779ef4@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Team Status
+    id: 19:d0de2d92ffc94f82a6d9e9099baab684@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Test-Proxy - Questions, Help, and Discussion
+    id: 19:b7c3eda7e0864d059721517174502bdb@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: TypeSpec Engineering
+    id: 19:16f8f1ed70d044139be153707bdaee0e@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: TypeSpec Spec PRs
+    id: 19:609c1607ce0c4026a26c28cb260afe01@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: UX design
+    id: 19:f57f9786e40f4562b442da9201450a86@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: UX Research
+    id: 19:0ce8397ede4d424a8fd4202835b416c8@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  - name: Watercooler
+    id: 19:ace033afee254726bb2bbb907b2feffd@thread.skype
+    tenant: azure_sdk_qa_bot
+    endpoint: https://azuresdkbot-dqh7g6btekbfa3hh.eastasia-01.azurewebsites.net
+
+  #  dev
+  - name: Azure SDK QA bot for TypeSpec Testing
+    id: 19:rMhMrxg7UjfwZmVoSeVvWvNQIfT_G6ds8napsytWqzw1@thread.tacv2
+    endpoint: https://azuresdkbot-preview-d5bugqfmc3bjh6ef.eastasia-01.azurewebsites.net
+    tenant: azure_sdk_qa_bot
+
+  - name: Azure SDK QA bot for Python Testing  🐍
+    id: 19:8551c70d67864a04b843151a256e109a@thread.tacv2
+    endpoint: https://azuresdkbot-preview-d5bugqfmc3bjh6ef.eastasia-01.azurewebsites.net
+    tenant: python_channel_qa_bot
+
+  - name: Azure SDK QA bot for SDK Onboarding Testing
+    id: 19:603d15bc0fd248ff82a8326da7322a4d@thread.tacv2
+    endpoint: https://azuresdkbot-preview-d5bugqfmc3bjh6ef.eastasia-01.azurewebsites.net
+    tenant: azure_sdk_onboarding
+
+  # dev internal
+  - name: Azure SDK QA Bot - Demo
+    id: 19:3iefzURPmxhDZJJTtwePbdO1EdI5T0hfK9UFK_59Sbk1@thread.tacv2
+    endpoint: https://azuresdkbot-azuresdkbot-dev-czhxctdndmfdb5hq.eastasia-01.azurewebsites.net
+    tenant: azure_sdk_qa_bot
+
+  - name: Azure SDK QA Bot - Demo - Python
+    id: 19:f876c6910f4048aa81f172300e0f7104@thread.tacv2
+    endpoint: https://azuresdkbot-azuresdkbot-dev-czhxctdndmfdb5hq.eastasia-01.azurewebsites.net
+    tenant: python_channel_qa_bot
+
+  - name: Azure SDK QA Bot - Auto Reply - Test
+    id: 19:ec68117574c248dab2f02af89c980797@thread.tacv2
+    endpoint: https://azuresdkbot-azuresdkbot-dev-czhxctdndmfdb5hq.eastasia-01.azurewebsites.net
+    tenant: azure_sdk_qa_bot
+
+  # wanl
+  - name: wanl - python
+    id: 19:9810c64acb4746fc93350c694aaf3d2b@thread.tacv2
+    endpoint: https://azuresdkbot-preview-d5bugqfmc3bjh6ef.eastasia-01.azurewebsites.net
+    tenant: python_channel_qa_bot

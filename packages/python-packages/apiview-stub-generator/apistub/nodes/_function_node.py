@@ -185,15 +185,17 @@ class FunctionNode(NodeEntityBase):
 
             # ensure any kwargs described only in the docstrings are added
             for argname in remaining_docstring_kwargs:
-                self.kwargs[argname] = parsed_docstring.kwargs[argname]
+                # if kwargs are explicitly set in docstring, ignore since they should be in param args
+                if argname not in ["\\**kwargs", "**kwargs", "kwargs"]:
+                    self.kwargs[argname] = parsed_docstring.kwargs[argname]
 
-            # retrieve the special *args type from docstrings
+            # retrieve the special **kwargs type from docstrings
             if self.special_kwarg and not self.special_kwarg.argtype:
                 match = parsed_docstring.pos_args.get(self.special_kwarg.argname, None)
                 if match:
                     self.special_kwarg.argtype = match.argtype
 
-            # retrieve the special **kwargs type from docstrings
+            # retrieve the special *args type from docstrings
             if self.special_vararg and not self.special_vararg.argtype:
                 match = parsed_docstring.pos_args.get(self.special_vararg.argname, None)
                 if match:

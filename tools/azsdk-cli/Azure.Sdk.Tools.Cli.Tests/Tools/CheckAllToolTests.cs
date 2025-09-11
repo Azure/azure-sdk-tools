@@ -192,6 +192,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var dependencyResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Dependency);
             var readmeResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Readme);
             var spellingResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Cspell);
+            var snippetsResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Snippets);
 
             // Assert
             Assert.IsNotNull(allResult);
@@ -199,6 +200,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             Assert.IsNotNull(dependencyResult);
             Assert.IsNotNull(readmeResult);
             Assert.IsNotNull(spellingResult);
+            Assert.IsNotNull(snippetsResult);
             
             // All should execute (may fail due to test environment, but should not error on check type)
             Assert.IsTrue(allResult.ExitCode >= 0);
@@ -206,6 +208,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             Assert.IsTrue(dependencyResult.ExitCode >= 0);
             Assert.IsTrue(readmeResult.ExitCode >= 0);
             Assert.IsTrue(spellingResult.ExitCode >= 0);
+            Assert.IsTrue(snippetsResult.ExitCode >= 0);
         }
     }
 }

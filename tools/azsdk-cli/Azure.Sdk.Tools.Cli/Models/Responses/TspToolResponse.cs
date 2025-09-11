@@ -20,7 +20,14 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses
             }
             else
             {
-                return $"### TypeSpec Project Path: {TypeSpecProjectPath}";
+                return string.Join(
+                    Environment.NewLine,
+                    [
+                        $"### TypeSpec Project Path: {TypeSpecProjectPath}",
+                        string.Empty,
+                        ..this.NextSteps ?? Enumerable.Empty<string>()
+                    ]
+                );
             }
         }
     }

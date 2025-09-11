@@ -37,13 +37,7 @@ This is the SDK developer experience CLI and MCP server. It is intended to:
    - Select `azure-sdk-mcp` and press enter
    - Select `Start Server` and press enter
 
-4. **Test the connection** by prompting Copilot (`Ctrl + Shift + I`):
-
-   ```text
-   "Use the hello-world MCP tool to echo back 'Testing the tool'"
-   ```
-
-    ![Screenshot showing Github Copilot successfully interacting with the MCP server.](/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Images/MCP-Success-Output.png)
+4. **Test the connection** by prompting Copilot (`Ctrl + Shift + I`) with any of our recommended prompts from the [documentation](https://aka.ms/azsdk/agent#agentic-workflow-scenarios)
 
 ## Usage Modes
 

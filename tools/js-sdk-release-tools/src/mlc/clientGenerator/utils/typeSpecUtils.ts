@@ -1,6 +1,6 @@
 import { join } from 'path';
 import { ModularClientPackageOptions } from '../../../common/types.js';
-import { getGeneratedPackageDirectory, generateRepoDataInTspLocation, runCommand, runCommandOptions } from '../../../common/utils.js';
+import { generateRepoDataInTspLocation, runCommand } from '../../../common/utils.js';
 import { logger } from '../../../utils/logger.js';
 import pkg from '@npmcli/package-json';
 const { load } = pkg;

@@ -126,11 +126,12 @@ def _local_review(
     """
     Generates a review using the locally installed code.
     """
+    target_path = pathlib.Path(target)
     if base is None:
-        filename = os.path.splitext(os.path.basename(target))[0]
+        filename = target_path.stem
     else:
-        target_name = os.path.splitext(os.path.basename(target))[0]
-        base_name = os.path.splitext(os.path.basename(base))[0]
+        target_name = target_path.stem
+        base_name = pathlib.Path(base).stem
         # find the common prefix
         common_prefix = os.path.commonprefix([target_name, base_name])
         # strip the common prefix from both names
@@ -138,22 +139,22 @@ def _local_review(
         base_name = base_name[len(common_prefix) :]
         filename = f"{common_prefix}_{base_name}_{target_name}"
 
-    with open(target, "r", encoding="utf-8") as f:
+    with target_path.open("r", encoding="utf-8") as f:
         target_apiview = f.read()
     if base:
-        with open(base, "r", encoding="utf-8") as f:
+        with pathlib.Path(base).open("r", encoding="utf-8") as f:
             base_apiview = f.read()
     else:
         base_apiview = None
 
     outline_text = None
     if outline:
-        with open(outline, "r", encoding="utf-8") as f:
+        with pathlib.Path(outline).open("r", encoding="utf-8") as f:
             outline_text = f.read()
 
     comments_obj = None
     if existing_comments:
-        with open(existing_comments, "r", encoding="utf-8") as f:
+        with pathlib.Path(existing_comments).open("r", encoding="utf-8") as f:
             comments_obj = json.load(f)
 
     reviewer = ApiViewReview(
@@ -166,14 +167,24 @@ def _local_review(
     )
     review = reviewer.run()
     reviewer.close()
-    output_path = os.path.join("scratch", "output", language)
-    os.makedirs(output_path, exist_ok=True)
-    output_file = os.path.join(output_path, f"{filename}.json")
+    output_path = pathlib.Path("scratch") / "output" / language
+    output_path.mkdir(parents=True, exist_ok=True)
+    output_file = output_path / f"{filename}.json"
 
-    with open(output_file, "w", encoding="utf-8") as f:
+    with output_file.open("w", encoding="utf-8") as f:
         f.write(review.model_dump_json(indent=4))
 
     print(f"Review written to {output_file}")
+
+
+def run_test_case(language: str, test_file: str, num_runs: int = 3):
+    """
+    Runs one or all eval test cases.
+    """
+    from evals._runner import EvalRunner
+
+    runner = EvalRunner(language=language, test_path=test_file, num_runs=num_runs)
+    runner.run()
 
 
 def create_test_case(
@@ -827,6 +838,7 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("mention", "handle_agent_mention")
             g.command("chat", "handle_agent_chat")
         with CommandGroup(self, "eval", "__main__#{}") as g:
+            g.command("run", "run_test_case")
             g.command("create", "create_test_case")
             g.command("deconstruct", "deconstruct_test_case")
         with CommandGroup(self, "app", "__main__#{}") as g:
@@ -915,13 +927,36 @@ class CliCommandsLoader(CLICommandsLoader):
                 action="store_true",
                 help="Enable debug logging for the review process. Outputs to `scratch/logs/<LANG>` directory.",
             )
+        with ArgumentsContext(self, "eval") as ac:
+            ac.argument(
+                "test_case",
+                type=str,
+                help="The name of the test case.",
+                options_list=["--test-case", "-c"],
+            )
+            ac.argument(
+                "language",
+                type=str,
+                help="The language of the test case.",
+                options_list=["--language", "-l"],
+                choices=SUPPORTED_LANGUAGES,
+            )
+            ac.argument(
+                "test_file",
+                type=str,
+                options_list=["--test-file", "-f"],
+                help="The full path to the JSONL test file.",
+            )
+        with ArgumentsContext(self, "eval run") as ac:
+            ac.argument(
+                "num_runs", type=int, options_list=["--num-runs", "-n"], help="Number of times to run the test case."
+            )
         with ArgumentsContext(self, "eval create") as ac:
-            ac.argument("language", type=str, help="The language for the test case.")
             ac.argument("test_case", type=str, help="The name of the test case")
             ac.argument(
                 "apiview_path",
                 type=str,
-                help="The full path to the txt file containing the APIview text",
+                help="The full path to the txt file containing the APIView text",
             )
             ac.argument(
                 "expected_path",
@@ -931,6 +966,7 @@ class CliCommandsLoader(CLICommandsLoader):
             ac.argument(
                 "test_file",
                 type=str,
+                options_list=["--test-file", "-f"],
                 help="The full path to the JSONL test file. Can be an existing test file, or will create a new one.",
             )
             ac.argument(
@@ -938,10 +974,6 @@ class CliCommandsLoader(CLICommandsLoader):
                 action="store_true",
                 help="Overwrite the test case if it already exists.",
             )
-        with ArgumentsContext(self, "eval deconstruct") as ac:
-            ac.argument("language", type=str, help="The language for the test case.")
-            ac.argument("test_case", type=str, help="The specific test case to deconstruct.")
-            ac.argument("test_file", type=str, help="The full path to the JSONL test file.")
         with ArgumentsContext(self, "search") as ac:
             ac.argument(
                 "path",

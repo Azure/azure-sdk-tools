@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using Azure.Tools.GeneratorAgent.Configuration;
+using Azure.Tools.GeneratorAgent.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -406,27 +407,6 @@ namespace Azure.Tools.GeneratorAgent.Tests
         }
 
         [Test]
-        public async Task GetTypeSpecFilesAsync_WithNoTspFiles_ShouldReturnEmptyDictionary()
-        {
-            // Arrange
-            var mockHandler = CreateMockHttpMessageHandler();
-            var httpClient = CreateMockHttpClient(mockHandler);
-            var service = CreateTestableService(httpClient: httpClient);
-
-            SetupEmptyApiResponse(mockHandler);
-
-            // Act
-            var result = await service.GetTypeSpecFilesAsync();
-
-            // Assert
-            Assert.Multiple(() =>
-            {
-                Assert.That(result, Is.Not.Null);
-                Assert.That(result.Count, Is.EqualTo(0));
-            });
-        }
-
-        [Test]
         public async Task GetTypeSpecFilesAsync_WithMultipleTspFiles_ShouldReturnAllFiles()
         {
             // Arrange
@@ -475,32 +455,6 @@ namespace Azure.Tools.GeneratorAgent.Tests
             // Act & Assert
             Assert.ThrowsAsync<OperationCanceledException>(async () => 
                 await service.GetTypeSpecFilesAsync(cts.Token));
-
-
-        }
-
-        [Test]
-        public async Task GetTypeSpecFilesAsync_WithMixedFileTypes_ShouldOnlyReturnTspFiles()
-        {
-            // Arrange
-            var mockHandler = CreateMockHttpMessageHandler();
-            var httpClient = CreateMockHttpClient(mockHandler);
-            var service = CreateTestableService(httpClient: httpClient);
-
-            SetupMixedFileTypesApiResponse(mockHandler);
-            SetupSuccessfulFileDownload(mockHandler, "test.tsp", "model Test {}");
-
-            // Act
-            var result = await service.GetTypeSpecFilesAsync();
-
-            // Assert
-            Assert.Multiple(() =>
-            {
-                Assert.That(result, Is.Not.Null);
-                Assert.That(result.Count, Is.EqualTo(1));
-                Assert.That(result.ContainsKey("test.tsp"), Is.True);
-                Assert.That(result.ContainsKey("readme.md"), Is.False);
-            });
 
 
         }

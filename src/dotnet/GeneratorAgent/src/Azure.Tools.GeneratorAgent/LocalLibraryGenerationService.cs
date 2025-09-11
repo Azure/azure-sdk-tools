@@ -6,44 +6,44 @@ using Microsoft.Extensions.Logging;
 
 namespace Azure.Tools.GeneratorAgent
 {
-    internal class LocalTypeSpecSdkGenerationService : ISdkGenerationService
+    internal class LocalLibraryGenerationService
     {
         private readonly AppSettings AppSettings;
-        private readonly ILogger<LocalTypeSpecSdkGenerationService> Logger;
-        private readonly ProcessExecutor ProcessExecutor;
-        private readonly string TypespecDir;
-        private readonly string SdkDir;
+        private readonly ILogger<LocalLibraryGenerationService> Logger;
+        private readonly ProcessExecutionService ProcessExecutionService;
+        private readonly ValidationContext ValidationContext;
 
-        public LocalTypeSpecSdkGenerationService(
+        public LocalLibraryGenerationService(
             AppSettings appSettings,
-            ILogger<LocalTypeSpecSdkGenerationService> logger,
-            ProcessExecutor processExecutor,
+            ILogger<LocalLibraryGenerationService> logger,
+            ProcessExecutionService processExecutionService,
             ValidationContext validationContext)
         {
             ArgumentNullException.ThrowIfNull(appSettings);
             ArgumentNullException.ThrowIfNull(logger);
-            ArgumentNullException.ThrowIfNull(processExecutor);
+            ArgumentNullException.ThrowIfNull(processExecutionService);
             ArgumentNullException.ThrowIfNull(validationContext);
 
             AppSettings = appSettings;
             Logger = logger;
-            ProcessExecutor = processExecutor;
-
-            TypespecDir = validationContext.ValidatedTypeSpecDir;
-            SdkDir = validationContext.ValidatedSdkDir;
+            ProcessExecutionService = processExecutionService;
+            ValidationContext = validationContext;
         }
 
         public async Task<Result<object>> CompileTypeSpecAsync(CancellationToken cancellationToken = default)
         {
-            Logger.LogInformation("Starting TypeSpec compilation for project: {ProjectPath}", TypespecDir);
+            string currentTypeSpecDir = ValidationContext.CurrentTypeSpecDir;
+            Logger.LogInformation("Starting TypeSpec compilation for project: {ProjectPath} (Source: {Source})", 
+                currentTypeSpecDir,
+                ValidationContext.IsGitHubWorkflow ? "GitHub" : "Local");
 
-            Result<object> installResult = await InstallTypeSpecDependencies(cancellationToken);
+            Result<object> installResult = await InstallTypeSpecDependencies(cancellationToken).ConfigureAwait(false);
             if (installResult.IsFailure)
             {
                 return installResult;
             }
 
-            Result<object> compileResult = await CompileTypeSpec(cancellationToken);
+            Result<object> compileResult = await CompileTypeSpec(cancellationToken).ConfigureAwait(false);
             if (compileResult.IsFailure)
             {
                 return compileResult;
@@ -78,7 +78,7 @@ namespace Azure.Tools.GeneratorAgent
 
             try
             {
-                Result<object> result = await ProcessExecutor.ExecuteAsync(
+                Result<object> result = await ProcessExecutionService.ExecuteAsync(
                     SecureProcessConfiguration.NpmExecutable,
                     argValidation.Value!,
                     workingDirectory,
@@ -97,7 +97,8 @@ namespace Azure.Tools.GeneratorAgent
         {
             Logger.LogInformation("Compiling TypeSpec project");
 
-            string tspOutputPath = Path.Combine(SdkDir);
+            string tspOutputPath = Path.Combine(ValidationContext.ValidatedSdkDir);
+            string currentTypeSpecDir = ValidationContext.CurrentTypeSpecDir;
 
             string arguments;
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -117,10 +118,10 @@ namespace Azure.Tools.GeneratorAgent
 
             try
             {
-                Result<object> result = await ProcessExecutor.ExecuteAsync(
+                Result<object> result = await ProcessExecutionService.ExecuteAsync(
                     SecureProcessConfiguration.NpxExecutable,
                     argValidation.Value!,
-                    TypespecDir,
+                    currentTypeSpecDir,
                     cancellationToken).ConfigureAwait(false);
 
                 if (result.IsFailure && result.ProcessException != null)

@@ -8,11 +8,11 @@ using Microsoft.Extensions.Logging;
 
 namespace Azure.Tools.GeneratorAgent
 {
-    internal class ProcessExecutor
+    internal class ProcessExecutionService
     {
-        private readonly ILogger<ProcessExecutor> Logger;
+        private readonly ILogger<ProcessExecutionService> Logger;
 
-        public ProcessExecutor(ILogger<ProcessExecutor> logger)
+        public ProcessExecutionService(ILogger<ProcessExecutionService> logger)
         {
             ArgumentNullException.ThrowIfNull(logger);
             Logger = logger;
@@ -51,10 +51,10 @@ namespace Azure.Tools.GeneratorAgent
                 Task<string> outputTask = process.StandardOutput.ReadToEndAsync();
                 Task<string> errorTask = process.StandardError.ReadToEndAsync();
 
-                bool timedOut = await WaitForProcessWithTimeoutAsync(process, timeout, cancellationToken);
+                bool timedOut = await WaitForProcessWithTimeoutAsync(process, timeout, cancellationToken).ConfigureAwait(false);
                 if (timedOut)
                 {
-                    return await HandleTimeoutAsync(process, outputTask, errorTask, timeout!.Value, command);
+                    return await HandleTimeoutAsync(process, outputTask, errorTask, timeout!.Value, command).ConfigureAwait(false);
                 }
 
                 string output = await outputTask.ConfigureAwait(false);

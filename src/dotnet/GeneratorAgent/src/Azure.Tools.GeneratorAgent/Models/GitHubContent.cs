@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Azure.Tools.GeneratorAgent
+namespace Azure.Tools.GeneratorAgent.Models
 {
     /// <summary>
     /// GitHub API response model for directory contents

@@ -89,6 +89,11 @@ To run the tests:
 dotnet test
 ```
 
+### Test Mode
+
+This tool can be run in test mode when the `AZSDKTOOLS_AGENT_TESTING` environment variable is set to `true`.
+When testing is enabled, release plans will be automatically generated in the test environment. 
+
 ### Test with GitHub Coding Agent
 
 This tool can be used as an MCP server in a github action invoked by the [GitHub Coding Agent](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/coding-agent). The azure-sdk language repositories and azure-rest-api-specs repository already have this MCP server configured for the coding agent.

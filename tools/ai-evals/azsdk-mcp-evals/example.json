@@ -1,0 +1,60 @@
+{
+  "chatHistory": [
+    {
+      "role": "user",
+      "authorName": "developer",
+      "createdAt": "2025-01-15T10:00:00Z",
+      "messageId": "msg_001",
+      "contents": [
+        {
+          "$type": "text",
+          "text": "I'm preparing to release the Azure.Storage.Blobs package for .NET. Can you help me check if it's ready?"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "authorName": "GitHub Copilot",
+      "createdAt": "2025-01-15T10:00:05Z",
+      "messageId": "msg_002",
+      "contents": [
+        {
+          "$type": "text",
+          "text": "I'll help you check the release readiness of the Azure.Storage.Blobs package for .NET. Let me verify the pipeline status, API view approval, changelog, and other readiness criteria."
+        }
+      ]
+    }
+  ],
+  "nextMessage": {
+    "role": "user",
+    "authorName": "developer",
+    "createdAt": "2025-01-15T10:00:10Z",
+    "messageId": "msg_003",
+    "contents": [
+      {
+        "$type": "text",
+        "text": "Please check the release readiness for Azure.Storage.Blobs in .NET"
+      }
+    ]
+  },
+  "expectedOutcome": [
+    {
+      "role": "assistant",
+      "authorName": "GitHub Copilot",
+      "createdAt": "2025-01-15T10:00:15Z",
+      "messageId": "msg_004",
+      "contents": [
+        {
+          "$type": "functionCall",
+          "functionCall": {
+            "name": "azsdk_check_package_release_readiness",
+            "arguments": {
+              "packageName": "Azure.Storage.Blobs",
+              "language": ".NET"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

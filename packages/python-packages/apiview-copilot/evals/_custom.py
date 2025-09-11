@@ -168,23 +168,32 @@ class CustomAPIViewEvaluator:
 
         exact_matches, rule_matches_wrong_line, generic_comments = self._get_comment_matches(expected, actual)
         self._evaluate_generic_comments(query, language, generic_comments)
-        expected_comments = len([c for c in expected["comments"] if c["rule_ids"]])
-        valid_generic_comments = len([c for c in generic_comments if c.get("valid") is True])
-        invalid_generic_comments = [c for c in generic_comments if c.get("valid") is False]
+
+        exact_matches_count = len(exact_matches)
+        rule_matches_wrong_line_count = len(rule_matches_wrong_line)
+        expected_comment_count = len([c for c in expected["comments"] if c["rule_ids"]])
+        valid_generic_comment_count = len([c for c in generic_comments if c.get("valid") is True])
+        invalid_generic_comment_count = len([c for c in generic_comments if c.get("valid") is False])
+        total_comment_count = len(actual["comments"])
+        true_positive_count = len(exact_matches)
+        false_positive_count = (
+            total_comment_count - exact_matches_count - rule_matches_wrong_line_count - valid_generic_comment_count
+        )
+        false_negative_count = expected_comment_count - exact_matches_count - rule_matches_wrong_line_count
+        percent_coverage = (exact_matches_count / expected_comment_count * 100) if expected_comment_count else 0
+
         review_eval = {
-            "expected_comments": expected_comments,
-            "comments_found": len(actual["comments"]),
-            "true_positives": len(exact_matches),
-            "valid_generic_comments": valid_generic_comments,
-            "invalid_generic_comments": invalid_generic_comments,
-            "false_positives": len(actual["comments"])
-            - (len(exact_matches) + len(rule_matches_wrong_line))
-            - valid_generic_comments,
-            "false_negatives": expected_comments - (len(exact_matches) + len(rule_matches_wrong_line)),
-            "percent_coverage": ((len(exact_matches) / expected_comments * 100) if expected_comments else 0),
-            "rule_matches_wrong_line": len(rule_matches_wrong_line),
+            "expected_comments": expected_comment_count,
+            "comments_found": total_comment_count,
+            "true_positives": true_positive_count,
+            "valid_generic_comments": valid_generic_comment_count,
+            "invalid_generic_comments": invalid_generic_comment_count,
+            "false_positives": false_positive_count,
+            "false_negatives": false_negative_count,
+            "percent_coverage": percent_coverage,
+            "rule_matches_wrong_line": rule_matches_wrong_line_count,
             "wrong_line_details": list(rule_matches_wrong_line),
-            "fuzzy_matches": len(rule_matches_wrong_line),
+            "fuzzy_matches": rule_matches_wrong_line_count,
             "groundedness": groundedness["groundedness"],
             "groundedness_reason": groundedness["groundedness_reason"],
             "similarity": similarity["similarity"],

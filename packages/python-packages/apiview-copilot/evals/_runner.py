@@ -75,13 +75,16 @@ class EvalRunner:
                 kwargs = {}
 
             run_results = []
+            # TODO: Multiple runs are running in series and also in series for multiple files. They could be made to run in parallel to speed processing.
             for run in range(self.num_runs):
                 print(f"Running evals {run + 1}/{self.num_runs} for {file.name}...")
                 result = evaluate(
                     data=str(file),
+                    # FIXME: Need to quickly ensure that the metrics submission is pickleable. If not, fail fast
                     evaluators={
                         "metrics": custom_eval,
                     },
+                    # FIXME: Evaluator config should be a property of the custom_eval class
                     evaluator_config={
                         "metrics": {
                             "column_mapping": {
@@ -95,11 +98,13 @@ class EvalRunner:
                         },
                     },
                     target=_review_apiview,
+                    # FIXME: Should this be True? Probably?
                     fail_on_evaluator_errors=False,
                     azure_ai_project=azure_ai_project,
                     **kwargs,
                 )
 
+                # TODO: Helper object for collecting and processing results?
                 run_result = self.record_run_result(result, rule_ids)
                 print(
                     f"Average score for {file.name} run {run + 1}/{self.num_runs}: {run_result[-1]['average_score']:.2f}"

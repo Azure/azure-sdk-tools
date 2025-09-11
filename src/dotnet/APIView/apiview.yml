@@ -14,7 +14,7 @@ parameters:
   - name: JavaScriptArtifactRegistry
     type: string
     default: 'https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-js@local/npm/registry/'
-  
+
 trigger:
   branches:
     include:
@@ -104,6 +104,7 @@ extends:
                 inputs:
                   version: '$(GoVersion)'
                 displayName: "Use Go $(GoVersion)"
+
               - script: |
                   npm install -g @angular/cli@16.1.8
                 workingDirectory: $(SPAClientProjectDirectory)

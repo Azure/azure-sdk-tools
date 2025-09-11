@@ -7,6 +7,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Client;
+using Azure.Sdk.Tools.Cli.Evaluations.Helpers;
+using Azure.Sdk.Tools.Cli.Evaluations.Scenarios;
 
 namespace Azure.Sdk.Tools.Cli.Evaluations
 {
@@ -18,13 +20,14 @@ namespace Azure.Sdk.Tools.Cli.Evaluations
         {
             var builder = Host.CreateApplicationBuilder();
 
-            // Use appropriate credential based on environment
+            // TODO: improve auth, using VS credential for now
             var credential = new VisualStudioCredential();
 
             builder.Services.AddChatClient(sp =>
                 new AzureOpenAIClient(new Uri(AzureOpenAIEndpoint), credential)
                     .GetChatClient(AzureOpenAIModelDeploymentName)
                     .AsIChatClient()
+            // TODO: Enable distributed cache
             )/*.UseDistributedCache()*/;
 
             var mcpClient = await McpClientFactory.CreateAsync(

@@ -1,10 +1,9 @@
-using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
-using Microsoft.Extensions.AI;
-using Microsoft.Extensions.AI.Evaluation;
-using ModelContextProtocol.Client;
+using Azure.Sdk.Tools.Cli.Evaluations.Models;
+using Azure.Sdk.Tools.Cli.Evaluations.Evaluators;
+using Azure.Sdk.Tools.Cli.Evaluations.Helpers;
 
-namespace Azure.Sdk.Tools.Cli.Evaluations
+namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
 {
     public class Scenario
     {
@@ -45,7 +44,9 @@ namespace Azure.Sdk.Tools.Cli.Evaluations
             var scenarioData = JsonSerializer.Deserialize<ScenarioData>(jsonContent, options);
 
             if (scenarioData == null)
+            {
                 throw new InvalidOperationException($"Failed to deserialize scenario data from {jsonPath}");
+            }
 
             return scenarioData;
         }

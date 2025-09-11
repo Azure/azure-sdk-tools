@@ -1,7 +1,7 @@
 using Microsoft.Extensions.AI;
 using ModelContextProtocol.Client;
 
-namespace Azure.Sdk.Tools.Cli.Evaluations
+namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
 {
     public class ChatCompletion
     {

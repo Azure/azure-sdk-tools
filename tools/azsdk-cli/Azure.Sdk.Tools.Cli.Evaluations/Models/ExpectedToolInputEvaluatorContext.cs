@@ -1,12 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.AI.Evaluation;
 
-namespace Azure.Sdk.Tools.Cli.Evaluations
+namespace Azure.Sdk.Tools.Cli.Evaluations.Models
 {
     public class ExpectedToolInputEvaluatorContext(IEnumerable<ChatMessage> messages)
         : EvaluationContext(name: ExpectedResultContextName, content: String.Join(",", messages))

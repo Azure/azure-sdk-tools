@@ -65,8 +65,11 @@ export async function customizeCodes(packageDirectory: string) {
     const options = { ...runCommandOptions, cwd };
 
     try {
-        const updateCommand = 'customization apply-v2 -s ./generated -c ./src';
-        await runCommand('npm', ['exec', '--', 'dev-tool', updateCommand], options, true, 600, true);
+        const generatedDir = path.join(packageDirectory, 'generated');
+        const srcDir = path.join(packageDirectory, 'src');
+        //TODO: support ./src/generated cases in future
+        const customizeCommand = `customization apply-v2 -s ${generatedDir} -c ${srcDir}`;
+        await runCommand('npm', ['exec', '--', 'dev-tool', customizeCommand], options, true, 600, true);
         logger.info(`Customize codes successfully.`);
     } catch (error) {
         logger.warn(`Failed to customize codes due to: ${(error as Error)?.stack ?? error}`);

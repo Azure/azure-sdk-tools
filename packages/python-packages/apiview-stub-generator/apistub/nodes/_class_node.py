@@ -286,6 +286,31 @@ class ClassNode(NodeEntityBase):
                     is_ivar=True,
                 )
                 self.child_nodes.append(ivar_node)
+                
+        # Get ivars from parent classes that are in the Azure SDK
+        if hasattr(self.obj, "__mro__"):
+            # Skip the class itself (first in MRO) and object (last in MRO)
+            for base_class in self.obj.__mro__[1:-1]:
+                # Only include parent classes from the Azure SDK
+                if (hasattr(base_class, "__module__") and 
+                    base_class.__module__.startswith(self.pkg_root_namespace)):
+                    if hasattr(base_class, "__doc__"):
+                        parent_docstring = getattr(base_class, "__doc__")
+                        if parent_docstring:
+                            parent_docstring_parser = DocstringParser(parent_docstring, apiview=self.apiview)
+                            for key, var in parent_docstring_parser.ivars.items():
+                                # Check if this ivar is already defined in the class
+                                if not any(isinstance(node, VariableNode) and node.name == key 
+                                           for node in self.child_nodes):
+                                    ivar_node = VariableNode(
+                                        namespace=self.namespace,
+                                        parent_node=self,
+                                        name=key,
+                                        type_name=var.argtype,
+                                        value=None,
+                                        is_ivar=True,
+                                    )
+                                    self.child_nodes.append(ivar_node)
 
     def _sort_elements(self):
         # Sort elements in following order

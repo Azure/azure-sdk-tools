@@ -101,7 +101,7 @@ namespace Azure.Tools.GeneratorAgent
                 if (result.Count > 0)
                 {
                     string tempDirectory = await CreateSecureTempDirectoryFromGitHubFiles(result, cancellationToken).ConfigureAwait(false);
-                    ValidationContext.UpdateTypeSpecDirForCompilation(tempDirectory);
+                    ValidationContext.CurrentTypeSpecDirForCompilation = tempDirectory;
 
                     Logger.LogInformation("Successfully read {Count} TypeSpec files from Github Repository\n", result.Count);
                 }
@@ -278,7 +278,7 @@ namespace Azure.Tools.GeneratorAgent
                 throw new SecurityException($"TypeSpec filename validation failed: {fileName}");
             }
 
-            string currentDir = ValidationContext.GetCurrentTypeSpecDir();
+            string currentDir = ValidationContext.CurrentTypeSpecDir;
             string filePath = Path.Combine(currentDir, fileName);
             
             // Security: Ensure file is within current directory

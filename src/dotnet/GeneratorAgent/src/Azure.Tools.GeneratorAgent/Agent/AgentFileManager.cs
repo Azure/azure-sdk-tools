@@ -178,7 +178,7 @@ namespace Azure.Tools.GeneratorAgent.Agent
 
             var finalResults = await Task.WhenAll(uploadedFilesIds.Select(id => CheckFileStatusAsync(id, ct))).ConfigureAwait(false);
             
-            var allProcessed = !finalResults.Any(r => !r.File?.Status.ToString()?.Equals(ProcessedStatus, StringComparison.OrdinalIgnoreCase));
+            var allProcessed = !finalResults.Any(r => r.File?.Status.ToString()?.Equals(ProcessedStatus, StringComparison.OrdinalIgnoreCase) != true);
             if (allProcessed)
             {
                 Logger.LogInformation("All files indexed successfully in {Duration:F1}s (completed during final check)",

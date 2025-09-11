@@ -9,8 +9,17 @@ namespace Azure.Tools.GeneratorAgent.Configuration
         public string ValidatedCommitId { get; private set; }
         public string ValidatedSdkDir { get; private set; }
         
-        // New property to track the current TypeSpec directory for compilation
-        private string? CurrentTypeSpecDirForCompilation { get; set; }
+        /// <summary>
+        /// The current TypeSpec directory to use for compilation.
+        /// This is used when GitHub files are downloaded to a temp directory.
+        /// </summary>
+        public string? CurrentTypeSpecDirForCompilation { get; set; }
+
+        /// <summary>
+        /// Gets the current TypeSpec directory that should be used for compilation.
+        /// Returns the temp directory if set (GitHub case), otherwise the original validated directory.
+        /// </summary>
+        public string CurrentTypeSpecDir => CurrentTypeSpecDirForCompilation ?? ValidatedTypeSpecDir;
 
         private ValidationContext(string typeSpecPath, string commitId, string outputPath)
         {
@@ -22,24 +31,6 @@ namespace Azure.Tools.GeneratorAgent.Configuration
         public static ValidationContext CreateFromValidatedInputs(string validatedTypeSpecPath, string validatedCommitId, string validatedOutputPath)
         {
             return new ValidationContext(validatedTypeSpecPath, validatedCommitId, validatedOutputPath);
-        }
-
-        /// <summary>
-        /// Updates the TypeSpec directory to use for compilation.
-        /// This is used when GitHub files are downloaded to a temp directory.
-        /// </summary>
-        public void UpdateTypeSpecDirForCompilation(string tempDirectory)
-        {
-            CurrentTypeSpecDirForCompilation = tempDirectory;
-        }
-
-        /// <summary>
-        /// Gets the current TypeSpec directory that should be used for compilation.
-        /// Returns the temp directory if set (GitHub case), otherwise the original validated directory.
-        /// </summary>
-        public string GetCurrentTypeSpecDir()
-        {
-            return CurrentTypeSpecDirForCompilation ?? ValidatedTypeSpecDir;
         }
 
         /// <summary>

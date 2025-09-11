@@ -32,7 +32,7 @@ namespace Azure.Tools.GeneratorAgent
 
         public async Task<Result<object>> CompileTypeSpecAsync(CancellationToken cancellationToken = default)
         {
-            string currentTypeSpecDir = ValidationContext.GetCurrentTypeSpecDir();
+            string currentTypeSpecDir = ValidationContext.CurrentTypeSpecDir;
             Logger.LogInformation("Starting TypeSpec compilation for project: {ProjectPath} (Source: {Source})", 
                 currentTypeSpecDir,
                 ValidationContext.IsGitHubWorkflow ? "GitHub" : "Local");
@@ -98,7 +98,7 @@ namespace Azure.Tools.GeneratorAgent
             Logger.LogInformation("Compiling TypeSpec project");
 
             string tspOutputPath = Path.Combine(ValidationContext.ValidatedSdkDir);
-            string currentTypeSpecDir = ValidationContext.GetCurrentTypeSpecDir();
+            string currentTypeSpecDir = ValidationContext.CurrentTypeSpecDir;
 
             string arguments;
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))

@@ -22,12 +22,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         private readonly INpxHelper npxHelper;
         private readonly ILogger<TypeSpecConvertTool> logger;
         private readonly IOutputHelper output;
+        private readonly ITspClientHelper tspClientHelper;
 
-        public TypeSpecConvertTool(INpxHelper npxHelper, ILogger<TypeSpecConvertTool> logger, IOutputHelper output)
+        public TypeSpecConvertTool(INpxHelper npxHelper, ILogger<TypeSpecConvertTool> logger, IOutputHelper output, ITspClientHelper tspClientHelper)
         {
             this.npxHelper = npxHelper;
             this.logger = logger;
             this.output = output;
+            this.tspClientHelper = tspClientHelper;
             CommandHierarchy = [SharedCommandGroups.TypeSpec];
         }
 
@@ -126,7 +128,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                 }
 
                 var fullOutputDir = Path.GetFullPath(outputDirectory.Trim());
-                return await RunTspClientAsync(fullPathToSwaggerReadme, fullOutputDir, isAzureResourceManagement ?? false, fullyCompatible ?? false, isCli, ct);
+                return await tspClientHelper.ConvertSwaggerAsync(fullPathToSwaggerReadme, fullOutputDir, isAzureResourceManagement ?? false, fullyCompatible ?? false, isCli, ct);
             }
             catch (Exception ex)
             {
@@ -161,56 +163,5 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             return null; // Validation passed
         }
 
-        private async Task<TspToolResponse> RunTspClientAsync(
-            string pathToSwaggerReadme,
-            string outputDirectory,
-            bool isAzureResourceManagement,
-            bool fullyCompatible,
-            bool isCli,
-            CancellationToken ct
-        )
-        {
-            var npxOptions = new NpxOptions(
-                "@azure-tools/typespec-client-generator-cli",
-                ["tsp-client", "convert", "--swagger-readme", pathToSwaggerReadme, "--output-dir", outputDirectory],
-                logOutputStream: true
-            );
-
-            if (isAzureResourceManagement)
-            {
-                npxOptions.AddArgs("--arm");
-            }
-
-            if (fullyCompatible)
-            {
-                npxOptions.AddArgs("--fully-compatible");
-            }
-
-            var result = await npxHelper.Run(npxOptions, ct);
-            if (result.ExitCode != 0)
-            {
-                SetFailure();
-                // Omit printing details in CLI mode since we already stream the generator cli output
-                if (isCli)
-                {
-                    return new TspToolResponse
-                    {
-                        ResponseError = $"Failed to convert swagger to TypeSpec project, see details in the above logs."
-                    };
-                }
-                return new TspToolResponse
-                {
-                    ResponseError = $"Failed to convert swagger to TypeSpec project, see generator output below" +
-                                    Environment.NewLine +
-                                    result.Output
-                };
-            }
-
-            return new TspToolResponse
-            {
-                IsSuccessful = true,
-                TypeSpecProjectPath = outputDirectory
-            };
-        }
     }
 }

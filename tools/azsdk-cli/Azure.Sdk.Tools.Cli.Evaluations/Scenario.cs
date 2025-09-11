@@ -4,7 +4,7 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.AI.Evaluation;
 using ModelContextProtocol.Client;
 
-namespace azsdk_mcp_evals
+namespace Azure.Sdk.Tools.Cli.Evaluations
 {
     public class Scenario
     {

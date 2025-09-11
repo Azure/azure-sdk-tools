@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.AI;
 
-namespace azsdk_mcp_evals
+namespace Azure.Sdk.Tools.Cli.Evaluations
 {
     public class ScenarioData
     {

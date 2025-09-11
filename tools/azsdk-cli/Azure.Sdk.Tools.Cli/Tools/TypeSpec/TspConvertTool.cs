@@ -80,18 +80,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             string pathToSwaggerReadme,
             [Description("The output directory for the generated TypeSpec project. This must be an existing empty directory.")]
             string outputDirectory,
-            [Description(@"
-                Indicates whether the swagger is for an Azure Resource Management (ARM) API.
-                Should be true if the swagger's path contains `resource-manager`.
-                ")
+            [Description("Indicates whether the swagger is for an Azure Resource Management (ARM) API. " +
+                         "Should be true if the swagger's path contains `resource-manager`.")
             ]
-            bool? isAzureResourceManagement,
-            [Description(@"
-                Indicates whether the generated TypeSpec project should be fully compatible with the swagger.
-                It is recommended to set this to `false` so that the generated project leverages TypeSpec built-in libraries with standard patterns and templates.
-                ")
+            bool isAzureResourceManagement,
+            [Description("Indicates whether the generated TypeSpec project should be fully compatible with the swagger. " +
+                         "It is recommended to set this to `false` so that the generated project leverages " +
+                         "TypeSpec built-in libraries with standard patterns and templates.")
             ]
-            bool? fullyCompatible,
+            bool fullyCompatible,
             bool isCli,
             CancellationToken ct
         )
@@ -126,7 +123,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                 }
 
                 var fullOutputDir = Path.GetFullPath(outputDirectory.Trim());
-                return await RunTspClientAsync(fullPathToSwaggerReadme, fullOutputDir, isAzureResourceManagement ?? false, fullyCompatible ?? false, isCli, ct);
+                return await RunTspClientAsync(fullPathToSwaggerReadme, fullOutputDir, isAzureResourceManagement, fullyCompatible, isCli, ct);
             }
             catch (Exception ex)
             {

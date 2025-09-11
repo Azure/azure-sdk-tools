@@ -224,7 +224,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        [McpServerTool(Name = "azsdk_create_release_plan"), Description("Create Release Plan work item.")]
+        [McpServerTool(Name = "azsdk_create_release_plan"), Description("Create Release Plan")]
         public async Task<string> CreateReleasePlan(string typeSpecProjectPath, string targetReleaseMonthYear, string serviceTreeId, string productTreeId, string specApiVersion, string specPullRequestUrl, string sdkReleaseType, string userEmail = "", bool isTestReleasePlan = false)
         {
             try
@@ -281,7 +281,22 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 }
                 else
                 {
-                    return output.Format(workItem);
+                    if (workItem.Id is int workItemId)
+                    {
+                        releasePlan.WorkItemId = workItemId;
+                    }
+
+                    if (workItem.Fields.TryGetValue("Custom.ReleasePlanId", out var value) && value is int releasePlanId)
+                    {
+                        releasePlan.ReleasePlanId = releasePlanId;
+                    }
+
+                    if (workItem.Fields.TryGetValue("Custom.ReleasePlanLink", out value) && value is string releasePlanLink)
+                    {
+                        releasePlan.ReleasePlanLink = releasePlanLink;
+                    }
+
+                    return JsonSerializer.Serialize(releasePlan, new JsonSerializerOptions { WriteIndented = true });
                 }
             }
             catch (Exception ex)

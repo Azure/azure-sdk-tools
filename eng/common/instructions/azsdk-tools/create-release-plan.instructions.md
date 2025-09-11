@@ -1,5 +1,11 @@
 # Release Plan Creation Process
-You goal is to create a valid release plan. You must prompt user to provide all required information and all input must match the format and requirement mentioned in step 3 below.
+Your goal is to create a valid release plan. You must prompt user to provide all required information and all input must match the format and requirement mentioned in step 3 below.
+
+> **Important Note**
+> Do **not** ask the user to manually edit the DevOps work item.
+> To update a release plan manually, the user must use the [Release Planner Tool](https://aka.ms/sdk-release-planner).
+> When summarizing or displaying release plan details, do not mention or display the work item link/URL, or any direct reference to Azure DevOps work item resources. Only provide relevant release plan details like **Release Plan Link** and **Release Plan ID**.
+
 Follow these steps in order to create or manage a release plan for an API specification pull request:
 
 ## Step 1: Validate Prerequisites

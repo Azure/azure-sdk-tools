@@ -132,7 +132,7 @@ namespace Azure.Sdk.Tools.Cli.Models
     {
         public string Language { get; set; } = string.Empty;
         public string GenerationPipelineUrl { get; set; } = string.Empty;
-        public string SdkPullRequestUrl {  get; set; } = string.Empty;
+        public string SdkPullRequestUrl { get; set; } = string.Empty;
         public string PackageName { get; set; } = string.Empty;
     }
 }

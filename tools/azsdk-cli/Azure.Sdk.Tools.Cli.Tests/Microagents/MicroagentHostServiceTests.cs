@@ -3,6 +3,8 @@ using System.ClientModel.Primitives;
 using Azure.AI.OpenAI;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Microagents.Tools;
+using Azure.Sdk.Tools.Cli.Helpers;
+using NUnit.Framework;
 using Moq;
 using OpenAI.Chat;
 
@@ -23,7 +25,8 @@ internal class MicroagentHostServiceTests
         chatClientMock = new Mock<ChatClient>();
         openAIClientMock.Setup(client => client.GetChatClient(It.IsAny<string>()))
             .Returns(chatClientMock.Object);
-        microagentHostService = new MicroagentHostService(openAIClientMock.Object, loggerMock.Object);
+        var tokenUsageHelper = new TokenUsageHelper(Mock.Of<Azure.Sdk.Tools.Cli.Helpers.IOutputHelper>());
+        microagentHostService = new MicroagentHostService(openAIClientMock.Object, loggerMock.Object, tokenUsageHelper);
     }
 
     [Test]

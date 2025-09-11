@@ -22,7 +22,7 @@ import { remove } from 'fs-extra';
 import { generateChangelogAndBumpVersion } from "../../common/changelog/automaticGenerateChangeLogAndBumpVersion.js";
 import { updateChangelogResult } from "../../common/packageResultUtils.js";
 import { isRushRepo } from "../../common/rushUtils.js";
-import { formatSdk, updateSnippets, lintFix } from "../../common/devToolUtils.js";
+import { formatSdk, updateSnippets, lintFix, customizeCodes } from "../../common/devToolUtils.js";
 import { RunMode } from "../../common/types.js";
 import { exists } from 'fs-extra';
 
@@ -272,6 +272,8 @@ export async function generateRLCInPipeline(options: {
         } else {
             logger.info(`Start to update.`);
             execSync('pnpm install', {stdio: 'inherit'});
+
+            await customizeCodes(packagePath);
 
             if(options.runMode === RunMode.Local || options.runMode === RunMode.Release){
                 await lintFix(packagePath);

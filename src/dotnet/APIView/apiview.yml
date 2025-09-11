@@ -312,10 +312,11 @@ extends:
               #      testResultsFormat: 'VSTest'
               #      mergeTestResults: true
 
-      - ${{ if and(eq(variables['System.TeamProject'], 'internal'), eq(coalesce(variables['runStagingPublish'], 'true'), 'true')) }}:
+      - ${{ if eq(variables['System.TeamProject'], 'internal') }}:
         - stage: Staging_Publish
           displayName: Pre-Prod
           dependsOn: Build
+          condition: and(succeeded(), eq(coalesce(variables['runStagingPublish'], 'true'), 'true'))
 
           variables:
             - name: 'apiUrl'
@@ -369,10 +370,11 @@ extends:
                   enableCustomDeployment: true
                   DeploymentType: zipDeploy
 
-      - ${{ if and(eq(coalesce(variables['runTestUIPublish'], 'true'), 'true'), in(variables['Build.Reason'], 'Manual', ''), eq(variables['System.TeamProject'], 'internal')) }}:
+      - ${{ if and(in(variables['Build.Reason'], 'Manual', ''), eq(variables['System.TeamProject'], 'internal')) }}:
         - stage: Test_UI_Publish
           displayName: Publish Test UI
           dependsOn: Build
+          condition: and(succeeded(), eq(coalesce(variables['runTestUIPublish'], 'true'), 'true'))
 
           variables:
             - name: 'apiUrl'
@@ -428,10 +430,11 @@ extends:
                         enableCustomDeployment: true
                         DeploymentType: zipDeploy
 
-      - ${{ if and(eq(coalesce(variables['runProductionPublish'], 'true'), 'true'), in(variables['Build.Reason'], 'Manual', ''), eq(variables['System.TeamProject'], 'internal')) }}:
+      - ${{ if and(in(variables['Build.Reason'], 'Manual', ''), eq(variables['System.TeamProject'], 'internal')) }}:
         - stage: Production_Publish
           displayName: Prod
           dependsOn: Staging_Publish
+          condition: eq(coalesce(variables['runProductionPublish'], 'true'), 'true')
 
           variables:
             - name: 'apiUrl'

@@ -26,6 +26,7 @@ from src._database_manager import get_database_manager
 from src._diff import create_diff_with_line_numbers
 from src._mention import handle_mention_request
 from src._settings import SettingsManager
+from src._thread_resolution import handle_thread_resolution_request
 from src._utils import get_language_pretty_name, get_prompt_path
 from src.agent._agent import get_main_agent, invoke_agent
 
@@ -264,7 +265,7 @@ async def handle_thread_resolution(request: MentionRequest):
     )
     try:
         pretty_language = get_language_pretty_name(request.language)
-        response = handle_mention_request(
+        response = handle_thread_resolution_request(
             comments=request.comments,
             language=pretty_language,
             package_name=request.package_name,

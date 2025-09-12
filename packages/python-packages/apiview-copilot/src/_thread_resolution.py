@@ -29,7 +29,6 @@ def handle_thread_resolution_request(*, comments: list[str], language: str, pack
         return "No comments provided."
 
     action_results = _parse_action(language=language, code=code, package_name=package_name, comments=comments)
-    # FIXME: Allowed action_results: record_result, record_exception, no_action, unclear
     action = action_results.get("action")
     if action == "record_result":
         plan = _parse_plan(
@@ -60,8 +59,8 @@ def handle_thread_resolution_request(*, comments: list[str], language: str, pack
 
 
 def _parse_action(*, language: str, code: str, package_name: str, comments: list[str]):
-    prompty_file = "parse_resolution_action.prompty"
-    prompt_path = get_prompt_path(folder="resolution", filename=prompty_file)
+    prompty_file = "parse_thread_resolution_action.prompty"
+    prompt_path = get_prompt_path(folder="thread_resolution", filename=prompty_file)
     inputs = {
         "language": language,
         "code": code,
@@ -77,8 +76,8 @@ def _parse_action(*, language: str, code: str, package_name: str, comments: list
 
 
 def _parse_plan(*, language: str, code: str, package_name: str, comments: list[str], reasoning: str):
-    prompty_file = "parse_resolution_to_memory.prompty"
-    prompt_path = get_prompt_path(folder="resolution", filename=prompty_file)
+    prompty_file = "parse_thread_resolution_to_memory.prompty"
+    prompt_path = get_prompt_path(folder="thread_resolution", filename=prompty_file)
     if not os.path.exists(prompt_path):
         print(f"Prompt file {prompt_path} does not exist.")
         return
@@ -172,8 +171,8 @@ def _summarize_results(results: dict):
     """
     Summarizes the results of the plan execution.
     """
-    prompt_file = "summarize_parse_resolution_to_memory.prompty"
-    prompt_path = get_prompt_path(folder="resolution", filename=prompt_file)
+    prompt_file = "summarize_actions.prompty"
+    prompt_path = get_prompt_path(folder="thread_resolution", filename=prompt_file)
     if not os.path.exists(prompt_path):
         print(f"Prompt file {prompt_path} does not exist.")
         return "No prompt file found."

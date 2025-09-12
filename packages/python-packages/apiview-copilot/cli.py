@@ -32,9 +32,9 @@ from src._database_manager import ContainerNames, get_database_manager
 from src._garbage_collector import GarbageCollector
 from src._mention import handle_mention_request
 from src._metrics import get_metrics_report
-from src._resolve_thread import handle_thread_resolution_request
 from src._search_manager import SearchManager
 from src._settings import SettingsManager
+from src._thread_resolution import handle_thread_resolution_request
 from src._utils import get_language_pretty_name
 from src.agent._agent import get_main_agent, invoke_agent
 
@@ -590,7 +590,7 @@ def handle_agent_mention(comments_path: str, remote: bool = False):
         )
 
 
-def handle_agent_resolve(comments_path: str, remote: bool = False):
+def handle_agent_thread_resolution(comments_path: str, remote: bool = False):
     """
     Handles requests to update the knowledge base when a conversation is resolved.
     """
@@ -885,7 +885,7 @@ class CliCommandsLoader(CLICommandsLoader):
         with CommandGroup(self, "agent", "__main__#{}") as g:
             g.command("mention", "handle_agent_mention")
             g.command("chat", "handle_agent_chat")
-            g.command("resolve", "handle_agent_resolve")
+            g.command("resolve-thread", "handle_agent_thread_resolution")
         with CommandGroup(self, "eval", "__main__#{}") as g:
             g.command("run", "run_test_case")
             g.command("create", "create_test_case")

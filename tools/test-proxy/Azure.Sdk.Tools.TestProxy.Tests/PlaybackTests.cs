@@ -16,6 +16,11 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 {
     public class PlaybackTests
     {
+        public PlaybackTests()
+        {
+            Startup.ProxyConfiguration.Mode = UniversalRecordingMode.Azure;
+            Startup.ProxyConfiguration.RecordingId = null;
+        }
 
         private NullLoggerFactory _nullLogger = new NullLoggerFactory();
 

@@ -18,6 +18,12 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 {
     public class RecordTests
     {
+        public RecordTests()
+        {
+            Startup.ProxyConfiguration.Mode = UniversalRecordingMode.Azure;
+            Startup.ProxyConfiguration.RecordingId = null;
+        }
+
         private NullLoggerFactory _nullLogger = new NullLoggerFactory();
 
         [Fact]

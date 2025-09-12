@@ -3,23 +3,19 @@ import { Item } from "../../rustdoc-types/output/rustdoc-types";
 import { createDocsReviewLines } from "./utils/generateDocReviewLine";
 import { isStaticItem } from "./utils/typeGuards";
 import { typeToReviewTokens } from "./utils/typeToReviewTokens";
-import { lineIdMap } from "../utils/lineIdUtils";
+import { createContentBasedLineId } from "../utils/lineIdUtils";
 
 /**
  * Processes a static item and adds its documentation to the ReviewLine.
  *
- * @param {Crate} apiJson - The API JSON object containing all items.
  * @param {Item} item - The static item to process.
+ * @param {string} lineIdPrefix - The prefix for hierarchical line IDs.
  */
-export function processStatic(item: Item) {
+export function processStatic(item: Item, lineIdPrefix: string = "") {
   if (!isStaticItem(item)) return;
 
-  const reviewLines: ReviewLine[] = item.docs ? createDocsReviewLines(item) : [];
-
-  lineIdMap.set(item.id.toString(), `static_${item.name}`);
   // Create the ReviewLine object
   const reviewLine: ReviewLine = {
-    LineId: item.id.toString(),
     Tokens: [],
     Children: [],
   };
@@ -30,7 +26,7 @@ export function processStatic(item: Item) {
   reviewLine.Tokens.push({
     Kind: TokenKind.MemberName,
     Value: item.name || "unknown_static",
-    NavigateToId: reviewLine.LineId,
+    NavigateToId: item.id.toString(), // Will be updated in post-processing
     HasSuffixSpace: false,
   });
 
@@ -42,6 +38,13 @@ export function processStatic(item: Item) {
     });
     reviewLine.Tokens.push(...typeToReviewTokens(item.inner.static.type));
   }
+
+  // Create content-based LineId from the tokens
+  const contentBasedLineId = createContentBasedLineId(reviewLine.Tokens, lineIdPrefix, item.id.toString());
+  reviewLine.LineId = contentBasedLineId;
+
+  // Create docs with content-based LineId
+  const reviewLines: ReviewLine[] = item.docs ? createDocsReviewLines(item, contentBasedLineId) : [];
 
   reviewLines.push(reviewLine);
   return reviewLines;

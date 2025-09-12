@@ -1,12 +1,60 @@
-import { PACKAGE_NAME } from "../main";
-import { ReviewLine } from "../models/apiview-models";
+import { ReviewLine, ReviewToken } from "../models/apiview-models";
 
+/**
+ * Maps content-based LineIds to their corresponding original item IDs
+ * Key: content-based LineId (e.g., "pub.struct.Client.field.endpoint")
+ * Value: original item.id (e.g., "123")
+ */
 export const lineIdMap = new Map<string, string>();
 
 /**
- * Sanitizes a string for use in line IDs while preserving meaningful distinctions
- * @param input The input string to sanitize
- * @returns A sanitized string suitable for line IDs
+ * Tracks which LineIds are from external items
+ * Key: content-based LineId
+ * Value: true if external, false if internal
+ */
+export const externalItemsMap = new Map<string, boolean>();
+
+/**
+ * Tracks all LineIds and their first occurrence for navigation
+ * Key: original item.id
+ * Value: content-based LineId of first occurrence
+ */
+export const navigationMap = new Map<string, string>();
+
+/**
+ * Extracts content from tokens by concatenating their values
+ * @param tokens Array of review tokens
+ * @returns Concatenated content string
+ */
+function extractTokenContent(tokens: ReviewToken[]): string {
+  const values = tokens
+    .map(token => token.Value)
+    .filter(value => value.trim() !== ""); // Filter out empty values
+
+  // Join tokens with underscores if they don't already contain spaces or separators
+  let result = "";
+  for (let i = 0; i < values.length; i++) {
+    const value = values[i];
+    if (i > 0) {
+      const prevValue = values[i - 1];
+      const currentValue = value;
+
+      // Add underscore if neither the previous value ends with separator nor current starts with separator
+      if (!prevValue.match(/[\s_\-:.]$/) && !currentValue.match(/^[\s_\-:.]/)) {
+        result += "_";
+      }
+    }
+    result += value;
+  }
+
+  // Don't strip important symbols here - let sanitizeForLineId handle them properly
+  return sanitizeForLineId(result);
+}
+
+/**
+ * Sanitizes input string for use as LineId by replacing special characters
+ * @param input Input string to sanitize
+ * @returns Sanitized string suitable for LineId
  */
 export function sanitizeForLineId(input: string): string {
   return input
@@ -47,144 +95,148 @@ export function sanitizeForLineId(input: string): string {
     .replace(/^_+|_+$/g, "");
 }
 
-function postProcessLineIdMap(reviewLines: ReviewLine[], updatedLineIdMap: Map<string, string>) {
-  function recurse(lines: ReviewLine[], prefix: string) {
-    for (const line of lines) {
-      if (line.LineId) {
-        let existingId = lineIdMap.has(line.LineId) ? lineIdMap.get(line.LineId) : line.LineId;
-        const newId = `${prefix}_${existingId}`;
-        updatedLineIdMap.set(line.LineId, newId);
-        if (line.Children && line.Children.length > 0) {
-          recurse(line.Children, newId);
-        }
-      }
-    }
+/**
+ * Creates a content-based LineId using hierarchical path
+ * @param tokens The tokens for this line
+ * @param lineIdPrefix The prefix from ancestors
+ * @param originalId The original item.id
+ * @returns The content-based LineId
+ */
+export function createContentBasedLineId(
+  tokens: ReviewToken[],
+  lineIdPrefix: string,
+  originalId: string
+): string {
+  const content = extractTokenContent(tokens);
+  const fullPath = lineIdPrefix ? `${lineIdPrefix}.${content}` : content;
+
+  // Store mapping
+  lineIdMap.set(fullPath, originalId);
+
+  // Track first occurrence for navigation
+  if (!navigationMap.has(originalId)) {
+    navigationMap.set(originalId, fullPath);
   }
-  if (reviewLines && Array.isArray(reviewLines)) {
-    recurse(reviewLines, `root_mod_${PACKAGE_NAME}`);
-  }
+
+  return fullPath;
 }
 
 /**
- * Ensures all line IDs are unique by automatically appending counters to duplicates.
- * This is a defensive measure to catch any edge cases not handled by sanitization.
- * @param reviewLines The review lines to validate and fix
+ * Marks a LineId as external
+ * @param lineId The content-based LineId
  */
-export function ensureUniqueLineIds(reviewLines: ReviewLine[]): void {
-  const usedLineIds = new Set<string>();
-  const lineIdCounters = new Map<string, number>();
-  const lineIdMappings = new Map<string, string>(); // Track original -> updated mappings
-
-  // First pass: collect all line IDs and fix duplicates
-  // 
-  // Why we need this duplicate fixing mechanism:
-  // 1. EXTERNAL RE-EXPORTS: The same external/internal item (like std::HashMap) can be re-exported
-  //    from multiple modules, creating identical line IDs in externalReexports.ts
-  // 2. TRAIT IMPLEMENTATIONS: Multiple impl blocks can generate similar line IDs after
-  //    sanitization, especially with generic types and reference patterns
-  // 3. MODULE PATH COLLISIONS: Different module structures can result in identical
-  //    final line IDs after path processing and sanitization
-  // 4. GENERIC TYPE VARIATIONS: Complex generic types with nested parameters can
-  //    collapse to similar sanitized forms (e.g., Box<T>, Arc<T> both become Box_of_T, Arc_of_T)
-  // 5. CROSS-REFERENCE CONFLICTS: Items referenced from multiple contexts (inherent impls,
-  //    trait impls, external paths) can create overlapping line ID spaces
-  // 
-  // Without this deduplication, Copilot reviews fail immediately with no diagnostics,
-  // making it impossible to identify and fix the root cause of the duplicate IDs.
-  function collectAndFixLineIds(line: ReviewLine): void {
-    if (line.LineId) {
-      let finalLineId = line.LineId;
-      const originalLineId = line.LineId;
-      
-      // If this line ID is already used, append a counter
-      if (usedLineIds.has(finalLineId)) {
-        const baseId = finalLineId;
-        const counter = (lineIdCounters.get(baseId) || 1) + 1;
-        lineIdCounters.set(baseId, counter);
-        finalLineId = `${baseId}_${counter}`;
-        
-        // Keep incrementing until we find a unique ID
-        while (usedLineIds.has(finalLineId)) {
-          const newCounter = lineIdCounters.get(baseId)! + 1;
-          lineIdCounters.set(baseId, newCounter);
-          finalLineId = `${baseId}_${newCounter}`;
-        }
-        
-        // Update the line ID and track the mapping
-        line.LineId = finalLineId;
-        lineIdMappings.set(originalLineId, finalLineId);
-      }
-      
-      usedLineIds.add(finalLineId);
-    }
-
-    // Process children recursively
-    if (line.Children && Array.isArray(line.Children)) {
-      line.Children.forEach(collectAndFixLineIds);
-    }
-  }
-
-  // Second pass: update all references to changed line IDs
-  function updateReferences(line: ReviewLine): void {
-    // Update RelatedToLine references
-    if (line.RelatedToLine && lineIdMappings.has(line.RelatedToLine)) {
-      line.RelatedToLine = lineIdMappings.get(line.RelatedToLine)!;
-    }
-
-    // Update NavigateToId references in tokens
-    if (line.Tokens && line.Tokens.length > 0) {
-      for (const token of line.Tokens) {
-        if (token.NavigateToId && lineIdMappings.has(token.NavigateToId)) {
-          token.NavigateToId = lineIdMappings.get(token.NavigateToId)!;
-        }
-      }
-    }
-
-    // Process children recursively
-    if (line.Children && Array.isArray(line.Children)) {
-      line.Children.forEach(updateReferences);
-    }
-  }
-
-  // Process all review lines
-  if (reviewLines && Array.isArray(reviewLines)) {
-    // First pass: fix duplicate line IDs
-    reviewLines.forEach(collectAndFixLineIds);
-    
-    // Second pass: update references if any IDs were changed
-    if (lineIdMappings.size > 0) {
-      reviewLines.forEach(updateReferences);
-    }
-  }
+export function markAsExternal(lineId: string): void {
+  externalItemsMap.set(lineId, true);
 }
 
-export function updateReviewLinesWithStableLineIds(reviewLines: ReviewLine[]) {
-  const updatedLineIdMap = new Map<string, string>();
-  postProcessLineIdMap(reviewLines, updatedLineIdMap);
-  function updateLineIdReferences(reviewLines: ReviewLine[]) {
-    if (reviewLines && Array.isArray(reviewLines)) {
-      for (const line of reviewLines) {
-        if (line.LineId) {
-          line.LineId = updatedLineIdMap.get(line.LineId) || line.LineId;
-        }
-        if (line.RelatedToLine) {
-          line.RelatedToLine = updatedLineIdMap.get(line.RelatedToLine) || line.RelatedToLine;
-        }
-        if (line.Tokens.length > 0) {
-          for (const token of line.Tokens) {
-            if (token.NavigateToId) {
-              token.NavigateToId = updatedLineIdMap.get(token.NavigateToId) || token.NavigateToId;
-            }
+/**
+ * Post-processes all review lines to set proper NavigateToId values
+ * @param reviewLines The array of review lines to process
+ */
+export function setNavigationIds(reviewLines: ReviewLine[]): void {
+  // Group LineIds by their mapped original item.id value
+  const valueGroups = new Map<string, string[]>();
+
+  for (const [lineId, originalId] of lineIdMap.entries()) {
+    if (!valueGroups.has(originalId)) {
+      valueGroups.set(originalId, []);
+    }
+    valueGroups.get(originalId)!.push(lineId);
+  }
+
+  // Determine navigation targets
+  const navigationTargets = new Map<string, string>();
+
+  for (const [originalId, lineIds] of valueGroups.entries()) {
+    let targetLineId: string;
+
+    if (lineIds.length === 1) {
+      // Case 3: Only one occurrence, link to self
+      targetLineId = lineIds[0];
+    } else {
+      // Multiple occurrences - check for external references
+      const externalLineIds = lineIds.filter(lineId => externalItemsMap.get(lineId) === true);
+
+      if (externalLineIds.length > 0) {
+        // Case 1: External reference found, use first external as leader
+        targetLineId = externalLineIds[0];
+      } else {
+        // Case 2: No external, use first occurrence
+        targetLineId = navigationMap.get(originalId) || lineIds[0];
+      }
+    }
+
+    // Set navigation target for all LineIds with this value
+    for (const lineId of lineIds) {
+      navigationTargets.set(lineId, targetLineId);
+    }
+  }
+
+  // Apply navigation targets to review lines
+  function updateNavigationIds(lines: ReviewLine[]) {
+    for (const line of lines) {
+      if (line.LineId && navigationTargets.has(line.LineId)) {
+        const targetLineId = navigationTargets.get(line.LineId)!;
+
+        // Update NavigateToId in tokens
+        for (const token of line.Tokens || []) {
+          if (token.NavigateToId) {
+            token.NavigateToId = targetLineId;
           }
         }
-        if (line.Children && Array.isArray(line.Children) && line.Children.length > 0) {
-          updateLineIdReferences(line.Children);
-        }
+      }
+
+      if (line.Children) {
+        updateNavigationIds(line.Children);
       }
     }
   }
-  updateLineIdReferences(reviewLines);
-  
-  // Final validation: ensure all line IDs are unique before serialization
-  ensureUniqueLineIds(reviewLines);
+
+  updateNavigationIds(reviewLines);
+}
+
+/**
+ * Validates that all line IDs in the review lines are unique
+ * @param reviewLines The array of review lines to validate
+ * @returns Object with validation result and duplicate count
+ */
+export function ensureUniqueLineIds(reviewLines: ReviewLine[]): {
+  isValid: boolean;
+  duplicateCount: number;
+  duplicates: string[];
+} {
+  const lineIdCounts = new Map<string, number>();
+  const duplicates: string[] = [];
+
+  function countLineIds(lines: ReviewLine[]) {
+    for (const line of lines) {
+      if (line.LineId) {
+        const count = lineIdCounts.get(line.LineId) || 0;
+        lineIdCounts.set(line.LineId, count + 1);
+
+        if (count === 1) { // First duplicate occurrence
+          duplicates.push(line.LineId);
+        }
+      }
+
+      if (line.Children) {
+        countLineIds(line.Children);
+      }
+    }
+  }
+
+  countLineIds(reviewLines);
+
+  const duplicateCount = duplicates.length;
+  const isValid = duplicateCount === 0;
+
+  if (!isValid) {
+    throw new Error(`Line ID validation failed: ${duplicateCount} duplicate${duplicateCount > 1 ? 's' : ''} found: ${duplicates.join(', ')}`);
+  }
+
+  return {
+    isValid,
+    duplicateCount,
+    duplicates
+  };
 }

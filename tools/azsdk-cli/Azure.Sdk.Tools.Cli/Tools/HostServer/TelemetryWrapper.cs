@@ -20,7 +20,7 @@ public class InstrumentedTool(ITelemetryService telemetryService, ILogger logger
     {
         using var activity = await telemetryService.StartActivity(ActivityName.ToolExecuted, request?.Server?.ClientInfo);
         Activity.Current = activity;
-        if( request?.Params == null || string.IsNullOrEmpty(request.Params.Name))
+        if (request?.Params == null || string.IsNullOrEmpty(request.Params.Name))
         {
             activity?.SetStatus(ActivityStatusCode.Error)?.AddTag(TagName.ErrorDetails, "Cannot call tool with null parameters");
             logger.LogWarning("Tool request or tool name is null or empty");

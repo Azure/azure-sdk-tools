@@ -18,8 +18,6 @@ namespace Azure.Sdk.Tools.Cli.Extensions;
 
 public static class OpenTelemetryExtensions
 {
-    private const string DefaultAppInsights = "InstrumentationKey=21e003c0-efee-4d3f-8a98-1868515aa2c9;IngestionEndpoint=https://centralus-2.in.applicationinsights.azure.com/;LiveEndpoint=https://centralus.livediagnostics.monitor.azure.com/;ApplicationId=f14f6a2d-6405-4f88-bd58-056f25fe274f";
-
     public static void ConfigureOpenTelemetry(this IServiceCollection services)
     {
         services.AddOptions<AzSdkToolsMcpServerConfiguration>()
@@ -33,7 +31,6 @@ public static class OpenTelemetryExtensions
                 }
 
                 var collectTelemetry = Environment.GetEnvironmentVariable("AZSDKTOOLS_MCP_COLLECT_TELEMETRY");
-
                 options.IsTelemetryEnabled = string.IsNullOrEmpty(collectTelemetry)
                     || (bool.TryParse(collectTelemetry, out var shouldCollect) && shouldCollect);
             });
@@ -80,10 +77,9 @@ public static class OpenTelemetryExtensions
 #endif
 
         var appInsightsConnectionString = Environment.GetEnvironmentVariable("AZSDKTOOLS_MCP_APPLICATIONINSIGHTS_CONNECTION_STRING");
-
         if (string.IsNullOrEmpty(appInsightsConnectionString))
         {
-            appInsightsConnectionString = DefaultAppInsights;
+            return;
         }
 
         services.ConfigureOpenTelemetryTracerProvider((sp, builder) =>

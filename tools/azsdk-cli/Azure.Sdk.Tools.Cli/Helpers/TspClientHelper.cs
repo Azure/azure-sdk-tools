@@ -54,4 +54,37 @@ public class TspClientHelper : ITspClientHelper
             TypeSpecProjectPath = outputDirectory
         };
     }
+
+    public async Task<TspToolResponse> UpdateGenerationAsync(string tspLocationPath, string outputDirectory, bool isCli, CancellationToken ct)
+    {
+        logger.LogInformation("tsp-client update (tsp-location): {loc} -> {out}", tspLocationPath, outputDirectory);
+        if (!File.Exists(tspLocationPath))
+        {
+            return new TspToolResponse { ResponseError = $"tsp-location.yaml not found at path: {tspLocationPath}" };
+        }
+        var workingDir = Path.GetDirectoryName(Path.GetFullPath(tspLocationPath))!;
+        var npxOptions = new NpxOptions(
+            "@azure-tools/typespec-client-generator-cli",
+            ["tsp-client", "update"],
+            logOutputStream: true,
+            workingDirectory: workingDir
+        );
+
+        var result = await npxHelper.Run(npxOptions, ct);
+        if (result.ExitCode != 0)
+        {
+            return new TspToolResponse
+            {
+                ResponseError = isCli
+                    ? "Failed to regenerate TypeSpec client, see details in the above logs."
+                    : "Failed to regenerate TypeSpec client, see generator output below" + Environment.NewLine + result.Output
+            };
+        }
+
+        return new TspToolResponse
+        {
+            IsSuccessful = true,
+            TypeSpecProjectPath = outputDirectory
+        };
+    }
 }

@@ -70,7 +70,12 @@ public enum UpdateStage
     /// <summary>
     /// Post-apply validation (build / tests / lint) executed and results captured.
     /// </summary>
-    Validated
+    Validated,
+
+    /// <summary>
+    /// Update failed due to an unknown error.
+    /// </summary>
+    Failed
 }
 
 public class ClientUpdateSessionState

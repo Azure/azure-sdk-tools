@@ -18,11 +18,11 @@ import {
 import { updateTypeSpecProjectYamlFile } from '../utils/updateTypeSpecProjectYamlFile.js';
 import { getRelativePackagePath } from "../utils/utils.js";
 import { defaultChildProcessTimeout, getGeneratedPackageDirectory, generateRepoDataInTspLocation, specifyApiVersionToGenerateSDKByTypeSpec, cleanUpPackageDirectory } from "../../common/utils.js";
-import { remove } from 'fs-extra';
+import { remove, emptyDir } from 'fs-extra';
 import { generateChangelogAndBumpVersion } from "../../common/changelog/automaticGenerateChangeLogAndBumpVersion.js";
 import { updateChangelogResult } from "../../common/packageResultUtils.js";
 import { isRushRepo } from "../../common/rushUtils.js";
-import { formatSdk, updateSnippets, lintFix } from "../../common/devToolUtils.js";
+import { formatSdk, updateSnippets, lintFix, customizeCodes } from "../../common/devToolUtils.js";
 import { RunMode } from "../../common/types.js";
 import { exists } from 'fs-extra';
 
@@ -60,7 +60,7 @@ export async function generateRLCInPipeline(options: {
                 sourcePath = path.join("src", "generated");
             }
             logger.info(`Should only remove ${sourcePath} for RLC generation in ${options.runMode} mode.`)
-            await remove(path.join(generatedPackageDir, sourcePath));
+            await emptyDir(path.join(generatedPackageDir, sourcePath));
         } else {
             logger.info(`Should remove all for RLC generation in ${options.runMode} mode`)
             await remove(generatedPackageDir);
@@ -272,6 +272,8 @@ export async function generateRLCInPipeline(options: {
         } else {
             logger.info(`Start to update.`);
             execSync('pnpm install', {stdio: 'inherit'});
+
+            await customizeCodes(packagePath);
 
             if(options.runMode === RunMode.Local || options.runMode === RunMode.Release){
                 await lintFix(packagePath);

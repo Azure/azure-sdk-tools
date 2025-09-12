@@ -22,6 +22,9 @@ namespace Azure.Sdk.Tools.Cli.Helpers
     {
         private readonly ILogger<GitHelper> logger = logger;
         private readonly IGitHubService gitHubService = gitHubService;
+        
+        // Cache for repository root discovery to avoid redundant calls
+        private readonly Dictionary<string, string> _repoRootCache = new();
 
         /// <summary>
         /// Gets the SHA of the merge base (common ancestor) between the current branch and the target branch.
@@ -31,7 +34,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         /// <returns>The SHA of the merge base commit, or empty string if not found</returns>
         public string GetMergeBaseCommitSha(string pathInRepo, string targetBranchName)
         {
-            var repoRoot = DiscoverRepoRoot(pathInRepo);
+            var repoRoot = GetRepoRootCached(pathInRepo);
             using (var repo = new Repository(repoRoot))
             {
                 // Get the current branch
@@ -52,7 +55,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         /// <returns>The friendly name of the current branch</returns>
         public string GetBranchName(string pathInRepo)
         {
-            var repoRoot = DiscoverRepoRoot(pathInRepo);
+            var repoRoot = GetRepoRootCached(pathInRepo);
             using var repo = new Repository(repoRoot);
             var branchName = repo.Head.FriendlyName;
             return branchName;
@@ -66,7 +69,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         /// <exception cref="InvalidOperationException">Thrown when unable to determine remote URL</exception>
         public Uri GetRepoRemoteUri(string pathInRepo)
         {
-            var repoRoot = DiscoverRepoRoot(pathInRepo);
+            var repoRoot = GetRepoRootCached(pathInRepo);
             using var repo = new Repository(repoRoot);
             var remote = repo.Network?.Remotes["origin"];
             if (remote != null)
@@ -176,6 +179,35 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         /// <exception cref="InvalidOperationException">Thrown when no git repository is found at or above the specified path</exception>
         public string DiscoverRepoRoot(string pathInRepo)
         {
+            return GetRepoRootCached(pathInRepo);
+        }
+
+        /// <summary>
+        /// Internal method to get repository root with caching to avoid redundant Repository.Discover calls.
+        /// </summary>
+        /// <param name="pathInRepo">Any path within the git repository (file or directory)</param>
+        /// <returns>The absolute path to the repository root directory</returns>
+        /// <exception cref="InvalidOperationException">Thrown when no git repository is found at or above the specified path</exception>
+        private string GetRepoRootCached(string pathInRepo)
+        {
+            // Check if we already have the repo root cached for this path
+            if (_repoRootCache.TryGetValue(pathInRepo, out var cachedRoot))
+            {
+                return cachedRoot;
+            }
+
+            // Check if any cached path is a parent of the current path (same repo)
+            foreach (var kvp in _repoRootCache)
+            {
+                if (pathInRepo.StartsWith(kvp.Value + Path.DirectorySeparatorChar) || pathInRepo == kvp.Value)
+                {
+                    // Cache this path too for future lookups
+                    _repoRootCache[pathInRepo] = kvp.Value;
+                    return kvp.Value;
+                }
+            }
+
+            // Discover the repo root for this path
             var repoPath = Repository.Discover(pathInRepo);
             if (string.IsNullOrEmpty(repoPath))
             {
@@ -185,7 +217,16 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             // Repository.Discover returns the path to .git directory
             // The repository root is the parent directory of .git
             var gitDir = new DirectoryInfo(repoPath);
-            return gitDir.Parent?.FullName ?? throw new InvalidOperationException("Unable to determine repository root");
+            if (gitDir.Parent == null || string.IsNullOrEmpty(gitDir.Parent.FullName))
+            {
+                throw new InvalidOperationException("Unable to determine repository root");
+            }
+            var repoRoot = gitDir.Parent.FullName;
+
+            // Cache the result
+            _repoRootCache[pathInRepo] = repoRoot;
+
+            return repoRoot;
         }
 
         /// <summary>

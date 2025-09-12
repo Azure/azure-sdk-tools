@@ -79,7 +79,90 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
 
             try
             {
-                Assert.Throws<RepositoryNotFoundException>(() => gitHelper.GetRepoRemoteUri(tempDir));
+                Assert.Throws<InvalidOperationException>(() => gitHelper.GetRepoRemoteUri(tempDir));
+            }
+            finally
+            {
+                if (Directory.Exists(tempDir))
+                {
+                    Directory.Delete(tempDir, true);
+                }
+            }
+        }
+
+        [Test]
+        public async Task GetRepoFullNameAsync_WithSubdirectoryPath_ReturnsCorrectFullName()
+        {
+            var testRepoPath = CreateTestRepoWithRemote("git@github.com:Azure/azure-rest-api-specs.git");
+            var subDir = Path.Combine(testRepoPath, "subdirectory");
+            Directory.CreateDirectory(subDir);
+            mockGitHubService.Setup(x => x.GetGitHubParentRepoUrlAsync("Azure", "azure-rest-api-specs"))
+                           .ReturnsAsync(string.Empty); // Not a fork
+
+            try
+            {
+                var result = await gitHelper.GetRepoFullNameAsync(subDir);
+
+                Assert.That(result, Is.EqualTo("Azure/azure-rest-api-specs"));
+            }
+            finally
+            {
+                CleanupTestRepo(testRepoPath);
+            }
+        }
+
+        [Test]
+        public async Task GetRepoFullNameAsync_WithForkRepoButDontFindUpstream_ReturnsDirectFullName()
+        {
+            var testRepoPath = CreateTestRepoWithRemote("https://github.com/UserFork/azure-rest-api-specs.git");
+            
+            try
+            {
+                var result = await gitHelper.GetRepoFullNameAsync(testRepoPath, findUpstreamParent: false);
+
+                Assert.That(result, Is.EqualTo("UserFork/azure-rest-api-specs"));
+            }
+            finally
+            {
+                CleanupTestRepo(testRepoPath);
+            }
+        }
+
+        [Test]
+        public async Task GetRepoFullNameAsync_WithEmptyPath_ThrowsArgumentException()
+        {
+            // Test empty string
+            try
+            {
+                await gitHelper.GetRepoFullNameAsync("");
+                Assert.Fail("Expected ArgumentException was not thrown");
+            }
+            catch (ArgumentException ex)
+            {
+                Assert.That(ex.ParamName, Is.EqualTo("pathInRepo"));
+            }
+            
+            // Test null
+            try
+            {
+                await gitHelper.GetRepoFullNameAsync(null!);
+                Assert.Fail("Expected ArgumentException was not thrown");
+            }
+            catch (ArgumentException ex)
+            {
+                Assert.That(ex.ParamName, Is.EqualTo("pathInRepo"));
+            }
+        }
+
+        [Test]
+        public void GetRepoFullNameAsync_WithNonGitDirectory_ThrowsException()
+        {
+            var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+            Directory.CreateDirectory(tempDir);
+
+            try
+            {
+                Assert.ThrowsAsync<InvalidOperationException>(async () => await gitHelper.GetRepoFullNameAsync(tempDir));
             }
             finally
             {

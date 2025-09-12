@@ -1,5 +1,6 @@
 using Azure.Sdk.Tools.TestProxy.Common;
 using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
+using Azure.Sdk.Tools.TestProxy.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
@@ -261,5 +262,82 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Contains("Uri doesn't match:", resultingException.Message);
         }
 
+        [Fact]
+        public async Task TestStartRecordStandardProxy()
+        {
+            Startup.ProxyConfiguration.Mode = UniversalRecordingMode.StandardRecord;
+            Startup.ProxyConfiguration.RecordingId = string.Empty;
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            var body = "{\"x-recording-file\":\"TestStartRecordNewFormat.json\"}";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
+            httpContext.Request.ContentLength = body.Length;
+            var controller = new Record(testRecordingHandler, new NullLoggerFactory())
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+            await controller.Start();
+            var recordingId = httpContext.Response.Headers["x-recording-id"].ToString();
+            Assert.False(string.IsNullOrEmpty(recordingId));
+            Assert.True(testRecordingHandler.RecordingSessions.ContainsKey(recordingId));
+            Assert.Equal(UniversalRecordingMode.StandardRecord, Startup.ProxyConfiguration.Mode);
+            Assert.Equal(recordingId, Startup.ProxyConfiguration.RecordingId);
+            Assert.Null(Startup.ProxyConfiguration.RecordingId);
+            Assert.Equal(UniversalRecordingMode.StandardPlayback, Startup.ProxyConfiguration.Mode);
+        }
+
+        [Fact]
+        public async Task TestStopRecordStandardProxy()
+        {
+            var testFile = "TestStartRecordNewFormat.json";
+            Startup.ProxyConfiguration.Mode = UniversalRecordingMode.StandardRecord;
+            Startup.ProxyConfiguration.RecordingId = string.Empty;
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            var body = "{\"x-recording-file\":\"" + testFile + "\"}";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
+            httpContext.Request.ContentLength = body.Length;
+            var controller = new Record(testRecordingHandler, new NullLoggerFactory())
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+            await controller.Start();
+            httpContext.Request.ContentLength = 0;
+            await controller.Stop();
+            Assert.True(File.Exists(Path.Combine(Directory.GetCurrentDirectory(), testFile)));
+        }
+
+        [Fact]
+        public async Task TestTopRecordThrowsOnWrongMode()
+        {
+            var testFile = "TestStartRecordNewFormat.json";
+            Startup.ProxyConfiguration.Mode = UniversalRecordingMode.StandardRecord;
+            Startup.ProxyConfiguration.RecordingId = string.Empty;
+            RecordingHandler testRecordingHandler = new RecordingHandler(Directory.GetCurrentDirectory());
+            var httpContext = new DefaultHttpContext();
+            var body = "{\"x-recording-file\":\"" + testFile + "\"}";
+            httpContext.Request.Body = TestHelpers.GenerateStreamRequestBody(body);
+            httpContext.Request.ContentLength = body.Length;
+            var controller = new Record(testRecordingHandler, new NullLoggerFactory())
+            {
+                ControllerContext = new ControllerContext()
+                {
+                    HttpContext = httpContext
+                }
+            };
+            await controller.Start();
+            httpContext.Request.ContentLength = 0;
+
+            Startup.ProxyConfiguration.Mode = UniversalRecordingMode.StandardPlayback;
+            await Assert.ThrowsAsync<HttpException>(
+                () => controller.Stop()
+            );
+        }
     }
 }

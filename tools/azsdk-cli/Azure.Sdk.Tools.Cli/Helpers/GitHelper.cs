@@ -9,13 +9,13 @@ namespace Azure.Sdk.Tools.Cli.Helpers
     public interface IGitHelper
     {
         // Get the owner 
-        public Task<string> GetRepoOwnerNameAsync(string path, bool findUpstreamParent = true);
-        public Task<string> GetRepoFullNameAsync(string path, bool findUpstreamParent = true);
-        public Uri GetRepoRemoteUri(string path);
-        public string GetBranchName(string path);
-        public string GetMergeBaseCommitSha(string path, string targetBranch);
-        public string DiscoverRepoRoot(string path);
-        public string GetRepoName(string path);
+        public Task<string> GetRepoOwnerNameAsync(string pathInRepo, bool findUpstreamParent = true);
+        public Task<string> GetRepoFullNameAsync(string pathInRepo, bool findUpstreamParent = true);
+        public Uri GetRepoRemoteUri(string pathInRepo);
+        public string GetBranchName(string pathInRepo);
+        public string GetMergeBaseCommitSha(string pathInRepo, string targetBranch);
+        public string DiscoverRepoRoot(string pathInRepo);
+        public string GetRepoName(string pathInRepo);
     }
 
     public class GitHelper(IGitHubService gitHubService, ILogger<GitHelper> logger) : IGitHelper
@@ -23,9 +23,16 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         private readonly ILogger<GitHelper> logger = logger;
         private readonly IGitHubService gitHubService = gitHubService;
 
-        public string GetMergeBaseCommitSha(string path, string targetBranchName)
+        /// <summary>
+        /// Gets the SHA of the merge base (common ancestor) between the current branch and the target branch.
+        /// </summary>
+        /// <param name="pathInRepo">Any path within the git repository (file or directory)</param>
+        /// <param name="targetBranchName">The name of the target branch to find the merge base with</param>
+        /// <returns>The SHA of the merge base commit, or empty string if not found</returns>
+        public string GetMergeBaseCommitSha(string pathInRepo, string targetBranchName)
         {
-            using (var repo = new Repository(path))
+            var repoRoot = DiscoverRepoRoot(pathInRepo);
+            using (var repo = new Repository(repoRoot))
             {
                 // Get the current branch
                 Branch currentBranch = repo.Head;
@@ -38,16 +45,29 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             }
         }
 
-        public string GetBranchName(string repoPath)
+        /// <summary>
+        /// Gets the friendly name of the current branch in the repository.
+        /// </summary>
+        /// <param name="pathInRepo">Any path within the git repository (file or directory)</param>
+        /// <returns>The friendly name of the current branch</returns>
+        public string GetBranchName(string pathInRepo)
         {
-            using var repo = new Repository(repoPath);
+            var repoRoot = DiscoverRepoRoot(pathInRepo);
+            using var repo = new Repository(repoRoot);
             var branchName = repo.Head.FriendlyName;
             return branchName;
         }
 
-        public Uri GetRepoRemoteUri(string path)
+        /// <summary>
+        /// Gets the remote origin URI of the repository in HTTPS format.
+        /// </summary>
+        /// <param name="pathInRepo">Any path within the git repository (file or directory)</param>
+        /// <returns>The HTTPS URI of the remote origin</returns>
+        /// <exception cref="InvalidOperationException">Thrown when unable to determine remote URL</exception>
+        public Uri GetRepoRemoteUri(string pathInRepo)
         {
-            using var repo = new Repository(path);
+            var repoRoot = DiscoverRepoRoot(pathInRepo);
+            using var repo = new Repository(repoRoot);
             var remote = repo.Network?.Remotes["origin"];
             if (remote != null)
             {
@@ -87,9 +107,16 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             return gitUrl;
         }
 
-        public async Task<string> GetRepoOwnerNameAsync(string path, bool findUpstreamParent = true)
+        /// <summary>
+        /// Gets the owner name of the repository, optionally finding the upstream parent if the repo is a fork.
+        /// </summary>
+        /// <param name="pathInRepo">Any path within the git repository (file or directory)</param>
+        /// <param name="findUpstreamParent">Whether to find the upstream parent repo if this is a fork (default: true)</param>
+        /// <returns>The owner name of the repository or its upstream parent</returns>
+        /// <exception cref="InvalidOperationException">Thrown when unable to determine repository owner</exception>
+        public async Task<string> GetRepoOwnerNameAsync(string pathInRepo, bool findUpstreamParent = true)
         {
-            var uri = GetRepoRemoteUri(path);
+            var uri = GetRepoRemoteUri(pathInRepo);
             var segments = uri.Segments;
             string repoOwner = string.Empty;
             string repoName = string.Empty;
@@ -122,25 +149,37 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             throw new InvalidOperationException("Unable to determine repository owner.");
         }
 
-        // Get the full name of repo in the format of "{owner/name}", e.g. "Azure/azure-rest-api-specs"
-        public async Task<string> GetRepoFullNameAsync(string path, bool findUpstreamParent = true)
+        /// <summary>
+        /// Gets the full name of the repository in the format "{owner}/{name}", e.g. "Azure/azure-rest-api-specs".
+        /// </summary>
+        /// <param name="pathInRepo">Any path within the git repository (file or directory)</param>
+        /// <param name="findUpstreamParent">Whether to find the upstream parent repo if this is a fork (default: true)</param>
+        /// <returns>The full name of the repository in "owner/name" format</returns>
+        /// <exception cref="ArgumentException">Thrown when pathInRepo is null or empty</exception>
+        public async Task<string> GetRepoFullNameAsync(string pathInRepo, bool findUpstreamParent = true)
         {
-            if (!string.IsNullOrEmpty(path))
+            if (!string.IsNullOrEmpty(pathInRepo))
             {
-                var repoOwner = await GetRepoOwnerNameAsync(path, findUpstreamParent);
-                var repoName = GetRepoName(path);
+                var repoOwner = await GetRepoOwnerNameAsync(pathInRepo, findUpstreamParent);
+                var repoName = GetRepoName(pathInRepo);
                 return $"{repoOwner}/{repoName}";
             }
 
-            throw new ArgumentException("Invalid repository path.", nameof(path));
+            throw new ArgumentException("Invalid repository path.", nameof(pathInRepo));
         }
 
-        public string DiscoverRepoRoot(string path)
+        /// <summary>
+        /// Discovers and returns the root directory path of the git repository containing the specified path.
+        /// </summary>
+        /// <param name="pathInRepo">Any path within the git repository (file or directory)</param>
+        /// <returns>The absolute path to the repository root directory</returns>
+        /// <exception cref="InvalidOperationException">Thrown when no git repository is found at or above the specified path</exception>
+        public string DiscoverRepoRoot(string pathInRepo)
         {
-            var repoPath = Repository.Discover(path);
+            var repoPath = Repository.Discover(pathInRepo);
             if (string.IsNullOrEmpty(repoPath))
             {
-                throw new InvalidOperationException($"No git repository found at or above the path: {path}");
+                throw new InvalidOperationException($"No git repository found at or above the path: {pathInRepo}");
             }
 
             // Repository.Discover returns the path to .git directory
@@ -149,25 +188,29 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             return gitDir.Parent?.FullName ?? throw new InvalidOperationException("Unable to determine repository root");
         }
 
-        // Get the repository name from the local path
-        public string GetRepoName(string path)
+        /// <summary>
+        /// Gets the repository name from the remote origin URL.
+        /// </summary>
+        /// <param name="pathInRepo">Any path within the git repository (file or directory)</param>
+        /// <returns>The name of the repository (without the owner)</returns>
+        /// <exception cref="ArgumentException">Thrown when pathInRepo is null or empty</exception>
+        /// <exception cref="InvalidOperationException">Thrown when unable to determine repository name from remote URL</exception>
+        public string GetRepoName(string pathInRepo)
         {
-            if (string.IsNullOrEmpty(path))
+            if (string.IsNullOrEmpty(pathInRepo))
             {
-                throw new ArgumentException("Invalid repository path.", nameof(path));
+                throw new ArgumentException("Invalid repository path.", nameof(pathInRepo));
             }
             
-            var repoRoot = DiscoverRepoRoot(path);
-            var uri = GetRepoRemoteUri(repoRoot);
+            var uri = GetRepoRemoteUri(pathInRepo);
             var segments = uri.Segments;
 
             if (segments.Length < 2)
             {
-                throw new InvalidOperationException($"Unable to parse repository owner and name from remote URL: {uri}");
+                throw new InvalidOperationException($"Unable to parse repository name from remote URL: {uri}");
             }
 
             string repoName = segments[^1].TrimEnd(".git".ToCharArray());
-
             return repoName;
         }
     }

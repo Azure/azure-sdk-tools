@@ -24,6 +24,12 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Startup.ProxyConfiguration.RecordingId = null;
         }
 
+        internal static void Dispose()
+        {
+            Startup.ProxyConfiguration.Mode = UniversalRecordingMode.Azure;
+            Startup.ProxyConfiguration.RecordingId = null;
+        }
+
         private NullLoggerFactory _nullLogger = new NullLoggerFactory();
 
         [Fact]

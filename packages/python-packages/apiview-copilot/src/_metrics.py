@@ -1,11 +1,34 @@
-from datetime import datetime
 from typing import Optional
 
 import prompty
 import prompty.azure
-from src._apiview import APIVIEW_COMMENT_SELECT_FIELDS, get_apiview_cosmos_client
+from src._apiview import (
+    get_active_reviews,
+    get_comments_in_date_range,
+)
 from src._models import APIViewComment
-from src._utils import get_prompt_path
+from src._utils import get_prompt_path, to_epoch_seconds
+
+
+class AdoptionMetric:
+    """Helper class to track adoption metrics."""
+
+    def __init__(self):
+        self.total_count = 0
+        self.copilot_count = 0
+
+    @property
+    def adoption_rate(self) -> float:
+        if self.total_count == 0:
+            return 0.0
+        return self.copilot_count / self.total_count * 100.0
+
+    def as_dict(self) -> dict:
+        return {
+            "adoption_rate": f"{self.adoption_rate:.2f}",
+            "active_reviews": self.total_count,
+            "active_copilot_reviews": self.copilot_count,
+        }
 
 
 def _calculate_language_adoption(start_date: str, end_date: str, environment: str = "production") -> dict:
@@ -15,102 +38,43 @@ def _calculate_language_adoption(start_date: str, end_date: str, environment: st
     and calculates what percentage of those ReviewIds have AI comments.
     Returns a dictionary with languages as keys and adoption percentages as values.
     """
-    # Get comments container client
-    comments_client = get_apiview_cosmos_client(container_name="Comments", environment=environment)
-    reviews_client = get_apiview_cosmos_client(container_name="Reviews", environment=environment)
 
-    iso_start = datetime.strptime(start_date, "%Y-%m-%d").strftime("%Y-%m-%dT00:00:00Z")
-    iso_end = datetime.strptime(end_date, "%Y-%m-%d").strftime("%Y-%m-%dT23:59:59.999999Z")
+    active_reviews = get_active_reviews(start_date, end_date, environment=environment)
+    active_review_ids = {r.review_id for r in active_reviews}
+    ai_review_ids = set()
+    comments = get_comments_in_date_range(start_date, end_date, environment=environment)
 
-    # Query all comments in the date range to get active ReviewIds
-    comments_query = """
-    SELECT c.ReviewId, c.CreatedBy FROM c 
-    WHERE c.CreatedOn >= @start_date AND c.CreatedOn <= @end_date
-    """
-
-    raw_comments = list(
-        comments_client.query_items(
-            query=comments_query,
-            parameters=[{"name": "@start_date", "value": iso_start}, {"name": "@end_date", "value": iso_end}],
-            enable_cross_partition_query=True,
-        )
-    )
-
-    # Build set of active ReviewIds from comments
-    active_reviews = set()
-    for comment in raw_comments:
+    # indentify which active reviews have AI comments
+    for comment in comments:
         review_id = comment.get("ReviewId")
-        if review_id:
-            active_reviews.add(review_id)
+        created_by = comment.get("CreatedBy")
+        if review_id and created_by == "azure-sdk":
+            ai_review_ids.add(review_id)
 
-    # Find ReviewIds with AI comments
-    ai_reviews = {
-        comment["ReviewId"]
-        for comment in raw_comments
-        if comment.get("CreatedBy") == "azure-sdk" and comment.get("ReviewId")
-    }
+    # convert from set to list
+    ai_review_ids = list(ai_review_ids)
 
-    # If no comments, try to get all reviews in the date range
-    if not active_reviews:
-        # Query all reviews in the date range
-        reviews_query = """
-        SELECT r.id, r.Language FROM r WHERE r.CreatedOn >= @start_date AND r.CreatedOn <= @end_date
-        """
-        batch_reviews = list(
-            reviews_client.query_items(
-                query=reviews_query,
-                parameters=[{"name": "@start_date", "value": iso_start}, {"name": "@end_date", "value": iso_end}],
-                enable_cross_partition_query=True,
-            )
-        )
-        review_to_language = {}
-        language_reviews = {}
-        for review in batch_reviews:
-            review_id = review.get("id")
-            language = review.get("Language", "").lower()
-            if language and review_id:
-                review_to_language[review_id] = language
-                if language not in language_reviews:
-                    language_reviews[language] = set()
-                language_reviews[language].add(review_id)
-    else:
-        # Query all reviews for active ReviewIds and get their languages
-        review_to_language = {}
-        language_reviews = {}
-        batch_size = 100
-        review_ids = list(active_reviews)
-        for i in range(0, len(review_ids), batch_size):
-            batch_ids = review_ids[i : i + batch_size]
-            reviews_query = """
-            SELECT r.id, r.Language FROM r WHERE ARRAY_CONTAINS(@review_ids, r.id)
-            """
-            batch_reviews = list(
-                reviews_client.query_items(
-                    query=reviews_query,
-                    parameters=[{"name": "@review_ids", "value": batch_ids}],
-                    enable_cross_partition_query=True,
-                )
-            )
-            for review in batch_reviews:
-                review_id = review.get("id")
-                language = review.get("Language", "").lower()
-                if language and review_id:
-                    review_to_language[review_id] = language
-                    if language not in language_reviews:
-                        language_reviews[language] = set()
-                    language_reviews[language].add(review_id)
+    # validate that ai_review_ids is a subset of active_review_ids
+    assert set(ai_review_ids).issubset(active_review_ids), "AI review IDs must be a subset of active review IDs"
+
+    # filter out C and C++ since they are not supported by Copilot
+    # See: https://github.com/Azure/azure-sdk-tools/issues/10465
+    pretty_languages_to_omit = ["c++", "c", "typespec", "swagger", "xml"]
+    active_reviews = [r for r in active_reviews if r.language.lower() not in pretty_languages_to_omit]
 
     # Calculate adoption rate and counts per language
-    adoption_stats = {}
-    for language, review_ids in language_reviews.items():
-        total_reviews = len(review_ids)
-        reviews_with_ai_comments = sum(1 for review_id in review_ids if review_id in ai_reviews)
-        adoption_rate = reviews_with_ai_comments / total_reviews if total_reviews > 0 else 0.0
-        adoption_stats[language] = {
-            "adoption_rate": f"{adoption_rate:.2f}",
-            "active_reviews": total_reviews,
-            "active_copilot_reviews": reviews_with_ai_comments,
-        }
+    adoption_stats: dict[str, AdoptionMetric] = {}
+    for item in active_reviews:
+        has_ai_comments = item.review_id in ai_review_ids
+        if item.language not in adoption_stats:
+            adoption_stats[item.language] = AdoptionMetric()
+        if has_ai_comments:
+            adoption_stats[item.language].copilot_count += 1
+        adoption_stats[item.language].total_count += 1
+
+    # convert to dict form for easier serialization
+    for language, stats in adoption_stats.items():
+        adoption_stats[language] = stats.as_dict()
 
     return adoption_stats
 
@@ -149,41 +113,20 @@ def get_metrics_report(start_date: str, end_date: str, environment: str, markdow
     """Generate a metrics report for a date range."""
     # validate that start_date and end_date are in YYYY-MM-DD format
     bad_dates = []
-    iso_start = None
-    iso_end = None
-    for date_str, label in zip([start_date, end_date], ["start_date", "end_date"]):
+    for date_str in [start_date, end_date]:
         try:
-            dt = datetime.strptime(date_str, "%Y-%m-%d")
-            if label == "start_date":
-                # Start of day
-                iso_start = dt.strftime("%Y-%m-%dT00:00:00Z")
-            else:
-                # End of day (max time)
-                iso_end = dt.strftime("%Y-%m-%dT23:59:59.999999Z")
+            to_epoch_seconds(date_str)
         except ValueError:
             bad_dates.append(date_str)
     if bad_dates:
         print(f"ValueError: Dates must be in YYYY-MM-DD format. Invalid date(s) found: {', '.join(bad_dates)}")
         return
 
-    comments_client = get_apiview_cosmos_client(container_name="Comments", environment=environment)
-    query = f"""
-    SELECT {', '.join(APIVIEW_COMMENT_SELECT_FIELDS)} FROM c
-    WHERE c.CreatedOn >= @start_date AND c.CreatedOn <= @end_date
-    """
-    # retrieve comments created between start_date and end_date (ISO 8601)
-    raw_comments = list(
-        comments_client.query_items(
-            query=query,
-            parameters=[{"name": "@start_date", "value": iso_start}, {"name": "@end_date", "value": iso_end}],
-            enable_cross_partition_query=True,
-        )
-    )
-    comments = [APIViewComment(**d) for d in raw_comments]
-
     # Calculate language adoption
     language_adoption = _calculate_language_adoption(start_date, end_date, environment=environment)
 
+    raw_comments = get_comments_in_date_range(start_date, end_date, environment=environment)
+    comments = [APIViewComment(**d) for d in raw_comments]
     report = {
         "start_date": start_date,
         "end_date": end_date,

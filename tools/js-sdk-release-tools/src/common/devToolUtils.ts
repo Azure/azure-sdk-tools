@@ -65,10 +65,8 @@ export async function customizeCodes(packageDirectory: string) {
     const options = { ...runCommandOptions, cwd };
 
     try {
-        const generatedDir = path.join(packageDirectory, 'generated');
-        const srcDir = path.join(packageDirectory, 'src');
         //TODO: support ./src/generated cases in future
-        const customizeCommand = `customization apply-v2 -s ${generatedDir} -c ${srcDir}`;
+        const customizeCommand = `customization apply-v2 -s ./generated -c ./src`;
         await runCommand('npm', ['exec', '--', 'dev-tool', customizeCommand], options, true, 600, true);
         logger.info(`Customize codes successfully.`);
     } catch (error) {

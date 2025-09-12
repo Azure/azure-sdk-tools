@@ -142,9 +142,12 @@ def get_active_reviews(start_date: str, end_date: str, environment: str = "produ
     results = list(reviews_container.query_items(query=query, parameters=params, enable_cross_partition_query=True))
 
     for result in results:
-        language = get_language_pretty_name(result.get("Language", "Unknown"))
         review_id = result["id"]
         review_name = result.get("PackageName")
+        language = get_language_pretty_name(result.get("Language", "Unknown"))
+        if language == "Java" and review_name.startswith("com.azure.android:"):
+            # APIView does not distinguish between Java and Android at the review level, but we need to
+            language = "Android"
         metadata.append(ActiveReviewMetadata(review_id=review_id, name=review_name, language=language))
     return metadata
 

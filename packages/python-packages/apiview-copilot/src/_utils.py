@@ -15,6 +15,8 @@ from datetime import datetime, timezone
 def get_language_pretty_name(language: str) -> str:
     """
     Returns a pretty name for the language.
+    Args:
+        language (str): The language to get the pretty name for.
     """
     language_pretty_names = {
         "android": "Android",
@@ -25,9 +27,10 @@ def get_language_pretty_name(language: str) -> str:
         "java": "Java",
         "python": "Python",
         "rust": "Rust",
-        "typescript": "TypeScript",
+        "typescript": "JavaScript",
     }
-    return language_pretty_names.get(language, language.capitalize())
+    pretty_name = language_pretty_names.get(language, language.capitalize())
+    return pretty_name
 
 
 def get_prompt_path(*, folder: str, filename: str) -> str:

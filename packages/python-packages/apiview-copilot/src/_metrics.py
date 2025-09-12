@@ -21,7 +21,7 @@ class AdoptionMetric:
     def adoption_rate(self) -> float:
         if self.total_count == 0:
             return 0.0
-        return self.copilot_count / self.total_count * 100.0
+        return self.copilot_count / self.total_count
 
     def as_dict(self) -> dict:
         return {
@@ -73,10 +73,10 @@ def _calculate_language_adoption(start_date: str, end_date: str, environment: st
         adoption_stats[item.language].total_count += 1
 
     # convert to dict form for easier serialization
-    for language, stats in adoption_stats.items():
-        adoption_stats[language] = stats.as_dict()
-
-    return adoption_stats
+    output = {}
+    for language, stats in list(adoption_stats.items()):
+        output[language.lower()] = stats.as_dict()
+    return output
 
 
 def _calculate_ai_vs_manual_comment_ratio(comments: list[APIViewComment]) -> float:

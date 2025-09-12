@@ -44,7 +44,7 @@ def _calculate_language_adoption(start_date: str, end_date: str, environment: st
     ai_review_ids = set()
     comments = get_comments_in_date_range(start_date, end_date, environment=environment)
 
-    # indentify which active reviews have AI comments
+    # identify which active reviews have AI comments
     for comment in comments:
         review_id = comment.get("ReviewId")
         created_by = comment.get("CreatedBy")

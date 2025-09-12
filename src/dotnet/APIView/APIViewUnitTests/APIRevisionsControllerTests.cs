@@ -55,7 +55,7 @@ public class APIRevisionsControllerTests
     }
 
     [Fact]
-    public async Task GetAPIRevisionTextAsync_SpecificType_WithValidId_ReturnsRevisionText()
+    public async Task GetAPIRevisionTextAsync_WithValidId_ReturnsRevisionText()
     {
         string reviewId = "review123";
         string apiRevisionId = "revision456";
@@ -81,18 +81,17 @@ public class APIRevisionsControllerTests
     }
 
     [Fact]
-    public async Task GetAPIRevisionTextAsync_SpecificType_WithoutRevisionId_ReturnsBadRequest()
+    public async Task GetAPIRevisionTextAsync_WithOnlyReviewId_ReturnsBadRequest()
     {
         string reviewId = "review123";
-        ActionResult<string> result = await _controller.GetAPIRevisionTextAsync(null, reviewId, APIRevisionSelectionType.Specific);
+        ActionResult<string> result = await _controller.GetAPIRevisionTextAsync(null, reviewId);
 
         BadRequestObjectResult badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
-        Assert.Equal("apiRevisionId is required when selectionType is Specific",
-            badRequestResult.Value);
+        Assert.Equal("apiRevisionId is required", badRequestResult.Value);
     }
 
     [Fact]
-    public async Task GetAPIRevisionTextAsync_SpecificType_WithDeletedRevision_ReturnsNoContent()
+    public async Task GetAPIRevisionTextAsync_WithDeletedRevision_ReturnsNoContent()
     {
         string apiRevisionId = "revision456";
         APIRevisionListItemModel deletedRevision = CreateMockAPIRevision(apiRevisionId, true);

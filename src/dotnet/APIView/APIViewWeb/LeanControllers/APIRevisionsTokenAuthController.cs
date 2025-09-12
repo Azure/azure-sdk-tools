@@ -53,23 +53,23 @@ public class APIRevisionsTokenAuthController : ControllerBase
     ///     Generate review text for an API revision
     /// </summary>
     /// <param name="reviewId">The review ID</param>
-    /// <param name="apiRevisionId">The specific API revision ID (required when selectionType is Specific)</param>
+    /// <param name="apiRevisionId">The specific API revision ID (required when there is not selectionType)</param>
     /// <param name="selectionType">How to select the API revision</param>
     /// <returns>Plain text representation of the API review</returns>
     [HttpGet("getRevisionText", Name = "GetAPIRevisionText")]
     public async Task<ActionResult<string>> GetAPIRevisionTextAsync(
         [FromQuery] string apiRevisionId = null,
         [FromQuery] string reviewId = null,
-        [FromQuery] APIRevisionSelectionType selectionType = APIRevisionSelectionType.Specific)
+        [FromQuery] APIRevisionSelectionType selectionType = APIRevisionSelectionType.Undefined)
     {
         try
         {
-            if (selectionType == APIRevisionSelectionType.Specific && string.IsNullOrEmpty(apiRevisionId))
+            if (selectionType == APIRevisionSelectionType.Undefined && string.IsNullOrEmpty(apiRevisionId))
             {
-                return BadRequest("apiRevisionId is required when selectionType is Specific");
+                return BadRequest("apiRevisionId is required");
             }
 
-            if (selectionType != APIRevisionSelectionType.Specific && string.IsNullOrEmpty(reviewId))
+            if (selectionType != APIRevisionSelectionType.Undefined && string.IsNullOrEmpty(reviewId))
             {
                 return BadRequest($"reviewId is required when selectionType is {selectionType}");
             }
@@ -77,7 +77,7 @@ public class APIRevisionsTokenAuthController : ControllerBase
             APIRevisionListItemModel activeApiRevision = null;
             switch (selectionType)
             {
-                case APIRevisionSelectionType.Specific:
+                case APIRevisionSelectionType.Undefined:
                     activeApiRevision = await _apiRevisionsManager.GetAPIRevisionAsync(User, apiRevisionId);
                     break;
                 case APIRevisionSelectionType.Latest:
@@ -116,8 +116,8 @@ public class APIRevisionsTokenAuthController : ControllerBase
                 return new LeanJsonResult(null, StatusCodes.Status204NoContent);
             }
 
-            if ((selectionType == APIRevisionSelectionType.Specific && !string.IsNullOrEmpty(reviewId) && activeApiRevision.ReviewId != reviewId) || 
-                (selectionType != APIRevisionSelectionType.Specific && !string.IsNullOrEmpty(apiRevisionId) && activeApiRevision.Id != apiRevisionId))
+            if ((selectionType == APIRevisionSelectionType.Undefined && !string.IsNullOrEmpty(reviewId) && activeApiRevision.ReviewId != reviewId) || 
+                (selectionType != APIRevisionSelectionType.Undefined && !string.IsNullOrEmpty(apiRevisionId) && activeApiRevision.Id != apiRevisionId))
             {
                 return BadRequest(
                     $"Mismatch between reviewId and apiRevisionId: The API revision '{apiRevisionId}' does not belong to review '{reviewId}'. Ensure the revision ID corresponds to the specified review.");

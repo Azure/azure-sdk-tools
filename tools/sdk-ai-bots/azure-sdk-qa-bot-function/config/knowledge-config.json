@@ -50,7 +50,7 @@
     {
       "repository": {
         "url": "https://github.com/Azure/azure-rest-api-specs.wiki.git",
-        "branch": "master",
+        "branch": "main",
         "authType": "public"
       },
       "paths": [
@@ -78,7 +78,7 @@
       "repository": {
         "url": "https://github.com/Azure/azure-sdk-for-python.wiki.git",
         "path": "azure-sdk-for-python.wiki",
-        "branch": "master",
+        "branch": "main",
         "authType": "public"
       },
       "paths": [

@@ -260,5 +260,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
 
             Assert.Contains("Uri doesn't match:", resultingException.Message);
         }
+
     }
 }

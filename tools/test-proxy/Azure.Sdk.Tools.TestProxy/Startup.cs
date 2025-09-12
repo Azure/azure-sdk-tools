@@ -106,8 +106,8 @@ namespace Azure.Sdk.Tools.TestProxy
                     break;
                 case StartOptions startOptions:
                     if (startOptions.StandardProxyMode) {
-                        // default to record, but when the 
-                        ProxyConfiguration.Mode = UniversalRecordingMode.Record;
+                        // default to playback when run in standard mode. hitting Record/Start or Record/Playback will switch this setting
+                        ProxyConfiguration.Mode = UniversalRecordingMode.StandardPlayback;
                     }
                     else
                     {
@@ -321,12 +321,12 @@ namespace Azure.Sdk.Tools.TestProxy
                         var cfg = Startup.ProxyConfiguration;
                         var handler = context.RequestServices.GetRequiredService<RecordingHandler>();
 
-                        if (cfg.Mode == UniversalRecordingMode.Playback)
+                        if (cfg.Mode == UniversalRecordingMode.StandardPlayback)
                         {
                             await handler.HandlePlaybackRequest(cfg.RecordingId, context.Request, context.Response);
                             return;
                         }
-                        else if (cfg.Mode == UniversalRecordingMode.Record)
+                        else if (cfg.Mode == UniversalRecordingMode.StandardRecord)
                         {
                             await handler.HandleRecordRequestAsync(cfg.RecordingId, context.Request, context.Response);
                             return;

@@ -44,7 +44,7 @@ namespace Azure.Sdk.Tools.TestProxy
                     _recordingHandler.ContextDirectory);
 
                 DebugLogger.LogAdminRequestDetails(_logger, Request);
-                _logger.LogDebug($"Attempting to start recording for {file} {assetsJson??string.Empty}");
+                _logger.LogDebug($"Attempting to start recording for {file} {assetsJson ?? string.Empty}");
 
                 if (string.IsNullOrWhiteSpace(file))
                 {
@@ -52,40 +52,14 @@ namespace Azure.Sdk.Tools.TestProxy
                 }
 
                 await _recordingHandler.StartRecordingAsync(file, Response, assetsJson);
+
+                if (Startup.ProxyConfiguration.Mode == UniversalRecordingMode.StandardRecord || Startup.ProxyConfiguration.Mode == UniversalRecordingMode.StandardPlayback)
+                {
+                    Startup.ProxyConfiguration.RecordingId = Response.Headers["x-recording-id"];
+                    // we use Start() to transition from StandardPlayback to StandardRecord and vice-versa
+                    Startup.ProxyConfiguration.Mode = UniversalRecordingMode.StandardRecord;
+                }
             }
-        }
-
-        [HttpPost]
-        public async Task StartUniversal()
-        {
-            var body = await HttpRequestInteractions.GetBody(Request);
-
-            if (body == null && (Startup.ProxyConfiguration.Mode.Equals(UniversalRecordingMode.Record) || Startup.ProxyConfiguration.Mode.Equals(UniversalRecordingMode.Playback)))
-            {
-                throw new HttpException(HttpStatusCode.BadRequest, "Provide a application/json body containing x-recording-file and x-recording-assets-file");
-            }
-
-            if (Startup.ProxyConfiguration.Mode.Equals(UniversalRecordingMode.Azure))
-            {
-                throw new HttpException(HttpStatusCode.BadRequest, "The /Record/StartUniversal endpoint is only available when the proxy is started in 'standard' mode. Re-run the proxy with --standard-proxy-mode.");
-            }
-
-            string file = HttpRequestInteractions.GetBodyKey(body, "x-recording-file", allowNulls: false);
-            var assetsJson = RecordingHandler.GetAssetsJsonLocation(
-                HttpRequestInteractions.GetBodyKey(body, "x-recording-assets-file", allowNulls: true),
-                _recordingHandler.ContextDirectory);
-
-            DebugLogger.LogAdminRequestDetails(_logger, Request);
-            _logger.LogDebug($"Attempting to start recording for {file} {assetsJson ?? string.Empty}");
-
-            if (string.IsNullOrWhiteSpace(file))
-            {
-                throw new HttpException(HttpStatusCode.BadRequest, "If providing a body to /Record/Start, the key 'x-recording-file' must be provided. If attempting to start an in-memory recording, provide NO body.");
-            }
-
-            await _recordingHandler.StartRecordingAsync(file, Response, assetsJson);
-
-            Startup.ProxyConfiguration.RecordingId = Response.Headers["x-recording-id"];
         }
 
         [HttpPost]
@@ -102,7 +76,16 @@ namespace Azure.Sdk.Tools.TestProxy
         [HttpPost]
         public async Task Stop()
         {
-            string id = RecordingHandler.GetHeader(Request, "x-recording-id");
+            string id = string.Empty;
+
+            if (Startup.ProxyConfiguration.Mode == UniversalRecordingMode.StandardPlayback || Startup.ProxyConfiguration.Mode == UniversalRecordingMode.StandardRecord)
+            {
+                id = Startup.ProxyConfiguration.RecordingId;
+            }
+            else
+            {
+                id = RecordingHandler.GetHeader(Request, "x-recording-id");
+            }
 
             var variables = await HttpRequestInteractions.GetBody<Dictionary<string, string>>(Request);
 
@@ -121,27 +104,20 @@ namespace Azure.Sdk.Tools.TestProxy
 
             DebugLogger.LogAdminRequestDetails(_logger, Request);
 
-            await _recordingHandler.StopRecording(id, variables: variables, saveRecording: save);
-        }
-
-        [HttpPost]
-        public async Task StopUniversal()
-        {
-            if (Startup.ProxyConfiguration.Mode.Equals(UniversalRecordingMode.Azure))
+            if (Startup.ProxyConfiguration.Mode == UniversalRecordingMode.StandardPlayback)
             {
-                throw new HttpException(HttpStatusCode.BadRequest, "The /Record/StopUniversal endpoint is only available when the proxy is started in 'standard' mode. Re-run the proxy with --standard-proxy-mode.");
+                throw new HttpException(HttpStatusCode.BadRequest, "The proxy is currently in playback mode. <proxyurl>/Record/Stop is not a valid operation in playback mode. Start a recording session using  /Record/Start before calling Record/Stop.");
             }
-
-            if (string.IsNullOrEmpty(Startup.ProxyConfiguration.RecordingId))
+            if (Startup.ProxyConfiguration.Mode == UniversalRecordingMode.StandardRecord)
             {
-                return; // nothing active
+                await _recordingHandler.StopRecording(Startup.ProxyConfiguration.RecordingId, variables: variables, saveRecording: save);
+                Startup.ProxyConfiguration.RecordingId = null;
             }
-
-            DebugLogger.LogAdminRequestDetails(_logger, Request);
-            await _recordingHandler.StopRecording(Startup.ProxyConfiguration.RecordingId);
-            Startup.ProxyConfiguration.RecordingId = null;
+            else
+            {
+                await _recordingHandler.StopRecording(id, variables: variables, saveRecording: save);
+            }
         }
-
 
         public async Task HandleRequest()
         {

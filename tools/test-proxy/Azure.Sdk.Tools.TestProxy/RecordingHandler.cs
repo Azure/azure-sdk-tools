@@ -1251,7 +1251,7 @@ namespace Azure.Sdk.Tools.TestProxy
 
         public static Uri GetRequestUri(HttpRequest request)
         {
-            if (Startup.ProxyConfiguration.Equals(UniversalRecordingMode.Record) || Startup.ProxyConfiguration.Equals(UniversalRecordingMode.Playback)) 
+            if (Startup.ProxyConfiguration.Mode == UniversalRecordingMode.StandardRecord || Startup.ProxyConfiguration.Mode == UniversalRecordingMode.StandardPlayback) 
             {
                 // remember from above, if we use UriBuilder or similar, we get auto-decoding of escaped characters in the path/query, which will break 
                 // some requests.

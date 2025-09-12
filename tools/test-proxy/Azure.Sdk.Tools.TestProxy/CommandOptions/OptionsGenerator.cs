@@ -50,8 +50,8 @@ namespace Azure.Sdk.Tools.TestProxy.CommandOptions
             dumpOption.AddAlias("-d");
 
             var standardProxyOption = new Option<bool>(
-                name: "--standard-proxy-mode",
-                description: "Flag; Run the proxy in single recording mode. This means that test-proxy will function as a regular proxy without needing any request header changes.",
+                name: "--http-proxy",
+                description: "Flag; Run the test-proxy in single-session mode. This means that test-proxy will function as a regular proxy without needing any request header changes. Single playback or record at a time.",
                 getDefaultValue: () => false);
 
             var universalOption = new Option<bool>(

@@ -1,0 +1,18 @@
+[
+  {
+    "packages": [
+        "azure-resourcemanager",
+        "azure-cosmos-kafka-connect",
+        "azure-sdk-bom",
+        "azure-ai-anomalydetector",
+        "azure-maps-elevation",
+        "azure-communication-callingserver",
+        "azure-messaging-eventgrid-cloudnative-cloudevents",
+        "azure-communication-networktraversal",
+        "azure-monitor-query",
+        "azure-ai-personalizer",
+        "azure-analytics-purview-catalog",
+        "azure-media-videoanalyzer-edge"
+    ]
+  }
+]

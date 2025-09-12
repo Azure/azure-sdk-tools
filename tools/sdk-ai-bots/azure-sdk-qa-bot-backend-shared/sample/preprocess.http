@@ -1,0 +1,10 @@
+POST http://localhost:3000/api/prompts/preprocess
+Content-Type: application/json
+x-api-key: YOUR_API_KEY
+
+{
+  "text": "hello, give me the change summary of this PR for tsp: https://github.com/Azure/azure-rest-api-specs/pull/34890",
+  "images": [
+    "https://raw.githubusercontent.com/wanlwanl/wanl-fork-azure-sdk-tools/refs/heads/wanl/ocr/tools/sdk-ai-bots/azure-sdk-qa-bot/test/images/ocr-eng.png"
+  ]
+}

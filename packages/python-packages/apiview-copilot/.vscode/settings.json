@@ -18,5 +18,7 @@
     "**/__pycache__": true,
     "**/*.pyc": true
   },
-  "python.analysis.autoImportCompletions": false
+  "python.analysis.autoImportCompletions": false,
+  "python-envs.defaultEnvManager": "ms-python.python:pyenv",
+  "python-envs.pythonProjects": []
 }

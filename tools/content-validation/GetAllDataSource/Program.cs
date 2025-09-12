@@ -87,6 +87,11 @@ namespace DataSource
 
                     await GetAllDataSource(allPages, language, versionSuffix, pageLink, cookieName, cookieValue, branch);
 
+                    if (string.IsNullOrEmpty(language))
+                    {
+                        throw new ArgumentException("Language cannot be null or empty.");
+                    }
+                    
                     if (allPages.Count > 0)
                     {
                         Console.WriteLine($"Saving {allPages.Count} URLs for {packageConfig.PackageName}...");
@@ -165,12 +170,12 @@ namespace DataSource
                         HasHeaderRecord = true,
                     }))
                     {
-                        csvReader.Context.RegisterClassMap<PythonPackageMap>();
+                        csvReader.Context.RegisterClassMap<PythonPackageMapInfo>();
     
-                        var records = new List<PackageCSV>();
+                        var records = new List<PackageCSVInfo>();
                         while (await csvReader.ReadAsync())
                         {
-                            var record = csvReader.GetRecord<PackageCSV>();
+                            var record = csvReader.GetRecord<PackageCSVInfo>();
                             records.Add(record);
                         }
     
@@ -593,16 +598,16 @@ namespace DataSource
         }
     }
 
-    public class PackageCSV
+    public class PackageCSVInfo
     {
         public string Package { get; set; } = string.Empty;
         public string VersionGA { get; set; } = string.Empty;
         public string VersionPreview { get; set; } = string.Empty;
     }
 
-    public class PythonPackageMap : ClassMap<PackageCSV>
+    public class PythonPackageMapInfo : ClassMap<PackageCSVInfo>
     {
-        public PythonPackageMap()
+        public PythonPackageMapInfo()
         {
             Map(m => m.Package).Name("Package");
             Map(m => m.VersionGA).Name("VersionGA");

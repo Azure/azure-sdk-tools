@@ -18,6 +18,7 @@ using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
@@ -125,7 +126,8 @@ public class ReviewManagerGenerateAIReviewTests
             mocks.CodeFileManager.Object,
             mocks.Configuration.Object,
             mocks.HttpClientFactory.Object,
-            mocks.PollingJobQueueManager.Object
+            mocks.PollingJobQueueManager.Object,
+            mocks.Logger.Object
         );
         return (reviewManager, mocks);
     }
@@ -166,5 +168,6 @@ public class ReviewManagerGenerateAIReviewTests
         public Mock<IPollingJobQueueManager> PollingJobQueueManager { get; } = new();
 
         public IEnumerable<LanguageService> LanguageServices { get; } = new List<LanguageService>();
+        public Mock<ILogger<ReviewManager>> Logger { get; } = new();
     }
 }

@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.CodeownersUtils.Utils
 {
@@ -29,7 +30,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Utils
         }
 
         /// <summary>
-        /// Load a file from the repository into an List&lt;string&gt;. 
+        /// Load a file from the repository into an List&lt;string&gt;.
         /// Q) Why is this necessary?
         /// A) There are some pieces of metadata that require looking forward to ensure correctness.
         /// </summary>
@@ -64,19 +65,19 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Utils
                     if (response.StatusCode == HttpStatusCode.OK)
                     {
                         // This writeline is probably unnecessary but good to have if there are previous attempts that failed
-                        Console.WriteLine($"GetUrlContents for {url} attempt number {attempts} succeeded.");
+                        Log.Logger.LogInformation("GetUrlContents for {Url} attempt number {Attempts} succeeded.", url, attempts);
                         return response.Content.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
                     }
                     else
                     {
-                        Console.WriteLine($"GetUrlContents attempt number {attempts}. Non-{HttpStatusCode.OK} status code trying to fetch {url}. Status Code = {response.StatusCode}");
+                        Log.Logger.LogWarning("GetUrlContents attempt number {Attempts}. Non-{StatusCode} status code trying to fetch {Url}. Status Code = {ResponseStatus}", attempts, HttpStatusCode.OK, url, response.StatusCode);
                     }
                 }
                 catch (HttpRequestException httpReqEx)
                 {
                     // HttpRequestException means the request failed due to an underlying issue such as network connectivity,
                     // DNS failure, server certificate validation or timeout.
-                    Console.WriteLine($"GetUrlContents attempt number {attempts}. HttpRequestException trying to fetch {url}. Exception message = {httpReqEx.Message}");
+                    Log.Logger.LogWarning("GetUrlContents attempt number {Attempts}. HttpRequestException trying to fetch {Url}. Exception message = {Message}", attempts, url, httpReqEx.Message);
                 }
 
                 // Skip retries on a NotFound response

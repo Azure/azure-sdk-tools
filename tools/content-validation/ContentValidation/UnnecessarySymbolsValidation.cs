@@ -19,20 +19,14 @@ public class UnnecessarySymbolsValidation : IValidation
     public List<IgnoreItem> commonIgnore = IgnoreData.GetIgnoreList("CommonValidation", "contains");
 
     public List<IgnoreItem> prefixList = IgnoreData.GetIgnoreList("UnnecessarySymbolsValidation", "prefix");
-
+    
     public List<IgnoreItem> ignoreListBefore = IgnoreData.GetIgnoreList("UnnecessarySymbolsValidation", "before]");
 
-    // Star list for checking if the content start with symbol in the list.
-    public List<IgnoreItem> startList = IgnoreData.GetIgnoreList("UnnecessarySymbolsValidation", "start");
-
-    // Content list for checking if the content between "[ ]" is in the list.
-    public List<IgnoreItem> contentList = IgnoreData.GetIgnoreList("UnnecessarySymbolsValidation", "content");
-
     // Prefix list for checking if the content before the "[" is in the list.
-    public List<IgnoreItem> containList01 = IgnoreData.GetIgnoreList("UnnecessarySymbolsValidation", "<contain>");
+    public List<IgnoreItem> containList01 = IgnoreData.GetIgnoreList("UnnecessarySymbolsValidation", "<contains>");
 
     // Content list for checking if the content between "[ ]" is in the list.
-    public List<IgnoreItem> containList02 = IgnoreData.GetIgnoreList("UnnecessarySymbolsValidation", "[contain]");
+    public List<IgnoreItem> containList02 = IgnoreData.GetIgnoreList("UnnecessarySymbolsValidation", "[contains]");
 
     public UnnecessarySymbolsValidation(IPlaywright playwright)
     {
@@ -85,7 +79,7 @@ public class UnnecessarySymbolsValidation : IValidation
             string[] lines = codeBlock.Split(["\r\n", "\n"], StringSplitOptions.RemoveEmptyEntries);
             foreach (string line in lines)
             {
-                if (startList.Any(item => line.Trim().Contains(item.IgnoreText)) || commonIgnore.Any(item => line.Trim().Contains(item.IgnoreText)))
+                if (prefixList.Any(item => line.Trim().Contains(item.IgnoreText)) || commonIgnore.Any(item => line.Trim().Contains(item.IgnoreText)))
                 {
                     continue;
                 }
@@ -93,7 +87,7 @@ public class UnnecessarySymbolsValidation : IValidation
                 var matchCollections = Regex.Matches(line, includePattern);
                 foreach (Match match in matchCollections)
                 {
-                    string unnecessarySymbol = $"\"{match.Value}\"";
+                    string unnecessarySymbol = $"\"{match.Value}\""; 
                     valueSet.Add(unnecessarySymbol);
                     errorList.Add($"Unnecessary symbol: {unnecessarySymbol} in code: `{line}`");
                 }
@@ -127,9 +121,9 @@ public class UnnecessarySymbolsValidation : IValidation
             {
                 continue; // Skip this line if it contains a valid interval symbol
             }
-
+            
             var matchCollections = Regex.Matches(line, includePattern);
-
+            
             foreach (Match match in matchCollections)
             {
                 // Console.WriteLine($"Unnecessary symbol: {match.Value} in text: `{line}`");
@@ -137,7 +131,7 @@ public class UnnecessarySymbolsValidation : IValidation
                 {
                     if (AreAngleBracketsPaired(line))
                     {
-                        continue;
+                        continue; 
                     }
 
                     // This case is not an issue in java doc, we will move it in ignore pattern.
@@ -170,7 +164,7 @@ public class UnnecessarySymbolsValidation : IValidation
                     {
                         continue;
                     }
-
+                    
                     if (ignoreListBefore.Any(item => line.Contains(item.IgnoreText)))
                     {
                         continue;
@@ -192,16 +186,15 @@ public class UnnecessarySymbolsValidation : IValidation
                 List<string> matchSymbols = new List<string>() { "[", "]", "<", ">" };
                 string unnecessarySymbol = $"\"{match.Value}\""; ;
                 valueSet.Add(unnecessarySymbol);
-
-                if (matchSymbols.Contains(match.Value))
+                
+                if(matchSymbols.Contains(match.Value))
                 {
                     errorList.Add($"Symbols `{unnecessarySymbol}` do not match in text: `{line}`");
                 }
-                else
-                {
+                else{
                     errorList.Add($"Unnecessary symbol: `{unnecessarySymbol}` in text: `{line}`");
                 }
-
+               
             }
 
             // Check the new patternForJava
@@ -211,7 +204,7 @@ public class UnnecessarySymbolsValidation : IValidation
                 string matchedContent = matchData.Value;
                 string unnecessarySymbol = $"\"{matchedContent}\"";
                 valueSet.Add(unnecessarySymbol);
-                errorList.Add($"Unnecessary symbol: `{unnecessarySymbol}` in text: `{line}`");
+                errorList.Add($"Unnecessary symbol: `{unnecessarySymbol}` in text: `{line}`"); 
             }
         }
     }
@@ -266,7 +259,7 @@ public class UnnecessarySymbolsValidation : IValidation
             return false;
         }
 
-        // Check if the content is in the contentList
+        // Check if the content is in the containList02
         if (input[index] == '[')
         {
             // Extract the content between '[' and ']'
@@ -280,8 +273,8 @@ public class UnnecessarySymbolsValidation : IValidation
 
             string contentBetweenBrackets = input.Substring(startIndex + 1, endIndex - startIndex - 1);
 
-            // Check if the content is in the contentList
-            if (contentList.Any(content => contentBetweenBrackets.Contains(content.IgnoreText, StringComparison.OrdinalIgnoreCase)))
+            // Check if the content is in the containList02
+            if (containList02.Any(content => contentBetweenBrackets.Contains(content.IgnoreText, StringComparison.OrdinalIgnoreCase)))
             {
                 return true;
             }

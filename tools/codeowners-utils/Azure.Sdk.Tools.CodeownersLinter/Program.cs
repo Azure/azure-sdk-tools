@@ -9,6 +9,7 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.CodeownersLinter
 {
@@ -19,6 +20,14 @@ namespace Azure.Sdk.Tools.CodeownersLinter
         {
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
+
+            // Configure logging for the application and pass the logger to the library helper.
+            var loggerFactory = LoggerFactory.Create(builder =>
+            {
+                builder.AddSimpleConsole();
+                builder.SetMinimumLevel(LogLevel.Information);
+            });
+            Log.Configure(loggerFactory.CreateLogger(typeof(Program).Namespace));
 
             // The storage URIs are in the azure-sdk-write-teams-container-blobs pipeline variable group.
             var teamUserBlobStorageUriOption = new Option<string>
@@ -123,17 +132,17 @@ namespace Azure.Sdk.Tools.CodeownersLinter
             string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
                 ts.Hours, ts.Minutes, ts.Seconds,
                 ts.Milliseconds / 10);
-            Console.WriteLine($"Total run time: {elapsedTime}");
+            Log.Logger.LogInformation("Total run time: {ElapsedTime}", elapsedTime);
 
-            Console.WriteLine($"Exiting with return code {returnCode}");
+            Log.Logger.LogInformation("Exiting with return code {ReturnCode}", returnCode);
             Environment.Exit(returnCode);
         }
 
         /// <summary>
-        /// Verify the arguments and call to process the CODEOWNERS file. If errors are being filtered with a 
+        /// Verify the arguments and call to process the CODEOWNERS file. If errors are being filtered with a
         /// baseline, or used to regenerate the baseline, that's done in here. Note that filtering errors and
         /// regenerating the baseline cannot both be done in the same run.
-        /// 
+        ///
         /// The baseBranchBaselineFile
         /// This file will be primarily used in PR validation where two calls will be made. be made. The first
         /// call will use the -gbl option and generate the secondary file to a different location. It can't use
@@ -156,13 +165,13 @@ namespace Azure.Sdk.Tools.CodeownersLinter
         /// <param name="baseBranchBaselineFile">The name of the base branch baseline file to generate or use.</param>
         /// <returns>integer, used to set the return code</returns>
         /// <exception cref="ArgumentException">Thrown if any arguments, or argument combinations, are invalid.</exception>
-        static int LintCodeownersFile(string teamUserBlobStorageUri, 
-                                      string userOrgVisibilityBlobStorageUri, 
-                                      string repoLabelBlobStorageUri, 
-                                      string repoRoot, 
+        static int LintCodeownersFile(string teamUserBlobStorageUri,
+                                      string userOrgVisibilityBlobStorageUri,
+                                      string repoLabelBlobStorageUri,
+                                      string repoRoot,
                                       string repoName,
-                                      bool   filterBaselineErrors,
-                                      bool   generateBaseline,
+                                      bool filterBaselineErrors,
+                                      bool generateBaseline,
                                       string baseBranchBaselineFile)
         {
             // Don't allow someone to create and use a baseline in the same run
@@ -213,15 +222,15 @@ namespace Azure.Sdk.Tools.CodeownersLinter
                 }
                 else
                 {
-                    Console.WriteLine($"The CODEOWNERS baseline error file, {codeownersBaselineFile}, file for {repoName} does not exist. No filtering will be done for errors.");
+                    Log.Logger.LogWarning("The CODEOWNERS baseline error file, {BaselineFile}, file for {RepoName} does not exist. No filtering will be done for errors.", codeownersBaselineFile, repoName);
                 }
             }
 
             DirectoryUtils directoryUtils = new DirectoryUtils(repoRoot);
             OwnerDataUtils ownerData = new OwnerDataUtils(teamUserBlobStorageUri, userOrgVisibilityBlobStorageUri);
 
-            var errors = CodeownersUtils.Verification.CodeownersLinter.LintCodeownersFile(directoryUtils, 
-                                                                           ownerData, 
+            var errors = CodeownersUtils.Verification.CodeownersLinter.LintCodeownersFile(directoryUtils,
+                                                                           ownerData,
                                                                            repoLabelData,
                                                                            codeownersFileFullPath);
 
@@ -251,7 +260,7 @@ namespace Azure.Sdk.Tools.CodeownersLinter
                 {
                     if (errors.Count == 0)
                     {
-                        Console.WriteLine($"##vso[task.LogIssue type=warning;]There were no CODEOWNERS parsing errors but there is a baseline file {codeownersBaselineFile} for filtering. If the file is empty, or all errors have been fixed, then it should be deleted.");
+                        Log.Logger.LogWarning("##vso[task.LogIssue type=warning;]There were no CODEOWNERS parsing errors but there is a baseline file {BaselineFile} for filtering. If the file is empty, or all errors have been fixed, then it should be deleted.", codeownersBaselineFile);
                     }
                     else
                     {
@@ -279,11 +288,11 @@ namespace Azure.Sdk.Tools.CodeownersLinter
                 // DevOps only adds the first 4 errors to the github checks list so lets always add the generic one first and then as many of the individual ones as can be found afterwards
                 if (loggingInDevOps)
                 {
-                    Console.WriteLine($"##vso[task.logissue type=error;]There are linter errors. Please visit {linterErrorsHelpLink} for guidance on how to handle them.");
+                    Log.Logger.LogError("##vso[task.logissue type=error;]There are linter errors. Please visit {HelpLink} for guidance on how to handle them.", linterErrorsHelpLink);
                 }
                 else
                 {
-                    Console.WriteLine($"There are linter errors. Please visit {linterErrorsHelpLink} for guidance on how to handle them.");
+                    Log.Logger.LogError("There are linter errors. Please visit {HelpLink} for guidance on how to handle them.", linterErrorsHelpLink);
                 }
 
                 // Output the errors sorted ascending by line number and by type. If there's a block
@@ -296,11 +305,11 @@ namespace Azure.Sdk.Tools.CodeownersLinter
                     if (loggingInDevOps)
                     {
                         // Environment.NewLine needs to be replaced by an encoded NewLine "%0D%0A" in order to display on GitHub and DevOps checks
-                        Console.WriteLine($"##vso[task.logissue type=error;sourcepath={codeownersFileFullPath};linenumber={error.LineNumber};columnnumber=1;]{error.ToString().Replace(Environment.NewLine,"%0D%0A")}");
+                        Log.Logger.LogError("##vso[task.logissue type=error;sourcepath={SourcePath};linenumber={LineNumber};columnnumber=1;]{Error}", codeownersFileFullPath, error.LineNumber, error.ToString().Replace(Environment.NewLine, "%0D%0A"));
                     }
-                    else 
+                    else
                     {
-                        Console.WriteLine(error + Environment.NewLine);
+                        Log.Logger.LogError("{Error}{NewLine}", error, Environment.NewLine);
                     }
                 }
             }

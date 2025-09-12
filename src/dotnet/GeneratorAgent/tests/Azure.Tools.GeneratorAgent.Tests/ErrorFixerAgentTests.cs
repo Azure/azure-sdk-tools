@@ -1,321 +1,210 @@
-using Azure.AI.Agents.Persistent;
-using Azure.Tools.ErrorAnalyzers;
+using Azure.Tools.GeneratorAgent.Agent;
 using Azure.Tools.GeneratorAgent.Configuration;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
-using Moq;
+using Microsoft.Extensions.Configuration;
 using NUnit.Framework;
+using Azure.AI.Agents.Persistent;
+using Moq;
 
 namespace Azure.Tools.GeneratorAgent.Tests
 {
     [TestFixture]
-    internal class ErrorFixerAgentTests
+    public class ErrorFixerAgentTests
     {
-        private class TestableErrorFixerAgent : ErrorFixerAgent
+        [Test]
+        public void Constructor_WithNullAgentFileManager_ThrowsArgumentNullException()
         {
-            private readonly PersistentAgent MockAgent;
-
-            public TestableErrorFixerAgent(
-                AppSettings appSettings,
-                ILogger<ErrorFixerAgent> logger,
-                PersistentAgentsClient client,
-                FixPromptService fixPromptService,
-                AgentResponseParser responseParser,
-                PersistentAgent mockAgent)
-                : base(appSettings, logger, client, fixPromptService, responseParser)
-            {
-                MockAgent = mockAgent;
-            }
-
-            internal override PersistentAgent CreateAgent() => MockAgent;
-
-            public async Task<string> TestInitializeAgentEnvironmentAsync(Dictionary<string, string> typeSpecFiles, CancellationToken ct = default)
-                => await InitializeAgentEnvironmentAsync(typeSpecFiles, ct);
-
-            public async ValueTask TestDisposeAsync() => await DisposeAsync();
+            // Arrange & Act & Assert
+            var ex = Assert.Throws<ArgumentNullException>(() => new ErrorFixerAgent(
+                fileManager: null!,
+                client: Mock.Of<PersistentAgentsClient>(),
+                appSettings: CreateTestAppSettings(),
+                logger: Mock.Of<ILogger<ErrorFixerAgent>>(),
+                loggerFactory: Mock.Of<ILoggerFactory>(),
+                fixPromptService: CreateMockFixPromptService()));
+            
+            Assert.That(ex.ParamName!, Is.EqualTo("fileManager"));
         }
 
-        #region Constructor Tests
+        [Test]
+        public void Constructor_WithNullClient_ThrowsArgumentNullException()
+        {
+            // Arrange & Act & Assert
+            var ex = Assert.Throws<ArgumentNullException>(() => new ErrorFixerAgent(
+                fileManager: CreateMockAgentFileManager(),
+                client: null!,
+                appSettings: CreateTestAppSettings(),
+                logger: Mock.Of<ILogger<ErrorFixerAgent>>(),
+                loggerFactory: Mock.Of<ILoggerFactory>(),
+                fixPromptService: CreateMockFixPromptService()));
+            
+            Assert.That(ex.ParamName, Is.EqualTo("client"));
+        }
 
         [Test]
-        public void Constructor_WithValidParameters_ShouldNotThrow()
+        public void Constructor_WithNullAppSettings_ThrowsArgumentNullException()
         {
+            // Arrange & Act & Assert
+            var ex = Assert.Throws<ArgumentNullException>(() => new ErrorFixerAgent(
+                fileManager: CreateMockAgentFileManager(),
+                client: Mock.Of<PersistentAgentsClient>(),
+                appSettings: null!,
+                logger: Mock.Of<ILogger<ErrorFixerAgent>>(),
+                loggerFactory: Mock.Of<ILoggerFactory>(),
+                fixPromptService: CreateMockFixPromptService()));
+            
+            Assert.That(ex.ParamName, Is.EqualTo("appSettings"));
+        }
+
+        [Test]
+        public void Constructor_WithNullLogger_ThrowsArgumentNullException()
+        {
+            // Arrange & Act & Assert
+            var ex = Assert.Throws<ArgumentNullException>(() => new ErrorFixerAgent(
+                fileManager: CreateMockAgentFileManager(),
+                client: Mock.Of<PersistentAgentsClient>(),
+                appSettings: CreateTestAppSettings(),
+                logger: null!,
+                loggerFactory: Mock.Of<ILoggerFactory>(),
+                fixPromptService: CreateMockFixPromptService()));
+            
+            Assert.That(ex.ParamName, Is.EqualTo("logger"));
+        }
+
+        [Test]
+        public void Constructor_WithNullLoggerFactory_ThrowsArgumentNullException()
+        {
+            // Arrange & Act & Assert
+            var ex = Assert.Throws<ArgumentNullException>(() => new ErrorFixerAgent(
+                fileManager: CreateMockAgentFileManager(),
+                client: Mock.Of<PersistentAgentsClient>(),
+                appSettings: CreateTestAppSettings(),
+                logger: Mock.Of<ILogger<ErrorFixerAgent>>(),
+                loggerFactory: null!,
+                fixPromptService: CreateMockFixPromptService()));
+            
+            Assert.That(ex.ParamName, Is.EqualTo("loggerFactory"));
+        }
+
+        [Test]
+        public void Constructor_WithNullFixPromptService_ThrowsArgumentNullException()
+        {
+            // Arrange & Act & Assert
+            var ex = Assert.Throws<ArgumentNullException>(() => new ErrorFixerAgent(
+                fileManager: CreateMockAgentFileManager(),
+                client: Mock.Of<PersistentAgentsClient>(),
+                appSettings: CreateTestAppSettings(),
+                logger: Mock.Of<ILogger<ErrorFixerAgent>>(),
+                loggerFactory: Mock.Of<ILoggerFactory>(),
+                fixPromptService: null!));
+            
+            Assert.That(ex.ParamName, Is.EqualTo("fixPromptService"));
+        }
+
+        [Test]
+        public void Constructor_WithValidParameters_SetsAllDependencies()
+        {
+            // Arrange
+            var AgentFileManager = CreateMockAgentFileManager();
+            var client = Mock.Of<PersistentAgentsClient>();
             var appSettings = CreateTestAppSettings();
-            var logger = NullLogger<ErrorFixerAgent>.Instance;
-            var client = new Mock<PersistentAgentsClient>().Object;
             var fixPromptService = CreateMockFixPromptService();
-            var responseParser = CreateMockResponseParser();
+            var logger = Mock.Of<ILogger<ErrorFixerAgent>>();
+            var loggerFactory = Mock.Of<ILoggerFactory>();
 
-            Assert.DoesNotThrow(() => new ErrorFixerAgent(appSettings, logger, client, fixPromptService, responseParser));
+            // Act & Assert - should not throw
+            var errorFixerAgent = new ErrorFixerAgent(
+                fileManager: AgentFileManager,
+                client: client,
+                appSettings: appSettings,
+                logger: logger,
+                loggerFactory: loggerFactory,
+                fixPromptService: fixPromptService);
+
+            Assert.That(errorFixerAgent, Is.Not.Null);
         }
 
         [Test]
-        public void Constructor_WithNullAppSettings_ShouldThrowArgumentNullException()
+        public void InitializeAgentEnvironmentAsync_WithNullTypeSpecFiles_ThrowsArgumentNullException()
         {
-            var logger = NullLogger<ErrorFixerAgent>.Instance;
-            var client = new Mock<PersistentAgentsClient>().Object;
-            var fixPromptService = CreateMockFixPromptService();
-            var responseParser = CreateMockResponseParser();
+            // Arrange
+            var errorFixerAgent = CreateValidErrorFixerAgent();
 
-            var ex = Assert.Throws<ArgumentNullException>(() => new ErrorFixerAgent(null!, logger, client, fixPromptService, responseParser));
-            Assert.That(ex!.ParamName, Is.EqualTo("appSettings"));
+            // Act & Assert
+            var ex = Assert.ThrowsAsync<ArgumentNullException>(async () => 
+                await errorFixerAgent.InitializeAgentEnvironmentAsync(null!, CancellationToken.None));
+            
+            Assert.That(ex.ParamName, Is.EqualTo("typeSpecFiles"));
         }
 
         [Test]
-        public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
+        public void FixCodeAsync_WithNullFixes_ThrowsArgumentNullException()
         {
-            var appSettings = CreateTestAppSettings();
-            var client = new Mock<PersistentAgentsClient>().Object;
-            var fixPromptService = CreateMockFixPromptService();
-            var responseParser = CreateMockResponseParser();
+            // Arrange
+            var errorFixerAgent = CreateValidErrorFixerAgent();
 
-            var ex = Assert.Throws<ArgumentNullException>(() => new ErrorFixerAgent(appSettings, null!, client, fixPromptService, responseParser));
-            Assert.That(ex!.ParamName, Is.EqualTo("logger"));
+            // Act & Assert
+            var ex = Assert.ThrowsAsync<ArgumentNullException>(async () => 
+                await errorFixerAgent.FixCodeAsync(null!, CancellationToken.None));
+            
+            Assert.That(ex.ParamName, Is.EqualTo("fixes"));
         }
 
         [Test]
-        public void Constructor_WithNullClient_ShouldThrowArgumentNullException()
+        public void AnalyzeErrorsAsync_WithNullErrorLogs_ThrowsArgumentNullException()
         {
-            var appSettings = CreateTestAppSettings();
-            var logger = NullLogger<ErrorFixerAgent>.Instance;
-            var fixPromptService = CreateMockFixPromptService();
-            var responseParser = CreateMockResponseParser();
+            // Arrange
+            var errorFixerAgent = CreateValidErrorFixerAgent();
 
-            var ex = Assert.Throws<ArgumentNullException>(() => new ErrorFixerAgent(appSettings, logger, null!, fixPromptService, responseParser));
-            Assert.That(ex!.ParamName, Is.EqualTo("client"));
+            // Act & Assert
+            var ex = Assert.ThrowsAsync<ArgumentNullException>(async () => 
+                await errorFixerAgent.AnalyzeErrorsAsync(null!, CancellationToken.None));
+            
+            Assert.That(ex.ParamName, Is.EqualTo("errorLogs"));
         }
 
-        [Test]
-        public void Constructor_WithNullFixPromptService_ShouldThrowArgumentNullException()
+        private static AgentFileManager CreateMockAgentFileManager()
         {
-            var appSettings = CreateTestAppSettings();
-            var logger = NullLogger<ErrorFixerAgent>.Instance;
-            var client = new Mock<PersistentAgentsClient>().Object;
-            var responseParser = CreateMockResponseParser();
-
-            var ex = Assert.Throws<ArgumentNullException>(() => new ErrorFixerAgent(appSettings, logger, client, null!, responseParser));
-            Assert.That(ex!.ParamName, Is.EqualTo("fixPromptService"));
+            return new AgentFileManager(
+                Mock.Of<PersistentAgentsClient>(),
+                Mock.Of<ILogger<AgentFileManager>>(),
+                CreateTestAppSettings());
         }
 
-        [Test]
-        public void Constructor_WithNullResponseParser_ShouldThrowArgumentNullException()
+        private static FixPromptService CreateMockFixPromptService()
         {
-            var appSettings = CreateTestAppSettings();
-            var logger = NullLogger<ErrorFixerAgent>.Instance;
-            var client = new Mock<PersistentAgentsClient>().Object;
-            var fixPromptService = CreateMockFixPromptService();
-
-            var ex = Assert.Throws<ArgumentNullException>(() => new ErrorFixerAgent(appSettings, logger, client, fixPromptService, null!));
-            Assert.That(ex!.ParamName, Is.EqualTo("responseParser"));
+            return new FixPromptService(
+                Mock.Of<ILogger<FixPromptService>>(),
+                CreateTestAppSettings());
         }
 
-        #endregion
-
-        #region CreateAgent Tests
-
-        [Test]
-        public void CreateAgent_WithValidConfiguration_ShouldCreateAgent()
+        private static ErrorFixerAgent CreateValidErrorFixerAgent()
         {
-            var mockAgent = CreateMockAgent();
-            var agent = CreateTestableAgent(mockAgent.Object);
-
-            var createdAgent = agent.CreateAgent();
-
-            Assert.That(createdAgent, Is.Not.Null);
-            Assert.That(createdAgent, Is.EqualTo(mockAgent.Object));
+            return new ErrorFixerAgent(
+                fileManager: CreateMockAgentFileManager(),
+                client: Mock.Of<PersistentAgentsClient>(),
+                appSettings: CreateTestAppSettings(),
+                logger: Mock.Of<ILogger<ErrorFixerAgent>>(),
+                loggerFactory: Mock.Of<ILoggerFactory>(),
+                fixPromptService: CreateMockFixPromptService());
         }
 
-        #endregion
-
-        #region FixCodeAsync Tests
-
-        [Test]
-        public void FixCodeAsync_WithNullFixes_ShouldThrowNullReferenceException()
-        {
-            var agent = CreateTestableAgent();
-            var threadId = "test-thread-id";
-
-            var ex = Assert.ThrowsAsync<NullReferenceException>(
-                async () => await agent.FixCodeAsync(null!, threadId));
-        }
-
-        [Test]
-        public void FixCodeAsync_WithNullThreadId_ShouldThrowNullReferenceException()
-        {
-            var agent = CreateTestableAgent();
-            var fixes = CreateValidFixesList();
-
-            Assert.ThrowsAsync<NullReferenceException>(
-                async () => await agent.FixCodeAsync(fixes, null!));
-        }
-
-        [Test]
-        public void FixCodeAsync_WithEmptyThreadId_ShouldThrowNullReferenceException()
-        {
-            var agent = CreateTestableAgent();
-            var fixes = CreateValidFixesList();
-
-            Assert.ThrowsAsync<NullReferenceException>(
-                async () => await agent.FixCodeAsync(fixes, ""));
-        }
-
-        [Test]
-        public void FixCodeAsync_WithEmptyFixesList_ShouldThrowInvalidOperationException()
-        {
-            var agent = CreateTestableAgent();
-            var fixes = new List<Fix>();
-            var threadId = "test-thread-id";
-
-            var ex = Assert.ThrowsAsync<InvalidOperationException>(
-                async () => await agent.FixCodeAsync(fixes, threadId));
-
-            Assert.That(ex!.Message, Does.Contain("No fixes were successfully applied"));
-        }
-
-        #endregion
-
-        #region InitializeAgentEnvironmentAsync Tests
-
-        [Test]
-        public void InitializeAgentEnvironmentAsync_WithNullTypeSpecFiles_ShouldThrowArgumentNullException()
-        {
-            var agent = CreateTestableAgent();
-
-            var ex = Assert.ThrowsAsync<ArgumentNullException>(
-                async () => await agent.TestInitializeAgentEnvironmentAsync(null!));
-
-            Assert.That(ex!.ParamName, Is.EqualTo("source"));
-        }
-
-        [Test]
-        public void InitializeAgentEnvironmentAsync_WithEmptyTypeSpecFiles_ShouldThrowInvalidOperationException()
-        {
-            var agent = CreateTestableAgent();
-            var typeSpecFiles = new Dictionary<string, string>();
-
-            var ex = Assert.ThrowsAsync<InvalidOperationException>(
-                async () => await agent.TestInitializeAgentEnvironmentAsync(typeSpecFiles));
-
-            Assert.That(ex!.Message, Does.Contain("No TypeSpec files provided"));
-        }
-
-        [Test]
-        public void InitializeAgentEnvironmentAsync_WithNonTypeSpecFiles_ShouldThrowInvalidOperationException()
-        {
-            var agent = CreateTestableAgent();
-            var typeSpecFiles = new Dictionary<string, string>
-            {
-                { "readme.md", "# README" },
-                { "config.json", "{ \"test\": true }" }
-            };
-
-            var ex = Assert.ThrowsAsync<InvalidOperationException>(
-                async () => await agent.TestInitializeAgentEnvironmentAsync(typeSpecFiles));
-
-            Assert.That(ex!.Message, Does.Contain("No TypeSpec files provided"));
-        }
-
-        [Test]
-        public void InitializeAgentEnvironmentAsync_WithCancelledToken_ShouldThrowInvalidOperationException()
-        {
-            var agent = CreateTestableAgent();
-            var typeSpecFiles = new Dictionary<string, string>
-            {
-                { "main.tsp", "model Test {}" }
-            };
-            var cts = new CancellationTokenSource();
-            cts.Cancel();
-
-            Assert.ThrowsAsync<InvalidOperationException>(
-                async () => await agent.TestInitializeAgentEnvironmentAsync(typeSpecFiles, cts.Token));
-        }
-
-        #endregion
-
-        #region DisposeAsync Tests
-
-        [Test]
-        public void DisposeAsync_WithoutInitialization_ShouldNotThrow()
-        {
-            var agent = CreateTestableAgent();
-
-            Assert.DoesNotThrowAsync(async () => await agent.TestDisposeAsync());
-        }
-
-        [Test]
-        public void DisposeAsync_CalledMultipleTimes_ShouldNotThrow()
-        {
-            var agent = CreateTestableAgent();
-
-            Assert.DoesNotThrowAsync(async () =>
-            {
-                await agent.TestDisposeAsync();
-                await agent.TestDisposeAsync();
-            });
-        }
-
-        [Test]
-        public void DisposeAsync_AfterAgentCreation_ShouldNotThrow()
-        {
-            var agent = CreateTestableAgent();
-            agent.CreateAgent();
-
-            Assert.DoesNotThrowAsync(async () => await agent.TestDisposeAsync());
-        }
-
-        [Test]
-        public void DisposeAsync_AfterFixCodeAsync_ShouldNotThrow()
-        {
-            var agent = CreateTestableAgent();
-            var fixes = CreateValidFixesList();
-            var threadId = "test-thread-id";
-
-            Assert.DoesNotThrowAsync(async () =>
-            {
-                try
-                {
-                    await agent.FixCodeAsync(fixes, threadId);
-                }
-                catch
-                {
-                }
-                await agent.TestDisposeAsync();
-            });
-        }
-
-        #endregion
-
-        #region Helper Methods
-
-        private TestableErrorFixerAgent CreateTestableAgent(PersistentAgent? mockAgent = null)
-        {
-            var appSettings = CreateTestAppSettings();
-            var logger = NullLogger<ErrorFixerAgent>.Instance;
-            var client = new Mock<PersistentAgentsClient>().Object;
-            var fixPromptService = CreateMockFixPromptService();
-            var responseParser = CreateMockResponseParser();
-            var agent = mockAgent ?? CreateMockAgent().Object;
-
-            return new TestableErrorFixerAgent(
-                appSettings,
-                logger,
-                client,
-                fixPromptService,
-                responseParser,
-                agent);
-        }
-
-        private AppSettings CreateTestAppSettings()
+        private static AppSettings CreateTestAppSettings()
         {
             var configMock = new Mock<IConfiguration>();
             var mockLogger = new Mock<ILogger<AppSettings>>();
 
             var testId = Guid.NewGuid().ToString("N")[..8];
 
+            // Set up default section
             var defaultSection = new Mock<IConfigurationSection>();
             defaultSection.Setup(s => s.Value).Returns((string?)null);
             configMock.Setup(c => c.GetSection(It.IsAny<string>())).Returns(defaultSection.Object);
+
+            // Set up required configuration values
+            var projectEndpointSection = new Mock<IConfigurationSection>();
+            projectEndpointSection.Setup(s => s.Value).Returns("https://test.example.com");
+            configMock.Setup(c => c.GetSection("AzureSettings:ProjectEndpoint")).Returns(projectEndpointSection.Object);
 
             var modelSection = new Mock<IConfigurationSection>();
             modelSection.Setup(s => s.Value).Returns($"test-model-{testId}");
@@ -329,61 +218,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
             instructionsSection.Setup(s => s.Value).Returns("test instructions");
             configMock.Setup(c => c.GetSection("AzureSettings:AgentInstructions")).Returns(instructionsSection.Object);
 
-            var endpointSection = new Mock<IConfigurationSection>();
-            endpointSection.Setup(s => s.Value).Returns("https://test.example.com");
-            configMock.Setup(c => c.GetSection("AzureSettings:ProjectEndpoint")).Returns(endpointSection.Object);
-
             return new AppSettings(configMock.Object, mockLogger.Object);
         }
-
-        private FixPromptService CreateMockFixPromptService()
-        {
-            var mockLogger = new Mock<ILogger<FixPromptService>>();
-            var appSettings = CreateMockAppSettings();
-            return new FixPromptService(mockLogger.Object, appSettings);
-        }
-
-        private AppSettings CreateMockAppSettings()
-        {
-            var mockConfiguration = new Mock<IConfiguration>();
-            var mockLogger = new Mock<ILogger<AppSettings>>();
-            
-            // Set up required configuration values
-            var projectEndpointSection = new Mock<IConfigurationSection>();
-            projectEndpointSection.Setup(s => s.Value).Returns("https://test.endpoint.com");
-            mockConfiguration.Setup(c => c.GetSection("AzureSettings:ProjectEndpoint")).Returns(projectEndpointSection.Object);
-            
-            // Set up agent instructions
-            var agentInstructionsSection = new Mock<IConfigurationSection>();
-            agentInstructionsSection.Setup(s => s.Value).Returns("You are an expert Azure SDK developer and TypeSpec author. Your primary goal is to resolve all AZC analyzer and TypeSpec compilation errors in the TypeSpec files and produce a valid, compilable result that strictly follows Azure SDK and TypeSpec guidelines.\n\n### SYSTEM INSTRUCTIONS\n- All files (e.g., main.tsp, client.tsp) are available via FileSearchTool. Retrieve any file content by filename as needed.\n- Never modify main.tsp—only client.tsp may be changed.");
-            mockConfiguration.Setup(c => c.GetSection("AzureSettings:AgentInstructions")).Returns(agentInstructionsSection.Object);
-            
-            return new AppSettings(mockConfiguration.Object, mockLogger.Object);
-        }
-
-        private AgentResponseParser CreateMockResponseParser()
-        {
-            var mockLogger = new Mock<ILogger<AgentResponseParser>>();
-            return new AgentResponseParser(mockLogger.Object);
-        }
-
-        private Mock<PersistentAgent> CreateMockAgent()
-        {
-            var mockAgent = new Mock<PersistentAgent>();
-            return mockAgent;
-        }
-
-        private static List<Fix> CreateValidFixesList()
-        {
-            var mockErrors = new List<RuleError>
-            {
-                new RuleError("AZC0012", "Type name 'Client' is too generic")
-            };
-            
-            var analyzer = new BuildErrorAnalyzer(new Mock<ILogger<BuildErrorAnalyzer>>().Object);
-            return analyzer.GetFixes(mockErrors).ToList();
-        }
-
-        #endregion
     }
 }

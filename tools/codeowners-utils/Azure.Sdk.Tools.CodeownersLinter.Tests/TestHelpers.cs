@@ -8,6 +8,7 @@ using Azure.Sdk.Tools.CodeownersUtils.Errors;
 using Azure.Sdk.Tools.CodeownersUtils.Caches;
 using Azure.Sdk.Tools.CodeownersUtils.Parsing;
 using Azure.Sdk.Tools.CodeownersUtils.Utils;
+using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.CodeownersUtils.Tests
 {
@@ -26,7 +27,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Tests
         /// The user/org visibility data will consist of 5 users, TestOwner0..TestOwner4, with only even users
         /// being visible.
         /// The team/user data will consist of 5 teams with the number of users in each team equal to the
-        /// team number, TestTeam0...TestTeam4.The users in each team will consist of the same users in 
+        /// team number, TestTeam0...TestTeam4.The users in each team will consist of the same users in
         /// the user/org data.
         /// </summary>
         /// <returns>Populated OwnerDataUtils</returns>
@@ -38,7 +39,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Tests
             Dictionary<string, List<string>> teamUserDict = new Dictionary<string, List<string>>(StringComparer.InvariantCultureIgnoreCase);
 
             // Create 5 teams
-            for (int i = 0;i < _maxItems; i++)
+            for (int i = 0; i < _maxItems; i++)
             {
                 string team = $"{TestTeamNamePartial}{i}";
                 List<string> users = new List<string>();
@@ -58,7 +59,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Tests
             UserOrgVisibilityCache userOrgVisibilityCache = new UserOrgVisibilityCache(null);
             Dictionary<string, bool> userOrgVisDict = new Dictionary<string, bool>(StringComparer.InvariantCultureIgnoreCase);
             // Make every even user visible
-            for (int i = 0;i < 5;i++)
+            for (int i = 0; i < 5; i++)
             {
                 string user = $"{TestOwnerNamePartial}{i}";
                 if (i % 2 == 0)
@@ -82,7 +83,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Tests
         {
             Dictionary<string, HashSet<string>> repoLabelDict = new Dictionary<string, HashSet<string>>(StringComparer.InvariantCultureIgnoreCase);
             HashSet<string> repoLabels = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
-            for (int i = 0;i < 5;i++)
+            for (int i = 0; i < 5; i++)
             {
                 string label = $"{TestLabelNamePartial}{i}";
                 repoLabels.Add(label);
@@ -112,7 +113,7 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Tests
         /// <param name="actualCodeownerEntries">The actual, or parsed, list of Codeowners entries.</param>
         /// <param name="expectedCodeownerEntries">The expected list of Codeowners entries</param>
         /// <returns>True if they're equal, false otherwise</returns>
-        public static bool CodeownersEntryListsAreEqual(List<CodeownersEntry> actualCodeownerEntries, 
+        public static bool CodeownersEntryListsAreEqual(List<CodeownersEntry> actualCodeownerEntries,
                                                         List<CodeownersEntry> expectedCodeownerEntries)
         {
             // SequenceEqual determines whether two sequences are equal by comparing the length and
@@ -190,8 +191,8 @@ namespace Azure.Sdk.Tools.CodeownersUtils.Tests
                 WriteIndented = true
             };
             string jsonString = JsonSerializer.Serialize(codeownersEntries, jsonSerializerOptions);
-            Console.WriteLine(jsonString);
-            Console.WriteLine("something to break on");
+            Log.Logger.LogInformation("{Json}", jsonString);
+            Log.Logger.LogInformation("something to break on");
         }
     }
 }

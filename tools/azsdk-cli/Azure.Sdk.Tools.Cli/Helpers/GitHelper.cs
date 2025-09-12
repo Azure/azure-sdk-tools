@@ -10,12 +10,14 @@ namespace Azure.Sdk.Tools.Cli.Helpers
     {
         // Get the owner 
         public Task<string> GetRepoOwnerNameAsync(string path, bool findUpstreamParent = true);
+        public Task<string> GetRepoFullNameAsync(string path, bool findUpstreamParent = true);
         public Uri GetRepoRemoteUri(string path);
         public string GetBranchName(string path);
         public string GetMergeBaseCommitSha(string path, string targetBranch);
         public string DiscoverRepoRoot(string path);
         public string GetRepoName(string path);
     }
+
     public class GitHelper(IGitHubService gitHubService, ILogger<GitHelper> logger) : IGitHelper
     {
         private readonly ILogger<GitHelper> logger = logger;
@@ -49,9 +51,40 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             var remote = repo.Network?.Remotes["origin"];
             if (remote != null)
             {
-                return new Uri(remote.Url);
+                var url = ConvertSshToHttpsUrl(remote.Url);
+                return new Uri(url);
             }
             throw new InvalidOperationException("Unable to determine remote URL.");
+        }
+
+        /// <summary>
+        /// Converts SSH GitHub URLs to HTTPS format
+        /// </summary>
+        /// <param name="gitUrl">The Git URL (SSH or HTTPS)</param>
+        /// <returns>HTTPS formatted Git URL</returns>
+        private static string ConvertSshToHttpsUrl(string gitUrl)
+        {
+            if (string.IsNullOrEmpty(gitUrl))
+            {
+                return gitUrl;
+            }
+
+            // If it's already HTTPS, return as-is
+            if (gitUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            {
+                return gitUrl;
+            }
+
+            // Handle GitHub SSH URLs (e.g., git@github.com:Azure/azure-rest-api-specs.git)
+            if (gitUrl.StartsWith("git@github.com:", StringComparison.OrdinalIgnoreCase))
+            {
+                // Convert SSH URL to HTTPS URL
+                // git@github.com:Azure/azure-rest-api-specs.git -> https://github.com/Azure/azure-rest-api-specs.git
+                return gitUrl.Replace("git@github.com:", "https://github.com/");
+            }
+
+            // Return as-is if it's not a recognized format
+            return gitUrl;
         }
 
         public async Task<string> GetRepoOwnerNameAsync(string path, bool findUpstreamParent = true)
@@ -66,7 +99,8 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 repoName = segments[^1].TrimEnd(".git".ToCharArray());
             }
 
-            if(findUpstreamParent) {
+            if (findUpstreamParent)
+            {
                 // Check if the repo is a fork and get the parent repo
                 var parentRepoUrl = await gitHubService.GetGitHubParentRepoUrlAsync(repoOwner, repoName);
                 logger.LogDebug($"Parent repo URL: {parentRepoUrl}");
@@ -86,7 +120,20 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             }
 
             throw new InvalidOperationException("Unable to determine repository owner.");
-        }        
+        }
+
+        // Get the full name of repo in the format of "{owner/name}", e.g. "Azure/azure-rest-api-specs"
+        public async Task<string> GetRepoFullNameAsync(string path, bool findUpstreamParent = true)
+        {
+            if (!string.IsNullOrEmpty(path))
+            {
+                var repoOwner = await GetRepoOwnerNameAsync(path, findUpstreamParent);
+                var repoName = GetRepoName(path);
+                return $"{repoOwner}/{repoName}";
+            }
+
+            throw new ArgumentException("Invalid repository path.", nameof(path));
+        }
 
         public string DiscoverRepoRoot(string path)
         {
@@ -95,17 +142,33 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             {
                 throw new InvalidOperationException($"No git repository found at or above the path: {path}");
             }
-            
+
             // Repository.Discover returns the path to .git directory
             // The repository root is the parent directory of .git
             var gitDir = new DirectoryInfo(repoPath);
             return gitDir.Parent?.FullName ?? throw new InvalidOperationException("Unable to determine repository root");
         }
 
+        // Get the repository name from the local path
         public string GetRepoName(string path)
         {
+            if (string.IsNullOrEmpty(path))
+            {
+                throw new ArgumentException("Invalid repository path.", nameof(path));
+            }
+            
             var repoRoot = DiscoverRepoRoot(path);
-            return new DirectoryInfo(repoRoot).Name ?? throw new InvalidOperationException($"Unable to determine repository name for path: {path}");
+            var uri = GetRepoRemoteUri(repoRoot);
+            var segments = uri.Segments;
+
+            if (segments.Length < 2)
+            {
+                throw new InvalidOperationException($"Unable to parse repository owner and name from remote URL: {uri}");
+            }
+
+            string repoName = segments[^1].TrimEnd(".git".ToCharArray());
+
+            return repoName;
         }
     }
 }

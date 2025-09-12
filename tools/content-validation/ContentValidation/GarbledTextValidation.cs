@@ -7,7 +7,7 @@ public class GarbledTextValidation : IValidation
 {
     private IPlaywright _playwright;
 
-    public List<IgnoreItem> ignoreList = IgnoreData.GetIgnoreList("GarbledTextValidation", "");
+    public List<IgnoreItem> ignoreList = IgnoreData.GetIgnoreList("GarbledTextValidation", "contains");
 
     public GarbledTextValidation(IPlaywright playwright)
     {

@@ -18,17 +18,15 @@ The cleanup script implementing these guidelines can be found [here](https://git
 This section applies to resource groups located in any of the dev/test subscriptions managed by the Azure SDK
 Engineering System team, such as:
 
+- Azure SDK Test Resources TME
 - Azure SDK Developer Playground
-- Azure SDK Test Resources
-- Azure SDK Test Resources - Preview
-- Sovereign cloud test subscriptions
 
 Currently, the automation will inspect resource groups and role assignments only.
 
 ### Resource Groups
 
-**NOTE:** Development resources should only be created in the `Azure SDK Developer Playground` subscription. The other
-subscriptions are intended to be used for CI resources and not manual testing.
+**NOTE:** Development resources should only be created in the `Azure SDK Test Resources TME` subscription. The other
+subscriptions are intended to be used for CI resources and not manual testing. For more info see [Subscription-and-Tenant-Usage](https://dev.azure.com/azure-sdk/internal/_wiki/wikis/internal.wiki/206/Subscription-and-Tenant-Usage)
 
 #### Quick Start Creating Resources
 
@@ -43,7 +41,7 @@ If you need the group for a little more time, add/update a tag named `DeleteAfte
 
 *To create long-lived resources:*
 
-NOTE: Resource groups in the playground subscription, if compliant and marked with valid aliases (see below), **will still
+NOTE: Resource groups in the TME and playground subscription, if compliant and marked with valid aliases (see below), **will still
 be marked for deletion after 10 days.** See the below examples for how to extend this deletion deadline if necessary.
 
 Create a resource group to contain all testing resources. The resource group name should start with your Microsoft alias.

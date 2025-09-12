@@ -20,7 +20,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         IGitHelper gitHelper,
         ITypeSpecHelper typespecHelper,
         IOutputHelper output,
-        ILogger<SpecWorkflowTool> logger) : MCPTool
+        ILogger<SpecWorkflowTool> logger,
+        IInputSanitizer inputSanitizer) : MCPTool
     {
         private static readonly string PUBLIC_SPECS_REPO = "azure-rest-api-specs";
         private static readonly string REPO_OWNER = "Azure";
@@ -232,6 +233,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 {
                     Status = "Success"
                 };
+                language = inputSanitizer.SanitizeName(language);
                 logger.LogInformation($"Generating SDK for TypeSpec project: {typespecProjectRoot}, API Version: {apiVersion}, SDK Release Type: {sdkReleaseType}, Language: {language}, Pull Request Number: {pullRequestNumber}, Work Item ID: {workItemId}");
                 // Is language supported for SDK generation
                 if (!DevOpsService.IsSDKGenerationSupported(language))
@@ -272,6 +274,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     }
                 }
 
+                if (workItemId > 0 && pullRequestNumber > 0)
+                {
+                    var apiReadiness = await CheckApiReadyForSDKGeneration(typespecProjectRoot, pullRequestNumber, workItemId);
+                    response.Details.AddRange(apiReadiness.Split("\n"));
+                }
                 // Return failure details in case of any failure
                 if (response.Status.Equals("Failed"))
                 {
@@ -476,8 +483,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             var appendedBody = string.IsNullOrEmpty(pr.Body)
                 ? links
                 : $"{pr.Body}\n{links}";
-
-            await githubService.UpdatePullRequestAsync(repoOwner, repoName, prNumber, pr.Title, appendedBody, pr.State.Value);
+            try
+            {
+                await githubService.UpdatePullRequestAsync(repoOwner, repoName, prNumber, pr.Title, appendedBody, pr.State.Value);
+            }
+            catch (Exception ex)
+            {
+                // This should not be a hard error when context is not updated in PR description
+                logger.LogError($"Failed to update pull request description for {repoOwner}/{repoName}#{prNumber}, Error: {ex.Message}");
+                return;
+            }
         }
 
         public override Command GetCommand()

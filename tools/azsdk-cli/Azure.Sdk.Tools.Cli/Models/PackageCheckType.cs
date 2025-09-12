@@ -28,5 +28,10 @@ public enum PackageCheckType
     /// <summary>
     /// Run cspell.
     /// </summary>
-    Cspell
+    Cspell,
+    
+    /// <summary>
+    /// Run snippet update check.
+    /// </summary>
+    Snippets
 }

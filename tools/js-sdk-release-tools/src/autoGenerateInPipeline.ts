@@ -56,6 +56,7 @@ async function automationGenerateInPipeline(
                     runningEnvironment: runningEnvironment,
                     apiVersion: apiVersion,
                     sdkReleaseType: sdkReleaseType,
+                    runMode: runMode as RunMode,
                 });
                 break;
             case SDKType.RestLevelClient:

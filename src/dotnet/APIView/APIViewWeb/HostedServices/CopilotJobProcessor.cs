@@ -47,6 +47,9 @@ namespace APIViewWeb.HostedServices
 
         public async Task ProcessJobAsync(AIReviewJobInfoModel jobInfo, CancellationToken cancellationToken = default)
         {
+            _logger.LogInformation("Starting Copilot job processing for JobId: {JobId}, ReviewId: {ReviewId}, APIRevisionId: {APIRevisionId}", 
+                jobInfo.JobId, jobInfo.APIRevision.ReviewId, jobInfo.APIRevision.Id);
+
             try
             {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -73,6 +76,8 @@ namespace APIViewWeb.HostedServices
                 
                 if (result.Status == "Error")
                 {
+                    _logger.LogError("Copilot job failed for JobId: {JobId}, ReviewId: {ReviewId}, APIRevisionId: {APIRevisionId}. Error: {ErrorDetails}", 
+                        jobInfo.JobId, jobInfo.APIRevision.ReviewId, jobInfo.APIRevision.Id, result.Details);
                     throw new Exception(result.Details);
                 }
 
@@ -80,6 +85,9 @@ namespace APIViewWeb.HostedServices
                     .Where(comment =>
                         jobInfo.CodeLines[comment.LineNo - 1].lineId != null || comment.Source == SummarySource)
                     .ToList() ?? new List<AIReviewComment>();
+
+                _logger.LogInformation("Processing {ValidCount} valid comments out of {TotalCount} for JobId: {JobId}, ReviewId: {ReviewId}", 
+                    validComments.Count, result.Comments?.Count ?? 0, jobInfo.JobId, jobInfo.APIRevision.ReviewId);
 
                 // Write back result as comments to APIView
                 foreach (var comment in validComments)
@@ -135,12 +143,16 @@ namespace APIViewWeb.HostedServices
                     NoOfGeneratedComment = validComments.Count,
                     JobId = jobInfo.JobId
                 }, cancellationToken);
+
+                _logger.LogInformation("Completed Copilot job {JobId}: {Status}, generated {CommentsCount} comments for ReviewId: {ReviewId}, APIRevisionId: {APIRevisionId}", 
+                    jobInfo.JobId, result.Status, validComments.Count, jobInfo.APIRevision.ReviewId, jobInfo.APIRevision.Id);
             }
             catch (Exception e)
             {
                 jobInfo.APIRevision.CopilotReviewInProgress = false;
                 await _apiRevisionsManager.UpdateAPIRevisionAsync(jobInfo.APIRevision);
-                _logger.LogError(e, "Error while processing Copilot job {JobId}", jobInfo.JobId);
+                _logger.LogError(e, "Error processing Copilot job {JobId}, ReviewId: {ReviewId}, APIRevisionId: {APIRevisionId}", 
+                    jobInfo.JobId, jobInfo.APIRevision.ReviewId, jobInfo.APIRevision.Id);
                 throw;
             }
         }

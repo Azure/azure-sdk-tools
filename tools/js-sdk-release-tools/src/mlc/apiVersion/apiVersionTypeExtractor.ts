@@ -6,6 +6,9 @@ import { exists } from "fs-extra";
 import { logger } from "../../utils/logger.js";
 import { getNpmPackageName } from "../../common/utils.js";
 import { isBetaVersion } from "../../utils/version.js";
+import { checkDirectoryExistsInGithub } from "../../common/npmUtils.js";
+import { tryGetNpmView } from "../../common/npmUtils.js";
+import { getLatestStableVersion } from "../../utils/version.js";
 
 export const getApiVersionType: IApiVersionTypeExtractor = async (
     packageRoot: string,
@@ -26,7 +29,7 @@ export const getApiVersionType: IApiVersionTypeExtractor = async (
         const packageName = getNpmPackageName(packageRoot);
         return await getApiVersionTypeFromNpm(packageName);
     }
-    
+
     logger.info('Failed to find api version in client, fallback to get api version type in operation\'s parameter');
     const parametersPath = join(packageRoot, "src/rest/parameters.ts");
     const typeFromOperations = getApiVersionTypeFromOperations(parametersPath);
@@ -38,15 +41,39 @@ export const getApiVersionType: IApiVersionTypeExtractor = async (
 };
 
 export const isModelOnly: IModelOnlyChecker = async (packageRoot: string): Promise<boolean> => {
-    // For MLC, simply check for parameters.ts - its absence indicates a model-only service
+    // Check locally for parameters.ts
     const parametersPath = join(packageRoot, "src/rest/parameters.ts");
     const isParametersExists = await exists(parametersPath);
-    
+
     if (!isParametersExists) {
-        logger.warn(`No parameters.ts found in ${packageRoot}, this is a model-only service in Modular client`);
-        return true;
+        // Get npm view to find the latest stable version
+        const packageName = getNpmPackageName(packageRoot);
+        const npmViewResult = await tryGetNpmView(packageName);
+        if (!npmViewResult) {
+            logger.warn(`No npm package found for ${packageName}, cannot check GitHub directory`);
+            return true;
+        }
+
+        const stableVersion = getLatestStableVersion(npmViewResult);
+        if (!stableVersion) {
+            logger.warn(`No stable version found for ${packageName}, cannot check GitHub directory`);
+            return true;
+        }
+
+        // Check if src/api exists in the GitHub repository
+        const hasOperationsInGithub = await checkDirectoryExistsInGithub(
+            packageRoot,
+            "src/api",
+            packageName,
+            stableVersion
+        );
+
+        if (!hasOperationsInGithub) {
+            logger.warn(`No parameters.ts found in ${packageRoot} and no src/api directory found in GitHub for ${packageName}, this is a model-only service`);
+            return true;
+        }
     }
-    
-    logger.info(`Found parameters.ts in ${packageRoot}, this is not a model-only service`);
+
+    logger.info(`Found parameters.ts locally or src/api in GitHub for ${packageRoot}, this is not a model-only service`);
     return false;
 };

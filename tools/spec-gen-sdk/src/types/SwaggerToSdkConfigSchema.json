@@ -202,6 +202,10 @@
           // Script path related to repo root
           "type": "string"
         },
+        "command": {
+          // Command to run, it only allows single line of command.
+          "type": "string"
+        },
         "envs": {
           // Extra environment variable to be passed to the script.
           // By default the following envs will be passed:
@@ -255,8 +259,7 @@
             "result": "error"
           }
         }
-      },
-      "required": ["path"]
+      }
     },
     "RunLogOptions": {
       // How should SDK Automation handle the log stream.

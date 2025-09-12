@@ -1,0 +1,22 @@
+{
+  "language": "python",
+  "package_name": "azure.widgets",
+  "code": "class WidgetUpdateProperties:",
+  "comments": [
+        {
+            "CreatedBy": "tjprescott",
+            "CommentText": "Can we simplify this name? Maybe just Widget?",
+            "CreatedOn": "2025-03-17T17:48:25.920445-04:00"
+        },
+        {
+            "CreatedBy": "noodle",
+            "CommentText": "We are following the pattern established elsewhere in the library. Also this model is just the updateable properties, so everything is optional, which is why we can't just reuse the Widget class.",
+            "CreatedOn": "2025-03-18T13:15:19.1494832-04:00"
+        },
+        {
+            "CreatedBy": "tjprescott",
+            "CommentText": "An okay, that makes sense.",
+            "CreatedOn": "2025-03-19T17:48:25.920445-04:00"
+        }
+    ]
+}

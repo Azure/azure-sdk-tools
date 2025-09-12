@@ -40,6 +40,9 @@ export const runSdkAutoCustomScript = async (
     continueOnFailed?: boolean;
   }
 ): Promise<SDKAutomationState> => {
+  if (!runOptions.path) {
+    throw new Error('Script path is not provided in run options.');
+  }
   const scriptPath = runOptions.path;
   const cwdAbsolutePath = path.resolve(options.cwd);
   const vsoLogErrorsArray: string[] = [];

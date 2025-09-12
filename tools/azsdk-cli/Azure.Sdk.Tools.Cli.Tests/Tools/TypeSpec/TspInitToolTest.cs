@@ -16,7 +16,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var npxHelper = new Mock<INpxHelper>().Object;
             var logger = new Mock<ILogger<TypeSpecInitTool>>().Object;
             var outputService = new Mock<IOutputHelper>().Object;
-            var tool = new TypeSpecInitTool(npxHelper, logger, outputService);
+            var tool = new TypeSpecInitTool(npxHelper, CreateTypeSpecHelper(), logger, outputService);
 
             // Act
             var command = tool.GetCommand();
@@ -34,7 +34,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var npxHelper = new Mock<INpxHelper>().Object;
             var logger = new Mock<ILogger<TypeSpecInitTool>>().Object;
             var outputService = new Mock<IOutputHelper>().Object;
-            var tool = new TypeSpecInitTool(npxHelper, logger, outputService);
+            var tool = new TypeSpecInitTool(npxHelper, CreateTypeSpecHelper(), logger, outputService);
 
             var result = await tool.InitTypeSpecProjectAsync(outputDirectory: "never-used", template: "invalid-template", serviceNamespace: "MyService", isCli: false);
 
@@ -52,7 +52,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var npxHelper = new Mock<INpxHelper>().Object;
             var logger = new Mock<ILogger<TypeSpecInitTool>>().Object;
             var outputService = new Mock<IOutputHelper>().Object;
-            var tool = new TypeSpecInitTool(npxHelper, logger, outputService);
+            var tool = new TypeSpecInitTool(npxHelper, CreateTypeSpecHelper(), logger, outputService);
 
             var result = await tool.InitTypeSpecProjectAsync(outputDirectory: "never-used", template: "azure-core", serviceNamespace: "", isCli: false);
 
@@ -64,20 +64,91 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         }
 
         [Test]
-        public async Task Init_WithNonExistentDirectory_ShouldReturnError()
+        public async Task Init_WithNonEmptyDirectory_ShouldReturnError()
         {
             var npxHelper = new Mock<INpxHelper>().Object;
             var logger = new Mock<ILogger<TypeSpecInitTool>>().Object;
             var outputService = new Mock<IOutputHelper>().Object;
-            var tool = new TypeSpecInitTool(npxHelper, logger, outputService);
+            var tool = new TypeSpecInitTool(npxHelper, CreateTypeSpecHelper(), logger, outputService);
+            var tempDir = Path.Combine(Path.GetTempPath(), $"test-nonexistent-{Guid.NewGuid()}");
 
-            var result = await tool.InitTypeSpecProjectAsync(outputDirectory: Path.Combine(Path.GetTempPath(), $"test-nonexistent-{Guid.NewGuid()}"), template: "azure-core", serviceNamespace: "MyService", isCli: false);
+            Directory.CreateDirectory(tempDir);
 
-            Assert.Multiple(() =>
+            try
             {
-                Assert.That(result.IsSuccessful, Is.False);
-                Assert.That(result.ResponseError, Does.Contain("Invalid --output-directory"));
-            });
+                await File.WriteAllTextAsync(Path.Join(tempDir, "somefile.txt"), "some file's contents");
+
+                var result = await tool.InitTypeSpecProjectAsync(outputDirectory: tempDir, template: "azure-core", serviceNamespace: "MyService", isCli: false);
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(result.IsSuccessful, Is.False);
+                    Assert.That(result.ResponseError, Does.Contain("Invalid --output-directory"));
+                });
+            }
+            finally
+            {
+                Directory.Delete(tempDir, true);
+            }
+        }
+
+        [Test]
+        public async Task Init_IncorrectGitRepo()
+        {
+            var npxHelper = new Mock<INpxHelper>().Object;
+            var logger = new Mock<ILogger<TypeSpecInitTool>>().Object;
+            var outputService = new Mock<IOutputHelper>().Object;
+            var tool = new TypeSpecInitTool(npxHelper, CreateTypeSpecHelper(false), logger, outputService);
+            var tempDir = Path.Combine(Path.GetTempPath(), $"test-nonexistent-{Guid.NewGuid()}");
+
+            try
+            {
+                var result = await tool.InitTypeSpecProjectAsync(outputDirectory: tempDir, template: "azure-core", serviceNamespace: "MyService", isCli: false);
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(result.IsSuccessful, Is.False);
+                    Assert.That(result.ResponseError, Is.EqualTo($"Failed: Invalid --output-directory, must be under the azure-rest-api-specs or azure-rest-api-specs-pr repo"
+));
+                });
+            }
+            finally
+            {
+                Directory.Delete(tempDir, true);
+            }
+        }
+
+        [Test]
+        public async Task Init_NotUnderSpecifications()
+        {
+            var npxHelper = new Mock<INpxHelper>().Object;
+            var logger = new Mock<ILogger<TypeSpecInitTool>>().Object;
+            var outputService = new Mock<IOutputHelper>().Object;
+            var tool = new TypeSpecInitTool(npxHelper, CreateTypeSpecHelper(true), logger, outputService);
+            var tempDir = Path.Combine(Path.GetTempPath(), $"test-nonexistent-{Guid.NewGuid()}");
+
+            try
+            {
+                var result = await tool.InitTypeSpecProjectAsync(outputDirectory: tempDir, template: "azure-core", serviceNamespace: "MyService", isCli: false);
+
+                Assert.Multiple(() =>
+                {
+                    Assert.That(result.IsSuccessful, Is.False);
+                    Assert.That(result.ResponseError, Does.Contain("Invalid --output-directory"));
+                    Assert.That(result.ResponseError, Is.EqualTo($"Failed: Invalid --output-directory, must be under <azure-rest-api-specs or azure-rest-api-specs-pr>{Path.DirectorySeparatorChar}specification"));
+                });
+            }
+            finally
+            {
+                Directory.Delete(tempDir, true);
+            }
+        }
+
+        private static ITypeSpecHelper CreateTypeSpecHelper(bool isSpecRepo = false)
+        {
+            var mock = new Mock<ITypeSpecHelper>();
+            mock.Setup(m => m.IsRepoPathForSpecRepo(It.IsAny<string>())).Returns(isSpecRepo);
+            return mock.Object;
         }
     }
 }

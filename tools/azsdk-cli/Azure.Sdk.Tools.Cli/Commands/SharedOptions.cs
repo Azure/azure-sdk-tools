@@ -29,6 +29,8 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(ReadMeGeneratorTool),
             typeof(ReleasePlanTool),
             typeof(ReleaseReadinessTool),
+            typeof(SdkBuildTool),
+            typeof(SdkGenerationTool),
             typeof(SdkReleaseTool),
             typeof(SpecCommonTools),
             typeof(PullRequestTools),
@@ -37,6 +39,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(TestAnalysisTool),
             typeof(TypeSpecConvertTool),
             typeof(TypeSpecInitTool),
+            typeof(TspClientUpdateTool),
             typeof(TypeSpecPublicRepoValidationTool),
 
             #if DEBUG

@@ -36,10 +36,18 @@ namespace ApiViewCopilot {
   @post
   op agentChat(@body request: AgentChatRequest): AgentChatResponse;
 
-  /** Handles an @mention from ApiView. Requires the bearer token to be set to the GH OAuth2 token. */
+  /** Handles an @mention from APIView. */
   @route("/api-review/mention")
   @post
   op handleMention(
+    @body request: MentionRequest,
+    @header("Authorization") authorization: string,
+  ): AgentChatResponse;
+
+  /** Handles the resolution of a chat thread from APIView. */
+  @route("/api-review/resolve")
+  @post
+  op handleResolve(
     @body request: MentionRequest,
     @header("Authorization") authorization: string,
   ): AgentChatResponse;

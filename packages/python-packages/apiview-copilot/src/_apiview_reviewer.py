@@ -457,13 +457,16 @@ class ApiViewReview:
         for idx, comment in enumerate(self.results.comments):
             if comment.source != "generic":
                 continue
+            search_result = self.search.search_all(query=comment.comment)
+            context = self.search.build_context(search_result)
+            context_text = context.to_markdown() if search_result else "EMPTY"
             futures[idx] = self.executor.submit(
                 self._run_prompt,
                 judge_prompt_path,
                 inputs={
                     "content": comment.model_dump(),
                     "language": get_language_pretty_name(self.language),
-                    "context": self.search.search_all(query=comment.comment),
+                    "context": context_text,
                 },
             )
 

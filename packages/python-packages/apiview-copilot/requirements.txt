@@ -1,5 +1,4 @@
 aiohttp==3.12.14
-asyncio==3.4.3
 azure-appconfiguration==1.7.1
 azure-cosmos==4.9.0
 azure-identity==1.21.0

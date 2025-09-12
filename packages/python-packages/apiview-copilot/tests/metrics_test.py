@@ -10,13 +10,13 @@ Test for metrics functionality.
 
 from unittest.mock import Mock, patch
 
-import cli
+import src._metrics as metrics
 
 
 class TestMetrics:
     """Test class for metrics functions."""
 
-    @patch("cli._get_apiview_cosmos_client")
+    @patch("src._metrics.get_apiview_cosmos_client")
     def test_calculate_language_adoption_basic(self, mock_cosmos_client):
         """Test basic language adoption calculation."""
         # Mock reviews data (should use 'id' not 'ReviewId')
@@ -41,7 +41,7 @@ class TestMetrics:
         mock_reviews = Mock()
         mock_reviews.query_items.return_value = iter(mock_reviews_data)
         mock_cosmos_client.side_effect = [mock_comments, mock_reviews]
-        result = cli._calculate_language_adoption("2024-01-01", "2024-01-31")  # pylint: disable=protected-access
+        result = metrics._calculate_language_adoption("2024-01-01", "2024-01-31")  # pylint: disable=protected-access
         expected = {
             "python": {
                 "adoption_rate": "0.50",
@@ -61,7 +61,7 @@ class TestMetrics:
         }
         assert result == expected
 
-    @patch("cli._get_apiview_cosmos_client")
+    @patch("src._metrics.get_apiview_cosmos_client")
     def test_calculate_language_adoption_empty(self, mock_cosmos_client):
         """Test language adoption calculation with no data."""
         mock_comments = Mock()
@@ -69,10 +69,10 @@ class TestMetrics:
         mock_reviews = Mock()
         mock_reviews.query_items.return_value = iter([])
         mock_cosmos_client.side_effect = [mock_comments, mock_reviews]
-        result = cli._calculate_language_adoption("2024-01-01", "2024-01-31")  # pylint: disable=protected-access
+        result = metrics._calculate_language_adoption("2024-01-01", "2024-01-31")  # pylint: disable=protected-access
         assert not result
 
-    @patch("cli._get_apiview_cosmos_client")
+    @patch("src._metrics.get_apiview_cosmos_client")
     def test_calculate_language_adoption_no_ai_comments(self, mock_cosmos_client):
         """Test language adoption with revisions but no AI comments."""
         mock_reviews = [
@@ -88,7 +88,7 @@ class TestMetrics:
         mock_reviews = Mock()
         mock_reviews.query_items.return_value = iter(mock_reviews_data)
         mock_cosmos_client.side_effect = [mock_comments, mock_reviews]
-        result = cli._calculate_language_adoption("2024-01-01", "2024-01-31")  # pylint: disable=protected-access
+        result = metrics._calculate_language_adoption("2024-01-01", "2024-01-31")  # pylint: disable=protected-access
         expected = {
             "python": {
                 "adoption_rate": "0.00",
@@ -98,7 +98,7 @@ class TestMetrics:
         }
         assert result == expected
 
-    @patch("cli._get_apiview_cosmos_client")
+    @patch("src._metrics.get_apiview_cosmos_client")
     def test_calculate_language_adoption_multiple_revisions_per_review(self, mock_cosmos_client):
         """Test language adoption with multiple revisions per review."""
         mock_reviews = [
@@ -120,7 +120,7 @@ class TestMetrics:
         mock_reviews = Mock()
         mock_reviews.query_items.return_value = iter(mock_reviews_data)
         mock_cosmos_client.side_effect = [mock_comments, mock_reviews]
-        result = cli._calculate_language_adoption("2024-01-01", "2024-01-31")  # pylint: disable=protected-access
+        result = metrics._calculate_language_adoption("2024-01-01", "2024-01-31")  # pylint: disable=protected-access
         expected = {
             "python": {
                 "adoption_rate": "0.50",
@@ -135,7 +135,7 @@ class TestMetrics:
         }
         assert result == expected
 
-    @patch("cli._get_apiview_cosmos_client")
+    @patch("src._metrics.get_apiview_cosmos_client")
     def test_datetime_parsing_in_language_adoption(self, mock_cosmos_client):
         """Test that datetime parsing works correctly in language adoption."""
         mock_comments = Mock()
@@ -143,11 +143,11 @@ class TestMetrics:
         mock_reviews = Mock()
         mock_reviews.query_items.return_value = iter([])
         mock_cosmos_client.side_effect = [mock_comments, mock_reviews]
-        result = cli._calculate_language_adoption("2024-01-01", "2024-12-31")  # pylint: disable=protected-access
+        result = metrics._calculate_language_adoption("2024-01-01", "2024-12-31")  # pylint: disable=protected-access
         assert not result
 
-    @patch("cli._calculate_language_adoption")
-    @patch("cli._get_apiview_cosmos_client")
+    @patch("src._metrics._calculate_language_adoption")
+    @patch("src._metrics.get_apiview_cosmos_client")
     def test_report_metrics_includes_language_adoption(self, mock_cosmos_client, mock_language_adoption):
         """Test that report_metrics includes language adoption in output."""
 
@@ -169,7 +169,7 @@ class TestMetrics:
         }
 
         # Call report_metrics and capture the return value
-        result = cli.report_metrics("2024-01-01", "2024-01-31")
+        result = metrics.get_metrics_report("2024-01-01", "2024-01-31", environment="test")
 
         # Verify language_adoption is in the metrics
         assert "language_adoption" in result["metrics"]

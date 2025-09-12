@@ -19,4 +19,12 @@ public interface ILanguageSpecificChecks
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Result of the dependency analysis</returns>
     Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Updates code snippets in the specific package using language-specific tools.
+    /// </summary>
+    /// <param name="packagePath">Path to the package directory</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Result of the snippet update operation</returns>
+    Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, CancellationToken cancellationToken = default);
 }

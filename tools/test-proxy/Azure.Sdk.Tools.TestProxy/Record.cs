@@ -122,7 +122,7 @@ namespace Azure.Sdk.Tools.TestProxy
         public async Task HandleRequest()
         {
             string id = string.Empty;
-            if (Startup.ProxyConfiguration.Mode.Equals(UniversalRecordingMode.Azure))
+            if (Startup.ProxyConfiguration.Mode == UniversalRecordingMode.Azure)
             {
                 id = RecordingHandler.GetHeader(Request, "x-recording-id");
             }

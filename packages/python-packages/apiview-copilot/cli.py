@@ -693,7 +693,18 @@ def get_active_reviews(start_date: str, end_date: str, language: str, environmen
     """
     Retrieves active APIView reviews in the specified environment during the specified period.
     """
-    return _get_active_reviews(start_date, end_date, language, environment)
+    reviews = _get_active_reviews(start_date, end_date, environment)
+    pretty_language = get_language_pretty_name(language).lower()
+
+    filtered = [r for r in reviews if r.language.lower() == pretty_language]
+    filtered_dicts = []
+    for r in filtered:
+        # since we are filtering by language, we can remove it from the output
+        d = r.__dict__.copy()
+        d.pop("language", None)
+        filtered_dicts.append(d)
+    print(f"Found {len(filtered_dicts)} reviews in {pretty_language} between {start_date} and {end_date}.")
+    return filtered_dicts
 
 
 def report_metrics(start_date: str, end_date: str, environment: str = "production", markdown: bool = False) -> dict:

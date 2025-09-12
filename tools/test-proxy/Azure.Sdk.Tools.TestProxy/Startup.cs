@@ -1,30 +1,32 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
+using System.CommandLine;
+using System.Diagnostics.CodeAnalysis;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Text.Json;
+using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
+using Azure.Sdk.Tools.TestProxy.CommandOptions;
+using Azure.Sdk.Tools.TestProxy.Common;
+using Azure.Sdk.Tools.TestProxy.Common.AutoShutdown;
+using Azure.Sdk.Tools.TestProxy.Models;
+using Azure.Sdk.Tools.TestProxy.Store;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using System.IO;
-using System.Text.RegularExpressions;
-using Azure.Sdk.Tools.TestProxy.Common;
 using Microsoft.Extensions.Logging;
-using System.Reflection;
-using Microsoft.AspNetCore.Server.Kestrel.Core;
-using Azure.Sdk.Tools.TestProxy.Store;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.CommandLine;
-using Azure.Sdk.Tools.TestProxy.CommandOptions;
-using System.Text.Json;
 using Microsoft.Extensions.Logging.Console;
 using Microsoft.Extensions.Options;
-using Azure.Sdk.Tools.TestProxy.Common.AutoShutdown;
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -43,6 +45,7 @@ namespace Azure.Sdk.Tools.TestProxy
         public static StoreResolver Resolver;
         public static IAssetsStore DefaultStore;
         public static string[] storedArgs;
+        public static ServerRecordingConfiguration ProxyConfiguration { get; } = new ServerRecordingConfiguration();
 
         private static string resolveRepoLocation(string storageLocation = null)
         {
@@ -102,6 +105,14 @@ namespace Azure.Sdk.Tools.TestProxy
                     System.Console.WriteLine("Config verb requires a subcommand after the \"config\" verb.\n\nCorrect Usage: \"Azure.Sdk.Tools.TestProxy config locate|show|create -a path/to/assets.json\"");
                     break;
                 case StartOptions startOptions:
+                    if (startOptions.StandardProxyMode) {
+                        // default to playback when run in standard mode. hitting Record/Start or Record/Playback will switch this setting
+                        ProxyConfiguration.Mode = UniversalRecordingMode.StandardPlayback;
+                    }
+                    else
+                    {
+                        ProxyConfiguration.Mode = UniversalRecordingMode.Azure;
+                    }
                     StartServer(startOptions);
                     break;
                 case PushOptions pushOptions:
@@ -252,11 +263,83 @@ namespace Azure.Sdk.Tools.TestProxy
             app.UseMiddleware<HttpExceptionMiddleware>();
             app.UseMiddleware<ShutdownTimerMiddleware>();
 
+            // always need to handle absolute-form requests from HTTP proxies
+            app.Use(async (context, next) =>
+            {
+                var feat = context.Features.Get<IHttpRequestFeature>();
+                var raw = feat?.RawTarget;
+
+                // If HTTP proxy absolute-form is used, RawTarget looks like "http://host:port/path?query"
+                if (!string.IsNullOrEmpty(raw) &&
+                    (raw.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                     raw.StartsWith("https://", StringComparison.OrdinalIgnoreCase)) &&
+                    Uri.TryCreate(raw, UriKind.Absolute, out var uri))
+                {
+                    // Preserve the original absolute target for recording metadata if you want
+                    context.Items["proxy.original-target"] = uri.ToString();
+
+                    context.Request.Scheme = uri.Scheme;
+                    // NOTE: HostString handles default ports (don’t pass a port if it's default)
+                    context.Request.Host = uri.IsDefaultPort
+                        ? new HostString(uri.Host)
+                        : new HostString(uri.Host, uri.Port);
+
+                    context.Request.Path = PathString.FromUriComponent(uri);
+                    context.Request.QueryString = QueryString.FromUriComponent(uri);
+
+                    // If the incoming Host header was the proxy host, it’s OK; upstream routing will
+                    // be derived from Scheme/Host/Path set above (and your handler can set/ensure Host).
+                    // If you prefer: context.Request.Headers["Host"] = context.Request.Host.ToString();
+                }
+
+                await next();
+            });
+
             DebugLogger.ConfigureLogger(loggerFactory);
 
-            MapRecording(app);
-            app.UseRouting();
-            app.UseEndpoints(endpoints => endpoints.MapControllers());
+            if (Startup.ProxyConfiguration.Mode == UniversalRecordingMode.Azure)
+            {
+                // Legacy Azure SDK behavior: route based on x-recording-mode header
+                MapRecording(app);
+                app.UseRouting();
+                app.UseEndpoints(endpoints => endpoints.MapControllers());
+                return;
+            }
+            else
+            {
+                app.Use(async (context, next) =>
+                {
+                    // Allow admin/record/playback controller endpoints as-is
+                    var path = context.Request.Path.Value ?? string.Empty;
+                    bool isControllerEndpoint =
+                        path.StartsWith("/Record", StringComparison.OrdinalIgnoreCase) ||
+                        path.StartsWith("/Playback", StringComparison.OrdinalIgnoreCase) ||
+                        path.StartsWith("/Admin", StringComparison.OrdinalIgnoreCase);
+
+                    if (!isControllerEndpoint)
+                    {
+                        var cfg = Startup.ProxyConfiguration;
+                        var handler = context.RequestServices.GetRequiredService<RecordingHandler>();
+
+                        if (cfg.Mode == UniversalRecordingMode.StandardPlayback)
+                        {
+                            await handler.HandlePlaybackRequest(cfg.RecordingId, context.Request, context.Response);
+                            return;
+                        }
+                        else if (cfg.Mode == UniversalRecordingMode.StandardRecord)
+                        {
+                            await handler.HandleRecordRequestAsync(cfg.RecordingId, context.Request, context.Response);
+                            return;
+                        }
+                    }
+
+                    await next();
+                });
+
+                // expose the controller endpoints for admin/record/playback
+                app.UseRouting();
+                app.UseEndpoints(endpoints => endpoints.MapControllers());
+            }
         }
 
         // Route requests with header x-recording-mode = X to X.HandleRequest

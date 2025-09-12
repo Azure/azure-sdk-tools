@@ -134,9 +134,9 @@ For safety, the "official target" version that the azure-sdk team uses is presen
 
 This is the help information for test-proxy. It uses the nuget package [`System.CommandLine`](https://www.nuget.org/packages/System.CommandLine) to parse arguments.
 
-The test-proxy executable fulfills one of two primary purposes:
+The test-proxy executable fulfills one of two primary purposes when called on the CLI:
 
-1. The test-proxy server (the only option up to this point)
+1. The test-proxy server
 2. [`asset-sync`](#asset-sync-retrieve-external-test-recordings) verbs
    - `push`
    - `restore`
@@ -257,6 +257,45 @@ Running proxy version is Azure.Sdk.Tools.TestProxy 20241209.1
 ```
 
 To discover the mapped ports.
+
+### Running the server using `start`
+
+When starting the test-proxy as a server `Azure.Sdk.Tools.TestProxy.exe start <options>`, users have the following options:
+
+```
+Usage:
+  Azure.Sdk.Tools.TestProxy start [<args>...] [options]
+
+Arguments:
+  <args>  Remaining arguments after "--". Used for asp.net arguments.
+
+Options:
+  -i, --insecure                                         Flag; Allow insecure upstream SSL certs. [default: False]
+  -d, --dump                                             Flag; Output configuration values when starting the
+                                                         Test-Proxy. [default: False]
+  -u, --universal                                        Flag; Redirect all logs to stdout, including what would
+                                                         normally be showing up on stderr. [default: False]
+  --auto-shutdown-in-seconds <auto-shutdown-in-seconds>  Integer argument; When provided, the proxy will auto-shutdown
+                                                         after not being contacted over any HTTP route for this number
+                                                         of seconds. [default: -1]
+  --http-proxy                                           Flag; Run the test-proxy in single-session mode. This means
+                                                         that test-proxy will function as a regular proxy without
+                                                         needing any request header changes. Single playback or record
+                                                         at a time. [default: False]
+  -l, --storage-location <storage-location>              The path to the target local git repo. If not provided as an
+                                                         argument, Environment variable TEST_PROXY_FOLDER will be
+                                                         consumed. Lacking both, the current working directory will be
+                                                         utilized. []
+  -p, --storage-plugin <storage-plugin>                  The plugin for the selected storage, default is Git storage is
+                                                         GitStore. (Currently the only option) [default: GitStore]
+  -?, -h, --help                                         Show help and usage information
+```
+
+While most of the `start` verb flags are self-explanatory, there is one that merits further discussion: `--http-proxy`.
+
+Before the addition of this feature in #11958, the test-proxy only supported a `custom-transport` solution. Clients would have to _actually modify_ their requests before they are fired -- detailed in [run your tests section](#run-your-tests). This was _useful_ because it was a transport-level customization that still allowed `Azure` sdks to actually test their SDK's utilization of `HTTP_PROXY` environment settings.
+
+When argument `--http-proxy` is provided, the requirement for needing to modify requests in transport _disappears_. When invoked with this flag, the test-proxy will be targetable by standard proxied requests from an HTTP_PROXY configured client. No transport-level customizations like headers `x-recording-mode`, `x-recording-id`, or `x-recording-upstream-base-uri` will be necessary, but due to the _lack_ of these, multiple playback or record sessions will be impossible. There will be no way to correlate requests that come through the proxy to a specific session!
 
 ## Environment Variables
 

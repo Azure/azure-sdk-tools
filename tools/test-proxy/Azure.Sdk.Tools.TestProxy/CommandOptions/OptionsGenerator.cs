@@ -49,6 +49,11 @@ namespace Azure.Sdk.Tools.TestProxy.CommandOptions
                 getDefaultValue: () => false);
             dumpOption.AddAlias("-d");
 
+            var standardProxyOption = new Option<bool>(
+                name: "--http-proxy",
+                description: "Flag; Run the test-proxy in single-session mode. This means that test-proxy will function as a regular proxy without needing any request header changes. Single playback or record at a time.",
+                getDefaultValue: () => false);
+
             var universalOption = new Option<bool>(
                 name: "--universal",
                 description: "Flag; Redirect all logs to stdout, including what would normally be showing up on stderr.",
@@ -94,10 +99,11 @@ namespace Azure.Sdk.Tools.TestProxy.CommandOptions
             startCommand.AddOption(dumpOption);
             startCommand.AddOption(universalOption);
             startCommand.AddOption(autoShutdownOption);
+            startCommand.AddOption(standardProxyOption);
             startCommand.AddArgument(collectedArgs);
 
             startCommand.SetHandler(async (startOpts) => await callback(startOpts),
-                new StartOptionsBinder(storageLocationOption, storagePluginOption, insecureOption, dumpOption, universalOption, autoShutdownOption, collectedArgs)
+                new StartOptionsBinder(storageLocationOption, storagePluginOption, insecureOption, dumpOption, universalOption, autoShutdownOption, standardProxyOption, collectedArgs)
             );
             root.Add(startCommand);
 

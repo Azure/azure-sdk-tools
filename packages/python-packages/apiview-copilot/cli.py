@@ -34,6 +34,7 @@ from src._mention import handle_mention_request
 from src._metrics import get_metrics_report
 from src._search_manager import SearchManager
 from src._settings import SettingsManager
+from src._thread_resolution import handle_thread_resolution_request
 from src._utils import get_language_pretty_name
 from src.agent._agent import get_main_agent, invoke_agent
 
@@ -589,6 +590,53 @@ def handle_agent_mention(comments_path: str, remote: bool = False):
         )
 
 
+def handle_agent_thread_resolution(comments_path: str, remote: bool = False):
+    """
+    Handles requests to update the knowledge base when a conversation is resolved.
+    """
+    # load comments from the comments_path
+    comments = []
+    if os.path.exists(comments_path):
+        with open(comments_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    else:
+        print(f"Comments file {comments_path} does not exist.")
+        return
+    comments = data.get("comments", [])
+    language = data.get("language", None)
+    package_name = data.get("package_name", None)
+    code = data.get("code", None)
+    if language not in SUPPORTED_LANGUAGES:
+        print(f"Unsupported language `{language}`")
+        return
+    pretty_language = get_language_pretty_name(language)
+
+    if remote:
+        settings = SettingsManager()
+        base_url = settings.get("WEBAPP_ENDPOINT")
+        api_endpoint = f"{base_url}/api-review/resolve"
+        try:
+            resp = requests.post(
+                api_endpoint,
+                json={"comments": comments, "language": language, "packageName": package_name, "code": code},
+                timeout=60,
+            )
+            data = resp.json()
+            if resp.status_code == 200:
+                print(f"{BOLD_BLUE}Agent response:{RESET}\n{data.get('response', '')}\n")
+            else:
+                print(f"Error: {resp.status_code} - {data}")
+        except Exception as e:
+            print(f"Error: {e}")
+    else:
+        return handle_thread_resolution_request(
+            comments=comments,
+            language=pretty_language,
+            package_name=package_name,
+            code=code,
+        )
+
+
 def db_get(container_name: str, id: str):
     """Retrieve an item from the database."""
     db = get_database_manager()
@@ -837,6 +885,7 @@ class CliCommandsLoader(CLICommandsLoader):
         with CommandGroup(self, "agent", "__main__#{}") as g:
             g.command("mention", "handle_agent_mention")
             g.command("chat", "handle_agent_chat")
+            g.command("resolve-thread", "handle_agent_thread_resolution")
         with CommandGroup(self, "eval", "__main__#{}") as g:
             g.command("run", "run_test_case")
             g.command("create", "create_test_case")
@@ -1064,19 +1113,18 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="The path to the base APIView file for diff summarization.",
                 options_list=["--base", "-b"],
             )
-        with ArgumentsContext(self, "agent mention") as ac:
-            ac.argument(
-                "comments_path",
-                type=str,
-                help="Path to the JSON file containing comments for the agent to process.",
-                options_list=["--comments-path", "-c"],
-            )
         with ArgumentsContext(self, "agent") as ac:
             ac.argument(
                 "thread_id",
                 type=str,
                 help="The thread ID to continue the discussion. If not provided, a new thread will be created.",
                 options_list=["--thread-id", "-t"],
+            )
+            ac.argument(
+                "comments_path",
+                type=str,
+                help="Path to the JSON file containing comments for the agent to process.",
+                options_list=["--comments-path", "-c"],
             )
         with ArgumentsContext(self, "db") as ac:
             ac.argument(

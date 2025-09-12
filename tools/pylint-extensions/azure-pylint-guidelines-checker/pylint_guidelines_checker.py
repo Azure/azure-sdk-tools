@@ -1515,6 +1515,12 @@ class CheckDocstringParameters(BaseChecker):
             "docstring-type-do-not-use-class",
             "Docstring type is formatted incorrectly. Do not use `:class` in docstring type.",
         ),
+        "C4753": (
+            'Do not use "kwargs" as a keyword argument in docstring. Either expand kwargs into individual arguments or use ":keyword Dict[str, Any] \\\\**kwargs:" format. See details: '
+            "https://azure.github.io/azure-sdk/python_documentation.html#docstrings",
+            "docstring-kwargs-keyword",
+            "Docstring should not use 'kwargs' as a keyword argument.",
+        ),
     }
     options = (
         (
@@ -1669,6 +1675,14 @@ class CheckDocstringParameters(BaseChecker):
 
             # check for params in docstring
             docparams.update(self._find_param(line, docstring, idx, docparams))
+
+        # check for incorrect use of "kwargs" as keyword argument
+        if "kwargs" in docstring_keyword_args:
+            self.add_message(
+                msgid="docstring-kwargs-keyword",
+                node=node,
+                confidence=None,
+            )
 
         # check that all params are documented
         missing_params = []

@@ -147,7 +147,7 @@ namespace APIViewUnitTests
             {
                 modifiedCount += ModifiedLineCount(l);
             }
-            Assert.Equal(4, modifiedCount);
+            Assert.Equal(2, modifiedCount);
         }
 
         private int ModifiedLineCount(ReviewLine line)

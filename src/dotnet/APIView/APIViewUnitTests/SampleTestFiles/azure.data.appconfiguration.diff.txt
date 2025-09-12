@@ -1,0 +1,823 @@
+    Dependencies: 
+    Azure.Core
+  - Microsoft.Bcl.AsyncInterfaces
+  - System.Text.Json
+
+    namespace Azure.Data.AppConfiguration { 
+  + public readonly struct AppConfigurationAudience : IEquatable<AppConfigurationAudience> { 
+      // <summary> 
+      // Initializes a new instance of the <see cref="T:Azure.Data.AppConfiguration.AppConfigurationAudience" /> object. 
+      // </summary> 
+      // <param name="value">The Microsoft Entra audience to use when forming authorization scopes. 
+      // For the App Configuration service, this value corresponds to a URL that identifies the Azure cloud where the resource is located.</param> 
+      // <exception cref="T:System.ArgumentNullException"> <paramref name="value" /> is null. </exception> 
+      // <remarks>Please use one of the constant members over creating a custom value unless you have special needs for doing so.</remarks> 
+    + public AppConfigurationAudience(string value); 
+      // <summary> Azure China. </summary> 
+    + public static AppConfigurationAudience AzureChina { get; }
+      // <summary> Azure Government. </summary> 
+    + public static AppConfigurationAudience AzureGovernment { get; }
+      // <summary> Azure Public Cloud. </summary> 
+    + public static AppConfigurationAudience AzurePublicCloud { get; }
+      // <summary> Determines if two <see cref="T:Azure.Data.AppConfiguration.AppConfigurationAudience" /> values are the same. </summary> 
+    + public static bool operator ==(AppConfigurationAudience left, AppConfigurationAudience right); 
+      // <summary> Converts a string to a <see cref="T:Azure.Data.AppConfiguration.AppConfigurationAudience" />. </summary> 
+    + public static implicit operator AppConfigurationAudience(string value); 
+      // <summary> Determines if two <see cref="T:Azure.Data.AppConfiguration.AppConfigurationAudience" /> values are not the same. </summary> 
+    + public static bool operator !=(AppConfigurationAudience left, AppConfigurationAudience right); 
+      // <summary>Indicates whether the current object is equal to another object of the same type.</summary><param name="other">An object to compare with this object.</param><returns><see langword="true" /> if the current object is equal to the <paramref name="other" /> parameter; otherwise, <see langword="false" />.</returns> 
+    + public bool Equals(AppConfigurationAudience other); 
+      // <summary>Indicates whether this instance and a specified object are equal.</summary><param name="obj">The object to compare with the current instance.</param><returns><see langword="true" /> if <paramref name="obj" /> and this instance are the same type and represent the same value; otherwise, <see langword="false" />.</returns> 
+    + public override bool Equals(object obj); 
+      // <summary>Returns the hash code for this instance.</summary><returns>A 32-bit signed integer that is the hash code for this instance.</returns> 
+    + public override int GetHashCode(); 
+      // <summary>Returns the fully qualified type name of this instance.</summary><returns>The fully qualified type name.</returns> 
+    + public override string ToString(); 
+  + } 
+
+  + public class AzureDataAppConfigurationContext : ModelReaderWriterContext { 
+      // <summary> Gets the default instance </summary> 
+    + public static AzureDataAppConfigurationContext Default { get; }
+      // <summary> 
+      // Tries to gets a <see cref="T:System.ClientModel.Primitives.ModelReaderWriterTypeBuilder" /> for the given <see cref="T:System.Type" /> to allow <see cref="T:System.ClientModel.Primitives.ModelReaderWriter" /> to work with AOT. 
+      // </summary><param name="type">The type to get info for.</param><param name="builder">The <see cref="T:System.ClientModel.Primitives.ModelReaderWriterTypeBuilder" /> if found.</param><returns>True if the corresponding <see cref="T:System.ClientModel.Primitives.ModelReaderWriterTypeBuilder" /> if defined in the context otherwise false.</returns> 
+    + protected override bool TryGetTypeBuilderCore(Type type, out ModelReaderWriterTypeBuilder builder); 
+  + } 
+
+    public class ConfigurationClient { 
+      public ConfigurationClient(string connectionString); 
+      public ConfigurationClient(string connectionString, ConfigurationClientOptions options); 
+      public ConfigurationClient(Uri endpoint, TokenCredential credential); 
+      public ConfigurationClient(Uri endpoint, TokenCredential credential, ConfigurationClientOptions options); 
+      protected ConfigurationClient(); 
+      public virtual HttpPipeline Pipeline { get; }
+      public virtual Response<ConfigurationSetting> AddConfigurationSetting(string key, string value, string label = null, CancellationToken cancellationToken = default); 
+      public virtual Response<ConfigurationSetting> AddConfigurationSetting(ConfigurationSetting setting, CancellationToken cancellationToken = default); 
+      public virtual Task<Response<ConfigurationSetting>> AddConfigurationSettingAsync(string key, string value, string label = null, CancellationToken cancellationToken = default); 
+      public virtual Task<Response<ConfigurationSetting>> AddConfigurationSettingAsync(ConfigurationSetting setting, CancellationToken cancellationToken = default); 
+      public virtual Response<ConfigurationSnapshot> ArchiveSnapshot(string snapshotName, CancellationToken cancellationToken = default); 
+      public virtual Response<ConfigurationSnapshot> ArchiveSnapshot(string snapshotName, MatchConditions matchConditions, CancellationToken cancellationToken = default); 
+      public virtual Task<Response<ConfigurationSnapshot>> ArchiveSnapshotAsync(string snapshotName, CancellationToken cancellationToken = default); 
+      public virtual Task<Response<ConfigurationSnapshot>> ArchiveSnapshotAsync(string snapshotName, MatchConditions matchConditions, CancellationToken cancellationToken = default); 
+      public virtual CreateSnapshotOperation CreateSnapshot(WaitUntil wait, string snapshotName, ConfigurationSnapshot snapshot, CancellationToken cancellationToken = default); 
+      public virtual Task<CreateSnapshotOperation> CreateSnapshotAsync(WaitUntil wait, string snapshotName, ConfigurationSnapshot snapshot, CancellationToken cancellationToken = default); 
+      public virtual Response DeleteConfigurationSetting(string key, string label = null, CancellationToken cancellationToken = default); 
+      public virtual Response DeleteConfigurationSetting(ConfigurationSetting setting, bool onlyIfUnchanged = false, CancellationToken cancellationToken = default); 
+      public virtual Task<Response> DeleteConfigurationSettingAsync(string key, string label = null, CancellationToken cancellationToken = default); 
+      public virtual Task<Response> DeleteConfigurationSettingAsync(ConfigurationSetting setting, bool onlyIfUnchanged = false, CancellationToken cancellationToken = default); 
+      public virtual Response<ConfigurationSetting> GetConfigurationSetting(string key, string label = null, CancellationToken cancellationToken = default); 
+      public virtual Response<ConfigurationSetting> GetConfigurationSetting(ConfigurationSetting setting, bool onlyIfChanged = false, CancellationToken cancellationToken = default); 
+      public virtual Response<ConfigurationSetting> GetConfigurationSetting(ConfigurationSetting setting, DateTimeOffset acceptDateTime, CancellationToken cancellationToken = default); 
+      public virtual Task<Response<ConfigurationSetting>> GetConfigurationSettingAsync(string key, string label = null, CancellationToken cancellationToken = default); 
+      public virtual Task<Response<ConfigurationSetting>> GetConfigurationSettingAsync(ConfigurationSetting setting, bool onlyIfChanged = false, CancellationToken cancellationToken = default); 
+      public virtual Task<Response<ConfigurationSetting>> GetConfigurationSettingAsync(ConfigurationSetting setting, DateTimeOffset acceptDateTime, CancellationToken cancellationToken = default); 
+      public virtual Pageable<ConfigurationSetting> GetConfigurationSettings(SettingSelector selector, CancellationToken cancellationToken = default); 
+      public virtual AsyncPageable<ConfigurationSetting> GetConfigurationSettingsAsync(SettingSelector selector, CancellationToken cancellationToken = default); 
+      public virtual Pageable<ConfigurationSetting> GetConfigurationSettingsForSnapshot(string snapshotName, CancellationToken cancellationToken = default); 
+      public virtual Pageable<ConfigurationSetting> GetConfigurationSettingsForSnapshot(string snapshotName, SettingFields fields, CancellationToken cancellationToken = default); 
+      public virtual AsyncPageable<ConfigurationSetting> GetConfigurationSettingsForSnapshotAsync(string snapshotName, CancellationToken cancellationToken = default); 
+      public virtual AsyncPageable<ConfigurationSetting> GetConfigurationSettingsForSnapshotAsync(string snapshotName, SettingFields fields, CancellationToken cancellationToken = default); 
+      public virtual Pageable<SettingLabel> GetLabels(SettingLabelSelector selector, CancellationToken cancellationToken = default); 
+      public virtual AsyncPageable<SettingLabel> GetLabelsAsync(SettingLabelSelector selector, CancellationToken cancellationToken = default); 
+      public virtual Pageable<ConfigurationSetting> GetRevisions(string keyFilter, string labelFilter = null, CancellationToken cancellationToken = default); 
+      public virtual Pageable<ConfigurationSetting> GetRevisions(SettingSelector selector, CancellationToken cancellationToken = default); 
+      public virtual AsyncPageable<ConfigurationSetting> GetRevisionsAsync(string keyFilter, string labelFilter = null, CancellationToken cancellationToken = default); 
+      public virtual AsyncPageable<ConfigurationSetting> GetRevisionsAsync(SettingSelector selector, CancellationToken cancellationToken = default); 
+      public virtual Response<ConfigurationSnapshot> GetSnapshot(string snapshotName, IEnumerable<SnapshotFields> fields = null, CancellationToken cancellationToken = default); 
+      public virtual Task<Response<ConfigurationSnapshot>> GetSnapshotAsync(string snapshotName, IEnumerable<SnapshotFields> fields = null, CancellationToken cancellationToken = default); 
+      public virtual Pageable<ConfigurationSnapshot> GetSnapshots(SnapshotSelector selector, CancellationToken cancellationToken = default); 
+      public virtual AsyncPageable<ConfigurationSnapshot> GetSnapshotsAsync(SnapshotSelector selector, CancellationToken cancellationToken = default); 
+      public virtual Response<ConfigurationSnapshot> RecoverSnapshot(string snapshotName, CancellationToken cancellationToken = default); 
+      public virtual Response<ConfigurationSnapshot> RecoverSnapshot(string snapshotName, MatchConditions matchConditions, CancellationToken cancellationToken = default); 
+      public virtual Task<Response<ConfigurationSnapshot>> RecoverSnapshotAsync(string snapshotName, CancellationToken cancellationToken = default); 
+      public virtual Task<Response<ConfigurationSnapshot>> RecoverSnapshotAsync(string snapshotName, MatchConditions matchConditions, CancellationToken cancellationToken = default); 
+      public virtual Response<ConfigurationSetting> SetConfigurationSetting(string key, string value, string label = null, CancellationToken cancellationToken = default); 
+      public virtual Response<ConfigurationSetting> SetConfigurationSetting(ConfigurationSetting setting, bool onlyIfUnchanged = false, CancellationToken cancellationToken = default); 
+      public virtual Task<Response<ConfigurationSetting>> SetConfigurationSettingAsync(string key, string value, string label = null, CancellationToken cancellationToken = default); 
+      public virtual Task<Response<ConfigurationSetting>> SetConfigurationSettingAsync(ConfigurationSetting setting, bool onlyIfUnchanged = false, CancellationToken cancellationToken = default); 
+      public virtual Response<ConfigurationSetting> SetReadOnly(string key, bool isReadOnly, CancellationToken cancellationToken = default); 
+      public virtual Response<ConfigurationSetting> SetReadOnly(string key, string label, bool isReadOnly, CancellationToken cancellationToken = default); 
+      public virtual Response<ConfigurationSetting> SetReadOnly(ConfigurationSetting setting, bool isReadOnly, bool onlyIfUnchanged = false, CancellationToken cancellationToken = default); 
+      public virtual Task<Response<ConfigurationSetting>> SetReadOnlyAsync(string key, bool isReadOnly, CancellationToken cancellationToken = default); 
+      public virtual Task<Response<ConfigurationSetting>> SetReadOnlyAsync(string key, string label, bool isReadOnly, CancellationToken cancellationToken = default); 
+      public virtual Task<Response<ConfigurationSetting>> SetReadOnlyAsync(ConfigurationSetting setting, bool isReadOnly, bool onlyIfUnchanged = false, CancellationToken cancellationToken = default); 
+      public virtual void UpdateSyncToken(string token); 
+      public override bool Equals(object obj); 
+      public override int GetHashCode(); 
+      public override string ToString(); 
+    + public virtual Response<FeatureFlag> AddFeatureFlag(string name, bool? enabled = null, string label = null, CancellationToken cancellationToken = default); 
+    + public virtual Response<FeatureFlag> AddFeatureFlag(FeatureFlag flag, CancellationToken cancellationToken = default); 
+    + public virtual Task<Response<FeatureFlag>> AddFeatureFlagAsync(string name, bool? enabled = null, string label = null, CancellationToken cancellationToken = default); 
+    + public virtual Task<Response<FeatureFlag>> AddFeatureFlagAsync(FeatureFlag flag, CancellationToken cancellationToken = default); 
+    + public virtual Response DeleteFeatureFlag(string name, string label = null, CancellationToken cancellationToken = default); 
+    + public virtual Response DeleteFeatureFlag(FeatureFlag flag, bool onlyIfUnchanged = false, CancellationToken cancellationToken = default); 
+    + public virtual Task<Response> DeleteFeatureFlagAsync(string name, string label = null, CancellationToken cancellationToken = default); 
+    + public virtual Task<Response> DeleteFeatureFlagAsync(FeatureFlag flag, bool onlyIfUnchanged = false, CancellationToken cancellationToken = default); 
+    + public virtual Response<FeatureFlag> GetFeatureFlag(string name, string label = null, CancellationToken cancellationToken = default); 
+    + public virtual Response<FeatureFlag> GetFeatureFlag(FeatureFlag flag, bool onlyIfChanged = false, CancellationToken cancellationToken = default); 
+    + public virtual Response<FeatureFlag> GetFeatureFlag(FeatureFlag flag, DateTimeOffset acceptDateTime, CancellationToken cancellationToken = default); 
+    + public virtual Task<Response<FeatureFlag>> GetFeatureFlagAsync(string name, string label = null, CancellationToken cancellationToken = default); 
+    + public virtual Task<Response<FeatureFlag>> GetFeatureFlagAsync(FeatureFlag flag, bool onlyIfChanged = false, CancellationToken cancellationToken = default); 
+    + public virtual Task<Response<FeatureFlag>> GetFeatureFlagAsync(FeatureFlag flag, DateTimeOffset acceptDateTime, CancellationToken cancellationToken = default); 
+    + public virtual Pageable<FeatureFlag> GetFeatureFlagRevisions(string nameFilter, string labelFilter = null, CancellationToken cancellationToken = default); 
+    + public virtual Pageable<FeatureFlag> GetFeatureFlagRevisions(FeatureFlagSelector selector, CancellationToken cancellationToken = default); 
+    + public virtual AsyncPageable<FeatureFlag> GetFeatureFlagRevisionsAsync(string nameFilter, string labelFilter = null, CancellationToken cancellationToken = default); 
+    + public virtual AsyncPageable<FeatureFlag> GetFeatureFlagRevisionsAsync(FeatureFlagSelector selector, CancellationToken cancellationToken = default); 
+    + public virtual Pageable<FeatureFlag> GetFeatureFlags(FeatureFlagSelector selector, CancellationToken cancellationToken = default); 
+    + public virtual AsyncPageable<FeatureFlag> GetFeatureFlagsAsync(FeatureFlagSelector selector, CancellationToken cancellationToken = default); 
+    + public virtual Response<FeatureFlag> SetFeatureFlag(string name, bool? enabled = null, string label = null, CancellationToken cancellationToken = default); 
+    + public virtual Response<FeatureFlag> SetFeatureFlag(FeatureFlag flag, bool onlyIfUnchanged = false, CancellationToken cancellationToken = default); 
+    + public virtual Task<Response<FeatureFlag>> SetFeatureFlagAsync(string name, bool? enabled = null, string label = null, CancellationToken cancellationToken = default); 
+    + public virtual Task<Response<FeatureFlag>> SetFeatureFlagAsync(FeatureFlag flag, bool onlyIfUnchanged = false, CancellationToken cancellationToken = default); 
+    + public virtual Response<FeatureFlag> SetFeatureFlagReadOnly(string name, bool isReadOnly, CancellationToken cancellationToken = default); 
+    + public virtual Response<FeatureFlag> SetFeatureFlagReadOnly(string name, string label, bool isReadOnly, CancellationToken cancellationToken = default); 
+    + public virtual Response<FeatureFlag> SetFeatureFlagReadOnly(FeatureFlag flag, bool isReadOnly, bool onlyIfUnchanged = false, CancellationToken cancellationToken = default); 
+    + public virtual Task<Response<FeatureFlag>> SetFeatureFlagReadOnlyAsync(string name, bool isReadOnly, CancellationToken cancellationToken = default); 
+    + public virtual Task<Response<FeatureFlag>> SetFeatureFlagReadOnlyAsync(string name, string label, bool isReadOnly, CancellationToken cancellationToken = default); 
+    + public virtual Task<Response<FeatureFlag>> SetFeatureFlagReadOnlyAsync(FeatureFlag flag, bool isReadOnly, bool onlyIfUnchanged = false, CancellationToken cancellationToken = default); 
+    } 
+    public static class ConfigurationClientExtensions { 
+      public static IAsyncEnumerable<Page<ConfigurationSetting>> AsPages(this AsyncPageable<ConfigurationSetting> pageable, IEnumerable<MatchConditions> conditions, string continuationToken = null, int? pageSizeHint = null); 
+      public static IEnumerable<Page<ConfigurationSetting>> AsPages(this Pageable<ConfigurationSetting> pageable, IEnumerable<MatchConditions> conditions, string continuationToken = null, int? pageSizeHint = null); 
+    } 
+    public class ConfigurationClientOptions : ClientOptions { 
+      public enum ServiceVersion { 
+        V1_0 = 0, 
+        V2023_10_01 = 1, 
+        V2023_11_01 = 2, 
+      } 
+
+      public ConfigurationClientOptions(ServiceVersion version = V2023_11_01); 
+    + public AppConfigurationAudience? Audience { get; set; }
+    } 
+    public static class ConfigurationModelFactory { 
+    + public static ConfigurationSetting ConfigurationSetting(string key = null, string label = null, string contentType = null, string value = null, DateTimeOffset? lastModified = null, IDictionary<string, string> tags = null, string description = null, bool? isReadOnly = null, ETag eTag = null); 
+      public static ConfigurationSetting ConfigurationSetting(string key, string value, string label = null, string contentType = null, ETag eTag = null, DateTimeOffset? lastModified = null, bool? isReadOnly = null); 
+    + public static ConfigurationSettingsFilter ConfigurationSettingsFilter(string key = null, string label = null, IEnumerable<string> tags = null); 
+    + public static ConfigurationSnapshot ConfigurationSnapshot(string name = null, ConfigurationSnapshotStatus? status = null, IEnumerable<ConfigurationSettingsFilter> filters = null, SnapshotComposition? snapshotComposition = null, DateTimeOffset? createdOn = null, DateTimeOffset? expiresOn = null, TimeSpan? retentionPeriod = null, long? sizeInBytes = null, long? itemCount = null, IDictionary<string, string> tags = null, string description = null, ETag eTag = null); 
+    + public static FeatureFlag FeatureFlag(string name = null, string alias = null, string label = null, string description = null, bool? enabled = null, FeatureFlagConditions conditions = null, IEnumerable<FeatureFlagVariantDefinition> variants = null, FeatureFlagAllocation allocation = null, FeatureFlagTelemetryConfiguration telemetry = null, IDictionary<string, string> tags = null, bool? isReadOnly = null, DateTimeOffset? lastModified = null, ETag eTag = null); 
+    + public static FeatureFlagAllocation FeatureFlagAllocation(string defaultWhenDisabled = null, string defaultWhenEnabled = null, IEnumerable<PercentileAllocation> percentile = null, IEnumerable<UserAllocation> user = null, IEnumerable<GroupAllocation> group = null, string seed = null); 
+    + public static FeatureFlagConditions FeatureFlagConditions(RequirementType? requirementType = null, IEnumerable<FeatureFlagFilter> filters = null); 
+      public static FeatureFlagConfigurationSetting FeatureFlagConfigurationSetting(string featureId, bool isEnabled, string label = null, ETag eTag = null, DateTimeOffset? lastModified = null, bool? isReadOnly = null); 
+    + public static FeatureFlagFilter FeatureFlagFilter(string name = null, IDictionary<string, object> parameters = null); 
+    + public static FeatureFlagTelemetryConfiguration FeatureFlagTelemetryConfiguration(bool enabled = false, IDictionary<string, string> metadata = null); 
+    + public static FeatureFlagVariantDefinition FeatureFlagVariantDefinition(string name = null, string configurationValue = null, StatusOverride? statusOverride = null); 
+    + public static GroupAllocation GroupAllocation(string variant = null, IEnumerable<string> groups = null); 
+    + public static PercentileAllocation PercentileAllocation(string variant = null, int from = 0, int to = 0); 
+      public static SecretReferenceConfigurationSetting SecretReferenceConfigurationSetting(string key, Uri secretId, string label = null, ETag eTag = null, DateTimeOffset? lastModified = null, bool? isReadOnly = null); 
+    + public static SettingLabel SettingLabel(string name = null); 
+    + public static UserAllocation UserAllocation(string variant = null, IEnumerable<string> users = null); 
+    } 
+    public class ConfigurationSetting { 
+      public ConfigurationSetting(string key, string value, string label = null); 
+      public ConfigurationSetting(string key, string value, string label, ETag etag); 
+      public string ContentType { get; set; }
+    + public string Description { get; set; }
+      public ETag ETag { get; }
+      public bool? IsReadOnly { get; }
+      public string Key { get; set; }
+      public string Label { get; set; }
+      public DateTimeOffset? LastModified { get; }
+      public IDictionary<string, string> Tags { get; }
+      public string Value { get; set; }
+    + public static explicit operator ConfigurationSetting(Response result); 
+    + public static implicit operator RequestContent(ConfigurationSetting configurationSetting); 
+    + protected virtual ConfigurationSetting JsonModelCreateCore(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+    + protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+    + protected virtual ConfigurationSetting PersistableModelCreateCore(BinaryData data, ModelReaderWriterOptions options); 
+    + protected virtual BinaryData PersistableModelWriteCore(ModelReaderWriterOptions options); 
+      public override bool Equals(object obj); 
+      public override int GetHashCode(); 
+      public override string ToString(); 
+    } 
+    public class ConfigurationSettingsFilter { 
+      public ConfigurationSettingsFilter(string key); 
+      public string Key { get; set; }
+      public string Label { get; set; }
+      public IList<string> Tags { get; }
+    + protected virtual ConfigurationSettingsFilter JsonModelCreateCore(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+    + protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+    + protected virtual ConfigurationSettingsFilter PersistableModelCreateCore(BinaryData data, ModelReaderWriterOptions options); 
+    + protected virtual BinaryData PersistableModelWriteCore(ModelReaderWriterOptions options); 
+    } 
+    public class ConfigurationSnapshot { 
+      public ConfigurationSnapshot(IEnumerable<ConfigurationSettingsFilter> filters); 
+      public DateTimeOffset? CreatedOn { get; }
+    + public string Description { get; set; }
+      public ETag ETag { get; }
+      public DateTimeOffset? ExpiresOn { get; }
+      public IList<ConfigurationSettingsFilter> Filters { get; }
+      public long? ItemCount { get; }
+      public string Name { get; }
+      public TimeSpan? RetentionPeriod { get; set; }
+      public long? SizeInBytes { get; }
+      public SnapshotComposition? SnapshotComposition { get; set; }
+      public ConfigurationSnapshotStatus? Status { get; }
+      public IDictionary<string, string> Tags { get; }
+    + public static explicit operator ConfigurationSnapshot(Response result); 
+    + public static implicit operator RequestContent(ConfigurationSnapshot configurationSnapshot); 
+    + protected virtual ConfigurationSnapshot JsonModelCreateCore(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+    + protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+    + protected virtual ConfigurationSnapshot PersistableModelCreateCore(BinaryData data, ModelReaderWriterOptions options); 
+    + protected virtual BinaryData PersistableModelWriteCore(ModelReaderWriterOptions options); 
+    } 
+    public readonly struct ConfigurationSnapshotStatus : IEquatable<ConfigurationSnapshotStatus> { 
+      public ConfigurationSnapshotStatus(string value); 
+      public static ConfigurationSnapshotStatus Archived { get; }
+      public static ConfigurationSnapshotStatus Failed { get; }
+      public static ConfigurationSnapshotStatus Provisioning { get; }
+      public static ConfigurationSnapshotStatus Ready { get; }
+      public static bool operator ==(ConfigurationSnapshotStatus left, ConfigurationSnapshotStatus right); 
+      public static implicit operator ConfigurationSnapshotStatus(string value); 
+    + public static implicit operator ConfigurationSnapshotStatus?(string value); 
+      public static bool operator !=(ConfigurationSnapshotStatus left, ConfigurationSnapshotStatus right); 
+      public bool Equals(ConfigurationSnapshotStatus other); 
+      public override bool Equals(object obj); 
+      public override int GetHashCode(); 
+      public override string ToString(); 
+    } 
+    public class CreateSnapshotOperation : Operation<ConfigurationSnapshot> { 
+      protected CreateSnapshotOperation(); 
+      public override bool HasCompleted { get; }
+      public override bool HasValue { get; }
+      public override string Id { get; }
+      public override ConfigurationSnapshot Value { get; }
+      public override Response GetRawResponse(); 
+      public override Response UpdateStatus(CancellationToken cancellationToken = default); 
+      public override ValueTask<Response> UpdateStatusAsync(CancellationToken cancellationToken = default); 
+      public override ValueTask<Response<ConfigurationSnapshot>> WaitForCompletionAsync(CancellationToken cancellationToken = default); 
+      public override ValueTask<Response<ConfigurationSnapshot>> WaitForCompletionAsync(TimeSpan pollingInterval, CancellationToken cancellationToken); 
+    } 
+    public class FeatureFlagConfigurationSetting : ConfigurationSetting { 
+      public FeatureFlagConfigurationSetting(string featureId, bool isEnabled, string label = null); 
+      public FeatureFlagConfigurationSetting(string featureId, bool isEnabled, string label, ETag etag); 
+      public IList<FeatureFlagFilter> ClientFilters { get; }
+    - public string Description { get; set; }
+      public string DisplayName { get; set; }
+      public string FeatureId { get; set; }
+      public bool IsEnabled { get; set; }
+      public static string KeyPrefix { get; }
+    } 
+    public class FeatureFlagFilter { 
+      public FeatureFlagFilter(string name); 
+      public FeatureFlagFilter(string name, IDictionary<string, object> parameters); 
+    - public string Name { get; }
+    + public string Name { get; set; }
+      public IDictionary<string, object> Parameters { get; }
+    + protected virtual FeatureFlagFilter JsonModelCreateCore(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+    + protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+    + protected virtual FeatureFlagFilter PersistableModelCreateCore(BinaryData data, ModelReaderWriterOptions options); 
+    + protected virtual BinaryData PersistableModelWriteCore(ModelReaderWriterOptions options); 
+    } 
+    public class SecretReferenceConfigurationSetting : ConfigurationSetting { 
+      public SecretReferenceConfigurationSetting(string key, Uri secretId, string label = null); 
+      public SecretReferenceConfigurationSetting(string key, Uri secretId, string label, ETag etag); 
+      public Uri SecretId { get; set; }
+    } 
+    [Flags] 
+    public enum SettingFields { 
+      All = 4294967295, 
+      Key = 1, 
+      Label = 2, 
+      Value = 4, 
+      ContentType = 8, 
+      ETag = 16, 
+      LastModified = 32, 
+      IsReadOnly = 64, 
+      Tags = 128, 
+    + Description = 352, 
+    } 
+    public class SettingLabel { 
+      public string Name { get; }
+    + protected virtual SettingLabel JsonModelCreateCore(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+    + protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+    + protected virtual SettingLabel PersistableModelCreateCore(BinaryData data, ModelReaderWriterOptions options); 
+    + protected virtual BinaryData PersistableModelWriteCore(ModelReaderWriterOptions options); 
+    } 
+    public readonly struct SettingLabelFields : IEquatable<SettingLabelFields> { 
+      public SettingLabelFields(string value); 
+      public static SettingLabelFields Name { get; }
+      public static bool operator ==(SettingLabelFields left, SettingLabelFields right); 
+      public static implicit operator SettingLabelFields(string value); 
+    + public static implicit operator SettingLabelFields?(string value); 
+      public static bool operator !=(SettingLabelFields left, SettingLabelFields right); 
+      public bool Equals(SettingLabelFields other); 
+      public override bool Equals(object obj); 
+      public override int GetHashCode(); 
+      public override string ToString(); 
+    } 
+    public class SettingLabelSelector { 
+      public SettingLabelSelector(); 
+      public DateTimeOffset? AcceptDateTime { get; set; }
+      public IList<SettingLabelFields> Fields { get; }
+      public string NameFilter { get; set; }
+    } 
+    public class SettingSelector { 
+      public SettingSelector(); 
+      public static readonly string Any; 
+      public DateTimeOffset? AcceptDateTime { get; set; }
+      public SettingFields Fields { get; set; }
+      public string KeyFilter { get; set; }
+      public string LabelFilter { get; set; }
+      public IList<string> TagsFilter { get; }
+      public override bool Equals(object obj); 
+      public override int GetHashCode(); 
+      public override string ToString(); 
+    } 
+    public readonly struct SnapshotComposition : IEquatable<SnapshotComposition> { 
+      public SnapshotComposition(string value); 
+      public static SnapshotComposition Key { get; }
+      public static SnapshotComposition KeyLabel { get; }
+      public static bool operator ==(SnapshotComposition left, SnapshotComposition right); 
+      public static implicit operator SnapshotComposition(string value); 
+    + public static implicit operator SnapshotComposition?(string value); 
+      public static bool operator !=(SnapshotComposition left, SnapshotComposition right); 
+      public bool Equals(SnapshotComposition other); 
+      public override bool Equals(object obj); 
+      public override int GetHashCode(); 
+      public override string ToString(); 
+    } 
+    public readonly struct SnapshotFields : IEquatable<SnapshotFields> { 
+      public SnapshotFields(string value); 
+      public static SnapshotFields CreatedOn { get; }
+    + public static SnapshotFields Description { get; }
+      public static SnapshotFields ETag { get; }
+      public static SnapshotFields ExpiresOn { get; }
+      public static SnapshotFields Filters { get; }
+      public static SnapshotFields ItemCount { get; }
+      public static SnapshotFields Name { get; }
+      public static SnapshotFields RetentionPeriod { get; }
+      public static SnapshotFields SizeInBytes { get; }
+      public static SnapshotFields SnapshotComposition { get; }
+      public static SnapshotFields Status { get; }
+      public static SnapshotFields Tags { get; }
+      public static bool operator ==(SnapshotFields left, SnapshotFields right); 
+      public static implicit operator SnapshotFields(string value); 
+    + public static implicit operator SnapshotFields?(string value); 
+      public static bool operator !=(SnapshotFields left, SnapshotFields right); 
+      public bool Equals(SnapshotFields other); 
+      public override bool Equals(object obj); 
+      public override int GetHashCode(); 
+      public override string ToString(); 
+    } 
+    public class SnapshotSelector { 
+      public SnapshotSelector(); 
+      public IList<SnapshotFields> Fields { get; }
+      public string NameFilter { get; set; }
+      public IList<ConfigurationSnapshotStatus> Status { get; }
+    } 
+
+
+
+
+  + [JsonConverter(typeof(ConfigurationSettingJsonConverter))] 
+
+
+
+
+
+  + public class FeatureFlag { 
+      // <summary> Initializes a new instance of <see cref="T:Azure.Data.AppConfiguration.FeatureFlag" />. </summary> 
+    + public FeatureFlag(); 
+      // <summary> 
+      // Creates a feature flag and sets it's enabled status and label. 
+      // </summary> 
+      // <param name="name">The primary identifier of the feature flag.</param> 
+      // <param name="enabled">The enabled status of the flag.</param> 
+      // <param name="label">A label used to group this feature flag with others.</param> 
+      // <param name="etag">The ETag value for the feature flag.</param> 
+    + public FeatureFlag(string name, bool? enabled = null, string label = null, ETag etag = null); 
+      // <summary> The alias of the feature flag. </summary> 
+    + public string Alias { get; set; }
+      // <summary> The allocation of the feature flag. </summary> 
+    + public FeatureFlagAllocation Allocation { get; set; }
+      // <summary> The conditions of the feature flag. </summary> 
+    + public FeatureFlagConditions Conditions { get; set; }
+      // <summary> The description of the feature flag. </summary> 
+    + public string Description { get; set; }
+      // <summary> The enabled state of the feature flag. </summary> 
+    + public bool? Enabled { get; set; }
+      // <summary> 
+      // An ETag indicating the state of a feature flag within a configuration store. 
+      // </summary> 
+    + public ETag ETag { get; }
+      // <summary> 
+      // A value indicating whether the feature flag is read only. 
+      // A read only feature flag may not be modified until it is made writable. 
+      // </summary> 
+    + public bool? IsReadOnly { get; }
+      // <summary> The label the feature flag belongs to. </summary> 
+    + public string Label { get; set; }
+      // <summary> 
+      // The last time a modifying operation was performed on the given feature flag. 
+      // </summary> 
+    + public DateTimeOffset? LastModified { get; }
+      // <summary> The name of the feature flag. </summary> 
+    + public string Name { get; }
+      // <summary> 
+      // A dictionary of tags used to assign additional properties to a feature flag. 
+      // These can be used to indicate how a feature flag may be applied. 
+      // </summary> 
+    + public IDictionary<string, string> Tags { get; }
+      // <summary> The telemetry settings of the feature flag. </summary> 
+    + public FeatureFlagTelemetryConfiguration Telemetry { get; set; }
+      // <summary> 
+      // A list of variant definitions for the feature flag. 
+      // </summary> 
+    + public IList<FeatureFlagVariantDefinition> Variants { get; }
+      // <param name="result"> The <see cref="T:Azure.Response" /> to deserialize the <see cref="T:Azure.Data.AppConfiguration.FeatureFlag" /> from. </param> 
+    + public static explicit operator FeatureFlag(Response result); 
+      // <param name="featureFlag"> The <see cref="T:Azure.Data.AppConfiguration.FeatureFlag" /> to serialize into <see cref="T:Azure.Core.RequestContent" />. </param> 
+    + public static implicit operator RequestContent(FeatureFlag featureFlag); 
+      // <param name="reader"> The JSON reader. </param> 
+      // <param name="options"> The client options for reading and writing models. </param> 
+    + protected virtual FeatureFlag JsonModelCreateCore(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+      // <param name="writer"> The JSON writer. </param> 
+      // <param name="options"> The client options for reading and writing models. </param> 
+    + protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+      // <param name="data"> The data to parse. </param> 
+      // <param name="options"> The client options for reading and writing models. </param> 
+    + protected virtual FeatureFlag PersistableModelCreateCore(BinaryData data, ModelReaderWriterOptions options); 
+      // <param name="options"> The client options for reading and writing models. </param> 
+    + protected virtual BinaryData PersistableModelWriteCore(ModelReaderWriterOptions options); 
+      // <summary> 
+      // Check if two FeatureFlag instances are equal. 
+      // </summary> 
+      // <param name="obj">The instance to compare to.</param> 
+    + public override bool Equals(object obj); 
+      // <summary> 
+      // Get a hash code for the FeatureFlag. 
+      // </summary> 
+    + public override int GetHashCode(); 
+  + } 
+
+  + public class FeatureFlagAllocation { 
+      // <summary> Initializes a new instance of <see cref="T:Azure.Data.AppConfiguration.FeatureFlagAllocation" />. </summary> 
+    + public FeatureFlagAllocation(); 
+      // <summary> The default variant to use when disabled. </summary> 
+    + public string DefaultWhenDisabled { get; set; }
+      // <summary> The default variant to use when enabled but not allocated. </summary> 
+    + public string DefaultWhenEnabled { get; set; }
+      // <summary> Allocates groups to variants. </summary> 
+    + public IList<GroupAllocation> Group { get; }
+      // <summary> Allocates percentiles to variants. </summary> 
+    + public IList<PercentileAllocation> Percentile { get; }
+      // <summary> The seed used for random allocation. </summary> 
+    + public string Seed { get; set; }
+      // <summary> Allocates users to variants. </summary> 
+    + public IList<UserAllocation> User { get; }
+      // <param name="reader"> The JSON reader. </param> 
+      // <param name="options"> The client options for reading and writing models. </param> 
+    + protected virtual FeatureFlagAllocation JsonModelCreateCore(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+      // <param name="writer"> The JSON writer. </param> 
+      // <param name="options"> The client options for reading and writing models. </param> 
+    + protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+      // <param name="data"> The data to parse. </param> 
+      // <param name="options"> The client options for reading and writing models. </param> 
+    + protected virtual FeatureFlagAllocation PersistableModelCreateCore(BinaryData data, ModelReaderWriterOptions options); 
+      // <param name="options"> The client options for reading and writing models. </param> 
+    + protected virtual BinaryData PersistableModelWriteCore(ModelReaderWriterOptions options); 
+  + } 
+
+  + public class FeatureFlagConditions { 
+      // <summary> Initializes a new instance of <see cref="T:Azure.Data.AppConfiguration.FeatureFlagConditions" />. </summary> 
+    + public FeatureFlagConditions(); 
+      // <summary> The filters that will conditionally enable or disable the flag. </summary> 
+    + public IList<FeatureFlagFilter> Filters { get; }
+      // <summary> The requirement type for the conditions. </summary> 
+    + public RequirementType? RequirementType { get; set; }
+      // <param name="reader"> The JSON reader. </param> 
+      // <param name="options"> The client options for reading and writing models. </param> 
+    + protected virtual FeatureFlagConditions JsonModelCreateCore(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+      // <param name="writer"> The JSON writer. </param> 
+      // <param name="options"> The client options for reading and writing models. </param> 
+    + protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+      // <param name="data"> The data to parse. </param> 
+      // <param name="options"> The client options for reading and writing models. </param> 
+    + protected virtual FeatureFlagConditions PersistableModelCreateCore(BinaryData data, ModelReaderWriterOptions options); 
+      // <param name="options"> The client options for reading and writing models. </param> 
+    + protected virtual BinaryData PersistableModelWriteCore(ModelReaderWriterOptions options); 
+  + } 
+
+
+  + [Flags] 
+  + public enum FeatureFlagFields { 
+      // <summary> 
+      // Allows for all the properties of a feature flag to be retrieved. 
+      // </summary> 
+    + All = 4294967295, 
+      // <summary> 
+      // No fields specified. 
+      // </summary> 
+    + None = 0, 
+      // <summary> 
+      // The primary identifier of the feature flag. 
+      // </summary> 
+    + Name = 1, 
+      // <summary> 
+      // A label used to group feature flag settings. 
+      // </summary> 
+    + Label = 2, 
+      // <summary> 
+      // The last time a modifying operation was performed on the given feature flag. 
+      // </summary> 
+    + LastModified = 4, 
+      // <summary> 
+      // A dictionary of tags that can help identify what a feature flag may be applicable for. 
+      // </summary> 
+    + Tags = 8, 
+      // <summary> 
+      // An ETag indicating the version of a feature flag within a configuration store. 
+      // </summary> 
+    + ETag = 16, 
+      // <summary> 
+      // A value indicating whether the feature flag is read-only. 
+      // </summary> 
+    + IsReadOnly = 32, 
+      // <summary> 
+      // A value indicating whether the feature flag is enabled or disabled. 
+      // </summary> 
+    + Enabled = 64, 
+      // <summary> 
+      // A description of the feature flag and its purpose. 
+      // </summary> 
+    + Description = 128, 
+      // <summary> 
+      // The variants configuration for the feature flag, defining different feature variations. 
+      // </summary> 
+    + Variants = 256, 
+      // <summary> 
+      // The allocation configuration for the feature flag, controlling how traffic is distributed among variants. 
+      // </summary> 
+    + Allocation = 512, 
+      // <summary> 
+      // The conditions configuration for the feature flag, defining when the feature should be enabled. 
+      // </summary> 
+    + Conditions = 1024, 
+      // <summary> 
+      // The telemetry configuration for the feature flag, controlling what telemetry data is collected. 
+      // </summary> 
+    + Telemetry = 2048, 
+      // <summary> 
+      // An alias for the feature flag, providing an alternative identifier. 
+      // </summary> 
+    + Alias = 131072, 
+  + } 
+
+
+  + public class FeatureFlagSelector { 
+      // <summary> 
+      // Creates a default <see cref="T:Azure.Data.AppConfiguration.SettingSelector" /> that will retrieve all <see cref="T:Azure.Data.AppConfiguration.FeatureFlag" /> entities in the configuration store. 
+      // </summary> 
+    + public FeatureFlagSelector(); 
+      // <summary> 
+      // A wildcard that matches any name or any label when passed as a filter 
+      // to Names or Labels. 
+      // </summary> 
+    + public static readonly string Any; 
+      // <summary> 
+      // Indicates the point in time in the revision history of the selected <see cref="T:Azure.Data.AppConfiguration.FeatureFlag" /> entities to retrieve. 
+      // If set, all properties of the <see cref="T:Azure.Data.AppConfiguration.FeatureFlag" /> entities in the returned group will be exactly what they 
+      // were at this time. 
+      // </summary> 
+    + public DateTimeOffset? AcceptDateTime { get; set; }
+      // <summary> 
+      // The fields of the <see cref="T:Azure.Data.AppConfiguration.FeatureFlag" /> to retrieve for each setting in the retrieved group. 
+      // </summary> 
+    + public FeatureFlagFields Fields { get; set; }
+      // <summary> 
+      // Label filter that will be used to select a set of <see cref="T:Azure.Data.AppConfiguration.FeatureFlag" /> entities. 
+      // </summary> 
+      // <remarks>See the documentation for this client library for details on the format of filter expressions.</remarks> 
+    + public string LabelFilter { get; set; }
+      // <summary> 
+      // Name filter that will be used to select a set of <see cref="T:Azure.Data.AppConfiguration.FeatureFlag" /> entities. 
+      // </summary> 
+      // <remarks>See the documentation for this client library for details on the format of filter expressions.</remarks> 
+    + public string NameFilter { get; set; }
+      // <summary> 
+      // Tag filter that will be used to select a set of <see cref="T:Azure.Data.AppConfiguration.FeatureFlag" /> entities. 
+      // Each tag in the list should be expressed as a string in the format `tag=value`. 
+      // </summary> 
+      // <remarks>See the documentation for this client library for details on the format of filter expressions.</remarks> 
+    + public IList<string> TagsFilter { get; }
+      // <summary> 
+      // Check if two SettingSelector instances are equal. 
+      // </summary> 
+      // <param name="obj">The instance to compare to.</param> 
+    + public override bool Equals(object obj); 
+      // <summary> 
+      // Get a hash code for the SettingSelector. 
+      // </summary> 
+    + public override int GetHashCode(); 
+      // <summary> 
+      // Creates a string in reference to the SettingSelector. 
+      // </summary> 
+    + public override string ToString(); 
+  + } 
+
+  + public class FeatureFlagTelemetryConfiguration { 
+      // <summary> Initializes a new instance of <see cref="T:Azure.Data.AppConfiguration.FeatureFlagTelemetryConfiguration" />. </summary> 
+      // <param name="enabled"> The enabled state of the telemetry. </param> 
+    + public FeatureFlagTelemetryConfiguration(bool enabled); 
+      // <summary> The enabled state of the telemetry. </summary> 
+    + public bool Enabled { get; set; }
+      // <summary> The metadata to include on outbound telemetry. </summary> 
+    + public IDictionary<string, string> Metadata { get; }
+      // <param name="reader"> The JSON reader. </param> 
+      // <param name="options"> The client options for reading and writing models. </param> 
+    + protected virtual FeatureFlagTelemetryConfiguration JsonModelCreateCore(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+      // <param name="writer"> The JSON writer. </param> 
+      // <param name="options"> The client options for reading and writing models. </param> 
+    + protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+      // <param name="data"> The data to parse. </param> 
+      // <param name="options"> The client options for reading and writing models. </param> 
+    + protected virtual FeatureFlagTelemetryConfiguration PersistableModelCreateCore(BinaryData data, ModelReaderWriterOptions options); 
+      // <param name="options"> The client options for reading and writing models. </param> 
+    + protected virtual BinaryData PersistableModelWriteCore(ModelReaderWriterOptions options); 
+  + } 
+
+  + public class FeatureFlagVariantDefinition { 
+      // <summary> Initializes a new instance of <see cref="T:Azure.Data.AppConfiguration.FeatureFlagVariantDefinition" />. </summary> 
+      // <param name="name"> The name of the variant. </param> 
+      // <exception cref="T:System.ArgumentNullException"> <paramref name="name" /> is null. </exception> 
+    + public FeatureFlagVariantDefinition(string name); 
+      // <summary> The value of the variant. </summary> 
+    + public string ConfigurationValue { get; set; }
+      // <summary> The name of the variant. </summary> 
+    + public string Name { get; set; }
+      // <summary> Determines if the variant should override the status of the flag. </summary> 
+    + public StatusOverride? StatusOverride { get; set; }
+      // <param name="reader"> The JSON reader. </param> 
+      // <param name="options"> The client options for reading and writing models. </param> 
+    + protected virtual FeatureFlagVariantDefinition JsonModelCreateCore(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+      // <param name="writer"> The JSON writer. </param> 
+      // <param name="options"> The client options for reading and writing models. </param> 
+    + protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+      // <param name="data"> The data to parse. </param> 
+      // <param name="options"> The client options for reading and writing models. </param> 
+    + protected virtual FeatureFlagVariantDefinition PersistableModelCreateCore(BinaryData data, ModelReaderWriterOptions options); 
+      // <param name="options"> The client options for reading and writing models. </param> 
+    + protected virtual BinaryData PersistableModelWriteCore(ModelReaderWriterOptions options); 
+  + } 
+
+  + public class GroupAllocation { 
+      // <summary> Initializes a new instance of <see cref="T:Azure.Data.AppConfiguration.GroupAllocation" />. </summary> 
+      // <param name="variant"> The variant to allocate these percentiles to. </param> 
+      // <param name="groups"> The groups to get this variant. </param> 
+      // <exception cref="T:System.ArgumentNullException"> <paramref name="variant" /> or <paramref name="groups" /> is null. </exception> 
+    + public GroupAllocation(string variant, IEnumerable<string> groups); 
+      // <summary> The groups to get this variant. </summary> 
+    + public IList<string> Groups { get; }
+      // <summary> The variant to allocate these percentiles to. </summary> 
+    + public string Variant { get; set; }
+      // <param name="reader"> The JSON reader. </param> 
+      // <param name="options"> The client options for reading and writing models. </param> 
+    + protected virtual GroupAllocation JsonModelCreateCore(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+      // <param name="writer"> The JSON writer. </param> 
+      // <param name="options"> The client options for reading and writing models. </param> 
+    + protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+      // <param name="data"> The data to parse. </param> 
+      // <param name="options"> The client options for reading and writing models. </param> 
+    + protected virtual GroupAllocation PersistableModelCreateCore(BinaryData data, ModelReaderWriterOptions options); 
+      // <param name="options"> The client options for reading and writing models. </param> 
+    + protected virtual BinaryData PersistableModelWriteCore(ModelReaderWriterOptions options); 
+  + } 
+
+  + public class PercentileAllocation { 
+      // <summary> Initializes a new instance of <see cref="T:Azure.Data.AppConfiguration.PercentileAllocation" />. </summary> 
+      // <param name="variant"> The variant to allocate these percentiles to. </param> 
+      // <param name="from"> The lower bounds for this percentile allocation. </param> 
+      // <param name="to"> The upper bounds for this percentile allocation. </param> 
+      // <exception cref="T:System.ArgumentNullException"> <paramref name="variant" /> is null. </exception> 
+    + public PercentileAllocation(string variant, int from, int to); 
+      // <summary> The lower bounds for this percentile allocation. </summary> 
+    + public int From { get; set; }
+      // <summary> The upper bounds for this percentile allocation. </summary> 
+    + public int To { get; set; }
+      // <summary> The variant to allocate these percentiles to. </summary> 
+    + public string Variant { get; set; }
+      // <param name="reader"> The JSON reader. </param> 
+      // <param name="options"> The client options for reading and writing models. </param> 
+    + protected virtual PercentileAllocation JsonModelCreateCore(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+      // <param name="writer"> The JSON writer. </param> 
+      // <param name="options"> The client options for reading and writing models. </param> 
+    + protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+      // <param name="data"> The data to parse. </param> 
+      // <param name="options"> The client options for reading and writing models. </param> 
+    + protected virtual PercentileAllocation PersistableModelCreateCore(BinaryData data, ModelReaderWriterOptions options); 
+      // <param name="options"> The client options for reading and writing models. </param> 
+    + protected virtual BinaryData PersistableModelWriteCore(ModelReaderWriterOptions options); 
+  + } 
+
+  + public readonly struct RequirementType : IEquatable<RequirementType> { 
+      // <summary> Initializes a new instance of <see cref="T:Azure.Data.AppConfiguration.RequirementType" />. </summary> 
+      // <param name="value"> The value. </param> 
+      // <exception cref="T:System.ArgumentNullException"> <paramref name="value" /> is null. </exception> 
+    + public RequirementType(string value); 
+      // <summary> All. </summary> 
+    + public static RequirementType All { get; }
+      // <summary> Any. </summary> 
+    + public static RequirementType Any { get; }
+      // <summary> Determines if two <see cref="T:Azure.Data.AppConfiguration.RequirementType" /> values are the same. </summary> 
+      // <param name="left"> The left value to compare. </param> 
+      // <param name="right"> The right value to compare. </param> 
+    + public static bool operator ==(RequirementType left, RequirementType right); 
+      // <summary> Converts a string to a <see cref="T:Azure.Data.AppConfiguration.RequirementType" />. </summary> 
+      // <param name="value"> The value. </param> 
+    + public static implicit operator RequirementType(string value); 
+      // <summary> Converts a string to a <see cref="T:Azure.Data.AppConfiguration.RequirementType" />. </summary> 
+      // <param name="value"> The value. </param> 
+    + public static implicit operator RequirementType?(string value); 
+      // <summary> Determines if two <see cref="T:Azure.Data.AppConfiguration.RequirementType" /> values are not the same. </summary> 
+      // <param name="left"> The left value to compare. </param> 
+      // <param name="right"> The right value to compare. </param> 
+    + public static bool operator !=(RequirementType left, RequirementType right); 
+      // <summary>Indicates whether the current object is equal to another object of the same type.</summary><param name="other">An object to compare with this object.</param><returns><see langword="true" /> if the current object is equal to the <paramref name="other" /> parameter; otherwise, <see langword="false" />.</returns> 
+    + public bool Equals(RequirementType other); 
+      // <summary>Indicates whether this instance and a specified object are equal.</summary><param name="obj">The object to compare with the current instance.</param><returns><see langword="true" /> if <paramref name="obj" /> and this instance are the same type and represent the same value; otherwise, <see langword="false" />.</returns> 
+    + public override bool Equals(object obj); 
+      // <summary>Returns the hash code for this instance.</summary><returns>A 32-bit signed integer that is the hash code for this instance.</returns> 
+    + public override int GetHashCode(); 
+      // <summary>Returns the fully qualified type name of this instance.</summary><returns>The fully qualified type name.</returns> 
+    + public override string ToString(); 
+  + } 
+
+
+
+
+
+
+
+
+
+
+  + public readonly struct StatusOverride : IEquatable<StatusOverride> { 
+      // <summary> Initializes a new instance of <see cref="T:Azure.Data.AppConfiguration.StatusOverride" />. </summary> 
+      // <param name="value"> The value. </param> 
+      // <exception cref="T:System.ArgumentNullException"> <paramref name="value" /> is null. </exception> 
+    + public StatusOverride(string value); 
+      // <summary> Disabled. </summary> 
+    + public static StatusOverride Disabled { get; }
+      // <summary> Enabled. </summary> 
+    + public static StatusOverride Enabled { get; }
+      // <summary> None. </summary> 
+    + public static StatusOverride None { get; }
+      // <summary> Determines if two <see cref="T:Azure.Data.AppConfiguration.StatusOverride" /> values are the same. </summary> 
+      // <param name="left"> The left value to compare. </param> 
+      // <param name="right"> The right value to compare. </param> 
+    + public static bool operator ==(StatusOverride left, StatusOverride right); 
+      // <summary> Converts a string to a <see cref="T:Azure.Data.AppConfiguration.StatusOverride" />. </summary> 
+      // <param name="value"> The value. </param> 
+    + public static implicit operator StatusOverride(string value); 
+      // <summary> Converts a string to a <see cref="T:Azure.Data.AppConfiguration.StatusOverride" />. </summary> 
+      // <param name="value"> The value. </param> 
+    + public static implicit operator StatusOverride?(string value); 
+      // <summary> Determines if two <see cref="T:Azure.Data.AppConfiguration.StatusOverride" /> values are not the same. </summary> 
+      // <param name="left"> The left value to compare. </param> 
+      // <param name="right"> The right value to compare. </param> 
+    + public static bool operator !=(StatusOverride left, StatusOverride right); 
+      // <summary>Indicates whether the current object is equal to another object of the same type.</summary><param name="other">An object to compare with this object.</param><returns><see langword="true" /> if the current object is equal to the <paramref name="other" /> parameter; otherwise, <see langword="false" />.</returns> 
+    + public bool Equals(StatusOverride other); 
+      // <summary>Indicates whether this instance and a specified object are equal.</summary><param name="obj">The object to compare with the current instance.</param><returns><see langword="true" /> if <paramref name="obj" /> and this instance are the same type and represent the same value; otherwise, <see langword="false" />.</returns> 
+    + public override bool Equals(object obj); 
+      // <summary>Returns the hash code for this instance.</summary><returns>A 32-bit signed integer that is the hash code for this instance.</returns> 
+    + public override int GetHashCode(); 
+      // <summary>Returns the fully qualified type name of this instance.</summary><returns>The fully qualified type name.</returns> 
+    + public override string ToString(); 
+  + } 
+
+  + public class UserAllocation { 
+      // <summary> Initializes a new instance of <see cref="T:Azure.Data.AppConfiguration.UserAllocation" />. </summary> 
+      // <param name="variant"> The variant to allocate these percentiles to. </param> 
+      // <param name="users"> The users to get this variant. </param> 
+      // <exception cref="T:System.ArgumentNullException"> <paramref name="variant" /> or <paramref name="users" /> is null. </exception> 
+    + public UserAllocation(string variant, IEnumerable<string> users); 
+      // <summary> The users to get this variant. </summary> 
+    + public IList<string> Users { get; }
+      // <summary> The variant to allocate these percentiles to. </summary> 
+    + public string Variant { get; set; }
+      // <param name="reader"> The JSON reader. </param> 
+      // <param name="options"> The client options for reading and writing models. </param> 
+    + protected virtual UserAllocation JsonModelCreateCore(ref Utf8JsonReader reader, ModelReaderWriterOptions options); 
+      // <param name="writer"> The JSON writer. </param> 
+      // <param name="options"> The client options for reading and writing models. </param> 
+    + protected virtual void JsonModelWriteCore(Utf8JsonWriter writer, ModelReaderWriterOptions options); 
+      // <param name="data"> The data to parse. </param> 
+      // <param name="options"> The client options for reading and writing models. </param> 
+    + protected virtual UserAllocation PersistableModelCreateCore(BinaryData data, ModelReaderWriterOptions options); 
+      // <param name="options"> The client options for reading and writing models. </param> 
+    + protected virtual BinaryData PersistableModelWriteCore(ModelReaderWriterOptions options); 
+  + } 
+
+    } 
+
+    namespace Microsoft.Extensions.Azure { 
+    public static class ConfigurationClientBuilderExtensions { 
+      public static IAzureClientBuilder<ConfigurationClient, ConfigurationClientOptions> AddConfigurationClient<TBuilder>(this TBuilder builder, string connectionString) where TBuilder : IAzureClientFactoryBuilder; 
+      public static IAzureClientBuilder<ConfigurationClient, ConfigurationClientOptions> AddConfigurationClient<TBuilder>(this TBuilder builder, Uri configurationUri) where TBuilder : IAzureClientFactoryBuilderWithCredential; 
+      public static IAzureClientBuilder<ConfigurationClient, ConfigurationClientOptions> AddConfigurationClient<TBuilder, TConfiguration>(this TBuilder builder, TConfiguration configuration) where TBuilder : IAzureClientFactoryBuilderWithConfiguration<TConfiguration>; 
+    } 
+
+    } 
+

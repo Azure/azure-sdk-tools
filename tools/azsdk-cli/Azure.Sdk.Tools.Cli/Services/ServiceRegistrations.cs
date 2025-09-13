@@ -6,10 +6,12 @@ using Microsoft.Extensions.Azure;
 using ModelContextProtocol.Server;
 using Azure.AI.OpenAI;
 using Azure.Sdk.Tools.Cli.Commands;
+using Azure.Sdk.Tools.Cli.Extensions;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Tools;
 using Azure.Sdk.Tools.Cli.Services.ClientUpdate;
+using Azure.Sdk.Tools.Cli.Telemetry;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -83,6 +85,10 @@ namespace Azure.Sdk.Tools.Cli.Services
                         return new AzureOpenAIClient(new Uri(ep), credential, options);
                     });
             });
+
+            // Telemetry
+            services.AddSingleton<ITelemetryService, TelemetryService>();
+            services.ConfigureOpenTelemetry();
         }
 
         public static void RegisterInstrumentedMcpTools(IServiceCollection services, string[] args)
@@ -110,7 +116,8 @@ namespace Azure.Sdk.Tools.Cli.Services
 
                             var loggerFactory = services.GetRequiredService<ILoggerFactory>();
                             var logger = loggerFactory.CreateLogger(toolType);
-                            return new InstrumentedTool(logger, innerTool, toolMethod.Name);
+                            var telemetryService = services.GetRequiredService<ITelemetryService>();
+                            return new InstrumentedTool(telemetryService, logger, innerTool);
                         }));
                     }
                 }

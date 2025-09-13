@@ -97,10 +97,10 @@ async function initProcessDataAndWriteTspLocation(
   }
 
   // Check for relevant package path variables and resolve
-  let emitterOutputDir = tspConfigData?.options?.[emitterData.emitter]?.["emitter-output-dir"];
+  let emitterOutputDir = tspConfigData?.options?.[emitterData.emitter]?.["package-dir"];
   const packageDir = tspConfigData?.options?.[emitterData.emitter]?.["package-dir"];
   let newPackageDir;
-  if (emitterOutputDir) {
+  if (!packageDir && emitterOutputDir) {
     const [options, _] = await resolveCompilerOptions(NodeHost, {
       cwd: process.cwd(),
       entrypoint: "main.tsp",
@@ -415,7 +415,9 @@ export async function generateCommand(argv: any) {
     );
   }
 
-  const legacyPathResolution = !tspConfigData?.options?.[emitter]?.["emitter-output-dir"];
+  // Give preference to package-dir if both are specified
+  // This is to avoid breaking existing behavior
+  const legacyPathResolution = tspConfigData?.options?.[emitter]?.["package-dir"];
 
   if (skipInstall) {
     Logger.info("Skipping installation of dependencies");

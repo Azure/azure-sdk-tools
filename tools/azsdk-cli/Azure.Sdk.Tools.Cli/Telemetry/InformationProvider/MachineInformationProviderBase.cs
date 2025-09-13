@@ -20,7 +20,7 @@ internal abstract class MachineInformationProviderBase(ILogger<MachineInformatio
     /// </summary>
     protected const string DeviceId = "deviceid";
 
-    private static readonly SHA256 s_sHA256 = SHA256.Create();
+    private static readonly SHA256 sha256 = SHA256.Create();
 
     private readonly ILogger<MachineInformationProviderBase> _logger = logger;
 
@@ -80,7 +80,7 @@ internal abstract class MachineInformationProviderBase(ILogger<MachineInformatio
     /// </summary>
     protected string HashValue(string value)
     {
-        var hashInput = s_sHA256.ComputeHash(Encoding.UTF8.GetBytes(value));
+        var hashInput = sha256.ComputeHash(Encoding.UTF8.GetBytes(value));
         return BitConverter.ToString(hashInput).Replace("-", string.Empty).ToLowerInvariant();
     }
 }

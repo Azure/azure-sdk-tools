@@ -1,5 +1,9 @@
 # Release
 
+## UNRELEASED - 0.28.2
+
+- If `package-dir` and `emitter-output-dir` are both specified in a given tspconfig.yaml give preference to `package-dir` until the legacy behavior is officially deprecated.
+
 ## 2025-08-15 - 0.28.1
 
 - Fix bug when using `emitter-output-dir` in tspconfig.yaml, always pass the repo root path for the `{output-dir}` variable.

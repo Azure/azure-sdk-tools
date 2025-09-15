@@ -329,6 +329,9 @@ export async function resolveOptions(typeSpecDirectory: string): Promise<Exclude
             cwd: process.cwd(),
             entrypoint: typeSpecDirectory, // not really used here
             configPath: typeSpecDirectory,
+            overrides: {
+                outputDir: process.cwd() // This will make outputDir just the current directory without adding 'tsp-output'
+            }
         });
     return options
 }

@@ -47,8 +47,6 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.True(testRecordingHandler.RecordingSessions.ContainsKey(recordingId));
             Assert.Equal(UniversalRecordingMode.StandardRecord, Startup.ProxyConfiguration.Mode);
             Assert.Equal(recordingId, Startup.ProxyConfiguration.RecordingId);
-            Assert.Null(Startup.ProxyConfiguration.RecordingId);
-            Assert.Equal(UniversalRecordingMode.StandardPlayback, Startup.ProxyConfiguration.Mode);
         }
 
         [Fact]

@@ -27,10 +27,10 @@ namespace Azure.Sdk.Tools.Cli.Services
         {
             // Services
             services.AddSingleton<IAzureService, AzureService>();
-            services.AddSingleton<IAzureAgentServiceFactory, AzureAgentServiceFactory>();
             services.AddSingleton<IDevOpsConnection, DevOpsConnection>();
             services.AddSingleton<IDevOpsService, DevOpsService>();
             services.AddSingleton<IGitHubService, GitHubService>();
+            services.AddScoped<IAzureAgentServiceFactory, AzureAgentServiceFactory>();
 
             // Language Check Services (Composition-based)
             services.AddSingleton<ILanguageChecks, LanguageChecks>();
@@ -58,6 +58,8 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ISpecGenSdkConfigHelper, SpecGenSdkConfigHelper>();
             services.AddSingleton<IInputSanitizer, InputSanitizer>();
             services.AddSingleton<ITspClientHelper, TspClientHelper>();
+            // Add as scoped so we can track/update usage across tools and services per request for logging/telemetry
+            services.AddScoped<TokenUsageHelper>();
 
             // Process Helper Classes
             services.AddSingleton<INpxHelper, NpxHelper>();
@@ -107,7 +109,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 {
                     if (toolMethod.GetCustomAttribute<McpServerToolAttribute>() is not null)
                     {
-                        services.AddSingleton((Func<IServiceProvider, McpServerTool>)(services =>
+                        services.AddScoped((Func<IServiceProvider, McpServerTool>)(services =>
                         {
                             var options = new McpServerToolCreateOptions { Services = services, SerializerOptions = serializerOptions };
                             var innerTool = toolMethod.IsStatic

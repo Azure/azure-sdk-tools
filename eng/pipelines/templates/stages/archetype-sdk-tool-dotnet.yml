@@ -186,6 +186,32 @@ extends:
 
                 - ${{ parameters.TestPreSteps }}
 
+                - pwsh: |
+                    Write-Host "=== Proxy-related env vars ==="
+                    Get-ChildItem env:*proxy* | Format-Table -AutoSize
+                    Write-Host "`n=== WinHTTP (system) proxy ==="
+                    netsh winhttp show proxy
+                    Write-Host "`n=== WinINET (per-user) proxy ==="
+                    reg query "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v ProxyEnable
+                    reg query "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v ProxyServer
+                    Write-Host "`n=== NuGet configs (effective) ==="
+                    $paths = @(
+                      "$env:APPDATA\NuGet\NuGet.Config",
+                      "$env:ProgramData\NuGet\Config\NuGet.Config",
+                      "$(Build.SourcesDirectory)\NuGet.Config",
+                      "$(Build.SourcesDirectory)\.nuget\NuGet.Config"
+                    )
+                    foreach ($p in $paths) { if (Test-Path $p) { Write-Host "`n--- $p ---"; Get-Content $p } }
+                    Write-Host "`n=== dotnet + nuget info ==="
+                    dotnet --info
+                    dotnet nuget list source --format detailed
+                    Write-Host "`n=== Can we reach nuget? ==="
+                    try {
+                      $r = Invoke-WebRequest -UseBasicParsing https://api.nuget.org/v3/index.json -TimeoutSec 20
+                      Write-Host "GET nuget OK: $($r.StatusCode)"
+                    } catch { Write-Host "Invoke-WebRequest failed: $($_.Exception.Message)" }
+                  displayName: Diagnose proxy/nuget environment
+
                 - script: 'dotnet test /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) $(Warn) --logger trx'
                   displayName: 'Test'
                   workingDirectory: '${{ coalesce(parameters.TestDirectory, parameters.ToolDirectory) }}'

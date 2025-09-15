@@ -213,6 +213,13 @@ extends:
                   displayName: Diagnose proxy/nuget environment
                   condition: eq( variables['Agent.OS'], 'Windows_NT' )
 
+                - pwsh: |
+                    nslookup api.nuget.org
+                    try { curl.exe -sS -D - https://api.nuget.org/v3/index.json | more } catch { Write-Host $_.Exception.Message }
+                    # Test-NetConnection would be nice but isn't always available on Server Core
+                  displayName: Extra reachability checks
+                  condition: eq( variables['Agent.OS'], 'Windows_NT' )
+
                 - script: 'dotnet test /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) $(Warn) --logger trx'
                   displayName: 'Test'
                   workingDirectory: '${{ coalesce(parameters.TestDirectory, parameters.ToolDirectory) }}'

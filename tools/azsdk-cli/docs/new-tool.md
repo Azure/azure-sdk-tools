@@ -18,6 +18,7 @@ Help me create a new tool using #new-tool.md as a reference
    * [Registration and Testing](#registration-and-testing)
    * [Required Tool Conventions](#required-tool-conventions)
    * [Common Patterns and Anti-patterns](#common-patterns-and-anti-patterns)
+   * [CLI Command Hierarchy](#cli-command-hierarchy)
 
 ## Tool Architecture Overview
 
@@ -616,3 +617,7 @@ catch (Exception ex)
     return new Response { ResponseError = ex.Message }; // Missing SetFailure()
 }
 ```
+
+## CLI command hierachy
+
+Refer to [CLI command hierarchy](cli-commands-guidelines.md) for guidelines on CLI command structure.

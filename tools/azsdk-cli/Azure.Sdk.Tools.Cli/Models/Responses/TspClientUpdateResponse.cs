@@ -8,7 +8,7 @@ namespace Azure.Sdk.Tools.Cli.Models;
 /// <summary>
 /// Response payload for TspClientUpdateTool MCP / CLI operations.
 /// </summary>
-public class TspClientUpdateResponse : Response
+public class TspClientUpdateResponse : CommandResponse
 {
     [JsonPropertyName("session")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

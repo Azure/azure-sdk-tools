@@ -1,45 +1,29 @@
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.ComponentModel;
-using System.Text;
-using System.Text.Json;
-using System.Text.RegularExpressions;
+using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Commands;
-using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Services;
-using Microsoft.AspNetCore.Mvc;
-using ModelContextProtocol.Server;
-using LibGit2Sharp;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package
 {
     [McpServerToolType, Description("This type contains the tools to build/compile SDK code locally.")]
-    public class SdkBuildTool: MCPTool
+    public class SdkBuildTool(
+        IGitHelper gitHelper,
+        ILogger<SdkBuildTool> logger,
+        IProcessHelper processHelper,
+        ISpecGenSdkConfigHelper specGenSdkConfigHelper
+    ) : MCPTool
     {
+        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package, SharedCommandGroups.SourceCode];
+
         // Command names
         private const string BuildSdkCommandName = "build";
         private const string AzureSdkForPythonRepoName = "azure-sdk-for-python";
         private const int CommandTimeoutInMinutes = 30;
 
-        private readonly IOutputHelper _output;
-        private readonly IProcessHelper _processHelper;
-        private readonly IGitHelper _gitHelper;
-        private readonly ISpecGenSdkConfigHelper _specGenSdkConfigHelper;
-        private readonly ILogger<SdkBuildTool> _logger;
-
-        public SdkBuildTool(IGitHelper gitHelper, ILogger<SdkBuildTool> logger, IOutputHelper output, IProcessHelper processHelper, ISpecGenSdkConfigHelper specGenSdkConfigHelper): base()
-        {
-            _gitHelper = gitHelper;
-            _logger = logger;
-            _output = output;
-            _processHelper = processHelper;
-            _specGenSdkConfigHelper = specGenSdkConfigHelper;
-            CommandHierarchy = [ SharedCommandGroups.Package, SharedCommandGroups.SourceCode ];
-        }
-
-        public override Command GetCommand()
+        protected override Command GetCommand()
         {
             var command = new Command(BuildSdkCommandName, "Builds SDK source code for a specified language and project.");
             command.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
@@ -48,14 +32,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return command;
         }
 
-        public async override Task HandleCommand(InvocationContext ctx, CancellationToken ct)
+        public async override Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
         {
             var command = ctx.ParseResult.CommandResult.Command.Name;
             var commandParser = ctx.ParseResult;
             var packagePath = commandParser.GetValueForOption(SharedOptions.PackagePath);
-            var buildResult = await BuildSdkAsync(packagePath, ct);
-            ctx.ExitCode = ExitCode;
-            _output.Output(buildResult);
+            return await BuildSdkAsync(packagePath, ct);
         }
 
         [McpServerTool(Name = "azsdk_package_build_code"), Description("Build/compile SDK code for a specified project locally.")]
@@ -66,7 +48,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             try
             {
-                _logger.LogInformation($"Building SDK for project path: {packagePath}");
+                logger.LogInformation($"Building SDK for project path: {packagePath}");
 
                 // Validate inputs
                 if (string.IsNullOrEmpty(packagePath))
@@ -80,21 +62,21 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 }
 
                 // Get repository root path from project path
-                string sdkRepoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
+                string sdkRepoRoot = gitHelper.DiscoverRepoRoot(packagePath);
                 if (string.IsNullOrEmpty(sdkRepoRoot))
                 {
                     return CreateFailureResponse($"Failed to discover local sdk repo with project-path: {packagePath}.");
                 }
 
-                _logger.LogInformation($"Repository root path: {sdkRepoRoot}");
+                logger.LogInformation($"Repository root path: {sdkRepoRoot}");
 
-                string sdkRepoName = _gitHelper.GetRepoName(sdkRepoRoot);
-                _logger.LogInformation($"Repository name: {sdkRepoName}");
+                string sdkRepoName = gitHelper.GetRepoName(sdkRepoRoot);
+                logger.LogInformation($"Repository name: {sdkRepoName}");
 
                 // Return if the project is python project
                 if (sdkRepoName.Contains(AzureSdkForPythonRepoName, StringComparison.OrdinalIgnoreCase))
                 {
-                    _logger.LogInformation("Python SDK project detected. Skipping build step as Python SDKs do not require a build process.");
+                    logger.LogInformation("Python SDK project detected. Skipping build step as Python SDKs do not require a build process.");
                     return CreateSuccessResponse("Python SDK project detected. Skipping build step as Python SDKs do not require a build process.");
                 }
 
@@ -110,20 +92,20 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 }
 
                 // Run the build script or command
-                _logger.LogInformation($"Executing build process...");
-                var buildResult = await _processHelper.Run(options, ct);
+                logger.LogInformation($"Executing build process...");
+                var buildResult = await processHelper.Run(options, ct);
                 var trimmedBuildResult = (buildResult.Output ?? string.Empty).Trim();
                 if (buildResult.ExitCode != 0)
                 {
                     return CreateFailureResponse($"Build process failed with exit code {buildResult.ExitCode}. Output:\n{trimmedBuildResult}");
                 }
 
-                _logger.LogInformation("Build process execution completed");
+                logger.LogInformation("Build process execution completed");
                 return CreateSuccessResponse($"Build completed successfully. Output:\n{trimmedBuildResult}");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while building SDK");
+                logger.LogError(ex, "Error occurred while building SDK");
                 return CreateFailureResponse($"An error occurred: {ex.Message}");
             }
         }
@@ -131,7 +113,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         // Helper method to create failure responses along with setting the failure state
         private DefaultCommandResponse CreateFailureResponse(string message)
         {
-            SetFailure();
             return new DefaultCommandResponse
             {
                 ResponseErrors = [message]
@@ -151,7 +132,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         // Create process options for building the SDK based on configuration
         private async Task<ProcessOptions> CreateProcessOptions(string sdkRepoRoot, string packagePath)
         {
-            var (configType, configValue) = await _specGenSdkConfigHelper.GetBuildConfigurationAsync(sdkRepoRoot);
+            var (configType, configValue) = await specGenSdkConfigHelper.GetBuildConfigurationAsync(sdkRepoRoot);
 
             if (configType == BuildConfigType.Command)
             {
@@ -161,10 +142,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     { "packagePath", packagePath }
                 };
 
-                var substitutedCommand = _specGenSdkConfigHelper.SubstituteCommandVariables(configValue, variables);
-                _logger.LogInformation($"Executing build command: {substitutedCommand}");
+                var substitutedCommand = specGenSdkConfigHelper.SubstituteCommandVariables(configValue, variables);
+                logger.LogInformation($"Executing build command: {substitutedCommand}");
 
-                var commandParts = _specGenSdkConfigHelper.ParseCommand(substitutedCommand);
+                var commandParts = specGenSdkConfigHelper.ParseCommand(substitutedCommand);
                 if (commandParts.Length == 0)
                 {
                     throw new InvalidOperationException($"Invalid build command: {substitutedCommand}");
@@ -185,7 +166,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 var fullBuildScriptPath = Path.IsPathRooted(configValue)
                     ? configValue
                     : Path.Combine(sdkRepoRoot, configValue);
-                
+
                 // Normalize the final path
                 fullBuildScriptPath = Path.GetFullPath(fullBuildScriptPath);
 
@@ -194,7 +175,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     throw new FileNotFoundException($"Build script not found at: {fullBuildScriptPath}");
                 }
 
-                _logger.LogInformation($"Executing build script file: {fullBuildScriptPath}");
+                logger.LogInformation($"Executing build script file: {fullBuildScriptPath}");
 
                 return new PowershellOptions(
                     fullBuildScriptPath,

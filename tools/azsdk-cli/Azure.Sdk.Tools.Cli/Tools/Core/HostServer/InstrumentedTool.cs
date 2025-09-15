@@ -1,11 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.Diagnostics;
+using System.Text.Json;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
-using System.Text.Json;
-using static Azure.Sdk.Tools.Cli.Telemetry.TelemetryConstants;
 using Azure.Sdk.Tools.Cli.Telemetry;
+using static Azure.Sdk.Tools.Cli.Telemetry.TelemetryConstants;
 
 namespace Azure.Sdk.Tools.Cli.Tools.HostServer;
 

@@ -5,8 +5,24 @@ using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models;
 
-public class Response
+public class CommandResponse
 {
+    private int? exitCode = null;
+    [JsonIgnore]
+    public int ExitCode
+    {
+        get
+        {
+            if (null != exitCode) { return exitCode.Value; }
+            if (!string.IsNullOrEmpty(ResponseError) || (ResponseErrors?.Count ?? 0) > 0)
+            {
+                return 1;
+            }
+            return 0;
+        }
+        set => exitCode = value;
+    }
+
     /// <summary>
     /// ResponseError represents a single error message associated with the response.
     /// </summary>
@@ -46,7 +62,7 @@ public class Response
         }
 
         if (NextSteps?.Count > 0)
-{
+        {
             messages.Add("[NEXT STEPS]");
             foreach (var step in NextSteps)
             {

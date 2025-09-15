@@ -1,5 +1,3 @@
-using Azure.Sdk.Tools.Cli.Contract;
-
 namespace Azure.Sdk.Tools.Cli.Commands
 {
     public static class SharedCommandGroups

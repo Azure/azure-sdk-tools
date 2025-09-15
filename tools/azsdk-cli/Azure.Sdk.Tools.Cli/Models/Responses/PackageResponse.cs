@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models.Responses
 {
-    public class PackageResponse: Response
+    public class PackageResponse : CommandResponse
     {
         [JsonPropertyName("Work item Id")]
         public int WorkItemId { get; set; }

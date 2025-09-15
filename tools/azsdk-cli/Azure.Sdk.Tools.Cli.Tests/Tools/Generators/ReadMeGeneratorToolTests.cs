@@ -2,29 +2,33 @@ using System.CommandLine;
 using System.CommandLine.Parsing;
 using Moq;
 using Azure.Sdk.Tools.Cli.Microagents;
-using Azure.Sdk.Tools.Cli.Tests.Mocks.Helpers;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.Package;
+using Azure.Sdk.Tools.Cli.Telemetry;
+using Azure.Sdk.Tools.Cli.Helpers;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators
 {
     internal class ReadMeGeneratorToolTests
     {
+        private OutputHelper outputHelper { get; set; }
+
         private ReadMeGeneratorTool tool;
-        private TestOutputHelper outputHelper;
         private Mock<IMicroagentHostService>? mockMicroAgentService;
+        private Mock<ITelemetryService>? telemetryServiceMock;
 
         [SetUp]
         public void Setup()
         {
-            outputHelper = new TestOutputHelper();
+            outputHelper = new();
             mockMicroAgentService = new Mock<IMicroagentHostService>();
+            telemetryServiceMock = new Mock<ITelemetryService>();
 
             tool = new ReadMeGeneratorTool(
                 new TestLogger<ReadMeGeneratorTool>(),
-                outputHelper,
                 mockMicroAgentService.Object
             );
+            tool.Initialize(outputHelper, telemetryServiceMock.Object);
         }
 
         [Test]
@@ -42,15 +46,15 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators
 
             try
             {
-                var command = tool.GetCommand();
+                var command = tool.GetCommandInstances().First();
 
                 int exitCode = command.Invoke($"--output-path \"{readmeOutputPath}\" --service-url \"https://learn.microsoft.com/azure/service-bus-messaging\" --template-path {readmeTemplatePath} --package-path {packagePath}");
 
                 Assert.Multiple(() =>
                 {
                     Assert.That(exitCode, Is.EqualTo(0), "Command should execute successfully");
-                    Assert.That(outputHelper.Outputs.First().Method, Is.EqualTo("Output"));
-                    Assert.That(outputHelper.Outputs.First().OutputValue, Is.EqualTo($"Readme written to {readmeOutputPath}"));
+                    Assert.That(outputHelper.Outputs.First().Stream, Is.EqualTo(OutputHelper.StreamType.Stdout));
+                    Assert.That(outputHelper.Outputs.First().Output, Is.EqualTo($"Readme written to {readmeOutputPath}{Environment.NewLine}"));
                 });
 
                 Assert.That(File.Exists(readmeOutputPath), Is.True, "Readme output file should be created");
@@ -78,7 +82,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators
                 Assert.Ignore("Skipping test as AZURE_SDK_FOR_GO_PATH is not set");
             }
 
-            var command = tool.GetCommand();
+            var command = tool.GetCommandInstances().First();
             var readmeOutputPath = Path.GetTempFileName();
             var readmeTemplatePath = Path.Combine(AppContext.BaseDirectory, "TestAssets", "README-template.go.md");
 
@@ -89,8 +93,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators
 
             Assert.Multiple(() =>
             {
-                Assert.That(outputHelper.Outputs.First().Method, Is.EqualTo("Output"));
-                Assert.That(outputHelper.Outputs.First().OutputValue, Is.EqualTo($"Readme written to {readmeOutputPath}"));
+                Assert.That(outputHelper.Outputs.First().Stream, Is.EqualTo(OutputHelper.StreamType.Stdout));
+                Assert.That(outputHelper.Outputs.First().Output, Is.EqualTo($"Readme written to {readmeOutputPath}"));
             });
         }
 
@@ -122,15 +126,15 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators
 
             try
             {
-                var command = tool.GetCommand();
+                var command = tool.GetCommandInstances().First();
 
                 int exitCode = command.Invoke($"--output-path \"{readmeOutputPath}\" --service-url \"https://learn.microsoft.com/azure/service-bus-messaging\" --template-path {readmeTemplatePath} --package-path {packagePath}");
 
                 Assert.Multiple(() =>
                 {
                     Assert.That(exitCode, Is.EqualTo(1), "Command should fail, as the final readme doesn't pass validation");
-                    Assert.That(outputHelper.Outputs.First().Method, Is.EqualTo("OutputError"));
-                    Assert.That(outputHelper.Outputs.First().OutputValue, Is.EqualTo($"ReadmeGenerator failed with validation errors: {expectedFeedback}"));
+                    Assert.That(outputHelper.Outputs.First().Stream, Is.EqualTo(OutputHelper.StreamType.Stderr));
+                    Assert.That(outputHelper.Outputs.First().Output, Is.EqualTo($"[ERROR] ReadmeGenerator failed with validation errors: {expectedFeedback}"));
                 });
 
                 Assert.That(File.Exists(readmeOutputPath), Is.True, "Readme output file should be created");

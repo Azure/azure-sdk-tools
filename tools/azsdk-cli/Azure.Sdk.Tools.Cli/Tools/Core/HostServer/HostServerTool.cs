@@ -1,10 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-using Azure.Sdk.Tools.Cli.Services;
-using Azure.Sdk.Tools.Cli.Contract;
 using System.CommandLine;
 using System.CommandLine.Invocation;
-using Azure.Sdk.Tools.Cli.Commands;
+using Azure.Sdk.Tools.Cli.Models;
 
 namespace Azure.Sdk.Tools.Cli.Tools.HostServer
 {
@@ -17,29 +15,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.HostServer
             _logger = logger;
         }
 
-        public override Command GetCommand()
+        protected override Command GetCommand() => new("start", "Starts the MCP server (stdio mode)");
+
+        public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
         {
-            Command command = new Command("start", "Starts the MCP server (stdio mode)");
-            command.SetHandler(async ctx =>
-            {
-                ctx.ExitCode = await HandleCommand(ctx, ctx.GetCancellationToken());
-            });
-
-            return command;
-        }
-
-        public override async Task<int> HandleCommand(InvocationContext ctx, CancellationToken ct)
-        {
-
             try
             {
                 await Program.ServerApp.RunAsync(ct);
-                return 0;
+                return new DefaultCommandResponse { };
             }
             catch (Exception ex)
             {
                 _logger.LogError("Exception during web app run: {ex}", ex);
-                return 1;
+                return new DefaultCommandResponse { ResponseError = ex.Message };
             }
         }
     }

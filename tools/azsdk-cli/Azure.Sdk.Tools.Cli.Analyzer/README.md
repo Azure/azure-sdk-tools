@@ -72,7 +72,7 @@ When you encounter MCP002 violations:
 // 1. Tool implementation
 public class MyCustomTool : MCPTool
 {
-    public override Command GetCommand() { /* implementation */ }
+    protected override Command GetCommand() { /* implementation */ }
     public override Task HandleCommand(InvocationContext ctx, CancellationToken ct) { /* implementation */ }
 }
 

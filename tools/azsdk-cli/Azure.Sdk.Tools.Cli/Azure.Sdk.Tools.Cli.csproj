@@ -41,10 +41,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../Azure.Sdk.Tools.Cli.Contract/Azure.Sdk.Tools.Cli.Contract.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="../Azure.Sdk.Tools.Cli.Analyzer/Azure.Sdk.Tools.Cli.Analyzer.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
   </ItemGroup>
 

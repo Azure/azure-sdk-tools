@@ -1,11 +1,12 @@
 using System.CommandLine;
-using Azure.Sdk.Tools.Cli.Contract;
+using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Telemetry;
+using Azure.Sdk.Tools.Cli.Tools;
 
 namespace Azure.Sdk.Tools.Cli.Commands
 {
     public static class CommandFactory
     {
-
         /// <summary>
         /// Creates the primary parsing entry point for the application. Uses the registered service providers
         /// to initialize whichever MCP tools we need to add to the configuration and pass on to HostTool.
@@ -31,7 +32,14 @@ namespace Azure.Sdk.Tools.Cli.Commands
             var toolTypes = SharedOptions.GetFilteredToolTypes(args);
 
             var toolInstances = toolTypes
-                .Select(t => (MCPToolBase)ActivatorUtilities.CreateInstance(serviceProvider, t))
+                .Select(t =>
+                {
+                    var _tool = (MCPToolBase)ActivatorUtilities.CreateInstance(serviceProvider, t);
+                    _tool.Initialize(
+                        serviceProvider.GetRequiredService<IOutputHelper>(),
+                        serviceProvider.GetRequiredService<ITelemetryService>());
+                    return _tool;
+                })
                 .ToList();
 
             PopulateToolHierarchy(rootCommand, toolInstances);

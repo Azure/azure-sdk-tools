@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using Moq;
-using NUnit.Framework;
 using NUnit.Framework.Internal;
 using Azure.Core;
 using Azure.Sdk.Tools.Cli.Helpers;
@@ -17,7 +16,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools;
 internal class ExampleToolTests
 {
     private ExampleTool tool;
-    private Mock<IOutputHelper>? mockOutput;
     private Mock<IAzureService>? mockAzureService;
     private Mock<IDevOpsService>? mockDevOpsService;
     private MockGitHubService? mockGitHubService;
@@ -29,7 +27,6 @@ internal class ExampleToolTests
     public void Setup()
     {
         // Create mock services
-        mockOutput = new Mock<IOutputHelper>();
         mockAzureService = new Mock<IAzureService>();
         mockDevOpsService = new Mock<IDevOpsService>();
         mockGitHubService = new MockGitHubService();
@@ -55,14 +52,13 @@ internal class ExampleToolTests
         // Create the tool instance
         tool = new ExampleTool(
             new TestLogger<ExampleTool>(),
-            mockOutput.Object,
             mockAzureService.Object,
             mockDevOpsService.Object,
             mockGitHubService,
             mockMicroagentHostService.Object,
             mockProcessHelper.Object,
             mockPowershellHelper.Object,
-            tokenUsageHelper: new TokenUsageHelper(mockOutput.Object),
+            tokenUsageHelper: new TokenUsageHelper(new OutputHelper()),
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             null
 #pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
@@ -154,7 +150,7 @@ internal class ExampleToolTests
     [Test]
     public void GetCommand_ReturnsCommandWithCorrectSubCommands()
     {
-        var subCommandNames = tool.GetCommands().Select(c => c.Name).ToList();
+        var subCommandNames = tool.GetCommandInstances().Select(c => c.Name).ToList();
         Assert.That(subCommandNames, Does.Contain("azure"));
         Assert.That(subCommandNames, Does.Contain("devops"));
         Assert.That(subCommandNames, Does.Contain("github"));

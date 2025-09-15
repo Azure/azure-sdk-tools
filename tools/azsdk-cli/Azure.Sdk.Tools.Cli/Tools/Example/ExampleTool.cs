@@ -4,13 +4,12 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.ComponentModel;
 using Azure.AI.OpenAI;
+using ModelContextProtocol.Server;
+using OpenAI.Chat;
 using Azure.Sdk.Tools.Cli.Commands;
-using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Helpers;
-using ModelContextProtocol.Server;
-using OpenAI.Chat;
 using Azure.Sdk.Tools.Cli.Microagents;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Example;
@@ -19,7 +18,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Example;
 [McpServerToolType, Description("Example tool demonstrating various framework features and service integrations")]
 public class ExampleTool(
     ILogger<ExampleTool> logger,
-    IOutputHelper output,
     IAzureService azureService,
     IDevOpsService devOpsService,
     IGitHubService gitHubService,
@@ -85,54 +83,23 @@ public class ExampleTool(
     private readonly Option<string> languageOption = new(["--language", "-l"], "Programming language of the repository");
     private readonly Option<bool> forceFailureOption = new(["--force-failure", "-f"], () => false, "Force an error for demonstration");
 
-    public override List<Command> GetCommands()
-    {
-        // Azure service example sub-command
-        var azureCmd = new Command(AzureSubCommand, "Demonstrate Azure service integration");
-        azureCmd.AddOption(tenantOption);
+    protected override List<Command> GetCommands() =>
+    [
+        new(AzureSubCommand, "Demonstrate Azure service integration") { tenantOption },
+        new(DevOpsSubCommand, "Demonstrate DevOps service integration") { packageArgument, languageOption },
+        new(GitHubSubCommand, "Demonstrate GitHub service integration"),
+        new(AISubCommand, "Demonstrate AI service integration") { aiInputArg },
+        new(ErrorSubCommand, "Demonstrate error handling patterns") { errorInputArg, forceFailureOption },
+        new(ProcessSubCommand, "Demonstrate spawning an external process (echo)") { processSleepArg },
+        new(PowershellSubCommand, "Demonstrate PowerShell helper running a temp script with a parameter") { powershellMessageArg },
+        new(MicroagentSubCommand, "Demonstrate micro-agent looping tool calls to compute Fibonacci") { fibonacciIndexOption }
+    ];
 
-        // DevOps service example sub-command
-        var devopsCmd = new Command(DevOpsSubCommand, "Demonstrate DevOps service integration");
-        devopsCmd.AddArgument(packageArgument);
-        devopsCmd.AddOption(languageOption);
-
-        // GitHub service example sub-command
-        var githubCmd = new Command(GitHubSubCommand, "Demonstrate GitHub service integration");
-
-        // AI service example sub-command
-        var aiCmd = new Command(AISubCommand, "Demonstrate AI service integration");
-        aiCmd.AddArgument(aiInputArg);
-
-        // Error handling example sub-command
-        var errorCmd = new Command(ErrorSubCommand, "Demonstrate error handling patterns");
-        errorCmd.AddArgument(errorInputArg);
-        errorCmd.AddOption(forceFailureOption);
-
-        // Process execution example sub-command
-        var processCmd = new Command(ProcessSubCommand, "Demonstrate spawning an external process (echo)");
-        processCmd.AddArgument(processSleepArg);
-
-        // PowerShell helper example sub-command
-        var powershellCmd = new Command(PowershellSubCommand, "Demonstrate PowerShell helper running a temp script with a parameter");
-        powershellCmd.AddArgument(powershellMessageArg);
-
-        // Microagent Fibonacci demo sub-command
-        var microagentCmd = new Command(MicroagentSubCommand, "Demonstrate micro-agent looping tool calls to compute Fibonacci");
-        microagentCmd.AddOption(fibonacciIndexOption);
-
-        var commands = new List<Command> { azureCmd, devopsCmd, githubCmd, aiCmd, errorCmd, processCmd, powershellCmd, microagentCmd };
-        foreach (var cmd in commands)
-        {
-            cmd.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
-        }
-        return commands;
-    }
-
-    public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
+    public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
     {
         var commandName = ctx.ParseResult.CommandResult.Command.Name;
 
-        object result = commandName switch
+        CommandResponse result = commandName switch
         {
             AzureSubCommand => await DemonstrateAzureService(ctx.ParseResult.GetValueForOption(tenantOption), ct),
             DevOpsSubCommand => await DemonstrateDevOpsService(ctx.ParseResult.GetValueForArgument(packageArgument), ctx.ParseResult.GetValueForOption(languageOption), ct),
@@ -145,8 +112,7 @@ public class ExampleTool(
             _ => new ExampleServiceResponse { ResponseError = $"Unknown command: {commandName}" }
         };
 
-        ctx.ExitCode = ExitCode;
-        output.Output(result);
+        return result;
     }
 
     [McpServerTool(Name = "azsdk_example_azure_service"), Description("Demonstrates Azure service integration")]
@@ -177,7 +143,6 @@ public class ExampleTool(
         catch (Exception ex)
         {
             logger.LogError(ex, "Error demonstrating Azure service with input");
-            SetFailure();
             return new ExampleServiceResponse
             {
                 ResponseError = $"Failed to demonstrate Azure service: {ex.Message}"
@@ -209,7 +174,6 @@ public class ExampleTool(
         catch (Exception ex)
         {
             logger.LogError(ex, "Error demonstrating DevOps service with package: {PackageName}, language: {Language}", packageName, language);
-            SetFailure();
             return new ExampleServiceResponse
             {
                 ResponseError = $"Failed to demonstrate DevOps service: {ex.Message}"
@@ -243,7 +207,6 @@ public class ExampleTool(
         catch (Exception ex)
         {
             logger.LogError(ex, "Error demonstrating GitHub service");
-            SetFailure();
             return new ExampleServiceResponse
             {
                 ResponseError = $"Failed to demonstrate GitHub service: {ex.Message}"
@@ -287,7 +250,6 @@ public class ExampleTool(
         catch (Exception ex)
         {
             logger.LogError(ex, "Error demonstrating AI service using model {Model} with prompt: {UserPrompt}", model, userPrompt);
-            SetFailure();
             return new ExampleServiceResponse
             {
                 ResponseError = $"Failed to demonstrate AI service: {ex.Message}"
@@ -330,7 +292,6 @@ public class ExampleTool(
         catch (Exception ex)
         {
             logger.LogError(ex, "Demonstrating error handling for scenario: {Scenario}", scenario);
-            SetFailure();
             return new DefaultCommandResponse
             {
                 ResponseError = $"Demonstrated error handling: {ex.GetType().Name}: {ex.Message}"
@@ -355,9 +316,9 @@ public class ExampleTool(
 
             if (result.ExitCode != 0)
             {
-                SetFailure(result.ExitCode);
                 return new ExampleServiceResponse
                 {
+                    ExitCode = result.ExitCode,
                     ResponseErrors = [
                         $"Sleep example failed to run process",
                         result.Output
@@ -379,7 +340,6 @@ public class ExampleTool(
         catch (Exception ex)
         {
             logger.LogError(ex, "Error demonstrating process execution for sleep: {time}", time);
-            SetFailure();
             return new ExampleServiceResponse
             {
                 ResponseError = $"Failed to execute process: {ex.Message}"
@@ -414,11 +374,11 @@ public class ExampleTool(
 
             if (result.ExitCode != 0)
             {
-                SetFailure(result.ExitCode);
                 return new ExampleServiceResponse
                 {
                     ServiceName = "PowerShell",
                     Operation = "RunTempScript",
+                    ExitCode = result.ExitCode,
                     ResponseErrors = [
                         $"PowerShell script exited with code {result.ExitCode}",
                         result.Output ?? string.Empty
@@ -441,7 +401,6 @@ public class ExampleTool(
         catch (Exception ex)
         {
             logger.LogError(ex, "Error demonstrating PowerShell helper with message: {Message}", message);
-            SetFailure();
             return new ExampleServiceResponse
             {
                 ResponseError = $"Failed to run PowerShell script: {ex.Message}"
@@ -477,7 +436,6 @@ public class ExampleTool(
         {
             if (n < 2)
             {
-                SetFailure();
                 return new DefaultCommandResponse { ResponseError = "--fibonacci must be >= 2 to run the micro-agent" };
             }
 
@@ -517,7 +475,6 @@ public class ExampleTool(
         {
             tokenUsageHelper.LogUsage();
             logger.LogError(ex, "Error demonstrating micro-agent Fibonacci for n={n}", n);
-            SetFailure();
             return new DefaultCommandResponse { ResponseError = $"Failed to compute Fibonacci({n}): {ex.Message}" };
         }
     }

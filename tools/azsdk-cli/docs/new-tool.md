@@ -101,7 +101,6 @@ public override CommandGroup[] CommandHierarchy { get; set; } = [
 
 **Common Dependencies:**
 - `ILogger<YourTool>` - Always required for logging
-- `IOutputHelper` - Required for CLI output (final results only)
 - `IAzureService` - For Azure authentication and credentials
 - `IDevOpsService` - For Azure DevOps operations
 - Custom service interfaces for your tool's specific needs
@@ -134,8 +133,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.YourToolCategory;
 
 [McpServerToolType, Description("Brief description of what this tool does")]
 public class YourTool(
-    ILogger<YourTool> logger,
-    IOutputHelper output
+    ILogger<YourTool> logger
 ) : MCPTool
 {
     // Set command hierarchy - determines CLI command path
@@ -153,7 +151,7 @@ public class YourTool(
     private readonly Option<bool> flagOption = new(["--flag", "-f"], () => false, "Boolean flag description");
 
     // CLI Command Configuration
-    public override Command GetCommand()
+    protected override Command GetCommand()
     {
         var command = new Command("your-command", "Description for CLI help");
 
@@ -209,7 +207,6 @@ public class YourTool(
 [McpServerToolType, Description("Tool with multiple sub-commands")]
 public class ComplexTool(
     ILogger<ComplexTool> logger,
-    IOutputHelper output
 ) : MCPMultiCommandTool
 {
     // Set command hierarchy - determines CLI command path
@@ -224,22 +221,15 @@ public class ComplexTool(
     private readonly Option<string> fooOption = new(["--foo"], "Foo") { IsRequired = true };
     private readonly Option<string> barOption = new(["--bar"], "Bar");
 
-    public override List<Command> GetCommands()
+    protected override List<Command> GetCommands()
     {
-        // Sub-command 1
-        var scmd1 = new Command(SubCommandName1, "Analyze something");
-        scmd1.AddOption(fooOption);
+        List<Commands> subCommands = [
+            new(SubCommandName1, "Analyze something", { fooOption })
+            new(SubCommandName2, "Process something", { fooOption, barOption })
+        ];
 
-        // Sub-command 2
-        var scmd2 = new Command(SubCommandName2, "Process something");
-        scmd2.AddOption(fooOption, barOption);
-
-        var commands = new List<Command> { scmd1, scmd2 };
-        foreach (var cmd in commands)
-        {
-            cmd.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
-        }
-        return commands;
+        SetHandler(subCommands, async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
+        return subCommands;
     }
 
     public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
@@ -287,7 +277,6 @@ public class ComplexTool(
 ```csharp
 public YourTool(
     ILogger<YourTool> logger,                        // Logging - ALWAYS required
-    IOutputHelper output,                            // CLI output - required for CLI commands
     IAzureService azureService,                      // Azure credentials and authentication
     IDevOpsService devopsService,                    // Azure DevOps operations
     IAzureAgentServiceFactory agentServiceFactory,   // AI services factory
@@ -298,7 +287,6 @@ public YourTool(
 ### Service Usage Guidelines
 
 - **ILogger**: Use for all logging operations (Info, Warning, Error, Debug)
-- **IOutputHelper**: Use ONLY in `GetCommand()`/`GetCommands()` for final CLI output to terminal/MCP client
 - **IAzureService**: Get Azure credentials, authenticate with Azure services
 - **Custom Services**: Implement business logic in separate services, not in tools
 
@@ -467,10 +455,10 @@ See [mcp quick start docs](../Azure.Sdk.Tools.Cli/README.md#1-mcp-server-mode)
 dotnet test
 ```
 
-### Example Integration Test
+### Example Unit Test
 
 ```csharp
-using Moq;
+using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools;
 
 namespace Azure.Sdk.Tools.Cli.Tests;
@@ -480,15 +468,10 @@ internal class YourToolTests
     [Test]
     public async Task YourTool_ProcessInput_ReturnsExpectedResult()
     {
-        // Arrange
-        var logger = new Mock<ILogger<YourTool>>();
-        var outputHelper = new Mock<IOutputHelper>();
-        var tool = new YourTool(logger.Object, outputHelper.Object);
+        var tool = new YourTool(new TestLogger<YourTool>());
 
-        // Act
         var result = await tool.YourToolMethod("test-input");
 
-        // Assert
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.Result, Is.Not.Null);
     }
@@ -514,10 +497,9 @@ internal class YourToolTests
     - GOOD: `Logger.LogError(ex, "Error occurred");`
     - BAD: `Logger.LogError($"Error occurred, {ex.Message}");`
 
-### 3. Output
-- **Use IOutputHelper only for final CLI results in `HandleCommand()`** - not for progress or debugging, those use `ILogger`.
-- **Structure output for both CLI and JSON consumption**
-- **Provide meaningful ToString() implementations** for CLI output
+### 3. Responses
+- **Create/use response classes for both CLI and JSON consumption**
+- **Provide meaningful ToString() implementations** in response classes for CLI output
 
 ### 4. MCP Server Integration
 - **Use descriptive MCP method names** (snake_case: `analyze_pipeline`)

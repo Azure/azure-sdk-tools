@@ -66,7 +66,6 @@ extends:
           env:
             # Azure App Configuration
             AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
-            AZURE_SDK_ENG_HUB_TOKEN: $(azuresdk-github-pat)
 
             # Set working directory for temp files
             TMPDIR: $(Agent.TempDirectory)

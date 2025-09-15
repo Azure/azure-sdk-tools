@@ -430,8 +430,6 @@ namespace APIViewWeb.Managers
         {
             try
             {
-                var updatedCount = 0;
-
                 foreach (var reviewId in associatedReviewIds.Where(id => !string.IsNullOrEmpty(id)))
                 {
                     try
@@ -444,7 +442,6 @@ namespace APIViewWeb.Managers
                             review.NamespaceApprovalRequestedOn = requestedOn;
                             
                             await _reviewsRepository.UpsertReviewAsync(review);
-                            updatedCount++;
                         }
                     }
                     catch (Exception ex)
@@ -500,7 +497,7 @@ namespace APIViewWeb.Managers
                             // Batch get reviews and filter out TypeSpec reviews
                             var languageReviews = await _reviewsRepository.GetReviewsAsync(reviewIdsToCheck);
                             var sdkLanguageReviews = languageReviews
-                                .Where(r => r != null && r.Language != ApiViewConstants.TypeSpecLanguage && LanguageHelper.IsSDKLanguage(r.Language))
+                                .Where(r => r != null && LanguageHelper.IsSDKLanguage(r.Language))
                                 .Select(r => r.Id);
                             
                             relatedReviewIds.AddRange(sdkLanguageReviews);

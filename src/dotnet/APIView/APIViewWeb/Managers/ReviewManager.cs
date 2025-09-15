@@ -32,7 +32,6 @@ namespace APIViewWeb.Managers
 {
     public class ReviewManager : IReviewManager
     {
-
         private readonly IAuthorizationService _authorizationService;
         private readonly ICosmosReviewRepository _reviewsRepository;
         private readonly IAPIRevisionsManager _apiRevisionsManager;
@@ -59,6 +58,22 @@ namespace APIViewWeb.Managers
             IHubContext<SignalRHub> signalRHubContext, IEnumerable<LanguageService> languageServices,
             TelemetryClient telemetryClient, ICodeFileManager codeFileManager, IConfiguration configuration, IHttpClientFactory httpClientFactory, IPollingJobQueueManager pollingJobQueueManager, INotificationManager notificationManager, ICosmosPullRequestsRepository pullRequestsRepository, ILogger<ReviewManager> logger)
 
+        private readonly ILogger<ReviewManager> _logger;
+
+        public ReviewManager(IAuthorizationService authorizationService,
+            ICosmosReviewRepository reviewsRepository,
+            IAPIRevisionsManager apiRevisionsManager,
+            ICommentsManager commentManager,
+            IBlobCodeFileRepository codeFileRepository,
+            ICosmosCommentsRepository commentsRepository,
+            IHubContext<SignalRHub> signalRHubContext,
+            IEnumerable<LanguageService> languageServices,
+            TelemetryClient telemetryClient,
+            ICodeFileManager codeFileManager,
+            IConfiguration configuration,
+            IHttpClientFactory httpClientFactory,
+            IPollingJobQueueManager pollingJobQueueManager,
+            ILogger<ReviewManager> logger)
         {
             _authorizationService = authorizationService;
             _reviewsRepository = reviewsRepository;
@@ -558,10 +573,17 @@ namespace APIViewWeb.Managers
             }
 
             try {
+                _logger.LogInformation("Starting Copilot job for ReviewId: {ReviewId}, APIRevisionId: {APIRevisionId}, Language: {Language}", 
+                    reviewId, activeApiRevision.Id, activeApiRevision.Language);
+                
                 var response = await client.PostAsync(startUrl, new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json"));
                 response.EnsureSuccessStatusCode();
                 var responseString = await response.Content.ReadAsStringAsync();
                 var jobStartedResponse = JsonSerializer.Deserialize<AIReviewJobStartedResponseModel>(responseString);
+                
+                _logger.LogInformation("Copilot job started successfully. JobId: {JobId}, ReviewId: {ReviewId}, APIRevisionId: {APIRevisionId}", 
+                    jobStartedResponse.JobId, reviewId, activeApiRevision.Id);
+                
                 activeApiRevision.CopilotReviewJobId = jobStartedResponse.JobId;
                 activeApiRevision.CopilotReviewInProgress = true;
                 await _apiRevisionsManager.UpdateAPIRevisionAsync(activeApiRevision);
@@ -574,6 +596,9 @@ namespace APIViewWeb.Managers
                 });
             }
             catch (Exception e ) {
+                _logger.LogError(e, "Failed to start Copilot job for ReviewId: {ReviewId}, APIRevisionId: {APIRevisionId}", 
+                    reviewId, activeApiRevision.Id);
+                
                 activeApiRevision.CopilotReviewInProgress = false;
                 await _apiRevisionsManager.UpdateAPIRevisionAsync(activeApiRevision);
                 throw new Exception($"Copilot Failed: {e.Message}");

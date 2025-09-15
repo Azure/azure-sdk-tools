@@ -12,17 +12,6 @@ namespace Azure.Tools.GeneratorAgent
         private readonly ILogger<FixPromptService> Logger;
         private readonly AppSettings AppSettings;
 
-        private const string FixInstructionTemplate = """
-
-            ### SPECIFIC FIX TO APPLY
-            {0}
-
-            ### CONTEXT
-            {1}
-
-            Now apply this fix following the system instructions above.
-            """;
-
         public FixPromptService(ILogger<FixPromptService> logger, AppSettings appSettings)
         {
             ArgumentNullException.ThrowIfNull(logger);
@@ -58,7 +47,7 @@ namespace Azure.Tools.GeneratorAgent
                 ? promptFix.Context 
                 : "No additional context provided.";
 
-            return AppSettings.AgentInstructions + string.Format(FixInstructionTemplate, fixInstruction, context);
+            return AppSettings.AgentInstructions + string.Format(AppSettings.FixPromptTemplate, fixInstruction, context);
         }
 
         /// <summary>
@@ -75,7 +64,7 @@ namespace Azure.Tools.GeneratorAgent
             string fixInstruction = $"Fix Type: {fixTypeName}\nAction Required: {fix.Action}";
             string context = "Generic fix - apply appropriate changes to resolve the compilation error.";
 
-            return AppSettings.AgentInstructions + string.Format(FixInstructionTemplate, fixInstruction, context);
+            return AppSettings.AgentInstructions + string.Format(AppSettings.FixPromptTemplate, fixInstruction, context);
         }
     }
 }

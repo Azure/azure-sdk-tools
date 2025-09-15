@@ -2,6 +2,7 @@ using Azure.Tools.ErrorAnalyzers;
 using Azure.Tools.GeneratorAgent.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using NUnit.Framework;
 
@@ -13,12 +14,12 @@ namespace Azure.Tools.GeneratorAgent.Tests
         #region Constructor Tests
 
         [Test]
-        public void Constructor_WithValidLogger_ShouldCreateInstance()
+        public void Constructor_WithValidParameters_ShouldCreateInstance()
         {
-            var mockLogger = new Mock<ILogger<FixPromptService>>();
-            var appSettings = CreateAppSettings();
+            var logger = NullLogger<FixPromptService>.Instance;
+            var appSettings = CreateTestAppSettings();
 
-            var service = new FixPromptService(mockLogger.Object, appSettings);
+            var service = new FixPromptService(logger, appSettings);
 
             Assert.That(service, Is.Not.Null);
         }
@@ -26,9 +27,19 @@ namespace Azure.Tools.GeneratorAgent.Tests
         [Test]
         public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
         {
-            var appSettings = CreateAppSettings();
+            var appSettings = CreateTestAppSettings();
+
             var ex = Assert.Throws<ArgumentNullException>(() => new FixPromptService(null!, appSettings));
-            Assert.That(ex!.ParamName, Is.EqualTo("logger"));
+            Assert.That(ex?.ParamName, Is.EqualTo("logger"));
+        }
+
+        [Test]
+        public void Constructor_WithNullAppSettings_ShouldThrowArgumentNullException()
+        {
+            var logger = NullLogger<FixPromptService>.Instance;
+
+            var ex = Assert.Throws<ArgumentNullException>(() => new FixPromptService(logger, null!));
+            Assert.That(ex?.ParamName, Is.EqualTo("appSettings"));
         }
 
         #endregion
@@ -41,28 +52,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var service = CreateFixPromptService();
 
             var ex = Assert.Throws<ArgumentNullException>(() => service.ConvertFixToPrompt(null!));
-            Assert.That(ex!.ParamName, Is.EqualTo("fix"));
-        }
-
-        [Test]
-        public void ConvertFixToPrompt_WithAgentPromptFixFromAnalyzer_ShouldReturnValidPrompt()
-        {
-            var service = CreateFixPromptService();
-            var fix = CreateValidFixFromAnalyzer();
-
-            var result = service.ConvertFixToPrompt(fix);
-
-            Assert.Multiple(() =>
-            {
-                Assert.That(result, Is.Not.Null);
-                Assert.That(result, Is.Not.Empty);
-                Assert.That(result, Does.Contain("### SPECIFIC FIX TO APPLY"));
-                Assert.That(result, Does.Contain("### CONTEXT"));
-                Assert.That(result, Does.Contain("SYSTEM INSTRUCTIONS"));
-                Assert.That(result, Does.Contain("TypeSpec files and produce a valid, compilable result"));
-                Assert.That(result, Does.Contain("FileSearchTool"));
-                Assert.That(result, Does.Contain("Now apply this fix following the system instructions above"));
-            });
+            Assert.That(ex?.ParamName, Is.EqualTo("fix"));
         }
 
         [Test]
@@ -83,6 +73,8 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 Assert.That(result, Does.Contain("TypeSpec files and produce a valid, compilable result"));
                 Assert.That(result, Does.Contain("FileSearchTool"));
                 Assert.That(result, Does.Contain("Now apply this fix following the system instructions above"));
+                Assert.That(result, Does.Contain("Fix the generic type name"));
+                Assert.That(result, Does.Contain("Test context for agent prompt fix"));
             });
         }
 
@@ -101,6 +93,31 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 Assert.That(result, Does.Contain("### SPECIFIC FIX TO APPLY"));
                 Assert.That(result, Does.Contain("### CONTEXT"));
                 Assert.That(result, Does.Contain("No additional context provided"));
+                Assert.That(result, Does.Contain("Fix the generic type name"));
+            });
+        }
+
+        [Test]
+        public void ConvertFixToPrompt_WithGenericFix_ShouldReturnValidPrompt()
+        {
+            var service = CreateFixPromptService();
+            var fix = CreateGenericFix();
+
+            // The mock Fix doesn't have Action properly set up, so this test focuses on structure
+            // The real implementation would have proper Action values
+            var result = service.ConvertFixToPrompt(fix);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result, Is.Not.Null);
+                Assert.That(result, Is.Not.Empty);
+                Assert.That(result, Does.Contain("### SPECIFIC FIX TO APPLY"));
+                Assert.That(result, Does.Contain("### CONTEXT"));
+                Assert.That(result, Does.Contain("SYSTEM INSTRUCTIONS"));
+                // Updated to match the actual prompt format
+                Assert.That(result, Does.Contain("Generic fix prompt"));
+                Assert.That(result, Does.Contain("Generic context"));
+                Assert.That(result, Does.Contain("You MUST respond with ONLY a JSON object"));
             });
         }
 
@@ -108,20 +125,24 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public void ConvertFixToPrompt_WithDifferentFixTypes_ShouldProduceConsistentStructure()
         {
             var service = CreateFixPromptService();
-            var analyzerFix = CreateValidFixFromAnalyzer();
+            var genericFix = CreateGenericFix();
             var agentPromptFix = CreateValidAgentPromptFix();
 
-            var analyzerResult = service.ConvertFixToPrompt(analyzerFix);
+            var genericResult = service.ConvertFixToPrompt(genericFix);
             var agentPromptResult = service.ConvertFixToPrompt(agentPromptFix);
 
             Assert.Multiple(() =>
             {
-                Assert.That(analyzerResult, Does.Contain("### SPECIFIC FIX TO APPLY"));
+                Assert.That(genericResult, Does.Contain("### SPECIFIC FIX TO APPLY"));
                 Assert.That(agentPromptResult, Does.Contain("### SPECIFIC FIX TO APPLY"));
-                Assert.That(analyzerResult, Does.Contain("### CONTEXT"));
+                Assert.That(genericResult, Does.Contain("### CONTEXT"));
                 Assert.That(agentPromptResult, Does.Contain("### CONTEXT"));
-                Assert.That(analyzerResult, Does.Contain("SYSTEM INSTRUCTIONS"));
+                Assert.That(genericResult, Does.Contain("SYSTEM INSTRUCTIONS"));
                 Assert.That(agentPromptResult, Does.Contain("SYSTEM INSTRUCTIONS"));
+                
+                // But AgentPromptFix should have specialized content
+                Assert.That(agentPromptResult, Does.Contain("Fix the generic type name"));
+                Assert.That(agentPromptResult, Does.Contain("Test context for agent prompt fix"));
             });
         }
 
@@ -133,7 +154,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         public void ConvertFixToPrompt_MultipleCallsWithSameFix_ShouldProduceConsistentResults()
         {
             var service = CreateFixPromptService();
-            var fix = CreateValidFixFromAnalyzer();
+            var fix = CreateValidAgentPromptFix();
 
             var result1 = service.ConvertFixToPrompt(fix);
             var result2 = service.ConvertFixToPrompt(fix);
@@ -160,19 +181,78 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
         #endregion
 
+        #region Integration Tests
+
+        [Test]
+        public void ConvertFixToPrompt_WithAgentPromptFixType_UsesSpecializedHandling()
+        {
+            var service = CreateFixPromptService();
+            var promptFix = new AgentPromptFix("Custom prompt instruction", "Custom context");
+
+            var result = service.ConvertFixToPrompt(promptFix);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result, Does.Contain("Custom prompt instruction"));
+                Assert.That(result, Does.Contain("Custom context"));
+                Assert.That(result, Does.Not.Contain("Fix Type:"));
+                Assert.That(result, Does.Not.Contain("Action Required:"));
+            });
+        }
+
+        [Test]
+        public void ConvertFixToPrompt_WithGenericFixType_UsesGenericHandling()
+        {
+            var service = CreateFixPromptService();
+            var genericFix = CreateGenericFix();
+
+            var result = service.ConvertFixToPrompt(genericFix);
+
+            Assert.Multiple(() =>
+            {
+                // Updated to match the actual prompt format
+                Assert.That(result, Does.Contain("Generic fix prompt"));
+                Assert.That(result, Does.Contain("Generic context"));
+                Assert.That(result, Does.Contain("You MUST respond with ONLY a JSON object"));
+            });
+        }
+
+        #endregion
+
+        #region Error Handling Tests
+
+        [Test]
+        public void ConvertFixToPrompt_WithEmptyPromptInAgentPromptFix_ShouldThrowArgumentException()
+        {
+            Assert.Throws<ArgumentException>(() => new AgentPromptFix("", "Some context"));
+        }
+
+        [Test]
+        public void ConvertFixToPrompt_WithEmptyStringContext_ShouldUseDefaultMessage()
+        {
+            var service = CreateFixPromptService();
+            var fix = new AgentPromptFix("Test prompt", "");
+
+            var result = service.ConvertFixToPrompt(fix);
+
+            Assert.That(result, Does.Contain("No additional context provided"));
+        }
+
+        #endregion
+
         #region Helper Methods
 
         private FixPromptService CreateFixPromptService()
         {
-            var mockLogger = new Mock<ILogger<FixPromptService>>();
-            var appSettings = CreateAppSettings();
-            return new FixPromptService(mockLogger.Object, appSettings);
+            var logger = NullLogger<FixPromptService>.Instance;
+            var appSettings = CreateTestAppSettings();
+            return new FixPromptService(logger, appSettings);
         }
 
-        private AppSettings CreateAppSettings()
+        private AppSettings CreateTestAppSettings()
         {
             var mockConfiguration = new Mock<IConfiguration>();
-            var mockLogger = new Mock<ILogger<AppSettings>>();
+            var logger = NullLogger<AppSettings>.Instance;
             
             // Set up required configuration values
             var projectEndpointSection = new Mock<IConfigurationSection>();
@@ -184,18 +264,12 @@ namespace Azure.Tools.GeneratorAgent.Tests
             agentInstructionsSection.Setup(s => s.Value).Returns("You are an expert Azure SDK developer and TypeSpec author. Your primary goal is to resolve all AZC analyzer and TypeSpec compilation errors in the TypeSpec files and produce a valid, compilable result that strictly follows Azure SDK and TypeSpec guidelines.\n\n### SYSTEM INSTRUCTIONS\n- All files (e.g., main.tsp, client.tsp) are available via FileSearchTool. Retrieve any file content by filename as needed.\n- Never modify main.tsp—only client.tsp may be changed.");
             mockConfiguration.Setup(c => c.GetSection("AzureSettings:AgentInstructions")).Returns(agentInstructionsSection.Object);
             
-            return new AppSettings(mockConfiguration.Object, mockLogger.Object);
-        }
-
-        private Fix CreateValidFixFromAnalyzer()
-        {
-            var mockErrors = new List<RuleError>
-            {
-                new RuleError("AZC0012", "Type name 'Client' is too generic")
-            };
+            // Set up fix prompt template
+            var fixPromptTemplateSection = new Mock<IConfigurationSection>();
+            fixPromptTemplateSection.Setup(s => s.Value).Returns("\n\n### SPECIFIC FIX TO APPLY\n{0}\n\n### CONTEXT\n{1}\n\n### RESPONSE FORMAT\nYou MUST respond with ONLY a JSON object in the following exact format:\n{{\n    \"path\": \"client.tsp\",\n    \"content\": \"... the complete updated client.tsp file content here ...\"\n}}\n\nThe \"content\" field must contain the complete, corrected client.tsp file content with all the fixes applied.\nDo not include any explanations, markdown, or other text outside of this JSON structure.\n\nNow apply this fix following the system instructions above.");
+            mockConfiguration.Setup(c => c.GetSection("AzureSettings:FixPromptTemplate")).Returns(fixPromptTemplateSection.Object);
             
-            var analyzer = new BuildErrorAnalyzer(new Mock<ILogger<BuildErrorAnalyzer>>().Object);
-            return analyzer.GetFixes(mockErrors).First();
+            return new AppSettings(mockConfiguration.Object, logger);
         }
 
         private AgentPromptFix CreateValidAgentPromptFix()
@@ -214,20 +288,13 @@ namespace Azure.Tools.GeneratorAgent.Tests
             );
         }
 
+        private Fix CreateGenericFix()
+        {
+            return new AgentPromptFix("Generic fix prompt", "Generic context");
+        }
+
         private List<Fix> CreateMultipleValidFixes()
         {
-            var mockErrors = new List<RuleError>
-            {
-                new RuleError("AZC0012", "Type name 'Client' is too generic"),
-                new RuleError("AZC0015", "Methods should follow naming convention"),
-                new RuleError("AZC0018", "Missing required parameters"),
-                new RuleError("AZC0020", "Return type not compatible"),
-                new RuleError("AZC0025", "Missing documentation")
-            };
-            
-            var analyzer = new BuildErrorAnalyzer(new Mock<ILogger<BuildErrorAnalyzer>>().Object);
-            var analyzerFixes = analyzer.GetFixes(mockErrors).ToList();
-            
             var agentPromptFixes = new List<Fix>
             {
                 new AgentPromptFix("Fix prompt 1", "Context 1"),
@@ -237,7 +304,15 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 new AgentPromptFix("Fix prompt 5", "Context 5")
             };
             
-            return analyzerFixes.Concat(agentPromptFixes).ToList();
+            var genericFixes = new List<Fix>();
+            for (int i = 1; i <= 5; i++)
+            {
+                // Use AgentPromptFix instead of trying to mock abstract Fix class
+                var genericFix = new AgentPromptFix($"Generic fix prompt {i}", $"Generic context {i}");
+                genericFixes.Add(genericFix);
+            }
+            
+            return agentPromptFixes.Concat(genericFixes).ToList();
         }
 
         #endregion

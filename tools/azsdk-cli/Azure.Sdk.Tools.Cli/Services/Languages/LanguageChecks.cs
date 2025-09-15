@@ -41,6 +41,14 @@ public interface ILanguageChecks
     Task<CLICheckResponse> CheckSpellingAsync(string packagePath, CancellationToken ct = default);
 
     /// <summary>
+    /// Updates code snippets in the specific package.
+    /// </summary>
+    /// <param name="packagePath">Path to the package directory</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Result of the snippet update operation</returns>
+    Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, CancellationToken ct = default);
+
+    /// <summary>
     /// Gets the SDK package path for the given repository and package path.
     /// </summary>
     /// <param name="repo">Repository root path</param>
@@ -121,6 +129,23 @@ public class LanguageChecks : ILanguageChecks
     public virtual async Task<CLICheckResponse> CheckSpellingAsync(string packagePath, CancellationToken ct)
     {
         return await CheckSpellingCommonAsync(packagePath, ct);
+    }
+
+    public virtual async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, CancellationToken ct = default)
+    {
+        var languageSpecificCheck = await _languageSpecificCheckResolver.GetLanguageCheckAsync(packagePath);
+
+        if (languageSpecificCheck == null)
+        {
+            _logger.LogError("No language-specific check handler found for package at {PackagePath}. Supported languages may not include this package type.", packagePath);
+            return new CLICheckResponse(
+                exitCode: 1,
+                checkStatusDetails: $"No language-specific check handler found for package at {packagePath}. Supported languages may not include this package type.",
+                error: "Unsupported package type"
+            );
+        }
+
+        return await languageSpecificCheck.UpdateSnippetsAsync(packagePath, ct);
     }
 
     /// <summary>

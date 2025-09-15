@@ -20,7 +20,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         IGitHelper gitHelper,
         ITypeSpecHelper typespecHelper,
         IOutputHelper output,
-        ILogger<SpecWorkflowTool> logger) : MCPTool
+        ILogger<SpecWorkflowTool> logger,
+        IInputSanitizer inputSanitizer) : MCPTool
     {
         private static readonly string PUBLIC_SPECS_REPO = "azure-rest-api-specs";
         private static readonly string REPO_OWNER = "Azure";
@@ -232,6 +233,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 {
                     Status = "Success"
                 };
+                language = inputSanitizer.SanitizeName(language);
                 logger.LogInformation($"Generating SDK for TypeSpec project: {typespecProjectRoot}, API Version: {apiVersion}, SDK Release Type: {sdkReleaseType}, Language: {language}, Pull Request Number: {pullRequestNumber}, Work Item ID: {workItemId}");
                 // Is language supported for SDK generation
                 if (!DevOpsService.IsSDKGenerationSupported(language))

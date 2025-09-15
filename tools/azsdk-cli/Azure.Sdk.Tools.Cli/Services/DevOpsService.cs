@@ -554,7 +554,8 @@ namespace Azure.Sdk.Tools.Cli.Services
                  { "ConfigPath", $"{typespecProjectRoot}/tspconfig.yaml" },
                  { "ApiVersion", apiVersion },
                  { "SdkReleaseType", sdkReleaseType },
-                 { "CreatePullRequest", "true" }
+                 { "CreatePullRequest", "true" },
+                 { "ReleasePlanWorkItemId", $"{workItemId}"}
             };
             var build = await RunPipelineAsync(pipelineDefinitionId, templateParams, branchRef);
             var pipelineRunUrl = GetPipelineUrl(build.Id);

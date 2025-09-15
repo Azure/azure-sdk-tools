@@ -59,18 +59,22 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         [McpServerTool(Name = "azsdk_get_release_plan_for_spec_pr"), Description("Get release plan for API spec pull request. This tool should be used only if work item Id is unknown.")]
         public async Task<string> GetReleasePlanForPullRequest(string pullRequestLink)
         {
+            var response = new GenericResponse();
+
             try
             {
-                List<string> releasePlanList = [];
-                var releasePlan = await devOpsService.GetReleasePlanAsync(pullRequestLink);
-                var _out = releasePlan == null ? "Failed to get release plan details." :
-                    $"Release Plan: {JsonSerializer.Serialize(releasePlan)}";
-                return output.Format(_out);
+                ValidatePullRequestUrl(pullRequestLink);
+                var releasePlan = await devOpsService.GetReleasePlanAsync(pullRequestLink) ?? throw new Exception("No release plan associated with pull request link");
+                response.Status = "Success";
+                response.Details.Add($"Release Plan: {JsonSerializer.Serialize(releasePlan)}");
+                return output.Format(response);
             }
             catch (Exception ex)
             {
                 logger.LogError("Failed to get release plan details: {exception}", ex.Message);
-                return output.Format($"Failed to get release plan details: {ex.Message}");
+                response.Status = "Failed";
+                response.Details.Add($"Failed to get release plan details: {ex.Message}");
+                return output.Format(response);
             }
         }
 
@@ -152,9 +156,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        private async Task ValidateCreateReleasePlanInputAsync(string typeSpecProjectPath, string serviceTreeId, string productTreeId, string specPullRequestUrl, string sdkReleaseType, string specApiVersion)
+        private void ValidatePullRequestUrl(string specPullRequestUrl)
         {
-            // Check for existing release plan for the given pull request URL.
             if (string.IsNullOrEmpty(specPullRequestUrl))
             {
                 throw new Exception("API spec pull request URL is required to create a release plan.");
@@ -167,6 +170,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 throw new Exception($"Invalid spec pull request URL '{specPullRequestUrl}' It should be a valid GitHub pull request to azure-rest-api-specs or azure-rest-api-specs-pr repo.");
             }
 
+        }
+
+        private async Task ValidateCreateReleasePlanInputAsync(string typeSpecProjectPath, string serviceTreeId, string productTreeId, string specPullRequestUrl, string sdkReleaseType, string specApiVersion)
+        {
+            ValidatePullRequestUrl(specPullRequestUrl);
+            // Check for existing release plan for the given pull request URL.
             logger.LogInformation("Checking for existing release plan for pull request URL: {specPullRequestUrl}", specPullRequestUrl);
             var existingReleasePlan = await devOpsService.GetReleasePlanAsync(specPullRequestUrl);
             if (existingReleasePlan != null && existingReleasePlan.WorkItemId > 0)
@@ -215,7 +224,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        [McpServerTool(Name = "azsdk_create_release_plan"), Description("Create Release Plan work item.")]
+        [McpServerTool(Name = "azsdk_create_release_plan"), Description("Create Release Plan")]
         public async Task<string> CreateReleasePlan(string typeSpecProjectPath, string targetReleaseMonthYear, string serviceTreeId, string productTreeId, string specApiVersion, string specPullRequestUrl, string sdkReleaseType, string userEmail = "", bool isTestReleasePlan = false)
         {
             try
@@ -272,7 +281,22 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 }
                 else
                 {
-                    return output.Format(workItem);
+                    if (workItem.Id is int workItemId)
+                    {
+                        releasePlan.WorkItemId = workItemId;
+                    }
+
+                    if (workItem.Fields.TryGetValue("Custom.ReleasePlanId", out var value) && value is int releasePlanId)
+                    {
+                        releasePlan.ReleasePlanId = releasePlanId;
+                    }
+
+                    if (workItem.Fields.TryGetValue("Custom.ReleasePlanLink", out value) && value is string releasePlanLink)
+                    {
+                        releasePlan.ReleasePlanLink = releasePlanLink;
+                    }
+
+                    return JsonSerializer.Serialize(releasePlan, new JsonSerializerOptions { WriteIndented = true });
                 }
             }
             catch (Exception ex)
@@ -297,11 +321,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 {
                     return "No SDK information provided to update the release plan.";
                 }
-
                 logger.LogInformation($"Updating SDK details in release plan work item ID: {releasePlanWorkItemId}");
                 logger.LogDebug($"SDK details to update: {sdkDetails}");
                 // Fix for CS8600: Ensure sdkDetails is not null before deserialization
-                List<SDKInfo>? SdkInfos = JsonSerializer.Deserialize<List<SDKInfo>>(sdkDetails);
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+                List<SDKInfo>? SdkInfos = JsonSerializer.Deserialize<List<SDKInfo>>(sdkDetails, options);
                 if (SdkInfos == null)
                 {
                     return "Failed to deserialize SDK details.";

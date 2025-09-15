@@ -6,10 +6,12 @@ using Microsoft.Extensions.Azure;
 using ModelContextProtocol.Server;
 using Azure.AI.OpenAI;
 using Azure.Sdk.Tools.Cli.Commands;
+using Azure.Sdk.Tools.Cli.Extensions;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Tools;
 using Azure.Sdk.Tools.Cli.Services.ClientUpdate;
+using Azure.Sdk.Tools.Cli.Telemetry;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -25,10 +27,10 @@ namespace Azure.Sdk.Tools.Cli.Services
         {
             // Services
             services.AddSingleton<IAzureService, AzureService>();
-            services.AddSingleton<IAzureAgentServiceFactory, AzureAgentServiceFactory>();
             services.AddSingleton<IDevOpsConnection, DevOpsConnection>();
             services.AddSingleton<IDevOpsService, DevOpsService>();
             services.AddSingleton<IGitHubService, GitHubService>();
+            services.AddScoped<IAzureAgentServiceFactory, AzureAgentServiceFactory>();
 
             // Language Check Services (Composition-based)
             services.AddSingleton<ILanguageChecks, LanguageChecks>();
@@ -53,6 +55,11 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IUserHelper, UserHelper>();
             services.AddSingleton<ICodeownersValidatorHelper, CodeownersValidatorHelper>();
             services.AddSingleton<IEnvironmentHelper, EnvironmentHelper>();
+            services.AddSingleton<ISpecGenSdkConfigHelper, SpecGenSdkConfigHelper>();
+            services.AddSingleton<IInputSanitizer, InputSanitizer>();
+            services.AddSingleton<ITspClientHelper, TspClientHelper>();
+            // Add as scoped so we can track/update usage across tools and services per request for logging/telemetry
+            services.AddScoped<TokenUsageHelper>();
 
             // Process Helper Classes
             services.AddSingleton<INpxHelper, NpxHelper>();
@@ -80,6 +87,10 @@ namespace Azure.Sdk.Tools.Cli.Services
                         return new AzureOpenAIClient(new Uri(ep), credential, options);
                     });
             });
+
+            // Telemetry
+            services.AddSingleton<ITelemetryService, TelemetryService>();
+            services.ConfigureOpenTelemetry();
         }
 
         public static void RegisterInstrumentedMcpTools(IServiceCollection services, string[] args)
@@ -98,7 +109,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 {
                     if (toolMethod.GetCustomAttribute<McpServerToolAttribute>() is not null)
                     {
-                        services.AddSingleton((Func<IServiceProvider, McpServerTool>)(services =>
+                        services.AddScoped((Func<IServiceProvider, McpServerTool>)(services =>
                         {
                             var options = new McpServerToolCreateOptions { Services = services, SerializerOptions = serializerOptions };
                             var innerTool = toolMethod.IsStatic
@@ -107,7 +118,8 @@ namespace Azure.Sdk.Tools.Cli.Services
 
                             var loggerFactory = services.GetRequiredService<ILoggerFactory>();
                             var logger = loggerFactory.CreateLogger(toolType);
-                            return new InstrumentedTool(logger, innerTool, toolMethod.Name);
+                            var telemetryService = services.GetRequiredService<ITelemetryService>();
+                            return new InstrumentedTool(telemetryService, logger, innerTool);
                         }));
                     }
                 }

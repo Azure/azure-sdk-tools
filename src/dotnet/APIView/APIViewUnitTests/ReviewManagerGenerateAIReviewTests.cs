@@ -127,10 +127,7 @@ public class ReviewManagerGenerateAIReviewTests
             mocks.CodeFileManager.Object,
             mocks.Configuration.Object,
             mocks.HttpClientFactory.Object,
-            mocks.PollingJobQueueManager.Object,
-            mocks.NotificationManager.Object,
-            mocks.PullRequestsRepository.Object,
-            mocks.Logger.Object
+            mocks.PollingJobQueueManager.Object
         );
         return (reviewManager, mocks);
     }
@@ -175,5 +172,6 @@ public class ReviewManagerGenerateAIReviewTests
         public Mock<ILogger<ReviewManager>> Logger { get; } = new();
 
         public IEnumerable<LanguageService> LanguageServices { get; } = new List<LanguageService>();
+        public Mock<ILogger<ReviewManager>> Logger { get; } = new();
     }
 }

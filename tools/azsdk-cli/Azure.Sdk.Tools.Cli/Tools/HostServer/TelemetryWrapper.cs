@@ -3,15 +3,14 @@
 using System.Diagnostics;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
-using Azure.Sdk.Tools.Cli.Configuration;
 using System.Text.Json;
+using static Azure.Sdk.Tools.Cli.Telemetry.TelemetryConstants;
+using Azure.Sdk.Tools.Cli.Telemetry;
 
 namespace Azure.Sdk.Tools.Cli.Tools;
 
-public class InstrumentedTool(ILogger logger, McpServerTool innerTool, string toolName) : DelegatingMcpServerTool(innerTool)
+public class InstrumentedTool(ITelemetryService telemetryService, ILogger logger, McpServerTool innerTool) : DelegatingMcpServerTool(innerTool)
 {
-    private static readonly ActivitySource source = new(Constants.TOOLS_ACTIVITY_SOURCE);
-
     private readonly JsonSerializerOptions serializerOptions = new()
     {
         WriteIndented = false,
@@ -19,22 +18,28 @@ public class InstrumentedTool(ILogger logger, McpServerTool innerTool, string to
 
     public override async ValueTask<CallToolResult> InvokeAsync(RequestContext<CallToolRequestParams> request, CancellationToken ct = default)
     {
-        using var activity = source.StartActivity("tool.invoke", ActivityKind.Internal);
-        if (activity == null)
+        using var activity = await telemetryService.StartActivity(ActivityName.ToolExecuted, request?.Server?.ClientInfo);
+        Activity.Current = activity;
+        if (request?.Params == null || string.IsNullOrEmpty(request.Params.Name))
         {
-            logger.LogError("Null activity created for tool {ToolName}", toolName);
+            activity?.SetStatus(ActivityStatusCode.Error)?.AddTag(TagName.ErrorDetails, "Cannot call tool with null parameters");
+            logger.LogWarning("Tool request or tool name is null or empty");
+            return await base.InvokeAsync(request, ct);
         }
 
         try
         {
-            activity?.SetTag("name", toolName);
-            var args = JsonSerializer.Serialize(request.Params?.Arguments, serializerOptions);
-            activity?.SetTag("args", args);
+            // Add tool name and arg
+            activity?.AddTag(TagName.ToolName, request.Params.Name);
+            var args = JsonSerializer.Serialize(request.Params.Arguments, serializerOptions);
+            activity?.SetTag(TagName.ToolArgs, args);
 
+            // Invoke the tool
             var result = await base.InvokeAsync(request, ct);
 
+            // Tag response in the activity
             var content = JsonSerializer.Serialize(result.Content);
-            activity?.SetTag("result", content);
+            activity?.SetTag(TagName.ToolResponse, content);
             activity?.SetStatus(ActivityStatusCode.Ok);
 
             return result;

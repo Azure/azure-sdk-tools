@@ -61,6 +61,9 @@ def handle_thread_resolution_request(*, comments: list[str], language: str, pack
 def _parse_action(*, language: str, code: str, package_name: str, comments: list[str]):
     prompty_file = "parse_thread_resolution_action.prompty"
     prompt_path = get_prompt_path(folder="thread_resolution", filename=prompty_file)
+    if not os.path.exists(prompt_path):
+        print(f"Prompt file {prompt_path} does not exist.")
+        return
     inputs = {
         "language": language,
         "code": code,

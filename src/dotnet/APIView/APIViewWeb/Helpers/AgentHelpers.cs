@@ -37,6 +37,7 @@ public class AgentHelpers
                 Downvotes = comment.Downvotes.Count,
                 CreatedBy = comment.CreatedBy,
                 CommentText = comment.CommentText,
+                IsResolved = comment.IsResolved
             }).ToList();
     }
 

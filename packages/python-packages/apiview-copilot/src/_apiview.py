@@ -1,11 +1,11 @@
 import sys
-from datetime import datetime, timezone
+from typing import Optional
 
 import requests
 from azure.cosmos import CosmosClient
 from azure.cosmos.exceptions import CosmosHttpResponseError
 from src._credential import get_credential
-from src._utils import get_language_pretty_name
+from src._utils import get_language_pretty_name, to_epoch_seconds
 
 _APIVIEW_COMMENT_SELECT_FIELDS = [
     "id",
@@ -22,6 +22,13 @@ _APIVIEW_COMMENT_SELECT_FIELDS = [
     "CommentType",
 ]
 APIVIEW_COMMENT_SELECT_FIELDS = [f"c.{field}" for field in _APIVIEW_COMMENT_SELECT_FIELDS]
+
+
+class ActiveReviewMetadata:
+    def __init__(self, review_id: str, name: Optional[str], language: str):
+        self.review_id = review_id
+        self.name = name
+        self.language = get_language_pretty_name(language)
 
 
 def get_apiview_cosmos_client(container_name: str, environment: str = "production"):
@@ -109,112 +116,77 @@ def get_apiview_comments(review_id: str, environment: str = "production") -> dic
     return conversations
 
 
-def get_active_reviews(start_date: str, end_date: str, language: str, environment: str = "production") -> list:
+def get_active_reviews(start_date: str, end_date: str, environment: str = "production") -> list[ActiveReviewMetadata]:
     """
     Lists distinct active APIView review IDs in the specified environment during the specified period.
+    The definition of "active" is any review that has comments created during the time period.
 
     Returns:
-        list[str] - ordered list of unique ReviewId values for comments that match the query window/language.
+        list[str] - list of unique ReviewId values considered "active" during the query window.
+    """
+    metadata: list[ActiveReviewMetadata] = []
+    active_review_ids = get_active_review_ids(start_date, end_date, environment=environment)
+    reviews_container = get_apiview_cosmos_client(container_name="Reviews", environment=environment)
+
+    # Build a parameterized OR query to fetch matching reviews and filter by language.
+    params = []
+    clauses = []
+    for i, rid in enumerate(active_review_ids):
+        param_name = f"@id_{i}"
+        clauses.append(f"c.id = {param_name}")
+        params.append({"name": param_name, "value": rid})
+
+    # Compose query with parameterized OR clauses
+    query = f"SELECT c.id, c.PackageName, c.Language FROM c WHERE ({' OR '.join(clauses)})"
+    results = list(reviews_container.query_items(query=query, parameters=params, enable_cross_partition_query=True))
+
+    for result in results:
+        review_id = result["id"]
+        review_name = result.get("PackageName")
+        language = get_language_pretty_name(result.get("Language", "Unknown"))
+        if language == "Java" and review_name.startswith("com.azure.android:"):
+            # APIView does not distinguish between Java and Android at the review level, but we need to
+            language = "Android"
+        metadata.append(ActiveReviewMetadata(review_id=review_id, name=review_name, language=language))
+    return metadata
+
+
+def get_comments_in_date_range(start_date: str, end_date: str, environment: str = "production") -> list:
+    """
+    Retrieves all comments created within the specified date range in the given environment.
+    """
+    comments_client = get_apiview_cosmos_client(container_name="Comments", environment=environment)
+    start_epoch = to_epoch_seconds(start_date)
+    end_epoch = to_epoch_seconds(end_date, end_of_day=True)
+    result = comments_client.query_items(
+        query=f"SELECT {', '.join(APIVIEW_COMMENT_SELECT_FIELDS)} FROM c WHERE c._ts >= @start_date AND c._ts <= @end_date",
+        parameters=[
+            {"name": "@start_date", "value": start_epoch},
+            {"name": "@end_date", "value": end_epoch},
+        ],
+        enable_cross_partition_query=True,
+    )
+    return list(result)
+
+
+def get_active_review_ids(start_date: str, end_date: str, environment: str = "production") -> list:
+    """
+    Lists distinct active APIView review IDs in the specified environment during the specified period.
+    The definition of "active" is any review that has comments created during the time period.
+
+    Returns:
+        list[str] - list of unique ReviewId values considered "active" during the query window.
     """
     try:
-        container = get_apiview_cosmos_client(container_name="Comments", environment=environment)
-        start_epoch = _to_epoch_seconds(start_date)
-        end_epoch = _to_epoch_seconds(end_date, end_of_day=True)
-        result = container.query_items(
-            query=f"SELECT {', '.join(APIVIEW_COMMENT_SELECT_FIELDS)} FROM c WHERE c._ts >= @start_date AND c._ts <= @end_date",
-            parameters=[
-                {"name": "@start_date", "value": start_epoch},
-                {"name": "@end_date", "value": end_epoch},
-            ],
-            enable_cross_partition_query=True,
-        )
-        comments = list(result)
+        comments = get_comments_in_date_range(start_date, end_date, environment=environment)
     except Exception as e:
         print(f"Error retrieving active reviews: {e}")
         return []
 
-    # Extract distinct ReviewId values preserving first-seen order
-    review_ids: list = []
-    seen: set = set()
+    review_ids = set()
     for comment in comments:
         review_id = comment.get("ReviewId")
-        if not review_id:
-            continue
-        if review_id not in seen:
-            seen.add(review_id)
-            review_ids.append(review_id)
+        if review_id:
+            review_ids.add(review_id)
 
-    if not review_ids:
-        return []
-
-    # Now extract the review names for those IDs from the "Reviews" container
-    try:
-        reviews_container = get_apiview_cosmos_client(container_name="Reviews", environment=environment)
-
-        # Build a parameterized OR query to fetch matching reviews and filter by language.
-        params = []
-        clauses = []
-        for i, rid in enumerate(review_ids):
-            param_name = f"@id_{i}"
-            clauses.append(f"c.id = {param_name}")
-            params.append({"name": param_name, "value": rid})
-
-        pretty_language = get_language_pretty_name(language)
-        params.append({"name": "@language", "value": pretty_language})
-
-        # Compose query with parameterized OR clauses and language filter
-        query = f"SELECT c.id, c.PackageName FROM c WHERE ({' OR '.join(clauses)}) AND c.Language = @language"
-
-        # Execute and materialize results; enable cross-partition in case Reviews is partitioned
-        results = list(reviews_container.query_items(query=query, parameters=params, enable_cross_partition_query=True))
-
-        # Build id_to_name map (supporting missing PackageName gracefully)
-        id_to_name = {r.get("id"): r.get("PackageName") for r in results}
-    except Exception as e:
-        print(f"Error retrieving review names from Reviews container: {e}")
-        # on error, fall back to returning ids with None names
-        id_to_name = {}
-
-    # Build ordered list of dicts (preserving original review_ids order)
-    return [{"ReviewId": rid, "Name": id_to_name.get(rid)} for rid in review_ids]
-
-
-def _to_epoch_seconds(date_str: str, *, end_of_day: bool = False) -> int:
-    """
-    Convert a date string to epoch seconds (UTC).
-
-    Accepted inputs:
-      - "YYYY-MM-DD"                -> treated as midnight UTC (or end of day if end_of_day=True)
-      - full ISO-8601 datetime e.g. "2025-08-01T12:34:56Z" or "2025-08-01T12:34:56+00:00"
-
-    Returns integer seconds since the epoch (UTC).
-
-    Raises:
-      ValueError if the input format cannot be parsed.
-    """
-    # Fast path for simple YYYY-MM-DD
-    if len(date_str) == 10 and date_str.count("-") == 2:
-        try:
-            year, month, day = map(int, date_str.split("-"))
-        except Exception as exc:
-            raise ValueError(f"Invalid date: {date_str}") from exc
-        if end_of_day:
-            dt = datetime(year, month, day, 23, 59, 59, 999999, tzinfo=timezone.utc)
-        else:
-            dt = datetime(year, month, day, 0, 0, 0, 0, tzinfo=timezone.utc)
-        return int(dt.timestamp())
-
-    # Otherwise try ISO parsing
-    try:
-        # datetime.fromisoformat handles offsets like +00:00 but not trailing 'Z' in some versions.
-        ds = date_str
-        if ds.endswith("Z"):
-            ds = ds[:-1] + "+00:00"
-        dt = datetime.fromisoformat(ds)
-        if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
-        else:
-            dt = dt.astimezone(timezone.utc)
-        return int(dt.timestamp())
-    except Exception as exc:
-        raise ValueError(f"Unrecognized date format: {date_str}") from exc
+    return list(review_ids)

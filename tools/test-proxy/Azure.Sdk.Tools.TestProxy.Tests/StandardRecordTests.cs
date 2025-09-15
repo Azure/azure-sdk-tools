@@ -3,6 +3,7 @@ using Azure.Sdk.Tools.TestProxy.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
+using System;
 using System.IO;
 using System.Threading.Tasks;
 using Xunit;
@@ -10,7 +11,7 @@ using Xunit;
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {
     [Collection("AccessesProxyConfig")]
-    public class StandardRecordTests
+    public class StandardRecordTests : IDisposable
     {
         public StandardRecordTests()
         {
@@ -18,7 +19,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Startup.ProxyConfiguration.RecordingId = null;
         }
 
-        internal static void Dispose()
+        public void Dispose()
         {
             Startup.ProxyConfiguration.Mode = UniversalRecordingMode.Azure;
             Startup.ProxyConfiguration.RecordingId = null;

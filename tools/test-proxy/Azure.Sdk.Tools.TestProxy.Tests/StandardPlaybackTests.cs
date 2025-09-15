@@ -15,7 +15,7 @@ using Xunit;
 namespace Azure.Sdk.Tools.TestProxy.Tests
 {
     [Collection("AccessesProxyConfig")]
-    public class StandardPlaybackTests
+    public class StandardPlaybackTests : IDisposable
     {
         public StandardPlaybackTests()
         {
@@ -23,7 +23,7 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Startup.ProxyConfiguration.RecordingId = null;
         }
 
-        internal static void Dispose()
+        public void Dispose()
         {
             Startup.ProxyConfiguration.Mode = UniversalRecordingMode.Azure;
             Startup.ProxyConfiguration.RecordingId = null;

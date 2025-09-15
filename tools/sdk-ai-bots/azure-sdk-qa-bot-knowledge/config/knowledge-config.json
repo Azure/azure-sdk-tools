@@ -123,10 +123,9 @@
     },
     {
       "repository": {
-        "url": "https://dev.azure.com/azure-sdk/internal/_git/azure-sdk-docs-eng.ms",
+        "url": "git@ssh.dev.azure.com:v3/azure-sdk/internal/azure-sdk-docs-eng.ms",
         "branch": "main",
-        "authType": "token",
-        "tokenEnvVar": "AZURE_SDK_ENG_HUB_TOKEN"
+        "authType": "public"
       },
       "paths": [
         {

@@ -14,8 +14,12 @@ namespace Azure.Sdk.Tools.Cli.Evaluations
 {
     public class Program
     {
-        private const string AzureOpenAIEndpoint = "https://devex-evals.openai.azure.com/";
-        private const string AzureOpenAIModelDeploymentName = "gpt-4o";
+        // TODO: Move these constants to environment variables.
+        private const string _azureOpenAIEndpoint = "https://devex-evals.openai.azure.com/";
+        private const string _azureOpenAIModelDeploymentName = "gpt-4o";
+        private const string _localMcpPowershellScriptPath = "..\\..\\..\\..\\..\\eng\\common\\mcp\\azure-sdk-mcp.ps1";
+        private const string _jsonPath = "..\\..\\..\\..\\..\\tools\\azsdk-cli\\Azure.Sdk.Tools.Cli.Evaluations\\example.json";
+
         static async Task Main(string[] args)
         {
             var builder = Host.CreateApplicationBuilder();
@@ -24,9 +28,14 @@ namespace Azure.Sdk.Tools.Cli.Evaluations
             var credential = new VisualStudioCredential();
 
             builder.Services.AddChatClient(sp =>
-                new AzureOpenAIClient(new Uri(AzureOpenAIEndpoint), credential)
-                    .GetChatClient(AzureOpenAIModelDeploymentName)
-                    .AsIChatClient()
+            {
+                var azureClient = new AzureOpenAIClient(new Uri(_azureOpenAIEndpoint), credential)
+                    .GetChatClient(_azureOpenAIModelDeploymentName)
+                    .AsIChatClient();
+                return new ChatClientBuilder(azureClient)
+                    .UseFunctionInvocation() // Need to setup the Chat Client Builder so that it can support function invocation for tool calls.
+                    .Build();
+            }
             // TODO: Enable distributed cache
             )/*.UseDistributedCache()*/;
 
@@ -35,7 +44,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations
                     new()
                     {
                         Command = "pwsh",
-                        Arguments = ["C:\\Users\\juanospina\\source\\repos\\azure-sdk-tools\\eng\\common\\mcp\\azure-sdk-mcp.ps1", "-Run"]
+                        Arguments = [_localMcpPowershellScriptPath, "-Run"]
                     }
                 )
             );
@@ -50,8 +59,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations
             // Get the scenario service and run it
             var scenario = host.Services.GetRequiredService<Scenario>();
 
-            var jsonPath = "C:\\Users\\juanospina\\source\\repos\\azure-sdk-tools\\tools\\ai-evals\\azsdk-mcp-evals\\example.json";
-            await scenario.PlayAsync(jsonPath);
+            await scenario.PlayAsync(_jsonPath);
         }
     }
 }

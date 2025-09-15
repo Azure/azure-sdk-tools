@@ -21,7 +21,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
             var chatOptions =
                 new ChatOptions
                 {
-                    ResponseFormat = ChatResponseFormat.Text,
+                    AllowMultipleToolCalls = true,
                     Tools = [.. tools]
                 };
 

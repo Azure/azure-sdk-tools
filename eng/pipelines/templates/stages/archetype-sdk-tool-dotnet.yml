@@ -211,6 +211,7 @@ extends:
                       Write-Host "GET nuget OK: $($r.StatusCode)"
                     } catch { Write-Host "Invoke-WebRequest failed: $($_.Exception.Message)" }
                   displayName: Diagnose proxy/nuget environment
+                  condition: eq( variables['Agent.OS'], 'Windows_NT' )
 
                 - script: 'dotnet test /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) $(Warn) --logger trx'
                   displayName: 'Test'

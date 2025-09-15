@@ -3,7 +3,8 @@ import json
 import os
 import pathlib
 import sys
-from typing import Any, Set, Tuple
+from abc import ABC, abstractmethod
+from typing import Any, Dict, Set, Tuple
 
 import prompty
 import prompty.azure_beta
@@ -16,7 +17,40 @@ from src._settings import SettingsManager
 from src._utils import get_prompt_path
 
 
-class CustomAPIViewEvaluator:
+class BaseEvaluator(ABC):
+    """Base class for custom evaluators in the evals framework.
+    
+    This abstract base class defines the minimal interface that all custom evaluators
+    must implement to be compatible with the evals runner framework.
+    """
+    
+    @abstractmethod
+    def __call__(self, **kwargs) -> Dict[str, Any]:
+        """Evaluate the given inputs and return evaluation metrics.
+        
+        Args:
+            **kwargs: Arbitrary keyword arguments containing evaluation inputs.
+                     The specific arguments depend on the evaluator implementation.
+        
+        Returns:
+            Dict[str, Any]: A dictionary containing evaluation metrics and results.
+                           The structure depends on the evaluator implementation.
+        """
+        pass
+    
+    @property
+    @abstractmethod
+    def evaluator_config(self) -> Dict[str, Any]:
+        """Return the evaluator configuration for the Azure AI evaluation framework.
+        
+        Returns:
+            Dict[str, Any]: Configuration dictionary containing column mappings
+                           and other evaluator-specific settings.
+        """
+        pass
+
+
+class CustomAPIViewEvaluator(BaseEvaluator):
     """Evaluator for comparing expected and actual APIView comments."""
 
     def __init__(self):
@@ -35,6 +69,20 @@ class CustomAPIViewEvaluator:
             "similarity_weight": 0.1,  # Similarity between expected and actual
             "false_positive_penalty": 0.3,  # Penalty for false positives
             "fuzzy_match_bonus": 0.2,  # Bonus for fuzzy match (right rule, wrong line)
+        }
+
+    @property
+    def evaluator_config(self) -> Dict[str, Any]:
+        """Return the evaluator configuration for the Azure AI evaluation framework."""
+        return {
+            "column_mapping": {
+                "response": "${data.response}",
+                "query": "${data.query}",
+                "language": "${data.language}",
+                "actual": "${target.actual}",
+                "testcase": "${data.testcase}",
+                "context": "${data.context}",
+            },
         }
 
     def _calculate_overall_score(self, review_eval: dict[str, Any]) -> float:

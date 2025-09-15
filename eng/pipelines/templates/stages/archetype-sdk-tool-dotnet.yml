@@ -182,6 +182,13 @@ extends:
                     sbomEnabled: false
 
               steps:
+                - pwsh: |
+                    nslookup api.nuget.org
+                    try { curl.exe -sS -D - https://api.nuget.org/v3/index.json | more } catch { Write-Host $_.Exception.Message }
+                    # Test-NetConnection would be nice but isn't always available on Server Core
+                  displayName: Extra reachability checks BEFORE installing dotnet or any other changes
+                  condition: eq( variables['Agent.OS'], 'Windows_NT' )
+
                 - template: /eng/pipelines/templates/steps/install-dotnet.yml
 
                 - ${{ parameters.TestPreSteps }}

@@ -123,7 +123,7 @@
     },
     {
       "repository": {
-        "url": "git@ssh.dev.azure.com:v3/azure-sdk/internal/azure-sdk-docs-eng.ms",
+        "url": "https://azure-sdk@dev.azure.com/azure-sdk/internal/_git/azure-sdk-docs-eng.ms",
         "branch": "main",
         "authType": "public"
       },

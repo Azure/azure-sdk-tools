@@ -8,7 +8,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from azure.ai.evaluation import evaluate
 from azure.identity import AzurePipelinesCredential
-from evals._custom import CustomAPIViewEvaluator
+from evals._custom import EVALUATORS
 from src._apiview_reviewer import ApiViewReview
 from src._settings import SettingsManager
 from tabulate import tabulate
@@ -27,11 +27,15 @@ def _review_apiview(query: str, language: str):
 class EvalRunner:
     """Class to run evals for APIView copilot."""
 
-    def __init__(self, *, language: str, test_path: str, num_runs: int = DEFAULT_NUM_RUNS):
+    def __init__(self, *, language: str, test_path: str, evaluator_type: str = "apiview", num_runs: int = DEFAULT_NUM_RUNS):
         self.language = language
         self.test_path = test_path
+        self.evaluator_type = evaluator_type
         self.num_runs = num_runs
         self.settings = SettingsManager()
+
+        if evaluator_type not in EVALUATORS:
+            raise ValueError(f"Unknown evaluator type: {evaluator_type}. Available: {list(EVALUATORS.keys())}")
 
         self._tests_directory = pathlib.Path(__file__).parent / "tests" / self.language
         self._test_file = pathlib.Path(test_path).name
@@ -45,7 +49,8 @@ class EvalRunner:
 
     def run(self):
         """Run the evaluation."""
-        custom_eval = CustomAPIViewEvaluator()
+        evaluator_class = EVALUATORS[self.evaluator_type]
+        custom_eval = evaluator_class()
         guideline_ids = set()
 
         all_results = {}
@@ -84,18 +89,9 @@ class EvalRunner:
                     evaluators={
                         "metrics": custom_eval,
                     },
-                    # FIXME: Evaluator config should be a property of the custom_eval class
+                    # Use the evaluator's own configuration
                     evaluator_config={
-                        "metrics": {
-                            "column_mapping": {
-                                "response": "${data.response}",
-                                "query": "${data.query}",
-                                "language": "${data.language}",
-                                "actual": "${target.actual}",
-                                "testcase": "${data.testcase}",
-                                "context": "${data.context}",
-                            },
-                        },
+                        "metrics": custom_eval.evaluator_config,
                     },
                     target=_review_apiview,
                     # FIXME: Should this be True? Probably?

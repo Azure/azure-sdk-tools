@@ -249,3 +249,9 @@ class CustomAPIViewEvaluator(BaseEvaluator):
         }
         review_eval["score"] = self._calculate_overall_score(review_eval)
         return review_eval
+
+
+# Registry of available evaluators
+EVALUATORS = {
+    "apiview": CustomAPIViewEvaluator,
+}

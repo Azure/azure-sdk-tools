@@ -31,9 +31,19 @@ extends:
           image: $(LINUXVMIMAGE)
           os: linux
         steps:
-        - checkout: self
-          fetchDepth: 1
-          
+        - task: AzureCLI@2
+          inputs:
+            azureSubscription: 'azuresdkqabot'
+            addSpnToEnvironment: true
+            scriptType: bash
+            scriptLocation: inlineScript
+            inlineScript: |
+              echo "##vso[task.setvariable variable=AZURE_CLIENT_ID]$servicePrincipalId"
+              echo "##vso[task.setvariable variable=AZURE_TENANT_ID]$tenantId"
+              echo "##vso[task.setvariable variable=AZURE_SUBSCRIPTION_ID]$(az account show --query id -o tsv)"
+              echo "$idToken" > "$(Agent.BuildDirectory)/id_token"
+              echo "##vso[task.setvariable variable=AZURE_FEDERATED_TOKEN_FILE]$(Agent.BuildDirectory)/id_token"
+
         - task: NodeTool@0
           displayName: 'Setup Node.js'
           inputs:
@@ -56,6 +66,7 @@ extends:
           env:
             # Azure App Configuration
             AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
+            AZURE_SDK_ENG_HUB_TOKEN: $(azuresdk-github-pat)
 
             # Set working directory for temp files
             TMPDIR: $(Agent.TempDirectory)

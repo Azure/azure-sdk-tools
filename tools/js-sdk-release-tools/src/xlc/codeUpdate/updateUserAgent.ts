@@ -8,7 +8,15 @@ import * as path from "path";
 
 export async function updateUserAgent(packageFolderPath: string, packageVersion: string) {
     const packageJsonData: any = JSON.parse(fs.readFileSync(path.join(packageFolderPath, 'package.json'), 'utf8'));
-    const packageName = packageJsonData.name.replace("@azure/", "");
+let packageName: string;
+    
+    if (packageJsonData.name.startsWith('@azure-rest/')) {
+        packageName = packageJsonData.name.replace('@azure-rest/', '') + '-rest';
+    } else if (packageJsonData.name.startsWith('@azure/')) {
+        packageName = packageJsonData.name.replace('@azure/', '');
+    } else {
+        packageName = packageJsonData.name;
+    }
     const sdkType = getSDKType(packageFolderPath);
     let files: string[];
     switch (sdkType) {

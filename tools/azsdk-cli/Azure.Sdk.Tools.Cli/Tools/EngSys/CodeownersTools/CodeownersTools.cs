@@ -9,8 +9,8 @@ using Octokit;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Contract;
-using Azure.Sdk.Tools.CodeownersUtils.Parsing;
 using Azure.Sdk.Tools.CodeownersUtils.Editing;
+using Azure.Sdk.Tools.CodeownersUtils.Parsing;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Commands;
@@ -47,12 +47,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
             IGitHubService githubService,
             IOutputHelper output,
             ILogger<CodeownersTools> logger,
+            ILoggerFactory? loggerFactory,
             ICodeownersValidatorHelper codeownersValidator) : base()
         {
             this.githubService = githubService;
             this.output = output;
             this.logger = logger;
             this.codeownersValidator = codeownersValidator;
+
+            CodeownersUtils.Utils.Log.Configure(loggerFactory);
 
             CommandHierarchy =
             [

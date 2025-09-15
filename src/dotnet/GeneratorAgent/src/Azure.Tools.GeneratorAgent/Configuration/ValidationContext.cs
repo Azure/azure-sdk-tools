@@ -8,6 +8,18 @@ namespace Azure.Tools.GeneratorAgent.Configuration
         public string ValidatedTypeSpecDir { get; private set; }
         public string ValidatedCommitId { get; private set; }
         public string ValidatedSdkDir { get; private set; }
+        
+        /// <summary>
+        /// The current TypeSpec directory to use for compilation.
+        /// This is used when GitHub files are downloaded to a temp directory.
+        /// </summary>
+        public string? CurrentTypeSpecDirForCompilation { get; set; }
+
+        /// <summary>
+        /// Gets the current TypeSpec directory that should be used for compilation.
+        /// Returns the temp directory if set (GitHub case), otherwise the original validated directory.
+        /// </summary>
+        public string CurrentTypeSpecDir => CurrentTypeSpecDirForCompilation ?? ValidatedTypeSpecDir;
 
         private ValidationContext(string typeSpecPath, string commitId, string outputPath)
         {
@@ -20,6 +32,11 @@ namespace Azure.Tools.GeneratorAgent.Configuration
         {
             return new ValidationContext(validatedTypeSpecPath, validatedCommitId, validatedOutputPath);
         }
+
+        /// <summary>
+        /// Checks if this is a GitHub-based workflow (has commit ID).
+        /// </summary>
+        public bool IsGitHubWorkflow => !string.IsNullOrWhiteSpace(ValidatedCommitId);
 
         public static Result<ValidationContext> TryValidateAndCreate(
             string? typespecPath, 

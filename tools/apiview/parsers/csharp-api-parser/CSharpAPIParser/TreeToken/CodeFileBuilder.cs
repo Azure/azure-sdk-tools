@@ -68,7 +68,7 @@ namespace CSharpAPIParser.TreeToken
         }
 
         public CodeFile Build(IAssemblySymbol assemblySymbol, bool runAnalysis, List<DependencyInfo>? dependencies)
-        {  
+        {
             _assembly = assemblySymbol;
             var analyzer = new Analyzer();
 
@@ -224,7 +224,7 @@ namespace CSharpAPIParser.TreeToken
                 IsContextEndLine = true
             });
             //Add an empty line in the review after current name space.
-            reviewLines.Add(new ReviewLine() { IsHidden = isHidden, RelatedToLine = namespaceLine.LineId});
+            reviewLines.Add(new ReviewLine() { IsHidden = isHidden, RelatedToLine = namespaceLine.LineId });
         }
 
         private void BuildNamespaceName(ReviewLine namespaceLine, INamespaceSymbol namespaceSymbol)
@@ -421,14 +421,15 @@ namespace CSharpAPIParser.TreeToken
         private void BuildMember(List<ReviewLine> reviewLines, ISymbol member, bool inHiddenScope)
         {
             bool isHidden = IsHiddenFromIntellisense(member) || inHiddenScope;
+            string lineId = GetLineId(member);
             var reviewLine = new ReviewLine()
             {
-                LineId = member.GetId(),
+                LineId = lineId,
                 IsHidden = isHidden
             };
 
-            BuildDocumentation(reviewLines, member, isHidden, member.GetId());
-            BuildAttributes(reviewLines, member.GetAttributes(), isHidden, member.GetId());
+            BuildDocumentation(reviewLines, member, isHidden, lineId);
+            BuildAttributes(reviewLines, member.GetAttributes(), isHidden, lineId);
             reviewLines.Add(reviewLine);
             DisplayName(reviewLine, member);
             reviewLine.Tokens.Last().HasSuffixSpace = false;
@@ -469,7 +470,7 @@ namespace CSharpAPIParser.TreeToken
                     {
                         // GetId() is not unique for attribute class. for e.g. attribute class id is something like "System.FlagsAttribute"
                         // So, using a unique id for attribute line
-                        LineId = $"{attribute.AttributeClass.GetId()}.{relatedTo}",
+                        LineId = $"{attribute.AttributeClass.GetId()}({attribute.ConstructorArguments.FirstOrDefault().Value}).{relatedTo}",
                         IsHidden = isHidden
                     };
 
@@ -841,7 +842,7 @@ namespace CSharpAPIParser.TreeToken
 
             protected override void AddBitwiseOr()
             {
-                if(_tokenList.Count > 0)
+                if (_tokenList.Count > 0)
                     _tokenList.Last().HasSuffixSpace = true;
                 _tokenList.Add(ReviewToken.CreatePunctuationToken(SyntaxKind.BarToken));
             }
@@ -857,6 +858,18 @@ namespace CSharpAPIParser.TreeToken
             {
                 AddNonNullConstantValue(type, typedConstantValue);
             }
+        }
+
+        string GetLineId(ISymbol member)
+        {
+            string lineId = member.GetId();
+            var value = (IsExplicitInterfaceImplementation(member), member) switch
+            {
+                (true, IMethodSymbol method) => $"{method.ExplicitInterfaceImplementations.First().ContainingType.GetId()}.{lineId}",
+                (true, IPropertySymbol prop) => $"{prop.ExplicitInterfaceImplementations.First().ContainingType.GetId()}.{lineId}",
+                (_, _) => lineId
+            };
+            return value;
         }
     }
 }

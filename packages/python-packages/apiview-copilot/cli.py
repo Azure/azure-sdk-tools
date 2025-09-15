@@ -17,28 +17,25 @@ import pathlib
 import sys
 import time
 from collections import OrderedDict
-from datetime import datetime
 from typing import Optional
 
 import colorama
-import prompty
-import prompty.azure
 import requests
-from azure.cosmos import CosmosClient
-from azure.cosmos.exceptions import CosmosHttpResponseError
 from colorama import Fore, Style
 from knack import CLI, ArgumentsContext, CLICommandsLoader
 from knack.commands import CommandGroup
 from knack.help_files import helps
+from src._apiview import get_active_reviews as _get_active_reviews
+from src._apiview import get_apiview_comments as _get_apiview_comments
 from src._apiview_reviewer import SUPPORTED_LANGUAGES, ApiViewReview
-from src._credential import get_credential
 from src._database_manager import ContainerNames, get_database_manager
 from src._garbage_collector import GarbageCollector
 from src._mention import handle_mention_request
-from src._models import APIViewComment
+from src._metrics import get_metrics_report
 from src._search_manager import SearchManager
 from src._settings import SettingsManager
-from src._utils import get_language_pretty_name, get_prompt_path
+from src._thread_resolution import handle_thread_resolution_request
+from src._utils import get_language_pretty_name
 from src.agent._agent import get_main_agent, invoke_agent
 
 colorama.init(autoreset=True)
@@ -109,6 +106,13 @@ helps[
     short-summary: Commands for reporting metrics.
 """
 
+helps[
+    "permissions"
+] = """
+    type: group
+    short-summary: Commands for managing permissions.
+"""
+
 # COMMANDS
 
 
@@ -123,11 +127,12 @@ def _local_review(
     """
     Generates a review using the locally installed code.
     """
+    target_path = pathlib.Path(target)
     if base is None:
-        filename = os.path.splitext(os.path.basename(target))[0]
+        filename = target_path.stem
     else:
-        target_name = os.path.splitext(os.path.basename(target))[0]
-        base_name = os.path.splitext(os.path.basename(base))[0]
+        target_name = target_path.stem
+        base_name = pathlib.Path(base).stem
         # find the common prefix
         common_prefix = os.path.commonprefix([target_name, base_name])
         # strip the common prefix from both names
@@ -135,22 +140,22 @@ def _local_review(
         base_name = base_name[len(common_prefix) :]
         filename = f"{common_prefix}_{base_name}_{target_name}"
 
-    with open(target, "r", encoding="utf-8") as f:
+    with target_path.open("r", encoding="utf-8") as f:
         target_apiview = f.read()
     if base:
-        with open(base, "r", encoding="utf-8") as f:
+        with pathlib.Path(base).open("r", encoding="utf-8") as f:
             base_apiview = f.read()
     else:
         base_apiview = None
 
     outline_text = None
     if outline:
-        with open(outline, "r", encoding="utf-8") as f:
+        with pathlib.Path(outline).open("r", encoding="utf-8") as f:
             outline_text = f.read()
 
     comments_obj = None
     if existing_comments:
-        with open(existing_comments, "r", encoding="utf-8") as f:
+        with pathlib.Path(existing_comments).open("r", encoding="utf-8") as f:
             comments_obj = json.load(f)
 
     reviewer = ApiViewReview(
@@ -163,14 +168,24 @@ def _local_review(
     )
     review = reviewer.run()
     reviewer.close()
-    output_path = os.path.join("scratch", "output", language)
-    os.makedirs(output_path, exist_ok=True)
-    output_file = os.path.join(output_path, f"{filename}.json")
+    output_path = pathlib.Path("scratch") / "output" / language
+    output_path.mkdir(parents=True, exist_ok=True)
+    output_file = output_path / f"{filename}.json"
 
-    with open(output_file, "w", encoding="utf-8") as f:
+    with output_file.open("w", encoding="utf-8") as f:
         f.write(review.model_dump_json(indent=4))
 
     print(f"Review written to {output_file}")
+
+
+def run_test_case(language: str, test_file: str, num_runs: int = 3):
+    """
+    Runs one or all eval test cases.
+    """
+    from evals._runner import EvalRunner
+
+    runner = EvalRunner(language=language, test_path=test_file, num_runs=num_runs)
+    runner.run()
 
 
 def create_test_case(
@@ -575,6 +590,53 @@ def handle_agent_mention(comments_path: str, remote: bool = False):
         )
 
 
+def handle_agent_thread_resolution(comments_path: str, remote: bool = False):
+    """
+    Handles requests to update the knowledge base when a conversation is resolved.
+    """
+    # load comments from the comments_path
+    comments = []
+    if os.path.exists(comments_path):
+        with open(comments_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    else:
+        print(f"Comments file {comments_path} does not exist.")
+        return
+    comments = data.get("comments", [])
+    language = data.get("language", None)
+    package_name = data.get("package_name", None)
+    code = data.get("code", None)
+    if language not in SUPPORTED_LANGUAGES:
+        print(f"Unsupported language `{language}`")
+        return
+    pretty_language = get_language_pretty_name(language)
+
+    if remote:
+        settings = SettingsManager()
+        base_url = settings.get("WEBAPP_ENDPOINT")
+        api_endpoint = f"{base_url}/api-review/resolve"
+        try:
+            resp = requests.post(
+                api_endpoint,
+                json={"comments": comments, "language": language, "packageName": package_name, "code": code},
+                timeout=60,
+            )
+            data = resp.json()
+            if resp.status_code == 200:
+                print(f"{BOLD_BLUE}Agent response:{RESET}\n{data.get('response', '')}\n")
+            else:
+                print(f"Error: {resp.status_code} - {data}")
+        except Exception as e:
+            print(f"Error: {e}")
+    else:
+        return handle_thread_resolution_request(
+            comments=comments,
+            language=pretty_language,
+            package_name=package_name,
+            code=code,
+        )
+
+
 def db_get(container_name: str, id: str):
     """Retrieve an item from the database."""
     db = get_database_manager()
@@ -619,313 +681,202 @@ def db_purge(containers: Optional[list[str]] = None, run_indexer: bool = False):
             print(f"Error purging container: {e}")
 
 
-def _get_apiview_cosmos_client(container_name: str, environment: str = "production"):
-    """
-    Returns the Cosmos DB container client for the specified container and environment.
-    """
-    apiview_account_names = {
-        "production": "apiview-cosmos",
-        "staging": "apiviewstaging",
-    }
-    try:
-        cosmos_acc = apiview_account_names.get(environment)
-        cosmos_db = "APIViewV2"
-        if not cosmos_acc:
-            raise ValueError(
-                # pylint: disable=line-too-long
-                f"Unrecognized environment: {environment}. Valid options are: {', '.join(apiview_account_names.keys())}."
-            )
-        cosmos_url = f"https://{cosmos_acc}.documents.azure.com:443/"
-        client = CosmosClient(url=cosmos_url, credential=get_credential())
-        database = client.get_database_client(cosmos_db)
-        container = database.get_container_client(container_name)
-        return container
-    except CosmosHttpResponseError as e:
-        if e.status_code == 403:
-            print(
-                # pylint: disable=line-too-long
-                "Error: You do not have permission to access Cosmos DB.\nTo grant yourself access, run: python scripts\\apiview_permissions.py"
-            )
-        sys.exit(1)
-
-
-_APIVIEW_COMMENT_SELECT_FIELDS = [
-    "id",
-    "CreatedOn",
-    "CreatedBy",
-    "CommentText",
-    "IsResolved",
-    "IsDeleted",
-    "ElementId",
-    "ReviewId",
-    "APIRevisionId",
-    "Upvotes",
-    "Downvotes",
-    "CommentType",
-]
-APIVIEW_COMMENT_SELECT_FIELDS = [f"c.{field}" for field in _APIVIEW_COMMENT_SELECT_FIELDS]
-
-
-def get_apiview_comments(review_id: str, environment: str = "production", use_api: bool = False) -> dict:
+def get_apiview_comments(review_id: str, environment: str = "production") -> dict:
     """
     Retrieves comments for a specific APIView review and returns them grouped by element ID and
     sorted by CreatedOn time. Omits resolved and deleted comments, and removes unnecessary fields.
     """
-    comments = []
-    try:
-        if use_api:
-            if not review_id:
-                raise ValueError("When using the API, `--review-id` must be provided.")
-            apiview_endpoints = {
-                "production": "https://apiview.dev",
-                "staging": "https://apiviewstagingtest.com",
-            }
-            endpoint_root = apiview_endpoints.get(environment)
-            endpoint = f"{endpoint_root}/api/Comments/{review_id}?commentType=APIRevision&isDeleted=false"
-            apiview_scopes = {
-                "production": "api://apiview/.default",
-                "staging": "api://apiviewstaging/.default",
-            }
-            credential = get_credential()
-            scope = apiview_scopes.get(environment)
-            token = credential.get_token(scope)
-            response = requests.get(
-                endpoint,
-                headers={"Content-Type": "application/json", "Authorization": f"Bearer {token.token}"},
-                timeout=30,
-            )
-
-            if response.status_code != 200:
-                print(f"Error retrieving comments: {response.status_code} - {response.text}")
-                return {}
-            try:
-                comments = response.json()
-            except Exception as json_exc:
-                content = response.content.decode("utf-8")
-                if "Please login using your GitHub account" in content:
-                    print("Error: API is still requesting authentication via Github.")
-                    return {}
-                else:
-                    print(f"Error parsing comments JSON: {json_exc}")
-                    return {}
-        else:
-            container = _get_apiview_cosmos_client(container_name="Comments", environment=environment)
-            result = container.query_items(
-                # pylint: disable=line-too-long
-                query=f"SELECT {', '.join(APIVIEW_COMMENT_SELECT_FIELDS)} FROM c WHERE c.ReviewId = @review_id AND c.IsResolved = false AND c.IsDeleted = false",
-                parameters=[{"name": "@review_id", "value": review_id}],
-            )
-            comments = list(result)
-    except Exception as e:
-        print(f"Error retrieving comments for review {review_id}: {e}")
-        return {}
-
-    conversations = {}
-    if comments:
-        for comment in comments:
-            element_id = comment.get("ElementId")
-            if element_id in conversations:
-                conversations[element_id].append(comment)
-            else:
-                conversations[element_id] = [comment]
-    for element_id, comments in conversations.items():
-        # sort comments by created_on time
-        comments.sort(key=lambda x: x.get("CreatedOn", 0))
-    return conversations
+    return _get_apiview_comments(review_id, environment)
 
 
-def _calculate_ai_vs_manual_comment_ratio(comments: list[APIViewComment]) -> float:
+def get_active_reviews(start_date: str, end_date: str, language: str, environment: str = "production") -> list:
     """
-    Calculates the ratio of AI-generated comments to manual comments.
+    Retrieves active APIView reviews in the specified environment during the specified period.
     """
-    ai_count = 0
-    manual_count = 0
-    for comment in comments:
-        if comment.created_by == "azure-sdk":
-            ai_count += 1
-        else:
-            manual_count += 1
-    return ai_count / manual_count if manual_count > 0 else float("inf") if ai_count > 0 else 0.0
+    reviews = _get_active_reviews(start_date, end_date, environment)
+    pretty_language = get_language_pretty_name(language).lower()
 
-
-def _calculate_good_vs_bad_comment_ratio(comments: list[APIViewComment]) -> float:
-    """
-    Calculates the ratio of AI-generated comments with a thumbs-up compared to comments with a thumbs-down.
-    """
-    good_count = 0
-    neutral_count = 0
-    bad_count = 0
-    ai_comments = [c for c in comments if c.created_by == "azure-sdk"]
-    for comment in ai_comments:
-        good_count += len(comment.upvotes)
-        bad_count += len(comment.downvotes)
-        if not comment.upvotes and not comment.downvotes:
-            neutral_count += 1
-    return good_count / bad_count if bad_count > 0 else float("inf") if good_count > 0 else 0.0
-
-
-def _calculate_language_adoption(start_date: str, end_date: str, environment: str = "production") -> dict:
-    """
-    Calculates the adoption rate of AI review comments by language.
-    Looks at distinct ReviewIds that had new revisions created during the time period
-    and calculates what percentage of those ReviewIds have AI comments.
-    Returns a dictionary with languages as keys and adoption percentages as values.
-    """
-    # Get comments container client
-    comments_client = _get_apiview_cosmos_client(container_name="Comments", environment=environment)
-    reviews_client = _get_apiview_cosmos_client(container_name="Reviews", environment=environment)
-
-    iso_start = datetime.strptime(start_date, "%Y-%m-%d").strftime("%Y-%m-%dT00:00:00Z")
-    iso_end = datetime.strptime(end_date, "%Y-%m-%d").strftime("%Y-%m-%dT23:59:59.999999Z")
-
-    # Query all comments in the date range to get active ReviewIds
-    comments_query = """
-    SELECT c.ReviewId, c.CreatedBy FROM c 
-    WHERE c.CreatedOn >= @start_date AND c.CreatedOn <= @end_date
-    """
-
-    raw_comments = list(
-        comments_client.query_items(
-            query=comments_query,
-            parameters=[{"name": "@start_date", "value": iso_start}, {"name": "@end_date", "value": iso_end}],
-            enable_cross_partition_query=True,
-        )
-    )
-
-    # Build set of active ReviewIds from comments
-    active_reviews = set()
-    for comment in raw_comments:
-        review_id = comment.get("ReviewId")
-        if review_id:
-            active_reviews.add(review_id)
-
-    # Find ReviewIds with AI comments
-    ai_reviews = {
-        comment["ReviewId"]
-        for comment in raw_comments
-        if comment.get("CreatedBy") == "azure-sdk" and comment.get("ReviewId")
-    }
-
-    # If no comments, try to get all reviews in the date range
-    if not active_reviews:
-        # Query all reviews in the date range
-        reviews_query = """
-        SELECT r.id, r.Language FROM r WHERE r.CreatedOn >= @start_date AND r.CreatedOn <= @end_date
-        """
-        batch_reviews = list(
-            reviews_client.query_items(
-                query=reviews_query,
-                parameters=[{"name": "@start_date", "value": iso_start}, {"name": "@end_date", "value": iso_end}],
-                enable_cross_partition_query=True,
-            )
-        )
-        review_to_language = {}
-        language_reviews = {}
-        for review in batch_reviews:
-            review_id = review.get("id")
-            language = review.get("Language", "").lower()
-            if language and review_id:
-                review_to_language[review_id] = language
-                if language not in language_reviews:
-                    language_reviews[language] = set()
-                language_reviews[language].add(review_id)
-    else:
-        # Query all reviews for active ReviewIds and get their languages
-        review_to_language = {}
-        language_reviews = {}
-        batch_size = 100
-        review_ids = list(active_reviews)
-        for i in range(0, len(review_ids), batch_size):
-            batch_ids = review_ids[i : i + batch_size]
-            reviews_query = """
-            SELECT r.id, r.Language FROM r WHERE ARRAY_CONTAINS(@review_ids, r.id)
-            """
-            batch_reviews = list(
-                reviews_client.query_items(
-                    query=reviews_query,
-                    parameters=[{"name": "@review_ids", "value": batch_ids}],
-                    enable_cross_partition_query=True,
-                )
-            )
-            for review in batch_reviews:
-                review_id = review.get("id")
-                language = review.get("Language", "").lower()
-                if language and review_id:
-                    review_to_language[review_id] = language
-                    if language not in language_reviews:
-                        language_reviews[language] = set()
-                    language_reviews[language].add(review_id)
-
-    # Calculate adoption rate and counts per language
-    adoption_stats = {}
-    for language, review_ids in language_reviews.items():
-        total_reviews = len(review_ids)
-        reviews_with_ai_comments = sum(1 for review_id in review_ids if review_id in ai_reviews)
-        adoption_rate = reviews_with_ai_comments / total_reviews if total_reviews > 0 else 0.0
-        adoption_stats[language] = {
-            "adoption_rate": f"{adoption_rate:.2f}",
-            "active_reviews": total_reviews,
-            "active_copilot_reviews": reviews_with_ai_comments,
-        }
-
-    return adoption_stats
+    filtered = [r for r in reviews if r.language.lower() == pretty_language]
+    filtered_dicts = []
+    for r in filtered:
+        # since we are filtering by language, we can remove it from the output
+        d = r.__dict__.copy()
+        d.pop("language", None)
+        filtered_dicts.append(d)
+    print(f"Found {len(filtered_dicts)} reviews in {pretty_language} between {start_date} and {end_date}.")
+    return filtered_dicts
 
 
 def report_metrics(start_date: str, end_date: str, environment: str = "production", markdown: bool = False) -> dict:
     """Generate a report of APIView metrics between two dates."""
-    # validate that start_date and end_date are in YYYY-MM-DD format
-    bad_dates = []
-    iso_start = None
-    iso_end = None
-    for date_str, label in zip([start_date, end_date], ["start_date", "end_date"]):
-        try:
-            dt = datetime.strptime(date_str, "%Y-%m-%d")
-            if label == "start_date":
-                # Start of day
-                iso_start = dt.strftime("%Y-%m-%dT00:00:00Z")
-            else:
-                # End of day (max time)
-                iso_end = dt.strftime("%Y-%m-%dT23:59:59.999999Z")
-        except ValueError:
-            bad_dates.append(date_str)
-    if bad_dates:
-        print(f"ValueError: Dates must be in YYYY-MM-DD format. Invalid date(s) found: {', '.join(bad_dates)}")
-        return
+    return get_metrics_report(start_date, end_date, environment, markdown)
 
-    comments_client = _get_apiview_cosmos_client(container_name="Comments", environment=environment)
-    query = f"""
-    SELECT {', '.join(APIVIEW_COMMENT_SELECT_FIELDS)} FROM c
-    WHERE c.CreatedOn >= @start_date AND c.CreatedOn <= @end_date
+
+def grant_permissions(assignee_id: str = None):
     """
-    # retrieve comments created between start_date and end_date (ISO 8601)
-    raw_comments = list(
-        comments_client.query_items(
-            query=query,
-            parameters=[{"name": "@start_date", "value": iso_start}, {"name": "@end_date", "value": iso_end}],
-            enable_cross_partition_query=True,
-        )
+    Grants permissions for running AVC locally.
+    """
+    from src._permissions import (
+        PrincipalType,
+        assign_cosmosdb_roles,
+        assign_keyvault_access,
+        assign_rbac_roles,
+        get_current_user_object_id,
     )
-    comments = [APIViewComment(**d) for d in raw_comments]
 
-    # Calculate language adoption
-    language_adoption = _calculate_language_adoption(start_date, end_date, environment=environment)
+    if not assignee_id:
+        assignee_id = get_current_user_object_id()
 
-    report = {
-        "start_date": start_date,
-        "end_date": end_date,
-        "metrics": {
-            "ai_vs_manual_comment_ratio": _calculate_ai_vs_manual_comment_ratio(comments),
-            "good_vs_bad_comment_ratio": _calculate_good_vs_bad_comment_ratio(comments),
-            "language_adoption": language_adoption,
-        },
-    }
-    if markdown:
-        prompt_path = get_prompt_path(folder="other", filename="summarize_metrics")
-        inputs = {"data": report}
-        summary = prompty.execute(prompt_path, inputs=inputs)
-        print(summary)
-    else:
-        return report
+    if not assignee_id:
+        raise ValueError("Error: Could not determine the current user ID. Provide `--assignee-id` or run `az login`.")
+
+    subscription_id = "a18897a6-7e44-457d-9260-f2854c0aca42"
+
+    # grant permissions for App Configuration Data Reader
+    for rg_name in ["apiview-copilot", "apiview-copilot-staging"]:
+        assign_rbac_roles(
+            roles=["App Configuration Data Reader"],
+            principal_id=assignee_id,
+            principal_type=PrincipalType.USER,
+            subscription_id=subscription_id,
+            rg_name=rg_name,
+        )
+
+        # grant permissions for Search Index Data Reader
+        assign_rbac_roles(
+            roles=["Search Index Data Reader"],
+            principal_id=assignee_id,
+            principal_type=PrincipalType.USER,
+            subscription_id=subscription_id,
+            rg_name=rg_name,
+        )
+
+        # grant CosmosDB permissions
+        cosmos_name = "avc-cosmos" if rg_name == "apiview-copilot" else "avc-cosmos-staging"
+        assign_cosmosdb_roles(
+            principal_id=assignee_id,
+            principal_type=PrincipalType.USER,
+            subscription_id=subscription_id,
+            rg_name=rg_name,
+            role_kind="readOnly",
+            cosmos_account_name=cosmos_name,
+        )
+
+        # grant KeyVault access
+        keyvault_name = "avc-vault" if rg_name == "apiview-copilot" else "avc-vault-staging"
+        assign_keyvault_access(
+            principal_id=assignee_id,
+            subscription_id=subscription_id,
+            rg_name=rg_name,
+            vault_name=keyvault_name,
+            tenant_id="72f988bf-86f1-41af-91ab-2d7cd011db47",
+        )
+
+    rg_name = "azsdk-engsys-ai"
+    # grant permissions for Cognitive Services OpenAI User on the OpenAI resource
+    assign_rbac_roles(
+        roles=["Cognitive Services OpenAI User"],
+        principal_id=assignee_id,
+        principal_type=PrincipalType.USER,
+        subscription_id=subscription_id,
+        rg_name=rg_name,
+        scope=f"/subscriptions/{subscription_id}/resourceGroups/{rg_name}/providers/Microsoft.CognitiveServices/accounts/azsdk-engsys-openai",
+    )
+
+    # grant permissions for Azure AI User on the Foundry resource
+    assign_rbac_roles(
+        roles=["Azure AI User"],
+        principal_id=assignee_id,
+        principal_type=PrincipalType.USER,
+        subscription_id=subscription_id,
+        rg_name=rg_name,
+        scope=f"/subscriptions/{subscription_id}/resourceGroups/{rg_name}/providers/Microsoft.CognitiveServices/accounts/azsdk-engsys-ai",
+    )
+    print("✅ Permissions granted. Please run `az logout` and then `az login` to refresh your access.")
+
+
+def revoke_permissions(assignee_id: str = None):
+    """
+    Revokes permissions for running AVC locally.
+    """
+    from azure.mgmt.resource import ManagementLockClient
+    from src._credential import get_credential
+    from src._permissions import (
+        get_current_user_object_id,
+        revoke_cosmosdb_roles,
+        revoke_keyvault_access,
+        revoke_rbac_roles,
+    )
+
+    if not assignee_id:
+        assignee_id = get_current_user_object_id()
+
+    if not assignee_id:
+        raise ValueError("Error: Could not determine the current user ID. Provide `--assignee-id` or run `az login`.")
+
+    subscription_id = "a18897a6-7e44-457d-9260-f2854c0aca42"
+    credential = get_credential()
+    lock_client = ManagementLockClient(credential, subscription_id)
+
+    # temporarily delete the delete locks
+    for rg_name in ["apiview-copilot", "apiview-copilot-staging", "azsdk-engsys-ai"]:
+        locks = lock_client.management_locks.list_at_resource_group_level(rg_name)
+        for lock in locks:
+            if lock.level == "CanNotDelete":
+                lock_client.management_locks.delete_at_resource_group_level(rg_name, lock.name)
+                print(f"✅ Removed 'CanNotDelete' lock '{lock.name}' from resource group '{rg_name}'...")
+
+    for rg_name in ["apiview-copilot", "apiview-copilot-staging"]:
+        revoke_rbac_roles(
+            roles=[
+                "App Configuration Data Reader",
+                "Search Index Data Reader",
+                "DocumentDB Account Contributor",
+            ],
+            principal_id=assignee_id,
+            subscription_id=subscription_id,
+            rg_name=rg_name,
+        )
+        cosmos_name = "avc-cosmos" if rg_name == "apiview-copilot" else "avc-cosmos-staging"
+        revoke_cosmosdb_roles(
+            principal_id=assignee_id,
+            subscription_id=subscription_id,
+            rg_name=rg_name,
+            cosmos_account_name=cosmos_name,
+        )
+
+        keyvault_name = "avc-vault" if rg_name == "apiview-copilot" else "avc-vault-staging"
+        revoke_keyvault_access(
+            principal_id=assignee_id, subscription_id=subscription_id, rg_name=rg_name, vault_name=keyvault_name
+        )
+
+    rg_name = "azsdk-engsys-ai"
+    revoke_rbac_roles(
+        roles=["Cognitive Services OpenAI User"],
+        principal_id=assignee_id,
+        subscription_id=subscription_id,
+        rg_name=rg_name,
+        scope=f"/subscriptions/{subscription_id}/resourceGroups/{rg_name}/providers/Microsoft.CognitiveServices/accounts/azsdk-engsys-openai",
+    )
+    revoke_rbac_roles(
+        roles=["Azure AI User"],
+        principal_id=assignee_id,
+        subscription_id=subscription_id,
+        rg_name=rg_name,
+        scope=f"/subscriptions/{subscription_id}/resourceGroups/{rg_name}/providers/Microsoft.CognitiveServices/accounts/azsdk-engsys-ai",
+    )
+
+    # recreate the deleted locks
+    for rg_name in ["apiview-copilot", "apiview-copilot-staging", "azsdk-engsys-ai"]:
+        lock_name = f"lock-{rg_name}"
+        lock_client.management_locks.create_or_update_at_resource_group_level(
+            rg_name,
+            lock_name=lock_name,
+            parameters={
+                "level": "CanNotDelete",
+            },
+        )
+        print(f"✅ Re-created 'CanNotDelete' lock for resource group '{rg_name}'...")
 
 
 class CliCommandsLoader(CLICommandsLoader):
@@ -936,6 +887,7 @@ class CliCommandsLoader(CLICommandsLoader):
     def load_command_table(self, args):
         with CommandGroup(self, "apiview", "__main__#{}") as g:
             g.command("get-comments", "get_apiview_comments")
+            g.command("get-active-reviews", "get_active_reviews")
         with CommandGroup(self, "review", "__main__#{}") as g:
             g.command("generate", "generate_review")
             g.command("start-job", "review_job_start")
@@ -944,7 +896,9 @@ class CliCommandsLoader(CLICommandsLoader):
         with CommandGroup(self, "agent", "__main__#{}") as g:
             g.command("mention", "handle_agent_mention")
             g.command("chat", "handle_agent_chat")
+            g.command("resolve-thread", "handle_agent_thread_resolution")
         with CommandGroup(self, "eval", "__main__#{}") as g:
+            g.command("run", "run_test_case")
             g.command("create", "create_test_case")
             g.command("deconstruct", "deconstruct_test_case")
         with CommandGroup(self, "app", "__main__#{}") as g:
@@ -958,6 +912,9 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("purge", "db_purge")
         with CommandGroup(self, "metrics", "__main__#{}") as g:
             g.command("report", "report_metrics")
+        with CommandGroup(self, "permissions", "__main__#{}") as g:
+            g.command("grant", "grant_permissions")
+            g.command("revoke", "revoke_permissions")
         return OrderedDict(self.command_table)
 
     # ARGUMENT REGISTRATION
@@ -975,6 +932,26 @@ class CliCommandsLoader(CLICommandsLoader):
                 "remote",
                 action="store_true",
                 help="Use the remote API review service instead of local processing.",
+            )
+            ac.argument(
+                "start_date",
+                type=str,
+                help="The start date (YYYY-MM-DD).",
+                options_list=["--start-date", "-s"],
+            )
+            ac.argument(
+                "end_date",
+                type=str,
+                help="The end date (YYYY-MM-DD).",
+                options_list=["--end-date", "-e"],
+            )
+            ac.argument(
+                "environment",
+                type=str,
+                help="The APIView environment. Defaults to 'production'.",
+                options_list=["--environment"],
+                default="production",
+                choices=["production", "staging"],
             )
         with ArgumentsContext(self, "review") as ac:
             ac.argument("path", type=str, help="The path to the APIView file")
@@ -1010,13 +987,36 @@ class CliCommandsLoader(CLICommandsLoader):
                 action="store_true",
                 help="Enable debug logging for the review process. Outputs to `scratch/logs/<LANG>` directory.",
             )
+        with ArgumentsContext(self, "eval") as ac:
+            ac.argument(
+                "test_case",
+                type=str,
+                help="The name of the test case.",
+                options_list=["--test-case", "-c"],
+            )
+            ac.argument(
+                "language",
+                type=str,
+                help="The language of the test case.",
+                options_list=["--language", "-l"],
+                choices=SUPPORTED_LANGUAGES,
+            )
+            ac.argument(
+                "test_file",
+                type=str,
+                options_list=["--test-file", "-f"],
+                help="The full path to the JSONL test file.",
+            )
+        with ArgumentsContext(self, "eval run") as ac:
+            ac.argument(
+                "num_runs", type=int, options_list=["--num-runs", "-n"], help="Number of times to run the test case."
+            )
         with ArgumentsContext(self, "eval create") as ac:
-            ac.argument("language", type=str, help="The language for the test case.")
             ac.argument("test_case", type=str, help="The name of the test case")
             ac.argument(
                 "apiview_path",
                 type=str,
-                help="The full path to the txt file containing the APIview text",
+                help="The full path to the txt file containing the APIView text",
             )
             ac.argument(
                 "expected_path",
@@ -1026,6 +1026,7 @@ class CliCommandsLoader(CLICommandsLoader):
             ac.argument(
                 "test_file",
                 type=str,
+                options_list=["--test-file", "-f"],
                 help="The full path to the JSONL test file. Can be an existing test file, or will create a new one.",
             )
             ac.argument(
@@ -1033,10 +1034,6 @@ class CliCommandsLoader(CLICommandsLoader):
                 action="store_true",
                 help="Overwrite the test case if it already exists.",
             )
-        with ArgumentsContext(self, "eval deconstruct") as ac:
-            ac.argument("language", type=str, help="The language for the test case.")
-            ac.argument("test_case", type=str, help="The specific test case to deconstruct.")
-            ac.argument("test_file", type=str, help="The full path to the JSONL test file.")
         with ArgumentsContext(self, "search") as ac:
             ac.argument(
                 "path",
@@ -1127,19 +1124,18 @@ class CliCommandsLoader(CLICommandsLoader):
                 help="The path to the base APIView file for diff summarization.",
                 options_list=["--base", "-b"],
             )
-        with ArgumentsContext(self, "agent mention") as ac:
-            ac.argument(
-                "comments_path",
-                type=str,
-                help="Path to the JSON file containing comments for the agent to process.",
-                options_list=["--comments-path", "-c"],
-            )
         with ArgumentsContext(self, "agent") as ac:
             ac.argument(
                 "thread_id",
                 type=str,
                 help="The thread ID to continue the discussion. If not provided, a new thread will be created.",
                 options_list=["--thread-id", "-t"],
+            )
+            ac.argument(
+                "comments_path",
+                type=str,
+                help="Path to the JSON file containing comments for the agent to process.",
+                options_list=["--comments-path", "-c"],
             )
         with ArgumentsContext(self, "db") as ac:
             ac.argument(
@@ -1185,31 +1181,20 @@ class CliCommandsLoader(CLICommandsLoader):
                 default="production",
                 choices=["production", "staging"],
             )
-            ac.argument(
-                "use_api",
-                action="store_true",
-                help="Use the APIView API to retrieve comments instead of Cosmos DB.",
-            )
         with ArgumentsContext(self, "metrics report") as ac:
-            ac.argument(
-                "start_date",
-                type=str,
-                help="The start date for the metrics report (YYYY-MM-DD).",
-                options_list=["--start-date", "-s"],
-            )
-            ac.argument(
-                "end_date",
-                type=str,
-                help="The end date for the metrics report (YYYY-MM-DD).",
-                options_list=["--end-date", "-e"],
-            )
+            ac.argument("start_date", help="The start date for the metrics report (YYYY-MM-DD).")
+            ac.argument("end_date", help="The end date for the metrics report (YYYY-MM-DD).")
             ac.argument(
                 "environment",
-                type=str,
                 help="The APIView environment from which to calculate the metrics report. Defaults to 'production'.",
-                options_list=["--environment"],
-                default="production",
-                choices=["production", "staging"],
+            )
+        with ArgumentsContext(self, "permissions") as ac:
+            ac.argument(
+                "assignee_id",
+                type=str,
+                help="The user ID of the assignee. If not provided, defaults to the current user.",
+                options_list=["--assignee-id", "-a"],
+                default=None,
             )
         super(CliCommandsLoader, self).load_arguments(command)
 

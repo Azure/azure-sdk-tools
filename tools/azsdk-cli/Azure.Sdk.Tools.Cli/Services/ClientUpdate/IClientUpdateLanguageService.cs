@@ -19,7 +19,6 @@ public interface IClientUpdateLanguageService
     /// </summary>
     string SupportedLanguage { get; }
 
-
     /// <summary>
     /// Produces an API change list by diffing file contents between two generated source trees.
     /// Implementations may perform a structural or textual diff; when <paramref name="oldGenerationPath"/> is null

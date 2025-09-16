@@ -43,26 +43,29 @@ namespace Azure.Tools.GeneratorAgent
 
             HttpClient = httpClient;
             
-            // Log GitHub authentication status
-            bool hasAuthHeader = httpClient.DefaultRequestHeaders.Authorization != null;
-            Logger.LogInformation("GitHub API client initialized. Authentication: {AuthStatus}", 
-                hasAuthHeader ? "Configured" : "Not configured - using rate-limited access");
+            if (Logger.IsEnabled(LogLevel.Debug))
+            {
+                bool hasAuthHeader = httpClient.DefaultRequestHeaders.Authorization != null;
+                Logger.LogDebug("GitHub API client initialized. Authentication: {AuthStatus}", 
+                    hasAuthHeader ? "Configured" : "Not configured - using rate-limited access");
+            }
         }
 
-        public async Task<Dictionary<string, string>> GetTypeSpecFilesAsync(CancellationToken cancellationToken = default)
+        public async Task<Result<Dictionary<string, string>>> GetTypeSpecFilesAsync(CancellationToken cancellationToken = default)
         {
+            // GitHub API endpoint for directory contents
+            string apiUrl = $"https://api.github.com/repos/{AppSettings.AzureSpecRepository}/contents/{TypespecSpecDir}?ref={CommitId}";
+
             try
             {
-                // GitHub API endpoint for directory contents
-                string apiUrl = $"https://api.github.com/repos/{AppSettings.AzureSpecRepository}/contents/{TypespecSpecDir}?ref={CommitId}";
-
                 HttpResponseMessage response = await HttpClient.GetAsync(apiUrl, cancellationToken).ConfigureAwait(false);
                 
                 if (!response.IsSuccessStatusCode)
                 {
-                    Logger.LogCritical("GitHub API request failed: {StatusCode} {ReasonPhrase}", 
-                        response.StatusCode, response.ReasonPhrase);
-                    throw new HttpRequestException($"GitHub API request failed: {response.StatusCode} {response.ReasonPhrase}");
+                    string errorMessage = Logger.IsEnabled(LogLevel.Error)
+                        ? $"GitHub API request failed: {response.StatusCode} {response.ReasonPhrase} for {apiUrl}"
+                        : "GitHub API request failed";
+                    return Result<Dictionary<string, string>>.Failure(new HttpRequestException(errorMessage));
                 }
 
                 string jsonContent = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
@@ -70,11 +73,10 @@ namespace Azure.Tools.GeneratorAgent
 
                 if (contents == null)
                 {
-                    Logger.LogCritical("Failed to deserialize GitHub API response from {ApiUrl}. " +
-                        "Response content: {JsonContent}", apiUrl, jsonContent);
-                    throw new InvalidOperationException($"Failed to deserialize GitHub API response for " +
-                        $"'{AppSettings.AzureSpecRepository}/{TypespecSpecDir}' at commit '{CommitId}'. " +
-                        $"Please verify the repository path and commit ID are correct.");
+                    string errorMessage = Logger.IsEnabled(LogLevel.Error)
+                        ? $"Failed to deserialize GitHub API response for '{AppSettings.AzureSpecRepository}/{TypespecSpecDir}' at commit '{CommitId}'. Please verify the repository path and commit ID are correct."
+                        : "Failed to deserialize GitHub API response";
+                    return Result<Dictionary<string, string>>.Failure(new InvalidOperationException(errorMessage));
                 }
 
                 Dictionary<string, string> typeSpecFiles = new(contents.Length);
@@ -84,49 +86,69 @@ namespace Azure.Tools.GeneratorAgent
                     .Where(c => string.Equals(c.Type, "file", StringComparison.Ordinal) &&
                             !string.IsNullOrEmpty(c.DownloadUrl));
 
-                IEnumerable<Task<(string FileName, string Content)>> downloadTasks = allFiles
-                    .Select(file => DownloadFileContentAsync(file.Name, file.DownloadUrl, cancellationToken));
-
-                (string FileName, string Content)[] downloadedFiles = await Task.WhenAll(downloadTasks).ConfigureAwait(false);
-
-                foreach ((string fileName, string content) in downloadedFiles)
+                // Download files
+                foreach (GitHubContent file in allFiles)
                 {
-                    if (!string.IsNullOrEmpty(content))
+                    var downloadResult = await DownloadFileContentAsync(file.Name, file.DownloadUrl, cancellationToken).ConfigureAwait(false);
+                    if (downloadResult.IsSuccess)
                     {
-                        typeSpecFiles[fileName] = content;
-                        Logger.LogDebug("Downloaded file: {FileName} ({Size} characters)", fileName, content.Length);
+                        typeSpecFiles[downloadResult.Value.FileName] = downloadResult.Value.Content;
+                        if (Logger.IsEnabled(LogLevel.Debug))
+                        {
+                            Logger.LogDebug("Downloaded file: {FileName} ({Size} characters)", 
+                                downloadResult.Value.FileName, 
+                                downloadResult.Value.Content.Length);
+                        }
                     }
                     else
                     {
-                        Logger.LogWarning("Failed to download content for file: {FileName}", fileName);
+                        return Result<Dictionary<string, string>>.Failure(downloadResult.Exception ?? new InvalidOperationException($"Failed to download file {file.Name}"));
                     }
                 }
 
-                return typeSpecFiles;
+                return Result<Dictionary<string, string>>.Success(typeSpecFiles);
+            }
+            catch (TaskCanceledException)
+            {
+                throw;
             }
             catch (Exception ex)
             {
-                Logger.LogCritical(ex, "Error in GitHub API TypeSpec files fetch");
-                throw;
+                return Result<Dictionary<string, string>>.Failure(new InvalidOperationException($"Unexpected error during GitHub API operation: {ex.Message}", ex));
             }
         }
 
-        private async Task<(string FileName, string Content)> DownloadFileContentAsync(string fileName, string? downloadUrl, CancellationToken cancellationToken)
+        private async Task<Result<(string FileName, string Content)>> DownloadFileContentAsync(string fileName, string? downloadUrl, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(downloadUrl))
             {
-                throw new InvalidOperationException($"Download URL is null or empty for file {fileName}");
+                string errorMsg = $"Download URL is null or empty for file {fileName}";
+                return Result<(string, string)>.Failure(new InvalidOperationException(errorMsg));
             }
 
-            HttpResponseMessage response = await HttpClient.GetAsync(downloadUrl, cancellationToken).ConfigureAwait(false);
-
-            if (!response.IsSuccessStatusCode)
+            try
             {
-                throw new HttpRequestException($"Failed to download file {fileName}: {response.StatusCode} {response.ReasonPhrase}");
-            }
+                HttpResponseMessage response = await HttpClient.GetAsync(downloadUrl, cancellationToken).ConfigureAwait(false);
 
-            string content = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-            return (fileName, content);
+                if (!response.IsSuccessStatusCode)
+                {
+                    string errorMsg = Logger.IsEnabled(LogLevel.Error) 
+                        ? $"Failed to download file {fileName}: {response.StatusCode} {response.ReasonPhrase}"
+                        : "Failed to download file";
+                    return Result<(string, string)>.Failure(new HttpRequestException(errorMsg));
+                }
+
+                string content = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+                return Result<(string, string)>.Success((fileName, content));
+            }
+            catch (TaskCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                return Result<(string, string)>.Failure(new InvalidOperationException($"Exception downloading file {fileName}: {ex.Message}", ex));
+            }
         }
     }
 }

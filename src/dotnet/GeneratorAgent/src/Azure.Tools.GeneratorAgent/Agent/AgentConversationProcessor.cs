@@ -38,7 +38,8 @@ namespace Azure.Tools.GeneratorAgent.Agent
             // Create the thread first
             var threadResponse = await client.Threads.CreateThreadAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
             var thread = threadResponse.Value;
-            logger.LogInformation("Created new conversation thread with ID: {ThreadId}", thread.Id);
+
+            logger.LogDebug("Created new conversation thread with ID: {ThreadId}", thread.Id);
 
             return new AgentConversationProcessor(client, logger, appSettings, agentId, thread.Id);
         }
@@ -57,108 +58,85 @@ namespace Azure.Tools.GeneratorAgent.Agent
             ThreadId = threadId;
         }
 
-        public async Task<string> FixCodeAsync(List<Fix> fixes, FixPromptService fixPromptService, CancellationToken cancellationToken = default)
+        public async Task<Result<string>> FixCodeAsync(List<Fix> fixes, FixPromptService fixPromptService, CancellationToken cancellationToken = default)
         {
-            Logger.LogInformation("Starting code fix process with {Count} fixes", fixes.Count);
-
-            var finalUpdatedContent = (string?)null;
-            var processedCount = 0;
-
-            try
+            if (Logger.IsEnabled(LogLevel.Debug))
             {
-                // Process each fix sequentially to maintain conversation context
-                // Each fix builds upon the previous one's result
-                for (var i = 0; i < fixes.Count; i++)
-                {
-                    var fix = fixes[i];
-                    var prompt = fixPromptService.ConvertFixToPrompt(fix);
-
-                    // Send message to the conversation thread
-                    await Client.Messages.CreateMessageAsync(ThreadId, MessageRole.User, prompt, cancellationToken: cancellationToken).ConfigureAwait(false);
-
-                    // Process the agent run and wait for completion
-                    await ProcessAgentRunAsync(cancellationToken).ConfigureAwait(false);
-
-                    // Read the agent's response
-                    var response = await ReadResponseAsync(cancellationToken).ConfigureAwait(false);
-
-                    try
-                    {
-                        var agentResponse = AgentResponseParser.ParseResponse(response);
-                        finalUpdatedContent = agentResponse.Content;
-                        processedCount++;
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.LogError(ex, "Failed to parse agent response for fix {FixIndex}/{TotalCount}. Response: {Response}", i + 1, fixes.Count, response);
-                        throw;
-                    }
-                }
-
-                Logger.LogInformation("Successfully processed all {Count} fixes. Final content length: {Length}", fixes.Count, finalUpdatedContent?.Length ?? 0);
-                return finalUpdatedContent ?? throw new InvalidOperationException("No fixes were successfully applied");
+                Logger.LogDebug("Processing {Count} fixes with agent", fixes.Count);
             }
-            catch (Exception ex) when (!(ex is OperationCanceledException))
+
+            // Create single comprehensive prompt for all fixes
+            var batchPrompt = fixPromptService.ConvertFixesToBatchPrompt(fixes);
+
+            // Send message to the conversation thread
+            await Client.Messages.CreateMessageAsync(ThreadId, MessageRole.User, batchPrompt, cancellationToken: cancellationToken).ConfigureAwait(false);
+
+            // Process the agent run and wait for completion
+            await ProcessAgentRunAsync(cancellationToken).ConfigureAwait(false);
+
+            // Read the agent's response
+            var responseResult = await ReadResponseAsync(cancellationToken).ConfigureAwait(false);
+            if (responseResult.IsFailure)
             {
-                Logger.LogError(ex, "Failed to complete code fix process. Processed {ProcessedCount}/{TotalCount} fixes", processedCount, fixes.Count);
-                throw;
+                return Result<string>.Failure(responseResult.Exception ?? new InvalidOperationException("Failed to read agent response"));
             }
+
+            var response = responseResult.Value!;
+
+            // Parse response - let exceptions bubble up to boundary
+            var agentResponse = AgentResponseParser.ParseResponse(response);
+            var finalUpdatedContent = agentResponse.Content;
+            
+            if (string.IsNullOrEmpty(finalUpdatedContent))
+            {
+                return Result<string>.Failure(new InvalidOperationException("No fixes were successfully applied"));
+            }
+
+            return Result<string>.Success(finalUpdatedContent);
         }
 
-        public async Task<IEnumerable<RuleError>> AnalyzeErrorsAsync(string errorLogs, CancellationToken cancellationToken = default)
+        public async Task<Result<IEnumerable<RuleError>>> AnalyzeErrorsAsync(string errorLogs, CancellationToken cancellationToken = default)
         {
             ArgumentNullException.ThrowIfNull(errorLogs);
 
-            Logger.LogInformation("Starting AI-based error analysis");
-
-            try
+            if (Logger.IsEnabled(LogLevel.Debug))
             {
-                // Create analysis prompt using the template from AppSettings
-                var analysisPrompt = string.Format(AppSettings.ErrorAnalysisPromptTemplate, errorLogs);
-
-                // Send message to the conversation thread
-                await Client.Messages.CreateMessageAsync(ThreadId, MessageRole.User, analysisPrompt, cancellationToken: cancellationToken).ConfigureAwait(false);
-
-                // Process the agent run and wait for completion
-                await ProcessAgentRunAsync(cancellationToken).ConfigureAwait(false);
-
-                // Read the agent's response
-                var response = await ReadResponseAsync(cancellationToken).ConfigureAwait(false);
-
-                try
-                {
-                    var ruleErrors = AgentResponseParser.ParseErrors(response);
-                    var materializedErrors = ruleErrors.ToList();
-                    Logger.LogInformation("AI-based error analysis completed. Found {Count} errors.", materializedErrors.Count);
-                    return materializedErrors;
-                }
-                catch (Exception parseEx)
-                {
-                    Logger.LogError(parseEx, "Failed to parse AI error analysis response. Response: {Response}", response);
-                    return Enumerable.Empty<RuleError>();
-                }
+                Logger.LogDebug("Starting AI-based error analysis");
             }
-            catch (Exception ex)
+
+            // Create analysis prompt using the template from AppSettings
+            var analysisPrompt = string.Format(AppSettings.ErrorAnalysisPromptTemplate, errorLogs);
+
+            // Send message to the conversation thread
+            await Client.Messages.CreateMessageAsync(ThreadId, MessageRole.User, analysisPrompt, cancellationToken: cancellationToken).ConfigureAwait(false);
+
+            // Process the agent run and wait for completion
+            await ProcessAgentRunAsync(cancellationToken).ConfigureAwait(false);
+
+            // Read the agent's response
+            var responseResult = await ReadResponseAsync(cancellationToken).ConfigureAwait(false);
+            if (responseResult.IsFailure)
             {
-                Logger.LogError(ex, "AI-based error analysis failed");
-                throw;
+                return Result<IEnumerable<RuleError>>.Failure(responseResult.Exception ?? new InvalidOperationException("Failed to read agent response"));
             }
+
+            var response = responseResult.Value!;
+            var ruleErrors = AgentResponseParser.ParseErrors(response);
+            
+            return Result<IEnumerable<RuleError>>.Success(ruleErrors.ToList());
         }
 
-        private async Task<string> ReadResponseAsync(CancellationToken cancellationToken)
+        private async Task<Result<string>> ReadResponseAsync(CancellationToken cancellationToken)
         {
             var messages = Client.Messages.GetMessagesAsync(ThreadId, order: ListSortOrder.Descending, cancellationToken: cancellationToken);
             var assistantResponses = new List<string>();
 
             await foreach (var message in messages.ConfigureAwait(false))
             {
-                Logger.LogDebug("Message role: {Role}", message.Role);
-
                 if (message.Role != MessageRole.User)
                 {
                     foreach (MessageTextContent content in message.ContentItems.OfType<MessageTextContent>())
                     {
-                        Logger.LogDebug("Assistant message content: {Text}", content.Text);
                         assistantResponses.Add(content.Text);
                     }
                     break;
@@ -167,10 +145,10 @@ namespace Azure.Tools.GeneratorAgent.Agent
 
             if (assistantResponses.Count == 0)
             {
-                throw new InvalidOperationException("No assistant response found in thread messages");
+                return Result<string>.Failure(new InvalidOperationException("No assistant response found in thread messages"));
             }
 
-            return string.Join("\n", assistantResponses);
+            return Result<string>.Success(string.Join("\n", assistantResponses));
         }
 
         private async Task ProcessAgentRunAsync(CancellationToken cancellationToken)
@@ -178,7 +156,10 @@ namespace Azure.Tools.GeneratorAgent.Agent
             var runResponse = await Client.Runs.CreateRunAsync(ThreadId, AgentId, cancellationToken: cancellationToken).ConfigureAwait(false);
             var run = runResponse.Value;
 
-            Logger.LogDebug("Created run {RunId} for thread {ThreadId}", run.Id, ThreadId);
+            if (Logger.IsEnabled(LogLevel.Debug))
+            {
+                Logger.LogDebug("Created run {RunId} for thread {ThreadId}", run.Id, ThreadId);
+            }
 
             var maxWaitTime = AppSettings.AgentRunMaxWaitTime;
             var pollingInterval = AppSettings.AgentRunPollingInterval;
@@ -192,7 +173,11 @@ namespace Azure.Tools.GeneratorAgent.Agent
                 run = runUpdateResponse.Value;
                 status = run.Status;
 
-                Logger.LogDebug("Run {RunId} status: {Status} (elapsed: {Elapsed:F1}s)", run.Id, status, stopwatch.Elapsed.TotalSeconds);
+                // Only log status periodically to avoid noise
+                if (Logger.IsEnabled(LogLevel.Debug) && stopwatch.Elapsed.TotalSeconds % 10 < 1)
+                {
+                    Logger.LogDebug("Run {RunId} status: {Status} (elapsed: {Elapsed:F1}s)", run.Id, status, stopwatch.Elapsed.TotalSeconds);
+                }
 
                 if (stopwatch.Elapsed > maxWaitTime)
                 {

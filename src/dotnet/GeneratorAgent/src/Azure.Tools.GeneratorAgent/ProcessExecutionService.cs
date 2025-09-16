@@ -61,7 +61,7 @@ namespace Azure.Tools.GeneratorAgent
                 string error = await errorTask.ConfigureAwait(false);
                 bool success = process.ExitCode == 0;
 
-                LogExecutionResult(success, process.ExitCode, command, error);
+                LogExecutionResult(success, process.ExitCode, command, error, output);
 
                 if (!success)
                 {
@@ -182,16 +182,19 @@ namespace Azure.Tools.GeneratorAgent
             return Result<object>.Failure(new TimeoutException(timeoutMessage));
         }
 
-        private void LogExecutionResult(bool success, int exitCode, string command, string error)
+        private void LogExecutionResult(bool success, int exitCode, string command, string error, string output = "")
         {
             if (success)
             {
-                Logger.LogDebug("Command {Command} succeeded", command);
+                if (Logger.IsEnabled(LogLevel.Debug))
+                {
+                    Logger.LogDebug("Command {Command} succeeded", command);
+                }
             }
             else
             {
-                Logger.LogError("Command {Command} failed with exit code {ExitCode}",
-                    command, exitCode);
+                Logger.LogError("Command {Command} failed with exit code {ExitCode}. Error output: {ErrorOutput}",
+                    command, exitCode, error);
             }
         }
     }

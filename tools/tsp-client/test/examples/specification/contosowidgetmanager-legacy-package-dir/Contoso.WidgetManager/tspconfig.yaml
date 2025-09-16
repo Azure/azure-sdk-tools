@@ -26,6 +26,7 @@ options:
     flavor: azure
   "@azure-tools/typespec-ts":
     package-dir: "contosowidgetmanager-rest"
+    emitter-output-dir: "{project-root}/../nonexistent" # This path is intentionally invalid to ensure package-dir is used instead
     package-details:
       name: "@azure-rest/contoso-widgetmanager-rest"
     flavor: azure

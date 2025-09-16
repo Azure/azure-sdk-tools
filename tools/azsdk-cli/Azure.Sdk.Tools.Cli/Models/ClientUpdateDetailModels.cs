@@ -19,6 +19,11 @@ public class ApiChange
     [JsonPropertyName("symbol")] public string Symbol { get; set; } = string.Empty;
     /// <summary>Human-readable description.</summary>
     [JsonPropertyName("detail")] public string Detail { get; set; } = string.Empty;
+    /// <summary>
+    /// Optional structured metadata for language-specific enrichments (e.g. returnType, parametersBefore/After).
+    /// Keys should be lowerCamelCase. Consumers must treat absence the same as empty.
+    /// </summary>
+    [JsonPropertyName("meta")] public Dictionary<string, string> Metadata { get; set; } = new();
 }
 
 public class CustomizationImpact

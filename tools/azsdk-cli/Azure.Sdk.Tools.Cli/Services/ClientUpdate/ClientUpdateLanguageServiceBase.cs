@@ -33,11 +33,13 @@ public abstract class ClientUpdateLanguageServiceBase : IClientUpdateLanguageSer
     public abstract string SupportedLanguage { get; }
 
     /// <summary>
-    /// Produces a semantic API change list between an older generated package and a newly generated package using precomputed git diff artifacts.
-    /// <param name="rawUnifiedDiff">Full unified diff text (can be empty when no changes).</param>
+    /// Produces a semantic API change list between an older generated package and a newly generated package.
     /// </summary>
+    /// <param name="oldGenerationPath">File-system path to the previously generated client code ("old" baseline).</param>
+    /// <param name="newGenerationPath">File-system path to the newly generated client code ("new" candidate).</param>
     /// <returns>A list of <see cref="ApiChange"/> instances describing added / removed / modified surface area. Empty list means no detectable API changes.</returns>
-    public abstract Task<List<ApiChange>> ComputeApiChanges(string rawUnifiedDiff);
+    /// <remarks>Implementations are responsible for any parsing / compilation needed to compute differences.</remarks>
+    public abstract Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath);
     /// <summary>
     /// Locates the root directory containing user customizations that extend or wrap the generated code for the given session.
     /// </summary>
@@ -114,7 +116,7 @@ public abstract class ClientUpdateLanguageServiceBase : IClientUpdateLanguageSer
     /// <param name="validationErrors">Validation error messages from <see cref="ValidateAsync"/>.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>Zero or more <see cref="PatchProposal"/> objects providing automated remediation steps. Empty list means no automated fixes.</returns>
-    public virtual Task<List<PatchProposal>> ProposeFixesAsync(ClientUpdateSessionState session, List<string> validationErrors, CancellationToken ct)
+    public virtual Task<List<PatchProposal>> ProposeFixesAsync(ClientUpdateSessionState session, IEnumerable<string> validationErrors, CancellationToken ct)
     {
         return Task.FromResult(new List<PatchProposal>());
     }

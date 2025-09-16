@@ -32,19 +32,19 @@ public class TspClientUpdateToolAutoTests
     private class MockNoChangeLanguageService : IClientUpdateLanguageService
     {
         public string SupportedLanguage => "java";
-        public Task<List<ApiChange>> ComputeApiChanges(string rawUnifiedDiff) => Task.FromResult(new List<ApiChange>());
+        public Task<List<ApiChange>> DiffAsync(string oldGeneratedPath, string newGeneratedPath) => Task.FromResult(new List<ApiChange>());
         public Task<string?> GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct) => Task.FromResult<string?>(null); // none
         public Task<List<CustomizationImpact>> AnalyzeCustomizationImpactAsync(ClientUpdateSessionState session, string customizationRoot, IEnumerable<ApiChange> apiChanges, CancellationToken ct) => Task.FromResult(new List<CustomizationImpact>());
         public Task<List<PatchProposal>> ProposePatchesAsync(ClientUpdateSessionState session, IEnumerable<CustomizationImpact> impacts, CancellationToken ct) => Task.FromResult(new List<PatchProposal>());
         public Task<ValidationResult> ValidateAsync(ClientUpdateSessionState session, CancellationToken ct) => Task.FromResult(ValidationResult.CreateSuccess());
-        public Task<List<PatchProposal>> ProposeFixesAsync(ClientUpdateSessionState session, List<string> validationErrors, CancellationToken ct) => Task.FromResult(new List<PatchProposal>());
+        public Task<List<PatchProposal>> ProposeFixesAsync(ClientUpdateSessionState session, IEnumerable<string> validationErrors, CancellationToken ct) => Task.FromResult(new List<PatchProposal>());
     }
 
     // Language service that produces a single API change
     private class MockChangeLanguageService : IClientUpdateLanguageService
     {
         public string SupportedLanguage => "java";
-        public Task<List<ApiChange>> ComputeApiChanges(string rawUnifiedDiff)
+        public Task<List<ApiChange>> DiffAsync(string oldGeneratedPath, string newGeneratedPath)
             => Task.FromResult(new List<ApiChange> {
                 new ApiChange { Kind = "MethodAdded", Symbol = "S1", Detail = "Added method S1" }
             });
@@ -53,7 +53,7 @@ public class TspClientUpdateToolAutoTests
             => Task.FromResult(new List<CustomizationImpact> { new CustomizationImpact { File = "Customization.java", Reasons = new List<string>{ "API change S1" } } });
         public Task<List<PatchProposal>> ProposePatchesAsync(ClientUpdateSessionState session, IEnumerable<CustomizationImpact> impacts, CancellationToken ct) => Task.FromResult(new List<PatchProposal>());
         public Task<ValidationResult> ValidateAsync(ClientUpdateSessionState session, CancellationToken ct) => Task.FromResult(ValidationResult.CreateSuccess());
-        public Task<List<PatchProposal>> ProposeFixesAsync(ClientUpdateSessionState session, List<string> validationErrors, CancellationToken ct) => Task.FromResult(new List<PatchProposal>());
+        public Task<List<PatchProposal>> ProposeFixesAsync(ClientUpdateSessionState session, IEnumerable<string> validationErrors, CancellationToken ct) => Task.FromResult(new List<PatchProposal>());
     }
 
 
@@ -103,7 +103,7 @@ public class TspClientUpdateToolAutoTests
         private readonly Func<int> _next;
         public TestLanguageServiceFailThenFix(Func<int> next) { _next = next; }
         public string SupportedLanguage => "java";
-        public Task<List<ApiChange>> ComputeApiChanges(string rawUnifiedDiff) => Task.FromResult(new List<ApiChange>());
+        public Task<List<ApiChange>> DiffAsync(string oldGeneratedPath, string newGeneratedPath) => Task.FromResult(new List<ApiChange>());
         public Task<string?> GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct) => Task.FromResult<string?>(null);
         public Task<List<CustomizationImpact>> AnalyzeCustomizationImpactAsync(ClientUpdateSessionState session, string? customizationRoot, IEnumerable<ApiChange> apiChanges, CancellationToken ct) => Task.FromResult(new List<CustomizationImpact>());
         public Task<List<PatchProposal>> ProposePatchesAsync(ClientUpdateSessionState session, IEnumerable<CustomizationImpact> impacts, CancellationToken ct) => Task.FromResult(new List<PatchProposal>());
@@ -116,20 +116,20 @@ public class TspClientUpdateToolAutoTests
             }
             return Task.FromResult(ValidationResult.CreateSuccess());
         }
-        public Task<List<PatchProposal>> ProposeFixesAsync(ClientUpdateSessionState session, List<string> validationErrors, CancellationToken ct)
-        {
-            // propose one trivial fix
-            var p = new PatchProposal { File = "src/Example.java", Diff = "--- a/src/Example.java\n+++ b/src/Example.java\n// fix" };
-            return Task.FromResult(new List<PatchProposal> { p });
+        public Task<List<PatchProposal>> ProposeFixesAsync(ClientUpdateSessionState session, IEnumerable<string> validationErrors, CancellationToken ct)
+            {
+                // propose one trivial fix
+                var p = new PatchProposal { File = "src/Example.java", Diff = "--- a/src/Example.java\n+++ b/src/Example.java\n// fix" };
+                return Task.FromResult(new List<PatchProposal> { p });
+            }
         }
-    }
 
-    private class SingleResolver : IClientUpdateLanguageServiceResolver
-    {
-        private readonly IClientUpdateLanguageService _svc;
-        public SingleResolver(IClientUpdateLanguageService svc) { _svc = svc; }
-        public Task<IClientUpdateLanguageService?> ResolveAsync(string? packagePath, CancellationToken ct = default) => Task.FromResult<IClientUpdateLanguageService?>(_svc);
-    }
+        private class SingleResolver : IClientUpdateLanguageServiceResolver
+        {
+            private readonly IClientUpdateLanguageService _svc;
+            public SingleResolver(IClientUpdateLanguageService svc) { _svc = svc; }
+            public Task<IClientUpdateLanguageService?> ResolveAsync(string? packagePath, CancellationToken ct = default) => Task.FromResult<IClientUpdateLanguageService?>(_svc);
+        }
 }
 
 internal class MockTspHelper : ITspClientHelper

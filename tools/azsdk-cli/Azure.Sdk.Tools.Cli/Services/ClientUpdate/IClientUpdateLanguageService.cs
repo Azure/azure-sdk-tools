@@ -20,14 +20,16 @@ public interface IClientUpdateLanguageService
     string SupportedLanguage { get; }
 
     /// <summary>
-    /// Produces a semantic API change list using the already captured raw git diff output.
-    /// The tool layer is responsible for executing:
+    /// Produces a semantic API change list by diffing file contents between two generated source trees.
+    /// Implementations may perform a structural or textual diff. The tool layer is responsible for executing:
     ///   - Derive high-level API changes (e.g., ClassAdded, MethodRemoved, ParameterRenamed, ReturnTypeChanged)
     ///   - Avoid emitting purely textual changes that do not affect API surface
     /// </summary>
     /// <param name="rawUnifiedDiff">Full unified diff text (can be empty when no changes).</param>
+    /// <param name="oldGeneratedPath">Path to the old generated sources.</param>
+    /// <param name="newGeneratedPath">Path to the new generated sources.</param>
     /// <returns>List of detected API changes (empty if no semantic differences).</returns>
-    Task<List<ApiChange>> ComputeApiChanges(string rawUnifiedDiff);
+    Task<List<ApiChange>> DiffAsync(string oldGeneratedPath, string newGeneratedPath);
 
     /// <summary>
     /// Locates the customization root directory for the language, if any.
@@ -43,7 +45,7 @@ public interface IClientUpdateLanguageService
     /// </summary>
     /// <param name="session">Current update session.</param>
     /// <param name="customizationRoot">Customization root (may be <c>null</c> for languages without customizations).</param>
-    /// <param name="apiChanges">Sequence of API changes from <see cref="ComputeApiChanges"/>.</param>
+    /// <param name="apiChanges">Sequence of API changes from <see cref="DiffAsync"/>.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>List of impacted customization descriptors (empty if none).</returns>
     Task<List<CustomizationImpact>> AnalyzeCustomizationImpactAsync(ClientUpdateSessionState session, string? customizationRoot, IEnumerable<ApiChange> apiChanges, CancellationToken ct);
@@ -73,5 +75,5 @@ public interface IClientUpdateLanguageService
     /// <param name="validationErrors">Errors from the previous <see cref="ValidateAsync"/> invocation.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>List of patch proposals representing potential fixes (may be empty).</returns>
-    Task<List<PatchProposal>> ProposeFixesAsync(ClientUpdateSessionState session, List<string> validationErrors, CancellationToken ct);
+    Task<List<PatchProposal>> ProposeFixesAsync(ClientUpdateSessionState session, IEnumerable<string> validationErrors, CancellationToken ct);
 }

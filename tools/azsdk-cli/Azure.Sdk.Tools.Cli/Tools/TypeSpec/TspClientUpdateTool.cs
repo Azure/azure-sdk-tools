@@ -113,10 +113,9 @@ public class TspClientUpdateTool : MCPTool
             };
         }
         session.LastStage = UpdateStage.Regenerated;
-        // Now after regeneration, we have old generated at packagePath, new generation at regenDir to perform a diff
 
-        var gitDiff = GetGitDiff(packagePath, session.NewGeneratedPath);
-        var apiChanges = await languageService.ComputeApiChanges(gitDiff);
+        // Now after regeneration, we have old generated at packagePath, new generation at regenDir to perform a diff
+        var apiChanges = await languageService.DiffAsync(packagePath, session.NewGeneratedPath);
         session.LastStage = UpdateStage.Diffed;
 
         if (apiChanges.Count == 0)
@@ -203,52 +202,5 @@ public class TspClientUpdateTool : MCPTool
             return Path.GetFullPath(Path.Combine(packagePath, newGenPath));
         }
         return Path.GetFullPath(newGenPath);
-    }
-
-    /// <summary>
-    /// Runs git diff between existing generated code (oldDir) and newly regenerated code (newDir) returning full patch text.
-    /// </summary>
-    private string GetGitDiff(string oldDir, string newDir)
-    {
-        try
-        {
-            if (!Directory.Exists(oldDir) || !Directory.Exists(newDir))
-            {
-                return string.Empty;
-            }
-            var psi = new System.Diagnostics.ProcessStartInfo
-            {
-                FileName = "git",
-                Arguments = $"-c core.safecrlf=false diff --ignore-space-at-eol --exit-code -- \"{oldDir}\" \"{newDir}\"",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                WorkingDirectory = oldDir
-            };
-            using var proc = System.Diagnostics.Process.Start(psi);
-            if (proc == null)
-            {
-                SetFailure();
-                return string.Empty;
-            }
-            var stdout = proc.StandardOutput.ReadToEnd();
-            var stderr = proc.StandardError.ReadToEnd();
-            proc.WaitForExit();
-            // git diff --exit-code returns 0 (no changes) or 1 (changes). Treat both as success.
-            if (proc.ExitCode != 0 && proc.ExitCode != 1)
-            {
-                logger.LogError("git diff failed (exit {code}): {err}", proc.ExitCode, stderr);
-                SetFailure(proc.ExitCode);
-                return string.Empty;
-            }
-            return stdout;
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Failed running git diff");
-            SetFailure();
-            return string.Empty;
-        }
     }
 }

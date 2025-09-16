@@ -618,6 +618,6 @@ catch (Exception ex)
 }
 ```
 
-## CLI command hierachy
+## CLI command hierarchy
 
 Refer to [CLI command hierarchy](cli-commands-guidelines.md) for guidelines on CLI command structure.

@@ -83,14 +83,13 @@ For creating, updating, and running tests for SDK packages:
 - `package generate --typespec-project ./specification/storage`
 - `package readme generate --package-path ./sdk/compute`
 - `package readme update --package-path ./sdk/keyvault --section getting-started`
-- `pacakge release --package-name azure-core`
+- `package release --package-name azure-core`
 - `package sample generate --package-path ./sdk/compute`
 - `package sample update --package-path ./sdk/storage --sample-name basic-usage`
 - `package show-details`
 - `package test generate --package-path ./sdk/storage --test-type <type>`
 - `package test run --package-path ./sdk/keyvault --test-suite integration`
 - `package validate --package-path ./sdk/keyvault`
-- 
 
 ### 3. **github** - GitHub Operations
 **Namespace:** `Azure.Sdk.Tools.Cli.Tools.GitHub`  

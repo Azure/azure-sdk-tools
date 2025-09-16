@@ -154,8 +154,8 @@ For TypeSpec client-specific operations:
 - Client generation workflows
 
 **Examples:**
-- `tsp client generate --output-dir ./generated`
-- `tspclient update --config-path ./tspconfig.yaml`
+- `tsp-client generate --output-dir ./generated`
+- `tsp-client update --config-path ./tspconfig.yaml`
 
 ## Namespace Organization
 

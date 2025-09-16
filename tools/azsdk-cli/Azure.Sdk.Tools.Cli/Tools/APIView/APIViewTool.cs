@@ -16,7 +16,7 @@ public class APIViewTool : MCPTool
 {
     private const string GetRevisionCommentsSubCommand = "get-revision-comments";
     private const string GetTokenFileForRevisionSubCommand = "get-token-file-for-revision";
-    private const string ListRevisionsSubCommand = "list-revisions";
+    private const string ListReviewVersionsSubCommand = "list-review-versions";
     private const string GetLatestRevisionSubCommand = "get-latest-revision";
     private const string CheckAuthenticationSubCommand = "check-authentication";
     private const string GetAuthenticationGuidanceSubCommand = "get-authentication-guidance";
@@ -80,7 +80,7 @@ public class APIViewTool : MCPTool
         parentCommand.AddCommand(getRevisionDiffCmd);
 
         // List revisions command
-        Command listRevisionsCmd = new(ListRevisionsSubCommand, "List all revisions for a review");
+        Command listRevisionsCmd = new(ListReviewVersionsSubCommand, "List all versions for a review");
         listRevisionsCmd.AddOption(reviewIdOptions);
         listRevisionsCmd.AddOption(environmentOption);
         listRevisionsCmd.AddOption(authTokenOption);
@@ -116,7 +116,7 @@ public class APIViewTool : MCPTool
         {
             GetRevisionCommentsSubCommand => await GetRevisionComments(ctx, ct),
             GetTokenFileForRevisionSubCommand => await GetTokenCodeFileForRevision(ctx, ct),
-            ListRevisionsSubCommand => await ListRevisions(ctx, ct),
+            ListReviewVersionsSubCommand => await ListReviewVersions(ctx, ct),
             GetLatestRevisionSubCommand => await GetLatestRevision(ctx, ct),
             CheckAuthenticationSubCommand => await CheckAuthentication(ctx, ct),
             GetAuthenticationGuidanceSubCommand => await GetAuthenticationGuidance(ctx, ct),
@@ -200,9 +200,9 @@ public class APIViewTool : MCPTool
         }
     }
 
-    [McpServerTool(Name = "azsdk_apiview_list_revisions")]
-    [Description("List all revisions for an APIView review")]
-    public async Task<APIViewResponse> ListReviewRevisions(
+    [McpServerTool(Name = "azsdk_apiview_list_review_versions")]
+    [Description("List all versions for an APIView review")]
+    public async Task<APIViewResponse> ListReviewVersions(
         string reviewId,
         string? environment = null,
         string? authToken = null)
@@ -239,7 +239,6 @@ public class APIViewTool : MCPTool
         string? environment = ctx.ParseResult.GetValueForOption(environmentOption);
         string? authToken = ctx.ParseResult.GetValueForOption(authTokenOption);
 
-        Console.WriteLine("ENVIRONMENT" + environment);
         if (string.IsNullOrEmpty(revisionId))
         {
             SetFailure();
@@ -303,7 +302,7 @@ public class APIViewTool : MCPTool
         }
     }
 
-    private async Task<APIViewResponse> ListRevisions(InvocationContext ctx, CancellationToken ct)
+    private async Task<APIViewResponse> ListReviewVersions(InvocationContext ctx, CancellationToken ct)
     {
         string? reviewId = ctx.ParseResult.GetValueForOption(reviewIdOptions);
         string? environment = ctx.ParseResult.GetValueForOption(environmentOption);
@@ -315,7 +314,7 @@ public class APIViewTool : MCPTool
             return new APIViewResponse { ResponseError = "Review ID is required" };
         }
 
-        return await ListReviewRevisions(reviewId, environment, authToken);
+        return await ListReviewVersions(reviewId, environment, authToken);
     }
 
     private async Task<APIViewResponse> GetLatestRevision(InvocationContext ctx, CancellationToken ct)

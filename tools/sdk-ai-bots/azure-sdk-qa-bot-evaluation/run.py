@@ -59,6 +59,7 @@ async def process_file(input_file: str, output_file: str, scenario: str, is_bot:
     print(f"Processing file: {input_file}")
     
     azure_openai_api_key = os.environ["BOT_AGENT_API_KEY"]
+    azure_bot_service_access_token = os.environ["BOT_AGENT_ACCESS_TOKEN"]
     bot_service_endpoint = os.environ.get("BOT_SERVICE_ENDPOINT", None) 
     api_url = f"{bot_service_endpoint}/completion" if bot_service_endpoint is not None else "http://localhost:8088/completion"
     start_time = time.time()
@@ -71,7 +72,7 @@ async def process_file(input_file: str, output_file: str, scenario: str, is_bot:
             # print(record)
             if is_bot:
                 try:
-                    api_response = await call_bot_api(record["query"], api_url, azure_openai_api_key, tenant_id)
+                    api_response = await call_bot_api(record["query"], api_url, azure_bot_service_access_token, tenant_id)
                     answer = api_response.get("answer", "")
                     full_context = api_response.get("full_context", "")
                     latency = time.time() - start_time
@@ -93,11 +94,11 @@ async def process_file(input_file: str, output_file: str, scenario: str, is_bot:
     outputFile.flush()
     outputFile.close()
 
-async def call_bot_api(question: str, bot_endpoint: str, api_key: str, tenant_id: str = None, withFullContext: bool = True) -> Dict[str, Any]:
+async def call_bot_api(question: str, bot_endpoint: str, access_token: str, tenant_id: str = None, withFullContext: bool = True) -> Dict[str, Any]:
     """Call the completion API endpoint."""
     headers = {
         "Content-Type": "application/json; charset=utf8",
-        "X-API-Key": api_key
+        "Authorization": f"Bearer {access_token}"
     }
     payload = {
         "tenant_id": tenant_id if tenant_id is not None else "azure_sdk_qa_bot",
@@ -430,6 +431,10 @@ if __name__ == "__main__":
                 }
         
         output_file_dir = asyncio.run(prepare_dataset(args.test_folder, args.prefix, args.is_bot))
+        if output_file_dir is None:
+            print(f"No test data file to process. exit")
+            exit(1)
+        
         for output_file in output_file_dir.glob("*.jsonl"):
             run_results = []
             result = evaluate(

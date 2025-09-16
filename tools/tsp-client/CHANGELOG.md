@@ -1,6 +1,6 @@
 # Release
 
-## UNRELEASED - 0.28.2
+## 2025-09-16 - 0.28.2
 
 - If `package-dir` and `emitter-output-dir` are both specified in a given tspconfig.yaml give preference to `package-dir` until the legacy behavior is officially deprecated.
 

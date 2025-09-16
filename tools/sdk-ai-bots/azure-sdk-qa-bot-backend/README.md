@@ -108,7 +108,7 @@ go test ./...
 ## Deploy
 
   ```bash
-  ./deploy.sh -t [tag] -m [slot|preview|prod]
+  ./deploy.sh -t [tag] -e [dev|preview|prod]
   ```
 
 ## Contributing

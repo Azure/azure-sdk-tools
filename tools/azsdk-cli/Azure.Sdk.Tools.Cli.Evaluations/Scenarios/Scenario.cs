@@ -1,54 +1,27 @@
-using System.Text.Json;
-using Azure.Sdk.Tools.Cli.Evaluations.Models;
-using Azure.Sdk.Tools.Cli.Evaluations.Evaluators;
 using Azure.Sdk.Tools.Cli.Evaluations.Helpers;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.Extensions.AI;
+using ModelContextProtocol.Client;
 
 namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
 {
-    public class Scenario
+    [TestClass]
+    public partial class Scenario
     {
-        private ChatCompletion _chatCompletion;
-        public Scenario(ChatCompletion chatCompletion) 
-        { 
-            _chatCompletion = chatCompletion;
-        }
+        // Configuration constants
+        protected const string JsonPath = "..\\..\\..\\..\\..\\tools\\azsdk-cli\\Azure.Sdk.Tools.Cli.Evaluations\\example.json";
 
-        public async Task PlayAsync(string jsonPath)
+        // Static services
+        protected static IChatClient? ChatClient;
+        protected static IMcpClient? McpClient;
+        protected static ChatCompletion? ChatCompletion;
+
+        [AssemblyInitialize]
+        public static async Task AssemblyInitialize(TestContext context)
         {
-            // 1. Validate ChatHistory. ex.. Should end with AI answering and not the user
-            // Before it gets here will need to be converted from JSON to chat message somehow. 
-            var json = await LoadScenarioFromJsonAsync(jsonPath);
-            var fullChat = json.ChatHistory.Append(json.NextMessage);
-
-            // 2. LLM question and answer
-            var response = await _chatCompletion.GetChatResponseAsync(fullChat);
-
-            // 3. Custom Evaluator to check tool inputs
-            var expectedToolInputEvaluator = new ExpectedToolInputEvaluator();
-
-            // Pass the expected outcome through the additional context. 
-            var additionalContext = new ExpectedToolInputEvaluatorContext(json.ExpectedOutcome);
-            var result = await expectedToolInputEvaluator.EvaluateAsync(fullChat, response, additionalContext: [additionalContext]);
-        }
-
-        private async Task<ScenarioData> LoadScenarioFromJsonAsync(string jsonPath)
-        {
-            var jsonContent = await File.ReadAllTextAsync(jsonPath);
-
-            var options = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true,
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-            };
-
-            var scenarioData = JsonSerializer.Deserialize<ScenarioData>(jsonContent, options);
-
-            if (scenarioData == null)
-            {
-                throw new InvalidOperationException($"Failed to deserialize scenario data from {jsonPath}");
-            }
-
-            return scenarioData;
+            ChatClient = TestSetup.GetChatClient();
+            McpClient = await TestSetup.GetMcpClientAsync();
+            ChatCompletion = TestSetup.GetChatCompletion(ChatClient, McpClient);
         }
     }
 }

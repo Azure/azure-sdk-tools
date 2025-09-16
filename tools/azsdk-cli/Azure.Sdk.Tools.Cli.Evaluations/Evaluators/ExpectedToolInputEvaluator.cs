@@ -7,8 +7,8 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Evaluators
 {
    public class ExpectedToolInputEvaluator : IEvaluator
    {
-        public const string AzsdkMcpName = "Azure SDK MCP";
-        public IReadOnlyCollection<string> EvaluationMetricNames => [AzsdkMcpName];
+        public const string ExpectedToolInputMetricName = "Azure SDK MCP";
+        public IReadOnlyCollection<string> EvaluationMetricNames => [ExpectedToolInputMetricName];
 
         public ValueTask<EvaluationResult> EvaluateAsync(
             IEnumerable<ChatMessage> messages,
@@ -18,7 +18,7 @@ namespace Azure.Sdk.Tools.Cli.Evaluations.Evaluators
             CancellationToken cancellationToken = default)
         {
             // Create the metric
-            var metric = new BooleanMetric(AzsdkMcpName);
+            var metric = new BooleanMetric(ExpectedToolInputMetricName);
             var result = new ValueTask<EvaluationResult>(new EvaluationResult(metric));
 
             if (additionalContext?.OfType<ExpectedToolInputEvaluatorContext>().FirstOrDefault()

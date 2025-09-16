@@ -8,7 +8,8 @@ schedules:
     displayName: "Weekly Monday Morning Trigger"
     branches:
       include:
-        - azure-sdk-ai-bot
+        - release/qa-bot
+        - main
     always: true
 
 trigger: none
@@ -38,7 +39,7 @@ extends:
                 displayName: 'check python'
               - task: AzureCLI@2
                 inputs:
-                  azureSubscription: 'azure-chat-bot-test'
+                  azureSubscription: 'azsdkqabot'
                   addSpnToEnvironment: true
                   scriptType: bash
                   scriptLocation: inlineScript

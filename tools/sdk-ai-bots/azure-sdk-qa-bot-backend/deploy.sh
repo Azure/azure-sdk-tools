@@ -1,26 +1,81 @@
 #!/bin/bash
 set -e
 
-# Azure configuration - REPLACE THESE PLACEHOLDERS with your actual resource names
-RESOURCE_GROUP="typespec_helper"
-ACR_NAME="azuresdkqabot"
-APP_NAME="azuresdkbot"
-APP_SLOT_DEV_NAME="azuresdkbot-dev"
-APP_SLOT_PREVIEW_NAME="preview"
-IMAGE_NAME="azure-sdk-qa-bot-backend"
-
 # Default deployment settings
 DEFAULT_TAG=$(date "+%Y%m%d%H%M%S")  # Use timestamp as default tag
-DEFAULT_MODE="slot"  # Default to slot deployment (options: slot, prod)
+DEFAULT_ENVIRONMENT="dev"  # Default to dev environment
 
 # Parse command-line arguments
-while getopts "t:m:" flag; do
+while getopts "t:e:" flag; do
   case "${flag}" in
     t) IMAGE_TAG="${OPTARG}" ;;
-    m) DEPLOY_MODE="${OPTARG}" ;;
+    e) ENVIRONMENT="${OPTARG}" ;;
     *) ;;
   esac
 done
+
+# Set defaults if not provided
+IMAGE_TAG=${IMAGE_TAG:-$DEFAULT_TAG}
+ENVIRONMENT=${ENVIRONMENT:-$DEFAULT_ENVIRONMENT}
+
+# Clean tag by removing any invalid characters for container registry
+IMAGE_TAG=$(echo "$IMAGE_TAG" | tr '/' '-')
+
+# Function to show usage
+show_usage() {
+    echo "Usage: $0 [-t image_tag] [-e environment]"
+    echo "  -t: Image tag (default: timestamp)"
+    echo "  -e: Environment - 'dev', 'preview', or 'prod' (default: dev)"
+    echo ""
+    echo "Examples:"
+    echo "  $0 -e dev -t v1.0.0       # Deploy to dev environment"
+    echo "  $0 -e preview -t v1.0.0   # Deploy to prod preview slot"
+    echo "  $0 -e prod -t v1.0.0      # Deploy directly to prod"
+    exit 1
+}
+
+# Validate environment
+if [[ "$ENVIRONMENT" != "dev" && "$ENVIRONMENT" != "prod" && "$ENVIRONMENT" != "preview" ]]; then
+    echo "Error: Invalid environment. Use 'dev', 'preview', or 'prod'"
+    show_usage
+fi
+
+# Configure environment-specific settings
+configure_environment() {
+    case "$ENVIRONMENT" in
+        "dev")
+            RESOURCE_GROUP="typespec_helper"
+            ACR_NAME="azuresdkqabot"
+            APP_NAME="azuresdkbot"
+            IMAGE_NAME="azure-sdk-qa-bot-backend"
+            echo "Configuring for DEV environment..."
+            ;;
+        "prod"|"preview")
+            RESOURCE_GROUP="azure-sdk-qa-bot"
+            ACR_NAME="azuresdkqabotcontainer"
+            APP_NAME="azuresdkqabot-server"
+            APP_SLOT_PREVIEW_NAME="preview"
+            IMAGE_NAME="azure-sdk-qa-bot-backend"
+            if [[ "$ENVIRONMENT" == "prod" ]]; then
+                echo "Configuring for PRODUCTION environment..."
+            else
+                echo "Configuring for PREVIEW environment..."
+            fi
+            ;;
+    esac
+}
+
+# Configure environment settings
+configure_environment
+
+echo "Environment: $ENVIRONMENT"
+echo "Using image tag: $IMAGE_TAG"
+
+# Check if Azure CLI is installed
+if ! command -v az &> /dev/null; then
+    echo "Azure CLI is not installed. Please install it first."
+    exit 1
+fi
 
 # Login to Azure
 az login
@@ -32,54 +87,15 @@ az acr login --name $ACR_NAME
 ACR_LOGIN_SERVER=$(az acr show --name $ACR_NAME --resource-group $RESOURCE_GROUP --query "loginServer" --output tsv)
 echo "ACR Login Server: $ACR_LOGIN_SERVER"
 
-APP_SLOT_NAME=${APP_SLOT_DEV_NAME}
-if [[ "$DEPLOY_MODE" == "preview" ]]; then
-    APP_SLOT_NAME=${APP_SLOT_PREVIEW_NAME}
-    # Update webapp image tag in the deployment slot
-    echo "Updating image in deployment slot ${APP_SLOT_NAME}..."
-    az webapp config container set --name ${APP_NAME} --slot ${APP_SLOT_NAME} --resource-group ${RESOURCE_GROUP} --container-image-name ${ACR_LOGIN_SERVER}/${IMAGE_NAME}:${IMAGE_TAG} --container-registry-url https://${ACR_LOGIN_SERVER}
-
-    # Restart the webapp to apply changes
-    az webapp restart  --name azuresdkbot --slot ${APP_SLOT_NAME} --resource-group typespec_helper
-    echo "Preview deployment completed successfully!"
-    exit 0
-fi
-
-# Handle production deployment if requested
-if [[ "$DEPLOY_MODE" == "prod" ]]; then
-    # Update webapp image tag in the deployment slot
-    echo "Updating image in deployment prod..."
+# Handle production deployment with direct prod mode (no build/push needed)
+if [[ "$ENVIRONMENT" == "prod" ]]; then
+    echo "Updating image in production slot..."
     az webapp config container set --name ${APP_NAME} --resource-group ${RESOURCE_GROUP} --container-image-name ${ACR_LOGIN_SERVER}/${IMAGE_NAME}:${IMAGE_TAG} --container-registry-url https://${ACR_LOGIN_SERVER}
 
     # Restart the webapp to apply changes
-    az webapp restart  --name azuresdkbot --resource-group typespec_helper
+    az webapp restart --name ${APP_NAME} --resource-group ${RESOURCE_GROUP}
     echo "Production deployment completed successfully!"
     exit 0
-fi
-
-# Set defaults if not provided
-IMAGE_TAG=${IMAGE_TAG:-$DEFAULT_TAG}
-DEPLOY_MODE=${DEPLOY_MODE:-$DEFAULT_MODE}
-
-# Clean tag by removing any invalid characters for container registry
-IMAGE_TAG=$(echo "$IMAGE_TAG" | tr '/' '-')
-
-echo "Using image tag: $IMAGE_TAG"
-echo "Deployment mode: $DEPLOY_MODE"
-
-# Validate deployment mode
-if [[ "$DEPLOY_MODE" != "preview" && "$DEPLOY_MODE" != "slot" && "$DEPLOY_MODE" != "prod" ]]; then
-    echo "Error: Invalid deployment mode. Use 'slot' or 'prod'"
-    echo "Usage: $0 [-t image_tag] [-m deployment_mode]"
-    echo "  -t: Image tag (default: latest)"
-    echo "  -m: Deployment mode - 'slot' for slot deployment only, 'prod' for production deployment with slot swap (default: slot)"
-    exit 1
-fi
-
-# Check if Azure CLI is installed
-if ! command -v az &> /dev/null; then
-    echo "Azure CLI is not installed. Please install it first."
-    exit 1
 fi
 
 # Clean up Docker resources to free up space
@@ -100,10 +116,31 @@ docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${ACR_LOGIN_SERVER}/${IMAGE_NAME}:${IMAGE_
 echo "Pushing image to Azure Container Registry..."
 docker push ${ACR_LOGIN_SERVER}/${IMAGE_NAME}:${IMAGE_TAG}
 
-# Update webapp image tag in the deployment slot
-echo "Updating image in deployment slot ${APP_SLOT_NAME}..."
-az webapp config container set --name ${APP_NAME} --slot ${APP_SLOT_NAME} --resource-group ${RESOURCE_GROUP} --container-image-name ${ACR_LOGIN_SERVER}/${IMAGE_NAME}:${IMAGE_TAG} --container-registry-url https://${ACR_LOGIN_SERVER}
+# Deploy based on environment
+deploy_application() {
+    case "$ENVIRONMENT" in
+        "dev")
+            echo "Updating image in dev environment..."
+            az webapp config container set --name ${APP_NAME} --resource-group ${RESOURCE_GROUP} --container-image-name ${ACR_LOGIN_SERVER}/${IMAGE_NAME}:${IMAGE_TAG} --container-registry-url https://${ACR_LOGIN_SERVER}
 
-# Restart the webapp to apply changes
-az webapp restart  --name azuresdkbot --slot ${APP_SLOT_NAME} --resource-group typespec_helper
-echo "Slot deployment completed successfully!"
+            # Restart the webapp to apply changes
+            az webapp restart --name ${APP_NAME} --resource-group ${RESOURCE_GROUP}
+            echo "Dev deployment completed successfully!"
+            ;;
+        "preview")
+            # Deploy to preview slot
+            APP_SLOT_NAME="preview"
+            echo "Updating image in deployment slot ${APP_SLOT_NAME}..."
+            az webapp config container set --name ${APP_NAME} --slot ${APP_SLOT_NAME} --resource-group ${RESOURCE_GROUP} --container-image-name ${ACR_LOGIN_SERVER}/${IMAGE_NAME}:${IMAGE_TAG} --container-registry-url https://${ACR_LOGIN_SERVER}
+
+            # Restart the webapp to apply changes
+            az webapp restart --name ${APP_NAME} --slot ${APP_SLOT_NAME} --resource-group ${RESOURCE_GROUP}
+            echo "Preview deployment completed successfully!"
+            ;;
+    esac
+}
+
+# Execute deployment
+deploy_application
+
+echo "Deployment completed successfully!"

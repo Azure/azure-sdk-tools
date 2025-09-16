@@ -100,7 +100,16 @@ async function initProcessDataAndWriteTspLocation(
   let emitterOutputDir = tspConfigData?.options?.[emitterData.emitter]?.["emitter-output-dir"];
   const packageDir = tspConfigData?.options?.[emitterData.emitter]?.["package-dir"];
   let newPackageDir;
-  if (emitterOutputDir) {
+  if (packageDir) {
+    // Warn that this behavior is deprecated
+    Logger.warn(
+      `Please update your tspconfig.yaml to include the "emitter-output-dir" option under the "${emitterData.emitter}" emitter options. "package-dir" support is deprecated and will be removed in future versions.`,
+    );
+    // If no emitter-output-dir is specified, fall back to the legacy package-dir path resolution for the new package directory
+    newPackageDir = resolve(
+      joinPaths(outputDir, getServiceDir(tspConfigData, emitterData.emitter), packageDir!),
+    );
+  } else if (emitterOutputDir) {
     const [options, _] = await resolveCompilerOptions(NodeHost, {
       cwd: process.cwd(),
       entrypoint: "main.tsp",
@@ -111,15 +120,6 @@ async function initProcessDataAndWriteTspLocation(
     });
     emitterOutputDir = options.options?.[emitterData.emitter]?.["emitter-output-dir"];
     newPackageDir = resolve(emitterOutputDir);
-  } else if (packageDir) {
-    // Warn that this behavior is deprecated
-    Logger.warn(
-      `Please update your tspconfig.yaml to include the "emitter-output-dir" option under the "${emitterData.emitter}" emitter options. "package-dir" support is deprecated and will be removed in future versions.`,
-    );
-    // If no emitter-output-dir is specified, fall back to the legacy package-dir path resolution for the new package directory
-    newPackageDir = resolve(
-      joinPaths(outputDir, getServiceDir(tspConfigData, emitterData.emitter), packageDir!),
-    );
   } else {
     throw new Error(
       `Missing emitter-output-dir in ${emitterData.emitter} options of tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`,
@@ -415,7 +415,9 @@ export async function generateCommand(argv: any) {
     );
   }
 
-  const legacyPathResolution = !tspConfigData?.options?.[emitter]?.["emitter-output-dir"];
+  // Give preference to package-dir if both are specified
+  // This is to avoid breaking existing behavior
+  const legacyPathResolution = tspConfigData?.options?.[emitter]?.["package-dir"];
 
   if (skipInstall) {
     Logger.info("Skipping installation of dependencies");

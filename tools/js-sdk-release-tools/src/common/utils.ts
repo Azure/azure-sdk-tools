@@ -206,7 +206,7 @@ export async function loadTspConfig(typeSpecDirectory: string): Promise<Exclude<
 // generated path is in posix format
 // e.g. sdk/mongocluster/arm-mongocluster
 export async function getGeneratedPackageDirectory(typeSpecDirectory: string, sdkRepoRoot: string): Promise<string> {
-    const tspConfig = await resolveOptions(typeSpecDirectory);
+    const tspConfig = await resolveOptions(typeSpecDirectory, sdkRepoRoot);
     const emitterOptions = tspConfig.options?.[emitterName];
     // Try to get package directory from emitter-output-dir first    
     const emitterOutputDir = emitterOptions?.['emitter-output-dir'];
@@ -322,7 +322,7 @@ export async function existsAsync(path: string): Promise<boolean> {
     }
 }
 
-export async function resolveOptions(typeSpecDirectory: string): Promise<Exclude<any, null | undefined>> {
+export async function resolveOptions(typeSpecDirectory: string, sdkRepoRoot?: string): Promise<Exclude<any, null | undefined>> {
     const [{ config, ...options }, diagnostics] = await compiler.resolveCompilerOptions(
         compiler.NodeHost,
         {
@@ -330,7 +330,7 @@ export async function resolveOptions(typeSpecDirectory: string): Promise<Exclude
             entrypoint: typeSpecDirectory, // not really used here
             configPath: typeSpecDirectory,
             overrides: {
-                outputDir: process.cwd() // This will make outputDir just the current directory without adding 'tsp-output'
+                outputDir: sdkRepoRoot || process.cwd() // Use sdkRepoRoot if provided, otherwise use current directory
             }
         });
     return options

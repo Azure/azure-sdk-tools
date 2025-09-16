@@ -211,10 +211,8 @@ export async function getGeneratedPackageDirectory(typeSpecDirectory: string, sd
     // Try to get package directory from emitter-output-dir first    
     const emitterOutputDir = emitterOptions?.['emitter-output-dir'];
     if (emitterOutputDir) {
-        // emitterOutputDir from resolved options should already be an absolute path
-        // Convert to relative path from sdkRepoRoot for consistency
-        const relativePath = path.relative(sdkRepoRoot, emitterOutputDir);
-        return posix.normalize(relativePath);
+        // emitter-output-dir is an absolute path, return it directly
+        return emitterOutputDir;
     }
 
     let packageDir = tspConfig.configFile.parameters?.["package-dir"]?.default;

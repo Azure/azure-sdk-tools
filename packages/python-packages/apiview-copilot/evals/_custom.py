@@ -17,6 +17,15 @@ from src._settings import SettingsManager
 from src._utils import get_prompt_path
 
 
+def _review_apiview(query: str, language: str):
+    """APIView review target function for evals framework."""
+    from src._apiview_reviewer import ApiViewReview
+    reviewer = ApiViewReview(target=query, language=language, base=None)
+    review = reviewer.run()
+    reviewer.close()
+    return {"actual": review.model_dump_json()}
+
+
 class BaseEvaluator(ABC):
     """Base class for custom evaluators in the evals framework.
     
@@ -48,6 +57,49 @@ class BaseEvaluator(ABC):
                            and other evaluator-specific settings.
         """
         pass
+
+    @property
+    @abstractmethod
+    def target_function(self) -> callable:
+        """Return the target function that generates data for this evaluator."""
+        pass
+
+    @abstractmethod
+    def process_results(self, raw_results: list, guideline_ids: set) -> dict:
+        """Process raw evaluation results into final format.
+        
+        Args:
+            raw_results: List of run results from multiple evaluation runs
+            guideline_ids: Set to collect guideline IDs (modified in place)
+            
+        Returns:
+            dict: Processed results in evaluator-specific format
+        """
+        pass
+
+    @abstractmethod
+    def show_results(self, processed_results: dict) -> None:
+        """Display results in evaluator-specific format.
+        
+        Args:
+            processed_results: Results from process_results method
+        """
+        pass
+
+    def post_process(self, processed_results: dict, language: str, tests_directory: str, test_file: str, guideline_ids: set = None) -> None:
+        """Optional post-processing after results are shown (e.g., baselines, coverage).
+        
+        Override this method if your evaluator needs additional processing like
+        baseline establishment or coverage calculation.
+        
+        Args:
+            processed_results: Results from process_results method
+            language: Programming language being evaluated
+            tests_directory: Path to tests directory
+            test_file: Name of test file being run
+            guideline_ids: Set of guideline IDs collected during evaluation (optional)
+        """
+        pass  # Default: no post-processing
 
 
 class CustomAPIViewEvaluator(BaseEvaluator):
@@ -84,6 +136,11 @@ class CustomAPIViewEvaluator(BaseEvaluator):
                 "context": "${data.context}",
             },
         }
+    
+    @property
+    def target_function(self) -> callable:
+        """Return the APIView review function."""
+        return _review_apiview
 
     def _calculate_overall_score(self, review_eval: dict[str, Any]) -> float:
         """Calculate the overall score based on the review evaluation metrics."""
@@ -249,6 +306,230 @@ class CustomAPIViewEvaluator(BaseEvaluator):
         }
         review_eval["score"] = self._calculate_overall_score(review_eval)
         return review_eval
+
+    def post_process(self, processed_results: dict, language: str, tests_directory: str, test_file: str, guideline_ids: set = None) -> None:
+        """APIView-specific post-processing: baselines and coverage."""
+        self._establish_baseline(processed_results, language, tests_directory)
+        
+        # Only calculate coverage if all tests were run and we have guideline_ids
+        if test_file == "all" and guideline_ids is not None:
+            self._calculate_coverage(guideline_ids, language, tests_directory)
+
+    def process_results(self, raw_results: list, guideline_ids: set) -> dict:
+        """Process  evaluation results for APIView evaluator."""
+        all_results = {}
+        
+        for run_result_data in raw_results:
+            for file_name, result in run_result_data.items():
+                if file_name not in all_results:
+                    all_results[file_name] = []
+                
+                run_result = self._record_run_result(result, guideline_ids)
+                all_results[file_name].append(run_result)
+        
+        # take the median run based on average score
+        final_results = {}
+        for file_name, run_results_list in all_results.items():
+            median_result = sorted(run_results_list, key=lambda x: x[-1]["average_score"])[len(run_results_list) // 2]
+            final_results[file_name] = median_result
+            
+        return final_results
+
+    def _record_run_result(self, result: dict, guideline_ids: set) -> list:
+        """Process a single run result (same logic as original)."""
+        import json
+        
+        run_result = []
+        total_score = 0
+
+        for row in result["rows"]:
+            # Use the score calculated by the evaluator itself
+            score = row["outputs.metrics.score"]
+            total_score += score
+            rules = [rule["guideline_ids"] for rule in json.loads(row["inputs.response"])["comments"]]
+            guideline_ids.update(*rules)
+
+            run_result.append(
+                {
+                    "testcase": row["inputs.testcase"],
+                    "expected": json.loads(row["inputs.response"]),
+                    "actual": json.loads(row["outputs.actual"]),
+                    "expected_comments": row["outputs.metrics.expected_comments"],
+                    "comments_found": row["outputs.metrics.comments_found"],
+                    "valid_generic_comments": row["outputs.metrics.valid_generic_comments"],
+                    "invalid_generic_comments": row["outputs.metrics.invalid_generic_comments"],
+                    "true_positives": row["outputs.metrics.true_positives"],
+                    "false_positives": row["outputs.metrics.false_positives"],
+                    "false_negatives": row["outputs.metrics.false_negatives"],
+                    "percent_coverage": row["outputs.metrics.percent_coverage"],
+                    "rule_matches_wrong_line": row["outputs.metrics.rule_matches_wrong_line"],
+                    "wrong_line_details": row["outputs.metrics.wrong_line_details"],
+                    "fuzzy_matches": row["outputs.metrics.fuzzy_matches"],
+                    "similarity": row["outputs.metrics.similarity"],
+                    "groundedness": row["outputs.metrics.groundedness"],
+                    "groundedness_reason": row["outputs.metrics.groundedness_reason"],
+                    "overall_score": score,
+                }
+            )
+        average_score = total_score / len(result["rows"])
+        run_result.append({"average_score": average_score, "total_evals": len(result["rows"])})
+        return run_result
+
+    def show_results(self, processed_results: dict) -> None:
+        """Display APIView results in table format."""
+        import json
+        import pathlib
+        from tabulate import tabulate
+        
+        for name, test_results in processed_results.items():
+            baseline_results = {}
+            baseline_path = pathlib.Path(__file__).parent / "results" / "python" / name[:-1]  # TODO: make language dynamic
+
+            if baseline_path.exists():
+                with open(baseline_path, "r", encoding="utf-8") as f:
+                    baseline_data = json.load(f)
+                    for result in baseline_data[:-1]:  # Skip summary
+                        baseline_results[result["testcase"]] = result
+                        try:
+                            baseline_results["average_score"] = baseline_data[-1]["average_score"]
+                        except KeyError:
+                            baseline_results["average_score"] = 0.0
+
+            self._output_table(baseline_results, test_results, name)
+
+    def _establish_baseline(self, processed_results: dict, language: str, tests_directory: str) -> None:
+        """Establish baseline for APIView evaluator."""
+        import json
+        import pathlib
+        import os
+        
+        # only ask if we're not in CI
+        if not bool(os.getenv("TF_BUILD")):
+            establish_baseline = input("\nDo you want to establish this as the new baseline? (y/n): ")
+            if establish_baseline.lower() == "y":
+                for name, result in processed_results.items():
+                    output_path = pathlib.Path(tests_directory).parent / "results" / language / name[:-1]
+                    output_path.parent.mkdir(parents=True, exist_ok=True)
+                    with open(str(output_path), "w", encoding="utf-8") as f:
+                        json.dump(result, indent=4, fp=f)
+
+        # whether or not we establish a baseline, we want to write results to a temp dir
+        log_path = pathlib.Path(tests_directory).parent / "results" / language / ".log"
+        if not log_path.exists():
+            log_path.mkdir(parents=True, exist_ok=True)
+
+        for name, result in processed_results.items():
+            output_path = log_path / name[:-1]
+            with open(str(output_path), "w", encoding="utf-8") as f:
+                json.dump(result, indent=4, fp=f)
+
+    def _calculate_coverage(self, guideline_ids: set, language: str, tests_directory: str) -> None:
+        """Calculate coverage for APIView evaluator."""
+        import json
+        import pathlib
+        
+        # only update coverage if all tests are run (this logic might need to be passed in)
+        output_path = pathlib.Path(tests_directory).parent / "results" / language / "coverage.json"
+        guidelines_path = pathlib.Path(tests_directory).parent.parent / "guidelines" / language
+        guidelines = []
+        for file in guidelines_path.glob("*.json"):
+            with open(file, "r", encoding="utf-8") as f:
+                guidelines.extend(json.loads(f.read()))
+        guideline_rule_ids = [rule["id"] for rule in guidelines]
+        difference = set(guideline_rule_ids).difference(guideline_ids)
+        
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(str(output_path), "w+", encoding="utf-8") as f:
+            f.write(
+                json.dumps(
+                    {
+                        "tested": list(guideline_ids),
+                        "not_tested": list(difference),
+                        "coverage": len(guideline_ids) / len(guideline_rule_ids) * 100,
+                    },
+                    indent=4,
+                )
+            )
+        print(f"\nTest coverage for {language}: {len(guideline_ids) / len(guideline_rule_ids) * 100:.2f}%")
+
+    def _format_terminal_diff(self, new: float, old: float, format_str: str = ".1f", reverse: bool = False) -> str:
+        """Format difference with ANSI colors for terminal output."""
+        diff = new - old
+        if diff > 0:
+            if reverse:
+                return f" (\033[31m+{diff:{format_str}}\033[0m)"  # Red
+            return f" (\033[32m+{diff:{format_str}}\033[0m)"  # Green
+        elif diff < 0:
+            if reverse:
+                return f" (\033[32m{diff:{format_str}}\033[0m)"  # Green
+            return f" (\033[31m{diff:{format_str}}\033[0m)"  # Red
+        return f" ({diff:{format_str}})"
+
+    def _output_table(self, baseline_results: dict, eval_results: list, file_name: str) -> None:
+        """Output results table for APIView evaluator."""
+        from tabulate import tabulate
+        
+        headers = [
+            "Test Case",
+            "Score",
+            "Violations found",
+            "Exact matches (TP)",
+            "Valid generic comments",
+            "Fuzzy matches",
+            "False positives (FP)",
+            "Groundedness",
+            "Similarity",
+        ]
+        terminal_rows = []
+
+        for result in eval_results[:-1]:  # Skip summary object
+            testcase = result["testcase"]
+            score = result["overall_score"]
+            exact = result["true_positives"]
+            rule = result["rule_matches_wrong_line"]
+            fp = result["false_positives"]
+            ground = result["groundedness"]
+            sim = result["similarity"]
+            valid_generic = result["valid_generic_comments"]
+            comments_found = f"{result['comments_found']} / {result['expected_comments']}"
+
+            terminal_row = [testcase]
+            if testcase in baseline_results:
+                base = baseline_results[testcase]
+                terminal_row.extend(
+                    [
+                        f"{score:.1f}{self._format_terminal_diff(score, base['overall_score'])}",
+                        comments_found,
+                        f"{exact}{self._format_terminal_diff(exact, base['true_positives'], 'd')}",
+                        f"{valid_generic}{self._format_terminal_diff(valid_generic, base['valid_generic_comments'], 'd')}",
+                        f"{rule}{self._format_terminal_diff(rule, base['rule_matches_wrong_line'], 'd')}",
+                        f"{fp}{self._format_terminal_diff(fp, base['false_positives'], 'd', reverse=True)}",
+                        f"{ground:.1f}{self._format_terminal_diff(ground, base['groundedness'])}",
+                        f"{sim:.1f}{self._format_terminal_diff(sim, base['similarity'])}",
+                    ]
+                )
+            else:
+                values = [
+                    f"{score:.1f}",
+                    comments_found,
+                    f"{exact}",
+                    f"{valid_generic}",
+                    str(rule),
+                    str(fp),
+                    f"{ground:.1f}",
+                    f"{sim:.1f}",
+                ]
+                terminal_row.extend(values)
+
+            terminal_rows.append(terminal_row)
+
+        print("====================================================")
+        print(f"\n\n✨ {file_name} results:\n")
+        print(tabulate(terminal_rows, headers, tablefmt="simple"))
+        if baseline_results:
+            print(
+                f"\n{file_name} average score: {eval_results[-1]['average_score']} {self._format_terminal_diff(eval_results[-1]['average_score'], baseline_results['average_score'])}\n\n"
+            )
 
 
 # Registry of available evaluators

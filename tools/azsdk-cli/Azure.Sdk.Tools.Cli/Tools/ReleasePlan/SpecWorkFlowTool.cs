@@ -337,12 +337,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 var sdkPullRequestUrl = releasePlan?.SDKInfo.FirstOrDefault(s => s.Language == language)?.SdkPullRequestUrl;
                 if (!string.IsNullOrEmpty(sdkPullRequestUrl))
                 {
-                    var uri = new Uri(sdkPullRequestUrl);
-                    var segments = uri.Segments;
-                    string repoOwner = segments[1].TrimEnd('/');
-                    string repoName = segments[2].TrimEnd('/');
-                    int sdkPullRequestNumber = int.Parse(segments[4].TrimEnd('/'));
-                    var sdkPullRequest = await githubService.GetPullRequestAsync(repoOwner, repoName, sdkPullRequestNumber);
+                    var parsedUrl = DevOpsService.ParseSDKPullRequestUrl(sdkPullRequestUrl);
+                    var sdkPullRequest = await githubService.GetPullRequestAsync(parsedUrl.RepoOwner, parsedUrl.RepoName, parsedUrl.PrNumber);
                     if (sdkPullRequest is not null && sdkPullRequest.State != "closed" && sdkPullRequest.Merged == false)
                     {
                         sdkRepoBranch = sdkPullRequest.Head.Ref;

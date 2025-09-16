@@ -230,12 +230,12 @@ system:
   - You must output the following schema, but NO DOT includes the ```json or ``` tags:
   ```json
   {
-    "is_valid": boolean,
+    "action": string,
     "rationale": string
   }
   ```
-  - `is_valid` should be `true` if the comment is consistent with the context, or `false` if it contradicts the context.
-  - `rationale` should explain why the comment is valid or invalid, referencing relevant parts of the context
+  - `action` should be `KEEP` if the comment is consistent with the context, or `DISCARD` if it contradicts the context.
+  - `rationale` should explain why the comment should be kept or rejected, referencing relevant parts of the context
 
 user:
   Please judge the following {{language}} comment:
@@ -245,6 +245,3 @@ user:
   Check if it aligns with or contradicts the provided context:
   # CONTEXT
   {{context}}
-
-  # OUTPUT
-  Out using the schema provided.

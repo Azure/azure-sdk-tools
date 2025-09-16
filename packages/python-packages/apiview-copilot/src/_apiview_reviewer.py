@@ -488,10 +488,16 @@ class ApiViewReview:
                         f"Error judging comment at index {idx}: Invalid JSON response: {repr(response)} | {str(je)}"
                     )
                     continue
-                if response_json.get("is_valid") is True:
+                if response_json.get("action") == "DISCARD":
+                    discard_results.append(response_json)
+                elif response_json.get("action") == "KEEP":
                     keep_results.append(response_json)
                 else:
-                    discard_results.append(response_json)
+                    # log an error but keep the comment to be safe
+                    self.logger.error(
+                        f"Error judging comment at index {idx}: Unknown action in response: {repr(response)}"
+                    )
+                    keep_results.append(response_json)
             except Exception as e:
                 self.logger.error(f"Error judging comment at index {idx}: {str(e)}")
             percent = int(((progress_idx + 1) / total) * 100) if total else 100
@@ -512,10 +518,14 @@ class ApiViewReview:
                 # combine the comment and result info
                 comment_dict = self.results.comments[result["idx"]].model_dump()
                 comment = {**comment_dict, **result}
-                if result.get("is_valid") is True:
+                if result.get("action") == "KEEP":
                     keep_comments.append(comment)
-                else:
+                elif result.get("action") == "DISCARD":
                     discard_comments.append(comment)
+                else:
+                    # should not happen, but log just in case
+                    self.logger.error(f"Unexpected action in judged comment: {result}")
+                    keep_comments.append(comment)
             ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             debug_dir = os.path.join("scratch", "logs", self.language)
             os.makedirs(debug_dir, exist_ok=True)

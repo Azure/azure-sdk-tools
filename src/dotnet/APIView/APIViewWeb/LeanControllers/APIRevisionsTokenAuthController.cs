@@ -135,7 +135,6 @@ public class APIRevisionsTokenAuthController : ControllerBase
         }
     }
 
-
     [HttpGet("{reviewId}/getReviewVersions", Name = "GetReviewVersions")]
     public async Task<ActionResult<string>> GetReviewVersions(string reviewId)
     {

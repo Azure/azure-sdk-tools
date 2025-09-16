@@ -158,8 +158,6 @@ public class APIViewTool : MCPTool
         }
     }
 
-
-
     [McpServerTool(Name = "azsdk_apiview_check_authentication")]
     [Description("Check APIView authentication status and available credentials")]
     public async Task<APIViewResponse> CheckAuthentication(string? environment = null)
@@ -230,8 +228,6 @@ public class APIViewTool : MCPTool
             return new APIViewResponse { ResponseError = $"Failed to get review revisions: {ex.Message}" };
         }
     }
-
-
 
     private async Task<APIViewResponse> GetRevisionComments(InvocationContext ctx, CancellationToken ct)
     {

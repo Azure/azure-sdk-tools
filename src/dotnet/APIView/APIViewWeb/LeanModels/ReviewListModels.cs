@@ -158,7 +158,6 @@ namespace APIViewWeb.LeanModels
         public bool IsDeleted { get; set; }
     }
 
-
     public class RevisionResponseModel
     {
         public string RevisionId { get; set; }

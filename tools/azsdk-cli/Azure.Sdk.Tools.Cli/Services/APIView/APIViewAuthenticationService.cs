@@ -141,7 +141,6 @@ To get a GitHub token:
         }
     }
 
-
     public bool IsAuthenticationFailure(string content)
     {
         return content.Contains("Account/Login") ||
@@ -221,8 +220,6 @@ To get a GitHub token:
 
         return JsonSerializer.Serialize(status, new JsonSerializerOptions { WriteIndented = true });
     }
-
-
     private string? GetGitHubToken()
     {
         string? githubToken = Environment.GetEnvironmentVariable(APIViewConfiguration.GitHubTokenEnvironmentVariable);

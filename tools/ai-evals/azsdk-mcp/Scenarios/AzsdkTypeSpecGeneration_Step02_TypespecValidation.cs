@@ -1,12 +1,12 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using AwesomeAssertions;
-using Azure.Sdk.Tools.Cli.Evaluations.Evaluators;
-using Azure.Sdk.Tools.Cli.Evaluations.Helpers;
-using Azure.Sdk.Tools.Cli.Evaluations.Models;
+using azsdk_mcp.Evaluators;
+using azsdk_mcp.Helpers;
+using azsdk_mcp.Models;
 using Microsoft.Extensions.AI.Evaluation;
 using Microsoft.Extensions.AI.Evaluation.Reporting;
 
-namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
+namespace azsdk_mcp.Scenarios
 {
     public partial class Scenario
     {

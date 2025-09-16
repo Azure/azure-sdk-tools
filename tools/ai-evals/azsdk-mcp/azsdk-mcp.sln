@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.14.36408.4
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.Sdk.Tools.Cli.Evaluations", "Azure.Sdk.Tools.Cli.Evaluations.csproj", "{A838A023-31B9-4B04-91D5-58863544C4E6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "azsdk-mcp", "azsdk-mcp.csproj", "{A838A023-31B9-4B04-91D5-58863544C4E6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

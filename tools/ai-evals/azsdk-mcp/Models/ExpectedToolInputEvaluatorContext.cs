@@ -1,7 +1,7 @@
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.AI.Evaluation;
 
-namespace Azure.Sdk.Tools.Cli.Evaluations.Models
+namespace azsdk_mcp.Models
 {
     public class ExpectedToolInputEvaluatorContext(IEnumerable<ChatMessage> messages)
         : EvaluationContext(name: ExpectedResultContextName, content: String.Join(",", messages))

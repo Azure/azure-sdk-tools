@@ -1,7 +1,7 @@
 using System.Text.Json;
-using Azure.Sdk.Tools.Cli.Evaluations.Models;
+using azsdk_mcp.Models;
 
-namespace Azure.Sdk.Tools.Cli.Evaluations.Helpers
+namespace azsdk_mcp.Helpers
 {
     public static class SerializationHelper
     {

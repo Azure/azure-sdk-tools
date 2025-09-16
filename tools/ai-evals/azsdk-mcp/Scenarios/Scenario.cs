@@ -1,9 +1,9 @@
-using Azure.Sdk.Tools.Cli.Evaluations.Helpers;
+using azsdk_mcp.Helpers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.Extensions.AI;
 using ModelContextProtocol.Client;
 
-namespace Azure.Sdk.Tools.Cli.Evaluations.Scenarios
+namespace azsdk_mcp.Scenarios
 {
     [TestClass]
     public partial class Scenario

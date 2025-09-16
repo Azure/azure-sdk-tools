@@ -39,7 +39,7 @@ extends:
                 displayName: 'check python'
               - task: AzureCLI@2
                 inputs:
-                  azureSubscription: 'azsdkqabot'
+                  azureSubscription: 'azuresdkqabot'
                   addSpnToEnvironment: true
                   scriptType: bash
                   scriptLocation: inlineScript

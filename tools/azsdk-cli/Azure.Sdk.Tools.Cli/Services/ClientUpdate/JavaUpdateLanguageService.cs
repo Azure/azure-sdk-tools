@@ -21,9 +21,9 @@ public class JavaUpdateLanguageService : ClientUpdateLanguageServiceBase
 
     private const string CustomizationDirName = "customization";
 
-    public override Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath)
+    public override Task<List<ApiChange>> ComputeApiChanges(string rawUnifiedDiff)
     {
-        // TODO: implement file-level diff between oldGenerationPath and newGenerationPath.
+        // TODO: parse rawUnifiedDiff to produce semantic ApiChanges
         return Task.FromResult(new List<ApiChange>());
     }
 

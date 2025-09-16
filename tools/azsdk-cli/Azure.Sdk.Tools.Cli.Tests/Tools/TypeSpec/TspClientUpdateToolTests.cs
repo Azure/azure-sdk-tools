@@ -32,7 +32,7 @@ public class TspClientUpdateToolAutoTests
     private class MockNoChangeLanguageService : IClientUpdateLanguageService
     {
         public string SupportedLanguage => "java";
-        public Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath) => Task.FromResult(new List<ApiChange>());
+        public Task<List<ApiChange>> ComputeApiChanges(string rawUnifiedDiff) => Task.FromResult(new List<ApiChange>());
         public Task<string?> GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct) => Task.FromResult<string?>(null); // none
         public Task<List<CustomizationImpact>> AnalyzeCustomizationImpactAsync(ClientUpdateSessionState session, string customizationRoot, IEnumerable<ApiChange> apiChanges, CancellationToken ct) => Task.FromResult(new List<CustomizationImpact>());
         public Task<List<PatchProposal>> ProposePatchesAsync(ClientUpdateSessionState session, IEnumerable<CustomizationImpact> impacts, CancellationToken ct) => Task.FromResult(new List<PatchProposal>());
@@ -44,7 +44,7 @@ public class TspClientUpdateToolAutoTests
     private class MockChangeLanguageService : IClientUpdateLanguageService
     {
         public string SupportedLanguage => "java";
-        public Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath)
+        public Task<List<ApiChange>> ComputeApiChanges(string rawUnifiedDiff)
             => Task.FromResult(new List<ApiChange> {
                 new ApiChange { Kind = "MethodAdded", Symbol = "S1", Detail = "Added method S1" }
             });
@@ -103,7 +103,7 @@ public class TspClientUpdateToolAutoTests
         private readonly Func<int> _next;
         public TestLanguageServiceFailThenFix(Func<int> next) { _next = next; }
         public string SupportedLanguage => "java";
-        public Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath) => Task.FromResult(new List<ApiChange>());
+        public Task<List<ApiChange>> ComputeApiChanges(string rawUnifiedDiff) => Task.FromResult(new List<ApiChange>());
         public Task<string?> GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct) => Task.FromResult<string?>(null);
         public Task<List<CustomizationImpact>> AnalyzeCustomizationImpactAsync(ClientUpdateSessionState session, string? customizationRoot, IEnumerable<ApiChange> apiChanges, CancellationToken ct) => Task.FromResult(new List<CustomizationImpact>());
         public Task<List<PatchProposal>> ProposePatchesAsync(ClientUpdateSessionState session, IEnumerable<CustomizationImpact> impacts, CancellationToken ct) => Task.FromResult(new List<PatchProposal>());

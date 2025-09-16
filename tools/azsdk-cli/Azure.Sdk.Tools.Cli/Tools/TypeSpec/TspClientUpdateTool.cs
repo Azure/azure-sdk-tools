@@ -116,7 +116,7 @@ public class TspClientUpdateTool : MCPTool
         // Now after regeneration, we have old generated at packagePath, new generation at regenDir to perform a diff
 
         var gitDiff = GetGitDiff(packagePath, session.NewGeneratedPath);
-        var apiChanges = await languageService.DiffAsync(packagePath, session.NewGeneratedPath);
+        var apiChanges = await languageService.ComputeApiChanges(gitDiff);
         session.LastStage = UpdateStage.Diffed;
 
         if (apiChanges.Count == 0)

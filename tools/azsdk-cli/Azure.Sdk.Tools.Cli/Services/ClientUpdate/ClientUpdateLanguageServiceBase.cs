@@ -33,13 +33,11 @@ public abstract class ClientUpdateLanguageServiceBase : IClientUpdateLanguageSer
     public abstract string SupportedLanguage { get; }
 
     /// <summary>
-    /// Produces a semantic API change list between an older generated package and a newly generated package.
+    /// Produces a semantic API change list between an older generated package and a newly generated package using precomputed git diff artifacts.
+    /// <param name="rawUnifiedDiff">Full unified diff text (can be empty when no changes).</param>
     /// </summary>
-    /// <param name="oldGenerationPath">File-system path to the previously generated client code ("old" baseline).</param>
-    /// <param name="newGenerationPath">File-system path to the newly generated client code ("new" candidate).</param>
     /// <returns>A list of <see cref="ApiChange"/> instances describing added / removed / modified surface area. Empty list means no detectable API changes.</returns>
-    /// <remarks>Implementations are responsible for any parsing / compilation needed to compute differences.</remarks>
-    public abstract Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath);
+    public abstract Task<List<ApiChange>> ComputeApiChanges(string rawUnifiedDiff);
     /// <summary>
     /// Locates the root directory containing user customizations that extend or wrap the generated code for the given session.
     /// </summary>
@@ -53,7 +51,7 @@ public abstract class ClientUpdateLanguageServiceBase : IClientUpdateLanguageSer
     /// </summary>
     /// <param name="session">Active update session state.</param>
     /// <param name="customizationRoot">Path returned by <see cref="GetCustomizationRootAsync"/>, or <c>null</c> if none.</param>
-    /// <param name="apiChanges">Sequence of API changes produced by <see cref="DiffAsync"/>.</param>
+    /// <param name="apiChanges">Sequence of API changes produced by <see cref="ComputeApiChanges"/>.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>A list of <see cref="CustomizationImpact"/> entries describing how each change affects customization code. Empty list means no impacts.</returns>
     public abstract Task<List<CustomizationImpact>> AnalyzeCustomizationImpactAsync(ClientUpdateSessionState session, string? customizationRoot, IEnumerable<ApiChange> apiChanges, CancellationToken ct);

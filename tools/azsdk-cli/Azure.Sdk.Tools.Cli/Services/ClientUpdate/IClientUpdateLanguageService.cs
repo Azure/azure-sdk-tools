@@ -20,17 +20,17 @@ public interface IClientUpdateLanguageService
     string SupportedLanguage { get; }
 
     /// <summary>
-    /// Produces an API change list by diffing file contents between two generated source trees.
-    /// Implementations may perform a structural or textual diff; when <paramref name="oldGenerationPath"/> is null
-    /// they should treat the operation as an initial generation (returning an empty change list).
+    /// Produces a semantic API change list using the already captured raw git diff output.
+    /// The tool layer is responsible for executing:
+    ///   - Derive high-level API changes (e.g., ClassAdded, MethodRemoved, ParameterRenamed, ReturnTypeChanged)
+    ///   - Avoid emitting purely textual changes that do not affect API surface
     /// </summary>
-    /// <param name="oldGenerationPath">Previous generation</param>
-    /// <param name="newGenerationPath">New/current generation root.</param>
-    /// <returns>List of detected API changes (empty if no differences).</returns>
-    Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath);
+    /// <param name="rawUnifiedDiff">Full unified diff text (can be empty when no changes).</param>
+    /// <returns>List of detected API changes (empty if no semantic differences).</returns>
+    Task<List<ApiChange>> ComputeApiChanges(string rawUnifiedDiff);
 
     /// <summary>
-    /// Locates the customization (hand-authored) root directory for the language, if any.
+    /// Locates the customization root directory for the language, if any.
     /// </summary>
     /// <param name="session">Current update session state.</param>
     /// <param name="generationRoot">Root folder of newly generated sources (e.g. a <c>src</c> directory).</param>
@@ -43,7 +43,7 @@ public interface IClientUpdateLanguageService
     /// </summary>
     /// <param name="session">Current update session.</param>
     /// <param name="customizationRoot">Customization root (may be <c>null</c> for languages without customizations).</param>
-    /// <param name="apiChanges">Sequence of API changes from <see cref="DiffAsync"/>.</param>
+    /// <param name="apiChanges">Sequence of API changes from <see cref="ComputeApiChanges"/>.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>List of impacted customization descriptors (empty if none).</returns>
     Task<List<CustomizationImpact>> AnalyzeCustomizationImpactAsync(ClientUpdateSessionState session, string? customizationRoot, IEnumerable<ApiChange> apiChanges, CancellationToken ct);

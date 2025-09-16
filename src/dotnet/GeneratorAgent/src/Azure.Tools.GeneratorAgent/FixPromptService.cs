@@ -68,13 +68,6 @@ namespace Azure.Tools.GeneratorAgent
             return AppSettings.AgentInstructions + string.Format(AppSettings.FixPromptTemplate, allFixInstructions, allContexts);
         }
 
-
-
-
-
-
-
-
         /// <summary>
         /// Converts a single Fix into a formatted prompt for the AI agent
         /// </summary>

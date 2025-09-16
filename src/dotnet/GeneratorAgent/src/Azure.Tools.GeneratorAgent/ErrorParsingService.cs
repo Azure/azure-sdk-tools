@@ -105,15 +105,6 @@ namespace Azure.Tools.GeneratorAgent
             var fixes = ErrorAnalyzerService.GetFixes(errorList);
             var materializedFixes = fixes.ToList();
             
-            if (Logger.IsEnabled(LogLevel.Debug))
-            {
-                Logger.LogDebug("Generated {FixCount} fixes:", materializedFixes.Count);
-                foreach (var fix in materializedFixes)
-                {
-                    Logger.LogDebug("  - {FixType}: {Action}", fix.GetType().Name, fix.Action);
-                }
-            }
-            
             return Result<IEnumerable<Fix>>.Success(materializedFixes);
         }
     }

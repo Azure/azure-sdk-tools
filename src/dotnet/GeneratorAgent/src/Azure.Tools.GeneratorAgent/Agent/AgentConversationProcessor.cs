@@ -60,11 +60,6 @@ namespace Azure.Tools.GeneratorAgent.Agent
 
         public async Task<Result<string>> FixCodeAsync(List<Fix> fixes, FixPromptService fixPromptService, CancellationToken cancellationToken = default)
         {
-            if (Logger.IsEnabled(LogLevel.Debug))
-            {
-                Logger.LogDebug("Processing {Count} fixes with agent", fixes.Count);
-            }
-
             // Create single comprehensive prompt for all fixes
             var batchPrompt = fixPromptService.ConvertFixesToBatchPrompt(fixes);
 

@@ -1,0 +1,23 @@
+namespace Azure.Sdk.Tools.Cli.Services.APIView;
+
+public static class APIViewConfiguration
+{
+    public const string UserAgent = "Azure-SDK-Tools-MCP";
+    public const string GitHubTokenEnvironmentVariable = "GITHUB_TOKEN";
+    public const string GitHubCliCommand = "gh auth status --show-token";
+    public const string GitHubTokenRegex = @"Token:\s(?<token>[_a-zA-Z0-9]+)";
+
+    public static readonly Dictionary<string, string> BaseUrlEndpoints = new()
+    {
+        { "production", "https://apiview.dev" },
+        { "staging", "https://apiviewstagingtest.com" },
+        { "local", "http://localhost:5000" }
+    };
+
+    public static readonly Dictionary<string, string> ApiViewScopes = new()
+    {
+        { "production", "api://apiview/.default" },
+        { "staging", "api://apiviewstaging/.default" },
+        { "local", "api://apiviewstaging/.default" }
+    };
+}

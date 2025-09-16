@@ -23,14 +23,11 @@ namespace APIViewWeb.LeanControllers
     {
         private readonly IReviewManager _reviewManager;
         private readonly IAPIRevisionsManager _apiRevisionsManager;
-        private readonly ICommentsManager _commentsManager;
         private readonly IBlobCodeFileRepository _codeFileRepository;
         private readonly IConfiguration _configuration;
         public readonly UserProfileCache _userProfileCache;
         private readonly IHubContext<SignalRHub> _signalRHubContext;
         private readonly INotificationManager _notificationManager;
-        private readonly IEnumerable<LanguageService> _languageServices;
-        private readonly IWebHostEnvironment _env;
 
         public ReviewsController(ILogger<ReviewsController> logger,
             IAPIRevisionsManager reviewRevisionsManager, IReviewManager reviewManager,
@@ -42,14 +39,11 @@ namespace APIViewWeb.LeanControllers
         {
             _apiRevisionsManager = reviewRevisionsManager;
             _reviewManager = reviewManager;
-            _commentsManager = commentManager;
             _codeFileRepository = codeFileRepository;
             _configuration = configuration;
             _userProfileCache = userProfileCache;
-            _languageServices = languageServices;
             _signalRHubContext = signalRHub;
             _notificationManager = notificationManager;
-            _env = env;
         }
 
         /// <summary>
@@ -149,66 +143,6 @@ namespace APIViewWeb.LeanControllers
             string userName = User.GetGitHubLogin();
             await _notificationManager.ToggleSubscribedAsync(User, reviewId, state);
             return Ok();
-        }
-
-        ///<summary>
-        ///Retrieve the Content (codeLines and Navigation) of a review
-        ///</summary>
-        ///<param name="reviewId"></param>
-        ///<param name="activeApiRevisionId"></param>
-        /// <param name="diffApiRevisionId"></param>
-        ///<returns></returns>
-        [Route("{reviewId}/content")]
-        [HttpGet]
-        public async Task<ActionResult<CodePanelData>> GetReviewContentAsync(string reviewId, [FromQuery] string activeApiRevisionId,
-            [FromQuery] string diffApiRevisionId = null)
-        {
-            var activeAPIRevision = await _apiRevisionsManager.GetAPIRevisionAsync(User, activeApiRevisionId);
-            APIRevisionListItemModel diffAPIRevision = null;
-
-            if (activeAPIRevision.IsDeleted)
-            {
-                return new LeanJsonResult(null, StatusCodes.Status204NoContent);
-            }
-
-            if (!string.IsNullOrEmpty(diffApiRevisionId))
-            {
-                diffAPIRevision = await _apiRevisionsManager.GetAPIRevisionAsync(User, diffApiRevisionId);
-
-                if (diffAPIRevision.IsDeleted) 
-                {
-                    return new LeanJsonResult(null, StatusCodes.Status204NoContent);
-                }
-            }
-
-            if (activeAPIRevision.Files[0].ParserStyle == ParserStyle.Tree)
-            {
-                var comments = await _commentsManager.GetCommentsAsync(reviewId, commentType: CommentType.APIRevision);
-                var activeRevisionReviewCodeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(revisionId: activeAPIRevision.Id, codeFileId: activeAPIRevision.Files[0].FileId);
-
-                if (activeRevisionReviewCodeFile.ContentGenerationInProgress)
-                {
-                    var languageServices = LanguageServiceHelpers.GetLanguageService(activeAPIRevision.Language, _languageServices);
-                    return new LeanJsonResult("Content generation in progress", StatusCodes.Status202Accepted, languageServices.ReviewGenerationPipelineUrl);
-                }
-
-                var codePanelRawData = new CodePanelRawData()
-                {
-                    activeRevisionCodeFile = activeRevisionReviewCodeFile,
-                    Comments = comments
-                };
-
-                if (diffAPIRevision != null)
-                {
-                    codePanelRawData.diffRevisionCodeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(revisionId: diffAPIRevision.Id, codeFileId: diffAPIRevision.Files[0].FileId);
-                }
-
-                // Render the code files to generate UI token tree
-                var result = await CodeFileHelpers.GenerateCodePanelDataAsync(codePanelRawData);
-                return new LeanJsonResult(result, StatusCodes.Status200OK);
-            }
-
-            return new LeanJsonResult("Invalid APIRevision", StatusCodes.Status500InternalServerError);
         }
 
         ///<summary>

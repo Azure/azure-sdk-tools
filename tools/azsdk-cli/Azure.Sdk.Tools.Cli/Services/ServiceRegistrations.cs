@@ -2,14 +2,15 @@
 // Licensed under the MIT License.
 using System.Reflection;
 using System.Text.Json;
-using Microsoft.Extensions.Azure;
-using ModelContextProtocol.Server;
 using Azure.AI.OpenAI;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Extensions;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Services.APIView;
 using Azure.Sdk.Tools.Cli.Tools;
+using Microsoft.Extensions.Azure;
+using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Services.ClientUpdate;
 using Azure.Sdk.Tools.Cli.Telemetry;
 
@@ -31,6 +32,11 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IDevOpsConnection, DevOpsConnection>();
             services.AddSingleton<IDevOpsService, DevOpsService>();
             services.AddSingleton<IGitHubService, GitHubService>();
+
+            // APIView Services
+            services.AddSingleton<IAPIViewAuthenticationService, APIViewAuthenticationService>();
+            services.AddSingleton<IAPIViewHttpService, APIViewHttpService>();
+            services.AddSingleton<IAPIViewService, APIViewService>();
 
             // Language Check Services (Composition-based)
             services.AddSingleton<ILanguageChecks, LanguageChecks>();
@@ -66,6 +72,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             services.AddSingleton<IMicroagentHostService, MicroagentHostService>();
 
+            services.AddHttpClient();
             services.AddAzureClients(clientBuilder =>
             {
                 // For more information about this pattern: https://learn.microsoft.com/en-us/dotnet/azure/sdk/dependency-injection

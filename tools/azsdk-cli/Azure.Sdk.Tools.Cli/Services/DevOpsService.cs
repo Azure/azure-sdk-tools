@@ -89,7 +89,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<ReleasePlanDetails> GetReleasePlanForWorkItemAsync(int workItemId);
         public Task<ReleasePlanDetails> GetReleasePlanAsync(string pullRequestUrl);
         public Task<WorkItem> CreateReleasePlanWorkItemAsync(ReleasePlanDetails releasePlan);
-        public Task<Build> RunSDKGenerationPipelineAsync(string branchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId);
+        public Task<Build> RunSDKGenerationPipelineAsync(string branchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId, string sdkRepoBranch = "main");
         public Task<Build> GetPipelineRunAsync(int buildId);
         public Task<string> GetSDKPullRequestFromPipelineRunAsync(int buildId, string language, int workItemId);
         public Task<bool> AddSdkInfoInReleasePlanAsync(int workItemId, string language, string sdkGenerationPipelineUrl, string sdkPullRequestUrl);
@@ -540,7 +540,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             };
         }
 
-        public async Task<Build> RunSDKGenerationPipelineAsync(string branchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId)
+        public async Task<Build> RunSDKGenerationPipelineAsync(string branchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId, string sdkRepoBranch = "main")
         {
             int pipelineDefinitionId = GetPipelineDefinitionId(language);
             if (pipelineDefinitionId == 0)
@@ -550,6 +550,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             var templateParams = new Dictionary<string, string>
             {
+                 { "SdkRepoBranch", sdkRepoBranch},
                  { "ConfigType", "TypeSpec"},
                  { "ConfigPath", $"{typespecProjectRoot}/tspconfig.yaml" },
                  { "ApiVersion", apiVersion },

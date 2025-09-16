@@ -16,11 +16,11 @@ model:
     top_p: 1.0
     stop: []
     max_tokens: 16384
-    response_format: ${file:guideline_result_schema.json}
+    response_format: ${file:comment_result_schema.json}
 sample:
   comments: |
     [{
-      "rule_ids": [
+      "guideline_ids": [
         "python_design.html#python-models-enum-name-uppercase"
       ],
       "line_no": 517, 
@@ -30,7 +30,7 @@ sample:
       "source": "guideline"
     },
     {
-      "rule_ids": [],
+      "guideline_ids": [],
       "line_no": 517, 
       "bad_code": "    tags = 'tags'", 
       "suggestion": "    TAGS = 'tags'", 
@@ -50,7 +50,7 @@ system:
   Ensure that the merged comment maintains the context and intent of the original comments.
   If there are conflicting suggestions, prioritize the one based on the guidelines.
   Use the provided context to enhance the understanding of the comments.
-  Ensure the output maintains all of the rule_ids and line numbers from the original comments.
+  Ensure the output maintains all of the guideline_ids and line numbers from the original comments.
   Regardless of the number of input comments, the output should always be an array of one comment.
 
 user:

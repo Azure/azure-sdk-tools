@@ -213,7 +213,7 @@ def create_test_case(
 
     context = ""
     for violation in expected_contents["comments"]:
-        for rule_id in violation["rule_ids"]:
+        for rule_id in violation["guideline_ids"]:
             for rule in guidelines:
                 if rule["id"] == rule_id:
                     if rule["text"] not in context:

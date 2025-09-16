@@ -391,7 +391,7 @@ class ApiViewReview:
             summary_response = all_futures[summary_tag].result()
             if summary_response:
                 self.summary = Comment(
-                    rule_ids=[],
+                    guideline_ids=[],
                     line_no=1,
                     bad_code="",
                     suggestion=None,
@@ -554,12 +554,12 @@ class ApiViewReview:
         futures = {}
         for line_no, batch in batches.items():
             # Collect all rule IDs for the batch
-            all_rule_ids = set()
+            all_guideline_ids = set()
             for comment in batch:
-                all_rule_ids.update(comment.rule_ids)
+                all_guideline_ids.update(comment.guideline_ids)
 
             # Prepare the context for the prompt
-            context = self.search.guidelines_for_ids(all_rule_ids)
+            context = self.search.guidelines_for_ids(all_guideline_ids)
 
             # Submit the task to the executor
             futures[line_no] = self.executor.submit(

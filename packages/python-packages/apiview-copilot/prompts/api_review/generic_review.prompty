@@ -17,7 +17,7 @@ model:
     presence_penalty: 0
     max_completion_tokens: 80000
     reasoning_effort: "medium"
-    response_format: ${file:generic_result_schema.json}
+    response_format: ${file:comment_result_schema.json}
 sample:
   language: python
   custom_rules: |

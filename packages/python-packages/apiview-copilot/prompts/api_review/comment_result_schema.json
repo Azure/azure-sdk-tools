@@ -1,7 +1,7 @@
 {
   "type": "json_schema",
   "json_schema": {
-    "name": "generic_review_result",
+    "name": "comment_result",
     "strict": true,
     "schema": {
       "type": "object",
@@ -12,6 +12,20 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
+              "guideline_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Unique guideline ID or IDs that were violated."
+              },
+              "memory_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Unique memory ID or IDs that were violated."
+              },
               "line_no": {
                 "type": "integer",
                 "description": "Line number of the violation."
@@ -29,7 +43,14 @@
                 "description": "concise, human-readable description of the issue. DO NOT use code snippets. DO NOT cite line numbers or guideline IDs."
               }
             },
-            "required": ["line_no", "bad_code", "suggestion", "comment"]
+            "required": [
+              "guideline_ids",
+              "memory_ids",
+              "line_no",
+              "bad_code",
+              "suggestion",
+              "comment"
+            ]
           },
           "description": "list of comments if any"
         }

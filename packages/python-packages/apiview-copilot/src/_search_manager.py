@@ -284,9 +284,9 @@ class ContextItem:
 class SearchManager:
     """Manages search operations using Azure Search."""
 
-    def __init__(self, *, language: str, include_general_guidelines: bool = False):
+    def __init__(self, *, language: Optional[str] = None, include_general_guidelines: bool = False):
         self.language = language
-        self.filter_expression = f"language eq '{language}'"
+        self.filter_expression = f"language eq '{language}'" if language else None
         if include_general_guidelines:
             self.filter_expression += " or language eq '' or language eq null"
         self._settings = SettingsManager()
@@ -296,13 +296,18 @@ class SearchManager:
         self.client = SearchClient(
             endpoint=self._search_endpoint, index_name=self._index_name, credential=self._credential
         )
-        self.language_guidelines = self._fetch_language_guidelines(language)
+        self.language_guidelines = self._fetch_language_guidelines(language) if language else None
+
+    def _ensure_language(self):
+        if not self.language:
+            raise ValueError("Language must be specified for searches.")
 
     def _fetch_language_guidelines(self, language: str) -> SearchResult:
         """
         Fetch all language-specific guidelines (kind='guidelines') from Azure Search,
         excluding those tagged 'vague' or 'documentation'.
         """
+        self._ensure_language()
         filter_expr = (
             f"kind eq 'guidelines' and language eq '{language}'"
             " and not tags/any(t: t eq 'vague')"
@@ -317,6 +322,7 @@ class SearchManager:
         Internal method to perform a search on the Azure Search index.
         This method is used by the public search methods to perform the actual search.
         """
+        self._ensure_language()
         result = self.client.search(
             search_text=query,
             filter=filter,
@@ -333,6 +339,7 @@ class SearchManager:
 
     def search_guidelines(self, query: str, *, top: int = 20) -> SearchResult:
         """Searches for guidelines in the Azure Search index."""
+        self._ensure_language()
         filter = "kind eq 'guidelines'"
         if self.filter_expression:
             filter = f"({filter}) and ({self.filter_expression})"
@@ -340,13 +347,15 @@ class SearchManager:
 
     def search_examples(self, query: str, *, top: int = 20) -> SearchResult:
         """Searches for examples in the Azure Search index."""
+        self._ensure_language()
         filter = "kind eq 'examples'"
         if self.filter_expression:
             filter = f"({filter}) and ({self.filter_expression})"
         return self._search(query, filter=filter, top=top)
 
-    def search_api_view_comments(self, query: str, *, top: int = 20) -> SearchResult:
-        """Searches for APIView comments in the Azure Search index."""
+    def search_memories(self, query: str, *, top: int = 20) -> SearchResult:
+        """Search for memories in the Azure Search index."""
+        self._ensure_language()
         filter = "kind eq 'memories'"
         if self.filter_expression:
             filter = f"({filter}) and ({self.filter_expression})"
@@ -358,31 +367,23 @@ class SearchManager:
         """
         return self._search(query, filter=self.filter_expression, top=top)
 
-    def guidelines_for_ids(self, ids: List[str]) -> List[object]:
-        """
-        Retrieves the guidelines for the given IDs from CosmosDB.
-        """
-        ids = list(ids)  # Ensure ids is subscriptable
-        database = get_database_manager()
-        batch_size = 50
-        results = []
-        for i in range(0, len(ids), batch_size):
-            batch = ids[i : i + batch_size]
-            placeholders = ",".join([f"@id{j}" for j in range(len(batch))])
-            # TODO: Omit `isDeleted` from query?
-            query = f"SELECT * FROM c WHERE c.id IN ({placeholders})"
-            parameters = [{"name": f"@id{j}", "value": value} for j, value in enumerate(batch)]
-            items = list(
-                database.guidelines.client.query_items(
-                    query=query,
-                    parameters=parameters,
-                    enable_cross_partition_query=True,
-                )
-            )
-            results.extend([Guideline.model_validate(r) for r in items])
-        return results
+    def search_all_by_id(self, ids: List[str]) -> List[SearchItem]:
+        """Searches for items by their IDs in the Azure Search index."""
+        if not ids:
+            return []
+        escaped = ",".join(id.replace("'", "''") for id in ids)
+        filter = f"search.in(id, '{escaped}', ',')"
+        if self.filter_expression:
+            filter = f"({filter}) and ({self.filter_expression})"
+        result = self.client.search(
+            search_text="*",
+            filter=filter,
+            query_type=QueryType.SIMPLE,
+            top=len(ids),
+        )
+        return list(SearchResult(result).results)
 
-    def build_context(self, items: List[SearchItem]) -> Context:
+    def build_context(self, search_results: List[SearchItem]) -> Context:
         """
         Given a set of items (guidelines, examples, memories), resolve the knowledge graph by traversing
         all related links (related_examples, related_memories, guideline_ids, memory_ids, etc.) using
@@ -391,11 +392,18 @@ class SearchManager:
         database = get_database_manager()
 
         # Partition input items by kind using SearchItem attributes
-        guidelines = {item.id: item for item in items if item.kind == "guidelines"}
-        examples = {item.id: item for item in items if item.kind == "examples"}
-        memories = {item.id: item for item in items if item.kind == "memories"}
+        guidelines = {}
+        examples = {}
+        memories = {}
+        for item in search_results:
+            if item.kind == "guidelines":
+                guidelines[item.id] = item
+            elif item.kind == "examples":
+                examples[item.id] = item
+            elif item.kind == "memories":
+                memories[item.id] = item
         # Save scores for each id
-        scores = {item.id: item.score for item in items if hasattr(item, "score")}
+        scores = {item.id: item.score for item in search_results if hasattr(item, "score")}
 
         # Track seen IDs to avoid cycles
         seen_guideline_ids = set()

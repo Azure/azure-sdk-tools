@@ -455,7 +455,7 @@ class ApiViewReview:
         # Submit each generic comment to the executor for parallel processing
         futures = {}
         for idx, comment in enumerate(self.results.comments):
-            if comment.source != "generic":
+            if comment.is_generic == True:
                 continue
             search_result = self.search.search_all(query=comment.comment)
             context = self.search.build_context(search_result)
@@ -565,11 +565,14 @@ class ApiViewReview:
         for line_no, batch in batches.items():
             # Collect all rule IDs for the batch
             all_guideline_ids = set()
+            all_memory_ids = set()
             for comment in batch:
                 all_guideline_ids.update(comment.guideline_ids)
+                all_memory_ids.update(comment.memory_ids)
 
             # Prepare the context for the prompt
-            context = self.search.guidelines_for_ids(all_guideline_ids)
+            search_results = self.search.search_all_by_id(list(all_guideline_ids.union(all_memory_ids)))
+            context = self.search.build_context(search_results)
 
             # Submit the task to the executor
             futures[line_no] = self.executor.submit(
@@ -601,6 +604,7 @@ class ApiViewReview:
         """
         Run the filter prompt on the comments, processing each comment in parallel.
         """
+        # FIXME: Remove the schema aspect from the prompt and just have the "action" and "rationale" properties
         filter_prompt_file = "comment_filter.prompty"
         filter_prompt_path = get_prompt_path(folder="api_review", filename=filter_prompt_file)
 

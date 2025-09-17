@@ -37,30 +37,23 @@ def test_process_comments_with_validation():
     comments = [
         {
             "guideline_ids": ["guideline-1"],
-            "memory_ids": [],
             "line_no": 1,
             "bad_code": "bad_code1",
             "suggestion": "fix1",
             "comment": "msg1",
-            "source": "test",
         },
         {
             "guideline_ids": ["not-allowed"],
-            "memory_ids": [],
             "line_no": 3,
             "bad_code": "bad_code2",
             "suggestion": "fix2",
             "comment": "msg2",
-            "source": "test",
         },
         {
-            "guideline_ids": [],
-            "memory_ids": [],
             "line_no": 2,
             "bad_code": "good_code",
             "suggestion": "fix3",
             "comment": "msg3",
-            "source": "test",
         },
     ]
     rr = ReviewResult(comments=comments, allowed_ids=allowed_ids, section=section)
@@ -92,30 +85,24 @@ def test_find_line_number_correction():
     comments = [
         {
             "guideline_ids": ["guideline-1"],
-            "memory_ids": [],
             "line_no": 2,  # This is off by one; should be 3
             "bad_code": "    y = 2",
             "suggestion": "    y = 3",
             "comment": "Should use 3 instead of 2",
-            "source": "test",
         },
         {
             "guideline_ids": ["guideline-1"],
-            "memory_ids": [],
             "line_no": 4,  # This is correct
             "bad_code": "    return x + y",
             "suggestion": "    return x - y",
             "comment": "Should subtract instead of add",
-            "source": "test",
         },
         {
             "guideline_ids": ["guideline-1"],
-            "memory_ids": [],
             "line_no": 10,  # This is out of range
             "bad_code": "# end",
             "suggestion": None,
             "comment": "End marker",
-            "source": "test",
         },
     ]
     rr = ReviewResult(comments=comments, allowed_ids=allowed_ids, section=section)
@@ -148,41 +135,33 @@ def test_blank_review_result_and_extend():
     comments1 = [
         {
             "guideline_ids": ["guideline-1"],
-            "memory_ids": [],
             "line_no": 2,
             "bad_code": "foo = 1",
             "suggestion": "foo = 42",
             "comment": "Change foo",
-            "source": "test1",
         },
         {
             "guideline_ids": ["abc-123"],
-            "memory_ids": [],
             "line_no": 2,
             "bad_code": "bar = 2",
             "suggestion": "bar = 22",
             "comment": "Change bar",
-            "source": "test1",
         },
     ]
     comments2 = [
         {
             "guideline_ids": ["bad-rule"],
-            "memory_ids": [],
             "line_no": 1,
             "bad_code": "baz = 3",
             "suggestion": "baz = 33",
             "comment": "Change baz",
-            "source": "test2",
         },
         {
             "guideline_ids": ["guideline-2", "aaa-bbb-ccc"],
-            "memory_ids": [],
             "line_no": 2,
             "bad_code": "qux = 4",
             "suggestion": "qux = 99",
             "comment": "Change qux",
-            "source": "test2",
         },
     ]
     rr_blank = ReviewResult()

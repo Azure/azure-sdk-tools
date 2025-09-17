@@ -26,6 +26,10 @@
                 },
                 "description": "Unique memory ID or IDs that were violated."
               },
+              "is_generic": {
+                "type": "boolean",
+                "description": "True if the comment is a general suggestion not tied to a specific guideline or memory."
+              },
               "line_no": {
                 "type": "integer",
                 "description": "Line number of the violation."
@@ -49,7 +53,8 @@
               "line_no",
               "bad_code",
               "suggestion",
-              "comment"
+              "comment",
+              "is_generic"
             ]
           },
           "description": "list of comments if any"

@@ -17,7 +17,7 @@ import pathlib
 import sys
 import time
 from collections import OrderedDict
-from typing import Optional
+from typing import List, Optional
 
 import colorama
 import requests
@@ -404,16 +404,28 @@ def review_job_get(job_id: str):
 
 
 def search_knowledge_base(
-    language: str,
+    language: Optional[str] = None,
     text: Optional[str] = None,
     path: Optional[str] = None,
     markdown: bool = False,
+    ids: Optional[List[str]] = None,
 ):
     """
     Queries the Search indexes and returns the resulting Cosmos DB
     objects, resolving all links between objects. This result represents
     what the AI reviewer would receive as context in RAG mode.
     """
+    # ensure that if ids is provided, no other parameters are provided
+    if ids:
+        if language or text or path or markdown:
+            raise ValueError("When using `--ids`, do not provide any other parameters.")
+        search = SearchManager()
+        results = search.search_all_by_id(ids)
+        print(json.dumps([result.__dict__ for result in results], indent=2, cls=CustomJSONEncoder))
+        return
+    elif not language:
+        raise ValueError("`--language` is required when `--ids` is not provided.")
+
     if (path and text) or (not path and not text):
         raise ValueError("Provide one of `--path` or `--text`.")
     search = SearchManager(language=language)
@@ -428,6 +440,33 @@ def search_knowledge_base(
         print(md)
     else:
         print(json.dumps(context, indent=2, cls=CustomJSONEncoder))
+
+
+def search_guidelines(ids: list[str]):
+    """
+    Searches the knowledge base for guidelines by their IDs.
+    """
+    search = SearchManager()
+    results = search.search_guidelines_by_ids(ids)
+    print(json.dumps([result.__dict__ for result in results], indent=2, cls=CustomJSONEncoder))
+
+
+def search_memories(ids: list[str]):
+    """
+    Searches the knowledge base for memories by their IDs.
+    """
+    search = SearchManager()
+    results = search.search_memories_by_ids(ids)
+    print(json.dumps([result.__dict__ for result in results], indent=2, cls=CustomJSONEncoder))
+
+
+def search_examples(ids: list[str]):
+    """
+    Searches the knowledge base for examples by their IDs.
+    """
+    search = SearchManager()
+    results = search.search_examples_by_ids(ids)
+    print(json.dumps([result.__dict__ for result in results], indent=2, cls=CustomJSONEncoder))
 
 
 def reindex_search(containers: Optional[list[str]] = None):
@@ -1056,6 +1095,13 @@ class CliCommandsLoader(CLICommandsLoader):
             ac.argument(
                 "markdown",
                 help="Render output as markdown instead of JSON.",
+            )
+            ac.argument(
+                "ids",
+                type=str,
+                nargs="+",
+                help="The IDs to retrieve.",
+                options_list=["--ids"],
             )
         with ArgumentsContext(self, "search reindex") as ac:
             ac.argument(

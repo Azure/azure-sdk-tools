@@ -98,8 +98,11 @@ class Comment(BaseModel):
     Represents a comment in the review result.
     """
 
-    guideline_ids: List[str] = Field(description="Unique guideline ID or IDs that were violated.")
-    memory_ids: List[str] = Field(description="Unique memory ID or IDs that were referenced.")
+    guideline_ids: List[str] = Field(default_factory=list, description="Unique guideline ID or IDs that were violated.")
+    memory_ids: List[str] = Field(default_factory=list, description="Unique memory ID or IDs that were referenced.")
+    is_generic: bool = Field(
+        default=False, description="Whether any portion of the comment was formulated from generic guidance."
+    )
     line_no: int = Field(description="Line number of the comment.")
     bad_code: str = Field(
         description="the original code that was bad, cited verbatim. Should contain a single line of code."
@@ -108,7 +111,6 @@ class Comment(BaseModel):
         description="the suggested code which fixes the bad code. If code is not feasible, a description is fine."
     )
     comment: str = Field(description="the contents of the comment.")
-    source: str = Field(description="unique tag for the prompt that produced the comment.")
 
     def __init__(self, **data):
         super().__init__(**data)

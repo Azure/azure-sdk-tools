@@ -22,9 +22,9 @@ sample:
     {
       "line_no": 4,
       "bad_code": "def foo(self, a: str, b: str, *, c: ..., d: ..., e: ...) -> Foo:",
+      "is_generic": true,
       "suggestion": "def foo(self, a: str, b: str, *, options: FooOptions) -> Foo:",
       "comment": "You have many optional keyword-only arguments. Consider organizing them into a configuration object.",
-      "source": "generic"
     }
   context: |
     > **id:** python_design.html#python-client-constructor-policy-arguments<br>**score:** 69<br>

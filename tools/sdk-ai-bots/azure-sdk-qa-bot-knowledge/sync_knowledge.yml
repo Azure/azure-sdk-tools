@@ -27,10 +27,6 @@ variables:
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
   parameters:
-    sdl:
-      sourceRepositoriesToScan:
-        exclude:
-          - repository: azure-sdk-docs-eng.ms
     stages:
     - stage: SyncKnowledge
       displayName: 'Sync Knowledge Sources'

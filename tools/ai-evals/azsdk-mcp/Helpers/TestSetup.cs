@@ -20,6 +20,10 @@ namespace azsdk_mcp.Helpers
             Environment.GetEnvironmentVariable("LOCAL_MCP_POWERSHELL_SCRIPT_PATH") 
             ?? throw new InvalidOperationException("LOCAL_MCP_POWERSHELL_SCRIPT_PATH environment variable is required");
 
+        public static readonly string CopilotInstructionsPath = 
+            Environment.GetEnvironmentVariable("COPILOT_INSTRUCTIONS_PATH") 
+            ?? throw new InvalidOperationException("COPILOT_INSTRUCTIONS_PATH environment variable is required");
+
         public static VisualStudioCredential GetCredential()
         {
             return new VisualStudioCredential();

@@ -75,8 +75,7 @@ export async function processDailySyncKnowledge(): Promise<void> {
         console.log('Loading existing blob metadata for change detection...');
 
         // Load existing blob metadata for change detection
-        const containerName = process.env.STORAGE_KNOWLEDGE_CONTAINER;
-        const existingBlobs = await blobService.listBlobsWithProperties(containerName);
+        const existingBlobs = await blobService.listBlobsWithProperties();
 
         console.log('Setting up documentation repositories...');
         

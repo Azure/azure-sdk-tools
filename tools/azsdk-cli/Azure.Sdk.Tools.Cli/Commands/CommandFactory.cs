@@ -1,4 +1,5 @@
 using System.CommandLine;
+using Azure.Sdk.Tools.Cli.Commands.HostServer;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.Cli.Tools;
@@ -12,7 +13,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
         /// to initialize whichever MCP tools we need to add to the configuration and pass on to HostTool.
         /// </summary>
         /// <returns></returns>
-        public static RootCommand CreateRootCommand(string[] args, IServiceProvider serviceProvider)
+        public static RootCommand CreateRootCommand(string[] args, IServiceProvider serviceProvider, bool debug = false)
         {
             var rootCommand = new RootCommand("azsdk cli - A Model Context Protocol (MCP) server that facilitates tasks for anyone working with the Azure SDK team.");
             rootCommand.AddOption(SharedOptions.ToolOption);
@@ -29,15 +30,29 @@ namespace Azure.Sdk.Tools.Cli.Commands
             });
             rootCommand.AddGlobalOption(SharedOptions.Format);
 
-            var toolTypes = SharedOptions.GetFilteredToolTypes(args);
+            // Create the MCP server command at the root as the MCP SDK has injected
+            // singletons within WithStdioServerTransport() and will not run
+            // within the DI scope we create for CLI commands.
+            var hostServer = ActivatorUtilities.CreateInstance<HostServerCommand>(serviceProvider);
+            rootCommand.AddCommand(hostServer.GetCommand());
 
+            var toolTypes = SharedOptions
+                                .GetFilteredToolTypes(args)
+                                .Where(t => t.Name != nameof(HostServerCommand));
+
+            // Many services are injected as scoped so they will be unique
+            // per request when running in MCP server mode. Create a base scope
+            // here so we can resolve those services in CLI mode as well.
+            using var scope = serviceProvider.CreateScope();
+            var scopedProvider = scope.ServiceProvider;
             var toolInstances = toolTypes
                 .Select(t =>
                 {
-                    var _tool = (MCPToolBase)ActivatorUtilities.CreateInstance(serviceProvider, t);
+                    var _tool = (MCPToolBase)ActivatorUtilities.CreateInstance(scopedProvider, t);
                     _tool.Initialize(
-                        serviceProvider.GetRequiredService<IOutputHelper>(),
-                        serviceProvider.GetRequiredService<ITelemetryService>());
+                        scopedProvider.GetRequiredService<IOutputHelper>(),
+                        scopedProvider.GetRequiredService<ITelemetryService>(),
+                        debug);
                     return _tool;
                 })
                 .ToList();

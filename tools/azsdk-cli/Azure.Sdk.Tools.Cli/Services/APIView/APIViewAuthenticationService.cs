@@ -4,6 +4,8 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Azure.Core;
 using Azure.Identity;
+using Azure.Sdk.Tools.Cli.Configuration;
+using Azure.Sdk.Tools.Cli.Helpers;
 
 namespace Azure.Sdk.Tools.Cli.Services.APIView;
 
@@ -21,10 +23,14 @@ public interface IAPIViewAuthenticationService
 
 public class APIViewAuthenticationService : IAPIViewAuthenticationService
 {
+    private readonly IProcessHelper _processHelper;
     private readonly ILogger<APIViewAuthenticationService> _logger;
 
-    public APIViewAuthenticationService(ILogger<APIViewAuthenticationService> logger)
+    public APIViewAuthenticationService(
+        IProcessHelper processHelper,
+        ILogger<APIViewAuthenticationService> logger)
     {
+        _processHelper = processHelper;
         _logger = logger;
     }
 
@@ -36,7 +42,7 @@ public class APIViewAuthenticationService : IAPIViewAuthenticationService
             return providedToken;
         }
 
-        string? githubToken = GetGitHubToken();
+        string? githubToken = await GetGitHubTokenAsync();
         if (!string.IsNullOrEmpty(githubToken))
         {
             _logger.LogDebug("Using GitHub token for authentication");
@@ -220,7 +226,7 @@ To get a GitHub token:
 
         return JsonSerializer.Serialize(status, new JsonSerializerOptions { WriteIndented = true });
     }
-    private string? GetGitHubToken()
+    private async Task<string?> GetGitHubTokenAsync()
     {
         string? githubToken = Environment.GetEnvironmentVariable(APIViewConfiguration.GitHubTokenEnvironmentVariable);
         if (!string.IsNullOrEmpty(githubToken))
@@ -230,20 +236,13 @@ To get a GitHub token:
 
         try
         {
-            Process process = new();
-            process.StartInfo.FileName = "gh";
-            process.StartInfo.Arguments = "auth status --show-token";
-            process.StartInfo.UseShellExecute = false;
-            process.StartInfo.RedirectStandardOutput = true;
-            process.StartInfo.RedirectStandardError = true;
+            var options = new ProcessOptions("gh", ["auth", "status", "--show-token"]);
 
-            process.Start();
-            string output = process.StandardError.ReadToEnd().Trim();
-            process.WaitForExit();
+            var result = await _processHelper.Run(options, CancellationToken.None);
 
-            if (process.ExitCode == 0 && !string.IsNullOrEmpty(output))
+            if (result.ExitCode == 0 && !string.IsNullOrEmpty(result.Output))
             {
-                Match match = Regex.Match(output, APIViewConfiguration.GitHubTokenRegex);
+                Match match = Regex.Match(result.Output, APIViewConfiguration.GitHubTokenRegex);
                 if (match.Success)
                 {
                     return match.Groups["token"]?.Value.Trim();

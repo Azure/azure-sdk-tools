@@ -10,14 +10,19 @@ using ModelContextProtocol.Server;
 
 namespace Azure.Sdk.Tools.Cli.Tools.APIView;
 
+public enum ContentType
+{
+    Text,
+    CodeFile
+}
+
 [McpServerToolType]
 [Description("Access APIView functionality including API structure, version diffs, comments, and review status")]
 public class APIViewTool : MCPTool
 {
     private const string GetRevisionCommentsSubCommand = "get-revision-comments";
-    private const string GetTokenFileForRevisionSubCommand = "get-token-file-for-revision";
+    private const string GetRevisionContentSubCommand = "get-revision-content";
     private const string ListReviewVersionsSubCommand = "list-review-versions";
-    private const string GetLatestRevisionSubCommand = "get-latest-revision";
     private const string CheckAuthenticationSubCommand = "check-authentication";
     private const string GetAuthenticationGuidanceSubCommand = "get-authentication-guidance";
     private readonly IAPIViewService _apiViewService;
@@ -30,18 +35,17 @@ public class APIViewTool : MCPTool
     private readonly Option<string> authTokenOption = new("--auth-token",
         "Authentication token for APIView (uses default authentication if not provided)");
 
-    // Optional options
-    private readonly Option<string> diffRevisionIdOption =
-        new("--diff-revision-id", "The APIView diff revision ID for comparison (optional)");
-
-    private readonly Option<string> reviewIdOptions = new("--review-id", "The APIView review ID") { IsRequired = true };
-
     private readonly Option<string> outputFileOption = 
         new("--output-file", "Output file path to save the revision content");
+
+    private readonly Option<string> contentTypeOption = new("--content-type",
+        description: "The APIView revision content type (text or codefile). Defaults to 'text'.", getDefaultValue: () => "text");
+
 
     // Required options for different commands
     private readonly Option<string> revisionIdOption =
         new("--revision-id", "The APIView revision ID") { IsRequired = true };
+    private readonly Option<string> reviewIdOptions = new("--review-id", "The APIView review ID") { IsRequired = true };
 
     public APIViewTool(ILogger<APIViewTool> logger, IOutputHelper output, IAPIViewService apiViewService)
     {
@@ -60,22 +64,20 @@ public class APIViewTool : MCPTool
         Command parentCommand = new("api", "Access APIView functionality");
 
         // Get revision comments command
-        Command getRevisionCommentsCmd =
-            new(GetRevisionCommentsSubCommand, "Get comments for a specific APIView revision");
+        Command getRevisionCommentsCmd = new(GetRevisionCommentsSubCommand, "Get comments for a specific APIView revision");
         getRevisionCommentsCmd.AddOption(revisionIdOption);
         getRevisionCommentsCmd.AddOption(environmentOption);
         getRevisionCommentsCmd.AddOption(authTokenOption);
         getRevisionCommentsCmd.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
         parentCommand.AddCommand(getRevisionCommentsCmd);
 
-        Command getRevisionDiffCmd = new(GetTokenFileForRevisionSubCommand,
-            "Get the token file for a specific APIView revision or diff revision");
+        Command getRevisionDiffCmd = new(GetRevisionContentSubCommand,
+            "Get the APIView revision content as a text or codefile");
         getRevisionDiffCmd.AddOption(revisionIdOption);
-        getRevisionDiffCmd.AddOption(diffRevisionIdOption);
-        getRevisionDiffCmd.AddOption(reviewIdOptions);
         getRevisionDiffCmd.AddOption(environmentOption);
         getRevisionDiffCmd.AddOption(authTokenOption);
         getRevisionDiffCmd.AddOption(outputFileOption);
+        getRevisionDiffCmd.AddOption(contentTypeOption);
         getRevisionDiffCmd.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
         parentCommand.AddCommand(getRevisionDiffCmd);
 
@@ -86,15 +88,6 @@ public class APIViewTool : MCPTool
         listRevisionsCmd.AddOption(authTokenOption);
         listRevisionsCmd.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
         parentCommand.AddCommand(listRevisionsCmd);
-
-        // Get latest revision command
-        Command getLatestRevisionCmd = new(GetLatestRevisionSubCommand, "Get the latest revision for a review");
-        getLatestRevisionCmd.AddOption(reviewIdOptions);
-        getLatestRevisionCmd.AddOption(environmentOption);
-        getLatestRevisionCmd.AddOption(authTokenOption);
-        getLatestRevisionCmd.AddOption(outputFileOption);
-        getLatestRevisionCmd.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
-        parentCommand.AddCommand(getLatestRevisionCmd);
 
         // Authentication commands
         Command checkAuthCmd = new(CheckAuthenticationSubCommand, "Check APIView authentication status");
@@ -115,9 +108,8 @@ public class APIViewTool : MCPTool
         APIViewResponse result = commandName switch
         {
             GetRevisionCommentsSubCommand => await GetRevisionComments(ctx, ct),
-            GetTokenFileForRevisionSubCommand => await GetTokenCodeFileForRevision(ctx, ct),
+            GetRevisionContentSubCommand => await GetRevisionContent(ctx, ct),
             ListReviewVersionsSubCommand => await ListReviewVersions(ctx, ct),
-            GetLatestRevisionSubCommand => await GetLatestRevision(ctx, ct),
             CheckAuthenticationSubCommand => await CheckAuthentication(ctx, ct),
             GetAuthenticationGuidanceSubCommand => await GetAuthenticationGuidance(ctx, ct),
             _ => new APIViewResponse { ResponseError = $"Unknown command: {commandName}" }
@@ -207,7 +199,7 @@ public class APIViewTool : MCPTool
     {
         try
         {
-            string? result = await _apiViewService.ListReviewVersions(reviewId, environment ?? "production", authToken);
+            string? result = await _apiViewService.ListReviewVersions(reviewId, environment, authToken);
             if (result == null)
             {
                 return new APIViewResponse
@@ -244,16 +236,15 @@ public class APIViewTool : MCPTool
         return await GetRevisionComments(revisionId, environment, authToken);
     }
 
-    private async Task<APIViewResponse> GetTokenCodeFileForRevision(InvocationContext ctx, CancellationToken ct)
+    private async Task<APIViewResponse> GetRevisionContent(InvocationContext ctx, CancellationToken ct)
     {
         string? revisionId = ctx.ParseResult.GetValueForOption(revisionIdOption);
-        string? diffRevisionId = ctx.ParseResult.GetValueForOption(diffRevisionIdOption);
-        string? reviewId = ctx.ParseResult.GetValueForOption(reviewIdOptions);
         string? environment = ctx.ParseResult.GetValueForOption(environmentOption);
         string? authToken = ctx.ParseResult.GetValueForOption(authTokenOption);
         string? outputFile = ctx.ParseResult.GetValueForOption(outputFileOption);
+        string? contentType = ctx.ParseResult.GetValueForOption(contentTypeOption);
 
-        if (string.IsNullOrEmpty(revisionId) || string.IsNullOrEmpty(reviewId))
+        if (string.IsNullOrEmpty(revisionId))
         {
             SetFailure();
             return new APIViewResponse { ResponseError = "Revision ID and review ID are required" };
@@ -261,13 +252,22 @@ public class APIViewTool : MCPTool
 
         try
         {
-            string? result = await _apiViewService.GetRevisionContent(reviewId, revisionId, diffRevisionId, environment ?? "production", authToken);
+            ContentType parsedContentType = ParseContentType(contentType);
+            string? result = parsedContentType switch
+            {
+                ContentType.Text => await _apiViewService.GetRevisionContentText(revisionId, environment,
+                    authToken),
+                ContentType.CodeFile => await _apiViewService.GetRevisionCodeTokenFile(revisionId, environment,
+                    authToken),
+                _ => throw new ArgumentOutOfRangeException(nameof(parsedContentType), parsedContentType, "Unsupported content type")
+            };
+
             if (result == null)
             {
                 return new APIViewResponse
                 {
                     Success = false,
-                    ResponseError = $"Failed to retrieve revision content for revisions {revisionId} and {diffRevisionId}"
+                    ResponseError = $"Failed to retrieve revision content for revision {revisionId}"
                 };
             }
 
@@ -289,10 +289,18 @@ public class APIViewTool : MCPTool
                 Data = result
             };
         }
+        catch (ArgumentException ex)
+        {
+            // Handle content type parsing errors specifically
+            return new APIViewResponse
+            {
+                Success = false,
+                ResponseError = ex.Message
+            };
+        }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to get revision content between revisions {RevisionId} and {DiffRevisionId}",
-                revisionId, diffRevisionId);
+            _logger.LogError(ex, "Failed to get revision content for revision {RevisionId}", revisionId);
             SetFailure();
             return new APIViewResponse { ResponseError = $"Failed to get revision content: {ex.Message}" };
         }
@@ -313,56 +321,6 @@ public class APIViewTool : MCPTool
         return await ListReviewVersions(reviewId, environment, authToken);
     }
 
-    private async Task<APIViewResponse> GetLatestRevision(InvocationContext ctx, CancellationToken ct)
-    {
-        string? reviewId = ctx.ParseResult.GetValueForOption(reviewIdOptions);
-        string? environment = ctx.ParseResult.GetValueForOption(environmentOption);
-        string? authToken = ctx.ParseResult.GetValueForOption(authTokenOption);
-        string? outputFile = ctx.ParseResult.GetValueForOption(outputFileOption);
-
-        if (string.IsNullOrEmpty(reviewId))
-        {
-            SetFailure();
-            return new APIViewResponse { ResponseError = "Review ID is required" };
-        }
-
-        try
-        {
-            string? result = await _apiViewService.GetLatestRevisionAsync(reviewId, environment ?? "production", authToken);
-            if (result == null)
-            {
-                return new APIViewResponse
-                {
-                    Success = false, ResponseError = $"Failed to retrieve latest revision for review {reviewId}"
-                };
-            }
-
-            if (!string.IsNullOrEmpty(outputFile))
-            {
-                await File.WriteAllTextAsync(outputFile, result, ct);
-                return new APIViewResponse
-                {
-                    Success = true,
-                    Message = $"Latest revision saved to file: {outputFile} ({result.Length:N0} characters)",
-                    Data = $"File saved: {outputFile}"
-                };
-            }
-
-            return new APIViewResponse
-            {
-                Success = true,
-                Message = $"Latest revision retrieved successfully ({result.Length:N0} characters)",
-                Data = result
-            };
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to get latest revision for review {ReviewId}", reviewId);
-            SetFailure();
-            return new APIViewResponse { ResponseError = $"Failed to get latest revision: {ex.Message}" };
-        }
-    }
-
     private async Task<APIViewResponse> CheckAuthentication(InvocationContext ctx, CancellationToken ct)
     {
         string? environment = ctx.ParseResult.GetValueForOption(environmentOption);
@@ -372,5 +330,15 @@ public class APIViewTool : MCPTool
     private async Task<APIViewResponse> GetAuthenticationGuidance(InvocationContext ctx, CancellationToken ct)
     {
         return await GetAuthenticationGuidance();
+    }
+
+    private static ContentType ParseContentType(string? contentTypeString)
+    {
+        return contentTypeString?.ToLowerInvariant() switch
+        {
+            "text" => ContentType.Text,
+            "codefile" => ContentType.CodeFile,
+            _ => throw new ArgumentException($"Invalid content type '{contentTypeString}'. Valid values are: text, codefile")
+        };
     }
 }

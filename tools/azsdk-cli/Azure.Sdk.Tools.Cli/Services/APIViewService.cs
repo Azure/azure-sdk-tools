@@ -6,9 +6,9 @@ namespace Azure.Sdk.Tools.Cli.Services;
 public interface IAPIViewService
 {
     Task<string?> GetCommentByRevisionAsync(string revisionId, string environment = "production", string? authToken = null);
-    Task<string?> GetRevisionContent(string reviewId, string activeRevisionId, string? diffRevisionId, string environment = "production", string? authToken = null);
+    Task<string?> GetRevisionCodeTokenFile(string activeRevisionId, string environment = "production", string? authToken = null);
     Task<string?> ListReviewVersions(string reviewId, string environment = "production", string? authToken = null);
-    Task<string?> GetLatestRevisionAsync(string reviewId, string environment = "production", string? authToken = null);
+    Task<string?> GetRevisionContentText(string revisionId, string environment = "production", string? authToken = null);
     Task<string> CheckAuthenticationStatusAsync(string environment = "production");
     Task<string> GetAuthenticationGuidanceAsync();
 }
@@ -31,89 +31,58 @@ public class APIViewService : IAPIViewService
 
     public async Task<string?> GetCommentByRevisionAsync(string revisionId, string environment = "production", string? authToken = null)
     {
-        try
-        {
-            string endpoint = $"/api/Comments/getRevisionComments?apiRevisionId={revisionId}";
-            string? result = await _httpService.GetAsync(endpoint, "comments", environment, authToken);
+        string endpoint = $"/api/Comments/getRevisionComments?apiRevisionId={revisionId}";
+        string? result = await _httpService.GetAsync(endpoint, "comments", environment, authToken);
 
-            if (result == null)
-            {
-                _logger.LogWarning("No comments found for revision {RevisionId}", revisionId);
-            }
-
-            return result;
-        }
-        catch (Exception ex)
+        if (result == null)
         {
-            _logger.LogError(ex, "Failed to get comments for revision {RevisionId}", revisionId);
-            return null;
+            _logger.LogWarning("No comments found for revision {RevisionId}", revisionId);
         }
+
+        return result;
     }
 
-    public async Task<string?> GetRevisionContent(string reviewId, string activeRevisionId, string? diffRevisionId, string environment = "production", string? authToken = null)
+    public async Task<string?> GetRevisionCodeTokenFile(string activeRevisionId, string environment = "production", string? authToken = null)
     {
-        try
-        {
-            string endpoint = $"/api/reviews/{reviewId}/content?activeApiRevisionId={activeRevisionId}&diffApiRevisionId={diffRevisionId}";
-            string? result = await _httpService.GetAsync(endpoint, "get revision content", environment, authToken);
+        string reviewIdEndpoint = $"/api/apirevisions/{activeRevisionId}/getReviewId";
+        string? reviewId = await _httpService.GetAsync(reviewIdEndpoint, "get review ID", environment, authToken);
 
-            if (string.IsNullOrWhiteSpace(result))
-            {
-                _logger.LogWarning("Received empty response for revisions {ActiveRevisionId} - {DiffRevisionId}",
-                    activeRevisionId, diffRevisionId);
-                return null;
-            }
+        string endpoint = $"/api/reviews/{reviewId}/content?activeApiRevisionId={activeRevisionId}";
+        string? result = await _httpService.GetAsync(endpoint, "get revision content", environment, authToken);
 
-            return result;
-        }
-        catch (Exception ex)
+        if (string.IsNullOrWhiteSpace(result))
         {
-            _logger.LogError(ex, "Failed to get diff between revisions: {ActiveRevisionId} - {DiffRevisionId}",
-                activeRevisionId, diffRevisionId);
+            _logger.LogWarning("Received empty response for revisions {ActiveRevisionId}", activeRevisionId);
             return null;
         }
+
+        return result;
     }
 
     public async Task<string?> ListReviewVersions(string reviewId, string environment = "production", string? authToken = null)
     {
-        try
-        {
-            string endpoint = $"/api/apirevisions/{reviewId}/getReviewVersions";
-            string? result = await _httpService.GetAsync(endpoint, "review revisions", environment, authToken);
+        string endpoint = $"/api/apirevisions/{reviewId}/getReviewVersions";
+        string? result = await _httpService.GetAsync(endpoint, "review revisions", environment, authToken);
 
-            if (result == null)
-            {
-                _logger.LogWarning("No revisions found for review {ReviewId}", reviewId);
-            }
-
-            return result;
-        }
-        catch (Exception ex)
+        if (result == null)
         {
-            _logger.LogError(ex, "Failed to get revisions for review {ReviewId}", reviewId);
-            return null;
+            _logger.LogWarning("No revisions found for review {ReviewId}", reviewId);
         }
+
+        return result;
     }
 
-    public async Task<string?> GetLatestRevisionAsync(string reviewId, string environment = "production", string? authToken = null)
+    public async Task<string?> GetRevisionContentText(string revisionId, string environment = "production", string? authToken = null)
     {
-        try
-        {
-            string endpoint = $"/api/apirevisions/getRevisionText?reviewId={reviewId}&selectionType=Latest";
-            string? result = await _httpService.GetAsync(endpoint, "latest revision", environment, authToken);
+        string endpoint = $"/api/apirevisions/getRevisionText?apiRevisionId={revisionId}";
+        string? result = await _httpService.GetAsync(endpoint, "latest revision", environment, authToken);
 
-            if (result == null)
-            {
-                _logger.LogWarning("No latest revision found for review {ReviewId}", reviewId);
-            }
-
-            return result;
-        }
-        catch (Exception ex)
+        if (result == null)
         {
-            _logger.LogError(ex, "Failed to get latest revision for review {ReviewId}", reviewId);
-            return null;
+            _logger.LogWarning("No content found for revision= {RevisionId}", revisionId);
         }
+
+        return result;
     }
 
     public async Task<string> CheckAuthenticationStatusAsync(string environment = "production")

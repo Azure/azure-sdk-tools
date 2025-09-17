@@ -166,4 +166,25 @@ public class APIRevisionsTokenAuthController : ControllerBase
             return StatusCode(StatusCodes.Status500InternalServerError, "Failed to get review versions");
         }
     }
+
+    [HttpGet("{revisionId}/getReviewId", Name = "GetReviewId")]
+    public async Task<ActionResult<string>> GetReviewIdForRevision(string revisionId)
+    {
+        try
+        {
+            APIRevisionListItemModel revision = await _apiRevisionsManager.GetAPIRevisionAsync(User, revisionId);
+            if (revision == null)
+            {
+                return NotFound($"No API revision found for ID: {revisionId}");
+            }
+
+            return new LeanJsonResult(revision.ReviewId, StatusCodes.Status200OK);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting review ID for revision {RevisionId}", revisionId);
+            return StatusCode(StatusCodes.Status500InternalServerError, "Failed to get review ID");
+        }
+    }
+
 }

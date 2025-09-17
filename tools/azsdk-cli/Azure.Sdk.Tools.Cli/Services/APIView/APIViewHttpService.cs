@@ -1,4 +1,5 @@
 using System.Net;
+using Azure.Sdk.Tools.Cli.Configuration;
 
 namespace Azure.Sdk.Tools.Cli.Services.APIView;
 
@@ -76,12 +77,12 @@ public class APIViewHttpService : IAPIViewHttpService
         catch (HttpRequestException ex)
         {
             _logger.LogError(ex, "HTTP request failed during {Operation}", operation);
-            return null;
+            throw;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error occurred during {Operation}", operation);
-            return null;
+            throw;
         }
     }
 }

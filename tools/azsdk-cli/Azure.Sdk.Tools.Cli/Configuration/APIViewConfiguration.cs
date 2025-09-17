@@ -1,4 +1,4 @@
-namespace Azure.Sdk.Tools.Cli.Services.APIView;
+namespace Azure.Sdk.Tools.Cli.Configuration;
 
 public static class APIViewConfiguration
 {

@@ -53,10 +53,10 @@ public class JavaUpdateLanguageService : ClientUpdateLanguageServiceBase
         var toolJar = ResolveJar();
         if (toolJar == null)
         {
-            // Optional on-demand build if env flag set
-            if (IsAutoBuildEnabled())
+            // Optional on-demand build if env flag set (async)
+            if (JavaApiDiffJarBuilder.IsAutoBuildEnabled())
             {
-                toolJar = TryAutoBuildJar(ct);
+                toolJar = await JavaApiDiffJarBuilder.TryAutoBuildAsync(_logger, ct);
             }
             _logger.LogDebug("Java API diff jar not found (skipping diff). Set APIDIFF_JAR or place jar at conventional path.");
             return results;
@@ -158,73 +158,7 @@ public class JavaUpdateLanguageService : ClientUpdateLanguageServiceBase
         return candidates.FirstOrDefault();
     }
 
-    private bool IsAutoBuildEnabled() =>
-        string.Equals(Environment.GetEnvironmentVariable("APIDIFF_AUTOBUILD"), "1", StringComparison.OrdinalIgnoreCase) ||
-        string.Equals(Environment.GetEnvironmentVariable("APIDIFF_AUTOBUILD"), "true", StringComparison.OrdinalIgnoreCase);
-
-    private string? TryAutoBuildJar(CancellationToken ct)
-    {
-        try
-        {
-            // Locate repo root by searching for Azure.Sdk.Tools.Cli.csproj
-            var dir = new DirectoryInfo(AppContext.BaseDirectory);
-            DirectoryInfo? root = null;
-            for (int i = 0; i < 8 && dir != null; i++)
-            {
-                if (File.Exists(Path.Combine(dir.FullName, "Azure.Sdk.Tools.Cli.csproj"))) { root = dir; break; }
-                dir = dir.Parent;
-            }
-            if (root == null)
-            {
-                return null;
-            }
-            var pom = Path.Combine(root.FullName, "Tools", "APIDiffTool", "pom.xml");
-            if (!File.Exists(pom))
-            {
-                return null;
-            }
-            var mvnExe = "mvn" + (OperatingSystem.IsWindows() ? ".cmd" : "");
-            var psi = new ProcessStartInfo
-            {
-                FileName = mvnExe,
-                Arguments = "-q -DskipTests package",
-                WorkingDirectory = Path.GetDirectoryName(pom)!,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-            using var proc = Process.Start(psi);
-            if (proc == null)
-            {
-                return null;
-            }
-            var stdoutTask = proc.StandardOutput.ReadToEndAsync(ct);
-            var stderrTask = proc.StandardError.ReadToEndAsync(ct);
-            proc.WaitForExit();
-            var stderr = stderrTask.Result;
-            if (proc.ExitCode != 0)
-            {
-                _logger.LogDebug("apidiff autobuild failed exit {Code}: {Err}", proc.ExitCode, stderr);
-                return null;
-            }
-            var targetDir = Path.Combine(Path.GetDirectoryName(pom)!, "target");
-            var shaded = Directory.Exists(targetDir) ? Directory.GetFiles(targetDir, "*-jar-with-dependencies.jar").FirstOrDefault() : null;
-            if (shaded == null)
-            {
-                return null;
-            }
-            var conventional = Path.Combine(AppContext.BaseDirectory, "tools", "java", "apidiff", "apidiff.jar");
-            Directory.CreateDirectory(Path.GetDirectoryName(conventional)!);
-            File.Copy(shaded, conventional, overwrite: true);
-            return File.Exists(conventional) ? conventional : null;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogDebug(ex, "Failed APIDiff auto-build");
-            return null;
-        }
-    }
+    // Auto-build helper moved to JavaApiDiffJarBuilder.
 
     public override Task<string?> GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct)
     {

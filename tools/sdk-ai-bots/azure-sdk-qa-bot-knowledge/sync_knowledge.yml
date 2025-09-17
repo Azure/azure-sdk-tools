@@ -38,6 +38,9 @@ stages:
     - checkout: self
       displayName: 'Checkout current repository'
 
+    - checkout: azure-sdk-docs-eng.ms
+      displayName: 'Checkout azure-sdk-docs-eng.ms repository'
+
     - task: AzureCLI@2
       inputs:
         azureSubscription: 'azuresdkqabot'
@@ -57,17 +60,17 @@ stages:
         versionSpec: '20.x'
         
     - script: |
-        cd tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge
+        cd $(Agent.BuildDirectory)/s/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge
         npm ci
       displayName: 'Install dependencies'
       
     - script: |
-        cd tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge
+        cd $(Agent.BuildDirectory)/s/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge
         npm run build
       displayName: 'Build TypeScript project'
       
     - script: |
-        cd tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge
+        cd $(Agent.BuildDirectory)/s/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge
         npm run start
       displayName: 'Execute knowledge sync'
       env:

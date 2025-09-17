@@ -25,6 +25,10 @@ def _review_apiview(query: str, language: str):
     reviewer.close()
     return {"actual": review.model_dump_json()}
 
+def _mention_workflow(query: str, language: str):
+    """Mention workflow target function"""
+    pass
+
 
 class BaseEvaluator(ABC):
     """Base class for custom evaluators in the evals framework.
@@ -531,8 +535,25 @@ class CustomAPIViewEvaluator(BaseEvaluator):
                 f"\n{file_name} average score: {eval_results[-1]['average_score']} {self._format_terminal_diff(eval_results[-1]['average_score'], baseline_results['average_score'])}\n\n"
             )
 
+class MentionEvaluator(BaseEvaluator):
+    def __call__(self, **kwargs):
+        pass
+
+    def evaluator_config(self):
+        pass
+
+    def target_function(self):
+        return _mention_workflow
+    
+    def process_results(self, raw_results, rule_ids):
+        pass
+    
+    def show_results(self, processed_results):
+        pass
+
 
 # Registry of available evaluators
 EVALUATORS = {
     "apiview": CustomAPIViewEvaluator,
+    "mention": MentionEvaluator
 }

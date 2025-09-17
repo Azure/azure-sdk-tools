@@ -8,7 +8,7 @@ from pathlib import Path
 import pathlib
 import re
 import time
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 from azure.ai.evaluation import evaluate, SimilarityEvaluator, GroundednessEvaluator
 import aiohttp
 from azure.identity import AzurePipelinesCredential, DefaultAzureCredential, AzureCliCredential
@@ -240,7 +240,7 @@ def format_terminal_diff(new: float, old: float, format_str: str = ".1f", revers
         return f" (\033[31m{diff:{format_str}}\033[0m)"  # Red
     return f" ({diff:{format_str}})"
 
-def output_table(baseline_results: dict[str, Any], eval_results: list[dict[str, Any]], file_name: str) -> None:
+def output_table(eval_results: list[dict[str, Any]], file_name: str, baseline_results: Optional[dict[str, Any]] = None) -> None:
     headers = [
         "Test Case",
         "Similarity",
@@ -264,7 +264,7 @@ def output_table(baseline_results: dict[str, Any], eval_results: list[dict[str, 
         groundedness_result = result['groundedness_result']
         
         terminal_row = [testcase]
-        if testcase in baseline_results:
+        if baseline_results is not None and testcase in baseline_results:
             base = baseline_results[testcase]
             values =[
                 f"{sim:.1f}{format_terminal_diff(sim, base['similarity'])}",
@@ -295,41 +295,46 @@ def output_table(baseline_results: dict[str, Any], eval_results: list[dict[str, 
             "\n\n"
         )
 
-def show_results(all_results: dict[str, Any]) -> None:
+def show_results(all_results: dict[str, Any], withBaseline: bool = True) -> None:
     """Display results in a table format."""
     for name, test_results in all_results.items():
-        baseline_results = {}
-        baselineName = f"{name.split('_')[0]}-test.json"
-        baseline_path = pathlib.Path(__file__).parent / "results" / baselineName
+        baseline_results = None
+        if withBaseline :
+            baseline_results = {}
+            baselineName = f"{name.split('_')[0]}-test.json"
+            baseline_path = pathlib.Path(__file__).parent / "results" / baselineName
 
-        if baseline_path.exists():
-            with open(baseline_path, "r") as f:
-                baseline_data = json.load(f)
-                for result in baseline_data[:-1]:  # Skip summary
-                    baseline_results[result["testcase"]] = result
-                baseline_results["average_score"] = baseline_data[-1]["average_score"]
+            if baseline_path.exists():
+                with open(baseline_path, "r") as f:
+                    baseline_data = json.load(f)
+                    for result in baseline_data[:-1]:  # Skip summary
+                        baseline_results[result["testcase"]] = result
+                    baseline_results["average_score"] = baseline_data[-1]["average_score"]
 
-        output_table(baseline_results, test_results, name)
+        output_table(test_results, name, baseline_results)
 
-def verify_results(all_results: dict[str, Any]) -> bool:
+def verify_results(all_results: dict[str, Any], withBaseline: bool = True) -> bool:
     ret = True
     failed_scenarios = []
     for name, test_results in all_results.items():
         scenario_ret = True
         baseline_results = {}
-        baselineName = f"{name.split('_')[0]}-test.json"
-        baseline_path = pathlib.Path(__file__).parent / "results" / baselineName
+        if withBaseline:
+            baselineName = f"{name.split('_')[0]}-test.json"
+            baseline_path = pathlib.Path(__file__).parent / "results" / baselineName
 
-        if baseline_path.exists():
-            with open(baseline_path, "r") as f:
-                baseline_data = json.load(f)
-                for result in baseline_data[:-1]:  # Skip summary
-                    baseline_results[result["testcase"]] = result
-                baseline_results["average_score"] = baseline_data[-1]["average_score"]
+            if baseline_path.exists():
+                with open(baseline_path, "r") as f:
+                    baseline_data = json.load(f)
+                    for result in baseline_data[:-1]:  # Skip summary
+                        baseline_results[result["testcase"]] = result
+                    baseline_results["average_score"] = baseline_data[-1]["average_score"]
+                    if test_results[-1]["average_score"] < baseline_data[-1]["average_score"]:
+                        scenario_ret = False
+        
         if test_results[-1]["similarity_pass_rate"] < test_results[-1]["total_evals"] or test_results[-1]["groundedness_pass_rate"] < test_results[-1]["total_evals"]:
             scenario_ret = False
-        if test_results[-1]["average_score"] < baseline_data[-1]["average_score"]:
-            scenario_ret = False
+
         if not scenario_ret:
             failed_scenarios.append(name)
             ret = False
@@ -373,11 +378,13 @@ if __name__ == "__main__":
     parser.add_argument("--is_ci", type=str, default="True", help="Run in CI/CD pipeline (True/False)")
     parser.add_argument("--evaluation_name_prefix", type=str, help="the prefix of evaluation name")
     parser.add_argument("--send_result", type=str, default="True", help="Send the evaluation result to AI foundry project")
+    parser.add_argument("--baseline_check", type=str, default="True", help="Compare the result with baseline.")
     args = parser.parse_args()
 
     args.is_bot = args.is_bot.lower() in ('true', '1', 'yes', 'on')
     args.is_ci = args.is_ci.lower() in ('true', '1', 'yes', 'on')
     args.send_result = args.send_result.lower() in ('true', '1', 'yes')
+    args.baseline_check = args.baseline_check.lower() in ('true', '1', 'yes')
 
     
     script_directory = os.path.dirname(os.path.abspath(__file__))
@@ -481,8 +488,9 @@ if __name__ == "__main__":
         traceback.print_exc()
         exit(1)
     
-    show_results(all_results)
-    establish_baseline(args, all_results)
-    isPass = verify_results(all_results)
+    show_results(all_results, args.baseline_check)
+    if args.baseline_check:
+        establish_baseline(args, all_results)
+    isPass = verify_results(all_results, args.baseline_check)
     if not isPass:
         exit(1)

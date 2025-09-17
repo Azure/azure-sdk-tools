@@ -537,19 +537,21 @@ class CustomAPIViewEvaluator(BaseEvaluator):
 
 class MentionEvaluator(BaseEvaluator):
     def __call__(self, **kwargs):
-        pass
+        raise NotImplementedError("MentionEvaluator not implemented yet.")
 
+    @property
     def evaluator_config(self):
-        pass
+        raise NotImplementedError("MentionEvaluator not implemented yet.")
 
+    @property
     def target_function(self):
         return _mention_workflow
     
     def process_results(self, raw_results, rule_ids):
-        pass
+        raise NotImplementedError("MentionEvaluator not implemented yet.")
     
     def show_results(self, processed_results):
-        pass
+        raise NotImplementedError("MentionEvaluator not implemented yet.")
 
 
 # Registry of available evaluators

@@ -39,14 +39,6 @@ export async function initSecrets(): Promise<void> {
         process.env.AOAI_CHAT_COMPLETIONS_API_KEY = aoaiSecretResponse.value;
         console.log('Set AOAI_CHAT_COMPLETIONS_API_KEY from Key Vault');
 
-        // Get Eng sys token
-        const engsysPAT = await client.getSecret('AZURE-SDK-ENG-HUB-TOKEN');
-        if (!engsysPAT.value) {
-            throw new Error('Failed to get AZURE-SDK-ENG-HUB-TOKEN secret value');
-        }
-
-        process.env.AZURE_SDK_ENG_HUB_TOKEN = engsysPAT.value;
-
         // Get SSH private key
         const sshPrivateKeySecret = await client.getSecret('SSH-PRIVATE-KEY');
         if (!sshPrivateKeySecret.value) {

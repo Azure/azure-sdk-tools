@@ -27,6 +27,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
 using Microsoft.Extensions.Options;
+using System.Net.Sockets; // added for CONNECT tunneling
+using System.Buffers;     // added for buffer pooling in tunneling
 
 namespace Azure.Sdk.Tools.TestProxy
 {
@@ -263,6 +265,74 @@ namespace Azure.Sdk.Tools.TestProxy
             app.UseMiddleware<HttpExceptionMiddleware>();
             app.UseMiddleware<ShutdownTimerMiddleware>();
 
+            // Basic CONNECT tunneling (no MITM). Must run very early.
+            app.Use(async (context, next) =>
+            {
+                if (!HttpMethods.IsConnect(context.Request.Method))
+                {
+                    await next();
+                    return;
+                }
+
+                var target = context.Request.Path.Value?.Trim('/');
+                if (string.IsNullOrEmpty(target) || !TryParseConnectTarget(target, out var host, out var port))
+                {
+                    context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                    return;
+                }
+
+                var upgrade = context.Features.Get<IHttpUpgradeFeature>();
+                if (upgrade == null)
+                {
+                    context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+                    return;
+                }
+
+                using var upstream = new TcpClient();
+                try
+                {
+                    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+#if NET8_0_OR_GREATER
+                    await upstream.ConnectAsync(host, port, cts.Token);
+#else
+                    await upstream.ConnectAsync(host, port);
+#endif
+                }
+                catch
+                {
+                    context.Response.StatusCode = StatusCodes.Status502BadGateway;
+                    return;
+                }
+
+                // Per RFC respond success then tunnel
+                var establish = System.Text.Encoding.ASCII.GetBytes("HTTP/1.1 200 Connection Established\r\nProxy-Agent: azure-test-proxy\r\n\r\n");
+                await context.Response.Body.WriteAsync(establish, 0, establish.Length);
+                await context.Response.Body.FlushAsync();
+
+                System.IO.Stream downstreamStream;
+                try
+                {
+                    downstreamStream = await upgrade.UpgradeAsync();
+                }
+                catch
+                {
+                    context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+                    return;
+                }
+
+                using (downstreamStream)
+                using (var upstreamStream = upstream.GetStream())
+                {
+                    var relayCts = new CancellationTokenSource();
+                    var t1 = PumpAsync(downstreamStream, upstreamStream, relayCts.Token);
+                    var t2 = PumpAsync(upstreamStream, downstreamStream, relayCts.Token);
+
+                    var finished = await Task.WhenAny(t1, t2);
+                    relayCts.Cancel();
+                    try { await Task.WhenAll(t1, t2); } catch { }
+                }
+            });
+
             // always need to handle absolute-form requests from HTTP proxies
             app.Use(async (context, next) =>
             {
@@ -430,6 +500,59 @@ namespace Azure.Sdk.Tools.TestProxy
             else
             {
                 return false;
+            }
+        }
+
+        // --- Helpers for CONNECT support ---
+        private static bool TryParseConnectTarget(string raw, out string host, out int port)
+        {
+            host = string.Empty;
+            port = 443;
+            // expected format host[:port]
+            var idx = raw.LastIndexOf(':');
+            if (idx > 0 && idx < raw.Length - 1 && int.TryParse(raw[(idx + 1)..], out var parsed))
+            {
+                host = raw[..idx];
+                port = parsed;
+                return true;
+            }
+            host = raw;
+            return !string.IsNullOrWhiteSpace(host);
+        }
+
+        private static async Task PumpAsync(Stream source, Stream destination, CancellationToken token)
+        {
+            var buffer = ArrayPool<byte>.Shared.Rent(32 * 1024);
+            try
+            {
+                while (!token.IsCancellationRequested)
+                {
+                    int read;
+                    try
+                    {
+                        read = await source.ReadAsync(buffer.AsMemory(0, buffer.Length), token);
+                    }
+                    catch
+                    {
+                        break; // read error -> terminate this direction
+                    }
+
+                    if (read == 0) break; // EOF
+
+                    try
+                    {
+                        await destination.WriteAsync(buffer.AsMemory(0, read), token);
+                        await destination.FlushAsync(token);
+                    }
+                    catch
+                    {
+                        break; // write error
+                    }
+                }
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(buffer);
             }
         }
     }

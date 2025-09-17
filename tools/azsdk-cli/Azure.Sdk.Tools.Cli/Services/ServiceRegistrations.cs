@@ -66,7 +66,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IPowershellHelper, PowershellHelper>();
             services.AddSingleton<IProcessHelper, ProcessHelper>();
 
-            services.AddSingleton<IMicroagentHostService, MicroagentHostService>();
+            services.AddScoped<IMicroagentHostService, MicroagentHostService>();
 
             services.AddAzureClients(clientBuilder =>
             {

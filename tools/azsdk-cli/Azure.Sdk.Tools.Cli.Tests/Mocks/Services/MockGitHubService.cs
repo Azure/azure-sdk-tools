@@ -93,6 +93,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.CompletedTask;
         }
 
+        public Task<IReadOnlyList<PullRequestFile>> GetPullRequestFilesAsync(string repoOwner, string repoName, int pullRequestNumber)
+        {
+            // Mock implementation - return some sample files for testing
+            var files = new List<PullRequestFile>();
+            return Task.FromResult<IReadOnlyList<PullRequestFile>>(files.AsReadOnly());
+        }
+
         public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path)
         {
             return Task.FromResult<IReadOnlyList<RepositoryContent>?>(new List<RepositoryContent>().AsReadOnly());

@@ -436,14 +436,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                 var codeownersEntries = CodeownersParser.ParseCodeownersEntries(codeownersContentList, azureWriteTeamsBlobUrl);
                 var codeownersEditor = new CodeownersEditor(codeownersContentText);
 
-                // Get the files changed in the PR by examining the diff URL
-                var changedFiles = new List<string>();
+                // Get the files changed in the PR
+                var pullRequestFiles = await githubService.GetPullRequestFilesAsync(repoOwner, repoName, pullRequestNumber);
+                var changedFiles = pullRequestFiles.Select(f => f.FileName).ToList();
                 
-                // For this implementation, we'll identify the changed files based on PR 11868's known changes
-                // In a more complete implementation, this would use the GitHub API to get the files changed
-                changedFiles.Add("eng/common/instructions/azsdk-tools/create-sdk-locally.instructions.md");
-                changedFiles.Add("eng/common/instructions/azsdk-tools/local-sdk-workflow.instructions.md");
-                changedFiles.Add("eng/common/instructions/azsdk-tools/typespec-to-sdk.instructions.md");
+                if (changedFiles.Count == 0)
+                {
+                    return "No files changed in this pull request.";
+                }
+
+                logger.LogInformation($"Found {changedFiles.Count} changed files in PR #{pullRequestNumber}");
 
                 // Find code owners for the changed files
                 var allCodeOwners = new HashSet<string>();

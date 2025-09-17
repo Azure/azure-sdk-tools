@@ -296,7 +296,7 @@ class SearchManager:
         self.client = SearchClient(
             endpoint=self._search_endpoint, index_name=self._index_name, credential=self._credential
         )
-        self.language_guidelines = self._fetch_language_guidelines(language) if language else None
+        self.language_guidelines = self._fetch_language_guidelines(language) if language else []
 
     def _ensure_language(self):
         if not self.language:

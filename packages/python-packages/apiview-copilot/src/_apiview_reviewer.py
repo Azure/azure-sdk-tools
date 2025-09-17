@@ -238,13 +238,7 @@ class ApiViewReview:
         try:
             # Run the prompt
             response = self._run_prompt(prompt_path, inputs)
-
-            # Process result based on task type
-            if task_name == "summary" or task_name == "outline":
-                result = response  # Just return the text
-            else:
-                # Parse JSON for guideline/generic tasks
-                result = json.loads(response)
+            result = json.loads(response)
 
             # Mark this task as done (for numeric progress only)
             status_array[status_idx] = True
@@ -265,10 +259,8 @@ class ApiViewReview:
         """
         Generate comments for the API view by submitting jobs in parallel.
         """
-        summary_tag = "summary"
         guideline_tag = "guideline"
         generic_tag = "generic"
-        outline_tag = "outline"
         context_tag = "context"
 
         sectioned_doc = self._create_sectioned_document()
@@ -280,21 +272,17 @@ class ApiViewReview:
             guideline_prompt_file = "guidelines_review.prompty"
             context_prompt_file = "context_review.prompty"
             generic_prompt_file = "generic_review.prompty"
-            summary_prompt_file = "summarize_api.prompty"
-            summary_content = self.target
         elif self.mode == ApiViewReviewMode.DIFF:
             guideline_prompt_file = "guidelines_diff_review.prompty"
             context_prompt_file = "context_diff_review.prompty"
             generic_prompt_file = "generic_diff_review.prompty"
-            summary_prompt_file = "summarize_diff.prompty"
-            summary_content = create_diff_with_line_numbers(old=self.base, new=self.target)
         else:
             raise NotImplementedError(f"Review mode {self.mode} is not implemented.")
 
         # Set up progress tracking
         self._print_message("Processing sections: ", overwrite=True)
 
-        total_prompts = 1 + (len(sections_to_process) * 3)  # 1 for summary, 3 for each section
+        total_prompts = len(sections_to_process) * 3  # 3 prompts per section
         prompt_status = [False] * total_prompts
 
         # Set up keyboard interrupt handler for more responsive cancellation (only in main thread)
@@ -318,20 +306,7 @@ class ApiViewReview:
         # Submit all jobs to the executor
         all_futures = {}
 
-        # 1. Summary task
-        all_futures[summary_tag] = self.executor.submit(
-            self._execute_prompt_task,
-            prompt_path=get_prompt_path(folder="summarize", filename=summary_prompt_file),
-            inputs={
-                "language": get_language_pretty_name(self.language),
-                "content": summary_content,
-            },
-            task_name=summary_tag,
-            status_idx=0,
-            status_array=prompt_status,
-        )
-
-        # 2. Guideline and generic tasks for each section
+        # Guideline and generic tasks for each section
         for idx, (section_idx, section) in enumerate(sections_to_process):
             # First check if cancellation is requested
             if cancel_event.is_set():
@@ -348,7 +323,7 @@ class ApiViewReview:
                     "content": section.numbered(),
                 },
                 task_name=guideline_key,
-                status_idx=(idx * 3) + 1,
+                status_idx=idx * 3,
                 status_array=prompt_status,
             )
 
@@ -364,7 +339,7 @@ class ApiViewReview:
                     "content": section.numbered(),
                 },
                 task_name=generic_key,
-                status_idx=(idx * 3) + 2,
+                status_idx=(idx * 3) + 1,
                 status_array=prompt_status,
             )
 
@@ -381,30 +356,16 @@ class ApiViewReview:
                     "content": section.numbered(),
                 },
                 task_name=context_key,
-                status_idx=(idx * 3) + 3,
+                status_idx=(idx * 3) + 2,
                 status_array=prompt_status,
             )
 
         # Process results as they complete
         try:
-            # Process summary result
-            summary_response = all_futures[summary_tag].result()
-            if summary_response:
-                self.summary = Comment(
-                    guideline_ids=[],
-                    line_no=1,
-                    bad_code="",
-                    suggestion=None,
-                    comment=summary_response,
-                    source="summary",
-                )
-
             # Process each section's results
             section_results = {}
 
             for key, future in all_futures.items():
-                if key in {summary_tag, outline_tag}:
-                    continue  # Already processed
                 try:
                     result = future.result()
                     if result:
@@ -420,6 +381,7 @@ class ApiViewReview:
                             # Tag comments with their source
                             for comment in result["comments"]:
                                 comment["source"] = section_type
+                                comment["is_generic"] = section_type == generic_tag
                             section_results[section_idx]["comments"].extend(result["comments"])
                 except Exception as e:
                     self.logger.error(f"Error processing {key}: {str(e)}")
@@ -824,9 +786,7 @@ class ApiViewReview:
             filter_end_time = time()
             self._print_message(f"  Filtering completed in {filter_end_time - filter_start_time:.2f} seconds.")
 
-            # Add the summary to the results
-            if self.summary:
-                self.results.comments.append(self.summary)
+            # summary removed: no summary comment appended
 
             # Track time for _filter_preexisting_comments
             preexisting_start_time = time()

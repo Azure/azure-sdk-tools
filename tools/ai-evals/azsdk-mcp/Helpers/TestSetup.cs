@@ -7,10 +7,18 @@ namespace azsdk_mcp.Helpers
 {
     public static class TestSetup
     {
-        // Configuration constants
-        private const string AzureOpenAIEndpoint = "https://devex-evals.openai.azure.com/";
-        private const string AzureOpenAIModelDeploymentName = "gpt-4o";
-        private const string LocalMcpPowershellScriptPath = @"C:\Users\juanospina\source\repos\azure-sdk-tools\eng\common\mcp\azure-sdk-mcp.ps1";
+        // Configuration from environment variables - required
+        private static readonly string AzureOpenAIEndpoint = 
+            Environment.GetEnvironmentVariable("AZURE_OPENAI_ENDPOINT") 
+            ?? throw new InvalidOperationException("AZURE_OPENAI_ENDPOINT environment variable is required");
+        
+        private static readonly string AzureOpenAIModelDeploymentName = 
+            Environment.GetEnvironmentVariable("AZURE_OPENAI_MODEL_DEPLOYMENT_NAME") 
+            ?? throw new InvalidOperationException("AZURE_OPENAI_MODEL_DEPLOYMENT_NAME environment variable is required");
+        
+        private static readonly string LocalMcpPowershellScriptPath = 
+            Environment.GetEnvironmentVariable("LOCAL_MCP_POWERSHELL_SCRIPT_PATH") 
+            ?? throw new InvalidOperationException("LOCAL_MCP_POWERSHELL_SCRIPT_PATH environment variable is required");
 
         public static VisualStudioCredential GetCredential()
         {

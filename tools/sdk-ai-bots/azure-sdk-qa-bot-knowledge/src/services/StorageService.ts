@@ -101,7 +101,7 @@ export class BlobService {
             )) {
                 blobs.set(blob.name, blob);
             }
-
+            console.log(`Listed ${blobs.size} blobs with properties`);
             return blobs;
         } catch (error) {
             throw new Error(
@@ -223,6 +223,7 @@ export class BlobService {
 
         if (!existing || !existing.properties.contentMD5) {
             // New blob or blob without MD5 (needs update)
+            console.log(`Blob ${blobPath} is new or missing MD5, needs upload`);
             return true;
         }
 

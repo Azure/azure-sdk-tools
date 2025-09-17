@@ -50,7 +50,7 @@
 /tools/perf-regression-finder/          @m-redding @jsquire
 
 # PRLabel: %azsdk-cli
-/tools/azsdk-cli/                       @benbp @scbedd @praveenkuttappan @smw-ms @Jeo02 @maririos @richardpark-msft @l0lawrence @timovv @samvaity
+/tools/azsdk-cli/                       @benbp @scbedd @praveenkuttappan @smw-ms @Jeo02 @maririos @richardpark-msft @l0lawrence @timovv @samvaity @haolingdong-msft @MaryGao @tadelesh @msyyc @haiyuazhang 
 
 ###########
 # Stress

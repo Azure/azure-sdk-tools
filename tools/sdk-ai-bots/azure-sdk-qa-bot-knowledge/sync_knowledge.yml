@@ -10,6 +10,13 @@ schedules:
     include:
     - main
 
+resources:
+  repositories:
+    - repository: azure-sdk-docs-eng.ms
+      type: git
+      name: internal/azure-sdk-docs-eng.ms
+      ref: refs/heads/main
+
 variables:
   - group: Release Secrets for GitHub
   - template: /eng/pipelines/templates/variables/image.yml
@@ -31,6 +38,11 @@ extends:
           image: $(LINUXVMIMAGE)
           os: linux
         steps:
+        # Checkout azure-sdk-docs-eng.ms
+        - checkout: azure-sdk-docs-eng.ms
+          displayName: 'Checkout azure-sdk-docs-eng.ms repository'
+          path: 'azure-sdk-docs'  # This will checkout to $(Agent.BuildDirectory)/s/azure-sdk-docs
+          
         - task: AzureCLI@2
           inputs:
             azureSubscription: 'azuresdkqabot'
@@ -61,6 +73,10 @@ extends:
           
         - script: |
             cd tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge
+            
+            # Set environment variables to access the azure-sdk-docs repository
+            export AZURE_SDK_DOCS_PATH="$(Agent.BuildDirectory)/s/azure-sdk-docs"
+            
             npm run start
           displayName: 'Execute knowledge sync'
           env:

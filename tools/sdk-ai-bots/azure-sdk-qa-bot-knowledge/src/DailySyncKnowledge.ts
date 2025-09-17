@@ -196,6 +196,10 @@ function getAuthenticatedUrl(repo: RepositoryConfig): string {
         console.log(`Using SSH authentication for ${repo.name} with host ${repo.sshHost || 'default'}`);
         return repo.url;
     }
+
+    if (repo.authType === 'local') {
+        repo.url = repo.localPath;
+    }
     
     return repo.url;
 }
@@ -310,15 +314,15 @@ async function setupDocumentationRepositories(docsDir: string): Promise<void> {
             
             // Get authenticated URL if required
             const cloneUrl = getAuthenticatedUrl(repo);
-            
-            if (fs.existsSync(repoPath)) {
-                // Update existing repository
-                process.chdir(repoPath);
-                
-                execSync('git fetch origin', { stdio: 'pipe', env: process.env });
-                execSync('git reset --hard origin/main || git reset --hard origin/master', { stdio: 'pipe', env: process.env });
+
+            if (repo.authType === 'local') {
+                // Copy from cloneUrl (local path)
+                for (const folder of repo.sparseCheckout || []) {
+                    const srcPath = path.join(cloneUrl, folder);
+                    fs.copyFileSync(srcPath, repoPath);
+                }
             } else {
-                // Clone new repository
+                // Clone from remote URL
                 process.chdir(docsDir);
                 
                 if (repo.sparseCheckout) {
@@ -335,7 +339,6 @@ async function setupDocumentationRepositories(docsDir: string): Promise<void> {
                     execSync(`git clone ${cloneUrl} ${repo.path}`, { stdio: 'pipe', env: process.env });
                 }
             }
-
             console.log(`${repo.name} setup completed`);
         } catch (error) {
             console.error(`Error setting up ${repo.name}:`, error);

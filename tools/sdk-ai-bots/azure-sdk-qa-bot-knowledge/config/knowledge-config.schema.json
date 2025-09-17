@@ -66,7 +66,7 @@
         "authType": {
           "type": "string",
           "description": "Authentication type for repository access",
-          "enum": ["public", "ssh", "token"]
+          "enum": ["public", "ssh", "token", "local"]
         },
         "sshHost": {
           "type": "string",
@@ -75,6 +75,10 @@
         "tokenEnvVar": {
           "type": "string",
           "description": "Environment variable containing access token (required for token auth)"
+        },
+        "localPathEnv": {
+          "type": "string",
+          "description": "Environment variable containing local repository path (required for local auth)"
         }
       },
       "required": ["url", "branch", "authType"],

@@ -94,6 +94,7 @@ public class GitConnection
         public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path);
         public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path, string? branch = null);
         public Task UpdatePullRequestAsync(string repoOwner, string repoName, int pullRequestNumber, string title, string body, ItemState state);
+        public Task RequestPullRequestReviewersAsync(string repoOwner, string repoName, int pullRequestNumber, IEnumerable<string> reviewers);
         public Task UpdateFileAsync(string owner, string repoName, string path, string message, string content, string sha, string branch);
         public Task<CreateBranchStatus> CreateBranchAsync(string repoOwner, string repoName, string branchName, string baseBranchName = "main");
         public Task<bool> IsExistingBranchAsync(string repoOwner, string repoName, string branchName);
@@ -133,6 +134,21 @@ public class GitConnection
                 State = state
             };
             await gitHubClient.PullRequest.Update(repoOwner, repoName, pullRequestNumber, update);
+        }
+
+        public async Task RequestPullRequestReviewersAsync(string repoOwner, string repoName, int pullRequestNumber, IEnumerable<string> reviewers)
+        {
+            try
+            {
+                var request = new PullRequestReviewRequest(reviewers.ToList(), null);
+                await gitHubClient.PullRequest.ReviewRequest.Create(repoOwner, repoName, pullRequestNumber, request);
+                logger.LogInformation($"Successfully requested review from {string.Join(", ", reviewers)} for PR #{pullRequestNumber}");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, $"Failed to request reviewers for PR #{pullRequestNumber}: {ex.Message}");
+                throw;
+            }
         }
 
         public async Task<string> GetGitHubParentRepoUrlAsync(string owner, string repoName)

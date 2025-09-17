@@ -87,6 +87,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.CompletedTask;
         }
 
+        public Task RequestPullRequestReviewersAsync(string repoOwner, string repoName, int pullRequestNumber, IEnumerable<string> reviewers)
+        {
+            // Mock implementation - just complete successfully
+            return Task.CompletedTask;
+        }
+
         public Task<IReadOnlyList<RepositoryContent>?> GetContentsAsync(string owner, string repoName, string path)
         {
             return Task.FromResult<IReadOnlyList<RepositoryContent>?>(new List<RepositoryContent>().AsReadOnly());

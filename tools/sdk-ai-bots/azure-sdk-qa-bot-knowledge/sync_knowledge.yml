@@ -61,17 +61,17 @@ stages:
         versionSpec: '20.x'
         
     - script: |
-        cd tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge
+        cd $(Agent.BuildDirectory)/s/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge
         npm ci
       displayName: 'Install dependencies'
       
     - script: |
-        cd tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge
+        cd $(Agent.BuildDirectory)/s/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge
         npm run build
       displayName: 'Build TypeScript project'
       
     - script: |
-        cd tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge
+        cd $(Agent.BuildDirectory)/s/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge
         npm run start
       displayName: 'Execute knowledge sync'
       env:
@@ -79,6 +79,6 @@ stages:
         AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
         AZURE_SDK_DOCS_PATH: "$(Agent.BuildDirectory)/s/azure-sdk-docs"
 
-        # Set working directory for temp files
+        # Set working directory for temporary files
         TMPDIR: $(Agent.TempDirectory)
         HOME: $(Agent.HomeDirectory)

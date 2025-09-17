@@ -10,7 +10,7 @@ namespace azsdk_mcp.Helpers
         // Configuration constants
         private const string AzureOpenAIEndpoint = "https://devex-evals.openai.azure.com/";
         private const string AzureOpenAIModelDeploymentName = "gpt-4o";
-        private const string LocalMcpPowershellScriptPath = "..\\..\\..\\..\\..\\eng\\common\\mcp\\azure-sdk-mcp.ps1";
+        private const string LocalMcpPowershellScriptPath = @"C:\Users\juanospina\source\repos\azure-sdk-tools\eng\common\mcp\azure-sdk-mcp.ps1";
 
         public static VisualStudioCredential GetCredential()
         {

@@ -13,12 +13,12 @@ namespace azsdk_mcp.Scenarios
         [TestMethod]
         public async Task AzsdkTypeSpecGeneration_Step02_TypespecValidation()
         {
-            // 1. Validate ChatHistory. ex.. Should end with AI answering and not the user
-            // Before it gets here will need to be converted from JSON to chat message somehow. 
-            var json = await SerializationHelper.LoadScenarioFromJsonAsync(JsonPath);
+            // 1. Load Scenario Data from JSON for this test. 
+            var filePath = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "TestData", "example.json");
+            var json = await SerializationHelper.LoadScenarioFromChatMessagesAsync(filePath);
             var fullChat = json.ChatHistory.Append(json.NextMessage);
-
-            // 2. LLM question and answer
+            
+            // 2. Get chat response
             var response = await ChatCompletion!.GetChatResponseAsync(fullChat);
 
             // 3. Custom Evaluator to check tool inputs

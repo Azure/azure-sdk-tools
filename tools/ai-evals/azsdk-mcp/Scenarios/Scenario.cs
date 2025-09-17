@@ -2,14 +2,14 @@ using azsdk_mcp.Helpers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.Extensions.AI;
 using ModelContextProtocol.Client;
+using System.Reflection;
 
 namespace azsdk_mcp.Scenarios
 {
     [TestClass]
     public partial class Scenario
     {
-        // Configuration constants
-        protected const string JsonPath = "..\\..\\..\\..\\..\\tools\\azsdk-cli\\Azure.Sdk.Tools.Cli.Evaluations\\example.json";
+        public TestContext TestContext { get; set; } = null!;
 
         // Static services
         protected static IChatClient? ChatClient;

@@ -125,7 +125,8 @@
       "repository": {
         "url": "https://azure-sdk@dev.azure.com/azure-sdk/internal/_git/azure-sdk-docs-eng.ms",
         "branch": "main",
-        "authType": "public"
+        "authType": "local",
+        "localPathEnv": "AZURE_SDK_DOCS_PATH"
       },
       "paths": [
         {

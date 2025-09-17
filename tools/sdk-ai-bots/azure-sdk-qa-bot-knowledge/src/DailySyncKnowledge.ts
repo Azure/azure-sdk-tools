@@ -319,7 +319,7 @@ async function setupDocumentationRepositories(docsDir: string): Promise<void> {
                 // Copy from cloneUrl (local path)
                 for (const folder of repo.sparseCheckout || []) {
                     const srcPath = path.join(cloneUrl, folder);
-                    fs.copyFileSync(srcPath, repoPath);
+                    fs.cpSync(srcPath, repoPath, { recursive: true });
                 }
             } else {
                 // Clone from remote URL

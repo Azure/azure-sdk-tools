@@ -38,10 +38,6 @@ stages:
     - checkout: self
       displayName: 'Checkout current repository'
 
-    - checkout: azure-sdk-docs-eng.ms
-      displayName: 'Checkout azure-sdk-docs-eng.ms repository'
-      path: 'azure-sdk-docs'  # This will checkout to $(Agent.BuildDirectory)/s/azure-sdk-docs
-
     - task: AzureCLI@2
       inputs:
         azureSubscription: 'azuresdkqabot'
@@ -61,23 +57,23 @@ stages:
         versionSpec: '20.x'
         
     - script: |
-        cd $(Agent.BuildDirectory)/s/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge
+        cd tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge
         npm ci
       displayName: 'Install dependencies'
       
     - script: |
-        cd $(Agent.BuildDirectory)/s/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge
+        cd tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge
         npm run build
       displayName: 'Build TypeScript project'
       
     - script: |
-        cd $(Agent.BuildDirectory)/s/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge
+        cd tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge
         npm run start
       displayName: 'Execute knowledge sync'
       env:
         # Azure App Configuration
         AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
-        AZURE_SDK_DOCS_PATH: "$(Agent.BuildDirectory)/s/azure-sdk-docs"
+        AZURE_SDK_DOCS_PATH: "$(Agent.BuildDirectory)/s/azure-sdk-docs-eng.ms"
 
         # Set working directory for temporary files
         TMPDIR: $(Agent.TempDirectory)

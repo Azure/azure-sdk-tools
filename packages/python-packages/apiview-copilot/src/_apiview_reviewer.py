@@ -447,7 +447,7 @@ class ApiViewReview:
         Judge generic comments by running the judge prompt on each comment, separating into keep
         and discard lists, reporting counts, and dumping to debug log if enabled.
         """
-        judge_prompt_file = "generic_comment_judge.prompty"
+        judge_prompt_file = "filter_generic_comment.prompty"
         judge_prompt_path = get_prompt_path(folder="api_review", filename=judge_prompt_file)
 
         self._print_message("Reviewing generic comments...")
@@ -600,12 +600,11 @@ class ApiViewReview:
         # Update the comments list with the unique comments
         self.results.comments = unique_comments
 
-    def _filter_comments(self):
+    def _filter_comments_with_metadata(self):
         """
         Run the filter prompt on the comments, processing each comment in parallel.
         """
-        # FIXME: Remove the schema aspect from the prompt and just have the "action" and "rationale" properties
-        filter_prompt_file = "comment_filter.prompty"
+        filter_prompt_file = "filter_comment_with_metadata.prompty"
         filter_prompt_path = get_prompt_path(folder="api_review", filename=filter_prompt_file)
 
         # Submit each comment to the executor for parallel processing
@@ -623,28 +622,36 @@ class ApiViewReview:
             )
 
         # Collect results as they complete, with % complete logging
-        keep_comments = []
-        discard_comments = []
+        keep_debug = []
+        discard_debug = []
+        comments_to_remove = []
         total = len(futures)
-        for idx, future in futures.items():
+        for progress_idx, (idx, future) in enumerate(futures.items()):
+            orig_comment = self.results.comments[idx]
             try:
                 response = future.result()
                 response_json = json.loads(response)
-                if response_json.get("status") == "KEEP":
-                    keep_comments.append(response_json)
+                action = response_json.get("action")
+                if action == "KEEP":
+                    keep_debug.append({**orig_comment.model_dump(), **response_json})
+                elif action == "DISCARD":
+                    discard_debug.append({**orig_comment.model_dump(), **response_json})
+                    comments_to_remove.append(idx)
                 else:
-                    discard_comments.append(response_json)
+                    self.logger.warning(f"Unexpected action for line {orig_comment.line_no}: {repr(response)}")
+                    keep_debug.append({**orig_comment.model_dump(), **response_json})
             except Exception as e:
                 self.logger.error(f"Error filtering comment at index {idx}: {str(e)}")
             # Log % complete
-            percent = int(((idx + 1) / total) * 100) if total else 100
+            percent = int(((progress_idx + 1) / total) * 100) if total else 100
             self._print_message(f"Filtering comments... {percent}% complete", overwrite=True)
         self._print_message()  # Ensure the progress bar is visible before the summary
 
-        # Update the results with the filtered comments
-        self._print_message(
-            f"Filtering completed. Kept {len(keep_comments)} comments. Discarded {len(discard_comments)} comments."
-        )
+        # Summary message (final counts computed after removals)
+        removed_count = len(set(comments_to_remove))
+        initial_count = len(self.results.comments)
+        final_count = initial_count - removed_count
+        self._print_message(f"Filtering completed. Kept {final_count} comments. Discarded {removed_count} comments.")
 
         # Debug log: dump keep_comments and discard_comments to files if enabled
         if self.debug_log:
@@ -654,13 +661,16 @@ class ApiViewReview:
             keep_path = os.path.join(debug_dir, f"debug_keep_comments_{ts}.json")
             discard_path = os.path.join(debug_dir, f"debug_discard_comments_{ts}.json")
             with open(keep_path, "w", encoding="utf-8") as f:
-                json.dump(keep_comments, f, indent=2)
+                json.dump(keep_debug, f, indent=2)
             with open(discard_path, "w", encoding="utf-8") as f:
-                json.dump(discard_comments, f, indent=2)
+                json.dump(discard_debug, f, indent=2)
             self.logger.debug(f"Kept comments written to {keep_path}")
             self.logger.debug(f"Discarded comments written to {discard_path}")
 
-        self.results.comments = [Comment(**comment) for comment in keep_comments]
+        # Remove comments that were marked for removal, preserving order of remaining comments
+        if comments_to_remove:
+            to_remove = set(comments_to_remove)
+            self.results.comments = [comment for i, comment in enumerate(self.results.comments) if i not in to_remove]
 
     def _filter_preexisting_comments(self):
         """
@@ -680,7 +690,7 @@ class ApiViewReview:
                 "existing": [e.model_dump() for e in existing_comments],
                 "language": get_language_pretty_name(self.language),
             }
-            prompt_path = get_prompt_path(folder="api_review", filename="existing_comment_filter.prompty")
+            prompt_path = get_prompt_path(folder="api_review", filename="filter_existing_comment.prompty")
             tasks.append((idx, comment, prompt_path, inputs))
             indices.append(idx)
 
@@ -693,10 +703,15 @@ class ApiViewReview:
             try:
                 response = futures[idx].result()
                 response_json = json.loads(response)
-                if response_json.get("status") == "KEEP":
-                    comment.comment = response_json.get("comment")
-                elif response_json.get("status") == "DISCARD":
+                action = response_json.get("action")
+                comment = response_json.get("comment")
+                if action == "KEEP":
+                    comment.comment = comment
+                elif action == "DISCARD":
                     comments_to_remove.append(idx)
+                else:
+                    self.logger.warning(f"Unexpected action for line {comment.line_no}: {repr(response)}")
+                    comment.comment = comment
             except Exception as e:
                 self.logger.error(f"Error filtering preexisting comments for line {comment.line_no}: {str(e)}")
                 self.logger.warning(f"Keeping comment despite filtering error: {comment.comment}")
@@ -805,7 +820,7 @@ class ApiViewReview:
 
             # Track time for _filter_comments
             filter_start_time = time()
-            self._filter_comments()
+            self._filter_comments_with_metadata()
             filter_end_time = time()
             self._print_message(f"  Filtering completed in {filter_end_time - filter_start_time:.2f} seconds.")
 

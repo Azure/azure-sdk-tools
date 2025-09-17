@@ -16,6 +16,7 @@ model:
     top_p: 1.0
     stop: []
     max_tokens: 16384
+    response_format: ${file:action_schema.json}
 sample:
   language: Python
   content: |
@@ -226,16 +227,7 @@ system:
   2. The most relevant guidance based on that comment.
 
   # OUTPUT REQUIREMENTS
-  
-  - You must output the following schema, but NO DOT includes the ```json or ``` tags:
-  ```json
-  {
-    "action": string,
-    "rationale": string
-  }
-  ```
   - `action` should be `KEEP` if the comment is consistent with the context, or `DISCARD` if it contradicts the context.
-  - `rationale` should explain why the comment should be kept or rejected, referencing relevant parts of the context
 
 user:
   Please judge the following {{language}} comment:

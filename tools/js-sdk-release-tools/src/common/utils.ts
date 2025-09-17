@@ -206,15 +206,13 @@ export async function loadTspConfig(typeSpecDirectory: string): Promise<Exclude<
 // generated path is in posix format
 // e.g. sdk/mongocluster/arm-mongocluster
 export async function getGeneratedPackageDirectory(typeSpecDirectory: string, sdkRepoRoot: string): Promise<string> {
-    const tspConfig = await resolveOptions(typeSpecDirectory);
+    const tspConfig = await resolveOptions(typeSpecDirectory, sdkRepoRoot);
     const emitterOptions = tspConfig.options?.[emitterName];
     // Try to get package directory from emitter-output-dir first    
     const emitterOutputDir = emitterOptions?.['emitter-output-dir'];
     if (emitterOutputDir) {
-        // emitterOutputDir from resolved options should already be an absolute path
-        // Convert to relative path from sdkRepoRoot for consistency
-        const relativePath = path.relative(sdkRepoRoot, emitterOutputDir);
-        return posix.normalize(relativePath);
+        // emitter-output-dir is an absolute path, return it directly
+        return emitterOutputDir;
     }
 
     let packageDir = tspConfig.configFile.parameters?.["package-dir"]?.default;
@@ -322,13 +320,16 @@ export async function existsAsync(path: string): Promise<boolean> {
     }
 }
 
-export async function resolveOptions(typeSpecDirectory: string): Promise<Exclude<any, null | undefined>> {
+export async function resolveOptions(typeSpecDirectory: string, sdkRepoRoot?: string): Promise<Exclude<any, null | undefined>> {
     const [{ config, ...options }, diagnostics] = await compiler.resolveCompilerOptions(
         compiler.NodeHost,
         {
             cwd: process.cwd(),
             entrypoint: typeSpecDirectory, // not really used here
             configPath: typeSpecDirectory,
+            overrides: {
+                outputDir: sdkRepoRoot || process.cwd() // Use sdkRepoRoot if provided, otherwise use current directory
+            }
         });
     return options
 }

@@ -485,7 +485,7 @@ namespace APIViewWeb.Managers
                     try
                     {
                         // Look up pull requests in azure-rest-api-specs repository (most common for TypeSpec)
-                        var pullRequests = await _pullRequestsRepository.GetPullRequestsAsync(prNumber, "azure-rest-api-specs");
+                        var pullRequests = await _pullRequestsRepository.GetPullRequestsAsync(prNumber, "Azure/azure-rest-api-specs");
                         
                         // Get all review IDs from pull requests first to batch the database calls
                         var reviewIdsToCheck = pullRequests

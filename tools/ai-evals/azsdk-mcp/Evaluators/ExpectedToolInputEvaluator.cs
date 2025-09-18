@@ -115,11 +115,11 @@ namespace azsdk_mcp.Evaluators
             }
 
             metric.Value = true;
-            metric.Reason = "The results tool calls input matched the expcted tool calls output";
+            metric.Reason = "The results tool calls input matched the expected tool calls output";
 
             Interpret(metric);
 
-            // If we made it here then everything was a match and our tools input matched up to what we expcted. 
+            // If we made it here then everything was a match and our tools input matched up to what we expected. 
             return new ValueTask<EvaluationResult>(new EvaluationResult(metric));
         }
 

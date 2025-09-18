@@ -100,7 +100,7 @@ namespace azsdk_mcp.Evaluators
                     {
                         metric.AddDiagnostics(
                             EvaluationDiagnostic.Error(
-                                $"Tool call made in the wrong order. Expected the {expToolName} tool but the LLM called {actToolName} tool. This was tool call #{countCalls}\nExpected Argument JSON:{expectedJson}\nActual Argument JSON:{actualJson}"));
+                                $"Tool call arguments did not match. Expected arguments for the {expToolName} tool but the LLM provided arguments for the {actToolName} tool. This was tool call #{countCalls}\nExpected Argument JSON:{expectedJson}\nActual Argument JSON:{actualJson}"));
                         return result;
                     }
                 }

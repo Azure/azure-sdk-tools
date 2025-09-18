@@ -4,20 +4,29 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.ComponentModel;
 using Azure.AI.OpenAI;
+using ModelContextProtocol.Server;
+using OpenAI.Chat;
 using Azure.Sdk.Tools.Cli.Commands;
-using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Helpers;
-using ModelContextProtocol.Server;
-using OpenAI.Chat;
 using Azure.Sdk.Tools.Cli.Microagents;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Example;
 
 #if DEBUG
 [McpServerToolType, Description("Example tool demonstrating various framework features and service integrations")]
-public class ExampleTool : MCPTool
+public class ExampleTool(
+    ILogger<ExampleTool> logger,
+    IAzureService azureService,
+    IDevOpsService devOpsService,
+    IGitHubService gitHubService,
+    IMicroagentHostService microagentHostService,
+    IProcessHelper processHelper,
+    IPowershellHelper powershellHelper,
+    TokenUsageHelper tokenUsageHelper,
+    AzureOpenAIClient openAIClient
+) : MCPMultiCommandTool
 {
     // Sub-command constants
     private const string AzureSubCommand = "azure";
@@ -29,17 +38,11 @@ public class ExampleTool : MCPTool
     private const string PowershellSubCommand = "powershell";
     private const string MicroagentSubCommand = "microagent";
 
-    // Dependencies injected via constructor
-    private readonly ILogger<ExampleTool> logger;
-    private readonly IOutputHelper output;
-    private readonly IAzureService azureService;
-    private readonly IDevOpsService devOpsService;
-    private readonly IGitHubService gitHubService;
-    private readonly AzureOpenAIClient openAIClient;
-    private readonly IProcessHelper processHelper;
-    private readonly IPowershellHelper powershellHelper;
-    private readonly TokenUsageHelper tokenUsageHelper;
-    private readonly IMicroagentHostService microagentHostService;
+    // azsdk example demo <sub-command>
+    public override CommandGroup[] CommandHierarchy { get; set; } = [
+        SharedCommandGroups.Example,
+        SharedCommandGroups.Demo
+    ];
 
     // CLI Options and Arguments
     private readonly Argument<string> aiInputArg = new(
@@ -78,102 +81,25 @@ public class ExampleTool : MCPTool
 
     private readonly Option<string> tenantOption = new(["--tenant", "-t"], "Tenant ID");
     private readonly Option<string> languageOption = new(["--language", "-l"], "Programming language of the repository");
-    private readonly Option<string> promptOption = new(["--prompt", "-p"], "AI prompt text");
     private readonly Option<bool> forceFailureOption = new(["--force-failure", "-f"], () => false, "Force an error for demonstration");
-    private readonly Option<bool> verboseOption = new(["--verbose", "-v"], () => false, "Enable verbose logging");
 
-    public ExampleTool(
-        ILogger<ExampleTool> logger,
-        IOutputHelper output,
-        IAzureService azureService,
-        IDevOpsService devOpsService,
-        IGitHubService gitHubService,
-        IProcessHelper processHelper,
-        IPowershellHelper powershellHelper,
-        TokenUsageHelper tokenUsageHelper,
-        IMicroagentHostService microagentHostService,
-        AzureOpenAIClient openAIClient
-    ) : base()
-    {
-        this.logger = logger;
-        this.output = output;
-        this.azureService = azureService;
-        this.devOpsService = devOpsService;
-        this.gitHubService = gitHubService;
-        this.openAIClient = openAIClient;
-        this.processHelper = processHelper;
-        this.powershellHelper = powershellHelper;
-        this.tokenUsageHelper = tokenUsageHelper;
-        this.microagentHostService = microagentHostService;
+    protected override List<Command> GetCommands() =>
+    [
+        new(AzureSubCommand, "Demonstrate Azure service integration") { tenantOption },
+        new(DevOpsSubCommand, "Demonstrate DevOps service integration") { packageArgument, languageOption },
+        new(GitHubSubCommand, "Demonstrate GitHub service integration"),
+        new(AISubCommand, "Demonstrate AI service integration") { aiInputArg },
+        new(ErrorSubCommand, "Demonstrate error handling patterns") { errorInputArg, forceFailureOption },
+        new(ProcessSubCommand, "Demonstrate spawning an external process (echo)") { processSleepArg },
+        new(PowershellSubCommand, "Demonstrate PowerShell helper running a temp script with a parameter") { powershellMessageArg },
+        new(MicroagentSubCommand, "Demonstrate micro-agent looping tool calls to compute Fibonacci") { fibonacciIndexOption }
+    ];
 
-        // Set command hierarchy - results in: azsdk example
-        CommandHierarchy = [
-            SharedCommandGroups.Example
-        ];
-    }
-
-    public override Command GetCommand()
-    {
-        var parentCommand = new Command("demo", "Comprehensive demonstration of framework features");
-
-        // Azure service example sub-command
-        var azureCmd = new Command(AzureSubCommand, "Demonstrate Azure service integration");
-        azureCmd.AddOption(tenantOption);
-        azureCmd.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
-
-        // DevOps service example sub-command
-        var devopsCmd = new Command(DevOpsSubCommand, "Demonstrate DevOps service integration");
-        devopsCmd.AddArgument(packageArgument);
-        devopsCmd.AddOption(languageOption);
-        devopsCmd.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
-
-        // GitHub service example sub-command
-        var githubCmd = new Command(GitHubSubCommand, "Demonstrate GitHub service integration");
-        githubCmd.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
-
-        // AI service example sub-command
-        var aiCmd = new Command(AISubCommand, "Demonstrate AI service integration");
-        aiCmd.AddArgument(aiInputArg);
-        aiCmd.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
-
-        // Error handling example sub-command
-        var errorCmd = new Command(ErrorSubCommand, "Demonstrate error handling patterns");
-        errorCmd.AddArgument(errorInputArg);
-        errorCmd.AddOption(forceFailureOption);
-        errorCmd.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
-
-        // Process execution example sub-command
-        var processCmd = new Command(ProcessSubCommand, "Demonstrate spawning an external process (echo)");
-        processCmd.AddArgument(processSleepArg);
-        processCmd.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
-
-        // PowerShell helper example sub-command
-        var powershellCmd = new Command(PowershellSubCommand, "Demonstrate PowerShell helper running a temp script with a parameter");
-        powershellCmd.AddArgument(powershellMessageArg);
-        powershellCmd.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
-
-        // Microagent Fibonacci demo sub-command
-        var microagentCmd = new Command(MicroagentSubCommand, "Demonstrate micro-agent looping tool calls to compute Fibonacci");
-        microagentCmd.AddOption(fibonacciIndexOption);
-        microagentCmd.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
-
-        parentCommand.Add(azureCmd);
-        parentCommand.Add(devopsCmd);
-        parentCommand.Add(githubCmd);
-        parentCommand.Add(aiCmd);
-        parentCommand.Add(errorCmd);
-        parentCommand.Add(processCmd);
-        parentCommand.Add(powershellCmd);
-        parentCommand.Add(microagentCmd);
-
-        return parentCommand;
-    }
-
-    public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
+    public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
     {
         var commandName = ctx.ParseResult.CommandResult.Command.Name;
 
-        object result = commandName switch
+        CommandResponse result = commandName switch
         {
             AzureSubCommand => await DemonstrateAzureService(ctx.ParseResult.GetValueForOption(tenantOption), ct),
             DevOpsSubCommand => await DemonstrateDevOpsService(ctx.ParseResult.GetValueForArgument(packageArgument), ctx.ParseResult.GetValueForOption(languageOption), ct),
@@ -186,8 +112,7 @@ public class ExampleTool : MCPTool
             _ => new ExampleServiceResponse { ResponseError = $"Unknown command: {commandName}" }
         };
 
-        ctx.ExitCode = ExitCode;
-        output.Output(result);
+        return result;
     }
 
     [McpServerTool(Name = "azsdk_example_azure_service"), Description("Demonstrates Azure service integration")]
@@ -218,7 +143,6 @@ public class ExampleTool : MCPTool
         catch (Exception ex)
         {
             logger.LogError(ex, "Error demonstrating Azure service with input");
-            SetFailure();
             return new ExampleServiceResponse
             {
                 ResponseError = $"Failed to demonstrate Azure service: {ex.Message}"
@@ -250,7 +174,6 @@ public class ExampleTool : MCPTool
         catch (Exception ex)
         {
             logger.LogError(ex, "Error demonstrating DevOps service with package: {PackageName}, language: {Language}", packageName, language);
-            SetFailure();
             return new ExampleServiceResponse
             {
                 ResponseError = $"Failed to demonstrate DevOps service: {ex.Message}"
@@ -284,7 +207,6 @@ public class ExampleTool : MCPTool
         catch (Exception ex)
         {
             logger.LogError(ex, "Error demonstrating GitHub service");
-            SetFailure();
             return new ExampleServiceResponse
             {
                 ResponseError = $"Failed to demonstrate GitHub service: {ex.Message}"
@@ -328,7 +250,6 @@ public class ExampleTool : MCPTool
         catch (Exception ex)
         {
             logger.LogError(ex, "Error demonstrating AI service using model {Model} with prompt: {UserPrompt}", model, userPrompt);
-            SetFailure();
             return new ExampleServiceResponse
             {
                 ResponseError = $"Failed to demonstrate AI service: {ex.Message}"
@@ -371,7 +292,6 @@ public class ExampleTool : MCPTool
         catch (Exception ex)
         {
             logger.LogError(ex, "Demonstrating error handling for scenario: {Scenario}", scenario);
-            SetFailure();
             return new DefaultCommandResponse
             {
                 ResponseError = $"Demonstrated error handling: {ex.GetType().Name}: {ex.Message}"
@@ -396,9 +316,9 @@ public class ExampleTool : MCPTool
 
             if (result.ExitCode != 0)
             {
-                SetFailure(result.ExitCode);
                 return new ExampleServiceResponse
                 {
+                    ExitCode = result.ExitCode,
                     ResponseErrors = [
                         $"Sleep example failed to run process",
                         result.Output
@@ -420,7 +340,6 @@ public class ExampleTool : MCPTool
         catch (Exception ex)
         {
             logger.LogError(ex, "Error demonstrating process execution for sleep: {time}", time);
-            SetFailure();
             return new ExampleServiceResponse
             {
                 ResponseError = $"Failed to execute process: {ex.Message}"
@@ -455,11 +374,11 @@ public class ExampleTool : MCPTool
 
             if (result.ExitCode != 0)
             {
-                SetFailure(result.ExitCode);
                 return new ExampleServiceResponse
                 {
                     ServiceName = "PowerShell",
                     Operation = "RunTempScript",
+                    ExitCode = result.ExitCode,
                     ResponseErrors = [
                         $"PowerShell script exited with code {result.ExitCode}",
                         result.Output ?? string.Empty
@@ -482,7 +401,6 @@ public class ExampleTool : MCPTool
         catch (Exception ex)
         {
             logger.LogError(ex, "Error demonstrating PowerShell helper with message: {Message}", message);
-            SetFailure();
             return new ExampleServiceResponse
             {
                 ResponseError = $"Failed to run PowerShell script: {ex.Message}"
@@ -518,7 +436,6 @@ public class ExampleTool : MCPTool
         {
             if (n < 2)
             {
-                SetFailure();
                 return new DefaultCommandResponse { ResponseError = "--fibonacci must be >= 2 to run the micro-agent" };
             }
 
@@ -558,7 +475,6 @@ public class ExampleTool : MCPTool
         {
             tokenUsageHelper.LogUsage();
             logger.LogError(ex, "Error demonstrating micro-agent Fibonacci for n={n}", n);
-            SetFailure();
             return new DefaultCommandResponse { ResponseError = $"Failed to compute Fibonacci({n}): {ex.Message}" };
         }
     }

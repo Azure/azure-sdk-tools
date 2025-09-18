@@ -4,7 +4,6 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
-using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Models;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Services.ClientUpdate;
@@ -13,36 +12,41 @@ using Azure.Sdk.Tools.Cli.Helpers;
 namespace Azure.Sdk.Tools.Cli.Tools;
 
 [McpServerToolType, Description("Update customized SDK code after TypeSpec regeneration: creates a new generation, diffs old vs new generated code, maps API changes to impacted customization files, applies patches.")]
-public class TspClientUpdateTool : MCPTool
+public class TspClientUpdateTool(
+    ILogger<TspClientUpdateTool> logger,
+    IClientUpdateLanguageServiceResolver languageServiceResolver,
+    ITspClientHelper tspClientHelper
+) : MCPTool
 {
-    private readonly ILogger<TspClientUpdateTool> logger;
-    private readonly IOutputHelper output;
-    private readonly IClientUpdateLanguageServiceResolver languageServiceResolver;
-    private readonly ITspClientHelper tspClientHelper;
+    public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.TypeSpec];
+
     private readonly Argument<string> updateCommitSha = new(name: "update-commit-sha", description: "SHA of the commit to apply update changes for") { Arity = ArgumentArity.ExactlyOne };
     private readonly Option<string?> newGenOpt = new(["--new-gen"], () => "./tmpgen", "Directory for regenerated TypeSpec output (optional)");
 
-    public TspClientUpdateTool(ILogger<TspClientUpdateTool> logger, IOutputHelper output, IClientUpdateLanguageServiceResolver languageServiceResolver, ITspClientHelper tspClientHelper)
-    {
-        this.logger = logger;
-        this.output = output;
-        this.languageServiceResolver = languageServiceResolver;
-        this.tspClientHelper = tspClientHelper;
-        CommandHierarchy = [ SharedCommandGroups.TypeSpec ];
-    }
+    protected override Command GetCommand() =>
+        new("customized-update", "Update customized TypeSpec-generated client code. Runs the full pipeline by default: regenerate -> diff -> map -> propose -> apply")
+        {
+            updateCommitSha,
+            SharedOptions.PackagePath,
+            newGenOpt
+        };
 
-    public override Command GetCommand()
+    public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
     {
-        var cmd = new Command("customized-update",
-            description: "Update customized TypeSpec-generated client code. Runs the full pipeline by default: regenerate -> diff -> map -> propose -> apply");
-        cmd.AddArgument(updateCommitSha);
-        cmd.AddOption(SharedOptions.PackagePath);
-        cmd.AddOption(newGenOpt);
-        cmd.SetHandler(async ctx => await HandleUpdate(ctx, ctx.GetCancellationToken()));
-        return cmd;
+        var spec = ctx.ParseResult.GetValueForArgument(updateCommitSha);
+        var packagePath = ctx.ParseResult.GetValueForOption(SharedOptions.PackagePath);
+        var newGenPath = ctx.ParseResult.GetValueForOption(newGenOpt);
+        try
+        {
+            logger.LogInformation("Starting client update (CLI) for package at: {packagePath} with new-gen: {newGenPath}", packagePath, newGenPath);
+            return await RunUpdateAsync(spec, packagePath, newGenPath, ct);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "CLI update failed");
+            return new TspClientUpdateResponse { ResponseError = ex.Message, ErrorCode = "ClientUpdateFailed" };
+        }
     }
-
-    public override Task HandleCommand(InvocationContext ctx, CancellationToken ct) => Task.CompletedTask;
 
     [McpServerTool(Name = "azsdk_tsp_update"), Description("Update customized TypeSpec-generated client code")]
     public Task<TspClientUpdateResponse> UpdateAsync(string commitSha, string packagePath, CancellationToken ct = default)
@@ -55,18 +59,15 @@ public class TspClientUpdateTool : MCPTool
             logger.LogInformation("Starting client update for package at: {packagePath} (regenDir: {regenDir})", packagePath, newGenPath);
             if (!Directory.Exists(packagePath))
             {
-                SetFailure(1);
                 return new TspClientUpdateResponse { ErrorCode = "1", ResponseError = $"Package path does not exist: {packagePath}" };
             }
             if (string.IsNullOrWhiteSpace(commitSha))
             {
-                SetFailure(1);
                 return new TspClientUpdateResponse { ErrorCode = "1", ResponseError = "Commit SHA is required." };
             }
             var resolved = await languageServiceResolver.ResolveAsync(packagePath, ct);
             if (resolved == null)
             {
-                SetFailure(1);
                 return new TspClientUpdateResponse { ErrorCode = "NoLanguageService", ResponseError = "Could not resolve a client update language service." };
             }
             return await UpdateCoreAsync(commitSha, packagePath, resolved, ct, newGenPath);
@@ -103,7 +104,6 @@ public class TspClientUpdateTool : MCPTool
         var regenResult = await tspClientHelper.UpdateGenerationAsync(tspLocationPath, regenDir, isCli: false, ct);
         if (!regenResult.IsSuccessful)
         {
-            SetFailure(1);
             session.LastStage = UpdateStage.Failed;
             return new TspClientUpdateResponse
             {
@@ -171,24 +171,6 @@ public class TspClientUpdateTool : MCPTool
         Session = s,
         Message = message
     };
-
-    private async Task HandleUpdate(InvocationContext ctx, CancellationToken ct)
-    {
-    var spec = ctx.ParseResult.GetValueForArgument(updateCommitSha);
-        var packagePath = ctx.ParseResult.GetValueForOption(SharedOptions.PackagePath);
-        var newGenPath = ctx.ParseResult.GetValueForOption(newGenOpt);
-        try
-        {
-            logger.LogInformation("Starting client update (CLI) for package at: {packagePath} with new-gen: {newGenPath}", packagePath, newGenPath);
-            var resp = await RunUpdateAsync(spec, packagePath, newGenPath, ct);
-            output.Output(resp);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "CLI update failed");
-            output.OutputError(new TspClientUpdateResponse { ResponseError = ex.Message, ErrorCode = "ClientUpdateFailed" });
-        }
-    }
 
     private static string ResolveRegenDirectory(string packagePath, string? newGenPath)
     {

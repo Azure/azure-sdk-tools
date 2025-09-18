@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models.Responses;
 
-public class ServiceCodeownersResult : Response
+public class ServiceCodeownersResult : CommandResponse
 {
     [JsonPropertyName("message")]
     public string Message { get; set; } = "";

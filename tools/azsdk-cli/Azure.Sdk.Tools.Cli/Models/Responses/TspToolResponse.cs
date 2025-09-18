@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models.Responses
 {
-    public class TspToolResponse : Response
+    public class TspToolResponse : CommandResponse
     {
         [JsonPropertyName("typespec_project_path")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]

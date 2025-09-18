@@ -21,6 +21,10 @@ internal static class TelemetryConstants
         public const string ToolArea = "ToolArea";
         public const string ToolArgs = "ToolArgs";
         public const string ToolResponse = "ToolResponse";
+        public const string CommandName = "CommandName";
+        public const string CommandArea = "CommandArea";
+        public const string CommandArgs = "CommandArgs";
+        public const string CommandResponse = "CommandResponse";
     }
 
     internal class ActivityName

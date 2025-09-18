@@ -22,7 +22,6 @@ public class APIViewTool : MCPTool
 {
     private const string GetRevisionCommentsSubCommand = "get-revision-comments";
     private const string GetRevisionContentSubCommand = "get-revision-content";
-    private const string ListReviewVersionsSubCommand = "list-review-versions";
     private const string CheckAuthenticationSubCommand = "check-authentication";
     private const string GetAuthenticationGuidanceSubCommand = "get-authentication-guidance";
     private readonly IAPIViewService _apiViewService;
@@ -81,14 +80,6 @@ public class APIViewTool : MCPTool
         getRevisionDiffCmd.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
         parentCommand.AddCommand(getRevisionDiffCmd);
 
-        // List revisions command
-        Command listRevisionsCmd = new(ListReviewVersionsSubCommand, "List all versions for a review");
-        listRevisionsCmd.AddOption(reviewIdOptions);
-        listRevisionsCmd.AddOption(environmentOption);
-        listRevisionsCmd.AddOption(authTokenOption);
-        listRevisionsCmd.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
-        parentCommand.AddCommand(listRevisionsCmd);
-
         // Authentication commands
         Command checkAuthCmd = new(CheckAuthenticationSubCommand, "Check APIView authentication status");
         checkAuthCmd.AddOption(environmentOption);
@@ -109,7 +100,6 @@ public class APIViewTool : MCPTool
         {
             GetRevisionCommentsSubCommand => await GetRevisionComments(ctx, ct),
             GetRevisionContentSubCommand => await GetRevisionContent(ctx, ct),
-            ListReviewVersionsSubCommand => await ListReviewVersions(ctx, ct),
             CheckAuthenticationSubCommand => await CheckAuthentication(ctx, ct),
             GetAuthenticationGuidanceSubCommand => await GetAuthenticationGuidance(ctx, ct),
             _ => new APIViewResponse { ResponseError = $"Unknown command: {commandName}" }
@@ -128,7 +118,7 @@ public class APIViewTool : MCPTool
     {
         try
         {
-            string? result = await _apiViewService.GetCommentByRevisionAsync(revisionId, environment, authToken);
+            string? result = await _apiViewService.GetCommentsByRevisionAsync(revisionId, environment, authToken);
             if (result == null)
             {
                 return new APIViewResponse
@@ -187,37 +177,6 @@ public class APIViewTool : MCPTool
             _logger.LogError(ex, "Failed to get authentication guidance");
             SetFailure();
             return new APIViewResponse { ResponseError = $"Failed to get authentication guidance: {ex.Message}" };
-        }
-    }
-
-    [McpServerTool(Name = "azsdk_apiview_list_review_versions")]
-    [Description("List all versions for an APIView review")]
-    public async Task<APIViewResponse> ListReviewVersions(
-        string reviewId,
-        string? environment = null,
-        string? authToken = null)
-    {
-        try
-        {
-            string? result = await _apiViewService.ListReviewVersions(reviewId, environment, authToken);
-            if (result == null)
-            {
-                return new APIViewResponse
-                {
-                    Success = false, ResponseError = $"Failed to retrieve revisions for review {reviewId}"
-                };
-            }
-
-            return new APIViewResponse
-            {
-                Success = true, Message = $"Revisions retrieved successfully for review {reviewId}", Data = result
-            };
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to get revisions for review {ReviewId}", reviewId);
-            SetFailure();
-            return new APIViewResponse { ResponseError = $"Failed to get review revisions: {ex.Message}" };
         }
     }
 
@@ -304,21 +263,6 @@ public class APIViewTool : MCPTool
             SetFailure();
             return new APIViewResponse { ResponseError = $"Failed to get revision content: {ex.Message}" };
         }
-    }
-
-    private async Task<APIViewResponse> ListReviewVersions(InvocationContext ctx, CancellationToken ct)
-    {
-        string? reviewId = ctx.ParseResult.GetValueForOption(reviewIdOptions);
-        string? environment = ctx.ParseResult.GetValueForOption(environmentOption);
-        string? authToken = ctx.ParseResult.GetValueForOption(authTokenOption);
-
-        if (string.IsNullOrEmpty(reviewId))
-        {
-            SetFailure();
-            return new APIViewResponse { ResponseError = "Review ID is required" };
-        }
-
-        return await ListReviewVersions(reviewId, environment, authToken);
     }
 
     private async Task<APIViewResponse> CheckAuthentication(InvocationContext ctx, CancellationToken ct)

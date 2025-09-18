@@ -5,9 +5,8 @@ namespace Azure.Sdk.Tools.Cli.Services;
 
 public interface IAPIViewService
 {
-    Task<string?> GetCommentByRevisionAsync(string revisionId, string environment = "production", string? authToken = null);
+    Task<string?> GetCommentsByRevisionAsync(string revisionId, string environment = "production", string? authToken = null);
     Task<string?> GetRevisionCodeTokenFile(string activeRevisionId, string environment = "production", string? authToken = null);
-    Task<string?> ListReviewVersions(string reviewId, string environment = "production", string? authToken = null);
     Task<string?> GetRevisionContentText(string revisionId, string environment = "production", string? authToken = null);
     Task<string> CheckAuthenticationStatusAsync(string environment = "production");
     Task<string> GetAuthenticationGuidanceAsync();
@@ -29,7 +28,7 @@ public class APIViewService : IAPIViewService
         _logger = logger;
     }
 
-    public async Task<string?> GetCommentByRevisionAsync(string revisionId, string environment = "production", string? authToken = null)
+    public async Task<string?> GetCommentsByRevisionAsync(string revisionId, string environment = "production", string? authToken = null)
     {
         string endpoint = $"/api/Comments/getRevisionComments?apiRevisionId={revisionId}";
         string? result = await _httpService.GetAsync(endpoint, "comments", environment, authToken);
@@ -54,19 +53,6 @@ public class APIViewService : IAPIViewService
         {
             _logger.LogWarning("Received empty response for revisions {ActiveRevisionId}", activeRevisionId);
             return null;
-        }
-
-        return result;
-    }
-
-    public async Task<string?> ListReviewVersions(string reviewId, string environment = "production", string? authToken = null)
-    {
-        string endpoint = $"/api/apirevisions/{reviewId}/getReviewVersions";
-        string? result = await _httpService.GetAsync(endpoint, "review revisions", environment, authToken);
-
-        if (result == null)
-        {
-            _logger.LogWarning("No revisions found for review {ReviewId}", reviewId);
         }
 
         return result;

@@ -157,15 +157,4 @@ namespace APIViewWeb.LeanModels
         public string Title { get; set; }
         public bool IsDeleted { get; set; }
     }
-
-    public class RevisionResponseModel
-    {
-        public string RevisionId { get; set; }
-        public string PackageVersion { get; set; }
-        public DateTime CreatedOn { get; set; }
-        public DateTime LastUpdatedOn { get; set; }
-        public bool IsDeleted { get; set; }
-        public bool IsReleased { get; set; }
-        public DateTime ReleasedOn { get; set; }
-    }
 }

@@ -10,6 +10,7 @@ using Azure.Sdk.Tools.Cli.Tools.Pipeline;
 using Azure.Sdk.Tools.Cli.Tools.ReleasePlan;
 using Azure.Sdk.Tools.Cli.Tools.Example;
 using Azure.Sdk.Tools.Cli.Tools.TypeSpec;
+using Azure.Sdk.Tools.Cli.Tools.APIView;
 
 namespace Azure.Sdk.Tools.Cli.Commands
 {
@@ -41,6 +42,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(TypeSpecInitTool),
             typeof(TspClientUpdateTool),
             typeof(TypeSpecPublicRepoValidationTool),
+            typeof(APIViewTool),
 
             #if DEBUG
             // only add these tools in debug mode

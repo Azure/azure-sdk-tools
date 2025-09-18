@@ -237,7 +237,7 @@ namespace APIViewUnitTests
                 .Returns(Task.CompletedTask);
 
             // Act
-            var result = await _controller.RequestNamespaceReviewAsync(reviewId, associatedReviewIds);
+            var result = await _controller.RequestNamespaceReviewAsync(reviewId, "revision1");
 
             // Assert
             result.Should().NotBeNull();
@@ -267,7 +267,7 @@ namespace APIViewUnitTests
                 .ReturnsAsync(javaReview);
 
             // Act
-            var result = await _controller.RequestNamespaceReviewAsync(reviewId, associatedReviewIds);
+            var result = await _controller.RequestNamespaceReviewAsync(reviewId, "revision1");
 
             // Assert
             result.Should().NotBeNull();
@@ -320,7 +320,7 @@ namespace APIViewUnitTests
             _mockNotificationManager.Setup(n => n.NotifyApproversOnNamespaceReviewRequest(It.IsAny<ClaimsPrincipal>(), It.IsAny<ReviewListItemModel>(), It.IsAny<IEnumerable<ReviewListItemModel>>(), It.IsAny<string>())).Returns(Task.CompletedTask);
 
             // Act
-            var result = await _controller.RequestNamespaceReviewAsync(reviewId, associatedReviewIds);
+            var result = await _controller.RequestNamespaceReviewAsync(reviewId, "revision1");
 
             // Assert
             result.Should().BeOfType<StatusCodeResult>();
@@ -365,7 +365,7 @@ namespace APIViewUnitTests
             _mockNotificationManager.Setup(n => n.NotifyApproversOnNamespaceReviewRequest(It.IsAny<ClaimsPrincipal>(), It.IsAny<ReviewListItemModel>(), It.IsAny<IEnumerable<ReviewListItemModel>>(), It.IsAny<string>())).Returns(Task.CompletedTask);
 
             // Act
-            var result = await _controller.RequestNamespaceReviewAsync(reviewId, associatedReviewIds);
+            var result = await _controller.RequestNamespaceReviewAsync(reviewId, "revision1");
 
             // Assert
             result.Should().BeOfType<StatusCodeResult>();
@@ -453,7 +453,7 @@ namespace APIViewUnitTests
             };
 
             // Act
-            var result = await _controller.RequestNamespaceReviewAsync(reviewId, associatedReviewIds);
+            var result = await _controller.RequestNamespaceReviewAsync(reviewId, "revision1");
 
             // Assert - This should succeed and return LeanJsonResult
             result.Should().NotBeNull();
@@ -503,7 +503,7 @@ namespace APIViewUnitTests
             };
 
             // Act
-            var result = await _controller.RequestNamespaceReviewAsync(reviewId, associatedReviewIds);
+            var result = await _controller.RequestNamespaceReviewAsync(reviewId, "revision1");
 
             // Assert - Controller catches all exceptions and returns 500
             result.Should().NotBeNull();
@@ -540,7 +540,7 @@ namespace APIViewUnitTests
             };
 
             // Act
-            var result = await _controller.RequestNamespaceReviewAsync(reviewId, associatedReviewIds);
+            var result = await _controller.RequestNamespaceReviewAsync(reviewId, "revision1");
 
             // Assert - Controller catches all exceptions and returns 500
             result.Should().NotBeNull();
@@ -577,7 +577,7 @@ namespace APIViewUnitTests
             };
 
             // Act
-            var result = await _controller.RequestNamespaceReviewAsync(reviewId, associatedReviewIds);
+            var result = await _controller.RequestNamespaceReviewAsync(reviewId, "revision1");
 
             // Assert - Controller catches all exceptions and returns 500
             result.Should().NotBeNull();

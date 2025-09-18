@@ -179,7 +179,7 @@ namespace APIViewUnitTests
                 .Returns(Task.CompletedTask);
 
             // Act - Request namespace review
-            var result = await _reviewManager.RequestNamespaceReviewAsync(_testUser, reviewId, associatedReviewIds);
+            var result = await _reviewManager.RequestNamespaceReviewAsync(_testUser, reviewId, "revision1");
 
             // Assert - Verify namespace review was requested
             result.Should().NotBeNull();

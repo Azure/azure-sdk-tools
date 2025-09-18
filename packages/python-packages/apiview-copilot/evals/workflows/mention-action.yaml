@@ -1,0 +1,4 @@
+name: mention-action
+kind: prompt
+tests: ../tests/python/mention-action.jsonl
+prompty: ../../prompts/mention/parse_conversation_action.prompty

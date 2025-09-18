@@ -493,5 +493,22 @@ namespace APIViewUnitTests
             results.Should().AllBeOfType<PageResult>();
             _pageModel.NamespaceApprovalInfo.Should().ContainKey("concurrent-review");
         }
+
+        [Theory]
+        [InlineData("true", true)]
+        [InlineData("false", false)]
+        [InlineData("invalid", true)] // Default to true for invalid values
+        [InlineData(null, true)] // Default to true for null values
+        public void EnablePendingReviewTab_ControlsNamespaceApprovalsTab(string configValue, bool expectedResult)
+        {
+            // Arrange - This feature flag now controls the Pending Namespace Approvals tab, not the Pending Reviews tab
+            _mockConfiguration.Setup(c => c["EnablePendingReviewTab"]).Returns(configValue);
+
+            // Act
+            var result = _pageModel.EnablePendingReviewTab;
+
+            // Assert
+            result.Should().Be(expectedResult);
+        }
     }
 }

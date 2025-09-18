@@ -41,15 +41,18 @@
                     }
                 </a>
             </li>
-            <li class="nav-item" role="presentation">
-                <a class="nav-link" id="pending-namespace-tab" data-toggle="tab" href="#pending-namespace" role="tab" aria-controls="pending-namespace" aria-selected="false">
-                    Pending Namespace Approvals
-                    @if (Model.NamespaceApprovalRequestedAPIRevisions.Any())
-                    {
-                        <span class="badge badge-warning ml-2">@Model.NamespaceApprovalRequestedAPIRevisions.Count()</span>
-                    }
-                </a>
-            </li>
+            @if (Model.EnablePendingReviewTab)
+            {
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" id="pending-namespace-tab" data-toggle="tab" href="#pending-namespace" role="tab" aria-controls="pending-namespace" aria-selected="false">
+                        Pending Namespace Approvals
+                        @if (Model.NamespaceApprovalRequestedAPIRevisions.Any())
+                        {
+                            <span class="badge badge-warning ml-2">@Model.NamespaceApprovalRequestedAPIRevisions.Count()</span>
+                        }
+                    </a>
+                </li>
+            }
             <li class="nav-item" role="presentation">
                 <a class="nav-link" id="recently-approved-tab" data-toggle="tab" href="#recently-approved" role="tab" aria-controls="recently-approved" aria-selected="false">
                     Recently Approved
@@ -153,8 +156,10 @@
                 </div>
             </div>
 
-            <!-- Pending Namespace Approvals Tab -->
-            <div class="tab-pane fade" id="pending-namespace" role="tabpanel" aria-labelledby="pending-namespace-tab">
+            @if (Model.EnablePendingReviewTab)
+            {
+                <!-- Pending Namespace Approvals Tab -->
+                <div class="tab-pane fade" id="pending-namespace" role="tabpanel" aria-labelledby="pending-namespace-tab">
                 <div class="col-12 p-0 border rounded table-responsive shadow-sm">
                     <table id="namespace-reviews-table" class="table table-sm table-hover m-0" style="width:100%">
                         <thead>
@@ -229,6 +234,7 @@
                     </table>
                 </div>
             </div>
+            }
 
             <!-- Recently Approved Tab -->
             <div class="tab-pane fade" id="recently-approved" role="tabpanel" aria-labelledby="recently-approved-tab">

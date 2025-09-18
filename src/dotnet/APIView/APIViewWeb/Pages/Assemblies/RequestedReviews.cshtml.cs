@@ -35,6 +35,21 @@ namespace APIViewWeb.Pages.Assemblies
         // Track namespace approval request info for associated revisions
         public Dictionary<string, (DateTime RequestedOn, string RequestedBy)> NamespaceApprovalInfo { get; set; } = new Dictionary<string, (DateTime, string)>();
 
+        // Feature flag for pending namespace approvals tab UI
+        public bool EnablePendingReviewTab
+        {
+            get
+            {
+                var enablePendingReviewTab = _configuration["EnablePendingReviewTab"];
+                if (bool.TryParse(enablePendingReviewTab, out bool isEnabled))
+                {
+                    return isEnabled;
+                }
+                // Default to true for backward compatibility
+                return true;
+            }
+        }
+
         /// <summary>
         /// Updates the latest revisions dictionary with the newest revision for a given review ID
         /// </summary>

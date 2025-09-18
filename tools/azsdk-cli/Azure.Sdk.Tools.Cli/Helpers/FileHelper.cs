@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using System.IO;
+
 namespace Azure.Sdk.Tools.Cli.Helpers
 {
     /// <summary>
@@ -37,6 +39,36 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             }
 
             return null; // Validation passed
+        }
+
+        /// <summary>
+        /// Ascend from the starting path until a .git directory/file is found or the max depth is reached.
+        /// Returns the directory path that contains .git, or null if not found.
+        /// </summary>
+        /// <param name="startPath">Starting path (file or directory).</param>
+        /// <param name="maxDepth">Maximum parent traversals.</param>
+        public static string? AscendToGitRoot(string startPath, int maxDepth = 12)
+        {
+            if (string.IsNullOrEmpty(startPath)) return null;
+
+            var current = new DirectoryInfo(Path.GetFullPath(startPath));
+            if (!current.Exists) return null;
+            // If a file was passed, move to its directory
+            if (File.Exists(current.FullName))
+            {
+                current = new FileInfo(current.FullName).Directory!;
+            }
+
+            for (int depth = 0; depth < maxDepth && current != null; depth++)
+            {
+                var gitPath = Path.Combine(current.FullName, ".git");
+                if (Directory.Exists(gitPath) || File.Exists(gitPath))
+                {
+                    return current.FullName;
+                }
+                current = current.Parent;
+            }
+            return null;
         }
     }
 }

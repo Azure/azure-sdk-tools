@@ -34,7 +34,7 @@ public class JavaUpdateLanguageService : ClientUpdateLanguageServiceBase
     }
 
     /// <summary>
-    /// Invoke an external Java-based API diff tool (for example apidiff.jar) to compare two generated API roots.
+    /// Invoke an external Java-based API diff tool to compare two generated API roots.
     /// The tool must output a JSON array of ApiChange objects, e.g.:
     /// [{"kind":"MethodAdded","symbol":"...","detail":"...","meta":{...}}].
     /// If the tool is not present, exits with an error, or the output cannot be parsed, this method returns an empty list.
@@ -50,15 +50,10 @@ public class JavaUpdateLanguageService : ClientUpdateLanguageServiceBase
     protected virtual async Task<List<ApiChange>> RunExternalJavaApiDiffAsync(string oldPath, string newPath, CancellationToken ct)
     {
         var results = new List<ApiChange>();
-        var toolJar = ResolveJar();
+        var toolJar = await JavaApiDiffJarBuilder.TryBuildDiffJarAsync(_logger, ct);
         if (toolJar == null)
         {
-            // Optional on-demand build if env flag set (async)
-            if (JavaApiDiffJarBuilder.IsAutoBuildEnabled())
-            {
-                toolJar = await JavaApiDiffJarBuilder.TryAutoBuildAsync(_logger, ct);
-            }
-            _logger.LogDebug("Java API diff jar not found (skipping diff). Set APIDIFF_JAR or place jar at conventional path.");
+            _logger.LogDebug("Java API diff jar not found (skipping diff).");
             return results;
         }
         var psi = new System.Diagnostics.ProcessStartInfo
@@ -101,64 +96,6 @@ public class JavaUpdateLanguageService : ClientUpdateLanguageServiceBase
         }
         return results;
     }
-
-    // Auto-build logic removed for simplicity; jar must be pre-built or supplied via APIDIFF_JAR.
-
-    private string? ResolveJar()
-    {
-        // 1. Explicit env var wins
-        var env = Environment.GetEnvironmentVariable("APIDIFF_JAR");
-        if (!string.IsNullOrWhiteSpace(env) && File.Exists(env))
-        {
-            return env;
-        }
-
-        var baseDir = AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-
-        // 2. Conventional deployed location next to CLI binaries
-        var conventional = Path.Combine(baseDir, "tools", "java", "apidiff", "apidiff.jar");
-        if (File.Exists(conventional))
-        {
-            return conventional;
-        }
-
-        // 3. Common source-relative target jars (developer scenarios). We DO NOT build, only check.
-        // Walk a few parent levels to allow running from bin/Debug/net8.0
-        var candidates = new List<string>();
-        var dir = new DirectoryInfo(baseDir);
-        for (int i = 0; i < 6 && dir != null; i++)
-        {
-            // Tools/APIDiffTool/target/<name>-jar-with-dependencies.jar
-            var toolsTarget = Path.Combine(dir.FullName, "Tools", "APIDiffTool", "target");
-            if (Directory.Exists(toolsTarget))
-            {
-                candidates.AddRange(Directory.GetFiles(toolsTarget, "*-jar-with-dependencies.jar"));
-            }
-            // tools/java/apidiff/target/... alternate layout
-            var altTarget = Path.Combine(dir.FullName, "tools", "java", "apidiff", "target");
-            if (Directory.Exists(altTarget))
-            {
-                candidates.AddRange(Directory.GetFiles(altTarget, "*-jar-with-dependencies.jar"));
-                // also conventional after manual copy
-                var altConventional = Path.Combine(dir.FullName, "tools", "java", "apidiff", "apidiff.jar");
-                if (File.Exists(altConventional))
-                {
-                    candidates.Add(altConventional);
-                }
-            }
-            dir = dir.Parent;
-        }
-
-        // Prefer exact conventional name if present among candidates; else first match.
-        var exact = candidates.FirstOrDefault(p => Path.GetFileName(p).Equals("apidiff.jar", StringComparison.OrdinalIgnoreCase));
-        if (exact != null)
-        {
-            return exact;
-        }
-        return candidates.FirstOrDefault();
-    }
-
-    // Auto-build helper moved to JavaApiDiffJarBuilder.
 
     public override Task<string?> GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct)
     {

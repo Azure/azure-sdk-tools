@@ -156,15 +156,19 @@ namespace APIViewWeb.LeanControllers
         /// Endpoint used by Client SPA for Requesting Namespace Review
         /// </summary>
         /// <param name="reviewId">The TypeSpec review ID to request namespace approval for</param>
-        /// <param name="associatedReviewIds"></param>
+        /// <param name="activeApiRevisionId">The active API revision ID</param>
         /// <returns></returns>
-        [HttpPost("{reviewId}/requestNamespaceReview", Name = "RequestNamespaceReview")]
-        public async Task<ActionResult> RequestNamespaceReviewAsync(string reviewId, [FromBody] List<string> associatedReviewIds)
+        [HttpPost("{reviewId}/requestNamespaceReview/{activeApiRevisionId}", Name = "RequestNamespaceReview")]
+        public async Task<ActionResult> RequestNamespaceReviewAsync(string reviewId, string activeApiRevisionId)
         {
             try
             {
-                var reviewIds = associatedReviewIds?.ToList() ?? new List<string>();
-                var updatedReview = await _reviewManager.RequestNamespaceReviewAsync(User, reviewId, reviewIds);
+                if (string.IsNullOrEmpty(activeApiRevisionId))
+                {
+                    return BadRequest("Active API revision ID is required");
+                }
+
+                var updatedReview = await _reviewManager.RequestNamespaceReviewAsync(User, reviewId, activeApiRevisionId);
                 return new LeanJsonResult(updatedReview, StatusCodes.Status200OK);
             }
             catch (Exception ex)

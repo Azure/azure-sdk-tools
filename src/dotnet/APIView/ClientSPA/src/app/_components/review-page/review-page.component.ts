@@ -551,15 +551,13 @@ export class ReviewPageComponent implements OnInit {
 
   handleNamespaceApprovalEmitter(value: boolean) {
     if (value) {
-      // Collect associated review IDs from the review page options component
-      // Each pull request has a reviewId that corresponds to the individual language review to update
-      const associatedReviewIds = this.reviewPageOptionsComponent?.pullRequestsOfAssociatedAPIRevisions
-        ?.map(pr => pr.reviewId)
-        ?.filter(reviewId => reviewId !== this.reviewId) || [];
-
-      this.reviewsService.requestNamespaceReview(this.reviewId!, associatedReviewIds).pipe(take(1)).subscribe({
+      this.reviewsService.requestNamespaceReview(this.reviewId!, this.activeApiRevisionId!).pipe(take(1)).subscribe({
         next: (review: Review) => {
           this.review = review;
+          // Reset loading state in the options component on success
+          if (this.reviewPageOptionsComponent) {
+            this.reviewPageOptionsComponent.resetNamespaceReviewLoadingState();
+          }
         },
         error: (error) => {
           console.error('Error requesting namespace review:', error);

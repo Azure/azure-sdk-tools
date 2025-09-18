@@ -349,10 +349,15 @@ namespace APIViewWeb.Managers
         /// </summary>
         /// <param name="user"></param>
         /// <param name="reviewId"></param>
-        /// <param name="associatedReviewIds">List of review IDs for associated language reviews to update</param>
+        /// <param name="revisionId"></param>
         /// <returns></returns>
-        public async Task<ReviewListItemModel> RequestNamespaceReviewAsync(ClaimsPrincipal user, string reviewId, List<string> associatedReviewIds)
+        public async Task<ReviewListItemModel> RequestNamespaceReviewAsync(ClaimsPrincipal user, string reviewId, string revisionId)
         {
+            if (string.IsNullOrEmpty(reviewId))
+            {
+                throw new ArgumentException("Review ID cannot be null or empty", nameof(reviewId));
+            }
+
             var typeSpecReview = await _reviewsRepository.GetReviewAsync(reviewId);
             
             // Only allow for TypeSpec reviews
@@ -365,77 +370,40 @@ namespace APIViewWeb.Managers
             var requestedOn = DateTime.UtcNow;
             var reviewGroupId = $"rg-{Guid.NewGuid():N}";
             
-            // Mark the TypeSpec review as namespace review requested
-            typeSpecReview.ReviewGroupId = reviewGroupId;
-            typeSpecReview.NamespaceReviewStatus = NamespaceReviewStatus.Pending;
-            typeSpecReview.NamespaceApprovalRequestedBy = userId;
-            typeSpecReview.NamespaceApprovalRequestedOn = requestedOn;
-            
-            await _reviewsRepository.UpsertReviewAsync(typeSpecReview);
 
-            // Auto-discover related reviews using pull request numbers from TypeSpec review
-            var discoveredReviewIds = await FindRelatedReviewsByPullRequestAsync(reviewId);
-            
-            // Combine provided review IDs with auto-discovered ones
-            var languageReviewIds = associatedReviewIds.Union(discoveredReviewIds).Distinct().ToList();
-            
+            // Get related reviews using pull request number from specific TypeSpec revision
+            var relatedReviews = await FindRelatedReviewsByPullRequestAsync(reviewId, revisionId);
+
             // Update the reviews identified by review IDs with namespace approval fields
-            await MarkAssociatedReviewsForNamespaceReview(languageReviewIds, userId, requestedOn, reviewGroupId);
+            await MarkAssociatedReviewsForNamespaceReview(relatedReviews, userId, requestedOn, reviewGroupId);
 
-            // Get the actual review records for email notification (after they've been updated)
-            var languageReviews = await GetValidLanguageReviews(languageReviewIds);
+            var sdkLanguageReviews = relatedReviews
+                                .Where(r => r != null && LanguageHelper.IsSDKLanguage(r.Language))
+                                .ToList();
 
             // Send email notifications to preferred approvers with the actual language review data
-            await _notificationManager.NotifyApproversOnNamespaceReviewRequest(user, typeSpecReview, languageReviews);
+            await _notificationManager.NotifyApproversOnNamespaceReviewRequest(user, typeSpecReview, sdkLanguageReviews);
 
             return typeSpecReview;
-        }
-
-        /// <summary>
-        /// Get valid language reviews from review IDs
-        /// </summary>
-        private async Task<List<ReviewListItemModel>> GetValidLanguageReviews(List<string> reviewIds)
-        {
-            var languageReviews = new List<ReviewListItemModel>();
-            
-            foreach (var reviewId in reviewIds)
-            {
-                try
-                {
-                    var review = await _reviewsRepository.GetReviewAsync(reviewId);
-                    if (review != null && LanguageHelper.IsSDKLanguage(review.Language))
-                    {
-                        languageReviews.Add(review);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _telemetryClient.TrackException(ex);
-                    // Continue with other reviews
-                }
-            }
-            
-            return languageReviews;
         }
 
         /// <summary>
         /// Update the associated language reviews with namespace approval fields
         /// This method takes review IDs and updates the review records only
         /// </summary>
-        /// <param name="associatedReviewIds">List of review IDs to update</param>
+        /// <param name="associatedReviews">List of reviews to update</param>
         /// <param name="userId">User requesting the namespace review</param>
         /// <param name="requestedOn">When the namespace approval was requested</param>
         /// <param name="reviewGroupId">Group ID to associate all related reviews</param>
         /// <returns></returns>
-        private async Task MarkAssociatedReviewsForNamespaceReview(List<string> associatedReviewIds, string userId, DateTime requestedOn, string reviewGroupId)
+        private async Task MarkAssociatedReviewsForNamespaceReview(List<ReviewListItemModel> associatedReviews, string userId, DateTime requestedOn, string reviewGroupId)
         {
             try
             {
-                foreach (var reviewId in associatedReviewIds.Where(id => !string.IsNullOrEmpty(id)))
+                foreach (var review in associatedReviews)
                 {
                     try
                     {
-                        var review = await _reviewsRepository.GetReviewAsync(reviewId);
                         if (review != null && LanguageHelper.IsSDKLanguageOrTypeSpec(review.Language))
                         {
                             review.ReviewGroupId = reviewGroupId;
@@ -461,63 +429,87 @@ namespace APIViewWeb.Managers
         }
 
         /// <summary>
-        /// Find related language reviews by looking up pull request numbers from TypeSpec review
+        /// Find related language reviews by looking up pull request number from specific TypeSpec revision
         /// </summary>
         /// <param name="typeSpecReviewId">The TypeSpec review ID</param>
-        /// <returns>List of review IDs for related language reviews</returns>
-        private async Task<List<string>> FindRelatedReviewsByPullRequestAsync(string typeSpecReviewId)
+        /// <param name="revisionId">The specific revision ID to get pull request from</param>
+        /// <returns>List of related language reviews</returns>
+        private async Task<List<ReviewListItemModel>> FindRelatedReviewsByPullRequestAsync(string typeSpecReviewId, string revisionId)
         {
-            var relatedReviewIds = new List<string>();
+            var relatedReviews = new List<ReviewListItemModel>();
             
             try
             {
-                // Get all revisions for the TypeSpec review to find pull request numbers
-                var revisions = await _apiRevisionsManager.GetAPIRevisionsAsync(typeSpecReviewId);
-                var pullRequestNumbers = revisions
-                    .Where(r => r.PullRequestNo.HasValue && r.PullRequestNo.Value > 0)
-                    .Select(r => r.PullRequestNo.Value)
-                    .Distinct()
-                    .ToList();
+                // Get the specific revision to find its pull request number
+                var revision = await _apiRevisionsManager.GetAPIRevisionAsync(revisionId);
 
-                // For each pull request number, find related reviews
-                foreach (var prNumber in pullRequestNumbers)
+                // TODO FIX: current db is showing null for PullRequestNo in APIRevision
+                int? prNumber = revision?.PullRequestNo;
+                if (!prNumber.HasValue && !string.IsNullOrEmpty(revision?.Label))
                 {
-                    try
-                    {
-                        // Look up pull requests in azure-rest-api-specs repository (most common for TypeSpec)
-                        var pullRequests = await _pullRequestsRepository.GetPullRequestsAsync(prNumber, "Azure/azure-rest-api-specs");
-                        
-                        // Get all review IDs from pull requests first to batch the database calls
-                        var reviewIdsToCheck = pullRequests
-                            .Where(pr => !string.IsNullOrEmpty(pr.ReviewId) && pr.ReviewId != typeSpecReviewId)
-                            .Select(pr => pr.ReviewId)
-                            .Distinct()
-                            .ToList();
-
-                        if (reviewIdsToCheck.Any())
-                        {
-                            // Batch get reviews and filter out TypeSpec reviews
-                            var languageReviews = await _reviewsRepository.GetReviewsAsync(reviewIdsToCheck);
-                            var sdkLanguageReviews = languageReviews
-                                .Where(r => r != null && LanguageHelper.IsSDKLanguage(r.Language))
-                                .Select(r => r.Id);
-                            
-                            relatedReviewIds.AddRange(sdkLanguageReviews);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        _telemetryClient.TrackException(ex);
-                        // Continue with other PRs
-                    }
+                    prNumber = ExtractPRNumberFromLabel(revision.Label);
                 }
 
-                return relatedReviewIds.Distinct().ToList();
+                if (!prNumber.HasValue || prNumber.Value <= 0)
+                {
+                    return relatedReviews;
+                }
+                
+                try
+                {
+                    // Look up pull requests in azure-rest-api-specs repository (most common for TypeSpec)
+                    var pullRequests = await _pullRequestsRepository.GetPullRequestsAsync(prNumber.Value, "Azure/azure-rest-api-specs");
+                    // Get all review IDs from pull requests first to batch the database calls
+                    var reviewIds = pullRequests
+                        .Where(pr => !string.IsNullOrEmpty(pr.ReviewId) && pr.ReviewId != typeSpecReviewId)
+                        .Select(pr => pr.ReviewId)
+                        .Distinct()
+                        .ToList();
+
+                    if (reviewIds.Count > 0)
+                    {
+                        relatedReviews = (List<ReviewListItemModel>)await _reviewsRepository.GetReviewsAsync(reviewIds);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _telemetryClient.TrackException(ex);
+                }
+
+                return relatedReviews;
             }
             catch (Exception ex)
             {
                 _telemetryClient.TrackException(ex);
-                return new List<string>();
+                return new List<ReviewListItemModel>();
+            }
+        }
+
+        /// <summary>
+        /// Extract PR number from label when PullRequestNo is null
+        /// </summary>
+        /// <param name="label">Label containing PR information like "Created for PR 37555"</param>
+        /// <returns>PR number if found, null otherwise</returns>
+        private int? ExtractPRNumberFromLabel(string label)
+        {
+            if (string.IsNullOrEmpty(label))
+                return null;
+            
+            try
+            {
+                // Look for patterns like "Created for PR 37555", "PR 12345", etc.
+                var prMatches = System.Text.RegularExpressions.Regex.Matches(label, @"PR\s+(\d+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+                if (prMatches.Count > 0 && int.TryParse(prMatches[0].Groups[1].Value, out int prNumber))
+                {
+                    return prNumber;
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "ExtractPRNumberFromLabel - Error extracting PR number from label: {Label}", label);
+                return null;
             }
         }
 
@@ -681,8 +673,6 @@ namespace APIViewWeb.Managers
             
             return review;
         }
-
-
 
         /// <summary>
         /// Get all SDK reviews with a specific review group ID regardless of status

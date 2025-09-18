@@ -325,14 +325,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 }
 
                 string typeSpecProjectPath = typespecHelper.GetTypeSpecProjectRelativePath(typespecProjectRoot);
-                string branchRef = "main";
+                string apiSpecBranchRef = "main";
                 if (pullRequestNumber > 0)
                 {
                     var pullRequest = await githubService.GetPullRequestAsync(REPO_OWNER, PUBLIC_SPECS_REPO, pullRequestNumber);
-                    branchRef = (pullRequest?.Merged ?? false) ? pullRequest.Base.Ref : $"refs/pull/{pullRequestNumber}/merge";
+                    apiSpecBranchRef = (pullRequest?.Merged ?? false) ? pullRequest.Base.Ref : $"refs/pull/{pullRequestNumber}/merge";
                 }
 
-                string sdkRepoBranch = "main";
+                string sdkRepoBranch = "";
                 var releasePlan = workItemId != 0 ? await devopsService.GetReleasePlanForWorkItemAsync(workItemId) : null;
                 var sdkPullRequestUrl = releasePlan?.SDKInfo.FirstOrDefault(s => s.Language == language)?.SdkPullRequestUrl;
                 if (!string.IsNullOrEmpty(sdkPullRequestUrl))
@@ -346,7 +346,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 }
                 
                 logger.LogInformation("Running SDK generation pipeline");
-                var pipelineRun = await devopsService.RunSDKGenerationPipelineAsync(branchRef, typeSpecProjectPath, apiVersion, sdkReleaseType, language, workItemId, sdkRepoBranch);
+                var pipelineRun = await devopsService.RunSDKGenerationPipelineAsync(apiSpecBranchRef, typeSpecProjectPath, apiVersion, sdkReleaseType, language, workItemId, sdkRepoBranch);
                 response = new SDKWorkflowResponse()
                 {
                     Status = "Success",

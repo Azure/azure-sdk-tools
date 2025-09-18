@@ -209,7 +209,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 workItemId: 456
             );
 
-            Assert.That(result, Does.Contain("Azure DevOps pipeline https://dev.azure.com/azure-sdk/internal/_build/results?buildId=100 has been initiated to generate the SDK. Build ID is 100"));
+            Assert.That(result.ToString(), Does.Contain("Azure DevOps pipeline https://dev.azure.com/azure-sdk/internal/_build/results?buildId=100 has been initiated to generate the SDK. Build ID is 100"));
         }
 
         [Test]

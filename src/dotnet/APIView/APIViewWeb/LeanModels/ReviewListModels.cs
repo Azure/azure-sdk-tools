@@ -118,6 +118,7 @@ namespace APIViewWeb.LeanModels
         public DateTime CreatedOn { get; set; }
         public DateTime LastUpdatedOn { get; set; }
         public bool IsDeleted { get; set; }
+        public string ReviewGroupId { get; set; }
         public string NamespaceApprovalRequestedBy { get; set; }
         public DateTime? NamespaceApprovalRequestedOn { get; set; }
     }

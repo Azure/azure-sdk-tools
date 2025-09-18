@@ -372,10 +372,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 }
 
                 var pr = await devopsService.GetSDKPullRequestFromPipelineRunAsync(buildId, language, workItemId);
-                var parsedLink = DevOpsService.ParseSDKPullRequestUrl(pr);
-
-                var rp = await devopsService.GetReleasePlanForWorkItemAsync(workItemId);
-                await UpdateSdkPullRequestDescription(parsedLink, rp);
 
                 return pr;
             }

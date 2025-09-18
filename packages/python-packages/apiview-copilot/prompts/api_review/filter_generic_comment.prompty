@@ -1,6 +1,6 @@
 ---
-name: Judge Generic APIView Review Comments
-description: A prompt that judges generic API review comments to ensure they are not contradicting internal guidance.
+name: Filter Generic APIView Review Comments
+description: A prompt that filters generic API review comments to ensure they are not contradicting internal guidance.
 authors:
   - tjprescott
 version: 1.0.0

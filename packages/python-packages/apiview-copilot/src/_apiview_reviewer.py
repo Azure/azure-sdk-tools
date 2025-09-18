@@ -183,6 +183,16 @@ class ApiViewReview:
             data["createdOn"] = data.pop("timestamp")
         return data
 
+    def _print_comment_counts(self):
+        """
+        Print the current comment counts.
+        """
+        total = len(self.results.comments)
+        generic = sum(1 for c in self.results.comments if c.is_generic)
+        guideline = sum(1 for c in self.results.comments if c.guideline_ids)
+        context = sum(1 for c in self.results.comments if c.memory_ids)
+        self._print_message(f"  Comments: Total={total}, Guideline={guideline}, Memory={context}, Generic={generic}")
+
     def _print_message(self, msg: str = "", overwrite: bool = False):
         """
         Print messages, using carriage return for terminal, or newlines for non-terminal.
@@ -191,7 +201,9 @@ class ApiViewReview:
         if self._isatty and overwrite:
             print(msg, end="\r", flush=True)
         elif msg:
-            print(f"[{self.job_id}] {msg}", flush=True)
+            lines = msg.splitlines()
+            for line in lines:
+                print(f"[{self.job_id}] {line}", flush=True)
         else:
             print(f"[{self.job_id}]", flush=True)
 
@@ -376,17 +388,29 @@ class ApiViewReview:
                         if section_idx not in section_results:
                             section_results[section_idx] = {"comments": []}
 
-                        # Add comments from this prompt
                         if "comments" in result:
-                            # Tag comments with their source
+                            filtered_comments = []
+                            # ensure raw comments are of a pure type
                             for comment in result["comments"]:
-                                comment["source"] = section_type
-                                comment["is_generic"] = section_type == generic_tag
-                            section_results[section_idx]["comments"].extend(result["comments"])
+                                if section_type == generic_tag:
+                                    comment["is_generic"] = True
+                                    comment["guideline_ids"] = []
+                                    comment["memory_ids"] = []
+                                    filtered_comments.append(comment)
+                                    continue
+                                if section_type == guideline_tag and comment.get("guideline_ids"):
+                                    comment["is_generic"] = False
+                                    comment["memory_ids"] = []
+                                    filtered_comments.append(comment)
+                                    continue
+                                if section_type == context_tag and comment.get("memory_ids"):
+                                    comment["is_generic"] = False
+                                    comment["guideline_ids"] = []
+                                    filtered_comments.append(comment)
+                                    continue
+                            section_results[section_idx]["comments"].extend(filtered_comments)
                 except Exception as e:
                     self.logger.error(f"Error processing {key}: {str(e)}")
-
-            self._print_message()  # Add newline after progress indicator
 
             # Merge results from all sections
             for section_idx, section_result in section_results.items():
@@ -404,27 +428,27 @@ class ApiViewReview:
             if is_main_thread:
                 signal.signal(signal.SIGINT, original_handler)
 
-    def _judge_generic_comments(self):
+    def _filter_generic_comments(self):
         """
-        Judge generic comments by running the judge prompt on each comment, separating into keep
+        Filter generic comments by running the filter prompt on each comment, separating into keep
         and discard lists, reporting counts, and dumping to debug log if enabled.
         """
-        judge_prompt_file = "filter_generic_comment.prompty"
-        judge_prompt_path = get_prompt_path(folder="api_review", filename=judge_prompt_file)
+        prompt_file = "filter_generic_comment.prompty"
+        prompt_path = get_prompt_path(folder="api_review", filename=prompt_file)
 
-        self._print_message("Reviewing generic comments...")
+        self._print_message("\nFiltering generic comments...")
 
         # Submit each generic comment to the executor for parallel processing
         futures = {}
         for idx, comment in enumerate(self.results.comments):
-            if comment.is_generic == True:
+            if not comment.is_generic:
                 continue
             search_result = self.search.search_all(query=comment.comment)
             context = self.search.build_context(search_result)
             context_text = context.to_markdown() if search_result else "EMPTY"
             futures[idx] = self.executor.submit(
                 self._run_prompt,
-                judge_prompt_path,
+                prompt_path,
                 inputs={
                     "content": comment.model_dump(),
                     "language": get_language_pretty_name(self.language),
@@ -433,8 +457,8 @@ class ApiViewReview:
             )
 
         # Collect results as they complete, with % complete logging
-        keep_results = []
-        discard_results = []
+        keep_results = {}
+        discard_results = {}
         total = len(futures)
         for progress_idx, (idx, future) in enumerate(futures.items()):
             try:
@@ -444,61 +468,58 @@ class ApiViewReview:
                     continue
                 try:
                     response_json = json.loads(response)
-                    response_json["idx"] = idx
                 except Exception as je:
                     self.logger.error(
                         f"Error judging comment at index {idx}: Invalid JSON response: {repr(response)} | {str(je)}"
                     )
                     continue
                 if response_json.get("action") == "DISCARD":
-                    discard_results.append(response_json)
+                    discard_results[idx] = response_json
                 elif response_json.get("action") == "KEEP":
-                    keep_results.append(response_json)
+                    keep_results[idx] = response_json
                 else:
                     # log an error but keep the comment to be safe
                     self.logger.error(
                         f"Error judging comment at index {idx}: Unknown action in response: {repr(response)}"
                     )
-                    keep_results.append(response_json)
+                    keep_results[idx] = response_json
             except Exception as e:
                 self.logger.error(f"Error judging comment at index {idx}: {str(e)}")
             percent = int(((progress_idx + 1) / total) * 100) if total else 100
-            self._print_message(f"Judging comments... {percent}% complete", overwrite=True)
+            self._print_message(f"Filtering generic comments... {percent}% complete", overwrite=True)
         self._print_message()  # Ensure the progress bar is visible before the summary
 
         # Report summary
         self._print_message(
             # pylint: disable=line-too-long
-            f"Judging completed. Kept {len(keep_results)} generic comments. Discarded {len(discard_results)} generic comments."
+            f"Filtering generic comments completed. Kept {len(keep_results)}. Discarded {len(discard_results)}."
         )
 
         # Debug log: dump keep_comments and discard_comments to files if enabled
         if self.debug_log:
-            keep_comments = []
-            discard_comments = []
-            for result in keep_results + discard_results:
+            for idx, result in (keep_results + discard_results).items():
                 # combine the comment and result info
-                comment_dict = self.results.comments[result["idx"]].model_dump()
+                comment_dict = self.results.comments[idx].model_dump()
                 comment = {**comment_dict, **result}
-                if result.get("action") == "KEEP":
-                    keep_comments.append(comment)
-                elif result.get("action") == "DISCARD":
-                    discard_comments.append(comment)
-                else:
-                    # should not happen, but log just in case
-                    self.logger.error(f"Unexpected action in judged comment: {result}")
-                    keep_comments.append(comment)
             ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             debug_dir = os.path.join("scratch", "logs", self.language)
             os.makedirs(debug_dir, exist_ok=True)
             keep_path = os.path.join(debug_dir, f"debug_keep_generic_comments_{ts}.json")
             discard_path = os.path.join(debug_dir, f"debug_discard_generic_comments_{ts}.json")
             with open(keep_path, "w", encoding="utf-8") as f:
-                json.dump(keep_comments, f, indent=2)
+                json.dump(keep_results.values(), f, indent=2)
             with open(discard_path, "w", encoding="utf-8") as f:
-                json.dump(discard_comments, f, indent=2)
+                json.dump(discard_results.values(), f, indent=2)
             self.logger.debug(f"Kept generic comments written to {keep_path}")
             self.logger.debug(f"Discarded generic comments written to {discard_path}")
+
+        # handle removing the discarded comments, preserving order of remaining comments
+        idx_to_remove = list(set(discard_results.keys()))
+        filtered_comments = []
+        for idx, comment in enumerate(self.results.comments):
+            if idx not in idx_to_remove:
+                filtered_comments.append(comment)
+        self.results.comments = filtered_comments
 
     def _deduplicate_comments(self):
         """
@@ -520,7 +541,7 @@ class ApiViewReview:
 
         prompt_path = get_prompt_path(folder="api_review", filename="merge_comments.prompty")
 
-        self._print_message("Deduplicating comments...")
+        self._print_message("\nDeduplicating comments...")
 
         # Submit all batches to the executor for parallel processing
         futures = {}
@@ -553,7 +574,6 @@ class ApiViewReview:
                     self.logger.error(f"Error merging comments for line {line_no}: {merge_results}")
                     continue
                 merged_comment = result_comments[0]
-                merged_comment["source"] = "merged"
                 merged_comment_obj = Comment(**merged_comment)
                 unique_comments.append(merged_comment_obj)
             except Exception as e:
@@ -606,14 +626,14 @@ class ApiViewReview:
                 self.logger.error(f"Error filtering comment at index {idx}: {str(e)}")
             # Log % complete
             percent = int(((progress_idx + 1) / total) * 100) if total else 100
-            self._print_message(f"Filtering comments... {percent}% complete", overwrite=True)
+            self._print_message(f"Hard filtering comments... {percent}% complete", overwrite=True)
         self._print_message()  # Ensure the progress bar is visible before the summary
 
         # Summary message (final counts computed after removals)
         removed_count = len(set(comments_to_remove))
         initial_count = len(self.results.comments)
         final_count = initial_count - removed_count
-        self._print_message(f"Filtering completed. Kept {final_count} comments. Discarded {removed_count} comments.")
+        self._print_message(f"Hard filtering completed. Kept {final_count}. Discarded {removed_count}.")
 
         # Debug log: dump keep_comments and discard_comments to files if enabled
         if self.debug_log:
@@ -691,7 +711,7 @@ class ApiViewReview:
         final_comment_count = len(self.results.comments)
         self._print_message(
             # pylint: disable=line-too-long
-            f"Filtered preexisting comments. KEEP: {final_comment_count}, DISCARD: {initial_comment_count - final_comment_count}."
+            f"\nFiltered preexisting comments. Kept: {final_comment_count}. Discarded: {initial_comment_count - final_comment_count}."
         )
 
     def _run_prompt(self, prompt_path: str, inputs: dict, max_retries: int = 5) -> str:
@@ -757,17 +777,20 @@ class ApiViewReview:
                 self.logger.error(f"Aborting review due to canary check failure: {canary_error}")
                 raise RuntimeError(f"Aborting review: {canary_error}")
 
-            # Track time for _generate_comments
-            generate_start_time = time()
+            start_time = time()
             self._generate_comments()
-            generate_end_time = time()
-            self._print_message(f"  Generated comments in {generate_end_time - generate_start_time:.2f} seconds.")
+            end_time = time()
+            self._print_message(
+                f"\nGenerated {len(self.results.comments)} comments in {end_time - start_time:.2f} seconds."
+            )
+            self._print_comment_counts()
 
-            # Run generic comments through a judge prompt
-            judge_start_time = time()
-            self._judge_generic_comments()
-            judge_end_time = time()
-            self._print_message(f"  Generic comments judged in {judge_end_time - judge_start_time:.2f} seconds.")
+            # Run generic comments through a filter
+            start_time = time()
+            self._filter_generic_comments()
+            end_time = time()
+            self._print_message(f"  Generic comments filtered in {end_time - start_time:.2f} seconds.")
+            self._print_comment_counts()
 
             # Track time for _deduplicate_comments
             deduplicate_start_time = time()
@@ -776,17 +799,16 @@ class ApiViewReview:
             merged_comment_count = len(self.results.comments)
             deduplicate_end_time = time()
             self._print_message(
-                f"  Deduplication completed in {deduplicate_end_time - deduplicate_start_time:.2f} seconds."
+                f"  Deduplication completed in {deduplicate_end_time - deduplicate_start_time:.2f} seconds. Collapsed {initial_comment_count - merged_comment_count} comments."
             )
-            self._print_message(f"  Initial comments: {initial_comment_count}, Merged comments: {merged_comment_count}")
+            self._print_comment_counts()
 
             # Track time for _filter_comments
             filter_start_time = time()
             self._filter_comments_with_metadata()
             filter_end_time = time()
-            self._print_message(f"  Filtering completed in {filter_end_time - filter_start_time:.2f} seconds.")
-
-            # summary removed: no summary comment appended
+            self._print_message(f"  Hard filtering completed in {filter_end_time - filter_start_time:.2f} seconds.")
+            self._print_comment_counts()
 
             # Track time for _filter_preexisting_comments
             preexisting_start_time = time()
@@ -795,13 +817,14 @@ class ApiViewReview:
             self._print_message(
                 f"  Preexisting comments filtered in {preexisting_end_time - preexisting_start_time:.2f} seconds."
             )
+            self._print_comment_counts()
 
             results = self.results.sorted()
 
             overall_end_time = time()
             self._print_message(
                 # pylint: disable=line-too-long
-                f"Review {self.job_id} generated in {overall_end_time - overall_start_time:.2f} seconds. Found {len(results.comments)} comments"
+                f"\nReview {self.job_id} generated in {overall_end_time - overall_start_time:.2f} seconds. Found {len(results.comments)} comments"
             )
 
             if self.semantic_search_failed:

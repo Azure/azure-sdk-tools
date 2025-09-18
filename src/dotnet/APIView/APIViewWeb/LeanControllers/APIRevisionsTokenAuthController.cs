@@ -57,16 +57,16 @@ public class APIRevisionsTokenAuthController : ControllerBase
     ///     Generate review text for an API revision
     /// </summary>
     /// <param name="reviewId">The review ID</param>
-    /// <param name="contentReturnType">The content return type. Default is text, but codefile can also be selected</param>
     /// <param name="apiRevisionId">The specific API revision ID (required when there is not selectionType)</param>
     /// <param name="selectionType">How to select the API revision</param>
+    /// <param name="contentReturnType">The content return type. Default is text, but CodeFile can also be selected</param>
     /// <returns>Plain text representation of the API review</returns>
     [HttpGet("getRevisionContent", Name = "GetAPIRevisionContent")]
-    public async Task<ActionResult> GetAPIRevisionTextAsync(
+    public async Task<ActionResult> GetAPIRevisionContentAsync(
         [FromQuery] string apiRevisionId = null,
         [FromQuery] string reviewId = null,
-        [FromQuery] APIRevisionContentReturnType contentReturnType = APIRevisionContentReturnType.Text,
-        [FromQuery] APIRevisionSelectionType selectionType = APIRevisionSelectionType.Undefined)
+        [FromQuery] APIRevisionSelectionType selectionType = APIRevisionSelectionType.Undefined,
+        [FromQuery] APIRevisionContentReturnType contentReturnType = APIRevisionContentReturnType.Text)
     {
         try
         {
@@ -83,7 +83,7 @@ public class APIRevisionsTokenAuthController : ControllerBase
             APIRevisionListItemModel activeApiRevision = await GetApiRevisionBySelectionType(selectionType, reviewId, apiRevisionId);
             if (activeApiRevision == null || activeApiRevision.IsDeleted)
             {
-                return new LeanJsonResult(null, StatusCodes.Status204NoContent);
+                return NotFound($"No API revision found for selection type: {selectionType}");
             }
 
             if (IsValidateRevisionMatch(activeApiRevision, reviewId, apiRevisionId, selectionType))

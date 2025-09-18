@@ -660,6 +660,7 @@ namespace APIViewWeb.Managers
                 review.ChangeHistory, ReviewChangeAction.Approved, userId, notes);
             review.ChangeHistory = changeUpdate.ChangeHistory;
             review.IsApproved = changeUpdate.ChangeStatus;
+            review.NamespaceReviewStatus = NamespaceReviewStatus.Approved;
             await _reviewsRepository.UpsertReviewAsync(review);
             
             // If this review was approved and has pending namespace status with a timestamp, check if we should approve the TypeSpec namespace

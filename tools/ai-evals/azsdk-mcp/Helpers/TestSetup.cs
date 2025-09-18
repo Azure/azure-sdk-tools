@@ -24,6 +24,10 @@ namespace azsdk_mcp.Helpers
             Environment.GetEnvironmentVariable("COPILOT_INSTRUCTIONS_PATH") 
             ?? throw new InvalidOperationException("COPILOT_INSTRUCTIONS_PATH environment variable is required");
 
+        public static readonly string AzsdkToolsInstructionsPath = 
+            Environment.GetEnvironmentVariable("AZSDK_TOOLS_INSTRUCTIONS_PATH") 
+            ?? throw new InvalidOperationException("AZSDK_TOOLS_INSTRUCTIONS_PATH environment variable is required");
+
         public static VisualStudioCredential GetCredential()
         {
             return new VisualStudioCredential();

@@ -121,7 +121,7 @@ namespace azsdk_mcp.Helpers
         /// </summary>
         private static async Task<string?> LoadInstructionFileAsync(string fileName)
         {
-            var azsdkToolsInstructionsPath = @"C:\Users\juanospina\source\repos\azure-sdk-tools\eng\common\instructions\azsdk-tools";
+            var azsdkToolsInstructionsPath = TestSetup.AzsdkToolsInstructionsPath;
             var customInstructionsPath = TestSetup.CopilotInstructionsPath;
 
             if (Path.GetFileName(customInstructionsPath) == fileName)

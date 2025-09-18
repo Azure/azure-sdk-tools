@@ -54,8 +54,9 @@ AZURE_OPENAI_MODEL_DEPLOYMENT_NAME=your-deployment-name
 # MCP Server Configuration
 LOCAL_MCP_POWERSHELL_SCRIPT_PATH=path/to/your/mcp-script.ps1
 
-# Copilot Instructions Path
+# Instruction File Paths
 COPILOT_INSTRUCTIONS_PATH=path/to/copilot-instructions.md
+AZSDK_TOOLS_INSTRUCTIONS_PATH=path/to/azsdk-tools/instructions
 ```
 
 ## Extending the Framework

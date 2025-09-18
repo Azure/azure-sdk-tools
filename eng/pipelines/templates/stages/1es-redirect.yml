@@ -26,6 +26,8 @@ extends:
   ${{ else }}:
     template: v1/1ES.Unofficial.PipelineTemplate.yml@1ESPipelineTemplates
   parameters:
+    featureFlags:
+      disableNetworkIsolation: true
     settings:
       skipBuildTagsForGitHubPullRequests: true
       networkIsolationPolicy: Permissive

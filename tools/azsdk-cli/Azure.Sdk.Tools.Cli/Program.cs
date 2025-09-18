@@ -46,7 +46,8 @@ public class Program
         WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
         builder.Services.AddOpenTelemetry()
-            .WithTracing(b => {
+            .WithTracing(b =>
+            {
                 b.AddSource(Constants.TOOLS_ACTIVITY_SOURCE)
                     .AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()
@@ -55,24 +56,21 @@ public class Program
             })
             .UseOtlpExporter();
 
-        // Log everything to stderr in mcp mode so the client doesn't try to interpret stdout messages that aren't json rpc
-        var logErrorThreshold = isCLI ? LogLevel.Error : LogLevel.Debug;
-
         builder.Logging.AddConsole(consoleLogOptions =>
         {
+            // Log everything to stderr in mcp mode so the client doesn't try to interpret stdout messages that aren't json rpc
+            var logErrorThreshold = isCLI ? LogLevel.Error : LogLevel.Debug;
             consoleLogOptions.LogToStandardErrorThreshold = logErrorThreshold;
         });
 
-        // Skip verbose azure client logging
+        // Skip azure client logging noise
         builder.Logging.AddFilter((category, level) =>
         {
-            var isAzureClient = category!.StartsWith("Azure.", StringComparison.Ordinal);
-            var isToolsClient = category!.StartsWith("Azure.Sdk.Tools.", StringComparison.Ordinal);
-            if (isAzureClient && !isToolsClient)
-            {
-                return level >= LogLevel.Warning;
-            }
-            return level >= logErrorThreshold;
+            if (debug || null == category) { return level >= logLevel; }
+            var isAzureClient = category.StartsWith("Azure.", StringComparison.Ordinal);
+            var isToolsClient = category.StartsWith("Azure.Sdk.Tools.", StringComparison.Ordinal);
+            if (isAzureClient && !isToolsClient) { return level >= LogLevel.Error; }
+            return level >= logLevel;
         });
 
         // add the console logger

@@ -27,37 +27,37 @@ export class SpectorCaseProcessor {
      * Initialize OpenAI client
      */
     private static async initOpenAIClient(): Promise<void> {
-        const deploymentName = process.env.AZURE_OPENAI_DEPLOYMENT_NAME;
+        const deploymentName = process.env.AOAI_CHAT_REASONING_MODEL;
         const apiVersion = "2024-12-01-preview";
-        const options = { deploymentName, apiVersion }
+        const apiKey = process.env.AOAI_CHAT_COMPLETIONS_API_KEY;
+        const endpoint = process.env.AOAI_CHAT_COMPLETIONS_ENDPOINT;
+        const options = { deploymentName, apiVersion, apiKey, endpoint }
         this.openAIClient = new AzureOpenAI(options);
     }
     /**
      * Process spector cases in the given directories
      */
-    static async processSpectorCases(docsDir: string, context: InvocationContext): Promise<void> {
+    static async processSpectorCases(docsDir: string): Promise<void> {
         await this.initOpenAIClient();
         
         const results = await Promise.all([
             this.convertSpectorCasesToMarkdown(
                 path.join(docsDir, 'typespec/packages/http-specs/specs'),
-                path.join(docsDir, 'typespec/packages/http-specs/specs/generated'),
-                context
+                path.join(docsDir, 'typespec/packages/http-specs/specs/generated')
             ),
             this.convertSpectorCasesToMarkdown(
                 path.join(docsDir, 'typespec-azure/packages/azure-http-specs/specs'),
-                path.join(docsDir, 'typespec-azure/packages/azure-http-specs/specs/generated'),
-                context
+                path.join(docsDir, 'typespec-azure/packages/azure-http-specs/specs/generated')
             )
         ]);
         
         for (const result of results) {
             if (result.error) {
-                context.error(`Error processing specs: ${result.error.message}`);
+                console.error(`Error processing specs: ${result.error.message}`);
             }
         }
-        
-        context.log('Spector case processing completed');
+
+        console.log('Spector case processing completed');
     }
     
     /**
@@ -65,26 +65,25 @@ export class SpectorCaseProcessor {
      */
     private static async convertSpectorCasesToMarkdown(
         root: string,
-        targetRoot: string,
-        context: InvocationContext
+        targetRoot: string
     ): Promise<ConvertResult> {
         if (!fs.existsSync(root)) {
-            context.error(`Spector specs directory not found: ${root}`);
+            console.error(`Spector specs directory not found: ${root}`);
             throw new Error(`Spector specs directory not found: ${root}`);
         }
-        
-        context.log(`Contents of folder: ${root}`);
-        
+
+        console.log(`Contents of folder: ${root}`);
+
         try {
-            const { specs, paths } = this.getSpecs(root, context);
-            
+            const { specs, paths } = this.getSpecs(root);
+
             // Process specs with concurrency limit
             const results: Promise<void>[] = [];
             for (let i = 0; i < specs.length; i++) {
                 const spec = specs[i];
                 const specPath = paths[i];
                 
-                results.push(this.processSpecFile(spec, specPath, root, targetRoot, context));
+                results.push(this.processSpecFile(spec, specPath, root, targetRoot));
                 
                 // Limit concurrency
                 if (results.length >= MAX_CONCURRENT_COUNT) {
@@ -100,7 +99,7 @@ export class SpectorCaseProcessor {
             
             return { count: specs.length };
         } catch (error) {
-            context.error(`Error processing specs in ${root}:`, error);
+            console.error(`Error processing specs in ${root}:`, error);
             return { count: 0, error: error as Error };
         }
     }
@@ -112,24 +111,23 @@ export class SpectorCaseProcessor {
         spec: string,
         specPath: string,
         root: string,
-        targetRoot: string,
-        context: InvocationContext
+        targetRoot: string
     ): Promise<void> {
         try {
             const dir = path.dirname(specPath);
             const relativeDir = path.relative(root, dir);
-            context.log(`Processing spec path: ${relativeDir}`);
-            
+            console.log(`Processing spec path: ${relativeDir}`);
+
             const scenarios = this.getScenarios('@scenario\n', spec);
-            const doc = await this.createMarkdownDoc(scenarios, spec, context);
+            const doc = await this.createMarkdownDoc(scenarios, spec);
             
             // Create target directory if it doesn't exist
             const targetDir = path.join(targetRoot, relativeDir);
             const targetPath = this.getTargetPath(specPath, targetDir);
             
-            await this.save(doc, targetDir, targetPath, context);
+            await this.save(doc, targetDir, targetPath);
         } catch (error) {
-            context.error(`Error processing spec file ${specPath}:`, error);
+            console.error(`Error processing spec file ${specPath}:`, error);
         }
     }
     
@@ -148,8 +146,7 @@ export class SpectorCaseProcessor {
     private static async save(
         doc: string,
         targetDir: string,
-        targetPath: string,
-        context: InvocationContext
+        targetPath: string
     ): Promise<void> {
         try {
             if (!fs.existsSync(targetDir)) {
@@ -157,9 +154,9 @@ export class SpectorCaseProcessor {
             }
             
             fs.writeFileSync(targetPath, doc, 'utf-8');
-            context.log(`Saved markdown to: ${targetPath}`);
+            console.log(`Saved markdown to: ${targetPath}`);
         } catch (error) {
-            context.error(`Error writing file ${targetPath}:`, error);
+            console.error(`Error writing file ${targetPath}:`, error);
             throw error;
         }
     }
@@ -169,8 +166,7 @@ export class SpectorCaseProcessor {
      */
     private static async createMarkdownDoc(
         scenarios: string[],
-        spec: string,
-        context: InvocationContext
+        spec: string
     ): Promise<string> {
         try {
             const title = await this.getChatCompletions(
@@ -179,14 +175,13 @@ export class SpectorCaseProcessor {
                 "the title will be used as markdown heading, so should be one line.\n" +
                 "the reply should only contains the title, no extra characters\n" +
                 "the below is the typespec content\n\n" +
-                spec,
-                context
+                spec
             );
             
             let doc = `# Usages for ${title}\n\n`;
             
             for (const scenario of scenarios) {
-                const scenarioMarkdownSection = await this.createScenarioSection(scenario, context);
+                const scenarioMarkdownSection = await this.createScenarioSection(scenario);
                 doc += scenarioMarkdownSection + '\n';
             }
             
@@ -198,7 +193,7 @@ export class SpectorCaseProcessor {
                 
             return doc;
         } catch (error) {
-            context.error('Error creating markdown document:', error);
+            console.error('Error creating markdown document:', error);
             throw error;
         }
     }
@@ -207,14 +202,13 @@ export class SpectorCaseProcessor {
      * Get chat completions from OpenAI with retry logic
      */
     private static async getChatCompletions(
-        question: string,
-        context: InvocationContext
+        question: string
     ): Promise<string> {
         if (!this.openAIClient) {
             throw new Error('OpenAI client not initialized');
         }
         
-        const deploymentName = process.env.AZURE_OPENAI_DEPLOYMENT_NAME!;
+        const deploymentName = process.env.AOAI_CHAT_REASONING_MODEL!;
         
         // Implement retry logic with exponential backoff
         for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
@@ -235,7 +229,7 @@ export class SpectorCaseProcessor {
                 
                 if (response.choices && response.choices.length > 0 && response.choices[0].message?.content) {
                     if (attempt > 0) {
-                        context.log(`Successfully completed request after ${attempt} retries`);
+                        console.log(`Successfully completed request after ${attempt} retries`);
                     }
                     return response.choices[0].message.content;
                 }
@@ -248,14 +242,14 @@ export class SpectorCaseProcessor {
                         // Calculate delay with exponential backoff
                         let delay = Math.min(BASE_DELAY * Math.pow(2, attempt), MAX_DELAY);
                         
-                        context.log(`Rate limit hit (attempt ${attempt + 1}/${MAX_RETRIES + 1}), retrying after ${delay}ms...`);
+                        console.log(`Rate limit hit (attempt ${attempt + 1}/${MAX_RETRIES + 1}), retrying after ${delay}ms...`);
                         await new Promise(resolve => setTimeout(resolve, delay));
                         continue;
                     }
                 }
                 
                 // For non-429 errors or after max retries, throw the error
-                context.error(`ERROR after ${attempt + 1} attempts:`, error);
+                console.error(`ERROR after ${attempt + 1} attempts:`, error);
                 throw error;
             }
         }
@@ -266,7 +260,7 @@ export class SpectorCaseProcessor {
     /**
      * Get heading for a scenario
      */
-    private static async getHeading(scenario: string, context: InvocationContext): Promise<string> {
+    private static async getHeading(scenario: string): Promise<string> {
         try {
             return await this.getChatCompletions(
                 "Get a title from the @scenarioDoc or @doc.\n" +
@@ -275,11 +269,10 @@ export class SpectorCaseProcessor {
                 "do not make the 'expected' test result in the title.\n" +
                 "the reply should only contains the title, no extra characters\n" +
                 "the below is the typespec content\n\n" +
-                scenario,
-                context
+                scenario
             );
         } catch (error) {
-            context.error('Error getting heading:', error);
+            console.error('Error getting heading:', error);
             return 'no-title';
         }
     }
@@ -287,7 +280,7 @@ export class SpectorCaseProcessor {
     /**
      * Get description for a scenario
      */
-    private static async getDescription(scenario: string, context: InvocationContext): Promise<string> {
+    private static async getDescription(scenario: string): Promise<string> {
         try {
             return await this.getChatCompletions(
                 "Get (do not modify words) a description from the @scenarioDoc or @doc.\n" +
@@ -297,11 +290,10 @@ export class SpectorCaseProcessor {
                 "must contains the clarify or details other than the 'expected' test result\n" +
                 "the reply should only contains the description, no extra characters\n" +
                 "the below is the typespec content\n\n" +
-                scenario,
-                context
+                scenario
             );
         } catch (error) {
-            context.error('Error getting description:', error);
+            console.error('Error getting description:', error);
             return 'no-description';
         }
     }
@@ -309,11 +301,11 @@ export class SpectorCaseProcessor {
     /**
      * Create scenario section
      */
-    private static async createScenarioSection(scenario: string, context: InvocationContext): Promise<string> {
+    private static async createScenarioSection(scenario: string): Promise<string> {
         try {
-            const heading = await this.getHeading(scenario, context);
-            const description = await this.getDescription(scenario, context);
-            
+            const heading = await this.getHeading(scenario);
+            const description = await this.getDescription(scenario);
+
             const cleanedScenario = this.removeSpectorContent(scenario);
             const finalDescription = description === heading ? '' : description;
             
@@ -326,7 +318,7 @@ export class SpectorCaseProcessor {
                 
             return section;
         } catch (error) {
-            context.error('Error creating scenario section:', error);
+            console.error('Error creating scenario section:', error);
             throw error;
         }
     }
@@ -334,7 +326,7 @@ export class SpectorCaseProcessor {
     /**
      * Get specs from directory
      */
-    private static getSpecs(root: string, context: InvocationContext): { specs: string[], paths: string[] } {
+    private static getSpecs(root: string): { specs: string[], paths: string[] } {
         const specs: string[] = [];
         const paths: string[] = [];
         
@@ -350,17 +342,17 @@ export class SpectorCaseProcessor {
                     // Check if this spec should be ignored
                     const shouldIgnore = IGNORED_SPECS.some(ignored => fullPath.includes(ignored));
                     if (shouldIgnore) {
-                        context.log(`Ignoring spec path: ${fullPath}`);
+                        console.log(`Ignoring spec path: ${fullPath}`);
                         continue;
                     }
                     
                     try {
-                        context.log(`Found spec path: ${fullPath}`);
+                        console.log(`Found spec path: ${fullPath}`);
                         const content = fs.readFileSync(fullPath, 'utf-8');
                         specs.push(content);
                         paths.push(fullPath);
                     } catch (error) {
-                        context.error(`Failed to read file ${fullPath}:`, error);
+                        console.error(`Failed to read file ${fullPath}:`, error);
                     }
                 }
             }

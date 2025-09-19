@@ -1,12 +1,12 @@
 # Azure SDK QA Bot Knowledge Sync
 
-This is a standalone TypeScript application extracted from the Azure Function `DailySyncKnowledge`. It processes documentation from various repositories and uploads processed content for the Azure SDK QA Bot.
+This is a standalone TypeScript application which processes documentation from various repositories and uploads processed content for the Azure SDK QA Bot.
 
 ## Features
 
 - Clones and processes documentation from multiple repositories
 - Extracts and processes markdown files
-- Handles TypeSpec files with @scenario annotations
+- Handles Spector test files with @scenario annotations
 - Uploads processed content to Azure Blob Storage
 - Maintains change detection for efficient processing
 - Supports multiple authentication methods (public, token, SSH)
@@ -17,10 +17,10 @@ This is a standalone TypeScript application extracted from the Azure Function `D
 azure-sdk-qa-bot-knowledge/
 ├── src/
 │   ├── index.ts                    # Main entry point (calls DailySyncKnowledge)
-│   ├── DailySyncKnowledge.ts      # Core processing logic (from Azure Function)
+│   ├── DailySyncKnowledge.ts      # Core processing logic
 │   └── services/
 │       ├── ConfigurationLoader.ts # Configuration loading and transformation
-│       ├── SpectorCaseProcessor.ts # TypeSpec processing
+│       ├── SpectorCaseProcessor.ts # TypeSpec spector tests processing
 │       ├── StorageService.ts      # Azure Blob Storage operations
 │       └── SearchService.ts       # Azure AI Search operations
 ├── config/
@@ -86,7 +86,7 @@ The project is designed to run in Azure DevOps pipelines via `sync_knowledge.yml
 
 ## Architecture
 
-This standalone application replicates the functionality of the original Azure Function:
+This standalone application about setting up knowleage base for chatbot:
 
 1. **Configuration Loading**: Reads and transforms repository configurations
 2. **Repository Management**: Clones/updates documentation repositories

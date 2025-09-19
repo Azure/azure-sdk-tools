@@ -326,7 +326,6 @@ namespace Azure.Tools.GeneratorAgent
             try
             {
                 await File.WriteAllTextAsync(filePath, content, Encoding.UTF8, cancellationToken).ConfigureAwait(false);
-                Logger.LogDebug("Updated TypeSpec file: {FileName} ({Size} characters)", Path.GetFileName(filePath), content.Length);
                 return Result<bool>.Success(true);
             }
             catch (Exception ex)

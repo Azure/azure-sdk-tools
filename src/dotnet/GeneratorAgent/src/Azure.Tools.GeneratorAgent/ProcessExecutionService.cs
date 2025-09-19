@@ -193,8 +193,8 @@ namespace Azure.Tools.GeneratorAgent
             }
             else
             {
-                Logger.LogError("Command {Command} failed with exit code {ExitCode}. Error output: {ErrorOutput}",
-                    command, exitCode, output);
+                Logger.LogError("Command {Command} failed with exit code {ExitCode}. Error output: {ErrorOutput}. Error: {Error}",
+                    command, exitCode, output, error);
             }
         }
     }

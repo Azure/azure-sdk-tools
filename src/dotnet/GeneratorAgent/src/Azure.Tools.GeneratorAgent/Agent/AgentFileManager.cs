@@ -33,10 +33,10 @@ namespace Azure.Tools.GeneratorAgent.Agent
 
             var results = await Task.WhenAll(uploadTasks).ConfigureAwait(false);
 
-            var failures = results.Where(r => r.IsFailure).ToList();
-            if (failures.Any())
+            var failures = results.Where(r => r.IsFailure);
+            var firstFailure = failures.FirstOrDefault();
+            if (firstFailure != null)
             {
-                var firstFailure = failures.First();
                 throw new InvalidOperationException($"Failed to upload files: {firstFailure.Exception?.Message}", firstFailure.Exception);
             }
 
@@ -235,14 +235,6 @@ namespace Azure.Tools.GeneratorAgent.Agent
 
         public virtual async Task UpdateFileInVectorStoreAsync(string vectorStoreId, string fileName, string content, CancellationToken cancellationToken = default)
         {
-            var uploadResult = await UploadSingleFileAsync(fileName, content, cancellationToken).ConfigureAwait(false);
-            if (uploadResult.IsFailure)
-            {
-                throw new InvalidOperationException($"Failed to upload updated file: {fileName}", uploadResult.Exception);
-            }
-
-            var newFileId = uploadResult.Value!;
-
             // Step 1: Find and remove the old version from vector store
             await foreach (var existingFile in Client.VectorStores.GetVectorStoreFilesAsync(vectorStoreId, cancellationToken: cancellationToken))
             {
@@ -264,7 +256,17 @@ namespace Azure.Tools.GeneratorAgent.Agent
                     break;
                 }
             }
+
             // Step 2: Add the new file to vector store
+            
+            var uploadResult = await UploadSingleFileAsync(fileName, content, cancellationToken).ConfigureAwait(false);
+            if (uploadResult.IsFailure)
+            {
+                throw new InvalidOperationException($"Failed to upload updated file: {fileName}", uploadResult.Exception);
+            }
+
+            var newFileId = uploadResult.Value!;
+    
             await Client.VectorStores.CreateVectorStoreFileAsync(
                 vectorStoreId: vectorStoreId,
                 fileId: newFileId,

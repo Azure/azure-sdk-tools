@@ -215,6 +215,8 @@ namespace Azure.Tools.GeneratorAgent
                     updateResult.ThrowIfFailure();
                 }
 
+                Logger.LogInformation("Updated TypeSpec file locally");
+
                 await errorFixerAgent.UpdateFileAsync("client.tsp", updatedClientTspContent, cancellationToken);
                 
                 Logger.LogInformation("Successfully updated client.tsp with generated fixes");

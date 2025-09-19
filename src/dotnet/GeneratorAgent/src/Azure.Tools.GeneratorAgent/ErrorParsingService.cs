@@ -21,14 +21,6 @@ namespace Azure.Tools.GeneratorAgent
 
         public virtual async Task<Result<IEnumerable<Fix>>> AnalyzeErrorsAsync(Result<object> result, CancellationToken cancellationToken)
         {
-            if (result.ProcessException?.Output == null)
-            {
-                Logger.LogWarning("No fixable error, skipping error analysis.");
-                return Result<IEnumerable<Fix>>.Success(Enumerable.Empty<Fix>());
-            }
-
-            Logger.LogDebug("Build error output:\n{ErrorOutput}", result.ProcessException.Output);
-
             var errors = ParseWithRegex(result.ProcessException.Output);
 
             if (!errors.Any())
@@ -70,21 +62,20 @@ namespace Azure.Tools.GeneratorAgent
                     string errorType = match.Groups[1].Value.Trim();
                     string errorMessage = match.Groups[2].Value.Trim();
 
-                    if (Logger.IsEnabled(LogLevel.Debug))
-                    { 
-                    Logger.LogDebug("Raw regex match: Type='{ErrorType}', Message='{ErrorMessage}'", errorType, errorMessage);
-                    }
-
                     if (string.IsNullOrWhiteSpace(errorType) || string.IsNullOrWhiteSpace(errorMessage))
                     {
                         Logger.LogDebug("Skipping empty error type or message");
                         continue;
                     }
 
-                    // Deduplicate exact (type, message) combinations
+
                     if (seenErrors.Add((errorType, errorMessage)))
                     {
                         errors.Add(new RuleError(errorType, errorMessage));
+                        if (Logger.IsEnabled(LogLevel.Debug))
+                        { 
+                        Logger.LogDebug("Raw regex match: Type='{ErrorType}', Message='{ErrorMessage}'", errorType, errorMessage);
+                        }
                     }
                 }
             }

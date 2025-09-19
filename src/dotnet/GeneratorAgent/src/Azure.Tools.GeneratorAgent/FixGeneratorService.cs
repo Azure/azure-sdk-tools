@@ -24,12 +24,12 @@ namespace Azure.Tools.GeneratorAgent
         {
             var fixTasks = new List<Task<Result<IEnumerable<Fix>>>>();
 
-            if (compileResult?.IsFailure == true)
+            if (compileResult?.IsFailure == true && compileResult?.ProcessException?.Output != null)
             {
                 fixTasks.Add(ErrorParsingService.AnalyzeErrorsAsync(compileResult, cancellationToken));
             }
 
-            if (buildResult?.IsFailure == true)
+            if (buildResult?.IsFailure == true && buildResult?.ProcessException?.Output != null)
             {
                 fixTasks.Add(ErrorParsingService.AnalyzeErrorsAsync(buildResult, cancellationToken));
             }
@@ -43,22 +43,20 @@ namespace Azure.Tools.GeneratorAgent
 
             // Process all tasks and handle failures
             var allFixResults = await Task.WhenAll(fixTasks).ConfigureAwait(false);
-            
+
             // Check for any failures
-            var failures = allFixResults.Where(r => r.IsFailure).ToList();
-            if (failures.Any())
+            var failures = allFixResults.Where(r => r.IsFailure);
+            var firstFailure = failures.FirstOrDefault();
+            if (firstFailure != null)
             {
-                var firstFailure = failures.First();
                 return Result<List<Fix>>.Failure(firstFailure.Exception ?? new InvalidOperationException("Error analysis failed"));
             }
-
+            
             var finalFixes = allFixResults
                 .Where(r => r.IsSuccess)
                 .SelectMany(r => r.Value!)
                 .ToList();
             
-            Logger.LogDebug("Total fixes generated: {TotalFixCount}", finalFixes.Count);
-
             return Result<List<Fix>>.Success(finalFixes);
         }
     }

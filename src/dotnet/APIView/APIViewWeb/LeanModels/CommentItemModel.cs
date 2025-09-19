@@ -29,7 +29,6 @@ namespace APIViewWeb.LeanModels
         public bool IsResolved { get; set; }
         public List<string> Upvotes { get; set; } = new List<string>();
         public List<string> Downvotes { get; set; } = new List<string>();
-
         public HashSet<string> TaggedUsers { get; set; } = new HashSet<string>();
         public CommentType CommentType { get; set; }
         public bool ResolutionLocked { get; set; } = false;
@@ -37,5 +36,8 @@ namespace APIViewWeb.LeanModels
         public DateTime CreatedOn { get; set; }
         public DateTime? LastEditedOn { get; set; }
         public bool IsDeleted { get; set; }
+        public bool IsGeneric { get; set; }
+        public List<string> GuidelineIds { get; set; } = [];
+        public List<string> MemoryIds { get; set; } = [];
     }
 }

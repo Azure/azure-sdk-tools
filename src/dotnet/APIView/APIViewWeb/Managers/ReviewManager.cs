@@ -461,7 +461,6 @@ namespace APIViewWeb.Managers
                     var pullRequests = await _pullRequestsRepository.GetPullRequestsAsync(prNumber.Value, "Azure/azure-rest-api-specs");
                     // Get all review IDs from pull requests first to batch the database calls
                     var reviewIds = pullRequests
-                        .Where(pr => !string.IsNullOrEmpty(pr.ReviewId) && pr.ReviewId != typeSpecReviewId)
                         .Select(pr => pr.ReviewId)
                         .Distinct()
                         .ToList();
@@ -663,11 +662,8 @@ namespace APIViewWeb.Managers
             review.NamespaceReviewStatus = NamespaceReviewStatus.Approved;
             await _reviewsRepository.UpsertReviewAsync(review);
             
-            // If this review was approved and has pending namespace status with a timestamp, check if we should approve the TypeSpec namespace
-            if (changeUpdate.ChangeStatus && 
-                LanguageHelper.IsSDKLanguage(review.Language) && 
-                review.NamespaceReviewStatus == NamespaceReviewStatus.Pending &&
-                review.NamespaceApprovalRequestedOn.HasValue)
+            // check if we should approve the TypeSpec namespace
+            if (LanguageHelper.IsSDKLanguage(review.Language))
             {
                 await CheckAndApproveNamespaceForTypeSpec(review);
             }
@@ -685,7 +681,7 @@ namespace APIViewWeb.Managers
             try
             {
                 var sdkLanguageReviews = new List<ReviewListItemModel>();
-                foreach (var language in ApiViewConstants.SdkLanguages)
+                foreach (var language in ApiViewConstants.AllSupportedLanguages)
                 {
                     var languageReviews = await _reviewsRepository.GetReviewsAsync(language: language, isClosed: null);
                     var matchingReviews = languageReviews.Where(r => 
@@ -695,35 +691,6 @@ namespace APIViewWeb.Managers
                 }
 
                 return sdkLanguageReviews;
-            }
-            catch (Exception ex)
-            {
-                _telemetryClient.TrackException(ex);
-                return new List<ReviewListItemModel>();
-            }
-        }
-
-        /// <summary>
-        /// Get all reviews with a specific review group ID that have pending namespace review status
-        /// </summary>
-        /// <param name="reviewGroupId">The review group ID</param>
-        /// <returns>List of reviews with the specified group ID that are pending namespace approval</returns>
-        private async Task<List<ReviewListItemModel>> GetPendingReviewsWithGroupId(string reviewGroupId)
-        {
-            try
-            {
-                if (string.IsNullOrEmpty(reviewGroupId))
-                    return new List<ReviewListItemModel>();
-
-                var allNamespaceReviews = await GetReviewsWithGroupId(reviewGroupId);
-
-                var matchingReviews = allNamespaceReviews
-                    .Where(r => r.ReviewGroupId == reviewGroupId && 
-                               !r.IsDeleted && 
-                               r.NamespaceReviewStatus == NamespaceReviewStatus.Pending)
-                    .ToList();
-
-                return matchingReviews;
             }
             catch (Exception ex)
             {
@@ -747,31 +714,30 @@ namespace APIViewWeb.Managers
                     return;
                 }
 
-                var pendingSdkReviews = await GetPendingReviewsWithGroupId(approvedReview.ReviewGroupId);
-
-                // If any others still pending, return
-                if (pendingSdkReviews.Any())
-                    return;
-
-                // Query database directly for TypeSpec review with the same GroupId
+                // Query database directly for all related reviews with the same GroupId
                 var allReviews = await GetReviewsWithGroupId(approvedReview.ReviewGroupId);
+
+                var pendingSdkReviews = allReviews.Where(r => r.ReviewGroupId == approvedReview.ReviewGroupId && LanguageHelper.IsSDKLanguage(r.Language) &&
+                               !r.IsDeleted && 
+                               !r.IsApproved).ToList();
+
                 var typeSpecReview = allReviews.FirstOrDefault(r => 
                     r.NamespaceReviewStatus == NamespaceReviewStatus.Pending &&
                     r.Language == ApiViewConstants.TypeSpecLanguage &&
                     !r.IsDeleted);
 
-                if (typeSpecReview == null)
+                if (typeSpecReview == null){
                     return;
+                }
 
                 typeSpecReview.NamespaceReviewStatus = NamespaceReviewStatus.Approved;
                 await _reviewsRepository.UpsertReviewAsync(typeSpecReview);
 
                 // Send notification emails
-                await _notificationManager.NotifyStakeholdersOfAutoApproval(typeSpecReview, allReviews);
+                await _notificationManager.NotifyStakeholdersOfManualApproval(typeSpecReview, allReviews);
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Error in namespace approval check for review: {ReviewId}", approvedReview.Id);
                 _telemetryClient.TrackException(ex);
             }
         }

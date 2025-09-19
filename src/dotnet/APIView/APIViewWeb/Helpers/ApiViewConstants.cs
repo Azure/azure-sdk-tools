@@ -10,5 +10,5 @@ public static class ApiViewConstants
 
     public static readonly string[] SdkLanguages = { "C#", "Java", "Python", "Go", "JavaScript" };
 
-    public static readonly string[] AllSupportedLanguages = { TypeSpecLanguage, "C#", "Java", "Python", "Go", "JavaScript" };
+    public static readonly string[] AllSupportedLanguages = { "TypeSpec", "C#", "Java", "Python", "Go", "JavaScript"};
 }

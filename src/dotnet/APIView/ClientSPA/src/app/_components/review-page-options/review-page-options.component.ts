@@ -638,11 +638,8 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     this.updateNamespaceReviewButtonState();
   }
 
-  /**
-   * Check if namespace review has been approved in change history
-   */
   isNamespaceApproved(): boolean {
-    return this.review?.changeHistory?.some(ch => ch.changeAction === 'namespaceApproved') || false;
+    return this.review?.namespaceReviewStatus === 'approved' || false;
   }
 
   getPullRequestsOfAssociatedAPIRevisionsUrl(pr: PullRequestModel) {

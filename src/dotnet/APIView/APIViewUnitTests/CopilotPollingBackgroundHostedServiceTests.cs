@@ -317,7 +317,7 @@ namespace APIViewUnitTests
                 LineNo = 1,
                 Comment = "Test comment",
                 Source = "analysis",
-                GuidelineIds= guidelineIds,
+                GuidelineIds = guidelineIds,
                 Suggestion = "Test suggestion",
                 Code = "public void Method()"
             };

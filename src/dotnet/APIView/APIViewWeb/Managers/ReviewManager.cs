@@ -404,7 +404,7 @@ namespace APIViewWeb.Managers
                 {
                     try
                     {
-                        if (review != null && LanguageHelper.IsSDKLanguageOrTypeSpec(review.Language))
+                        if (review != null && LanguageHelper.IsSDKLanguageOrTypeSpec(review.Language) && review.NamespaceReviewStatus != NamespaceReviewStatus.Approved && !review.IsApproved)
                         {
                             review.ReviewGroupId = reviewGroupId;
                             review.NamespaceReviewStatus = NamespaceReviewStatus.Pending;

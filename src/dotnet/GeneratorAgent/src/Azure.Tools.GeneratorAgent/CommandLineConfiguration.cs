@@ -26,20 +26,20 @@ namespace Azure.Tools.GeneratorAgent
         /// <returns>The configured root command.</returns>
         public RootCommand CreateRootCommand(Func<string?, string?, string, Task<int>> handler)
         {
-            RootCommand rootCommand = new("Azure SDK Generator Agent");
+            var rootCommand = new RootCommand("Azure SDK Generator Agent");
 
-            Option<string?> typespecDirOption = new(
+            var typespecDirOption = new Option<string?>(
                 new[] { "--typespec-dir", "-t" },
                 "Path to the local TypeSpec project directory or TypeSpec specification directory (e.g., specification/testservice/TestService)")
             {
                 IsRequired = true
             };
 
-            Option<string?> commitIdOption = new(
+            var commitIdOption = new Option<string?>(
                 new[] { "--commit-id", "-c" },
                 "GitHub commit ID to generate SDK from (optional, used with --typespec-dir for GitHub generation)");
 
-            Option<string> sdkDirOption = new(
+            var sdkDirOption = new Option<string>(
                 new[] { "--output-dir", "-o" },
                 "Output directory for generated SDK files")
             {
@@ -58,25 +58,22 @@ namespace Azure.Tools.GeneratorAgent
             return rootCommand;
         }
 
+        /// <summary>
+        /// Validates input and logs errors. Returns 0 for success, 1 for failure.
+        /// Single responsibility - validate and log once at boundary.
+        /// </summary>
         internal int ValidateInput(string? typespecDir, string? commitId, string sdkDir)
         {
-            try
+            var result = ValidationContext.TryValidateAndCreate(typespecDir, commitId, sdkDir);
+            
+            if (result.IsFailure)
             {
-                Result<ValidationContext> result = ValidationContext.TryValidateAndCreate(typespecDir, commitId, sdkDir, Logger);
-                
-                if (result.IsFailure)
-                {
-                    Logger.LogError("Input validation failed: {Error}", result.Exception?.Message);
-                    return ExitCodeFailure;
-                }
-                
-                return ExitCodeSuccess;
-            }
-            catch (ArgumentException ex)
-            {
-                Logger.LogError("Input validation failed: {Error}", ex.Message);
+                Logger.LogError("Input validation failed: {Error}", result.Exception?.Message ?? "Unknown validation error");
                 return ExitCodeFailure;
             }
+            
+            Logger.LogDebug("Input validation completed successfully");
+            return ExitCodeSuccess;
         } 
     }
 }

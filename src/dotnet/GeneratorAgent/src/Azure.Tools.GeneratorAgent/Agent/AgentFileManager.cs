@@ -9,7 +9,7 @@ namespace Azure.Tools.GeneratorAgent.Agent
     {
         private const string UnknownStatus = "Unknown";
         private const string ProcessedStatus = "Processed";
-        
+
         private readonly PersistentAgentsClient Client;
         private readonly ILogger<AgentFileManager> Logger;
         private readonly AppSettings AppSettings;
@@ -19,7 +19,7 @@ namespace Azure.Tools.GeneratorAgent.Agent
             ArgumentNullException.ThrowIfNull(client);
             ArgumentNullException.ThrowIfNull(logger);
             ArgumentNullException.ThrowIfNull(appSettings);
-            
+
             Client = client;
             Logger = logger;
             AppSettings = appSettings;
@@ -33,48 +33,48 @@ namespace Azure.Tools.GeneratorAgent.Agent
 
             var results = await Task.WhenAll(uploadTasks).ConfigureAwait(false);
 
-            var uploadedFileIds = results
-                .Where(id => !string.IsNullOrEmpty(id))
-                .Select(id => id!);
+            var failures = results.Where(r => r.IsFailure);
+            var firstFailure = failures.FirstOrDefault();
+            if (firstFailure != null)
+            {
+                throw new InvalidOperationException($"Failed to upload files: {firstFailure.Exception?.Message}", firstFailure.Exception);
+            }
+
+            var uploadedFileIds = results.Select(result => result.Value!);
 
             await WaitForIndexingAsync(uploadedFileIds, cancellationToken).ConfigureAwait(false);
 
             var vectorStoreId = await CreateVectorStoreAsync(uploadedFileIds, cancellationToken).ConfigureAwait(false);
 
-                        Logger.LogDebug("Files added to vector store successfully: {VectorStoreId}", vectorStoreId);
             return vectorStoreId;
         }
 
-        protected virtual async Task<string?> UploadSingleFileAsync(string fileName, string content, CancellationToken cancellationToken)
+        protected virtual async Task<Result<string>> UploadSingleFileAsync(string fileName, string content, CancellationToken cancellationToken)
         {
-            try
+            var txtFileName = Path.ChangeExtension(fileName, "txt");
+
+            using var contentStream = new MemoryStream(Encoding.UTF8.GetBytes(content));
+
+            var uploaded = await Client.Files.UploadFileAsync(
+                contentStream,
+                PersistentAgentFilePurpose.Agents,
+                txtFileName,
+                cancellationToken: cancellationToken
+            ).ConfigureAwait(false);
+
+            if (uploaded?.Value?.Id != null)
             {
-                var txtFileName = Path.ChangeExtension(fileName, "txt");
-
-                using var contentStream = new MemoryStream(Encoding.UTF8.GetBytes(content));
-
-                var uploaded = await Client.Files.UploadFileAsync(
-                    contentStream,
-                    PersistentAgentFilePurpose.Agents,
-                    txtFileName,
-                    cancellationToken: cancellationToken
-                ).ConfigureAwait(false);
-
-                if (uploaded?.Value?.Id != null)
+                if (Logger.IsEnabled(LogLevel.Debug))
                 {
                     Logger.LogDebug("Uploaded file: {FileName} -> {FileId}", fileName, uploaded.Value.Id);
-                    return uploaded.Value.Id;
                 }
-                else
-                {
-                    Logger.LogWarning("Failed to upload file: {FileName}", fileName);
-                    return null;
-                }
+                return Result<string>.Success(uploaded.Value.Id);
             }
-            catch (Exception ex)
+            else
             {
-                Logger.LogError(ex, "Error uploading file: {FileName}", fileName);
-                return null;
+                var errorMsg = $"Failed to upload file: {fileName}";
+                Logger.LogWarning(errorMsg);
+                return Result<string>.Failure(new InvalidOperationException(errorMsg));
             }
         }
 
@@ -84,7 +84,7 @@ namespace Azure.Tools.GeneratorAgent.Agent
             var pollingInterval = AppSettings.IndexingPollingInterval;
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
-            Logger.LogDebug("Waiting for {Count} files to be indexed... (timeout: {Timeout}s)", 
+            Logger.LogDebug("Waiting for {Count} files to be indexed... (timeout: {Timeout}s)",
                 uploadedFilesIds.Count(), maxWaitTime.TotalSeconds);
 
             const int batchSize = 10;
@@ -92,13 +92,13 @@ namespace Azure.Tools.GeneratorAgent.Agent
             {
                 var results = new List<(string FileId, PersistentAgentFileInfo? File)>();
                 var totalCount = 0;
-                
+
                 var batch = new List<string>(batchSize);
                 foreach (var fileId in uploadedFilesIds)
                 {
                     batch.Add(fileId);
                     totalCount++;
-                    
+
                     if (batch.Count == batchSize)
                     {
                         var checkTasks = batch.Select(id => CheckFileStatusAsync(id, ct));
@@ -107,19 +107,18 @@ namespace Azure.Tools.GeneratorAgent.Agent
                         batch.Clear();
                     }
                 }
-                
-                // Process remaining items in the last batch
+
                 if (batch.Count > 0)
                 {
                     var checkTasks = batch.Select(id => CheckFileStatusAsync(id, ct));
                     var batchResults = await Task.WhenAll(checkTasks).ConfigureAwait(false);
                     results.AddRange(batchResults);
                 }
-                
+
                 var allIndexed = true;
                 var pendingFiles = Logger.IsEnabled(LogLevel.Debug) ? new List<string>() : null;
                 var currentStatusCounts = Logger.IsEnabled(LogLevel.Information) ? new Dictionary<string, int>() : null;
-                
+
                 foreach ((string FileId, PersistentAgentFileInfo? File) result in results)
                 {
                     if (result.File == null)
@@ -139,9 +138,6 @@ namespace Azure.Tools.GeneratorAgent.Agent
                         {
                             currentStatusCounts[status] = currentStatusCounts.GetValueOrDefault(status) + 1;
                         }
-                        
-                        Logger.LogDebug("File {Filename} (ID: {FileId}) status: {Status}", 
-                            result.File?.Filename, result.FileId, status);
 
                         if (!status.Equals(ProcessedStatus, StringComparison.OrdinalIgnoreCase))
                         {
@@ -157,14 +153,17 @@ namespace Azure.Tools.GeneratorAgent.Agent
                 if (Logger.IsEnabled(LogLevel.Debug) && currentStatusCounts != null)
                 {
                     var statusSummary = string.Join(", ", currentStatusCounts.Select(kvp => $"{kvp.Key}: {kvp.Value}"));
-                    Logger.LogDebug("Indexing status: {StatusSummary} | Elapsed: {Elapsed:F1}s", 
+                    Logger.LogDebug("Indexing status: {StatusSummary} | Elapsed: {Elapsed:F1}s",
                         statusSummary, stopwatch.Elapsed.TotalSeconds);
                 }
 
                 if (allIndexed)
                 {
-                    Logger.LogDebug("All {Count} files indexed successfully in {Duration:F1}s", 
-                        totalCount, stopwatch.Elapsed.TotalSeconds);
+                    if (Logger.IsEnabled(LogLevel.Debug))
+                    {
+                        Logger.LogDebug("All {Count} files indexed successfully in {Duration:F1}s",
+                            totalCount, stopwatch.Elapsed.TotalSeconds);
+                    }
                     return;
                 }
 
@@ -177,11 +176,12 @@ namespace Azure.Tools.GeneratorAgent.Agent
             }
 
             var finalResults = await Task.WhenAll(uploadedFilesIds.Select(id => CheckFileStatusAsync(id, ct))).ConfigureAwait(false);
-            
+
             var allProcessed = !finalResults.Any(r => r.File?.Status.ToString()?.Equals(ProcessedStatus, StringComparison.OrdinalIgnoreCase) != true);
             if (allProcessed)
             {
-                Logger.LogInformation("All files indexed successfully in {Duration:F1}s (completed during final check)",
+
+                Logger.LogDebug("All files indexed successfully in {Duration:F1}s (completed during final check)",
                     stopwatch.Elapsed.TotalSeconds);
                 return;
             }
@@ -190,15 +190,15 @@ namespace Azure.Tools.GeneratorAgent.Agent
                 .Where(r => r.File != null)
                 .GroupBy(r => r.File!.Status.ToString() ?? UnknownStatus)
                 .ToDictionary(g => g.Key, g => g.Count());
-            
+
             var finalStatusSummary = string.Join(", ", finalSummary.Select(kvp => $"{kvp.Key}: {kvp.Value}"));
-            
+
             throw new TimeoutException(
                 $"Timeout after {maxWaitTime.TotalSeconds}s while waiting for file indexing to complete. " +
                 $"Final status: {finalStatusSummary}. " +
                 $"This may indicate the Azure AI service is experiencing delays or the files require more processing time.");
         }
-        
+
         private async Task<(string FileId, PersistentAgentFileInfo? File)> CheckFileStatusAsync(string fileId, CancellationToken ct)
         {
             try
@@ -206,24 +206,7 @@ namespace Azure.Tools.GeneratorAgent.Agent
                 var file = await Client.Files.GetFileAsync(fileId, cancellationToken: ct).ConfigureAwait(false);
                 return (fileId, file);
             }
-            catch (Azure.RequestFailedException ex) when (ex.Status == 404)
-            {
-                Logger.LogWarning("File not found (404): {FileId} - it may have been deleted or not yet available", fileId);
-                return (fileId, null);
-            }
-            catch (Azure.RequestFailedException ex) when (ex.Status >= 400 && ex.Status < 500)
-            {
-                Logger.LogWarning("Client error ({StatusCode}) checking file {FileId}: {Message}",
-                    ex.Status, fileId, ex.Message);
-                return (fileId, null);
-            }
-            catch (Azure.RequestFailedException ex) when (ex.Status >= 500)
-            {
-                Logger.LogWarning("Server error ({StatusCode}) checking file {FileId}: {Message} - will retry",
-                    ex.Status, fileId, ex.Message);
-                return (fileId, null);
-            }
-            catch (Exception ex)
+            catch (Exception ex) when (!(ex is Azure.RequestFailedException))
             {
                 Logger.LogWarning(ex, "Unexpected error checking status for file: {FileId}", fileId);
                 return (fileId, null);
@@ -243,12 +226,56 @@ namespace Azure.Tools.GeneratorAgent.Agent
                 cancellationToken: ct
             ).ConfigureAwait(false);
 
-            Logger.LogInformation("Created vector store: {Name} ({Id})", store.Value.Name, store.Value.Id);
+            Logger.LogDebug("Vector store created with ID: {VectorStoreId}", store.Value.Id);
 
-            Logger.LogDebug("Waiting {WaitTime}ms for vector store to be ready...", AppSettings.VectorStoreReadyWaitTime);
             await Task.Delay(AppSettings.VectorStoreReadyWaitTime, ct).ConfigureAwait(false);
 
             return store.Value.Id;
+        }
+
+        public virtual async Task UpdateFileInVectorStoreAsync(string vectorStoreId, string fileName, string content, CancellationToken cancellationToken = default)
+        {
+            // Step 1: Find and remove the old version from vector store
+            await foreach (var existingFile in Client.VectorStores.GetVectorStoreFilesAsync(vectorStoreId, cancellationToken: cancellationToken))
+            {
+                // Get file details to check the name
+                var fileDetails = await Client.Files.GetFileAsync(existingFile.Id, cancellationToken).ConfigureAwait(false);
+
+                // Compare with the expected filename (with .txt extension)
+                var expectedFileName = Path.ChangeExtension(fileName, "txt");
+
+                if (fileDetails.Value.Filename == expectedFileName)
+                {
+                    // Remove old file from vector store
+                    await Client.VectorStores.DeleteVectorStoreFileAsync(vectorStoreId, existingFile.Id, cancellationToken).ConfigureAwait(false);
+                    Logger.LogDebug("Removed old version of {FileName} from vector store", fileName);
+
+                    // Delete the old file
+                    await Client.Files.DeleteFileAsync(existingFile.Id, cancellationToken).ConfigureAwait(false);
+                    Logger.LogDebug("Deleted old file with ID: {FileId}", existingFile.Id);
+                    break;
+                }
+            }
+
+            // Step 2: Add the new file to vector store
+            
+            var uploadResult = await UploadSingleFileAsync(fileName, content, cancellationToken).ConfigureAwait(false);
+            if (uploadResult.IsFailure)
+            {
+                throw new InvalidOperationException($"Failed to upload updated file: {fileName}", uploadResult.Exception);
+            }
+
+            var newFileId = uploadResult.Value!;
+    
+            await Client.VectorStores.CreateVectorStoreFileAsync(
+                vectorStoreId: vectorStoreId,
+                fileId: newFileId,
+                cancellationToken: cancellationToken).ConfigureAwait(false);
+
+            // Step 3: Wait for the new file to be indexed
+            await WaitForIndexingAsync(new[] { newFileId }, cancellationToken).ConfigureAwait(false);
+            
+            Logger.LogDebug("Successfully updated {FileName} in vector store {VectorStoreId}", fileName, vectorStoreId);
         }
     }
 }

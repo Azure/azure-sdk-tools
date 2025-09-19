@@ -442,33 +442,6 @@ def search_knowledge_base(
         print(json.dumps(context, indent=2, cls=CustomJSONEncoder))
 
 
-def search_guidelines(ids: list[str]):
-    """
-    Searches the knowledge base for guidelines by their IDs.
-    """
-    search = SearchManager()
-    results = search.search_guidelines_by_ids(ids)
-    print(json.dumps([result.__dict__ for result in results], indent=2, cls=CustomJSONEncoder))
-
-
-def search_memories(ids: list[str]):
-    """
-    Searches the knowledge base for memories by their IDs.
-    """
-    search = SearchManager()
-    results = search.search_memories_by_ids(ids)
-    print(json.dumps([result.__dict__ for result in results], indent=2, cls=CustomJSONEncoder))
-
-
-def search_examples(ids: list[str]):
-    """
-    Searches the knowledge base for examples by their IDs.
-    """
-    search = SearchManager()
-    results = search.search_examples_by_ids(ids)
-    print(json.dumps([result.__dict__ for result in results], indent=2, cls=CustomJSONEncoder))
-
-
 def reindex_search(containers: Optional[list[str]] = None):
     """
     Trigger a reindex of the Azure Search index for the ArchAgent Knowledge Base.

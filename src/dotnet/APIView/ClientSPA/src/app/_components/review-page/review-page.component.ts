@@ -25,6 +25,8 @@ import { SamplesRevision } from 'src/app/_models/samples';
 import { CodeLineSearchInfo } from 'src/app/_models/codeLineSearchInfo';
 import { HttpResponse } from '@angular/common/http';
 import { environment } from 'src/environments/environment';
+import { NotificationsService } from 'src/app/_services/notifications/notifications.service';
+import { SiteNotification } from 'src/app/_models/notificationsModel';
 
 @Component({
   selector: 'app-review-page',
@@ -93,7 +95,7 @@ export class ReviewPageComponent implements OnInit {
   constructor(private route: ActivatedRoute, private router: Router, private apiRevisionsService: APIRevisionsService,
     private reviewsService: ReviewsService, private workerService: WorkerService, private changeDetectorRef: ChangeDetectorRef,
     private userProfileService: UserProfileService, private commentsService: CommentsService, private signalRService: SignalRService,
-    private samplesRevisionService: SamplesRevisionService, private titleService: Title) {}
+    private samplesRevisionService: SamplesRevisionService, private titleService: Title, private notificationsService: NotificationsService) {}
 
   ngOnInit() {
     this.reviewId = this.route.snapshot.paramMap.get(REVIEW_ID_ROUTE_PARAM);
@@ -557,6 +559,19 @@ export class ReviewPageComponent implements OnInit {
           // Reset loading state in the options component on success
           if (this.reviewPageOptionsComponent) {
             this.reviewPageOptionsComponent.resetNamespaceReviewLoadingState();
+          }
+          try {
+            const notification = new SiteNotification(
+              this.reviewId!,
+              this.activeApiRevisionId!,
+              'Namespace Review',
+              'Namespace review has been requested successfully!',
+              'success'
+            );
+            this.notificationsService.addNotification(notification);
+          } catch (error) {
+            // Fallback alert
+            alert('Namespace review has been requested successfully!');
           }
         },
         error: (error) => {

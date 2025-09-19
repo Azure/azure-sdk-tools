@@ -2,11 +2,8 @@
 // Licensed under the MIT License.
 using Moq;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.Package;
-using System.CommandLine;
-using System.CommandLine.Invocation;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.Package;
 
@@ -30,7 +27,6 @@ public class SdkBuildToolTests
 
     private SdkBuildTool _tool;
     private Mock<IGitHelper> _mockGitHelper;
-    private Mock<IOutputHelper> _mockOutputHelper;
     private Mock<IProcessHelper> _mockProcessHelper;
     private Mock<ISpecGenSdkConfigHelper> _mockSpecGenSdkConfigHelper;
     private TestLogger<SdkBuildTool> _logger;
@@ -41,7 +37,6 @@ public class SdkBuildToolTests
     {
         // Create mocks
         _mockGitHelper = new Mock<IGitHelper>();
-        _mockOutputHelper = new Mock<IOutputHelper>();
         _mockProcessHelper = new Mock<IProcessHelper>();
         _mockSpecGenSdkConfigHelper = new Mock<ISpecGenSdkConfigHelper>();
         _logger = new TestLogger<SdkBuildTool>();
@@ -54,7 +49,6 @@ public class SdkBuildToolTests
         _tool = new SdkBuildTool(
             _mockGitHelper.Object,
             _logger,
-            _mockOutputHelper.Object,
             _mockProcessHelper.Object,
             _mockSpecGenSdkConfigHelper.Object
         );
@@ -88,7 +82,7 @@ public class SdkBuildToolTests
         // Arrange
         var pythonProjectPath = Path.Combine(_tempDirectory, "test-python-sdk");
         Directory.CreateDirectory(pythonProjectPath);
-        
+
         // Mock GitHelper to return a Python SDK repo name
         _mockGitHelper
             .Setup(x => x.DiscoverRepoRoot(pythonProjectPath))
@@ -202,7 +196,7 @@ public class SdkBuildToolTests
     public void GetCommand_ReturnsCommandWithCorrectStructure()
     {
         // Act
-        var command = _tool.GetCommand();
+        var command = _tool.GetCommandInstances().First();
 
         // Assert
         Assert.That(command.Name, Is.EqualTo("build"));

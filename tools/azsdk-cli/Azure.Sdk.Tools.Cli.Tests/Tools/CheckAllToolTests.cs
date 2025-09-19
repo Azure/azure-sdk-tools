@@ -11,7 +11,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
     public class PackageCheckToolTests
     {
         private Mock<ILogger<PackageCheckTool>> _mockLogger;
-        private Mock<IOutputHelper> _mockOutputHelper;
         private Mock<IProcessHelper> _mockProcessHelper;
         private Mock<INpxHelper> _mockNpxHelper;
         private Mock<IGitHelper> _mockGitHelper;
@@ -26,7 +25,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public void Setup()
         {
             _mockLogger = new Mock<ILogger<PackageCheckTool>>();
-            _mockOutputHelper = new Mock<IOutputHelper>();
             _mockProcessHelper = new Mock<IProcessHelper>();
             _mockNpxHelper = new Mock<INpxHelper>();
             _mockGitHelper = new Mock<IGitHelper>();
@@ -40,7 +38,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var languageChecks = new List<ILanguageSpecificChecks> { pythonCheck };
             var mockPowershellHelper = new Mock<IPowershellHelper>();
             var resolver = new LanguageSpecificCheckResolver(languageChecks, _mockGitHelper.Object, mockPowershellHelper.Object, _mockResolverLogger.Object);            _languageChecks = new LanguageChecks(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _mockLanguageChecksLogger.Object, resolver);
-            _packageCheckTool = new PackageCheckTool(_mockLogger.Object, _mockOutputHelper.Object, _languageChecks);
+            _packageCheckTool = new PackageCheckTool(_mockLogger.Object, _languageChecks);
 
             // Setup default mock responses
             var defaultProcessResult = new ProcessResult { ExitCode = 0, OutputDetails = new List<(StdioLevel, string)>() };
@@ -201,7 +199,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             Assert.IsNotNull(readmeResult);
             Assert.IsNotNull(spellingResult);
             Assert.IsNotNull(snippetsResult);
-            
+
             // All should execute (may fail due to test environment, but should not error on check type)
             Assert.IsTrue(allResult.ExitCode >= 0);
             Assert.IsTrue(changelogResult.ExitCode >= 0);

@@ -170,7 +170,7 @@ def _summarize_results(results: dict):
     """
     Summarizes the results of the plan execution.
     """
-    prompt_file = "summarize_parse_conversation_to_memory.prompty"
+    prompt_file = "summarize_actions.prompty"
     prompt_path = get_prompt_path(folder="mention", filename=prompt_file)
     if not os.path.exists(prompt_path):
         print(f"Prompt file {prompt_path} does not exist.")

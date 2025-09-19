@@ -5,7 +5,7 @@ namespace Azure.Sdk.Tools.Cli.Models;
 /// <summary>
 /// Response model for file download operations
 /// </summary>
-public class DownloadResponse : Response
+public class DownloadResponse : CommandResponse
 {
     [JsonPropertyName("message")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]

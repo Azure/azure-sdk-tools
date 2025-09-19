@@ -6,7 +6,7 @@ parameters:
 trigger:
   branches:
     include:
-      - azure-sdk-ai-bot
+      - release/qa-bot
       - main
   paths:
     include:
@@ -15,8 +15,7 @@ trigger:
 pr:
   branches:
     include:
-      - azure-sdk-ai-bot
-      - azure-sdk-ai-bot-dev
+      - release/qa-bot
       - main
   paths:
     include:

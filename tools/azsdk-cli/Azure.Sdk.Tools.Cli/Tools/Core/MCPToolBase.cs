@@ -79,11 +79,6 @@ public abstract class MCPToolBase
             activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
             throw;
         }
-        finally
-        {
-            activity?.Stop();
-            tracer?.Dispose();
-        }
     }
 
     public abstract List<Command> GetCommandInstances();

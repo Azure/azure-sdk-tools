@@ -1,8 +1,5 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-using System.CommandLine;
-using System.CommandLine.Builder;
-using System.CommandLine.Parsing;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
@@ -17,16 +14,8 @@ public class Program
     public static async Task<int> Main(string[] args)
     {
         var (outputFormat, debug) = SharedOptions.GetGlobalOptionValues(args);
-
         ServerApp = CreateAppBuilder(args, outputFormat, debug).Build();
-
-        var rootCommand = CommandFactory.CreateRootCommand(args, ServerApp.Services, debug);
-        var parsedCommands = new CommandLineBuilder(rootCommand)
-               .UseDefaults()            // adds help, version, error reporting, suggestions…
-               .UseExceptionHandler()    // catches unhandled exceptions and writes them out
-               .Build();
-
-        return await parsedCommands.InvokeAsync(args);
+        return await CommandRunner.BuildAndRun(args, ServerApp.Services, debug);
     }
 
     // todo: make this honor subcommands of `start` and the like, instead of simply looking presence of `start` verb

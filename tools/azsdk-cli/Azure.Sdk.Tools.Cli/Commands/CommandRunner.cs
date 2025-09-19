@@ -1,4 +1,6 @@
 using System.CommandLine;
+using System.CommandLine.Builder;
+using System.CommandLine.Parsing;
 using Azure.Sdk.Tools.Cli.Commands.HostServer;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Telemetry;
@@ -6,14 +8,17 @@ using Azure.Sdk.Tools.Cli.Tools;
 
 namespace Azure.Sdk.Tools.Cli.Commands
 {
-    public static class CommandFactory
+    public static class CommandRunner
     {
         /// <summary>
-        /// Creates the primary parsing entry point for the application. Uses the registered service providers
-        /// to initialize whichever MCP tools we need to add to the configuration and pass on to HostTool.
+        /// Creates the primary parsing entry point for the application and runs the command
         /// </summary>
-        /// <returns></returns>
-        public static RootCommand CreateRootCommand(string[] args, IServiceProvider serviceProvider, bool debug = false)
+        /// <returns>Command exit code</returns>
+        public static async Task<int> BuildAndRun(
+            string[] args,
+            IServiceProvider serviceProvider,
+            bool debug = false
+        )
         {
             var rootCommand = new RootCommand("azsdk cli - A Model Context Protocol (MCP) server that facilitates tasks for anyone working with the Azure SDK team.");
             rootCommand.AddOption(SharedOptions.ToolOption);
@@ -43,7 +48,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             // Many services are injected as scoped so they will be unique
             // per request when running in MCP server mode. Create a base scope
             // here so we can resolve those services in CLI mode as well.
-            using var scope = serviceProvider.CreateScope();
+            using var scope = serviceProvider.CreateAsyncScope();
             var scopedProvider = scope.ServiceProvider;
             var toolInstances = toolTypes
                 .Select(t =>
@@ -59,7 +64,12 @@ namespace Azure.Sdk.Tools.Cli.Commands
 
             PopulateToolHierarchy(rootCommand, toolInstances);
 
-            return rootCommand;
+            var parsedCommands = new CommandLineBuilder(rootCommand)
+                   .UseDefaults()            // adds help, version, error reporting, suggestions…
+                   .UseExceptionHandler()    // catches unhandled exceptions and writes them out
+                   .Build();
+
+            return await parsedCommands.InvokeAsync(args);
         }
 
         private static void PopulateToolHierarchy(RootCommand rootCommand, List<MCPToolBase> toolList)

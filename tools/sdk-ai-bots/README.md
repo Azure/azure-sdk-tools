@@ -1,4 +1,4 @@
-# Azure SDK AI Bots
+# Azure SDK AI Bot
 
 This folder contains AI-powered components that work together to provide intelligent assistance for Azure SDK development, including TypeSpec authoring guidance, Azure SDK generation support, and service team onboarding.
 

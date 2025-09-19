@@ -9,7 +9,6 @@ Module for the APIView Copilot API review functionality.
 """
 
 import concurrent.futures
-import datetime
 import json
 import logging
 import os
@@ -101,7 +100,8 @@ class ApiViewReview:
         outline: Optional[str] = None,
         comments: Optional[list] = None,
         include_general_guidelines: bool = False,
-        debug_log: bool = False,
+        write_debug_logs: bool = False,
+        write_output: bool = False,
     ):
         self.job_id = str(uuid.uuid4())
         self.target = self._unescape(target)
@@ -117,7 +117,7 @@ class ApiViewReview:
             self.max_chunk_size = 500
         self.search = SearchManager(language=language)
         self.semantic_search_failed = False
-        self.allowed_ids = [x.id for x in self.search.language_guidelines]
+        self.allowed_ids = [x.id for x in self.search.language_guidelines or []]
         self.results = ReviewResult()
         self.summary = None
         self.outline = outline
@@ -128,9 +128,15 @@ class ApiViewReview:
         self.filter_expression = f"language eq '{language}' and not (tags/any(t: t eq 'documentation' or t eq 'vague'))"
         if include_general_guidelines:
             self.filter_expression += " or language eq '' or language eq null"
-        self.debug_log = debug_log
         self.settings = SettingsManager()
         self._isatty = sys.stdout.isatty()
+
+        self.write_debug_logs = write_debug_logs
+        self.write_output = write_output
+        if write_output or write_debug_logs:
+            self.output_dir = os.path.join("scratch", "output", self.job_id)
+        else:
+            self.output_dir = None
 
         class JobLogger:
             """Logger wrapper to prepend job_id to all log messages."""
@@ -496,20 +502,20 @@ class ApiViewReview:
         )
 
         # Debug log: dump keep_comments and discard_comments to files if enabled
-        if self.debug_log:
-            for idx, result in (keep_results + discard_results).items():
-                # combine the comment and result info
+        if self.write_debug_logs:
+            os.makedirs(self.output_dir, exist_ok=True)
+            for idx, comment in keep_results.items():
                 comment_dict = self.results.comments[idx].model_dump()
-                comment = {**comment_dict, **result}
-            ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            debug_dir = os.path.join("scratch", "logs", self.language)
-            os.makedirs(debug_dir, exist_ok=True)
-            keep_path = os.path.join(debug_dir, f"debug_keep_generic_comments_{ts}.json")
-            discard_path = os.path.join(debug_dir, f"debug_discard_generic_comments_{ts}.json")
+                keep_results[idx] = {**comment_dict, **comment}
+            for idx, comment in discard_results.items():
+                comment_dict = self.results.comments[idx].model_dump()
+                discard_results[idx] = {**comment_dict, **comment}
+            keep_path = os.path.join(self.output_dir, "filter_generic_comments_KEEP.json")
+            discard_path = os.path.join(self.output_dir, "filter_generic_comments_DISCARD.json")
             with open(keep_path, "w", encoding="utf-8") as f:
-                json.dump(keep_results.values(), f, indent=2)
+                json.dump(list(keep_results.values()), f, indent=2)
             with open(discard_path, "w", encoding="utf-8") as f:
-                json.dump(discard_results.values(), f, indent=2)
+                json.dump(list(discard_results.values()), f, indent=2)
             self.logger.debug(f"Kept generic comments written to {keep_path}")
             self.logger.debug(f"Discarded generic comments written to {discard_path}")
 
@@ -636,12 +642,10 @@ class ApiViewReview:
         self._print_message(f"Hard filtering completed. Kept {final_count}. Discarded {removed_count}.")
 
         # Debug log: dump keep_comments and discard_comments to files if enabled
-        if self.debug_log:
-            ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            debug_dir = os.path.join("scratch", "logs", self.language)
-            os.makedirs(debug_dir, exist_ok=True)
-            keep_path = os.path.join(debug_dir, f"debug_keep_comments_{ts}.json")
-            discard_path = os.path.join(debug_dir, f"debug_discard_comments_{ts}.json")
+        if self.write_debug_logs:
+            os.makedirs(self.output_dir, exist_ok=True)
+            keep_path = os.path.join(self.output_dir, "filter_comments_with_metadata_KEEP.json")
+            discard_path = os.path.join(self.output_dir, "filter_comments_with_metadata_DISCARD.json")
             with open(keep_path, "w", encoding="utf-8") as f:
                 json.dump(keep_debug, f, indent=2)
             with open(discard_path, "w", encoding="utf-8") as f:
@@ -686,14 +690,14 @@ class ApiViewReview:
                 response = futures[idx].result()
                 response_json = json.loads(response)
                 action = response_json.get("action")
-                comment = response_json.get("comment")
+                refined_comment = response_json.get("comment")
                 if action == "KEEP":
-                    comment.comment = comment
+                    comment.comment = refined_comment
                 elif action == "DISCARD":
                     comments_to_remove.append(idx)
                 else:
                     self.logger.warning(f"Unexpected action for line {comment.line_no}: {repr(response)}")
-                    comment.comment = comment
+                    comment.comment = refined_comment
             except Exception as e:
                 self.logger.error(f"Error filtering preexisting comments for line {comment.line_no}: {str(e)}")
                 self.logger.warning(f"Keeping comment despite filtering error: {comment.comment}")
@@ -830,6 +834,14 @@ class ApiViewReview:
             if self.semantic_search_failed:
                 self._print_message("WARN: Semantic search failed for some chunks (see error.log).")
 
+            # Write output JSON if enabled
+            if self.write_output:
+                os.makedirs(self.output_dir, exist_ok=True)
+                output_path = os.path.join(self.output_dir, "output.json")
+                with open(output_path, "w", encoding="utf-8") as f:
+                    json.dump(results.model_dump(), f, indent=2)
+                self._print_message(f"Review results written to {output_path}")
+
             return results
         finally:
             # Don't close the executor here as it might be needed for future operations
@@ -869,10 +881,10 @@ class ApiViewReview:
         Retrieves all guidelines for the current language as context.
         """
         try:
-            guidelines = self.search.language_guidelines
-            if not guidelines:
+            language_guidelines = self.search.language_guidelines
+            if not language_guidelines:
                 return None
-            context = self.search.build_context(self.search.language_guidelines.results)
+            context = self.search.build_context(language_guidelines.results)
             return context
         except Exception as e:
             logger.error("Error retrieving guidelines: %s: %s", type(e).__name__, e, exc_info=True)

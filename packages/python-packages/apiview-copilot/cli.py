@@ -128,9 +128,7 @@ def _local_review(
     Generates a review using the locally installed code.
     """
     target_path = pathlib.Path(target)
-    if base is None:
-        filename = target_path.stem
-    else:
+    if base is not None:
         target_name = target_path.stem
         base_name = pathlib.Path(base).stem
         # find the common prefix
@@ -138,7 +136,6 @@ def _local_review(
         # strip the common prefix from both names
         target_name = target_name[len(common_prefix) :]
         base_name = base_name[len(common_prefix) :]
-        filename = f"{common_prefix}_{base_name}_{target_name}"
 
     with target_path.open("r", encoding="utf-8") as f:
         target_apiview = f.read()
@@ -164,18 +161,11 @@ def _local_review(
         language=language,
         outline=outline_text,
         comments=comments_obj,
-        debug_log=debug_log,
+        write_output=True,
+        write_debug_logs=debug_log,
     )
-    review = reviewer.run()
+    reviewer.run()
     reviewer.close()
-    output_path = pathlib.Path("scratch") / "output" / language
-    output_path.mkdir(parents=True, exist_ok=True)
-    output_file = output_path / f"{filename}.json"
-
-    with output_file.open("w", encoding="utf-8") as f:
-        f.write(review.model_dump_json(indent=4))
-
-    print(f"Review written to {output_file}")
 
 
 def run_test_case(language: str, test_file: str, num_runs: int = 3):

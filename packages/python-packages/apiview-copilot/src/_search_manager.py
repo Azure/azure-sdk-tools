@@ -286,9 +286,15 @@ class SearchManager:
 
     def __init__(self, *, language: Optional[str] = None, include_general_guidelines: bool = False):
         self.language = language
-        self.filter_expression = f"language eq '{language}'" if language else None
+        self.filter_expression = None
+        if language:
+            self.filter_expression = f"language eq '{language}'"
         if include_general_guidelines:
-            self.filter_expression += " or language eq '' or language eq null"
+            general_guidelines_filter = "language eq '' or language eq null"
+            if self.filter_expression:
+                self.filter_expression += f" or {general_guidelines_filter}"
+            else:
+                self.filter_expression = general_guidelines_filter
         self._settings = SettingsManager()
         self._search_endpoint = self._settings.get("SEARCH_ENDPOINT")
         self._credential = get_credential()
@@ -296,7 +302,7 @@ class SearchManager:
         self.client = SearchClient(
             endpoint=self._search_endpoint, index_name=self._index_name, credential=self._credential
         )
-        self.language_guidelines = self._fetch_language_guidelines(language) if language else []
+        self.language_guidelines = self._fetch_language_guidelines(language) if language else None
 
     def _ensure_language(self):
         if not self.language:

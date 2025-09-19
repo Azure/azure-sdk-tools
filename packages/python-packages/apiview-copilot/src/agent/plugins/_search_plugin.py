@@ -53,7 +53,7 @@ class SearchPlugin:
             language (str): The programming language to filter results.
         """
         search = SearchManager(language=language)
-        results = search.search_api_view_comments(query)
+        results = search.search_memories(query)
         context = search.build_context(results.results)
         return context.to_markdown()
 

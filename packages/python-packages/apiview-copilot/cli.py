@@ -17,7 +17,7 @@ import pathlib
 import sys
 import time
 from collections import OrderedDict
-from typing import Optional
+from typing import List, Optional
 
 import colorama
 import requests
@@ -128,9 +128,7 @@ def _local_review(
     Generates a review using the locally installed code.
     """
     target_path = pathlib.Path(target)
-    if base is None:
-        filename = target_path.stem
-    else:
+    if base is not None:
         target_name = target_path.stem
         base_name = pathlib.Path(base).stem
         # find the common prefix
@@ -138,7 +136,6 @@ def _local_review(
         # strip the common prefix from both names
         target_name = target_name[len(common_prefix) :]
         base_name = base_name[len(common_prefix) :]
-        filename = f"{common_prefix}_{base_name}_{target_name}"
 
     with target_path.open("r", encoding="utf-8") as f:
         target_apiview = f.read()
@@ -164,18 +161,11 @@ def _local_review(
         language=language,
         outline=outline_text,
         comments=comments_obj,
-        debug_log=debug_log,
+        write_output=True,
+        write_debug_logs=debug_log,
     )
-    review = reviewer.run()
+    reviewer.run()
     reviewer.close()
-    output_path = pathlib.Path("scratch") / "output" / language
-    output_path.mkdir(parents=True, exist_ok=True)
-    output_file = output_path / f"{filename}.json"
-
-    with output_file.open("w", encoding="utf-8") as f:
-        f.write(review.model_dump_json(indent=4))
-
-    print(f"Review written to {output_file}")
 
 
 def run_test_case(language: str, test_file: str, num_runs: int = 3):
@@ -213,7 +203,7 @@ def create_test_case(
 
     context = ""
     for violation in expected_contents["comments"]:
-        for rule_id in violation["rule_ids"]:
+        for rule_id in violation["guideline_ids"]:
             for rule in guidelines:
                 if rule["id"] == rule_id:
                     if rule["text"] not in context:
@@ -404,16 +394,28 @@ def review_job_get(job_id: str):
 
 
 def search_knowledge_base(
-    language: str,
+    language: Optional[str] = None,
     text: Optional[str] = None,
     path: Optional[str] = None,
     markdown: bool = False,
+    ids: Optional[List[str]] = None,
 ):
     """
     Queries the Search indexes and returns the resulting Cosmos DB
     objects, resolving all links between objects. This result represents
     what the AI reviewer would receive as context in RAG mode.
     """
+    # ensure that if ids is provided, no other parameters are provided
+    if ids:
+        if language or text or path or markdown:
+            raise ValueError("When using `--ids`, do not provide any other parameters.")
+        search = SearchManager()
+        results = search.search_all_by_id(ids)
+        print(json.dumps([result.__dict__ for result in results], indent=2, cls=CustomJSONEncoder))
+        return
+    elif not language:
+        raise ValueError("`--language` is required when `--ids` is not provided.")
+
     if (path and text) or (not path and not text):
         raise ValueError("Provide one of `--path` or `--text`.")
     search = SearchManager(language=language)
@@ -1056,6 +1058,13 @@ class CliCommandsLoader(CLICommandsLoader):
             ac.argument(
                 "markdown",
                 help="Render output as markdown instead of JSON.",
+            )
+            ac.argument(
+                "ids",
+                type=str,
+                nargs="+",
+                help="The IDs to retrieve.",
+                options_list=["--ids"],
             )
         with ArgumentsContext(self, "search reindex") as ac:
             ac.argument(

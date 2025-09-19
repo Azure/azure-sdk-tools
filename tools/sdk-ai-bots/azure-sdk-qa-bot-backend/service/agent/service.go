@@ -326,16 +326,6 @@ func (s *CompletionService) buildMessages(req *model.CompletionReq) ([]azopenai.
 
 	// process current user message
 	currentMessage := req.Message.Content
-	if req.WithPreprocess != nil && *req.WithPreprocess {
-		preProcessedMessage := preprocess.NewPreprocessService().ExtractAdditionalInfo(req.Message.Content)
-		log.Println("user message with additional info:", preProcessedMessage)
-		// avoid token limit error, we need to limit the number of messages in the history
-		if len(preProcessedMessage) > config.AppConfig.AOAI_CHAT_MAX_TOKENS {
-			log.Printf("Message content is too long, truncating to %d characters", config.AppConfig.AOAI_CHAT_MAX_TOKENS)
-			preProcessedMessage = preProcessedMessage[:config.AppConfig.AOAI_CHAT_MAX_TOKENS]
-		}
-		currentMessage = preProcessedMessage
-	}
 	msg := &azopenai.ChatRequestUserMessage{
 		Content: azopenai.NewChatRequestUserMessageContent(currentMessage),
 		Name:    processName(req.Message.Name),

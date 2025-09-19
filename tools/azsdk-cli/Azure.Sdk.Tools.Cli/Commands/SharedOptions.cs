@@ -5,7 +5,6 @@ using System.IO.Enumeration;
 using Azure.Sdk.Tools.Cli.Tools;
 using Azure.Sdk.Tools.Cli.Tools.EngSys;
 using Azure.Sdk.Tools.Cli.Tools.GitHub;
-using Azure.Sdk.Tools.Cli.Tools.HostServer;
 using Azure.Sdk.Tools.Cli.Tools.Package;
 using Azure.Sdk.Tools.Cli.Tools.Pipeline;
 using Azure.Sdk.Tools.Cli.Tools.ReleasePlan;
@@ -21,7 +20,6 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(CleanupTool),
             typeof(CodeownersTools),
             typeof(GitHubLabelsTool),
-            typeof(HostServerTool),
             typeof(LogAnalysisTool),
             typeof(PipelineTool),
             typeof(PipelineAnalysisTool),
@@ -73,7 +71,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             IsRequired = false
         };
 
-        public static (string, bool) GetGlobalOptionValues(string[] args)
+        public static (string outputFormat, bool debug) GetGlobalOptionValues(string[] args)
         {
             var root = new RootCommand
             {
@@ -85,9 +83,9 @@ namespace Azure.Sdk.Tools.Cli.Commands
             var parser = new Parser(root);
             var result = parser.Parse(args);
 
-            var raw = result.GetValueForOption(Format)?.ToLowerInvariant() ?? "";
+            var outputFormat = result.GetValueForOption(Format)?.ToLowerInvariant() ?? "";
             var debug = result.GetValueForOption(Debug);
-            return (raw, debug);
+            return (outputFormat, debug);
         }
 
         public static string[] GetToolsFromArgs(string[] args)

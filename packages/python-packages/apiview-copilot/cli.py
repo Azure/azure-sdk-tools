@@ -393,6 +393,20 @@ def review_job_get(job_id: str):
         print(f"Error: {resp.status_code} {resp.text}")
 
 
+def get_all_guidelines(language: str, markdown: bool = False):
+    """
+    Retrieve all guidelines for a specific language. Returns a context
+    object which can be printed as JSON or Markdown.
+    """
+    search = SearchManager(language=language)
+    context = search.build_context(search.language_guidelines.results)
+    if markdown:
+        md = context.to_markdown()
+        print(md)
+    else:
+        print(json.dumps(context, indent=2, cls=CustomJSONEncoder))
+
+
 def search_knowledge_base(
     language: Optional[str] = None,
     text: Optional[str] = None,
@@ -403,7 +417,8 @@ def search_knowledge_base(
     """
     Queries the Search indexes and returns the resulting Cosmos DB
     objects, resolving all links between objects. This result represents
-    what the AI reviewer would receive as context in RAG mode.
+    what the AI reviewer would receive as context in RAG mode when used
+    with the Markdown flag.
     """
     # ensure that if ids is provided, no other parameters are provided
     if ids:
@@ -908,6 +923,7 @@ class CliCommandsLoader(CLICommandsLoader):
         with CommandGroup(self, "search", "__main__#{}") as g:
             g.command("kb", "search_knowledge_base")
             g.command("reindex", "reindex_search")
+            g.command("all-guidelines", "get_all_guidelines")
         with CommandGroup(self, "db", "__main__#{}") as g:
             g.command("get", "db_get")
             g.command("delete", "db_delete")

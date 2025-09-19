@@ -104,24 +104,14 @@ namespace APIViewWeb.LeanControllers
         public ActionResult<bool> GetEnableNamespaceReviewAsync()
         {
             var enableNamespaceReview = _configuration["EnableNamespaceReview"];
-            if (bool.TryParse(enableNamespaceReview, out bool isEnabled))
-            {
-                return new LeanJsonResult(isEnabled, StatusCodes.Status200OK);
-            }
-            // Default to false if not configured or invalid value
-            return new LeanJsonResult(false, StatusCodes.Status200OK);
+            return new LeanJsonResult(enableNamespaceReview, StatusCodes.Status200OK);
         }
 
         [HttpGet("enablePendingReviewTab", Name = "EnablePendingReviewTab")]
         public ActionResult<bool> GetEnablePendingReviewTabAsync()
         {
             var enablePendingReviewTab = _configuration["EnablePendingReviewTab"];
-            if (bool.TryParse(enablePendingReviewTab, out bool isEnabled))
-            {
-                return new LeanJsonResult(isEnabled, StatusCodes.Status200OK);
-            }
-            // Default to false if not configured or invalid value
-            return new LeanJsonResult(false, StatusCodes.Status200OK);
+            return new LeanJsonResult(enablePendingReviewTab, StatusCodes.Status200OK);
         }
 
         /// <summary>

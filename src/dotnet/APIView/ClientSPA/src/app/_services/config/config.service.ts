@@ -41,4 +41,13 @@ export class ConfigService {
   get webAppUrl () : string {
     return this.config.webAppUrl;
   }
+  // Get EnableNamespaceReview from Azure App Configuration via API
+  getEnableNamespaceReview() {
+    return this.http.get<boolean>(`${this.apiUrl}reviews/enableNamespaceReview`);
+  }
+
+  // Get EnablePendingReviewTab from Azure App Configuration via API
+  getEnablePendingReviewTab() {
+    return this.http.get<boolean>(`${this.apiUrl}reviews/enablePendingReviewTab`);
+  }
 }

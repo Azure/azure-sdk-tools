@@ -170,10 +170,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
                 if (!requestMinusBoundary.SequenceEqual(recordMinusBoundary, out int index, out int length))
                 {
-                    descriptionBuilder?.AppendLine("Multipart bodies differ after removing ignoring boundaries.");
+                    descriptionBuilder?.AppendLine("Multipart bodies differ after removing boundaries.");
                     if (length > 0)
                     {
-                        descriptionBuilder?.AppendLine($"First difference at inside the snippet from {index} to {length}.");
+                        descriptionBuilder?.AppendLine($"First difference inside the snippet from {index} to {length}.");
                         descriptionBuilder?.AppendLine($"Request snippet: \"{requestMinusBoundary.SliceToString(index, Math.Min(length, requestMinusBoundary.Length - index), encoding)}\"");
                         descriptionBuilder?.AppendLine($"Record snippet:  \"{recordMinusBoundary.SliceToString(index, Math.Min(length, recordMinusBoundary.Length - index), encoding)}\"");
                     }

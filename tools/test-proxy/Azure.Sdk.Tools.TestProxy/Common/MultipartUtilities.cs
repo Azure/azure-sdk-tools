@@ -288,7 +288,7 @@ File an issue on Azure/azure-sdk-tools and include this base64 string for reprod
 
         /// <summary>
         /// Given a multipart body, remove the boundary delimiters and return only the content.
-        /// Used for nomrmalizing multipart bodies for comparison.
+        /// Used for normalizing multipart bodies for comparison.
         /// Uses <see cref="ReadOnlySequence{T}"/> to avoid unnecessary allocations.
         /// </summary>
         /// <param name="body">The body of a multipart request or response.</param>

@@ -139,7 +139,7 @@ export async function buildPackage(
         }
 
         logger.info(`Start to build package '${name}'.`);
-        await runCommand('pnpm', ['build', '--filter', `${name}...`], runCommandOptions);
+        await runCommand('pnpm', ['turbo', 'build', '--filter', `${name}...`, '--token 1'], runCommandOptions);
     }
 
     const apiViewContext = await addApiViewInfo(packageDirectory, options.sdkRepoRoot, name, packageResult);

@@ -13,9 +13,9 @@ import { AnnotatedReviewLines } from "./utils/models";
 import { getAPIJson, processedItems } from "../main";
 import { processItem } from "./processItem";
 import { processModule } from "./processModule";
-import { lineIdMap } from "../utils/lineIdUtils";
+import { createContentBasedLineId } from "../utils/lineIdUtils";
 
-function processSimpleUseItem(item: Item): AnnotatedReviewLines {
+function processSimpleUseItem(item: Item, lineIdPrefix: string = ""): AnnotatedReviewLines {
   const annotatedReviewLines: AnnotatedReviewLines = {
     siblingModule: {},
     children: {},
@@ -66,8 +66,10 @@ function processSimpleUseItem(item: Item): AnnotatedReviewLines {
       },
     );
   }
-  lineIdMap.set(item.id.toString(), item.inner.use.name);
-  annotatedReviewLines.children[item.id] = [{ LineId: item.id.toString(), Tokens: tokens }];
+
+  // Create content-based LineId from the tokens
+  const contentBasedLineId = createContentBasedLineId(tokens, lineIdPrefix, item.id.toString());
+  annotatedReviewLines.children[item.id] = [{ LineId: contentBasedLineId, Tokens: tokens }];
   return annotatedReviewLines;
 }
 
@@ -81,6 +83,7 @@ function processSimpleUseItem(item: Item): AnnotatedReviewLines {
 export function processUse(
   item: Item,
   parentModule: { prefix: string; id: number } | undefined,
+  lineIdPrefix: string = "",
 ): AnnotatedReviewLines {
   let annotatedReviewLines: AnnotatedReviewLines = {
     siblingModule: {},
@@ -88,13 +91,16 @@ export function processUse(
   };
 
   if (!isUseItem(item)) return annotatedReviewLines;
-  const docsLines = item.docs ? createDocsReviewLines(item) : [];
+
+  const tempLineId = createContentBasedLineId([{ Kind: TokenKind.Text, Value: "use" }], lineIdPrefix, item.id.toString());
+  const docsLines = item.docs ? createDocsReviewLines(item, tempLineId) : [];
+
   const apiJson = getAPIJson();
   const dereferencedId = item.inner.use.id;
   if (item.inner.use.is_glob) {
     if (processedItems.has(dereferencedId)) {
       // case 0: This item has already been processed, so we only add a reference.
-      annotatedReviewLines = processSimpleUseItem(item);
+      annotatedReviewLines = processSimpleUseItem(item, lineIdPrefix);
     }
     // case 1: [ glob = true; module = true; in index ] - collapse all the children on to the parent
     else if (dereferencedId in apiJson.index && isModuleItem(apiJson.index[dereferencedId])) {
@@ -105,13 +111,14 @@ export function processUse(
           annotatedReviewLines.siblingModule[childId] = processModule(
             apiJson.index[childId],
             parentModule,
+            lineIdPrefix
           );
           processedItems.add(childId);
         } else if (!isUseItem(apiJson.index[childId])) {
-          annotatedReviewLines.children[childId] = processItem(apiJson.index[childId]);
+          annotatedReviewLines.children[childId] = processItem(apiJson.index[childId], parentModule, lineIdPrefix);
           processedItems.add(childId);
         } else {
-          const useReviewLines = processUse(apiJson.index[childId], parentModule);
+          const useReviewLines = processUse(apiJson.index[childId], parentModule, lineIdPrefix);
           for (const key in useReviewLines.siblingModule) {
             annotatedReviewLines.siblingModule[key] = useReviewLines.siblingModule[key];
           }
@@ -131,7 +138,7 @@ export function processUse(
         apiJson,
       );
       moduleChildIds.forEach((childId) => {
-        const childLine = createItemLineFromPath(childId, apiJson.paths[childId]);
+        const childLine = createItemLineFromPath(childId, apiJson.paths[childId], lineIdPrefix);
         if (childLine) {
           annotatedReviewLines.children[childId] = [childLine];
         }
@@ -143,6 +150,7 @@ export function processUse(
     annotatedReviewLines.siblingModule[dereferencedId] = processModule(
       apiJson.index[dereferencedId],
       parentModule,
+      lineIdPrefix
     );
   }
   // case 4: [ glob = false; module = true; in paths ] - sibling module with a mention of re-export
@@ -155,6 +163,7 @@ export function processUse(
       apiJson.paths[dereferencedId],
       apiJson,
       parentModule,
+      lineIdPrefix,
     );
   }
   // case 5: [ glob = false; module = false; in index ]
@@ -166,13 +175,13 @@ export function processUse(
     }
     // case 5.2: Already expanded, so we just add a reference.
     else {
-      annotatedReviewLines = processSimpleUseItem(item);
+      annotatedReviewLines = processSimpleUseItem(item, lineIdPrefix);
     }
   }
   // case 6: [ glob = false; module = false; in paths ] - simple use item
   else if (dereferencedId in apiJson.paths) {
-    annotatedReviewLines = processSimpleUseItem(item);
+    annotatedReviewLines = processSimpleUseItem(item, lineIdPrefix);
   }
-  registerExternalItemReference(dereferencedId);
+  registerExternalItemReference(dereferencedId, lineIdPrefix);
   return annotatedReviewLines;
 }

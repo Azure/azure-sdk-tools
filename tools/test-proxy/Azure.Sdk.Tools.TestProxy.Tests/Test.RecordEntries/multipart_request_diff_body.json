@@ -116,6 +116,12 @@
         "\r\n",
         "b64:SFRUUC8xLjEgMjA0IE5vIENvbnRlbnQNCkNvbnRlbnQtSUQ6IDcNCg0K",
         "\r\n",
+        "--changesetresponse_b03ffa4a-53fc-4036-8a02-509eec67ca53\r\n",
+        "Content-Type: application/http\r\n",
+        "Content-Transfer-Encoding: binary\r\n",
+        "\r\n",
+        "b64:SFRUUC8xLjEgMjA0IE5vIENvbnRlbnQNCkNvbnRlbnQtSUQ6IDcNCg0K",
+        "\r\n",
         "--changesetresponse_b03ffa4a-53fc-4036-8a02-509eec67ca53--\r\n",
         "\r\n",
         "--batchresponse_32c36dfe-6fad-46c7-9a9a-5472c406b4a8--\r\n"

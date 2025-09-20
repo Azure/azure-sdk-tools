@@ -6,50 +6,37 @@ import { processGenerics } from "./utils/processGenerics";
 import { isUnionItem } from "./utils/typeGuards";
 import { processStructField } from "./processStructField";
 import { getAPIJson } from "../main";
-import { lineIdMap } from "../utils/lineIdUtils";
+import { createContentBasedLineId } from "../utils/lineIdUtils";
 
 /**
  * Processes a union item and adds its documentation to the ReviewLine.
  *
- * @param {Crate} apiJson - The API JSON object containing all items.
  * @param {Item} item - The union item to process.
+ * @param {string} lineIdPrefix - The prefix for hierarchical line IDs.
  */
-export function processUnion(item: Item): ReviewLine[] {
+export function processUnion(item: Item, lineIdPrefix: string = ""): ReviewLine[] {
   if (!isUnionItem(item)) return [];
   const apiJson = getAPIJson();
-  const reviewLines: ReviewLine[] = item.docs ? createDocsReviewLines(item) : [];
 
-  lineIdMap.set(item.id.toString(), `union_${item.name}`);
   // Process derives and impls
-  let implResult: ImplProcessResult;
+  let implResult: ImplProcessResult = { deriveTokens: [], implBlock: [], traitImpls: [] };
   if (item.inner.union && item.inner.union.impls) {
-    implResult = processImpl({ ...item, inner: { union: item.inner.union } });
+    implResult = processImpl({ ...item, inner: { union: item.inner.union } }, lineIdPrefix);
   }
 
-  const unionLine: ReviewLine = {
-    LineId: item.id.toString(),
-    Tokens: [],
-    Children: [],
-  };
+  // Build tokens first
+  const tokens = [];
 
-  if (implResult.deriveTokens.length > 0) {
-    const deriveTokensLine: ReviewLine = {
-      Tokens: implResult.deriveTokens,
-      RelatedToLine: item.id.toString(),
-    };
-    reviewLines.push(deriveTokensLine);
-  }
-
-  unionLine.Tokens.push({
+  tokens.push({
     Kind: TokenKind.Keyword,
     Value: "pub union",
   });
 
-  unionLine.Tokens.push({
+  tokens.push({
     Kind: TokenKind.MemberName,
     Value: item.name || "unknown_union_name",
     RenderClasses: ["class"],
-    NavigateToId: item.id.toString(),
+    NavigateToId: item.id.toString(), // Will be updated in post-processing
     NavigationDisplayName: item.name || undefined,
     HasSuffixSpace: false,
   });
@@ -57,33 +44,55 @@ export function processUnion(item: Item): ReviewLine[] {
   const genericsTokens = processGenerics(item.inner.union.generics);
   // Add generics params if present
   if (item.inner.union.generics) {
-    unionLine.Tokens.push(...genericsTokens.params);
+    tokens.push(...genericsTokens.params);
   }
 
   // Add generics where clauses if present
   if (item.inner.union.generics) {
-    unionLine.Tokens.push(...genericsTokens.wherePredicates);
+    tokens.push(...genericsTokens.wherePredicates);
   }
 
-  unionLine.Tokens.push({
+  tokens.push({
     Kind: TokenKind.Punctuation,
     Value: "{",
     HasPrefixSpace: true,
   });
+
+  // Create content-based LineId from tokens
+  const contentBasedLineId = createContentBasedLineId(tokens, lineIdPrefix, item.id.toString());
+
+  // Create docs with content-based LineId
+  const reviewLines: ReviewLine[] = item.docs ? createDocsReviewLines(item, contentBasedLineId) : [];
+
+  // Add derive tokens if any
+  if (implResult.deriveTokens.length > 0) {
+    const deriveTokensLine: ReviewLine = {
+      RelatedToLine: contentBasedLineId,
+      Tokens: implResult.deriveTokens,
+    };
+    reviewLines.push(deriveTokensLine);
+  }
+
+  // Create the union line
+  const unionLine: ReviewLine = {
+    LineId: contentBasedLineId,
+    Tokens: tokens,
+    Children: [],
+  };
 
   // Process fields
   if (item.inner.union.fields) {
     item.inner.union.fields.forEach((fieldId: number) => {
       const fieldItem = apiJson.index[fieldId];
       if (fieldItem && typeof fieldItem.inner === "object" && "struct_field" in fieldItem.inner) {
-        unionLine.Children.push(processStructField(fieldItem));
+        unionLine.Children.push(processStructField(fieldItem, contentBasedLineId));
       }
     });
   }
 
   reviewLines.push(unionLine);
   reviewLines.push({
-    RelatedToLine: item.id.toString(),
+    RelatedToLine: contentBasedLineId,
     Tokens: [{ Kind: TokenKind.Punctuation, Value: "}" }],
   });
 

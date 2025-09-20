@@ -5,9 +5,10 @@ import { Item } from "../../../rustdoc-types/output/rustdoc-types";
  * Creates ReviewLine objects for the documentation of the given item.
  *
  * @param {Item} item - The item to create the documentation ReviewLines for.
+ * @param {string} contentBasedLineId - The content-based LineId to relate the docs to.
  * @returns {ReviewLine[]} The created ReviewLine objects.
  */
-export function createDocsReviewLines(item: Item): ReviewLine[] {
+export function createDocsReviewLines(item: Item, contentBasedLineId: string): ReviewLine[] {
   if (!item.docs) {
     return [];
   }
@@ -24,7 +25,7 @@ export function createDocsReviewLines(item: Item): ReviewLine[] {
         IsDocumentation: true,
       },
     ],
-    RelatedToLine: item.id.toString(),
+    RelatedToLine: contentBasedLineId,
   }));
 
   return reviewLines;

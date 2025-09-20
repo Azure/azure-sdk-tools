@@ -4,7 +4,7 @@ import { createDocsReviewLines } from "./utils/generateDocReviewLine";
 import { processGenerics } from "./utils/processGenerics";
 import { isFunctionItem } from "./utils/typeGuards";
 import { typeToReviewTokens } from "./utils/typeToReviewTokens";
-import { lineIdMap } from "../utils/lineIdUtils";
+import { createContentBasedLineId } from "../utils/lineIdUtils";
 
 /**
  * Processes the function header and adds modifiers and ABI information to the tokens
@@ -57,47 +57,45 @@ function processFunctionHeader(header: FunctionHeader, reviewLine: ReviewLine) {
  * Processes a function item and adds its documentation to the ReviewLine.
  *
  * @param {Item} item - The function item to process.
+ * @param {string} lineIdPrefix - The prefix for hierarchical line IDs.
  */
-export function processFunction(item: Item): ReviewLine[] {
+export function processFunction(item: Item, lineIdPrefix: string = ""): ReviewLine[] {
   if (!isFunctionItem(item)) return [];
-  const reviewLines: ReviewLine[] = item.docs ? createDocsReviewLines(item) : [];
 
-  // Create the ReviewLine object
-  const reviewLine: ReviewLine = {
-    LineId: item.id.toString(),
-    Tokens: [],
-    Children: [],
-  };
+  // Build tokens first
+  const tokens = [];
 
-  reviewLine.Tokens.push({
+  tokens.push({
     Kind: TokenKind.Keyword,
     Value: "pub",
   });
 
   // Process function header modifiers and ABI
-  processFunctionHeader(item.inner.function.header, reviewLine);
+  const tempReviewLine = { Tokens: [] as any[] };
+  processFunctionHeader(item.inner.function.header, tempReviewLine);
+  tokens.push(...tempReviewLine.Tokens);
 
-  reviewLine.Tokens.push({
+  tokens.push({
     Kind: TokenKind.Keyword,
     Value: "fn",
   });
 
-  reviewLine.Tokens.push({
+  tokens.push({
     Kind: TokenKind.MemberName,
     Value: item.name || "unknown_fn",
     HasSuffixSpace: false,
     RenderClasses: ["method"],
-    NavigateToId: item.id.toString(),
+    NavigateToId: item.id.toString(), // Will be updated in post-processing
   });
 
   const genericsTokens = processGenerics(item.inner.function.generics);
   // Add generics params if present
   if (item.inner.function.generics) {
-    reviewLine.Tokens.push(...genericsTokens.params);
+    tokens.push(...genericsTokens.params);
   }
 
   // Process function parameters
-  reviewLine.Tokens.push({
+  tokens.push({
     Kind: TokenKind.Punctuation,
     Value: "(",
     HasSuffixSpace: false,
@@ -108,7 +106,7 @@ export function processFunction(item: Item): ReviewLine[] {
   if (item.inner.function.sig.inputs.length > 0) {
     item.inner.function.sig.inputs.forEach((input: [string, Type], index: number) => {
       if (index > 0) {
-        reviewLine.Tokens.push({
+        tokens.push({
           Kind: TokenKind.Punctuation,
           Value: ", ",
           HasSuffixSpace: false,
@@ -116,29 +114,29 @@ export function processFunction(item: Item): ReviewLine[] {
       }
 
       if (input[0] === "self") {
-        reviewLine.Tokens.push({
+        tokens.push({
           Kind: TokenKind.StringLiteral,
           Value: `&${input[0]}`,
           HasSuffixSpace: false,
         });
       } else {
-        reviewLine.Tokens.push({
+        tokens.push({
           Kind: TokenKind.StringLiteral,
           Value: input[0],
           HasSuffixSpace: false,
         });
 
-        reviewLine.Tokens.push({
+        tokens.push({
           Kind: TokenKind.Punctuation,
           Value: ": ",
           HasSuffixSpace: false,
         });
-        reviewLine.Tokens.push(...typeToReviewTokens(input[1]));
+        tokens.push(...typeToReviewTokens(input[1]));
       }
     });
   }
 
-  reviewLine.Tokens.push({
+  tokens.push({
     Kind: TokenKind.Punctuation,
     Value: ")",
     HasPrefixSpace: false,
@@ -147,34 +145,47 @@ export function processFunction(item: Item): ReviewLine[] {
 
   // Add return type if present
   if (item.inner.function.sig.output) {
-    reviewLine.Tokens.push({
+    tokens.push({
       Kind: TokenKind.Punctuation,
       Value: "->",
       HasPrefixSpace: true,
     });
-    reviewLine.Tokens.push(...typeToReviewTokens(item.inner.function.sig.output));
+    tokens.push(...typeToReviewTokens(item.inner.function.sig.output));
   }
 
   // Add generics where clauses if present
   if (item.inner.function.generics) {
-    reviewLine.Tokens.push(...genericsTokens.wherePredicates);
+    tokens.push(...genericsTokens.wherePredicates);
   }
 
   if (item.inner.function.has_body) {
-    reviewLine.Tokens.push({
+    tokens.push({
       Kind: TokenKind.Punctuation,
       Value: "{}",
       HasSuffixSpace: false,
       HasPrefixSpace: true,
     });
   } else {
-    reviewLine.Tokens.push({
+    tokens.push({
       Kind: TokenKind.Punctuation,
       Value: ";",
       HasSuffixSpace: false,
     });
   }
+
+  // Create content-based LineId from tokens
+  const contentBasedLineId = createContentBasedLineId(tokens, lineIdPrefix, item.id.toString());
+
+  // Create docs with content-based LineId
+  const reviewLines: ReviewLine[] = item.docs ? createDocsReviewLines(item, contentBasedLineId) : [];
+
+  // Create the ReviewLine object
+  const reviewLine: ReviewLine = {
+    LineId: contentBasedLineId,
+    Tokens: tokens,
+    Children: [],
+  };
+
   reviewLines.push(reviewLine);
-  lineIdMap.set(item.id.toString(), `function_${item.name}`);
   return reviewLines;
 }

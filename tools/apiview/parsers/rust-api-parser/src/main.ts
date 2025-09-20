@@ -4,7 +4,7 @@ import { CodeFile, TokenKind } from "./models/apiview-models";
 import { Crate, FORMAT_VERSION, Id } from "../rustdoc-types/output/rustdoc-types";
 import { externalReferencesLines } from "./process-items/utils/externalReexports";
 import { sortExternalItems } from "./process-items/utils/sorting";
-import { updateReviewLinesWithStableLineIds } from "./utils/lineIdUtils";
+import { setNavigationIds, ensureUniqueLineIds } from "./utils/lineIdUtils";
 
 let apiJson: Crate;
 export const processedItems = new Set<number>();
@@ -18,7 +18,7 @@ export function getAPIJson(): Crate {
  * @param codeFile The code file to add review lines to
  */
 function processRootItem(codeFile: CodeFile): void {
-  const reviewLines = processItem(apiJson.index[apiJson.root]);
+  const reviewLines = processItem(apiJson.index[apiJson.root], undefined, "");
   if (reviewLines) {
     codeFile.ReviewLines.push(...reviewLines);
   }
@@ -70,7 +70,7 @@ function buildCodeFile(): CodeFile {
   const codeFile: CodeFile = {
     PackageName: apiJson.index[apiJson.root].name || "unknown_root_package_name",
     PackageVersion: apiJson["crate_version"] || "unknown_crate_version",
-    ParserVersion: "1.1.0",
+    ParserVersion: "1.1.1",
     Language: "Rust",
     ReviewLines: [],
   };
@@ -79,7 +79,15 @@ function buildCodeFile(): CodeFile {
   processRootItem(codeFile);
   processExternalReferences(codeFile);
 
-  updateReviewLinesWithStableLineIds(codeFile.ReviewLines);
+  // Apply the new navigation system
+  setNavigationIds(codeFile.ReviewLines);
+
+  // Validate uniqueness
+  const validation = ensureUniqueLineIds(codeFile.ReviewLines);
+  if (!validation.isValid) {
+    console.error(`❌ Found ${validation.duplicateCount} duplicate line IDs: ${validation.duplicates.join(', ')}`);
+  }
+
   return codeFile;
 }
 

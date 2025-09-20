@@ -205,7 +205,7 @@ File an issue on Azure/azure-sdk-tools and include this base64 string for reprod
             {
                 message.TryGetContentType(out string contentType);
 
-                if (ContentTypeUtilities.IsMultipartMixed(message.Headers, out var boundary))
+                if (ContentTypeUtilities.IsMultipart(message.Headers, out var boundary))
                 {
                     message.Body = SanitizeMultipartBody(boundary, message.Body);
                 }

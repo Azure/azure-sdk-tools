@@ -690,9 +690,11 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             Assert.Equal(0, matcher.CompareHeaderDictionaries(targetUntouchedEntry.Request.Headers, targetEntry.Request.Headers, new HashSet<string>(), new HashSet<string>()));
             Assert.Equal(0, matcher.CompareHeaderDictionaries(targetUntouchedEntry.Response.Headers, targetEntry.Response.Headers, new HashSet<string>(), new HashSet<string>()));
 
-            targetUntouchedEntry.Request.TryGetContentType(out var contentType);
-            Assert.Equal(0, matcher.CompareBodies(targetUntouchedEntry.Request.Body, targetEntry.Request.Body, contentType));
-            Assert.Equal(0, matcher.CompareBodies(targetUntouchedEntry.Response.Body, targetEntry.Response.Body, contentType));
+            targetUntouchedEntry.Request.TryGetContentType(out var requestContentType);
+            targetEntry.Request.TryGetContentType(out var recordContentType);
+            ContentTypeUtilities.TryGetTextEncoding(requestContentType, out var encoding);
+            Assert.Equal(0, matcher.CompareBodies(targetUntouchedEntry.Request.Body, targetEntry.Request.Body, requestContentType, recordContentType, encoding));
+            Assert.Equal(0, matcher.CompareBodies(targetUntouchedEntry.Response.Body, targetEntry.Response.Body, requestContentType, recordContentType, encoding));
             Assert.Equal(targetUntouchedEntry.RequestUri, targetEntry.RequestUri);
         }
 
@@ -771,9 +773,11 @@ namespace Azure.Sdk.Tools.TestProxy.Tests
             await session.Session.Sanitize(sanitizer);
 
             var resultBodyValue = Encoding.UTF8.GetString(targetEntry.Request.Body);
-            targetUntouchedEntry.Request.TryGetContentType(out var contentType);
-            Assert.Equal(0, matcher.CompareBodies(targetUntouchedEntry.Request.Body, targetEntry.Request.Body, contentType));
-            Assert.Equal(0, matcher.CompareBodies(targetUntouchedEntry.Response.Body, targetEntry.Response.Body, contentType));
+            targetUntouchedEntry.Request.TryGetContentType(out var requestContentType);
+            targetEntry.Request.TryGetContentType(out var recordContentType);
+            ContentTypeUtilities.TryGetTextEncoding(requestContentType, out var encoding);
+            Assert.Equal(0, matcher.CompareBodies(targetUntouchedEntry.Request.Body, targetEntry.Request.Body, requestContentType, recordContentType, encoding));
+            Assert.Equal(0, matcher.CompareBodies(targetUntouchedEntry.Response.Body, targetEntry.Response.Body, requestContentType, recordContentType, encoding));
         }
 
         [Fact]

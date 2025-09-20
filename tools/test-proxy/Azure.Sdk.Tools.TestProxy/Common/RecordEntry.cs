@@ -120,7 +120,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 // TODO consider versioning RecordSession so that we can stop doing the below for newly created recordings
                 NormalizeJsonBody(requestOrResponse);
             }
-            else if (ContentTypeUtilities.IsMultipartMixed(requestOrResponse.Headers, out var boundary) && property.ValueKind == JsonValueKind.Array)
+            else if (ContentTypeUtilities.IsMultipart(requestOrResponse.Headers, out var boundary) && property.ValueKind == JsonValueKind.Array)
             {
                 requestOrResponse.Body = MultipartUtilities.DeserializeMultipartBody(property, boundary);
             }
@@ -263,7 +263,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     jsonWriter.WriteEndArray();
                 }
             }
-            else if (ContentTypeUtilities.IsMultipartMixed(headers, out var boundary))
+            else if (ContentTypeUtilities.IsMultipart(headers, out var boundary))
             {
                 MultipartUtilities.SerializeMultipartBody(jsonWriter, name, requestBody, boundary);
             }

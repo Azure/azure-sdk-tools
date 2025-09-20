@@ -32,6 +32,8 @@ import com.github.javaparser.ast.body.EnumConstantDeclaration;
 import com.github.javaparser.ast.body.EnumDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
+import java.util.List;
+import java.util.ArrayList;
 import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.body.TypeDeclaration;
 import com.github.javaparser.ast.body.VariableDeclarator;
@@ -519,13 +521,15 @@ public class JavaASTAnalyser implements Analyser {
                 .setSkipDiff())
             .addContextStartTokens();
 
-        // parent
-        String gavStr = mavenPom.getParent().getGroupId() + ":" + mavenPom.getParent().getArtifactId() + ":"
+        // parent (may be absent if the sources jar didn't contain a real pom.xml)
+        if (mavenPom.getParent() != null) {
+            String gavStr = mavenPom.getParent().getGroupId() + ":" + mavenPom.getParent().getArtifactId() + ":"
                 + mavenPom.getParent().getVersion();
-        MiscUtils.tokeniseMavenKeyValue(mavenLine, "parent", gavStr, true);
+            MiscUtils.tokeniseMavenKeyValue(mavenLine, "parent", gavStr, true);
+        }
 
         // properties
-        gavStr = mavenPom.getGroupId() + ":" + mavenPom.getArtifactId() + ":" + mavenPom.getVersion();
+        String gavStr = mavenPom.getGroupId() + ":" + mavenPom.getArtifactId() + ":" + mavenPom.getVersion();
         MiscUtils.tokeniseMavenKeyValue(mavenLine, "properties", gavStr, true);
 
         // configuration
@@ -1364,6 +1368,38 @@ public class JavaASTAnalyser implements Analyser {
 
         // close declaration
         definitionLine.addToken(PUNCTUATION, ")");
+
+        // Tier 0: populate methodIndex directly (only for real methods / constructors, not annotation members treated as callable)
+        if (callableDeclaration instanceof MethodDeclaration || callableDeclaration instanceof ConstructorDeclaration) {
+            List<String> paramTypes = new ArrayList<>();
+            List<String> paramNames = new ArrayList<>();
+            for (Parameter p : parameters) {
+                // Reuse textual form already added to tokens: p.getType().toString() preserves generics
+                paramTypes.add(p.getType().toString());
+                paramNames.add(p.getNameAsString());
+            }
+            // Build enclosing type FQN from parent chain
+            String enclosingFqn = buildEnclosingTypeFqn(callableDeclaration);
+            String signatureKey = enclosingFqn + "#" + name + "(" + String.join(",", paramTypes) + ")";
+            apiListing.putMethodIndexEntry(signatureKey, paramNames, paramTypes);
+        }
+    }
+
+    private String buildEnclosingTypeFqn(Node node) {
+        List<String> parts = new ArrayList<>();
+        Node current = node.getParentNode().orElse(null);
+        while (current != null) {
+            if (current instanceof TypeDeclaration<?>) {
+                parts.add(0, ((TypeDeclaration<?>) current).getNameAsString());
+            }
+            current = current.getParentNode().orElse(null);
+        }
+        // Prepend package name if available from apiListing
+        String pkg = apiListing.getPackageName();
+        if (pkg != null && !pkg.isEmpty()) {
+            parts.add(0, pkg);
+        }
+        return String.join(".", parts);
     }
 
     private boolean visitTypeParameters(NodeList<TypeParameter> typeParameters, ReviewLine reviewLine) {

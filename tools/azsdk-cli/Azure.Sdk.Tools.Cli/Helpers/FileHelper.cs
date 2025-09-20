@@ -1,8 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using System.IO;
-
 namespace Azure.Sdk.Tools.Cli.Helpers
 {
     /// <summary>
@@ -49,10 +47,16 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         /// <param name="maxDepth">Maximum parent traversals.</param>
         public static string? AscendToGitRoot(string startPath, int maxDepth = 12)
         {
-            if (string.IsNullOrEmpty(startPath)) return null;
+            if (string.IsNullOrEmpty(startPath))
+            {
+                return null;
+            }
 
             var current = new DirectoryInfo(Path.GetFullPath(startPath));
-            if (!current.Exists) return null;
+            if (!current.Exists)
+            {
+                return null;
+            }
             // If a file was passed, move to its directory
             if (File.Exists(current.FullName))
             {

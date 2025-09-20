@@ -1,0 +1,12 @@
+{
+  "methodIndex": {
+    "com.example.Foo#methodA(int)": {
+      "paramNames": ["y"],
+      "paramTypes": ["int"]
+    },
+    "com.example.Foo#methodC()": {
+      "paramNames": [],
+      "paramTypes": []
+    }
+  }
+}

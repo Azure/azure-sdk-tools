@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+
+using System.Diagnostics;
 using Azure.Sdk.Tools.Cli.Models;
 using Microsoft.Extensions.Logging;
-using System.Diagnostics;
-using System;
 
 namespace Azure.Sdk.Tools.Cli.Services.ClientUpdate;
 
@@ -29,72 +29,127 @@ public class JavaUpdateLanguageService : ClientUpdateLanguageServiceBase
         {
             throw new InvalidOperationException("Java API diff requires both oldGenerationPath and newGenerationPath.");
         }
-        var external = await RunExternalJavaApiDiffAsync(oldGenerationPath!, newGenerationPath!, CancellationToken.None);
-        return external;
+        // Always use APIView methodIndex diff; treat empty list as no-change.
+        return await RunApiViewDiffAsync(oldGenerationPath!, newGenerationPath!, CancellationToken.None);
     }
 
     /// <summary>
-    /// Invoke an external Java-based API diff tool to compare two generated API roots.
-    /// The tool must output a JSON array of ApiChange objects, e.g.:
-    /// [{"kind":"MethodAdded","symbol":"...","detail":"...","meta":{...}}].
-    /// If the tool is not present, exits with an error, or the output cannot be parsed, this method returns an empty list.
+    /// Run the APIView Java processor on both generations, parse methodIndex maps, and compute a diff.
+    /// Returns empty list if processor cannot build or methodIndex missing.
     /// </summary>
-    /// <param name="oldPath">File-system path to the old generation root.</param>
-    /// <param name="newPath">File-system path to the new generation root.</param>
-    /// <param name="ct">Cancellation token to cancel the external process and reads.</param>
-    /// <returns>A list of parsed ApiChange instances, or an empty list on error or when the tool is unavailable.</returns>
-    /// <remarks>
-    /// The implementation launches Java with the diff tool jar and parses its JSON stdout. Failures and non-zero
-    /// exit codes are logged at Debug level and treated as "no changes" to preserve robustness of calling code.
-    /// </remarks>
-    protected virtual async Task<List<ApiChange>> RunExternalJavaApiDiffAsync(string oldPath, string newPath, CancellationToken ct)
+    private async Task<List<ApiChange>> RunApiViewDiffAsync(string oldPath, string newPath, CancellationToken ct)
     {
-        var results = new List<ApiChange>();
-        var toolJar = await JavaApiDiffJarBuilder.TryBuildDiffJarAsync(_logger, ct);
-        if (toolJar == null)
+        var changes = new List<ApiChange>();
+        try
         {
-            _logger.LogDebug("Java API diff jar not found (skipping diff).");
-            return results;
+            // TODO: This might not be required
+            var processorJar = await JavaApiViewJarBuilder.BuildProcessorJarAsync(_logger, ct);
+            if (processorJar == null)
+            {
+                return changes;
+            }
+
+            // Collect input sources for each generation root.
+            var oldInputs = DiscoverJavaInputs(oldPath);
+            var newInputs = DiscoverJavaInputs(newPath);
+            if (oldInputs.Count == 0 || newInputs.Count == 0)
+            {
+                _logger.LogDebug("APIView diff: no inputs discovered (old={OldCount}, new={NewCount})", oldInputs.Count, newInputs.Count);
+                return changes;
+            }
+
+            var tempRoot = Path.Combine(Path.GetTempPath(), "apiview-diff-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(tempRoot);
+            var oldOut = Path.Combine(tempRoot, "old");
+            var newOut = Path.Combine(tempRoot, "new");
+            Directory.CreateDirectory(oldOut);
+            Directory.CreateDirectory(newOut);
+
+            // Run processor for each side.
+            if (!await RunAPIViewProcessorAsync(processorJar, oldInputs, oldOut, ct) || !await RunAPIViewProcessorAsync(processorJar, newInputs, newOut, ct))
+            {
+                return new List<ApiChange>();
+            }
+
+            var oldIndex = JavaApiViewMethodIndexLoader.LoadMerged(oldOut, _logger);
+            var newIndex = JavaApiViewMethodIndexLoader.LoadMerged(newOut, _logger);
+            if (oldIndex.Count == 0 && newIndex.Count == 0)
+            {
+                return changes;
+            }
+            return JavaApiViewMethodIndexLoader.ComputeChanges(oldIndex, newIndex);
         }
-        var psi = new System.Diagnostics.ProcessStartInfo
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "APIView diff path failed");
+            return new List<ApiChange>();
+        }
+    }
+    private List<string> DiscoverJavaInputs(string generationRoot)
+    {
+        var inputs = new List<string>();
+        try
+        {
+            if (Directory.Exists(generationRoot))
+            {
+                if (Directory.EnumerateFiles(generationRoot, "*.java", SearchOption.AllDirectories).Any())
+                {
+                    inputs.Add(generationRoot);
+                }
+                else
+                {
+                    _logger.LogDebug("No .java files found under provided generation root {Root}", generationRoot);
+                }
+            }
+            else
+            {
+                _logger.LogDebug("Generation root does not exist: {Root}", generationRoot);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Error discovering Java inputs under {Root}", generationRoot);
+        }
+        return inputs;
+    }
+
+    private async Task<bool> RunAPIViewProcessorAsync(string processorJar, List<string> inputs, string outDir, CancellationToken ct)
+    {
+        var joined = string.Join(',', inputs);
+        var psi = new ProcessStartInfo
         {
             FileName = "java",
-            Arguments = $"-jar \"{toolJar}\" --old \"{oldPath}\" --new \"{newPath}\" --format json",
+            Arguments = $"-jar \"{processorJar}\" \"{joined}\" \"{outDir}\"",
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
             CreateNoWindow = true,
-            WorkingDirectory = newPath
+            WorkingDirectory = outDir
         };
-        using var proc = System.Diagnostics.Process.Start(psi);
+        using var proc = Process.Start(psi);
         if (proc == null)
         {
-            return results;
+            return false;
         }
         var stdout = await proc.StandardOutput.ReadToEndAsync(ct);
         var stderr = await proc.StandardError.ReadToEndAsync(ct);
         await proc.WaitForExitAsync(ct);
         if (proc.ExitCode != 0)
         {
-            _logger.LogDebug("Java API diff tool exit {code}: {err}", proc.ExitCode, stderr);
-            return results;
+            _logger.LogDebug("APIView processor exit {Code}: {Err}", proc.ExitCode, Truncate(stderr, 400));
+            return false;
         }
-        try
+        _logger.LogDebug("APIView processor stdout (truncated): {Out}", Truncate(stdout, 400));
+        return true;
+    }
+
+    private static string Truncate(string s, int max)
+    {
+        if (string.IsNullOrEmpty(s) || s.Length <= max)
         {
-            var parsed = System.Text.Json.JsonSerializer.Deserialize<List<ApiChange>>(stdout, new System.Text.Json.JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
-            if (parsed != null)
-            {
-                results.AddRange(parsed);
-            }
+            return s;
         }
-        catch (Exception ex)
-        {
-            _logger.LogDebug(ex, "Failed to deserialize Java API diff tool JSON output");
-        }
-        return results;
+        return s[..max] + "...";
     }
 
     public override Task<string?> GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct)

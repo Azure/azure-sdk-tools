@@ -37,7 +37,7 @@ public class Main {
     // [inputFiles] <outputDirectory>
     public static void main(String[] args) {
         if (args.length != 2) {
-            System.out.println("Expected argument order: [comma-separated sources jarFiles] <outputFile>, e.g. /path/to/jarfile.jar ./temp/");
+            System.out.println("Expected argument order: [comma-separated sources jarFiles or directories] <outputDir>, e.g. /path/to/jarfile-sources.jar,../explodedSrcDir ./temp/");
             System.exit(-1);
         }
 
@@ -135,11 +135,15 @@ public class Main {
     private static Optional<APIListing> processFile(final File inputFile) {
         final APIListing apiListing = new APIListing();
 
-        if (inputFile.getName().endsWith("-sources.jar")) {
+        if (inputFile.isDirectory()) {
+            processSourceDirectory(inputFile, apiListing);
+            return Optional.of(apiListing);
+        } else if (inputFile.getName().endsWith("-sources.jar")) {
             processJavaSourcesJar(inputFile, apiListing);
             return Optional.of(apiListing);
         }
 
+        System.out.println("  Skipping unsupported input: " + inputFile);
         return Optional.empty();
     }
 
@@ -185,6 +189,40 @@ public class Main {
             final Analyser analyser = new JavaASTAnalyser(apiListing);
             analyser.analyse(allFiles);
         } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void processSourceDirectory(File dir, APIListing apiListing) {
+        System.out.println("  Processing source directory: '" + dir + "'");
+        final Pom mavenPom = Pom.fromDirectory(dir);
+        final String groupId = mavenPom.getGroupId();
+        final String artifactId = mavenPom.getArtifactId();
+
+        final String packageName = (groupId.isEmpty() ? "" : groupId + ":") + artifactId;
+        System.out.println("  Using '" + packageName + "' for the package name");
+        System.out.println("  Using '" + mavenPom.getVersion() + "' for the package version");
+
+        apiListing.setPackageName(packageName);
+        apiListing.setPackageVersion(mavenPom.getVersion());
+        apiListing.setLanguage(Language.JAVA);
+        apiListing.setMavenPom(mavenPom);
+
+        if (groupId.contains("spring")) {
+            apiListing.setLanguageVariant(LanguageVariant.SPRING);
+        } else if (groupId.contains("android")) {
+            apiListing.setLanguageVariant(LanguageVariant.ANDROID);
+        } else {
+            apiListing.setLanguageVariant(LanguageVariant.DEFAULT);
+        }
+        System.out.println("  Using '" + apiListing.getLanguageVariant() + "' for the language variant");
+
+        final List<Path> allFiles = new ArrayList<>();
+        try (Stream<Path> paths = Files.walk(dir.toPath())) {
+            paths.forEach(allFiles::add);
+            final Analyser analyser = new JavaASTAnalyser(apiListing);
+            analyser.analyse(allFiles);
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }

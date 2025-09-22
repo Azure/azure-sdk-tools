@@ -8,7 +8,6 @@ schedules:
     displayName: "Weekly Monday Morning Trigger"
     branches:
       include:
-        - release/qa-bot
         - main
     always: true
 

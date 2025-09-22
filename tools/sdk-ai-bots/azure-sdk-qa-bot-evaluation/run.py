@@ -304,7 +304,7 @@ def show_results(all_results: dict[str, Any], withBaseline: bool = True) -> None
     """Display results in a table format."""
     for name, test_results in all_results.items():
         baseline_results = None
-        if withBaseline :
+        if withBaseline:
             baseline_results = {}
             baselineName = f"{name.split('_')[0]}-test.json"
             baseline_path = pathlib.Path(__file__).parent / "results" / baselineName
@@ -323,8 +323,9 @@ def verify_results(all_results: dict[str, Any], withBaseline: bool = True) -> bo
     failed_scenarios = []
     for name, test_results in all_results.items():
         scenario_ret = True
-        baseline_results = {}
+        
         if withBaseline:
+            baseline_results = {}
             baselineName = f"{name.split('_')[0]}-test.json"
             baseline_path = pathlib.Path(__file__).parent / "results" / baselineName
 

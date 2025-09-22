@@ -18,7 +18,7 @@ if __name__ == "__main__":
         "-n",
         type=int,
         default=1,
-        help="The number of runs to perform, with the median of results kept. Defaults to 3.",
+        help="The number of runs to perform, with the median of results kept. Defaults to 1.",
     )
     parser.add_argument(
         "--test-file",

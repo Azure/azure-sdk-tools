@@ -38,13 +38,14 @@ public class PipelineAnalysisTool(
     private readonly Option<bool> analyzeWithAgentOpt = new(["--agent", "-a"], () => false, "Analyze logs with RAG via upstream ai agent");
     private readonly Option<string> projectEndpointOpt = new(["--ai-endpoint", "-e"], "The ai foundry project endpoint for the Azure AI Agent service");
     private readonly Option<string> aiModelOpt = new(["--ai-model"], "The model to use for the Azure AI Agent");
+    private readonly Option<string> queryOpt = new(["--query"], () => "Why did this pipeline fail?", "Log analysis query for agent mode");
 
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.AzurePipelines];
 
     protected override Command GetCommand() =>
         new("analyze", "Analyze a pipeline run")
         {
-            pipelineArg, projectOpt, logIdOpt, analyzeWithAgentOpt, projectEndpointOpt, aiModelOpt
+            pipelineArg, projectOpt, logIdOpt, analyzeWithAgentOpt, projectEndpointOpt, aiModelOpt, queryOpt
         };
 
     public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
@@ -56,6 +57,7 @@ public class PipelineAnalysisTool(
         var analyzeWithAgent = ctx.ParseResult.GetValueForOption(analyzeWithAgentOpt);
         var projectEndpoint = ctx.ParseResult.GetValueForOption(projectEndpointOpt);
         var aiModel = ctx.ParseResult.GetValueForOption(aiModelOpt);
+        var query = ctx.ParseResult.GetValueForOption(queryOpt);
 
         var (buildId, projectFromLink) = getBuildIdFromPipelineIdentifier(pipelineIdentifier);
         logger.LogInformation("Analyzing pipeline {pipelineIdentifier}...", pipelineIdentifier);
@@ -63,13 +65,13 @@ public class PipelineAnalysisTool(
 
         if (logId != 0)
         {
-            var result = await AnalyzePipelineFailureLogs(project ?? projectFromLink, buildId, [logId], analyzeWithAgent, ct);
+            var result = await AnalyzePipelineFailureLogs(project ?? projectFromLink, buildId, query, [logId], analyzeWithAgent, ct);
             tokenUsageHelper.LogUsage();
             return result;
         }
         else
         {
-            var result = await AnalyzePipeline(project ?? projectFromLink, buildId, analyzeWithAgent, ct);
+            var result = await AnalyzePipeline(project ?? projectFromLink, buildId, query, analyzeWithAgent, ct);
             tokenUsageHelper.LogUsage();
             return result;
         }
@@ -320,7 +322,7 @@ public class PipelineAnalysisTool(
         return logContent;
     }
 
-    public async Task<LogAnalysisResponse> AnalyzePipelineFailureLogs(string? project, int buildId, List<int> logIds, bool analyzeWithAgent, CancellationToken ct)
+    public async Task<LogAnalysisResponse> AnalyzePipelineFailureLogs(string? project, int buildId, string query, List<int> logIds, bool analyzeWithAgent, CancellationToken ct)
     {
         try
         {
@@ -361,7 +363,7 @@ public class PipelineAnalysisTool(
                 return response;
             }
 
-            var result = await azureAgentService.QueryFiles(logs, session, "Why did this pipeline fail?", ct);
+            var result = await azureAgentService.QueryFiles(logs, session, query, ct);
             // Sometimes chat gpt likes to wrap the json in markdown
             if (result.StartsWith("```json"))
             {
@@ -403,11 +405,11 @@ public class PipelineAnalysisTool(
     }
 
     [McpServerTool(Name = "azsdk_analyze_pipeline"), Description("Analyze azure pipeline for failures. Set analyzeWithAgent to false unless requested otherwise by the user")]
-    public async Task<AnalyzePipelineResponse> AnalyzePipeline(int buildId, bool analyzeWithAgent, CancellationToken ct)
+    public async Task<AnalyzePipelineResponse> AnalyzePipeline(int buildId, string query, bool analyzeWithAgent, CancellationToken ct)
     {
         try
         {
-            return await AnalyzePipeline(null, buildId, analyzeWithAgent, ct);
+            return await AnalyzePipeline(null, buildId, query, analyzeWithAgent, ct);
         }
         catch (Exception ex)
         {
@@ -419,7 +421,7 @@ public class PipelineAnalysisTool(
         }
     }
 
-    public async Task<AnalyzePipelineResponse> AnalyzePipeline(string? project, int buildId, bool analyzeWithAgent, CancellationToken ct)
+    public async Task<AnalyzePipelineResponse> AnalyzePipeline(string? project, int buildId, string query, bool analyzeWithAgent, CancellationToken ct)
     {
         try
         {
@@ -429,7 +431,7 @@ public class PipelineAnalysisTool(
             }
 
             var failureLogIds = await GetPipelineFailureLogIds(project, buildId, ct);
-            var analysis = await AnalyzePipelineFailureLogs(project, buildId, failureLogIds, analyzeWithAgent, ct);
+            var analysis = await AnalyzePipelineFailureLogs(project, buildId, query, failureLogIds, analyzeWithAgent, ct);
 
             var failedTests = new FailedTestRunListResponse();
             var failedTestArtifacts = await devopsService.GetPipelineLlmArtifacts(project, buildId);

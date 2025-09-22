@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import pathlib
 import re
+import sys
 import time
 from typing import Any, Dict, Optional
 from azure.ai.evaluation import evaluate, SimilarityEvaluator, GroundednessEvaluator
@@ -17,6 +18,7 @@ import argparse
 from dotenv import load_dotenv
 from azure.storage.blob import BlobServiceClient
 import yaml
+import logging
 
 weights: dict[str, float] = {
     "similarity_weight": 0.6,  # Similarity between expected and actual
@@ -61,7 +63,7 @@ def retrieve_tenant_id(channel: str):
 
 async def process_file(input_file: str, output_file: str, scenario: str, is_bot: bool) -> None:
     """Process a single input file"""
-    print(f"Processing file: {input_file}")
+    logging.info(f"Processing file: {input_file}")
     
     azure_bot_service_access_token = os.environ["BOT_AGENT_ACCESS_TOKEN"]
     bot_service_endpoint = os.environ.get("BOT_SERVICE_ENDPOINT", None) 
@@ -73,7 +75,7 @@ async def process_file(input_file: str, output_file: str, scenario: str, is_bot:
     with open(input_file, "r", encoding="utf-8") as f:
         for line in f:
             record = json.loads(line)
-            # print(record)
+            logging.debug(record)
             if is_bot:
                 try:
                     api_response = await call_bot_api(record["query"], api_url, azure_bot_service_access_token, tenant_id)
@@ -92,13 +94,13 @@ async def process_file(input_file: str, output_file: str, scenario: str, is_bot:
                     if processed_test_data:
                         outputFile.write(json.dumps(processed_test_data, ensure_ascii=False) + '\n')
                 except Exception as e:
-                    print(f"❌ Error occurred when process {input_file}: {str(e)}")
+                    logging.error(f"❌ Error occurred when process {input_file}: {str(e)}")
                     import traceback
                     traceback.print_exc()
     outputFile.flush()
     outputFile.close()
 
-async def call_bot_api(question: str, bot_endpoint: str, access_token: str, tenant_id: str = None, withFullContext: bool = True) -> Dict[str, Any]:
+async def call_bot_api(question: str, bot_endpoint: str, access_token: str, tenant_id: str = None, with_full_context: bool = True) -> Dict[str, Any]:
     """Call the completion API endpoint."""
     headers = {
         "Content-Type": "application/json; charset=utf8",
@@ -111,7 +113,7 @@ async def call_bot_api(question: str, bot_endpoint: str, access_token: str, tena
             "content": question
         },
         "with_preprocess": True,
-        "with_full_context": withFullContext
+        "with_full_context": with_full_context
     }
 
     async with aiohttp.ClientSession() as session:
@@ -129,18 +131,18 @@ async def prepare_dataset(testdata_dir: str, file_prefix: str = None, is_bot: bo
         prefix: Optional prefix to filter which markdown files to process.
                     If provided, only files starting with this prefix will be processed.
     """
-    print("📁 Preparing dataset...")
+    logging.info("📁 Preparing dataset...")
     data_dir = Path(testdata_dir)
     script_directory = os.path.dirname(os.path.abspath(__file__))
-    print("Script directory:", script_directory)
+    logging.info(f"Script directory:{script_directory}")
     output_dir = Path(os.path.join(script_directory, "output"))
     output_dir.mkdir(exist_ok=True)
     
-    print(f"📂 Data directory: {data_dir.absolute()}")
-    print(f"📂 Output directory: {output_dir.absolute()}")
+    logging.info(f"📂 Data directory: {data_dir.absolute()}")
+    logging.info(f"📂 Output directory: {output_dir.absolute()}")
     
     if not data_dir.exists():
-        print(f"❌ Data directory {data_dir.absolute()} does not exist!")
+        logging.error(f"❌ Data directory {data_dir.absolute()} does not exist!")
         return None
     
     current_date = datetime.now().strftime("%Y_%m_%d")
@@ -148,11 +150,11 @@ async def prepare_dataset(testdata_dir: str, file_prefix: str = None, is_bot: bo
     glob_pattern = f"{file_prefix}*.jsonl" if file_prefix else "*.jsonl"
     matching_files = list(data_dir.glob(glob_pattern))
     
-    print(f"🔍 Looking for files matching pattern: {glob_pattern}")
-    print(f"📋 Found {len(matching_files)} matching files")
+    logging.info(f"🔍 Looking for files matching pattern: {glob_pattern}")
+    logging.info(f"📋 Found {len(matching_files)} matching files")
     
     if matching_files:
-        print(f"Found {len(matching_files)} files matching prefix '{file_prefix}' in {data_dir}/")
+        logging.info(f"Found {len(matching_files)} files matching prefix '{file_prefix}' in {data_dir}/")
         # group files
         grouped = defaultdict(list)
 
@@ -165,16 +167,16 @@ async def prepare_dataset(testdata_dir: str, file_prefix: str = None, is_bot: bo
         for key, items in grouped.items():
             output_file = os.path.join(output_dir.absolute(), f"{key}_{current_date}.jsonl")
             for file_path in items:
-                print(f"  - {file_path.name}")
+                logging.info(f"  - {file_path.name}")
                 await process_file(str(file_path), str(output_file), key, is_bot)
     elif file_prefix:
-        print(f"No files found matching prefix '{file_prefix}' in {data_dir}/")
+        logging.info(f"No files found matching prefix '{file_prefix}' in {data_dir}/")
         return None
     else:
-        print(f"No files found in {data_dir}/")
+        logging.info(f"No files found in {data_dir}/")
         return None
         
-    print("Processing complete. Results written to output directory.")
+    logging.info("Processing complete. Results written to output directory.")
     return output_dir.absolute()
 
 def calculate_overall_score(row: dict[str, Any]) -> float:
@@ -288,8 +290,8 @@ def output_table(eval_results: list[dict[str, Any]], file_name: str, baseline_re
         terminal_row.extend(values)
         terminal_rows.append(terminal_row)
 
-    print("====================================================")
-    print(f"\n\n✨ {file_name} results:\n")
+    logging.info("====================================================")
+    logging.info(f"\n\n✨ {file_name} results:\n")
     print(tabulate(terminal_rows, headers, tablefmt="simple"))
     if baseline_results:
         print(
@@ -299,11 +301,11 @@ def output_table(eval_results: list[dict[str, Any]], file_name: str, baseline_re
             "\n\n"
         )
 
-def show_results(all_results: dict[str, Any], withBaseline: bool = True) -> None:
+def show_results(all_results: dict[str, Any], with_baseline: bool = True) -> None:
     """Display results in a table format."""
     for name, test_results in all_results.items():
         baseline_results = None
-        if withBaseline:
+        if with_baseline:
             baseline_results = {}
             baselineName = f"{name.split('_')[0]}-test.json"
             baseline_path = pathlib.Path(__file__).parent / "results" / baselineName
@@ -317,13 +319,13 @@ def show_results(all_results: dict[str, Any], withBaseline: bool = True) -> None
 
         output_table(test_results, name, baseline_results)
 
-def verify_results(all_results: dict[str, Any], withBaseline: bool = True) -> bool:
+def verify_results(all_results: dict[str, Any], with_baseline: bool = True) -> bool:
     ret = True
     failed_scenarios = []
     for name, test_results in all_results.items():
         scenario_ret = True
         
-        if withBaseline:
+        if with_baseline:
             baseline_results = {}
             baselineName = f"{name.split('_')[0]}-test.json"
             baseline_path = pathlib.Path(__file__).parent / "results" / baselineName
@@ -344,7 +346,7 @@ def verify_results(all_results: dict[str, Any], withBaseline: bool = True) -> bo
             failed_scenarios.append(name)
             ret = False
     if failed_scenarios:
-        print(f"Failed Scenarios: {' '.join(failed_scenarios)}")
+        logging.info(f"Failed Scenarios: {' '.join(failed_scenarios)}")
     return ret 
 
 def establish_baseline(args: argparse.Namespace, all_results: dict[str, Any]) -> None:
@@ -372,8 +374,8 @@ def establish_baseline(args: argparse.Namespace, all_results: dict[str, Any]) ->
             json.dump(result, indent=4, fp=f)
 
 if __name__ == "__main__":
-
-    print("🚀 Starting evaluation ...")
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+    logging.info("🚀 Starting evaluation ...")
 
     parser = argparse.ArgumentParser(description="Run evals for Azure Chat Bot.")
 
@@ -393,24 +395,24 @@ if __name__ == "__main__":
 
     
     script_directory = os.path.dirname(os.path.abspath(__file__))
-    print("Script directory:", script_directory)
+    logging.info(f"Script directory:{script_directory}")
 
     
     current_file_path = os.getcwd()
-    print("Current working directory:", current_file_path)
+    logging.info(f"Current working directory:{current_file_path}")
 
 
     if (args.test_folder is None):
         args.test_folder = os.path.join(script_directory, "tests")
     
-    print(f"test folder: {args.test_folder}")
+    logging.info(f"test folder: {args.test_folder}")
     # Required environment variables
     load_dotenv()
     all_results = {}
     try: 
-        print("📊 Preparing dataset...")
+        logging.info("📊 Preparing dataset...")
         azure_ai_project_endpoint = os.environ["AZURE_AI_PROJECT_ENDPOINT"]
-        print(f"📋 Using project endpoint: {azure_ai_project_endpoint}")
+        logging.info(f"📋 Using project endpoint: {azure_ai_project_endpoint}")
         model_config: dict[str, str] = {
             "azure_endpoint": os.environ["AZURE_OPENAI_ENDPOINT"],
             "api_key": os.environ["AZURE_OPENAI_API_KEY"],
@@ -420,19 +422,6 @@ if __name__ == "__main__":
         kwargs = {}
         if args.send_result:
             if args.is_ci:
-                # service_connection_id = os.environ["AZURESUBSCRIPTION_SERVICE_CONNECTION_ID"]
-                # client_id = os.environ["AZURESUBSCRIPTION_CLIENT_ID"]
-                # tenant_id = os.environ["AZURESUBSCRIPTION_TENANT_ID"]
-                # system_access_token = os.environ["SYSTEM_ACCESSTOKEN"]
-
-                # kwargs = {
-                #     "credential": AzurePipelinesCredential(
-                #         service_connection_id=service_connection_id,
-                #         client_id=client_id,
-                #         tenant_id=tenant_id,
-                #         system_access_token=system_access_token,
-                #     )
-                # }
                 kwargs = {
                     "credential": DefaultAzureCredential()
                 }
@@ -444,8 +433,8 @@ if __name__ == "__main__":
         
         output_file_dir = asyncio.run(prepare_dataset(args.test_folder, args.prefix, args.is_bot))
         if output_file_dir is None:
-            print(f"No test data file to process. exit")
-            exit(1)
+            logging.info(f"No test data file to process. Exitting")
+            sys.exit(1)
         
         for output_file in output_file_dir.glob("*.jsonl"):
             run_results = []
@@ -484,18 +473,18 @@ if __name__ == "__main__":
                 **kwargs
             )
             # print("✅ Evaluation completed. Results:", result)
-            print("✅ Evaluation completed.")
+            logging.info("✅ Evaluation completed.")
             run_result = record_run_result(result)
             all_results[output_file.name] = run_result
     except Exception as e:
-        print(f"❌ Error occurred: {str(e)}")
+        logging.info(f"❌ Error occurred: {str(e)}")
         import traceback
         traceback.print_exc()
-        exit(1)
+        sys.exit(1)
     
     show_results(all_results, args.baseline_check)
     if args.baseline_check:
         establish_baseline(args, all_results)
     isPass = verify_results(all_results, args.baseline_check)
     if not isPass:
-        exit(1)
+        sys.exit(1)

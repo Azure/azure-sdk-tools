@@ -727,12 +727,11 @@ async function uploadFilesToBlobStorage(
 async function cleanupExpiredBlobs(currentFiles: ProcessedMarkdownFile[]): Promise<void> {
     try {
         const blobService = new BlobService();
-        const containerName = process.env.STORAGE_KNOWLEDGE_CONTAINER;
 
         console.log('Cleaning up expired blobs...');
         
         // Get all existing blobs
-        const allBlobs = await blobService.listBlobs(containerName);
+        const allBlobs = await blobService.listBlobs();
         
         // Create a set of current file blob paths for efficient lookup
         const currentFileBlobPaths = new Set(

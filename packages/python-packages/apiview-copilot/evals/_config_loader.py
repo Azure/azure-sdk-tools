@@ -22,9 +22,10 @@ import dataclasses
 import os
 from pathlib import Path
 from typing import List
+from evals._custom import EVALUATORS
 import yaml
 
-SUPPORTED_KINDS = {"prompt", "apiview"}
+SUPPORTED_WORKFLOWS = set(EVALUATORS.keys())
 
 @dataclasses.dataclass(slots=True)
 class WorkflowConfig:
@@ -69,14 +70,12 @@ def load_workflow_config(path: str | os.PathLike) -> WorkflowConfig:
     name = raw.get("name")
     if not name or not isinstance(name, str):
         _fail("Missing required string field: name")
+    if name not in SUPPORTED_WORKFLOWS:
+        _fail(f"Invalid test: {name!r}. Supported: {sorted(SUPPORTED_WORKFLOWS)}")
     
     # naming conventions
     if any(c for c in name if c.isupper()) or " " in name:
         _fail("Workflow name should be lowercase kebab/underscore (no spaces or uppercase)")
-
-    kind = raw.get("kind")
-    if kind not in SUPPORTED_KINDS:
-        _fail(f"Invalid or missing kind: {kind!r}. Supported: {sorted(SUPPORTED_KINDS)}")
 
     tests_rel = raw.get("tests")
     if not tests_rel or not isinstance(tests_rel, str):
@@ -87,6 +86,9 @@ def load_workflow_config(path: str | os.PathLike) -> WorkflowConfig:
     if tests_path.suffix != ".jsonl":
         _fail(f"Tests file must be .jsonl: {tests_path}")
 
+    kind = raw.get("kind")
+    if not kind or not isinstance(kind, str):
+        _fail("Missing required string field: kind")
     prompty_path: Path | None = None
     if kind == "prompt":
         prompty_rel = raw.get("prompty")
@@ -96,8 +98,7 @@ def load_workflow_config(path: str | os.PathLike) -> WorkflowConfig:
         if not prompty_path.exists():
             _fail(f"Prompty file not found: {prompty_path}")
         if not prompty_path.suffix.startswith(".prompty"):
-            # allow .prompty or e.g. .prompty.txt if that's a convention; just warn silently for now
-            pass
+            _fail(f"Prompty path does not point to a prompty file")
 
     runs = raw.get("runs", 1)
     if not isinstance(runs, int) or runs < 1:

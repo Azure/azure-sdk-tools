@@ -70,7 +70,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
         }
 
-        [McpServerTool(Name = "azsdk_package_run_check"), Description("Run validation checks for SDK packages. Provide package path and check type (All, Changelog, Dependency, Readme, Cspell, Snippets).")]
+        [McpServerTool(Name = "azsdk_package_run_check"), Description("Run validation checks for SDK packages. Provide package path and check type (All, Changelog, Dependency, Readme, Cspell, FixSpelling, Snippets).")]
         public async Task<CLICheckResponse> RunPackageCheck(string packagePath, PackageCheckType checkType, CancellationToken ct = default)
         {
             try
@@ -88,6 +88,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     PackageCheckType.Dependency => await RunDependencyCheck(packagePath, ct),
                     PackageCheckType.Readme => await RunReadmeValidation(packagePath, ct),
                     PackageCheckType.Cspell => await RunSpellingValidation(packagePath, ct),
+                    PackageCheckType.FixSpelling => await RunFixSpellingValidation(packagePath, ct),
                     PackageCheckType.Snippets => await RunSnippetUpdate(packagePath, ct),
                     _ => throw new ArgumentOutOfRangeException(
                         nameof(checkType),
@@ -296,6 +297,33 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             logger.LogInformation("Running snippet update");
 
             var result = await languageChecks.UpdateSnippetsAsync(packagePath, ct);
+            return result;
+        }
+
+        private async Task<CLICheckResponse> RunFixSpellingValidation(string packagePath, CancellationToken ct = default)
+        {
+            logger.LogInformation("Running spelling-fix validation (attempting to apply fixes)");
+
+            var result = await languageChecks.FixSpellingAsync(packagePath, ct);
+
+            if (result.ExitCode != 0)
+            {
+                result.NextSteps = new List<string>
+                {
+                    "Attempted to apply fixes but some issues remain. Review the output and correct manually where necessary",
+                    "Consider adding technical terms to the cspell dictionary to avoid repeated false positives",
+                    "Run the fix command locally to see diffs before committing"
+                };
+            }
+            else
+            {
+                result.NextSteps = new List<string>
+                {
+                    "Spelling fixes applied successfully where possible",
+                    "Review changes and commit them if acceptable"
+                };
+            }
+
             return result;
         }
 

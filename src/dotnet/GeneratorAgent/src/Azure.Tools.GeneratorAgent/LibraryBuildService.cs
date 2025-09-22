@@ -29,56 +29,48 @@ namespace Azure.Tools.GeneratorAgent
 
         public async Task<Result<object>> BuildSdkAsync(CancellationToken cancellationToken = default)
         {
-            Logger.LogInformation("Starting SDK build in directory: {SdkOutputDir}", SdkOutputDir);
+            Logger.LogDebug("Starting SDK build in directory: {SdkOutputDir}", SdkOutputDir);
 
-            string buildTarget = DetermineBuildTarget(SdkOutputDir);
-            if (string.IsNullOrEmpty(buildTarget))
+            Result<string> buildTargetResult = DetermineBuildTarget(SdkOutputDir);
+            if (buildTargetResult.IsFailure)
             {
-                throw new FileNotFoundException($"No solution (.sln) or project (.csproj) files found in: {SdkOutputDir}");
+                return Result<object>.Failure(buildTargetResult.Exception!);
             }
 
-            try
+            string arguments = $"build \"{buildTargetResult.Value}\"";
+            
+            Result<string> argValidation = InputValidator.ValidateProcessArguments(arguments);
+            if (argValidation.IsFailure)
             {
-                string arguments = $"build \"{buildTarget}\"";
-                
-                Result<string> argValidation = InputValidator.ValidateProcessArguments(arguments);
-                if (argValidation.IsFailure)
-                {
-                    throw new ArgumentException($"Build arguments validation failed: {argValidation.Exception?.Message}");
-                }
-
-                Result<object> buildResult = await ProcessExecutionService.ExecuteAsync(
-                    SecureProcessConfiguration.DotNetExecutable,
-                    argValidation.Value!,
-                    SdkOutputDir,
-                    cancellationToken).ConfigureAwait(false);
-
-                if (buildResult.IsFailure && buildResult.ProcessException != null)
-                {
-                    return Result<object>.Failure(
-                        new DotNetBuildException(
-                            buildResult.ProcessException.Command,
-                            buildResult.ProcessException.Output,
-                            buildResult.ProcessException.Error,
-                            buildResult.ProcessException.ExitCode ?? -1,
-                            buildResult.ProcessException));
-                }
-
-                return buildResult;
+                return Result<object>.Failure(argValidation.Exception!);
             }
-            catch (Exception ex) when (ex is not OperationCanceledException)
+
+            Result<object> buildResult = await ProcessExecutionService.ExecuteAsync(
+                SecureProcessConfiguration.DotNetExecutable,
+                argValidation.Value!,
+                SdkOutputDir,
+                cancellationToken).ConfigureAwait(false);
+
+            if (buildResult.IsFailure && buildResult.ProcessException != null)
             {
-                Logger.LogCritical(ex, "Unexpected system error during SDK build");
-                throw;
+                return Result<object>.Failure(
+                    new DotNetBuildException(
+                        buildResult.ProcessException.Command,
+                        buildResult.ProcessException.Output,
+                        buildResult.ProcessException.Error,
+                        buildResult.ProcessException.ExitCode ?? -1,
+                        buildResult.ProcessException));
             }
+
+            return buildResult;
         }
 
         /// <summary>
         /// Determines the best build target (solution or project file) in the SDK output directory.
         /// </summary>
         /// <param name="sdkOutputDir">The SDK output directory to search</param>
-        /// <returns>The path to the build target, or null if none found</returns>
-        private string DetermineBuildTarget(string sdkOutputDir)
+        /// <returns>Result containing the path to the build target, or failure if none found</returns>
+        private Result<string> DetermineBuildTarget(string sdkOutputDir)
         {
             try
             {
@@ -86,8 +78,8 @@ namespace Azure.Tools.GeneratorAgent
                 if (solutionFiles.Length > 0)
                 {
                     string solutionFile = solutionFiles[0];
-                    Logger.LogInformation("Found solution file: {SolutionFile}", solutionFile);
-                    return solutionFile;
+                    Logger.LogDebug("Found solution file: {SolutionFile}", solutionFile);
+                    return Result<string>.Success(solutionFile);
                 }
 
                 // If no solution file, look for project files in src directory (common pattern)
@@ -98,8 +90,10 @@ namespace Azure.Tools.GeneratorAgent
                     if (projectFiles.Length > 0)
                     {
                         string projectFile = projectFiles[0];
-                        Logger.LogInformation("Found project file in src: {ProjectFile}", projectFile);
-                        return projectFile;
+
+                            Logger.LogDebug("Found project file in src: {ProjectFile}", projectFile);
+
+                        return Result<string>.Success(projectFile);
                     }
                 }
 
@@ -108,16 +102,18 @@ namespace Azure.Tools.GeneratorAgent
                 if (rootProjectFiles.Length > 0)
                 {
                     string projectFile = rootProjectFiles[0];
-                    Logger.LogInformation("Found project file in root: {ProjectFile}", projectFile);
-                    return projectFile;
+
+                    Logger.LogDebug("Found project file in root: {ProjectFile}", projectFile);
+                    
+                    return Result<string>.Success(projectFile);
                 }
 
-                return string.Empty;
+                return Result<string>.Failure(new FileNotFoundException($"No solution (.sln) or project (.csproj) files found in: {sdkOutputDir}"));
             }
             catch (Exception ex)
             {
                 Logger.LogError(ex, "Error while determining build target in {SdkOutputDir}", sdkOutputDir);
-                return string.Empty;
+                return Result<string>.Failure(ex);
             }
         }
     }

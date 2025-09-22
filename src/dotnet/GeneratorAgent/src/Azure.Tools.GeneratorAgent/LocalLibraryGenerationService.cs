@@ -33,9 +33,6 @@ namespace Azure.Tools.GeneratorAgent
         public async Task<Result<object>> CompileTypeSpecAsync(CancellationToken cancellationToken = default)
         {
             string currentTypeSpecDir = ValidationContext.CurrentTypeSpecDir;
-            Logger.LogInformation("Starting TypeSpec compilation for project: {ProjectPath} (Source: {Source})", 
-                currentTypeSpecDir,
-                ValidationContext.IsGitHubWorkflow ? "GitHub" : "Local");
 
             Result<object> installResult = await InstallTypeSpecDependencies(cancellationToken).ConfigureAwait(false);
             if (installResult.IsFailure)
@@ -49,13 +46,12 @@ namespace Azure.Tools.GeneratorAgent
                 return compileResult;
             }
 
-            Logger.LogInformation("TypeSpec compilation completed successfully");
             return Result<object>.Success("TypeSpec compilation completed successfully");
         }
         
         private async Task<Result<object>> InstallTypeSpecDependencies(CancellationToken cancellationToken)
         {
-            Logger.LogInformation("Installing TypeSpec dependencies globally");
+            Logger.LogDebug("Installing TypeSpec dependencies globally");
 
             string arguments;
             
@@ -71,31 +67,23 @@ namespace Azure.Tools.GeneratorAgent
             Result<string> argValidation = InputValidator.ValidateProcessArguments(arguments);
             if (argValidation.IsFailure)
             {
-                throw new ArgumentException($"Process arguments validation failed: {argValidation.Exception?.Message}");
+                return Result<object>.Failure(argValidation.Exception!);
             }
 
             string workingDirectory = Path.GetTempPath();
 
-            try
-            {
-                Result<object> result = await ProcessExecutionService.ExecuteAsync(
-                    SecureProcessConfiguration.NpmExecutable,
-                    argValidation.Value!,
-                    workingDirectory,
-                    cancellationToken).ConfigureAwait(false);
+            Result<object> result = await ProcessExecutionService.ExecuteAsync(
+                SecureProcessConfiguration.NpmExecutable,
+                argValidation.Value!,
+                workingDirectory,
+                cancellationToken).ConfigureAwait(false);
 
-                return result;
-            }
-            catch (Exception ex) when (ex is not OperationCanceledException)
-            {
-                Logger.LogCritical(ex, "Unexpected system error during TypeSpec dependency installation");
-                throw;
-            }
+            return result;
         }
 
         private async Task<Result<object>> CompileTypeSpec(CancellationToken cancellationToken)
         {
-            Logger.LogInformation("Compiling TypeSpec project");
+            Logger.LogDebug("Compiling TypeSpec project");
 
             string tspOutputPath = Path.Combine(ValidationContext.ValidatedSdkDir);
             string currentTypeSpecDir = ValidationContext.CurrentTypeSpecDir;
@@ -113,35 +101,27 @@ namespace Azure.Tools.GeneratorAgent
             Result<string> argValidation = InputValidator.ValidateProcessArguments(arguments);
             if (argValidation.IsFailure)
             {
-                throw new ArgumentException($"Process arguments validation failed: {argValidation.Exception?.Message}");
+                return Result<object>.Failure(argValidation.Exception!);
             }
 
-            try
+            Result<object> result = await ProcessExecutionService.ExecuteAsync(
+                SecureProcessConfiguration.NpxExecutable,
+                argValidation.Value!,
+                currentTypeSpecDir,
+                cancellationToken).ConfigureAwait(false);
+
+            if (result.IsFailure && result.ProcessException != null)
             {
-                Result<object> result = await ProcessExecutionService.ExecuteAsync(
-                    SecureProcessConfiguration.NpxExecutable,
-                    argValidation.Value!,
-                    currentTypeSpecDir,
-                    cancellationToken).ConfigureAwait(false);
-
-                if (result.IsFailure && result.ProcessException != null)
-                {
-                    return Result<object>.Failure(
-                        new TypeSpecCompilationException(
-                            result.ProcessException.Command,
-                            result.ProcessException.Output,
-                            result.ProcessException.Error,
-                            result.ProcessException.ExitCode ?? -1,
-                            result.ProcessException));
-                }
-
-                return result;
+                return Result<object>.Failure(
+                    new TypeSpecCompilationException(
+                        result.ProcessException.Command,
+                        result.ProcessException.Output,
+                        result.ProcessException.Error,
+                        result.ProcessException.ExitCode ?? -1,
+                        result.ProcessException));
             }
-            catch (Exception ex) when (ex is not OperationCanceledException)
-            {
-                Logger.LogCritical(ex, "Unexpected system error during TypeSpec compilation");
-                throw;
-            }
+
+            return result;
         }
     }
 }

@@ -1,7 +1,7 @@
 {
   "type": "json_schema",
   "json_schema": {
-    "name": "comparison_result",
+    "name": "existing_comment_result",
     "strict": true,
     "schema": {
       "type": "object",
@@ -11,16 +11,16 @@
           "type": "string",
           "description": "The proposed comment. May be identical to the input or a modified version."
         },
-        "status": {
+        "action": {
           "type": "string",
-          "description": "status of the comment, can be 'KEEP' or 'DISCARD'"
+          "description": "Should be 'KEEP' if the comment has value or 'DISCARD' if the comment is no longer necessary."
         },
-        "status_reason": {
+        "rationale": {
           "type": "string",
-          "description": "the reasoning used to determine the status of the comment. This should be a short sentence explaining why the comment was kept or removed."
+          "description": "The reasoning for choosing the action. Should be a short sentence explaining why the comment was kept or removed."
         }
       },
-      "required": ["comment", "status", "status_reason"]
+      "required": ["comment", "action", "rationale"]
     }
   }
 }

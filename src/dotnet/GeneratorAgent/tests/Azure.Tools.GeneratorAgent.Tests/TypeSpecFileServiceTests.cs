@@ -258,8 +258,9 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             // Assert
             Assert.That(result, Is.Not.Null);
-            Assert.That(result.Count, Is.GreaterThan(0));
-            Assert.That(result.ContainsKey("main.tsp"), Is.True);
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Value!.Count, Is.GreaterThan(0));
+            Assert.That(result.Value.ContainsKey("main.tsp"), Is.True);
         }
 
         [Test]
@@ -279,7 +280,8 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             // Assert
             Assert.That(result, Is.Not.Null);
-            Assert.That(result.Count, Is.EqualTo(0));
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Value!.Count, Is.EqualTo(0));
         }
 
         [Test]
@@ -301,10 +303,11 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             // Assert
             Assert.That(result, Is.Not.Null);
-            Assert.That(result.Count, Is.EqualTo(3));
-            Assert.That(result.ContainsKey("main.tsp"), Is.True);
-            Assert.That(result.ContainsKey("second.tsp"), Is.True);
-            Assert.That(result.ContainsKey("third.tsp"), Is.True);
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Value!.Count, Is.EqualTo(3));
+            Assert.That(result.Value.ContainsKey("main.tsp"), Is.True);
+            Assert.That(result.Value.ContainsKey("second.tsp"), Is.True);
+            Assert.That(result.Value.ContainsKey("third.tsp"), Is.True);
         }
 
         [Test]
@@ -327,8 +330,9 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             // Assert
             Assert.That(result, Is.Not.Null);
-            Assert.That(result.Count, Is.EqualTo(2));
-            Assert.That(result.ContainsKey("subfile.tsp"), Is.True);
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Value!.Count, Is.EqualTo(2));
+            Assert.That(result.Value.ContainsKey("subfile.tsp"), Is.True);
         }
 
         [Test]

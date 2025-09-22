@@ -1,6 +1,6 @@
 namespace Azure.Sdk.Tools.Cli.Helpers;
 
-public class TokenUsageHelper(IOutputHelper outputHelper)
+public class TokenUsageHelper(IRawOutputHelper outputHelper)
 {
     protected double PromptTokens { get; set; } = 0;
     protected double CompletionTokens { get; set; } = 0;

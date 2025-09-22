@@ -360,6 +360,18 @@ describe.sequential("Verify commands", () => {
           joinPaths(cwd(), "./test/examples/init/", "sdk/legacypath", "contosowidgetmanager-rest"),
         ),
       );
+      // Make sure that the emitter-output-dir value is ignored
+      try {
+        await stat(
+          joinPaths(
+            cwd(),
+            "./test/examples/specification/contosowidgetmanager-legacy-package-dir/nonexistent",
+          ),
+        );
+        assert.fail("The emitter-output-dir path should not exist");
+      } catch (error: any) {
+        assert.match(error.message, /ENOENT: no such file or directory/);
+      }
       await removeDirectory(joinPaths(cwd(), "./test/examples/init/sdk"));
     } catch (error: any) {
       assert.fail("Failed to init. Error: " + error);

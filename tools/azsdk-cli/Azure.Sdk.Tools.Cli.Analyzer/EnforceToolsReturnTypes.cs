@@ -159,7 +159,7 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
             }
 
             // Check if it implements Response (look in Azure.Sdk.Tools.Cli.Models namespace)
-            var responseType = compilation.GetTypeByMetadataName("Azure.Sdk.Tools.Cli.Models.Response");
+            var responseType = compilation.GetTypeByMetadataName("Azure.Sdk.Tools.Cli.Models.CommandResponse");
             if (responseType != null && InheritsFromOrImplements(returnType, responseType))
             {
                 return true;

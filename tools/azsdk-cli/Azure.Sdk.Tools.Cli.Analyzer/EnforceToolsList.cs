@@ -74,7 +74,7 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
                         return;
                     }
 
-                    var baseTool = symCtx.Compilation.GetTypeByMetadataName("Azure.Sdk.Tools.Cli.Contract.MCPTool");
+                    var baseTool = symCtx.Compilation.GetTypeByMetadataName("Azure.Sdk.Tools.Cli.Contract.MCPToolBase");
                     if (baseTool != null && InheritsFrom(named, baseTool))
                     {
                         implementations.Add(named);

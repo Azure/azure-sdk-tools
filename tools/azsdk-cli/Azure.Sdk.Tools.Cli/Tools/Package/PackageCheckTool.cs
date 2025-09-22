@@ -1,13 +1,10 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.ComponentModel;
 using ModelContextProtocol.Server;
-using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Commands;
-using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 
@@ -18,71 +15,54 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     /// </summary>
     [Description("Run validation checks for SDK packages")]
     [McpServerToolType]
-    public class PackageCheckTool : MCPTool
+    public class PackageCheckTool(
+        ILogger<PackageCheckTool> logger,
+        ILanguageChecks languageChecks
+    ) : MCPMultiCommandTool
     {
-        private readonly ILogger<PackageCheckTool> logger;
-        private readonly IOutputHelper output;
-        private readonly ILanguageChecks languageChecks;
+        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
 
-        public PackageCheckTool(ILogger<PackageCheckTool> logger, IOutputHelper output, ILanguageChecks languageChecks) : base()
+        private const string RunChecksCommandName = "run-checks";
+
+        protected override List<Command> GetCommands()
         {
-            this.logger = logger;
-            this.output = output;
-            this.languageChecks = languageChecks;
-            CommandHierarchy = [SharedCommandGroups.Package];
-        }
-
-        public override Command GetCommand()
-        {
-            var parentCommand = new Command("run-checks", "Run validation checks for SDK packages");
-
+            var parentCommand = new Command(RunChecksCommandName, "Run validation checks for SDK packages");
             // Add the package path option to the parent command so it can be used without subcommands
             parentCommand.AddOption(SharedOptions.PackagePath);
 
-            // Set handler for the parent command to default to All checks
-            parentCommand.SetHandler(async (InvocationContext ctx) =>
-            {
-                var packagePath = ctx.ParseResult.GetValueForOption(SharedOptions.PackagePath);
-                await HandleCommandWithOptions(packagePath, PackageCheckType.All, ctx.GetCancellationToken());
-            });
-
             // Create sub-commands for each check type
+            List<Command> subCommands = [];
             var checkTypeValues = Enum.GetValues<PackageCheckType>();
             foreach (var checkType in checkTypeValues)
             {
-                var subCommand = new Command(checkType.ToString().ToLowerInvariant(), $"Run {checkType} validation check");
+                var checkName = checkType.ToString().ToLowerInvariant();
+                var subCommand = new Command(checkName, $"Run {checkName} validation check");
                 subCommand.AddOption(SharedOptions.PackagePath);
 
-                subCommand.SetHandler(async (InvocationContext ctx) =>
-                {
-                    var packagePath = ctx.ParseResult.GetValueForOption(SharedOptions.PackagePath);
-                    await HandleCommandWithOptions(packagePath, checkType, ctx.GetCancellationToken());
-                });
-
                 parentCommand.AddCommand(subCommand);
+                subCommands.Add(subCommand);
             }
 
-            return parentCommand;
+            return [parentCommand, .. subCommands];
         }
 
-        public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
+        public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
         {
             // Get the command name which corresponds to the check type
             var commandName = ctx.ParseResult.CommandResult.Command.Name;
 
             // If this is the parent command (run-checks), default to All
-            if (commandName == "run-checks")
+            if (commandName == RunChecksCommandName)
             {
                 var packagePath = ctx.ParseResult.GetValueForOption(SharedOptions.PackagePath);
-                await HandleCommandWithOptions(packagePath, PackageCheckType.All, ct);
-                return;
+                return await RunPackageCheck(packagePath, PackageCheckType.All, ct);
             }
 
             // Parse the command name back to enum for subcommands
             if (Enum.TryParse<PackageCheckType>(commandName, true, out var checkType))
             {
                 var packagePath = ctx.ParseResult.GetValueForOption(SharedOptions.PackagePath);
-                await HandleCommandWithOptions(packagePath, checkType, ct);
+                return await RunPackageCheck(packagePath, checkType, ct);
             }
             else
             {
@@ -90,22 +70,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
         }
 
-        private async Task HandleCommandWithOptions(string packagePath, PackageCheckType checkType, CancellationToken ct)
-        {
-            var result = await RunPackageCheck(packagePath, checkType, ct);
-            ExitCode = result.ExitCode;
-            output.Output(result);
-        }
-
         [McpServerTool(Name = "azsdk_package_run_check"), Description("Run validation checks for SDK packages. Provide package path and check type (All, Changelog, Dependency, Readme, Cspell, Snippets).")]
         public async Task<CLICheckResponse> RunPackageCheck(string packagePath, PackageCheckType checkType, CancellationToken ct = default)
         {
             try
             {
-                logger.LogInformation($"Starting {checkType} check for package at: {packagePath}");
+                logger.LogInformation("Starting {checkType} check for package at: {packagePath}", checkType, packagePath);
                 if (!Directory.Exists(packagePath))
                 {
-                    SetFailure(1);
                     return new CLICheckResponse(1, "", $"Package path does not exist: {packagePath}");
                 }
 
@@ -126,7 +98,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             catch (Exception ex)
             {
                 logger.LogError(ex, "Unhandled exception while running package check");
-                SetFailure(1);
                 return new CLICheckResponse(1, ex.ToString(), $"Unhandled exception while running {checkType} check");
             }
         }
@@ -183,14 +154,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 overallSuccess = false;
             }
 
-            if (!overallSuccess)
-            {
-                SetFailure(1);
-            }
-
             var message = overallSuccess ? "All checks completed successfully" : "Some checks failed";
             var combinedOutput = string.Join("\n", results.Select(r => r.CheckStatusDetails));
-            
+
             // Generate comprehensive next steps for all checks
             var nextSteps = new List<string>();
             if (overallSuccess)
@@ -203,7 +169,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 nextSteps.Add($"The following checks failed: {string.Join(", ", failedChecks)}");
                 nextSteps.Add("Address the issues identified above before proceeding with package release.");
                 nextSteps.Add("Re-run the package checks after making corrections to verify all issues are resolved.");
-                
+
                 // Add specific guidance from individual check failures
                 foreach (var result in results.Where(r => r.ExitCode != 0 && r.NextSteps?.Any() == true))
                 {
@@ -224,7 +190,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
             if (result.ExitCode != 0)
             {
-                SetFailure(1);
                 result.NextSteps = new List<string>
                 {
                     "Review and update the CHANGELOG.md file to ensure it follows the proper format",
@@ -250,7 +215,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             logger.LogInformation("Running dependency check");
 
             var result = await languageChecks.AnalyzeDependenciesAsync(packagePath, ct);
-            
+
             if (result.ExitCode != 0)
             {
                 result.NextSteps = new List<string>
@@ -268,7 +233,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     "Dependency check passed - all dependencies are properly configured"
                 };
             }
-            
+
             return result;
         }
 
@@ -277,7 +242,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             logger.LogInformation("Running README validation");
 
             var result = await languageChecks.ValidateReadmeAsync(packagePath, ct);
-            
+
             if (result.ExitCode != 0)
             {
                 result.NextSteps = new List<string>
@@ -295,7 +260,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     "README validation passed - documentation is properly formatted"
                 };
             }
-            
+
             return result;
         }
 
@@ -304,7 +269,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             logger.LogInformation("Running spelling validation");
 
             var result = await languageChecks.CheckSpellingAsync(packagePath, ct);
-            
+
             if (result.ExitCode != 0)
             {
                 result.NextSteps = new List<string>
@@ -322,7 +287,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     "Spelling check passed - no spelling errors found"
                 };
             }
-            
+
             return result;
         }
 

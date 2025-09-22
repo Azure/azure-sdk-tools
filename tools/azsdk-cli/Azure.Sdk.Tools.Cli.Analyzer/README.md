@@ -53,7 +53,7 @@ public async Task<Response> ProcessData(string myArg)
 
 ## Overview
 
-The `EnforceToolsListAnalyzer` ensures that every class inheriting from `MCPTool` is properly registered in the `SharedOptions.ToolsList` static list, otherwise they will not be loaded at startup.
+The `EnforceToolsListAnalyzer` ensures that every class inheriting from `MCPToolBase` is properly registered in the `SharedOptions.ToolsList` static list, otherwise they will not be loaded at startup.
 
 All non-abstract classes that inherit from `Azure.Sdk.Tools.Cli.Contract.MCPTool` must be included as `typeof(ClassName)` entries in the `SharedOptions.ToolsList` static field (`Azure.Sdk.Tools.Cli/Commands/SharedOptions.cs`).
 
@@ -72,7 +72,7 @@ When you encounter MCP002 violations:
 // 1. Tool implementation
 public class MyCustomTool : MCPTool
 {
-    public override Command GetCommand() { /* implementation */ }
+    protected override Command GetCommand() { /* implementation */ }
     public override Task HandleCommand(InvocationContext ctx, CancellationToken ct) { /* implementation */ }
 }
 
@@ -92,7 +92,7 @@ public static readonly List<Type> ToolsList = [
 The `EnforceToolsReturnTypesAnalyzer` ensures that all public non-static methods in classes within
 the `Azure.Sdk.Tools.Cli.Tools` namespace return only approved types at compile time.
 
-This excludes inherited methods `GetCommand`, `HandleCommand`, etc.
+This excludes inherited methods `GetCommand`, `GetCommands`, `HandleCommand`, etc.
 
 ## Allowed Return Types
 

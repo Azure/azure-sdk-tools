@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models;
 
-public class FailedTestRunResponse : Response
+public class FailedTestRunResponse : CommandResponse
 {
     [JsonPropertyName("run_id")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]

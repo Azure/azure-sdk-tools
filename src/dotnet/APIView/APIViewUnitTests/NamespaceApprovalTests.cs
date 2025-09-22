@@ -205,13 +205,14 @@ namespace APIViewUnitTests
             var reviewId = "csharp-review-999";
             var csharpReview = CreateReview(reviewId, "C#", "Azure.AI.DocumentIntelligence", 
                 NamespaceReviewStatus.NotStarted, null, null);
+            var revisionId = "revision1";
 
             _mockReviewsRepository.Setup(r => r.GetReviewAsync(reviewId))
                 .ReturnsAsync(csharpReview);
 
             // Act & Assert - Should throw exception for non-TypeSpec reviews
             var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-                () => _reviewManager.RequestNamespaceReviewAsync(_testUser, reviewId, new List<string>()));
+                () => _reviewManager.RequestNamespaceReviewAsync(_testUser, reviewId, revisionId));
 
             exception.Message.Should().Contain("Namespace review can only be requested for TypeSpec reviews");
         }
@@ -225,6 +226,7 @@ namespace APIViewUnitTests
             var reviewId = "notification-failure-test";
             var typeSpecReview = CreateReview(reviewId, ApiViewConstants.TypeSpecLanguage, "Azure.AI.NotificationTest", 
                 NamespaceReviewStatus.NotStarted, null, null);
+            var revisionId = "revision1";
 
             _mockReviewsRepository.Setup(r => r.GetReviewAsync(reviewId))
                 .ReturnsAsync(typeSpecReview);
@@ -244,8 +246,8 @@ namespace APIViewUnitTests
 
             // Act & Assert - Should throw exception due to notification failure
             var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-                () => _reviewManager.RequestNamespaceReviewAsync(_testUser, reviewId, new List<string>()));
-            
+                () => _reviewManager.RequestNamespaceReviewAsync(_testUser, reviewId, revisionId));
+
             exception.Message.Should().Be("Email service unavailable");
             
             // Verify the review was updated before notification failure
@@ -260,6 +262,7 @@ namespace APIViewUnitTests
             var reviewId = "typespec-with-prs";
             var typeSpecReview = CreateReview(reviewId, ApiViewConstants.TypeSpecLanguage, "Azure.AI.AutoDiscovery", 
                 NamespaceReviewStatus.NotStarted, null, null);
+            var revisionId = "revision1";
 
             // Mock pull request discovery
             var discoveredPullRequests = new List<PullRequestModel>
@@ -290,7 +293,7 @@ namespace APIViewUnitTests
                 .Returns(Task.CompletedTask);
 
             // Act - Request with empty associated reviews (should auto-discover)
-            var result = await _reviewManager.RequestNamespaceReviewAsync(_testUser, reviewId, new List<string>());
+            var result = await _reviewManager.RequestNamespaceReviewAsync(_testUser, reviewId, revisionId);
 
             // Assert - Should include auto-discovered reviews
             result.Should().NotBeNull();
@@ -314,13 +317,14 @@ namespace APIViewUnitTests
             var reviewId = "already-requested-review";
             var typeSpecReview = CreateReview(reviewId, ApiViewConstants.TypeSpecLanguage, "Azure.AI.AlreadyRequested", 
                 NamespaceReviewStatus.Pending, "previous-user", _testTimestamp.AddDays(-1));
+            var revisionId = "revisionId";
 
             _mockReviewsRepository.Setup(r => r.GetReviewAsync(reviewId))
                 .ReturnsAsync(typeSpecReview);
 
             // Act & Assert - Should handle already requested reviews gracefully
-            var result = await _reviewManager.RequestNamespaceReviewAsync(_testUser, reviewId, new List<string>());
-            
+            var result = await _reviewManager.RequestNamespaceReviewAsync(_testUser, reviewId, revisionId);
+
             // The result should update the existing request with new user/timestamp
             result.Should().NotBeNull();
             result.NamespaceReviewStatus.Should().Be(NamespaceReviewStatus.Pending);
@@ -335,6 +339,7 @@ namespace APIViewUnitTests
             var reviewId = "typespec-with-invalid-associations";
             var typeSpecReview = CreateReview(reviewId, ApiViewConstants.TypeSpecLanguage, "Azure.AI.InvalidAssociations", 
                 NamespaceReviewStatus.NotStarted, null, null);
+            var revisionId = "revisionId";
 
             var validReview = CreateReview("valid-csharp", "C#", "Azure.AI.InvalidAssociations", 
                 NamespaceReviewStatus.NotStarted, null, null);
@@ -371,8 +376,7 @@ namespace APIViewUnitTests
                 .Returns(Task.CompletedTask);
 
             // Act - Request with mix of valid and invalid associated reviews
-            var associatedReviewIds = new List<string> { "valid-csharp", "deleted-java", "closed-python", "nonexistent-review" };
-            var result = await _reviewManager.RequestNamespaceReviewAsync(_testUser, reviewId, associatedReviewIds);
+            var result = await _reviewManager.RequestNamespaceReviewAsync(_testUser, reviewId, revisionId);
 
             // Assert - Should process all provided reviews (implementation doesn't filter by status)
             result.Should().NotBeNull();
@@ -427,13 +431,14 @@ namespace APIViewUnitTests
         {
             // Arrange - Setup repository to fail
             var reviewId = "repository-failure-test";
+            var revisionId = "revisionId";
             _mockReviewsRepository.Setup(r => r.GetReviewAsync(reviewId))
                 .ThrowsAsync(new InvalidOperationException("Database connection failed"));
 
             // Act & Assert - Should propagate repository exceptions
             var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-                () => _reviewManager.RequestNamespaceReviewAsync(_testUser, reviewId, new List<string>()));
-            
+                () => _reviewManager.RequestNamespaceReviewAsync(_testUser, reviewId, revisionId));
+
             exception.Message.Should().Be("Database connection failed");
         }
 
@@ -468,7 +473,7 @@ namespace APIViewUnitTests
                 .ThrowsAsync(new UnauthorizedAccessException("User not authorized to request namespace reviews"));
 
             var exception = await Assert.ThrowsAsync<UnauthorizedAccessException>(
-                () => _reviewManager.RequestNamespaceReviewAsync(unauthorizedUser, reviewId, new List<string>()));
+                () => _reviewManager.RequestNamespaceReviewAsync(unauthorizedUser, reviewId, "revision1"));
             
             exception.Message.Should().Be("User not authorized to request namespace reviews");
         }
@@ -478,15 +483,15 @@ namespace APIViewUnitTests
         {
             // Act & Assert - Test null review ID (implementation doesn't validate input)
             await Assert.ThrowsAsync<NullReferenceException>(
-                () => _reviewManager.RequestNamespaceReviewAsync(_testUser, null, new List<string>()));
+                () => _reviewManager.RequestNamespaceReviewAsync(_testUser, null, "revision1"));
 
             // Act & Assert - Test empty review ID
             await Assert.ThrowsAsync<NullReferenceException>(
-                () => _reviewManager.RequestNamespaceReviewAsync(_testUser, "", new List<string>()));
+                () => _reviewManager.RequestNamespaceReviewAsync(_testUser, "", "revision1"));
 
             // Act & Assert - Test whitespace review ID
             await Assert.ThrowsAsync<NullReferenceException>(
-                () => _reviewManager.RequestNamespaceReviewAsync(_testUser, "   ", new List<string>()));
+                () => _reviewManager.RequestNamespaceReviewAsync(_testUser, "   ", "revision1"));
         }
 
         [Fact]
@@ -499,7 +504,7 @@ namespace APIViewUnitTests
 
             // Act & Assert - Should throw NullReferenceException (implementation doesn't handle null)
             await Assert.ThrowsAsync<NullReferenceException>(
-                () => _reviewManager.RequestNamespaceReviewAsync(_testUser, reviewId, new List<string>()));
+                () => _reviewManager.RequestNamespaceReviewAsync(_testUser, reviewId, "revision1"));
         }
 
         [Fact]
@@ -559,7 +564,7 @@ namespace APIViewUnitTests
                 .Returns(Task.CompletedTask);
 
             // Act - Should still process the request (implementation doesn't check this flag)
-            var result = await disabledReviewManager.RequestNamespaceReviewAsync(_testUser, reviewId, new List<string>());
+            var result = await disabledReviewManager.RequestNamespaceReviewAsync(_testUser, reviewId, "revision1");
             
             // Assert - Should complete successfully even with feature disabled
             result.Should().NotBeNull();

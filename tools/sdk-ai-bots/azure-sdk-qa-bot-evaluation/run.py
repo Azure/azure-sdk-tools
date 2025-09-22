@@ -63,7 +63,6 @@ async def process_file(input_file: str, output_file: str, scenario: str, is_bot:
     """Process a single input file"""
     print(f"Processing file: {input_file}")
     
-    azure_openai_api_key = os.environ["BOT_AGENT_API_KEY"]
     azure_bot_service_access_token = os.environ["BOT_AGENT_ACCESS_TOKEN"]
     bot_service_endpoint = os.environ.get("BOT_SERVICE_ENDPOINT", None) 
     api_url = f"{bot_service_endpoint}/completion" if bot_service_endpoint is not None else "http://localhost:8088/completion"

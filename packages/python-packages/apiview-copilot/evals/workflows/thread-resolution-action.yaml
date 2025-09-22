@@ -1,0 +1,4 @@
+name: thread-resolution-action
+kind: prompt
+tests: ../tests/python/thread-resolution-action.jsonl
+prompty: ../../prompts/thread_resolution/parse_thread_resolution_action.prompty

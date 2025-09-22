@@ -113,6 +113,8 @@ class Comment(BaseModel):
     comment: str = Field(description="the contents of the comment.")
     correlation_id: Optional[str] = Field(
         default=None, description="a correlation ID for grouping similar comments together."
+    confidence_score: Optional[float] = Field(
+        description="Confidence score from 0.0 to 1.0 indicating the confidence of the comment."
     )
 
     def __init__(self, **data):

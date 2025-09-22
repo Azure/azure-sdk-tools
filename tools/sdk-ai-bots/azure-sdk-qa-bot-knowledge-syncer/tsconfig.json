@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "module": "Node16",
-    "moduleResolution": "node16",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
     "target": "es2018",
     "outDir": "dist",
     "rootDir": ".",

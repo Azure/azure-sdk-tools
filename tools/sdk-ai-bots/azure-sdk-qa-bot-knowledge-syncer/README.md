@@ -14,7 +14,7 @@ This is a standalone TypeScript application which processes documentation from v
 ## Project Structure
 
 ```
-azure-sdk-qa-bot-knowledge/
+azure-sdk-qa-bot-knowledge-syncer/
 ├── src/
 │   ├── index.ts                    # Main entry point (calls DailySyncKnowledge)
 │   ├── DailySyncKnowledge.ts      # Core processing logic

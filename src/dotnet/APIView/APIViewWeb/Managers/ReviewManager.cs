@@ -373,17 +373,17 @@ namespace APIViewWeb.Managers
 
             // Get related reviews using pull request number from specific TypeSpec revision
             var relatedReviews = await FindRelatedReviewsByPullRequestAsync(reviewId, revisionId);
- 
+
+            // Filter SDK language reviews before processing to avoid unnecessary work
             var sdkLanguageReviews = relatedReviews
                                 .Where(r => r != null && LanguageHelper.IsSDKLanguage(r.Language))
                                 .ToList();
+
             // Update the reviews identified by review IDs with namespace approval fields
             await MarkAssociatedReviewsForNamespaceReview(relatedReviews, userId, requestedOn, reviewGroupId);
 
             // Send email notifications to preferred approvers with the actual language review data
-            await _notificationManager.NotifyApproversOnNamespaceReviewRequest(user, typeSpecReview, sdkLanguageReviews);
-
-            return typeSpecReview;
+            await _notificationManager.NotifyApproversOnNamespaceReviewRequest(user, typeSpecReview, sdkLanguageReviews);            return typeSpecReview;
         }
 
         /// <summary>

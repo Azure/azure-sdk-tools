@@ -435,6 +435,21 @@ namespace APIViewUnitTests
                 .Setup(a => a.GetAPIRevisionAsync("revision1"))
                 .ReturnsAsync(testRevision);
 
+            // Setup GetAPIRevisionsAsync for individual review IDs (needed for checking if revisions are approved)
+            _mockApiRevisionsManager
+                .Setup(a => a.GetAPIRevisionsAsync("java-review-id", "", APIRevisionType.All))
+                .ReturnsAsync(new List<APIRevisionListItemModel> 
+                { 
+                    new APIRevisionListItemModel { Id = "java-rev-1", IsApproved = false }
+                });
+                
+            _mockApiRevisionsManager
+                .Setup(a => a.GetAPIRevisionsAsync("python-review-id", "", APIRevisionType.All))
+                .ReturnsAsync(new List<APIRevisionListItemModel> 
+                { 
+                    new APIRevisionListItemModel { Id = "python-rev-1", IsApproved = false }
+                });
+
             // Setup pull requests repository to return related pull requests
             var mockPullRequests = new List<PullRequestModel>
             {
@@ -443,7 +458,7 @@ namespace APIViewUnitTests
             };
             
             _mockPullRequestsRepository
-                .Setup(p => p.GetPullRequestsAsync(12345, "Azure/azure-rest-api-specs"))
+                .Setup(p => p.GetPullRequestsAsync(reviewId, "revision1"))
                 .ReturnsAsync(mockPullRequests);
 
             // Setup GetReviewsAsync to return associated reviews

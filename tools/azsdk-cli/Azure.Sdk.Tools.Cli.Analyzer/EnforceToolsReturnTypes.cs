@@ -15,7 +15,7 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
         public static readonly DiagnosticDescriptor Rule = new DiagnosticDescriptor(
             Id,
             "Tool methods must return Response types, built-in value types, or string",
-            "Method '{0}' in Tools namespace must return a class implementing Response, a built-in value type, or string. Current return type: '{1}'.",
+            "Method '{0}' in Tools namespace must return a class implementing CommandResponse, a built-in value type, or string. Current return type: '{1}'.",
             "Design",
             DiagnosticSeverity.Error,
             isEnabledByDefault: true);
@@ -159,7 +159,7 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
             }
 
             // Check if it implements Response (look in Azure.Sdk.Tools.Cli.Models namespace)
-            var responseType = compilation.GetTypeByMetadataName("Azure.Sdk.Tools.Cli.Models.Response");
+            var responseType = compilation.GetTypeByMetadataName("Azure.Sdk.Tools.Cli.Models.CommandResponse");
             if (responseType != null && InheritsFromOrImplements(returnType, responseType))
             {
                 return true;
@@ -212,7 +212,7 @@ namespace Azure.Sdk.Tools.Cli.Analyzer
                     return true;
                 }
 
-                var responseType = compilation.GetTypeByMetadataName("Azure.Sdk.Tools.Cli.Models.Response");
+                var responseType = compilation.GetTypeByMetadataName("Azure.Sdk.Tools.Cli.Models.CommandResponse");
                 if (responseType != null && InheritsFromOrImplements(elementType, responseType))
                 {
                     return true;

@@ -12,7 +12,7 @@ import {
 import { typeToReviewTokens } from "./utils/typeToReviewTokens";
 import { processGenericArgs, processGenerics } from "./utils/processGenerics";
 import { getAPIJson } from "../main";
-import { lineIdMap } from "../utils/lineIdUtils";
+import { createContentBasedLineId } from "../utils/lineIdUtils";
 
 // Interface for the result of processing implementations
 export interface ImplProcessResult {
@@ -25,6 +25,7 @@ export interface ImplProcessResult {
 function getFilteredImpls<T extends ImplItem>(
   impls: number[],
   filterFn: (item: ImplItem) => boolean,
+  currentItem: Item,
 ): T[] {
   const apiJson = getAPIJson();
   return impls
@@ -33,8 +34,8 @@ function getFilteredImpls<T extends ImplItem>(
 }
 
 // Process automatically derived trait implementations
-export function processAutoTraitImpls(impls: number[]): ReviewToken[] {
-  const traitItems = getFilteredImpls(impls, isAutoDerivedImpl);
+export function processAutoTraitImpls(impls: number[], currentItem: Item): ReviewToken[] {
+  const traitItems = getFilteredImpls(impls, isAutoDerivedImpl, currentItem);
   // Get all traits that have been derived
   const traits = traitItems.map<ReviewToken>((item) => ({
     Kind: TokenKind.MemberName,
@@ -61,16 +62,19 @@ export function processAutoTraitImpls(impls: number[]): ReviewToken[] {
 }
 
 // Process manually implemented trait implementations
-function processOtherTraitImpls(impls: number[], prefixId: string): ReviewLine[] {
+function processOtherTraitImpls(impls: number[], lineIdPrefix: string, currentItem: Item): ReviewLine[] {
   const apiJson = getAPIJson();
-  const traitImpls = getFilteredImpls(impls, isManualTraitImpl);
+  const traitImpls = getFilteredImpls(impls, isManualTraitImpl, currentItem);
+
+  // Track trait implementations to add sequence numbers for duplicates
+  const traitImplCounts = new Map<string, number>();
+
   return traitImpls.flatMap((implItem) => {
     if (!implItem.inner.impl.trait) return [];
 
     // Get the type that the trait is implemented for
     const parentName = typeToReviewTokens(implItem.inner.impl.for);
 
-    const lineId = implItem.id.toString() + "_" + prefixId;
     // Process provided trait methods that are mentioned but not explicitly implemented
     const providedTraitMethods: ReviewLine[] = implItem.inner.impl.provided_trait_methods.map(
       (method) => {
@@ -91,43 +95,68 @@ function processOtherTraitImpls(impls: number[], prefixId: string): ReviewLine[]
               HasSuffixSpace: false,
             },
           ],
-          RelatedToLine: lineId,
+          // RelatedToLine will be set after contentBasedLineId is created
         };
       },
     );
     const implGenerics = processGenerics(implItem.inner.impl.generics);
     const implTraitName =
       (implItem.inner.impl.is_negative ? "!" : "") + implItem.inner.impl.trait.name;
+
+    // Build tokens first to generate the LineId
+    const tokens = [
+      {
+        Kind: TokenKind.Keyword,
+        Value: (implItem.inner.impl.is_unsafe ? "unsafe " : "") + "impl",
+        HasSuffixSpace: false,
+      },
+      ...implGenerics.params,
+      {
+        Kind: TokenKind.MemberName,
+        Value: implTraitName,
+        HasPrefixSpace: true,
+        HasSuffixSpace: false,
+        NavigateToId: implItem.id.toString(), // Will be updated in post-processing
+        RenderClasses: ["interface"],
+      },
+      // Add any generic arguments the trait might have
+      ...processGenericArgs(implItem.inner.impl.trait.args),
+      { Kind: TokenKind.Punctuation, Value: "for", HasPrefixSpace: true, HasSuffixSpace: true },
+      // Add the type the trait is implemented for
+      ...parentName,
+      ...implGenerics.wherePredicates,
+      { Kind: TokenKind.Punctuation, Value: "{", HasPrefixSpace: true },
+    ];
+
+    // Create content-based LineId from the tokens  
+    // Include context of which item is being processed to distinguish duplicates
+    const contextualId = `${currentItem.id}_${implItem.id}`;
+    const contextName = currentItem.name || "unknown_item";
+    let contextualLineIdPrefix = lineIdPrefix ? `${lineIdPrefix}.for_${contextName}` : `for_${contextName}`;
+
+    // Add sequence number for duplicate trait implementations
+    const traitKey = `${implTraitName}_for_${parentName.map(t => t.Value).join('')}`;
+    const count = (traitImplCounts.get(traitKey) || 0) + 1;
+    traitImplCounts.set(traitKey, count);
+    if (count > 1) {
+      contextualLineIdPrefix = `${contextualLineIdPrefix}.impl${count}`;
+    }
+
+    const contentBasedLineId = createContentBasedLineId(tokens, contextualLineIdPrefix, contextualId);
+
+    // Update providedTraitMethods to use the content-based LineId
+    providedTraitMethods.forEach(method => {
+      method.RelatedToLine = contentBasedLineId;
+    });
+
     // Create the main impl line with trait name and type
     const reviewLineForImpl: ReviewLine = {
-      LineId: lineId,
-      Tokens: [
-        {
-          Kind: TokenKind.Keyword,
-          Value: (implItem.inner.impl.is_unsafe ? "unsafe " : "") + "impl",
-          HasSuffixSpace: false,
-        },
-        ...implGenerics.params,
-        {
-          Kind: TokenKind.MemberName,
-          Value: implTraitName,
-          HasPrefixSpace: true,
-          HasSuffixSpace: false,
-          NavigateToId: lineId,
-          RenderClasses: ["interface"],
-        },
-        // Add any generic arguments the trait might have
-        ...processGenericArgs(implItem.inner.impl.trait.args),
-        { Kind: TokenKind.Punctuation, Value: "for", HasPrefixSpace: true, HasSuffixSpace: true },
-        // Add the type the trait is implemented for
-        ...parentName,
-        ...implGenerics.wherePredicates,
-        { Kind: TokenKind.Punctuation, Value: "{", HasPrefixSpace: true },
-      ],
+      LineId: contentBasedLineId,
+      Tokens: tokens,
       // Add both implemented methods and provided methods as children
       Children: [
         ...implItem.inner.impl.items
-          .map((item) => processItem(apiJson.index[item]))
+          .map((item) => processItem(apiJson.index[item], undefined, contentBasedLineId))
           .filter((item) => item != null)
           .flat(),
         ...providedTraitMethods,
@@ -147,10 +176,9 @@ function processOtherTraitImpls(impls: number[], prefixId: string): ReviewLine[]
     if (matchingToken) {
       matchingToken.NavigationDisplayName = tokenStringForDisplay;
     }
-    lineIdMap.set(lineId, prefixId + tokenStringForDisplay.replace(/[^a-zA-Z0-9]+/g, "_"));
 
     const closingLine: ReviewLine = {
-      RelatedToLine: lineId,
+      RelatedToLine: contentBasedLineId,
       Tokens: [{ Kind: TokenKind.Punctuation, Value: "}" }],
     };
 
@@ -159,20 +187,41 @@ function processOtherTraitImpls(impls: number[], prefixId: string): ReviewLine[]
 }
 
 // Process inherent implementations
-function processImpls(impls: number[]): ReviewLine[] {
+function processImpls(impls: number[], lineIdPrefix: string = "", currentItem: Item): ReviewLine[] {
   const apiJson = getAPIJson();
-  const inherentImpls = getFilteredImpls(impls, isInherentImpl);
+  const inherentImpls = getFilteredImpls(impls, isInherentImpl, currentItem);
 
   return (
     inherentImpls
       // Process each implementation's items and flatten the results
-      .flatMap((implItem) =>
-        implItem.inner.impl.items
-          // Process each item within the impl
-          .map((item) => processItem(apiJson.index[item]))
+      .flatMap((implItem) => {
+        // Create the impl block lineId first
+        // For inherent impls, extract type name from the 'for' field
+        const forTokens = typeToReviewTokens(implItem.inner.impl.for);
+        const typeName = forTokens.find(token => token.Kind === TokenKind.TypeName)?.Value ||
+          forTokens.find(token => token.Value && token.Value.length > 0)?.Value ||
+          "unknown_type";
+        const implTokens = [
+          { Kind: TokenKind.Keyword, Value: "impl" },
+          {
+            Kind: TokenKind.MemberName,
+            Value: typeName,
+            RenderClasses: ["interface"],
+            NavigateToId: implItem.id.toString(),
+          },
+        ];
+        // Include context of which item is being processed to distinguish duplicates
+        const contextualId = `${currentItem.id}_${implItem.id}`;
+        const contextName = currentItem.name || "unknown_item";
+        const contextualLineIdPrefix = lineIdPrefix ? `${lineIdPrefix}.for_${contextName}` : `for_${contextName}`;
+        const implLineId = createContentBasedLineId(implTokens, contextualLineIdPrefix, contextualId);
+
+        return implItem.inner.impl.items
+          // Process each item within the impl with the proper lineId prefix
+          .map((item) => processItem(apiJson.index[item], undefined, implLineId))
           // Flatten nested arrays
-          .flat(),
-      )
+          .flat();
+      })
   );
 }
 
@@ -182,48 +231,53 @@ export function processImpl(
     | (Item & { inner: { struct: Struct } })
     | (Item & { inner: { enum: Enum } })
     | (Item & { inner: { union: Union } }),
+  lineIdPrefix: string = "",
 ): ImplProcessResult {
-  const linedId = item.id.toString() + "_impl";
-  lineIdMap.set(linedId, lineIdMap.get(item.id.toString()) + "_impl");
   // Get all implementations associated with this item
   const impls = getImplsFromItem(item);
 
   // Process auto-derived trait implementations (like #[derive(Debug, Clone)])
-  const deriveTokens = processAutoTraitImpls(impls);
+  const deriveTokens = processAutoTraitImpls(impls, item);
 
   // Process inherent method implementations (like impl Type { fn method() {} })
   // Process children first to check if they're empty
-  const children = processImpls(impls).filter((item) => item != null);
+  const children = processImpls(impls, lineIdPrefix, item).filter((item) => item != null);
 
   let implBlock: ReviewLine[] = [];
   if (children.length > 0) {
+    // Create tokens for the impl block
+    const implTokens = [
+      { Kind: TokenKind.Keyword, Value: "impl" },
+      {
+        Kind: TokenKind.MemberName,
+        Value: item.name || "unknown_impl",
+        RenderClasses: ["interface"],
+        NavigateToId: item.id.toString(), // Will be updated in post-processing
+        NavigationDisplayName: `impl ${item.name}`,
+      },
+      { Kind: TokenKind.Punctuation, Value: "{" },
+    ];
+
+    // Create content-based LineId from the tokens
+    const implLineId = createContentBasedLineId(implTokens, lineIdPrefix, item.id.toString());
+
     // Only create an implBlock if there are children
     implBlock = [
       // Create the main implementation line with type name
       {
-        LineId: linedId,
-        Tokens: [
-          { Kind: TokenKind.Keyword, Value: "impl" },
-          {
-            Kind: TokenKind.MemberName,
-            Value: item.name || "unknown_impl",
-            RenderClasses: ["interface"],
-            NavigateToId: linedId,
-            NavigationDisplayName: `impl ${item.name}`,
-          },
-          { Kind: TokenKind.Punctuation, Value: "{" },
-        ],
+        LineId: implLineId,
+        Tokens: implTokens,
         Children: children,
       },
       {
-        RelatedToLine: linedId,
+        RelatedToLine: implLineId,
         Tokens: [{ Kind: TokenKind.Punctuation, Value: "}" }],
       },
     ];
   }
 
   // Process manual trait implementations (like impl Trait for Type { ... })
-  const traitImpls = processOtherTraitImpls(impls, item.name);
+  const traitImpls = processOtherTraitImpls(impls, lineIdPrefix, item);
 
   return { deriveTokens, implBlock, traitImpls };
 }

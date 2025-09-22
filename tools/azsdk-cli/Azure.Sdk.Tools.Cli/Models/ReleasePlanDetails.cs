@@ -42,6 +42,12 @@ namespace Azure.Sdk.Tools.Cli.Models
                 new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchOperation
                 {
                     Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                    Path = "/fields/System.State",
+                    Value = Status
+                },
+                new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchOperation
+                {
+                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
                     Path = "/fields/Custom.ServiceTreeID",
                     Value = ServiceTreeId
                 },

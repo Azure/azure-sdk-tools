@@ -1,28 +1,25 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.Xml;
-using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 
 namespace Azure.Sdk.Tools.Cli.Services;
 
 public interface ITestHelper
 {
-    Task<List<FailedTestRunResponse>> GetFailedTestCases(string trxFilePath, string filterTitle = "");
+    Task<FailedTestRunListResponse> GetFailedTestCases(string trxFilePath, string filterTitle = "");
     Task<FailedTestRunResponse> GetFailedTestCaseData(string trxFilePath, string testCaseTitle);
-    Task<List<FailedTestRunResponse>> GetFailedTestRunDataFromTrx(string trxFilePath);
+    Task<FailedTestRunListResponse> GetFailedTestRunDataFromTrx(string trxFilePath);
 }
 
-public class TestHelper(IOutputHelper output, ILogger<TestHelper> logger) : ITestHelper
+public class TestHelper(ILogger<TestHelper> logger) : ITestHelper
 {
-    private readonly IOutputHelper output = output;
     private readonly ILogger<TestHelper> logger = logger;
 
-    public async Task<List<FailedTestRunResponse>> GetFailedTestCases(string trxFilePath, string filterTitle = "")
+    public async Task<FailedTestRunListResponse> GetFailedTestCases(string trxFilePath, string filterTitle = "")
     {
         var failedTestRuns = await GetFailedTestRunDataFromTrx(trxFilePath);
-
-        return failedTestRuns
+        failedTestRuns.Items = failedTestRuns.Items
                 .Where(run => string.IsNullOrEmpty(filterTitle) || run.TestCaseTitle.Contains(filterTitle, StringComparison.OrdinalIgnoreCase))
                 .Select(run => new FailedTestRunResponse
                 {
@@ -30,17 +27,18 @@ public class TestHelper(IOutputHelper output, ILogger<TestHelper> logger) : ITes
                     Uri = run.Uri
                 })
                 .ToList();
+        return failedTestRuns;
     }
 
     public async Task<FailedTestRunResponse> GetFailedTestCaseData(string trxFilePath, string testCaseTitle)
     {
         var failedTestRuns = await GetFailedTestRunDataFromTrx(trxFilePath);
-        return failedTestRuns.FirstOrDefault(run => run.TestCaseTitle.Equals(testCaseTitle, StringComparison.OrdinalIgnoreCase));
+        return failedTestRuns.Items.FirstOrDefault(run => run.TestCaseTitle.Equals(testCaseTitle, StringComparison.OrdinalIgnoreCase));
     }
 
-    public async Task<List<FailedTestRunResponse>> GetFailedTestRunDataFromTrx(string trxFilePath)
+    public async Task<FailedTestRunListResponse> GetFailedTestRunDataFromTrx(string trxFilePath)
     {
-        var failedTestRuns = new List<FailedTestRunResponse>();
+        var failedTestRuns = new FailedTestRunListResponse();
         if (!File.Exists(trxFilePath))
         {
             logger.LogError("TRX file not found: {trxFilePath}", trxFilePath);
@@ -84,7 +82,7 @@ public class TestHelper(IOutputHelper output, ILogger<TestHelper> logger) : ITes
                 }
             }
 
-            failedTestRuns.Add(new FailedTestRunResponse
+            failedTestRuns.Items.Add(new FailedTestRunResponse
             {
                 TestCaseTitle = testName,
                 ErrorMessage = errorMessage,

@@ -41,30 +41,27 @@ namespace Azure.Tools.GeneratorAgent.Configuration
         public static Result<ValidationContext> TryValidateAndCreate(
             string? typespecPath, 
             string? commitId, 
-            string sdkOutputPath, 
-            ILogger logger)
+            string sdkOutputPath)
         {
             bool isLocalPath = string.IsNullOrWhiteSpace(commitId);
 
             Result<string> typespecValidation = InputValidator.ValidateTypeSpecDir(typespecPath, isLocalPath);
             if (typespecValidation.IsFailure)
             {
-                return Result<ValidationContext>.Failure(new ArgumentException($"TypeSpec path validation failed: {typespecValidation.Exception?.Message}"));
+                return Result<ValidationContext>.Failure(typespecValidation.Exception!);
             }
 
             Result<string> commitValidation = InputValidator.ValidateCommitId(commitId);
             if (commitValidation.IsFailure)
             {
-                return Result<ValidationContext>.Failure(new ArgumentException($"Commit ID validation failed: {commitValidation.Exception?.Message}"));
+                return Result<ValidationContext>.Failure(commitValidation.Exception!);
             }
 
             Result<string> outputValidation = InputValidator.ValidateOutputDirectory(sdkOutputPath);
             if (outputValidation.IsFailure)
             {
-                return Result<ValidationContext>.Failure(new ArgumentException($"SDK output path validation failed: {outputValidation.Exception?.Message}"));
+                return Result<ValidationContext>.Failure(outputValidation.Exception!);
             }
-
-            logger.LogInformation("All input validation completed successfully");
 
             return Result<ValidationContext>.Success(new ValidationContext(
                 typespecValidation.Value!,

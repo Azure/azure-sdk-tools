@@ -19,19 +19,17 @@ namespace Azure.Sdk.Tools.Cli.Services
     public static class ServiceRegistrations
     {
         /// <summary>
-        /// This is the function that defines all of the services available to any of the MCPTool instantiations. This
-        /// same collection modification is run within the HostServerTool::CreateAppBuilder.
+        /// This is the function that defines all of the services available to any tool instantiations
         /// </summary>
         /// <param name="services"></param>
         /// todo: make this use reflection to populate itself with all of our services and helpers
-        public static void RegisterCommonServices(IServiceCollection services)
+        public static void RegisterCommonServices(IServiceCollection services, OutputHelper.OutputModes outputMode)
         {
             // Services
             services.AddSingleton<IAzureService, AzureService>();
             services.AddSingleton<IDevOpsConnection, DevOpsConnection>();
             services.AddSingleton<IDevOpsService, DevOpsService>();
             services.AddSingleton<IGitHubService, GitHubService>();
-            services.AddScoped<IAzureAgentServiceFactory, AzureAgentServiceFactory>();
 
             // APIView Services
             services.AddSingleton<IAPIViewAuthenticationService, APIViewAuthenticationService>();
@@ -61,18 +59,27 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IUserHelper, UserHelper>();
             services.AddSingleton<ICodeownersValidatorHelper, CodeownersValidatorHelper>();
             services.AddSingleton<IEnvironmentHelper, EnvironmentHelper>();
+            services.AddSingleton<IRawOutputHelper>(_ => new OutputHelper(outputMode));
             services.AddSingleton<ISpecGenSdkConfigHelper, SpecGenSdkConfigHelper>();
             services.AddSingleton<IInputSanitizer, InputSanitizer>();
             services.AddSingleton<ITspClientHelper, TspClientHelper>();
-            // Add as scoped so we can track/update usage across tools and services per request for logging/telemetry
-            services.AddScoped<TokenUsageHelper>();
 
             // Process Helper Classes
             services.AddSingleton<INpxHelper, NpxHelper>();
             services.AddSingleton<IPowershellHelper, PowershellHelper>();
             services.AddSingleton<IProcessHelper, ProcessHelper>();
 
-            services.AddSingleton<IMicroagentHostService, MicroagentHostService>();
+            // Services that need to be scoped so we can track/update state across services per request
+            services.AddScoped<TokenUsageHelper>();
+            services.AddScoped<IOutputHelper>(_ => new OutputHelper(outputMode));
+            // Services depending on other scoped services
+            services.AddScoped<IMicroagentHostService, MicroagentHostService>();
+            services.AddScoped<IAzureAgentServiceFactory, AzureAgentServiceFactory>();
+
+
+            // Telemetry
+            services.AddSingleton<ITelemetryService, TelemetryService>();
+            services.ConfigureOpenTelemetry();
 
             services.AddHttpClient();
             services.AddAzureClients(clientBuilder =>
@@ -94,12 +101,9 @@ namespace Azure.Sdk.Tools.Cli.Services
                         return new AzureOpenAIClient(new Uri(ep), credential, options);
                     });
             });
-
-            // Telemetry
-            services.AddSingleton<ITelemetryService, TelemetryService>();
-            services.ConfigureOpenTelemetry();
         }
 
+        // Once middleware support is added to the MCP SDK this should be replaced
         public static void RegisterInstrumentedMcpTools(IServiceCollection services, string[] args)
         {
             JsonSerializerOptions? serializerOptions = null;
@@ -116,7 +120,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 {
                     if (toolMethod.GetCustomAttribute<McpServerToolAttribute>() is not null)
                     {
-                        services.AddScoped((Func<IServiceProvider, McpServerTool>)(services =>
+                        services.AddSingleton((Func<IServiceProvider, McpServerTool>)(services =>
                         {
                             var options = new McpServerToolCreateOptions { Services = services, SerializerOptions = serializerOptions };
                             var innerTool = toolMethod.IsStatic

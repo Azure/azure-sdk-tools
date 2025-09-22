@@ -1,5 +1,3 @@
-using Azure.Sdk.Tools.Cli.Contract;
-
 namespace Azure.Sdk.Tools.Cli.Commands
 {
     public static class SharedCommandGroups
@@ -63,6 +61,12 @@ namespace Azure.Sdk.Tools.Cli.Commands
         public static readonly CommandGroup Example = new(
             Verb: "example",
             Description: "Example tool demonstrating framework features",
+            Options: []
+        );
+
+        public static readonly CommandGroup Demo = new(
+            Verb: "demo",
+            Description: "Demo commands exercising services and helpers",
             Options: []
         );
 #endif

@@ -36,125 +36,146 @@ namespace Azure.Tools.GeneratorAgent
 
         /// <summary>
         /// Gets TypeSpec files from either local directory or GitHub repository.
-        /// Returns a dictionary where key is filename and value is file content.
+        /// Returns a Result containing dictionary where key is filename and value is file content.
         /// </summary>
-        public async Task<Dictionary<string, string>> GetTypeSpecFilesAsync(
+        public async Task<Result<Dictionary<string, string>>> GetTypeSpecFilesAsync(
             CancellationToken cancellationToken = default)
         {
             ObjectDisposedException.ThrowIf(IsDisposed, this);
 
+            Result<Dictionary<string, string>> result;
+
             if (string.IsNullOrWhiteSpace(ValidationContext.ValidatedCommitId))
             {
                 // Local case
-                return await GetLocalTypeSpecFilesAsync(ValidationContext.ValidatedTypeSpecDir, cancellationToken).ConfigureAwait(false);
+                result = await GetLocalTypeSpecFilesAsync(ValidationContext.ValidatedTypeSpecDir, cancellationToken).ConfigureAwait(false);
             }
             else
             {
                 // GitHub case
-                return await GetGitHubTypeSpecFilesAsync(cancellationToken).ConfigureAwait(false);
+                result = await GetGitHubTypeSpecFilesAsync(cancellationToken).ConfigureAwait(false);
             }
+
+            // Handle result and log appropriately
+            if (result.IsFailure)
+            {
+                Logger.LogError("Failed to load TypeSpec files: {Error}", result.Exception?.Message);
+                return result;
+            }
+            
+            var typeSpecFiles = result.Value!;
+            if (typeSpecFiles.Count == 0)
+            {
+                Logger.LogWarning("No TypeSpec files found");
+            }
+
+            return result;
         }
 
-        private async Task<Dictionary<string, string>> GetLocalTypeSpecFilesAsync(
+        private async Task<Result<Dictionary<string, string>>> GetLocalTypeSpecFilesAsync(
             string typeSpecDir, 
             CancellationToken cancellationToken)
         {
-            Logger.LogInformation("Reading TypeSpec files from local directory: {TypeSpecDir}", typeSpecDir);
+            // Fail fast validation - check directory exists
+            if (!Directory.Exists(typeSpecDir))
+            {
+                return Result<Dictionary<string, string>>.Failure(
+                    new DirectoryNotFoundException($"TypeSpec directory not found: {typeSpecDir}"));
+            }
+
+            var typeSpecFiles = new Dictionary<string, string>();
+            string[] allFiles = Directory.GetFiles(typeSpecDir, "*.tsp", SearchOption.AllDirectories);
 
             try
             {
-                Dictionary<string, string> typeSpecFiles = new Dictionary<string, string>();
-                
-                string[] allFiles = Directory.GetFiles(typeSpecDir, "*.tsp", SearchOption.AllDirectories);
-
                 foreach (string filePath in allFiles)
                 {
                     string fileName = Path.GetFileName(filePath);
                     string content = await File.ReadAllTextAsync(filePath, Encoding.UTF8, cancellationToken).ConfigureAwait(false);
                     typeSpecFiles[fileName] = content;
+                    
+                    if (Logger.IsEnabled(LogLevel.Debug))
+                    {
+                        Logger.LogDebug("Loaded file: {FileName} ({Size} characters)", fileName, content.Length);
+                    }
                 }
-
-                Logger.LogInformation("Successfully read {Count} TypeSpec files from local directory\n", typeSpecFiles.Count);
-                return typeSpecFiles;
+                
+                return Result<Dictionary<string, string>>.Success(typeSpecFiles);
             }
-            catch (Exception ex) when (ex is not OperationCanceledException)
+            catch (Exception ex)
             {
-                Logger.LogCritical(ex, "Error reading TypeSpec files from local directory: {TypeSpecDir}", typeSpecDir);
-                throw;
+                return Result<Dictionary<string, string>>.Failure(new InvalidOperationException($"Failed to read TypeSpec files from directory '{typeSpecDir}': {ex.Message}", ex));
             }
         }
 
-        private async Task<Dictionary<string, string>> GetGitHubTypeSpecFilesAsync(
+        private async Task<Result<Dictionary<string, string>>> GetGitHubTypeSpecFilesAsync(
             CancellationToken cancellationToken)
         {
-            Logger.LogInformation("Fetching TypeSpec files from GitHub: {TypeSpecDir} at commit {CommitId}", 
-                ValidationContext.ValidatedTypeSpecDir, ValidationContext.ValidatedCommitId);
+            GitHubFileService = GitHubServiceFactory(ValidationContext);
 
-            try
+            var githubResult = await GitHubFileService.GetTypeSpecFilesAsync(cancellationToken).ConfigureAwait(false);
+            
+            if (githubResult.IsFailure)
             {
-                GitHubFileService = GitHubServiceFactory(ValidationContext);
+                return Result<Dictionary<string, string>>.Failure(githubResult.Exception!);
+            }
 
-                // Get files from GitHub
-                Dictionary<string, string> result = await GitHubFileService.GetTypeSpecFilesAsync(cancellationToken).ConfigureAwait(false);
+            var result = githubResult.Value ?? new Dictionary<string, string>();
 
-                // Create secure temporary directory for compilation
-                if (result.Count > 0)
+            if (result.Count > 0)
+            {
+                var tempDirResult = await CreateSecureTempDirectoryFromGitHubFiles(result, cancellationToken).ConfigureAwait(false);
+                if (tempDirResult.IsFailure)
                 {
-                    string tempDirectory = await CreateSecureTempDirectoryFromGitHubFiles(result, cancellationToken).ConfigureAwait(false);
-                    ValidationContext.CurrentTypeSpecDirForCompilation = tempDirectory;
-
-                    Logger.LogInformation("Successfully read {Count} TypeSpec files from Github Repository\n", result.Count);
+                    return Result<Dictionary<string, string>>.Failure(tempDirResult.Exception!);
                 }
+                
+                ValidationContext.CurrentTypeSpecDirForCompilation = tempDirResult.Value!;
+            }
 
-                return result;
-            }
-            catch (Exception ex) when (ex is not OperationCanceledException)
-            {
-                Logger.LogCritical(ex, "Unexpected error fetching TypeSpec files from GitHub: {TypeSpecDir} at commit {CommitId}", 
-                    ValidationContext.ValidatedTypeSpecDir, ValidationContext.ValidatedCommitId);
-                throw;
-            }
+            return Result<Dictionary<string, string>>.Success(result);
         }
 
         /// <summary>
         /// Creates a secure temporary directory and writes GitHub files to it.
         /// Implements essential security measures for production use.
         /// </summary>
-        private async Task<string> CreateSecureTempDirectoryFromGitHubFiles(
+        private async Task<Result<string>> CreateSecureTempDirectoryFromGitHubFiles(
             Dictionary<string, string> githubFiles, 
             CancellationToken cancellationToken)
         {
             string tempPath = string.Empty;
 
+            // Create validated temp path
+            tempPath = CreateSecureTempPath();
+
+            // Validate the constructed path
+            Result<string> pathValidation = InputValidator.ValidateDirTraversal(tempPath, "temporary TypeSpec directory");
+            if (pathValidation.IsFailure)
+            {
+                return Result<string>.Failure(new SecurityException($"Temporary directory path validation failed: {pathValidation.Exception?.Message}"));
+            }
+
             try
             {
-                // Security: Create validated temp path
-                tempPath = CreateSecureTempPath();
-
-                // Security: Validate the constructed path
-                Result<string> pathValidation = InputValidator.ValidateDirTraversal(tempPath, "temporary TypeSpec directory");
-                if (pathValidation.IsFailure)
-                {
-                    throw new SecurityException($"Temporary directory path validation failed: {pathValidation.Exception?.Message}");
-                }
-
                 // Create directory
                 Directory.CreateDirectory(tempPath);
                 TempDirectories.Add(tempPath);
 
-                // Security: Write files with validation
-                await WriteFilesSecurely(tempPath, githubFiles, cancellationToken).ConfigureAwait(false);
+                // Write files with validation
+                var writeResult = await WriteFilesSecurely(tempPath, githubFiles, cancellationToken).ConfigureAwait(false);
+                if (writeResult.IsFailure)
+                {
+                    await CleanupTempDirectorySecurely(tempPath).ConfigureAwait(false);
+                    return Result<string>.Failure(writeResult.Exception!);
+                }
 
-                Logger.LogInformation("Created secure temp directory: {TempPath} with {FileCount} files", tempPath, githubFiles.Count);
-                return tempPath;
+                Logger.LogDebug("Created secure temp directory: {TempPath} with {FileCount} files", tempPath, githubFiles.Count);
+                return Result<string>.Success(tempPath);
             }
-            catch (Exception ex) when (ex is not OperationCanceledException)
+            catch (Exception ex)
             {
-                // Security: Always cleanup on failure
-                await CleanupTempDirectorySecurely(tempPath).ConfigureAwait(false);
-                
-                Logger.LogError(ex, "Failed to create secure temp directory: {TempPath}", tempPath);
-                throw new InvalidOperationException($"Failed to create secure temporary TypeSpec directory: {ex.Message}", ex);
+                return Result<string>.Failure(new InvalidOperationException($"Failed to create temporary directory '{tempPath}': {ex.Message}", ex));
             }
         }
 
@@ -164,10 +185,10 @@ namespace Azure.Tools.GeneratorAgent
         /// </summary>
         private string CreateSecureTempPath()
         {
-            // Security: Sanitize the TypeSpec directory name
+            // Sanitize the TypeSpec directory name
             string sanitizedSpecDir = SanitizeDirectoryNameSecurely(ValidationContext.ValidatedTypeSpecDir);
             
-            // Security: Create unique timestamp + random identifier
+            // Create unique timestamp + random identifier
             string timestamp = DateTimeOffset.UtcNow.ToString("yyyyMMdd_HHmmss_fff");
             string uniqueId = Path.GetRandomFileName()[..8]; // First 8 chars for uniqueness
             
@@ -184,43 +205,56 @@ namespace Azure.Tools.GeneratorAgent
         /// <summary>
         /// Writes files securely with proper validation and error handling.
         /// </summary>
-        private async Task WriteFilesSecurely(
+        private async Task<Result<bool>> WriteFilesSecurely(
             string tempPath, 
             Dictionary<string, string> githubFiles, 
             CancellationToken cancellationToken)
         {
             string fullTempPath = Path.GetFullPath(tempPath);
 
-            foreach (var kvp in githubFiles)
+            try
             {
-                // Security: Validate each filename
-                Result<string> fileValidation = InputValidator.ValidateDirTraversal(kvp.Key, "TypeSpec filename");
-                if (fileValidation.IsFailure)
+                foreach (var kvp in githubFiles)
                 {
-                    Logger.LogWarning("Skipping invalid filename: {FileName}", kvp.Key);
-                    continue;
+                    // Validate each filename
+                    Result<string> fileValidation = InputValidator.ValidateDirTraversal(kvp.Key, "TypeSpec filename");
+                    if (fileValidation.IsFailure)
+                    {
+                        Logger.LogWarning("Skipping invalid filename: {FileName}", kvp.Key);
+                        continue;
+                    }
+
+                    string filePath = Path.Combine(tempPath, kvp.Key);
+                    
+                    // Ensure file path is within temp directory (prevent directory traversal)
+                    string fullFilePath = Path.GetFullPath(filePath);
+                    if (!fullFilePath.StartsWith(fullTempPath, StringComparison.OrdinalIgnoreCase))
+                    {
+                        Logger.LogWarning("Skipping file outside temp directory: {FileName}", kvp.Key);
+                        continue;
+                    }
+
+                    // Create subdirectories safely
+                    string? directoryPath = Path.GetDirectoryName(filePath);
+                    if (!string.IsNullOrEmpty(directoryPath) && !Directory.Exists(directoryPath))
+                    {
+                        Directory.CreateDirectory(directoryPath);
+                    }
+
+                    // Write file with proper encoding
+                    await File.WriteAllTextAsync(filePath, kvp.Value, Encoding.UTF8, cancellationToken).ConfigureAwait(false);
+                    
+                    if (Logger.IsEnabled(LogLevel.Debug))
+                    {
+                        Logger.LogDebug("Securely wrote file: {FilePath} ({Size} characters)", filePath, kvp.Value.Length);
+                    }
                 }
 
-                string filePath = Path.Combine(tempPath, kvp.Key);
-                
-                // Security: Ensure file path is within temp directory (prevent directory traversal)
-                string fullFilePath = Path.GetFullPath(filePath);
-                if (!fullFilePath.StartsWith(fullTempPath, StringComparison.OrdinalIgnoreCase))
-                {
-                    Logger.LogWarning("Skipping file outside temp directory: {FileName}", kvp.Key);
-                    continue;
-                }
-
-                // Security: Create subdirectories safely
-                string? directoryPath = Path.GetDirectoryName(filePath);
-                if (!string.IsNullOrEmpty(directoryPath) && !Directory.Exists(directoryPath))
-                {
-                    Directory.CreateDirectory(directoryPath);
-                }
-
-                // Write file with proper encoding
-                await File.WriteAllTextAsync(filePath, kvp.Value, Encoding.UTF8, cancellationToken).ConfigureAwait(false);
-                Logger.LogDebug("Securely wrote file: {FilePath} ({Size} characters)", filePath, kvp.Value.Length);
+                return Result<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                return Result<bool>.Failure(new InvalidOperationException($"Failed to write files to temporary directory '{tempPath}': {ex.Message}", ex));
             }
         }
 
@@ -232,7 +266,7 @@ namespace Azure.Tools.GeneratorAgent
             if (string.IsNullOrWhiteSpace(directoryName))
                 return "default";
 
-            // Security: Replace all invalid and potentially dangerous characters
+            // Replace all invalid and potentially dangerous characters
             char[] invalidChars = Path.GetInvalidFileNameChars();
             var sanitized = new StringBuilder(directoryName.Length);
 
@@ -250,14 +284,14 @@ namespace Azure.Tools.GeneratorAgent
 
             string result = sanitized.ToString();
             
-            // Security: Limit length for filesystem compatibility
+            // Limit length for filesystem compatibility
             const int maxLength = 50; // Conservative length for cross-platform compatibility
             if (result.Length > maxLength)
             {
                 result = result[..maxLength];
             }
 
-            // Security: Ensure not empty after sanitization
+            // Ensure not empty after sanitization
             return string.IsNullOrEmpty(result) ? "default" : result.TrimEnd('_');
         }
 
@@ -265,39 +299,38 @@ namespace Azure.Tools.GeneratorAgent
         /// Updates a TypeSpec file in the current working directory with security validation.
         /// Used for iterative error fixing.
         /// </summary>
-        public async Task UpdateTypeSpecFileAsync(string fileName, string content, CancellationToken cancellationToken = default)
+        public async Task<Result<bool>> UpdateTypeSpecFileAsync(string fileName, string content, CancellationToken cancellationToken = default)
         {
             ObjectDisposedException.ThrowIf(IsDisposed, this);
             ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
             ArgumentNullException.ThrowIfNull(content);
 
-            // Security: Validate filename
+            // Validate filename
             Result<string> fileValidation = InputValidator.ValidateDirTraversal(fileName, "TypeSpec filename");
             if (fileValidation.IsFailure)
             {
-                throw new SecurityException($"TypeSpec filename validation failed: {fileName}");
+                return Result<bool>.Failure(new SecurityException($"TypeSpec filename validation failed: {fileName}"));
             }
 
             string currentDir = ValidationContext.CurrentTypeSpecDir;
             string filePath = Path.Combine(currentDir, fileName);
             
-            // Security: Ensure file is within current directory
+            // Ensure file is within current directory
             string fullCurrentDir = Path.GetFullPath(currentDir);
             string fullFilePath = Path.GetFullPath(filePath);
             if (!fullFilePath.StartsWith(fullCurrentDir, StringComparison.OrdinalIgnoreCase))
             {
-                throw new SecurityException($"File '{fileName}' attempts to write outside current directory");
+                return Result<bool>.Failure(new SecurityException($"File '{fileName}' attempts to write outside current directory"));
             }
 
             try
             {
                 await File.WriteAllTextAsync(filePath, content, Encoding.UTF8, cancellationToken).ConfigureAwait(false);
-                Logger.LogInformation("Securely updated TypeSpec file: {FilePath} ({Size} characters)", filePath, content.Length);
+                return Result<bool>.Success(true);
             }
-            catch (Exception ex) when (ex is not OperationCanceledException and not SecurityException)
+            catch (Exception ex)
             {
-                Logger.LogError(ex, "Failed to update TypeSpec file: {FilePath}", filePath);
-                throw new InvalidOperationException($"Failed to update TypeSpec file: {fileName}", ex);
+                return Result<bool>.Failure(new InvalidOperationException($"Failed to write TypeSpec file '{fileName}': {ex.Message}", ex));
             }
         }
 
@@ -311,7 +344,6 @@ namespace Azure.Tools.GeneratorAgent
 
             try
             {
-                // Security: Use Task.Run for potentially blocking I/O operation
                 await Task.Run(() =>
                 {
                     Directory.Delete(tempDirectory, recursive: true);
@@ -333,7 +365,7 @@ namespace Azure.Tools.GeneratorAgent
 
             try
             {
-                // Security: Clean up all tracked temp directories
+                // Clean up all tracked temp directories
                 foreach (string tempDir in TempDirectories)
                 {
                     try
@@ -341,7 +373,10 @@ namespace Azure.Tools.GeneratorAgent
                         if (Directory.Exists(tempDir))
                         {
                             Directory.Delete(tempDir, recursive: true);
-                            Logger.LogDebug("Disposed temp directory: {TempDir}", tempDir);
+                            if (Logger.IsEnabled(LogLevel.Debug))
+                            {
+                                Logger.LogDebug("Disposed temp directory: {TempDir}", tempDir);
+                            }
                         }
                     }
                     catch (Exception ex)

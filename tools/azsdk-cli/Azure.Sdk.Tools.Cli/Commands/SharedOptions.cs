@@ -21,7 +21,6 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(CleanupTool),
             typeof(CodeownersTools),
             typeof(GitHubLabelsTool),
-            typeof(HostServerTool),
             typeof(LogAnalysisTool),
             typeof(PipelineTool),
             typeof(PipelineAnalysisTool),
@@ -44,7 +43,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(TypeSpecPublicRepoValidationTool),
             typeof(APIViewTool),
 
-            #if DEBUG
+#if DEBUG
             // only add these tools in debug mode
             typeof(ExampleTool),
             typeof(HelloWorldTool),
@@ -74,7 +73,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             IsRequired = false
         };
 
-        public static (string, bool) GetGlobalOptionValues(string[] args)
+        public static (string outputFormat, bool debug) GetGlobalOptionValues(string[] args)
         {
             var root = new RootCommand
             {
@@ -86,9 +85,9 @@ namespace Azure.Sdk.Tools.Cli.Commands
             var parser = new Parser(root);
             var result = parser.Parse(args);
 
-            var raw = result.GetValueForOption(Format)?.ToLowerInvariant() ?? "";
+            var outputFormat = result.GetValueForOption(Format)?.ToLowerInvariant() ?? "";
             var debug = result.GetValueForOption(Debug);
-            return (raw, debug);
+            return (outputFormat, debug);
         }
 
         public static string[] GetToolsFromArgs(string[] args)

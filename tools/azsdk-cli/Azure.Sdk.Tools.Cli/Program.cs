@@ -1,43 +1,29 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-using System.CommandLine;
-using System.CommandLine.Builder;
-using System.CommandLine.Parsing;
-using OpenTelemetry;
-using OpenTelemetry.Trace;
 using Azure.Sdk.Tools.Cli.Commands;
-using Azure.Sdk.Tools.Cli.Core;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
-using Azure.Sdk.Tools.Cli.Configuration;
+using Azure.Sdk.Tools.Cli.Telemetry;
 
 namespace Azure.Sdk.Tools.Cli;
 
 public class Program
 {
+    public static WebApplication ServerApp { get; private set; }
+
     public static async Task<int> Main(string[] args)
     {
-        ServerApp = CreateAppBuilder(args).Build();
-        var rootCommand = CommandFactory.CreateRootCommand(args, ServerApp.Services);
-
-        var parsedCommands = new CommandLineBuilder(rootCommand)
-               .UseDefaults()            // adds help, version, error reporting, suggestions…
-               .UseExceptionHandler()    // catches unhandled exceptions and writes them out
-               .Build();
-
-        return await parsedCommands.InvokeAsync(args);
+        var (outputFormat, debug) = SharedOptions.GetGlobalOptionValues(args);
+        ServerApp = CreateAppBuilder(args, outputFormat, debug).Build();
+        return await CommandRunner.BuildAndRun(args, ServerApp.Services, debug);
     }
 
     // todo: make this honor subcommands of `start` and the like, instead of simply looking presence of `start` verb
-    public static bool IsCLI(string[] args) => !args.Select(x => x.Trim().ToLowerInvariant()).Any(x => x == "start");
+    public static bool IsCommandLine(string[] args) => !args.Select(x => x.Trim().ToLowerInvariant()).Any(x => x == "start" || x == "mcp");
 
-    public static WebApplication ServerApp;
-
-    public static WebApplicationBuilder CreateAppBuilder(string[] args)
+    public static WebApplicationBuilder CreateAppBuilder(string[] args, string outputFormat, bool debug = false)
     {
-        var isCLI = IsCLI(args);
-        var (outputFormat, debug) = SharedOptions.GetGlobalOptionValues(args);
+        var isCommandLine = IsCommandLine(args);
         var logLevel = debug ? LogLevel.Debug : LogLevel.Information;
 
         // Any args that ASP.NET doesn't recognize will be _ignored_ by the CreateBuilder, so we don't need to ONLY
@@ -45,21 +31,10 @@ public class Program
         // it doesn't recognize.
         WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-        builder.Services.AddOpenTelemetry()
-            .WithTracing(b =>
-            {
-                b.AddSource(Constants.TOOLS_ACTIVITY_SOURCE)
-                    .AddAspNetCoreInstrumentation()
-                    .AddHttpClientInstrumentation()
-                    .AddProcessor(new TelemetryProcessor());
-                if (debug) { b.AddConsoleExporter(); }
-            })
-            .UseOtlpExporter();
-
         builder.Logging.AddConsole(consoleLogOptions =>
         {
             // Log everything to stderr in mcp mode so the client doesn't try to interpret stdout messages that aren't json rpc
-            var logErrorThreshold = isCLI ? LogLevel.Error : LogLevel.Debug;
+            var logErrorThreshold = isCommandLine ? LogLevel.Error : LogLevel.Debug;
             consoleLogOptions.LogToStandardErrorThreshold = logErrorThreshold;
         });
 
@@ -80,16 +55,23 @@ public class Program
             l.SetMinimumLevel(logLevel);
         });
 
-        var outputMode = !isCLI ? OutputModes.Mcp : outputFormat switch
+        var outputMode = !isCommandLine ? OutputHelper.OutputModes.Mcp : outputFormat switch
         {
-            "plain" => OutputModes.Plain,
-            "json" => OutputModes.Json,
+            "plain" => OutputHelper.OutputModes.Plain,
+            "json" => OutputHelper.OutputModes.Json,
             _ => throw new ArgumentException($"Invalid output format '{outputFormat}'. Supported formats are: plain, json")
         };
-        builder.Services.AddSingleton<IOutputHelper>(new OutputHelper(outputMode));
 
         // register common services
-        ServiceRegistrations.RegisterCommonServices(builder.Services);
+        ServiceRegistrations.RegisterCommonServices(builder.Services, outputMode);
+
+        if (isCommandLine)
+        {
+            return builder;
+        }
+
+        TelemetryService.RegisterServerTelemetry(builder.Services, debug);
+
         // register MCP tools
         ServiceRegistrations.RegisterInstrumentedMcpTools(builder.Services, args);
 

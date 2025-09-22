@@ -3,7 +3,6 @@ using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Azure.Sdk.Tools.Cli.Tools.ReleasePlan;
-using Microsoft.Azure.Pipelines.WebApi;
 using Microsoft.Extensions.Logging;
 using Microsoft.TeamFoundation.Build.WebApi;
 using Moq;
@@ -15,7 +14,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
     internal class SpecWorkflowToolTests
     {
         private Mock<IDevOpsService> mockDevOpsService;
-        private Mock<IOutputHelper> mockOutputService;
         private Mock<IGitHubService> mockGitHubService;
         private Mock<IGitHelper> mockGitHelper;
         private Mock<ITypeSpecHelper> mockTypeSpecHelper;
@@ -27,15 +25,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public void Setup()
         {
             mockDevOpsService = new Mock<IDevOpsService>();
-            mockOutputService = new Mock<IOutputHelper>();
             mockGitHubService = new Mock<IGitHubService>();
             mockGitHelper = new Mock<IGitHelper>();
             mockTypeSpecHelper = new Mock<ITypeSpecHelper>();
             logger = new TestLogger<SpecWorkflowTool>();
             inputSanitizer = new InputSanitizer();
 
-            mockOutputService.Setup(x => x.Format(It.IsAny<GenericResponse>()))
-                           .Returns((GenericResponse r) => string.Join(", ", r.Details));
             mockGitHelper.Setup(x => x.GetBranchName(It.IsAny<string>()))
                 .Returns("testBranch");
             mockTypeSpecHelper.Setup(x => x.IsRepoPathForPublicSpecRepo(It.IsAny<string>()))
@@ -48,7 +43,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 mockDevOpsService.Object,
                 mockGitHelper.Object,
                 mockTypeSpecHelper.Object,
-                mockOutputService.Object,
                 logger,
                 inputSanitizer
             );
@@ -81,7 +75,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 workItemId: 456
             );
 
-            Assert.That(result, Does.Contain("does not have a package name specified for python"));
+            Assert.That(result.ToString(), Does.Contain("does not have a package name specified for python"));
         }
 
         [Test]
@@ -112,7 +106,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 workItemId: 456
             );
 
-            Assert.That(result, Does.Contain("does not have a language specified"));
+            Assert.That(result.ToString(), Does.Contain("does not have a language specified"));
 
             // Test 2: Empty language
             var releasePlanWithEmptyLanguage = new ReleasePlanDetails
@@ -139,7 +133,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 workItemId: 456
             );
 
-            Assert.That(resultEmptyLanguage, Does.Contain("does not have a language specified"));
+            Assert.That(resultEmptyLanguage.ToString(), Does.Contain("does not have a language specified"));
         }
 
         [Test]
@@ -162,7 +156,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 workItemId: 456
             );
 
-            Assert.That(result, Does.Contain("SDK details are not present in the release plan"));
+            Assert.That(result.ToString(), Does.Contain("SDK details are not present in the release plan"));
         }
 
         [Test]
@@ -199,7 +193,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 .ReturnsAsync(
                 new Octokit.PullRequest(123, null, null, null, null, null, null, null, 123, ItemState.Open, null, null, DateTimeOffset.Now, DateTimeOffset.Now, DateTimeOffset.Now, null, null, null, null, null, null, false, null, null, null, null, 0, 1, 1, 1, 1, null, false, null, null, null, labels, null));
 
-            mockDevOpsService.Setup(x => x.RunSDKGenerationPipelineAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()))
+            mockDevOpsService.Setup(x => x.RunSDKGenerationPipelineAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()))
                 .ReturnsAsync(new Build()
                 {
                     Id = 100,
@@ -214,7 +208,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 pullRequestNumber: 123,
                 workItemId: 456
             );
-            Assert.That(result, Does.Contain("Azure DevOps pipeline https://dev.azure.com/azure-sdk/internal/_build/results?buildId=100 has been initiated to generate the SDK. Build ID is 100"));
+
+            Assert.That(result.ToString(), Does.Contain("Azure DevOps pipeline https://dev.azure.com/azure-sdk/internal/_build/results?buildId=100 has been initiated to generate the SDK. Build ID is 100"));
         }
 
         [Test]
@@ -225,7 +220,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             mockTypeSpecHelper.Setup(x => x.IsValidTypeSpecProjectPath(It.IsAny<string>()))
                 .Returns(true);
 
-            mockDevOpsService.Setup(x => x.RunSDKGenerationPipelineAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()))
+            mockDevOpsService.Setup(x => x.RunSDKGenerationPipelineAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()))
                 .ReturnsAsync(new Build()
                 {
                     Id = 100,
@@ -238,7 +233,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 sdkReleaseType: "beta",
                 language: "Java"
             );
-            Assert.That(result, Does.Contain("Azure DevOps pipeline https://dev.azure.com/azure-sdk/internal/_build/results?buildId=100 has been initiated to generate the SDK. Build ID is 100"));
+            Assert.That(result.ToString(), Does.Contain("Azure DevOps pipeline https://dev.azure.com/azure-sdk/internal/_build/results?buildId=100 has been initiated to generate the SDK. Build ID is 100"));
         }
 
         [Test]
@@ -249,7 +244,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             mockTypeSpecHelper.Setup(x => x.IsValidTypeSpecProjectPath(It.IsAny<string>()))
                 .Returns(true);
 
-            mockDevOpsService.Setup(x => x.RunSDKGenerationPipelineAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()))
+            mockDevOpsService.Setup(x => x.RunSDKGenerationPipelineAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()))
                 .ReturnsAsync(new Build()
                 {
                     Id = 100,
@@ -267,7 +262,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 language: "Java",
                 pullRequestNumber: 123
             );
-            Assert.That(result, Does.Contain("Azure DevOps pipeline https://dev.azure.com/azure-sdk/internal/_build/results?buildId=100 has been initiated to generate the SDK. Build ID is 100"));
+            Assert.That(result.ToString(), Does.Contain("Azure DevOps pipeline https://dev.azure.com/azure-sdk/internal/_build/results?buildId=100 has been initiated to generate the SDK. Build ID is 100"));
         }
     }
 }

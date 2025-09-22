@@ -193,7 +193,7 @@ public class PipelineAnalysisTool(
         return build.Project.Name;
     }
 
-    public async Task<List<int>> GetPipelineFailureLogIds(string project, int buildId, CancellationToken ct = default)
+    private async Task<List<int>> getPipelineFailureLogIds(string project, int buildId, CancellationToken ct = default)
     {
         logger.LogDebug("Getting pipeline task failures for {project} {buildId}", project, buildId);
 
@@ -203,7 +203,7 @@ public class PipelineAnalysisTool(
             var _failedTasks = timeline.Records.Where(
                                     r => r.Result == TaskResult.Failed
                                     && r.RecordType == "Task"
-                                    && !IsTestStep(r.Name))
+                                    && !isTestStep(r.Name))
                                 .ToList();
             logger.LogDebug("Found {count} failed tasks", _failedTasks.Count);
             return _failedTasks.Select(t => t.Log?.Id ?? 0).Where(id => id != 0).Distinct().ToList();
@@ -230,7 +230,7 @@ public class PipelineAnalysisTool(
             .Where(r =>
                 r.GetProperty("result").GetString() == "failed" &&
                 r.GetProperty("type").GetString() == "Task" &&
-                !IsTestStep(r.GetProperty("name").GetString())).ToList();
+                !isTestStep(r.GetProperty("name").GetString())).ToList();
 
         List<int> logIds = [];
         foreach (var task in failedTasks)
@@ -249,7 +249,7 @@ public class PipelineAnalysisTool(
         return logIds;
     }
 
-    public async Task<FailedTestRunListResponse> GetPipelineFailedTestResults(string project, int buildId, CancellationToken ct = default)
+    private async Task<FailedTestRunListResponse> getPipelineFailedTestResults(string project, int buildId, CancellationToken ct = default)
     {
         try
         {
@@ -307,7 +307,7 @@ public class PipelineAnalysisTool(
         }
     }
 
-    public async Task<string> GetBuildLogLinesUnauthenticated(string project, int buildId, int logId, CancellationToken ct = default)
+    private async Task<string> getBuildLogLinesUnauthenticated(string project, int buildId, int logId, CancellationToken ct = default)
     {
         var logUrl = $"{Constants.AZURE_SDK_DEVOPS_BASE_URL}/{project}/_apis/build/builds/{buildId}/logs/{logId}?api-version=7.1";
         logger.LogDebug("Fetching log file from {url}", logUrl);
@@ -326,73 +326,7 @@ public class PipelineAnalysisTool(
     {
         try
         {
-            project ??= Constants.AZURE_SDK_DEVOPS_PUBLIC_PROJECT;
-            var session = $"{project}-{buildId}";
-            List<string> logs = [];
-
-            foreach (var logId in logIds)
-            {
-                string logText;
-                logger.LogDebug("Downloading pipeline failure log for {project} {buildId} {logId}", project, buildId, logId);
-
-                if (project == Constants.AZURE_SDK_DEVOPS_PUBLIC_PROJECT)
-                {
-                    logText = await GetBuildLogLinesUnauthenticated(project, buildId, logId, ct);
-                }
-                else
-                {
-                    var logContent = await buildClient.GetBuildLogLinesAsync(project, buildId, logId, cancellationToken: ct);
-                    logText = string.Join("\n", logContent);
-                }
-
-                var tempPath = Path.GetTempFileName() + ".txt";
-                logger.LogDebug("Writing log id {logId} to temporary file {tempPath}", logId, tempPath);
-                await File.WriteAllTextAsync(tempPath, logText, ct);
-                var filename = $"{session}-{logId}.txt";
-                logs.Add(tempPath);
-            }
-
-            if (!analyzeWithAgent)
-            {
-                LogAnalysisResponse response = new() { Errors = [] };
-                foreach (var log in logs)
-                {
-                    var localLogResult = await logAnalysisHelper.AnalyzeLogContent(log, null, null, null);
-                    response.Errors.AddRange(localLogResult);
-                }
-                return response;
-            }
-
-            var result = await azureAgentService.QueryFiles(logs, session, query, ct);
-            // Sometimes chat gpt likes to wrap the json in markdown
-            if (result.StartsWith("```json"))
-            {
-                result = result[7..].Trim();
-            }
-            if (result.EndsWith("```"))
-            {
-                result = result[..^3].Trim();
-            }
-
-            foreach (var log in logs)
-            {
-                File.Delete(log);
-            }
-
-            try
-            {
-                return JsonSerializer.Deserialize<LogAnalysisResponse>(result);
-            }
-            catch (JsonException ex)
-            {
-                logger.LogError(ex, "Failed to deserialize log analysis response");
-                logger.LogError("Response:\n{result}", result);
-
-                return new LogAnalysisResponse()
-                {
-                    ResponseError = "Failed to deserialize log analysis response. Check the logs for more details.",
-                };
-            }
+            return await analyzePipelineFailureLogs(project, buildId, query, logIds, analyzeWithAgent, ct);
         }
         catch (Exception ex)
         {
@@ -401,6 +335,73 @@ public class PipelineAnalysisTool(
             {
                 ResponseError = $"Failed to analyze pipeline {buildId}: {ex.Message}",
             };
+        }
+    }
+
+    private async Task<LogAnalysisResponse> analyzePipelineFailureLogs(string? project, int buildId, string query, List<int> logIds, bool analyzeWithAgent, CancellationToken ct)
+    {
+        project ??= Constants.AZURE_SDK_DEVOPS_PUBLIC_PROJECT;
+        var session = $"{project}-{buildId}";
+        List<string> logs = [];
+
+        foreach (var logId in logIds)
+        {
+            string logText;
+            logger.LogDebug("Downloading pipeline failure log for {project} {buildId} {logId}", project, buildId, logId);
+
+            if (project == Constants.AZURE_SDK_DEVOPS_PUBLIC_PROJECT)
+            {
+                logText = await getBuildLogLinesUnauthenticated(project, buildId, logId, ct);
+            }
+            else
+            {
+                var logContent = await buildClient.GetBuildLogLinesAsync(project, buildId, logId, cancellationToken: ct);
+                logText = string.Join("\n", logContent);
+            }
+
+            var tempPath = Path.GetTempFileName() + ".txt";
+            logger.LogDebug("Writing log id {logId} to temporary file {tempPath}", logId, tempPath);
+            await File.WriteAllTextAsync(tempPath, logText, ct);
+            var filename = $"{session}-{logId}.txt";
+            logs.Add(tempPath);
+        }
+
+        if (!analyzeWithAgent)
+        {
+            LogAnalysisResponse response = new() { Errors = [] };
+            foreach (var log in logs)
+            {
+                var localLogResult = await logAnalysisHelper.AnalyzeLogContent(log, null, null, null);
+                response.Errors.AddRange(localLogResult);
+            }
+            return response;
+        }
+
+        var result = await azureAgentService.QueryFiles(logs, session, query, ct);
+        // Sometimes chat gpt likes to wrap the json in markdown
+        if (result.StartsWith("```json"))
+        {
+            result = result[7..].Trim();
+        }
+        if (result.EndsWith("```"))
+        {
+            result = result[..^3].Trim();
+        }
+
+        foreach (var log in logs)
+        {
+            File.Delete(log);
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<LogAnalysisResponse>(result);
+        }
+        catch (JsonException ex)
+        {
+            logger.LogError(ex, "Failed to deserialize log analysis response");
+            logger.LogError("Response:\n{result}", result);
+            throw;
         }
     }
 
@@ -430,8 +431,8 @@ public class PipelineAnalysisTool(
                 project = await GetPipelineProject(buildId, project);
             }
 
-            var failureLogIds = await GetPipelineFailureLogIds(project, buildId, ct);
-            var analysis = await AnalyzePipelineFailureLogs(project, buildId, query, failureLogIds, analyzeWithAgent, ct);
+            var failureLogIds = await getPipelineFailureLogIds(project, buildId, ct);
+            var analysis = await analyzePipelineFailureLogs(project, buildId, query, failureLogIds, analyzeWithAgent, ct);
 
             var failedTests = new FailedTestRunListResponse();
             var failedTestArtifacts = await devopsService.GetPipelineLlmArtifacts(project, buildId);
@@ -468,7 +469,7 @@ public class PipelineAnalysisTool(
         }
     }
 
-    public bool IsTestStep(string stepName)
+    private bool isTestStep(string stepName)
     {
         if (stepName.Contains("deploy test resources", StringComparison.OrdinalIgnoreCase))
         {

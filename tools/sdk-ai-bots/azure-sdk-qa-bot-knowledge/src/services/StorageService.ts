@@ -24,7 +24,7 @@ export class BlobService {
         const storageAccountName = process.env.STORAGE_ACCOUNT_NAME;
         if (!storageAccountName) {
             throw new Error(
-                "AZURE_STORAGE_ACCOUNT_NAME environment variable is required"
+                "STORAGE_ACCOUNT_NAME environment variable is required"
             );
         }
 

@@ -22,7 +22,7 @@ export class SearchService {
         const searchApiKey = process.env.AI_SEARCH_API_KEY;
         
         if (!searchServiceName || !searchIndexName) {
-            throw new Error('AZURE_SEARCH_SERVICE_NAME and AZURE_SEARCH_INDEX_NAME environment variables are required');
+            throw new Error('AI_SEARCH_SERVICE_NAME and AI_SEARCH_INDEX environment variables are required');
         }
 
         const endpoint = `https://${searchServiceName}.search.windows.net`;

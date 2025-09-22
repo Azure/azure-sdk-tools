@@ -28,7 +28,7 @@ export async function initSecrets(): Promise<void> {
         }
 
         process.env.AI_SEARCH_API_KEY = aiSearchSecretResponse.value;
-        console.log('Set AI_SEARCH_APIKEY from Key Vault');
+        console.log('Set AI_SEARCH_API_KEY from Key Vault');
 
         // Get AOAI Chat Completions API Key
         const aoaiSecretResponse = await client.getSecret('AOAI-CHAT-COMPLETIONS-API-KEY');

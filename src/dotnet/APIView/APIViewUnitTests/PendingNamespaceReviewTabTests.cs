@@ -497,8 +497,8 @@ namespace APIViewUnitTests
         [Theory]
         [InlineData("true", true)]
         [InlineData("false", false)]
-        [InlineData("invalid", true)] // Default to true for invalid values
-        [InlineData(null, true)] // Default to true for null values
+        [InlineData("invalid", false)] // Default to false for invalid values
+        [InlineData(null, false)] // Default to false for null values
         public void EnablePendingReviewTab_ControlsNamespaceApprovalsTab(string configValue, bool expectedResult)
         {
             // Arrange - This feature flag now controls the Pending Namespace Approvals tab, not the Pending Reviews tab

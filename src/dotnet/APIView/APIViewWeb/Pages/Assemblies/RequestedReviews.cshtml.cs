@@ -45,8 +45,7 @@ namespace APIViewWeb.Pages.Assemblies
                 {
                     return isEnabled;
                 }
-                // Default to true for backward compatibility
-                return true;
+                return false;
             }
         }
 

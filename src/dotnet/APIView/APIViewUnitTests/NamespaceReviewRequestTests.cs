@@ -423,10 +423,33 @@ namespace APIViewUnitTests
                 .Setup(r => r.GetReviewAsync("python-review-id"))
                 .ReturnsAsync(pythonReview);
 
-            // Setup API revisions (empty for simplicity)
+            // Setup API revision for finding related reviews
+            var testRevision = new APIRevisionListItemModel
+            {
+                Id = "revision1",
+                PullRequestNo = 12345,
+                Label = "Created for PR 12345"
+            };
+            
             _mockApiRevisionsManager
-                .Setup(a => a.GetAPIRevisionsAsync(reviewId, "", APIRevisionType.All))
-                .ReturnsAsync(new List<APIRevisionListItemModel>());
+                .Setup(a => a.GetAPIRevisionAsync("revision1"))
+                .ReturnsAsync(testRevision);
+
+            // Setup pull requests repository to return related pull requests
+            var mockPullRequests = new List<PullRequestModel>
+            {
+                new PullRequestModel { ReviewId = "java-review-id" },
+                new PullRequestModel { ReviewId = "python-review-id" }
+            };
+            
+            _mockPullRequestsRepository
+                .Setup(p => p.GetPullRequestsAsync(12345, "Azure/azure-rest-api-specs"))
+                .ReturnsAsync(mockPullRequests);
+
+            // Setup GetReviewsAsync to return associated reviews
+            _mockReviewsRepository
+                .Setup(r => r.GetReviewsAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<bool?>()))
+                .ReturnsAsync(new List<ReviewListItemModel> { javaReview, pythonReview });
 
             // Track updated reviews
             var updatedReviews = new List<ReviewListItemModel>();
@@ -464,12 +487,18 @@ namespace APIViewUnitTests
             // We can verify the operation succeeded by checking the data was processed correctly
 
             // Verify that reviews were updated with namespace status and timestamp
-            updatedReviews.Should().HaveCount(3); // Main review + 2 associated reviews
+            updatedReviews.Should().HaveCount(2); // Only associated reviews are updated (not the main TypeSpec review)
             
-            var updatedMainReview = updatedReviews.FirstOrDefault(r => r.Id == reviewId);
-            updatedMainReview.Should().NotBeNull();
-            updatedMainReview.NamespaceReviewStatus.Should().Be(NamespaceReviewStatus.Pending);
-            updatedMainReview.NamespaceApprovalRequestedOn.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMinutes(1));
+            // Verify that the associated reviews were updated correctly
+            var javaReviewUpdated = updatedReviews.FirstOrDefault(r => r.Id == "java-review-id");
+            javaReviewUpdated.Should().NotBeNull();
+            javaReviewUpdated.NamespaceReviewStatus.Should().Be(NamespaceReviewStatus.Pending);
+            javaReviewUpdated.NamespaceApprovalRequestedOn.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMinutes(1));
+            
+            var pythonReviewUpdated = updatedReviews.FirstOrDefault(r => r.Id == "python-review-id");
+            pythonReviewUpdated.Should().NotBeNull();
+            pythonReviewUpdated.NamespaceReviewStatus.Should().Be(NamespaceReviewStatus.Pending);
+            pythonReviewUpdated.NamespaceApprovalRequestedOn.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMinutes(1));
 
             // Verify notification was called
             _mockNotificationManager.Verify(
@@ -489,11 +518,6 @@ namespace APIViewUnitTests
             var associatedReviewIds = new List<string> { "java-review-id" };
             var user = CreateTestUser("testuser");
 
-            // Setup repository to throw exception for null reviewId (this is what happens in reality)
-            _mockReviewsRepository
-                .Setup(r => r.GetReviewAsync(reviewId))
-                .ThrowsAsync(new ArgumentNullException("reviewId"));
-
             // Setup HttpContext for the controller
             var httpContext = new DefaultHttpContext();
             httpContext.User = user;
@@ -512,10 +536,10 @@ namespace APIViewUnitTests
             var statusResult = result as StatusCodeResult;
             statusResult.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
 
-            // Verify the repository was called
+            // The repository is not called because the implementation throws ArgumentException before repository access
             _mockReviewsRepository.Verify(
                 r => r.GetReviewAsync(reviewId),
-                Times.Once);
+                Times.Never);
         }
 
         [Fact]

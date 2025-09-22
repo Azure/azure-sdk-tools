@@ -7,3 +7,14 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-patch"]
+  
+  - package-ecosystem: "npm"
+    directory: "/eng/common/tsp-client"
+    schedule:
+      interval: "daily"
+    versioning-strategy: increase
+
+  - package-ecosystem: "npm"
+    directory: "/eng/common/spelling"
+    schedule:
+      interval: "daily"

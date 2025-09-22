@@ -2,7 +2,6 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
-using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
@@ -23,7 +22,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
             var mockGitHubService = new Mock<IGitHubService>();
             var gitHelper = new GitHelper(mockGitHubService.Object, NullLogger<GitHelper>.Instance);
-            LangService = new GoLanguageSpecificChecks(new ProcessHelper(NullLogger<ProcessHelper>.Instance, Mock.Of<IOutputHelper>()), new NpxHelper(NullLogger<NpxHelper>.Instance, Mock.Of<IOutputHelper>()), gitHelper, NullLogger<GoLanguageSpecificChecks>.Instance);
+            LangService = new GoLanguageSpecificChecks(new ProcessHelper(NullLogger<ProcessHelper>.Instance, Mock.Of<IRawOutputHelper>()), new NpxHelper(NullLogger<NpxHelper>.Instance, Mock.Of<IRawOutputHelper>()), gitHelper, NullLogger<GoLanguageSpecificChecks>.Instance);
 
             if (!await LangService.CheckDependencies(CancellationToken.None))
             {
@@ -59,7 +58,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 import (
                     "github.com/Azure/azure-sdk-for-go/sdk/messaging/azservicebus"      // an unused dep we're going to remove
                     "github.com/Azure/azure-sdk-for-go/sdk/azidentity"
-                )                
+                )
 
                 func main() {
                     cred, err := azidentity.NewDefaultAzureCredential(nil)
@@ -95,7 +94,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 package main
 
                 import (
-                )                
+                )
 
                 func main() {
                     syntax error
@@ -117,11 +116,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 package main
 
                 import (
-                )                
+                )
 
                 func unusedFunc() {}
 
-                func main() {                    
+                func main() {
                 }
                 """);
 

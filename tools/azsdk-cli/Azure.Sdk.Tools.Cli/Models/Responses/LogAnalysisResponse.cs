@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models;
 
-public class LogAnalysisResponse : Response
+public class LogAnalysisResponse : CommandResponse
 {
     [JsonPropertyName("summary")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]

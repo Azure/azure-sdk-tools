@@ -156,6 +156,13 @@ describe('ReviewPageOptionsComponent', () => {
         const result = component['isCopilotReviewSupportedForPackage']();
         expect(result).toBe(true);
       });
+
+      it('should return false for TypeSpec packages', () => {
+        component.review!.packageName = 'some-package';
+        component.review!.language = 'TypeSpec';
+        const result = component['isCopilotReviewSupportedForPackage']();
+        expect(result).toBe(false);
+      });
     });
 
     describe('isCopilotReviewSupported property', () => {

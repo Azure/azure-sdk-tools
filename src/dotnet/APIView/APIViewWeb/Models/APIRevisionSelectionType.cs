@@ -23,5 +23,10 @@ public enum APIRevisionSelectionType
     ///     Use the latest manual revision (non-automatic)
     /// </summary>
     LatestManual = 4
+}
 
+public enum APIRevisionContentReturnType
+{
+    Text,
+    CodeFile
 }

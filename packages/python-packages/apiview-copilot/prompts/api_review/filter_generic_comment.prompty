@@ -1,6 +1,6 @@
 ---
-name: Judge Generic APIView Review Comments
-description: A prompt that judges generic API review comments to ensure they are not contradicting internal guidance.
+name: Filter Generic APIView Review Comments
+description: A prompt that filters generic API review comments to ensure they are not contradicting internal guidance.
 authors:
   - tjprescott
 version: 1.0.0
@@ -16,15 +16,16 @@ model:
     top_p: 1.0
     stop: []
     max_tokens: 16384
+    response_format: ${file:action_schema.json}
 sample:
   language: Python
   content: |
     {
       "line_no": 4,
       "bad_code": "def foo(self, a: str, b: str, *, c: ..., d: ..., e: ...) -> Foo:",
+      "is_generic": true,
       "suggestion": "def foo(self, a: str, b: str, *, options: FooOptions) -> Foo:",
       "comment": "You have many optional keyword-only arguments. Consider organizing them into a configuration object.",
-      "source": "generic"
     }
   context: |
     > **id:** python_design.html#python-client-constructor-policy-arguments<br>**score:** 69<br>
@@ -226,16 +227,7 @@ system:
   2. The most relevant guidance based on that comment.
 
   # OUTPUT REQUIREMENTS
-  
-  - You must output the following schema, but NO DOT includes the ```json or ``` tags:
-  ```json
-  {
-    "is_valid": boolean,
-    "rationale": string
-  }
-  ```
-  - `is_valid` should be `true` if the comment is consistent with the context, or `false` if it contradicts the context.
-  - `rationale` should explain why the comment is valid or invalid, referencing relevant parts of the context
+  - `action` should be `KEEP` if the comment is consistent with the context, or `DISCARD` if it contradicts the context.
 
 user:
   Please judge the following {{language}} comment:
@@ -245,6 +237,3 @@ user:
   Check if it aligns with or contradicts the provided context:
   # CONTEXT
   {{context}}
-
-  # OUTPUT
-  Out using the schema provided.

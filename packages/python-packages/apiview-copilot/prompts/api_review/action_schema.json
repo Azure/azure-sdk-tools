@@ -1,0 +1,22 @@
+{
+  "type": "json_schema",
+  "json_schema": {
+    "name": "action_result",
+    "strict": true,
+    "schema": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string",
+          "description": "The recommended action. Allowed actions must be noted in the prompt."
+        },
+        "rationale": {
+          "type": "string",
+          "description": "A concise explanation of why the action was chosen, referencing relevant parts of the context."
+        }
+      },
+      "required": ["action", "rationale"],
+      "additionalProperties": false
+    }
+  }
+}

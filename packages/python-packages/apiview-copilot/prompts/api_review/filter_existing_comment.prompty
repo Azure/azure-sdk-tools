@@ -16,14 +16,14 @@ model:
     top_p: 1.0
     stop: []
     max_tokens: 16384
-    response_format: ${file:existing_comparison_result_schema.json}
+    response_format: ${file:filter_existing_comment_result_schema.json}
 sample:
   language: Python
   existing: |
     [
       {
         "line_no": 4,
-        "commentText": "What is this for?",
+        "commentText": "Where's your async client? It should be `azure.widget.aio.WidgetClient`.",
         "createdBy": "tjprescott"
       },
     ]
@@ -43,9 +43,9 @@ system:
 
   # TASK
   Your task to see if the proposed comment says anything materially different from existing comments.
-  - If there's an existing comment by "azure-sdk" then you MUST NOT propose a new comment.
+  - If there's an existing comment by "@azure-sdk" then you MUST NOT propose a new comment.
   - If the proposed comment is materially different from other existing comments, then you should propose it.
-  - If the proposed comment is the same as an existing comment, then you SHOULD NOT propose it.
+  - If the proposed comment is the same in meaning as an existing comment, then you SHOULD NOT propose it.
   - If the proposed comment is similar to existing comments but has some new information, then you should rephrase the proposed comment to focus only on the new information.
 
 user:

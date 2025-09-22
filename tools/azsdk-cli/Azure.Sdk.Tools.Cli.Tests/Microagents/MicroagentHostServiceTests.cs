@@ -25,7 +25,7 @@ internal class MicroagentHostServiceTests
         chatClientMock = new Mock<ChatClient>();
         openAIClientMock.Setup(client => client.GetChatClient(It.IsAny<string>()))
             .Returns(chatClientMock.Object);
-        var tokenUsageHelper = new TokenUsageHelper(Mock.Of<Azure.Sdk.Tools.Cli.Helpers.IOutputHelper>());
+        var tokenUsageHelper = new TokenUsageHelper(Mock.Of<Azure.Sdk.Tools.Cli.Helpers.IRawOutputHelper>());
         microagentHostService = new MicroagentHostService(openAIClientMock.Object, loggerMock.Object, tokenUsageHelper);
     }
 

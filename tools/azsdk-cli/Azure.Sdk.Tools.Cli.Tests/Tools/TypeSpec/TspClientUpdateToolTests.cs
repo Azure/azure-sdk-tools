@@ -16,17 +16,6 @@ public class TspClientUpdateToolAutoTests
         Directory.CreateDirectory(path);
         return path;
     }
-    private class NullOutputService : IOutputHelper
-    {
-        public string Format(object response) => string.Empty;
-        public string ValidateAndFormat<T>(string response) => string.Empty;
-        public void Output(object output) { }
-        public void Output(string output) { }
-        public void OutputError(object output) { }
-        public void OutputError(string output) { }
-        public void OutputConsole(string output) { }
-        public void OutputConsoleError(string output) { }
-    }
 
     // Language service that produces no API changes
     private class MockNoChangeLanguageService : IClientUpdateLanguageService
@@ -63,7 +52,7 @@ public class TspClientUpdateToolAutoTests
         var svc = new MockNoChangeLanguageService();
         var resolver = new SingleResolver(svc);
         var tsp = new MockTspHelper();
-        var tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), new NullOutputService(), resolver, tsp);
+        var tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), resolver, tsp);
         var pkg = CreateTempPackageDir();
         var run = await tool.UpdateAsync("0123456789abcdef0123456789abcdef01234567", packagePath: pkg, ct: CancellationToken.None);
         Assert.That(run.Session, Is.Not.Null, "Session should be created");
@@ -77,7 +66,7 @@ public class TspClientUpdateToolAutoTests
         var svc = new MockChangeLanguageService();
         var resolver = new SingleResolver(svc);
         var tsp = new MockTspHelper();
-        var tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), new NullOutputService(), resolver, tsp);
+        var tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), resolver, tsp);
         var pkg = CreateTempPackageDir();
         var first = await tool.UpdateAsync("89abcdef0123456789abcdef0123456789abcdef", packagePath: pkg, ct: CancellationToken.None);
         Assert.That(first.Session, Is.Not.Null);
@@ -88,9 +77,9 @@ public class TspClientUpdateToolAutoTests
     public async Task Validation_Failure_Then_AutoFixes_Applied()
     {
         var tsp = new MockTspHelper();
-        var tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), new NullOutputService(), new SingleResolver(new MockNoChangeLanguageService()), tsp);
+        var tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), new SingleResolver(new MockNoChangeLanguageService()), tsp);
         int calls = 0; var svc = new TestLanguageServiceFailThenFix(() => calls++);
-        tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), new NullOutputService(), new SingleResolver(svc), tsp);
+        tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), new SingleResolver(svc), tsp);
         var pkg = CreateTempPackageDir();
         var resp = await tool.UpdateAsync("fedcba9876543210fedcba9876543210fedcba98", packagePath: pkg, ct: CancellationToken.None);
         Assert.That(resp.Session, Is.Not.Null);

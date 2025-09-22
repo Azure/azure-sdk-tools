@@ -89,7 +89,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<ReleasePlanDetails> GetReleasePlanForWorkItemAsync(int workItemId);
         public Task<ReleasePlanDetails> GetReleasePlanAsync(string pullRequestUrl);
         public Task<WorkItem> CreateReleasePlanWorkItemAsync(ReleasePlanDetails releasePlan);
-        public Task<Build> RunSDKGenerationPipelineAsync(string branchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId);
+        public Task<Build> RunSDKGenerationPipelineAsync(string apiSpecBranchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId, string sdkRepoBranch = "");
         public Task<Build> GetPipelineRunAsync(int buildId);
         public Task<string> GetSDKPullRequestFromPipelineRunAsync(int buildId, string language, int workItemId);
         public Task<bool> AddSdkInfoInReleasePlanAsync(int workItemId, string language, string sdkGenerationPipelineUrl, string sdkPullRequestUrl);
@@ -98,7 +98,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<bool> UpdateSpecPullRequestAsync(int releasePlanWorkItemId, string specPullRequest);
         public Task<bool> LinkNamespaceApprovalIssueAsync(int releasePlanWorkItemId, string url);
         public Task<PackageResponse> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "");
-        public Task<Build> RunPipelineAsync(int pipelineDefinitionId, Dictionary<string, string> templateParams, string branchRef = "main");
+        public Task<Build> RunPipelineAsync(int pipelineDefinitionId, Dictionary<string, string> templateParams, string apiSpecBranchRef = "main");
         public Task<Dictionary<string, List<string>>> GetPipelineLlmArtifacts(string project, int buildId);
     }
 
@@ -540,7 +540,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             };
         }
 
-        public async Task<Build> RunSDKGenerationPipelineAsync(string branchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId)
+        public async Task<Build> RunSDKGenerationPipelineAsync(string apiSpecBranchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId, string sdkRepoBranch = "")
         {
             int pipelineDefinitionId = GetPipelineDefinitionId(language);
             if (pipelineDefinitionId == 0)
@@ -550,6 +550,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             var templateParams = new Dictionary<string, string>
             {
+                 { "SdkRepoBranch", sdkRepoBranch},
                  { "ConfigType", "TypeSpec"},
                  { "ConfigPath", $"{typespecProjectRoot}/tspconfig.yaml" },
                  { "ApiVersion", apiVersion },
@@ -557,7 +558,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                  { "CreatePullRequest", "true" },
                  { "ReleasePlanWorkItemId", $"{workItemId}"}
             };
-            var build = await RunPipelineAsync(pipelineDefinitionId, templateParams, branchRef);
+            var build = await RunPipelineAsync(pipelineDefinitionId, templateParams, apiSpecBranchRef);
             var pipelineRunUrl = GetPipelineUrl(build.Id);
             logger.LogInformation($"Started pipeline run {pipelineRunUrl} to generate SDK.");
             if (workItemId != 0)
@@ -569,7 +570,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             return build;
         }
 
-        public async Task<Build> RunPipelineAsync(int pipelineDefinitionId, Dictionary<string, string> templateParams, string branchRef = "main")
+        public async Task<Build> RunPipelineAsync(int pipelineDefinitionId, Dictionary<string, string> templateParams, string apiSpecBranchRef = "main")
         {
             if (pipelineDefinitionId == 0)
             {
@@ -587,7 +588,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 Definition = definition,
                 Project = project,
-                SourceBranch = branchRef,
+                SourceBranch = apiSpecBranchRef,
                 TemplateParameters = templateParams
             });
             return build;

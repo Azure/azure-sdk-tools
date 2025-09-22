@@ -3,58 +3,69 @@ import { Item } from "../../rustdoc-types/output/rustdoc-types";
 import { createDocsReviewLines } from "./utils/generateDocReviewLine";
 import { isConstantItem } from "./utils/typeGuards";
 import { typeToReviewTokens } from "./utils/typeToReviewTokens";
-import { lineIdMap } from "../utils/lineIdUtils";
+import { createContentBasedLineId } from "../utils/lineIdUtils";
 
-export function processConstant(item: Item) {
+export function processConstant(item: Item, lineIdPrefix: string = "") {
   if (!isConstantItem(item)) return;
-  const reviewLines: ReviewLine[] = item.docs ? createDocsReviewLines(item) : [];
+
+  // Build tokens first
+  const tokens = [
+    {
+      Kind: TokenKind.Keyword,
+      Value: "pub const",
+    },
+    {
+      Kind: TokenKind.MemberName,
+      Value: item.name || "unknown_const",
+      HasSuffixSpace: false,
+      NavigateToId: item.id.toString(), // Will be updated in post-processing
+    },
+    {
+      Kind: TokenKind.Punctuation,
+      Value: ":",
+    },
+    ...typeToReviewTokens(item.inner.constant.type),
+    {
+      Kind: TokenKind.Punctuation,
+      Value: " =",
+    },
+    {
+      Kind: TokenKind.Text,
+      Value: item.inner.constant.const.expr || "unknown_const_expr",
+      HasSuffixSpace: false,
+    },
+    {
+      Kind: TokenKind.Punctuation,
+      Value: ";",
+    }
+  ];
+
+  if (item.inner.constant.const.value) {
+    tokens.push(
+      {
+        Kind: TokenKind.Punctuation,
+        Value: "//",
+      },
+      {
+        Kind: TokenKind.Text,
+        Value: item.inner.constant.const.value,
+      }
+    );
+  }
+
+  // Create content-based LineId from tokens
+  const contentBasedLineId = createContentBasedLineId(tokens, lineIdPrefix, item.id.toString());
+
+  // Create docs with content-based LineId
+  const reviewLines: ReviewLine[] = item.docs ? createDocsReviewLines(item, contentBasedLineId) : [];
 
   // Create the ReviewLine object
   const reviewLine: ReviewLine = {
-    LineId: item.id.toString(),
-    Tokens: [],
+    LineId: contentBasedLineId,
+    Tokens: tokens,
     Children: [],
   };
 
-  reviewLine.Tokens.push({
-    Kind: TokenKind.Keyword,
-    Value: "pub const",
-  });
-  reviewLine.Tokens.push({
-    Kind: TokenKind.MemberName,
-    Value: item.name || "unknown_const",
-    HasSuffixSpace: false,
-    NavigateToId: item.id.toString(),
-  });
-  reviewLine.Tokens.push({
-    Kind: TokenKind.Punctuation,
-    Value: ":",
-  });
-  reviewLine.Tokens.push(...typeToReviewTokens(item.inner.constant.type));
-  reviewLine.Tokens.push({
-    Kind: TokenKind.Punctuation,
-    Value: " =",
-  });
-  reviewLine.Tokens.push({
-    Kind: TokenKind.Text,
-    Value: item.inner.constant.const.expr || "unknown_const_expr",
-    HasSuffixSpace: false,
-  });
-  reviewLine.Tokens.push({
-    Kind: TokenKind.Punctuation,
-    Value: ";",
-  });
-  if (item.inner.constant.const.value) {
-    reviewLine.Tokens.push({
-      Kind: TokenKind.Punctuation,
-      Value: "//",
-    });
-    reviewLine.Tokens.push({
-      Kind: TokenKind.Text,
-      Value: item.inner.constant.const.value,
-    });
-  }
   reviewLines.push(reviewLine);
-  lineIdMap.set(item.id.toString(), `const_${item.name}`);
   return reviewLines;
 }

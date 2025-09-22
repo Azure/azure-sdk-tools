@@ -440,25 +440,10 @@ namespace APIViewWeb.Managers
             
             try
             {
-                // Get the specific revision to find its pull request number
-                var revision = await _apiRevisionsManager.GetAPIRevisionAsync(revisionId);
-
-                // TODO FIX: current db is showing null for PullRequestNo in APIRevision
-                int? prNumber = revision?.PullRequestNo;
-                if (!prNumber.HasValue && !string.IsNullOrEmpty(revision?.Label))
-                {
-                    prNumber = ExtractPRNumberFromLabel(revision.Label);
-                }
-
-                if (!prNumber.HasValue || prNumber.Value <= 0)
-                {
-                    return relatedReviews;
-                }
-                
                 try
                 {
-                    // Look up pull requests in azure-rest-api-specs repository (most common for TypeSpec)
-                    var pullRequests = await _pullRequestsRepository.GetPullRequestsAsync(prNumber.Value, "Azure/azure-rest-api-specs");
+                    // Look up pull requests directly by revision ID - much more reliable than extracting PR numbers
+                    var pullRequests = await _pullRequestsRepository.GetPullRequestsAsync(typeSpecReviewId, revisionId);
                     // Get all review IDs from pull requests first to batch the database calls
                     var reviewIds = pullRequests
                         .Select(pr => pr.ReviewId)
@@ -484,33 +469,6 @@ namespace APIViewWeb.Managers
             }
         }
 
-        /// <summary>
-        /// Extract PR number from label when PullRequestNo is null
-        /// </summary>
-        /// <param name="label">Label containing PR information like "Created for PR 37555"</param>
-        /// <returns>PR number if found, null otherwise</returns>
-        private int? ExtractPRNumberFromLabel(string label)
-        {
-            if (string.IsNullOrEmpty(label))
-                return null;
-            
-            try
-            {
-                // Look for patterns like "Created for PR 37555", "PR 12345", etc.
-                var prMatches = System.Text.RegularExpressions.Regex.Matches(label, @"PR\s+(\d+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-
-                if (prMatches.Count > 0 && int.TryParse(prMatches[0].Groups[1].Value, out int prNumber))
-                {
-                    return prNumber;
-                }
-                return null;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "ExtractPRNumberFromLabel - Error extracting PR number from label: {Label}", label);
-                return null;
-            }
-        }
 
         /// <summary>
         /// Sends info to AI service for generating initial review on APIReview file

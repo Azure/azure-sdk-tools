@@ -1,4 +1,4 @@
-# Azure SDK QA Bot Knowledge Sync
+# Azure SDK QA Bot Knowledge Syncer
 
 This is a standalone TypeScript application which processes documentation from various repositories and uploads processed content for the Azure SDK QA Bot.
 

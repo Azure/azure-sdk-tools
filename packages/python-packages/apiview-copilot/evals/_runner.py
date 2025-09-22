@@ -32,17 +32,16 @@ class EvalRunner:
             self._workflow_config = load_workflow_config(path_obj)
         except WorkflowConfigError as e:
             raise ValueError(f"Invalid workflow config: {e}") from e
-        self._is_workflow = True
 
         self._tests_directory = self._workflow_config.tests_path.parent
         self._test_files: List[pathlib.Path] = [self._workflow_config.tests_path]
         
-        evaluation_kind = self._workflow_config.kind
+        evaluation_kind = self._workflow_config.name
         self._evaluator_class = EVALUATORS[evaluation_kind]
 
     def run(self):
         """Run the evaluation over the resolved test files."""
-        custom_eval = self._evaluator_class()
+        custom_eval = self._evaluator_class(self._workflow_config)
         guideline_ids = set()
         all_run_results = []
 

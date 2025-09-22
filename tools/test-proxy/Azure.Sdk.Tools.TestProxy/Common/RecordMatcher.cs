@@ -364,8 +364,15 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                             if (ContentTypeUtilities.IsMultiPart(requestContentType, out var requestBoundary) &&
                                 ContentTypeUtilities.IsMultiPart(entryContentType, out var entryBoundary))
                             {
-                                requestHeaderValues[0] = requestContentType.Replace(requestBoundary, string.Empty);
-                                entryHeaderValues[0] = entryContentType.Replace(entryBoundary, string.Empty);
+                                string requestContentTypeWithoutBoundary = requestContentType.Replace(requestBoundary, string.Empty);
+                                string entryContentTypeWithoutBoundary = entryContentType.Replace(entryBoundary, string.Empty);
+                                if (!requestContentTypeWithoutBoundary.Equals(entryContentTypeWithoutBoundary, StringComparison.Ordinal))
+                                {
+                                    difference++;
+                                    descriptionBuilder?.AppendLine($"    <{headerName}> values differ, request <{requestContentTypeWithoutBoundary}>, record <{entryContentTypeWithoutBoundary}>");
+                                }
+                                remaining.Remove(headerName);
+                                continue;
                             }
                         }
                     }

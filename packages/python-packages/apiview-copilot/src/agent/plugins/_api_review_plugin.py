@@ -8,10 +8,11 @@
 Plugin for performing API reviews using the ApiViewReview class.
 """
 
+import asyncio
 import json
 from typing import Optional
 
-import requests
+import httpx
 from semantic_kernel.functions import kernel_function
 from src._apiview_reviewer import ApiViewReview
 from src._credential import get_credential
@@ -75,6 +76,10 @@ class ApiViewClient:
         return await self.send_request(endpoint)
 
     async def send_request(self, endpoint: str):
+        # strip leading /
+        if endpoint.startswith("/"):
+            endpoint = endpoint[1:]
+
         apiview_endpoints = {
             "production": "https://apiview.dev",
             "staging": "https://apiviewstagingtest.com",
@@ -87,26 +92,12 @@ class ApiViewClient:
         }
         credential = get_credential()
         scope = apiview_scopes.get(self.environment)
-        token = credential.get_token(scope)
-        response = requests.get(
-            endpoint,
-            headers={"Content-Type": "application/json", "Authorization": f"Bearer {token.token}"},
-            timeout=30,
-        )
+        token = await asyncio.to_thread(credential.get_token, scope)
 
-        if response.status_code != 200:
-            print(f"Error retrieving comments: {response.status_code} - {response.text}")
-            return {}
-        try:
-            return response.json()
-        except Exception as json_exc:
-            content = response.content.decode("utf-8")
-            if "Please login using your GitHub account" in content:
-                print("Error: API is still requesting authentication via Github.")
-                return {}
-            else:
-                print(f"Error parsing comments JSON: {json_exc}")
-                return {}
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.get(endpoint, headers={"Authorization": f"Bearer {token.token}"})
+            resp.raise_for_status()
+            return resp.json()
 
 
 class ApiReviewPlugin:

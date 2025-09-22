@@ -373,13 +373,12 @@ namespace APIViewWeb.Managers
 
             // Get related reviews using pull request number from specific TypeSpec revision
             var relatedReviews = await FindRelatedReviewsByPullRequestAsync(reviewId, revisionId);
-
-            // Update the reviews identified by review IDs with namespace approval fields
-            await MarkAssociatedReviewsForNamespaceReview(relatedReviews, userId, requestedOn, reviewGroupId);
-
+ 
             var sdkLanguageReviews = relatedReviews
                                 .Where(r => r != null && LanguageHelper.IsSDKLanguage(r.Language))
                                 .ToList();
+            // Update the reviews identified by review IDs with namespace approval fields
+            await MarkAssociatedReviewsForNamespaceReview(relatedReviews, userId, requestedOn, reviewGroupId);
 
             // Send email notifications to preferred approvers with the actual language review data
             await _notificationManager.NotifyApproversOnNamespaceReviewRequest(user, typeSpecReview, sdkLanguageReviews);
@@ -407,9 +406,23 @@ namespace APIViewWeb.Managers
                         if (review != null && LanguageHelper.IsSDKLanguageOrTypeSpec(review.Language) && review.NamespaceReviewStatus != NamespaceReviewStatus.Approved && !review.IsApproved)
                         {
                             review.ReviewGroupId = reviewGroupId;
-                            review.NamespaceReviewStatus = NamespaceReviewStatus.Pending;
-                            review.NamespaceApprovalRequestedBy = userId;
-                            review.NamespaceApprovalRequestedOn = requestedOn;
+                            
+                            // Check if any revision for this review is already approved
+                            var revisions = await _apiRevisionsManager.GetAPIRevisionsAsync(review.Id);
+                            var hasApprovedRevision = revisions.Any(r => r.IsApproved);
+                            
+                            if (hasApprovedRevision)
+                            {
+                                // If any revision is approved, approve the namespace too (implicit approval)
+                                review.NamespaceReviewStatus = NamespaceReviewStatus.Approved;
+                            }
+                            else
+                            {
+                                // Otherwise set to pending
+                                review.NamespaceReviewStatus = NamespaceReviewStatus.Pending;
+                                review.NamespaceApprovalRequestedBy = userId;
+                                review.NamespaceApprovalRequestedOn = requestedOn;
+                            }
                             
                             await _reviewsRepository.UpsertReviewAsync(review);
                         }

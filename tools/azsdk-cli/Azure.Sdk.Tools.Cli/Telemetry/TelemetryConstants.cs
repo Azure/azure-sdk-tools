@@ -25,6 +25,7 @@ internal static class TelemetryConstants
         public const string CommandArea = "CommandArea";
         public const string CommandArgs = "CommandArgs";
         public const string CommandResponse = "CommandResponse";
+        public const string DebugTag = "IsDebugEnvironment";
     }
 
     internal class ActivityName

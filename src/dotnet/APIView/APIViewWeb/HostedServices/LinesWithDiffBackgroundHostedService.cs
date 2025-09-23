@@ -11,6 +11,7 @@ using Microsoft.ApplicationInsights.DataContracts;
 using System.Collections.Generic;
 using APIViewWeb.LeanModels;
 using System.Linq;
+using APIViewWeb.Helpers;
 
 namespace APIViewWeb.HostedServices
 {
@@ -43,7 +44,7 @@ namespace APIViewWeb.HostedServices
                 var operation = _telemetryClient.StartOperation(requestTelemetry);
                 try
                 {
-                    var reviews = await _reviewManager.GetReviewsAsync(language: "Swagger");
+                    var reviews = await _reviewManager.GetReviewsAsync(language: ApiViewConstants.SwaggerLanguage);
                     reviews = reviews.OrderBy(r => r.CreatedOn).Reverse();
                     int index = 1;
                     int total = reviews.Count();

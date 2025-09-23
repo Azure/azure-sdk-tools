@@ -867,7 +867,7 @@ class ThreadResolutionActionEvaluator(PromptWorkflowEvaluator):
 
 
 # Registry of available evaluators
-EVALUATORS = {
+EVALUATORS: Dict[str, BaseEvaluator] = {
     "apiview": CustomAPIViewEvaluator,
     "mention-action": MentionActionEvaluator,
     "thread-resolution-action": ThreadResolutionActionEvaluator

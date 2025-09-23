@@ -3,9 +3,6 @@ namespace Azure.Sdk.Tools.Cli.Configuration;
 public static class APIViewConfiguration
 {
     public const string UserAgent = "Azure-SDK-Tools-MCP";
-    public const string GitHubTokenEnvironmentVariable = "GITHUB_TOKEN";
-    public const string GitHubCliCommand = "gh auth status --show-token";
-    public const string GitHubTokenRegex = @"Token:\s(?<token>[_a-zA-Z0-9]+)";
 
     public static readonly Dictionary<string, string> BaseUrlEndpoints = new()
     {

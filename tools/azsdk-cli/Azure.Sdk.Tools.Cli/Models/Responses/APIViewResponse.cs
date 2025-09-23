@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models.Responses;
 
-public class APIViewResponse : Response
+public class APIViewResponse : CommandResponse
 {
     [JsonPropertyName("success")]
     public bool Success { get; set; } = false;
@@ -25,6 +25,6 @@ public class APIViewResponse : Response
             output.AppendLine(Message);
         }
 
-        return ToString(output.ToString());
+        return output.ToString();
     }
 }

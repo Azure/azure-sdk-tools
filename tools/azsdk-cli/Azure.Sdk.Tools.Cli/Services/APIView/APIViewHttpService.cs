@@ -5,7 +5,7 @@ namespace Azure.Sdk.Tools.Cli.Services.APIView;
 
 public interface IAPIViewHttpService
 {
-    Task<string?> GetAsync(string endpoint, string operation, string environment = "production", string? authToken = null);
+    Task<string?> GetAsync(string endpoint, string operation, string environment = "production");
 }
 
 public class APIViewHttpService : IAPIViewHttpService
@@ -24,15 +24,14 @@ public class APIViewHttpService : IAPIViewHttpService
         _logger = logger;
     }
 
-    public async Task<string?> GetAsync(string endpoint, string operation, string environment = "production",
-        string? authToken = null)
+    public async Task<string?> GetAsync(string endpoint, string operation, string environment = "production")
     {
         try
         {
             string baseUrl = APIViewConfiguration.BaseUrlEndpoints[environment];
             HttpClient httpClient = _httpClientFactory.CreateClient();
 
-            await _authService.ConfigureAuthenticationAsync(httpClient, environment, authToken);
+            await _authService.ConfigureAuthenticationAsync(httpClient, environment);
 
             string requestUrl = $"{baseUrl}{endpoint}";
             using HttpResponseMessage response = await httpClient.GetAsync(requestUrl);

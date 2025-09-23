@@ -5,9 +5,9 @@ namespace Azure.Sdk.Tools.Cli.Services;
 
 public interface IAPIViewService
 {
-    Task<string?> GetCommentsByRevisionAsync(string revisionId, string environment = "production", string? authToken = null);
-    Task<string?> GetRevisionCodeTokenFile(string activeRevisionId, string environment = "production", string? authToken = null);
-    Task<string?> GetRevisionContentText(string revisionId, string environment = "production", string? authToken = null);
+    Task<string?> GetRevisionContent(string apiRevisionId, string reviewId, string selectionType,
+        string contentReturnType, string environment = "production");
+    Task<string?> GetCommentsByRevisionAsync(string revisionId, string environment = "production");
     Task<string> CheckAuthenticationStatusAsync(string environment = "production");
     Task<string> GetAuthenticationGuidanceAsync();
 }
@@ -28,10 +28,10 @@ public class APIViewService : IAPIViewService
         _logger = logger;
     }
 
-    public async Task<string?> GetCommentsByRevisionAsync(string revisionId, string environment = "production", string? authToken = null)
+    public async Task<string?> GetCommentsByRevisionAsync(string revisionId, string environment = "production")
     {
         string endpoint = $"/api/Comments/getRevisionComments?apiRevisionId={revisionId}";
-        string? result = await _httpService.GetAsync(endpoint, "comments", environment, authToken);
+        string? result = await _httpService.GetAsync(endpoint, "comments", environment);
 
         if (result == null)
         {
@@ -41,31 +41,14 @@ public class APIViewService : IAPIViewService
         return result;
     }
 
-    public async Task<string?> GetRevisionCodeTokenFile(string activeRevisionId, string environment = "production", string? authToken = null)
+    public async Task<string?> GetRevisionContent(string apiRevisionId, string reviewId, string selectionType, string contentReturnType, string environment = "production")
     {
-        string reviewIdEndpoint = $"/api/apirevisions/{activeRevisionId}/getReviewId";
-        string? reviewId = await _httpService.GetAsync(reviewIdEndpoint, "get review ID", environment, authToken);
-
-        string endpoint = $"/api/reviews/{reviewId}/content?activeApiRevisionId={activeRevisionId}";
-        string? result = await _httpService.GetAsync(endpoint, "get revision content", environment, authToken);
-
+        string revisionContentEndpoint = $"/api/apirevisions/getRevisionContent?apiRevisionId={apiRevisionId}&reviewId={reviewId}&selectionType={selectionType}&contentReturnType={contentReturnType}";
+        string? result = await _httpService.GetAsync(revisionContentEndpoint, "get revision content", environment);
         if (string.IsNullOrWhiteSpace(result))
         {
-            _logger.LogWarning("Received empty response for revisions {ActiveRevisionId}", activeRevisionId);
+            _logger.LogWarning("Received empty response for revisions {ActiveRevisionId}", apiRevisionId);
             return null;
-        }
-
-        return result;
-    }
-
-    public async Task<string?> GetRevisionContentText(string revisionId, string environment = "production", string? authToken = null)
-    {
-        string endpoint = $"/api/apirevisions/getRevisionText?apiRevisionId={revisionId}";
-        string? result = await _httpService.GetAsync(endpoint, "latest revision", environment, authToken);
-
-        if (result == null)
-        {
-            _logger.LogWarning("No content found for revision= {RevisionId}", revisionId);
         }
 
         return result;
@@ -82,13 +65,12 @@ public class APIViewService : IAPIViewService
         var guidance = new
         {
             isAuthenticated = !string.IsNullOrEmpty(token),
-            currentTokenSource = _authService.GetTokenSource(token),
+            currentTokenSource = "azure-credentials",
             instructions = _authService.GetAuthenticationGuidance(),
             quickSetup = new
             {
-                githubToken = "Set environment variable: GITHUB_TOKEN=your_token_here",
                 azureCli = "Run: az login",
-                githubCli = "Run: gh auth login"
+                azurePowerShell = "Run: Connect-AzAccount"
             }
         };
 

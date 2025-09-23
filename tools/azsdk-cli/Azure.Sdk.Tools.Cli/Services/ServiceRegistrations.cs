@@ -51,8 +51,8 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             services.AddSingleton<IMicroagentHostService, MicroagentHostService>();
 
-            // Add HttpClient for AI completion service
-            services.AddHttpClient<IAiCompletionService, AiCompletionService>();
+            // Add HttpClient
+            services.AddHttpClient();
 
             services.AddAzureClients(clientBuilder =>
             {

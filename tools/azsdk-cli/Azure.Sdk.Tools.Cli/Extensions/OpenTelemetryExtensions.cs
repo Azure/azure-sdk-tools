@@ -32,7 +32,7 @@ public static class OpenTelemetryExtensions
                     options.Version = assemblyName.Version.ToString();
                 }
 
-                var collectTelemetry = Environment.GetEnvironmentVariable("AZSDKTOOLS_MCP_COLLECT_TELEMETRY");
+                var collectTelemetry = Environment.GetEnvironmentVariable("AZSDKTOOLS_COLLECT_TELEMETRY");
                 options.IsTelemetryEnabled = string.IsNullOrEmpty(collectTelemetry)
                     || (bool.TryParse(collectTelemetry, out var shouldCollect) && shouldCollect);
             });
@@ -88,7 +88,7 @@ public static class OpenTelemetryExtensions
             builder.AddSource(serverConfig.Value.Name);
         });
 
-        var appInsightsConnectionString = Environment.GetEnvironmentVariable("AZSDKTOOLS_MCP_APPLICATIONINSIGHTS_CONNECTION_STRING");
+        var appInsightsConnectionString = Environment.GetEnvironmentVariable("AZSDKTOOLS_APPLICATIONINSIGHTS_CONNECTION_STRING");
         if (string.IsNullOrEmpty(appInsightsConnectionString))
         {
             appInsightsConnectionString = DefaultAppInsights;

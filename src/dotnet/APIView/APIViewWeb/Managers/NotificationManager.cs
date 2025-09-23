@@ -325,9 +325,9 @@ namespace APIViewWeb.Managers
                 }
 
                 var subject = $"Namespace Review Requested: {review.PackageName}";
-                
+
                 // Build TypeSpec URL
-                var typeSpecUrl = $"{_apiviewEndpoint}/Assemblies/Review/{review.Id}";
+                var typeSpecUrl = $"{_configuration.GetValue<string>("APIVIew-Host-Url")}/Assemblies/Review/{review.Id}";
                 
                 // Generate email content using template with actual language review data
                 var emailContent = await _emailTemplateService.GetNamespaceReviewRequestEmailAsync(

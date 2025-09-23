@@ -41,10 +41,10 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             if (string.IsNullOrEmpty(_options.Endpoint) || string.IsNullOrEmpty(_options.ClientId))
             {
-                throw new ArgumentException("Neither the completion API endpoint nor the application client ID has been specified.");
+                throw new ArgumentException($"Neither the AI completion API endpoint nor the application client ID has been specified. Please set environment variable {AiCompletionOptions.EndpointEnvironmentVariable} and {AiCompletionOptions.AzureSDKBotClientIdEnvironmentVariable}.");
             } else
             {
-                _logger.LogInformation("Ai completion service endpoint: {Endpoint}, client id: {ClientId}", _options.Endpoint, _options.ClientId);
+                _logger.LogInformation("AI completion service endpoint: {Endpoint}, client id: {ClientId}", _options.Endpoint, _options.ClientId);
                 
                 var builder = PublicClientApplicationBuilder
                 .Create(_options.ClientId)

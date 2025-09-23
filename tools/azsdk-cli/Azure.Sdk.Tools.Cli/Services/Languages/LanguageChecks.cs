@@ -248,7 +248,7 @@ public class LanguageChecks : ILanguageChecks
 
     /// <summary>
     /// <summary>
-    /// Common spelling check implementation that checks for spelling issues and optionally applies fixes using cspell (via npx).
+    /// Common spelling check implementation that checks for spelling issues and optionally applies fixes.
     /// </summary>
     /// <param name="packagePath">Absolute path to the package directory</param>
     /// <param name="fix">Whether to attempt to automatically fix spelling issues where supported by cspell</param>

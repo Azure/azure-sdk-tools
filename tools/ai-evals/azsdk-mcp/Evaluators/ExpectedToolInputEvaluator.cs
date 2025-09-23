@@ -35,6 +35,7 @@ namespace Azure.Sdk.Tools.McpEvals.Evaluators
             var expectedToolCalls = GetToolContent(context.ChatMessages);
             var actualToolCalls = GetToolContent(modelResponse.Messages);
 
+            // Make sure we have tool calls to compare
             if (!expectedToolCalls.Any())
             {
                 metric.AddDiagnostics(
@@ -52,6 +53,8 @@ namespace Azure.Sdk.Tools.McpEvals.Evaluators
 
                 return result;
             }
+
+            // Equal number of tool calls
             var expCount = expectedToolCalls.Count();
             var actCount = actualToolCalls.Count();
             if (expCount != actCount)
@@ -83,6 +86,20 @@ namespace Azure.Sdk.Tools.McpEvals.Evaluators
                     return result;
                 }
 
+                if(toolCall.exp.Arguments == null)
+                {
+                    // No arguments to compare
+                    continue;
+                }
+
+                if(toolCall.act.Arguments == null)
+                {
+                    metric.AddDiagnostics(
+                    EvaluationDiagnostic.Error(
+                        $"Tool call #{countCalls}, expected arguments for tool {expToolName} but LLM provided none."));
+                    return result;
+                }
+
                 // Since it is a dictionary with a object may just be easier to serialize and compare strings. Can then even return the string args to the user if something went wrong. 
                 try
                 {
@@ -93,14 +110,18 @@ namespace Azure.Sdk.Tools.McpEvals.Evaluators
                         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
                     };
 
-                    var expectedJson = JsonSerializer.Serialize(toolCall.exp.Arguments, options);
-                    var actualJson = JsonSerializer.Serialize(toolCall.act.Arguments, options);
+                    // Sort the dictionaries to prevent ordering issues during comparison
+                    var expectedArguments = new SortedDictionary<string, object?>(toolCall.exp.Arguments);
+                    var actualArguments = new SortedDictionary<string, object?>(toolCall.act.Arguments);
+
+                    var expectedJson = JsonSerializer.Serialize(expectedArguments, options);
+                    var actualJson = JsonSerializer.Serialize(actualArguments, options);
 
                     if (!string.Equals(expectedJson, actualJson, StringComparison.OrdinalIgnoreCase))
                     {
                         metric.AddDiagnostics(
                             EvaluationDiagnostic.Error(
-                                $"Tool call arguments did not match. Expected arguments for the {expToolName} tool but the LLM provided arguments for the {actToolName} tool. This was tool call #{countCalls}\nExpected Argument JSON:{expectedJson}\nActual Argument JSON:{actualJson}"));
+                                $"Tool call arguments did not match. This was tool call #{countCalls}\nExpected Argument JSON:{expectedJson}\nActual Argument JSON:{actualJson}"));
                         return result;
                     }
                 }
@@ -108,7 +129,7 @@ namespace Azure.Sdk.Tools.McpEvals.Evaluators
                 {
                     metric.AddDiagnostics(
                         EvaluationDiagnostic.Error(
-                            $"Tool call #{countCalls}, failed to serialize either the {expToolName} tool or the {actToolName} tool. Error: {ex}"));
+                            $"Tool call #{countCalls}, failed to serialize either the expected tool call or the actual tool call. Error: {ex}"));
                     return result;
                 }
                 

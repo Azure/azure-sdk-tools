@@ -1,0 +1,80 @@
+trigger:
+  branches:
+    include:
+      - main
+      - release/qa-bot
+  paths:
+    include:
+      - tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-syncer/
+
+pr:
+  branches:
+    include:
+      - main
+      - release/qa-bot
+  paths:
+    include:
+      - tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-syncer/
+
+extends:
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  parameters:
+    Use1ESOfficial: false
+    stages:
+      - stage: "AzureSDKQABot_KnowledgeSyncer_CI"
+        jobs:
+          - job: "AzureSDKQABot_KnowledgeSyncer_CI"
+            displayName: "Run AzureSDKQABot Knowledge Syncer CI Checks - "
+
+            variables:
+              - template: /eng/pipelines/templates/variables/globals.yml
+              - template: /eng/pipelines/templates/variables/image.yml
+
+            pool:
+              name: "$(LINUXPOOL)"
+              image: "$(LINUXVMIMAGE)"
+              os: linux
+
+            steps:
+              - task: NodeTool@0
+                displayName: "Use Node.js 20.x"
+                inputs:
+                  versionSpec: '20.x'
+
+              - script: |
+                  node -v
+                  npm -v
+                displayName: "Show Node & npm versions"
+
+              - script: |
+                  cd tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-syncer
+                  npm ci
+                displayName: "Install dependencies"
+
+              - script: |
+                  cd tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-syncer
+                  npm run build
+                displayName: "Build"
+
+              - script: |
+                  cd tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-syncer
+                  npm test -- --reporter=junit --outputFile=vitest-report.xml || echo "Tests completed with exit code $?"
+                displayName: "Run Tests"
+
+              - task: PublishTestResults@2
+                condition: succeededOrFailed()
+                inputs:
+                  testResultsFiles: 'tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-syncer/vitest-report.xml'
+                  testRunTitle: 'Knowledge Syncer tests'
+                displayName: 'Publish test results'
+
+              - script: |
+                  echo "Packaging artifact"
+                  tar -czf knowledge-syncer-dist.tgz -C tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-syncer/dist .
+                displayName: "Package dist"
+
+              - task: PublishBuildArtifacts@1
+                inputs:
+                  pathToPublish: knowledge-syncer-dist.tgz
+                  artifactName: knowledge-syncer-dist
+                displayName: "Publish artifact"

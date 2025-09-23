@@ -531,7 +531,7 @@ async function createReleaseNotesIndex(
 /**
  * Extract date from a filename in the format release-YYYY-MM-DD.md
  */
-function extractDateFromFilename(filePath: string): Date {
+export function extractDateFromFilename(filePath: string): Date {
     const filename = path.basename(filePath);
     const match = filename.match(/release-(\d{4}-\d{2}-\d{2})/);
     
@@ -549,7 +549,7 @@ function extractDateFromFilename(filePath: string): Date {
 /**
  * Extract release info from release note frontmatter
  */
-function extractReleaseInfo(content: string): { title: string; releaseDate: string; version: string } {
+export function extractReleaseInfo(content: string): { title: string; releaseDate: string; version: string } {
     let title = '';
     let releaseDate = '';
     let version = '';
@@ -580,7 +580,7 @@ function extractReleaseInfo(content: string): { title: string; releaseDate: stri
 /**
  * Process a single markdown file
  */
-function processMarkdownFile(
+export function processMarkdownFile(
     filePath: string,
     source: DocumentationSource,
     sourceDir: string
@@ -627,7 +627,7 @@ function processMarkdownFile(
 /**
  * Convert markdown
  */
-function convertMarkdown(content: string): { filename: string; content: string } {
+export function convertMarkdown(content: string): { filename: string; content: string } {
     let title = '';
     let filename = '';
     let foundTitle = false;
@@ -683,7 +683,7 @@ function convertMarkdown(content: string): { filename: string; content: string }
 /**
  * Extract sections and downgrade headers (kept for release notes processing)
  */
-function extractSections(content: string): string {
+export function extractSections(content: string): string {
     // Remove frontmatter
     const contentWithoutFrontmatter = content.replace(/^---\s*\n[\s\S]*?\n---\s*\n/, '');
     

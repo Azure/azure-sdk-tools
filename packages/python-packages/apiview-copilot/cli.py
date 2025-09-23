@@ -277,6 +277,27 @@ def deploy_flask_app():
     deploy_app_to_azure()
 
 
+def _group_apiview_comments(comments_path: str):
+    """
+    Groups similar comments in an APIView comments JSON file.
+    """
+    from src._apiview_reviewer import Comment
+    from src._comment_grouper import CommentGrouper
+
+    comments = []
+    if os.path.exists(comments_path):
+        with open(comments_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    else:
+        print(f"Comments file {comments_path} does not exist.")
+        return
+    comments_data = data.get("comments", [])
+    comments = [Comment(**comment) for comment in comments_data]
+    grouper = CommentGrouper(comments=comments)
+    grouped_comments = grouper.group()
+    return grouped_comments
+
+
 def generate_review(
     language: str,
     target: str,
@@ -945,6 +966,7 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("start-job", "review_job_start")
             g.command("get-job", "review_job_get")
             g.command("summarize", "review_summarize")
+            g.command("group-comments", "_group_apiview_comments")
         with CommandGroup(self, "agent", "__main__#{}") as g:
             g.command("mention", "handle_agent_mention")
             g.command("chat", "handle_agent_chat")

@@ -23,6 +23,7 @@ import prompty
 import prompty.azure_beta
 import yaml
 
+from ._comment_grouper import CommentGrouper
 from ._credential import get_credential, in_ci
 from ._diff import create_diff_with_line_numbers
 from ._models import Comment, ExistingComment, ReviewResult
@@ -833,6 +834,9 @@ class ApiViewReview:
 
             if self.semantic_search_failed:
                 self._print_message("WARN: Semantic search failed for some chunks (see error.log).")
+
+            # Assign correlation IDs for similar comments
+            results.comments = CommentGrouper(comments=results.comments).group()
 
             # Write output JSON if enabled
             if self.write_output:

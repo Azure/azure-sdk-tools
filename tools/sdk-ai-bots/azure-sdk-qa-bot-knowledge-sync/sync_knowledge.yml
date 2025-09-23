@@ -43,7 +43,7 @@ stages:
 
     - task: AzureCLI@2
       inputs:
-        azureSubscription: 'azuresdkqabot'
+        azureSubscription: $(SERVICE_CONNECTION)
         addSpnToEnvironment: true
         scriptType: bash
         scriptLocation: inlineScript

@@ -37,16 +37,10 @@ public interface ILanguageChecks
     /// Checks spelling in the specific package.
     /// </summary>
     /// <param name="packagePath">Path to the package directory</param>
+    /// <param name="fix">Whether to attempt to automatically fix spelling issues where supported by cspell</param>
+    /// <param name="ct">Cancellation token</param>
     /// <returns>Result of the spelling check</returns>
-    Task<CLICheckResponse> CheckSpellingAsync(string packagePath, CancellationToken ct = default);
-
-    /// <summary>
-    /// Attempts to automatically fix spelling issues in the specific package where supported by cspell.
-    /// This operation may modify files in the package directory.
-    /// </summary>
-    /// <param name="packagePath">Path to the package directory</param>
-    /// <returns>Result of the spelling fix operation</returns>
-    Task<CLICheckResponse> FixSpellingAsync(string packagePath, CancellationToken ct = default);
+    Task<CLICheckResponse> CheckSpellingAsync(string packagePath, bool fix = false, CancellationToken ct = default);
 
     /// <summary>
     /// Updates code snippets in the specific package.
@@ -134,14 +128,9 @@ public class LanguageChecks : ILanguageChecks
         return await ValidateReadmeCommonAsync(packagePath, ct);
     }
 
-    public virtual async Task<CLICheckResponse> CheckSpellingAsync(string packagePath, CancellationToken ct)
+    public virtual async Task<CLICheckResponse> CheckSpellingAsync(string packagePath, bool fix = false, CancellationToken ct = default)
     {
-        return await CheckSpellingCommonAsync(packagePath, ct);
-    }
-
-    public virtual async Task<CLICheckResponse> FixSpellingAsync(string packagePath, CancellationToken ct = default)
-    {
-        return await FixSpellingCommonAsync(packagePath, ct);
+        return await CheckSpellingCommonAsync(packagePath, fix, ct);
     }
 
     public virtual async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, CancellationToken ct = default)
@@ -258,12 +247,14 @@ public class LanguageChecks : ILanguageChecks
     }
 
     /// <summary>
-    /// Common spelling check implementation that works for most Azure SDK languages.
-    /// Uses cspell directly to check spelling in the package directory.
+    /// <summary>
+    /// Common spelling check implementation that checks for spelling issues and optionally applies fixes using cspell (via npx).
     /// </summary>
     /// <param name="packagePath">Absolute path to the package directory</param>
+    /// <param name="fix">Whether to attempt to automatically fix spelling issues where supported by cspell</param>
+    /// <param name="ct">Cancellation token</param>
     /// <returns>CLI check response containing success/failure status and response message</returns>
-    protected async Task<CLICheckResponse> CheckSpellingCommonAsync(string packagePath, CancellationToken ct = default)
+    protected async Task<CLICheckResponse> CheckSpellingCommonAsync(string packagePath, bool fix = false, CancellationToken ct = default)
     {
         try
         {
@@ -290,95 +281,51 @@ public class LanguageChecks : ILanguageChecks
                 logOutputStream: true
             );
             var processResult = await _npxHelper.Run(npxOptions, ct: ct);
+
+            // If fix is requested and there are spelling issues, provide fix guidance
+            if (fix && processResult.ExitCode != 0 && !string.IsNullOrWhiteSpace(processResult.Output))
+            {
+                // Build an LLM prompt that instructs the model to either fix typos or add legitimate terms to cspell.json
+                var sb = new System.Text.StringBuilder();
+                sb.AppendLine("You are an automated spelling helper. You will be provided with the output from cspell lint for a code repository.");
+                sb.AppendLine("For each reported token, decide whether it is a typo that should be corrected, or a legitimate technical/proper term that should be added to the cspell dictionary (the cspell.json 'words' list).");
+                sb.AppendLine();
+                sb.AppendLine("Requirements:");
+                sb.AppendLine("1) Output ONLY valid JSON: an array of objects. Each object must contain the following fields:");
+                sb.AppendLine("   - file: path to the file containing the token (relative to repository root)");
+                sb.AppendLine("   - line: the line number where the token appears");
+                sb.AppendLine("   - original: the original token as reported by cspell");
+                sb.AppendLine("   - recommendation: an object with these fields:");
+                sb.AppendLine("       * action: one of 'fix' or 'ignore' ('fix' means propose a replacement, 'ignore' means add to cspell.json words)");
+                sb.AppendLine("       * replacement: (string) present only if action == 'fix' — the corrected token or replacement text");
+                sb.AppendLine("       * justification: (string) a brief one-line justification for the recommendation");
+                sb.AppendLine();
+                sb.AppendLine("2) If you recommend 'ignore', ensure you explain why this word should be kept (e.g. product name, acronym, code identifier, or language-specific term).");
+                sb.AppendLine("3) Keep replacements minimal and preserve code formatting and casing.");
+                sb.AppendLine();
+                sb.AppendLine("cspell lint output:");
+                sb.AppendLine(processResult.Output);
+                sb.AppendLine();
+                sb.AppendLine("Return the JSON array now.");
+
+                var prompt = sb.ToString();
+
+                var response = new CLICheckResponse(processResult.ExitCode, prompt);
+                response.NextSteps = new List<string>
+                {
+                    "Send the returned JSON prompt to your LLM to obtain fix/ignore recommendations.",
+                    "For 'ignore' recommendations, add the word to the repository's .vscode/cspell.json 'words' list.",
+                    "For 'fix' recommendations, apply the suggested replacements as a patch and review before committing."
+                };
+
+                return response;
+            }
+
             return new CLICheckResponse(processResult);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in CheckSpellingCommonAsync");
-            return new CLICheckResponse(1, "", $"Unhandled exception: {ex.Message}");
-        }
-    }
-
-    /// <summary>
-    /// Common spelling-fix implementation that attempts to apply fixes using cspell (via npx) where supported.
-    /// </summary>
-    /// <param name="packagePath">Absolute path to the package directory</param>
-    /// <param name="ct">Cancellation token</param>
-    /// <returns>CLI check response</returns>
-    protected async Task<CLICheckResponse> FixSpellingCommonAsync(string packagePath, CancellationToken ct = default)
-    {
-        try
-        {
-            var (packageRepoRoot, errorResponse) = ValidatePackageAndDiscoverRepo(packagePath);
-            if (errorResponse != null)
-            {
-                return errorResponse;
-            }
-
-            // Construct the path to the cspell config file
-            var cspellConfigPath = Path.Combine(packageRepoRoot, ".vscode", "cspell.json");
-
-            if (!File.Exists(cspellConfigPath))
-            {
-                return new CLICheckResponse(1, "", $"Cspell config file not found at expected location: {cspellConfigPath}");
-            }
-
-            // Convert absolute path to relative path from repo root
-            var relativePath = Path.GetRelativePath(packageRepoRoot, packagePath);
-
-            // Run cspell lint to collect spelling issues (do NOT auto-apply fixes here).
-            var npxOptions = new NpxOptions(
-                null,
-                ["cspell", "lint", "--config", cspellConfigPath, "--root", packageRepoRoot, $"." + Path.DirectorySeparatorChar + relativePath + Path.DirectorySeparatorChar + "**"],
-                logOutputStream: true
-            );
-
-            var processResult = await _npxHelper.Run(npxOptions, ct: ct);
-
-            // If no issues were found, return a success response
-            if (processResult.ExitCode == 0 || string.IsNullOrWhiteSpace(processResult.Output))
-            {
-                return new CLICheckResponse(0, "No spelling issues found");
-            }
-
-            // Build an LLM prompt that instructs the model to either fix typos or add legitimate terms to cspell.json
-            var sb = new System.Text.StringBuilder();
-            sb.AppendLine("You are an automated spelling helper. You will be provided with the output from cspell lint for a code repository.");
-            sb.AppendLine("For each reported token, decide whether it is a typo that should be corrected, or a legitimate technical/proper term that should be added to the cspell dictionary (the cspell.json 'words' list).");
-            sb.AppendLine();
-            sb.AppendLine("Requirements:");
-            sb.AppendLine("1) Output ONLY valid JSON: an array of objects. Each object must contain the following fields:");
-            sb.AppendLine("   - file: path to the file containing the token (relative to repository root)");
-            sb.AppendLine("   - line: the line number where the token appears");
-            sb.AppendLine("   - original: the original token as reported by cspell");
-            sb.AppendLine("   - recommendation: an object with these fields:");
-            sb.AppendLine("       * action: one of 'fix' or 'ignore' ('fix' means propose a replacement, 'ignore' means add to cspell.json words)");
-            sb.AppendLine("       * replacement: (string) present only if action == 'fix' — the corrected token or replacement text");
-            sb.AppendLine("       * justification: (string) a brief one-line justification for the recommendation");
-            sb.AppendLine();
-            sb.AppendLine("2) If you recommend 'ignore', ensure you explain why this word should be kept (e.g. product name, acronym, code identifier, or language-specific term).");
-            sb.AppendLine("3) Keep replacements minimal and preserve code formatting and casing.");
-            sb.AppendLine();
-            sb.AppendLine("cspell lint output:");
-            sb.AppendLine(processResult.Output);
-            sb.AppendLine();
-            sb.AppendLine("Return the JSON array now.");
-
-            var prompt = sb.ToString();
-
-            var response = new CLICheckResponse(processResult.ExitCode, prompt);
-            response.NextSteps = new List<string>
-            {
-                "Send the returned JSON prompt to your LLM to obtain fix/ignore recommendations.",
-                "For 'ignore' recommendations, add the word to the repository's .vscode/cspell.json 'words' list.",
-                "For 'fix' recommendations, apply the suggested replacements as a patch and review before committing."
-            };
-
-            return response;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error in FixSpellingCommonAsync");
             return new CLICheckResponse(1, "", $"Unhandled exception: {ex.Message}");
         }
     }

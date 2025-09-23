@@ -31,11 +31,6 @@ public enum PackageCheckType
     Cspell,
     
     /// <summary>
-    /// Run spelling fix (attempt to automatically apply fixes using cspell where supported).
-    /// </summary>
-    FixSpelling,
-    
-    /// <summary>
     /// Run snippet update check.
     /// </summary>
     Snippets

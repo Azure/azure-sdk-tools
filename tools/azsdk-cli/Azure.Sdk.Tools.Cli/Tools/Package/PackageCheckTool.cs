@@ -70,8 +70,21 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
         }
 
-        [McpServerTool(Name = "azsdk_package_run_check"), Description("Run validation checks for SDK packages. Provide package path and check type (All, Changelog, Dependency, Readme, Cspell, FixSpelling, Snippets).")]
+        [McpServerTool(Name = "azsdk_package_run_check"), Description("Run validation checks for SDK packages. Provide package path and check type (All, Changelog, Dependency, Readme, Cspell, Snippets).")]
         public async Task<CLICheckResponse> RunPackageCheck(string packagePath, PackageCheckType checkType, CancellationToken ct = default)
+        {
+            try
+            {
+                return await RunPackageCheck(packagePath, checkType, false, ct);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Unhandled exception while running package check");
+                return new CLICheckResponse(1, ex.ToString(), $"Unhandled exception while running {checkType} check");
+            }
+        }
+
+        public async Task<CLICheckResponse> RunPackageCheck(string packagePath, PackageCheckType checkType, bool fix, CancellationToken ct = default)
         {
             try
             {
@@ -87,8 +100,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     PackageCheckType.Changelog => await RunChangelogValidation(packagePath, ct),
                     PackageCheckType.Dependency => await RunDependencyCheck(packagePath, ct),
                     PackageCheckType.Readme => await RunReadmeValidation(packagePath, ct),
-                    PackageCheckType.Cspell => await RunSpellingValidation(packagePath, ct),
-                    PackageCheckType.FixSpelling => await RunFixSpellingValidation(packagePath, ct),
+                    PackageCheckType.Cspell => await RunSpellingValidation(packagePath, fix, ct),
                     PackageCheckType.Snippets => await RunSnippetUpdate(packagePath, ct),
                     _ => throw new ArgumentOutOfRangeException(
                         nameof(checkType),
@@ -139,7 +151,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             // Run spelling check
-            var spellingCheckResult = await languageChecks.CheckSpellingAsync(packagePath);
+            var spellingCheckResult = await languageChecks.CheckSpellingAsync(packagePath, false, ct);
             results.Add(spellingCheckResult);
             if (spellingCheckResult.ExitCode != 0)
             {
@@ -265,21 +277,34 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return result;
         }
 
-        private async Task<CLICheckResponse> RunSpellingValidation(string packagePath, CancellationToken ct = default)
+        private async Task<CLICheckResponse> RunSpellingValidation(string packagePath, bool fix = false, CancellationToken ct = default)
         {
-            logger.LogInformation("Running spelling validation");
+            logger.LogInformation("Running spelling validation{fixMode}", fix ? " with fix mode enabled" : "");
 
-            var result = await languageChecks.CheckSpellingAsync(packagePath, ct);
+            var result = await languageChecks.CheckSpellingAsync(packagePath, fix, ct);
 
             if (result.ExitCode != 0)
             {
-                result.NextSteps = new List<string>
+                if (fix)
                 {
-                    "Fix spelling errors identified in the package files",
-                    "Add legitimate technical terms to the cspell dictionary if needed",
-                    "Review comments, documentation, and variable names for typos",
-                    "Run cspell locally to identify and fix spelling issues before committing"
-                };
+                    result.NextSteps = new List<string>
+                    {
+                        "Review the fix recommendations provided in the output",
+                        "For 'ignore' recommendations, add the word to the repository's .vscode/cspell.json 'words' list",
+                        "For 'fix' recommendations, apply the suggested replacements as a patch and review before committing"
+                    };
+                }
+                else
+                {
+                    result.NextSteps = new List<string>
+                    {
+                        "Fix spelling errors identified in the package files",
+                        "Add legitimate technical terms to the cspell dictionary if needed",
+                        "Review comments, documentation, and variable names for typos",
+                        "Run cspell locally to identify and fix spelling issues before committing",
+                        "Use the fix=true parameter to get automated fix recommendations"
+                    };
+                }
             }
             else
             {
@@ -297,33 +322,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             logger.LogInformation("Running snippet update");
 
             var result = await languageChecks.UpdateSnippetsAsync(packagePath, ct);
-            return result;
-        }
-
-        private async Task<CLICheckResponse> RunFixSpellingValidation(string packagePath, CancellationToken ct = default)
-        {
-            logger.LogInformation("Running spelling-fix validation (attempting to apply fixes)");
-
-            var result = await languageChecks.FixSpellingAsync(packagePath, ct);
-
-            if (result.ExitCode != 0)
-            {
-                result.NextSteps = new List<string>
-                {
-                    "Attempted to apply fixes but some issues remain. Review the output and correct manually where necessary",
-                    "Consider adding technical terms to the cspell dictionary to avoid repeated false positives",
-                    "Run the fix command locally to see diffs before committing"
-                };
-            }
-            else
-            {
-                result.NextSteps = new List<string>
-                {
-                    "Spelling fixes applied successfully where possible",
-                    "Review changes and commit them if acceptable"
-                };
-            }
-
             return result;
         }
 

@@ -190,7 +190,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var dependencyResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Dependency);
             var readmeResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Readme);
             var spellingResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Cspell);
-            var fixSpellingResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.FixSpelling);
             var snippetsResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Snippets);
 
             // Assert
@@ -199,7 +198,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             Assert.IsNotNull(dependencyResult);
             Assert.IsNotNull(readmeResult);
             Assert.IsNotNull(spellingResult);
-            Assert.IsNotNull(fixSpellingResult);
             Assert.IsNotNull(snippetsResult);
 
             // All should execute (may fail due to test environment, but should not error on check type)
@@ -208,25 +206,32 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             Assert.IsTrue(dependencyResult.ExitCode >= 0);
             Assert.IsTrue(readmeResult.ExitCode >= 0);
             Assert.IsTrue(spellingResult.ExitCode >= 0);
-            Assert.IsTrue(fixSpellingResult.ExitCode >= 0);
             Assert.IsTrue(snippetsResult.ExitCode >= 0);
         }
 
         [Test]
-        public async Task RunPackageCheck_WithFixSpellingCheck_WhenFileWithTypos_ReturnsResult()
+        public async Task RunPackageCheck_WithCspellFixEnabled_WhenFileWithTypos_ReturnsResult()
         {
             // Arrange - Create a file with obvious spelling errors
             var testFile = Path.Combine(_testProjectPath, "test_fix.md");
             await File.WriteAllTextAsync(testFile, "This file contians obvioius speling erors.");
 
-            // Act
-            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.FixSpelling);
+            // Act - Test both regular cspell check and with fix enabled
+            var normalResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Cspell, false);
+            var fixResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Cspell, true);
 
             // Assert
-            Assert.IsNotNull(result);
-            Assert.IsNotNull(result.CheckStatusDetails);
-            // Fixing may succeed or partially succeed depending on environment and cspell version
-            Assert.That(result.ExitCode, Is.GreaterThanOrEqualTo(0));
+            Assert.IsNotNull(normalResult);
+            Assert.IsNotNull(fixResult);
+            Assert.IsNotNull(normalResult.CheckStatusDetails);
+            Assert.IsNotNull(fixResult.CheckStatusDetails);
+            
+            // Both may succeed or partially succeed depending on environment and cspell version
+            Assert.That(normalResult.ExitCode, Is.GreaterThanOrEqualTo(0));
+            Assert.That(fixResult.ExitCode, Is.GreaterThanOrEqualTo(0));
+            
+            // The fix result should have different next steps indicating LLM guidance
+            Assert.IsTrue(fixResult.NextSteps != null && fixResult.NextSteps.Any());
         }
     }
 }

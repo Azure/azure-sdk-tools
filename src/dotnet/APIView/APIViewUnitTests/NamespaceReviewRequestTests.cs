@@ -451,14 +451,26 @@ namespace APIViewUnitTests
                 });
 
             // Setup pull requests repository to return related pull requests
-            var mockPullRequests = new List<PullRequestModel>
-            {
-                new PullRequestModel { ReviewId = "java-review-id" },
-                new PullRequestModel { ReviewId = "python-review-id" }
+            // First call - get the initial PR model for the TypeSpec review
+            var initialPullRequest = new PullRequestModel 
+            { 
+                ReviewId = reviewId, 
+                PullRequestNumber = 12345 
             };
             
             _mockPullRequestsRepository
                 .Setup(p => p.GetPullRequestsAsync(reviewId, "revision1"))
+                .ReturnsAsync(new List<PullRequestModel> { initialPullRequest });
+                
+            // Second call - get all related pull requests by PR number
+            var mockPullRequests = new List<PullRequestModel>
+            {
+                new PullRequestModel { ReviewId = "java-review-id", PullRequestNumber = 12345 },
+                new PullRequestModel { ReviewId = "python-review-id", PullRequestNumber = 12345 }
+            };
+            
+            _mockPullRequestsRepository
+                .Setup(p => p.GetPullRequestsAsync(12345, "Azure/azure-rest-api-specs"))
                 .ReturnsAsync(mockPullRequests);
 
             // Setup GetReviewsAsync to return associated reviews

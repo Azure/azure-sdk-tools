@@ -17,7 +17,7 @@ model:
     top_p: 1.0
     stop: []
     max_tokens: 16384
-    response_format: ${file:filtered_result_schema.json}
+    response_format: ${file:action_schema.json}
 sample:
   language: Python
   exceptions: |
@@ -83,25 +83,19 @@ system:
 
   # ADDITIONAL EXCEPTIONS
 
-  
   - You MUST remove any comment that explicitly asserts that a class, method, property, or parameter is *absent*, *not defined*, or *missing* when that element is present in the outline.
   - DO NOT remove comments about naming mismatches or other design concerns—even if the outline shows an element exists—unless they literally say “this element doesn’t exist.”
 
   # OUTPUT REQUIREMENTS
-  
-  - Review each proposed comment
-  - Flag any comments' `status` field as "REMOVE" that violate the exceptions
-  - Flag any comments' `status` field as "KEEP" that enhance API design
-  - All comments MUST be flagged with a `status` field, and a `status_reason`.
-  - For properties that are in the input schema AND the output schema, the value in the output must be the same as the input.
+  - `action` should be `KEEP` if the comment is consistent with the context, or `DISCARD` if it contradicts the context.
 
 user:
-  Please validate the following comment against the exceptions and APIView outline.
-
-  # OUTLINE
-  {{outline}}
-
+  Please validate the following {{language}} comment:
   # PROPOSED COMMENT
   ```json
   {{content}}
   ```
+
+  You may use the following outline in evaluating the comment:
+  # OUTLINE
+  {{outline}}

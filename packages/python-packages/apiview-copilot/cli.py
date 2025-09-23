@@ -17,7 +17,7 @@ import pathlib
 import sys
 import time
 from collections import OrderedDict
-from typing import Optional
+from typing import List, Optional
 
 import colorama
 import requests
@@ -128,9 +128,7 @@ def _local_review(
     Generates a review using the locally installed code.
     """
     target_path = pathlib.Path(target)
-    if base is None:
-        filename = target_path.stem
-    else:
+    if base is not None:
         target_name = target_path.stem
         base_name = pathlib.Path(base).stem
         # find the common prefix
@@ -138,7 +136,6 @@ def _local_review(
         # strip the common prefix from both names
         target_name = target_name[len(common_prefix) :]
         base_name = base_name[len(common_prefix) :]
-        filename = f"{common_prefix}_{base_name}_{target_name}"
 
     with target_path.open("r", encoding="utf-8") as f:
         target_apiview = f.read()
@@ -164,18 +161,11 @@ def _local_review(
         language=language,
         outline=outline_text,
         comments=comments_obj,
-        debug_log=debug_log,
+        write_output=True,
+        write_debug_logs=debug_log,
     )
-    review = reviewer.run()
+    reviewer.run()
     reviewer.close()
-    output_path = pathlib.Path("scratch") / "output" / language
-    output_path.mkdir(parents=True, exist_ok=True)
-    output_file = output_path / f"{filename}.json"
-
-    with output_file.open("w", encoding="utf-8") as f:
-        f.write(review.model_dump_json(indent=4))
-
-    print(f"Review written to {output_file}")
 
 
 def run_test_case(language: str, test_file: str, num_runs: int = 3):
@@ -213,7 +203,7 @@ def create_test_case(
 
     context = ""
     for violation in expected_contents["comments"]:
-        for rule_id in violation["rule_ids"]:
+        for rule_id in violation["guideline_ids"]:
             for rule in guidelines:
                 if rule["id"] == rule_id:
                     if rule["text"] not in context:
@@ -403,17 +393,66 @@ def review_job_get(job_id: str):
         print(f"Error: {resp.status_code} {resp.text}")
 
 
+def get_all_guidelines(language: str, markdown: bool = False):
+    """
+    Retrieve all guidelines for a specific language. Returns a context
+    object which can be printed as JSON or Markdown.
+    """
+    search = SearchManager(language=language)
+    context = search.build_context(search.language_guidelines.results)
+    if markdown:
+        md = context.to_markdown()
+        print(md)
+    else:
+        print(json.dumps(context, indent=2, cls=CustomJSONEncoder))
+
+
+def extract_document_section(apiview_path: str, size: int, index: int = 1):
+    """
+    Extracts a section of a document for testing purposes.
+
+    apiview_path: Path to the document file.
+    size: Size of the section to extract.
+    index: Index of the section to extract (default is 1).
+    """
+    from src._sectioned_document import SectionedDocument
+
+    if not os.path.exists(apiview_path):
+        raise ValueError(f"File {apiview_path} does not exist.")
+    with open(apiview_path, "r", encoding="utf-8") as f:
+        content = f.read()
+    sectioned = SectionedDocument(lines=content.splitlines(), max_chunk_size=size)
+    try:
+        section = sectioned.sections[index - 1]
+        print(str(section))
+    except IndexError:
+        print(f"Error: Index {index} out of range. Document has {len(sectioned.sections)} sections.")
+
+
 def search_knowledge_base(
-    language: str,
+    language: Optional[str] = None,
     text: Optional[str] = None,
     path: Optional[str] = None,
     markdown: bool = False,
+    ids: Optional[List[str]] = None,
 ):
     """
     Queries the Search indexes and returns the resulting Cosmos DB
     objects, resolving all links between objects. This result represents
-    what the AI reviewer would receive as context in RAG mode.
+    what the AI reviewer would receive as context in RAG mode when used
+    with the Markdown flag.
     """
+    # ensure that if ids is provided, no other parameters are provided
+    if ids:
+        if language or text or path or markdown:
+            raise ValueError("When using `--ids`, do not provide any other parameters.")
+        search = SearchManager()
+        results = search.search_all_by_id(ids)
+        print(json.dumps([result.__dict__ for result in results], indent=2, cls=CustomJSONEncoder))
+        return
+    elif not language:
+        raise ValueError("`--language` is required when `--ids` is not provided.")
+
     if (path and text) or (not path and not text):
         raise ValueError("Provide one of `--path` or `--text`.")
     search = SearchManager(language=language)
@@ -901,11 +940,13 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("run", "run_test_case")
             g.command("create", "create_test_case")
             g.command("deconstruct", "deconstruct_test_case")
+            g.command("extract-section", "extract_document_section")
         with CommandGroup(self, "app", "__main__#{}") as g:
             g.command("deploy", "deploy_flask_app")
         with CommandGroup(self, "search", "__main__#{}") as g:
             g.command("kb", "search_knowledge_base")
             g.command("reindex", "reindex_search")
+            g.command("all-guidelines", "get_all_guidelines")
         with CommandGroup(self, "db", "__main__#{}") as g:
             g.command("get", "db_get")
             g.command("delete", "db_delete")
@@ -1007,17 +1048,27 @@ class CliCommandsLoader(CLICommandsLoader):
                 options_list=["--test-file", "-f"],
                 help="The full path to the JSONL test file.",
             )
+            ac.argument(
+                "apiview_path",
+                options_list=["--apiview-path", "-p"],
+                type=str,
+                help="The full path to the txt file containing the APIView text",
+            )
+        with ArgumentsContext(self, "eval extract-section") as ac:
+            ac.argument("size", type=int, help="The size of the section to extract.")
+            ac.argument(
+                "index",
+                type=int,
+                help="The index of the section to extract (default is 1).",
+                default=1,
+                options_list=["--index", "-i"],
+            )
         with ArgumentsContext(self, "eval run") as ac:
             ac.argument(
                 "num_runs", type=int, options_list=["--num-runs", "-n"], help="Number of times to run the test case."
             )
         with ArgumentsContext(self, "eval create") as ac:
             ac.argument("test_case", type=str, help="The name of the test case")
-            ac.argument(
-                "apiview_path",
-                type=str,
-                help="The full path to the txt file containing the APIView text",
-            )
             ac.argument(
                 "expected_path",
                 type=str,
@@ -1056,6 +1107,13 @@ class CliCommandsLoader(CLICommandsLoader):
             ac.argument(
                 "markdown",
                 help="Render output as markdown instead of JSON.",
+            )
+            ac.argument(
+                "ids",
+                type=str,
+                nargs="+",
+                help="The IDs to retrieve.",
+                options_list=["--ids"],
             )
         with ArgumentsContext(self, "search reindex") as ac:
             ac.argument(

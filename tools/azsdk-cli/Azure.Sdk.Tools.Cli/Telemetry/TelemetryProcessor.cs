@@ -1,7 +1,7 @@
 using OpenTelemetry;
 using System.Diagnostics;
 
-namespace Azure.Sdk.Tools.Cli.Core;
+namespace Azure.Sdk.Tools.Cli.Telemetry;
 
 public sealed class TelemetryProcessor : BaseProcessor<Activity>
 {

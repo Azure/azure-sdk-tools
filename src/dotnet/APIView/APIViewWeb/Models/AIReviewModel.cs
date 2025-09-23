@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using APIViewWeb.LeanModels;
@@ -11,8 +10,23 @@ namespace APIViewWeb.Models
 
     public class AIReviewComment
     {
+        private List<string> _guidelineIds;
+
         [JsonPropertyName("rule_ids")]
-        public List<string> RuleIds { get; set; }
+        public List<string> RuleIds 
+        { 
+            get => _guidelineIds; 
+            set => _guidelineIds = value; 
+        }
+        
+        [JsonPropertyName("guideline_ids")]
+        public List<string> GuidelineIds 
+        { 
+            get => _guidelineIds; 
+            set => _guidelineIds = value; 
+        }
+        [JsonPropertyName("memory_ids")]
+        public List<string> MemoryIds { get; set; }
         [JsonPropertyName("line_no")]
         public int LineNo { get; set; }
         [JsonPropertyName("bad_code")]
@@ -23,6 +37,8 @@ namespace APIViewWeb.Models
         public string Comment { get; set; }
         [JsonPropertyName("source")]
         public string Source { get; set; }
+        [JsonPropertyName("is_generic")]
+        public bool IsGeneric { get; set; }
     }
 
     public class AIReviewJobPolledResponseModel

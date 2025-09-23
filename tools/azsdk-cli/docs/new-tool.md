@@ -67,13 +67,9 @@ All tools in the azsdk-cli project follow a consistent architecture:
 **Command Hierarchy Examples:**
 ```csharp
 // Single group: azsdk log <sub-command>
-CommandHierarchy = [ SharedCommandGroups.Log ];
+public override CommandGroup[] CommandHierarchy { get; set; } = [ SharedCommandGroups.Log ];
 
 // Multiple groups: azsdk eng cleanup <sub-command>
-CommandHierarchy = [ SharedCommandGroups.EngSys, SharedCommandGroups.Cleanup ];
-
-// If using a primary constructor
-// Multiple groups: azsdk example demo <sub-command>
 public override CommandGroup[] CommandHierarchy { get; set; } = [
     SharedCommandGroups.Example,
     SharedCommandGroups.Demo
@@ -101,6 +97,7 @@ public override CommandGroup[] CommandHierarchy { get; set; } = [
 
 **Common Dependencies:**
 - `ILogger<YourTool>` - Always required for logging
+- `IProcessHelper` - Helper for running external processes
 - `IAzureService` - For Azure authentication and credentials
 - `IDevOpsService` - For Azure DevOps operations
 - Custom service interfaces for your tool's specific needs
@@ -151,21 +148,14 @@ public class YourTool(
     private readonly Option<bool> flagOption = new(["--flag", "-f"], () => false, "Boolean flag description");
 
     // CLI Command Configuration
-    protected override Command GetCommand()
-    {
-        var command = new Command("your-command", "Description for CLI help");
-
-        command.AddArgument(requiredArg);
-        command.AddOption(optionalParam);
-        command.AddOption(flagOption);
-
-        command.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
-
-        return command;
-    }
+    protected override Command GetCommand() =>
+        new("your-command", "Description for CLI help")
+        {
+            requiredArg, optionalParam, flagOption
+        };
 
     // CLI Command Handler
-    public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
+    public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
     {
         // Extract parameters from CLI context
         var input = ctx.ParseResult.GetValueForArgument(requiredArg);
@@ -173,15 +163,11 @@ public class YourTool(
         var flag = ctx.ParseResult.GetValueForOption(flagOption);
 
         // Call your main logic (can be shared with MCP methods)
-        var result = await ProcessRequest(input, param, flag, ct);
-
-        // Set exit code and output result
-        ctx.ExitCode = ExitCode;
-        output.Output(result);
+        return await ProcessRequest(input, param, flag, ct);
     }
 
     // MCP Server Method - exposed to LLM agents
-    [McpServerTool(Name = "your_tool_method"), Description("Description for LLM agents")]
+    [McpServerTool(Name = "azsdk_your_tool_method"), Description("Description for LLM agents")]
     public async Task<YourResponseType> ProcessRequest(string input, string? optionalParam = null, CancellationToken ct = default)
     {
         try
@@ -191,7 +177,6 @@ public class YourTool(
         catch (Exception ex)
         {
             logger.LogError(ex, "Error processing MCP request: {input}", input);
-            SetFailure();
             return new YourResponseType
             {
                 ResponseError = $"Error processing request: {ex.Message}"
@@ -221,48 +206,36 @@ public class ComplexTool(
     private readonly Option<string> fooOption = new(["--foo"], "Foo") { IsRequired = true };
     private readonly Option<string> barOption = new(["--bar"], "Bar");
 
-    protected override List<Command> GetCommands()
-    {
-        List<Commands> subCommands = [
-            new(SubCommandName1, "Analyze something", { fooOption })
-            new(SubCommandName2, "Process something", { fooOption, barOption })
-        ];
+    protected override List<Command> GetCommands() => [
+        new(SubCommandName1, "Analyze something", { fooOption }),
+        new(SubCommandName2, "Process something", { fooOption, barOption })
+    ];
 
-        SetHandler(subCommands, async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
-        return subCommands;
-    }
-
-    public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
+    public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
     {
         var commandName = ctx.ParseResult.CommandResult.Command.Name;
 
         if (commandName == SubCommandName1)
         {
             var foo = ctx.ParseResult.GetValueForOption(fooOption);
-            var result1 = await SubCommand1(foo, ct);
-            ctx.ExitCode = ExitCode;
-            output.Output(result1);
-            return;
+            return await SubCommand1(foo, ct);
         }
 
         if (commandName == SubCommandName2)
         {
             var foo = ctx.ParseResult.GetValueForOption(fooOption);
             var bar = ctx.ParseResult.GetValueForOption(barOption);
-            var result2 = await SubCommand2(foo, bar, ct);
-            ctx.ExitCode = ExitCode;
-            output.Output(result2);
-            return;
+            return await SubCommand2(foo, bar, ct);
         }
     }
 
-    [McpServerTool(Name = "sub_command_1"), Description("Handles first stuff")]
+    [McpServerTool(Name = "azsdk_sub_command_1"), Description("Handles first stuff")]
     public async Task<DefaultCommandResponse> SubCommand1(string foo, CancellationToken ct)
     {
         // Implementation
     }
 
-    [McpServerTool(Name = "sub_command_2"), Description("Handles second stuff")]
+    [McpServerTool(Name = "azsdk_sub_command_2"), Description("Handles second stuff")]
     public async Task<YourResponseType> SubCommand2(string foo, string bar, CancellationToken ct)
     {
         // Implementation
@@ -302,6 +275,9 @@ Response handling strategies were created with the intent to flexibly handle mul
 callers without the output being too tightly coupled to the tool code.
 Calls could be from a CLI invocation in the terminal, tool calls from an MCP client, and potentially more.
 
+NOTE: In CLI mode, the `ResponseError` or `ResponseErrors` property being set on a response object will
+default `ExitCode` to `1`. The `ExitCode` property can also be manually overridden.
+
 ### Response Class Requirements
 
 A custom response class is not always necessary. It should be defined when the tool needs to:
@@ -310,8 +286,6 @@ A custom response class is not always necessary. It should be defined when the t
 1. Return structured data that is easier for an LLM to parse
 1. Enforce specific fields get set in output
 1. Customize error output
-
-Tools can also return primitive types, string, `IEnumerable` of a supported type, `Task` and `void` for simple scenarios.
 
 All tool response classes must:
 
@@ -364,7 +338,7 @@ public class YourResponseType : Response
 An example usage of `DefaultCommandResponse`:
 
 ```csharp
-[McpServerTool(Name = "hello-world"), Description("Echoes the message back to the client")]
+[McpServerTool(Name = "azsdk_hello_world"), Description("Echoes the message back to the client")]
 public DefaultCommandResponse EchoSuccess(string message)
 {
     try
@@ -372,13 +346,12 @@ public DefaultCommandResponse EchoSuccess(string message)
         logger.LogInformation("Echoing message: {message}", message);
         return new()
         {
-            Result = $"RESPONDING TO '{message}' with SUCCESS: {ExitCode}"
+            Result = $"RESPONDING TO '{message}' with SUCCESS"
         };
     }
     catch (Exception ex)
     {
         logger.LogError(ex, "Error occurred while echoing message: {message}", message);
-        SetFailure();
         return new()
         {
             ResponseError = $"Error occurred while processing '{message}': {ex.Message}"
@@ -395,7 +368,6 @@ public DefaultCommandResponse EchoSuccess(string message)
 catch (Exception ex)
 {
     logger.LogError(ex, "Error processing {input}", input);
-    SetFailure();
     return new YourResponseType
     {
         ResponseError = $"Failed to process {input}: {ex.Message}"
@@ -407,7 +379,6 @@ var errors = new List<string>();
 // ... collect errors
 if (errors.Any())
 {
-    SetFailure();
     return new YourResponseType
     {
         ResponseErrors = errors
@@ -459,7 +430,7 @@ dotnet test
 
 ```csharp
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
-using Azure.Sdk.Tools.Cli.Tools;
+using Azure.Sdk.Tools.Cli.Tools.YourTool;
 
 namespace Azure.Sdk.Tools.Cli.Tests;
 
@@ -469,11 +440,11 @@ internal class YourToolTests
     public async Task YourTool_ProcessInput_ReturnsExpectedResult()
     {
         var tool = new YourTool(new TestLogger<YourTool>());
-
         var result = await tool.YourToolMethod("test-input");
 
         Assert.That(result.ResponseError, Is.Null);
         Assert.That(result.Result, Is.Not.Null);
+        Assert.That(result.ToString(), Is.EqualTo("test response"));
     }
 }
 ```
@@ -484,7 +455,6 @@ internal class YourToolTests
 - **Always wrap top-level methods** in try/catch blocks
 - **Use specific exception types** when possible for better error messages
 - **Log errors with context** before returning error responses
-- **Call `SetFailure()`** on tool instance for all error cases
 
 ### 2. Logging
 - **Use ILogger for all logging** - never `Console.WriteLine` or similar
@@ -502,9 +472,10 @@ internal class YourToolTests
 - **Provide meaningful ToString() implementations** in response classes for CLI output
 
 ### 4. MCP Server Integration
-- **Use descriptive MCP method names** (snake_case: `analyze_pipeline`)
+- **Use descriptive MCP tool names** (snake_case: `azsdk_analyze_pipeline`)
 - **Provide clear descriptions** for LLM agents
 - **Design parameters for LLM consumption** - clear names and simple parameter types. Be wary of optional parameters that the LLM might eagerly come up with values for.
+- **Tool names must be prefixed with azsdk_**
 
 ### 5. Command Design Guidelines
 
@@ -523,7 +494,7 @@ internal class YourToolTests
 
 ### 7. Namespace and Organization Rules
 
-- **Correct namespace**: `Azure.Sdk.Tools.Cli.Tools`
+- **Correct namespace**: `Azure.Sdk.Tools.Cli.Tools.[YourToolCategory]`
 - **File organization**: Group related tools in sub-directories, but keep flat namespace
 - **Tool registration**: Always add to `SharedOptions.ToolsList`
 - **Dependency patterns**: Use constructor injection, avoid static dependencies
@@ -534,7 +505,7 @@ internal class YourToolTests
 
 ```csharp
 // Good: Proper error handling
-[McpServerTool, Description("Processes data")]
+[McpServerTool(Name = "azsdk_process_data"), Description("Processes data")]
 public async Task<ProcessResponse> ProcessData(string input, CancellationToken ct = default)
 {
     try
@@ -546,7 +517,6 @@ public async Task<ProcessResponse> ProcessData(string input, CancellationToken c
     catch (Exception ex)
     {
         logger.LogError(ex, "Failed to process data: {input}", input);
-        SetFailure();
         return new ProcessResponse
         {
             ResponseError = $"Failed to process data: {ex.Message}"
@@ -555,20 +525,18 @@ public async Task<ProcessResponse> ProcessData(string input, CancellationToken c
 }
 
 // Good: Shared logic between CLI and MCP
-public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
+public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
 {
     var input = ctx.ParseResult.GetValueForArgument(inputArg);
-    var result = await ProcessData(input, ct);
-    ctx.ExitCode = ExitCode;
-    output.Output(result);
+    return await ProcessData(input, ct);
 }
 ```
 
 ### ❌ Anti-patterns to Avoid
 
 ```csharp
-// Bad: No error handling
-[McpServerTool]
+// Bad: No try/catch error handling
+[McpServerTool(Name = "azsdk_process_data")]
 public ProcessResponse ProcessData(string input)
 {
     var result = DoWork(input); // Can throw exceptions
@@ -587,7 +555,7 @@ public class BadTool : MCPTool
 }
 
 // Bad: Wrong namespace
-namespace Azure.Sdk.Tools.Cli.Tools.YourTool  // Incorrect
+namespace Azure.Sdk.Tools.Cli.Tools  // Incorrect, should be Azure.Sdk.Tools.Cli.Tools.YourToolCategory
 {
     public class YourTool : MCPTool { }
 }
@@ -598,9 +566,9 @@ public void DoWork()
     Console.WriteLine("Working..."); // Use ILogger instead
 }
 
-// Bad: Not calling SetFailure on errors
+// Bad: Not returning a response object with ResponseError set
 catch (Exception ex)
 {
-    return new Response { ResponseError = ex.Message }; // Missing SetFailure()
+    return $"Exception: {ex.Message}";
 }
 ```

@@ -704,7 +704,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     const isJavaScript = this.review.language == "JavaScript";
 
     const isTypeSpec = this.review.language === "TypeSpec";
-
+    
     return !(isAzureRestPackage && isJavaScript) && !isTypeSpec;
   }
 }

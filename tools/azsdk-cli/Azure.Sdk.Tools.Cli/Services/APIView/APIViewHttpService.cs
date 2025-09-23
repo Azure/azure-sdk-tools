@@ -1,5 +1,7 @@
 using System.Net;
+using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Configuration;
+using Azure.Sdk.Tools.Cli.Models.APIView;
 
 namespace Azure.Sdk.Tools.Cli.Services.APIView;
 
@@ -41,9 +43,10 @@ public class APIViewHttpService : IAPIViewHttpService
                 if (!string.IsNullOrEmpty(location) && (location.Contains("Login") || location.Contains("login")))
                 {
                     _logger.LogError("Authentication required: Redirected to login page at {Location}", location);
-                    return _authService.CreateAuthenticationErrorResponse(
+                    AuthenticationErrorResponse errorResponse = _authService.CreateAuthenticationErrorResponse(
                         $"APIView requires authentication to access {operation}",
                         baseUrl: baseUrl);
+                    return JsonSerializer.Serialize(errorResponse, new JsonSerializerOptions { WriteIndented = true });
                 }
             }
 
@@ -66,9 +69,10 @@ public class APIViewHttpService : IAPIViewHttpService
             if (_authService.IsAuthenticationFailure(content))
             {
                 _logger.LogError("Authentication required: Received login page instead of {Operation} data", operation);
-                return _authService.CreateAuthenticationErrorResponse(
+                AuthenticationErrorResponse errorResponse = _authService.CreateAuthenticationErrorResponse(
                     $"APIView requires authentication to access {operation}",
                     baseUrl: baseUrl);
+                return JsonSerializer.Serialize(errorResponse, new JsonSerializerOptions { WriteIndented = true });
             }
 
             return content;

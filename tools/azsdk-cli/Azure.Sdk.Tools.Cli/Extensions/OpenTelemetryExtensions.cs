@@ -81,6 +81,12 @@ public static class OpenTelemetryExtensions
         var appInsightsConnectionString = Environment.GetEnvironmentVariable("AZSDKTOOLS_MCP_APPLICATIONINSIGHTS_CONNECTION_STRING");
         if (string.IsNullOrEmpty(appInsightsConnectionString))
         {
+            // Don't use default app insights when running in agent test mode.
+            var agentTesting = Environment.GetEnvironmentVariable("AZSDKTOOLS_AGENT_TESTING");
+            if (bool.TryParse(agentTesting, out var isAgentTesting) && isAgentTesting)
+            {
+                return;
+            }
             appInsightsConnectionString = DefaultAppInsights;
         }
 

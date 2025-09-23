@@ -456,7 +456,8 @@ namespace APIViewWeb.Managers
                 try
                 {
                     // Look up pull requests directly by revision ID - much more reliable than extracting PR numbers
-                    var pullRequests = await _pullRequestsRepository.GetPullRequestsAsync(typeSpecReviewId, revisionId);
+                    PullRequestModel prModel = (await _pullRequestsRepository.GetPullRequestsAsync(typeSpecReviewId, revisionId)).FirstOrDefault();
+                    var pullRequests = await _pullRequestsRepository.GetPullRequestsAsync(prModel.PullRequestNumber, "Azure/azure-rest-api-specs");
                     // Get all review IDs from pull requests first to batch the database calls
                     var reviewIds = pullRequests
                         .Select(pr => pr.ReviewId)

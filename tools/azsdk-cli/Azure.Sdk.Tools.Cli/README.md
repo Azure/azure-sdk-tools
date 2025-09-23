@@ -122,3 +122,13 @@ dotnet run --project Azure.Sdk.Tools.Cli -- release-plan get --work-item-id YOUR
 In either case, the _same_ code will be invoked to get both results.
 
 This server is intended to run in **local mcp mode only** and will utilize your environment cached settings to communicate where authentication is necessary.
+
+## Telemetry Configuration
+Telemetry collection is on by default.
+
+To opt out, set the environment variable `AZSDKTOOLS_COLLECT_TELEMETRY` to false in your environment.
+
+If you need to direct telemetry to an alternate Application Insights instance (for local testing or private collection), set one of the following environment variables in your environment or in your hosting configuration:
+
+- `AZSDKTOOLS_APPLICATIONINSIGHTS_CONNECTION_STRING`: the full Application Insights connection string.
+

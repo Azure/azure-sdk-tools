@@ -115,6 +115,9 @@ internal class TelemetryService : ITelemetryService
 
             _tagsList.Add(new(TagName.MacAddressHash, macAddressHash));
             _tagsList.Add(new(TagName.DevDeviceId, deviceId));
+#if DEBUG
+            _tagsList.Add(new(TagName.DebugTag, "true"));
+#endif
 
             _isInitialized.SetResult();
         }

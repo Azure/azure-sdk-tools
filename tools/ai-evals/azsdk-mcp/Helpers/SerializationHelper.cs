@@ -1,7 +1,11 @@
+using System.ClientModel.Primitives;
+using System;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.McpEvals.Models;
 using Microsoft.Extensions.AI;
+using OpenAIChatMessage = OpenAI.Chat.ChatMessage;
+using MicrosoftExtensionsAIChatExtensions = OpenAI.Chat.MicrosoftExtensionsAIChatExtensions;
 
 namespace Azure.Sdk.Tools.McpEvals.Helpers
 {
@@ -19,22 +23,21 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
         {
             var jsonContent = await File.ReadAllTextAsync(jsonPath);
 
+            var jsonBinary = BinaryData.FromString(jsonContent);
+
             var options = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true,
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             };
 
-            var chatMessages = JsonSerializer.Deserialize<List<ChatMessage>>(jsonContent, options);
+            var chatMessages = DeserializeMessages(jsonBinary);
 
-            if (chatMessages == null || chatMessages.Count == 0)
-            {
-                throw new InvalidOperationException($"Failed to deserialize chat messages from {jsonPath} or the list is empty");
-            }
+            var translatedChatMessages = MicrosoftExtensionsAIChatExtensions.AsChatMessages(chatMessages).ToList();
 
-            await RebuildAttachmentsInChatMessagesAsync(chatMessages);
+            await RebuildAttachmentsInChatMessagesAsync(translatedChatMessages);
 
-            return ParseChatMessagesIntoScenarioData(chatMessages);
+            return ParseChatMessagesIntoScenarioData(translatedChatMessages);
         }
 
         /// <summary>
@@ -57,32 +60,18 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
 
         private static ScenarioData ParseChatMessagesIntoScenarioData(List<ChatMessage> chatMessages)
         {
-            // Find the last user message
-            var lastUserMessageIndex = -1;
-            for (int i = chatMessages.Count - 1; i >= 0; i--)
-            {
-                if (chatMessages[i].Role == ChatRole.User)
-                {
-                    lastUserMessageIndex = i;
-                    break;
-                }
-            }
-
-            if (lastUserMessageIndex == -1)
+            // Use List<T>.FindLastIndex for clear intent and minimal code.
+            int lastUserMessageIndex = chatMessages.FindLastIndex(m => m.Role == ChatRole.User);
+            if (lastUserMessageIndex < 0)
             {
                 throw new InvalidOperationException("No user message found in the chat messages list");
             }
 
-            // Split the messages
-            var chatHistory = chatMessages.Take(lastUserMessageIndex).ToList();
-            var nextMessage = chatMessages[lastUserMessageIndex];
-            var expectedOutcome = chatMessages.Skip(lastUserMessageIndex + 1).ToList();
-
             return new ScenarioData
             {
-                ChatHistory = chatHistory,
-                NextMessage = nextMessage,
-                ExpectedOutcome = expectedOutcome
+                ChatHistory = chatMessages.Take(lastUserMessageIndex).ToList(),
+                NextMessage = chatMessages[lastUserMessageIndex],
+                ExpectedOutcome = chatMessages.Skip(lastUserMessageIndex + 1).ToList()
             };
         }
 
@@ -136,6 +125,16 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
             }
 
             return null;
+        }
+
+        private static IEnumerable<OpenAIChatMessage> DeserializeMessages(BinaryData data)
+        {
+            using JsonDocument messagesAsJson = JsonDocument.Parse(data.ToMemory());
+
+            foreach (JsonElement jsonElement in messagesAsJson.RootElement.EnumerateArray())
+            {
+                yield return ModelReaderWriter.Read<OpenAIChatMessage>(BinaryData.FromObjectAsJson(jsonElement), ModelReaderWriterOptions.Json);
+            }
         }
     }
 }

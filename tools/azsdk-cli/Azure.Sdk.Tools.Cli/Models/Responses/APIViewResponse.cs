@@ -25,6 +25,6 @@ public class APIViewResponse : CommandResponse
             output.AppendLine(Message);
         }
 
-        return output.ToString();
+        return ToString(output);
     }
 }

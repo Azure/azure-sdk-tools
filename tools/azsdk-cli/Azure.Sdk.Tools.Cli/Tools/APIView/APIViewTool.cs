@@ -1,7 +1,10 @@
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.ComponentModel;
+using System.Text.Json;
+using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Models.APIView;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Services;
 using ModelContextProtocol.Server;
@@ -10,8 +13,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.APIView;
 
 [McpServerToolType]
 [Description("Access APIView functionality including API structure, version diffs, comments, and review status")]
-public class APIViewTool : MCPTool
+public class APIViewTool : MCPMultiCommandTool
 {
+    public override CommandGroup[] CommandHierarchy { get; set; } = [
+        SharedCommandGroups.APIView
+    ];
+
     private static readonly string[] validContentTypes = ["Text", "CodeFile"];
     private static readonly string[] validRevisionSelectionTypes = ["Latest", "LatestApproved", "LatestAutomatic", "LatestManual", "Undefined"];
 
@@ -39,44 +46,39 @@ public class APIViewTool : MCPTool
         _apiViewService = apiViewService;
     }
 
-    protected override Command GetCommand()
+    protected override List<Command> GetCommands()
     {
-        var revisionCommentsCmd = new Command("comments", "Get comments for a specific revision ID or APIView URL");
-        revisionCommentsCmd.AddOption(revisionIdOption);
-        revisionCommentsCmd.AddOption(apiViewUrlOption);
-        revisionCommentsCmd.AddOption(environmentOption);
-        revisionCommentsCmd.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
-        
-        var revisionContentCmd = new Command("content", "Get revision content by revision ID, review ID, or APIView URL (for revision)");
-        revisionContentCmd.AddOption(revisionIdOption);
-        revisionContentCmd.AddOption(reviewIdOptions);
-        revisionContentCmd.AddOption(apiViewUrlOption);
-        revisionContentCmd.AddOption(revisionSelectionTypeOption);
-        revisionContentCmd.AddOption(environmentOption);
-        revisionContentCmd.AddOption(outputFileOption);
-        revisionContentCmd.AddOption(contentReturnTypeOption);
-        revisionContentCmd.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
-        
+        var revisionCommentsCmd = new Command("comments", "Get comments for a specific revision ID or APIView URL")
+        {
+            revisionIdOption, apiViewUrlOption, environmentOption
+        };
+        var revisionContentCmd = new Command("content", "Get revision content by revision ID, review ID, or APIView URL (for revision)")
+        {
+            revisionIdOption,
+            reviewIdOptions,
+            apiViewUrlOption,
+            revisionSelectionTypeOption,
+            environmentOption,
+            outputFileOption,
+            contentReturnTypeOption
+        };
+
         var revisionCommand = new Command("revision", "APIView revision operations");
         revisionCommand.AddCommand(revisionCommentsCmd);
         revisionCommand.AddCommand(revisionContentCmd);
-        
-        var authCheckCmd = new Command("check", "Check APIView authentication status");
-        authCheckCmd.AddOption(environmentOption);
-        authCheckCmd.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
-        
+
+        var authCheckCmd = new Command("check", "Check APIView authentication status")
+        {
+            environmentOption
+        };
+
         var authGuidanceCmd = new Command("guidance", "Get APIView authentication guidance");
-        authGuidanceCmd.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
-        
+
         var authCommand = new Command("auth", "APIView authentication operations");
         authCommand.AddCommand(authCheckCmd);
         authCommand.AddCommand(authGuidanceCmd);
-        
-        var rootCommand = new Command("apiview", "Access APIView functionality");
-        rootCommand.AddCommand(revisionCommand);
-        rootCommand.AddCommand(authCommand);
-        
-        return rootCommand;
+
+        return [revisionCommand, authCommand];
     }
 
     public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
@@ -88,8 +90,8 @@ public class APIViewTool : MCPTool
         {
             ("revision", "comments") => await GetRevisionComments(ctx, ct),
             ("revision", "content") => await GetRevisionContent(ctx, ct),
-            ("auth", "check") => await CheckAuthentication(ctx, ct),
-            ("auth", "guidance") => await GetAuthenticationGuidance(ctx, ct),
+            ("auth", "check") => await CheckAuthentication(ctx.ParseResult.GetValueForOption(environmentOption)),
+            ("auth", "guidance") => await GetAuthenticationGuidance(),
             _ => new APIViewResponse { ResponseError = $"Unknown command: {parentCommandName} {commandName}" }
         };
 
@@ -109,10 +111,7 @@ public class APIViewTool : MCPTool
             if (result == null)
             {
                 _logger.LogError("Failed to retrieve comments for revision {RevisionId}", actualRevisionId);
-                return new APIViewResponse
-                {
-                    Success = false, ResponseError = $"Failed to retrieve comments for revision {actualRevisionId}"
-                };
+                return new APIViewResponse { ResponseError = $"Failed to retrieve comments for revision {actualRevisionId}" };
             }
 
             _logger.LogInformation("Comments retrieved successfully for revision {RevisionId}. Comments: {comments}", actualRevisionId, result);
@@ -134,11 +133,12 @@ public class APIViewTool : MCPTool
     {
         try
         {
-            string result = await _apiViewService.CheckAuthenticationStatusAsync(environment);
-            _logger.LogInformation("Authentication status retrieved successfully. Status: {Status}", result);
+            AuthenticationStatus result = await _apiViewService.CheckAuthenticationStatusAsync(environment);
+            string serializedResult = JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true });
+            _logger.LogInformation("Authentication status retrieved successfully. Status: {Status}", serializedResult);
             return new APIViewResponse
             {
-                Success = true, Message = "Authentication status retrieved successfully", Data = result
+                Success = true, Message = "Authentication status retrieved successfully", Data = serializedResult
             };
         }
         catch (Exception ex)
@@ -154,11 +154,12 @@ public class APIViewTool : MCPTool
     {
         try
         {
-            string result = await _apiViewService.GetAuthenticationGuidanceAsync();
-            _logger.LogInformation("Authentication guidance retrieved successfully. Guidance: {Guidance}", result);
+            AuthenticationGuidance result = await _apiViewService.GetAuthenticationGuidanceAsync();
+            string serializedResult = JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true });
+            _logger.LogInformation("Authentication guidance retrieved successfully. Guidance: {Guidance}", serializedResult);
             return new APIViewResponse
             {
-                Success = true, Message = "Authentication guidance retrieved successfully", Data = result
+                Success = true, Message = "Authentication guidance retrieved successfully", Data = serializedResult
             };
         }
         catch (Exception ex)
@@ -271,11 +272,7 @@ public class APIViewTool : MCPTool
             if (result == null)
             {
                 _logger.LogError("Failed to retrieve revision content for revision {RevisionId}", revisionId);
-                return new APIViewResponse
-                {
-                    Success = false,
-                    ResponseError = $"Failed to retrieve revision content for revision {revisionId}"
-                };
+                return new APIViewResponse { ResponseError = $"Failed to retrieve revision content for revision {revisionId}" };
             }
 
             if (!string.IsNullOrEmpty(outputFile))
@@ -302,28 +299,13 @@ public class APIViewTool : MCPTool
         catch (ArgumentException ex)
         {
             _logger.LogError(ex, "Invalid argument provided");
-            return new APIViewResponse
-            {
-                Success = false,
-                ResponseError = ex.Message
-            };
+            return new APIViewResponse { ResponseError = ex.Message };
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to get revision content for revision {RevisionId}", revisionId);
             return new APIViewResponse { ResponseError = $"Failed to get revision content: {ex.Message}" };
         }
-    }
-
-    private async Task<APIViewResponse> CheckAuthentication(InvocationContext ctx, CancellationToken ct)
-    {
-        string? environment = ctx.ParseResult.GetValueForOption(environmentOption);
-        return await CheckAuthentication(environment);
-    }
-
-    private async Task<APIViewResponse> GetAuthenticationGuidance(InvocationContext ctx, CancellationToken ct)
-    {
-        return await GetAuthenticationGuidance();
     }
 
     private string ExtractRevisionIdFromInput(string input)

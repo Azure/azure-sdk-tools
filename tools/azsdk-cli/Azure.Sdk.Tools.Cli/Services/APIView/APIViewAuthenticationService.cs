@@ -3,6 +3,7 @@ using System.Text.Json;
 using Azure.Core;
 using Azure.Identity;
 using Azure.Sdk.Tools.Cli.Configuration;
+using Azure.Sdk.Tools.Cli.Models.APIView;
 
 namespace Azure.Sdk.Tools.Cli.Services.APIView;
 
@@ -10,10 +11,10 @@ public interface IAPIViewAuthenticationService
 {
     Task<string?> GetAuthenticationTokenAsync(string environment = "production");
     Task ConfigureAuthenticationAsync(HttpClient httpClient, string environment = "production");
-    Task<string> CheckAuthenticationStatusAsync(string? endpoint = null);
+    Task<AuthenticationStatus> CheckAuthenticationStatusAsync(string? endpoint = null);
     string GetAuthenticationGuidance();
     bool IsAuthenticationFailure(string content);
-    string CreateAuthenticationErrorResponse(string message, string revisionId = null, string activeRevisionId = null,
+    AuthenticationErrorResponse CreateAuthenticationErrorResponse(string message, string revisionId = null, string activeRevisionId = null,
         string diffRevisionId = null, string baseUrl = null);
 }
 
@@ -33,8 +34,10 @@ public class APIViewAuthenticationService : IAPIViewAuthenticationService
             var credential = new ChainedTokenCredential(
                 new AzureCliCredential(),
                 new AzurePowerShellCredential(),
-                new DefaultAzureCredential());
-                
+                new AzureDeveloperCliCredential(),
+                new VisualStudioCredential()
+            );
+
             string scope = APIViewConfiguration.ApiViewScopes[environment];
             
             if (string.IsNullOrEmpty(scope))
@@ -51,8 +54,7 @@ public class APIViewAuthenticationService : IAPIViewAuthenticationService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to get Azure token with scope {Scope}: {Message}", 
-                APIViewConfiguration.ApiViewScopes.GetValueOrDefault(environment, "unknown"), ex.Message);
+            _logger.LogWarning(ex, "Failed to get Azure token with scope {Scope}", APIViewConfiguration.ApiViewScopes.GetValueOrDefault(environment, "unknown"));
             return null;
         }
     }
@@ -83,18 +85,10 @@ public class APIViewAuthenticationService : IAPIViewAuthenticationService
    - Run: az login
    - Ensure you have access to APIView resources
 
-**Azure PowerShell**:
-   - Run: Connect-AzAccount
-   - Ensure you have access to APIView resources
-
-**Managed Identity** (when running in Azure):
-   - Authentication will happen automatically
-   - Ensure the managed identity has appropriate APIView permissions
-
-The authentication service will automatically try Azure CLI, Azure PowerShell, and managed identity credentials in that order.";
+The authentication service will automatically try Azure CLI";
     }
 
-    public async Task<string> CheckAuthenticationStatusAsync(string? environmentOption = null)
+    public async Task<AuthenticationStatus> CheckAuthenticationStatusAsync(string? environmentOption = null)
     {
         string environment = environmentOption ?? "production";
         string baseUrl = APIViewConfiguration.BaseUrlEndpoints[environment];
@@ -135,17 +129,15 @@ The authentication service will automatically try Azure CLI, Azure PowerShell, a
             }
         }
 
-        var status = new
+        return new AuthenticationStatus
         {
-            hasToken,
-            isAuthenticationWorking,
-            tokenSource = "azure-credentials",
-            endpoint = baseUrl,
-            authenticationError,
-            guidance = isAuthenticationWorking ? "Authentication working successfully" : GetAuthenticationGuidance()
+            HasToken = hasToken,
+            IsAuthenticationWorking = isAuthenticationWorking,
+            TokenSource = "azure-credentials",
+            Endpoint = baseUrl,
+            AuthenticationError = authenticationError,
+            Guidance = isAuthenticationWorking ? "Authentication working successfully" : GetAuthenticationGuidance()
         };
-
-        return JsonSerializer.Serialize(status, new JsonSerializerOptions { WriteIndented = true });
     }
 
     public bool IsAuthenticationFailure(string content)
@@ -155,22 +147,18 @@ The authentication service will automatically try Azure CLI, Azure PowerShell, a
                content.Contains("authentication required", StringComparison.OrdinalIgnoreCase);
     }
 
-    public string CreateAuthenticationErrorResponse(string message, string revisionId = null,
+    public AuthenticationErrorResponse CreateAuthenticationErrorResponse(string message, string revisionId = null,
         string activeRevisionId = null, string diffRevisionId = null, string baseUrl = null)
     {
-        string guidance = GetAuthenticationGuidance();
-
-        var errorResponse = new
+        return new AuthenticationErrorResponse
         {
-            error = "Authentication Required",
-            message,
-            guidance,
-            revisionId,
-            activeRevisionId,
-            diffRevisionId,
-            loginUrl = !string.IsNullOrEmpty(baseUrl) ? $"{baseUrl}/Account/Login" : null
+            Error = "Authentication Required",
+            Message = message,
+            Guidance = GetAuthenticationGuidance(),
+            RevisionId = revisionId,
+            ActiveRevisionId = activeRevisionId,
+            DiffRevisionId = diffRevisionId,
+            LoginUrl = !string.IsNullOrEmpty(baseUrl) ? $"{baseUrl}/Account/Login" : null
         };
-
-        return JsonSerializer.Serialize(errorResponse, new JsonSerializerOptions { WriteIndented = true });
     }
 }

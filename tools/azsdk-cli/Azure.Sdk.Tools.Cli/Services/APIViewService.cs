@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Azure.Sdk.Tools.Cli.Models.APIView;
 using Azure.Sdk.Tools.Cli.Services.APIView;
 
 namespace Azure.Sdk.Tools.Cli.Services;
@@ -8,8 +9,8 @@ public interface IAPIViewService
     Task<string?> GetRevisionContent(string apiRevisionId, string reviewId, string selectionType,
         string contentReturnType, string environment = "production");
     Task<string?> GetCommentsByRevisionAsync(string revisionId, string environment = "production");
-    Task<string> CheckAuthenticationStatusAsync(string environment = "production");
-    Task<string> GetAuthenticationGuidanceAsync();
+    Task<AuthenticationStatus> CheckAuthenticationStatusAsync(string environment = "production");
+    Task<AuthenticationGuidance> GetAuthenticationGuidanceAsync();
 }
 
 public class APIViewService : IAPIViewService
@@ -54,26 +55,20 @@ public class APIViewService : IAPIViewService
         return result;
     }
 
-    public async Task<string> CheckAuthenticationStatusAsync(string environment = "production")
+    public async Task<AuthenticationStatus> CheckAuthenticationStatusAsync(string environment = "production")
     {
         return await _authService.CheckAuthenticationStatusAsync(environment);
     }
 
-    public async Task<string> GetAuthenticationGuidanceAsync()
+    public async Task<AuthenticationGuidance> GetAuthenticationGuidanceAsync()
     {
         string? token = await _authService.GetAuthenticationTokenAsync();
-        var guidance = new
+        return new AuthenticationGuidance
         {
-            isAuthenticated = !string.IsNullOrEmpty(token),
-            currentTokenSource = "azure-credentials",
-            instructions = _authService.GetAuthenticationGuidance(),
-            quickSetup = new
-            {
-                azureCli = "Run: az login",
-                azurePowerShell = "Run: Connect-AzAccount"
-            }
+            IsAuthenticated = !string.IsNullOrEmpty(token),
+            CurrentTokenSource = "azure-credentials",
+            Instructions = _authService.GetAuthenticationGuidance(),
+            QuickSetup = "Run: az login"
         };
-
-        return JsonSerializer.Serialize(guidance, new JsonSerializerOptions { WriteIndented = true });
     }
 }

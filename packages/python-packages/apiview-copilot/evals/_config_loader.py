@@ -1,20 +1,12 @@
 """Workflow configuration loader for evals.
 
 Minimal schema (intentionally lean):
-- version (optional now; defaults to 1 if absent)
 - name: unique workflow name
 - kind: 'prompt' | 'apiview'
 - tests: path to .jsonl testcases (relative to yaml location allowed)
 - prompty: required iff kind == 'prompt'
-- runs: optional int (default 1)
-- output: optional path for artifacts (default scratch/output/<name> relative to repo root or yaml dir)
 
 Future (not implemented yet): metrics, model, post_process, baseline, coverage.
-
-Design goals:
-- Fail fast with clear, actionable error messages
-- Keep zero external dependencies beyond stdlib + pyyaml
-- Provide a normalized dataclass for downstream runner use
 """
 from __future__ import annotations
 

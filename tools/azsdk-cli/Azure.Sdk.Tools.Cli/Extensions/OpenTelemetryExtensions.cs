@@ -78,18 +78,6 @@ public static class OpenTelemetryExtensions
         });
 #endif
 
-        var appInsightsConnectionString = Environment.GetEnvironmentVariable("AZSDKTOOLS_MCP_APPLICATIONINSIGHTS_CONNECTION_STRING");
-        if (string.IsNullOrEmpty(appInsightsConnectionString))
-        {
-            // Don't use default app insights when running in agent test mode.
-            var agentTesting = Environment.GetEnvironmentVariable("AZSDKTOOLS_AGENT_TESTING");
-            if (bool.TryParse(agentTesting, out var isAgentTesting) && isAgentTesting)
-            {
-                return;
-            }
-            appInsightsConnectionString = DefaultAppInsights;
-        }
-
         services.ConfigureOpenTelemetryTracerProvider((sp, builder) =>
         {
             var serverConfig = sp.GetRequiredService<IOptions<AzSdkToolsMcpServerConfiguration>>();
@@ -97,15 +85,19 @@ public static class OpenTelemetryExtensions
             {
                 return;
             }
-
             builder.AddSource(serverConfig.Value.Name);
         });
+
+        var appInsightsConnectionString = Environment.GetEnvironmentVariable("AZSDKTOOLS_MCP_APPLICATIONINSIGHTS_CONNECTION_STRING");
+        if (string.IsNullOrEmpty(appInsightsConnectionString))
+        {
+            appInsightsConnectionString = DefaultAppInsights;
+        }
 
         services.AddOpenTelemetry()
             .ConfigureResource(r =>
             {
                 var version = Assembly.GetExecutingAssembly()?.GetName()?.Version?.ToString();
-
                 r.AddService(Constants.TOOLS_ACTIVITY_SOURCE, version)
                     .AddTelemetrySdk();
             })

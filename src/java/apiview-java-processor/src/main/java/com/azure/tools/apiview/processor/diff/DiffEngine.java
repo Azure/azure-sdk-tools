@@ -59,15 +59,13 @@ public class DiffEngine {
                 // Check type change
                 if (!safe(of.type).equals(safe(nf.type))) {
                     ApiChangeDto ch = fieldChange("ModifiedFieldType", describeField(of), describeField(nf), fqn, nf);
-                    ch.category = "FieldType";
-                    ch.impact = "Breaking"; // changing type typically breaking
+                    ch.category = "FieldType"; // changing type typically breaking
                     out.add(ch);
                 }
                 // Deprecation change
                 if (of.deprecated != nf.deprecated) {
                     ApiChangeDto ch = fieldChange("ModifiedFieldDeprecation", describeField(of), describeField(nf), fqn, nf);
-                    ch.category = "Deprecation";
-                    ch.impact = "NonBreaking"; // deprecation addition not breaking
+                    ch.category = "Deprecation"; // deprecation addition not breaking
                     out.add(ch);
                 }
             }
@@ -90,19 +88,16 @@ public class DiffEngine {
                 if (!safe(om.returnType).equals(safe(nm.returnType))) {
                     ApiChangeDto ch = methodChange("ModifiedMethodReturnType", fqn, om, nm);
                     ch.category = "ReturnType";
-                    ch.impact = "Breaking";
                     out.add(ch);
                 }
                 if (om.deprecated != nm.deprecated) {
                     ApiChangeDto ch = methodChange("ModifiedMethodDeprecation", fqn, om, nm);
                     ch.category = "Deprecation";
-                    ch.impact = "NonBreaking";
                     out.add(ch);
                 }
                 if (!safe(om.visibility).equals(safe(nm.visibility))) {
                     ApiChangeDto ch = methodChange("ModifiedMethodVisibility", fqn, om, nm);
                     ch.category = "Visibility";
-                    ch.impact = "Breaking";
                     out.add(ch);
                 }
                 // Parameter name changes (types same, names differ)
@@ -110,7 +105,6 @@ public class DiffEngine {
                     ApiChangeDto ch = methodChange("ModifiedMethodParameterNames", fqn, om, nm);
                     ch.meta.paramNameChange = Boolean.TRUE;
                     ch.category = "Parameters";
-                    ch.impact = "NonBreaking";
                     out.add(ch);
                 }
             }
@@ -130,8 +124,7 @@ public class DiffEngine {
                 ch.meta.symbolKind = "Method";
                 ch.meta.fqn = fqn;
                 ch.meta.methodName = name;
-                ch.category = "Overload";
-                ch.impact = oldCount < newCount ? "NonBreaking" : "Breaking"; // removal is breaking
+                ch.category = "Overload"; // removal considered breaking if fewer overloads, omitted impact field
                 out.add(ch);
             }
         }
@@ -139,15 +132,13 @@ public class DiffEngine {
 
     private ApiChangeDto methodAdded(String fqn, MethodSymbol m) {
         ApiChangeDto ch = baseMethodChange("AddedMethod", fqn, m);
-        ch.after = describeMethod(m);
-        ch.impact = "NonBreaking"; // adding method typically non-breaking
+        ch.after = describeMethod(m); // adding method typically non-breaking
         return ch;
     }
 
     private ApiChangeDto methodRemoved(String fqn, MethodSymbol m) {
         ApiChangeDto ch = baseMethodChange("RemovedMethod", fqn, m);
         ch.before = describeMethod(m);
-        ch.impact = "Breaking";
         return ch;
     }
 
@@ -164,10 +155,10 @@ public class DiffEngine {
         ch.meta.symbolKind = "Method";
         ch.meta.fqn = fqn;
         ch.meta.methodName = m.name;
-    ch.meta.signature = m.fullSignature;
-    ch.meta.returnType = m.returnType;
-    ch.meta.parameterTypes = extractParamTypes(m);
-    ch.meta.parameterNames = extractParamNames(m);
+        ch.meta.signature = m.fullSignature;
+        ch.meta.returnType = m.returnType;
+        ch.meta.parameterTypes = extractParamTypes(m);
+        ch.meta.parameterNames = extractParamNames(m);
         ch.meta.visibility = m.visibility;
         ch.meta.deprecated = m.deprecated ? Boolean.TRUE : null;
         ch.category = inferCategory(type);
@@ -181,11 +172,10 @@ public class DiffEngine {
         ch.after = after;
         ch.meta.symbolKind = "Class";
         ch.meta.fqn = after != null ? after : before;
-    // Class visibility not currently captured; infer from modifiers
-    ch.meta.visibility = cls.modifiers.contains("public") ? "public" : (cls.modifiers.contains("protected") ? "protected" : null);
+        // Class visibility not currently captured; infer from modifiers
+        ch.meta.visibility = cls.modifiers.contains("public") ? "public" : (cls.modifiers.contains("protected") ? "protected" : null);
         ch.meta.deprecated = cls.deprecated ? Boolean.TRUE : null;
-        ch.category = "Type";
-        ch.impact = type.startsWith("Removed") ? "Breaking" : "NonBreaking";
+        ch.category = "Type"; // removed impact classification
         return ch;
     }
 
@@ -199,17 +189,15 @@ public class DiffEngine {
         ch.meta.fieldName = f.name;
         ch.meta.visibility = f.visibility;
         ch.meta.deprecated = f.deprecated ? Boolean.TRUE : null;
-        ch.category = type.startsWith("Modified") ? "Field" : (type.startsWith("Added") ? "Field" : "Field");
-        if (type.startsWith("Removed")) ch.impact = "Breaking";
-        else if (type.startsWith("Added")) ch.impact = "NonBreaking";
+        ch.category = type.startsWith("Modified") ? "Field" : (type.startsWith("Added") ? "Field" : "Field"); // impact removed
         return ch;
     }
 
     private String describeMethod(MethodSymbol m) {
         StringBuilder sb = new StringBuilder();
         sb.append(m.visibility).append(" ");
-    boolean isConstructor = "void".equals(m.returnType) && m.name != null && m.name.length() > 0 && m.name.equals(simpleNameFromFqn(m.fqn));
-    if (isConstructor) {
+        boolean isConstructor = "void".equals(m.returnType) && m.name != null && m.name.length() > 0 && m.name.equals(simpleNameFromFqn(m.fqn));
+        if (isConstructor) {
             sb.append(m.name);
         } else {
             sb.append(m.returnType).append(" ").append(m.name);

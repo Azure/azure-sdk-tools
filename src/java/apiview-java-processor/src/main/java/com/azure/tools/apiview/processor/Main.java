@@ -112,8 +112,9 @@ public class Main {
 
         com.azure.tools.apiview.processor.diff.collector.DiffSymbolCollector oldCollector = new com.azure.tools.apiview.processor.diff.collector.DiffSymbolCollector(oldTable);
         com.azure.tools.apiview.processor.diff.collector.DiffSymbolCollector newCollector = new com.azure.tools.apiview.processor.diff.collector.DiffSymbolCollector(newTable);
-        new com.azure.tools.apiview.processor.analysers.JavaASTAnalyser(new com.azure.tools.apiview.processor.model.APIListing(), oldCollector).analyse(oldSourceFiles);
-        new com.azure.tools.apiview.processor.analysers.JavaASTAnalyser(new com.azure.tools.apiview.processor.model.APIListing(), newCollector).analyse(newSourceFiles);
+        // Disable diagnostics for diff mode to avoid requiring populated APIListing metadata
+        new com.azure.tools.apiview.processor.analysers.JavaASTAnalyser(new com.azure.tools.apiview.processor.model.APIListing(), oldCollector, false).analyse(oldSourceFiles);
+        new com.azure.tools.apiview.processor.analysers.JavaASTAnalyser(new com.azure.tools.apiview.processor.model.APIListing(), newCollector, false).analyse(newSourceFiles);
 
         com.azure.tools.apiview.processor.diff.DiffEngine engine = new com.azure.tools.apiview.processor.diff.DiffEngine();
         java.util.List<com.azure.tools.apiview.processor.diff.dto.ApiChangeDto> changes = engine.diff(oldTable, newTable);

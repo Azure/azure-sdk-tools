@@ -33,8 +33,6 @@ import com.github.javaparser.ast.body.EnumConstantDeclaration;
 import com.github.javaparser.ast.body.EnumDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
-import java.util.List;
-import java.util.ArrayList;
 import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.body.TypeDeclaration;
 import com.github.javaparser.ast.body.VariableDeclarator;
@@ -194,12 +192,16 @@ public class JavaASTAnalyser implements Analyser {
      **********************************************************************************************/
 
     public JavaASTAnalyser(APIListing apiListing) {
-        this(apiListing, null);
+        this(apiListing, null, true);
     }
 
     public JavaASTAnalyser(APIListing apiListing, SymbolCollector collector) {
+        this(apiListing, collector, true);
+    }
+
+    public JavaASTAnalyser(APIListing apiListing, SymbolCollector collector, boolean enableDiagnostics) {
         this.apiListing = apiListing;
-        this.diagnostic = new Diagnostics(apiListing);
+        this.diagnostic = enableDiagnostics ? new Diagnostics(apiListing) : null;
         this.symbolCollector = collector;
     }
 
@@ -248,7 +250,9 @@ public class JavaASTAnalyser implements Analyser {
 
         // we conclude by doing a final pass over all diagnostics to enable them to do any final analysis based on
         // the already-executed individual scans
-        diagnostic.scanFinal(apiListing);
+        if (diagnostic != null) {
+            diagnostic.scanFinal(apiListing);
+        }
 
         // validate the model
         APIListingValidator.validate(apiListing);
@@ -732,7 +736,9 @@ public class JavaASTAnalyser implements Analyser {
             visitDefinition(typeDeclaration, parentNode);
         }
 
-        diagnostic.scanIndividual(compilationUnit, apiListing);
+        if (diagnostic != null) {
+            diagnostic.scanIndividual(compilationUnit, apiListing);
+        }
     }
 
     // This method is for constructors, fields, methods, etc.
@@ -1701,5 +1707,18 @@ public class JavaASTAnalyser implements Analyser {
         public Spacing getSpacing() {
             return spacing;
         }
+    }
+
+    // Helper used by diff symbol collection to determine the enclosing top-level or nested type
+    // of a member (field, method, constructor). Walks parent chain until a TypeDeclaration is found.
+    private TypeDeclaration<?> findEnclosingType(BodyDeclaration<?> definition) {
+        Node current = definition.getParentNode().orElse(null);
+        while (current != null) {
+            if (current instanceof TypeDeclaration) {
+                return (TypeDeclaration<?>) current;
+            }
+            current = current.getParentNode().orElse(null);
+        }
+        return null; // top-level type will be handled separately
     }
 }

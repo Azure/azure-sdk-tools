@@ -1,5 +1,4 @@
 import asyncio
-import json
 import sys
 from typing import Optional
 
@@ -44,7 +43,7 @@ selection_type = {
 class ApiViewClient:
     """Client for interacting with the API View service."""
 
-    def __init__(self, environment: str = "staging"):
+    def __init__(self, environment: str = "production"):
         self.environment = environment
 
     async def get_revision_text(

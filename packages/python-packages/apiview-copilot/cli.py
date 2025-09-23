@@ -723,7 +723,7 @@ def db_purge(containers: Optional[list[str]] = None, run_indexer: bool = False):
 def get_apiview_comments(revision_id: str, environment: str = "production") -> dict:
     """
     Retrieves comments for a specific APIView revision and returns them grouped by line number and
-    sorted by CreatedOn time.
+    sorted by createdOn time.
     """
     apiview = ApiViewClient(environment=environment)
     comments = asyncio.run(apiview.get_review_comments(revision_id=revision_id))
@@ -737,7 +737,7 @@ def get_apiview_comments(revision_id: str, environment: str = "production") -> d
                 conversations[line_no] = [comment]
     for line_no, comments in conversations.items():
         # sort comments by created_on time
-        comments.sort(key=lambda x: x.get("CreatedOn", 0))
+        comments.sort(key=lambda x: x.get("createdOn", 0))
     return conversations
 
 

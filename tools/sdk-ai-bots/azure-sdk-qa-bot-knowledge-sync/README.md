@@ -1,4 +1,4 @@
-# Azure SDK QA Bot Knowledge Syncer
+# Azure SDK QA Bot Knowledge Sync
 
 This is a standalone TypeScript application which processes documentation from various repositories and uploads processed content for the Azure SDK QA Bot.
 
@@ -14,7 +14,7 @@ This is a standalone TypeScript application which processes documentation from v
 ## Project Structure
 
 ```
-azure-sdk-qa-bot-knowledge-syncer/
+azure-sdk-qa-bot-knowledge-sync/
 ├── src/
 │   ├── index.ts                    # Main entry point (calls DailySyncKnowledge)
 │   ├── DailySyncKnowledge.ts      # Core processing logic

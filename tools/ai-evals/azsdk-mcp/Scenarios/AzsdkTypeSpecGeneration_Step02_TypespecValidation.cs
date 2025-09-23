@@ -1,20 +1,20 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using AwesomeAssertions;
 using Azure.Sdk.Tools.McpEvals.Evaluators;
 using Azure.Sdk.Tools.McpEvals.Helpers;
 using Azure.Sdk.Tools.McpEvals.Models;
 using Microsoft.Extensions.AI.Evaluation;
 using Microsoft.Extensions.AI.Evaluation.Reporting;
+using NUnit.Framework;
 
 namespace Azure.Sdk.Tools.McpEvals.Scenarios
 {
     public partial class Scenario
     {
-        [TestMethod]
+    [Test]
         public async Task AzsdkTypeSpecGeneration_Step02_TypespecValidation()
         {
             // 1. Load Scenario Data from JSON for this test. 
-            var filePath = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "TestData", "example.json");
+            var filePath = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "example.json");
             var json = await SerializationHelper.LoadScenarioFromChatMessagesAsync(filePath);
             var fullChat = json.ChatHistory.Append(json.NextMessage);
             

@@ -1,23 +1,20 @@
 using Azure.Sdk.Tools.McpEvals.Helpers;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.Extensions.AI;
 using ModelContextProtocol.Client;
-using System.Reflection;
+using NUnit.Framework;
 
 namespace Azure.Sdk.Tools.McpEvals.Scenarios
 {
-    [TestClass]
+    [TestFixture]
     public partial class Scenario
     {
-        public TestContext TestContext { get; set; } = null!;
-
-        // Static services
+        // Static services shared across all tests
         protected static IChatClient? ChatClient;
         protected static IMcpClient? McpClient;
         protected static ChatCompletion? ChatCompletion;
 
-        [AssemblyInitialize]
-        public static async Task AssemblyInitialize(TestContext context)
+        [OneTimeSetUp]
+        public async Task GlobalSetup()
         {
             ChatClient = TestSetup.GetChatClient();
             McpClient = await TestSetup.GetMcpClientAsync();

@@ -73,7 +73,8 @@ extends:
                   tar -czf knowledge-syncer-dist.tgz -C tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-syncer/dist .
                 displayName: "Package dist"
 
-              # Publish artifact using pipeline artifact syntax (1ES compliant)
-              - publish: knowledge-syncer-dist.tgz
-                artifact: knowledge-syncer-dist
+              # Publish artifact using 1ES-compliant pipeline artifact output syntax
+              - output: pipelineArtifact
                 displayName: "Publish artifact"
+                path: knowledge-syncer-dist.tgz
+                artifact: knowledge-syncer-dist

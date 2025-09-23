@@ -126,9 +126,9 @@ This server is intended to run in **local mcp mode only** and will utilize your 
 ## Telemetry Configuration
 Telemetry collection is on by default.
 
-To opt out, set the environment variable AZSDKTOOLS_MCP_COLLECT_TELEMETRY to false in your environment.
+To opt out, set the environment variable `AZSDKTOOLS_MCP_COLLECT_TELEMETRY` to false in your environment.
 
 If you need to direct telemetry to an alternate Application Insights instance (for local testing or private collection), set one of the following environment variables in your environment or in your hosting configuration:
 
-- AZSDKTOOLS_MCP_APPLICATIONINSIGHTS_CONNECTION_STRING: the full Application Insights connection string.
+- `AZSDKTOOLS_MCP_APPLICATIONINSIGHTS_CONNECTION_STRING`: the full Application Insights connection string.
 

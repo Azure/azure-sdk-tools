@@ -20,49 +20,6 @@ namespace Azure.Sdk.Tools.Cli.Models.AiCompletion
         AzureSDKOnboarding
     }
 
-    [JsonConverter(typeof(JsonStringEnumWithEnumMemberConverter<Source>))]
-    public enum Source
-    {
-        [EnumMember(Value = "typespec_docs")]
-        TypeSpec,
-
-        [EnumMember(Value = "typespec_azure_docs")]
-        TypeSpecAzure,
-
-        [EnumMember(Value = "azure_rest_api_specs_wiki")]
-        AzureRestAPISpec,
-
-        [EnumMember(Value = "azure_sdk_for_python_docs")]
-        AzureSDKForPython,
-
-        [EnumMember(Value = "azure_sdk_for_python_wiki")]
-        AzureSDKForPythonWiki,
-
-        [EnumMember(Value = "static_typespec_qa")]
-        TypeSpecQA,
-
-        [EnumMember(Value = "azure_api_guidelines")]
-        AzureAPIGuidelines,
-
-        [EnumMember(Value = "azure_resource_manager_rpc")]
-        AzureResourceManagerRPC,
-
-        [EnumMember(Value = "static_typespec_migration_docs")]
-        TypeSpecMigration,
-
-        [EnumMember(Value = "azure-sdk-docs-eng")]
-        AzureSDKDocsEng,
-
-        [EnumMember(Value = "azure-sdk-guidelines")]
-        AzureSDKGuidelines,
-
-        [EnumMember(Value = "typespec_azure_http_specs")]
-        TypeSpecAzureHttpSpecs,
-
-        [EnumMember(Value = "typespec_http_specs")]
-        TypeSpecHttpSpecs
-    }
-
     [JsonConverter(typeof(JsonStringEnumWithEnumMemberConverter<Role>))]
     public enum Role
     {

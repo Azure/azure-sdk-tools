@@ -25,9 +25,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 
         // Command line options and arguments
         private readonly Argument<string> _questionArgument = new("question", "The question to ask the AI agent");
-        private readonly Option<bool> _includeContextOption = new("--include-context", () => false, "Include full search context in the response");
-        private readonly Option<string> _endpointOption = new("--endpoint", "Override the AI completion endpoint");
-        private readonly Option<string> _apiKeyOption = new("--api-key", "Override the API key");
 
         public AiCompletionTool(
             IAiCompletionService aiCompletionService,
@@ -42,9 +39,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             var command = new Command("ai-completion", "Query the Azure SDK QA Bot AI agent for answers about TypeSpec, Azure SDK, and API guidelines");
 
             command.AddArgument(_questionArgument);
-            command.AddOption(_includeContextOption);
-            command.AddOption(_endpointOption);
-            command.AddOption(_apiKeyOption);
 
             command.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
 
@@ -54,14 +48,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
         {
             var question = ctx.ParseResult.GetValueForArgument(_questionArgument);
-            var includeContext = ctx.ParseResult.GetValueForOption(_includeContextOption);
-            var endpoint = ctx.ParseResult.GetValueForOption(_endpointOption);
-            var apiKey = ctx.ParseResult.GetValueForOption(_apiKeyOption);
 
             if (string.IsNullOrWhiteSpace(question))
             {
                 _logger.LogError("Question cannot be empty");
-                Console.WriteLine("Error: Question cannot be empty");
                 SetFailure();
                 return;
             }
@@ -72,25 +62,21 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 
                 var response = await QueryAzureSDKDocumentation(
                   question,
-                  conversationHistory: null,
-                  includeFullContext: includeContext,
                   ct: ct);
 
                 if (response.IsSuccessful)
                 {
-                    Console.WriteLine(response.ToString());
+                    _logger.LogDebug(response.ToString());
                 }
                 else
                 {
                     _logger.LogError("AI query failed: {Error}", response.ResponseError);
-                    Console.WriteLine($"Error: {response.ResponseError}");
                     SetFailure();
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to query AI agent via CLI");
-                Console.WriteLine($"Error: {ex.Message}");
                 SetFailure();
             }
         }
@@ -98,16 +84,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         [McpServerTool(Name = "azsdk_ai_qa_completion")]
         [Description(@"Query the Azure SDK QA Bot AI agent for answers about TypeSpec, Azure SDK, and API guidelines.
             Pass in a `question` to get an AI-generated response with references.
-            Optionally include `conversationHistory` for context-aware responses.
-            Optionally set `includeFullContext` to get the full search context used.
             Returns an answer with supporting references and documentation links.")]
         public async Task<AiCompletionToolResponse> QueryAzureSDKDocumentation(
             [Description("The question to ask the AI agent")]
             string question,
-            [Description("Previous conversation messages for context (optional)")]
-            List<MessageInput>? conversationHistory = null,
-            [Description("Whether to include full search context in the response")]
-            bool includeFullContext = false,
             CancellationToken ct = default)
         {
             try
@@ -132,20 +112,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                     {
                         Role = Role.User,
                         Content = question
-                    },
-                    WithFullContext = includeFullContext,
+                    }
                 };
-
-                // Map conversation history if provided
-                if (conversationHistory?.Any() == true)
-                {
-                    request.History = MapHistory(conversationHistory);
-                    _logger.LogDebug("Including {Count} messages in conversation history", conversationHistory.Count);
-                }
 
                 // Call the service
                 var response = await _aiCompletionService.SendCompletionRequestAsync(
-                    request, null, null, ct);
+                    request, ct);
 
                 _logger.LogInformation("Received response with ID: {Id}, HasResult: {HasResult}",
                     response.Id, response.HasResult);
@@ -184,118 +156,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                     ResponseError = $"Failed to query AI agent: {ex.Message}"
                 };
             }
-        }
-
-        [McpServerTool(Name = "azsdk_ai_qa_completion_with_context")]
-        [Description(@"Query the Azure SDK QA Bot with additional context like links or images.
-            Use this when you need to provide specific documentation links or code snippets as context.
-            Pass in `additionalContext` as a list of links or images that should be considered.
-            All other parameters are the same as the main query tool.")]
-        public async Task<AiCompletionToolResponse> QueryWithAdditionalContext(
-            [Description("The question to ask the AI agent")]
-            string question,
-            [Description("Additional context items (links or images) to include")]
-            List<AdditionalContextInput> additionalContext,
-            [Description("Previous conversation messages for context (optional)")]
-            List<MessageInput>? conversationHistory = null,
-            [Description("Whether to include full search context in the response")]
-            bool includeFullContext = false,
-            CancellationToken ct = default)
-        {
-            try
-            {
-                // Validate inputs
-                if (string.IsNullOrWhiteSpace(question))
-                {
-                    SetFailure();
-                    return new AiCompletionToolResponse
-                    {
-                        ResponseError = "Question cannot be empty"
-                    };
-                }
-
-                if (additionalContext == null || !additionalContext.Any())
-                {
-                    SetFailure();
-                    return new AiCompletionToolResponse
-                    {
-                        ResponseError = "Additional context is required for this method"
-                    };
-                }
-
-                _logger.LogInformation("Querying AI agent with question and {Count} additional context items",
-                    additionalContext.Count);
-
-                // Build request
-                var request = new CompletionRequest
-                {
-                    TenantId = TenantId.AzureSDKQaBot,
-                    Message = new Message
-                    {
-                        Role = Role.User,
-                        Content = question
-                    },
-                    WithFullContext = includeFullContext,
-                };
-
-                // Map additional context
-                request.AdditionalInfos = additionalContext.Select(ac => new AdditionalInfo
-                {
-                    Type = ac.Type?.ToLowerInvariant() == "image" ? AdditionalInfoType.Image : AdditionalInfoType.Link,
-                    Content = ac.Content ?? string.Empty,
-                    Link = ac.Link ?? string.Empty
-                }).ToList();
-
-                // Map conversation history if provided
-                if (conversationHistory?.Any() == true)
-                {
-                    request.History = MapHistory(conversationHistory);
-                }
-
-                // Call the service
-                var response = await _aiCompletionService.SendCompletionRequestAsync(
-                    request, null, null, ct);
-
-                return new AiCompletionToolResponse
-                {
-                    IsSuccessful = response.HasResult,
-                    Answer = response.Answer,
-                    References = MapReferences(response.References),
-                    FullContext = response.FullContext,
-                    ReasoningProgress = response.ReasoningProgress,
-                    QueryIntension = response.Intension != null ? new QueryIntension
-                    {
-                        Question = response.Intension.Question,
-                        Category = response.Intension.Category,
-                        SpecType = response.Intension.SpecType,
-                        Scope = response.Intension.Scope?.ToString()
-                    } : null
-                };
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error querying AI agent with additional context");
-                SetFailure();
-                return new AiCompletionToolResponse
-                {
-                    ResponseError = $"Failed to query AI agent: {ex.Message}"
-                };
-            }
-        }
-
-        private List<Message> MapHistory(List<MessageInput> history)
-        {
-            return history.Select(h => new Message
-            {
-                Role = h.Role?.ToLowerInvariant() switch
-                {
-                    "user" => Role.User,
-                    "assistant" => Role.Assistant,
-                    "system" => Role.System,
-                    _ => Role.User
-                },
-                Content = h.Content ?? string.Empty
-            }).ToList();
         }
 
         private List<DocumentReference> MapReferences(List<Reference>? references)

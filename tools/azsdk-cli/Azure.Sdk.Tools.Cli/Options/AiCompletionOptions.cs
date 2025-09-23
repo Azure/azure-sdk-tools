@@ -17,35 +17,23 @@ namespace Azure.Sdk.Tools.Cli.Options
     /// </summary>
     [Required]
     [Url]
-    public string Endpoint { get; set; } = string.Empty;
+    public string Endpoint { get; set; } = Environment.GetEnvironmentVariable(EndpointEnvironmentVariable) ?? string.Empty;
 
     /// <summary>
-    /// Optional API key for authentication. Can also be set via environment variable.
+    /// Optional AI bot application client id for authentication. Can also be set via environment variable.
     /// </summary>
-    public string? ApiKey { get; set; }
+    public string? ClientId { get; set; } = Environment.GetEnvironmentVariable(AzureSDKBotClientIdEnvironmentVariable) ?? string.Empty;
 
-    /// <summary>
-    /// Timeout for HTTP requests in seconds. Default is 30 seconds.
-    /// </summary>
-    [Range(1, 300)]
+        /// <summary>
+        /// Timeout for HTTP requests in seconds. Default is 30 seconds.
+        /// </summary>
+        [Range(1, 300)]
     public int TimeoutSeconds { get; set; } = 300;
-
-    /// <summary>
-    /// Maximum number of retry attempts for failed requests. Default is 3.
-    /// </summary>
-    [Range(0, 10)]
-    public int MaxRetryAttempts { get; set; } = 3;
 
     /// <summary>
     /// Default tenant ID to use when not specified in requests.
     /// </summary>
     public string DefaultTenantId { get; set; } = "azure_sdk_qa_bot";
-
-    /// <summary>
-    /// Default TopK value for searches. Default is 10.
-    /// </summary>
-    [Range(1, 100)]
-    public int DefaultTopK { get; set; } = 10;
 
     /// <summary>
     /// Whether to enable request/response logging for debugging. Default is false.
@@ -58,13 +46,13 @@ namespace Azure.Sdk.Tools.Cli.Options
     public string UserAgent { get; set; } = "Azure-SDK-Tools-CLI";
 
     /// <summary>
-    /// Environment variable name for the API key override.
-    /// </summary>
-    public string ApiKeyEnvironmentVariable { get; set; } = "AI_COMPLETION_API_KEY";
-
-    /// <summary>
     /// Environment variable name for the endpoint override.
     /// </summary>
-    public string EndpointEnvironmentVariable { get; set; } = "AI_COMPLETION_ENDPOINT";
+    public const string EndpointEnvironmentVariable = "AI_COMPLETION_ENDPOINT";
+
+    /// <summary>
+    /// Environment variable name for the service application client ID.
+    /// </summary>
+    public const string AzureSDKBotClientIdEnvironmentVariable = "AI_COMPLETION_BOT_CLIENT_ID";
   }
 }

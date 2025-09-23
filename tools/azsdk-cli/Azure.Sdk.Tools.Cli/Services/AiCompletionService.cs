@@ -1,12 +1,16 @@
 using System.ComponentModel.DataAnnotations;
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading;
 using Azure.Sdk.Tools.Cli.Models.AiCompletion;
 using Azure.Sdk.Tools.Cli.Options;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.Identity.Client;
+using static Microsoft.VisualStudio.Services.Graph.GraphResourceIds;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -19,6 +23,9 @@ namespace Azure.Sdk.Tools.Cli.Services
         private readonly ILogger<AiCompletionService> _logger;
         private readonly AiCompletionOptions _options;
         private readonly JsonSerializerOptions _jsonOptions;
+        private readonly IPublicClientApplication? _msalApp;
+        private AuthenticationResult? token;
+        private readonly IList<string> scopes = new List<string>() { "api://azure-sdk-qa-bot/token" };
 
         public AiCompletionService(
             HttpClient httpClient,
@@ -36,13 +43,29 @@ namespace Azure.Sdk.Tools.Cli.Services
                 WriteIndented = _options.EnableDebugLogging
             };
 
+            if (string.IsNullOrEmpty(_options.Endpoint) || string.IsNullOrEmpty(_options.ClientId))
+            {
+                _logger.LogError("Neither the completion API endpoint nor the application client ID has been specified.");
+                throw new ArgumentException("Neither the completion API endpoint nor the application client ID has been specified.");
+            } else
+            {
+                _logger.LogDebug("endpoint:" +  _options.Endpoint);
+                _logger.LogDebug("clientid:" + _options.ClientId);
+                var authUrl = "https://login.microsoftonline.com/organizations/";
+                var scopes = new[] { "api://azure-sdk-qa-bot/token" };
+                var builder = PublicClientApplicationBuilder
+                .Create(_options.ClientId)
+                .WithAuthority(authUrl)
+                .WithDefaultRedirectUri(); // Use MSAL's default redirect URI for public clients
+
+                _msalApp = builder.Build();
+            }
+            
             ConfigureHttpClient();
         }
 
         public async Task<CompletionResponse> SendCompletionRequestAsync(
             CompletionRequest request,
-            string? apiKey = null,
-            string? endpoint = null,
             CancellationToken cancellationToken = default)
         {
             if (request == null)
@@ -57,21 +80,60 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             try
             {
-                // Get endpoint and API key with environment variable override support
-                endpoint = GetEffectiveEndpoint(endpoint);
-                apiKey = GetEffectiveApiKey(apiKey);
-
-                var requestUri = new Uri(new Uri(endpoint), "/completion");
+                var requestUri = new Uri(new Uri(_options.Endpoint), "/completion");
 
                 using var httpRequest = new HttpRequestMessage(HttpMethod.Post, requestUri);
-
-                if (!string.IsNullOrEmpty(apiKey))
+                
+                if (token == null)
                 {
-                    httpRequest.Headers.Add("X-API-KEY", apiKey);
+                    _logger.LogInformation("token is null");
+                }
+                else if (DateTime.UtcNow > token.ExpiresOn)
+                {
+                    _logger.LogInformation("token is expired");
                 }
 
-                httpRequest.Content = JsonContent.Create(request, options: _jsonOptions);
+                if (token == null || DateTime.UtcNow > token.ExpiresOn)
+                {
+                    //if (_msalApp != null)
+                    //{
+                    //    var accounts = await _msalApp.GetAccountsAsync();
+                    //    AuthenticationResult? authResult = null;
+                    //    if (accounts.Any())
+                    //    {
+                    //        try
+                    //        {
+                    //            authResult = await _msalApp.AcquireTokenSilent(scopes, accounts.FirstOrDefault())
+                    //                .ExecuteAsync(cancellationToken);
+                    //        }
+                    //        catch (MsalUiRequiredException ex)
+                    //        {
+                    //            Console.WriteLine("Silent authentication failed, will use interactive: {Message}", ex.Message);
+                    //        }
+                    //    } else
+                    //    {
+                    //        _logger.LogInformation("No cached accounts found, will use interactive authentication.");
+                    //    }
 
+                    //    if (authResult == null)
+                    //    {
+                    //        _logger.LogInformation("Prompting for interactive authentication");
+                    //        authResult = await _msalApp.AcquireTokenInteractive(scopes)
+                    //            .ExecuteAsync(cancellationToken);
+                    //        _logger.LogInformation("Interactive authentication completed successfully");
+                    //    }
+                    //    if (authResult == null)
+                    //    {
+                    //        _logger.LogError("Failed to authenticate.");
+                    //        throw new Exception("Authentication Failure.");
+                    //    }
+                    //    accessToken = authResult.AccessToken;
+                    //}
+                    token = await RetriveAiCompletionAccessTokenAsync(cancellationToken);
+                }
+                
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
+                httpRequest.Content = JsonContent.Create(request, options: _jsonOptions);
                 if (_options.EnableDebugLogging)
                 {
                     var requestJson = JsonSerializer.Serialize(request, _jsonOptions);
@@ -143,15 +205,49 @@ namespace Azure.Sdk.Tools.Cli.Services
                 return false;
             }
 
-            if (request.TopK.HasValue && (request.TopK.Value < 1 || request.TopK.Value > 100))
-            {
-                _logger.LogWarning("Request validation failed: TopK must be between 1 and 100");
-                return false;
-            }
-
             return isValid;
         }
+        private async Task<AuthenticationResult> RetriveAiCompletionAccessTokenAsync(CancellationToken cancellationToken = default)
+        {
+            if (_msalApp != null)
+            {
+                var accounts = await _msalApp.GetAccountsAsync();
+                AuthenticationResult? authResult = null;
+                if (accounts.Any())
+                {
+                    try
+                    {
+                        authResult = await _msalApp.AcquireTokenSilent(scopes, accounts.FirstOrDefault())
+                            .ExecuteAsync(cancellationToken);
+                    }
+                    catch (MsalUiRequiredException ex)
+                    {
+                        _logger.LogError("Silent authentication failed, will use interactive: {Message}", ex.Message);
+                    }
+                }
+                else
+                {
+                    _logger.LogInformation("No cached accounts found, will use interactive authentication.");
+                }
 
+                if (authResult == null)
+                {
+                    _logger.LogInformation("Prompting for interactive authentication");
+                    authResult = await _msalApp.AcquireTokenInteractive(scopes)
+                        .ExecuteAsync(cancellationToken);
+                    _logger.LogInformation("Interactive authentication completed successfully");
+                }
+                if (authResult == null)
+                {
+                    _logger.LogError("Failed to authenticate.");
+                    throw new Exception("Authentication Failure.");
+                }
+                return authResult;
+            } else
+            {
+                throw new Exception("No IPublicClientApplication instance");
+            }
+        }
         private async Task<CompletionResponse> HandleHttpResponse(
             HttpResponseMessage response,
             CancellationToken cancellationToken)
@@ -230,47 +326,6 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
 
             _httpClient.DefaultRequestHeaders.Accept.ParseAdd("application/json");
-        }
-
-        private string GetEffectiveEndpoint(string? override_endpoint)
-        {
-            // Priority: parameter override > environment variable > configuration
-            if (!string.IsNullOrEmpty(override_endpoint))
-            {
-                return override_endpoint;
-            }
-
-            var envEndpoint = Environment.GetEnvironmentVariable(_options.EndpointEnvironmentVariable);
-            if (!string.IsNullOrEmpty(envEndpoint))
-            {
-                return envEndpoint;
-            }
-
-            if (string.IsNullOrEmpty(_options.Endpoint))
-            {
-                throw new InvalidOperationException(
-                    $"AI completion endpoint not configured. Set via configuration, " +
-                    $"environment variable '{_options.EndpointEnvironmentVariable}', or parameter override.");
-            }
-
-            return _options.Endpoint;
-        }
-
-        private string? GetEffectiveApiKey(string? override_apiKey)
-        {
-            // Priority: parameter override > environment variable > configuration
-            if (!string.IsNullOrEmpty(override_apiKey))
-            {
-                return override_apiKey;
-            }
-
-            var envApiKey = Environment.GetEnvironmentVariable(_options.ApiKeyEnvironmentVariable);
-            if (!string.IsNullOrEmpty(envApiKey))
-            {
-                return envApiKey;
-            }
-
-            return _options.ApiKey;
         }
     }
 }

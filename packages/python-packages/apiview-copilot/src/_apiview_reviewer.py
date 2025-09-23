@@ -820,11 +820,19 @@ class ApiViewReview:
             self._filter_preexisting_comments()
             preexisting_end_time = time()
             self._print_message(
-                f"  Preexisting comments filtered in {preexisting_end_time - preexisting_start_time:.2f} seconds."
+                f"Preexisting comments filtered in {preexisting_end_time - preexisting_start_time:.2f} seconds."
             )
             self._print_comment_counts()
 
             results = self.results.sorted()
+
+            correlation_id_start_time = time()
+            # Assign correlation IDs for similar comments
+            results.comments = CommentGrouper(comments=results.comments, reviewer=self).group()
+            correlation_id_end_time = time()
+            self._print_message(
+                f"\nCorrelation IDs assigned in {correlation_id_end_time - correlation_id_start_time:.2f} seconds."
+            )
 
             overall_end_time = time()
             self._print_message(
@@ -834,9 +842,6 @@ class ApiViewReview:
 
             if self.semantic_search_failed:
                 self._print_message("WARN: Semantic search failed for some chunks (see error.log).")
-
-            # Assign correlation IDs for similar comments
-            results.comments = CommentGrouper(comments=results.comments).group()
 
             # Write output JSON if enabled
             if self.write_output:

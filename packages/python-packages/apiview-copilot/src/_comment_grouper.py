@@ -1,3 +1,4 @@
+import json
 from uuid import uuid4
 
 
@@ -7,10 +8,13 @@ class CommentGrouper:
     grouped together with a correlation_id.
     """
 
-    def __init__(self, comments):
+    def __init__(self, *, comments: list["Comment"] = None, reviewer: "ApiViewReview" = None):
         self.comments = comments
+        self.reviewer = reviewer
+        if not self.comments and self.reviewer:
+            self.comments = self.reviewer.comments
 
-    def group(self) -> list:
+    def group(self) -> list["Comment"]:
         """
         Algorithm to group comments together.
         """
@@ -38,5 +42,23 @@ class CommentGrouper:
                 correlation_id = str(uuid4())
                 for idx in indices:
                     self.comments[idx].correlation_id = correlation_id
+
+        if self.reviewer and len(generic_only) > 1:
+            from src._utils import get_prompt_path
+
+            prompty_file = "generate_correlation_ids.prompty"
+            # pylint: disable=protected-access
+            response = self.reviewer._run_prompt(
+                prompt_path=get_prompt_path(folder="api_review", filename=prompty_file),
+                inputs={"content": {i: self.comments[i] for i in generic_only}},
+            )
+            results = json.loads(response).get("results", [])
+            for result in results:
+                indices = result.get("result", [])
+                if len(indices) > 1:
+                    correlation_id = str(uuid4())
+                    for idx in indices:
+                        assert idx in generic_only
+                        self.comments[idx].correlation_id = correlation_id
 
         return self.comments

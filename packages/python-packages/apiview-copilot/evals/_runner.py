@@ -41,7 +41,7 @@ class EvalRunner:
 
     def run(self):
         """Run the evaluation over the resolved test files."""
-        custom_eval = self._evaluator_class(self._workflow_config)
+        evaluator = self._evaluator_class(self._workflow_config)
         guideline_ids = set()
         all_run_results = []
 
@@ -75,9 +75,9 @@ class EvalRunner:
                 print(f"Running evals {run + 1}/{self.num_runs} for {file.name}...")
                 result = evaluate(
                     data=str(file),
-                    evaluators={"metrics": custom_eval},
-                    evaluator_config={"metrics": custom_eval.evaluator_config},
-                    target=custom_eval.target_function,
+                    evaluators={"metrics": evaluator},
+                    evaluator_config={"metrics": evaluator.evaluator_config},
+                    target=evaluator.target_function,
                     # FIXME: Should this be True? Probably?
                     fail_on_evaluator_errors=False,
                     # azure_ai_project=azure_ai_project,
@@ -90,9 +90,9 @@ class EvalRunner:
             raise ValueError("No results produced.")
 
         # Delegate all result processing to the evaluator
-        processed_results = custom_eval.process_results(all_run_results, guideline_ids)
-        custom_eval.show_results(processed_results)
-        custom_eval.post_process(
+        processed_results = evaluator.process_results(all_run_results, guideline_ids)
+        evaluator.show_results(processed_results)
+        evaluator.post_process(
             processed_results,
             self.language,
             str(self._tests_directory),

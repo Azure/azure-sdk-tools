@@ -67,14 +67,3 @@ extends:
                   testResultsFiles: 'tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-syncer/vitest-report.xml'
                   testRunTitle: 'Knowledge Syncer tests'
                 displayName: 'Publish test results'
-
-              - script: |
-                  echo "Packaging artifact"
-                  tar -czf knowledge-syncer-dist.tgz -C tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge-syncer/dist .
-                displayName: "Package dist"
-
-              # Publish artifact using 1ES-compliant pipeline artifact output syntax
-              - output: pipelineArtifact
-                displayName: "Publish artifact"
-                path: knowledge-syncer-dist.tgz
-                artifact: knowledge-syncer-dist

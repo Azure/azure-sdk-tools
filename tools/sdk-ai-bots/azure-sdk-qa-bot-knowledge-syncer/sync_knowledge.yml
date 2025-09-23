@@ -60,19 +60,19 @@ stages:
         versionSpec: '20.x'
         
     - script: |
-        cd $(Agent.BuildDirectory)/s/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge
         npm ci
       displayName: 'Install dependencies'
+      workingDirectory: $(Agent.BuildDirectory)/s/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge
       
     - script: |
-        cd $(Agent.BuildDirectory)/s/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge
         npm run build
       displayName: 'Build TypeScript project'
+      workingDirectory: $(Agent.BuildDirectory)/s/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge
       
     - script: |
-        cd $(Agent.BuildDirectory)/s/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge
         npm run start
       displayName: 'Execute knowledge sync'
+      workingDirectory: $(Agent.BuildDirectory)/s/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-knowledge
       env:
         # Azure App Configuration
         AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)

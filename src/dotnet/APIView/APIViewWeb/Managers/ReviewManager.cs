@@ -726,31 +726,45 @@ namespace APIViewWeb.Managers
         {
             try
             {
-                // Get all non-closed reviews for the language
                 var reviews = await _reviewsRepository.GetReviewsAsync(language: language, isClosed: false);
-                
-                var eligibleReviews = new List<APIRevisionGenerationPipelineParamModel>();
-                
+                var paramList = new List<APIRevisionGenerationPipelineParamModel>();
+
                 foreach (var review in reviews)
                 {
                     try
                     {
                         var revisions = await _apiRevisionsManager.GetAPIRevisionsAsync(review.Id);
-                        // Find the first revision that has original files and can be updated
-                        APIRevisionListItemModel firstRevision = revisions.FirstOrDefault(r => 
-                            r.Files.Any(f => f.HasOriginal) && 
-                            languageService.CanUpdate(r.Files.First().VersionString));
-
-                        if (firstRevision != null)
+                        foreach (var revision in revisions)
                         {
-                            // Add to the batch for pipeline processing
-                            eligibleReviews.Add(new APIRevisionGenerationPipelineParamModel
+                            foreach (var file in revision.Files)
                             {
-                                ReviewID = review.Id,
-                                RevisionID = firstRevision.Id,
-                                FileID = firstRevision.Files.First().FileId,
-                                FileName = firstRevision.Files.First().FileName
-                            });
+                                // Don't include current revision if file is not required to be updated.
+                                // E.g. json token file is uploaded for a language, specific revision was already upgraded.
+                                if (!file.HasOriginal || file.FileName == null || !languageService.IsSupportedFile(file.FileName) || !languageService.CanUpdate(file.VersionString))
+                                {
+                                    continue;
+                                }
+
+                                _telemetryClient.TrackTrace($"Updating review: {review.Id}, revision: {revision.Id}");
+                                paramList.Add(new APIRevisionGenerationPipelineParamModel()
+                                {
+                                    FileID = file.FileId,
+                                    ReviewID = review.Id,
+                                    RevisionID = revision.Id,
+                                    FileName = Path.GetFileName(file.FileName)
+                                });
+                            }
+                        }
+
+                        // This should be changed to configurable batch count
+                        if (paramList.Count >= backgroundBatchProcessCount)
+                        {
+                            _telemetryClient.TrackTrace($"Running pipeline to update reviews for {language} with batch size {paramList.Count}");
+                            await _apiRevisionsManager.RunAPIRevisionGenerationPipeline(paramList, languageService.Name);
+                            // Delay of 10 minute before starting next batch
+                            // We should try to increase the number of revisions in the batch than number of runs.
+                            await Task.Delay(600000);
+                            paramList.Clear();
                         }
                     }
                     catch (Exception ex)
@@ -760,29 +774,10 @@ namespace APIViewWeb.Managers
                     }
                 }
 
-                if (eligibleReviews.Count > 0)
+                if (paramList.Count > 0)
                 {
-                    // Batch the reviews to avoid pipeline run storm
-                    var batchSize = Math.Max(1, backgroundBatchProcessCount);
-                    var batches = eligibleReviews
-                        .Select((review, index) => new { review, index })
-                        .GroupBy(x => x.index / batchSize)
-                        .Select(g => g.Select(x => x.review).ToList())
-                        .ToList();
-
-                    foreach (var batch in batches)
-                    {
-                        try
-                        {
-                            // Use the same pipeline generation approach as API revisions
-                            await _apiRevisionsManager.RunAPIRevisionGenerationPipeline(batch, language);
-                        }
-                        catch (Exception ex)
-                        {
-                            _telemetryClient.TrackException(ex);
-                            // Continue with other batches
-                        }
-                    }
+                    _telemetryClient.TrackTrace($"Running pipeline to update reviews for {language} with batch size {paramList.Count}");
+                    await _apiRevisionsManager.RunAPIRevisionGenerationPipeline(paramList, languageService.Name);
                 }
             }
             catch (Exception ex)

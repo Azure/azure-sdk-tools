@@ -83,11 +83,11 @@ class CustomAPIViewEvaluator:
 
         for expected_comment in expected["comments"]:
             e_line = expected_comment["line_no"]
-            e_rules = frozenset(expected_comment["rule_ids"])
+            e_rules = frozenset(expected_comment["guideline_ids"])
 
             for actual_comment in comments_left:
                 a_line = actual_comment["line_no"]
-                a_rules = frozenset(actual_comment["rule_ids"])
+                a_rules = frozenset(actual_comment["guideline_ids"])
 
                 rule_match = any(rule for rule in a_rules if rule in e_rules)
                 if e_line == a_line and rule_match:
@@ -135,7 +135,7 @@ class CustomAPIViewEvaluator:
             comment["valid"] = "true" in response.lower()
 
     def _groundedness(self, actual: dict[str, Any], context: str) -> None:
-        actual = [c for c in actual["comments"] if c["rule_ids"]]
+        actual = [c for c in actual["comments"] if c["guideline_ids"]]
         if not actual:
             return {"groundedness": 0.0, "groundedness_reason": "No comments found."}
         groundedness = GroundednessEvaluator(model_config=self._model_config)(
@@ -144,14 +144,14 @@ class CustomAPIViewEvaluator:
         return groundedness
 
     def _similarity(self, expected: dict[str, Any], actual: dict[str, Any], query: str) -> None:
-        actual = [c for c in actual["comments"] if c["rule_ids"]]
+        actual = [c for c in actual["comments"] if c["guideline_ids"]]
         if not actual:
             return {"similarity": 0.0}
 
         similarity = SimilarityEvaluator(model_config=self._model_config)(
             response=json.dumps(actual),
             query=query,
-            ground_truth=json.dumps([c for c in expected["comments"] if c["rule_ids"]]),
+            ground_truth=json.dumps([c for c in expected["comments"] if c["guideline_ids"]]),
         )
         return similarity
 
@@ -171,7 +171,7 @@ class CustomAPIViewEvaluator:
 
         exact_matches_count = len(exact_matches)
         rule_matches_wrong_line_count = len(rule_matches_wrong_line)
-        expected_comment_count = len([c for c in expected["comments"] if c["rule_ids"]])
+        expected_comment_count = len([c for c in expected["comments"] if c["guideline_ids"]])
         valid_generic_comment_count = len([c for c in generic_comments if c.get("valid") is True])
         invalid_generic_comment_count = len([c for c in generic_comments if c.get("valid") is False])
         total_comment_count = len(actual["comments"])

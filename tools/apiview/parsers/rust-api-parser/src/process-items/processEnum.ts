@@ -5,33 +5,32 @@ import { createDocsReviewLines } from "./utils/generateDocReviewLine";
 import { processGenerics } from "./utils/processGenerics";
 import { isEnumItem } from "./utils/typeGuards";
 import { getAPIJson } from "../main";
-import { lineIdMap } from "../utils/lineIdUtils";
+import { createContentBasedLineId } from "../utils/lineIdUtils";
 
-export function processEnum(item: Item): ReviewLine[] {
+export function processEnum(item: Item, lineIdPrefix: string = ""): ReviewLine[] {
   if (!isEnumItem(item)) return [];
   const apiJson = getAPIJson();
-  const reviewLines: ReviewLine[] = item.docs ? createDocsReviewLines(item) : [];
 
-  lineIdMap.set(item.id.toString(), `enum_${item.name}`);
+  // Create initial placeholder docs (will be updated with correct LineId after enum tokens are generated)
+  const reviewLines: ReviewLine[] = [];
+
   // Process derives and impls
-  let implResult: ImplProcessResult;
+  let implResult: ImplProcessResult = { deriveTokens: [], implBlock: [], traitImpls: [] };
   if (item.inner.enum.impls) {
-    implResult = processImpl({ ...item, inner: { enum: item.inner.enum } });
+    implResult = processImpl({ ...item, inner: { enum: item.inner.enum } }, lineIdPrefix);
   }
-
-  const enumLine: ReviewLine = {
-    LineId: item.id.toString(),
-    Tokens: [],
-    Children: [],
-  };
 
   if (implResult.deriveTokens.length > 0) {
     const deriveTokensLine: ReviewLine = {
       Tokens: implResult.deriveTokens,
-      RelatedToLine: item.id.toString(),
     };
     reviewLines.push(deriveTokensLine);
   }
+
+  const enumLine: ReviewLine = {
+    Tokens: [],
+    Children: [],
+  };
 
   enumLine.Tokens.push({
     Kind: TokenKind.Keyword,
@@ -41,9 +40,9 @@ export function processEnum(item: Item): ReviewLine[] {
   enumLine.Tokens.push({
     Kind: TokenKind.MemberName,
     Value: item.name || "unknown_enum",
-    NavigateToId: item.id.toString(),
-    NavigationDisplayName: item.name || undefined,
     RenderClasses: ["enum"],
+    NavigateToId: item.id.toString(), // Will be updated in post-processing
+    NavigationDisplayName: item.name || undefined,
     HasSuffixSpace: false,
   });
 
@@ -64,13 +63,31 @@ export function processEnum(item: Item): ReviewLine[] {
     HasPrefixSpace: true,
   });
 
+  // Create content-based LineId from the tokens
+  const contentBasedLineId = createContentBasedLineId(enumLine.Tokens, lineIdPrefix, item.id.toString());
+  enumLine.LineId = contentBasedLineId;
+
+  // Add documentation with correct RelatedToLine
+  if (item.docs) {
+    const docsLines = createDocsReviewLines(item, contentBasedLineId);
+    reviewLines.unshift(...docsLines);
+  }
+
+  // Set RelatedToLine for derive tokens
+  if (implResult.deriveTokens.length > 0) {
+    reviewLines[reviewLines.length - 1].RelatedToLine = contentBasedLineId;
+  }
+
   // Process enum variants
   if (item.inner.enum.variants) {
     enumLine.Children = item.inner.enum.variants.map((variant: number) => {
       const variantItem = apiJson.index[variant];
-      lineIdMap.set(variantItem.id.toString(), `variant_${variantItem.name}`);
       return {
-        LineId: variantItem.id.toString(),
+        LineId: createContentBasedLineId(
+          [{ Kind: TokenKind.Text, Value: variantItem.name || "unknown_variant" }],
+          contentBasedLineId,
+          variantItem.id.toString()
+        ),
         Tokens: [
           {
             Kind: TokenKind.Text,
@@ -89,7 +106,7 @@ export function processEnum(item: Item): ReviewLine[] {
 
   reviewLines.push(enumLine);
   reviewLines.push({
-    RelatedToLine: item.id.toString(),
+    RelatedToLine: contentBasedLineId,
     Tokens: [{ Kind: TokenKind.Punctuation, Value: "}" }],
   });
 

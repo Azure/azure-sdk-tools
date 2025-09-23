@@ -7,9 +7,13 @@ using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Telemetry;
 using static Azure.Sdk.Tools.Cli.Telemetry.TelemetryConstants;
 
-namespace Azure.Sdk.Tools.Cli.Tools.HostServer;
+namespace Azure.Sdk.Tools.Cli.Tools;
 
-public class InstrumentedTool(ITelemetryService telemetryService, ILogger logger, McpServerTool innerTool) : DelegatingMcpServerTool(innerTool)
+public class InstrumentedTool(
+    ITelemetryService telemetryService,
+    ILogger logger,
+    McpServerTool innerTool
+) : DelegatingMcpServerTool(innerTool)
 {
     private readonly JsonSerializerOptions serializerOptions = new()
     {

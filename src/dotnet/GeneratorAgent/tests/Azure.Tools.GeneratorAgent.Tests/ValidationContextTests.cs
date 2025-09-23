@@ -220,7 +220,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Configuration
             var outputPath = fixture.CreateValidOutputDirectory();
             var mockLogger = fixture.CreateMockLogger();
 
-            var result = ValidationContext.TryValidateAndCreate(typeSpecPath, null, outputPath, mockLogger.Object);
+            var result = ValidationContext.TryValidateAndCreate(typeSpecPath, null, outputPath);
 
             Assert.Multiple(() =>
             {
@@ -243,7 +243,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Configuration
             var outputPath = fixture.CreateValidOutputDirectory();
             var mockLogger = fixture.CreateMockLogger();
 
-            var result = ValidationContext.TryValidateAndCreate(typeSpecPath, commitId, outputPath, mockLogger.Object);
+            var result = ValidationContext.TryValidateAndCreate(typeSpecPath, commitId, outputPath);
 
             Assert.Multiple(() =>
             {
@@ -265,7 +265,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Configuration
             var outputPath = fixture.CreateValidOutputDirectory();
             var mockLogger = fixture.CreateMockLogger();
 
-            var result = ValidationContext.TryValidateAndCreate(typeSpecPath, string.Empty, outputPath, mockLogger.Object);
+            var result = ValidationContext.TryValidateAndCreate(typeSpecPath, string.Empty, outputPath);
 
             Assert.Multiple(() =>
             {
@@ -283,7 +283,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Configuration
             var outputPath = fixture.CreateValidOutputDirectory();
             var mockLogger = fixture.CreateMockLogger();
 
-            var result = ValidationContext.TryValidateAndCreate(typeSpecPath, "   ", outputPath, mockLogger.Object);
+            var result = ValidationContext.TryValidateAndCreate(typeSpecPath, "   ", outputPath);
 
             Assert.Multiple(() =>
             {
@@ -301,7 +301,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Configuration
             var outputPath = fixture.CreateValidOutputDirectory();
             var mockLogger = fixture.CreateMockLogger();
 
-            var result = ValidationContext.TryValidateAndCreate(typeSpecPath, null, outputPath, mockLogger.Object);
+            var result = ValidationContext.TryValidateAndCreate(typeSpecPath, null, outputPath);
 
             Assert.Multiple(() =>
             {
@@ -320,7 +320,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Configuration
             var outputPath = fixture.CreateValidOutputDirectory();
             var mockLogger = fixture.CreateMockLogger();
 
-            var result = ValidationContext.TryValidateAndCreate(typeSpecPath, commitId, outputPath, mockLogger.Object);
+            var result = ValidationContext.TryValidateAndCreate(typeSpecPath, commitId, outputPath);
 
             Assert.Multiple(() =>
             {
@@ -343,7 +343,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Configuration
             var mockLogger = fixture.CreateMockLogger();
 
             var ex = Assert.Throws<ArgumentException>(() => 
-                ValidationContext.TryValidateAndCreate(invalidTypeSpecPath, null, outputPath, mockLogger.Object));
+                ValidationContext.TryValidateAndCreate(invalidTypeSpecPath, null, outputPath));
 
             Assert.That(ex?.Message, Does.Contain("Invalid path format"));
         }
@@ -356,7 +356,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Configuration
             var mockLogger = fixture.CreateMockLogger();
 
             var ex = Assert.Throws<ArgumentException>(() => 
-                ValidationContext.TryValidateAndCreate(null, null, outputPath, mockLogger.Object));
+                ValidationContext.TryValidateAndCreate(null, null, outputPath));
 
             Assert.That(ex?.Message, Does.Contain("TypeSpec path cannot be null or empty"));
         }
@@ -370,7 +370,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Configuration
             var mockLogger = fixture.CreateMockLogger();
 
             var ex = Assert.Throws<ArgumentException>(() => 
-                ValidationContext.TryValidateAndCreate(emptyTypeSpecPath, null, outputPath, mockLogger.Object));
+                ValidationContext.TryValidateAndCreate(emptyTypeSpecPath, null, outputPath));
 
             Assert.That(ex?.Message, Does.Contain("No .tsp or .yaml files found in directory"));
         }
@@ -384,7 +384,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Configuration
             var mockLogger = fixture.CreateMockLogger();
 
             var ex = Assert.Throws<ArgumentException>(() => 
-                ValidationContext.TryValidateAndCreate(nonExistentPath, null, outputPath, mockLogger.Object));
+                ValidationContext.TryValidateAndCreate(nonExistentPath, null, outputPath));
 
             Assert.That(ex?.Message, Does.Contain("TypeSpec directory not found"));
         }
@@ -399,7 +399,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Configuration
             var mockLogger = fixture.CreateMockLogger();
 
             var ex = Assert.Throws<ArgumentException>(() => 
-                ValidationContext.TryValidateAndCreate(typeSpecPath, invalidCommitId, outputPath, mockLogger.Object));
+                ValidationContext.TryValidateAndCreate(typeSpecPath, invalidCommitId, outputPath));
 
             Assert.That(ex?.Message, Does.Contain("Commit ID must be 6-40 hexadecimal characters"));
         }
@@ -414,7 +414,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Configuration
             var mockLogger = fixture.CreateMockLogger();
 
             var ex = Assert.Throws<ArgumentException>(() => 
-                ValidationContext.TryValidateAndCreate(typeSpecPath, commitId, invalidOutputPath, mockLogger.Object));
+                ValidationContext.TryValidateAndCreate(typeSpecPath, commitId, invalidOutputPath));
 
             Assert.That(ex?.Message, Does.Contain("Invalid path format"));
         }
@@ -428,7 +428,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Configuration
             var mockLogger = fixture.CreateMockLogger();
 
             var ex = Assert.Throws<ArgumentException>(() => 
-                ValidationContext.TryValidateAndCreate(invalidPath, null, outputPath, mockLogger.Object));
+                ValidationContext.TryValidateAndCreate(invalidPath, null, outputPath));
 
             Assert.That(ex?.Message, Does.Contain("Invalid path format"));
         }
@@ -445,7 +445,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Configuration
             var outputPath = fixture.CreateValidOutputDirectory();
             var mockLogger = fixture.CreateMockLogger();
 
-            ValidationContext.TryValidateAndCreate(typeSpecPath, null, outputPath, mockLogger.Object);
+            ValidationContext.TryValidateAndCreate(typeSpecPath, null, outputPath);
 
             mockLogger.Verify(
                 x => x.Log(
@@ -466,7 +466,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Configuration
             var mockLogger = fixture.CreateMockLogger();
 
             Assert.Throws<ArgumentException>(() => 
-                ValidationContext.TryValidateAndCreate(invalidTypeSpecPath, null, outputPath, mockLogger.Object));
+                ValidationContext.TryValidateAndCreate(invalidTypeSpecPath, null, outputPath));
 
             mockLogger.Verify(
                 x => x.Log(
@@ -491,8 +491,8 @@ namespace Azure.Tools.GeneratorAgent.Tests.Configuration
             var invalidOutputPath = fixture.CreateDirectoryTraversalPath();
             var mockLogger = fixture.CreateMockLogger();
 
-            var ex = Assert.Throws<ArgumentException>(() => 
-                ValidationContext.TryValidateAndCreate(invalidTypeSpecPath, null, invalidOutputPath, mockLogger.Object)); // null commit ID makes it local
+            var ex = Assert.Throws<ArgumentException>(() =>
+                ValidationContext.TryValidateAndCreate(invalidTypeSpecPath, null, invalidOutputPath));
 
             // Should fail on TypeSpec path validation first since we're using local path (null commit ID)
             Assert.That(ex?.Message, Does.Contain("Invalid path format"));
@@ -508,7 +508,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Configuration
             var mockLogger = fixture.CreateMockLogger();
 
             var ex = Assert.Throws<ArgumentException>(() => 
-                ValidationContext.TryValidateAndCreate(typeSpecPath, invalidCommitId, invalidOutputPath, mockLogger.Object));
+                ValidationContext.TryValidateAndCreate(typeSpecPath, invalidCommitId, invalidOutputPath));
 
             // Should fail on commit ID validation since TypeSpec path is valid
             Assert.That(ex?.Message, Does.Contain("Commit ID must be 6-40 hexadecimal characters"));
@@ -524,7 +524,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Configuration
             var mockLogger = fixture.CreateMockLogger();
 
             var ex = Assert.Throws<ArgumentException>(() => 
-                ValidationContext.TryValidateAndCreate(typeSpecPath, commitId, invalidOutputPath, mockLogger.Object));
+                ValidationContext.TryValidateAndCreate(typeSpecPath, commitId, invalidOutputPath));
 
             // Should fail on output path validation since TypeSpec path and commit ID are valid
             Assert.That(ex?.Message, Does.Contain("Invalid path format"));
@@ -543,7 +543,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Configuration
             var outputPath = fixture.CreateValidOutputDirectory();
             var mockLogger = fixture.CreateMockLogger();
 
-            var result = ValidationContext.TryValidateAndCreate(typeSpecPath, longCommitId, outputPath, mockLogger.Object);
+            var result = ValidationContext.TryValidateAndCreate(typeSpecPath, longCommitId, outputPath);
 
             Assert.Multiple(() =>
             {
@@ -561,7 +561,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Configuration
             var mockLogger = fixture.CreateMockLogger();
 
             var ex = Assert.Throws<ArgumentException>(() => 
-                ValidationContext.TryValidateAndCreate(typeSpecPath, null, null!, mockLogger.Object));
+                ValidationContext.TryValidateAndCreate(typeSpecPath, null, null!));
 
             Assert.That(ex?.Message, Does.Contain("Output directory path cannot be null or empty"));
         }
@@ -574,7 +574,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Configuration
             var mockLogger = fixture.CreateMockLogger();
 
             var ex = Assert.Throws<ArgumentException>(() => 
-                ValidationContext.TryValidateAndCreate(typeSpecPath, null, string.Empty, mockLogger.Object));
+                ValidationContext.TryValidateAndCreate(typeSpecPath, null, string.Empty));
 
             Assert.That(ex?.Message, Does.Contain("Output directory path cannot be null or empty"));
         }
@@ -595,7 +595,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Configuration
                 var typeSpecPath = fixture.CreateValidTypeSpecDirectory();
                 var outputPath = fixture.CreateValidOutputDirectory();
                 tasks.Add(Task.Run(() => 
-                    ValidationContext.TryValidateAndCreate(typeSpecPath, null, outputPath, mockLogger.Object)));
+                    ValidationContext.TryValidateAndCreate(typeSpecPath, null, outputPath)));
             }
 
             var results = Task.WhenAll(tasks).Result;

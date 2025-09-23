@@ -21,7 +21,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             return contentType.Contains(dockerManifest) || contentType.Contains(dockerIndex);
         }
 
-        public static bool IsMultipartMixed(IDictionary<string, string[]> headers,
+        public static bool IsMultipart(IDictionary<string, string[]> headers,
                                              out string boundary)
         {
             boundary = null;
@@ -30,14 +30,30 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 return false;
 
             var ct = values[0];
-            if (!ct.StartsWith("multipart/mixed", StringComparison.OrdinalIgnoreCase))
+            /*
+             * For the most part, the multipart serialization/deserialization code should be universal across
+             * all the various types of multipart/* payloads.
+             * 
+             * Until we discover otherwise, we'll treat them the same.
+             */
+            if (!ct.StartsWith("multipart/", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            return IsMultiPart(ct, out boundary);
+        }
+
+        public static bool IsMultiPart(string contentType, out string boundary)
+        {
+            boundary = null;
+
+            if (contentType is null)
                 return false;
 
             const string key = "boundary=";
-            var idx = ct.IndexOf(key, StringComparison.OrdinalIgnoreCase);
+            var idx = contentType.IndexOf(key, StringComparison.OrdinalIgnoreCase);
             if (idx == -1) return false;
 
-            boundary = ct[(idx + key.Length)..]   // everything after “boundary=”
+            boundary = contentType[(idx + key.Length)..]   // everything after “boundary=”
                          .Trim()                  // strip spaces
                          .Trim('"');              // strip optional quotes
             return boundary.Length > 0;

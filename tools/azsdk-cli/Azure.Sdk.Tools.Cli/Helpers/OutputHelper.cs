@@ -3,6 +3,12 @@ using Azure.Sdk.Tools.Cli.Models;
 
 namespace Azure.Sdk.Tools.Cli.Helpers;
 
+public interface IRawOutputHelper
+{
+    void OutputConsole(string output);
+    void OutputConsoleError(string output);
+}
+
 public interface IOutputHelper
 {
     string Format(object response);
@@ -11,12 +17,10 @@ public interface IOutputHelper
     void Output(string output);
     void OutputError(object output);
     void OutputError(string output);
-    void OutputConsole(string output);
-    void OutputConsoleError(string output);
     void OutputCommandResponse(CommandResponse output);
 }
 
-public class OutputHelper : IOutputHelper
+public class OutputHelper : IOutputHelper, IRawOutputHelper
 {
     private OutputModes OutputMode { get; set; }
 

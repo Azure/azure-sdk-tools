@@ -7,71 +7,83 @@ import { getAPIJson, processedItems } from "../main";
 import { getSortedChildIds } from "./utils/sorting";
 import { processUse } from "./processUse";
 import { AnnotatedReviewLines } from "./utils/models";
-import { lineIdMap } from "../utils/lineIdUtils";
+import { createContentBasedLineId } from "../utils/lineIdUtils";
 
 /**
  * Processes a module item and adds its documentation to the ReviewLine.
  *
  * @param {Item} item - The module item to process.
  * @param {Object} parentModule - Optional parent module information.
+ * @param {string} lineIdPrefix - The prefix for hierarchical line IDs.
  * @returns {ReviewLine[]} Array of ReviewLine objects.
  */
 export function processModule(
   item: Item,
   parentModule?: { prefix: string; id: number },
+  lineIdPrefix: string = "",
 ): ReviewLine[] {
   if (!isModuleItem(item)) return [];
-  const reviewLines: ReviewLine[] = item.docs ? createDocsReviewLines(item) : [];
   const apiJson = getAPIJson();
   const isRootModule = item.id === apiJson.root;
 
-  lineIdMap.set(item.id.toString(), item.name || "unknown_mod");
-  // Create the ReviewLine object
-  const reviewLine: ReviewLine = {
-    LineId: item.id.toString(),
-    Tokens: [],
-    Children: [],
-  };
+  // Build tokens first for non-root modules
+  const tokens = [];
   let fullName = "";
+  let contentBasedLineId = "";
 
   if (!isRootModule) {
-    reviewLine.Tokens.push({
+    tokens.push({
       Kind: TokenKind.Keyword,
       Value: "pub mod",
     });
     // parent module
     if (parentModule) {
       fullName += parentModule.prefix + "::";
-      reviewLine.Tokens.push({
+      tokens.push({
         Kind: TokenKind.TypeName,
         Value: parentModule.prefix,
         RenderClasses: ["namespace"],
-        NavigateToId: parentModule.id.toString(),
+        NavigateToId: parentModule.id.toString(), // Will be updated in post-processing
         HasSuffixSpace: false,
       });
-      reviewLine.Tokens.push({
+      tokens.push({
         Kind: TokenKind.Punctuation,
         Value: `::`,
         HasSuffixSpace: false,
       });
     }
     fullName += item.name;
-    lineIdMap.set(item.id.toString(), fullName);
     // current module
-    reviewLine.Tokens.push({
+    tokens.push({
       Kind: TokenKind.TypeName,
       Value: item.name || "unknown_mod",
       RenderClasses: ["namespace"],
-      NavigateToId: item.id.toString(),
+      NavigateToId: item.id.toString(), // Will be updated in post-processing
       NavigationDisplayName: fullName,
     });
 
-    reviewLine.Tokens.push({
+    tokens.push({
       Kind: TokenKind.Punctuation,
       Value: "{",
       HasSuffixSpace: false,
     });
+
+    // Create content-based LineId from tokens
+    contentBasedLineId = createContentBasedLineId(tokens, lineIdPrefix, item.id.toString());
   }
+
+  // Create docs with content-based LineId (empty string for root modules)
+  const reviewLines: ReviewLine[] = item.docs ? createDocsReviewLines(item, contentBasedLineId) : [];
+
+  // Create the ReviewLine object
+  const reviewLine: ReviewLine = {
+    LineId: contentBasedLineId,
+    Tokens: tokens,
+    Children: [],
+  };
+
+  // For child processing, use the current content-based lineId if non-root, or the passed lineIdPrefix if root
+  const childLineIdPrefix = isRootModule ? lineIdPrefix : (reviewLine.LineId || lineIdPrefix);
 
   const allChildIds = item.inner.module.items;
   const regularChildIds = [];
@@ -81,15 +93,16 @@ export function processModule(
   const passThroughParentInfo = isRootModule
     ? parentModule
     : {
-        id: item.id,
-        prefix: fullName,
-      };
+      id: item.id,
+      prefix: fullName,
+    };
   for (const childId of allChildIds) {
     if (isModuleItem(apiJson.index[childId])) {
       // 1. Process child modules first so that any references in the parent modules can be shown as links than the fully dereferenced version
       annotatedReviewLines.siblingModule[childId] = processModule(
         apiJson.index[childId],
         passThroughParentInfo,
+        childLineIdPrefix,
       );
       processedItems.add(childId);
     } else if (!isUseItem(apiJson.index[childId])) {
@@ -104,7 +117,7 @@ export function processModule(
   if (regularChildIds.length > 0) {
     for (const childId of regularChildIds) {
       if (childId in apiJson.index) {
-        annotatedReviewLines.children[childId] = processItem(apiJson.index[childId]) || [];
+        annotatedReviewLines.children[childId] = processItem(apiJson.index[childId], passThroughParentInfo, childLineIdPrefix) || [];
         processedItems.add(childId);
       }
     }
@@ -113,7 +126,7 @@ export function processModule(
   // Process the use items
   if (useChildIds.length > 0) {
     for (const childId of useChildIds) {
-      const useResult = processUse(apiJson.index[childId], passThroughParentInfo);
+      const useResult = processUse(apiJson.index[childId], passThroughParentInfo, childLineIdPrefix);
       processedItems.add(childId);
       for (const key in useResult.siblingModule) {
         annotatedReviewLines.siblingModule[key] = useResult.siblingModule[key];

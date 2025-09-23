@@ -20,10 +20,7 @@ namespace Azure.Tools.GeneratorAgent.Agent
         /// </summary>
         public static AgentTypeSpecResponse ParseResponse(string rawResponse)
         {
-            if (rawResponse == null)
-            {
-                throw new ArgumentException("Agent response is null", nameof(rawResponse));
-            }
+            ArgumentNullException.ThrowIfNull(rawResponse);
 
             try
             {
@@ -60,10 +57,7 @@ namespace Azure.Tools.GeneratorAgent.Agent
         /// </summary>
         public static IEnumerable<RuleError> ParseErrors(string rawResponse)
         {
-            if (rawResponse == null)
-            {
-                throw new ArgumentException("Agent response is null", nameof(rawResponse));
-            }
+            ArgumentNullException.ThrowIfNull(rawResponse);
 
             try
             {

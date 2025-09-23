@@ -22,6 +22,7 @@ namespace Azure.Tools.GeneratorAgent.Configuration
         public string ProjectEndpoint => GetRequiredSetting("AzureSettings:ProjectEndpoint");
         public string Model => Configuration.GetSection("AzureSettings:Model").Value ?? "gpt-4o";
         public string AgentName => Configuration.GetSection("AzureSettings:AgentName").Value ?? "AZC Fixer";
+        public int MaxIterations => Configuration.GetSection("AzureSettings:MaxIterations").Get<int>();
         public string AgentInstructions => Configuration.GetSection("AzureSettings:AgentInstructions").Value ?? "";
         public string FixPromptTemplate => Configuration.GetSection("AzureSettings:FixPromptTemplate").Value ?? "";
         public string ErrorAnalysisPromptTemplate => Configuration.GetSection("AzureSettings:ErrorAnalysisPromptTemplate").Value ?? "";

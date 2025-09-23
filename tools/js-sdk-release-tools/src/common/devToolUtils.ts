@@ -46,7 +46,7 @@ export async function lintFix(packageDirectory: string) {
     const options = { ...runCommandOptions, cwd };
 
     logger.info("Start to build @azure/eslint-plugin-azure-sdk package to install eslint dependency.");
-    await runCommand('pnpm', ['build', '--filter', `@azure/eslint-plugin-azure-sdk...`], runCommandOptions);
+    await runCommand('pnpm', ['turbo', 'build', '--filter', `@azure/eslint-plugin-azure-sdk...`, '--token 1'], runCommandOptions);
     logger.info("Build @azure/eslint-plugin-azure-sdk package successfully.");
     logger.info(`Start to fix lint errors in '${packageDirectory}'.`);
     const lintFixCommand = `run vendored eslint package.json api-extractor.json src${test}${samplesDev} --fix --fix-type [problem,suggestion]`;

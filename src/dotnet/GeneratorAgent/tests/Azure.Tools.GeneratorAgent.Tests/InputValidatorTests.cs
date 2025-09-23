@@ -43,7 +43,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
                 return filePath;
             }
 
-            public string CreateTypeSpecDirectory(string dirName, string[] fileNames = null)
+            public string CreateTypeSpecDirectory(string dirName, string[]? fileNames = null)
             {
                 var dirPath = CreateTestDirectory(dirName);
                 var files = fileNames ?? new[] { "main.tsp", "config.yaml" };

@@ -46,7 +46,7 @@ class EvalRunner:
     def run(self):
         """Run the evaluation."""
         custom_eval = CustomAPIViewEvaluator()
-        rule_ids = set()
+        guideline_ids = set()
 
         all_results = {}
         for file in self._tests_directory.glob("*.jsonl"):
@@ -105,7 +105,7 @@ class EvalRunner:
                 )
 
                 # TODO: Helper object for collecting and processing results?
-                run_result = self.record_run_result(result, rule_ids)
+                run_result = self.record_run_result(result, guideline_ids)
                 print(
                     f"Average score for {file.name} run {run + 1}/{self.num_runs}: {run_result[-1]['average_score']:.2f}"
                 )
@@ -120,20 +120,20 @@ class EvalRunner:
 
         self.show_results(all_results)
         self.establish_baseline(all_results)
-        self.calculate_coverage(rule_ids)
+        self.calculate_coverage(guideline_ids)
 
     def in_ci(self) -> bool:
         return bool(os.getenv("TF_BUILD"))
 
-    def record_run_result(self, result: dict[str, Any], rule_ids: Set[str]) -> list[dict[str, Any]]:
+    def record_run_result(self, result: dict[str, Any], guideline_ids: Set[str]) -> list[dict[str, Any]]:
         run_result = []
         total_score = 0
 
         for row in result["rows"]:
             score = self.calculate_overall_score(row)
             total_score += score
-            rules = [rule["rule_ids"] for rule in json.loads(row["inputs.response"])["comments"]]
-            rule_ids.update(*rules)
+            rules = [rule["guideline_ids"] for rule in json.loads(row["inputs.response"])["comments"]]
+            guideline_ids.update(*rules)
 
             run_result.append(
                 {
@@ -201,8 +201,8 @@ class EvalRunner:
             with open(str(output_path), "w", encoding="utf-8") as f:
                 json.dump(result, indent=4, fp=f)
 
-    def calculate_coverage(self, rule_ids: set[str]) -> None:
-        """Calculate and output the coverage of tests based on the rule IDs."""
+    def calculate_coverage(self, guideline_ids: set[str]) -> None:
+        """Calculate and output the coverage of tests based on the guideline IDs."""
 
         if self._test_file == "all":
             # only update coverage if all tests are run
@@ -213,19 +213,19 @@ class EvalRunner:
                 with open(file, "r", encoding="utf-8") as f:
                     guidelines.extend(json.loads(f.read()))
             guideline_rule_ids = [rule["id"] for rule in guidelines]
-            difference = set(guideline_rule_ids).difference(rule_ids)
+            difference = set(guideline_rule_ids).difference(guideline_ids)
             with open(str(output_path), "w+", encoding="utf-8") as f:
                 f.write(
                     json.dumps(
                         {
-                            "tested": list(rule_ids),
+                            "tested": list(guideline_ids),
                             "not_tested": list(difference),
-                            "coverage": len(rule_ids) / len(guideline_rule_ids) * 100,
+                            "coverage": len(guideline_ids) / len(guideline_rule_ids) * 100,
                         },
                         indent=4,
                     )
                 )
-            print(f"\nTest coverage for {self.language}: {len(rule_ids) / len(guideline_rule_ids) * 100:.2f}%")
+            print(f"\nTest coverage for {self.language}: {len(guideline_ids) / len(guideline_rule_ids) * 100:.2f}%")
 
     def calculate_overall_score(self, row: dict[str, Any]) -> float:
         """Calculate weighted score based on various metrics."""

@@ -188,21 +188,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         public string Content { get; set; } = string.Empty;
     }
 
-    public class AdditionalContextInput
-    {
-        [Description("The type of context (link or image)")]
-        public string Type { get; set; } = "link";
-
-        [Description("Description or content of the context item")]
-        [Required]
-        public string Content { get; set; } = string.Empty;
-
-        [Description("URL link to the context item")]
-        [Required]
-        [Url]
-        public string Link { get; set; } = string.Empty;
-    }
-
     // Response models for the MCP tool
     public class AiCompletionToolResponse : Azure.Sdk.Tools.Cli.Models.Response
     {

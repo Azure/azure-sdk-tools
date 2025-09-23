@@ -32,7 +32,7 @@ For vscode, create the `.vscode/mcp.json` file and add the development build of 
       "args": ["start"],
       "env": {
         "AI_COMPLETION_ENDPOINT": "https://completion.endpoint",
-        "AI_COMPLETION_API_KEY": "my-super-secret-key"
+        "AI_COMPLETION_BOT_CLIENT_ID": "bot-service-client-id"
       }
     }
   }

@@ -20,7 +20,6 @@ namespace Azure.Sdk.Tools.Cli.Services
         private readonly AiCompletionOptions _options;
         private readonly JsonSerializerOptions _jsonOptions;
         private readonly IPublicClientApplication? _msalApp;
-        private AuthenticationInfo? _token;
         private readonly IList<string> scopes = new List<string>() { "api://azure-sdk-qa-bot/token" };
         private readonly string authUrl = "https://login.microsoftonline.com/organizations/";
 
@@ -42,7 +41,6 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             if (string.IsNullOrEmpty(_options.Endpoint) || string.IsNullOrEmpty(_options.ClientId))
             {
-                _logger.LogError("Neither the completion API endpoint nor the application client ID has been specified.");
                 throw new ArgumentException("Neither the completion API endpoint nor the application client ID has been specified.");
             } else
             {
@@ -82,12 +80,16 @@ namespace Azure.Sdk.Tools.Cli.Services
 
                 using var httpRequest = new HttpRequestMessage(HttpMethod.Post, requestUri);
 
-                if (_token == null || DateTime.UtcNow > _token.ExpiresOn)
+                var authResult = await RetriveAiCompletionAccessTokenAsync(cancellationToken);
+                if (!string.IsNullOrEmpty(authResult.AccessToken))
                 {
-                    _token = await RetriveAiCompletionAccessTokenAsync(cancellationToken);
+                    httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", authResult.AccessToken);
                 }
-                
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _token.AccessToken);
+                else
+                {
+                    throw new InvalidOperationException("Authentication failed: No access token obtained");
+                }
+
                 httpRequest.Content = JsonContent.Create(request, options: _jsonOptions);
                 if (_options.EnableDebugLogging)
                 {
@@ -162,7 +164,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             return isValid;
         }
-        private async Task<AuthenticationInfo> RetriveAiCompletionAccessTokenAsync(CancellationToken cancellationToken = default)
+        private async Task<AuthenticationResult> RetriveAiCompletionAccessTokenAsync(CancellationToken cancellationToken = default)
         {
             if (_msalApp != null)
             {
@@ -197,10 +199,10 @@ namespace Azure.Sdk.Tools.Cli.Services
                     _logger.LogError("Failed to authenticate.");
                     throw new Exception("Authentication Failure.");
                 }
-                return new AuthenticationInfo(authResult.AccessToken, authResult.ExpiresOn);
+                return authResult;
             } else
             {
-                throw new Exception("No IPublicClientApplication instance");
+                throw new InvalidOperationException("MSAL application not initialized. Check ClientId configuration.");
             }
         }
         private async Task<CompletionResponse> HandleHttpResponse(
@@ -304,15 +306,5 @@ namespace Azure.Sdk.Tools.Cli.Services
                 }
             });
         }
-    }
-
-    class AuthenticationInfo
-    {
-        public AuthenticationInfo(string token, DateTimeOffset expiresOn) {
-            AccessToken = token;
-            ExpiresOn = expiresOn;
-        }
-        public string AccessToken { get; set; }
-        public DateTimeOffset ExpiresOn { get; set; }
     }
 }

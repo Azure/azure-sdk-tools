@@ -75,7 +75,7 @@ export async function processDailySyncKnowledge(): Promise<void> {
         console.log('Loading existing blob metadata for change detection...');
 
         // Load existing blob metadata for change detection
-        const existingBlobs = await blobService.listBlobsWithProperties();
+        const existingBlobs = await blobService.listBlobs();
 
         console.log('Setting up documentation repositories...');
         
@@ -731,7 +731,7 @@ async function cleanupExpiredBlobs(currentFiles: ProcessedMarkdownFile[]): Promi
         console.log('Cleaning up expired blobs...');
         
         // Get all existing blobs
-        const allBlobs = await blobService.listBlobs();
+        const blobs = await blobService.listBlobs();
         
         // Create a set of current file blob paths for efficient lookup
         const currentFileBlobPaths = new Set(
@@ -741,8 +741,9 @@ async function cleanupExpiredBlobs(currentFiles: ProcessedMarkdownFile[]): Promi
         );
         
         let deletedCount = 0;
-        
-        for (const blobPath of allBlobs) {
+
+        for (const blob of blobs) {
+            const blobPath = blob[0];
             // Skip static files
             if (blobPath.startsWith('static_')) {
                 continue;

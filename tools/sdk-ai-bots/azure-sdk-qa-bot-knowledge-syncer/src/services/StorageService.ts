@@ -83,9 +83,9 @@ export class BlobService {
     }
 
     /**
-     * List all blobs in a container with their properties including contentMD5
+     * List all blobs in a container
      */
-    async listBlobsWithProperties(
+    async listBlobs(
         prefix?: string
     ): Promise<Map<string, BlobItem>> {
         try {
@@ -106,31 +106,6 @@ export class BlobService {
         } catch (error) {
             throw new Error(
                 `Failed to list blobs with properties: ${
-                    error instanceof Error ? error.message : "Unknown error"
-                }`
-            );
-        }
-    }
-
-    /**
-     * List all blob names in a container
-     */
-    async listBlobs(prefix?: string): Promise<string[]> {
-        try {
-            const blobs: string[] = [];
-
-            const listOptions = prefix ? { prefix } : undefined;
-
-            for await (const blob of this.blobContainerClient.listBlobsFlat(
-                listOptions
-            )) {
-                blobs.push(blob.name);
-            }
-
-            return blobs;
-        } catch (error) {
-            throw new Error(
-                `Failed to list blobs: ${
                     error instanceof Error ? error.message : "Unknown error"
                 }`
             );

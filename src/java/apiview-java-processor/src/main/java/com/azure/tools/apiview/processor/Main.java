@@ -33,25 +33,139 @@ import java.util.stream.Stream;
 
 public class Main {
 
-    // expected argument order:
-    // [inputFiles] <outputDirectory>
     public static void main(String[] args) {
-        if (args.length != 2) {
-            System.out.println("Expected argument order: [comma-separated sources jarFiles or directories] <outputDir>, e.g. /path/to/jarfile-sources.jar,../explodedSrcDir ./temp/");
-            System.exit(-1);
+        if (args.length == 0) {
+            printUsageAndExit();
         }
 
+        // Detect --diff mode
+        boolean isDiff = false;
+        List<String> oldInputs = new ArrayList<>();
+        List<String> newInputs = new ArrayList<>();
+        String outputDirArg = null;
+        for (int i = 0; i < args.length; i++) {
+            String a = args[i];
+            if ("--diff".equals(a)) {
+                isDiff = true;
+            } else if ("--old".equals(a) && i + 1 < args.length) {
+                oldInputs.addAll(Arrays.asList(args[++i].split(",")));
+            } else if ("--new".equals(a) && i + 1 < args.length) {
+                newInputs.addAll(Arrays.asList(args[++i].split(",")));
+            } else if ("--out".equals(a) && i + 1 < args.length) {
+                outputDirArg = args[++i];
+            } else if (a.startsWith("--")) {
+                System.out.println("Unknown option: " + a);
+                printUsageAndExit();
+            } else {
+                // fallback classic mode collection
+                if (outputDirArg == null && args.length == 2) {
+                    // classic mode: [inputFiles] <outputDir>
+                    classicMode(args);
+                    return;
+                }
+            }
+        }
+
+        if (isDiff) {
+            runDiffMode(oldInputs, newInputs, outputDirArg);
+            return;
+        }
+
+        // If not diff mode, fallback to classic
+        if (args.length == 2) {
+            classicMode(args);
+        } else {
+            printUsageAndExit();
+        }
+    }
+
+    private static void classicMode(String[] args) {
+        if (args.length != 2) {
+            printUsageAndExit();
+        }
         long startMillis = System.currentTimeMillis();
         final String jarFiles = args[0];
         final String[] jarFilesArray = jarFiles.split(",");
-
         final File outputDir = new File(args[1]);
-
-        System.out.println("Running with following configuration:");
+        System.out.println("Running (listing) with following configuration:");
         System.out.printf("  Output directory: '%s'%n", outputDir);
-
         Arrays.stream(jarFilesArray).forEach(jarFile -> run(new File(jarFile), outputDir));
         System.out.println("Finished processing in " + (System.currentTimeMillis() - startMillis) + "ms");
+    }
+
+    private static void runDiffMode(List<String> oldInputs, List<String> newInputs, String outputDirArg) {
+        if (oldInputs.isEmpty() || newInputs.isEmpty() || outputDirArg == null) {
+            System.out.println("Missing required --diff arguments");
+            printUsageAndExit();
+        }
+        long startMillis = System.currentTimeMillis();
+        System.out.println("Running diff mode");
+        File outDir = new File(outputDirArg);
+        if (!outDir.exists()) outDir.mkdirs();
+
+        // Collect source file paths (.java) from each input (directory or -sources.jar)
+        List<Path> oldSourceFiles = collectJavaSources(oldInputs);
+        List<Path> newSourceFiles = collectJavaSources(newInputs);
+
+        com.azure.tools.apiview.processor.diff.model.ApiSymbolTable oldTable = new com.azure.tools.apiview.processor.diff.model.ApiSymbolTable();
+        com.azure.tools.apiview.processor.diff.model.ApiSymbolTable newTable = new com.azure.tools.apiview.processor.diff.model.ApiSymbolTable();
+
+        com.github.javaparser.JavaParser parser = new com.github.javaparser.JavaParser();
+        for (Path p : oldSourceFiles) {
+            try { com.github.javaparser.ast.CompilationUnit cu = parser.parse(p).getResult().orElse(null);
+                com.azure.tools.apiview.processor.diff.SymbolExtractor.extract(cu, oldTable);
+            } catch (Exception e) { e.printStackTrace(); }
+        }
+        for (Path p : newSourceFiles) {
+            try { com.github.javaparser.ast.CompilationUnit cu = parser.parse(p).getResult().orElse(null);
+                com.azure.tools.apiview.processor.diff.SymbolExtractor.extract(cu, newTable);
+            } catch (Exception e) { e.printStackTrace(); }
+        }
+
+        com.azure.tools.apiview.processor.diff.DiffEngine engine = new com.azure.tools.apiview.processor.diff.DiffEngine();
+        java.util.List<com.azure.tools.apiview.processor.diff.dto.ApiChangeDto> changes = engine.diff(oldTable, newTable);
+        com.azure.tools.apiview.processor.diff.dto.ApiDiffResult result = new com.azure.tools.apiview.processor.diff.dto.ApiDiffResult();
+        result.changes = changes;
+
+        File outputFile = new File(outDir, "apiview-diff.json");
+        try (java.io.OutputStream os = new java.io.FileOutputStream(outputFile);
+             com.azure.json.JsonWriter writer = com.azure.json.JsonProviders.createWriter(os)) {
+            result.write(writer);
+            System.out.println("Diff output written: " + outputFile.getAbsolutePath());
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(-1);
+        }
+        System.out.println("Diff finished in " + (System.currentTimeMillis() - startMillis) + "ms with " + changes.size() + " changes");
+    }
+
+    private static List<Path> collectJavaSources(List<String> inputs) {
+        List<Path> out = new ArrayList<>();
+        for (String in : inputs) {
+            File f = new File(in);
+            if (!f.exists()) continue;
+            if (f.isDirectory()) {
+                try (Stream<Path> paths = Files.walk(f.toPath())) {
+                    paths.filter(p -> p.toString().endsWith(".java")).forEach(out::add);
+                } catch (IOException e) { e.printStackTrace(); }
+            } else if (f.getName().endsWith("-sources.jar")) {
+                try (FileSystem fs = FileSystems.newFileSystem(f.toPath(), Main.class.getClassLoader())) {
+                    fs.getRootDirectories().forEach(root -> {
+                        try (Stream<Path> paths = Files.walk(root)) {
+                            paths.filter(p -> p.toString().endsWith(".java")).forEach(out::add);
+                        } catch (IOException e) { e.printStackTrace(); }
+                    });
+                } catch (IOException e) { e.printStackTrace(); }
+            }
+        }
+        return out;
+    }
+
+    private static void printUsageAndExit() {
+        System.out.println("Usage:\n" +
+                "  Listing mode: <sourcesOrJarsCommaSeparated> <outputDir>\n" +
+                "  Diff mode: --diff --old <oldPathsCommaSeparated> --new <newPathsCommaSeparated> --out <outputDir>\n");
+        System.exit(-1);
     }
 
     /**

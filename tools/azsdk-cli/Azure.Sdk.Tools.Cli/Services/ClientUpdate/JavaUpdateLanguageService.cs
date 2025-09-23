@@ -1,18 +1,15 @@
-// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-
+// Clean implementation of JavaUpdateLanguageService (integrated diff mode)
 using System.Diagnostics;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Azure.Sdk.Tools.Cli.Models;
-using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.Cli.Services.ClientUpdate;
 
-/// <summary>
-/// Java-specific update language service.
-/// </summary>
 public class JavaUpdateLanguageService : ClientUpdateLanguageServiceBase
 {
     private readonly ILogger<JavaUpdateLanguageService> _logger;
+    private const string CustomizationDirName = "customization";
 
     public JavaUpdateLanguageService(ILanguageSpecificCheckResolver languageSpecificCheckResolver, ILogger<JavaUpdateLanguageService> logger) : base(languageSpecificCheckResolver)
     {
@@ -21,70 +18,140 @@ public class JavaUpdateLanguageService : ClientUpdateLanguageServiceBase
 
     public override string SupportedLanguage => "java";
 
-    private const string CustomizationDirName = "customization";
-
     public override async Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath)
     {
         if (string.IsNullOrWhiteSpace(oldGenerationPath) || string.IsNullOrWhiteSpace(newGenerationPath))
         {
             throw new InvalidOperationException("Java API diff requires both oldGenerationPath and newGenerationPath.");
         }
-        // Always use APIView methodIndex diff; treat empty list as no-change.
-        return await RunApiViewDiffAsync(oldGenerationPath!, newGenerationPath!, CancellationToken.None);
+        return await RunApiViewDiffAsync(oldGenerationPath, newGenerationPath, CancellationToken.None);
     }
 
-    /// <summary>
-    /// Run the APIView Java processor on both generations, parse methodIndex maps, and compute a diff.
-    /// Returns empty list if processor cannot build or methodIndex missing.
-    /// </summary>
     private async Task<List<ApiChange>> RunApiViewDiffAsync(string oldPath, string newPath, CancellationToken ct)
     {
-        var changes = new List<ApiChange>();
+        var result = new List<ApiChange>();
         try
         {
-            // TODO: This might not be required
             var processorJar = await JavaApiViewJarBuilder.BuildProcessorJarAsync(_logger, ct);
-            if (processorJar == null)
+            if (string.IsNullOrEmpty(processorJar))
             {
-                return changes;
+                _logger.LogDebug("Processor jar build returned null");
+                return result;
             }
-
-            // Collect input sources for each generation root.
             var oldInputs = DiscoverJavaInputs(oldPath);
             var newInputs = DiscoverJavaInputs(newPath);
             if (oldInputs.Count == 0 || newInputs.Count == 0)
             {
-                _logger.LogDebug("APIView diff: no inputs discovered (old={OldCount}, new={NewCount})", oldInputs.Count, newInputs.Count);
-                return changes;
+                _logger.LogDebug("No inputs for diff (old={Old}, new={New})", oldInputs.Count, newInputs.Count);
+                return result;
             }
-
             var tempRoot = Path.Combine(Path.GetTempPath(), "apiview-diff-" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(tempRoot);
-            var oldOut = Path.Combine(tempRoot, "old");
-            var newOut = Path.Combine(tempRoot, "new");
-            Directory.CreateDirectory(oldOut);
-            Directory.CreateDirectory(newOut);
-
-            // Run processor for each side.
-            if (!await RunAPIViewProcessorAsync(processorJar, oldInputs, oldOut, ct) || !await RunAPIViewProcessorAsync(processorJar, newInputs, newOut, ct))
+            var diffOut = Path.Combine(tempRoot, "out");
+            Directory.CreateDirectory(diffOut);
+            if (!await RunAPIViewProcessorDiffAsync(processorJar, oldInputs, newInputs, diffOut, ct))
             {
-                return new List<ApiChange>();
+                return result;
             }
-
-            var oldIndex = JavaApiViewMethodIndexLoader.LoadMerged(oldOut, _logger);
-            var newIndex = JavaApiViewMethodIndexLoader.LoadMerged(newOut, _logger);
-            if (oldIndex.Count == 0 && newIndex.Count == 0)
+            var diffPath = Path.Combine(diffOut, "apiview-diff.json");
+            if (!File.Exists(diffPath))
             {
-                return changes;
+                _logger.LogDebug("Diff output file not found: {Path}", diffPath);
+                return result;
             }
-            return JavaApiViewMethodIndexLoader.ComputeChanges(oldIndex, newIndex);
+            await using var fs = File.OpenRead(diffPath);
+            var payload = await JsonSerializer.DeserializeAsync<RawApiDiffResult>(fs, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }, ct);
+            if (payload?.Changes != null)
+            {
+                result = payload.Changes.Select(MapRawChange).ToList();
+            }
         }
         catch (Exception ex)
         {
-            _logger.LogDebug(ex, "APIView diff path failed");
-            return new List<ApiChange>();
+            _logger.LogDebug(ex, "Failed running integrated diff mode");
         }
+        return result;
     }
+
+    private async Task<bool> RunAPIViewProcessorDiffAsync(string processorJar, List<string> oldInputs, List<string> newInputs, string outDir, CancellationToken ct)
+    {
+        var oldJoined = string.Join(',', oldInputs);
+        var newJoined = string.Join(',', newInputs);
+        var psi = new ProcessStartInfo
+        {
+            FileName = "java",
+            Arguments = $"-jar \"{processorJar}\" --diff --old \"{oldJoined}\" --new \"{newJoined}\" --out \"{outDir}\"",
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            WorkingDirectory = outDir
+        };
+        using var proc = Process.Start(psi);
+        if (proc == null)
+        {
+            return false;
+        }
+        var stdout = await proc.StandardOutput.ReadToEndAsync(ct);
+        var stderr = await proc.StandardError.ReadToEndAsync(ct);
+        await proc.WaitForExitAsync(ct);
+        if (proc.ExitCode != 0)
+        {
+            _logger.LogDebug("Processor --diff exit {Code}: {Err}", proc.ExitCode, Truncate(stderr, 400));
+            return false;
+        }
+        _logger.LogDebug("Processor --diff stdout (trunc): {Out}", Truncate(stdout, 400));
+        return true;
+    }
+
+    private static ApiChange MapRawChange(RawApiChange raw)
+    {
+        var apiChange = new ApiChange();
+        apiChange.Kind = raw.Kind ?? string.Empty;
+        apiChange.Symbol = raw.Symbol ?? string.Empty;
+        apiChange.Detail = raw.Detail ?? string.Empty;
+        if (raw.Meta != null)
+        {
+            void Add(string key, object? value)
+            {
+                if (value == null) { return; }
+                var str = value switch
+                {
+                    string s => s,
+                    string[] arr => string.Join(",", arr),
+                    bool b => b.ToString().ToLowerInvariant(),
+                    int i => i.ToString(),
+                    _ => value.ToString() ?? string.Empty
+                };
+                if (!string.IsNullOrEmpty(str))
+                {
+                    apiChange.Metadata[key] = str;
+                }
+            }
+            Add("symbolKind", raw.Meta.SymbolKind);
+            Add("fqn", raw.Meta.FullyQualifiedName);
+            Add("oldSignature", raw.Meta.OldSignature);
+            Add("newSignature", raw.Meta.NewSignature);
+            Add("oldReturnType", raw.Meta.OldReturnType);
+            Add("newReturnType", raw.Meta.NewReturnType);
+            Add("oldFieldType", raw.Meta.OldFieldType);
+            Add("newFieldType", raw.Meta.NewFieldType);
+            Add("oldVisibility", raw.Meta.OldVisibility);
+            Add("newVisibility", raw.Meta.NewVisibility);
+            Add("deprecatedBefore", raw.Meta.DeprecatedBefore);
+            Add("deprecatedAfter", raw.Meta.DeprecatedAfter);
+            Add("parameterTypes", raw.Meta.ParameterTypes);
+            Add("oldParameterNames", raw.Meta.OldParameterNames);
+            Add("newParameterNames", raw.Meta.NewParameterNames);
+            Add("paramNameChange", raw.Meta.ParamNameChange);
+            Add("overloadCountBefore", raw.Meta.OverloadCountBefore);
+            Add("overloadCountAfter", raw.Meta.OverloadCountAfter);
+        }
+        if (!string.IsNullOrEmpty(raw.Category)) { apiChange.Metadata["category"] = raw.Category!; }
+        if (!string.IsNullOrEmpty(raw.Impact)) { apiChange.Metadata["impact"] = raw.Impact!; }
+        return apiChange;
+    }
+
     private List<string> DiscoverJavaInputs(string generationRoot)
     {
         var inputs = new List<string>();
@@ -113,61 +180,14 @@ public class JavaUpdateLanguageService : ClientUpdateLanguageServiceBase
         return inputs;
     }
 
-    private async Task<bool> RunAPIViewProcessorAsync(string processorJar, List<string> inputs, string outDir, CancellationToken ct)
-    {
-        var joined = string.Join(',', inputs);
-        var psi = new ProcessStartInfo
-        {
-            FileName = "java",
-            Arguments = $"-jar \"{processorJar}\" \"{joined}\" \"{outDir}\"",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            WorkingDirectory = outDir
-        };
-        using var proc = Process.Start(psi);
-        if (proc == null)
-        {
-            return false;
-        }
-        var stdout = await proc.StandardOutput.ReadToEndAsync(ct);
-        var stderr = await proc.StandardError.ReadToEndAsync(ct);
-        await proc.WaitForExitAsync(ct);
-        if (proc.ExitCode != 0)
-        {
-            _logger.LogDebug("APIView processor exit {Code}: {Err}", proc.ExitCode, Truncate(stderr, 400));
-            return false;
-        }
-        _logger.LogDebug("APIView processor stdout (truncated): {Out}", Truncate(stdout, 400));
-        return true;
-    }
-
-    private static string Truncate(string s, int max)
-    {
-        if (string.IsNullOrEmpty(s) || s.Length <= max)
-        {
-            return s;
-        }
-        return s[..max] + "...";
-    }
-
+    private static string Truncate(string s, int max) => string.IsNullOrEmpty(s) || s.Length <= max ? s : s[..max] + "...";
     public override Task<string?> GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct)
     {
         try
         {
-            // In azure-sdk-for-java layout, generated code lives under:
-            //   <pkgRoot>/azure-<package>-<service>/src
-            // Customizations (single root) live under parallel directory:
-            //   <pkgRoot>/azure-<package>-<service>/customization/src/main/java
-            // Example (document intelligence):
-            //   generated root: .../azure-ai-documentintelligence/src
-            //   customization root: .../azure-ai-documentintelligence/customization/src/main/java
-
-            var packageRoot = Directory.GetParent(generationRoot)?.FullName; // parent of 'src'
+            var packageRoot = Directory.GetParent(generationRoot)?.FullName;
             if (!string.IsNullOrEmpty(packageRoot) && Directory.Exists(packageRoot))
             {
-                // canonical customization root: <packageRoot>/customization/src/main/java
                 var customizationSourceRoot = Path.Combine(packageRoot, CustomizationDirName, "src", "main", "java");
                 if (Directory.Exists(customizationSourceRoot))
                 {
@@ -184,20 +204,54 @@ public class JavaUpdateLanguageService : ClientUpdateLanguageServiceBase
 
     public override Task<List<CustomizationImpact>> AnalyzeCustomizationImpactAsync(ClientUpdateSessionState session, string? customizationRoot, IEnumerable<ApiChange> apiChanges, CancellationToken ct)
     {
-        // Stub: TODO no impacted files
-        return Task.FromResult(new List<CustomizationImpact>());
+        return Task.FromResult(new List<CustomizationImpact>()); // future enhancement
     }
 
     public override Task<List<PatchProposal>> ProposePatchesAsync(ClientUpdateSessionState session, IEnumerable<CustomizationImpact> impacts, CancellationToken ct)
     {
-    // Stub: create a trivial placeholder patch for each impacted file.
-        var proposals = impacts
-            .Select(i => new PatchProposal
-            {
-                File = i.File,
-                Diff = $"--- a/{i.File}\n+++ b/{i.File}\n// TODO: computed diff placeholder\n"
-            })
-            .ToList();
+        var proposals = impacts.Select(i => new PatchProposal
+        {
+            File = i.File,
+            Diff = $"--- a/{i.File}\n+++ b/{i.File}\n// TODO: computed diff placeholder\n"
+        }).ToList();
         return Task.FromResult(proposals);
     }
+}
+
+internal class RawApiDiffResult
+{
+    [JsonPropertyName("schemaVersion")] public string? SchemaVersion { get; set; }
+    [JsonPropertyName("changes")] public List<RawApiChange> Changes { get; set; } = new();
+}
+
+internal class RawApiChange
+{
+    [JsonPropertyName("kind")] public string? Kind { get; set; }
+    [JsonPropertyName("symbol")] public string? Symbol { get; set; }
+    [JsonPropertyName("detail")] public string? Detail { get; set; }
+    [JsonPropertyName("impact")] public string? Impact { get; set; }
+    [JsonPropertyName("category")] public string? Category { get; set; }
+    [JsonPropertyName("meta")] public RawApiChangeMeta? Meta { get; set; }
+}
+
+internal class RawApiChangeMeta
+{
+    [JsonPropertyName("symbolKind")] public string? SymbolKind { get; set; }
+    [JsonPropertyName("fqn")] public string? FullyQualifiedName { get; set; }
+    [JsonPropertyName("oldSignature")] public string? OldSignature { get; set; }
+    [JsonPropertyName("newSignature")] public string? NewSignature { get; set; }
+    [JsonPropertyName("oldReturnType")] public string? OldReturnType { get; set; }
+    [JsonPropertyName("newReturnType")] public string? NewReturnType { get; set; }
+    [JsonPropertyName("oldFieldType")] public string? OldFieldType { get; set; }
+    [JsonPropertyName("newFieldType")] public string? NewFieldType { get; set; }
+    [JsonPropertyName("oldVisibility")] public string? OldVisibility { get; set; }
+    [JsonPropertyName("newVisibility")] public string? NewVisibility { get; set; }
+    [JsonPropertyName("deprecatedBefore")] public bool? DeprecatedBefore { get; set; }
+    [JsonPropertyName("deprecatedAfter")] public bool? DeprecatedAfter { get; set; }
+    [JsonPropertyName("parameterTypes")] public string[]? ParameterTypes { get; set; }
+    [JsonPropertyName("oldParameterNames")] public string[]? OldParameterNames { get; set; }
+    [JsonPropertyName("newParameterNames")] public string[]? NewParameterNames { get; set; }
+    [JsonPropertyName("paramNameChange")] public bool? ParamNameChange { get; set; }
+    [JsonPropertyName("overloadCountBefore")] public int? OverloadCountBefore { get; set; }
+    [JsonPropertyName("overloadCountAfter")] public int? OverloadCountAfter { get; set; }
 }

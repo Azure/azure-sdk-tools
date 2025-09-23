@@ -8,12 +8,10 @@ import java.util.List;
  * Container for a list of ApiChangeDto plus schema metadata.
  */
 public class ApiDiffResult {
-    public String schemaVersion = "1.0.0"; // increment if shape changes
     public List<ApiChangeDto> changes;
 
     public void write(JsonWriter writer) throws IOException {
         writer.writeStartObject();
-        writer.writeStringField("schemaVersion", schemaVersion);
         writer.writeFieldName("changes");
         writer.writeStartArray();
         if (changes != null) {

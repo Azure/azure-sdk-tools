@@ -13,6 +13,7 @@ import com.azure.tools.apiview.processor.model.TokenKind;
 import com.azure.tools.apiview.processor.model.maven.Dependency;
 import com.azure.tools.apiview.processor.model.maven.Pom;
 import com.azure.tools.apiview.processor.model.traits.Parent;
+import com.azure.tools.apiview.processor.diff.collector.SymbolCollector;
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.JavaParserAdapter;
 import com.github.javaparser.ParserConfiguration;
@@ -181,6 +182,7 @@ public class JavaASTAnalyser implements Analyser {
     private final Diagnostics diagnostic;
 
     private final Map<String,String> shortClassNameToFullyQualfiedNameMap = new HashMap<>();
+    private final SymbolCollector symbolCollector; // nullable for diff mode
 
     private int JAVADOC_LINE_COUNT = 0;
 
@@ -192,8 +194,13 @@ public class JavaASTAnalyser implements Analyser {
      **********************************************************************************************/
 
     public JavaASTAnalyser(APIListing apiListing) {
+        this(apiListing, null);
+    }
+
+    public JavaASTAnalyser(APIListing apiListing, SymbolCollector collector) {
         this.apiListing = apiListing;
         this.diagnostic = new Diagnostics(apiListing);
+        this.symbolCollector = collector;
     }
 
 
@@ -730,6 +737,7 @@ public class JavaASTAnalyser implements Analyser {
 
     // This method is for constructors, fields, methods, etc.
     private void visitDefinition(BodyDeclaration<?> definition, ReviewLine parentLine) {
+    TypeDeclaration<?> enclosingTypeForMembers = findEnclosingType(definition);
         boolean isTypeDeclaration = false;
         String id;
         String name;
@@ -738,6 +746,9 @@ public class JavaASTAnalyser implements Analyser {
             TypeDeclaration<?> typeDeclaration = definition.asTypeDeclaration();
             // Skip if the class is private or package-private, unless it is a nested type defined inside a public interface
             if (!isTypeAPublicAPI(typeDeclaration)) {
+            if (symbolCollector != null) {
+                try { symbolCollector.onType(typeDeclaration); } catch (Exception ignored) {}
+            }
                 return;
             }
 
@@ -750,10 +761,16 @@ public class JavaASTAnalyser implements Analyser {
             FieldDeclaration fieldDeclaration = definition.asFieldDeclaration();
             id = makeId(fieldDeclaration);
             name = fieldDeclaration.toString();
+            if (symbolCollector != null) {
+                try { symbolCollector.onField(enclosingTypeForMembers, fieldDeclaration); } catch (Exception ignored) {}
+            }
         } else if (definition.isCallableDeclaration()) {
             CallableDeclaration<?> callableDeclaration = definition.asCallableDeclaration();
             id = makeId(callableDeclaration);
             name = callableDeclaration.getNameAsString();
+            if (symbolCollector != null) {
+                try { symbolCollector.onMethod(enclosingTypeForMembers, callableDeclaration, callableDeclaration.isConstructorDeclaration()); } catch (Exception ignored) {}
+            }
         } else {
             System.out.println("Unknown definition type: " + definition.getClass().getName());
             System.exit(-1);
@@ -1717,4 +1734,16 @@ public class JavaASTAnalyser implements Analyser {
             return spacing;
         }
     }
+
+    private static TypeDeclaration<?> findEnclosingType(Node node) {
+        Node current = node;
+        while (current != null) {
+            if (current instanceof TypeDeclaration<?>) {
+                return (TypeDeclaration<?>) current;
+            }
+            current = current.getParentNode().orElse(null);
+        }
+        return null;
+    }
+
 }

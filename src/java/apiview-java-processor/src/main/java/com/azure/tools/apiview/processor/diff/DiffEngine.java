@@ -7,7 +7,6 @@ import java.util.*;
 
 /**
  * Computes semantic differences between two ApiSymbolTable instances.
- * Focuses on public/protected surface changes.
  */
 public class DiffEngine {
 

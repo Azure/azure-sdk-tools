@@ -6,15 +6,12 @@ import java.util.Map;
 
 /**
  * Represents a single API change between two revisions.
- * Minimal DTO with manual JSON serialization (azure-json) to avoid reflection needs on Java 8.
  */
 public class ApiChangeDto {
     public String changeType; // e.g. AddedMethod, RemovedMethod, AddedClass, RemovedClass, ModifiedMethod, ModifiedField
     public String before;     // optional textual representation of prior symbol (null for additions)
     public String after;      // optional textual representation of new symbol (null for removals)
     public Meta meta = new Meta();
-    public String impact;     // optional classification (e.g. Breaking, NonBreaking)
-    public String confidence; // optional (e.g. High, Medium, Low)
     public String category;   // optional grouping (Parameters, ReturnType, Visibility, Deprecation, etc.)
 
     public static class Meta {
@@ -37,8 +34,6 @@ public class ApiChangeDto {
         writer.writeStringField("changeType", changeType);
         if (before != null) writer.writeStringField("before", before);
         if (after != null) writer.writeStringField("after", after);
-        if (impact != null) writer.writeStringField("impact", impact);
-        if (confidence != null) writer.writeStringField("confidence", confidence);
         if (category != null) writer.writeStringField("category", category);
         writeMeta(writer);
         writer.writeEndObject();

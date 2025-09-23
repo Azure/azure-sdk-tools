@@ -87,7 +87,7 @@ public class Main {
         final String jarFiles = args[0];
         final String[] jarFilesArray = jarFiles.split(",");
         final File outputDir = new File(args[1]);
-        System.out.println("Running (listing) with following configuration:");
+        System.out.println("Running with following configuration:");
         System.out.printf("  Output directory: '%s'%n", outputDir);
         Arrays.stream(jarFilesArray).forEach(jarFile -> run(new File(jarFile), outputDir));
         System.out.println("Finished processing in " + (System.currentTimeMillis() - startMillis) + "ms");
@@ -103,24 +103,17 @@ public class Main {
         File outDir = new File(outputDirArg);
         if (!outDir.exists()) outDir.mkdirs();
 
-        // Collect source file paths (.java) from each input (directory or -sources.jar)
+        // Collect source file paths (.java) from each input directory
         List<Path> oldSourceFiles = collectJavaSources(oldInputs);
         List<Path> newSourceFiles = collectJavaSources(newInputs);
 
         com.azure.tools.apiview.processor.diff.model.ApiSymbolTable oldTable = new com.azure.tools.apiview.processor.diff.model.ApiSymbolTable();
         com.azure.tools.apiview.processor.diff.model.ApiSymbolTable newTable = new com.azure.tools.apiview.processor.diff.model.ApiSymbolTable();
 
-        com.github.javaparser.JavaParser parser = new com.github.javaparser.JavaParser();
-        for (Path p : oldSourceFiles) {
-            try { com.github.javaparser.ast.CompilationUnit cu = parser.parse(p).getResult().orElse(null);
-                com.azure.tools.apiview.processor.diff.SymbolExtractor.extract(cu, oldTable);
-            } catch (Exception e) { e.printStackTrace(); }
-        }
-        for (Path p : newSourceFiles) {
-            try { com.github.javaparser.ast.CompilationUnit cu = parser.parse(p).getResult().orElse(null);
-                com.azure.tools.apiview.processor.diff.SymbolExtractor.extract(cu, newTable);
-            } catch (Exception e) { e.printStackTrace(); }
-        }
+        com.azure.tools.apiview.processor.diff.collector.DiffSymbolCollector oldCollector = new com.azure.tools.apiview.processor.diff.collector.DiffSymbolCollector(oldTable);
+        com.azure.tools.apiview.processor.diff.collector.DiffSymbolCollector newCollector = new com.azure.tools.apiview.processor.diff.collector.DiffSymbolCollector(newTable);
+        new com.azure.tools.apiview.processor.analysers.JavaASTAnalyser(new com.azure.tools.apiview.processor.model.APIListing(), oldCollector).analyse(oldSourceFiles);
+        new com.azure.tools.apiview.processor.analysers.JavaASTAnalyser(new com.azure.tools.apiview.processor.model.APIListing(), newCollector).analyse(newSourceFiles);
 
         com.azure.tools.apiview.processor.diff.DiffEngine engine = new com.azure.tools.apiview.processor.diff.DiffEngine();
         java.util.List<com.azure.tools.apiview.processor.diff.dto.ApiChangeDto> changes = engine.diff(oldTable, newTable);
@@ -147,14 +140,6 @@ public class Main {
             if (f.isDirectory()) {
                 try (Stream<Path> paths = Files.walk(f.toPath())) {
                     paths.filter(p -> p.toString().endsWith(".java")).forEach(out::add);
-                } catch (IOException e) { e.printStackTrace(); }
-            } else if (f.getName().endsWith("-sources.jar")) {
-                try (FileSystem fs = FileSystems.newFileSystem(f.toPath(), Main.class.getClassLoader())) {
-                    fs.getRootDirectories().forEach(root -> {
-                        try (Stream<Path> paths = Files.walk(root)) {
-                            paths.filter(p -> p.toString().endsWith(".java")).forEach(out::add);
-                        } catch (IOException e) { e.printStackTrace(); }
-                    });
                 } catch (IOException e) { e.printStackTrace(); }
             }
         }

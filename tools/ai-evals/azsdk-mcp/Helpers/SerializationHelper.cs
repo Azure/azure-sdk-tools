@@ -1,9 +1,9 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using azsdk_mcp.Models;
+using Azure.Sdk.Tools.McpEvals.Models;
 using Microsoft.Extensions.AI;
 
-namespace azsdk_mcp.Helpers
+namespace Azure.Sdk.Tools.McpEvals.Helpers
 {
     public static class SerializationHelper
     {

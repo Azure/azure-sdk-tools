@@ -3,7 +3,7 @@ using Azure.Identity;
 using Microsoft.Extensions.AI;
 using ModelContextProtocol.Client;
 
-namespace azsdk_mcp.Helpers
+namespace Azure.Sdk.Tools.McpEvals.Helpers
 {
     public static class TestSetup
     {

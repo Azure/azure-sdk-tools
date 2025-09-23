@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, map } from 'rxjs';
+import { BehaviorSubject, map, tap } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
 @Injectable({
@@ -40,14 +40,5 @@ export class ConfigService {
 
   get webAppUrl () : string {
     return this.config.webAppUrl;
-  }
-  // Get EnableNamespaceReview from Azure App Configuration via API
-  getEnableNamespaceReview() {
-    return this.http.get<boolean>(`${this.apiUrl}reviews/enableNamespaceReview`);
-  }
-
-  // Get EnablePendingReviewTab from Azure App Configuration via API
-  getEnablePendingReviewTab() {
-    return this.http.get<boolean>(`${this.apiUrl}reviews/enablePendingReviewTab`);
   }
 }

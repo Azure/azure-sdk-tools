@@ -107,13 +107,6 @@ namespace APIViewWeb.LeanControllers
             return new LeanJsonResult(enableNamespaceReview, StatusCodes.Status200OK);
         }
 
-        [HttpGet("enablePendingReviewTab", Name = "EnablePendingReviewTab")]
-        public ActionResult<bool> GetEnablePendingReviewTabAsync()
-        {
-            var enablePendingReviewTab = _configuration["EnablePendingReviewTab"];
-            return new LeanJsonResult(enablePendingReviewTab, StatusCodes.Status200OK);
-        }
-
         /// <summary>
         /// Create a Reviews
         /// </summary>

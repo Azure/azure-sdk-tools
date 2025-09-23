@@ -77,6 +77,10 @@ export class ReviewsService {
     return this.http.get<string[]>(this.baseUrl + `/${reviewId}/preferredApprovers`, { withCredentials: true });
   }
 
+  getEnableNamespaceReview() : Observable<boolean> {
+    return this.http.get<boolean>(this.baseUrl + `/enableNamespaceReview`, { withCredentials: true });
+  }
+
   openReviewPage(reviewId: string) {
     window.open(this.configService.webAppUrl + `Assemblies/Review/${reviewId}`, '_blank');
   }

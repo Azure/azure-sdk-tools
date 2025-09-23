@@ -141,10 +141,11 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     this.activeAPIRevision?.assignedReviewers.map(revision => this.selectedApprovers.push(revision.assingedTo));
 
     // Load EnableNamespaceReview feature flag from Azure App Configuration
-    this.configService.getEnableNamespaceReview().pipe(take(1)).subscribe({
-      next: (enabled: boolean) => {
-        this.namespaceReviewEnabled = enabled;
-        this.setNamespaceReviewStates(); // Update states after loading feature flag
+    this.reviewsService.getEnableNamespaceReview().pipe(take(1)).subscribe({
+      next: (enabled: any) => {
+        // Handle null/undefined values from the API and convert string "true"/"false" to boolean
+        this.namespaceReviewEnabled = enabled === true || enabled === 'true';
+        this.setNamespaceReviewStates();
       },
       error: (error: any) => {
         this.namespaceReviewEnabled = false; // Default to false on error
@@ -422,6 +423,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   setNamespaceReviewStates() {
     // Only show namespace review request for TypeSpec language AND if feature is enabled
     this.canRequestNamespaceReview = this.review?.language === 'TypeSpec' && this.namespaceReviewEnabled;
+    console.log("Namespace review request can be made:",  this.namespaceReviewEnabled);
     // Always keep the button available for requesting namespace review
     this.isNamespaceReviewRequested = false;
 

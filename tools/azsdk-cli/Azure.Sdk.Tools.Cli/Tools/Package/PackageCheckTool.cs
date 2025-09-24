@@ -273,38 +273,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             logger.LogInformation("Running spelling validation{fixMode}", fixCheckErrors ? " with fix mode enabled" : "");
 
             var result = await languageChecks.CheckSpellingAsync(packagePath, fixCheckErrors, ct);
-
-            if (result.ExitCode != 0)
-            {
-                if (fixCheckErrors)
-                {
-                    result.NextSteps = new List<string>
-                    {
-                        "Review the fix recommendations provided in the output",
-                        "For 'ignore' recommendations, add the word to the repository's .vscode/cspell.json 'words' list",
-                        "For 'fix' recommendations, apply the suggested replacements as a patch and review before committing"
-                    };
-                }
-                else
-                {
-                    result.NextSteps = new List<string>
-                    {
-                        "Fix spelling errors identified in the package files",
-                        "Add legitimate technical terms to the cspell dictionary if needed",
-                        "Review comments, documentation, and variable names for typos",
-                        "Run cspell locally to identify and fix spelling issues before committing",
-                        "Use the fix=true parameter to get automated fix recommendations"
-                    };
-                }
-            }
-            else
-            {
-                result.NextSteps = new List<string>
-                {
-                    "Spelling check passed - no spelling errors found"
-                };
-            }
-
             return result;
         }
 

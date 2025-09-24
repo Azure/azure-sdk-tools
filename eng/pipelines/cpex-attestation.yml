@@ -8,11 +8,14 @@ pool:
 parameters:
 - name: TableName
   type: string
-  default: 'KpiEvidenceStream'
+  default: 'ProdKpiEvidenceStream'
 - name: ReleasePlanWorkItemId
   type: string
   default: ''
 - name: TriageWorkItemId
+  type: string
+  default: ''
+- name: TargetServiceTreeId
   type: string
   default: ''
 
@@ -30,3 +33,4 @@ jobs:
             -TableName "$(TableName)"
             -ReleasePlanWorkItemId "$(ReleasePlanWorkItemId)"
             -TriageWorkItemId "$(TriageWorkItemId)"
+            -TargetServiceTreeId "$(TargetServiceTreeId)"

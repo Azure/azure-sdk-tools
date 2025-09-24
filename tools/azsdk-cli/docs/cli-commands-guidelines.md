@@ -58,21 +58,20 @@ For operations at the SDK package level. The package group has further sub-group
 
 ##### **readme** - README Operations  
 For generating and updating README files:
-- Generate README files
+- Generate README file
 - Update README content
 - Validate README format
-- README documentation
 
 ##### **sample** - Sample Operations
 For generating and updating SDK samples:
-- Generate new samples
+- Create samples
 - Update existing samples
 - Validate sample code
 - Sample documentation
 
 ##### **test** - Test Operations
 For creating, updating, and running tests for SDK packages:
-- Create new tests
+- Create tests
 - Update existing tests
 - Run tests for specific packages
 - Test validation and reporting
@@ -86,7 +85,6 @@ For creating, updating, and running tests for SDK packages:
 - `package release --package-name azure-core`
 - `package sample generate --package-path ./sdk/compute`
 - `package sample update --package-path ./sdk/storage --sample-name basic-usage`
-- `package show-details`
 - `package test generate --package-path ./sdk/storage --test-type <type>`
 - `package test run --package-path ./sdk/keyvault --test-suite integration`
 - `package validate --package-path ./sdk/keyvault`
@@ -121,7 +119,6 @@ For release planning and SDK coordination:
 - Workflow management
 
 **Examples:**
-- `release-plan check-api-readiness --typespec-project ./spec/compute`
 - `release-plan generate-sdk --typespec-project ./spec/storage --api-version 2023-01-01`
 - `release-plan get --workitem-id 456`
 - `release-plan link-sdk-pr --release-plan-id 123 --pr 789`
@@ -132,7 +129,7 @@ For release planning and SDK coordination:
 **Verb:** `tsp`  
 
 For TypeSpec-related operations:
-- Create new TypeSpec projects
+- Create TypeSpec projects
 - Convert Swagger to TypeSpec
 - Validate TypeSpec projects
 - Common TypeSpec workflows

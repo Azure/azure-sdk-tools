@@ -17,6 +17,15 @@ from azure.ai.evaluation import GroundednessEvaluator, SimilarityEvaluator
 from src._settings import SettingsManager
 from src._utils import get_prompt_path
 
+class PromptWorkflowTarget:
+    def __init__(self, prompty_subpath, prompty_filename):
+        self.prompty_path = Path(__file__).parent.parent / "prompts" / prompty_subpath / prompty_filename
+
+    def __call__(self, **kwargs):
+        prompty_kwargs = {k: v for k, v in kwargs.items() 
+                     if k not in {"response", "testcase"}}
+        result = prompty.execute(self.prompty_path, inputs=prompty_kwargs)
+        return {"actual": result}
 
 def _review_apiview(query: str, language: str):
     """APIView review target function for evals framework."""
@@ -26,27 +35,8 @@ def _review_apiview(query: str, language: str):
     reviewer.close()
     return {"actual": review.model_dump_json()}
 
-
-# TODO: Since these are global functions passed to the eval, the prompty path is built from relative paths. 
-# But the prompty path is already included in the YAML, so there's redundancy there. Perhaps the workflow config could somehow be accessed here.
-def _mention_action_workflow(**kwargs):
-    """Global target function for mention-action workflow."""    
-    prompty_path = Path(__file__).parent.parent / "prompts" / "mention" / "parse_conversation_action.prompty"
-    
-    prompty_kwargs = {k: v for k, v in kwargs.items() 
-                     if k not in {"response", "testcase"}}
-    result = prompty.execute(prompty_path, inputs=prompty_kwargs)
-    return {"actual": result}
-
-def _thread_resolution_action_workflow(**kwargs):
-    """Global target function for thread-resolution workflow."""  
-    prompty_path = Path(__file__).parent.parent / "prompts" / "thread_resolution" / "parse_thread_resolution_action.prompty"
-    
-    prompty_kwargs = {k: v for k, v in kwargs.items() 
-                     if k not in {"response", "testcase"}}
-    result = prompty.execute(prompty_path, inputs=prompty_kwargs)
-    return {"actual": result}
-
+_mention_action_workflow = PromptWorkflowTarget("mention", "parse_conversation_action.prompty")
+_thread_resolution_action_workflow = PromptWorkflowTarget("thread_resolution", "parse_thread_resolution_action.prompty")
 
 class BaseEvaluator(ABC):
     """Base class for custom evaluators in the evals framework.

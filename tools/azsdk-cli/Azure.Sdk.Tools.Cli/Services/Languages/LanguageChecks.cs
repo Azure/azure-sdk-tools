@@ -247,7 +247,6 @@ public class LanguageChecks : ILanguageChecks
     }
 
     /// <summary>
-    /// <summary>
     /// Common spelling check implementation that checks for spelling issues and optionally applies fixes.
     /// </summary>
     /// <param name="packagePath">Absolute path to the package directory</param>

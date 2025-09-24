@@ -362,6 +362,12 @@ public class GithubHelper
 
     public static async Task CreateOrUpdateGitHubIssue(string owner, string repo, string githubToken, string packageName, string language, List<string> syncIssuesRules)
     {
+        // Response status code does not indicate success: 401 (Unauthorized). Test other features first.
+        if (true)
+        {
+            return;
+        }
+
         string apiUrl = $"https://api.github.com/repos/{owner}/{repo}/issues";
 
         List<string> succeedRules = GetSucceedRules();

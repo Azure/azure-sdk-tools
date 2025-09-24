@@ -12,18 +12,19 @@ using ModelContextProtocol.Server;
 namespace Azure.Sdk.Tools.Cli.Tools.APIView;
 
 [McpServerToolType]
-[Description("Access APIView functionality including API structure, version diffs, comments, and review status")]
-public class APIViewTool : MCPMultiCommandTool
+[Description("APIView revision operations including comments and content")]
+public class APIViewRevisionTool : MCPMultiCommandTool
 {
     public override CommandGroup[] CommandHierarchy { get; set; } = [
-        SharedCommandGroups.APIView
+        SharedCommandGroups.APIView,
+        SharedCommandGroups.APIViewRevision
     ];
 
     private static readonly string[] validContentTypes = ["Text", "CodeFile"];
     private static readonly string[] validRevisionSelectionTypes = ["Latest", "LatestApproved", "LatestAutomatic", "LatestManual", "Undefined"];
 
     private readonly IAPIViewService _apiViewService;
-    private readonly ILogger<APIViewTool> _logger;
+    private readonly ILogger<APIViewRevisionTool> _logger;
 
     private readonly Option<string> environmentOption = new("--environment",
         description: "The APIView environment (defaults to production)", getDefaultValue: () => "production");
@@ -36,11 +37,11 @@ public class APIViewTool : MCPMultiCommandTool
     private readonly Option<string> revisionSelectionTypeOption = new("--revision-selection-type",
         description: "The type of revision selection (Latest, latestApproved, LatestAutomatic, LatestManual)");
 
-    private readonly Option<string> revisionIdOption =new("--revision-id", "The APIView revision ID");
+    private readonly Option<string> revisionIdOption = new("--revision-id", "The APIView revision ID");
     private readonly Option<string> reviewIdOptions = new("--review-id", "The APIView review ID");
     private readonly Option<string> apiViewUrlOption = new("--url", "The full APIView URL (alternative to --revision-id)");
 
-    public APIViewTool(ILogger<APIViewTool> logger, IAPIViewService apiViewService)
+    public APIViewRevisionTool(ILogger<APIViewRevisionTool> logger, IAPIViewService apiViewService)
     {
         _logger = logger;
         _apiViewService = apiViewService;
@@ -63,36 +64,18 @@ public class APIViewTool : MCPMultiCommandTool
             contentReturnTypeOption
         };
 
-        var revisionCommand = new Command("revision", "APIView revision operations");
-        revisionCommand.AddCommand(revisionCommentsCmd);
-        revisionCommand.AddCommand(revisionContentCmd);
-
-        var authCheckCmd = new Command("check", "Check APIView authentication status")
-        {
-            environmentOption
-        };
-
-        var authGuidanceCmd = new Command("guidance", "Get APIView authentication guidance");
-
-        var authCommand = new Command("auth", "APIView authentication operations");
-        authCommand.AddCommand(authCheckCmd);
-        authCommand.AddCommand(authGuidanceCmd);
-
-        return [revisionCommand, authCommand];
+        return [revisionCommentsCmd, revisionContentCmd];
     }
 
     public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
     {
         string commandName = ctx.ParseResult.CommandResult.Command.Name;
-        string parentCommandName = ctx.ParseResult.CommandResult.Command.Parents.FirstOrDefault()?.Name ?? "";
         
-        APIViewResponse result = (parentCommandName, commandName) switch
+        APIViewResponse result = commandName switch
         {
-            ("revision", "comments") => await GetRevisionComments(ctx, ct),
-            ("revision", "content") => await GetRevisionContent(ctx, ct),
-            ("auth", "check") => await CheckAuthentication(ctx.ParseResult.GetValueForOption(environmentOption)),
-            ("auth", "guidance") => await GetAuthenticationGuidance(),
-            _ => new APIViewResponse { ResponseError = $"Unknown command: {parentCommandName} {commandName}" }
+            "comments" => await GetRevisionComments(ctx, ct),
+            "content" => await GetRevisionContent(ctx, ct),
+            _ => new APIViewResponse { ResponseError = $"Unknown revision command: {commandName}" }
         };
 
         return result;
@@ -124,48 +107,6 @@ public class APIViewTool : MCPMultiCommandTool
         {
             _logger.LogError(ex, "Failed to get comments for revision {RevisionId}", revisionId);
             return new APIViewResponse { ResponseError = $"Failed to get comments: {ex.Message}" };
-        }
-    }
-
-    [McpServerTool(Name = "azsdk_apiview_check_authentication")]
-    [Description("Check APIView authentication status and available credentials")]
-    public async Task<APIViewResponse> CheckAuthentication(string? environment = null)
-    {
-        try
-        {
-            AuthenticationStatus result = await _apiViewService.CheckAuthenticationStatusAsync(environment);
-            string serializedResult = JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true });
-            _logger.LogInformation("Authentication status retrieved successfully. Status: {Status}", serializedResult);
-            return new APIViewResponse
-            {
-                Success = true, Message = "Authentication status retrieved successfully", Data = serializedResult
-            };
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to check authentication status");
-            return new APIViewResponse { ResponseError = $"Failed to check authentication: {ex.Message}" };
-        }
-    }
-
-    [McpServerTool(Name = "azsdk_apiview_get_authentication_guidance")]
-    [Description("Get detailed guidance on how to authenticate with APIView")]
-    public async Task<APIViewResponse> GetAuthenticationGuidance()
-    {
-        try
-        {
-            AuthenticationGuidance result = await _apiViewService.GetAuthenticationGuidanceAsync();
-            string serializedResult = JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true });
-            _logger.LogInformation("Authentication guidance retrieved successfully. Guidance: {Guidance}", serializedResult);
-            return new APIViewResponse
-            {
-                Success = true, Message = "Authentication guidance retrieved successfully", Data = serializedResult
-            };
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to get authentication guidance");
-            return new APIViewResponse { ResponseError = $"Failed to get authentication guidance: {ex.Message}" };
         }
     }
 

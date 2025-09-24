@@ -2,6 +2,7 @@ import type { Language, TypeChecker } from "./types.ts";
 import { typecheckTypeScript } from "./typescript/typecheck.ts";
 import { typecheckPython } from "./python/typecheck.ts";
 import { typecheckGo } from "./go/typecheck.ts";
+import { typecheckJava } from "./java/typecheck.ts";
 
 export const languages = [
     "TypeScript",
@@ -66,6 +67,8 @@ export function getTypechecker(language: Language): TypeChecker {
             return typecheckTypeScript;
         case "python":
             return typecheckPython;
+        case "java":
+            return typecheckJava;
         case "go":
             return typecheckGo;
         case "curl":

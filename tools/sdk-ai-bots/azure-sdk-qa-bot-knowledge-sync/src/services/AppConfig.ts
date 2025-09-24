@@ -7,8 +7,13 @@ import * as dotenv from 'dotenv';
  */
 function loadEnvFile(): void {
     try {
-        dotenv.config({ path: '.env' });
-        console.log('Loaded environment variables from .env file');
+        // Go to project root (3 levels up from dist/src/services when compiled)
+        const path = require('path');
+        const projectRoot = path.resolve(__dirname, '../../..');
+        const envPath = path.join(projectRoot, '.env');
+        
+        dotenv.config({ path: envPath });
+        console.log(`Loaded environment variables from .env file at: ${envPath}`);
     } catch (error) {
         console.log(`No .env file found or error loading it: ${error}`);
     }

@@ -143,7 +143,7 @@ stages:
         echo "##vso[task.setvariable variable=SelectedRules]$rules"
       name: setRules
 
-    - template: ../../common/content-validation-for-python.yml
+    - template: ../common/content-validation-for-python.yml
       parameters:
         packageName: $(PackageName)
         rules: $(SelectedRules)
@@ -174,7 +174,7 @@ stages:
         echo "##vso[task.setvariable variable=SelectedRules]$rules"
       name: setRules
 
-    - template: ../../common/content-validation-for-python.yml
+    - template: ../common/content-validation-for-python.yml
       parameters:
         packageName: $(PackageName)
         rules: $(SelectedRules)

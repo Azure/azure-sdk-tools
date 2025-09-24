@@ -149,7 +149,7 @@ stages:
         echo "##vso[task.setvariable variable=SelectedRules]$rules"
       name: setRules
 
-    - template: ../../common/content-validation-for-javascript.yml
+    - template: ../common/content-validation-for-javascript.yml
       parameters:
         packageName: $(PackageName)
         rules: $(SelectedRules)
@@ -181,7 +181,7 @@ stages:
         echo "##vso[task.setvariable variable=SelectedRules]$rules"
       name: setRules
 
-    - template: ../../common/content-validation-for-javascript.yml
+    - template: ../common/content-validation-for-javascript.yml
       parameters:
         packageName: $(PackageName)
         rules: $(SelectedRules)

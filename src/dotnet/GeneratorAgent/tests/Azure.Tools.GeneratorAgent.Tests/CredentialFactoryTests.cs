@@ -134,7 +134,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Authentication
 
             loggerMock.Verify(
                 x => x.Log(
-                    LogLevel.Information,
+                    LogLevel.Debug,
                     It.IsAny<EventId>(),
                     It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Creating credential for environment")),
                     It.IsAny<Exception>(),

@@ -362,9 +362,9 @@ namespace Azure.Tools.GeneratorAgent.Tests
             // Assert
             Assert.Multiple(() =>
             {
-                Assert.That(result.IsSuccess, Is.True);
-                Assert.That(result.Value!.Count, Is.EqualTo(1));
-                Assert.That(result.Value!["test.tsp"], Is.EqualTo("model Test {}"));
+                Assert.That(result, Is.Not.Null);
+                Assert.That(result.Count, Is.EqualTo(1));
+                Assert.That(result["test.tsp"], Is.EqualTo("model Test {}"));
             });
 
 
@@ -399,9 +399,10 @@ namespace Azure.Tools.GeneratorAgent.Tests
             SetupInvalidJsonResponse(mockHandler);
 
             // Act & Assert
-            var exception = Assert.ThrowsAsync<JsonException>(async () => 
+            var exception = Assert.ThrowsAsync<InvalidOperationException>(async () => 
                 await service.GetTypeSpecFilesAsync());
-            Assert.That(exception!.Message, Does.Contain("is an invalid start of a value"));
+            Assert.That(exception!.Message, Does.Contain("Failed to deserialize GitHub API response"));
+            Assert.That(exception!.InnerException, Is.TypeOf<JsonException>());
 
 
         }
@@ -424,10 +425,10 @@ namespace Azure.Tools.GeneratorAgent.Tests
             // Assert
             Assert.Multiple(() =>
             {
-                Assert.That(result.IsSuccess, Is.True);
-                Assert.That(result.Value!.Count, Is.EqualTo(2));
-                Assert.That(result.Value!.ContainsKey("file1.tsp"), Is.True);
-                Assert.That(result.Value!.ContainsKey("file2.tsp"), Is.True);
+                Assert.That(result, Is.Not.Null);
+                Assert.That(result.Count, Is.EqualTo(2));
+                Assert.That(result.ContainsKey("file1.tsp"), Is.True);
+                Assert.That(result.ContainsKey("file2.tsp"), Is.True);
             });
 
 
@@ -495,17 +496,19 @@ namespace Azure.Tools.GeneratorAgent.Tests
             // Assert
             Assert.Multiple(() =>
             {
-                Assert.That(result.IsSuccess, Is.True);
-                Assert.That(result.Value!.Count, Is.EqualTo(1));
-                Assert.That(result.Value!.ContainsKey("file1.tsp"), Is.True);
-                Assert.That(result.Value!.ContainsKey("file2.tsp"), Is.False);
+                Assert.That(result, Is.Not.Null);
+                Assert.That(result.Count, Is.EqualTo(2)); // Both files included, even empty ones
+                Assert.That(result.ContainsKey("file1.tsp"), Is.True);
+                Assert.That(result.ContainsKey("file2.tsp"), Is.True); // Empty file is still included
+                Assert.That(result["file1.tsp"], Is.EqualTo("model File1 {}"));
+                Assert.That(result["file2.tsp"], Is.EqualTo("")); // Empty content
             });
 
 
         }
 
         [Test]
-        public void GetTypeSpecFilesAsync_WithUnexpectedException_ShouldThrowAndLogCritical()
+        public void GetTypeSpecFilesAsync_WithUnexpectedException_ShouldThrowException()
         {
             // Arrange
             var mockLogger = CreateMockLogger();
@@ -526,9 +529,6 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var exception = Assert.ThrowsAsync<InvalidOperationException>(async () => 
                 await service.GetTypeSpecFilesAsync());
             Assert.That(exception!.Message, Does.Contain("Unexpected error"));
-
-            // Verify critical logging
-            VerifyLogMessage(mockLogger, LogLevel.Critical, "Error in GitHub API TypeSpec files fetch");
         }
 
         #endregion

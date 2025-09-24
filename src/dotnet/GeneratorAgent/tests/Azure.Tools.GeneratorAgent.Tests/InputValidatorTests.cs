@@ -115,34 +115,37 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
         [Test]
         public void ValidateDirTraversal_WithNullPath_ShouldThrowArgumentException()
         {
-            // Act & Assert
-            var exception = Assert.Throws<ArgumentException>(() => 
-                InputValidator.ValidateDirTraversal(null));
+            // Act
+            var result = InputValidator.ValidateDirTraversal(null);
             
-            Assert.That(exception.ParamName, Is.EqualTo("path"));
-            Assert.That(exception.Message, Does.Contain("path cannot be null or empty"));
+            // Assert
+            Assert.That(result.IsFailure, Is.True);
+            Assert.That(result.Exception, Is.TypeOf<ArgumentException>());
+            Assert.That(result.Exception?.Message, Does.Contain("path cannot be null or empty"));
         }
 
         [Test]
         public void ValidateDirTraversal_WithEmptyPath_ShouldThrowArgumentException()
         {
-            // Act & Assert
-            var exception = Assert.Throws<ArgumentException>(() => 
-                InputValidator.ValidateDirTraversal(""));
+            // Act
+            var result = InputValidator.ValidateDirTraversal("");
             
-            Assert.That(exception.ParamName, Is.EqualTo("path"));
-            Assert.That(exception.Message, Does.Contain("path cannot be null or empty"));
+            // Assert
+            Assert.That(result.IsFailure, Is.True);
+            Assert.That(result.Exception, Is.TypeOf<ArgumentException>());
+            Assert.That(result.Exception?.Message, Does.Contain("path cannot be null or empty"));
         }
 
         [Test]
         public void ValidateDirTraversal_WithWhitespacePath_ShouldThrowArgumentException()
         {
-            // Act & Assert
-            var exception = Assert.Throws<ArgumentException>(() => 
-                InputValidator.ValidateDirTraversal("   "));
+            // Act
+            var result = InputValidator.ValidateDirTraversal("   ");
             
-            Assert.That(exception.ParamName, Is.EqualTo("path"));
-            Assert.That(exception.Message, Does.Contain("path cannot be null or empty"));
+            // Assert
+            Assert.That(result.IsFailure, Is.True);
+            Assert.That(result.Exception, Is.TypeOf<ArgumentException>());
+            Assert.That(result.Exception?.Message, Does.Contain("path cannot be null or empty"));
         }
 
         [Test]
@@ -189,11 +192,14 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
         [Test]
         public void ValidateDirTraversal_WithCustomPathType_WithNullPath_ShouldIncludeCustomPathType()
         {
-            // Act & Assert
-            var exception = Assert.Throws<ArgumentException>(() => 
-                InputValidator.ValidateDirTraversal(null, "Custom Path Type"));
+            // Act
+            var result = InputValidator.ValidateDirTraversal(null, "Custom Path Type");
             
-            Assert.That(exception.Message, Does.Contain("Custom Path Type cannot be null or empty"));
+            // Assert
+            Assert.That(result.IsFailure, Is.True);
+            Assert.That(result.Exception, Is.TypeOf<ArgumentException>());
+            
+            Assert.That(result.Exception?.Message, Does.Contain("Custom Path Type cannot be null or empty"));
         }
 
         #endregion
@@ -203,23 +209,23 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
         [Test]
         public void ValidateTypeSpecDir_WithNullPath_ShouldThrowArgumentException()
         {
-            // Act & Assert
-            var exception = Assert.Throws<ArgumentException>(() => 
-                InputValidator.ValidateTypeSpecDir(null));
+            // Act
+            var result = InputValidator.ValidateTypeSpecDir(null);
             
-            Assert.That(exception.ParamName, Is.EqualTo("path"));
-            Assert.That(exception.Message, Does.Contain("TypeSpec path cannot be null or empty"));
+            // Assert
+            Assert.That(result.IsFailure, Is.True);
+            Assert.That(result.Exception, Is.TypeOf<ArgumentException>());Assert.That(result.Exception?.Message, Does.Contain("TypeSpec path cannot be null or empty"));
         }
 
         [Test]
         public void ValidateTypeSpecDir_WithEmptyPath_ShouldThrowArgumentException()
         {
-            // Act & Assert
-            var exception = Assert.Throws<ArgumentException>(() => 
-                InputValidator.ValidateTypeSpecDir(""));
+            // Act
+            var result = InputValidator.ValidateTypeSpecDir("");
             
-            Assert.That(exception.ParamName, Is.EqualTo("path"));
-            Assert.That(exception.Message, Does.Contain("TypeSpec path cannot be null or empty"));
+            // Assert
+            Assert.That(result.IsFailure, Is.True);
+            Assert.That(result.Exception, Is.TypeOf<ArgumentException>());Assert.That(result.Exception?.Message, Does.Contain("TypeSpec path cannot be null or empty"));
         }
 
         [Test]
@@ -248,12 +254,13 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             // Arrange
             var nonExistentPath = Path.Combine(fixture.CreateTestDirectory("temp"), "NonExistent");
 
-            // Act & Assert
-            var exception = Assert.Throws<ArgumentException>(() => 
-                InputValidator.ValidateTypeSpecDir(nonExistentPath, isLocalPath: true));
+            // Act
+            var result = InputValidator.ValidateTypeSpecDir(nonExistentPath, isLocalPath: true);
             
-            Assert.That(exception.InnerException, Is.TypeOf<DirectoryNotFoundException>());
-            Assert.That(exception.Message, Does.Contain("Invalid path format"));
+            // Assert
+            Assert.That(result.IsFailure, Is.True);
+            Assert.That(result.Exception, Is.TypeOf<DirectoryNotFoundException>());
+            Assert.That(result.Exception?.Message, Does.Contain("TypeSpec directory not found"));
         }
 
         [Test]
@@ -264,12 +271,13 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             // Arrange
             var emptyDir = fixture.CreateTestDirectory("EmptyDir");
 
-            // Act & Assert
-            var exception = Assert.Throws<ArgumentException>(() => 
-                InputValidator.ValidateTypeSpecDir(emptyDir, isLocalPath: true));
+            // Act
+            var result = InputValidator.ValidateTypeSpecDir(emptyDir, isLocalPath: true);
             
-            Assert.That(exception.InnerException, Is.TypeOf<InvalidOperationException>());
-            Assert.That(exception.InnerException.Message, Does.Contain("No .tsp or .yaml files found"));
+            // Assert
+            Assert.That(result.IsFailure, Is.True);
+            Assert.That(result.Exception, Is.TypeOf<InvalidOperationException>());
+            Assert.That(result.Exception?.Message, Does.Contain("No .tsp or .yaml files found"));
         }
 
         [Test]
@@ -282,13 +290,14 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             File.WriteAllText(Path.Combine(dirWithMixedFiles, "valid.tsp"), "# TypeSpec");
             File.WriteAllText(Path.Combine(dirWithMixedFiles, "invalid.txt"), "# Text file");
 
-            // Act & Assert
-            var exception = Assert.Throws<ArgumentException>(() => 
-                InputValidator.ValidateTypeSpecDir(dirWithMixedFiles, isLocalPath: true));
+            // Act
+            var result = InputValidator.ValidateTypeSpecDir(dirWithMixedFiles, isLocalPath: true);
             
-            Assert.That(exception.InnerException, Is.TypeOf<InvalidOperationException>());
-            Assert.That(exception.InnerException.Message, Does.Contain("Directory contains non-TypeSpec files"));
-            Assert.That(exception.InnerException.Message, Does.Contain("invalid.txt"));
+            // Assert
+            Assert.That(result.IsFailure, Is.True);
+            Assert.That(result.Exception, Is.TypeOf<InvalidOperationException>());
+            Assert.That(result.Exception?.Message, Does.Contain("Directory contains non-TypeSpec files"));
+            Assert.That(result.Exception?.Message, Does.Contain("invalid.txt"));
         }
 
         [Test]
@@ -310,45 +319,57 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
         [Test]
         public void ValidateTypeSpecDir_WithRepositoryPathStartingWithSlash_ShouldThrowArgumentException()
         {
-            // Act & Assert
-            var exception = Assert.Throws<ArgumentException>(() => 
-                InputValidator.ValidateTypeSpecDir("/invalid/path", isLocalPath: false));
+            // Act
+            var result = InputValidator.ValidateTypeSpecDir("/invalid/path", isLocalPath: false);
             
-            Assert.That(exception.InnerException, Is.TypeOf<ArgumentException>());
-            Assert.That(exception.InnerException.Message, Does.Contain("Repository path cannot start with / or \\"));
+            // Assert
+            Assert.That(result.IsFailure, Is.True);
+            Assert.That(result.Exception, Is.TypeOf<ArgumentException>());
+            
+            Assert.That(result.Exception, Is.TypeOf<ArgumentException>());
+            Assert.That(result.Exception?.Message, Does.Contain("Repository path cannot start with / or \\"));
         }
 
         [Test]
         public void ValidateTypeSpecDir_WithRepositoryPathStartingWithBackslash_ShouldThrowArgumentException()
         {
-            // Act & Assert
-            var exception = Assert.Throws<ArgumentException>(() => 
-                InputValidator.ValidateTypeSpecDir(@"\invalid\path", isLocalPath: false));
+            // Act
+            var result = InputValidator.ValidateTypeSpecDir(@"\invalid\path", isLocalPath: false);
             
-            Assert.That(exception.InnerException, Is.TypeOf<ArgumentException>());
-            Assert.That(exception.InnerException.Message, Does.Contain("Repository path cannot start with / or \\"));
+            // Assert
+            Assert.That(result.IsFailure, Is.True);
+            Assert.That(result.Exception, Is.TypeOf<ArgumentException>());
+            
+            Assert.That(result.Exception, Is.TypeOf<ArgumentException>());
+            Assert.That(result.Exception?.Message, Does.Contain("Repository path cannot start with / or \\"));
         }
 
         [Test]
         public void ValidateTypeSpecDir_WithRepositoryPathWithDoubleSeparators_ShouldThrowArgumentException()
         {
-            // Act & Assert
-            var exception = Assert.Throws<ArgumentException>(() => 
-                InputValidator.ValidateTypeSpecDir("invalid//path", isLocalPath: false));
+            // Act
+            var result = InputValidator.ValidateTypeSpecDir("invalid//path", isLocalPath: false);
             
-            Assert.That(exception.InnerException, Is.TypeOf<ArgumentException>());
-            Assert.That(exception.InnerException.Message, Does.Contain("Repository path contains invalid double separators"));
+            // Assert
+            Assert.That(result.IsFailure, Is.True);
+            Assert.That(result.Exception, Is.TypeOf<ArgumentException>());
+            
+            Assert.That(result.Exception, Is.TypeOf<ArgumentException>());
+            Assert.That(result.Exception?.Message, Does.Contain("Repository path contains invalid double separators"));
         }
 
         [Test]
         public void ValidateTypeSpecDir_WithRepositoryPathWithDoubleBackslashes_ShouldThrowArgumentException()
         {
-            // Act & Assert
-            var exception = Assert.Throws<ArgumentException>(() => 
-                InputValidator.ValidateTypeSpecDir(@"invalid\\path", isLocalPath: false));
+            // Act
+            var result = InputValidator.ValidateTypeSpecDir(@"invalid\\path", isLocalPath: false);
             
-            Assert.That(exception.InnerException, Is.TypeOf<ArgumentException>());
-            Assert.That(exception.InnerException.Message, Does.Contain("Repository path contains invalid double separators"));
+            // Assert
+            Assert.That(result.IsFailure, Is.True);
+            Assert.That(result.Exception, Is.TypeOf<ArgumentException>());
+            
+            Assert.That(result.Exception, Is.TypeOf<ArgumentException>());
+            Assert.That(result.Exception?.Message, Does.Contain("Repository path contains invalid double separators"));
         }
 
         #endregion
@@ -439,11 +460,12 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             // Act & Assert
             foreach (var commitId in invalidCommitIds)
             {
-                var exception = Assert.Throws<ArgumentException>(() => 
-                    InputValidator.ValidateCommitId(commitId));
-
-                Assert.That(exception.ParamName, Is.EqualTo("commitId"));
-                Assert.That(exception.Message, Does.Contain("Commit ID must be 6-40 hexadecimal characters"));
+                // Act
+                var result = InputValidator.ValidateCommitId(commitId);
+                
+                // Assert
+                Assert.That(result.IsFailure, Is.True);
+                Assert.That(result.Exception, Is.TypeOf<ArgumentException>());Assert.That(result.Exception?.Message, Does.Contain("Commit ID must be 6-40 hexadecimal characters"));
             }
         }
 
@@ -454,23 +476,23 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
         [Test]
         public void ValidateOutputDirectory_WithNullPath_ShouldThrowArgumentException()
         {
-            // Act & Assert
-            var exception = Assert.Throws<ArgumentException>(() => 
-                InputValidator.ValidateOutputDirectory(null));
+            // Act
+            var result = InputValidator.ValidateOutputDirectory(null);
             
-            Assert.That(exception.ParamName, Is.EqualTo("path"));
-            Assert.That(exception.Message, Does.Contain("Output directory path cannot be null or empty"));
+            // Assert
+            Assert.That(result.IsFailure, Is.True);
+            Assert.That(result.Exception, Is.TypeOf<ArgumentException>());Assert.That(result.Exception?.Message, Does.Contain("Output directory path cannot be null or empty"));
         }
 
         [Test]
         public void ValidateOutputDirectory_WithEmptyPath_ShouldThrowArgumentException()
         {
-            // Act & Assert
-            var exception = Assert.Throws<ArgumentException>(() => 
-                InputValidator.ValidateOutputDirectory(""));
+            // Act
+            var result = InputValidator.ValidateOutputDirectory("");
             
-            Assert.That(exception.ParamName, Is.EqualTo("path"));
-            Assert.That(exception.Message, Does.Contain("Output directory path cannot be null or empty"));
+            // Assert
+            Assert.That(result.IsFailure, Is.True);
+            Assert.That(result.Exception, Is.TypeOf<ArgumentException>());Assert.That(result.Exception?.Message, Does.Contain("Output directory path cannot be null or empty"));
         }
 
         [Test]
@@ -518,12 +540,13 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             // Arrange
             var nonExistentParent = Path.Combine(fixture.CreateTestDirectory("temp"), "NonExistentParent", "child");
 
-            // Act & Assert
-            var exception = Assert.Throws<ArgumentException>(() => 
-                InputValidator.ValidateOutputDirectory(nonExistentParent));
+            // Act
+            var result = InputValidator.ValidateOutputDirectory(nonExistentParent);
             
-            Assert.That(exception.InnerException, Is.TypeOf<DirectoryNotFoundException>());
-            Assert.That(exception.InnerException.Message, Does.Contain("Parent directory does not exist"));
+            // Assert
+            Assert.That(result.IsFailure, Is.True);
+            Assert.That(result.Exception, Is.TypeOf<DirectoryNotFoundException>());
+            Assert.That(result.Exception?.Message, Does.Contain("Parent directory does not exist"));
         }
 
         #endregion
@@ -538,12 +561,12 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             // Arrange
             var azureSdkPath = fixture.CreateTestDirectory("AzureSDK");
 
-            // Act & Assert
-            var exception = Assert.Throws<ArgumentException>(() => 
-                InputValidator.ValidatePowerShellScriptPath(null, azureSdkPath));
+            // Act
+            var result = InputValidator.ValidatePowerShellScriptPath(null!, azureSdkPath);
             
-            Assert.That(exception.ParamName, Is.EqualTo("scriptPath"));
-            Assert.That(exception.Message, Does.Contain("PowerShell script path cannot be null or empty"));
+            // Assert
+            Assert.That(result.IsFailure, Is.True);
+            Assert.That(result.Exception, Is.TypeOf<ArgumentException>());Assert.That(result.Exception?.Message, Does.Contain("PowerShell script path cannot be null or empty"));
         }
 
         [Test]
@@ -554,12 +577,12 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             // Arrange
             var azureSdkPath = fixture.CreateTestDirectory("AzureSDK");
 
-            // Act & Assert
-            var exception = Assert.Throws<ArgumentException>(() => 
-                InputValidator.ValidatePowerShellScriptPath("", azureSdkPath));
+            // Act
+            var result = InputValidator.ValidatePowerShellScriptPath("", azureSdkPath);
             
-            Assert.That(exception.ParamName, Is.EqualTo("scriptPath"));
-            Assert.That(exception.Message, Does.Contain("PowerShell script path cannot be null or empty"));
+            // Assert
+            Assert.That(result.IsFailure, Is.True);
+            Assert.That(result.Exception, Is.TypeOf<ArgumentException>());Assert.That(result.Exception?.Message, Does.Contain("PowerShell script path cannot be null or empty"));
         }
 
         [Test]
@@ -570,12 +593,12 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             // Arrange
             var azureSdkPath = fixture.CreateTestDirectory("AzureSDK");
 
-            // Act & Assert
-            var exception = Assert.Throws<ArgumentException>(() => 
-                InputValidator.ValidatePowerShellScriptPath("   ", azureSdkPath));
+            // Act
+            var result = InputValidator.ValidatePowerShellScriptPath("   ", azureSdkPath);
             
-            Assert.That(exception.ParamName, Is.EqualTo("scriptPath"));
-            Assert.That(exception.Message, Does.Contain("PowerShell script path cannot be null or empty"));
+            // Assert
+            Assert.That(result.IsFailure, Is.True);
+            Assert.That(result.Exception, Is.TypeOf<ArgumentException>());Assert.That(result.Exception?.Message, Does.Contain("PowerShell script path cannot be null or empty"));
         }
 
         [Test]
@@ -586,12 +609,12 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             // Arrange
             var azureSdkPath = fixture.CreateTestDirectory("AzureSDK");
 
-            // Act & Assert
-            var exception = Assert.Throws<ArgumentException>(() => 
-                InputValidator.ValidatePowerShellScriptPath("script.bat", azureSdkPath));
+            // Act
+            var result = InputValidator.ValidatePowerShellScriptPath("script.bat", azureSdkPath);
             
-            Assert.That(exception.ParamName, Is.EqualTo("scriptPath"));
-            Assert.That(exception.Message, Does.Contain("PowerShell script must have .ps1 extension"));
+            // Assert
+            Assert.That(result.IsFailure, Is.True);
+            Assert.That(result.Exception, Is.TypeOf<ArgumentException>());Assert.That(result.Exception?.Message, Does.Contain("PowerShell script must have .ps1 extension"));
         }
 
         [Test]
@@ -625,12 +648,13 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             // Arrange
             var azureSdkPath = fixture.CreateTestDirectory("AzureSDK");
 
-            // Act & Assert
-            var exception = Assert.Throws<ArgumentException>(() => 
-                InputValidator.ValidatePowerShellScriptPath("nonexistent.ps1", azureSdkPath));
+            // Act
+            var result = InputValidator.ValidatePowerShellScriptPath("nonexistent.ps1", azureSdkPath);
             
-            Assert.That(exception.InnerException, Is.TypeOf<FileNotFoundException>());
-            Assert.That(exception.InnerException.Message, Does.Contain("PowerShell script not found"));
+            // Assert
+            Assert.That(result.IsFailure, Is.True);
+            Assert.That(result.Exception, Is.TypeOf<FileNotFoundException>());
+            Assert.That(result.Exception?.Message, Does.Contain("PowerShell script not found"));
         }
 
         [Test]
@@ -646,12 +670,13 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             // Try to use an absolute path outside the Azure SDK directory
             var relativePath = Path.GetRelativePath(azureSdkPath, externalScript);
 
-            // Act & Assert
-            var exception = Assert.Throws<ArgumentException>(() => 
-                InputValidator.ValidatePowerShellScriptPath(relativePath, azureSdkPath));
+            // Act
+            var result = InputValidator.ValidatePowerShellScriptPath(relativePath, azureSdkPath);
             
+            // Assert
+            Assert.That(result.IsFailure, Is.True);
             // The script exists but is outside the Azure SDK directory, so should get UnauthorizedAccessException
-            Assert.That(exception.InnerException, Is.TypeOf<UnauthorizedAccessException>());
+            Assert.That(result.Exception, Is.TypeOf<UnauthorizedAccessException>());
         }
 
         [Test]
@@ -662,12 +687,13 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             // Arrange
             var azureSdkPath = fixture.CreateTestDirectory("AzureSDK");
 
-            // Act & Assert
-            var exception = Assert.Throws<ArgumentException>(() => 
-                InputValidator.ValidatePowerShellScriptPath(@"..\..\..\malicious.ps1", azureSdkPath));
+            // Act
+            var result = InputValidator.ValidatePowerShellScriptPath(@"..\..\..\malicious.ps1", azureSdkPath);
             
-            Assert.That(exception.InnerException, Is.TypeOf<FileNotFoundException>());
-            Assert.That(exception.InnerException.Message, Does.Contain("PowerShell script not found"));
+            // Assert
+            Assert.That(result.IsFailure, Is.True);
+            Assert.That(result.Exception, Is.TypeOf<FileNotFoundException>());
+            Assert.That(result.Exception?.Message, Does.Contain("PowerShell script not found"));
         }
 
         #endregion
@@ -678,7 +704,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
         public void ValidateProcessArguments_WithNullArguments_ShouldReturnSuccessWithEmptyString()
         {
             // Act
-            var result = InputValidator.ValidateProcessArguments(null);
+            var result = InputValidator.ValidateProcessArguments(null!);
 
             // Assert
             Assert.That(result.IsSuccess, Is.True);
@@ -743,11 +769,12 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             // Act & Assert
             foreach (var args in dangerousArguments)
             {
-                var exception = Assert.Throws<ArgumentException>(() => 
-                    InputValidator.ValidateProcessArguments(args));
-
-                Assert.That(exception.ParamName, Is.EqualTo("arguments"));
-                Assert.That(exception.Message, Does.Contain("Arguments contain command separator:"));
+                // Act
+                var result = InputValidator.ValidateProcessArguments(args);
+                
+                // Assert
+                Assert.That(result.IsFailure, Is.True);
+                Assert.That(result.Exception, Is.TypeOf<ArgumentException>());Assert.That(result.Exception?.Message, Does.Contain("Arguments contain command separator:"));
             }
         }
 
@@ -761,11 +788,12 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             foreach (var separator in commandSeparators)
             {
                 var testArg = $"safe-command {separator} other-arg";
-                var exception = Assert.Throws<ArgumentException>(() => 
-                    InputValidator.ValidateProcessArguments(testArg));
-
-                Assert.That(exception.ParamName, Is.EqualTo("arguments"));
-                Assert.That(exception.Message, Does.Contain($"Arguments contain command separator: {separator}"));
+                // Act
+                var result = InputValidator.ValidateProcessArguments(testArg);
+                
+                // Assert
+                Assert.That(result.IsFailure, Is.True);
+                Assert.That(result.Exception, Is.TypeOf<ArgumentException>());Assert.That(result.Exception?.Message, Does.Contain($"Arguments contain command separator: {separator}"));
             }
         }
 
@@ -783,11 +811,12 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             // Act & Assert
             foreach (var args in caseVariations)
             {
-                var exception = Assert.Throws<ArgumentException>(() => 
-                    InputValidator.ValidateProcessArguments(args));
-
-                Assert.That(exception.ParamName, Is.EqualTo("arguments"));
-                Assert.That(exception.Message, Does.Contain("Arguments contain command separator:"));
+                // Act
+                var result = InputValidator.ValidateProcessArguments(args);
+                
+                // Assert
+                Assert.That(result.IsFailure, Is.True);
+                Assert.That(result.Exception, Is.TypeOf<ArgumentException>());Assert.That(result.Exception?.Message, Does.Contain("Arguments contain command separator:"));
             }
         }
 
@@ -860,23 +889,25 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             // Arrange
             var nonExistentDir = Path.Combine(fixture.CreateTestDirectory("temp"), "NonExistentDir");
 
-            // Act & Assert
-            var exception = Assert.Throws<ArgumentException>(() => 
-                InputValidator.ValidateWorkingDirectory(nonExistentDir));
+            // Act
+            var result = InputValidator.ValidateWorkingDirectory(nonExistentDir);
             
-            Assert.That(exception.InnerException, Is.TypeOf<DirectoryNotFoundException>());
-            Assert.That(exception.InnerException.Message, Does.Contain("Working directory does not exist"));
+            // Assert
+            Assert.That(result.IsFailure, Is.True);
+            Assert.That(result.Exception, Is.TypeOf<DirectoryNotFoundException>());
+            Assert.That(result.Exception?.Message, Does.Contain("Working directory does not exist"));
         }
 
         [Test]
         public void ValidateWorkingDirectory_WithDirectoryTraversal_ShouldThrowDirectoryNotFoundException()
         {
-            // Act & Assert
-            var exception = Assert.Throws<ArgumentException>(() => 
-                InputValidator.ValidateWorkingDirectory("../../../nonexistent"));
+            // Act
+            var result = InputValidator.ValidateWorkingDirectory("../../../nonexistent");
             
-            Assert.That(exception.InnerException, Is.TypeOf<DirectoryNotFoundException>());
-            Assert.That(exception.InnerException.Message, Does.Contain("Working directory does not exist"));
+            // Assert
+            Assert.That(result.IsFailure, Is.True);
+            Assert.That(result.Exception, Is.TypeOf<DirectoryNotFoundException>());
+            Assert.That(result.Exception?.Message, Does.Contain("Working directory does not exist"));
         }
 
         #endregion
@@ -910,7 +941,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
 
             // Assert
             Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Value, Is.EqualTo(Path.GetFullPath(rootPath)));
+            Assert.That(result.Value, Is.EqualTo(Path.GetFullPath(rootPath!)));
         }
 
         [Test]
@@ -957,10 +988,14 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             // Act & Assert
             foreach (var separator in allSeparators)
             {
-                var exception = Assert.Throws<ArgumentException>(() => 
-                    InputValidator.ValidateProcessArguments($"command {separator} other"));
+                // Act
+                var result = InputValidator.ValidateProcessArguments($"command {separator} other");
+                
+                // Assert
+                Assert.That(result.IsFailure, Is.True);
+                Assert.That(result.Exception, Is.TypeOf<ArgumentException>());
 
-                Assert.That(exception.Message, Does.Contain($"Arguments contain command separator: {separator}"));
+                Assert.That(result.Exception?.Message, Does.Contain($"Arguments contain command separator: {separator}"));
             }
         }
 

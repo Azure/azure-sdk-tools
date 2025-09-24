@@ -22,6 +22,9 @@ using Microsoft.Extensions.Options;
 using Microsoft.ApplicationInsights;
 using Azure.Identity;
 using Microsoft.Extensions.Logging;
+using System.Net.Http;
+using APIViewWeb.Managers.Interfaces;
+using APIViewWeb.Services;
 
 namespace APIViewIntegrationTests
 {
@@ -104,7 +107,13 @@ namespace APIViewIntegrationTests
 
             var telemetryClient = new Mock<TelemetryClient>();
 
-            var notificationManager = new NotificationManager(_config, ReviewRepository, APIRevisionRepository, cosmosUserProfileRepository, telemetryClient.Object);
+            var emailTemplateServiceMoq = new Mock<IEmailTemplateService>();
+            var httpClientFactoryMoq = new Mock<IHttpClientFactory>();
+            var loggerMoq = new Mock<ILogger<NotificationManager>>();
+            var userProfileManagerMoq = new Mock<IUserProfileManager>();
+            var userProfileCache = new UserProfileCache(memoryCache, userProfileManagerMoq.Object, Mock.Of<ILogger<UserProfileCache>>());
+            
+            var notificationManager = new NotificationManager(_config, ReviewRepository, APIRevisionRepository, cosmosUserProfileRepository, userProfileCache, telemetryClient.Object, emailTemplateServiceMoq.Object, httpClientFactoryMoq.Object, loggerMoq.Object);
 
             var devopsArtifactRepositoryMoq = new Mock<IDevopsArtifactRepository>();
             devopsArtifactRepositoryMoq.Setup(_ => _.DownloadPackageArtifact(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
@@ -116,9 +125,23 @@ namespace APIViewIntegrationTests
             var signalRHubContextMoq = new Mock<IHubContext<SignalRHub>>();
             var options = new Mock<IOptions<OrganizationOptions>>();
 
+            var backgroundTaskQueueMoq = new Mock<IBackgroundTaskQueue>();
+            var commentsLoggerMoq = new Mock<ILogger<CommentsManager>>();
+            
             CommentsManager = new CommentsManager(
-                 authorizationService: authorizationServiceMoq.Object, commentsRepository: CommentRepository,
-                 notificationManager: notificationManager, options: options.Object);
+                apiRevisionsManager: APIRevisionManager,
+                authorizationService: authorizationServiceMoq.Object,
+                commentsRepository: CommentRepository,
+                reviewRepository: ReviewRepository,
+                notificationManager: notificationManager,
+                codeFileRepository: BlobCodeFileRepository,
+                signalRHubContext: signalRHubContextMoq.Object,
+                httpClientFactory: httpClientFactoryMoq.Object,
+                userProfileCache: userProfileCache,
+                configuration: _config,
+                options: options.Object,
+                backgroundTaskQueue: backgroundTaskQueueMoq.Object,
+                logger: commentsLoggerMoq.Object);
 
             CodeFileManager = new CodeFileManager(
                 languageServices: languageService, codeFileRepository: BlobCodeFileRepository,
@@ -131,11 +154,28 @@ namespace APIViewIntegrationTests
                 originalsRepository: blobOriginalsRepository, notificationManager: notificationManager, signalRHubContext: signalRHubContextMoq.Object,
                 telemetryClient: telemetryClient.Object, configuration: _config);
 
+            var pollingJobQueueManagerMoq = new Mock<IPollingJobQueueManager>();
+            var pullRequestsRepositoryMoq = new Mock<ICosmosPullRequestsRepository>();
+            var reviewManagerLoggerMoq = new Mock<ILogger<ReviewManager>>();
+            
             ReviewManager = new ReviewManager(
-                authorizationService: authorizationServiceMoq.Object, reviewsRepository: ReviewRepository,
-                apiRevisionsManager: APIRevisionManager, commentManager: CommentsManager, codeFileRepository: BlobCodeFileRepository,
-                commentsRepository: CommentRepository, languageServices: languageService, signalRHubContext: signalRHubContextMoq.Object,
-                telemetryClient: telemetryClient.Object, codeFileManager: CodeFileManager);
+                authorizationService: authorizationServiceMoq.Object,
+                reviewsRepository: ReviewRepository,
+                apiRevisionsManager: APIRevisionManager,
+                commentManager: CommentsManager,
+                codeFileRepository: BlobCodeFileRepository,
+                commentsRepository: CommentRepository,
+                apiRevisionsRepository: APIRevisionRepository,
+                signalRHubContext: signalRHubContextMoq.Object,
+                languageServices: languageService,
+                telemetryClient: telemetryClient.Object,
+                codeFileManager: CodeFileManager,
+                configuration: _config,
+                httpClientFactory: httpClientFactoryMoq.Object,
+                pollingJobQueueManager: pollingJobQueueManagerMoq.Object,
+                notificationManager: notificationManager,
+                pullRequestsRepository: pullRequestsRepositoryMoq.Object,
+                logger: reviewManagerLoggerMoq.Object);
 
             TestDataPath = _config["TestPkgPath"];
         }

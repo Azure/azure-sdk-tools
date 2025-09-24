@@ -1,5 +1,9 @@
 # Release
 
+## 2025-09-22 - 0.28.3
+
+- Fix a bug where tsp-client was always setting the `save-inputs` option under a given emitter to `false` when the --save-inputs flag wasn't passed to the tool.
+
 ## 2025-09-16 - 0.28.2
 
 - If `package-dir` and `emitter-output-dir` are both specified in a given tspconfig.yaml give preference to `package-dir` until the legacy behavior is officially deprecated.

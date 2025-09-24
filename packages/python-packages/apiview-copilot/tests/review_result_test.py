@@ -36,41 +36,37 @@ def test_process_comments_with_validation():
     section = DummySection(["bad_code1", "good_code", "bad_code2"])
     comments = [
         {
-            "rule_ids": ["guideline-1"],
+            "guideline_ids": ["guideline-1"],
             "line_no": 1,
             "bad_code": "bad_code1",
             "suggestion": "fix1",
             "comment": "msg1",
-            "source": "test",
         },
         {
-            "rule_ids": ["not-allowed"],
+            "guideline_ids": ["not-allowed"],
             "line_no": 3,
             "bad_code": "bad_code2",
             "suggestion": "fix2",
             "comment": "msg2",
-            "source": "test",
         },
         {
-            "rule_ids": [],
             "line_no": 2,
             "bad_code": "good_code",
             "suggestion": "fix3",
             "comment": "msg3",
-            "source": "test",
         },
     ]
     rr = ReviewResult(comments=comments, allowed_ids=allowed_ids, section=section)
-    # All comments should be present, but only valid rule_ids retained
+    # All comments should be present, but only valid guideline_ids retained
     expected_comments = [
-        {"bad_code": "bad_code1", "rule_ids": ["guideline-1"]},
-        {"bad_code": "bad_code2", "rule_ids": []},
-        {"bad_code": "good_code", "rule_ids": []},
+        {"bad_code": "bad_code1", "guideline_ids": ["guideline-1"], "memory_ids": []},
+        {"bad_code": "bad_code2", "guideline_ids": [], "memory_ids": []},
+        {"bad_code": "good_code", "guideline_ids": [], "memory_ids": []},
     ]
     assert len(rr.comments) == len(expected_comments)
     for comment, expected in zip(rr.comments, expected_comments):
         assert comment.bad_code == expected["bad_code"]
-        assert comment.rule_ids == expected["rule_ids"]
+        assert comment.guideline_ids == expected["guideline_ids"]
 
 
 def test_find_line_number_correction():
@@ -88,28 +84,25 @@ def test_find_line_number_correction():
     # The comment's bad_code matches line 3, but line_no is off by 1 (should be 3, but is 2)
     comments = [
         {
-            "rule_ids": ["guideline-1"],
+            "guideline_ids": ["guideline-1"],
             "line_no": 2,  # This is off by one; should be 3
             "bad_code": "    y = 2",
             "suggestion": "    y = 3",
             "comment": "Should use 3 instead of 2",
-            "source": "test",
         },
         {
-            "rule_ids": ["guideline-1"],
+            "guideline_ids": ["guideline-1"],
             "line_no": 4,  # This is correct
             "bad_code": "    return x + y",
             "suggestion": "    return x - y",
             "comment": "Should subtract instead of add",
-            "source": "test",
         },
         {
-            "rule_ids": ["guideline-1"],
+            "guideline_ids": ["guideline-1"],
             "line_no": 10,  # This is out of range
             "bad_code": "# end",
             "suggestion": None,
             "comment": "End marker",
-            "source": "test",
         },
     ]
     rr = ReviewResult(comments=comments, allowed_ids=allowed_ids, section=section)
@@ -141,38 +134,34 @@ def test_blank_review_result_and_extend():
     )
     comments1 = [
         {
-            "rule_ids": ["guideline-1"],
+            "guideline_ids": ["guideline-1"],
             "line_no": 2,
             "bad_code": "foo = 1",
             "suggestion": "foo = 42",
             "comment": "Change foo",
-            "source": "test1",
         },
         {
-            "rule_ids": ["abc-123"],
+            "guideline_ids": ["abc-123"],
             "line_no": 2,
             "bad_code": "bar = 2",
             "suggestion": "bar = 22",
             "comment": "Change bar",
-            "source": "test1",
         },
     ]
     comments2 = [
         {
-            "rule_ids": ["bad-rule"],
+            "guideline_ids": ["bad-rule"],
             "line_no": 1,
             "bad_code": "baz = 3",
             "suggestion": "baz = 33",
             "comment": "Change baz",
-            "source": "test2",
         },
         {
-            "rule_ids": ["guideline-2", "aaa-bbb-ccc"],
+            "guideline_ids": ["guideline-2", "aaa-bbb-ccc"],
             "line_no": 2,
             "bad_code": "qux = 4",
             "suggestion": "qux = 99",
             "comment": "Change qux",
-            "source": "test2",
         },
     ]
     rr_blank = ReviewResult()
@@ -183,13 +172,13 @@ def test_blank_review_result_and_extend():
 
     # Validate all comments are present and correct using a cleaner approach
     expected_comments = [
-        {"line_no": 1, "bad_code": "foo = 1", "rule_ids": ["guideline-1"]},
-        {"line_no": 2, "bad_code": "bar = 2", "rule_ids": []},
-        {"line_no": 1, "bad_code": "baz = 3", "rule_ids": []},
-        {"line_no": 2, "bad_code": "qux = 4", "rule_ids": ["guideline-2"]},
+        {"line_no": 1, "bad_code": "foo = 1", "guideline_ids": ["guideline-1"], "memory_ids": []},
+        {"line_no": 2, "bad_code": "bar = 2", "guideline_ids": [], "memory_ids": []},
+        {"line_no": 1, "bad_code": "baz = 3", "guideline_ids": [], "memory_ids": []},
+        {"line_no": 2, "bad_code": "qux = 4", "guideline_ids": ["guideline-2"], "memory_ids": []},
     ]
     assert len(rr_blank.comments) == len(expected_comments)
     for comment, expected in zip(rr_blank.comments, expected_comments):
         assert comment.line_no == expected["line_no"]
         assert comment.bad_code == expected["bad_code"]
-        assert comment.rule_ids == expected["rule_ids"]
+        assert comment.guideline_ids == expected["guideline_ids"]

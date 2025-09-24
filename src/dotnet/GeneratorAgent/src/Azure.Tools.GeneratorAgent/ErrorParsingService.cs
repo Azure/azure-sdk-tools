@@ -19,28 +19,26 @@ namespace Azure.Tools.GeneratorAgent
             Logger = logger;
         }
 
-        public virtual async Task<IEnumerable<Fix>> AnalyzeErrorsAsync(Result<object> result, CancellationToken cancellationToken)
+        public virtual async Task<Result<IEnumerable<Fix>>> AnalyzeErrorsAsync(Result<object> result, CancellationToken cancellationToken)
         {
-            Logger.LogInformation("Analyzing errors...");
-
-            if (result.ProcessException?.Output == null)
-            {
-                Logger.LogWarning("No fixable error, skipping error analysis.");
-                return Enumerable.Empty<Fix>();
-            }
-
             var errors = ParseWithRegex(result.ProcessException.Output);
 
             if (!errors.Any())
             {
-                Logger.LogInformation("No errors found with regex. Falling back to AI-based parsing.");
+                Logger.LogDebug("No errors found with regex. Falling back to AI-based parsing.");
                 if (ErrorFixerAgent != null)
                 {
-                    errors = await ErrorFixerAgent.AnalyzeErrorsAsync(result.ProcessException.Output, cancellationToken).ConfigureAwait(false);
+                    var aiAnalysisResult = await ErrorFixerAgent.AnalyzeErrorsAsync(result.ProcessException.Output, cancellationToken).ConfigureAwait(false);
+                    if (aiAnalysisResult.IsFailure)
+                    {
+                        return Result<IEnumerable<Fix>>.Failure(aiAnalysisResult.Exception ?? new InvalidOperationException("AI analysis failed"));
+                    }
+                    errors = aiAnalysisResult.Value!;
                 }
             }
 
-            return GenerateFixes(errors);
+            var fixesResult = GenerateFixes(errors);
+            return fixesResult;
         }
 
         private IEnumerable<RuleError> ParseWithRegex(string output)
@@ -52,10 +50,10 @@ namespace Azure.Tools.GeneratorAgent
             }
 
             MatchCollection matches = ErrorRegex.Matches(output);
-            Logger.LogDebug("Found {MatchCount} potential error matches using regex.", matches.Count);
 
+            // Use HashSet to deduplicate exact (type, message) combinations
             HashSet<(string type, string message)> seenErrors = new();
-            List<RuleError> errors = new(matches.Count);
+            List<RuleError> errors = new();
 
             foreach (Match match in matches)
             {
@@ -66,38 +64,39 @@ namespace Azure.Tools.GeneratorAgent
 
                     if (string.IsNullOrWhiteSpace(errorType) || string.IsNullOrWhiteSpace(errorMessage))
                     {
+                        Logger.LogDebug("Skipping empty error type or message");
                         continue;
                     }
 
-                    if (!seenErrors.Add((errorType, errorMessage)))
+
+                    if (seenErrors.Add((errorType, errorMessage)))
                     {
-                        continue;
+                        errors.Add(new RuleError(errorType, errorMessage));
+                        if (Logger.IsEnabled(LogLevel.Debug))
+                        { 
+                        Logger.LogDebug("Raw regex match: Type='{ErrorType}', Message='{ErrorMessage}'", errorType, errorMessage);
+                        }
                     }
-
-                    errors.Add(new RuleError(errorType, errorMessage));
-                    Logger.LogDebug("Extracted error: {ErrorType} - {ErrorMessage}", errorType, errorMessage);
                 }
             }
 
+            if (Logger.IsEnabled(LogLevel.Debug))
+            {
+                Logger.LogDebug("Parsed {UniqueErrorCount} unique errors from {TotalMatches} regex matches", errors.Count, matches.Count);
+            }
             return errors;
         }
 
-        private IEnumerable<Fix> GenerateFixes(IEnumerable<RuleError> errors)
+        private Result<IEnumerable<Fix>> GenerateFixes(IEnumerable<RuleError> errors)
         {
             ArgumentNullException.ThrowIfNull(errors);
 
-            try
-            {
-                var fixes = ErrorAnalyzerService.GetFixes(errors);
-                var materializedFixes = fixes.ToList();
-                Logger.LogInformation("Generated {FixCount} fixes for errors.", materializedFixes.Count);
-                return materializedFixes;
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Failed to generate fixes for errors.");
-                return Enumerable.Empty<Fix>();
-            }
+            var errorList = errors.ToList();
+
+            var fixes = ErrorAnalyzerService.GetFixes(errorList);
+            var materializedFixes = fixes.ToList();
+            
+            return Result<IEnumerable<Fix>>.Success(materializedFixes);
         }
     }
 }

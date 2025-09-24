@@ -362,9 +362,9 @@ namespace Azure.Tools.GeneratorAgent.Tests
             // Assert
             Assert.Multiple(() =>
             {
-                Assert.That(result, Is.Not.Null);
-                Assert.That(result.Count, Is.EqualTo(1));
-                Assert.That(result["test.tsp"], Is.EqualTo("model Test {}"));
+                Assert.That(result.IsSuccess, Is.True);
+                Assert.That(result.Value!.Count, Is.EqualTo(1));
+                Assert.That(result.Value!["test.tsp"], Is.EqualTo("model Test {}"));
             });
 
 
@@ -424,10 +424,10 @@ namespace Azure.Tools.GeneratorAgent.Tests
             // Assert
             Assert.Multiple(() =>
             {
-                Assert.That(result, Is.Not.Null);
-                Assert.That(result.Count, Is.EqualTo(2));
-                Assert.That(result.ContainsKey("file1.tsp"), Is.True);
-                Assert.That(result.ContainsKey("file2.tsp"), Is.True);
+                Assert.That(result.IsSuccess, Is.True);
+                Assert.That(result.Value!.Count, Is.EqualTo(2));
+                Assert.That(result.Value!.ContainsKey("file1.tsp"), Is.True);
+                Assert.That(result.Value!.ContainsKey("file2.tsp"), Is.True);
             });
 
 
@@ -495,10 +495,10 @@ namespace Azure.Tools.GeneratorAgent.Tests
             // Assert
             Assert.Multiple(() =>
             {
-                Assert.That(result, Is.Not.Null);
-                Assert.That(result.Count, Is.EqualTo(1));
-                Assert.That(result.ContainsKey("file1.tsp"), Is.True);
-                Assert.That(result.ContainsKey("file2.tsp"), Is.False);
+                Assert.That(result.IsSuccess, Is.True);
+                Assert.That(result.Value!.Count, Is.EqualTo(1));
+                Assert.That(result.Value!.ContainsKey("file1.tsp"), Is.True);
+                Assert.That(result.Value!.ContainsKey("file2.tsp"), Is.False);
             });
 
 

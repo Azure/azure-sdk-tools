@@ -41,11 +41,11 @@ namespace Azure.Tools.GeneratorAgent.Tests
             public bool GetShouldFailUpload() => ShouldFailUpload;
             public bool GetShouldTimeout() => ShouldTimeout;
 
-            protected override async Task<string?> UploadSingleFileAsync(string fileName, string content, CancellationToken cancellationToken)
+            protected override async Task<Result<string>> UploadSingleFileAsync(string fileName, string content, CancellationToken cancellationToken)
             {
                 if (ShouldFailUpload)
                 {
-                    throw new InvalidOperationException("Simulated upload failure");
+                    return Result<string>.Failure(new InvalidOperationException("Simulated upload failure"));
                 }
 
                 if (ShouldTimeout)
@@ -55,7 +55,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
                 // Return a mock file ID
                 var fileId = $"file-{fileName.GetHashCode():X}";
-                return fileId;
+                return Result<string>.Success(fileId);
             }
 
             protected override async Task<string> CreateVectorStoreAsync(IEnumerable<string> fileIds, CancellationToken ct)

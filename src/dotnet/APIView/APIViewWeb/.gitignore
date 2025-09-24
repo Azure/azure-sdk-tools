@@ -6,6 +6,9 @@ wwwroot/*.css.map
 wwwroot/*.js
 wwwroot/*.js.map
 
+# Angular SPA build output
+wwwroot/spa/
+
 # PlayWright Tests Results
 Client/test-results/
 Client/playwright-report/

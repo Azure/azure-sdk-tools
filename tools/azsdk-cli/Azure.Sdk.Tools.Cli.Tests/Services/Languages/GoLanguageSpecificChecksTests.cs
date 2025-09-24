@@ -22,7 +22,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
             var mockGitHubService = new Mock<IGitHubService>();
             var gitHelper = new GitHelper(mockGitHubService.Object, NullLogger<GitHelper>.Instance);
-            LangService = new GoLanguageSpecificChecks(new ProcessHelper(NullLogger<ProcessHelper>.Instance, Mock.Of<IOutputHelper>()), new NpxHelper(NullLogger<NpxHelper>.Instance, Mock.Of<IOutputHelper>()), gitHelper, NullLogger<GoLanguageSpecificChecks>.Instance);
+            LangService = new GoLanguageSpecificChecks(new ProcessHelper(NullLogger<ProcessHelper>.Instance, Mock.Of<IRawOutputHelper>()), new NpxHelper(NullLogger<NpxHelper>.Instance, Mock.Of<IRawOutputHelper>()), gitHelper, NullLogger<GoLanguageSpecificChecks>.Instance);
 
             if (!await LangService.CheckDependencies(CancellationToken.None))
             {

@@ -1,0 +1,26 @@
+{
+  "type": "json_schema",
+  "json_schema": {
+    "name": "existing_comment_result",
+    "strict": true,
+    "schema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "comment": {
+          "type": "string",
+          "description": "The proposed comment. May be identical to the input or a modified version."
+        },
+        "action": {
+          "type": "string",
+          "description": "Should be 'KEEP' if the comment has value or 'DISCARD' if the comment is no longer necessary."
+        },
+        "rationale": {
+          "type": "string",
+          "description": "The reasoning for choosing the action. Should be a short sentence explaining why the comment was kept or removed."
+        }
+      },
+      "required": ["comment", "action", "rationale"]
+    }
+  }
+}

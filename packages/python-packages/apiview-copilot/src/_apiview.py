@@ -1,7 +1,8 @@
+import asyncio
 import sys
 from typing import Optional
 
-import requests
+import httpx
 from azure.cosmos import CosmosClient
 from azure.cosmos.exceptions import CosmosHttpResponseError
 from src._credential import get_credential
@@ -29,6 +30,89 @@ class ActiveReviewMetadata:
         self.review_id = review_id
         self.name = name
         self.language = get_language_pretty_name(language)
+
+
+selection_type = {
+    "Latest": 1,
+    "LatestApproved": 2,
+    "LatestAutomatic": 3,
+    "LatestManual": 4,
+}
+
+
+class ApiViewClient:
+    """Client for interacting with the API View service."""
+
+    def __init__(self, environment: str = "production"):
+        self.environment = environment
+
+    async def get_revision_text(
+        self, *, revision_id: Optional[str] = None, review_id: Optional[str] = None, label: Optional[str] = None
+    ) -> str:
+        """
+        Get the text of an API revision.
+        Args:
+            revision_id (str): The ID of the API revision to retrieve.
+            review_id (str): The ID of the API review to retrieve.
+            label (str): Used in conjunction with review_id to specify which revision to get. Defaults to "Latest".
+        """
+        endpoint = "/api/apirevisions/getRevisionContent?"
+
+        if revision_id:
+            if review_id or label:
+                raise ValueError("revision_id cannot be used with review_id or label.")
+            endpoint += f"apiRevisionId={revision_id}"
+        elif review_id:
+            if not label:
+                label = "Latest"
+            if label not in selection_type:
+                raise ValueError(f"Invalid label '{label}'. Must be one of {list(selection_type.keys())}.")
+            endpoint += f"apiReviewId={review_id}&label={selection_type[label]}"
+        else:
+            raise ValueError("Either revision_id or review_id must be provided.")
+        return await self.send_request(endpoint)
+
+    async def get_revision_outline(self, revision_id: str) -> str:
+        """
+        Get the outline for a given API revision.
+        Args:
+            revision_id (str): The ID of the API revision to retrieve.
+        """
+        return await self.send_request(f"/api/apirevisions/{revision_id}/outline")
+
+    async def get_review_comments(self, revision_id: str) -> str:
+        """
+        Get the comments visible for a given API review.
+        Args:
+            revision_id (str): The ID of the API revision to retrieve comments for. Comments that are "visible"
+                               from that revision will be returned.
+        """
+        endpoint = f"/api/comments/getRevisionComments?apiRevisionId={revision_id}"
+        return await self.send_request(endpoint)
+
+    async def send_request(self, endpoint: str):
+        # strip leading /
+        if endpoint.startswith("/"):
+            endpoint = endpoint[1:]
+
+        apiview_endpoints = {
+            "production": "https://apiview.dev",
+            "staging": "https://apiviewstagingtest.com",
+        }
+        endpoint_root = apiview_endpoints.get(self.environment)
+        endpoint = f"{endpoint_root}/{endpoint}"
+        apiview_scopes = {
+            "production": "api://apiview/.default",
+            "staging": "api://apiviewstaging/.default",
+        }
+        credential = get_credential()
+        scope = apiview_scopes.get(self.environment)
+        token = await asyncio.to_thread(credential.get_token, scope)
+
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.get(endpoint, headers={"Authorization": f"Bearer {token.token}"})
+            resp.raise_for_status()
+            return resp.json()
 
 
 def get_apiview_cosmos_client(container_name: str, environment: str = "production"):
@@ -59,61 +143,6 @@ def get_apiview_cosmos_client(container_name: str, environment: str = "productio
                 "Error: You do not have permission to access Cosmos DB.\nTo grant yourself access, run: python scripts\\apiview_permissions.py"
             )
         sys.exit(1)
-
-
-def get_apiview_comments(review_id: str, environment: str = "production") -> dict:
-    """
-    Retrieves comments for a specific APIView review and returns them grouped by element ID and
-    sorted by CreatedOn time. Omits resolved and deleted comments, and removes unnecessary fields.
-    """
-    comments = []
-    if not review_id:
-        raise ValueError("When using the API, `--review-id` must be provided.")
-    apiview_endpoints = {
-        "production": "https://apiview.dev",
-        "staging": "https://apiviewstagingtest.com",
-    }
-    endpoint_root = apiview_endpoints.get(environment)
-    endpoint = f"{endpoint_root}/api/Comments/{review_id}?commentType=APIRevision&isDeleted=false"
-    apiview_scopes = {
-        "production": "api://apiview/.default",
-        "staging": "api://apiviewstaging/.default",
-    }
-    credential = get_credential()
-    scope = apiview_scopes.get(environment)
-    token = credential.get_token(scope)
-    response = requests.get(
-        endpoint,
-        headers={"Content-Type": "application/json", "Authorization": f"Bearer {token.token}"},
-        timeout=30,
-    )
-
-    if response.status_code != 200:
-        print(f"Error retrieving comments: {response.status_code} - {response.text}")
-        return {}
-    try:
-        comments = response.json()
-    except Exception as json_exc:
-        content = response.content.decode("utf-8")
-        if "Please login using your GitHub account" in content:
-            print("Error: API is still requesting authentication via Github.")
-            return {}
-        else:
-            print(f"Error parsing comments JSON: {json_exc}")
-            return {}
-
-    conversations = {}
-    if comments:
-        for comment in comments:
-            element_id = comment.get("ElementId")
-            if element_id in conversations:
-                conversations[element_id].append(comment)
-            else:
-                conversations[element_id] = [comment]
-    for element_id, comments in conversations.items():
-        # sort comments by created_on time
-        comments.sort(key=lambda x: x.get("CreatedOn", 0))
-    return conversations
 
 
 def get_active_reviews(start_date: str, end_date: str, environment: str = "production") -> list[ActiveReviewMetadata]:

@@ -10,7 +10,7 @@ internal static class TelemetryConstants
     /// </summary>
     internal class TagName
     {
-        public const string AzureMcpVersion = "Version";
+        public const string AzSdkToolVersion = "Version";
         public const string ClientName = "ClientName";
         public const string ClientVersion = "ClientVersion";
         public const string DevDeviceId = "DevDeviceId";
@@ -25,6 +25,7 @@ internal static class TelemetryConstants
         public const string CommandArea = "CommandArea";
         public const string CommandArgs = "CommandArgs";
         public const string CommandResponse = "CommandResponse";
+        public const string DebugTag = "IsDebugEnvironment";
     }
 
     internal class ActivityName

@@ -97,8 +97,10 @@ go test ./...
 
 ## Deploy
 
+Before deploy, you need to install [Docker](https://docs.docker.com/engine/install/)
+
   ```bash
-  ./deploy.sh -t [tag] -e [dev|test|prod]
+  ./deploy.sh -t [tag] -e [dev|preview|prod]
   ```
 
 ## Contributing

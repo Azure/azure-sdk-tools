@@ -15,7 +15,7 @@
     - `MINOR` version is in range [0-654]
     - `PATCH` version is in range [0-9999]
   -->
-  <Target Name="_InitializeFileVersion" BeforeTargets="GetAssemblyVersion">
+  <Target Name="_InitializeFileVersion" BeforeTargets="GetAssemblyVersion" Condition="'$(Version)' == ''">
     <Error Text="Expected _BuildNumber to match OfficialBuildId property!"
             Condition="'$(OfficialBuildId)' != '' and '$(OfficialBuildId)' != '$(_BuildNumber)'" />
 

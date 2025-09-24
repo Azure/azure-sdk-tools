@@ -19,6 +19,7 @@ from dotenv import load_dotenv
 from azure.storage.blob import BlobServiceClient
 import yaml
 import logging
+import shutil
 
 weights: dict[str, float] = {
     "similarity_weight": 0.6,  # Similarity between expected and actual
@@ -65,7 +66,7 @@ async def process_file(input_file: str, output_file: str, scenario: str, is_bot:
     """Process a single input file"""
     logging.info(f"Processing file: {input_file}")
     
-    azure_bot_service_access_token = os.environ["BOT_AGENT_ACCESS_TOKEN"]
+    azure_bot_service_access_token = os.environ.get("BOT_AGENT_ACCESS_TOKEN", None)
     bot_service_endpoint = os.environ.get("BOT_SERVICE_ENDPOINT", None) 
     api_url = f"{bot_service_endpoint}/completion" if bot_service_endpoint is not None else "http://localhost:8088/completion"
     start_time = time.time()
@@ -104,8 +105,10 @@ async def call_bot_api(question: str, bot_endpoint: str, access_token: str, tena
     """Call the completion API endpoint."""
     headers = {
         "Content-Type": "application/json; charset=utf8",
-        "Authorization": f"Bearer {access_token}"
     }
+    if access_token: 
+        headers["Authorization"] = f"Bearer {access_token}"
+    
     payload = {
         "tenant_id": tenant_id if tenant_id is not None else "azure_sdk_qa_bot",
         "message": {
@@ -133,13 +136,23 @@ async def prepare_dataset(testdata_dir: str, file_prefix: str = None, is_bot: bo
     """
     logging.info("📁 Preparing dataset...")
     data_dir = Path(testdata_dir)
+    logging.info(f"📂 Data directory: {data_dir.absolute()}")
     script_directory = os.path.dirname(os.path.abspath(__file__))
     logging.info(f"Script directory:{script_directory}")
     output_dir = Path(os.path.join(script_directory, "output"))
     output_dir.mkdir(exist_ok=True)
-    
-    logging.info(f"📂 Data directory: {data_dir.absolute()}")
     logging.info(f"📂 Output directory: {output_dir.absolute()}")
+    
+    for filename in os.listdir(output_dir.absolute()):
+        file_path = os.path.join(output_dir.absolute(), filename)
+        try:
+            if os.path.isfile(file_path) or os.path.islink(file_path):
+                os.unlink(file_path)  # remove file or link
+            elif os.path.isdir(file_path):
+                shutil.rmtree(file_path)  # remove directory
+        except Exception as e:
+            print(f"Failed to delete {file_path}. Reason: {e}")
+    print(f"Directory '{output_dir.absolute()}' cleared.")
     
     if not data_dir.exists():
         logging.error(f"❌ Data directory {data_dir.absolute()} does not exist!")

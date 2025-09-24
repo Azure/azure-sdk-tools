@@ -150,7 +150,7 @@ stages:
         echo "##vso[task.setvariable variable=SelectedRules]$rules"
       name: setRules
 
-    - template: /eng/pipelines/common/content-validation-for-java.yml
+    - template: ../../common/content-validation-for-java.yml
       parameters:
         packageName: $(PackageName)
         rules: $(SelectedRules)
@@ -182,7 +182,7 @@ stages:
         echo "##vso[task.setvariable variable=SelectedRules]$rules"
       name: setRules
 
-    - template: /eng/pipelines/common/content-validation-for-java.yml
+    - template: ../../common/content-validation-for-java.yml
       parameters:
         packageName: $(PackageName)
         rules: $(SelectedRules)

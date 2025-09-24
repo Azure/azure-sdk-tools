@@ -216,23 +216,62 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var testFile = Path.Combine(_testProjectPath, "test_fix.md");
             await File.WriteAllTextAsync(testFile, "This file contians obvioius speling erors.");
 
-            // Act - Test both regular cspell check and with fix enabled
-            var normalResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Cspell, false, CancellationToken.None);
-            var fixResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Cspell, true, CancellationToken.None);
+            // Create a mock repository root and cspell config
+            var mockRepoRoot = Path.GetTempPath();
+            var cspellConfigDir = Path.Combine(mockRepoRoot, ".vscode");
+            var cspellConfigPath = Path.Combine(cspellConfigDir, "cspell.json");
+            
+            Directory.CreateDirectory(cspellConfigDir);
+            await File.WriteAllTextAsync(cspellConfigPath, "{}"); // Create minimal cspell config
 
-            // Assert
-            Assert.IsNotNull(normalResult);
-            Assert.IsNotNull(fixResult);
-            Assert.IsNotNull(normalResult.CheckStatusDetails);
-            Assert.IsNotNull(fixResult.CheckStatusDetails);
+            // Setup mocks
+            _mockGitHelper.Setup(x => x.DiscoverRepoRoot(It.IsAny<string>()))
+                         .Returns(mockRepoRoot);
             
-            // Both may succeed or partially succeed depending on environment and cspell version
-            Assert.That(normalResult.ExitCode, Is.GreaterThanOrEqualTo(0));
-            Assert.That(fixResult.ExitCode, Is.GreaterThanOrEqualTo(0));
+            // Setup mock to return spelling errors for cspell check (exit code 1 indicates errors found)
+            var cspellErrorResult = new ProcessResult { ExitCode = 1 };
+            cspellErrorResult.AppendStdout("test_fix.md:1:11 - Unknown word (contians)");
+            cspellErrorResult.AppendStdout("test_fix.md:1:19 - Unknown word (obvioius)");
+            cspellErrorResult.AppendStdout("test_fix.md:1:27 - Unknown word (speling)");
+            cspellErrorResult.AppendStdout("test_fix.md:1:34 - Unknown word (erors)");
             
-            // The fix result should have different next steps indicating LLM guidance
-            Assert.IsNotNull(fixResult.NextSteps);
-            Assert.IsNotEmpty(fixResult.NextSteps);
+            // Reset and setup mock for this specific test
+            _mockNpxHelper.Reset();
+            _mockNpxHelper.Setup(x => x.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()))
+                         .ReturnsAsync(cspellErrorResult);
+
+            try
+            {
+                // Act - Test both regular cspell check and with fix enabled
+                var normalResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Cspell, false, CancellationToken.None);
+                var fixResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Cspell, true, CancellationToken.None);
+
+                // Assert
+                Assert.IsNotNull(normalResult);
+                Assert.IsNotNull(fixResult);
+                Assert.IsNotNull(normalResult.CheckStatusDetails);
+                Assert.IsNotNull(fixResult.CheckStatusDetails);
+                
+                // Both should fail since there are spelling errors
+                Assert.That(normalResult.ExitCode, Is.EqualTo(1));
+                Assert.That(fixResult.ExitCode, Is.EqualTo(1));
+                
+                // The fix result should have different next steps indicating LLM guidance
+                Assert.IsNotNull(fixResult.NextSteps);
+                Assert.IsNotEmpty(fixResult.NextSteps);
+            }
+            finally
+            {
+                // Cleanup
+                if (File.Exists(cspellConfigPath))
+                {
+                    File.Delete(cspellConfigPath);
+                }
+                if (Directory.Exists(cspellConfigDir))
+                {
+                    Directory.Delete(cspellConfigDir);
+                }
+            }
         }
     }
 }

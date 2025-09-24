@@ -11,6 +11,14 @@
     <NoWarn>ASP0000;CS8603;CS8618;CS8625;CS8604</NoWarn>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <AssemblyName>azsdk</AssemblyName>
+    <Version>0.5.0</Version>
+    <!-- Disable auto-versioning to use static version -->
+    <DisableImplicitVersioning>true</DisableImplicitVersioning>
+    <!-- Package metadata -->
+    <PackageReleaseNotes>See CHANGELOG.md for release notes</PackageReleaseNotes>
+    <RepositoryUrl>https://github.com/Azure/azure-sdk-tools</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>azure;sdk;tools;cli</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
@@ -50,5 +58,11 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Images/quokka.ansi" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Include changelog and documentation files in the package -->
+    <None Include="CHANGELOG.md" Pack="true" PackagePath="CHANGELOG.md" />
+    <None Include="../README.md" Pack="true" PackagePath="README.md" />
   </ItemGroup>
 </Project>

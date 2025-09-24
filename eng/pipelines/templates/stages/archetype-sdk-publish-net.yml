@@ -6,7 +6,7 @@ parameters:
   RequireStrongNames: true
   PublishEnvironment: ''
   ExeMatrix: []
-
+  VerifyChangelog: false
 # Needs Github Release variable group linked.
 # Needs AzureSDK Nuget Release Pipelines Secrets variable group linked.
 

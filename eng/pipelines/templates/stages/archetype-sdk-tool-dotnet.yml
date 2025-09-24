@@ -47,6 +47,9 @@ parameters:
   - name: Use1ESOfficial
     type: boolean
     default: true
+  - name: VerifyChangelog
+    type: boolean
+    default: false
   - name: TestMatrix
     type: object
     default:
@@ -224,6 +227,7 @@ extends:
             ${{ if parameters.PublishEnvironment }}:
               PublishEnvironment: ${{ parameters.PublishEnvironment }}
             dependsOn: BuildTestAndPackage
+            VerifyChangelog: ${{ parameters.VerifyChangelog }}
 
       - ${{ if and(ne(parameters.SkipReleaseStage, true), not(eq(length(parameters.DockerDeployments), 0)), eq(variables['System.TeamProject'], 'internal'))}}:
         - stage: PublishDockerImages

@@ -175,7 +175,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         {
             var exception = Assert.Throws<ArgumentNullException>(() => new ProcessExecutionService(null!));
 
-            Assert.That(exception.ParamName, Is.EqualTo("logger"));
+            Assert.That(exception.ParamName!, Is.EqualTo("logger"));
         }
 
         #endregion
@@ -201,7 +201,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
             {
                 Assert.That(result.IsSuccess, Is.True);
                 Assert.That(result.Value, Is.Not.Null);
-                Assert.That(result.Value.ToString(), Does.Contain("test message"));
+                Assert.That(result.Value!.ToString(), Does.Contain("test message"));
                 Assert.That(result.ProcessException, Is.Null);
                 Assert.That(result.Exception, Is.Null);
             });
@@ -217,7 +217,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             var result = await executor.ExecuteAsync(
                 command,
-                null,
+                null!, // Explicitly allow null for this test
                 workingDir,
                 fixture.CancellationToken);
 
@@ -322,7 +322,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
                     workingDir,
                     fixture.CancellationToken));
 
-            Assert.That(exception.ParamName, Is.EqualTo("command"));
+            Assert.That(exception.ParamName!, Is.EqualTo("command"));
         }
 
         [Test]
@@ -340,7 +340,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
                     workingDir,
                     fixture.CancellationToken));
 
-            Assert.That(exception.ParamName, Is.EqualTo("command"));
+            Assert.That(exception.ParamName!, Is.EqualTo("command"));
         }
 
         [Test]
@@ -358,7 +358,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
                     workingDir,
                     fixture.CancellationToken));
 
-            Assert.That(exception.ParamName, Is.EqualTo("command"));
+            Assert.That(exception.ParamName!, Is.EqualTo("command"));
         }
 
         [Test]
@@ -377,7 +377,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
                     workingDir,
                     fixture.CancellationToken));
 
-            Assert.That(exception.Message, Does.Contain("not in the allowed commands list"));
+            Assert.That(exception.Message!, Does.Contain("not in the allowed commands list"));
         }
 
         [Test]
@@ -396,7 +396,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
                     invalidDir,
                     fixture.CancellationToken));
 
-            Assert.That(exception.Message, Does.Contain("Working directory does not exist"));
+            Assert.That(exception.Message!, Does.Contain("Working directory does not exist"));
         }
 
         [Test]

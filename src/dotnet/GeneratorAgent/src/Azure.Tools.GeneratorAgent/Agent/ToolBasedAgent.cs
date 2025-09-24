@@ -96,10 +96,8 @@ internal class ToolBasedAgent : IAsyncDisposable
     {
         Logger.LogInformation("Initializing tool-based agent...");
 
-        // Accessing AgentId will trigger agent creation via Lazy<T> if not already created
         ConversationManager.SetAgentId(AgentId);
 
-        // Start conversation thread immediately during initialization
         await ConversationManager.StartConversationAsync(cancellationToken);
 
         Logger.LogInformation("Agent conversation initialized successfully with agent: {AgentId}, thread: {ThreadId}",
@@ -211,7 +209,7 @@ internal class ToolBasedAgent : IAsyncDisposable
 
         try
         {
-            // First, delete the conversation thread if it exists
+            // Delete the conversation thread if it exists
             await ConversationManager.DeleteThreadAsync(CancellationToken.None).ConfigureAwait(false);
 
             // Only delete the agent if it was actually created

@@ -178,7 +178,6 @@ internal class ConversationManager
             var toolName = functionCall.Name;
             var arguments = functionCall.Arguments;
             
-            // Let the ToolExecutor handle its own logging - avoid duplication
             return await ToolExecutor.ExecuteToolCallAsync(toolName, arguments, cancellationToken);
         }
         

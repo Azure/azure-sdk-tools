@@ -120,7 +120,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Authentication
             const RuntimeEnvironment invalidEnvironment = (RuntimeEnvironment)999;
 
             var ex = Assert.Throws<ArgumentException>(() => factory.CreateCredential(invalidEnvironment));
-            Assert.That(ex.ParamName, Is.EqualTo("environment"));
+            Assert.That(ex.ParamName!, Is.EqualTo("environment"));
             Assert.That(ex.Message, Does.Contain("Unsupported runtime environment"));
         }
 

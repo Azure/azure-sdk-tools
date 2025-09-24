@@ -13,7 +13,7 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
     internal static class ServiceCollectionExtensions
     {
         /// <summary>
-        /// Adds all required services for the GeneratorAgent application.
+        /// Adds all required services for the GeneratorAgent application using modern DI patterns.
         /// </summary>
         /// <param name="services">The service collection to add services to</param>
         /// <param name="toolConfig">The tool configuration</param>
@@ -23,7 +23,7 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
             ArgumentNullException.ThrowIfNull(services);
             ArgumentNullException.ThrowIfNull(toolConfig);
 
-            // Register configuration
+            // Register configuration as singleton 
             services.AddSingleton(toolConfig);
             services.AddSingleton(provider =>
             {
@@ -31,19 +31,11 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
                 return toolConfig.CreateAppSettings(logger);
             });
 
-            // Register credential management services
-            services.AddCredentialServices();
-
-            // Register HttpClient management
-            services.AddHttpClientServices();
-
-            // Register Azure AI services
-            services.AddAzureAIServices();
-
-            // Register application services
-            services.AddApplicationServices();
-
-            return services;
+            return services
+                .AddCredentialServices()
+                .AddHttpClientServices()
+                .AddAzureAIServices()
+                .AddApplicationServices();
         }
 
         /// <summary>

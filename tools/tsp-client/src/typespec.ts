@@ -117,10 +117,19 @@ export async function compileTsp({
   }
   const overrideOptions: Record<string, Record<string, string>> = {
     [emitterPackage]: {
-      "save-inputs": saveInputs ? "true" : "false",
       ...emitterOverrideOptions,
     },
   };
+
+  if (saveInputs) {
+    // Only override save-inputs if the user explicitly passed --save-inputs to tsp-client.
+    // If the user did not pass --save-inputs, we do not override it here, and leave save-inputs
+    // as it was specified in tspconfig.yaml (or not specified at all).
+    overrideOptions[emitterPackage]!["save-inputs"] = "true";
+    Logger.debug(
+      "The save-inputs option will be set to true for the emitter options at compile time.",
+    );
+  }
 
   if (legacyPathResolution) {
     overrideOptions[emitterPackage]!["emitter-output-dir"] = outputDir;

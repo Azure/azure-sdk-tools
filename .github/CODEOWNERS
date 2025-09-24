@@ -49,8 +49,12 @@
 /tools/content-validation/              @xiangyan99 @zedy-wj
 /tools/perf-regression-finder/          @m-redding @jsquire
 
+#####################
+# Azure SDK Tools MCP
+#####################
+/eng/common/instructions/azsdk-tools/   @maririos @praveenkuttappan @MrJustinB 
 # PRLabel: %azsdk-cli
-/tools/azsdk-cli/                       @benbp @scbedd @praveenkuttappan @smw-ms @Jeo02 @maririos @richardpark-msft @l0lawrence @timovv @samvaity @haolingdong-msft @MaryGao @tadelesh @msyyc
+/tools/azsdk-cli/                       @azure/azsdk-cli
 
 ###########
 # Stress
@@ -77,7 +81,6 @@
 /src/swift/                               @tjprescott
 /src/java/apiview-java-processor/         @JonathanGiles
 /src/go/                                  @jhendrixMSFT @chlowell @RickWinter
-
 
 ###########
 # Pylint checkers

@@ -1,11 +1,10 @@
-import { app, HttpRequest, HttpResponseInit, InvocationContext, Timer } from '@azure/functions';
 import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
-import { BlobService } from '../services/StorageService';
-import { SpectorCaseProcessor } from '../services/SpectorCaseProcessor';
-import { ConfigurationLoader, RepositoryConfig } from '../services/ConfigurationLoader';
-import { SearchService } from '../services/SearchService';
+import { BlobService } from './services/StorageService';
+import { SpectorCaseProcessor } from './services/SpectorCaseProcessor';
+import { ConfigurationLoader, RepositoryConfig } from './services/ConfigurationLoader';
+import { SearchService } from './services/SearchService';
 
 /**
  * Daily sync knowledge function that processes documentation from various repositories
@@ -50,54 +49,9 @@ interface ProcessSourceDirectoryResult {
 }
 
 /**
- * Timer-triggered function that runs daily to sync knowledge base
- */
-export async function dailySyncKnowledgeTimer(myTimer: Timer, context: InvocationContext): Promise<void> {
-    context.log('Daily sync knowledge timer function started');
-    
-    try {
-        await processDailySyncKnowledge(context);
-        context.log('Daily sync knowledge completed successfully');
-    } catch (error) {
-        context.error('Daily sync knowledge failed:', error);
-        throw error;
-    }
-}
-
-/**
- * HTTP-triggered function for manual sync
- */
-export async function dailySyncKnowledgeHttp(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
-    context.log('Daily sync knowledge HTTP function started');
-    
-    try {
-        await processDailySyncKnowledge(context);
-        
-        return {
-            status: 200,
-            jsonBody: {
-                message: 'Daily sync knowledge completed successfully',
-                timestamp: new Date().toISOString()
-            }
-        };
-    } catch (error) {
-        context.error('Daily sync knowledge failed:', error);
-        
-        return {
-            status: 500,
-            jsonBody: {
-                error: 'Daily sync knowledge failed',
-                details: error instanceof Error ? error.message : 'Unknown error',
-                timestamp: new Date().toISOString()
-            }
-        };
-    }
-}
-
-/**
  * Core processing logic for daily sync knowledge
  */
-async function processDailySyncKnowledge(context: InvocationContext): Promise<void> {
+export async function processDailySyncKnowledge(): Promise<void> {
     const workingDir = '/tmp/daily-sync-work';
     const docsDir = path.join(workingDir, 'docs');
     const tempDocsDir = path.join(workingDir, 'temp_docs');
@@ -108,8 +62,8 @@ async function processDailySyncKnowledge(context: InvocationContext): Promise<vo
     
     try {
         // Load configuration
-        context.log('Loading knowledge configuration...');
-        const documentationSources = ConfigurationLoader.getDocumentationSources(context);
+        console.log('Loading knowledge configuration...');
+        const documentationSources = ConfigurationLoader.getDocumentationSources();
         
         // Create working directories
         if (fs.existsSync(workingDir)) {
@@ -117,24 +71,23 @@ async function processDailySyncKnowledge(context: InvocationContext): Promise<vo
         }
         fs.mkdirSync(workingDir, { recursive: true });
         fs.mkdirSync(docsDir, { recursive: true });
-        
-        context.log('Loading existing blob metadata for change detection...');
-        
+
+        console.log('Loading existing blob metadata for change detection...');
+
         // Load existing blob metadata for change detection
-        const containerName = process.env.STORAGE_KNOWLEDGE_CONTAINER;
-        const existingBlobs = await blobService.listBlobsWithProperties(containerName);
-        
-        context.log('Setting up documentation repositories...');
+        const existingBlobs = await blobService.listBlobs();
+
+        console.log('Setting up documentation repositories...');
         
         // Setup documentation repositories
-        await setupDocumentationRepositories(docsDir, context);
-        
-        context.log('Preprocessing spector cases...');
+        await setupDocumentationRepositories(docsDir);
+
+        console.log('Preprocessing spector cases...');
         
         // Preprocess spector cases
-        await preprocessSpectorCases(docsDir, context);
+        await preprocessSpectorCases(docsDir);
 
-        context.log('Processing documentation sources...');
+        console.log('Processing documentation sources...');
         
         let totalProcessed = 0;
         let changedDocuments = 0;
@@ -148,7 +101,7 @@ async function processDailySyncKnowledge(context: InvocationContext): Promise<vo
             const targetDir = path.join(tempDocsDir, source.folder);
             
             if (!fs.existsSync(sourceDir)) {
-                context.warn(`Source directory not found: ${sourceDir}`);
+                console.warn(`Source directory not found: ${sourceDir}`);
                 continue;
             }
             
@@ -157,9 +110,9 @@ async function processDailySyncKnowledge(context: InvocationContext): Promise<vo
             
             // Create release notes index
             try {
-                await createReleaseNotesIndex(source, sourceDir, targetDir, context);
+                await createReleaseNotesIndex(source, sourceDir, targetDir);
             } catch (error) {
-                context.error(`Error creating release notes index: ${error}`);
+                console.error(`Error creating release notes index: ${error}`);
                 throw error;
             }
             
@@ -170,9 +123,7 @@ async function processDailySyncKnowledge(context: InvocationContext): Promise<vo
                     source, 
                     targetDir, 
                     existingBlobs,
-                    searchService,
-                    blobService,
-                    context
+                    blobService
                 );
                 
                 totalProcessed += result.totalProcessed;
@@ -181,24 +132,24 @@ async function processDailySyncKnowledge(context: InvocationContext): Promise<vo
                 allChangedFiles.push(...result.changedFiles);
                 allUnchangedFiles.push(...result.unchangedFiles);
             } catch (error) {
-                context.error(`Error processing source directory: ${error}`);
+                console.error(`Error processing source directory: ${error}`);
                 throw error;
             }
         }
-        
-        context.log(`Processing completed: ${totalProcessed} total, ${changedDocuments} changed, ${unchangedDocuments} unchanged`);
-        context.log(`Files that changed: ${allChangedFiles.length}, Files that remained unchanged: ${allUnchangedFiles.length}`);
+
+        console.log(`Processing completed: ${totalProcessed} total, ${changedDocuments} changed, ${unchangedDocuments} unchanged`);
+        console.log(`Files that changed: ${allChangedFiles.length}, Files that remained unchanged: ${allUnchangedFiles.length}`);
 
         // Delete the AI Search index for changed files
-        await deleteAISearchIndex(searchService, allChangedFiles, context);
+        await deleteAISearchIndex(searchService, allChangedFiles);
 
         // Upload files to blob storage (only for changed documents)
-        await uploadFilesToBlobStorage(allChangedFiles, context);
+        await uploadFilesToBlobStorage(allChangedFiles);
         
         // Clean up expired blobs
-        await cleanupExpiredBlobs(allChangedFiles.concat(allUnchangedFiles), context);
-        context.log('Daily sync knowledge processing completed');
-        
+        await cleanupExpiredBlobs(allChangedFiles.concat(allUnchangedFiles));
+        console.log('Daily sync knowledge processing completed');
+
     } finally {
         // Cleanup working directory
         if (fs.existsSync(workingDir)) {
@@ -210,14 +161,14 @@ async function processDailySyncKnowledge(context: InvocationContext): Promise<vo
 /**
  * Delete AI Search index for changed files
  */
-async function deleteAISearchIndex(searchService: SearchService, changeFiles: ProcessedMarkdownFile[], context: InvocationContext) {
+async function deleteAISearchIndex(searchService: SearchService, changeFiles: ProcessedMarkdownFile[]) {
     for (const processed of changeFiles) {
         // Delete existing chunks from AI Search if document title exists
         try {
-            await searchService.deleteDocumentChunksByFileName(processed.filename, context);
-            context.log(`Deleted AI search chunks for: "${processed.blobPath}"`);
+            await searchService.deleteDocumentChunksByFileName(processed.filename);
+            console.log(`Deleted AI search chunks for: "${processed.blobPath}"`);
         } catch (error) {
-            context.warn(`Failed to delete chunks for: "${processed.blobPath}": ${error instanceof Error ? error.message : 'Unknown error'}`);
+            console.warn(`Failed to delete chunks for: "${processed.blobPath}": ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
 }
@@ -225,24 +176,28 @@ async function deleteAISearchIndex(searchService: SearchService, changeFiles: Pr
 /**
  * Get authenticated URL for repository cloning
  */
-function getAuthenticatedUrl(repo: RepositoryConfig, context: InvocationContext): string {
+function getAuthenticatedUrl(repo: RepositoryConfig): string {
     if (repo.authType === 'public') {
         return repo.url;
     }
     
     if (repo.authType === 'token') {
         if (!repo.token) {
-            context.error(`Token is missing for repository ${repo.name}. Please check environment variable.`);
+            console.error(`Token is missing for repository ${repo.name}. Please check environment variable.`);
             throw new Error(`Authentication token missing for ${repo.name}`);
         }
-        context.log(`Using token authentication for ${repo.name}`);
+        console.log(`Using token authentication for ${repo.name}`);
         return repo.url.replace('https://', `https://${repo.token}@`);
     }
     
     if (repo.authType === 'ssh') {
         // SSH URLs should be used as-is, assuming SSH keys are configured
-        context.log(`Using SSH authentication for ${repo.name} with host ${repo.sshHost || 'default'}`);
+        console.log(`Using SSH authentication for ${repo.name} with host ${repo.sshHost || 'default'}`);
         return repo.url;
+    }
+
+    if (repo.authType === 'local') {
+        repo.url = repo.localPath;
     }
     
     return repo.url;
@@ -251,11 +206,11 @@ function getAuthenticatedUrl(repo: RepositoryConfig, context: InvocationContext)
 /**
  * Setup SSH configuration for git operations (Windows and Linux compatible)
  */
-async function setupSSHConfig(context: InvocationContext): Promise<void> {
+async function setupSSHConfig(): Promise<void> {
     const sshPrivateKey = process.env.SSH_PRIVATE_KEY;
     
     if (!sshPrivateKey) {
-        context.warn('SSH_PRIVATE_KEY environment variable not found');
+        console.warn('SSH_PRIVATE_KEY environment variable not found');
         return;
     }
     
@@ -305,30 +260,30 @@ Host github.com
         
         // Set correct permissions on SSH config file (644 = owner read/write, group/others read only)
         fs.chmodSync(sshConfigPath, 0o644);
-        
-        context.log(`SSH configuration setup completed`);
-        context.log(`SSH directory: ${sshDir}`);
-        context.log(`Private key path: ${privateKeyPath}`);
-        context.log(`SSH config path: ${sshConfigPath}`);
-        
+
+        console.log(`SSH configuration setup completed`);
+        console.log(`SSH directory: ${sshDir}`);
+        console.log(`Private key path: ${privateKeyPath}`);
+        console.log(`SSH config path: ${sshConfigPath}`);
+
         // Set GIT_SSH_COMMAND environment variable to use the custom SSH config
         process.env.GIT_SSH_COMMAND = `ssh -F "${sshConfigPath}" -o StrictHostKeyChecking=no`;
         
         // Test SSH connection
-        context.log('Testing SSH connection to github-microsoft...');
+        console.log('Testing SSH connection to github-microsoft...');
         try {
             const { execSync } = require('child_process');
             const testResult = execSync(`ssh -F "${sshConfigPath}" -T git@github-microsoft -o ConnectTimeout=10`, {
                 stdio: 'pipe',
                 timeout: 15000
             }).toString();
-            context.log('SSH test result:', testResult);
+            console.log('SSH test result:', testResult);
         } catch (testError) {
-            context.warn('SSH test failed (this might be normal):', testError.message);
+            console.warn('SSH test failed (this might be normal):', testError.message);
         }
         
     } catch (error) {
-        context.error('Error setting up SSH configuration:', error);
+        console.error('Error setting up SSH configuration:', error);
         throw error;
     }
 }
@@ -336,29 +291,37 @@ Host github.com
 /**
  * Setup documentation repositories by cloning or updating them
  */
-async function setupDocumentationRepositories(docsDir: string, context: InvocationContext): Promise<void> {
+async function setupDocumentationRepositories(docsDir: string): Promise<void> {
+    // Configure git to use HTTP/1.1 globally to avoid HTTP/2 stream issues
+    try {
+        execSync('git config --global http.version HTTP/1.1', { stdio: 'pipe' });
+        console.log('Configured git to use HTTP/1.1 globally');
+    } catch (error) {
+        console.warn('Failed to configure git HTTP version, continuing anyway:', error);
+    }
+    
     // Setup SSH configuration first
-    await setupSSHConfig(context);
+    await setupSSHConfig();
     
     // Load repository configurations from the config file
-    const repositories = ConfigurationLoader.getRepositoryConfigs(context);
+    const repositories = ConfigurationLoader.getRepositoryConfigs();
     
     for (const repo of repositories) {
         try {
-            context.log(`Setting up ${repo.name}...`);
+            console.log(`Setting up ${repo.name}...`);
             const repoPath = path.join(docsDir, repo.path);
             
             // Get authenticated URL if required
-            const cloneUrl = getAuthenticatedUrl(repo, context);
-            
-            if (fs.existsSync(repoPath)) {
-                // Update existing repository
-                process.chdir(repoPath);
-                
-                execSync('git fetch origin', { stdio: 'pipe', env: process.env });
-                execSync('git reset --hard origin/main || git reset --hard origin/master', { stdio: 'pipe', env: process.env });
+            const cloneUrl = getAuthenticatedUrl(repo);
+
+            if (repo.authType === 'local') {
+                // Copy from cloneUrl (local path)
+                for (const folder of repo.sparseCheckout || []) {
+                    const srcPath = path.join(cloneUrl, folder);
+                    fs.cpSync(srcPath, repoPath, { recursive: true });
+                }
             } else {
-                // Clone new repository
+                // Clone from remote URL
                 process.chdir(docsDir);
                 
                 if (repo.sparseCheckout) {
@@ -375,10 +338,9 @@ async function setupDocumentationRepositories(docsDir: string, context: Invocati
                     execSync(`git clone ${cloneUrl} ${repo.path}`, { stdio: 'pipe', env: process.env });
                 }
             }
-            
-            context.log(`${repo.name} setup completed`);
+            console.log(`${repo.name} setup completed`);
         } catch (error) {
-            context.error(`Error setting up ${repo.name}:`, error);
+            console.error(`Error setting up ${repo.name}:`, error);
             throw error;
         }
     }
@@ -392,9 +354,7 @@ async function processSourceDirectory(
     source: DocumentationSource,
     targetDir: string,
     existingBlobs: Map<string, any>,
-    searchService: SearchService,
-    blobService: BlobService,
-    context: InvocationContext
+    blobService: BlobService
 ): Promise<ProcessSourceDirectoryResult> {
     
     let totalProcessed = 0;
@@ -437,7 +397,7 @@ async function processSourceDirectory(
 
                     // Check if content has changed by comparing MD5
                     if (blobService.hasContentChanged(processed.blobPath, processed.content, existingBlobs)) {
-                        context.log(`Content changed for: ${processed.blobPath}`);
+                        console.log(`Content changed for: ${processed.blobPath}`);
                         changedDocuments++;
                         changedFiles.push(processed);
                         
@@ -445,12 +405,12 @@ async function processSourceDirectory(
                         const targetFilePath = path.join(targetDir, processed.filename);
                         fs.writeFileSync(targetFilePath, processed.content);
                     } else {
-                        context.log(`Content unchanged for: ${processed.blobPath}`);
+                        console.log(`Content unchanged for: ${processed.blobPath}`);
                         unchangedDocuments++;
                         unchangedFiles.push(processed);
                     }
                 } catch (error) {
-                    context.error(`Error processing file ${fullPath}:`, error);
+                    console.error(`Error processing file ${fullPath}:`, error);
                     throw error;
                 }
             }
@@ -474,15 +434,14 @@ async function processSourceDirectory(
 async function createReleaseNotesIndex(
     source: DocumentationSource,
     sourceDir: string,
-    targetDir: string,
-    context: InvocationContext
+    targetDir: string
 ): Promise<void> {
     // Path to release notes directory
     const releaseNotesDir = path.join(sourceDir, 'release-notes');
     
     // Check if release notes directory exists
     if (!fs.existsSync(releaseNotesDir)) {
-        context.log(`Release notes directory not found for ${source.folder}, skipping index creation`);
+        console.log(`Release notes directory not found for ${source.folder}, skipping index creation`);
         return;
     }
     
@@ -557,7 +516,7 @@ async function createReleaseNotesIndex(
             // Add the release header and sections to content
             content += releaseHeader + sections + '\n';
         } catch (error) {
-            context.warn(`Error reading release note file ${filePath}: ${error}`);
+            console.warn(`Error reading release note file ${filePath}: ${error}`);
             continue;
         }
     }
@@ -566,13 +525,13 @@ async function createReleaseNotesIndex(
     const indexPath = path.join(targetDir, 'version-release-notes-index.md');
     fs.writeFileSync(indexPath, content);
     
-    context.log(`Created release notes index for ${source.folder}`);
+    console.log(`Created release notes index for ${source.folder}`);
 }
 
 /**
  * Extract date from a filename in the format release-YYYY-MM-DD.md
  */
-function extractDateFromFilename(filePath: string): Date {
+export function extractDateFromFilename(filePath: string): Date {
     const filename = path.basename(filePath);
     const match = filename.match(/release-(\d{4}-\d{2}-\d{2})/);
     
@@ -590,7 +549,7 @@ function extractDateFromFilename(filePath: string): Date {
 /**
  * Extract release info from release note frontmatter
  */
-function extractReleaseInfo(content: string): { title: string; releaseDate: string; version: string } {
+export function extractReleaseInfo(content: string): { title: string; releaseDate: string; version: string } {
     let title = '';
     let releaseDate = '';
     let version = '';
@@ -621,7 +580,7 @@ function extractReleaseInfo(content: string): { title: string; releaseDate: stri
 /**
  * Process a single markdown file
  */
-function processMarkdownFile(
+export function processMarkdownFile(
     filePath: string,
     source: DocumentationSource,
     sourceDir: string
@@ -668,7 +627,7 @@ function processMarkdownFile(
 /**
  * Convert markdown
  */
-function convertMarkdown(content: string): { filename: string; content: string } {
+export function convertMarkdown(content: string): { filename: string; content: string } {
     let title = '';
     let filename = '';
     let foundTitle = false;
@@ -724,7 +683,7 @@ function convertMarkdown(content: string): { filename: string; content: string }
 /**
  * Extract sections and downgrade headers (kept for release notes processing)
  */
-function extractSections(content: string): string {
+export function extractSections(content: string): string {
     // Remove frontmatter
     const contentWithoutFrontmatter = content.replace(/^---\s*\n[\s\S]*?\n---\s*\n/, '');
     
@@ -741,27 +700,23 @@ function extractSections(content: string): string {
  * Upload changed files to blob storage using the ProcessedMarkdownFile information
  */
 async function uploadFilesToBlobStorage(
-    changedFiles: ProcessedMarkdownFile[], 
-    context: InvocationContext
+    changedFiles: ProcessedMarkdownFile[]
 ) {
     try {
         const blobService = new BlobService();
-        const containerName = process.env.STORAGE_KNOWLEDGE_CONTAINER;
-        
         let uploadedCount = 0;
-        
         // Upload only changed files
         for (const file of changedFiles) {
             if (file.isValid) {
-                await blobService.putBlob(context, containerName, file.blobPath, file.content);
+                await blobService.putBlob(file.blobPath, file.content);
                 uploadedCount++;
             }
         }
-        
-        context.log(`Successfully uploaded ${uploadedCount} changed files to blob storage`);
+
+        console.log(`Successfully uploaded ${uploadedCount} changed files to blob storage`);
         return;
     } catch (error) {
-        context.error('Error uploading changed files to blob storage:', error);
+        console.error('Error uploading changed files to blob storage:', error);
         throw error;
     }
 }
@@ -769,15 +724,14 @@ async function uploadFilesToBlobStorage(
 /**
  * Clean up expired blobs
  */
-async function cleanupExpiredBlobs(currentFiles: ProcessedMarkdownFile[], context: InvocationContext): Promise<void> {
+async function cleanupExpiredBlobs(currentFiles: ProcessedMarkdownFile[]): Promise<void> {
     try {
         const blobService = new BlobService();
-        const containerName = process.env.STORAGE_KNOWLEDGE_CONTAINER;
-        
-        context.log('Cleaning up expired blobs...');
+
+        console.log('Cleaning up expired blobs...');
         
         // Get all existing blobs
-        const allBlobs = await blobService.listBlobs(containerName);
+        const blobs = await blobService.listBlobs();
         
         // Create a set of current file blob paths for efficient lookup
         const currentFileBlobPaths = new Set(
@@ -787,8 +741,9 @@ async function cleanupExpiredBlobs(currentFiles: ProcessedMarkdownFile[], contex
         );
         
         let deletedCount = 0;
-        
-        for (const blobPath of allBlobs) {
+
+        for (const blob of blobs) {
+            const blobPath = blob[0];
             // Skip static files
             if (blobPath.startsWith('static_')) {
                 continue;
@@ -797,17 +752,17 @@ async function cleanupExpiredBlobs(currentFiles: ProcessedMarkdownFile[], contex
             // Delete if not in current files
             if (!currentFileBlobPaths.has(blobPath)) {
                 try {
-                    await blobService.deleteBlob(context, containerName, blobPath);
+                    await blobService.deleteBlob(blobPath);
                     deletedCount++;
                 } catch (error) {
-                    context.warn(`Failed to delete blob ${blobPath}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                    console.warn(`Failed to delete blob ${blobPath}: ${error instanceof Error ? error.message : 'Unknown error'}`);
                 }
             }
         }
-        
-        context.log(`Cleaned up ${deletedCount} expired blobs`);
+
+        console.log(`Cleaned up ${deletedCount} expired blobs`);
     } catch (error) {
-        context.error('Error cleaning up expired blobs:', error);
+        console.error('Error cleaning up expired blobs:', error);
         throw error;
     }
 }
@@ -815,26 +770,14 @@ async function cleanupExpiredBlobs(currentFiles: ProcessedMarkdownFile[], contex
 /**
  * Preprocess spector cases in the documentation directories
  */
-async function preprocessSpectorCases(docsDir: string, context: InvocationContext): Promise<void> {
-    context.log('Starting spector case processing...');
+async function preprocessSpectorCases(docsDir: string): Promise<void> {
+    console.log('Starting spector case processing...');
     
     try {
-        await SpectorCaseProcessor.processSpectorCases(docsDir, context);
-        context.log('Spector case processing completed successfully');
+        await SpectorCaseProcessor.processSpectorCases(docsDir);
+        console.log('Spector case processing completed successfully');
     } catch (error) {
-        context.error('Error processing spector cases:', error);
+        console.error('Error processing spector cases:', error);
         throw error;
     }
 }
-
-// Register the functions
-app.timer('dailySyncKnowledgeTimer', {
-    schedule: '0 0 9 * * *',
-    handler: dailySyncKnowledgeTimer,
-});
-
-app.http('dailySyncKnowledgeHttp', {
-    methods: ['GET'],
-    authLevel: 'function',
-    handler: dailySyncKnowledgeHttp,
-});

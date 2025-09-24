@@ -25,8 +25,8 @@ from colorama import Fore, Style
 from knack import CLI, ArgumentsContext, CLICommandsLoader
 from knack.commands import CommandGroup
 from knack.help_files import helps
+from src._apiview import ApiViewClient
 from src._apiview import get_active_reviews as _get_active_reviews
-from src._apiview import get_apiview_comments as _get_apiview_comments
 from src._apiview_reviewer import SUPPORTED_LANGUAGES, ApiViewReview
 from src._database_manager import ContainerNames, get_database_manager
 from src._garbage_collector import GarbageCollector
@@ -720,12 +720,25 @@ def db_purge(containers: Optional[list[str]] = None, run_indexer: bool = False):
             print(f"Error purging container: {e}")
 
 
-def get_apiview_comments(review_id: str, environment: str = "production") -> dict:
+def get_apiview_comments(revision_id: str, environment: str = "production") -> dict:
     """
-    Retrieves comments for a specific APIView review and returns them grouped by element ID and
-    sorted by CreatedOn time. Omits resolved and deleted comments, and removes unnecessary fields.
+    Retrieves comments for a specific APIView revision and returns them grouped by line number and
+    sorted by createdOn time.
     """
-    return _get_apiview_comments(review_id, environment)
+    apiview = ApiViewClient(environment=environment)
+    comments = asyncio.run(apiview.get_review_comments(revision_id=revision_id))
+    conversations = {}
+    if comments:
+        for comment in comments:
+            line_no = comment.get("lineNo")
+            if line_no in conversations:
+                conversations[line_no].append(comment)
+            else:
+                conversations[line_no] = [comment]
+    for line_no, comments in conversations.items():
+        # sort comments by created_on time
+        comments.sort(key=lambda x: x.get("createdOn", 0))
+    return conversations
 
 
 def get_active_reviews(start_date: str, end_date: str, language: str, environment: str = "production") -> list:
@@ -1226,10 +1239,10 @@ class CliCommandsLoader(CLICommandsLoader):
             )
         with ArgumentsContext(self, "apiview") as ac:
             ac.argument(
-                "review_id",
+                "revision_id",
                 type=str,
-                help="The review ID of the APIView to retrieve comments for.",
-                options_list=["--review-id", "-r"],
+                help="The revision ID of the APIView to retrieve comments for.",
+                options_list=["--revision-id", "-r"],
             )
             ac.argument(
                 "environment",

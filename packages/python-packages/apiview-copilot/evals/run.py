@@ -25,7 +25,7 @@ if __name__ == "__main__":
         "-t",
         type=str,
         required=True,
-        help="Path to workflow YAML or JSONL file name.",
+        help="Path to workflow YAML.",
     )
     args = parser.parse_args()
     runner = EvalRunner(

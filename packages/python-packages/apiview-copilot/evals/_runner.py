@@ -36,7 +36,7 @@ class EvalRunner:
         self._tests_directory = self._workflow_config.tests_path.parent
         self._test_files: List[pathlib.Path] = [self._workflow_config.tests_path]
         
-        evaluation_kind = self._workflow_config.name
+        evaluation_kind = self._workflow_config.kind
         self._evaluator_class = EVALUATORS[evaluation_kind]
 
     def run(self):

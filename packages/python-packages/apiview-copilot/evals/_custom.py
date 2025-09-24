@@ -559,7 +559,135 @@ class PromptWorkflowEvaluator(BaseEvaluator):
             raise ValueError("PromptWorkflowEvaluator requires workflow_config")
         self.config = workflow_config
         self._discovered_fields = self._discover_jsonl_fields()
-        self._prompty_instance = None
+        
+        # Get evaluation fields from workflow config
+        self.evaluation_config = self.config.evaluation_config
+        self.comparison_field = self.evaluation_config.comparison_field
+        self.display_name = self.evaluation_config.display_name
+        self.breakdown_categories = self.evaluation_config.breakdown_categories
+        self.correct_field_name = f"correct_{self.comparison_field}"
+
+    def __call__(self, *, response: str, actual: str, testcase: str, **kwargs):
+        try:
+            expected_data = json.loads(response)
+            actual_data = json.loads(actual)
+            
+            expected_value = expected_data.get(self.comparison_field, "").strip()
+            actual_value = actual_data.get(self.comparison_field, "").strip()
+
+            is_correct = expected_value == actual_value
+            
+        except (json.JSONDecodeError, AttributeError):
+            is_correct = actual.strip() == response.strip()
+            expected_value = response.strip()
+            actual_value = actual.strip()
+        
+        return {
+            self.correct_field_name: is_correct,
+            "actual": actual,
+            "expected": response,
+            "testcase": testcase,
+            "score": 100 if is_correct else 0,
+            f"expected_{self.comparison_field}": expected_value,
+            f"actual_{self.comparison_field}": actual_value,
+        }
+    
+    def process_results(self, raw_results: list, rule_ids: set = None) -> dict:
+        """Process prompt workflow results."""
+        all_results = {}
+        
+        for run_result_data in raw_results:
+            for file_name, result in run_result_data.items():
+                if file_name not in all_results:
+                    all_results[file_name] = []
+                
+                run_summary = {
+                    "total_tests": 0,
+                    f"{self.correct_field_name}s": 0,
+                    "test_results": [],
+                    f"{self.comparison_field}_breakdown": self.breakdown_categories.copy()
+                }
+                
+                # Process each test case in this run
+                for row in result.get("rows", []):
+                    test_result = {
+                        "testcase": row.get("inputs.testcase", "unknown"),
+                        "correct": row.get(f"outputs.metrics.{self.correct_field_name}", False),
+                        f"expected_{self.comparison_field}": row.get(f"outputs.metrics.expected_{self.comparison_field}", ""),
+                        f"actual_{self.comparison_field}": row.get(f"outputs.metrics.actual_{self.comparison_field}", ""),
+                        "score": row.get("outputs.metrics.score", 0),
+                    }
+                    
+                    run_summary["test_results"].append(test_result)
+                    run_summary["total_tests"] += 1
+                    
+                    if test_result["correct"]:
+                        run_summary[f"{self.correct_field_name}s"] += 1
+
+                    # Track breakdown by comparison field
+                    expected_val = test_result[f"expected_{self.comparison_field}"]
+                    if expected_val in run_summary[f"{self.comparison_field}_breakdown"]:
+                        run_summary[f"{self.comparison_field}_breakdown"][expected_val]["total"] += 1
+                        if test_result["correct"]:
+                            run_summary[f"{self.comparison_field}_breakdown"][expected_val]["correct"] += 1
+
+                run_summary["accuracy"] = (run_summary[f"{self.correct_field_name}s"] / run_summary["total_tests"]) * 100 if run_summary["total_tests"] > 0 else 0
+                all_results[file_name].append(run_summary)
+        
+        # For multiple runs: take the median accuracy run
+        final_results = {}
+        for file_name, runs in all_results.items():
+            if len(runs) == 1:
+                final_results[file_name] = runs[0]
+            else:
+                # Find median by accuracy
+                sorted_runs = sorted(runs, key=lambda x: x["accuracy"])
+                median_idx = len(sorted_runs) // 2
+                final_results[file_name] = sorted_runs[median_idx]
+        
+        return final_results
+    
+    def show_results(self, processed_results: dict) -> None:
+        """Display prompt workflow results with category breakdown."""
+        from tabulate import tabulate
+        
+        for file_name, results in processed_results.items():
+            accuracy = results["accuracy"]
+            correct = results[f"{self.correct_field_name}s"]
+            total = results["total_tests"]
+            
+            print("====================================================")
+            print(f"\n\n✨ {file_name} results:\n")
+            print(f"Overall {self.display_name} Accuracy: {correct}/{total} ({accuracy:.1f}%)\n")
+            
+            # Show breakdown by category
+            breakdown = results[f"{self.comparison_field}_breakdown"]
+            breakdown_rows = []
+            for rec_type, stats in breakdown.items():
+                if stats["total"] > 0:
+                    type_accuracy = (stats["correct"] / stats["total"]) * 100
+                    breakdown_rows.append([
+                        rec_type,
+                        f"{stats['correct']}/{stats['total']}",
+                        f"{type_accuracy:.1f}%"
+                    ])
+            
+            if breakdown_rows:
+                print(f"{self.display_name} Breakdown:")
+                print(tabulate(breakdown_rows, 
+                             headers=["Type", "Correct", "Accuracy"], 
+                             tablefmt="simple"))
+                print()
+            
+            # Show failed cases with details
+            failed_cases = [test for test in results["test_results"] if not test["correct"]]
+            if failed_cases:
+                print("Failed Cases:")
+                for test in failed_cases:
+                    print(f"  ❌ {test['testcase']}")
+                    print(f"     Expected {self.display_name}: {test[f'expected_{self.comparison_field}']}")
+                    print(f"     Actual {self.display_name}:   {test[f'actual_{self.comparison_field}']}")
+                    print()
 
     def _discover_jsonl_fields(self) -> set[str]:
         """Peek at JSONL to see what fields are available."""
@@ -590,285 +718,8 @@ class PromptWorkflowEvaluator(BaseEvaluator):
         
         return workflow_targets[workflow_name]
     
-    @abstractmethod
-    def __call__(self, **kwargs):
-        """Each workflow implements its own comparison logic."""
-        pass
-    
-    @abstractmethod 
-    def process_results(self, raw_results: list, rule_ids: set) -> dict:
-        """Each workflow processes results differently."""
-        pass
-    
-    @abstractmethod
-    def show_results(self, processed_results: dict) -> None:
-        """Each workflow displays results differently."""
-        pass
-
-class MentionActionEvaluator(PromptWorkflowEvaluator):
-    def __call__(self, *, response: str, actual: str, testcase: str, **kwargs):
-        
-        try:
-            expected_data = json.loads(response)
-            actual_data = json.loads(actual)
-            
-            expected_recommendation = expected_data.get("recommendation", "").strip()
-            actual_recommendation = actual_data.get("recommendation", "").strip()
-            
-            correct_recommendation = expected_recommendation == actual_recommendation
-            
-        except (json.JSONDecodeError, AttributeError) as e:
-            correct_recommendation = actual.strip() == response.strip()
-            expected_recommendation = response.strip()
-            actual_recommendation = actual.strip()
-        
-        return {
-            "correct_recommendation": correct_recommendation,
-            "actual": actual,
-            "expected": response,
-            "testcase": testcase,
-            "score": 100 if correct_recommendation else 0,
-            "expected_recommendation": expected_recommendation,
-            "actual_recommendation": actual_recommendation,
-        }
-    
-    def process_results(self, raw_results: list, rule_ids: set) -> dict:
-        """Process mention-action workflow results."""
-        all_results = {}
-        
-        for run_result_data in raw_results:
-            for file_name, result in run_result_data.items():
-                if file_name not in all_results:
-                    all_results[file_name] = []
-                
-                # Extract recommendation-specific results
-                run_summary = {
-                    "total_tests": 0,
-                    "correct_recommendations": 0,
-                    "test_results": [],
-                    "recommendation_breakdown": {
-                        "no_action": {"correct": 0, "total": 0},
-                        "update_kb": {"correct": 0, "total": 0}
-                    }
-                }
-                
-                # Process each test case in this run
-                for row in result.get("rows", []):
-                    test_result = {
-                        "testcase": row.get("inputs.testcase", "unknown"),
-                        "correct": row.get("outputs.metrics.correct_recommendation", False),
-                        "expected_recommendation": row.get("outputs.metrics.expected_recommendation", ""),
-                        "actual_recommendation": row.get("outputs.metrics.actual_recommendation", ""),
-                        "score": row.get("outputs.metrics.score", 0),
-                    }
-                    
-                    run_summary["test_results"].append(test_result)
-                    run_summary["total_tests"] += 1
-                    
-                    if test_result["correct"]:
-                        run_summary["correct_recommendations"] += 1
-                    
-                    # Track breakdown by recommendation type
-                    expected_rec = test_result["expected_recommendation"]
-                    if expected_rec in run_summary["recommendation_breakdown"]:
-                        run_summary["recommendation_breakdown"][expected_rec]["total"] += 1
-                        if test_result["correct"]:
-                            run_summary["recommendation_breakdown"][expected_rec]["correct"] += 1
-                
-                run_summary["accuracy"] = (run_summary["correct_recommendations"] / run_summary["total_tests"]) * 100 if run_summary["total_tests"] > 0 else 0
-                all_results[file_name].append(run_summary)
-        
-        # For multiple runs: take the median accuracy run
-        final_results = {}
-        for file_name, runs in all_results.items():
-            if len(runs) == 1:
-                final_results[file_name] = runs[0]
-            else:
-                # Find median by accuracy
-                sorted_runs = sorted(runs, key=lambda x: x["accuracy"])
-                median_idx = len(sorted_runs) // 2
-                final_results[file_name] = sorted_runs[median_idx]
-        
-        return final_results
-    
-    def show_results(self, processed_results: dict) -> None:
-        """Display mention-action workflow results with recommendation breakdown."""
-        from tabulate import tabulate
-        
-        for file_name, results in processed_results.items():
-            accuracy = results["accuracy"]
-            correct = results["correct_recommendations"]
-            total = results["total_tests"]
-            
-            print("====================================================")
-            print(f"\n\n✨ {file_name} results:\n")
-            print(f"Overall Accuracy: {correct}/{total} ({accuracy:.1f}%)\n")
-            
-            # Show breakdown by recommendation type
-            breakdown = results["recommendation_breakdown"]
-            breakdown_rows = []
-            for rec_type, stats in breakdown.items():
-                if stats["total"] > 0:
-                    type_accuracy = (stats["correct"] / stats["total"]) * 100
-                    breakdown_rows.append([
-                        rec_type,
-                        f"{stats['correct']}/{stats['total']}",
-                        f"{type_accuracy:.1f}%"
-                    ])
-            
-            if breakdown_rows:
-                print("Recommendation Type Breakdown:")
-                print(tabulate(breakdown_rows, 
-                             headers=["Type", "Correct", "Accuracy"], 
-                             tablefmt="simple"))
-                print()
-            
-            # Show failed cases with details
-            failed_cases = [test for test in results["test_results"] if not test["correct"]]
-            if failed_cases:
-                print("Failed Cases:")
-                for test in failed_cases:
-                    print(f"  ❌ {test['testcase']}")
-                    print(f"     Expected: {test['expected_recommendation']}")
-                    print(f"     Actual:   {test['actual_recommendation']}")
-                    print()
-
-class ThreadResolutionActionEvaluator(PromptWorkflowEvaluator):
-    """Evaluator for thread-resolution action workflow."""
-
-    def __call__(self, *, response: str, actual: str, testcase: str, **kwargs):
-        
-        try:
-            expected_data = json.loads(response)
-            actual_data = json.loads(actual)
-            
-            expected_action = expected_data.get("action", "").strip()
-            actual_action = actual_data.get("action", "").strip()
-            
-            correct_action = expected_action == actual_action
-            
-        except (json.JSONDecodeError, AttributeError) as e:
-            correct_action = actual.strip() == response.strip()
-            expected_action = response.strip()
-            actual_action = actual.strip()
-        
-        return {
-            "correct_action": correct_action,
-            "actual": actual,
-            "expected": response,
-            "testcase": testcase,
-            "score": 100 if correct_action else 0,
-            "expected_action": expected_action,
-            "actual_action": actual_action,
-        }
-    
-    def process_results(self, raw_results: list, rule_ids: set) -> dict:
-        """Process thread-resolution workflow results."""
-        all_results = {}
-        
-        for run_result_data in raw_results:
-            for file_name, result in run_result_data.items():
-                if file_name not in all_results:
-                    all_results[file_name] = []
-                
-                # Extract action-specific results
-                run_summary = {
-                    "total_tests": 0,
-                    "correct_actions": 0,
-                    "test_results": [],
-                    "action_breakdown": {
-                        "record_result": {"correct": 0, "total": 0},
-                        "record_exception": {"correct": 0, "total": 0},
-                        "no_action": {"correct": 0, "total": 0},
-                        "unclear": {"correct": 0, "total": 0}
-                    }
-                }
-                
-                # Process each test case in this run
-                for row in result.get("rows", []):
-                    test_result = {
-                        "testcase": row.get("inputs.testcase", "unknown"),
-                        "correct": row.get("outputs.metrics.correct_action", False),
-                        "expected_action": row.get("outputs.metrics.expected_action", ""),
-                        "actual_action": row.get("outputs.metrics.actual_action", ""),
-                        "score": row.get("outputs.metrics.score", 0),
-                    }
-                    
-                    run_summary["test_results"].append(test_result)
-                    run_summary["total_tests"] += 1
-                    
-                    if test_result["correct"]:
-                        run_summary["correct_actions"] += 1
-                    
-                    # Track breakdown by action type
-                    expected_action = test_result["expected_action"]
-                    if expected_action in run_summary["action_breakdown"]:
-                        run_summary["action_breakdown"][expected_action]["total"] += 1
-                        if test_result["correct"]:
-                            run_summary["action_breakdown"][expected_action]["correct"] += 1
-                
-                run_summary["accuracy"] = (run_summary["correct_actions"] / run_summary["total_tests"]) * 100 if run_summary["total_tests"] > 0 else 0
-                all_results[file_name].append(run_summary)
-        
-        # For multiple runs: take the median accuracy run
-        final_results = {}
-        for file_name, runs in all_results.items():
-            if len(runs) == 1:
-                final_results[file_name] = runs[0]
-            else:
-                # Find median by accuracy
-                sorted_runs = sorted(runs, key=lambda x: x["accuracy"])
-                median_idx = len(sorted_runs) // 2
-                final_results[file_name] = sorted_runs[median_idx]
-        
-        return final_results
-    
-    def show_results(self, processed_results: dict) -> None:
-        """Display thread-resolution workflow results with action breakdown."""
-        from tabulate import tabulate
-        
-        for file_name, results in processed_results.items():
-            accuracy = results["accuracy"]
-            correct = results["correct_actions"]
-            total = results["total_tests"]
-            
-            print("====================================================")
-            print(f"\n\n✨ {file_name} results:\n")
-            print(f"Overall Accuracy: {correct}/{total} ({accuracy:.1f}%)\n")
-            
-            # Show breakdown by action type
-            breakdown = results["action_breakdown"]
-            breakdown_rows = []
-            for action_type, stats in breakdown.items():
-                if stats["total"] > 0:
-                    type_accuracy = (stats["correct"] / stats["total"]) * 100
-                    breakdown_rows.append([
-                        action_type,
-                        f"{stats['correct']}/{stats['total']}",
-                        f"{type_accuracy:.1f}%"
-                    ])
-            
-            if breakdown_rows:
-                print("Action Type Breakdown:")
-                print(tabulate(breakdown_rows, 
-                             headers=["Action Type", "Correct", "Accuracy"], 
-                             tablefmt="simple"))
-                print()
-            
-            # Show failed cases with details
-            failed_cases = [test for test in results["test_results"] if not test["correct"]]
-            if failed_cases:
-                print("Failed Cases:")
-                for test in failed_cases:
-                    print(f"  ❌ {test['testcase']}")
-                    print(f"     Expected: {test['expected_action']}")
-                    print(f"     Actual:   {test['actual_action']}")
-                    print()
-
-
 # Registry of available evaluators
 EVALUATORS: Dict[str, BaseEvaluator] = {
     "apiview": CustomAPIViewEvaluator,
-    "mention-action": MentionActionEvaluator,
-    "thread-resolution-action": ThreadResolutionActionEvaluator
+    "prompt": PromptWorkflowEvaluator
 }

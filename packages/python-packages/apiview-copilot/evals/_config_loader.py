@@ -25,7 +25,14 @@ class WorkflowConfig:
     kind: str
     tests_path: Path
     prompty_path: Path | None
+    evaluation_config: EvaluationConfig | None
     source_file: Path | None = None  # for diagnostics
+
+@dataclasses.dataclass(slots=True)
+class EvaluationConfig:
+    comparison_field: str
+    display_name: str
+    breakdown_categories: dict[str, dict[str, int]]
 
 class WorkflowConfigError(ValueError):
     pass
@@ -62,8 +69,6 @@ def load_workflow_config(path: str | os.PathLike) -> WorkflowConfig:
     name = raw.get("name")
     if not name or not isinstance(name, str):
         _fail("Missing required string field: name")
-    if name not in SUPPORTED_WORKFLOWS:
-        _fail(f"Invalid test: {name!r}. Supported: {sorted(SUPPORTED_WORKFLOWS)}")
     
     # naming conventions
     if any(c for c in name if c.isupper()) or " " in name:
@@ -81,6 +86,9 @@ def load_workflow_config(path: str | os.PathLike) -> WorkflowConfig:
     kind = raw.get("kind")
     if not kind or not isinstance(kind, str):
         _fail("Missing required string field: kind")
+    if kind not in SUPPORTED_WORKFLOWS:
+        _fail(f"Invalid test: {name!r}. Supported: {sorted(SUPPORTED_WORKFLOWS)}")
+        
     prompty_path: Path | None = None
     if kind == "prompt":
         prompty_rel = raw.get("prompty")
@@ -96,12 +104,34 @@ def load_workflow_config(path: str | os.PathLike) -> WorkflowConfig:
     if not isinstance(runs, int) or runs < 1:
         _fail(f"runs must be positive integer (got: {runs!r})")
 
+    evaluation_config = None
+    if kind == "prompt":
+        eval_config_raw = raw.get("evaluation_config")
+        if eval_config_raw and isinstance(eval_config_raw, dict):
+            comparison_field = eval_config_raw.get("comparison_field", "action")
+            display_name = eval_config_raw.get("display_name", "Action") 
+            breakdown_categories = eval_config_raw.get("breakdown_categories", {})
+            
+            # Validate breakdown_categories structure
+            if breakdown_categories:
+                for key, value in breakdown_categories.items():
+                    if not isinstance(value, dict) or "correct" not in value or "total" not in value:
+                        _fail(f"breakdown_categories.{key} must have 'correct' and 'total' fields")
+                    if not isinstance(value["correct"], int) or not isinstance(value["total"], int):
+                        _fail(f"breakdown_categories.{key} correct/total must be integers")
+            
+            evaluation_config = EvaluationConfig(
+                comparison_field=comparison_field,
+                display_name=display_name,
+                breakdown_categories=breakdown_categories
+            )
 
     cfg = WorkflowConfig(
         name=name,
         kind=kind,
         tests_path=tests_path,
         prompty_path=prompty_path,
+        evaluation_config=evaluation_config,
         source_file=yaml_path,
     )
     return cfg

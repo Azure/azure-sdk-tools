@@ -66,17 +66,15 @@ The main endpoint for querying the bot is `/completion`. [Here](test/api_test.re
 
 Choose the environment you want to test, the `Default domain` filed is the endpoint:
 
-Prod: [azuresdkqabot-server](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot/providers/Microsoft.Web/sites/azuresdkqabot-server/appServices)
-
-Preview: [azuresdkqabot-test-server](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-test/providers/Microsoft.Web/sites/azuresdkqabot-test-server/appServices)
-
-Dev: [azuresdkqabot-dev-server](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.Web/sites/azuresdkqabot-dev-server/appServices)
+- Prod: [azuresdkqabot-server](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot/providers/Microsoft.Web/sites/azuresdkqabot-server/appServices)
+- Preview: [azuresdkqabot-test-server](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-test/providers/Microsoft.Web/sites/azuresdkqabot-test-server/appServices)
+- Dev: [azuresdkqabot-dev-server](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.Web/sites/azuresdkqabot-dev-server/appServices)
 
 ### How to get access token?
 
-Prod: `az account get-access-token --resource api://azure-sdk-qa-bot`
-Preview: `az account get-access-token --resource api://azure-sdk-qa-bot-test`
-Dev: `az account get-access-token --resource api://azure-sdk-qa-bot-dev`
+- Prod: `az account get-access-token --resource api://azure-sdk-qa-bot`
+- Preview: `az account get-access-token --resource api://azure-sdk-qa-bot-test`
+- Dev: `az account get-access-token --resource api://azure-sdk-qa-bot-dev`
 
 ## Development
 

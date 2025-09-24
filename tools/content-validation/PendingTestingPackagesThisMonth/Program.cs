@@ -25,7 +25,7 @@ namespace PendingTestingPackagesThisMonth
             using IHost host = Host.CreateApplicationBuilder(args).Build();
             IConfiguration config = host.Services.GetRequiredService<IConfiguration>();
             string? language = config["Language"];
-            string packagesListFilePath = "../" + config["PackagesListFilePath"];
+            string packagesListFilePath = "../../../../../tools/content-validation/" + config["PackagesListFilePath"];
 
             // Initialize Playwright instance.
             if (string.IsNullOrEmpty(language))
@@ -126,7 +126,7 @@ namespace PendingTestingPackagesThisMonth
 
             var joinedResult = string.Join(",", result);
 
-            var outputPath = Path.Combine(Directory.GetCurrentDirectory(), packagesListFilePath);
+            var outputPath = Path.Combine(AppContext.BaseDirectory, packagesListFilePath);
             await File.WriteAllTextAsync(outputPath, joinedResult);
 
             return result;
@@ -155,8 +155,7 @@ namespace PendingTestingPackagesThisMonth
             }
 
             var joinedResult = string.Join(",", result);
-
-            var outputPath = Path.Combine(Directory.GetCurrentDirectory(), packagesListFilePath);
+            var outputPath = Path.Combine(AppContext.BaseDirectory, packagesListFilePath);
             await File.WriteAllTextAsync(outputPath, joinedResult);
 
             return result;
@@ -189,7 +188,7 @@ namespace PendingTestingPackagesThisMonth
 
             var joinedResult = string.Join(",", updatedPackages);
 
-            var outputPath = Path.Combine(Directory.GetCurrentDirectory(), packagesListFilePath);
+            var outputPath = Path.Combine(AppContext.BaseDirectory, packagesListFilePath);
             await File.WriteAllTextAsync(outputPath, joinedResult);
 
             return result;
@@ -223,7 +222,7 @@ namespace PendingTestingPackagesThisMonth
 
             var joinedResult = string.Join(",", updatedPackages);
 
-            var outputPath = Path.Combine(Directory.GetCurrentDirectory(), packagesListFilePath);
+            var outputPath = Path.Combine(AppContext.BaseDirectory, packagesListFilePath);
             await File.WriteAllTextAsync(outputPath, joinedResult);
 
             return result;

@@ -6,3 +6,9 @@ temp
 tsp-output/
 output/
 test/examples/specification/convert/examples/*
+# Test artifacts
+sdk/
+test/examples/sdk/alternate-emitter-package-json-path/
+test/utils/alternate-*
+test/utils/emitter-package-extra-dep-*
+test/utils/emitter-package-manual-deps*

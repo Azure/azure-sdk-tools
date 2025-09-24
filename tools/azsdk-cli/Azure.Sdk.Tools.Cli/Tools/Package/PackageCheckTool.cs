@@ -23,8 +23,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
 
         private const string RunChecksCommandName = "run-checks";
-        
-        private readonly Option<bool> fixOption = new(["--fixCheckErrors"], "Enable fixCheckErrors mode for supported checks (like spelling)") { IsRequired = false };
+
+        private readonly Option<bool> fixOption = new(["--fix"], "Enable fix mode for supported checks (like spelling)") { IsRequired = false };
 
         protected override List<Command> GetCommands()
         {

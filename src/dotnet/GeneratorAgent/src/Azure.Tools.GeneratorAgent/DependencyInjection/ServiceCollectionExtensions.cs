@@ -13,7 +13,7 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
     internal static class ServiceCollectionExtensions
     {
         /// <summary>
-        /// Adds all required services for the GeneratorAgent application using modern DI patterns.
+        /// Adds all required services for the GeneratorAgent application.
         /// </summary>
         /// <param name="services">The service collection to add services to</param>
         /// <param name="toolConfig">The tool configuration</param>

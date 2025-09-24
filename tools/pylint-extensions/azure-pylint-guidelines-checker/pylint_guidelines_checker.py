@@ -1516,7 +1516,7 @@ class CheckDocstringParameters(BaseChecker):
             "Docstring type is formatted incorrectly. Do not use `:class` in docstring type.",
         ),
         "C4753": (
-            'Do not use "kwargs" as a keyword argument in docstring. Either expand kwargs into individual arguments or use ":keyword Dict[str, Any] \\\\**kwargs:" format. See details: '
+            'Do not use "kwargs" as a keyword argument in docstring. Either expand kwargs into individual arguments or use ":keyword Dict[str, Any] **kwargs:" format. See details: '
             "https://azure.github.io/azure-sdk/python_documentation.html#docstrings",
             "docstring-kwargs-keyword",
             "Docstring should not use 'kwargs' as a keyword argument.",
@@ -1634,6 +1634,7 @@ class CheckDocstringParameters(BaseChecker):
         arg_names = []
         method_keyword_only_args = []
         vararg_name = None
+        kwarg_name = None
         # specific case for constructor where docstring found in class def
         if isinstance(node, astroid.ClassDef):
             for constructor in node.body:
@@ -1645,13 +1646,15 @@ class CheckDocstringParameters(BaseChecker):
                     method_keyword_only_args = [
                         arg.name for arg in constructor.args.kwonlyargs
                     ]
-                    vararg_name = node.args.vararg
+                    vararg_name = constructor.args.vararg
+                    kwarg_name = constructor.args.kwarg
                     break
 
         if isinstance(node, astroid.FunctionDef):
             arg_names = [arg.name for arg in node.args.args]
             method_keyword_only_args = [arg.name for arg in node.args.kwonlyargs]
             vararg_name = node.args.vararg
+            kwarg_name = node.args.kwarg
 
         try:
             # check for incorrect type :class to prevent splitting
@@ -1693,8 +1696,14 @@ class CheckDocstringParameters(BaseChecker):
                 missing_params.append(param)
 
         # check that all keyword-only args are documented
+        # Exclude **kwargs from mismatch check if method has variable keyword args
+        docstring_kwargs_to_check = dict(docstring_keyword_args)
+        if kwarg_name and f"**{kwarg_name}" in docstring_kwargs_to_check:
+            # Remove **kwargs from the check since it's a variable keyword arg, not a keyword-only arg
+            del docstring_kwargs_to_check[f"**{kwarg_name}"]
+        
         missing_kwonly_args = list(
-            set(docstring_keyword_args) ^ set(method_keyword_only_args)
+            set(docstring_kwargs_to_check) ^ set(method_keyword_only_args)
         )
 
         if missing_params:

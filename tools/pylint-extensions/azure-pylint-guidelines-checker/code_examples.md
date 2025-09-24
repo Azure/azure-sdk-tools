@@ -749,6 +749,15 @@ def process_data(*, option1=None, option2=None, **kwargs):
     """
 ```
 
+✅ **Also Correct** (when kwargs is actually needed):
+```python
+def process_data(**kwargs):
+    """Process data with various options.
+    
+    :keyword Dict[str, Any] **kwargs: Additional keyword arguments.
+    """
+```
+
 ## do-not-import-legacy-six
 
 ❌ **Incorrect**:

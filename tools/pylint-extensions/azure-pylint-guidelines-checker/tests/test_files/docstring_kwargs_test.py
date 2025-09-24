@@ -33,3 +33,14 @@ def function_with_other_keyword(*, other_arg=None):
     :rtype: None
     """
     return None
+
+# test_docstring_kwargs_correct_format - should not trigger error  
+def function_with_correct_kwargs_format(**kwargs):
+    """
+    Function with correct kwargs documentation format.
+    
+    :keyword Dict[str, Any] **kwargs: Additional keyword arguments
+    :return: None
+    :rtype: None
+    """
+    return None

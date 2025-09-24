@@ -3132,6 +3132,11 @@ class TestDocstringParameters(pylint.testutils.CheckerTestCase):
         function_node_other = node.body[2]
         with self.assertNoMessages():
             self.checker.visit_functiondef(function_node_other)
+            
+        # test_docstring_kwargs_correct_format - should not trigger error
+        function_node_correct_format = node.body[3]
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(function_node_correct_format)
 
 
 class TestDoNotImportLegacySix(pylint.testutils.CheckerTestCase):

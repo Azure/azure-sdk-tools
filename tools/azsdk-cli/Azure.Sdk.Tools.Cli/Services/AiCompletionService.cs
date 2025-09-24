@@ -39,13 +39,11 @@ namespace Azure.Sdk.Tools.Cli.Services
                 WriteIndented = _options.EnableDebugLogging
             };
 
-            if (string.IsNullOrEmpty(_options.Endpoint) || string.IsNullOrEmpty(_options.ClientId))
-            {
-                throw new ArgumentException($"Neither the AI completion API endpoint nor the application client ID has been specified. Please set environment variable {AiCompletionOptions.EndpointEnvironmentVariable} and {AiCompletionOptions.AzureSDKBotClientIdEnvironmentVariable}.");
-            } else
-            {
-                _logger.LogInformation("AI completion service endpoint: {Endpoint}, client id: {ClientId}", _options.Endpoint, _options.ClientId);
-                
+            if (string.IsNullOrEmpty(_options.Endpoint)) {
+                logger.LogError("AI completion API endpoint is not configured. Please set environment variable {EnvVar}.", AiCompletionOptions.EndpointEnvironmentVariable);
+            } else if (!string.IsNullOrEmpty(_options.ClientId)) {
+                _logger.LogInformation("AI completion service endpoint and client id are configured. Initializing authentication.");
+
                 var builder = PublicClientApplicationBuilder
                 .Create(_options.ClientId)
                 .WithAuthority(authUrl)
@@ -64,6 +62,9 @@ namespace Azure.Sdk.Tools.Cli.Services
             CompletionRequest request,
             CancellationToken cancellationToken = default)
         {
+            if (string.IsNullOrEmpty(_options.Endpoint)) {
+                throw new ArgumentException($"AI completion API endpoint has not been configured. Please set environment variable {AiCompletionOptions.EndpointEnvironmentVariable}.");
+            }
             if (request == null)
             {
                 throw new ArgumentNullException(nameof(request));
@@ -81,13 +82,9 @@ namespace Azure.Sdk.Tools.Cli.Services
                 using var httpRequest = new HttpRequestMessage(HttpMethod.Post, requestUri);
 
                 var authResult = await RetriveAiCompletionAccessTokenAsync(cancellationToken);
-                if (!string.IsNullOrEmpty(authResult.AccessToken))
+                if (authResult != null && !string.IsNullOrEmpty(authResult.AccessToken))
                 {
                     httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", authResult.AccessToken);
-                }
-                else
-                {
-                    throw new InvalidOperationException("Authentication failed: No access token obtained");
                 }
 
                 httpRequest.Content = JsonContent.Create(request, options: _jsonOptions);
@@ -202,7 +199,8 @@ namespace Azure.Sdk.Tools.Cli.Services
                 return authResult;
             } else
             {
-                throw new InvalidOperationException("MSAL application not initialized. Check ClientId configuration.");
+                _logger.LogInformation("AI completion client id not configured, skipping authentication.");
+                return null;
             }
         }
         private async Task<CompletionResponse> HandleHttpResponse(
@@ -265,7 +263,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             throw response.StatusCode switch
             {
-                HttpStatusCode.Unauthorized => new InvalidOperationException("Unauthorized: Invalid or missing API key"),
+                HttpStatusCode.Unauthorized => new InvalidOperationException("Unauthorized: Invalid or missing AI completion service client id"),
                 HttpStatusCode.BadRequest => new ArgumentException($"Bad request: {content}"),
                 HttpStatusCode.TooManyRequests => new InvalidOperationException("Rate limit exceeded. Please try again later."),
                 HttpStatusCode.InternalServerError => new InvalidOperationException("AI completion service is experiencing issues"),

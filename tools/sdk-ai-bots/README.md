@@ -4,19 +4,26 @@ This folder contains AI-powered components that work together to provide intelli
 
 ## Architecture Overview
 
-The system consists of five main components working together to provide intelligent assistance for Azure SDK development:
+The system consists of six main components corresponding to the project folders:
 
 ```text
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Teams Bot     │    │   Go Backend    │    │  Azure Function │
-│  (TypeScript)   │◄──►│   API Service   │◄──►│   (TypeScript)  │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                       │                       │
-         ▼                       ▼                       ▼
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│  Shared Library │    │   Evaluation    │    │ Knowledge Base  │
-│  (TypeScript)   │    │   (Python)      │    │ (Configurable)  │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
+┌───────────────────────────────────────────────────────────────────────┐
+│                             Azure SDK AI Bot System                   │
+├─────────────────┬─────────────────┬─────────────────┬─────────────────┤
+│   Teams Bot     │ Backend Service │  Azure Function │ Knowledge Sync  │
+│  (TypeScript)   │       (Go)      │   (TypeScript)  │  (TypeScript)   │
+│                 │                 │                 │                 │
+│azure-sdk-qa-    │azure-sdk-qa-    │azure-sdk-qa-    │azure-sdk-qa-    │
+│bot/             │bot-backend/     │bot-function/    │bot-knowledge-   │
+│                 │                 │                 │sync/            │
+├─────────────────┼─────────────────┴─────────────────┴─────────────────┤
+│  Shared Library │               Evaluation Framework                  │
+│  (TypeScript)   │                    (Python)                         │
+│                 │                                                     │
+│azure-sdk-qa-    │            azure-sdk-qa-bot-evaluation/             │
+│bot-backend-     │                                                     │
+│shared/          │                                                     │
+└─────────────────┴─────────────────────────────────────────────────────┘
 ```
 
 ## Components
@@ -31,7 +38,7 @@ The core processing engine that handles AI-powered response generation for the b
 
 ### 3. Azure Function (`azure-sdk-qa-bot-function/`)
 
-A serverless component responsible for maintaining and updating the knowledge base that powers the bot's responses. It processes documentation from various sources, indexes content for searchability, and manages the configuration of knowledge sources.
+A serverless component that handles bot analytics and activity conversion. It processes Teams bot interactions and provides monitoring capabilities for the system.
 
 ### 4. Shared Library (`azure-sdk-qa-bot-backend-shared/`)
 
@@ -83,7 +90,7 @@ go run main.go
 ```bash
 cd azure-sdk-qa-bot-function
 npm install
-func start
+npm start
 ```
 
 #### Evaluation Framework
@@ -98,7 +105,7 @@ python evaluation.py
 
 ### Documentation Sources
 
-Add new documentation sources by updating `azure-sdk-qa-bot-function/config/knowledge-config.json`. See [Self-Serve Knowledge Sources Guide](docs/SELF_SERVE_ADD_KNOWLEDGE_SOURCES.md) for detailed instructions.
+Add new documentation sources by updating the knowledge configuration. The Knowledge Sync Service uses `azure-sdk-qa-bot-knowledge-sync/config/knowledge-config.json`, while the Azure Function uses `azure-sdk-qa-bot-function/config/knowledge-config.json`. See [Self-Serve Knowledge Sources Guide](docs/SELF_SERVE_ADD_KNOWLEDGE_SOURCES.md) for detailed instructions.
 
 ### Environment Variables
 

@@ -26,6 +26,8 @@ weights: dict[str, float] = {
     "groundedness_weight": 0.4,  # Staying grounded in guidelines
 }
 
+channel_to_tenant_id_dict: dict[str, str] = {}
+
 scenario_to_channel: dict[str, str] = {
     "typespec": "TypeSpec Discussion",
     "python": "Language - Python",
@@ -40,7 +42,7 @@ scenario_to_channel: dict[str, str] = {
     "javascript": "Language - JavaScript"
 }
 
-def retrieve_tenant_id(channel: str):
+def retrieve_tenant_ids() -> dict[str, str]:
     credential = DefaultAzureCredential()
     storage_blob_account = os.environ["STORAGE_BLOB_ACCOUNT"]
     blob_service_client = BlobServiceClient(
@@ -55,12 +57,13 @@ def retrieve_tenant_id(channel: str):
     download_stream = blob_client.download_blob()
     channel_data_yaml = yaml.safe_load(download_stream.readall())
     channels = channel_data_yaml["channels"]
+    channel_to_tenant_id = {}
+    channel_to_tenant_id["default"] = channel_data_yaml["default"]["tenant"]
     if channels:
         for item in channels:
-            if item["name"] == channel:
-                return item["tenant"]
+            channel_to_tenant_id[item["name"]] = item["tenant"]
 
-    return channel_data_yaml["default"]["tenant"]
+    return channel_to_tenant_id
 
 async def process_file(input_file: str, output_file: str, scenario: str, is_bot: bool) -> None:
     """Process a single input file"""
@@ -70,7 +73,9 @@ async def process_file(input_file: str, output_file: str, scenario: str, is_bot:
     bot_service_endpoint = os.environ.get("BOT_SERVICE_ENDPOINT", None) 
     api_url = f"{bot_service_endpoint}/completion" if bot_service_endpoint is not None else "http://localhost:8088/completion"
     start_time = time.time()
-    tenant_id = retrieve_tenant_id(scenario_to_channel[scenario] if scenario in scenario_to_channel else scenario)
+    tenant_id = channel_to_tenant_id_dict[scenario_to_channel[scenario] if scenario in scenario_to_channel else scenario]
+    if tenant_id is None:
+        tenant_id = channel_to_tenant_id_dict["default"]
     
     outputFile = open(output_file, 'a', encoding='utf-8')
     with open(input_file, "r", encoding="utf-8") as f:
@@ -421,6 +426,7 @@ if __name__ == "__main__":
     logging.info(f"test folder: {args.test_folder}")
     # Required environment variables
     load_dotenv()
+    channel_to_tenant_id_dict = retrieve_tenant_ids()
     all_results = {}
     try: 
         logging.info("📊 Preparing dataset...")

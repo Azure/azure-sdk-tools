@@ -37,10 +37,10 @@ public interface ILanguageChecks
     /// Checks spelling in the specific package.
     /// </summary>
     /// <param name="packagePath">Path to the package directory</param>
-    /// <param name="fix">Whether to attempt to automatically fix spelling issues where supported by cspell</param>
+    /// <param name="fixCheckErrors">Whether to attempt to automatically fix spelling issues where supported by cspell</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Result of the spelling check</returns>
-    Task<CLICheckResponse> CheckSpellingAsync(string packagePath, bool fix = false, CancellationToken ct = default);
+    Task<CLICheckResponse> CheckSpellingAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
 
     /// <summary>
     /// Updates code snippets in the specific package.
@@ -128,9 +128,9 @@ public class LanguageChecks : ILanguageChecks
         return await ValidateReadmeCommonAsync(packagePath, ct);
     }
 
-    public virtual async Task<CLICheckResponse> CheckSpellingAsync(string packagePath, bool fix = false, CancellationToken ct = default)
+    public virtual async Task<CLICheckResponse> CheckSpellingAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
-        return await CheckSpellingCommonAsync(packagePath, fix, ct);
+        return await CheckSpellingCommonAsync(packagePath, fixCheckErrors, ct);
     }
 
     public virtual async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, CancellationToken ct = default)
@@ -251,10 +251,10 @@ public class LanguageChecks : ILanguageChecks
     /// Common spelling check implementation that checks for spelling issues and optionally applies fixes.
     /// </summary>
     /// <param name="packagePath">Absolute path to the package directory</param>
-    /// <param name="fix">Whether to attempt to automatically fix spelling issues where supported by cspell</param>
+    /// <param name="fixCheckErrors">Whether to attempt to automatically fix spelling issues where supported by cspell</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>CLI check response containing success/failure status and response message</returns>
-    protected async Task<CLICheckResponse> CheckSpellingCommonAsync(string packagePath, bool fix = false, CancellationToken ct = default)
+    protected async Task<CLICheckResponse> CheckSpellingCommonAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         try
         {
@@ -283,7 +283,7 @@ public class LanguageChecks : ILanguageChecks
             var processResult = await _npxHelper.Run(npxOptions, ct: ct);
 
             // If fix is requested and there are spelling issues, provide fix guidance
-            if (fix && processResult.ExitCode != 0 && !string.IsNullOrWhiteSpace(processResult.Output))
+            if (fixCheckErrors && processResult.ExitCode != 0 && !string.IsNullOrWhiteSpace(processResult.Output))
             {
                 // Build an LLM prompt that instructs the model to either fix typos or add legitimate terms to cspell.json
                 var sb = new System.Text.StringBuilder();

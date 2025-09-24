@@ -231,7 +231,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             Assert.That(fixResult.ExitCode, Is.GreaterThanOrEqualTo(0));
             
             // The fix result should have different next steps indicating LLM guidance
-            Assert.IsTrue(fixResult.NextSteps != null && fixResult.NextSteps.Any());
+            Assert.IsNotEmpty(fixResult.NextSteps);
         }
     }
 }

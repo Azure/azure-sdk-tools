@@ -1,6 +1,7 @@
 package com.azure.tools.apiview.processor.diff.dto;
 
 import com.azure.json.JsonWriter;
+
 import java.io.IOException;
 import java.util.Map;
 
@@ -8,25 +9,51 @@ import java.util.Map;
  * Represents a single API change between two revisions.
  */
 public class ApiChangeDto {
-    public String changeType; // e.g. AddedMethod, RemovedMethod, AddedClass, RemovedClass, ModifiedMethod, ModifiedField
-    public String before;     // optional textual representation of prior symbol (null for additions)
-    public String after;      // optional textual representation of new symbol (null for removals)
-    public Meta meta = new Meta();
-    public String category;   // optional grouping (Parameters, ReturnType, Visibility, Deprecation, etc.)
+    private String changeType; // e.g. AddedMethod, RemovedMethod, AddedClass, RemovedClass, ModifiedMethod, ModifiedField
+    private String before;     // optional textual representation of prior symbol (null for additions)
+    private String after;      // optional textual representation of new symbol (null for removals)
+    private Meta meta = new Meta();
+    private String category;   // optional grouping (Parameters, ReturnType, Visibility, Deprecation, etc.)
 
     public static class Meta {
-        public String symbolKind;   // Class, Method, Field
-        public String fqn;          // Fully qualified class or member owner FQN
-        public String methodName;   // For methods
-        public String fieldName;    // For fields
-        public String signature;    // Canonical signature for method/constructor
-        public String visibility;   // public/protected
-        public String returnType;   // For methods
-        public String[] parameterTypes; // Erased param type list
-        public String[] parameterNames; // Parameter names (old or new depending on context)
-        public Boolean deprecated;      // Nullable
-        public Boolean paramNameChange; // true if param names changed but types same
-        public Map<String, String> extra; // Future extensibility
+        private String symbolKind;   // Class, Method, Field
+        private String fqn;          // Fully qualified class or member owner FQN
+        private String methodName;   // For methods
+        private String fieldName;    // For fields
+        private String signature;    // Canonical signature for method/constructor
+        private String visibility;   // public/protected
+        private String returnType;   // For methods
+        private String[] parameterTypes; // Erased param type list
+        private String[] parameterNames; // Parameter names (old or new depending on context)
+        private Boolean deprecated;      // Nullable
+        private Boolean paramNameChange; // true if param names changed but types same
+        private Map<String, String> extra; // Future extensibility
+
+        // Getters / setters
+        public String getSymbolKind() { return symbolKind; }
+        public Meta setSymbolKind(String v) { this.symbolKind = v; return this; }
+        public String getFqn() { return fqn; }
+        public Meta setFqn(String v) { this.fqn = v; return this; }
+        public String getMethodName() { return methodName; }
+        public Meta setMethodName(String v) { this.methodName = v; return this; }
+        public String getFieldName() { return fieldName; }
+        public Meta setFieldName(String v) { this.fieldName = v; return this; }
+        public String getSignature() { return signature; }
+        public Meta setSignature(String v) { this.signature = v; return this; }
+        public String getVisibility() { return visibility; }
+        public Meta setVisibility(String v) { this.visibility = v; return this; }
+        public String getReturnType() { return returnType; }
+        public Meta setReturnType(String v) { this.returnType = v; return this; }
+        public String[] getParameterTypes() { return parameterTypes; }
+        public Meta setParameterTypes(String[] v) { this.parameterTypes = v; return this; }
+        public String[] getParameterNames() { return parameterNames; }
+        public Meta setParameterNames(String[] v) { this.parameterNames = v; return this; }
+        public Boolean getDeprecated() { return deprecated; }
+        public Meta setDeprecated(Boolean v) { this.deprecated = v; return this; }
+        public Boolean getParamNameChange() { return paramNameChange; }
+        public Meta setParamNameChange(Boolean v) { this.paramNameChange = v; return this; }
+        public Map<String, String> getExtra() { return extra; }
+        public Meta setExtra(Map<String, String> v) { this.extra = v; return this; }
     }
 
     public void write(JsonWriter writer) throws IOException {
@@ -73,4 +100,16 @@ public class ApiChangeDto {
         }
         writer.writeEndObject();
     }
+
+    // Getters / setters for top-level fields
+    public String getChangeType() { return changeType; }
+    public ApiChangeDto setChangeType(String v) { this.changeType = v; return this; }
+    public String getBefore() { return before; }
+    public ApiChangeDto setBefore(String v) { this.before = v; return this; }
+    public String getAfter() { return after; }
+    public ApiChangeDto setAfter(String v) { this.after = v; return this; }
+    public Meta getMeta() { return meta; }
+    public ApiChangeDto setMeta(Meta m) { this.meta = m; return this; }
+    public String getCategory() { return category; }
+    public ApiChangeDto setCategory(String v) { this.category = v; return this; }
 }

@@ -48,7 +48,7 @@ public class DiffModeTest {
         // Read output file apiview-diff.json
         Path diffJson = outDir.resolve("apiview-diff.json");
         assertTrue(Files.exists(diffJson), "Diff output file should exist");
-        String json = Files.readAllLines(diffJson, StandardCharsets.UTF_8).stream().collect(Collectors.joining());
+        String json = String.join("", Files.readAllLines(diffJson, StandardCharsets.UTF_8));
 
         // Basic assertions on change types.
         assertTrue(json.contains("AddedMethod"), "Should contain AddedMethod change for bar()");
@@ -85,7 +85,7 @@ public class DiffModeTest {
 
         Path diffJson = outDir.resolve("apiview-diff.json");
         assertTrue(Files.exists(diffJson), "Diff output file should exist");
-        String json = Files.readAllLines(diffJson, StandardCharsets.UTF_8).stream().collect(Collectors.joining());
+        String json = String.join("", Files.readAllLines(diffJson, StandardCharsets.UTF_8));
 
         assertTrue(json.contains("ModifiedFieldType"), "Should detect field type change");
         assertTrue(json.contains("AddedField"), "Should detect added field");

@@ -195,13 +195,9 @@ public class JavaASTAnalyser implements Analyser {
         this(apiListing, null, true);
     }
 
-    public JavaASTAnalyser(APIListing apiListing, SymbolCollector collector) {
-        this(apiListing, collector, true);
-    }
-
     public JavaASTAnalyser(APIListing apiListing, SymbolCollector collector, boolean enableDiagnostics) {
         this.apiListing = apiListing;
-        this.diagnostic = enableDiagnostics ? new Diagnostics(apiListing) : null;
+        this.diagnostic = new Diagnostics(apiListing, enableDiagnostics);
         this.symbolCollector = collector;
     }
 
@@ -250,9 +246,7 @@ public class JavaASTAnalyser implements Analyser {
 
         // we conclude by doing a final pass over all diagnostics to enable them to do any final analysis based on
         // the already-executed individual scans
-        if (diagnostic != null) {
-            diagnostic.scanFinal(apiListing);
-        }
+        diagnostic.scanFinal(apiListing);
 
         // validate the model
         APIListingValidator.validate(apiListing);
@@ -736,9 +730,7 @@ public class JavaASTAnalyser implements Analyser {
             visitDefinition(typeDeclaration, parentNode);
         }
 
-        if (diagnostic != null) {
-            diagnostic.scanIndividual(compilationUnit, apiListing);
-        }
+        diagnostic.scanIndividual(compilationUnit, apiListing);
     }
 
     // This method is for constructors, fields, methods, etc.
@@ -1537,7 +1529,7 @@ public class JavaASTAnalyser implements Analyser {
          * node two = List
          * node three = String
          *
-         * "java.util.Map<String, Integer>" has four nodes:
+         * "Map<String, Integer>" has four nodes:
          * node one = java.util
          * node two = Map
          * node three = String

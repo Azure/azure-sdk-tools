@@ -1,71 +1,76 @@
 package com.azure.tools.apiview.processor.diff;
 
 import com.azure.tools.apiview.processor.diff.dto.ApiChangeDto;
+import com.azure.tools.apiview.processor.diff.dto.ApiDiffResult;
 import com.azure.tools.apiview.processor.diff.model.*;
 
 import java.util.*;
 
 /**
- * Computes semantic differences between two ApiSymbolTable instances.
+ * Computes semantic differences between two class symbol maps.
  */
 public class DiffEngine {
 
-    public List<ApiChangeDto> diff(ApiSymbolTable oldTable, ApiSymbolTable newTable) {
-        List<ApiChangeDto> out = new ArrayList<ApiChangeDto>();
+    public ApiDiffResult diff(Map<String, ClassSymbol> oldClasses, Map<String, ClassSymbol> newClasses) {
+        List<ApiChangeDto> list = new ArrayList<ApiChangeDto>();
 
         // Class additions/removals
         Set<String> allClasses = new HashSet<String>();
-        allClasses.addAll(oldTable.classes.keySet());
-        allClasses.addAll(newTable.classes.keySet());
+        allClasses.addAll(oldClasses.keySet());
+        allClasses.addAll(newClasses.keySet());
         for (String fqn : allClasses) {
-            ClassSymbol oldCls = oldTable.classes.get(fqn);
-            ClassSymbol newCls = newTable.classes.get(fqn);
+            ClassSymbol oldCls = oldClasses.get(fqn);
+            ClassSymbol newCls = newClasses.get(fqn);
             if (oldCls == null) {
-                out.add(classChange("AddedClass", null, fqn, newCls));
+                list.add(classChange("AddedClass", null, fqn, newCls));
             } else if (newCls == null) {
-                out.add(classChange("RemovedClass", fqn, null, oldCls));
+                list.add(classChange("RemovedClass", fqn, null, oldCls));
             } else {
                 // members
-                diffFields(fqn, oldCls, newCls, out);
-                diffMethods(fqn, oldCls, newCls, out);
+                diffFields(fqn, oldCls, newCls, list);
+                diffMethods(fqn, oldCls, newCls, list);
             }
         }
 
         // Sort for determinism (by changeType then signature/fqn)
-        Collections.sort(out, new Comparator<ApiChangeDto>() {
+        Collections.sort(list, new Comparator<ApiChangeDto>() {
             public int compare(ApiChangeDto a, ApiChangeDto b) {
-                int ct = safe(a.changeType).compareTo(safe(b.changeType));
-                if (ct != 0) return ct;
-                String as = a.meta.signature != null ? a.meta.signature : a.meta.fqn;
-                String bs = b.meta.signature != null ? b.meta.signature : b.meta.fqn;
+                int ct = safe(a.getChangeType()).compareTo(safe(b.getChangeType()));
+                if (ct != 0) {
+                    return ct;
+                }
+                String as = a.getMeta().getSignature() != null ? a.getMeta().getSignature() : a.getMeta().getFqn();
+                String bs = b.getMeta().getSignature() != null ? b.getMeta().getSignature() : b.getMeta().getFqn();
                 return safe(as).compareTo(safe(bs));
             }
         });
-        return out;
+        ApiDiffResult result = new ApiDiffResult();
+        for (ApiChangeDto c : list) result.addChange(c);
+        return result;
     }
 
     private void diffFields(String fqn, ClassSymbol oldCls, ClassSymbol newCls, List<ApiChangeDto> out) {
         Set<String> names = new HashSet<String>();
-        names.addAll(oldCls.fields.keySet());
-        names.addAll(newCls.fields.keySet());
+        names.addAll(oldCls.getFields().keySet());
+        names.addAll(newCls.getFields().keySet());
         for (String name : names) {
-            FieldSymbol of = oldCls.fields.get(name);
-            FieldSymbol nf = newCls.fields.get(name);
+            FieldSymbol of = oldCls.getFields().get(name);
+            FieldSymbol nf = newCls.getFields().get(name);
             if (of == null) {
                 out.add(fieldChange("AddedField", null, describeField(nf), fqn, nf));
             } else if (nf == null) {
                 out.add(fieldChange("RemovedField", describeField(of), null, fqn, of));
             } else {
                 // Check type change
-                if (!safe(of.type).equals(safe(nf.type))) {
+                if (!safe(of.getType()).equals(safe(nf.getType()))) {
                     ApiChangeDto ch = fieldChange("ModifiedFieldType", describeField(of), describeField(nf), fqn, nf);
-                    ch.category = "FieldType"; // changing type typically breaking
+                    ch.setCategory("FieldType");
                     out.add(ch);
                 }
                 // Deprecation change
-                if (of.deprecated != nf.deprecated) {
+                if (of.isDeprecated() != nf.isDeprecated()) {
                     ApiChangeDto ch = fieldChange("ModifiedFieldDeprecation", describeField(of), describeField(nf), fqn, nf);
-                    ch.category = "Deprecation"; // deprecation addition not breaking
+                    ch.setCategory("Deprecation");
                     out.add(ch);
                 }
             }
@@ -75,56 +80,54 @@ public class DiffEngine {
     private void diffMethods(String fqn, ClassSymbol oldCls, ClassSymbol newCls, List<ApiChangeDto> out) {
         // Compare by signature maps
         Set<String> allSigs = new HashSet<String>();
-        allSigs.addAll(oldCls.methodsBySignature.keySet());
-        allSigs.addAll(newCls.methodsBySignature.keySet());
+        allSigs.addAll(oldCls.getMethodsBySignature().keySet());
+        allSigs.addAll(newCls.getMethodsBySignature().keySet());
         for (String sig : allSigs) {
-            MethodSymbol om = oldCls.methodsBySignature.get(sig);
-            MethodSymbol nm = newCls.methodsBySignature.get(sig);
+            MethodSymbol om = oldCls.getMethodsBySignature().get(sig);
+            MethodSymbol nm = newCls.getMethodsBySignature().get(sig);
             if (om == null) {
                 out.add(methodAdded(fqn, nm));
             } else if (nm == null) {
                 out.add(methodRemoved(fqn, om));
             } else {
-                if (!safe(om.returnType).equals(safe(nm.returnType))) {
+                if (!safe(om.getReturnType()).equals(safe(nm.getReturnType()))) {
                     ApiChangeDto ch = methodChange("ModifiedMethodReturnType", fqn, om, nm);
-                    ch.category = "ReturnType";
+                    ch.setCategory("ReturnType");
                     out.add(ch);
                 }
-                if (om.deprecated != nm.deprecated) {
+                if (om.isDeprecated() != nm.isDeprecated()) {
                     ApiChangeDto ch = methodChange("ModifiedMethodDeprecation", fqn, om, nm);
-                    ch.category = "Deprecation";
+                    ch.setCategory("Deprecation");
                     out.add(ch);
                 }
-                if (!safe(om.visibility).equals(safe(nm.visibility))) {
+                if (!safe(om.getVisibility()).equals(safe(nm.getVisibility()))) {
                     ApiChangeDto ch = methodChange("ModifiedMethodVisibility", fqn, om, nm);
-                    ch.category = "Visibility";
+                    ch.setCategory("Visibility");
                     out.add(ch);
                 }
                 // Parameter name changes (types same, names differ)
                 if (sameParamTypes(om, nm) && !sameParamNames(om, nm)) {
                     ApiChangeDto ch = methodChange("ModifiedMethodParameterNames", fqn, om, nm);
-                    ch.meta.paramNameChange = Boolean.TRUE;
-                    ch.category = "Parameters";
+                    ch.getMeta().setParamNameChange(Boolean.TRUE);
+                    ch.setCategory("Parameters");
                     out.add(ch);
                 }
             }
         }
         // Detect overload added/removed by comparing methodsByName
         Set<String> methodNames = new HashSet<String>();
-        methodNames.addAll(oldCls.methodsByName.keySet());
-        methodNames.addAll(newCls.methodsByName.keySet());
+        methodNames.addAll(oldCls.getMethodsByName().keySet());
+        methodNames.addAll(newCls.getMethodsByName().keySet());
         for (String name : methodNames) {
-            List<MethodSymbol> oldOver = oldCls.methodsByName.get(name);
-            List<MethodSymbol> newOver = newCls.methodsByName.get(name);
+            List<MethodSymbol> oldOver = oldCls.getMethodsByName().get(name);
+            List<MethodSymbol> newOver = newCls.getMethodsByName().get(name);
             int oldCount = oldOver == null ? 0 : oldOver.size();
             int newCount = newOver == null ? 0 : newOver.size();
             if (oldCount != newCount) {
                 ApiChangeDto ch = new ApiChangeDto();
-                ch.changeType = oldCount < newCount ? "AddedOverload" : "RemovedOverload";
-                ch.meta.symbolKind = "Method";
-                ch.meta.fqn = fqn;
-                ch.meta.methodName = name;
-                ch.category = "Overload"; // removal considered breaking if fewer overloads, omitted impact field
+                ch.setChangeType(oldCount < newCount ? "AddedOverload" : "RemovedOverload");
+                ch.getMeta().setSymbolKind("Method").setFqn(fqn).setMethodName(name);
+                ch.setCategory("Overload"); // removal considered breaking if fewer overloads, omitted impact field
                 out.add(ch);
             }
         }
@@ -132,81 +135,85 @@ public class DiffEngine {
 
     private ApiChangeDto methodAdded(String fqn, MethodSymbol m) {
         ApiChangeDto ch = baseMethodChange("AddedMethod", fqn, m);
-        ch.after = describeMethod(m); // adding method typically non-breaking
+        ch.setAfter(describeMethod(m)); // adding method typically non-breaking
         return ch;
     }
 
     private ApiChangeDto methodRemoved(String fqn, MethodSymbol m) {
         ApiChangeDto ch = baseMethodChange("RemovedMethod", fqn, m);
-        ch.before = describeMethod(m);
+        ch.setBefore(describeMethod(m));
         return ch;
     }
 
     private ApiChangeDto methodChange(String type, String fqn, MethodSymbol oldM, MethodSymbol newM) {
         ApiChangeDto ch = baseMethodChange(type, fqn, newM);
-        ch.before = describeMethod(oldM);
-        ch.after = describeMethod(newM);
+        ch.setBefore(describeMethod(oldM));
+        ch.setAfter(describeMethod(newM));
         return ch;
     }
 
     private ApiChangeDto baseMethodChange(String type, String fqn, MethodSymbol m) {
         ApiChangeDto ch = new ApiChangeDto();
-        ch.changeType = type;
-        ch.meta.symbolKind = "Method";
-        ch.meta.fqn = fqn;
-        ch.meta.methodName = m.name;
-        ch.meta.signature = m.fullSignature;
-        ch.meta.returnType = m.returnType;
-        ch.meta.parameterTypes = extractParamTypes(m);
-        ch.meta.parameterNames = extractParamNames(m);
-        ch.meta.visibility = m.visibility;
-        ch.meta.deprecated = m.deprecated ? Boolean.TRUE : null;
-        ch.category = inferCategory(type);
+        ch.setChangeType(type);
+        ApiChangeDto.Meta meta = ch.getMeta();
+        meta.setSymbolKind("Method")
+            .setFqn(fqn)
+            .setMethodName(m.getName())
+            .setSignature(m.getFullSignature())
+            .setReturnType(m.getReturnType())
+            .setParameterTypes(extractParamTypes(m))
+            .setParameterNames(extractParamNames(m))
+            .setVisibility(m.getVisibility())
+            .setDeprecated(m.isDeprecated() ? Boolean.TRUE : null);
+        ch.setCategory(inferCategory(type));
         return ch;
     }
 
     private ApiChangeDto classChange(String type, String before, String after, ClassSymbol cls) {
         ApiChangeDto ch = new ApiChangeDto();
-        ch.changeType = type;
-        ch.before = before;
-        ch.after = after;
-        ch.meta.symbolKind = "Class";
-        ch.meta.fqn = after != null ? after : before;
+        ch.setChangeType(type);
+        ch.setBefore(before);
+        ch.setAfter(after);
+        ApiChangeDto.Meta meta = ch.getMeta();
+        meta.setSymbolKind("Class").setFqn(after != null ? after : before);
         // Class visibility not currently captured; infer from modifiers
-        ch.meta.visibility = cls.modifiers.contains("public") ? "public" : (cls.modifiers.contains("protected") ? "protected" : null);
-        ch.meta.deprecated = cls.deprecated ? Boolean.TRUE : null;
-        ch.category = "Type"; // removed impact classification
+        meta.setVisibility(cls.getModifiers().contains("public") ? "public" : (cls.getModifiers().contains("protected") ? "protected" : null));
+        meta.setDeprecated(cls.isDeprecated() ? Boolean.TRUE : null);
+        ch.setCategory("Type"); // removed impact classification
         return ch;
     }
 
     private ApiChangeDto fieldChange(String type, String before, String after, String fqn, FieldSymbol f) {
         ApiChangeDto ch = new ApiChangeDto();
-        ch.changeType = type;
-        ch.before = before;
-        ch.after = after;
-        ch.meta.symbolKind = "Field";
-        ch.meta.fqn = fqn;
-        ch.meta.fieldName = f.name;
-        ch.meta.visibility = f.visibility;
-        ch.meta.deprecated = f.deprecated ? Boolean.TRUE : null;
-        ch.category = type.startsWith("Modified") ? "Field" : (type.startsWith("Added") ? "Field" : "Field"); // impact removed
+        ch.setChangeType(type);
+        ch.setBefore(before);
+        ch.setAfter(after);
+        ApiChangeDto.Meta meta = ch.getMeta();
+        meta.setSymbolKind("Field")
+            .setFqn(fqn)
+            .setFieldName(f.getName())
+            .setVisibility(f.getVisibility())
+            .setDeprecated(f.isDeprecated() ? Boolean.TRUE : null);
+        ch.setCategory(type.startsWith("Modified") ? "Field" : (type.startsWith("Added") ? "Field" : "Field")); // impact removed
         return ch;
     }
 
     private String describeMethod(MethodSymbol m) {
         StringBuilder sb = new StringBuilder();
-        sb.append(m.visibility).append(" ");
-        boolean isConstructor = "void".equals(m.returnType) && m.name != null && m.name.length() > 0 && m.name.equals(simpleNameFromFqn(m.fqn));
+        sb.append(m.getVisibility()).append(" ");
+        boolean isConstructor = "void".equals(m.getReturnType()) && m.getName() != null && m.getName().length() > 0 && m.getName().equals(simpleNameFromFqn(m.getFqn()));
         if (isConstructor) {
-            sb.append(m.name);
+            sb.append(m.getName());
         } else {
-            sb.append(m.returnType).append(" ").append(m.name);
+            sb.append(m.getReturnType()).append(" ").append(m.getName());
         }
         sb.append("(");
         String[] pTypes = extractParamTypes(m);
         String[] pNames = extractParamNames(m);
         for (int i = 0; i < pTypes.length; i++) {
-            if (i > 0) sb.append(", ");
+            if (i > 0) {
+                sb.append(", ");
+            }
             sb.append(pTypes[i]).append(" ").append(pNames[i]);
         }
         sb.append(")");
@@ -214,43 +221,55 @@ public class DiffEngine {
     }
 
     private String describeField(FieldSymbol f) {
-        return f.visibility + " " + f.type + " " + f.name;
+        return f.getVisibility() + " " + f.getType() + " " + f.getName();
     }
 
     private String safe(String s) { return s == null ? "" : s; }
 
     private String inferCategory(String changeType) {
-        if (changeType.contains("ReturnType")) return "ReturnType";
-        if (changeType.contains("Parameter")) return "Parameters";
-        if (changeType.contains("Overload")) return "Overload";
-        if (changeType.contains("Visibility")) return "Visibility";
+        if (changeType.contains("ReturnType")) {
+            return "ReturnType";
+        }
+        if (changeType.contains("Parameter")) {
+            return "Parameters";
+        }
+        if (changeType.contains("Overload")) {
+            return "Overload";
+        }
+        if (changeType.contains("Visibility")) {
+            return "Visibility";
+        }
         return "Method";
     }
 
     private String[] extractParamTypes(MethodSymbol m) {
-        String[] arr = new String[m.params.size()];
-        for (int i = 0; i < m.params.size(); i++) arr[i] = m.params.get(i).type;
+        String[] arr = new String[m.getParams().size()];
+        for (int i = 0; i < m.getParams().size(); i++) arr[i] = m.getParams().get(i).getType();
         return arr;
     }
 
     private String[] extractParamNames(MethodSymbol m) {
-        String[] arr = new String[m.params.size()];
-        for (int i = 0; i < m.params.size(); i++) arr[i] = m.params.get(i).name;
+        String[] arr = new String[m.getParams().size()];
+        for (int i = 0; i < m.getParams().size(); i++) arr[i] = m.getParams().get(i).getName();
         return arr;
     }
 
     private boolean sameParamTypes(MethodSymbol a, MethodSymbol b) {
-        if (a.params.size() != b.params.size()) return false;
-        for (int i = 0; i < a.params.size(); i++) {
-            if (!safe(a.params.get(i).type).equals(safe(b.params.get(i).type))) return false;
+        if (a.getParams().size() != b.getParams().size()) {
+            return false;
+        }
+        for (int i = 0; i < a.getParams().size(); i++) {
+            if (!safe(a.getParams().get(i).getType()).equals(safe(b.getParams().get(i).getType()))) return false;
         }
         return true;
     }
 
     private boolean sameParamNames(MethodSymbol a, MethodSymbol b) {
-        if (a.params.size() != b.params.size()) return false;
-        for (int i = 0; i < a.params.size(); i++) {
-            if (!safe(a.params.get(i).name).equals(safe(b.params.get(i).name))) return false;
+        if (a.getParams().size() != b.getParams().size()) {
+            return false;
+        }
+        for (int i = 0; i < a.getParams().size(); i++) {
+            if (!safe(a.getParams().get(i).getName()).equals(safe(b.getParams().get(i).getName()))) return false;
         }
         return true;
     }

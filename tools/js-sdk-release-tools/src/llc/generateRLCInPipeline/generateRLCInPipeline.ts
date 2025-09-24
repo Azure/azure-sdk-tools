@@ -96,16 +96,11 @@ export async function generateRLCInPipeline(options: {
                     specifyApiVersionToGenerateSDKByTypeSpec(tspDefDir, options.apiVersion);
                 }
                 const tspClientDir = path.join(process.cwd(), 'eng', 'common', 'tsp-client');
-                const currentDir = process.cwd();
-                logger.info(`Changing directory to: ${tspClientDir}`);
-                process.chdir(tspClientDir);
                 
-                const scriptCommand = ['npm exec --no -- tsp-client', 'init', '--debug', '--tsp-config', path.join(tspDefDir, 'tspconfig.yaml'), '--local-spec-repo', tspDefDir, '--repo', generateRepoDataInTspLocation(options.swaggerRepoUrl), '--commit', options.gitCommitId].join(" ");
+                logger.info(`Using tsp-client from: ${tspClientDir}`);
+                const scriptCommand = ['npm', '--prefix', tspClientDir, 'exec', '--no', '--', 'tsp-client', 'init', '--debug', '--tsp-config', path.join(tspDefDir, 'tspconfig.yaml'), '--local-spec-repo', tspDefDir, '--repo', generateRepoDataInTspLocation(options.swaggerRepoUrl), '--commit', options.gitCommitId].join(" ");
                 logger.info(`Start to run command: '${scriptCommand}'`);
                 execSync(scriptCommand, {stdio: 'inherit'});
-                
-                logger.info(`Changing back to original directory: ${currentDir}`);
-                process.chdir(currentDir);
                 logger.info("Generated code by tsp-client successfully.");
             }
             packagePath = generatedPackageDir;

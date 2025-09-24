@@ -20,13 +20,16 @@ export async function generateTypeScriptCodeFromTypeSpec(
     const repoUrl = generateRepoDataInTspLocation(options.repoUrl);
     const tspClientDir = join(process.cwd(), 'eng', 'common', 'tsp-client');
     
-    const currentDir = process.cwd();
-    logger.info(`Changing directory to: ${tspClientDir}`);
-    process.chdir(tspClientDir);
-    
+    logger.info(`Using tsp-client from: ${tspClientDir}`);
     await runCommand(
-        'npm exec --no -- tsp-client',
+        'npm',
         [
+            '--prefix',
+            tspClientDir,
+            'exec',
+            '--no',
+            '--',
+            'tsp-client',
             'init',
             '--debug',
             '--tsp-config',
@@ -41,9 +44,6 @@ export async function generateTypeScriptCodeFromTypeSpec(
         { shell: true, stdio: 'inherit' },
         false
     );
-    
-    logger.info(`Changing back to original directory: ${currentDir}`);
-    process.chdir(currentDir);
 
     if (originalVersion) await updatePackageVersion(packageDirectory, originalVersion);
     logger.info(`Generated typescript code successfully.`);

@@ -106,15 +106,35 @@ public class JavaUpdateLanguageService : ClientUpdateLanguageServiceBase
 
     private static ApiChange MapRawChange(RawApiChange raw)
     {
+        // New Java diff schema fields:
+        // changeType, before, after, category, meta{ symbolKind,fqn,methodName,fieldName,signature,visibility,returnType,parameterTypes,parameterNames,deprecated,paramNameChange }
         var apiChange = new ApiChange();
-        apiChange.Kind = raw.Kind ?? string.Empty;
-        apiChange.Symbol = raw.Symbol ?? string.Empty;
-        apiChange.Detail = raw.Detail ?? string.Empty;
+
+        // Map high-level fields. We'll surface changeType as Kind, and use before/after to construct Symbol/Detail heuristically.
+        apiChange.Kind = raw.ChangeType ?? string.Empty;
+
+        // Determine a representative symbol name from meta.
+        string? symbolFromMeta = raw.Meta?.MethodName ?? raw.Meta?.FieldName ?? raw.Meta?.Fqn;
+        apiChange.Symbol = symbolFromMeta ?? string.Empty;
+
+        // Detail: show a concise before -> after form if both exist; else whichever exists.
+        if (!string.IsNullOrEmpty(raw.Before) && !string.IsNullOrEmpty(raw.After))
+        {
+            apiChange.Detail = $"{raw.Before} -> {raw.After}";
+        }
+        else
+        {
+            apiChange.Detail = raw.Before ?? raw.After ?? string.Empty;
+        }
+
         if (raw.Meta != null)
         {
             void Add(string key, object? value)
             {
-                if (value == null) { return; }
+                if (value == null)
+                {
+                    return;
+                }
                 var str = value switch
                 {
                     string s => s,
@@ -128,27 +148,23 @@ public class JavaUpdateLanguageService : ClientUpdateLanguageServiceBase
                     apiChange.Metadata[key] = str;
                 }
             }
+
             Add("symbolKind", raw.Meta.SymbolKind);
-            Add("fqn", raw.Meta.FullyQualifiedName);
-            Add("oldSignature", raw.Meta.OldSignature);
-            Add("newSignature", raw.Meta.NewSignature);
-            Add("oldReturnType", raw.Meta.OldReturnType);
-            Add("newReturnType", raw.Meta.NewReturnType);
-            Add("oldFieldType", raw.Meta.OldFieldType);
-            Add("newFieldType", raw.Meta.NewFieldType);
-            Add("oldVisibility", raw.Meta.OldVisibility);
-            Add("newVisibility", raw.Meta.NewVisibility);
-            Add("deprecatedBefore", raw.Meta.DeprecatedBefore);
-            Add("deprecatedAfter", raw.Meta.DeprecatedAfter);
+            Add("fqn", raw.Meta.Fqn);
+            Add("methodName", raw.Meta.MethodName);
+            Add("fieldName", raw.Meta.FieldName);
+            Add("signature", raw.Meta.Signature);
+            Add("visibility", raw.Meta.Visibility);
+            Add("returnType", raw.Meta.ReturnType);
             Add("parameterTypes", raw.Meta.ParameterTypes);
-            Add("oldParameterNames", raw.Meta.OldParameterNames);
-            Add("newParameterNames", raw.Meta.NewParameterNames);
+            Add("parameterNames", raw.Meta.ParameterNames);
+            Add("deprecated", raw.Meta.Deprecated);
             Add("paramNameChange", raw.Meta.ParamNameChange);
-            Add("overloadCountBefore", raw.Meta.OverloadCountBefore);
-            Add("overloadCountAfter", raw.Meta.OverloadCountAfter);
         }
-        if (!string.IsNullOrEmpty(raw.Category)) { apiChange.Metadata["category"] = raw.Category!; }
-        if (!string.IsNullOrEmpty(raw.Impact)) { apiChange.Metadata["impact"] = raw.Impact!; }
+        if (!string.IsNullOrEmpty(raw.Category))
+        {
+            apiChange.Metadata["category"] = raw.Category!;
+        }
         return apiChange;
     }
 
@@ -226,10 +242,10 @@ internal class RawApiDiffResult
 
 internal class RawApiChange
 {
-    [JsonPropertyName("kind")] public string? Kind { get; set; }
-    [JsonPropertyName("symbol")] public string? Symbol { get; set; }
-    [JsonPropertyName("detail")] public string? Detail { get; set; }
-    [JsonPropertyName("impact")] public string? Impact { get; set; }
+    // Updated to new Java diff output schema
+    [JsonPropertyName("changeType")] public string? ChangeType { get; set; }
+    [JsonPropertyName("before")] public string? Before { get; set; }
+    [JsonPropertyName("after")] public string? After { get; set; }
     [JsonPropertyName("category")] public string? Category { get; set; }
     [JsonPropertyName("meta")] public RawApiChangeMeta? Meta { get; set; }
 }
@@ -237,21 +253,14 @@ internal class RawApiChange
 internal class RawApiChangeMeta
 {
     [JsonPropertyName("symbolKind")] public string? SymbolKind { get; set; }
-    [JsonPropertyName("fqn")] public string? FullyQualifiedName { get; set; }
-    [JsonPropertyName("oldSignature")] public string? OldSignature { get; set; }
-    [JsonPropertyName("newSignature")] public string? NewSignature { get; set; }
-    [JsonPropertyName("oldReturnType")] public string? OldReturnType { get; set; }
-    [JsonPropertyName("newReturnType")] public string? NewReturnType { get; set; }
-    [JsonPropertyName("oldFieldType")] public string? OldFieldType { get; set; }
-    [JsonPropertyName("newFieldType")] public string? NewFieldType { get; set; }
-    [JsonPropertyName("oldVisibility")] public string? OldVisibility { get; set; }
-    [JsonPropertyName("newVisibility")] public string? NewVisibility { get; set; }
-    [JsonPropertyName("deprecatedBefore")] public bool? DeprecatedBefore { get; set; }
-    [JsonPropertyName("deprecatedAfter")] public bool? DeprecatedAfter { get; set; }
+    [JsonPropertyName("fqn")] public string? Fqn { get; set; }
+    [JsonPropertyName("methodName")] public string? MethodName { get; set; }
+    [JsonPropertyName("fieldName")] public string? FieldName { get; set; }
+    [JsonPropertyName("signature")] public string? Signature { get; set; }
+    [JsonPropertyName("visibility")] public string? Visibility { get; set; }
+    [JsonPropertyName("returnType")] public string? ReturnType { get; set; }
     [JsonPropertyName("parameterTypes")] public string[]? ParameterTypes { get; set; }
-    [JsonPropertyName("oldParameterNames")] public string[]? OldParameterNames { get; set; }
-    [JsonPropertyName("newParameterNames")] public string[]? NewParameterNames { get; set; }
+    [JsonPropertyName("parameterNames")] public string[]? ParameterNames { get; set; }
+    [JsonPropertyName("deprecated")] public bool? Deprecated { get; set; }
     [JsonPropertyName("paramNameChange")] public bool? ParamNameChange { get; set; }
-    [JsonPropertyName("overloadCountBefore")] public int? OverloadCountBefore { get; set; }
-    [JsonPropertyName("overloadCountAfter")] public int? OverloadCountAfter { get; set; }
 }

@@ -396,7 +396,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     this.activeAPIRevisionIsApprovedByCurrentUser = this.activeAPIRevision?.approvers.includes(this.userProfile?.userName!)!;
     this.canToggleApproveAPIRevision = (!this.diffAPIRevision || this.diffAPIRevision.approvers.length > 0);
 
-    this.isAPIRevisionApprovalDisabled = isReviewByCopilotRequired && !isVersionReviewedByCopilot && !this.activeAPIRevisionIsApprovedByCurrentUser;
+    this.isAPIRevisionApprovalDisabled = this.shouldDisableApproval(isReviewByCopilotRequired, isVersionReviewedByCopilot);
 
     if (this.canToggleApproveAPIRevision) {
       if (this.isAPIRevisionApprovalDisabled) {

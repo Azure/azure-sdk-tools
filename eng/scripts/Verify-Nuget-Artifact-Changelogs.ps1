@@ -21,7 +21,7 @@ foreach ($artifact in $artifacts) {
     Write-Host "Verifying changelog for artifact: $($artifact.Name)"
 
     # Create temporary directory for extraction
-    $tempDir = Join-Path $env:TEMP "changelog-verify-$([System.Guid]::NewGuid())"
+    $tempDir = Join-Path ([System.IO.Path]::GetTempPath()) "changelog-verify-$([System.Guid]::NewGuid())"
     New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
 
     try {

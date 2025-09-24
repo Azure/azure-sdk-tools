@@ -1,5 +1,9 @@
 import json
+from typing import Callable
 from uuid import uuid4
+
+from src._prompt_runner import run_prompt
+from src._utils import get_prompt_path
 
 
 class CommentGrouper:
@@ -8,11 +12,13 @@ class CommentGrouper:
     grouped together with a correlation_id.
     """
 
-    def __init__(self, *, comments: list["Comment"] = None, reviewer: "ApiViewReview" = None):
-        self.comments = comments
-        self.reviewer = reviewer
-        if not self.comments and self.reviewer:
-            self.comments = self.reviewer.comments
+    def __init__(
+        self, *, comments: list["Comment"] = None, run_prompt_func: Callable = run_prompt, settings=None, logger=None
+    ):
+        self.comments = comments or []
+        self.run_prompt = run_prompt_func
+        self.settings = settings
+        self.logger = logger
 
     def group(self) -> list["Comment"]:
         """
@@ -43,14 +49,13 @@ class CommentGrouper:
                 for idx in indices:
                     self.comments[idx].correlation_id = correlation_id
 
-        if self.reviewer and len(generic_only) > 1:
-            from src._utils import get_prompt_path
-
+        if len(generic_only) > 1:
             prompty_file = "generate_correlation_ids.prompty"
-            # pylint: disable=protected-access
-            response = self.reviewer._run_prompt(
+            response = self.run_prompt(
                 prompt_path=get_prompt_path(folder="api_review", filename=prompty_file),
                 inputs={"content": {i: self.comments[i] for i in generic_only}},
+                settings=self.settings,
+                logger=self.logger,
             )
             results = json.loads(response).get("results", [])
             for result in results:
@@ -58,7 +63,8 @@ class CommentGrouper:
                 if len(indices) > 1:
                     correlation_id = str(uuid4())
                     for idx in indices:
-                        assert idx in generic_only
+                        if idx not in generic_only:
+                            raise ValueError(f"Index {idx} is not a generic comment index.")
                         self.comments[idx].correlation_id = correlation_id
 
         return self.comments

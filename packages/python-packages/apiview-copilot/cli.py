@@ -277,12 +277,12 @@ def deploy_flask_app():
     deploy_app_to_azure()
 
 
-def _group_apiview_comments(comments_path: str):
+def group_apiview_comments(comments_path: str):
     """
     Groups similar comments in an APIView comments JSON file.
     """
-    from src._apiview_reviewer import Comment
     from src._comment_grouper import CommentGrouper
+    from src._models import Comment
 
     comments = []
     if os.path.exists(comments_path):
@@ -966,7 +966,7 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("start-job", "review_job_start")
             g.command("get-job", "review_job_get")
             g.command("summarize", "review_summarize")
-            g.command("group-comments", "_group_apiview_comments")
+            g.command("group-comments", "group_apiview_comments")
         with CommandGroup(self, "agent", "__main__#{}") as g:
             g.command("mention", "handle_agent_mention")
             g.command("chat", "handle_agent_chat")
@@ -1028,6 +1028,12 @@ class CliCommandsLoader(CLICommandsLoader):
                 options_list=["--environment"],
                 default="production",
                 choices=["production", "staging"],
+            )
+            ac.argument(
+                "comments_path",
+                type=str,
+                help="Path to a JSON file containing comments.",
+                options_list=["--comments-path", "-c"],
             )
         with ArgumentsContext(self, "review") as ac:
             ac.argument("path", type=str, help="The path to the APIView file")
@@ -1223,12 +1229,6 @@ class CliCommandsLoader(CLICommandsLoader):
                 type=str,
                 help="The thread ID to continue the discussion. If not provided, a new thread will be created.",
                 options_list=["--thread-id", "-t"],
-            )
-            ac.argument(
-                "comments_path",
-                type=str,
-                help="Path to the JSON file containing comments for the agent to process.",
-                options_list=["--comments-path", "-c"],
             )
         with ArgumentsContext(self, "db") as ac:
             ac.argument(

@@ -12,8 +12,6 @@
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <AssemblyName>azsdk</AssemblyName>
     <Version>0.5.0</Version>
-    <!-- Disable auto-versioning to use static version -->
-    <DisableImplicitVersioning>true</DisableImplicitVersioning>
     <!-- Package metadata -->
     <PackageReleaseNotes>See CHANGELOG.md for release notes</PackageReleaseNotes>
     <RepositoryUrl>https://github.com/Azure/azure-sdk-tools</RepositoryUrl>

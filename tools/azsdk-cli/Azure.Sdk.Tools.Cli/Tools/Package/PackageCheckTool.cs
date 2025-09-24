@@ -315,9 +315,5 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             var result = await languageChecks.UpdateSnippetsAsync(packagePath, ct);
             return result;
         }
-
-        // Back-compat overload for callers/tests that don't pass a CancellationToken
-        public Task<CLICheckResponse> RunPackageCheck(string packagePath, PackageCheckType checkType, bool fixCheckErrors = false)
-            => RunPackageCheck(packagePath, checkType, fixCheckErrors, ct: default);
     }
 }

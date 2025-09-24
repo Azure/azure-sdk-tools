@@ -6,7 +6,10 @@ param (
     [string] $ReleasePlanWorkItemId,
 
     [Parameter(Mandatory = $false)]
-    [string] $TriageWorkItemId
+    [string] $TriageWorkItemId,
+
+    [Parameter(Mandatory = $false)]
+    [string] $TargetServiceTreeId
 )
 
 Set-StrictMode -Version 3
@@ -49,7 +52,7 @@ print
     Write-Host "Added attestation entry for product [$productId], with status [$status] for KPI action id [$actionItemId]."
 }
 
-$triages =  Get-TriagesForCPEXAttestation -triageWorkItemId $TriageWorkItemId
+$triages =  Get-TriagesForCPEXAttestation -triageWorkItemId $TriageWorkItemId -targetServiceTreeId $TargetServiceTreeId
 
 foreach ($triage in $triages) {
     $fields = $triage.fields
@@ -77,9 +80,9 @@ foreach ($triage in $triages) {
 
     if ($dataAttestationStatus -ne "Completed") {
         if ($dataScope -eq "Yes") {
-            Update-AttestationStatusInWorkItem -workItemId $triage.id -fieldName "Custom.DataplaneAttestationStatus" -status "Completed"
+            # Update-AttestationStatusInWorkItem -workItemId $triage.id -fieldName "Custom.DataplaneAttestationStatus" -status "Completed"
         } else {
-            Update-AttestationStatusInWorkItem -workItemId $triage.id -fieldName "Custom.DataplaneAttestationStatus" -status "Not applicable"
+            # Update-AttestationStatusInWorkItem -workItemId $triage.id -fieldName "Custom.DataplaneAttestationStatus" -status "Not applicable"
 
             if ($lifecycleToDataKpis.ContainsKey($productLifecycle)) {
                 foreach ($kpiId in $lifecycleToDataKpis[$productLifecycle]) {
@@ -98,9 +101,9 @@ foreach ($triage in $triages) {
 
     if ($mgmtAttestationStatus -ne "Completed") {
         if ($mgmtScope -eq "Yes") {
-            Update-AttestationStatusInWorkItem -workItemId $triage.id -fieldName "Custom.ManagementPlaneAttestationStatus" -status "Completed"
+            # Update-AttestationStatusInWorkItem -workItemId $triage.id -fieldName "Custom.ManagementPlaneAttestationStatus" -status "Completed"
         } else {
-            Update-AttestationStatusInWorkItem -workItemId $triage.id -fieldName "Custom.ManagementPlaneAttestationStatus" -status "Not applicable"
+            # Update-AttestationStatusInWorkItem -workItemId $triage.id -fieldName "Custom.ManagementPlaneAttestationStatus" -status "Not applicable"
             if ($lifecycleToMgmtKpis.ContainsKey($productLifecycle)) {
                 foreach ($kpiId in $lifecycleToMgmtKpis[$productLifecycle]) {
                     AddAttestationEntry $productServiceTreeId $kpiId $NA $productType $url
@@ -111,7 +114,7 @@ foreach ($triage in $triages) {
 
 }
 
-$releasePlans = Get-ReleasePlansForCPEXAttestation -releasePlanWorkItemId $ReleasePlanWorkItemId
+$releasePlans = Get-ReleasePlansForCPEXAttestation -releasePlanWorkItemId $ReleasePlanWorkItemId -targetServiceTreeId $TargetServiceTreeId
 
 foreach ($releasePlan in $releasePlans) {
     $fields = $releasePlan.fields
@@ -163,5 +166,5 @@ foreach ($releasePlan in $releasePlans) {
         AddAttestationEntry $productServiceTreeId $kpiId $Completed $productType $url
     }
 
-    Update-AttestationStatusInWorkItem -workItemId $releasePlan.id -fieldName "Custom.AttestationStatus" -status "Completed"
+    # Update-AttestationStatusInWorkItem -workItemId $releasePlan.id -fieldName "Custom.AttestationStatus" -status "Completed"
 }

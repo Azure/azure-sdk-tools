@@ -1,6 +1,6 @@
 param (
     [Parameter(Mandatory = $false)]
-    [string] $TableName = "KpiEvidenceStream",
+    [string] $TableName = "ProdKpiEvidenceStream",
 
     [Parameter(Mandatory = $false)]
     [string] $ReleasePlanWorkItemId,
@@ -44,7 +44,9 @@ print
     EvidenceUrl = "$url"
 "@
 
+    Write-Host "Adding attestation entry for product [$productId], with status [$status] for KPI action id [$actionItemId]."
     InvokeKustoCommand $command
+    Write-Host "Added attestation entry for product [$productId], with status [$status] for KPI action id [$actionItemId]."
 }
 
 $triages =  Get-TriagesForCPEXAttestation -triageWorkItemId $TriageWorkItemId
@@ -124,38 +126,41 @@ foreach ($releasePlan in $releasePlans) {
         $productType = "ProductSku"
     }
     
-    if ($dataScope -eq 'Yes') {
-        switch -Wildcard ($lifecycle) {
-            "*Public Preview*" {
-                AddAttestationEntry $productServiceTreeId $KPI_ID_Data_Public_Preview $Completed $productType $url
+    $kpiId = switch ($mgmtScope) {
+        'Yes' {
+            switch -Wildcard ($lifecycle) {
+                "*Public Preview*" { $KPI_ID_Mgmt_Public_Preview }
+                "*Private Preview*" { $KPI_ID_Mgmt_Private_Preview }
+                "*GA*" { $KPI_ID_Mgmt_GA }
+                default {
+                    Write-Output "Release Plan ID $($releasePlan.id): Management plane in scope, unknown lifecycle $($lifecycle)"
+                    $null
+                }
             }
-            "*Private Preview*" {
-                AddAttestationEntry $productServiceTreeId $KPI_ID_Data_Private_Preview $Completed $productType $url
-            }
-            "*GA*" {
-                AddAttestationEntry $productServiceTreeId $KPI_ID_Data_GA $Completed $productType $url
-            }
-            default {
-                Write-Output "Release Plan ID $($releasePlan.id): Dataplane in scope, unknown lifecycle $($lifecycle)"
+        }
+        default {
+            switch ($dataScope) {
+                'Yes' {
+                    switch -Wildcard ($lifecycle) {
+                        "*Public Preview*" { $KPI_ID_Data_Public_Preview }
+                        "*Private Preview*" { $KPI_ID_Data_Private_Preview }
+                        "*GA*" { $KPI_ID_Data_GA }
+                        default {
+                            Write-Output "Release Plan ID $($releasePlan.id): Dataplane in scope, unknown lifecycle $($lifecycle)"
+                            $null
+                        }
+                    }
+                }
+                default {
+                    Write-Output "Release Plan ID: Both Management Plane and DataPlane not in scope"
+                    $null
+                }
             }
         }
     }
 
-    if ($mgmtScope -eq 'Yes') {
-        switch -Wildcard ($lifecycle) {
-            "*Public Preview*" {
-                AddAttestationEntry $productServiceTreeId $KPI_ID_Mgmt_Public_Preview $Completed $productType $url
-            }
-            "*Private Preview*" {
-                AddAttestationEntry $productServiceTreeId $KPI_ID_Mgmt_Private_Preview $Completed $productType $url
-            }
-            "*GA*" {
-                AddAttestationEntry $productServiceTreeId $KPI_ID_Mgmt_GA $Completed $productType $url
-            }
-            default {
-                Write-Output "Release Plan ID $($releasePlan.id): Management plane in scope, unknown lifecycle $($lifecycle)"
-            }
-        }
+    if ($kpiId) {
+        AddAttestationEntry $productServiceTreeId $kpiId $Completed $productType $url
     }
 
     Update-AttestationStatusInWorkItem -workItemId $releasePlan.id -fieldName "Custom.AttestationStatus" -status "Completed"

@@ -187,9 +187,19 @@ namespace Azure.Sdk.Tools.Cli.Services
                 if (authResult == null)
                 {
                     _logger.LogInformation("Prompting for interactive authentication");
-                    authResult = await _msalApp.AcquireTokenInteractive(scopes)
-                        .ExecuteAsync(cancellationToken);
-                    _logger.LogInformation("Interactive authentication completed successfully");
+                    try
+                    {
+                        // Set a timeout of 60 seconds
+                        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+                        authResult = await _msalApp.AcquireTokenInteractive(scopes)
+                        .ExecuteAsync(cts.Token);
+                        _logger.LogInformation("Interactive authentication completed successfully");
+                    }
+                    catch (Exception)
+                    {
+                        _logger.LogError("Interactive authentication failed");
+                        authResult = null;
+                    }
                 }
                 if (authResult == null)
                 {

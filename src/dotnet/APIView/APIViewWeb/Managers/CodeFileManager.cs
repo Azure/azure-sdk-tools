@@ -4,6 +4,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
 using ApiView;
+using APIViewWeb.Exceptions;
 using APIViewWeb.Helpers;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.Models;
@@ -99,6 +100,15 @@ namespace APIViewWeb.Managers
                 }
             }
 
+            if (codeFile != null)
+            {
+                List<string> duplicateLineIds = GetDuplicateLineIds(codeFile);
+                if (duplicateLineIds.Count > 0)
+                {
+                    throw new DuplicateLineIdException(codeFile.Language, duplicateLineIds);
+                }
+            }
+
             return codeFile;
         }
 
@@ -161,6 +171,16 @@ namespace APIViewWeb.Managers
                 memoryStream,
                 runAnalysis);
             }
+
+            if (codeFile != null)
+            {
+                List<string> duplicateLineIds = GetDuplicateLineIds(codeFile);
+                if (duplicateLineIds.Count > 0)
+                {
+                    throw new DuplicateLineIdException(codeFile.Language, duplicateLineIds);
+                }
+            }
+
             return codeFile;
         }
 
@@ -228,6 +248,16 @@ namespace APIViewWeb.Managers
                 result = false;
 
             return result;
+        }
+
+        public List<string> GetDuplicateLineIds(CodeFile codeFile)
+        {
+            return codeFile.GetApiLines(skipDocs: true)
+                .Where(line => !string.IsNullOrEmpty(line.lineId))
+                .GroupBy(line => line.lineId)
+                .Where(group => group.Count() > 1)
+                .Select(group => group.Key)
+                .ToList();
         }
 
         private static void InitializeFromCodeFile(APICodeFileModel file, CodeFile codeFile)

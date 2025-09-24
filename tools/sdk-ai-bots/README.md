@@ -48,6 +48,10 @@ A common code library that provides consistent data structures, utility function
 
 A quality assurance system that continuously monitors and evaluates the performance of the AI bot's responses. It runs automated tests to measure response accuracy, relevance, and quality to ensure the bot maintains high standards of assistance.
 
+### 6. Knowledge Sync Service (`azure-sdk-qa-bot-knowledge-sync/`)
+
+A standalone TypeScript application that processes documentation from various repositories and maintains the knowledge base. It clones repositories, processes markdown files and TypeSpec Spector test files, uploads processed content to Azure Blob Storage, and updates the Azure AI Search index. This service maintains change detection for efficient processing and serves as the primary knowledge management component for the system.
+
 ## Knowledge Sources
 
 The bot provides intelligent responses by searching through comprehensive knowledge bases including:

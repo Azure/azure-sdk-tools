@@ -41,6 +41,7 @@ steps:
   inputs:
     command: 'build'
     projects: 'content-validation.sln'
+    workingDirectory: '$(System.DefaultWorkingDirectory)/tools/content-validation'
 
 - task: DotNetCoreCLI@2
   displayName: Run Playwright Install
@@ -57,13 +58,13 @@ steps:
     PackageName: ${{ parameters.packageName }}
   inputs:
     command: 'run'
-    workingDirectory: '$(System.DefaultWorkingDirectory)/DataSource'
+    workingDirectory: '$(System.DefaultWorkingDirectory)/tools/content-validation/DataSource'
 
 - task: DotNetCoreCLI@2
   displayName: Run common test case
   inputs:
     command: 'test'
-    projects: 'ContentValidation.Test/ContentValidation.Test.csproj'
+    projects: 'tools/content-validation/ContentValidation.Test/ContentValidation.Test.csproj'
     arguments: '-e BROWSER=chromium --filter Category=CommonTest'
     testRunTitle: 'Content Validation Testing Start'
   continueOnError: false
@@ -72,7 +73,7 @@ steps:
   displayName: Run test case
   inputs:
     command: 'test'
-    projects: 'ContentValidation.Test/ContentValidation.Test.csproj'
+    projects: 'tools/content-validation/ContentValidation.Test/ContentValidation.Test.csproj'
     arguments: '-e BROWSER=chromium --filter Category=DotNetTest'
     testRunTitle: 'Content Validation Testing Start'
   continueOnError: true
@@ -88,7 +89,7 @@ steps:
     allowFailedBuilds: false
     branchName: 'refs/heads/main'
     artifactName: 'issues-summary'
-    downloadPath: '$(System.DefaultWorkingDirectory)/Artifacts'
+    downloadPath: '$(System.DefaultWorkingDirectory)/tools/content-validation/Artifacts'
   continueOnError: true
 
 - task: DotNetCoreCLI@2
@@ -102,12 +103,12 @@ steps:
     Repo: $(GITHUB_REPO)
   inputs:
     command: 'run'
-    workingDirectory: '$(System.DefaultWorkingDirectory)/ReportHelper'
+    workingDirectory: '$(System.DefaultWorkingDirectory)/tools/content-validation/ReportHelper'
 
 - task: PublishPipelineArtifact@1
   displayName: "Upload pipeline test data"
   inputs:
-    targetPath: $(System.DefaultWorkingDirectory)/Reports
+    targetPath: $(System.DefaultWorkingDirectory)/tools/content-validation/Reports
     artifactName: ${{ parameters.packageName }}
     publishLocation: "pipeline"
 
@@ -118,7 +119,7 @@ steps:
     targetType: 'inline'
     script: |
       #!/bin/bash
-      FILE_PATH="$(System.DefaultWorkingDirectory)/eng/PipelineFailedStatus.txt"
+      FILE_PATH="$(System.DefaultWorkingDirectory)/tools/content-validation/eng/PipelineFailedStatus.txt"
 
       if [ ! -f "$FILE_PATH" ]; then
         echo "No exception was caught during the test case execution. Please check the test case running results."

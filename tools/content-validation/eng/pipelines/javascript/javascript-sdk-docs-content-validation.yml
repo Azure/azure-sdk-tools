@@ -86,6 +86,7 @@ stages:
       inputs:
         command: 'build'
         projects: 'content-validation.sln'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/tools/content-validation'
 
     - task: DotNetCoreCLI@2
       displayName: Run Playwright Install
@@ -101,11 +102,11 @@ stages:
         PackagesListFilePath: ${{ parameters.packagesListFilePath }}
       inputs:
         command: 'run'
-        workingDirectory: '$(System.DefaultWorkingDirectory)/PendingTestingPackagesThisMonth'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/tools/content-validation/PendingTestingPackagesThisMonth'
       name: runPackagesJob
 
     - pwsh: |
-        $packagesJson = Get-Content "$(System.DefaultWorkingDirectory)/${{ parameters.packagesListFilePath }}" -Raw
+        $packagesJson = Get-Content "$(System.DefaultWorkingDirectory)/tools/content-validation/${{ parameters.packagesListFilePath }}" -Raw
         
         if ($packagesJson -notmatch '^\s*\{') {
           $packages = $packagesJson -split ',' | ForEach-Object { $_.Trim() }

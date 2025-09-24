@@ -1,12 +1,12 @@
 using System.ComponentModel.DataAnnotations;
 using System.Net;
-using System.Net.Http.Json;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Azure.Sdk.Tools.Cli.Models.AiCompletion;
 using Azure.Sdk.Tools.Cli.Options;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.Identity.Client;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -19,6 +19,9 @@ namespace Azure.Sdk.Tools.Cli.Services
         private readonly ILogger<AiCompletionService> _logger;
         private readonly AiCompletionOptions _options;
         private readonly JsonSerializerOptions _jsonOptions;
+        private readonly IPublicClientApplication? _msalApp;
+        private readonly IList<string> scopes = new List<string>() { "api://azure-sdk-qa-bot/token" };
+        private readonly string authUrl = "https://login.microsoftonline.com/organizations/";
 
         public AiCompletionService(
             HttpClient httpClient,
@@ -36,15 +39,32 @@ namespace Azure.Sdk.Tools.Cli.Services
                 WriteIndented = _options.EnableDebugLogging
             };
 
+            if (string.IsNullOrEmpty(_options.Endpoint)) {
+                logger.LogError("AI completion API endpoint is not configured. Please set environment variable {EnvVar}.", AiCompletionOptions.EndpointEnvironmentVariable);
+            } else if (!string.IsNullOrEmpty(_options.ClientId)) {
+                _logger.LogInformation("AI completion service endpoint and client id are configured. Initializing authentication.");
+
+                var builder = PublicClientApplicationBuilder
+                .Create(_options.ClientId)
+                .WithAuthority(authUrl)
+                .WithDefaultRedirectUri(); // Use MSAL's default redirect URI for public clients
+
+                _msalApp = builder.Build();
+
+                // Configure persistent token cache
+                ConfigureTokenCache(_msalApp);
+            }
+
             ConfigureHttpClient();
         }
 
         public async Task<CompletionResponse> SendCompletionRequestAsync(
             CompletionRequest request,
-            string? apiKey = null,
-            string? endpoint = null,
             CancellationToken cancellationToken = default)
         {
+            if (string.IsNullOrEmpty(_options.Endpoint)) {
+                throw new ArgumentException($"AI completion API endpoint has not been configured. Please set environment variable {AiCompletionOptions.EndpointEnvironmentVariable}.");
+            }
             if (request == null)
             {
                 throw new ArgumentNullException(nameof(request));
@@ -57,21 +77,17 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             try
             {
-                // Get endpoint and API key with environment variable override support
-                endpoint = GetEffectiveEndpoint(endpoint);
-                apiKey = GetEffectiveApiKey(apiKey);
-
-                var requestUri = new Uri(new Uri(endpoint), "/completion");
+                var requestUri = new Uri(new Uri(_options.Endpoint), "/completion");
 
                 using var httpRequest = new HttpRequestMessage(HttpMethod.Post, requestUri);
 
-                if (!string.IsNullOrEmpty(apiKey))
+                var authResult = await RetriveAiCompletionAccessTokenAsync(cancellationToken);
+                if (authResult != null && !string.IsNullOrEmpty(authResult.AccessToken))
                 {
-                    httpRequest.Headers.Add("X-API-KEY", apiKey);
+                    httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", authResult.AccessToken);
                 }
 
                 httpRequest.Content = JsonContent.Create(request, options: _jsonOptions);
-
                 if (_options.EnableDebugLogging)
                 {
                     var requestJson = JsonSerializer.Serialize(request, _jsonOptions);
@@ -143,15 +159,60 @@ namespace Azure.Sdk.Tools.Cli.Services
                 return false;
             }
 
-            if (request.TopK.HasValue && (request.TopK.Value < 1 || request.TopK.Value > 100))
-            {
-                _logger.LogWarning("Request validation failed: TopK must be between 1 and 100");
-                return false;
-            }
-
             return isValid;
         }
+        private async Task<AuthenticationResult> RetriveAiCompletionAccessTokenAsync(CancellationToken cancellationToken = default)
+        {
+            if (_msalApp != null)
+            {
+                var accounts = await _msalApp.GetAccountsAsync();
+                AuthenticationResult? authResult = null;
+                if (accounts.Any())
+                {
+                    try
+                    {
+                        authResult = await _msalApp.AcquireTokenSilent(scopes, accounts.FirstOrDefault())
+                            .ExecuteAsync(cancellationToken);
+                    }
+                    catch (MsalUiRequiredException ex)
+                    {
+                        _logger.LogError("Silent authentication failed, will use interactive: {Message}", ex.Message);
+                    }
+                }
+                else
+                {
+                    _logger.LogInformation("No cached accounts found, will use interactive authentication.");
+                }
 
+                if (authResult == null)
+                {
+                    _logger.LogInformation("Prompting for interactive authentication");
+                    try
+                    {
+                        // Set a timeout of 60 seconds
+                        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+                        authResult = await _msalApp.AcquireTokenInteractive(scopes)
+                        .ExecuteAsync(cts.Token);
+                        _logger.LogInformation("Interactive authentication completed successfully");
+                    }
+                    catch (Exception)
+                    {
+                        _logger.LogError("Interactive authentication failed");
+                        authResult = null;
+                    }
+                }
+                if (authResult == null)
+                {
+                    _logger.LogError("Failed to authenticate.");
+                    throw new Exception("Authentication Failure.");
+                }
+                return authResult;
+            } else
+            {
+                _logger.LogInformation("AI completion client id not configured, skipping authentication.");
+                return null;
+            }
+        }
         private async Task<CompletionResponse> HandleHttpResponse(
             HttpResponseMessage response,
             CancellationToken cancellationToken)
@@ -212,7 +273,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             throw response.StatusCode switch
             {
-                HttpStatusCode.Unauthorized => new InvalidOperationException("Unauthorized: Invalid or missing API key"),
+                HttpStatusCode.Unauthorized => new InvalidOperationException("Unauthorized: Invalid or missing AI completion service client id"),
                 HttpStatusCode.BadRequest => new ArgumentException($"Bad request: {content}"),
                 HttpStatusCode.TooManyRequests => new InvalidOperationException("Rate limit exceeded. Please try again later."),
                 HttpStatusCode.InternalServerError => new InvalidOperationException("AI completion service is experiencing issues"),
@@ -232,45 +293,26 @@ namespace Azure.Sdk.Tools.Cli.Services
             _httpClient.DefaultRequestHeaders.Accept.ParseAdd("application/json");
         }
 
-        private string GetEffectiveEndpoint(string? override_endpoint)
+        private void ConfigureTokenCache(IPublicClientApplication app)
         {
-            // Priority: parameter override > environment variable > configuration
-            if (!string.IsNullOrEmpty(override_endpoint))
+            // Configure in-memory token cache for the lifetime of the MCP server process
+            _logger.LogDebug("Configuring in-memory token cache for MSAL");
+
+            // Set up token cache callbacks with detailed logging
+            app.UserTokenCache.SetBeforeAccess(notificationArgs =>
             {
-                return override_endpoint;
-            }
+                _logger.LogDebug("Token cache access - HasStateChanged: {HasStateChanged}, SuggestedCacheKey: {SuggestedCacheKey}",
+                    notificationArgs.HasStateChanged, notificationArgs.SuggestedCacheKey);
+            });
 
-            var envEndpoint = Environment.GetEnvironmentVariable(_options.EndpointEnvironmentVariable);
-            if (!string.IsNullOrEmpty(envEndpoint))
+            app.UserTokenCache.SetAfterAccess(notificationArgs =>
             {
-                return envEndpoint;
-            }
-
-            if (string.IsNullOrEmpty(_options.Endpoint))
-            {
-                throw new InvalidOperationException(
-                    $"AI completion endpoint not configured. Set via configuration, " +
-                    $"environment variable '{_options.EndpointEnvironmentVariable}', or parameter override.");
-            }
-
-            return _options.Endpoint;
-        }
-
-        private string? GetEffectiveApiKey(string? override_apiKey)
-        {
-            // Priority: parameter override > environment variable > configuration
-            if (!string.IsNullOrEmpty(override_apiKey))
-            {
-                return override_apiKey;
-            }
-
-            var envApiKey = Environment.GetEnvironmentVariable(_options.ApiKeyEnvironmentVariable);
-            if (!string.IsNullOrEmpty(envApiKey))
-            {
-                return envApiKey;
-            }
-
-            return _options.ApiKey;
+                _logger.LogDebug("Token cache after access - HasStateChanged: {HasStateChanged}", notificationArgs.HasStateChanged);
+                if (notificationArgs.HasStateChanged)
+                {
+                    _logger.LogInformation("Token cache has been updated with new authentication data");
+                }
+            });
         }
     }
 }

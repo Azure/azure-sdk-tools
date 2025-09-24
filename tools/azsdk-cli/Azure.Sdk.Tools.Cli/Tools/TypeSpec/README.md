@@ -31,13 +31,32 @@ For vscode, create the `.vscode/mcp.json` file and add the development build of 
       "command": "/path/to/repo/azure-sdk-tools/tsp-qa-bot/artifacts/bin/Azure.Sdk.Tools.Cli/Debug/net8.0/azsdk",
       "args": ["start"],
       "env": {
-        "AI_COMPLETION_ENDPOINT": "https://completion.endpoint",
-        "AI_COMPLETION_API_KEY": "my-super-secret-key"
+        "AI_COMPLETION_ENDPOINT": "https://completion.endpoint"
       }
     }
   }
 }
 ```
+
+When using azure-sdk-bot-qa-service as the AI completion service in Azure with built-in Microsoft authentication enabled, you must also set the environment variable AI_COMPLETION_BOT_CLIENT_ID. This variable should reference the application (client) ID of the AI completion service. You can find both the endpoint and the client ID in the Azure SDK QA bot configuration blob.
+
+```
+{
+  "servers": {
+    "azsdk-w-qa-bot": {
+      "type": "stdio",
+      "command": "/path/to/repo/azure-sdk-tools/tsp-qa-bot/artifacts/bin/Azure.Sdk.Tools.Cli/Debug/net8.0/azsdk",
+      "args": ["start"],
+      "env": {
+        "AI_COMPLETION_ENDPOINT": "https://azuresdkqabot-endpoint.azurewebsites.net",
+        "AI_COMPLETION_BOT_CLIENT_ID": "azure-web-service-application-id"
+      }
+    }
+  }
+}
+
+```
+
 
 ## Testing in vscode
 

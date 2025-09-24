@@ -20,8 +20,6 @@ namespace Azure.Sdk.Tools.Cli.Services
         /// <exception cref="InvalidOperationException">Thrown when the service call fails</exception>
         Task<CompletionResponse> SendCompletionRequestAsync(
             CompletionRequest request,
-            string? apiKey = null,
-            string? endpoint = null,
             CancellationToken cancellationToken = default);
 
         /// <summary>

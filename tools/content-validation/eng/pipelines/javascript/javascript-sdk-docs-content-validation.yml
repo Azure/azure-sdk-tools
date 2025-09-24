@@ -85,8 +85,7 @@ stages:
       displayName: Build all projects and libraries
       inputs:
         command: 'build'
-        projects: 'content-validation.sln'
-        workingDirectory: '$(System.DefaultWorkingDirectory)/tools/content-validation'
+        projects: '$(System.DefaultWorkingDirectory)/tools/content-validation/content-validation.sln'
 
     - task: DotNetCoreCLI@2
       displayName: Run Playwright Install

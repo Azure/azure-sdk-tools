@@ -35,11 +35,6 @@ steps:
     command: custom
     custom: 'tool '
     arguments: install Microsoft.Playwright.CLI
-
-- script: |
-    echo "Current directory: $(System.DefaultWorkingDirectory)/tools/content-validation"
-    ls -al $(System.DefaultWorkingDirectory)/tools/content-validation
-  displayName: 'List files for debug'
   
 - task: DotNetCoreCLI@2
   displayName: Build all projects and libraries

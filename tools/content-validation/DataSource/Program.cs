@@ -42,7 +42,7 @@ namespace DataSource
                 throw new ArgumentException("PackageName must be specified in the configuration.");
             }
 
-            string configPath = Path.Combine(AppContext.BaseDirectory, "../../../config.json");
+            string configPath = Path.Combine(AppContext.BaseDirectory, "../../../../../tools/content-validation/DataSource/config.json");
             if (!File.Exists(configPath))
             {
                 throw new FileNotFoundException($"Config file not found: {configPath}");

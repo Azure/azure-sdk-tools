@@ -132,6 +132,11 @@ extends:
                   }
                 displayName: Create dir for packages to publish or list its contents
 
+              - ${{ if eq(parameters.VerifyChangelog, true) }}:
+                - pwsh: |
+                    $(Build.SourcesDirectory)/eng/scripts/Verify-Nuget-Artifact-Changelogs.ps1 -ArtifactsPath "$(packagesToPublishDir)" -ForRelease $false
+                  displayName: Verify Changelogs for artifacts
+
           - ${{ if ne(length(parameters.StandaloneExeMatrix), 0) }}:
             - job: Produce_Executables_linux
 

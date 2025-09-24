@@ -44,23 +44,28 @@ fi
 configure_environment() {
     case "$ENVIRONMENT" in
         "dev")
-            RESOURCE_GROUP="typespec_helper"
-            ACR_NAME="azuresdkqabot"
-            APP_NAME="azuresdkbot"
+            RESOURCE_GROUP="azure-sdk-qa-bot-dev"
+            ACR_NAME="azuresdkqabotdevcontainer"
+            ACR_RESOURCE_GROUP="azure-sdk-qa-bot-dev"
+            APP_NAME="azuresdkqabot-dev-server"
             IMAGE_NAME="azure-sdk-qa-bot-backend"
             echo "Configuring for DEV environment..."
             ;;
-        "prod"|"preview")
+        "prod")
             RESOURCE_GROUP="azure-sdk-qa-bot"
             ACR_NAME="azuresdkqabotcontainer"
+            ACR_RESOURCE_GROUP="azure-sdk-qa-bot"
             APP_NAME="azuresdkqabot-server"
-            APP_SLOT_PREVIEW_NAME="preview"
             IMAGE_NAME="azure-sdk-qa-bot-backend"
-            if [[ "$ENVIRONMENT" == "prod" ]]; then
-                echo "Configuring for PRODUCTION environment..."
-            else
-                echo "Configuring for PREVIEW environment..."
-            fi
+            echo "Configuring for PRODUCTION environment..."
+            ;;
+        "preview")
+            RESOURCE_GROUP="azure-sdk-qa-bot-test"
+            ACR_NAME="azuresdkqabotcontainer"
+            ACR_RESOURCE_GROUP="azure-sdk-qa-bot"
+            APP_NAME="azuresdkqabot-test-server"
+            IMAGE_NAME="azure-sdk-qa-bot-backend"
+            echo "Configuring for PREVIEW environment..."
             ;;
     esac
 }
@@ -81,24 +86,31 @@ fi
 az login
 
 echo "Logging into Azure Container Registry..."
-az acr login --name $ACR_NAME
+az acr login --name $ACR_NAME --resource-group $ACR_RESOURCE_GROUP
 
 # Get the login server name for the ACR
-ACR_LOGIN_SERVER=$(az acr show --name $ACR_NAME --resource-group $RESOURCE_GROUP --query "loginServer" --output tsv)
+ACR_LOGIN_SERVER=$(az acr show --name $ACR_NAME --resource-group $ACR_RESOURCE_GROUP --query "loginServer" --output tsv)
 echo "ACR Login Server: $ACR_LOGIN_SERVER"
 
-# Handle production deployment with direct prod mode (no build/push needed)
+# Handle production deployment (skip build, just check image exists)
 if [[ "$ENVIRONMENT" == "prod" ]]; then
-    echo "Updating image in production slot..."
-    az webapp config container set --name ${APP_NAME} --resource-group ${RESOURCE_GROUP} --container-image-name ${ACR_LOGIN_SERVER}/${IMAGE_NAME}:${IMAGE_TAG} --container-registry-url https://${ACR_LOGIN_SERVER}
-
-    # Restart the webapp to apply changes
-    az webapp restart --name ${APP_NAME} --resource-group ${RESOURCE_GROUP}
-    echo "Production deployment completed successfully!"
+    echo "Production deployment: Checking if image exists in registry..."
+    
+    # Check if the image exists in the container registry
+    if az acr repository show --name $ACR_NAME --repository $IMAGE_NAME --tag $IMAGE_TAG --resource-group $ACR_RESOURCE_GROUP >/dev/null 2>&1; then
+        echo "Image ${IMAGE_NAME}:${IMAGE_TAG} found in registry. Proceeding with production deployment..."
+    else
+        echo "Error: Image ${IMAGE_NAME}:${IMAGE_TAG} not found in registry."
+        echo "Please ensure the image has been built and tested in preview environment first."
+        exit 1
+    fi
+    
+    # Deploy to production
+    deploy_application
     exit 0
 fi
 
-# Clean up Docker resources to free up space
+# For dev and preview environments: Clean up Docker resources to free up space
 echo "Cleaning up Docker resources to free up disk space..."
 docker system prune -f
 docker image prune -a -f
@@ -128,14 +140,20 @@ deploy_application() {
             echo "Dev deployment completed successfully!"
             ;;
         "preview")
-            # Deploy to preview slot
-            APP_SLOT_NAME="preview"
-            echo "Updating image in deployment slot ${APP_SLOT_NAME}..."
-            az webapp config container set --name ${APP_NAME} --slot ${APP_SLOT_NAME} --resource-group ${RESOURCE_GROUP} --container-image-name ${ACR_LOGIN_SERVER}/${IMAGE_NAME}:${IMAGE_TAG} --container-registry-url https://${ACR_LOGIN_SERVER}
+            echo "Updating image in preview environment..."
+            az webapp config container set --name ${APP_NAME} --resource-group ${RESOURCE_GROUP} --container-image-name ${ACR_LOGIN_SERVER}/${IMAGE_NAME}:${IMAGE_TAG} --container-registry-url https://${ACR_LOGIN_SERVER}
 
             # Restart the webapp to apply changes
-            az webapp restart --name ${APP_NAME} --slot ${APP_SLOT_NAME} --resource-group ${RESOURCE_GROUP}
+            az webapp restart --name ${APP_NAME} --resource-group ${RESOURCE_GROUP}
             echo "Preview deployment completed successfully!"
+            ;;
+        "prod")
+            echo "Updating image in production environment..."
+            az webapp config container set --name ${APP_NAME} --resource-group ${RESOURCE_GROUP} --container-image-name ${ACR_LOGIN_SERVER}/${IMAGE_NAME}:${IMAGE_TAG} --container-registry-url https://${ACR_LOGIN_SERVER}
+
+            # Restart the webapp to apply changes
+            az webapp restart --name ${APP_NAME} --resource-group ${RESOURCE_GROUP}
+            echo "Production deployment completed successfully!"
             ;;
     esac
 }

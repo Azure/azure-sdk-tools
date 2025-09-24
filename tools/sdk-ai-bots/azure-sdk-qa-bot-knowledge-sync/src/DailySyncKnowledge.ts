@@ -84,8 +84,8 @@ export async function processDailySyncKnowledge(): Promise<void> {
 
         console.log('Preprocessing spector cases...');
         
-        // // Preprocess spector cases
-        // await preprocessSpectorCases(docsDir);
+        // Preprocess spector cases
+        await preprocessSpectorCases(docsDir);
 
         console.log('Processing documentation sources...');
         

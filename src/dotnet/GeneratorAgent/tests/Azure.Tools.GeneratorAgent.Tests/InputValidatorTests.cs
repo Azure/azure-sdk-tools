@@ -214,7 +214,8 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             
             // Assert
             Assert.That(result.IsFailure, Is.True);
-            Assert.That(result.Exception, Is.TypeOf<ArgumentException>());Assert.That(result.Exception?.Message, Does.Contain("TypeSpec path cannot be null or empty"));
+            Assert.That(result.Exception, Is.TypeOf<ArgumentException>());
+            Assert.That(result.Exception?.Message, Does.Contain("TypeSpec path cannot be null or empty"));
         }
 
         [Test]
@@ -225,7 +226,8 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             
             // Assert
             Assert.That(result.IsFailure, Is.True);
-            Assert.That(result.Exception, Is.TypeOf<ArgumentException>());Assert.That(result.Exception?.Message, Does.Contain("TypeSpec path cannot be null or empty"));
+            Assert.That(result.Exception, Is.TypeOf<ArgumentException>());
+            Assert.That(result.Exception?.Message, Does.Contain("TypeSpec path cannot be null or empty"));
         }
 
         [Test]
@@ -465,7 +467,8 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
                 
                 // Assert
                 Assert.That(result.IsFailure, Is.True);
-                Assert.That(result.Exception, Is.TypeOf<ArgumentException>());Assert.That(result.Exception?.Message, Does.Contain("Commit ID must be 6-40 hexadecimal characters"));
+                Assert.That(result.Exception, Is.TypeOf<ArgumentException>());
+                Assert.That(result.Exception?.Message, Does.Contain("Commit ID must be 6-40 hexadecimal characters"));
             }
         }
 
@@ -481,7 +484,8 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             
             // Assert
             Assert.That(result.IsFailure, Is.True);
-            Assert.That(result.Exception, Is.TypeOf<ArgumentException>());Assert.That(result.Exception?.Message, Does.Contain("Output directory path cannot be null or empty"));
+            Assert.That(result.Exception, Is.TypeOf<ArgumentException>());
+            Assert.That(result.Exception?.Message, Does.Contain("Output directory path cannot be null or empty"));
         }
 
         [Test]
@@ -492,7 +496,8 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             
             // Assert
             Assert.That(result.IsFailure, Is.True);
-            Assert.That(result.Exception, Is.TypeOf<ArgumentException>());Assert.That(result.Exception?.Message, Does.Contain("Output directory path cannot be null or empty"));
+            Assert.That(result.Exception, Is.TypeOf<ArgumentException>());
+            Assert.That(result.Exception?.Message, Does.Contain("Output directory path cannot be null or empty"));
         }
 
         [Test]
@@ -566,7 +571,8 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             
             // Assert
             Assert.That(result.IsFailure, Is.True);
-            Assert.That(result.Exception, Is.TypeOf<ArgumentException>());Assert.That(result.Exception?.Message, Does.Contain("PowerShell script path cannot be null or empty"));
+            Assert.That(result.Exception, Is.TypeOf<ArgumentException>());
+            Assert.That(result.Exception?.Message, Does.Contain("PowerShell script path cannot be null or empty"));
         }
 
         [Test]
@@ -582,7 +588,8 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             
             // Assert
             Assert.That(result.IsFailure, Is.True);
-            Assert.That(result.Exception, Is.TypeOf<ArgumentException>());Assert.That(result.Exception?.Message, Does.Contain("PowerShell script path cannot be null or empty"));
+            Assert.That(result.Exception, Is.TypeOf<ArgumentException>());
+            Assert.That(result.Exception?.Message, Does.Contain("PowerShell script path cannot be null or empty"));
         }
 
         [Test]
@@ -598,7 +605,8 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             
             // Assert
             Assert.That(result.IsFailure, Is.True);
-            Assert.That(result.Exception, Is.TypeOf<ArgumentException>());Assert.That(result.Exception?.Message, Does.Contain("PowerShell script path cannot be null or empty"));
+            Assert.That(result.Exception, Is.TypeOf<ArgumentException>());
+            Assert.That(result.Exception?.Message, Does.Contain("PowerShell script path cannot be null or empty"));
         }
 
         [Test]
@@ -614,7 +622,8 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             
             // Assert
             Assert.That(result.IsFailure, Is.True);
-            Assert.That(result.Exception, Is.TypeOf<ArgumentException>());Assert.That(result.Exception?.Message, Does.Contain("PowerShell script must have .ps1 extension"));
+            Assert.That(result.Exception, Is.TypeOf<ArgumentException>());
+            Assert.That(result.Exception?.Message, Does.Contain("PowerShell script must have .ps1 extension"));
         }
 
         [Test]
@@ -774,7 +783,8 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
                 
                 // Assert
                 Assert.That(result.IsFailure, Is.True);
-                Assert.That(result.Exception, Is.TypeOf<ArgumentException>());Assert.That(result.Exception?.Message, Does.Contain("Arguments contain command separator:"));
+                Assert.That(result.Exception, Is.TypeOf<ArgumentException>());
+                Assert.That(result.Exception?.Message, Does.Contain("Arguments contain command separator:"));
             }
         }
 
@@ -793,7 +803,8 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
                 
                 // Assert
                 Assert.That(result.IsFailure, Is.True);
-                Assert.That(result.Exception, Is.TypeOf<ArgumentException>());Assert.That(result.Exception?.Message, Does.Contain($"Arguments contain command separator: {separator}"));
+                Assert.That(result.Exception, Is.TypeOf<ArgumentException>());
+                Assert.That(result.Exception?.Message, Does.Contain($"Arguments contain command separator: {separator}"));
             }
         }
 
@@ -816,7 +827,8 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
                 
                 // Assert
                 Assert.That(result.IsFailure, Is.True);
-                Assert.That(result.Exception, Is.TypeOf<ArgumentException>());Assert.That(result.Exception?.Message, Does.Contain("Arguments contain command separator:"));
+                Assert.That(result.Exception, Is.TypeOf<ArgumentException>());
+                Assert.That(result.Exception?.Message, Does.Contain("Arguments contain command separator:"));
             }
         }
 

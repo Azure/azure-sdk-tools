@@ -161,7 +161,7 @@ internal class ToolBasedAgent : IAsyncDisposable
             }
 
             // Create error analysis prompt
-            var analysisPrompt = AppSettings.ErrorAnalysisPromptTemplate.Replace("{0}", errorLogs);
+            var analysisPrompt = string.Format(AppSettings.ErrorAnalysisPromptTemplate, errorLogs);
 
             // Send to agent for analysis
             var agentResponse = await ConversationManager.SendMessageAsync(analysisPrompt, cancellationToken);

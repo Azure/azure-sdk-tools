@@ -191,7 +191,7 @@ namespace Azure.Tools.GeneratorAgent
                     // Get patch proposal from agent
                     Logger.LogInformation("Processing fixes with Agent");
                     var patchResult = await toolBasedAgent.FixCodeAsync(allFixes, cancellationToken).ConfigureAwait(false);
-                    Logger.LogInformation("The patch result is {pathResult}", patchResult.Value);
+                    Logger.LogInformation("The patch result is {patchResult}", patchResult.Value);
 
                     // TODO: Apply patch and continue iteration
                     currentIteration += 1;

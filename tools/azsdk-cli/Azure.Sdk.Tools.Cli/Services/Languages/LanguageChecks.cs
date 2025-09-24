@@ -55,6 +55,24 @@ public interface ILanguageChecks
     Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, CancellationToken ct = default);
 
     /// <summary>
+    /// Lints code in the specific package.
+    /// </summary>
+    /// <param name="packagePath">Path to the package directory</param>
+    /// <param name="fix">Whether to automatically fix linting issues</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Result of the code linting operation</returns>
+    Task<CLICheckResponse> LintCodeAsync(string packagePath, bool fix = false, CancellationToken ct = default);
+
+    /// <summary>
+    /// Formats code in the specific package.
+    /// </summary>
+    /// <param name="packagePath">Path to the package directory</param>
+    /// <param name="fix">Whether to automatically apply code formatting</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Result of the code formatting operation</returns>
+    Task<CLICheckResponse> FormatCodeAsync(string packagePath, bool fix = false, CancellationToken ct = default);
+
+    /// <summary>
     /// Gets the SDK package path for the given repository and package path.
     /// </summary>
     /// <param name="repo">Repository root path</param>
@@ -154,6 +172,40 @@ public class LanguageChecks : ILanguageChecks
         }
 
         return await languageSpecificCheck.UpdateSnippetsAsync(packagePath, ct);
+    }
+
+    public virtual async Task<CLICheckResponse> LintCodeAsync(string packagePath, bool fix = false, CancellationToken ct = default)
+    {
+        var languageSpecificCheck = await _languageSpecificCheckResolver.GetLanguageCheckAsync(packagePath);
+
+        if (languageSpecificCheck == null)
+        {
+            _logger.LogError("No language-specific check handler found for package at {PackagePath}. Supported languages may not include this package type.", packagePath);
+            return new CLICheckResponse(
+                exitCode: 1,
+                checkStatusDetails: $"No language-specific check handler found for package at {packagePath}. Supported languages may not include this package type.",
+                error: "Unsupported package type"
+            );
+        }
+
+        return await languageSpecificCheck.LintCodeAsync(packagePath, fix, ct);
+    }
+
+    public virtual async Task<CLICheckResponse> FormatCodeAsync(string packagePath, bool fix = false, CancellationToken ct = default)
+    {
+        var languageSpecificCheck = await _languageSpecificCheckResolver.GetLanguageCheckAsync(packagePath);
+
+        if (languageSpecificCheck == null)
+        {
+            _logger.LogError("No language-specific check handler found for package at {PackagePath}. Supported languages may not include this package type.", packagePath);
+            return new CLICheckResponse(
+                exitCode: 1,
+                checkStatusDetails: $"No language-specific check handler found for package at {packagePath}. Supported languages may not include this package type.",
+                error: "Unsupported package type"
+            );
+        }
+
+        return await languageSpecificCheck.FormatCodeAsync(packagePath, fix, ct);
     }
 
     /// <summary>

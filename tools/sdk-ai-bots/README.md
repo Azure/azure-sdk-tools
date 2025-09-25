@@ -114,7 +114,7 @@ npm run dev:local
 ```bash
 cd azure-sdk-qa-bot-evaluation
 pip install -r requirements.txt
-python evaluation.py
+python run.py
 ```
 
 ## Configuration

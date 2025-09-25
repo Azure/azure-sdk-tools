@@ -1,10 +1,10 @@
 # Azure SDK AI Bot
 
-This folder contains AI-powered components that work together to provide intelligent assistance for Azure SDK development, including TypeSpec authoring guidance, Azure SDK generation support, and service team onboarding.
+This folder contains AI-powered components that work together to provide intelligent assistance for Azure SDK, including TypeSpec authoring guidance, Azure SDK generation support, and service team onboarding.
 
 ## Architecture Overview
 
-The system consists of six main components that work together to provide intelligent assistance for Azure SDK domain knowledge. Each component operates independently with well-defined interfaces:
+The system consists of six main components that work together to provide support for Azure SDK domain knowledge. Each component operates independently with well-defined interfaces:
 
 ```text
 ┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐

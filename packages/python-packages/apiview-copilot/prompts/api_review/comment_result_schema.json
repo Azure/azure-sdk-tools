@@ -30,10 +30,6 @@
                 "type": "boolean",
                 "description": "True if the comment is a general suggestion not tied to a specific guideline or memory."
               },
-              "confidence_score": {
-                "type": "number",
-                "description": "A float betwee 0 and 1 indicating how likely it is that the comment is a false-positive because it is highly subjective. 0 means very likely to be a false positive. 1 means not at all likely to be a false positive."
-              },
               "line_no": {
                 "type": "integer",
                 "description": "Line number of the violation."
@@ -58,8 +54,7 @@
               "bad_code",
               "suggestion",
               "comment",
-              "is_generic",
-              "confidence_score"
+              "is_generic"
             ]
           },
           "description": "list of comments if any"

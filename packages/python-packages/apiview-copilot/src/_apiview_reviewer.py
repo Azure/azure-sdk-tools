@@ -736,6 +736,7 @@ class ApiViewReview:
                 inputs={
                     "content": comment.model_dump(),
                     "language": get_language_pretty_name(self.language),
+                    # FIXME: This needs to be filled in with relevant context... or does it?
                     "context": "#TODO: Fill in later",
                 },
             )
@@ -747,6 +748,7 @@ class ApiViewReview:
                 response = future.result()
                 response_json = json.loads(response)
                 results = response_json.get("results", {})
+                severity = response_json.get("severity", "UNKNOWN").upper()
 
                 yes_votes = 0
                 no_votes = 0
@@ -763,13 +765,13 @@ class ApiViewReview:
                     else:
                         self.logger.warning(f"Unexpected answer {answer} for comment at index {idx}")
                 total_votes = yes_votes + no_votes + unknown_votes
-                confidence = (yes_votes / total_votes) * 100 if total_votes > 0 else 0.0
+                confidence = (yes_votes / total_votes) if total_votes > 0 else 0.0
+                self.results.comments[idx].severity = severity
                 self.results.comments[idx].confidence_score = confidence
             except Exception as e:
                 self.logger.error(f"Error scoring comment at index {idx}: {str(e)}")
             percent = int(((progress_idx + 1) / total) * 100) if total else 100
             self._print_message(f"Scoring comments... {percent}% complete", overwrite=True)
-        self._print_message()  # Ensure the progress bar is visible before the summary
 
     def _run_prompt(self, prompt_path: str, inputs: dict, max_retries: int = 5) -> str:
         """

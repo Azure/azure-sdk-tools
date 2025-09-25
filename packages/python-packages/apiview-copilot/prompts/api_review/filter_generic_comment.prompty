@@ -81,7 +81,7 @@ sample:
     DO craft a constructor for models that are intended to be instantiated by a user (i.e. non-result types) with minimal required information and optional information as keyword-only arguments.
 
 
-    > **memoryid:** 0aa42016-e6b1-4142-8b87-504576cca9b0<br>**score:** 55<br>
+    > **memory_id:** 0aa42016-e6b1-4142-8b87-504576cca9b0<br>**score:** 55<br>
     ## Remove unused **_kwargs and update optional parameters to keyword-only
 
     The '**_kwargs' parameter was removed entirely due to linting errors when unused, and optional parameters were updated to be keyword-only. The team is reviewing the PR for final resolution.

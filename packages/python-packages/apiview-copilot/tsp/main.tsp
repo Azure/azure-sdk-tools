@@ -135,8 +135,11 @@ namespace ApiViewCopilot {
     /** An ID that correlates this comment with other related comments */
     correlationId?: string;
     
-    /** A score from 0 to 100 estimating the confidence in this comment's validity */
-    confidenceScore?: int32;
+    /** A score from 0 to 1 estimating the confidence in this comment's validity */
+    confidenceScore?: float32;
+
+    /** The severity level of the comment */
+    severity: "GENERAL" | "SHOULD" | "MUST" | "QUESTION";
   }
 
   model ApiReviewJobRequest {

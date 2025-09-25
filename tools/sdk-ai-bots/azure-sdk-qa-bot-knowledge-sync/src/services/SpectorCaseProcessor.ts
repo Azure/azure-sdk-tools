@@ -233,35 +233,35 @@ export class SpectorCaseProcessor {
 
         const prompt = `Analyze the following TypeSpec content and scenarios to extract structured information.
 
-MAIN SPEC CONTENT:
-${spec}
+            MAIN SPEC CONTENT:
+            ${spec}
 
-SCENARIOS:
-${scenariosWithIndex}
+            SCENARIOS:
+            ${scenariosWithIndex}
 
-Please provide a JSON response with the following structure:
-{
-"title": "A concise title from @scenarioService or @doc that is closest to @scenarioService (one line only, no extra characters)",
-"scenarios": [
-    {
-        "heading": "Title for scenario 1 from @scenarioDoc or @doc (one line, no 'expected' test results)",
-        "description": "Description from @scenarioDoc or @doc (one or more paragraphs, exclude 'expected' test results, include clarifying details)"
-    },
-    {
-        "heading": "Title for scenario 2...",
-        "description": "Description for scenario 2..."
-    }
-]
-}
+            Please provide a JSON response with the following structure:
+            {
+            "title": "A concise title from @scenarioService or @doc that is closest to @scenarioService (one line only, no extra characters)",
+            "scenarios": [
+                {
+                    "heading": "Title for scenario 1 from @scenarioDoc or @doc (one line, no 'expected' test results)",
+                    "description": "Description from @scenarioDoc or @doc (one or more paragraphs, exclude 'expected' test results, include clarifying details)"
+                },
+                {
+                    "heading": "Title for scenario 2...",
+                    "description": "Description for scenario 2..."
+                }
+            ]
+            }
 
-Requirements:
-- Extract title from @scenarioService or @doc closest to @scenarioService only
-- For each scenario, extract heading and description from @scenarioDoc or @doc
-- Headings should be one line suitable for markdown headers
-- Descriptions should exclude 'expected' test results but include clarifying details
-- If description is same as heading, make description empty string
-- Provide exactly ${scenarios.length} scenario objects in the response
-- Return only valid JSON, no additional text or formatting`;
+            Requirements:
+            - Extract title from @scenarioService or @doc closest to @scenarioService only
+            - For each scenario, extract heading and description from @scenarioDoc or @doc
+            - Headings should be one line suitable for markdown headers
+            - Descriptions should exclude 'expected' test results but include clarifying details
+            - If description is same as heading, make description empty string
+            - Provide exactly ${scenarios.length} scenario objects in the response
+            - Return only valid JSON, no additional text or formatting`;
 
         const response = await this.getChatCompletions(prompt);
         

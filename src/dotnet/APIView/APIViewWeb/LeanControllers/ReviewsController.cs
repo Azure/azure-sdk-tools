@@ -203,12 +203,28 @@ namespace APIViewWeb.LeanControllers
                     return NotFound($"Review with ID {reviewId} not found");
                 }
 
-                // Classify the package using PackageHelper
-                var packageType = PackageHelper.ClassifyPackageType(review.PackageName, review.Language);
+                PackageType packageType;
+
+                // Check if this is an SDK language
+                if (!LanguageHelper.IsSDKLanguage(review.Language))
+                {
+                    // If not SDK language, set as Unknown
+                    packageType = PackageType.Unknown;
+                }
+                // Special handling for TypeSpec
+                else if (review.Language == ApiViewConstants.TypeSpecLanguage)
+                {
+                    packageType = await _reviewManager.ClassifyTypeSpecPackageAsync(reviewId);
+                }
+                else
+                {
+                    // Regular SDK language classification
+                    packageType = PackageHelper.ClassifyPackageType(review.PackageName, review.Language);
+                }
 
                 review.PackageType = packageType;
                 await _reviewManager.UpdateReviewAsync(review);
-                
+
                 return Ok(review);
             }
             catch (Exception ex)

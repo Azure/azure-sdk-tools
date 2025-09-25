@@ -289,6 +289,58 @@ namespace APIViewWeb.Managers
         }
 
         /// <summary>
+        /// Classify TypeSpec package type by examining related SDK language packages
+        /// </summary>
+        /// <param name="typeSpecReviewId">The TypeSpec review ID</param>
+        /// <returns>PackageType based on related SDK language packages</returns>
+        public async Task<PackageType> ClassifyTypeSpecPackageAsync(string typeSpecReviewId)
+        {
+            try
+            {
+                // Get the TypeSpec review to find its revisions
+                var typeSpecReview = await _reviewsRepository.GetReviewAsync(typeSpecReviewId);
+                if (typeSpecReview == null)
+                {
+                    return PackageType.Unknown;
+                }
+
+                // Get only the latest revision for this TypeSpec review
+                var typeSpecRevisions = await _apiRevisionsManager.GetAPIRevisionsAsync(typeSpecReviewId);
+                var latestRevision = typeSpecRevisions.OrderByDescending(r => r.CreatedOn).FirstOrDefault();
+                
+                if (latestRevision != null)
+                {
+                    try
+                    {
+                        var relatedReviews = await FindRelatedReviewsByPullRequestAsync(typeSpecReviewId, latestRevision.Id);
+                        
+                        // Find the first SDK language review and classify its package
+                        foreach (var relatedReview in relatedReviews)
+                        {
+                            if (LanguageHelper.IsSDKLanguage(relatedReview.Language) && 
+                                relatedReview.Language != ApiViewConstants.TypeSpecLanguage)
+                            {
+                                var packageType = PackageHelper.ClassifyPackageType(relatedReview.PackageName, relatedReview.Language);
+                                return packageType;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _telemetryClient.TrackException(ex);
+                    }
+                }
+                // If no related SDK packages found, fallback to Unknown or Data?
+                return PackageType.Unknown;
+            }
+            catch (Exception ex)
+            {
+                _telemetryClient.TrackException(ex);
+                return PackageType.Unknown;
+            }
+        }
+
+        /// <summary>
         /// SoftDeleteReviewAsync
         /// </summary>
         /// <param name="user"></param>

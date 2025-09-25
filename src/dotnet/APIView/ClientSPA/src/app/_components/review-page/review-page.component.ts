@@ -5,7 +5,7 @@ import { MenuItem, TreeNode } from 'primeng/api';
 import { concatMap, EMPTY, from, Observable, Subject, take, takeUntil, tap } from 'rxjs';
 import { CodeLineRowNavigationDirection, getLanguageCssSafeName } from 'src/app/_helpers/common-helpers';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
-import { Review } from 'src/app/_models/review';
+import { Review, PackageType } from 'src/app/_models/review';
 import { APIRevision, APIRevisionGroupedByLanguage, ApiTreeBuilderData } from 'src/app/_models/revision';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 import { APIRevisionsService } from 'src/app/_services/revisions/revisions.service';
@@ -278,8 +278,35 @@ export class ReviewPageComponent implements OnInit {
           this.review = review;
           this.updateLoadingStateBasedOnReviewDeletionStatus();
           this.updatePageTitle();
+
+          // Check if PackageType needs to be classified
+          this.checkAndClassifyPackageType(review);
         }
       });
+  }
+
+  checkAndClassifyPackageType(review: Review) {
+    // Check if PackageType is null, undefined, or Unknown
+    if (!review.packageType || review.packageType === PackageType.Unknown) {
+      console.log(`PackageType is ${review.packageType || 'null'} for review ${review.id}, calling classification endpoint`);
+
+      this.reviewsService.classifyPackageType(review.id)
+        .pipe(takeUntil(this.destroy$)).subscribe({
+          next: (updatedReview: Review) => {
+            // Update the local review object with the classified type
+            if (this.review) {
+              this.review.packageType = updatedReview.packageType;
+            }
+          },
+          error: (error) => {
+            console.error('Failed to classify package type:', error);
+            // Set to Unknown on error
+            if (this.review) {
+              this.review.packageType = PackageType.Unknown;
+            }
+          }
+        });
+    }
   }
 
   loadPreferredApprovers(reviewId: string) {

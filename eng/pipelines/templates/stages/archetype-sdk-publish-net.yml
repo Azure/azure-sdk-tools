@@ -6,7 +6,7 @@ parameters:
   RequireStrongNames: true
   PublishEnvironment: ''
   ExeMatrix: []
-
+  VerifyChangelog: false
 # Needs Github Release variable group linked.
 # Needs AzureSDK Nuget Release Pipelines Secrets variable group linked.
 
@@ -34,6 +34,7 @@ stages:
     parameters:
       ArtifactName: packages
       Feed: ${{ parameters.Feed }}
+      VerifyChangelog: ${{ parameters.VerifyChangelog }}
       ${{ if parameters.PublishEnvironment }}:
         PublishEnvironment: ${{ parameters.PublishEnvironment }}
 

@@ -550,7 +550,6 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             var templateParams = new Dictionary<string, string>
             {
-                 { "SdkRepoBranch", sdkRepoBranch},
                  { "ConfigType", "TypeSpec"},
                  { "ConfigPath", $"{typespecProjectRoot}/tspconfig.yaml" },
                  { "ApiVersion", apiVersion },
@@ -558,6 +557,12 @@ namespace Azure.Sdk.Tools.Cli.Services
                  { "CreatePullRequest", "true" },
                  { "ReleasePlanWorkItemId", $"{workItemId}"}
             };
+
+            if (!string.IsNullOrEmpty(sdkRepoBranch))
+            {
+                templateParams["SdkRepoBranch"] = sdkRepoBranch;
+            }
+
             var build = await RunPipelineAsync(pipelineDefinitionId, templateParams, apiSpecBranchRef);
             var pipelineRunUrl = GetPipelineUrl(build.Id);
             logger.LogInformation($"Started pipeline run {pipelineRunUrl} to generate SDK.");

@@ -246,10 +246,14 @@ namespace APIViewWeb.Managers
                 throw new ArgumentException("Package Name and Language are required");
             }
 
+            // Classify package type using the PackageHelper
+            var packageType = PackageHelper.ClassifyPackageType(packageName, language);
+
             ReviewListItemModel review = new ReviewListItemModel()
             {
                 PackageName = packageName,
                 Language = language,
+                PackageType = packageType,
                 CreatedOn = DateTime.UtcNow,
                 CreatedBy = ApiViewConstants.AzureSdkBotName,
                 IsClosed = isClosed,

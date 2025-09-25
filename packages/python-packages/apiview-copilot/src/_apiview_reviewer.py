@@ -19,14 +19,13 @@ import uuid
 from time import time
 from typing import List, Optional
 
-import prompty
-import prompty.azure_beta
 import yaml
 
-from ._credential import get_credential, in_ci
+from ._comment_grouper import CommentGrouper
+from ._credential import get_credential
 from ._diff import create_diff_with_line_numbers
 from ._models import Comment, ExistingComment, ReviewResult
-from ._retry import retry_with_backoff
+from ._prompt_runner import run_prompt
 from ._search_manager import SearchManager
 from ._sectioned_document import SectionedDocument
 from ._settings import SettingsManager
@@ -170,6 +169,7 @@ class ApiViewReview:
                 self._logger.exception(f"[{self._job_id}] {msg}", *args, **kwargs)
 
         self.logger = JobLogger(logger, self.job_id)
+        self.run_prompt = run_prompt  # Use shared prompt runner
 
     def __del__(self):
         # Ensure the executor is properly shut down
@@ -721,49 +721,13 @@ class ApiViewReview:
     def _run_prompt(self, prompt_path: str, inputs: dict, max_retries: int = 5) -> str:
         """
         Run a prompt with retry logic.
-
-        Args:
-            prompt_path: Path to the prompt file
-            inputs: Dictionary of inputs for the prompt
-            max_retries: Maximum number of retry attempts (default: 5)
-
-        Returns:
-            String result of the prompt execution
-
-        Raises:
-            Exception: If all retry attempts fail
         """
-
-        def execute_prompt() -> str:
-            if in_ci():
-                configuration = {"api_key": self.settings.get("OPENAI_API_KEY")}
-            else:
-                configuration = {}
-
-            return prompty.execute(prompt_path, inputs=inputs, configuration=configuration)
-
-        def on_retry(exception, attempt, max_attempts):
-            self.logger.warning(
-                f"Error executing prompt {os.path.basename(prompt_path)}, "
-                f"attempt {attempt+1}/{max_attempts}: {str(exception)}"
-            )
-
-        def on_failure(exception, attempt):
-            self.logger.error(
-                f"Failed to execute prompt {os.path.basename(prompt_path)} "
-                f"after {attempt} attempts: {str(exception)}"
-            )
-            raise exception
-
-        os.environ["OPENAI_ENDPOINT"] = self.settings.get("OPENAI_ENDPOINT")
-        return retry_with_backoff(
-            func=execute_prompt,
+        return self.run_prompt(
+            prompt_path=prompt_path,
+            inputs=inputs,
+            settings=self.settings,
             max_retries=max_retries,
-            retry_exceptions=(json.JSONDecodeError, Exception),
-            on_retry=on_retry,
-            on_failure=on_failure,
             logger=self.logger,
-            description=f"prompt {os.path.basename(prompt_path)}",
         )
 
     # pylint: disable=too-many-locals
@@ -819,11 +783,24 @@ class ApiViewReview:
             self._filter_preexisting_comments()
             preexisting_end_time = time()
             self._print_message(
-                f"  Preexisting comments filtered in {preexisting_end_time - preexisting_start_time:.2f} seconds."
+                f"Preexisting comments filtered in {preexisting_end_time - preexisting_start_time:.2f} seconds."
             )
             self._print_comment_counts()
 
             results = self.results.sorted()
+
+            correlation_id_start_time = time()
+            # Assign correlation IDs for similar comments
+            results.comments = CommentGrouper(
+                comments=results.comments,
+                run_prompt_func=self.run_prompt,
+                settings=self.settings,
+                logger=self.logger,
+            ).group()
+            correlation_id_end_time = time()
+            self._print_message(
+                f"\nCorrelation IDs assigned in {correlation_id_end_time - correlation_id_start_time:.2f} seconds."
+            )
 
             overall_end_time = time()
             self._print_message(

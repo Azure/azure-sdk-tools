@@ -104,7 +104,7 @@ namespace APIViewWeb.Helpers
         public static PackageType ClassifyPackageType(string packageName, string language)
         {
             // Validate inputs - return Unknown
-            if (string.IsNullOrWhiteSpace(packageName)|| string.IsNullOrWhiteSpace(language) || !LanguageHelper.IsSDKLanguage(language))
+            if (string.IsNullOrWhiteSpace(packageName) || string.IsNullOrWhiteSpace(language) || !LanguageHelper.IsSDKLanguage(language))
             {
                 return PackageType.Unknown;
             }

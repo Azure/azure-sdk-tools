@@ -226,13 +226,12 @@ export class SpectorCaseProcessor {
         scenarios: string[],
         spec: string
     ): Promise<AnalysisResult> {
-        try {
-            // Prepare scenarios with indices for reference
-            const scenariosWithIndex = scenarios.map((scenario, index) => 
-                `=== SCENARIO ${index + 1} ===\n${scenario}\n`
-            ).join('\n');
+        // Prepare scenarios with indices for reference
+        const scenariosWithIndex = scenarios.map((scenario, index) => 
+            `=== SCENARIO ${index + 1} ===\n${scenario}\n`
+        ).join('\n');
 
-            const prompt = `Analyze the following TypeSpec content and scenarios to extract structured information.
+        const prompt = `Analyze the following TypeSpec content and scenarios to extract structured information.
 
 MAIN SPEC CONTENT:
 ${spec}
@@ -242,17 +241,17 @@ ${scenariosWithIndex}
 
 Please provide a JSON response with the following structure:
 {
-    "title": "A concise title from @scenarioService or @doc that is closest to @scenarioService (one line only, no extra characters)",
-    "scenarios": [
-        {
-            "heading": "Title for scenario 1 from @scenarioDoc or @doc (one line, no 'expected' test results)",
-            "description": "Description from @scenarioDoc or @doc (one or more paragraphs, exclude 'expected' test results, include clarifying details)"
-        },
-        {
-            "heading": "Title for scenario 2...",
-            "description": "Description for scenario 2..."
-        }
-    ]
+"title": "A concise title from @scenarioService or @doc that is closest to @scenarioService (one line only, no extra characters)",
+"scenarios": [
+    {
+        "heading": "Title for scenario 1 from @scenarioDoc or @doc (one line, no 'expected' test results)",
+        "description": "Description from @scenarioDoc or @doc (one or more paragraphs, exclude 'expected' test results, include clarifying details)"
+    },
+    {
+        "heading": "Title for scenario 2...",
+        "description": "Description for scenario 2..."
+    }
+]
 }
 
 Requirements:
@@ -264,57 +263,38 @@ Requirements:
 - Provide exactly ${scenarios.length} scenario objects in the response
 - Return only valid JSON, no additional text or formatting`;
 
-            const response = await this.getChatCompletions(prompt);
+        const response = await this.getChatCompletions(prompt);
+        
+        // Parse the JSON response
+        let analysisResult: AnalysisResult;
+        try {
+            // Clean the response to ensure it's valid JSON
+            let cleanResponse = response.trim();
             
-            // Parse the JSON response
-            let analysisResult: AnalysisResult;
-            try {
-                // Clean the response to ensure it's valid JSON
-                let cleanResponse = response.trim();
-                
-                // Remove any markdown code block formatting if present
-                if (cleanResponse.startsWith('```json')) {
-                    cleanResponse = cleanResponse.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-                } else if (cleanResponse.startsWith('```')) {
-                    cleanResponse = cleanResponse.replace(/^```\s*/, '').replace(/\s*```$/, '');
-                }
-                
-                analysisResult = JSON.parse(cleanResponse);
-            } catch (parseError) {
-                console.error('Failed to parse LLM response as JSON:', parseError);
-                console.error('Raw response:', response);
-                throw new Error(`Invalid JSON response from LLM: ${parseError}`);
+            // Remove any markdown code block formatting if present
+            if (cleanResponse.startsWith('```json')) {
+                cleanResponse = cleanResponse.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+            } else if (cleanResponse.startsWith('```')) {
+                cleanResponse = cleanResponse.replace(/^```\s*/, '').replace(/\s*```$/, '');
             }
             
-            // Validate the response structure
-            if (!analysisResult.title || !Array.isArray(analysisResult.scenarios)) {
-                throw new Error('Invalid response structure from LLM');
-            }
-            
-            if (analysisResult.scenarios.length !== scenarios.length) {
-                console.warn(`Expected ${scenarios.length} scenarios, got ${analysisResult.scenarios.length}`);
-                // Pad with default values if needed
-                while (analysisResult.scenarios.length < scenarios.length) {
-                    analysisResult.scenarios.push({
-                        heading: 'no-title',
-                        description: 'no-description'
-                    });
-                }
-            }
-            
-            return analysisResult;
-        } catch (error) {
-            console.error('Error in analyzeScenariosAndSpec:', error);
-            
-            // Fallback: return default values
-            return {
-                title: 'TypeSpec Documentation',
-                scenarios: scenarios.map(() => ({
-                    heading: 'no-title',
-                    description: 'no-description'
-                }))
-            };
+            analysisResult = JSON.parse(cleanResponse);
+        } catch (parseError) {
+            console.error('Failed to parse LLM response as JSON:', parseError);
+            console.error('Raw response:', response);
+            throw new Error(`Invalid JSON response from LLM: ${parseError}`);
         }
+        
+        // Validate the response structure
+        if (!analysisResult.title || !Array.isArray(analysisResult.scenarios)) {
+            throw new Error('Invalid response structure from LLM');
+        }
+        
+        if (analysisResult.scenarios.length !== scenarios.length) {
+            throw new Error(`Expected ${scenarios.length} scenarios, got ${analysisResult.scenarios.length}`);
+        }
+        
+        return analysisResult;
     }
 
     /**

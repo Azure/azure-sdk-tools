@@ -9,3 +9,7 @@ azure-sdk-qa-bot is a Teams bot which can answer the questions related to the Az
 -	This bot can provide general QA by searching through a knowledge base that includes documents from three sources:
     - Azure SDK documents available at the [engineering hub site](https://eng.ms/docs/products/azure-developer-experience)
     - TypeSpec documents available at https://github.com/azure/typespec-azure
+
+## Running Evaluations
+
+To run evaluations, see: [azure-sdk-qa-bot-evaluation/README.md](./azure-sdk-qa-bot-evaluation/README.md)

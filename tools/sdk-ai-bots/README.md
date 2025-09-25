@@ -61,8 +61,8 @@ The bot provides intelligent responses by searching through comprehensive knowle
 
 ### Prerequisites
 
-- **Node.js**: Version 18, 20, or 22
-- **Go**: Version 1.19+ (for backend service)
+- **Node.js**: Version 20+
+- **Go**: Version 1.23+ (for backend service)
 - **Python**: Version 3.10+ (for evaluation framework)
 - **Azure Subscription**: For deploying cloud resources
 - **Teams Toolkit**: For Teams app development and deployment

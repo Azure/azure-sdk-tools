@@ -61,7 +61,9 @@ internal class MicroagentHostServiceTests
             BinaryData.FromString("""{"Result":"Success"}""")
         );
 
+#pragma warning disable OPENAI001
         var chatCompletion = OpenAIChatModelFactory.ChatCompletion(role: ChatMessageRole.Assistant, toolCalls: [exitToolCall]);
+#pragma warning restore OPENAI001
 
         var agentDefinition = new Microagent<string>
         {
@@ -105,9 +107,11 @@ internal class MicroagentHostServiceTests
             Tools = [tool],
         };
 
+#pragma warning disable OPENAI001
         chatClientMock.SetupSequence(client => client.CompleteChatAsync(It.IsAny<IReadOnlyList<ChatMessage>>(), It.IsAny<ChatCompletionOptions>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ClientResult.FromValue(OpenAIChatModelFactory.ChatCompletion(role: ChatMessageRole.Assistant, toolCalls: [regularToolCall]), Mock.Of<PipelineResponse>()))
             .ReturnsAsync(ClientResult.FromValue(OpenAIChatModelFactory.ChatCompletion(role: ChatMessageRole.Assistant, toolCalls: [exitToolCall]), Mock.Of<PipelineResponse>()));
+#pragma warning restore OPENAI001
 
         // Act
         var result = await microagentHostService.RunAgentToCompletion(microagent);
@@ -146,10 +150,12 @@ internal class MicroagentHostServiceTests
             MaxToolCalls = 2,
         };
 
+#pragma warning disable OPENAI001
         chatClientMock.SetupSequence(client => client.CompleteChatAsync(It.IsAny<IReadOnlyList<ChatMessage>>(), It.IsAny<ChatCompletionOptions>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ClientResult.FromValue(OpenAIChatModelFactory.ChatCompletion(role: ChatMessageRole.Assistant, toolCalls: [regularToolCall]), Mock.Of<PipelineResponse>()))
             .ReturnsAsync(ClientResult.FromValue(OpenAIChatModelFactory.ChatCompletion(role: ChatMessageRole.Assistant, toolCalls: [regularToolCall]), Mock.Of<PipelineResponse>()))
             .ReturnsAsync(ClientResult.FromValue(OpenAIChatModelFactory.ChatCompletion(role: ChatMessageRole.Assistant, toolCalls: [exitToolCall]), Mock.Of<PipelineResponse>()));
+#pragma warning restore OPENAI001
 
         // Act/Assert
         Assert.ThrowsAsync<Exception>(async () =>

@@ -21,7 +21,7 @@ public class AzureAgentService(
 {
     public string ProjectEndpoint { get; } = _projectEndpoint ?? defaultProjectEndpoint;
     private static readonly string defaultProjectEndpoint = "https://azsdk-engsys-openai.services.ai.azure.com/api/projects/azsdk-engsys-openai-foundry";
-    private readonly string model = _model ?? "o3-mini";
+    private readonly string model = _model ?? "gpt-4o";
 
     private readonly PersistentAgentsClient client = new(_projectEndpoint ?? defaultProjectEndpoint, azureService.GetCredential());
 
@@ -74,9 +74,33 @@ Again, the entire response **MUST BE VALID JSON**";
         }
     }
 
+    public async Task DeleteAgentResources(
+        PersistentAgent agent,
+        PersistentAgentsVectorStore vectorStore,
+        PersistentAgentThread thread,
+        List<PersistentAgentFileInfo> sessionFiles,
+        CancellationToken ct = default)
+    {
+        logger.LogDebug("Deleting agent {AgentId} ({AgentName})", agent.Id, agent.Name);
+        await client.Administration.DeleteAgentAsync(agent.Id, ct);
+
+        logger.LogDebug("Deleting thread {ThreadId}", thread.Id);
+        await client.Threads.DeleteThreadAsync(thread.Id, ct);
+
+        logger.LogDebug("Deleting vector store {VectorStoreId} ({VectorStoreName})", vectorStore.Id, vectorStore.Name);
+        await client.VectorStores.DeleteVectorStoreAsync(vectorStore.Id, ct);
+
+        foreach (var file in sessionFiles)
+        {
+            logger.LogDebug("Deleting file {FileId} ({FileName})", file.Id, file.Filename);
+            await client.Files.DeleteFileAsync(file.Id, ct);
+        }
+    }
+
     public async Task<string> QueryFiles(List<string> files, string session, string query, CancellationToken ct)
     {
         List<string> uploaded = [];
+        List<PersistentAgentFileInfo> sessionFiles = [];
         foreach (var file in files)
         {
             if (string.IsNullOrWhiteSpace(file) || Path.GetExtension(file) == string.Empty)
@@ -86,6 +110,7 @@ Again, the entire response **MUST BE VALID JSON**";
             logger.LogDebug("Uploading file {FileName}", file);
             PersistentAgentFileInfo info = await client.Files.UploadFileAsync(file, PersistentAgentFilePurpose.Agents, ct);
             uploaded.Add(info.Id);
+            sessionFiles.Add(info);
         }
 
         PersistentAgentsVectorStore vectorStore = await client.VectorStores.CreateVectorStoreAsync(uploaded, name: session, cancellationToken: ct);
@@ -145,7 +170,7 @@ Again, the entire response **MUST BE VALID JSON**";
 
         // NOTE: in the future we will want to keep these around if the user wants to keep querying the file in a session
         logger.LogInformation("Deleting temporary resources: agent {AgentId}, vector store {VectorStoreId}, {fileCount} files", agent.Id, vectorStore.Id, uploaded.Count);
-        await DeleteAgents(ct);
+        await DeleteAgentResources(agent, vectorStore, thread, sessionFiles, ct);
 
         return string.Join("\n", response);
     }

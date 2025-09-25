@@ -49,7 +49,7 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
         }
         catch (Exception ex)
         {
-            _logger.LogDebug($"Exception occurred while checking dependencies {ex}");
+            _logger.LogDebug(ex, "Exception occurred while checking dependencies");
             return false;
         }
     }

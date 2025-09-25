@@ -62,7 +62,7 @@ extends:
                 displayName: 'check go'
               - task: AzureCLI@2
                 inputs:
-                  azureSubscription: 'azure-chat-bot-test'
+                  azureSubscription: 'azuresdkqabot-dev'
                   addSpnToEnvironment: true
                   scriptType: bash
                   scriptLocation: inlineScript
@@ -109,6 +109,5 @@ extends:
                   AZURE_EVALUATION_MODEL_NAME: $(AZURE_EVALUATION_MODEL_NAME)
                   AZURE_API_VERSION: $(AZURE_API_VERSION)
                   STORAGE_BLOB_ACCOUNT: $(STORAGE_BLOB_ACCOUNT)
-                  AI_ONLINE_PERFORMANCE_EVALUATION_STORAGE_CONTAINER: $(AI_ONLINE_PERFORMANCE_EVALUATION_STORAGE_CONTAINER)
                   BOT_CONFIG_CONTAINER: $(BOT_CONFIG_CONTAINER)
                   BOT_CONFIG_CHANNEL_BLOB: $(BOT_CONFIG_CHANNEL_BLOB)

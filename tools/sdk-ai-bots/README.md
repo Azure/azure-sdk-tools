@@ -4,33 +4,29 @@ This folder contains AI-powered components that work together to provide intelli
 
 ## Architecture Overview
 
-The system consists of six main components corresponding to the project folders:
+The system consists of six main components that work together to provide intelligent assistance for Azure SDK development. Each component operates independently with well-defined interfaces:
 
 ```text
-┌───────────────────────────────────────────────────────────────────────┐
-│                             Azure SDK AI Bot System                   │
-├─────────────────┬─────────────────┬─────────────────┬─────────────────┤
-│   Teams Bot     │ Backend Service │  Azure Function │ Knowledge Sync  │
-│  (TypeScript)   │       (Go)      │   (TypeScript)  │  (TypeScript)   │
-│                 │                 │                 │                 │
-│azure-sdk-qa-    │azure-sdk-qa-    │azure-sdk-qa-    │azure-sdk-qa-    │
-│bot/             │bot-backend/     │bot-function/    │bot-knowledge-   │
-│                 │                 │                 │sync/            │
-├─────────────────┼─────────────────┴─────────────────┴─────────────────┤
-│  Shared Library │               Evaluation Framework                  │
-│  (TypeScript)   │                    (Python)                         │
-│                 │                                                     │
-│azure-sdk-qa-    │            azure-sdk-qa-bot-evaluation/             │
-│bot-backend-     │                                                     │
-│shared/          │                                                     │
-└─────────────────┴─────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                            Azure SDK AI Bot System                                             │
+├─────────────────────┬───────────────────────────┬────────────────────────────┬─────────────────────────────────┤
+│     Teams Bot       │      Backend Service      │        Azure Function      │          Knowledge Sync         │
+│    (TypeScript)     │           (Go)            │         (TypeScript)       │           (TypeScript)          │
+│ azure-sdk-qa-bot/   │ azure-sdk-qa-bot-backend/ │ azure-sdk-qa-bot-function/ │ azure-sdk-qa-bot-knowledge-sync/│
+│                     │                           │                            │                                 │
+├─────────────────────┴───────────────────────────┴────────────────────────────┴─────────────────────────────────┤
+│                  Shared Library                 │                        Evaluation Framework                  │
+│                   (TypeScript)                  │                              (Python)                        │
+│           azure-sdk-qa-bot-backend-shared/      │                     azure-sdk-qa-bot-evaluation/             │
+│                                                 │                                                              │
+└─────────────────────────────────────────────────┴──────────────────────────────────────────────────────────────┘
 ```
 
 ## Components
 
 ### 1. Azure SDK QA Bot (`azure-sdk-qa-bot/`)
 
-An intelligent assistant that operates within Microsoft Teams to help developers with Azure SDK related questions. It provides real-time guidance on TypeSpec authoring, SDK generation, and best practices by leveraging AI-powered responses.
+An intelligent assistant that operates within Microsoft Teams to help developers with Azure SDK related questions. It provides real-time guidance on TypeSpec authoring, Azure SDK onboarding, and best practices by leveraging AI-powered responses.
 
 ### 2. Backend API Service (`azure-sdk-qa-bot-backend/`)
 
@@ -109,7 +105,7 @@ python evaluation.py
 
 ### Documentation Sources
 
-Add new documentation sources by updating the knowledge configuration. The Knowledge Sync Service uses `azure-sdk-qa-bot-knowledge-sync/config/knowledge-config.json`, while the Azure Function uses `azure-sdk-qa-bot-function/config/knowledge-config.json`. See [Self-Serve Knowledge Sources Guide](docs/SELF_SERVE_ADD_KNOWLEDGE_SOURCES.md) for detailed instructions.
+Add new documentation sources by updating the knowledge configuration. The Knowledge Sync Service uses `azure-sdk-qa-bot-knowledge-sync/config/knowledge-config.json`. See [Self-Serve Knowledge Sources Guide](docs/SELF_SERVE_ADD_KNOWLEDGE_SOURCES.md) for detailed instructions.
 
 ### Environment Variables
 

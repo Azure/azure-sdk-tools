@@ -77,13 +77,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             var identityLine = File.ReadAllLines(Path.Join(GoPackageDir, "go.mod")).Where(line => line.Contains("azidentity")).Select(line => line.Trim()).First();
             Assert.That(identityLine, Is.Not.EqualTo("github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.10.0"));
 
-            resp = await LangService.FormatCodeAsync(GoPackageDir, CancellationToken.None);
+            resp = await LangService.FormatCodeAsync(GoPackageDir, false, CancellationToken.None);
             Assert.That(File.ReadAllText(Path.Join(GoPackageDir, "main.go")), Does.Not.Contain("azservicebus"));
 
             resp = await LangService.BuildProjectAsync(GoPackageDir, CancellationToken.None);
             Assert.That(resp.ExitCode, Is.EqualTo(0));
 
-            resp = await LangService.LintCodeAsync(GoPackageDir, CancellationToken.None);
+            resp = await LangService.LintCodeAsync(GoPackageDir, false, CancellationToken.None);
             Assert.That(resp.ExitCode, Is.EqualTo(0));
         }
 
@@ -124,7 +124,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 }
                 """);
 
-            var resp = await LangService.LintCodeAsync(GoPackageDir, CancellationToken.None);
+            var resp = await LangService.LintCodeAsync(GoPackageDir, false, CancellationToken.None);
             Assert.Multiple(() =>
             {
                 Assert.That(resp.ExitCode, Is.EqualTo(1));

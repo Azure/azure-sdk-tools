@@ -30,7 +30,7 @@ An intelligent assistant that operates within Microsoft Teams to help developers
 
 ### 2. Backend API Service (`azure-sdk-qa-bot-backend/`)
 
-The core processing engine that handles AI-powered response generation for the bot. It receives user questions, processes them through AI models, manages user feedback, and logs interactions for analytics and improvement purposes.
+The core processing engine responsible for generating AI-powered responses for the bot. It receives user questions, processes them through AI models, manages user feedback, and logs interactions for analytics and improvement purposes.
 
 ### 3. Azure Function (`azure-sdk-qa-bot-function/`)
 

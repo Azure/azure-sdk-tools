@@ -391,9 +391,8 @@ public class JavaASTAnalyser implements Analyser {
 
     private void processPackage(String packageName, List<ScanElement> scanElements) {
         if (packageName.isEmpty()) {
-            // we are dealing with the root package, so we are looking at the maven pom and module-info.
-
-            // look for the maven pom.xml file, and put that in first, in the root package
+            // Root package: attempt to tokenise Maven POM (may be absent in diff directory mode) and module-info.
+            // Always attempt; tokeniseMavenPom will no-op if the Null Object (non-real) Pom is present.
             tokeniseMavenPom(apiListing.getMavenPom());
 
             // look for the module-info.java file, and put that second, after the maven pom
@@ -518,6 +517,9 @@ public class JavaASTAnalyser implements Analyser {
      **********************************************************************************************/
 
     private void tokeniseMavenPom(Pom mavenPom) {
+        if (mavenPom == null || !mavenPom.isPomFileReal()) {
+            return;
+        }
         ReviewLine mavenLine = apiListing.addChildLine();
 
         mavenLine

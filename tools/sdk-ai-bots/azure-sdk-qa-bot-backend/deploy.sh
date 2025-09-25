@@ -70,6 +70,36 @@ configure_environment() {
     esac
 }
 
+# Deploy based on environment
+deploy_application() {
+    case "$ENVIRONMENT" in
+        "dev")
+            echo "Updating image in dev environment..."
+            az webapp config container set --name ${APP_NAME} --resource-group ${RESOURCE_GROUP} --container-image-name ${ACR_LOGIN_SERVER}/${IMAGE_NAME}:${IMAGE_TAG} --container-registry-url https://${ACR_LOGIN_SERVER}
+
+            # Restart the webapp to apply changes
+            az webapp restart --name ${APP_NAME} --resource-group ${RESOURCE_GROUP}
+            echo "Dev deployment completed successfully!"
+            ;;
+        "preview")
+            echo "Updating image in preview environment..."
+            az webapp config container set --name ${APP_NAME} --resource-group ${RESOURCE_GROUP} --container-image-name ${ACR_LOGIN_SERVER}/${IMAGE_NAME}:${IMAGE_TAG} --container-registry-url https://${ACR_LOGIN_SERVER}
+
+            # Restart the webapp to apply changes
+            az webapp restart --name ${APP_NAME} --resource-group ${RESOURCE_GROUP}
+            echo "Preview deployment completed successfully!"
+            ;;
+        "prod")
+            echo "Updating image in production environment..."
+            az webapp config container set --name ${APP_NAME} --resource-group ${RESOURCE_GROUP} --container-image-name ${ACR_LOGIN_SERVER}/${IMAGE_NAME}:${IMAGE_TAG} --container-registry-url https://${ACR_LOGIN_SERVER}
+
+            # Restart the webapp to apply changes
+            az webapp restart --name ${APP_NAME} --resource-group ${RESOURCE_GROUP}
+            echo "Production deployment completed successfully!"
+            ;;
+    esac
+}
+
 # Configure environment settings
 configure_environment
 
@@ -127,36 +157,6 @@ docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${ACR_LOGIN_SERVER}/${IMAGE_NAME}:${IMAGE_
 # Push the image to ACR
 echo "Pushing image to Azure Container Registry..."
 docker push ${ACR_LOGIN_SERVER}/${IMAGE_NAME}:${IMAGE_TAG}
-
-# Deploy based on environment
-deploy_application() {
-    case "$ENVIRONMENT" in
-        "dev")
-            echo "Updating image in dev environment..."
-            az webapp config container set --name ${APP_NAME} --resource-group ${RESOURCE_GROUP} --container-image-name ${ACR_LOGIN_SERVER}/${IMAGE_NAME}:${IMAGE_TAG} --container-registry-url https://${ACR_LOGIN_SERVER}
-
-            # Restart the webapp to apply changes
-            az webapp restart --name ${APP_NAME} --resource-group ${RESOURCE_GROUP}
-            echo "Dev deployment completed successfully!"
-            ;;
-        "preview")
-            echo "Updating image in preview environment..."
-            az webapp config container set --name ${APP_NAME} --resource-group ${RESOURCE_GROUP} --container-image-name ${ACR_LOGIN_SERVER}/${IMAGE_NAME}:${IMAGE_TAG} --container-registry-url https://${ACR_LOGIN_SERVER}
-
-            # Restart the webapp to apply changes
-            az webapp restart --name ${APP_NAME} --resource-group ${RESOURCE_GROUP}
-            echo "Preview deployment completed successfully!"
-            ;;
-        "prod")
-            echo "Updating image in production environment..."
-            az webapp config container set --name ${APP_NAME} --resource-group ${RESOURCE_GROUP} --container-image-name ${ACR_LOGIN_SERVER}/${IMAGE_NAME}:${IMAGE_TAG} --container-registry-url https://${ACR_LOGIN_SERVER}
-
-            # Restart the webapp to apply changes
-            az webapp restart --name ${APP_NAME} --resource-group ${RESOURCE_GROUP}
-            echo "Production deployment completed successfully!"
-            ;;
-    esac
-}
 
 # Execute deployment
 deploy_application

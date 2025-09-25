@@ -175,10 +175,7 @@ public class Pom {
     }
 
     public String getGroupId() {
-        if (gav.getGroupId() != null && !gav.getGroupId().isEmpty()) {
-            return gav.getGroupId();
-        }
-        return parent != null ? parent.getGroupId() : "";
+        return gav.getGroupId() != null ? gav.getGroupId() : parent.getGroupId();
     }
 
     public String getArtifactId() {
@@ -186,10 +183,7 @@ public class Pom {
     }
 
     public String getVersion() {
-        if (gav.getVersion() != null && !gav.getVersion().isEmpty()) {
-            return gav.getVersion();
-        }
-        return parent != null ? parent.getVersion() : "";
+        return gav.getVersion() != null ? gav.getVersion() : parent.getVersion();
     }
 
     public Gav getParent() {
@@ -258,27 +252,5 @@ public class Pom {
         }
 
         return new Gav(groupId, artifactId, version);
-    }
-
-    /**
-     * Attempts to read a pom.xml file from the given directory. If not found or cannot be parsed,
-     * returns a synthetic Pom using the directory name as the artifactId and version 0.0.0.
-     */
-    public static Pom fromDirectory(File dir) {
-        if (dir == null || !dir.isDirectory()) {
-            throw new IllegalArgumentException("Provided file is not a directory: " + dir);
-        }
-
-        File pomFile = new File(dir, "pom.xml");
-        if (pomFile.exists()) {
-            try (InputStream is = java.nio.file.Files.newInputStream(pomFile.toPath())) {
-                return new Pom(is);
-            } catch (IOException e) {
-                // fall through to synthetic
-            }
-        }
-
-        // Synthetic fallback: no groupId so it will appear empty, caller can decide how to handle.
-        return new Pom("", dir.getName(), "0.0.0", false);
     }
 }

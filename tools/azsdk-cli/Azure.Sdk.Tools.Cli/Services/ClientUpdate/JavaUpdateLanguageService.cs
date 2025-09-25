@@ -60,10 +60,16 @@ public class JavaUpdateLanguageService : ClientUpdateLanguageServiceBase
                 return result;
             }
             await using var fs = File.OpenRead(diffPath);
-            var payload = await JsonSerializer.DeserializeAsync<RawApiDiffResult>(fs, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }, ct);
-            if (payload?.Changes != null)
+            using var doc = await JsonDocument.ParseAsync(fs, cancellationToken: ct);
+            if (doc.RootElement.TryGetProperty("changes", out var changesElement))
             {
-                result = payload.Changes.Select(MapRawChange).ToList();
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                options.Converters.Add(new ApiChangeJsonConverter());
+                var changes = JsonSerializer.Deserialize<List<ApiChange>>(changesElement.GetRawText(), options);
+                if (changes != null)
+                {
+                    result = changes;
+                }
             }
         }
         catch (Exception ex)
@@ -104,68 +110,99 @@ public class JavaUpdateLanguageService : ClientUpdateLanguageServiceBase
         return true;
     }
 
-    private static ApiChange MapRawChange(RawApiChange raw)
+    private class ApiChangeJsonConverter : JsonConverter<ApiChange>
     {
-        // New Java diff schema fields:
-        // changeType, before, after, category, meta{ symbolKind,fqn,methodName,fieldName,signature,visibility,returnType,parameterTypes,parameterNames,deprecated,paramNameChange }
-        var apiChange = new ApiChange();
-
-        // Map high-level fields. We'll surface changeType as Kind, and use before/after to construct Symbol/Detail heuristically.
-        apiChange.Kind = raw.ChangeType ?? string.Empty;
-
-        // Determine a representative symbol name from meta.
-        string? symbolFromMeta = raw.Meta?.MethodName ?? raw.Meta?.FieldName ?? raw.Meta?.Fqn;
-        apiChange.Symbol = symbolFromMeta ?? string.Empty;
-
-        // Detail: show a concise before -> after form if both exist; else whichever exists.
-        if (!string.IsNullOrEmpty(raw.Before) && !string.IsNullOrEmpty(raw.After))
+        public override ApiChange Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            apiChange.Detail = $"{raw.Before} -> {raw.After}";
-        }
-        else
-        {
-            apiChange.Detail = raw.Before ?? raw.After ?? string.Empty;
-        }
+            using var doc = JsonDocument.ParseValue(ref reader);
+            var root = doc.RootElement;
+            
+            var apiChange = new ApiChange();
 
-        if (raw.Meta != null)
-        {
-            void Add(string key, object? value)
+            // Map changeType to Kind
+            if (root.TryGetProperty("changeType", out var changeTypeElement))
             {
-                if (value == null)
+                apiChange.Kind = changeTypeElement.GetString() ?? string.Empty;
+            }
+
+            // Extract before/after for Detail
+            string? before = null, after = null;
+            if (root.TryGetProperty("before", out var beforeElement))
+            {
+                before = beforeElement.GetString();
+            }
+            if (root.TryGetProperty("after", out var afterElement))
+            {
+                after = afterElement.GetString();
+            }
+
+            // Build Detail from before/after
+            if (!string.IsNullOrEmpty(before) && !string.IsNullOrEmpty(after))
+            {
+                apiChange.Detail = $"{before} -> {after}";
+            }
+            else
+            {
+                apiChange.Detail = before ?? after ?? string.Empty;
+            }
+
+            // Extract Symbol from meta
+            if (root.TryGetProperty("meta", out var metaElement))
+            {
+                // Try to get the best symbol name
+                string? symbolFromMeta = null;
+                if (metaElement.TryGetProperty("methodName", out var methodNameElement))
                 {
-                    return;
+                    symbolFromMeta = methodNameElement.GetString();
                 }
-                var str = value switch
+                else if (metaElement.TryGetProperty("fieldName", out var fieldNameElement))
                 {
-                    string s => s,
-                    string[] arr => string.Join(",", arr),
-                    bool b => b.ToString().ToLowerInvariant(),
-                    int i => i.ToString(),
-                    _ => value.ToString() ?? string.Empty
-                };
-                if (!string.IsNullOrEmpty(str))
+                    symbolFromMeta = fieldNameElement.GetString();
+                }
+                else if (metaElement.TryGetProperty("fqn", out var fqnElement))
                 {
-                    apiChange.Metadata[key] = str;
+                    symbolFromMeta = fqnElement.GetString();
+                }
+                
+                apiChange.Symbol = symbolFromMeta ?? string.Empty;
+
+                // Flatten all meta properties into Metadata dictionary
+                foreach (var property in metaElement.EnumerateObject())
+                {
+                    var value = property.Value.ValueKind switch
+                    {
+                        JsonValueKind.String => property.Value.GetString(),
+                        JsonValueKind.True => "true",
+                        JsonValueKind.False => "false",
+                        JsonValueKind.Number => property.Value.GetRawText(),
+                        JsonValueKind.Array => string.Join(",", property.Value.EnumerateArray().Select(e => e.GetString())),
+                        _ => property.Value.GetRawText()
+                    };
+                    
+                    if (!string.IsNullOrEmpty(value))
+                    {
+                        apiChange.Metadata[property.Name] = value;
+                    }
                 }
             }
 
-            Add("symbolKind", raw.Meta.SymbolKind);
-            Add("fqn", raw.Meta.Fqn);
-            Add("methodName", raw.Meta.MethodName);
-            Add("fieldName", raw.Meta.FieldName);
-            Add("signature", raw.Meta.Signature);
-            Add("visibility", raw.Meta.Visibility);
-            Add("returnType", raw.Meta.ReturnType);
-            Add("parameterTypes", raw.Meta.ParameterTypes);
-            Add("parameterNames", raw.Meta.ParameterNames);
-            Add("deprecated", raw.Meta.Deprecated);
-            Add("paramNameChange", raw.Meta.ParamNameChange);
+            // Add category to metadata if present
+            if (root.TryGetProperty("category", out var categoryElement))
+            {
+                var category = categoryElement.GetString();
+                if (!string.IsNullOrEmpty(category))
+                {
+                    apiChange.Metadata["category"] = category;
+                }
+            }
+
+            return apiChange;
         }
-        if (!string.IsNullOrEmpty(raw.Category))
+
+        public override void Write(Utf8JsonWriter writer, ApiChange value, JsonSerializerOptions options)
         {
-            apiChange.Metadata["category"] = raw.Category!;
+            throw new NotImplementedException("Writing ApiChange to JSON is not supported");
         }
-        return apiChange;
     }
 
     private List<string> DiscoverJavaInputs(string generationRoot)
@@ -232,35 +269,4 @@ public class JavaUpdateLanguageService : ClientUpdateLanguageServiceBase
         }).ToList();
         return Task.FromResult(proposals);
     }
-}
-
-internal class RawApiDiffResult
-{
-    [JsonPropertyName("schemaVersion")] public string? SchemaVersion { get; set; }
-    [JsonPropertyName("changes")] public List<RawApiChange> Changes { get; set; } = new();
-}
-
-internal class RawApiChange
-{
-    // Updated to new Java diff output schema
-    [JsonPropertyName("changeType")] public string? ChangeType { get; set; }
-    [JsonPropertyName("before")] public string? Before { get; set; }
-    [JsonPropertyName("after")] public string? After { get; set; }
-    [JsonPropertyName("category")] public string? Category { get; set; }
-    [JsonPropertyName("meta")] public RawApiChangeMeta? Meta { get; set; }
-}
-
-internal class RawApiChangeMeta
-{
-    [JsonPropertyName("symbolKind")] public string? SymbolKind { get; set; }
-    [JsonPropertyName("fqn")] public string? Fqn { get; set; }
-    [JsonPropertyName("methodName")] public string? MethodName { get; set; }
-    [JsonPropertyName("fieldName")] public string? FieldName { get; set; }
-    [JsonPropertyName("signature")] public string? Signature { get; set; }
-    [JsonPropertyName("visibility")] public string? Visibility { get; set; }
-    [JsonPropertyName("returnType")] public string? ReturnType { get; set; }
-    [JsonPropertyName("parameterTypes")] public string[]? ParameterTypes { get; set; }
-    [JsonPropertyName("parameterNames")] public string[]? ParameterNames { get; set; }
-    [JsonPropertyName("deprecated")] public bool? Deprecated { get; set; }
-    [JsonPropertyName("paramNameChange")] public bool? ParamNameChange { get; set; }
 }

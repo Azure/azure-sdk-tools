@@ -13,7 +13,6 @@ import com.azure.tools.apiview.processor.model.TokenKind;
 import com.azure.tools.apiview.processor.model.maven.Dependency;
 import com.azure.tools.apiview.processor.model.maven.Pom;
 import com.azure.tools.apiview.processor.model.traits.Parent;
-import com.azure.tools.apiview.processor.diff.collector.SymbolCollector;
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.JavaParserAdapter;
 import com.github.javaparser.ParserConfiguration;
@@ -33,8 +32,6 @@ import com.github.javaparser.ast.body.EnumConstantDeclaration;
 import com.github.javaparser.ast.body.EnumDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
-import java.util.List;
-import java.util.ArrayList;
 import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.body.TypeDeclaration;
 import com.github.javaparser.ast.body.VariableDeclarator;
@@ -182,7 +179,6 @@ public class JavaASTAnalyser implements Analyser {
     private final Diagnostics diagnostic;
 
     private final Map<String,String> shortClassNameToFullyQualfiedNameMap = new HashMap<>();
-    private final SymbolCollector symbolCollector; // nullable for diff mode
 
     private int JAVADOC_LINE_COUNT = 0;
 
@@ -194,13 +190,8 @@ public class JavaASTAnalyser implements Analyser {
      **********************************************************************************************/
 
     public JavaASTAnalyser(APIListing apiListing) {
-        this(apiListing, null);
-    }
-
-    public JavaASTAnalyser(APIListing apiListing, SymbolCollector collector) {
         this.apiListing = apiListing;
         this.diagnostic = new Diagnostics(apiListing);
-        this.symbolCollector = collector;
     }
 
 
@@ -528,15 +519,13 @@ public class JavaASTAnalyser implements Analyser {
                 .setSkipDiff())
             .addContextStartTokens();
 
-        // parent (may be absent if the sources jar didn't contain a real pom.xml)
-        if (mavenPom.getParent() != null) {
-            String gavStr = mavenPom.getParent().getGroupId() + ":" + mavenPom.getParent().getArtifactId() + ":"
+        // parent
+        String gavStr = mavenPom.getParent().getGroupId() + ":" + mavenPom.getParent().getArtifactId() + ":"
                 + mavenPom.getParent().getVersion();
-            MiscUtils.tokeniseMavenKeyValue(mavenLine, "parent", gavStr, true);
-        }
+        MiscUtils.tokeniseMavenKeyValue(mavenLine, "parent", gavStr, true);
 
         // properties
-        String gavStr = mavenPom.getGroupId() + ":" + mavenPom.getArtifactId() + ":" + mavenPom.getVersion();
+        gavStr = mavenPom.getGroupId() + ":" + mavenPom.getArtifactId() + ":" + mavenPom.getVersion();
         MiscUtils.tokeniseMavenKeyValue(mavenLine, "properties", gavStr, true);
 
         // configuration
@@ -737,7 +726,6 @@ public class JavaASTAnalyser implements Analyser {
 
     // This method is for constructors, fields, methods, etc.
     private void visitDefinition(BodyDeclaration<?> definition, ReviewLine parentLine) {
-    TypeDeclaration<?> enclosingTypeForMembers = findEnclosingType(definition);
         boolean isTypeDeclaration = false;
         String id;
         String name;
@@ -746,9 +734,6 @@ public class JavaASTAnalyser implements Analyser {
             TypeDeclaration<?> typeDeclaration = definition.asTypeDeclaration();
             // Skip if the class is private or package-private, unless it is a nested type defined inside a public interface
             if (!isTypeAPublicAPI(typeDeclaration)) {
-            if (symbolCollector != null) {
-                try { symbolCollector.onType(typeDeclaration); } catch (Exception ignored) {}
-            }
                 return;
             }
 
@@ -761,16 +746,10 @@ public class JavaASTAnalyser implements Analyser {
             FieldDeclaration fieldDeclaration = definition.asFieldDeclaration();
             id = makeId(fieldDeclaration);
             name = fieldDeclaration.toString();
-            if (symbolCollector != null) {
-                try { symbolCollector.onField(enclosingTypeForMembers, fieldDeclaration); } catch (Exception ignored) {}
-            }
         } else if (definition.isCallableDeclaration()) {
             CallableDeclaration<?> callableDeclaration = definition.asCallableDeclaration();
             id = makeId(callableDeclaration);
             name = callableDeclaration.getNameAsString();
-            if (symbolCollector != null) {
-                try { symbolCollector.onMethod(enclosingTypeForMembers, callableDeclaration, callableDeclaration.isConstructorDeclaration()); } catch (Exception ignored) {}
-            }
         } else {
             System.out.println("Unknown definition type: " + definition.getClass().getName());
             System.exit(-1);
@@ -1385,38 +1364,6 @@ public class JavaASTAnalyser implements Analyser {
 
         // close declaration
         definitionLine.addToken(PUNCTUATION, ")");
-
-        // Tier 0: populate methodIndex directly (only for real methods / constructors, not annotation members treated as callable)
-        if (callableDeclaration instanceof MethodDeclaration || callableDeclaration instanceof ConstructorDeclaration) {
-            List<String> paramTypes = new ArrayList<>();
-            List<String> paramNames = new ArrayList<>();
-            for (Parameter p : parameters) {
-                // Reuse textual form already added to tokens: p.getType().toString() preserves generics
-                paramTypes.add(p.getType().toString());
-                paramNames.add(p.getNameAsString());
-            }
-            // Build enclosing type FQN from parent chain
-            String enclosingFqn = buildEnclosingTypeFqn(callableDeclaration);
-            String signatureKey = enclosingFqn + "#" + name + "(" + String.join(",", paramTypes) + ")";
-            apiListing.putMethodIndexEntry(signatureKey, paramNames, paramTypes);
-        }
-    }
-
-    private String buildEnclosingTypeFqn(Node node) {
-        List<String> parts = new ArrayList<>();
-        Node current = node.getParentNode().orElse(null);
-        while (current != null) {
-            if (current instanceof TypeDeclaration<?>) {
-                parts.add(0, ((TypeDeclaration<?>) current).getNameAsString());
-            }
-            current = current.getParentNode().orElse(null);
-        }
-        // Prepend package name if available from apiListing
-        String pkg = apiListing.getPackageName();
-        if (pkg != null && !pkg.isEmpty()) {
-            parts.add(0, pkg);
-        }
-        return String.join(".", parts);
     }
 
     private boolean visitTypeParameters(NodeList<TypeParameter> typeParameters, ReviewLine reviewLine) {
@@ -1734,16 +1681,4 @@ public class JavaASTAnalyser implements Analyser {
             return spacing;
         }
     }
-
-    private static TypeDeclaration<?> findEnclosingType(Node node) {
-        Node current = node;
-        while (current != null) {
-            if (current instanceof TypeDeclaration<?>) {
-                return (TypeDeclaration<?>) current;
-            }
-            current = current.getParentNode().orElse(null);
-        }
-        return null;
-    }
-
 }

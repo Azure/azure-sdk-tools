@@ -7,10 +7,11 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from azure.ai.evaluation import evaluate
 from azure.identity import AzurePipelinesCredential
-from evals._custom import EVALUATORS
-from _config_loader import load_workflow_config, WorkflowConfigError
 from src._settings import SettingsManager
 from tabulate import tabulate
+
+from _config_loader import load_workflow_config, WorkflowConfigError, get_evaluator_class
+import _custom
 
 DEFAULT_NUM_RUNS: int = 1
 
@@ -37,7 +38,7 @@ class EvalRunner:
         self._test_files: List[pathlib.Path] = [self._workflow_config.tests_path]
         
         evaluation_kind = self._workflow_config.kind
-        self._evaluator_class = EVALUATORS[evaluation_kind]
+        self._evaluator_class = get_evaluator_class(evaluation_kind)
 
     def run(self):
         """Run the evaluation over the resolved test files."""

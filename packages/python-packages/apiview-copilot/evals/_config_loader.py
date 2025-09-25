@@ -13,11 +13,11 @@ from __future__ import annotations
 import dataclasses
 import os
 from pathlib import Path
-from typing import List
-from evals._custom import EVALUATORS
+from typing import List, Dict, Type, Any
 import yaml
 
-SUPPORTED_WORKFLOWS = set(EVALUATORS.keys())
+# Global evaluator registry
+_EVALUATOR_REGISTRY: Dict[str, Type] = {}
 
 @dataclasses.dataclass(slots=True)
 class WorkflowConfig:
@@ -37,10 +37,38 @@ class EvaluationConfig:
 class WorkflowConfigError(ValueError):
     pass
 
+def register_evaluator(kind: str, evaluator_class: Type) -> None:
+    """Register an evaluator class for a given kind.
+    
+    Args:
+        kind: The workflow kind (e.g., 'apiview', 'prompt')
+        evaluator_class: The evaluator class to register
+    """
+    _EVALUATOR_REGISTRY[kind] = evaluator_class
 
 def _fail(msg: str) -> None:
     raise WorkflowConfigError(msg)
 
+def get_evaluator_class(kind: str) -> Type:
+    """Get an evaluator class by kind.
+    
+    Args:
+        kind: The workflow kind
+        
+    Returns:
+        The evaluator class
+        
+    Raises:
+        WorkflowConfigError: If the kind is not registered
+    """
+    if kind not in _EVALUATOR_REGISTRY:
+        available = sorted(_EVALUATOR_REGISTRY.keys())
+        raise WorkflowConfigError(f"Unknown evaluator kind: {kind!r}. Available: {available}")
+    return _EVALUATOR_REGISTRY[kind]
+
+def get_supported_workflows() -> set[str]:
+    """Get the set of supported workflow kinds."""
+    return set(_EVALUATOR_REGISTRY.keys())
 
 def load_workflow_config(path: str | os.PathLike) -> WorkflowConfig:
     """Load and validate a single workflow yaml file.
@@ -86,9 +114,11 @@ def load_workflow_config(path: str | os.PathLike) -> WorkflowConfig:
     kind = raw.get("kind")
     if not kind or not isinstance(kind, str):
         _fail("Missing required string field: kind")
-    if kind not in SUPPORTED_WORKFLOWS:
-        _fail(f"Invalid test: {name!r}. Supported: {sorted(SUPPORTED_WORKFLOWS)}")
-        
+
+    supported_workflows = get_supported_workflows()
+    if kind not in supported_workflows:
+        _fail(f"Invalid kind: {kind!r}. Supported: {sorted(supported_workflows)}")
+
     prompty_path: Path | None = None
     if kind == "prompt":
         prompty_rel = raw.get("prompty")
@@ -104,27 +134,8 @@ def load_workflow_config(path: str | os.PathLike) -> WorkflowConfig:
     if not isinstance(runs, int) or runs < 1:
         _fail(f"runs must be positive integer (got: {runs!r})")
 
-    evaluation_config = None
-    if kind == "prompt":
-        eval_config_raw = raw.get("evaluation_config")
-        if eval_config_raw and isinstance(eval_config_raw, dict):
-            comparison_field = eval_config_raw.get("comparison_field", "action")
-            display_name = eval_config_raw.get("display_name", "Action") 
-            breakdown_categories = eval_config_raw.get("breakdown_categories", {})
-            
-            # Validate breakdown_categories structure
-            if breakdown_categories:
-                for key, value in breakdown_categories.items():
-                    if not isinstance(value, dict) or "correct" not in value or "total" not in value:
-                        _fail(f"breakdown_categories.{key} must have 'correct' and 'total' fields")
-                    if not isinstance(value["correct"], int) or not isinstance(value["total"], int):
-                        _fail(f"breakdown_categories.{key} correct/total must be integers")
-            
-            evaluation_config = EvaluationConfig(
-                comparison_field=comparison_field,
-                display_name=display_name,
-                breakdown_categories=breakdown_categories
-            )
+    evaluator_class = get_evaluator_class(kind)
+    evaluation_config = evaluator_class.validate_config_schema(raw.get("evaluation_config"))
 
     cfg = WorkflowConfig(
         name=name,
@@ -135,7 +146,6 @@ def load_workflow_config(path: str | os.PathLike) -> WorkflowConfig:
         source_file=yaml_path,
     )
     return cfg
-
 
 def load_workflow_directory(dir_path: str | os.PathLike) -> List[WorkflowConfig]:
     base = Path(dir_path).resolve()
@@ -158,7 +168,11 @@ def load_workflow_directory(dir_path: str | os.PathLike) -> List[WorkflowConfig]
 
 __all__ = [
     "WorkflowConfig",
+    "EvaluationConfig",
     "WorkflowConfigError",
+    "register_evaluator",
+    "get_evaluator_class", 
+    "get_supported_workflows",
     "load_workflow_config",
     "load_workflow_directory",
 ]

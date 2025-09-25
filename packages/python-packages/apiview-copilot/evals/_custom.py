@@ -17,6 +17,8 @@ from azure.ai.evaluation import GroundednessEvaluator, SimilarityEvaluator
 from src._settings import SettingsManager
 from src._utils import get_prompt_path
 
+from _config_loader import WorkflowConfigError, EvaluationConfig
+
 class PromptWorkflowTarget:
     def __init__(self, prompty_subpath, prompty_filename):
         self.prompty_path = Path(__file__).parent.parent / "prompts" / prompty_subpath / prompty_filename
@@ -112,6 +114,11 @@ class BaseEvaluator(ABC):
             guideline_ids: Set of guideline IDs collected during evaluation (optional)
         """
         pass  # Default: no post-processing
+
+    @classmethod
+    def validate_config_schema(cls, raw_config: dict) -> dict | None:
+        """Base validation - subclasses should override as needed."""
+        return None
 
 
 class CustomAPIViewEvaluator(BaseEvaluator):
@@ -708,8 +715,32 @@ class PromptWorkflowEvaluator(BaseEvaluator):
         
         return workflow_targets[workflow_name]
     
-# Registry of available evaluators
-EVALUATORS: Dict[str, BaseEvaluator] = {
-    "apiview": CustomAPIViewEvaluator,
-    "prompt": PromptWorkflowEvaluator
-}
+    @classmethod
+    def validate_config_schema(cls, raw_config: dict) -> dict | None:
+        """Validate prompt workflow configuration."""
+        if not raw_config or not isinstance(raw_config, dict):
+            return None
+            
+        comparison_field = raw_config.get("comparison_field", "action")
+        display_name = raw_config.get("display_name", "Action") 
+        breakdown_categories = raw_config.get("breakdown_categories", {})
+        
+        # Validate breakdown_categories structure
+        if breakdown_categories:
+            for key, value in breakdown_categories.items():
+                if not isinstance(value, dict) or "correct" not in value or "total" not in value:
+                    raise WorkflowConfigError(f"breakdown_categories.{key} must have 'correct' and 'total' fields")
+                if not isinstance(value["correct"], int) or not isinstance(value["total"], int):
+                    raise WorkflowConfigError(f"breakdown_categories.{key} correct/total must be integers")
+        
+        return EvaluationConfig(
+            comparison_field=comparison_field,
+            display_name=display_name,
+            breakdown_categories=breakdown_categories
+        )
+    
+# Register evaluators at module load time to prevent circular imports
+from _config_loader import register_evaluator
+
+register_evaluator("apiview", CustomAPIViewEvaluator)
+register_evaluator("prompt", PromptWorkflowEvaluator)

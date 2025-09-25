@@ -15,6 +15,16 @@ interface ConvertResult {
     error?: Error;
 }
 
+interface ScenarioAnalysis {
+    heading: string;
+    description: string;
+}
+
+interface AnalysisResult {
+    title: string;
+    scenarios: ScenarioAnalysis[];
+}
+
 /**
  * Spector case processor for TypeSpec HTTP specifications
  * Converts TypeSpec (.tsp) files with @scenario annotations to markdown documentation
@@ -119,6 +129,10 @@ export class SpectorCaseProcessor {
             console.log(`Processing spec path: ${relativeDir}`);
 
             const scenarios = this.getScenarios('@scenario\n', spec);
+            if (scenarios.length === 0) {
+                console.log(`No scenarios found in spec path: ${relativeDir}, skipping.`);
+                return;
+            }
             const doc = await this.createMarkdownDoc(scenarios, spec);
             
             // Create target directory if it doesn't exist
@@ -169,20 +183,27 @@ export class SpectorCaseProcessor {
         spec: string
     ): Promise<string> {
         try {
-            const title = await this.getChatCompletions(
-                "Get a title from the @scenarioService or @doc that is closest to @scenarioService.\n" +
-                "do not get title from other @doc. @doc for @scenarioService maybe not existed\n" +
-                "the title will be used as markdown heading, so should be one line.\n" +
-                "the reply should only contains the title, no extra characters\n" +
-                "the below is the typespec content\n\n" +
-                spec
-            );
+            // Single comprehensive call to process all scenarios at once
+            const analysisResult = await this.analyzeScenariosAndSpec(scenarios, spec);
             
-            let doc = `# Usages for ${title}\n\n`;
+            let doc = `# Usages for ${analysisResult.title}\n\n`;
             
-            for (const scenario of scenarios) {
-                const scenarioMarkdownSection = await this.createScenarioSection(scenario);
-                doc += scenarioMarkdownSection + '\n';
+            // Process each scenario with the pre-analyzed data
+            for (let i = 0; i < scenarios.length; i++) {
+                const scenario = scenarios[i];
+                const scenarioData = analysisResult.scenarios[i];
+                
+                const cleanedScenario = this.removeSpectorContent(scenario);
+                const finalDescription = scenarioData.description === scenarioData.heading ? '' : scenarioData.description;
+                
+                const section = 
+                    `## Scenario: ${scenarioData.heading}\n` +
+                    `${finalDescription}\n` +
+                    '``` typespec\n' +
+                    `${cleanedScenario}\n` +
+                    '```\n';
+                
+                doc += section + '\n';
             }
             
             const removed = this.removeSpectorContent(spec);
@@ -198,6 +219,104 @@ export class SpectorCaseProcessor {
         }
     }
     
+    /**
+     * Analyze scenarios and spec content in a single LLM call to reduce API calls
+     */
+    private static async analyzeScenariosAndSpec(
+        scenarios: string[],
+        spec: string
+    ): Promise<AnalysisResult> {
+        try {
+            // Prepare scenarios with indices for reference
+            const scenariosWithIndex = scenarios.map((scenario, index) => 
+                `=== SCENARIO ${index + 1} ===\n${scenario}\n`
+            ).join('\n');
+
+            const prompt = `Analyze the following TypeSpec content and scenarios to extract structured information.
+
+MAIN SPEC CONTENT:
+${spec}
+
+SCENARIOS:
+${scenariosWithIndex}
+
+Please provide a JSON response with the following structure:
+{
+    "title": "A concise title from @scenarioService or @doc that is closest to @scenarioService (one line only, no extra characters)",
+    "scenarios": [
+        {
+            "heading": "Title for scenario 1 from @scenarioDoc or @doc (one line, no 'expected' test results)",
+            "description": "Description from @scenarioDoc or @doc (one or more paragraphs, exclude 'expected' test results, include clarifying details)"
+        },
+        {
+            "heading": "Title for scenario 2...",
+            "description": "Description for scenario 2..."
+        }
+    ]
+}
+
+Requirements:
+- Extract title from @scenarioService or @doc closest to @scenarioService only
+- For each scenario, extract heading and description from @scenarioDoc or @doc
+- Headings should be one line suitable for markdown headers
+- Descriptions should exclude 'expected' test results but include clarifying details
+- If description is same as heading, make description empty string
+- Provide exactly ${scenarios.length} scenario objects in the response
+- Return only valid JSON, no additional text or formatting`;
+
+            const response = await this.getChatCompletions(prompt);
+            
+            // Parse the JSON response
+            let analysisResult: AnalysisResult;
+            try {
+                // Clean the response to ensure it's valid JSON
+                let cleanResponse = response.trim();
+                
+                // Remove any markdown code block formatting if present
+                if (cleanResponse.startsWith('```json')) {
+                    cleanResponse = cleanResponse.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+                } else if (cleanResponse.startsWith('```')) {
+                    cleanResponse = cleanResponse.replace(/^```\s*/, '').replace(/\s*```$/, '');
+                }
+                
+                analysisResult = JSON.parse(cleanResponse);
+            } catch (parseError) {
+                console.error('Failed to parse LLM response as JSON:', parseError);
+                console.error('Raw response:', response);
+                throw new Error(`Invalid JSON response from LLM: ${parseError}`);
+            }
+            
+            // Validate the response structure
+            if (!analysisResult.title || !Array.isArray(analysisResult.scenarios)) {
+                throw new Error('Invalid response structure from LLM');
+            }
+            
+            if (analysisResult.scenarios.length !== scenarios.length) {
+                console.warn(`Expected ${scenarios.length} scenarios, got ${analysisResult.scenarios.length}`);
+                // Pad with default values if needed
+                while (analysisResult.scenarios.length < scenarios.length) {
+                    analysisResult.scenarios.push({
+                        heading: 'no-title',
+                        description: 'no-description'
+                    });
+                }
+            }
+            
+            return analysisResult;
+        } catch (error) {
+            console.error('Error in analyzeScenariosAndSpec:', error);
+            
+            // Fallback: return default values
+            return {
+                title: 'TypeSpec Documentation',
+                scenarios: scenarios.map(() => ({
+                    heading: 'no-title',
+                    description: 'no-description'
+                }))
+            };
+        }
+    }
+
     /**
      * Get chat completions from OpenAI with retry logic
      */
@@ -217,7 +336,7 @@ export class SpectorCaseProcessor {
                     messages:[
                             {
                                 role: 'system',
-                                content: 'You are a helpful assistant. And you are a great TypeSpec expert.'
+                                content: 'You are a TypeSpec expert assistant. Extract structured information from TypeSpec files and return only valid JSON responses as requested.'
                             },
                             {
                                 role: 'user',
@@ -255,72 +374,6 @@ export class SpectorCaseProcessor {
         }
         
         throw new Error(`Failed to get valid response after ${MAX_RETRIES + 1} attempts`);
-    }
-    
-    /**
-     * Get heading for a scenario
-     */
-    private static async getHeading(scenario: string): Promise<string> {
-        try {
-            return await this.getChatCompletions(
-                "Get a title from the @scenarioDoc or @doc.\n" +
-                "the title will be used as markdown heading, so should be one line.\n" +
-                "If the first line is good, just copy the first line in @scenarioDoc or @doc.\n" +
-                "do not make the 'expected' test result in the title.\n" +
-                "the reply should only contains the title, no extra characters\n" +
-                "the below is the typespec content\n\n" +
-                scenario
-            );
-        } catch (error) {
-            console.error('Error getting heading:', error);
-            return 'no-title';
-        }
-    }
-    
-    /**
-     * Get description for a scenario
-     */
-    private static async getDescription(scenario: string): Promise<string> {
-        try {
-            return await this.getChatCompletions(
-                "Get (do not modify words) a description from the @scenarioDoc or @doc.\n" +
-                "the description will be used in a markdown description, so should be one or more paragraphs.\n" +
-                "If the first line is good, just copy the first line in @scenarioDoc or @doc.\n" +
-                "do not make the 'expected' test result in the @scenarioDoc or @doc.\n" +
-                "must contains the clarify or details other than the 'expected' test result\n" +
-                "the reply should only contains the description, no extra characters\n" +
-                "the below is the typespec content\n\n" +
-                scenario
-            );
-        } catch (error) {
-            console.error('Error getting description:', error);
-            return 'no-description';
-        }
-    }
-    
-    /**
-     * Create scenario section
-     */
-    private static async createScenarioSection(scenario: string): Promise<string> {
-        try {
-            const heading = await this.getHeading(scenario);
-            const description = await this.getDescription(scenario);
-
-            const cleanedScenario = this.removeSpectorContent(scenario);
-            const finalDescription = description === heading ? '' : description;
-            
-            const section = 
-                `## Scenario: ${heading}\n` +
-                `${finalDescription}\n` +
-                '``` typespec\n' +
-                `${cleanedScenario}\n` +
-                '```\n';
-                
-            return section;
-        } catch (error) {
-            console.error('Error creating scenario section:', error);
-            throw error;
-        }
     }
     
     /**

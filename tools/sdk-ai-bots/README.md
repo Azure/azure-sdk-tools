@@ -4,7 +4,7 @@ This folder contains AI-powered components that work together to provide intelli
 
 ## Architecture Overview
 
-The system consists of six main components that work together to provide intelligent assistance for Azure SDK development. Each component operates independently with well-defined interfaces:
+The system consists of six main components that work together to provide intelligent assistance for Azure SDK domain knowledge. Each component operates independently with well-defined interfaces:
 
 ```text
 ┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐

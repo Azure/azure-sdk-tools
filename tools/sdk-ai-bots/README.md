@@ -93,6 +93,22 @@ npm install
 npm start
 ```
 
+#### Knowledge Sync Service
+
+```bash
+cd azure-sdk-qa-bot-knowledge-sync
+npm install
+npm start
+```
+
+#### Shared Library
+
+```bash
+cd azure-sdk-qa-bot-backend-shared
+npm install
+npm run dev:local
+```
+
 #### Evaluation Framework
 
 ```bash

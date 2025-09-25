@@ -117,6 +117,10 @@ pip install -r requirements.txt
 python run.py
 ```
 
+**NOTE**: Running Evaluations
+
+To run evaluations, see: [azure-sdk-qa-bot-evaluation/README.md](./azure-sdk-qa-bot-evaluation/README.md)
+
 ## Configuration
 
 ### Documentation Sources

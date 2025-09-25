@@ -166,18 +166,4 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
     {
         return await Task.FromResult(new CLICheckResponse());
     }
-
-    public async Task<CLICheckResponse> LintCodeAsync(string packagePath, bool fix = false, CancellationToken cancellationToken = default)
-    {
-        // Implementation for linting code in a Go project
-        // Could use golangci-lint or other Go linting tools
-        return await Task.FromResult(new CLICheckResponse(0, "Code linting not yet implemented for Go", ""));
-    }
-
-    public async Task<CLICheckResponse> FormatCodeAsync(string packagePath, bool fix = false, CancellationToken cancellationToken = default)
-    {
-        // Implementation for formatting code in a Go project
-        // Could use gofmt, goimports, etc.
-        return await Task.FromResult(new CLICheckResponse(0, "Code formatting not yet implemented for Go", ""));
-    }
 }

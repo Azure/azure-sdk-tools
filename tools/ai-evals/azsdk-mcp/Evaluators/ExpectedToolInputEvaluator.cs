@@ -7,7 +7,7 @@ namespace Azure.Sdk.Tools.McpEvals.Evaluators
 {
    public class ExpectedToolInputEvaluator : IEvaluator
    {
-        public const string ExpectedToolInputMetricName = "Azure SDK MCP";
+        public const string ExpectedToolInputMetricName = "Expected Tool Input";
         public IReadOnlyCollection<string> EvaluationMetricNames => [ExpectedToolInputMetricName];
 
         public ValueTask<EvaluationResult> EvaluateAsync(
@@ -49,7 +49,7 @@ namespace Azure.Sdk.Tools.McpEvals.Evaluators
             {
                 metric.AddDiagnostics(
                     EvaluationDiagnostic.Error(
-                        $"Provided LLM Result contained no tool calls."));
+                        $"Provided LLM Result contained no tool call. Expected to call: {PrintToolNames(expectedToolCalls)}"));
 
                 return result;
             }
@@ -61,7 +61,7 @@ namespace Azure.Sdk.Tools.McpEvals.Evaluators
             {
                 metric.AddDiagnostics(
                     EvaluationDiagnostic.Error(
-                        $"The LLM Result had more tool calls than expected: Actual calls: {actCount}, Expected calls: {expCount}"));
+                        $"The LLM Result had different set of tool calls than expected: Actual calls: {PrintToolNames(actualToolCalls)}, Expected calls: {PrintToolNames(expectedToolCalls)}"));
 
                 return result;
             }
@@ -162,12 +162,33 @@ namespace Azure.Sdk.Tools.McpEvals.Evaluators
             }
         }
 
-        private static IEnumerable<FunctionCallContent> GetToolContent(IEnumerable<ChatMessage> messages)
+        private static IEnumerable<FunctionCallContent> GetToolContent(IEnumerable<ChatMessage> messages, bool simplify)
         {
-            return messages
+            var result = messages
                 .Where(message => message.Role == ChatRole.Assistant)
                 .SelectMany(message => message.Contents)
                 .OfType<FunctionCallContent>();
+
+            // Remove consecutive duplicates if requested
+            if (simplify)
+            {
+                string? lastToolName = null;
+
+                // Going in reverse as we want to maintain the last tool call from the duplicates
+                foreach (var message in result.Reverse())
+                {
+                    if(lastToolName == null || lastToolName != message.Name)
+                    {
+                        lastToolName = message.Name;
+                        yield return message;
+                    }
+                }
+            }
         }
-   }
+
+        private static string PrintToolNames(IEnumerable<FunctionCallContent> toolCalls)
+        {
+            return string.Join(",", toolCalls.Select(toolCall => toolCall.Name));
+        }
+    }
 }

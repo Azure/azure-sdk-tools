@@ -4,7 +4,7 @@ This document provides a guide for developers to add new knowledge sources to th
 
 ## Overview
 
-The Azure SDK QA Bot uses a configuration-driven approach to manage knowledge sources. Developers can add new documentation repositories and sources by updating the `azure-sdk-qa-bot-function/config/knowledge-config.json` file and following the process outlined in this document.
+The Azure SDK QA Bot uses a configuration-driven approach to manage knowledge sources. Developers can add new documentation repositories and sources by updating the `azure-sdk-qa-bot-knowledge-sync/config/knowledge-config.json` file and following the process outlined in this document.
 
 ## Prerequisites
 
@@ -14,7 +14,7 @@ The Azure SDK QA Bot uses a configuration-driven approach to manage knowledge so
 
 ## Configuration Structure
 
-The knowledge sources are defined in `azure-sdk-qa-bot-function/config/knowledge-config.json`. Each source contains:
+The knowledge sources are defined in `azure-sdk-qa-bot-knowledge-sync/config/knowledge-config.json`. Each source contains:
 
 - **Repository configuration**: Git repository details, authentication, and access settings
 - **Documentation paths**: Specific paths within the repository that contain documentation
@@ -22,7 +22,7 @@ The knowledge sources are defined in `azure-sdk-qa-bot-function/config/knowledge
 
 ### Configuration Schema
 
-The complete knowledge source configuration schema is defined at `azure-sdk-qa-bot-function/config/knowledge-config.schema.json`
+The complete knowledge source configuration schema is defined at `azure-sdk-qa-bot-knowledge-sync/config/knowledge-config.schema.json`
 
 Example:
 ```json

@@ -16,43 +16,43 @@ model:
     top_p: 1.0
     stop: []
     max_tokens: 16384
+    response_format: ${file:judge_comment_schema.json}
 sample:
   language: Python
+  context: |
+    None
   content: |
     {
       "line_no": 4,
-      "bad_code": "class azure.widget.WidgetClient:",
-      "suggestion": "",
-      "comment": "Perhaps consider splitting WidgetClient into separate clients WidgetClient and WidgetPartsClient to reduce complexity and improve single responsibility.",
+      "bad_code": "class azure.widget.WidgetObject:",
+      "suggestion": "class azure.widget.Widget:",
+      "comment": "Consider omitting the 'Object' suffix.",
       "memory_ids": [],
-      "is_generic": true,
+      "is_generic": false,
     }
 ---
 system:
-  You are a helpful AI that reviews {{language}} API design comments from another AI. Your role is to independently establish a confidence score for the comment.
+  You are a helpful AI that reviews {{language}} API design comments from another AI. Your role is to answer a series of yes/no questions about the comment to
+  help formulate a confidence score. You are provided context that you may reference. Memories describe prior accepted decisions. These might reinforce guidelines
+  or even establish allowable exceptions for a given service and language.
+
+  # QUESTIONS
+  Answer each of the following questions for the comment provided. Acceptable answers are: "YES", "NO", or "UNKNOWN".
+  1. Is the comment tied to the correct element of the API (e.g., the right class, method, or enum member)?
+  2. Is a suggested fix provided, and is it syntactically correct and consistent with the comment?
+  3. Does the comment cite evidence, such as a guideline or memory reference, that supports the comment?
+  4. Is the language of the comment unambiguous (i.e., not hedged with uncertainty like “maybe” or “possibly”)?
+  5. Can a developer immediately act on this comment without requiring further clarification?
 
   # OUTPUT REQUIREMENTS
-  - You must output a JSON object with the following schema:
-    ```json
-    {
-      "objectivity": int,
-      "groundedness": int,
-      "confidence_score": int,
-      "rationale": string
-    }
-    ```
-  - The objectivity, groundedness, and confidence_scores must be integers from 1 (lowest) to 5 (highest).
-  - The following fields are used to determine which data sources contributed to the comment: `guideline_ids`, `memory_ids` and `is_generic`.
-  - Guidance for scoring:
-    - 1: Comment has no guideline_ids, memory_ids, and is_generic is false. Comment is subjective.
-    - 2: Comment does not have guideline_ids but may have memory_ids or is_generic is true; comment is subjective.
-    - 3: Comment may have guideline_ids or memory_ids or is_generic is true; the comment is objective.
-    - 4: Comment has guideline_ids but the comment itself is subjective.
-    - 5: Comment has guideline_ids and the comment itself is not subjective.
-  - The rationale must explain why you assigned the confidence_score, referencing the guideline_ids, memory_ids, and is_generic fields as applicable.
+  - Always answer all questions.
 
 user:
-  Please establish a confidence score for the following {{language}} comment:
+  Given the following context:
+  # CONTEXT
+  {{context}}
+
+  Please evaluate the following {{language}} comment:
   # PROPOSED COMMENT
   ```json
   {{content}}

@@ -118,7 +118,7 @@ namespace ApiViewCopilot {
     memoryIds: string[];
 
     /** Whether the comment is entirely or in part formed from generic guidance */
-    is_generic: boolean;
+    isGeneric: boolean;
 
     /** The line number of the comment */
     lineNo: int32;
@@ -132,8 +132,11 @@ namespace ApiViewCopilot {
     /** The contents of the comment */
     comment: string;
 
-    /** Tag that identifies the source of the comment */
-    source: string;
+    /** An ID that correlates this comment with other related comments */
+    correlationId?: string;
+    
+    /** A score from 0 to 100 estimating the confidence in this comment's validity */
+    confidenceScore?: int32;
   }
 
   model ApiReviewJobRequest {

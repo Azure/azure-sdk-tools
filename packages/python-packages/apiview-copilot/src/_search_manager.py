@@ -42,7 +42,6 @@ class SearchItem:
         self.service = result.get("service")
         self.is_exception = result.get("is_exception") or False
         self.example_type = result.get("example_type")
-        self.source = result.get("source")
         self.score = result.get("@search.score", None)
         self.reranker_score = result.get("@search.reranker_score", None)
         self.captions = []

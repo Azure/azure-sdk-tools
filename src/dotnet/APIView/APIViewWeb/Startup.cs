@@ -240,7 +240,7 @@ namespace APIViewWeb
                 .AddMicrosoftIdentityWebApi(Configuration.GetSection("AzureAd"), "Bearer")
                 .EnableTokenAcquisitionToCallDownstreamApi()
                 .AddMicrosoftGraph(Configuration.GetSection("MicrosoftGraph"))
-                .AddInMemoryTokenCaches(); ;
+                .AddInMemoryTokenCaches();
             }
 
             services.AddAuthorization();

@@ -10,21 +10,8 @@ namespace APIViewWeb.Models
 
     public class AIReviewComment
     {
-        private List<string> _guidelineIds;
-
-        [JsonPropertyName("rule_ids")]
-        public List<string> RuleIds 
-        { 
-            get => _guidelineIds; 
-            set => _guidelineIds = value; 
-        }
-        
-        [JsonPropertyName("guideline_ids")]
-        public List<string> GuidelineIds 
-        { 
-            get => _guidelineIds; 
-            set => _guidelineIds = value; 
-        }
+        [JsonPropertyName("guideline_ids")] 
+        public List<string> GuidelineIds { get; set; }
         [JsonPropertyName("memory_ids")]
         public List<string> MemoryIds { get; set; }
         [JsonPropertyName("line_no")]

@@ -1,6 +1,7 @@
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Configuration;
+using Azure.Sdk.Tools.Cli.Prompts;
 using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.Cli.Services;
@@ -37,8 +38,10 @@ public interface ILanguageChecks
     /// Checks spelling in the specific package.
     /// </summary>
     /// <param name="packagePath">Path to the package directory</param>
+    /// <param name="fixCheckErrors">Whether to attempt to automatically fix spelling issues where supported by cspell</param>
+    /// <param name="ct">Cancellation token</param>
     /// <returns>Result of the spelling check</returns>
-    Task<CLICheckResponse> CheckSpellingAsync(string packagePath, CancellationToken ct = default);
+    Task<CLICheckResponse> CheckSpellingAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
 
     /// <summary>
     /// Updates code snippets in the specific package.
@@ -126,9 +129,9 @@ public class LanguageChecks : ILanguageChecks
         return await ValidateReadmeCommonAsync(packagePath, ct);
     }
 
-    public virtual async Task<CLICheckResponse> CheckSpellingAsync(string packagePath, CancellationToken ct)
+    public virtual async Task<CLICheckResponse> CheckSpellingAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
-        return await CheckSpellingCommonAsync(packagePath, ct);
+        return await CheckSpellingCommonAsync(packagePath, fixCheckErrors, ct);
     }
 
     public virtual async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, CancellationToken ct = default)
@@ -245,12 +248,13 @@ public class LanguageChecks : ILanguageChecks
     }
 
     /// <summary>
-    /// Common spelling check implementation that works for most Azure SDK languages.
-    /// Uses cspell directly to check spelling in the package directory.
+    /// Common spelling check implementation that checks for spelling issues and optionally applies fixes.
     /// </summary>
     /// <param name="packagePath">Absolute path to the package directory</param>
+    /// <param name="fixCheckErrors">Whether to attempt to automatically fix spelling issues where supported by cspell</param>
+    /// <param name="ct">Cancellation token</param>
     /// <returns>CLI check response containing success/failure status and response message</returns>
-    protected async Task<CLICheckResponse> CheckSpellingCommonAsync(string packagePath, CancellationToken ct = default)
+    protected async Task<CLICheckResponse> CheckSpellingCommonAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         try
         {
@@ -277,6 +281,25 @@ public class LanguageChecks : ILanguageChecks
                 logOutputStream: true
             );
             var processResult = await _npxHelper.Run(npxOptions, ct: ct);
+
+            // If fix is requested and there are spelling issues, provide fix guidance
+            if (fixCheckErrors && processResult.ExitCode != 0 && !string.IsNullOrWhiteSpace(processResult.Output))
+            {
+                // Get the spelling fix recommendation prompt from the prompts library
+                var prompt = ValidationPrompts.GetSpellingFixRecommendationPrompt(processResult.Output);
+                
+
+                var response = new CLICheckResponse(processResult.ExitCode, prompt);
+                response.NextSteps = new List<string>
+                {
+                    "Send the returned JSON prompt to your LLM to obtain fix/ignore recommendations.",
+                    "For 'ignore' recommendations, add the word to the repository's .vscode/cspell.json 'words' list.",
+                    "For 'fix' recommendations, apply the suggested replacements as a patch and review before committing."
+                };
+
+                return response;
+            }
+
             return new CLICheckResponse(processResult);
         }
         catch (Exception ex)

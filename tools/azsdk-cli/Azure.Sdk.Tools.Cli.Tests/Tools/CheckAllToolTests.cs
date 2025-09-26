@@ -69,7 +69,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public async Task RunPackageCheck_WithAllChecks_ReturnsFailureResult()
         {
             // Act - Using empty temp directory will cause dependency check to fail
-            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.All);
+            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.All, false, CancellationToken.None);
 
             // Assert
             Assert.IsNotNull(result);
@@ -81,7 +81,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public async Task RunPackageCheck_WithChangelogCheck_ReturnsResult()
         {
             // Act
-            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Changelog);
+            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Changelog, false, CancellationToken.None);
 
             // Assert
             Assert.IsNotNull(result);
@@ -93,7 +93,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public async Task RunPackageCheck_WithDependencyCheck_ReturnsResult()
         {
             // Act
-            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Dependency);
+            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Dependency, false, CancellationToken.None);
 
             // Assert
             Assert.IsNotNull(result);
@@ -107,7 +107,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             // Arrange - Empty directory with no README
 
             // Act
-            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Readme);
+            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Readme, false, CancellationToken.None);
 
             // Assert
             Assert.IsNotNull(result);
@@ -123,7 +123,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             await File.WriteAllTextAsync(testFile, "This file contians obvioius speling erors.");
 
             // Act
-            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Cspell);
+            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Cspell, false, CancellationToken.None);
 
             // Assert
             Assert.IsNotNull(result);
@@ -139,7 +139,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             await File.WriteAllTextAsync(projectFilePath, "<Project Sdk=\"Microsoft.NET.Sdk\"></Project>");
 
             // Act - This will still fail because dotnet commands won't work properly, but test structure is better
-            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.All);
+            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.All, false, CancellationToken.None);
 
             // Assert
             Assert.IsNotNull(result);
@@ -155,7 +155,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             string invalidPath = "/tmp/nonexistent-path-12345";
 
             // Act
-            var result = await _packageCheckTool.RunPackageCheck(invalidPath, PackageCheckType.All);
+            var result = await _packageCheckTool.RunPackageCheck(invalidPath, PackageCheckType.All, false, CancellationToken.None);
 
             // Assert
             Assert.IsNotNull(result);
@@ -168,7 +168,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public async Task RunPackageCheck_WithValidPath_RunsAllChecks()
         {
             // Act
-            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.All);
+            var result = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.All, false, CancellationToken.None);
 
             // Assert
             Assert.IsNotNull(result);
@@ -185,12 +185,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             // Test that all enum values work correctly
 
             // Act - Test all enum values
-            var allResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.All);
-            var changelogResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Changelog);
-            var dependencyResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Dependency);
-            var readmeResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Readme);
-            var spellingResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Cspell);
-            var snippetsResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Snippets);
+            var allResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.All, false, CancellationToken.None);
+            var changelogResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Changelog, false, CancellationToken.None);
+            var dependencyResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Dependency, false, CancellationToken.None);
+            var readmeResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Readme, false, CancellationToken.None);
+            var spellingResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Cspell, false, CancellationToken.None);
+            var snippetsResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Snippets, false, CancellationToken.None);
 
             // Assert
             Assert.IsNotNull(allResult);
@@ -207,6 +207,71 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             Assert.IsTrue(readmeResult.ExitCode >= 0);
             Assert.IsTrue(spellingResult.ExitCode >= 0);
             Assert.IsTrue(snippetsResult.ExitCode >= 0);
+        }
+
+        [Test]
+        public async Task RunPackageCheck_WithCspellFixEnabled_WhenFileWithTypos_ReturnsResult()
+        {
+            // Arrange - Create a file with obvious spelling errors
+            var testFile = Path.Combine(_testProjectPath, "test_fix.md");
+            await File.WriteAllTextAsync(testFile, "This file contians obvioius speling erors.");
+
+            // Create a mock repository root and cspell config
+            var mockRepoRoot = Path.GetTempPath();
+            var cspellConfigDir = Path.Combine(mockRepoRoot, ".vscode");
+            var cspellConfigPath = Path.Combine(cspellConfigDir, "cspell.json");
+            
+            Directory.CreateDirectory(cspellConfigDir);
+            await File.WriteAllTextAsync(cspellConfigPath, "{}"); // Create minimal cspell config
+
+            // Setup mocks
+            _mockGitHelper.Setup(x => x.DiscoverRepoRoot(It.IsAny<string>()))
+                         .Returns(mockRepoRoot);
+            
+            // Setup mock to return spelling errors for cspell check (exit code 1 indicates errors found)
+            var cspellErrorResult = new ProcessResult { ExitCode = 1 };
+            cspellErrorResult.AppendStdout("test_fix.md:1:11 - Unknown word (contians)");
+            cspellErrorResult.AppendStdout("test_fix.md:1:19 - Unknown word (obvioius)");
+            cspellErrorResult.AppendStdout("test_fix.md:1:27 - Unknown word (speling)");
+            cspellErrorResult.AppendStdout("test_fix.md:1:34 - Unknown word (erors)");
+            
+            // Reset and setup mock for this specific test
+            _mockNpxHelper.Reset();
+            _mockNpxHelper.Setup(x => x.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()))
+                         .ReturnsAsync(cspellErrorResult);
+
+            try
+            {
+                // Act - Test both regular cspell check and with fix enabled
+                var normalResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Cspell, false, CancellationToken.None);
+                var fixResult = await _packageCheckTool.RunPackageCheck(_testProjectPath, PackageCheckType.Cspell, true, CancellationToken.None);
+
+                // Assert
+                Assert.IsNotNull(normalResult);
+                Assert.IsNotNull(fixResult);
+                Assert.IsNotNull(normalResult.CheckStatusDetails);
+                Assert.IsNotNull(fixResult.CheckStatusDetails);
+                
+                // Both should fail since there are spelling errors
+                Assert.That(normalResult.ExitCode, Is.EqualTo(1));
+                Assert.That(fixResult.ExitCode, Is.EqualTo(1));
+                
+                // The fix result should have different next steps indicating LLM guidance
+                Assert.IsNotNull(fixResult.NextSteps);
+                Assert.IsNotEmpty(fixResult.NextSteps);
+            }
+            finally
+            {
+                // Cleanup
+                if (File.Exists(cspellConfigPath))
+                {
+                    File.Delete(cspellConfigPath);
+                }
+                if (Directory.Exists(cspellConfigDir))
+                {
+                    Directory.Delete(cspellConfigDir);
+                }
+            }
         }
     }
 }

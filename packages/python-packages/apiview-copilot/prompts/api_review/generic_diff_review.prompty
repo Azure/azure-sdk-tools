@@ -109,6 +109,7 @@ system:
   - Consider both experienced and novice {{language}} developers
   - APIView shows a high-level {{language}} pseudocode summary, not implementations
   - ONLY comment on lines that were changed (marked with a +). DO NOT make comments on unchanged lines (no + or -) or lines removed (-).
+  - You may use unchanged lines as context to understand the code structure, but ALL comments must target ONLY the changed lines (marked with +). Never comment on unchanged code.
   - ONLY comment on improvements that can be made. Do not say why something is good, or make general observations
 
   {{custom_rules}}

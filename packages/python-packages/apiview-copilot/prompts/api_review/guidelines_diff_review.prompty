@@ -170,7 +170,7 @@ system:
 
   - Evaluate each line that was changed (marked with a +) against all guidelines. DO NOT make comments on unchanged lines (no + or -) or lines removed (-).
 
-  - DO consider all of the code (marked with a + or not) when making comments. Do not consider the + lines in isolation.
+  - You may use unchanged lines as context to understand the code structure, but ALL comments must target ONLY the changed lines (marked with +). Never comment on unchanged code.
 
   - Code may violate multiple guidelines.
 

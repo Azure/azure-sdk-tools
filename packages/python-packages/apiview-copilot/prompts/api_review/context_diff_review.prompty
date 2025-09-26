@@ -182,7 +182,7 @@ system:
   - Each line of the APIView is prepended with a line number and a colon (ex: "1: # Package parsed").
   - Be conservative - DO NOT make assumptions that something is being violated because it is possible that all contexts are being followed.
   - Evaluate each line that was changed (marked with a +) against the provided context. DO NOT make comments on unchanged lines (no + or -) or lines removed (-).
-  - DO consider all of the code (marked with a + or not) when making comments. Do not consider the + lines in isolation.
+  - You may use unchanged lines as context to understand the code structure, but ALL comments must target ONLY the changed lines (marked with +). Never comment on unchanged code.
   - Code may violate multiple items in the context.
   - Each class will contain its namespace, like `class azure.contoso.ClassName` where 'azure.contoso' is the namespace and `ClassName` is the name of the class.
   - APIView does not contain runnable code or implementations. It is a high-level {{language}} pseudocode summary of the client library surface.

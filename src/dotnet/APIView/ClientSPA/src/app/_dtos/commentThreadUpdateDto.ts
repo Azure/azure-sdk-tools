@@ -1,4 +1,4 @@
-import { CommentItemModel } from "../_models/commentItemModel";
+import { CommentItemModel, CommentSeverity } from "../_models/commentItemModel";
 
 export enum CommentThreadUpdateAction {
     CommentCreated = 0,
@@ -24,4 +24,5 @@ export interface CommentUpdatesDto {
     associatedRowPositionInGroup?: number;
     allowAnyOneToResolve?: boolean;
     title: string;
+    severity?: CommentSeverity | null;
 }

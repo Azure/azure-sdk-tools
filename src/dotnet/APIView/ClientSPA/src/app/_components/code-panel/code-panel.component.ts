@@ -532,7 +532,7 @@ export class CodePanelComponent implements OnChanges{
         });
     }
     else {
-      this.commentsService.createComment(this.reviewId!, this.activeApiRevisionId!, commentUpdates.nodeId!, commentUpdates.commentText!, CommentType.APIRevision, commentUpdates.allowAnyOneToResolve)
+      this.commentsService.createComment(this.reviewId!, this.activeApiRevisionId!, commentUpdates.nodeId!, commentUpdates.commentText!, CommentType.APIRevision, commentUpdates.allowAnyOneToResolve, commentUpdates.severity)
         .pipe(take(1)).subscribe({
             next: (response: CommentItemModel) => {
               this.addCommentToCommentThread(commentUpdates, response);

@@ -484,7 +484,7 @@ export class SamplesPageComponent {
           });
       }
       else {
-        this.commentsService.createComment(this.reviewId!, this.activeSamplesRevisionId!, commentUpdates.elementId!, commentUpdates.commentText!, CommentType.SampleRevision, commentUpdates.allowAnyOneToResolve)
+        this.commentsService.createComment(this.reviewId!, this.activeSamplesRevisionId!, commentUpdates.elementId!, commentUpdates.commentText!, CommentType.SampleRevision, commentUpdates.allowAnyOneToResolve, commentUpdates.severity)
           .pipe(take(1)).subscribe({
               next: (response: CommentItemModel) => {
                 commentThread!.comments = [...commentThread!.comments!, response];

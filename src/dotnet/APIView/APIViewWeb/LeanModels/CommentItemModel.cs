@@ -13,6 +13,16 @@ namespace APIViewWeb.LeanModels
         SampleRevision
     }
 
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    [JsonConverter(typeof(StringEnumConverter))]
+    public enum CommentSeverity
+    {
+        Question = 0,
+        Suggestion = 1,
+        ShouldFix = 2,
+        MustFix = 3
+    }
+
     public class CommentItemModel
     {
         [System.Text.Json.Serialization.JsonPropertyName("id")]
@@ -31,6 +41,7 @@ namespace APIViewWeb.LeanModels
         public List<string> Downvotes { get; set; } = new List<string>();
         public HashSet<string> TaggedUsers { get; set; } = new HashSet<string>();
         public CommentType CommentType { get; set; }
+        public CommentSeverity? Severity { get; set; }
         public bool ResolutionLocked { get; set; } = false;
         public string CreatedBy { get; set; }
         public DateTime CreatedOn { get; set; }

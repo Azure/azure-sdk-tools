@@ -107,6 +107,7 @@ namespace APIViewWeb.LeanControllers
         /// <param name="elementId"></param>
         /// <param name="commentText"></param>
         /// <param name="commentType"></param>
+        /// <param name="severity"></param>
         /// <param name="resolutionLocked"></param>
         /// <returns></returns>
         [HttpPost(Name = "CreateComment")]
@@ -117,6 +118,7 @@ namespace APIViewWeb.LeanControllers
             [FromForm] CommentType commentType,
             [FromForm] string apiRevisionId = null,
             [FromForm] string sampleRevisionId = null,
+            [FromForm] CommentSeverity? severity = null,
             bool resolutionLocked = false)
         {
             if (string.IsNullOrEmpty(commentText) || (string.IsNullOrEmpty(apiRevisionId) && string.IsNullOrEmpty(sampleRevisionId)))
@@ -134,7 +136,8 @@ namespace APIViewWeb.LeanControllers
                 ResolutionLocked = resolutionLocked,
                 CreatedBy = User.GetGitHubLogin(),
                 CreatedOn = DateTime.UtcNow,
-                CommentType = commentType
+                CommentType = commentType,
+                Severity = severity
             };
 
             bool isApiViewAgentTagged = AgentHelpers.IsApiViewAgentTagged(comment, out string commentTextWithIdentifiedTags);
@@ -166,6 +169,20 @@ namespace APIViewWeb.LeanControllers
         public async Task<ActionResult> UpdateCommentTextAsync(string reviewId, string commentId, [FromForm] string commentText)
         {
             await _commentsManager.UpdateCommentAsync(User, reviewId, commentId, commentText, new string[0]);
+            return Ok();
+        }
+
+        /// <summary>
+        /// Update comment severity
+        /// </summary>
+        /// <param name="reviewId"></param>
+        /// <param name="commentId"></param>
+        /// <param name="severity"></param>
+        /// <returns></returns>
+        [HttpPatch("{reviewId}/{commentId}/updateCommentSeverity", Name = "UpdateCommentSeverity")]
+        public async Task<ActionResult> UpdateCommentSeverityAsync(string reviewId, string commentId, [FromForm] CommentSeverity? severity)
+        {
+            await _commentsManager.UpdateCommentSeverityAsync(User, reviewId, commentId, severity);
             return Ok();
         }
 

@@ -36,8 +36,10 @@
       <app-comment-thread
         [codePanelRowData]="item"
         [associatedCodeLine]="getAssociatedCodeLine(item)"
+        [actualLineNumber]="index"
         [userProfile]="userProfile"
         [preferredApprovers]="preferredApprovers"
+        [reviewId]="reviewId || ''"
         (cancelCommentActionEmitter)="handleCancelCommentActionEmitter($event)"
         (saveCommentActionEmitter)="handleSaveCommentActionEmitter($event)"
         (deleteCommentActionEmitter)="handleDeleteCommentActionEmitter($event)"

@@ -7,6 +7,8 @@ import { CodePanelRowData } from 'src/app/_models/codePanelModels';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
 import { CodeLineRowNavigationDirection } from 'src/app/_helpers/common-helpers';
+import { CommentSeverity } from 'src/app/_models/commentItemModel';
+import { CommentsService } from 'src/app/_services/comments/comments.service';
 
 @Component({
   selector: 'app-comment-thread',
@@ -19,8 +21,10 @@ import { CodeLineRowNavigationDirection } from 'src/app/_helpers/common-helpers'
 export class CommentThreadComponent {
   @Input() codePanelRowData: CodePanelRowData | undefined = undefined;
   @Input() associatedCodeLine: CodePanelRowData | undefined;
+  @Input() actualLineNumber: number = 0;
   @Input() instanceLocation: "code-panel" | "conversations" | "samples" = "code-panel";
   @Input() preferredApprovers : string[] = [];
+  @Input() reviewId: string = '';
 
   @Input() userProfile : UserProfile | undefined;
   @Output() cancelCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
@@ -38,7 +42,7 @@ export class CommentThreadComponent {
   menuItemAllUsers: MenuItem[] = [];
   menuItemsLoggedInUsers: MenuItem[] = [];
   menuItemsLoggedInArchitects: MenuItem[] = [];
-  allowAnyOneToResolve : boolean = true;
+  allowAnyOneToResolve : boolean = false; // Default to false since default severity is "Should fix"
 
   threadResolvedBy : string | undefined = '';
   threadResolvedStateToggleText : string = 'Show';
@@ -46,13 +50,23 @@ export class CommentThreadComponent {
   threadResolvedAndExpanded : boolean = false;
   spacingBasedOnResolvedState: string = 'my-2';
   resolveThreadButtonText : string = 'Resolve';
+  isThreadCollapsed: boolean = false;
 
   floatItemStart : string = ""
   floatItemEnd : string = ""
 
+  selectedSeverity: CommentSeverity | null = CommentSeverity.ShouldFix; // Default to "Should fix"
+  isEditingSeverity: string | null = null; // Track which comment severity is being edited
+  severityOptions = [
+    { label: 'Question', value: CommentSeverity.Question },
+    { label: 'Suggestion', value: CommentSeverity.Suggestion },
+    { label: 'Should fix', value: CommentSeverity.ShouldFix },
+    { label: 'Must fix', value: CommentSeverity.MustFix }
+  ];
+
   CodeLineRowNavigationDirection = CodeLineRowNavigationDirection;
 
-  constructor(private changeDetectorRef: ChangeDetectorRef, private messageService: MessageService) { }
+  constructor(private changeDetectorRef: ChangeDetectorRef, private messageService: MessageService, private commentsService: CommentsService) { }
 
   ngOnInit(): void {
     this.menuItemsLoggedInUsers.push({
@@ -169,6 +183,14 @@ export class CommentThreadComponent {
     this.allowAnyOneToResolve = !this.allowAnyOneToResolve;
   }
 
+  toggleThreadCollapse() {
+    this.isThreadCollapsed = !this.isThreadCollapsed;
+    
+    if (this.isThreadCollapsed) {
+      this.stopEditingSeverity();
+    }
+  }
+
   createGitHubIssue(event: MenuItemCommandEvent) {
     let repo = "";
     switch (event.item?.title) {
@@ -247,6 +269,8 @@ export class CommentThreadComponent {
     const title = target.closest(".user-comment-thread")?.getAttribute("title");
     if (replyEditorContainer) {
       this.codePanelRowData!.showReplyTextBox = false;
+      // Reset severity selection when canceling
+      this.selectedSeverity = null;
       this.cancelCommentActionEmitter.emit(
         {
           nodeIdHashed: this.codePanelRowData!.nodeIdHashed,
@@ -293,9 +317,11 @@ export class CommentThreadComponent {
             allowAnyOneToResolve: this.allowAnyOneToResolve,
             associatedRowPositionInGroup: this.codePanelRowData!.associatedRowPositionInGroup,
             elementId: elementId,
-            revisionId: revisionIdForConversationGroup
+            revisionId: revisionIdForConversationGroup,
+            severity: this.selectedSeverity
           } as CommentUpdatesDto
         );
+        this.selectedSeverity = null;
       }
       this.codePanelRowData!.showReplyTextBox = false;
     } else {
@@ -391,6 +417,123 @@ export class CommentThreadComponent {
   }
   
   handleContentEmitter(event: string) {
+    this.changeDetectorRef.detectChanges();
+  }
+
+  isFirstCommentInThread(comment: any): boolean {
+    if (!this.codePanelRowData?.comments) return false;
+    return this.codePanelRowData.comments[0].id === comment.id;
+  }
+  
+  private normalizeSeverity(severity: CommentSeverity | string | null | undefined): string | null {
+    if (severity === null || severity === undefined) return null;
+    return typeof severity === 'string' ? severity.toLowerCase() : CommentSeverity[severity]?.toLowerCase() || null;
+  }
+
+  getSeverityLabel(severity: CommentSeverity | string | null | undefined): string {
+    const normalized = this.normalizeSeverity(severity);
+    switch (normalized) {
+      case 'question': return 'Question';
+      case 'suggestion': return 'Suggestion';
+      case 'shouldfix': return 'Should fix';
+      case 'mustfix': return 'Must fix';
+      default: return '';
+    }
+  }
+
+  getSeverityBadgeClass(severity: CommentSeverity | string | null | undefined): string {
+    const normalized = this.normalizeSeverity(severity);
+    switch (normalized) {
+      case 'question': return 'severity-question';
+      case 'suggestion': return 'severity-suggestion';
+      case 'shouldfix': return 'severity-should-fix';
+      case 'mustfix': return 'severity-must-fix';
+      default: return '';
+    }
+  }
+
+  getSeverityEnumValue(severity: CommentSeverity | string | null | undefined): CommentSeverity | null {
+    if (severity === null || severity === undefined) return null;
+    if (typeof severity === 'number') return severity; 
+    
+    const normalized = this.normalizeSeverity(severity);
+    switch (normalized) {
+      case 'question': return CommentSeverity.Question;
+      case 'suggestion': return CommentSeverity.Suggestion;
+      case 'shouldfix': return CommentSeverity.ShouldFix;
+      case 'mustfix': return CommentSeverity.MustFix;
+      default: return null;
+    }
+  }
+
+  onSeverityDropdownHide(): void {
+    this.stopEditingSeverity();
+  }
+
+  onSeverityChange(newSeverity: CommentSeverity, commentId: string): void {
+    // Update the comment's severity value locally first
+    const comment = this.codePanelRowData?.comments?.find(c => c.id === commentId);
+    if (comment && this.reviewId && this.reviewId.trim() !== '') {
+      const originalSeverity = comment.severity; 
+      const originalSeverityEnum = this.getSeverityEnumValue(originalSeverity);
+      
+      if (originalSeverityEnum === newSeverity) {
+        return;
+      }
+      
+      comment.severity = newSeverity;
+      this.commentsService.updateCommentSeverity(this.reviewId, commentId, newSeverity).subscribe({
+        next: (response) => {
+        },
+        error: (error) => {
+          comment.severity = originalSeverity;
+          this.messageService.add({ 
+            severity: 'error', 
+            icon: 'bi bi-exclamation-triangle', 
+            summary: 'Update Failed', 
+            detail: `Failed to update comment severity. Server error: ${error.status || 'Unknown'}. Please try again.`, 
+            key: 'bc', 
+            life: 5000 
+          });
+          // Force UI update to show reverted value
+          this.changeDetectorRef.detectChanges();
+        }
+      });
+    } else if (!this.reviewId || this.reviewId.trim() === '') {
+      this.messageService.add({ 
+        severity: 'warn', 
+        icon: 'bi bi-exclamation-triangle', 
+        summary: 'Update Not Available', 
+        detail: 'Cannot update severity: review information is not available.', 
+        key: 'bc', 
+        life: 3000 
+      });
+    }
+  }
+
+  startEditingSeverity(commentId: string): void {
+    this.isEditingSeverity = commentId;
+    this.changeDetectorRef.detectChanges();
+  }
+
+  stopEditingSeverity(): void {
+    this.isEditingSeverity = null;
+    this.changeDetectorRef.detectChanges();
+  }
+
+  hasSeverity(severity: CommentSeverity | null | undefined): boolean {
+    return severity !== null && severity !== undefined;
+  }
+
+  onSeveritySelectionChange(newSeverity: CommentSeverity): void {
+    this.selectedSeverity = newSeverity;
+    
+    if (newSeverity === CommentSeverity.Question || newSeverity === CommentSeverity.Suggestion) {
+      this.allowAnyOneToResolve = true;  // Questions and Suggestions can be resolved by anyone
+    } else if (newSeverity === CommentSeverity.ShouldFix || newSeverity === CommentSeverity.MustFix) {
+      this.allowAnyOneToResolve = false; // These need more restricted resolution
+    }
+    
     this.changeDetectorRef.detectChanges();
   }
 }

@@ -8,7 +8,6 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using APIView.Identity;
 using APIViewWeb.Account;
 using APIViewWeb.Filters;
 using APIViewWeb.Helpers;
@@ -19,6 +18,7 @@ using APIViewWeb.Managers;
 using APIViewWeb.Managers.Interfaces;
 using APIViewWeb.MiddleWare;
 using APIViewWeb.Repositories;
+using APIViewWeb.Services;
 using Azure.Identity;
 using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Authentication;
@@ -37,7 +37,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json.Linq;
-using APIViewWeb.Services;
+using Microsoft.Identity.Web;
+using ClaimConstants = APIView.Identity.ClaimConstants;
 
 namespace APIViewWeb
 {
@@ -165,36 +166,6 @@ namespace APIViewWeb
                     options.AccessDeniedPath = "/Unauthorized";
                 })
                 .AddScheme<AuthenticationSchemeOptions, TokenAuthenticationHandler>("TokenAuth", options => { })
-                .AddJwtBearer("Bearer", options =>
-                {
-                    string tenantId = Configuration["AzureAd:TenantId"];
-                    string clientId = Configuration["AzureAd:ClientId"];
-
-                    if (string.IsNullOrEmpty(tenantId) || string.IsNullOrEmpty(clientId))
-                    {
-                        return;
-                    }
-
-                    options.Authority = $"https://login.microsoftonline.com/{tenantId}";
-                    options.Audience = clientId;
-                    options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
-                    {
-                        ValidateIssuer = true,
-                        ValidateAudience = true,
-                        ValidateLifetime = true,
-                        ValidateIssuerSigningKey = true,
-                        ClockSkew = TimeSpan.FromMinutes(5),
-                        ValidAudiences = [
-                            clientId, 
-                            $"api://{clientId}"
-                        ],
-                        ValidIssuers = [
-                            $"https://login.microsoftonline.com/{tenantId}/v2.0",
-                            $"https://login.microsoftonline.com/{tenantId}/",
-                            $"https://sts.windows.net/{tenantId}/"
-                        ]
-                    };
-                })
                 .AddOAuth("GitHub", options =>
                 {
                     options.ClientId = Configuration["Github:ClientId"];
@@ -265,7 +236,11 @@ namespace APIViewWeb
                             }
                         }
                     };
-                });
+                })
+                .AddMicrosoftIdentityWebApi(Configuration.GetSection("AzureAd"), "Bearer")
+                .EnableTokenAcquisitionToCallDownstreamApi()
+                .AddMicrosoftGraph(Configuration.GetSection("MicrosoftGraph"))
+                .AddInMemoryTokenCaches(); ;
             }
 
             services.AddAuthorization();

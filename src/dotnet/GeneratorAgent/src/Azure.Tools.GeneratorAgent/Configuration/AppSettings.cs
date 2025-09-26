@@ -59,6 +59,7 @@ namespace Azure.Tools.GeneratorAgent.Configuration
             int.Parse(Configuration.GetSection("AzureSettings:DelayBetweenFixesMs").Value ?? "500");
         
         public string TypespecEmitterPackage => "@typespec/http-client-csharp";
+        public string TypespecCompiler => "@typespec/compiler";
         public string TypeSpecDirectoryName => "@typespec";
         public string HttpClientCSharpDirectoryName => "http-client-csharp";
 

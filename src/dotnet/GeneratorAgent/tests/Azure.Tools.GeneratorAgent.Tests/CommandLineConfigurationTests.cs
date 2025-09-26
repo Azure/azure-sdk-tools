@@ -87,7 +87,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         {
             mockLogger.Verify(
                 x => x.Log(
-                    LogLevel.Information,
+                    LogLevel.Debug,
                     It.IsAny<EventId>(),
                     It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains(expectedMessage)),
                     It.IsAny<Exception>(),
@@ -276,7 +276,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var result = commandLineConfiguration.ValidateInput(typespecPath, commitId, sdkOutputPath);
 
             Assert.That(result, Is.EqualTo(0));
-            VerifyLogInformation(mockLogger, "All input validation completed successfully");
+            VerifyLogInformation(mockLogger, "Input validation completed successfully");
         }
 
         [Test]
@@ -294,7 +294,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var result = commandLineConfiguration.ValidateInput(typespecPath, commitId, sdkOutputPath);
 
             Assert.That(result, Is.EqualTo(0));
-            VerifyLogInformation(mockLogger, "All input validation completed successfully");
+            VerifyLogInformation(mockLogger, "Input validation completed successfully");
         }
 
         [Test]

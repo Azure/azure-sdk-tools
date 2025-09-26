@@ -34,53 +34,29 @@ namespace Azure.Tools.GeneratorAgent
             GitHubServiceFactory = gitHubServiceFactory;
         }
 
-        /// <summary>
-        /// Gets TypeSpec files from either local directory or GitHub repository.
-        /// Returns a Result containing dictionary where key is filename and value is file content.
-        /// </summary>
-        public async Task<Result<Dictionary<string, string>>> GetTypeSpecFilesAsync(
-            CancellationToken cancellationToken = default)
+        public async Task<Dictionary<string, string>> GetTypeSpecFilesAsync(CancellationToken cancellationToken = default)
         {
             ObjectDisposedException.ThrowIf(IsDisposed, this);
 
-            Result<Dictionary<string, string>> result;
+            string? directoryToUse = ValidationContext.CurrentTypeSpecDir;
 
-            if (string.IsNullOrWhiteSpace(ValidationContext.ValidatedCommitId))
+            if (string.IsNullOrWhiteSpace(directoryToUse))
             {
-                // Local case
-                result = await GetLocalTypeSpecFilesAsync(ValidationContext.ValidatedTypeSpecDir, cancellationToken).ConfigureAwait(false);
-            }
-            else
-            {
-                // GitHub case
-                result = await GetGitHubTypeSpecFilesAsync(cancellationToken).ConfigureAwait(false);
+                throw new InvalidOperationException(
+                    "No TypeSpec directory available. Call EnsureTypeSpecFilesAvailableAsync() first for GitHub scenarios.");
             }
 
-            // Handle result and log appropriately
-            if (result.IsFailure)
-            {
-                Logger.LogError("Failed to load TypeSpec files: {Error}", result.Exception?.Message);
-                return result;
-            }
-            
-            var typeSpecFiles = result.Value!;
-            if (typeSpecFiles.Count == 0)
-            {
-                Logger.LogWarning("No TypeSpec files found");
-            }
-
-            return result;
+            return await GetLocalTypeSpecFilesAsync(directoryToUse, cancellationToken).ConfigureAwait(false);
         }
 
-        private async Task<Result<Dictionary<string, string>>> GetLocalTypeSpecFilesAsync(
+        private async Task<Dictionary<string, string>> GetLocalTypeSpecFilesAsync(
             string typeSpecDir, 
             CancellationToken cancellationToken)
         {
             // Fail fast validation - check directory exists
             if (!Directory.Exists(typeSpecDir))
             {
-                return Result<Dictionary<string, string>>.Failure(
-                    new DirectoryNotFoundException($"TypeSpec directory not found: {typeSpecDir}"));
+                throw new DirectoryNotFoundException($"TypeSpec directory not found: {typeSpecDir}");
             }
 
             var typeSpecFiles = new Dictionary<string, string>();
@@ -93,67 +69,56 @@ namespace Azure.Tools.GeneratorAgent
                     string fileName = Path.GetFileName(filePath);
                     string content = await File.ReadAllTextAsync(filePath, Encoding.UTF8, cancellationToken).ConfigureAwait(false);
                     typeSpecFiles[fileName] = content;
-                    
-                    if (Logger.IsEnabled(LogLevel.Debug))
-                    {
-                        Logger.LogDebug("Loaded file: {FileName} ({Size} characters)", fileName, content.Length);
-                    }
                 }
                 
-                return Result<Dictionary<string, string>>.Success(typeSpecFiles);
+                return typeSpecFiles;
             }
             catch (Exception ex)
             {
-                return Result<Dictionary<string, string>>.Failure(new InvalidOperationException($"Failed to read TypeSpec files from directory '{typeSpecDir}': {ex.Message}", ex));
+                throw new InvalidOperationException($"Failed to read TypeSpec files from directory '{typeSpecDir}': {ex.Message}", ex);
             }
         }
 
-        private async Task<Result<Dictionary<string, string>>> GetGitHubTypeSpecFilesAsync(
-            CancellationToken cancellationToken)
+        public async Task DownloadGitHubTypeSpecFilesAsync(CancellationToken cancellationToken)
         {
+            ObjectDisposedException.ThrowIf(IsDisposed, this);
+
+            Logger.LogInformation("Downloading TypeSpec files from GitHub repository");
+
             GitHubFileService = GitHubServiceFactory(ValidationContext);
 
-            var githubResult = await GitHubFileService.GetTypeSpecFilesAsync(cancellationToken).ConfigureAwait(false);
+            var githubFiles = await GitHubFileService.GetTypeSpecFilesAsync(cancellationToken).ConfigureAwait(false);
+            Logger.LogInformation("Successfully downloaded {FileCount} TypeSpec files", githubFiles.Count);
             
-            if (githubResult.IsFailure)
+            if (githubFiles.Count == 0)
             {
-                return Result<Dictionary<string, string>>.Failure(githubResult.Exception!);
+                throw new InvalidOperationException("No TypeSpec files found in GitHub repository");
             }
 
-            var result = githubResult.Value ?? new Dictionary<string, string>();
+            // Create secure temporary directory for compilation
+            var tempDirectory = await WriteGithubFilesToTempDirectory(githubFiles, cancellationToken).ConfigureAwait(false);
+            ValidationContext.CurrentTypeSpecDirForCompilation = tempDirectory;
 
-            if (result.Count > 0)
-            {
-                var tempDirResult = await CreateSecureTempDirectoryFromGitHubFiles(result, cancellationToken).ConfigureAwait(false);
-                if (tempDirResult.IsFailure)
-                {
-                    return Result<Dictionary<string, string>>.Failure(tempDirResult.Exception!);
-                }
-                
-                ValidationContext.CurrentTypeSpecDirForCompilation = tempDirResult.Value!;
-            }
-
-            return Result<Dictionary<string, string>>.Success(result);
+            Logger.LogInformation("Successfully downloaded {Count} TypeSpec files from GitHub and created temp directory: {TempDir}", 
+                githubFiles.Count, tempDirectory);
         }
 
         /// <summary>
         /// Creates a secure temporary directory and writes GitHub files to it.
         /// Implements essential security measures for production use.
         /// </summary>
-        private async Task<Result<string>> CreateSecureTempDirectoryFromGitHubFiles(
+        private async Task<string> WriteGithubFilesToTempDirectory(
             Dictionary<string, string> githubFiles, 
             CancellationToken cancellationToken)
         {
-            string tempPath = string.Empty;
-
             // Create validated temp path
-            tempPath = CreateSecureTempPath();
+            var tempPath = CreateSecureTempPath();
 
             // Validate the constructed path
-            Result<string> pathValidation = InputValidator.ValidateDirTraversal(tempPath, "temporary TypeSpec directory");
+            var pathValidation = InputValidator.ValidateDirTraversal(tempPath, "temporary TypeSpec directory");
             if (pathValidation.IsFailure)
             {
-                return Result<string>.Failure(new SecurityException($"Temporary directory path validation failed: {pathValidation.Exception?.Message}"));
+                throw new SecurityException($"Temporary directory path validation failed: {pathValidation.Exception?.Message}");
             }
 
             try
@@ -163,19 +128,15 @@ namespace Azure.Tools.GeneratorAgent
                 TempDirectories.Add(tempPath);
 
                 // Write files with validation
-                var writeResult = await WriteFilesSecurely(tempPath, githubFiles, cancellationToken).ConfigureAwait(false);
-                if (writeResult.IsFailure)
-                {
-                    await CleanupTempDirectorySecurely(tempPath).ConfigureAwait(false);
-                    return Result<string>.Failure(writeResult.Exception!);
-                }
+                await WriteFilesSecurely(tempPath, githubFiles, cancellationToken).ConfigureAwait(false);
 
                 Logger.LogDebug("Created secure temp directory: {TempPath} with {FileCount} files", tempPath, githubFiles.Count);
-                return Result<string>.Success(tempPath);
+                return tempPath;
             }
             catch (Exception ex)
             {
-                return Result<string>.Failure(new InvalidOperationException($"Failed to create temporary directory '{tempPath}': {ex.Message}", ex));
+                await CleanupTempDirectorySecurely(tempPath).ConfigureAwait(false);
+                throw new InvalidOperationException($"Failed to create temporary directory '{tempPath}': {ex.Message}", ex);
             }
         }
 
@@ -205,7 +166,7 @@ namespace Azure.Tools.GeneratorAgent
         /// <summary>
         /// Writes files securely with proper validation and error handling.
         /// </summary>
-        private async Task<Result<bool>> WriteFilesSecurely(
+        private async Task WriteFilesSecurely(
             string tempPath, 
             Dictionary<string, string> githubFiles, 
             CancellationToken cancellationToken)
@@ -217,7 +178,7 @@ namespace Azure.Tools.GeneratorAgent
                 foreach (var kvp in githubFiles)
                 {
                     // Validate each filename
-                    Result<string> fileValidation = InputValidator.ValidateDirTraversal(kvp.Key, "TypeSpec filename");
+                    var fileValidation = InputValidator.ValidateDirTraversal(kvp.Key, "TypeSpec filename");
                     if (fileValidation.IsFailure)
                     {
                         Logger.LogWarning("Skipping invalid filename: {FileName}", kvp.Key);
@@ -249,12 +210,10 @@ namespace Azure.Tools.GeneratorAgent
                         Logger.LogDebug("Securely wrote file: {FilePath} ({Size} characters)", filePath, kvp.Value.Length);
                     }
                 }
-
-                return Result<bool>.Success(true);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                return Result<bool>.Failure(new InvalidOperationException($"Failed to write files to temporary directory '{tempPath}': {ex.Message}", ex));
+                throw new InvalidOperationException($"Failed to write files to temporary directory '{tempPath}': {ex.Message}", ex);
             }
         }
 

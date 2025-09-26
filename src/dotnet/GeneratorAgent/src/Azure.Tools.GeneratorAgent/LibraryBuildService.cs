@@ -29,7 +29,7 @@ namespace Azure.Tools.GeneratorAgent
 
         public async Task<Result<object>> BuildSdkAsync(CancellationToken cancellationToken = default)
         {
-            Logger.LogDebug("Starting SDK build in directory: {SdkOutputDir}", SdkOutputDir);
+            Logger.LogDebug("Starting library build in directory: {SdkOutputDir}", SdkOutputDir);
 
             Result<string> buildTargetResult = DetermineBuildTarget(SdkOutputDir);
             if (buildTargetResult.IsFailure)

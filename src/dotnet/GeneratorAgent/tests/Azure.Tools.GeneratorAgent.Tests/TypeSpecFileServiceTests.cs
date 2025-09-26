@@ -258,9 +258,8 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             // Assert
             Assert.That(result, Is.Not.Null);
-            Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Value!.Count, Is.GreaterThan(0));
-            Assert.That(result.Value.ContainsKey("main.tsp"), Is.True);
+            Assert.That(result.Count, Is.GreaterThan(0));
+            Assert.That(result.ContainsKey("main.tsp"), Is.True);
         }
 
         [Test]
@@ -280,8 +279,8 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             // Assert
             Assert.That(result, Is.Not.Null);
-            Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Value!.Count, Is.EqualTo(0));
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.Count, Is.EqualTo(0));
         }
 
         [Test]
@@ -303,11 +302,11 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             // Assert
             Assert.That(result, Is.Not.Null);
-            Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Value!.Count, Is.EqualTo(3));
-            Assert.That(result.Value.ContainsKey("main.tsp"), Is.True);
-            Assert.That(result.Value.ContainsKey("second.tsp"), Is.True);
-            Assert.That(result.Value.ContainsKey("third.tsp"), Is.True);
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.Count, Is.EqualTo(3));
+            Assert.That(result.ContainsKey("main.tsp"), Is.True);
+            Assert.That(result.ContainsKey("second.tsp"), Is.True);
+            Assert.That(result.ContainsKey("third.tsp"), Is.True);
         }
 
         [Test]
@@ -330,9 +329,9 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             // Assert
             Assert.That(result, Is.Not.Null);
-            Assert.That(result.IsSuccess, Is.True);
-            Assert.That(result.Value!.Count, Is.EqualTo(2));
-            Assert.That(result.Value.ContainsKey("subfile.tsp"), Is.True);
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.Count, Is.EqualTo(2));
+            Assert.That(result.ContainsKey("subfile.tsp"), Is.True);
         }
 
         [Test]
@@ -363,7 +362,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
             cts.Cancel();
 
             // Act & Assert
-            Assert.ThrowsAsync<TaskCanceledException>(
+            Assert.ThrowsAsync<InvalidOperationException>(
                 async () => await service.GetTypeSpecFilesAsync(cts.Token));
         }
 
@@ -418,11 +417,12 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var service = CreateService(validationContext: validationContext, gitHubServiceFactory: testFactory);
 
             // Act
-            Assert.ThrowsAsync<HttpRequestException>(async () => await service.GetTypeSpecFilesAsync(CancellationToken.None));
+            Assert.ThrowsAsync<DirectoryNotFoundException>(async () => await service.GetTypeSpecFilesAsync(CancellationToken.None));
 
-            // Assert
-            Assert.That(factoryCalled, Is.True);
-            Assert.That(receivedContext, Is.EqualTo(validationContext));
+            // Assert - Factory should NOT be called when calling GetTypeSpecFilesAsync directly with GitHub URL
+            // The service requires EnsureTypeSpecFilesAvailableAsync to be called first for GitHub scenarios
+            Assert.That(factoryCalled, Is.False);
+            Assert.That(receivedContext, Is.Null);
         }
 
 
@@ -538,7 +538,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         }
 
         [Test]
-        public void UpdateTypeSpecFileAsync_WithDirectoryTraversalFileName_ShouldThrowSecurityException()
+        public async Task UpdateTypeSpecFileAsync_WithDirectoryTraversalFileName_ShouldThrowSecurityException()
         {
             // Arrange
             using var fixture = new TestEnvironmentFixture();
@@ -548,13 +548,16 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var validationContext = CreateLocalValidationContext(typeSpecDir, outputDir);
             var service = CreateService(validationContext: validationContext);
 
-            // Act & Assert
-            Assert.ThrowsAsync<SecurityException>(
-                async () => await service.UpdateTypeSpecFileAsync("../../../evil.tsp", "malicious content", CancellationToken.None));
+            // Act
+            var result = await service.UpdateTypeSpecFileAsync("../../../evil.tsp", "malicious content", CancellationToken.None);
+
+            // Assert
+            Assert.That(result.IsFailure, Is.True);
+            Assert.That(result.Exception, Is.InstanceOf<SecurityException>());
         }
 
         [Test]
-        public void UpdateTypeSpecFileAsync_WithAbsolutePathOutsideDirectory_ShouldThrowSecurityException()
+        public async Task UpdateTypeSpecFileAsync_WithAbsolutePathOutsideDirectory_ShouldThrowSecurityException()
         {
             // Arrange
             using var fixture = new TestEnvironmentFixture();
@@ -564,9 +567,12 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var validationContext = CreateLocalValidationContext(typeSpecDir, outputDir);
             var service = CreateService(validationContext: validationContext);
 
-            // Act & Assert
-            Assert.ThrowsAsync<SecurityException>(
-                async () => await service.UpdateTypeSpecFileAsync("C:\\Windows\\System32\\evil.tsp", "malicious content", CancellationToken.None));
+            // Act
+            var result = await service.UpdateTypeSpecFileAsync("C:\\Windows\\System32\\evil.tsp", "malicious content", CancellationToken.None);
+
+            // Assert
+            Assert.That(result.IsFailure, Is.True);
+            Assert.That(result.Exception, Is.InstanceOf<SecurityException>());
         }
 
         [Test]
@@ -589,7 +595,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
         }
 
         [Test]
-        public void UpdateTypeSpecFileAsync_WithCancellation_ShouldThrowOperationCanceledException()
+        public async Task UpdateTypeSpecFileAsync_WithCancellation_ShouldThrowOperationCanceledException()
         {
             // Arrange
             using var fixture = new TestEnvironmentFixture();
@@ -602,9 +608,12 @@ namespace Azure.Tools.GeneratorAgent.Tests
             using var cts = new CancellationTokenSource();
             cts.Cancel();
 
-            // Act & Assert
-            Assert.ThrowsAsync<TaskCanceledException>(
-                async () => await service.UpdateTypeSpecFileAsync("test.tsp", "content", cts.Token));
+            // Act
+            var result = await service.UpdateTypeSpecFileAsync("test.tsp", "content", cts.Token);
+
+            // Assert
+            Assert.That(result.IsFailure, Is.True);
+            Assert.That(result.Exception, Is.InstanceOf<InvalidOperationException>());
         }
 
         [Test]

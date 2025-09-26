@@ -289,11 +289,12 @@ namespace APIViewWeb.Managers
         }
 
         /// <summary>
-        /// Classify TypeSpec package type by examining related SDK language packages
+        /// Classify TypeSpec package type by examining related SDK language packages.
+        /// Updates the TypeSpec review and any related reviews that have PackageType.Unknown.
         /// </summary>
         /// <param name="typeSpecReviewId">The TypeSpec review ID</param>
-        /// <returns>PackageType based on related SDK language packages</returns>
-        public async Task<PackageType> ClassifyTypeSpecPackageAsync(string typeSpecReviewId)
+        /// <returns>The updated TypeSpec review model</returns>
+        public async Task<ReviewListItemModel> ClassifyTypeSpecPackageAsync(string typeSpecReviewId)
         {
             try
             {
@@ -301,7 +302,7 @@ namespace APIViewWeb.Managers
                 var typeSpecReview = await _reviewsRepository.GetReviewAsync(typeSpecReviewId);
                 if (typeSpecReview == null)
                 {
-                    return PackageType.Unknown;
+                    return null;
                 }
 
                 // Get only the latest revision for this TypeSpec review
@@ -314,15 +315,39 @@ namespace APIViewWeb.Managers
                     {
                         var relatedReviews = await FindRelatedReviewsByPullRequestAsync(typeSpecReviewId, latestRevision.Id);
                         
-                        // Find the first SDK language review and classify its package
+                        // Single loop to check existing PackageType and classify if needed
                         foreach (var relatedReview in relatedReviews)
                         {
-                            if (LanguageHelper.IsSDKLanguage(relatedReview.Language) && 
+                            // First check if this review already has a PackageType (not Unknown)
+                            if (relatedReview.PackageType != PackageType.Unknown)
+                            {
+                                // Found existing PackageType, use it and exit early
+                                if (typeSpecReview.PackageType == PackageType.Unknown)
+                                {
+                                    typeSpecReview.PackageType = relatedReview.PackageType;
+                                    await _reviewsRepository.UpsertReviewAsync(typeSpecReview);
+                                }
+                                return typeSpecReview;
+                            }
+
+                            // If no existing PackageType, classify SDK language reviews
+                            if (LanguageHelper.IsSDKLanguage(relatedReview.Language) &&
                                 relatedReview.Language != ApiViewConstants.TypeSpecLanguage)
                             {
                                 var packageType = PackageHelper.ClassifyPackageType(relatedReview.PackageName, relatedReview.Language);
-                                return packageType;
+
+                                // Use the first valid classification found
+                                if (packageType != PackageType.Unknown)
+                                {
+                                    relatedReview.PackageType = packageType;
+                                    await _reviewsRepository.UpsertReviewAsync(relatedReview);
+                                    typeSpecReview.PackageType = packageType;
+                                    await _reviewsRepository.UpsertReviewAsync(typeSpecReview);
+                                    return typeSpecReview;
+                                }
+
                             }
+                        
                         }
                     }
                     catch (Exception ex)
@@ -330,13 +355,13 @@ namespace APIViewWeb.Managers
                         _telemetryClient.TrackException(ex);
                     }
                 }
-                // If no related SDK packages found, fallback to Unknown or Data?
-                return PackageType.Unknown;
+                typeSpecReview.PackageType =  PackageType.Unknown;
+                return typeSpecReview;
             }
             catch (Exception ex)
             {
                 _telemetryClient.TrackException(ex);
-                return PackageType.Unknown;
+                return null;
             }
         }
 

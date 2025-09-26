@@ -203,6 +203,12 @@ namespace APIViewWeb.LeanControllers
                     return NotFound($"Review with ID {reviewId} not found");
                 }
 
+                // Only classify if PackageType is not already defined (Unknown is the default)
+                if (review.PackageType != PackageType.Unknown)
+                {
+                    return Ok(review); // Already classified, return existing review
+                }
+
                 PackageType packageType;
 
                 // Check if this is an SDK language
@@ -214,16 +220,15 @@ namespace APIViewWeb.LeanControllers
                 // Special handling for TypeSpec
                 else if (review.Language == ApiViewConstants.TypeSpecLanguage)
                 {
-                    packageType = await _reviewManager.ClassifyTypeSpecPackageAsync(reviewId);
+                    review = await _reviewManager.ClassifyTypeSpecPackageAsync(reviewId);
                 }
                 else
                 {
                     // Regular SDK language classification
                     packageType = PackageHelper.ClassifyPackageType(review.PackageName, review.Language);
+                    review.PackageType = packageType;
+                    await _reviewManager.UpdateReviewAsync(review);
                 }
-
-                review.PackageType = packageType;
-                await _reviewManager.UpdateReviewAsync(review);
 
                 return Ok(review);
             }

@@ -27,7 +27,7 @@ namespace APIViewWeb.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> Add(string reviewId, string revisionId, string elementId, string commentText, string sectionClass, string[] taggedUsers, string resolutionLock = "off", bool usageSampleComment = false, string crossLangId = null)
+        public async Task<ActionResult> Add(string reviewId, string revisionId, string elementId, string commentText, string sectionClass, string[] taggedUsers, string resolutionLock = "off", bool usageSampleComment = false, string crossLangId = null, CommentSeverity? severity = null)
         {
             if (string.IsNullOrEmpty(commentText))
             {
@@ -47,6 +47,7 @@ namespace APIViewWeb.Controllers
             comment.ResolutionLocked = !resolutionLock.Equals("on");
             comment.CreatedBy = User.GetGitHubLogin();
             comment.CrossLanguageId = crossLangId;
+            comment.Severity = severity;
 
             foreach(string user in taggedUsers)
             {

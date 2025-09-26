@@ -47,7 +47,7 @@ system:
   # OUTPUT REQUIREMENTS
   - Always answer all questions.
   - Rate each comment for severity according to the following guidance:
-    - "GENERAL": A comment that is informative but leaves it up to the service team as to whether or not to implement.
+    - "SUGGESTION": A comment that is informative but leaves it up to the service team as to whether or not to implement.
     - "SHOULD": A comment that should be fixed, unless there is a compelling reason why it should not.
     - "MUST": A comment that identifies a critical issue that must be fixed.
     - "QUESTION": A comment that asks for clarification or more information.

@@ -8,8 +8,8 @@
       "properties": {
         "severity": {
           "type": "string",
-          "enum": ["GENERAL", "SHOULD", "MUST", "QUESTION"],
-          "description": "The severity level of the comment. Must be one of: General, Should Fix, Must Fix, Question."
+          "enum": ["SUGGESTION", "SHOULD", "MUST", "QUESTION"],
+          "description": "The severity level of the comment. Must be one of: Suggestion, Should Fix, Must Fix, Question."
         },
         "results": {
           "type": "array",

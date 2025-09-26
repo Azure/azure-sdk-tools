@@ -119,7 +119,7 @@ class Comment(BaseModel):
     )
     severity: Optional[str] = Field(
         default=None,
-        description="The severity level of the comment: 'GENERAL', 'SHOULD', 'MUST', or 'QUESTION'.",
+        description="The severity level of the comment: 'SUGGESTION', 'SHOULD', 'MUST', or 'QUESTION'.",
     )
 
     def __init__(self, **data):

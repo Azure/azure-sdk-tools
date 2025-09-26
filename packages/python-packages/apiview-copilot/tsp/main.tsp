@@ -139,7 +139,7 @@ namespace ApiViewCopilot {
     confidenceScore?: float32;
 
     /** The severity level of the comment */
-    severity: "GENERAL" | "SHOULD" | "MUST" | "QUESTION";
+    severity: "SUGGESTION" | "SHOULD" | "MUST" | "QUESTION";
   }
 
   model ApiReviewJobRequest {

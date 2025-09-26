@@ -107,6 +107,7 @@ namespace APIViewWeb.LeanControllers
         /// <param name="elementId"></param>
         /// <param name="commentText"></param>
         /// <param name="commentType"></param>
+        /// <param name="severity"></param>
         /// <param name="resolutionLocked"></param>
         /// <returns></returns>
         [HttpPost(Name = "CreateComment")]

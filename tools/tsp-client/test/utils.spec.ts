@@ -125,7 +125,7 @@ describe("Verify other utils functions", function () {
       repo: "Azure/foo-repo",
       additionalDirectories: [],
       entrypointFile: "foo.tsp",
-      emitterPackageJsonPath: "foo.json",
+      emitterPackageJsonPath: "tools/tsp-client/foo.json",
     });
   });
 });

@@ -1,12 +1,13 @@
 import { joinPaths, normalizeSlashes } from "@typespec/compiler";
 import { randomUUID } from "node:crypto";
 import { access, constants, mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Logger } from "./log.js";
 import { TspLocation } from "./typespec.js";
 import { normalizeDirectory, readTspLocation } from "./fs.js";
 import { parse as parseYaml } from "yaml";
+import { getRepoRoot } from "./git.js";
 
 const defaultTspClientConfigPath = joinPaths("eng", "tspclientconfig.yaml");
 
@@ -146,7 +147,9 @@ export async function updateExistingTspLocation(
           `Adding emitterPackageJsonPath ${emitterPackageJsonOverride} to tsp-location.yaml`,
         );
       }
-      updatedTspLocation.emitterPackageJsonPath = emitterPackageJsonOverride;
+      updatedTspLocation.emitterPackageJsonPath = normalizeSlashes(
+        relative(await getRepoRoot(projectPath), emitterPackageJsonOverride),
+      );
     }
     return updatedTspLocation;
   } catch (error) {

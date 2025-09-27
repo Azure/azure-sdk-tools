@@ -115,7 +115,7 @@ async function initProcessDataAndWriteTspLocation(
       entrypoint: "main.tsp",
       configPath: tspConfigPath,
       overrides: {
-        outputDir: outputDir,
+        outputDir: repoRoot,
       },
     });
     emitterOutputDir = options.options?.[emitterData.emitter]?.["emitter-output-dir"];

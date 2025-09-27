@@ -115,7 +115,7 @@ async function initProcessDataAndWriteTspLocation(
       entrypoint: "main.tsp",
       configPath: tspConfigPath,
       overrides: {
-        outputDir: outputDir,
+        outputDir: repoRoot,
       },
     });
     emitterOutputDir = options.options?.[emitterData.emitter]?.["emitter-output-dir"];
@@ -132,7 +132,11 @@ async function initProcessDataAndWriteTspLocation(
     // If the update-if-exists flag is set, check if there's an existing tsp-location.yaml
     // and update it with the new values while maintaining previously existing data.
     Logger.debug(`Trying to read existing tsp-location.yaml at ${newPackageDir}`);
-    tspLocationData = await updateExistingTspLocation(tspLocationData, newPackageDir);
+    tspLocationData = await updateExistingTspLocation(
+      tspLocationData,
+      newPackageDir,
+      emitterPackageOverride,
+    );
   }
   await mkdir(newPackageDir, { recursive: true });
   await writeTspLocationYaml(tspLocationData, newPackageDir);

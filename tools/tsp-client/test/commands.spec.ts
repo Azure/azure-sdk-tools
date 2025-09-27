@@ -19,7 +19,7 @@ import { writeTspLocationYaml } from "../src/utils.js";
 import { dirname, resolve } from "node:path";
 
 describe.sequential("Verify commands", () => {
-  let repoRoot;
+  let repoRoot: string;
   beforeAll(async () => {
     repoRoot = await getRepoRoot(cwd());
     await cp(
@@ -47,9 +47,6 @@ describe.sequential("Verify commands", () => {
     await rm("./test/examples/initGlobalConfig/", { recursive: true });
     await rm("./test/examples/initGlobalConfigNoMatch/", { recursive: true });
     await rm(joinPaths(repoRoot, "sdk/contosowidgetmanager"), { recursive: true });
-    await rm(joinPaths("test/examples/sdk/alternate-emitter-package-json-path"), {
-      recursive: true,
-    });
   });
 
   it("Generate lock file", async () => {
@@ -220,12 +217,15 @@ describe.sequential("Verify commands", () => {
         ],
         emitterPackageJsonPath: "tools/tsp-client/test/utils/alternate-emitter-package.json",
       };
+      await mkdir(joinPaths(repoRoot, "sdk/contosowidgetmanager/contosowidgetmanager-rest"), {
+        recursive: true,
+      });
       await writeTspLocationYaml(
         tspLocationContent,
-        joinPaths(cwd(), "test/examples/sdk/alternate-emitter-package-json-path"),
+        joinPaths(repoRoot, "sdk/contosowidgetmanager/contosowidgetmanager-rest"),
       );
       const args = {
-        "output-dir": joinPaths(cwd(), "test/examples/sdk/alternate-emitter-package-json-path"),
+        "output-dir": joinPaths(repoRoot, "sdk/contosowidgetmanager/contosowidgetmanager-rest"),
         "local-spec-repo":
           "./test/examples/specification/contosowidgetmanager/Contoso.WidgetManager",
       };

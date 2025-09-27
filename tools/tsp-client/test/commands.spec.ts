@@ -386,7 +386,7 @@ describe.sequential("Verify commands", () => {
     try {
       const libraryPath = joinPaths(repoRoot, "sdk/contosowidgetmanager/contosowidgetmanager-rest");
       const args = {
-        "output-dir": joinPaths(cwd(), "./test/examples/initOrUpdate/"),
+        "output-dir": libraryPath,
         "tsp-config": joinPaths(
           cwd(),
           "./test/examples/specification/contosowidgetmanager/Contoso.WidgetManager/",

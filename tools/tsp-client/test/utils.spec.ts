@@ -82,19 +82,50 @@ describe("Verify other utils functions", function () {
       commit: "1234567890abcdef",
       repo: "Azure/foo-repo",
       additionalDirectories: [],
+      // Init logic will resolve this value according to the first supported emitter it finds in the repo
+      // This value will always be ignored to not change any existing config when updateExistingTspLocation() is called
       emitterPackageJsonPath: "example.json",
     };
     const newPackageDir = joinPaths(cwd(), "test/examples/sdk/local-spec-sdk");
     const updatedTspLocationData = await updateExistingTspLocation(tspLocationData, newPackageDir);
     // Verify that directory, commit, repo, and additionalDirectories are updated correctly
     // Verify that the entrypointFile remains unchanged
+    // Verify that the emitterPackageJsonPath remains unchanged because no override is provided through the function parameter
     assert.deepEqual(updatedTspLocationData, {
       directory: "test-directory",
       commit: "1234567890abcdef",
       repo: "Azure/foo-repo",
       additionalDirectories: [],
       entrypointFile: "foo.tsp",
+    });
+  });
+
+  it("Check updateExistingTspLocation with override parameter", async function () {
+    const tspLocationData = {
+      directory: "test-directory",
+      commit: "1234567890abcdef",
+      repo: "Azure/foo-repo",
+      additionalDirectories: [],
+      // Init logic will resolve this value according to the first supported emitter it finds in the repo
+      // This value will always be ignored to not change any existing config when updateExistingTspLocation() is called
       emitterPackageJsonPath: "example.json",
+    };
+    const newPackageDir = joinPaths(cwd(), "test/examples/sdk/local-spec-sdk");
+    const updatedTspLocationData = await updateExistingTspLocation(
+      tspLocationData,
+      newPackageDir,
+      "foo.json",
+    );
+    // Verify that directory, commit, repo, and additionalDirectories are updated correctly
+    // Verify that the entrypointFile remains unchanged
+    // Verify that the emitterPackageJsonPath is updated to the override value
+    assert.deepEqual(updatedTspLocationData, {
+      directory: "test-directory",
+      commit: "1234567890abcdef",
+      repo: "Azure/foo-repo",
+      additionalDirectories: [],
+      entrypointFile: "foo.tsp",
+      emitterPackageJsonPath: "foo.json",
     });
   });
 });

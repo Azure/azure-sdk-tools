@@ -109,6 +109,7 @@ export async function writeTspLocationYaml(
 export async function updateExistingTspLocation(
   tspLocationData: TspLocation,
   projectPath: string,
+  emitterPackageJsonOverride?: string,
 ): Promise<TspLocation> {
   try {
     const existingTspLocation = await readTspLocation(projectPath);
@@ -117,13 +118,13 @@ export async function updateExistingTspLocation(
     const updatedTspLocation = { ...existingTspLocation };
 
     // Define the properties that can be updated
+    // NOTE: emitterPackageJsonPath is handled separately below because of the override logic
     const updatableProperties: (keyof TspLocation)[] = [
       "repo",
       "commit",
       "directory",
       "entrypointFile",
       "additionalDirectories",
-      "emitterPackageJsonPath",
     ];
 
     // Update each property if it has a valid value
@@ -134,6 +135,19 @@ export async function updateExistingTspLocation(
       }
     }
 
+    // Only add/replace emitterPackageJsonPath value if an override is provided, otherwise keep existing value or leave undefined
+    if (emitterPackageJsonOverride) {
+      if (existingTspLocation.emitterPackageJsonPath !== undefined) {
+        Logger.debug(
+          `Updating existing emitterPackageJsonPath ${existingTspLocation.emitterPackageJsonPath} with ${emitterPackageJsonOverride} in tsp-location.yaml`,
+        );
+      } else {
+        Logger.debug(
+          `Adding emitterPackageJsonPath ${emitterPackageJsonOverride} to tsp-location.yaml`,
+        );
+      }
+      updatedTspLocation.emitterPackageJsonPath = emitterPackageJsonOverride;
+    }
     return updatedTspLocation;
   } catch (error) {
     Logger.debug(`Will create a new tsp-location.yaml. Error reading tsp-location.yaml: ${error}`);

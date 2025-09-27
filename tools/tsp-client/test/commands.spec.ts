@@ -47,6 +47,9 @@ describe.sequential("Verify commands", () => {
     await rm("./test/examples/initGlobalConfig/", { recursive: true });
     await rm("./test/examples/initGlobalConfigNoMatch/", { recursive: true });
     await rm(joinPaths(repoRoot, "sdk/contosowidgetmanager"), { recursive: true });
+    await rm(joinPaths("test/examples/sdk/alternate-emitter-package-json-path"), {
+      recursive: true,
+    });
   });
 
   it("Generate lock file", async () => {

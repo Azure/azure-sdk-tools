@@ -33,9 +33,9 @@ param botDisplayName string
 // Email notification settings (semicolon-separated string from env file)
 param alertEmailAddresses string = 'wanl@microsoft.com'
 
-// Storage Account for TypeSpec Helper
-param typespecHelperStorageAccountName string = 'typespechelper4storage'
-param typespecHelperStorageResourceGroupName string = 'typespec_helper'
+// Storage Account
+param storageAccountName string = 'azuresdkqabotstorage'
+param storageResourceGroupName string = 'azure-sdk-qa-bot'
 
 resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   location: location
@@ -382,9 +382,9 @@ resource healthCheckAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
 // Module to assign storage permissions to Bot Identity on TypeSpec Helper Storage Account
 module typespecStoragePermissions './storagePermissions.bicep' = {
   name: 'typespec-storage-permissions'
-  scope: resourceGroup(typespecHelperStorageResourceGroupName)  // Use specified resource group
+  scope: resourceGroup(storageResourceGroupName)  // Use specified resource group
   params: {
-    storageAccountName: typespecHelperStorageAccountName
+    storageAccountName: storageAccountName
     principalId: identity.properties.principalId
     principalType: 'ServicePrincipal'
   }

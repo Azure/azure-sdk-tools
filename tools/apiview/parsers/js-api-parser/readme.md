@@ -16,7 +16,7 @@ Run `node ./dist/export.js <Path to api-extractor JSON output> --output <Path to
 
 For e.g.
 
-`node .\export.js C:\git\azure-sdk-for-js\sdk\core\core-client\temp\core-client.api.json --output C:\git\azure-sdk-for-js\sdk\core\core-client\temp\apiview.json` 
+`node .\dist\export.js C:\git\azure-sdk-for-js\sdk\core\core-client\temp\core-client.api.json --output C:\git\azure-sdk-for-js\sdk\core\core-client\temp\apiview.json` 
 
 Or if you have the package installed, you can run `ts-genapi <Path to api-extractor JSON output> --output <Path to apiviewFile> --metadata-file [Path to metadata.json]`.
 

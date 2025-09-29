@@ -38,6 +38,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json.Linq;
 using Microsoft.Identity.Web;
+using Microsoft.Identity.ServiceEssentials;
 using ClaimConstants = APIView.Identity.ClaimConstants;
 
 namespace APIViewWeb
@@ -241,6 +242,7 @@ namespace APIViewWeb
                 .EnableTokenAcquisitionToCallDownstreamApi()
                 .AddMicrosoftGraph(Configuration.GetSection("MicrosoftGraph"))
                 .AddInMemoryTokenCaches();
+                services.AddMise(Configuration);
             }
 
             services.AddAuthorization();

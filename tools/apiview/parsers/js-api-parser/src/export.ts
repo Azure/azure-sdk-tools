@@ -28,7 +28,7 @@ async function loadApiJson(fileName: string) {
 
 async function main() {
   const optionDefinitions = [
-    { name: "input", type: String },
+    { name: "input", type: String, defaultOption: true },
     { name: "output", type: String },
     { name: "metadata-file", type: String },
     { name: "help", type: Boolean, alias: "h" },
@@ -39,11 +39,13 @@ async function main() {
   if (options.help) {
     console.log("Usage:");
     console.log(
-      "  ts-genapi --input <path-to-api-extractor-json> --output <path-to-output-json> [--metadata-file <path-to-metadata>]",
+      "  ts-genapi <path-to-api-extractor-json> --output <path-to-output-json> [--metadata-file <path-to-metadata>]",
     );
     console.log("");
+    console.log("Arguments:");
+    console.log("  <path-to-api-extractor-json>  Path to api-extractor JSON output");
+    console.log("");
     console.log("Options:");
-    console.log("  --input          Path to api-extractor JSON output");
     console.log("  --output         Path to output JSON file");
     console.log("  --metadata-file  Path to metadata file (optional)");
     console.log("  --help, -h       Show this help message");
@@ -51,11 +53,11 @@ async function main() {
   }
 
   if (!options.input || !options.output) {
-    console.error("Error: Both --input and --output are required");
+    console.error("Error: Both input file and --output are required");
     console.log("");
     console.log("Usage:");
     console.log(
-      "  ts-genapi --input <path-to-api-extractor-json> --output <path-to-output-json> [--metadata-file <path-to-metadata>]",
+      "  ts-genapi <path-to-api-extractor-json> --output <path-to-output-json> [--metadata-file <path-to-metadata>]",
     );
     console.log("");
     console.log("For more information, run: ts-genapi --help");

@@ -12,15 +12,15 @@ This application tokenises a Javascript project into a format useful for JavaScr
 
 Run API extractor step on JS project to create json output file. This step is integrated within build commend for all Azure SDK projects in azure-sdk-for-js monorepo. So running build step is good enough to create input file for APIvIew parser. You can see a JSON file created in temp directory within package root directory once build step is completed successfully for the package.
 
-Run `ts-genapi --input <path-to-api-extractor-json> --output <path-to-output-json> [--metadata-file <path-to-metadata>]`
+Run `ts-genapi <path-to-api-extractor-json> --output <path-to-output-json> [--metadata-file <path-to-metadata>]`
 
 For e.g.
 
-`ts-genapi --input C:\git\azure-sdk-for-js\sdk\core\core-client\temp\core-client.api.json --output C:\git\azure-sdk-for-js\sdk\core\core-client\temp\apiview.json`
+`ts-genapi C:\git\azure-sdk-for-js\sdk\core\core-client\temp\core-client.api.json --output C:\git\azure-sdk-for-js\sdk\core\core-client\temp\apiview.json`
 
-### Options
+### Arguments and Options
 
-- `--input`: Path to api-extractor JSON output (required)
+- `<path-to-api-extractor-json>`: Path to api-extractor JSON output (required, positional argument)
 - `--output`: Path to output JSON file (required)  
 - `--metadata-file`: Path to metadata file (optional)
 - `--help`, `-h`: Show help message
@@ -29,10 +29,10 @@ For e.g.
 
 ```bash
 # Basic usage
-ts-genapi --input input.api.json --output output.json
+ts-genapi input.api.json --output output.json
 
 # With metadata file
-ts-genapi --input input.api.json --output output.json --metadata-file metadata.json
+ts-genapi input.api.json --output output.json --metadata-file metadata.json
 
 # Show help
 ts-genapi --help

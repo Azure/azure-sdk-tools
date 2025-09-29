@@ -22,7 +22,7 @@ describe("CLI", () => {
   it("shows help message with --help", async () => {
     const { stdout } = await execAsync(`node ${binPath} --help`);
     expect(stdout).toContain("Usage:");
-    expect(stdout).toContain("--input");
+    expect(stdout).toContain("path-to-api-extractor-json");
     expect(stdout).toContain("--output");
     expect(stdout).toContain("--metadata-file");
   });
@@ -30,7 +30,7 @@ describe("CLI", () => {
   it("shows help message with -h", async () => {
     const { stdout } = await execAsync(`node ${binPath} -h`);
     expect(stdout).toContain("Usage:");
-    expect(stdout).toContain("--input");
+    expect(stdout).toContain("path-to-api-extractor-json");
     expect(stdout).toContain("--output");
   });
 
@@ -40,17 +40,17 @@ describe("CLI", () => {
       expect.fail("Should have thrown an error");
     } catch (error: any) {
       expect(error.code).toBe(1);
-      expect(error.stderr).toContain("Error: Both --input and --output are required");
+      expect(error.stderr).toContain("Error: Both input file and --output are required");
     }
   });
 
   it("fails when only input provided", async () => {
     try {
-      await execAsync(`node ${binPath} --input ${testDataPath}`);
+      await execAsync(`node ${binPath} ${testDataPath}`);
       expect.fail("Should have thrown an error");
     } catch (error: any) {
       expect(error.code).toBe(1);
-      expect(error.stderr).toContain("Error: Both --input and --output are required");
+      expect(error.stderr).toContain("Error: Both input file and --output are required");
     }
   });
 
@@ -60,13 +60,13 @@ describe("CLI", () => {
       expect.fail("Should have thrown an error");
     } catch (error: any) {
       expect(error.code).toBe(1);
-      expect(error.stderr).toContain("Error: Both --input and --output are required");
+      expect(error.stderr).toContain("Error: Both input file and --output are required");
     }
   });
 
   it("processes file successfully with required arguments", async () => {
     const { stdout, stderr } = await execAsync(
-      `node ${binPath} --input ${testDataPath} --output ${tempOutputPath}`
+      `node ${binPath} ${testDataPath} --output ${tempOutputPath}`
     );
     
     expect(stderr).toBe("");
@@ -86,7 +86,7 @@ describe("CLI", () => {
   it("accepts metadata-file parameter", async () => {
     // This test just verifies the parameter is accepted without error
     const { stdout, stderr } = await execAsync(
-      `node ${binPath} --input ${testDataPath} --output ${tempOutputPath} --metadata-file some-metadata.json`
+      `node ${binPath} ${testDataPath} --output ${tempOutputPath} --metadata-file some-metadata.json`
     );
     
     expect(stderr).toBe("");

@@ -112,7 +112,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     reqEntryPreSanitize = requestEntry.Clone();
                 }
 
-                sanitizer.Sanitize(requestEntry);
+                sanitizer.Sanitize(requestEntry, matcher.ShouldCompareBodies);
 
                 if (DebugLogger.CheckLogLevel(LogLevel.Debug))
                 {

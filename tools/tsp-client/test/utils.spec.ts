@@ -82,9 +82,6 @@ describe("Verify other utils functions", function () {
       commit: "1234567890abcdef",
       repo: "Azure/foo-repo",
       additionalDirectories: [],
-      // Init logic will resolve this value according to the first supported emitter it finds in the repo
-      // This value will always be ignored to not change any existing config when updateExistingTspLocation() is called
-      emitterPackageJsonPath: "example.json",
     };
     const newPackageDir = joinPaths(cwd(), "test/examples/sdk/local-spec-sdk");
     const updatedTspLocationData = await updateExistingTspLocation(tspLocationData, newPackageDir);
@@ -106,8 +103,6 @@ describe("Verify other utils functions", function () {
       commit: "1234567890abcdef",
       repo: "Azure/foo-repo",
       additionalDirectories: [],
-      // Init logic will resolve this value according to the first supported emitter it finds in the repo
-      // This value will always be ignored to not change any existing config when updateExistingTspLocation() is called
       emitterPackageJsonPath: "example.json",
     };
     const newPackageDir = joinPaths(cwd(), "test/examples/sdk/local-spec-sdk");

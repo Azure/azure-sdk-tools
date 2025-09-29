@@ -242,7 +242,7 @@ namespace APIViewWeb
                 .EnableTokenAcquisitionToCallDownstreamApi()
                 .AddMicrosoftGraph(Configuration.GetSection("MicrosoftGraph"))
                 .AddInMemoryTokenCaches();
-                services.AddMise(Configuration);
+                services.AddMiseStandard(Configuration);
             }
 
             services.AddAuthorization();

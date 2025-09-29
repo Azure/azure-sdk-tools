@@ -8,19 +8,24 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.Identity.ServiceEssentials;
+using AuthenticationTicket = Microsoft.AspNetCore.Authentication.AuthenticationTicket;
 
 namespace APIViewWeb.Account;
 
 public class TokenAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
 {
     private readonly ILogger<TokenAuthenticationHandler> _authLogger;
+    private readonly IMiseHandler _miseHandler;
 
     public TokenAuthenticationHandler(
         IOptionsMonitor<AuthenticationSchemeOptions> options,
+        IMiseHandler miseHandler,
         ILoggerFactory logger,
         UrlEncoder encoder)
         : base(options, logger, encoder)
     {
+        _miseHandler = miseHandler;
         _authLogger = logger.CreateLogger<TokenAuthenticationHandler>();
     }
 
@@ -44,6 +49,12 @@ public class TokenAuthenticationHandler : AuthenticationHandler<AuthenticationSc
                 AuthenticationTicket ticket = new(user, "GitHubToken");
                 return AuthenticateResult.Success(ticket);
             }
+        }
+
+        MiseValidationResult miseOutput = await _miseHandler.ValidateRequest(Request.Headers).ExecuteAsync().ConfigureAwait(false);
+        if (miseOutput.HttpResponseStatusCode != 200)
+        {
+            return AuthenticateResult.Fail(miseOutput.ErrorDescription ?? miseOutput.HttpResponseStatusCode.ToString());
         }
 
         AuthenticateResult azureJwtResult = await Context.AuthenticateAsync("Bearer");

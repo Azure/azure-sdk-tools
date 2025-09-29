@@ -10,18 +10,23 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.Identity.ServiceEssentials;
+using AuthenticationTicket = Microsoft.AspNetCore.Authentication.AuthenticationTicket;
 
 namespace APIViewWeb.Account;
 
 public class CookieOrTokenAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
 {
     private readonly ILogger<CookieOrTokenAuthenticationHandler> _authLogger;
+    private readonly IMiseHandler _miseHandler;
 
     public CookieOrTokenAuthenticationHandler(IOptionsMonitor<AuthenticationSchemeOptions> options,
+        IMiseHandler miseHandler,
         ILoggerFactory loggerFactory, UrlEncoder encoder)
         : base(options, loggerFactory, encoder)
     {
         _authLogger = loggerFactory.CreateLogger<CookieOrTokenAuthenticationHandler>();
+        _miseHandler = miseHandler;
     }
 
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
@@ -50,6 +55,12 @@ public class CookieOrTokenAuthenticationHandler : AuthenticationHandler<Authenti
                 AuthenticationTicket ticket = new(user, "GitHubToken");
                 return AuthenticateResult.Success(ticket);
             }
+        }
+
+        MiseValidationResult miseOutput = await _miseHandler.ValidateRequest(Request.Headers).ExecuteAsync().ConfigureAwait(false);
+        if (miseOutput.HttpResponseStatusCode != 200)
+        {
+            return AuthenticateResult.Fail(miseOutput.ErrorDescription ?? miseOutput.HttpResponseStatusCode.ToString());
         }
 
         AuthenticateResult azureJwtResult = await Context.AuthenticateAsync("Bearer");

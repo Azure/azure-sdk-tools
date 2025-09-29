@@ -12,6 +12,7 @@
     <TypeScriptCompileBlocked>true</TypeScriptCompileBlocked>
     <SignAssembly>False</SignAssembly>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <RestoreConfigFile>nuget.config</RestoreConfigFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -41,7 +42,7 @@
     <PackageReference Include="Microsoft.ApplicationInsights.SnapshotCollector" Version="1.4.5" />
     <PackageReference Include="Microsoft.Identity.Web" Version="2.16.1" />
     <PackageReference Include="Microsoft.Identity.Web.MicrosoftGraph" Version="2.16.1" />
-    <PackageReference Include="Microsoft.Identity.ServiceEssentials" Version="1.0.0" />
+    <PackageReference Include="Microsoft.Identity.ServiceEssentials.Standard" Version="2.0.0-rc.1.1" />
     <PackageReference Include="Microsoft.Azure.AppConfiguration.AspNetCore" Version="7.0.0" />
     <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.40.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="7.0.15" />

@@ -87,7 +87,7 @@ The following knowledge base content is retrieved based on user's question:
 The intention of user's question based on whole conversation:
 
 ```
-{{intension}}
+{{intention}}
 ```
 
 # OUTPUT REQUIREMENTS

@@ -182,7 +182,7 @@ public class APIViewRevisionTool : MCPMultiCommandTool
             }
             catch (ArgumentException ex) when (ex.Message.Contains("activeApiRevisionId"))
             {
-                string errorMessage = "Failed to extract revision ID from URL. URL must contain 'activeApiRevisionId' parameter.";
+                string errorMessage = "Failed to extract active revision ID from URL. URL must contain 'activeApiRevisionId' parameter.";
                 _logger.LogError(ex, errorMessage);
                 return new APIViewResponse { ResponseError = errorMessage};
             }

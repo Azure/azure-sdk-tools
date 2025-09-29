@@ -21,7 +21,7 @@ public class APIViewRevisionTool : MCPMultiCommandTool
     ];
 
     private static readonly string[] validContentTypes = ["Text", "CodeFile"];
-    private static readonly string[] validRevisionSelectionTypes = ["Latest", "LatestApproved", "LatestAutomatic", "LatestManual", "Undefined"];
+    private static readonly string[] validRevisionFiltersTypes = ["Latest", "LatestApproved", "LatestAutomatic", "LatestManual", "Undefined"];
 
     private readonly IAPIViewService _apiViewService;
     private readonly ILogger<APIViewRevisionTool> _logger;
@@ -34,8 +34,8 @@ public class APIViewRevisionTool : MCPMultiCommandTool
 
     private readonly Option<string> contentReturnTypeOption = new("--content-return-type",
         description: "The APIView revision content type (text or codefile). Defaults to 'text'.", getDefaultValue: () => "text");
-    private readonly Option<string> revisionSelectionTypeOption = new("--revision-selection-type",
-        description: "The type of revision selection (Latest, latestApproved, LatestAutomatic, LatestManual)");
+    private readonly Option<string> filterOption = new("--filter",
+        description: "Filter the desired revision (Latest, LatestApproved, LatestAutomatic, LatestManual) - Required when reviewId is used");
 
     private readonly Option<string> revisionIdOption = new("--revision-id", "The APIView revision ID");
     private readonly Option<string> reviewIdOptions = new("--review-id", "The APIView review ID");
@@ -58,7 +58,7 @@ public class APIViewRevisionTool : MCPMultiCommandTool
             revisionIdOption,
             reviewIdOptions,
             apiViewUrlOption,
-            revisionSelectionTypeOption,
+            filterOption,
             environmentOption,
             outputFileOption,
             contentReturnTypeOption
@@ -140,7 +140,7 @@ public class APIViewRevisionTool : MCPMultiCommandTool
         string? outputFile = ctx.ParseResult.GetValueForOption(outputFileOption);
         string? contentType = ctx.ParseResult.GetValueForOption(contentReturnTypeOption);
         string? reviewId = ctx.ParseResult.GetValueForOption(reviewIdOptions);
-        string? revisionSelectionType = ctx.ParseResult.GetValueForOption(revisionSelectionTypeOption);
+        string? filter = ctx.ParseResult.GetValueForOption(filterOption);
 
         if (!validContentTypes.Contains(contentType, StringComparer.OrdinalIgnoreCase))
         {
@@ -168,40 +168,52 @@ public class APIViewRevisionTool : MCPMultiCommandTool
 
         if (!string.IsNullOrEmpty(apiViewUrl))
         {
-            if (!string.IsNullOrEmpty(revisionSelectionType))
-            {
-                string errorMessage = "Cannot specify --revision-selection-type with --url.";
-                _logger.LogError(errorMessage);
-                return new APIViewResponse { ResponseError = errorMessage };
-            }
-
             try
             {
-                revisionId = ExtractRevisionIdFromInput(apiViewUrl);
-                revisionSelectionType = "Undefined";
+                if (!string.IsNullOrEmpty(filter))
+                {
+                    reviewId = ExtractReviewIdFromUrl(apiViewUrl);
+                }
+                else
+                {
+                    revisionId = ExtractRevisionIdFromInput(apiViewUrl);
+                    filter = "Undefined";
+                }
             }
-            catch (ArgumentException ex)
+            catch (ArgumentException ex) when (ex.Message.Contains("activeApiRevisionId"))
             {
-                _logger.LogError(ex, "Failed to extract revision ID from URL");
-                return new APIViewResponse { ResponseError = ex.Message };
+                string errorMessage = "Failed to extract revision ID from URL. URL must contain 'activeApiRevisionId' parameter.";
+                _logger.LogError(ex, errorMessage);
+                return new APIViewResponse { ResponseError = errorMessage};
+            }
+            catch (ArgumentException ex) when (ex.Message.Contains("/review/"))
+            {
+                string errorMessage = "Failed to extract review ID from URL. URL path must contain '/review/{reviewId}' segment.";
+                _logger.LogError(ex, errorMessage);
+                return new APIViewResponse { ResponseError = errorMessage };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error while parsing URL");
+                return new APIViewResponse { ResponseError = $"Failed to parse URL: {ex.Message}" };
             }
         }
         else if (!string.IsNullOrEmpty(revisionId))
         {
-            if (!string.IsNullOrEmpty(revisionSelectionType))
+            if (!string.IsNullOrEmpty(filter))
             {
-                string errorMessage = "Cannot specify --revision-selection-type with --revision-id.";
+                string errorMessage = "Cannot specify --revision-filter with --revision-id.";
                 _logger.LogError(errorMessage);
                 return new APIViewResponse { ResponseError = errorMessage };
             }
-            revisionSelectionType = "Undefined";
+            filter = "Undefined";
         }
         else
         {
-            revisionSelectionType ??= "Latest";
-            if (!validRevisionSelectionTypes.Contains(revisionSelectionType, StringComparer.OrdinalIgnoreCase))
+            filter ??= "Latest";
+            if (!validRevisionFiltersTypes.Contains(filter, StringComparer.OrdinalIgnoreCase))
             {
-                string errorMessage = $"Invalid revision selection type '{revisionSelectionType}'. Must be one of: {string.Join(", ", validRevisionSelectionTypes)}.";
+                string errorMessage = $"Invalid revision filter '{filter}'. Must be one of: {string.Join(", ", validRevisionFiltersTypes)}.";
                 _logger.LogError(errorMessage);
                 return new APIViewResponse { ResponseError = errorMessage };
             }
@@ -209,11 +221,11 @@ public class APIViewRevisionTool : MCPMultiCommandTool
 
         try
         {
-            string? result = await _apiViewService.GetRevisionContent(revisionId, reviewId, revisionSelectionType, contentType, environment);
+            string? result = await _apiViewService.GetRevisionContent(revisionId, reviewId, filter, contentType, environment);
             if (result == null)
             {
-                _logger.LogError("Failed to retrieve revision content for revision {RevisionId}", revisionId);
-                return new APIViewResponse { ResponseError = $"Failed to retrieve revision content for revision {revisionId}" };
+                _logger.LogError($"Revision content not found");
+                return new APIViewResponse { ResponseError = $"Revision content not found" };
             }
 
             if (!string.IsNullOrEmpty(outputFile))
@@ -278,5 +290,47 @@ public class APIViewRevisionTool : MCPMultiCommandTool
         }
 
         return input;
+    }
+
+    private string? ExtractReviewIdFromUrl(string url)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            throw new ArgumentException("Input cannot be null or empty", nameof(url));
+        }
+
+        if (!Uri.TryCreate(url, UriKind.Absolute, out Uri? uri) || (uri.Scheme != "http" && uri.Scheme != "https"))
+        {
+            throw new ArgumentException("URL must be a valid HTTP or HTTPS URL", nameof(url));
+        }
+
+        try
+        {
+            const string reviewSegment = "/review/";
+            int reviewIndex = uri.AbsolutePath.IndexOf(reviewSegment, StringComparison.OrdinalIgnoreCase);
+            
+            if (reviewIndex >= 0)
+            {
+                int startIndex = reviewIndex + reviewSegment.Length;
+                int endIndex = uri.AbsolutePath.IndexOf('/', startIndex);
+                
+                string reviewId = endIndex > startIndex 
+                    ? uri.AbsolutePath.Substring(startIndex, endIndex - startIndex)
+                    : uri.AbsolutePath.Substring(startIndex);
+                
+                if (!string.IsNullOrWhiteSpace(reviewId))
+                {
+                    _logger.LogInformation("Extracted review ID {ReviewId} from URL {Url}", reviewId, url);
+                    return reviewId;
+                }
+            }
+
+            throw new ArgumentException("URL path must contain '/review/{reviewId}' segment");
+        }
+        catch (Exception ex) when (!(ex is ArgumentException))
+        {
+            _logger.LogWarning(ex, "Failed to extract review ID from URL {Url}", url);
+            throw new ArgumentException($"Error parsing URL path: {ex.Message}", nameof(url));
+        }
     }
 }

@@ -66,7 +66,7 @@ public class APIViewHttpService : IAPIViewHttpService
 
             string content = await response.Content.ReadAsStringAsync();
 
-            if (_authService.IsAuthenticationFailure(content))
+            if (APIViewAuthenticationService.IsAuthenticationFailure(content))
             {
                 _logger.LogError("Authentication required: Received login page instead of {Operation} data", operation);
                 AuthenticationErrorResponse errorResponse = _authService.CreateAuthenticationErrorResponse(

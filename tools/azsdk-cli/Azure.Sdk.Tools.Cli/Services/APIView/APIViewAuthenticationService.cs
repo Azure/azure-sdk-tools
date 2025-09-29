@@ -9,11 +9,7 @@ namespace Azure.Sdk.Tools.Cli.Services.APIView;
 
 public interface IAPIViewAuthenticationService
 {
-    Task<string?> GetAuthenticationTokenAsync(string environment = "production");
     Task ConfigureAuthenticationAsync(HttpClient httpClient, string environment = "production");
-    Task<AuthenticationStatus> CheckAuthenticationStatusAsync(string? endpoint = null);
-    string GetAuthenticationGuidance();
-    bool IsAuthenticationFailure(string content);
     AuthenticationErrorResponse CreateAuthenticationErrorResponse(string message, string revisionId = null, string activeRevisionId = null,
         string diffRevisionId = null, string baseUrl = null);
 }
@@ -77,70 +73,17 @@ public class APIViewAuthenticationService : IAPIViewAuthenticationService
             !string.IsNullOrEmpty(token) ? "Bearer [TOKEN]" : "None", APIViewConfiguration.UserAgent);
     }
 
-    public string GetAuthenticationGuidance()
+    private string GetAuthenticationGuidance()
     {
         return @"Authentication is required to access APIView data. Please authenticate using Azure credentials:
 
 **Azure CLI**:
    - Run: az login
-   - Ensure you have access to APIView resources
 
 The authentication service will automatically try Azure CLI";
     }
 
-    public async Task<AuthenticationStatus> CheckAuthenticationStatusAsync(string? environmentOption = null)
-    {
-        string environment = environmentOption ?? "production";
-        string baseUrl = APIViewConfiguration.BaseUrlEndpoints[environment];
-        string? token = await GetAuthenticationTokenAsync(environment);
-        
-        bool hasToken = !string.IsNullOrEmpty(token);
-        bool isAuthenticationWorking = false;
-        string? authenticationError = null;
-
-        if (hasToken)
-        {
-            try
-            {
-                using var httpClient = new HttpClient();
-                await ConfigureAuthenticationAsync(httpClient, environment);
-                
-                string testUrl = $"{baseUrl}/api/authtest/status";
-                using var response = await httpClient.GetAsync(testUrl);
-                
-                if (response.IsSuccessStatusCode)
-                {
-                    string responseContent = await response.Content.ReadAsStringAsync();
-                    isAuthenticationWorking = responseContent.Contains("\"IsAuthenticated\":true", StringComparison.OrdinalIgnoreCase);
-                    
-                    if (!isAuthenticationWorking)
-                    {
-                        authenticationError = "Token exists but authentication failed - token may be invalid or expired";
-                    }
-                }
-                else
-                {
-                    authenticationError = $"Authentication test failed with status {response.StatusCode}";
-                }
-            }
-            catch (Exception ex)
-            {
-                authenticationError = $"Authentication test failed: {ex.Message}";
-            }
-        }
-
-        return new AuthenticationStatus
-        {
-            HasToken = hasToken,
-            IsAuthenticationWorking = isAuthenticationWorking,
-            TokenSource = "azure-credentials",
-            Endpoint = baseUrl,
-            AuthenticationError = authenticationError,
-            Guidance = isAuthenticationWorking ? "Authentication working successfully" : GetAuthenticationGuidance()
-        };
-    }
-
-    public bool IsAuthenticationFailure(string content)
+    public static bool IsAuthenticationFailure(string content)
     {
         return content.Contains("Account/Login") ||
                (content.Contains("login") && content.Contains("<html")) ||

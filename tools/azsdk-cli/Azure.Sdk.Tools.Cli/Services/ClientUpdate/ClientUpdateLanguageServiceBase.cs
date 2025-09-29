@@ -47,7 +47,19 @@ public abstract class ClientUpdateLanguageServiceBase : IClientUpdateLanguageSer
     /// <param name="generationRoot">Root path of the generated client currently under consideration.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>The absolute path to the customization root directory, or <c>null</c> if no customization area exists / is required.</returns>
-    public abstract Task<string?> GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct);
+    public abstract string GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct);
+    
+    /// <summary>
+    /// Unified method that analyzes customization impacts and generates patches in a single operation.
+    /// This is the preferred method for efficient analysis and patch generation.
+    /// </summary>
+    /// <param name="session">Active update session state.</param>
+    /// <param name="customizationRoot">Path returned by <see cref="GetCustomizationRootAsync"/>, or <c>null</c> if none.</param>
+    /// <param name="apiChanges">Sequence of API changes produced by <see cref="ComputeApiChanges"/>.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>A tuple containing both impacts and patch proposals from unified analysis.</returns>
+    public abstract Task<(List<CustomizationImpact> impacts, List<PatchProposal> patches)> AnalyzeAndProposePatchesAsync(ClientUpdateSessionState session, string? customizationRoot, IEnumerable<ApiChange> apiChanges, CancellationToken ct);
+    
     /// <summary>
     /// Analyzes how detected API changes impact existing user customizations.
     /// </summary>
@@ -120,4 +132,13 @@ public abstract class ClientUpdateLanguageServiceBase : IClientUpdateLanguageSer
     {
         return Task.FromResult(new List<PatchProposal>());
     }
+
+    /// <summary>
+    /// Applies the provided patches to the customization files.
+    /// </summary>
+    /// <param name="session">The current client update session state.</param>
+    /// <param name="patches">Collection of patch proposals to apply to customization files.</param>
+    /// <param name="ct">Cancellation token for async operation.</param>
+    /// <returns>Result of patch application including success status, applied patches, and any errors.</returns>
+    public abstract Task<PatchApplicationResult> ApplyPatchesAsync(ClientUpdateSessionState session, IEnumerable<PatchProposal> patches, CancellationToken ct);
 }

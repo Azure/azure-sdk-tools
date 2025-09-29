@@ -38,7 +38,18 @@ public interface IClientUpdateLanguageService
     /// <param name="generationRoot">Root folder of newly generated sources (e.g. a <c>src</c> directory).</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>Absolute path to customization root or <c>null</c> if none is found / applicable.</returns>
-    Task<string?> GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct);
+    string GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct);
+
+    /// <summary>
+    /// Unified method that analyzes customization impacts and generates patches in a single operation.
+    /// This is the preferred method for efficient analysis and patch generation.
+    /// </summary>
+    /// <param name="session">Current update session state.</param>
+    /// <param name="customizationRoot">Customization root (may be <c>null</c> for languages without customizations).</param>
+    /// <param name="apiChanges">Sequence of API changes from <see cref="DiffAsync"/>.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>A tuple containing both impacts and patch proposals from unified analysis.</returns>
+    Task<(List<CustomizationImpact> impacts, List<PatchProposal> patches)> AnalyzeAndProposePatchesAsync(ClientUpdateSessionState session, string? customizationRoot, IEnumerable<ApiChange> apiChanges, CancellationToken ct);
 
     /// <summary>
     /// Analyzes which customization files are impacted by the supplied API changes.
@@ -72,8 +83,17 @@ public interface IClientUpdateLanguageService
     /// Implementations may return an empty list if no automatic fixes are available or safe.
     /// </summary>
     /// <param name="session">Current update session.</param>
-    /// <param name="validationErrors">Errors from the previous <see cref="ValidateAsync"/> invocation.</param>
-    /// <param name="ct">Cancellation token.</param>
-    /// <returns>List of patch proposals representing potential fixes (may be empty).</returns>
+    /// <param name="validationErrors">Collection of validation error messages from a previous validation step.</param>
+    /// <param name="ct">Cancellation token for async operation.</param>
+    /// <returns>Zero or more patch proposals that aim to fix the validation errors automatically.</returns>
     Task<List<PatchProposal>> ProposeFixesAsync(ClientUpdateSessionState session, IEnumerable<string> validationErrors, CancellationToken ct);
+
+    /// <summary>
+    /// Applies the provided patches to the customization files.
+    /// </summary>
+    /// <param name="session">The current client update session state.</param>
+    /// <param name="patches">Collection of patch proposals to apply to customization files.</param>
+    /// <param name="ct">Cancellation token for async operation.</param>
+    /// <returns>Result of patch application including success status, applied patches, and any errors.</returns>
+    Task<PatchApplicationResult> ApplyPatchesAsync(ClientUpdateSessionState session, IEnumerable<PatchProposal> patches, CancellationToken ct);
 }

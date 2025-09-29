@@ -1,0 +1,6 @@
+=== LLM-ENHANCED DEPENDENCY CHAIN ANALYSIS OUTPUT ===
+Test Scenario: Parameter Name Conflict Detection
+API Change: ModifiedMethodParameterNames (analyzeDocumentOptions → analyzeRequest)
+Analysis Method: LLM-Enhanced Dependency Chain Detection
+Total impacts found: 0
+

@@ -1,0 +1,102 @@
+=== ACTUAL STRUCTURED API CHANGE CONTEXT FROM TEST DATA ===
+
+TOTAL CHANGES: 15
+
+=== CHANGES BY KIND ===
+AddedClass: 1 changes
+  - PagedAnalyzeBatchOperation: Added: com.azure.ai.documentintelligence.models.PagedAnalyze...
+
+AddedMethod: 2 changes
+  - listAnalyzeBatchResultsWithResponse: Added: public Mono listAnalyzeBatchResultsWithResponse(Strin...
+  - listAnalyzeBatchResultsWithResponse: Added: public Response listAnalyzeBatchResultsWithResponse(S...
+
+AddedOverload: 2 changes
+  - listAnalyzeBatchResultsWithResponse: ...
+  - listAnalyzeBatchResultsWithResponse: ...
+
+ModifiedMethodParameterNames: 4 changes
+  - beginAnalyzeDocument: public PollerFlux beginAnalyzeDocument(String modelId, Analy...
+  - beginAnalyzeDocument: public PollerFlux beginAnalyzeDocument(String modelId, Binar...
+
+ModifiedMethodReturnType: 2 changes
+  - listAnalyzeBatchResults: public PagedFlux listAnalyzeBatchResults(String modelId) -> ...
+  - listAnalyzeBatchResults: public PagedFlux listAnalyzeBatchResults(String modelId) -> ...
+
+RemovedMethod: 2 changes
+  - listAnalyzeBatchResults: Removed: public PagedFlux listAnalyzeBatchResults(String mod...
+  - listAnalyzeBatchResults: Removed: public PagedIterable listAnalyzeBatchResults(String...
+
+RemovedOverload: 2 changes
+  - listAnalyzeBatchResults: ...
+  - listAnalyzeBatchResults: ...
+
+=== METHOD CHANGES: 14 ===
+Kind: AddedMethod
+Symbol: listAnalyzeBatchResultsWithResponse
+Detail: Added: public Mono listAnalyzeBatchResultsWithResponse(String modelId, RequestOptions requestOptions...
+Key Metadata:
+  symbolKind: Method
+  fqn: com.azure.ai.documentintelligence.DocumentIntelligenceAsyncClient
+  methodName: listAnalyzeBatchResultsWithResponse
+
+Kind: AddedMethod
+Symbol: listAnalyzeBatchResultsWithResponse
+Detail: Added: public Response listAnalyzeBatchResultsWithResponse(String modelId, RequestOptions requestOpt...
+Key Metadata:
+  symbolKind: Method
+  fqn: com.azure.ai.documentintelligence.DocumentIntelligenceClient
+  methodName: listAnalyzeBatchResultsWithResponse
+
+Kind: AddedOverload
+Symbol: listAnalyzeBatchResultsWithResponse
+Detail: ...
+Key Metadata:
+  symbolKind: Method
+  fqn: com.azure.ai.documentintelligence.DocumentIntelligenceAsyncClient
+  methodName: listAnalyzeBatchResultsWithResponse
+
+Kind: AddedOverload
+Symbol: listAnalyzeBatchResultsWithResponse
+Detail: ...
+Key Metadata:
+  symbolKind: Method
+  fqn: com.azure.ai.documentintelligence.DocumentIntelligenceClient
+  methodName: listAnalyzeBatchResultsWithResponse
+
+Kind: ModifiedMethodParameterNames
+Symbol: beginAnalyzeDocument
+Detail: public PollerFlux beginAnalyzeDocument(String modelId, AnalyzeDocumentOptions analyzeDocumentOptions...
+Key Metadata:
+  symbolKind: Method
+  fqn: com.azure.ai.documentintelligence.DocumentIntelligenceAsyncClient
+  methodName: beginAnalyzeDocument
+
+=== PARAMETER CHANGES: 10 ===
+Kind: AddedMethod
+Symbol: listAnalyzeBatchResultsWithResponse
+Has paramNameChange: False
+Parameter Names: modelId,requestOptions
+
+Kind: AddedMethod
+Symbol: listAnalyzeBatchResultsWithResponse
+Has paramNameChange: False
+Parameter Names: modelId,requestOptions
+
+Kind: ModifiedMethodParameterNames
+Symbol: beginAnalyzeDocument
+Has paramNameChange: True
+Parameter Names: modelId,analyzeDocumentRequest
+
+=== TYPE CHANGES: 3 ===
+Kind: AddedClass
+Symbol: PagedAnalyzeBatchOperation
+Detail: Added: com.azure.ai.documentintelligence.models.PagedAnalyzeBatchOperation
+
+Kind: ModifiedMethodReturnType
+Symbol: listAnalyzeBatchResults
+Detail: public PagedFlux listAnalyzeBatchResults(String modelId) -> public Mono listAnalyzeBatchResults(String modelId)
+
+Kind: ModifiedMethodReturnType
+Symbol: listAnalyzeBatchResults
+Detail: public PagedFlux listAnalyzeBatchResults(String modelId) -> public PagedAnalyzeBatchOperation listAnalyzeBatchResults(String modelId)
+

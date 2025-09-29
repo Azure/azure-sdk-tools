@@ -55,4 +55,8 @@
   <ItemGroup>
     <EmbeddedResource Include="Images/quokka.ansi" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Include="TestAssets/**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

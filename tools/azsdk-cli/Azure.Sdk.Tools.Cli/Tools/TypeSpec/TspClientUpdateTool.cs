@@ -20,7 +20,6 @@ public class TspClientUpdateTool : MCPTool
     private readonly IClientUpdateLanguageServiceResolver languageServiceResolver;
     private readonly ITspClientHelper tspClientHelper;
     private readonly Argument<string> updateCommitSha = new(name: "update-commit-sha", description: "SHA of the commit to apply update changes for") { Arity = ArgumentArity.ExactlyOne };
-    private readonly Option<string?> newGenOpt = new(["--new-gen"], () => "./tmpgen", "Directory for regenerated TypeSpec output (optional)");
 
     public TspClientUpdateTool(ILogger<TspClientUpdateTool> logger, IOutputHelper output, IClientUpdateLanguageServiceResolver languageServiceResolver, ITspClientHelper tspClientHelper)
     {
@@ -37,7 +36,6 @@ public class TspClientUpdateTool : MCPTool
             description: "Update customized TypeSpec-generated client code. Runs the full pipeline by default: regenerate -> diff -> map -> propose -> apply");
         cmd.AddArgument(updateCommitSha);
         cmd.AddOption(SharedOptions.PackagePath);
-        cmd.AddOption(newGenOpt);
         cmd.SetHandler(async ctx => await HandleUpdate(ctx, ctx.GetCancellationToken()));
         return cmd;
     }
@@ -46,13 +44,13 @@ public class TspClientUpdateTool : MCPTool
 
     [McpServerTool(Name = "azsdk_tsp_update"), Description("Update customized TypeSpec-generated client code")]
     public Task<TspClientUpdateResponse> UpdateAsync(string commitSha, string packagePath, CancellationToken ct = default)
-        => RunUpdateAsync(commitSha, packagePath, newGenPath: null, ct);
+        => RunUpdateAsync(commitSha, packagePath, ct);
 
-    private async Task<TspClientUpdateResponse> RunUpdateAsync(string commitSha, string packagePath, string? newGenPath, CancellationToken ct)
+    private async Task<TspClientUpdateResponse> RunUpdateAsync(string commitSha, string packagePath, CancellationToken ct)
     {
         try
         {
-            logger.LogInformation("Starting client update for package at: {packagePath} (regenDir: {regenDir})", packagePath, newGenPath);
+            logger.LogInformation("Starting client update for package at: {packagePath}", packagePath);
             if (!Directory.Exists(packagePath))
             {
                 SetFailure(1);
@@ -69,7 +67,7 @@ public class TspClientUpdateTool : MCPTool
                 SetFailure(1);
                 return new TspClientUpdateResponse { ErrorCode = "NoLanguageService", ResponseError = "Could not resolve a client update language service." };
             }
-            return await UpdateCoreAsync(commitSha, packagePath, resolved, ct, newGenPath);
+            return await UpdateCoreAsync(commitSha, packagePath, resolved, ct);
         }
         catch (Exception ex)
         {
@@ -78,29 +76,31 @@ public class TspClientUpdateTool : MCPTool
         }
     }
 
-    private async Task<TspClientUpdateResponse> UpdateCoreAsync(string commitSha, string packagePath, IClientUpdateLanguageService languageService, CancellationToken ct, string? newGenPath)
+    private async Task<TspClientUpdateResponse> UpdateCoreAsync(string commitSha, string packagePath, IClientUpdateLanguageService languageService, CancellationToken ct)
     {
         var session = new ClientUpdateSessionState { SpecPath = commitSha };
 
-        // Determine output directory for new generation: use provided newGenPath (CLI option) or fallback.
-        var regenDir = ResolveRegenDirectory(packagePath, newGenPath);
-        if (!Directory.Exists(regenDir))
-        {
-            Directory.CreateDirectory(regenDir);
-        }
-        session.NewGeneratedPath = regenDir;
+        // Create backup directory to preserve old generation for diff
+        var backupDir = CreateBackupDirectory(packagePath);
+        await BackupCurrentGeneration(packagePath, backupDir, ct);
+        
+        session.NewGeneratedPath = packagePath;
 
         // Locate the existing tsp-location.yaml file within the provided packagePath and overwrite the commit: value with the new sha
         var tspLocationPath = Path.Combine(packagePath, "tsp-location.yaml");
         if (File.Exists(tspLocationPath))
         {
             var tspLocationContent = await File.ReadAllTextAsync(tspLocationPath, ct);
-            tspLocationContent = tspLocationContent.Replace("commit: ", $"commit: {commitSha}");
+            tspLocationContent = System.Text.RegularExpressions.Regex.Replace(
+                tspLocationContent, 
+                @"commit:\s+[a-f0-9]+", 
+                $"commit: {commitSha}");
             await File.WriteAllTextAsync(tspLocationPath, tspLocationContent, ct);
         }
 
-        // Invoke tsp-client update
-        var regenResult = await tspClientHelper.UpdateGenerationAsync(tspLocationPath, regenDir, isCli: false, ct);
+        logger.LogInformation("Generating new code into package path: {PackagePath}", packagePath);
+        // Invoke tsp-client update to generate directly into package path
+        var regenResult = await tspClientHelper.UpdateGenerationAsync(tspLocationPath, packagePath, isCli: false, ct);
         if (!regenResult.IsSuccessful)
         {
             SetFailure(1);
@@ -114,31 +114,80 @@ public class TspClientUpdateTool : MCPTool
         }
         session.LastStage = UpdateStage.Regenerated;
 
-        // Now after regeneration, we have old generated at packagePath, new generation at regenDir to perform a diff
-        var apiChanges = await languageService.DiffAsync(packagePath, session.NewGeneratedPath);
+        // Now after regeneration, we have old generated at backupDir, new generation at packagePath to perform a diff
+        var apiChanges = await languageService.DiffAsync(backupDir, session.NewGeneratedPath);
         session.LastStage = UpdateStage.Diffed;
+
+        // Clean up temporary backup directory after diff is complete
+        try
+        {
+            if (Directory.Exists(backupDir))
+            {
+                Directory.Delete(backupDir, recursive: true);
+                logger.LogInformation("Cleaned up temporary backup directory: {BackupDir}", backupDir);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to clean up temporary backup directory: {BackupDir}", backupDir);
+        }
 
         if (apiChanges.Count == 0)
         {
             // Nothing to update; proceed to validation of existing customizations.
+            logger.LogInformation("No API changes detected; skipping update, session " + session.LastStage);
             return await ValidateWithAutoFixAsync(session, languageService, ct);
         }
 
-        var customizationRoot = await languageService.GetCustomizationRootAsync(session, session.NewGeneratedPath, ct);
+        var customizationRoot = languageService.GetCustomizationRootAsync(session, packagePath, ct);
+        logger.LogInformation("Customization root result: '{CustomizationRoot}'", customizationRoot ?? "null");
+        
+        if (string.IsNullOrEmpty(customizationRoot))
+        {
+            // Nothing to update; proceed to exit
+            logger.LogInformation("No customization root found; skipping update session " + session.LastStage);
+            return await ValidateWithAutoFixAsync(session, languageService, ct);
+        }
+        
+        logger.LogInformation("Using customization root: {CustomizationRoot}", customizationRoot);
         session.CustomizationRoot = customizationRoot;
-        var impacts = await languageService.AnalyzeCustomizationImpactAsync(session, customizationRoot, apiChanges, ct);
+        
+        var analysisResult = await languageService.AnalyzeAndProposePatchesAsync(session, customizationRoot, apiChanges, ct);
+        var impacts = analysisResult.Item1;
+        var patches = analysisResult.Item2;
         session.LastStage = UpdateStage.Mapped;
+        
         if (impacts.Count == 0)
         {
+            logger.LogInformation("No impacted customizations detected; skipping patch application, session " + session.LastStage);
             return await ValidateWithAutoFixAsync(session, languageService, ct);
         }
 
-        var patches = await languageService.ProposePatchesAsync(session, impacts, ct);
         session.LastStage = UpdateStage.PatchesProposed;
+        
         // Apply patches immediately since we don't store them.
         if (patches.Count > 0)
         {
-            // Language service may expose an apply method; if not, future enhancement.
+            logger.LogInformation("Applying {PatchCount} patches to customization files", patches.Count);
+            var applyResult = await languageService.ApplyPatchesAsync(session, patches, ct);
+            
+            if (!applyResult.Success)
+            {
+                logger.LogWarning("Failed to apply {FailedCount}/{TotalCount} patches", 
+                    applyResult.FailedPatchesCount, applyResult.TotalPatches);
+                
+                // Log specific errors for troubleshooting
+                foreach (var error in applyResult.Errors.Take(5)) // Limit to avoid log spam
+                {
+                    logger.LogWarning("Patch application error: {Error}", error);
+                }
+            }
+            else
+            {
+                logger.LogInformation("Successfully applied all {PatchCount} patches", applyResult.SuccessfulPatches);
+            }
+            
+            session.LastStage = UpdateStage.Applied;
         }
 
         return await ValidateWithAutoFixAsync(session, languageService, ct);
@@ -150,16 +199,6 @@ public class TspClientUpdateTool : MCPTool
         session.LastStage = UpdateStage.Validated;
         if (!result.Success)
         {
-            // Attempt a single round of auto-fix for minimal model.
-            var fixes = await languageService.ProposeFixesAsync(session, result.Errors, ct);
-            if (fixes.Count > 0)
-            {
-                var retry = await languageService.ValidateAsync(session, ct);
-                if (retry.Success)
-                {
-                    return CompleteClientUpdate(session, "Update pipeline complete (after fixes).");
-                }
-            }
             session.RequiresManualIntervention = true;
             return CompleteClientUpdate(session, "Validation failed – manual intervention required.");
         }
@@ -174,13 +213,12 @@ public class TspClientUpdateTool : MCPTool
 
     private async Task HandleUpdate(InvocationContext ctx, CancellationToken ct)
     {
-    var spec = ctx.ParseResult.GetValueForArgument(updateCommitSha);
+        var spec = ctx.ParseResult.GetValueForArgument(updateCommitSha);
         var packagePath = ctx.ParseResult.GetValueForOption(SharedOptions.PackagePath);
-        var newGenPath = ctx.ParseResult.GetValueForOption(newGenOpt);
         try
         {
-            logger.LogInformation("Starting client update (CLI) for package at: {packagePath} with new-gen: {newGenPath}", packagePath, newGenPath);
-            var resp = await RunUpdateAsync(spec, packagePath, newGenPath, ct);
+            logger.LogInformation("Starting client update (CLI) for package at: {packagePath}", packagePath);
+            var resp = await RunUpdateAsync(spec, packagePath, ct);
             output.Output(resp);
         }
         catch (Exception ex)
@@ -190,17 +228,65 @@ public class TspClientUpdateTool : MCPTool
         }
     }
 
-    private static string ResolveRegenDirectory(string packagePath, string? newGenPath)
+    private static string CreateBackupDirectory(string packagePath)
     {
-        if (string.IsNullOrWhiteSpace(newGenPath))
+        // Create a unique backup directory name with timestamp
+        var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+        var backupDirName = $"_backup-old-{timestamp}";
+        var backupPath = Path.Combine(packagePath, backupDirName);
+        Directory.CreateDirectory(backupPath);
+        return backupPath;
+    }
+
+    private static async Task BackupCurrentGeneration(string packagePath, string backupDir, CancellationToken ct)
+    {
+        // Copy the entire directory structure but only .java files to maintain same folder structure
+        var sourceDir = new DirectoryInfo(packagePath);
+        if (!sourceDir.Exists) 
         {
-            return Path.Combine(packagePath, "_generated-new");
+            return;
         }
-        // If user supplied a relative path, place it under the package path for isolation.
-        if (!Path.IsPathRooted(newGenPath))
+
+        // Copy the complete directory structure starting from package root
+        // This ensures backup has same structure: both have src/main/java/... 
+        await CopyDirectorySelectiveAsync(sourceDir, new DirectoryInfo(backupDir), ct);
+    }
+
+    private static async Task CopyDirectorySelectiveAsync(DirectoryInfo source, DirectoryInfo target, CancellationToken ct)
+    {
+        if (!target.Exists)
         {
-            return Path.GetFullPath(Path.Combine(packagePath, newGenPath));
+            target.Create();
         }
-        return Path.GetFullPath(newGenPath);
+
+        // Copy all .java files (generated source files)
+        foreach (var file in source.GetFiles("*.java"))
+        {
+            ct.ThrowIfCancellationRequested();
+            var targetFile = Path.Combine(target.FullName, file.Name);
+            await CopyFileAsync(file.FullName, targetFile, ct);
+        }
+
+        // Recursively copy subdirectories but exclude backup directories and focus on source structure
+        foreach (var subDir in source.GetDirectories())
+        {
+            ct.ThrowIfCancellationRequested();
+            
+            // Skip backup directories to avoid infinite recursion
+            if (subDir.Name.StartsWith("_backup-old-", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+            
+            var targetSubDir = target.CreateSubdirectory(subDir.Name);
+            await CopyDirectorySelectiveAsync(subDir, targetSubDir, ct);
+        }
+    }
+
+    private static async Task CopyFileAsync(string sourcePath, string targetPath, CancellationToken ct)
+    {
+        await using var sourceStream = File.OpenRead(sourcePath);
+        await using var targetStream = File.Create(targetPath);
+        await sourceStream.CopyToAsync(targetStream, ct);
     }
 }

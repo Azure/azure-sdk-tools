@@ -46,6 +46,9 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IClientUpdateLanguageServiceResolver, ClientUpdateLanguageServiceResolver>();
             // Future: services.AddSingleton<IClientUpdateLanguageService, PythonClientUpdateLanguageService>(); etc.
 
+            // Client update LLM services
+            services.AddSingleton<IClientUpdateLlmService, ClientUpdateLlmService>();
+
             // Helper classes
             services.AddSingleton<ILogAnalysisHelper, LogAnalysisHelper>();
             services.AddSingleton<IGitHelper, GitHelper>();

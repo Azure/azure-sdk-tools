@@ -104,4 +104,11 @@ public class ClientUpdateSessionState
     /// True when automation halted and requires user action.
     /// </summary>
     [JsonPropertyName("requiresManualIntervention")] public bool RequiresManualIntervention { get; set; } = false;
+    
+    /// <summary>
+    /// Cached combined LLM response from impact analysis to avoid duplicate API calls during patch generation.
+    /// Contains both impacts and patch proposals in a single response.
+    /// </summary>
+    [JsonIgnore]
+    public string? CachedCombinedLlmResponse { get; set; }
 }

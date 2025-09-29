@@ -1,0 +1,112 @@
+=== STRUCTURED API CHANGE CONTEXT EXAMPLE ===
+Processing data from: apiview-diff.json
+
+This file demonstrates how the StructuredApiChangeContext processes the real test data from our apiview-diff.json.
+
+From test logs, we can see the actual processing results:
+"Prepared structured context: 15 total changes, 14 method changes, 10 parameter changes, 3 type changes"
+
+== RAW JSON CHANGES (15 total) ==
+The apiview-diff.json contains 15 changes:
+1. AddedClass: PagedAnalyzeBatchOperation
+2. AddedMethod: listAnalyzeBatchResultsWithResponse (AsyncClient) 
+3. AddedMethod: listAnalyzeBatchResultsWithResponse (Client)
+4. AddedOverload: listAnalyzeBatchResultsWithResponse (AsyncClient)
+5. AddedOverload: listAnalyzeBatchResultsWithResponse (Client)
+6. ModifiedMethodParameterNames: beginAnalyzeDocument (analyzeDocumentOptions → analyzeDocumentRequest) AsyncClient
+7. ModifiedMethodParameterNames: beginAnalyzeDocument (analyzeRequest → analyzeDocumentRequest) AsyncClient
+8. ModifiedMethodParameterNames: beginAnalyzeDocument (analyzeDocumentOptions → analyzeDocumentRequest) Client
+9. ModifiedMethodParameterNames: beginAnalyzeDocument (analyzeRequest → analyzeDocumentRequest) Client
+10. ModifiedMethodReturnType: listAnalyzeBatchResults (PagedFlux → Mono) AsyncClient
+11. ModifiedMethodReturnType: listAnalyzeBatchResults (PagedFlux → PagedAnalyzeBatchOperation) Client
+12. RemovedMethod: listAnalyzeBatchResults(String, RequestOptions) AsyncClient
+13. RemovedMethod: listAnalyzeBatchResults(String, RequestOptions) Client
+14. RemovedOverload: listAnalyzeBatchResults AsyncClient
+15. RemovedOverload: listAnalyzeBatchResults Client
+
+== STRUCTURED CONTEXT BREAKDOWN ==
+
+After processing through PrepareStructuredApiChanges(), the context is organized as:
+
+** ACTUAL TEST RESULTS from Debug Logs **
+✅ Total Changes: 15
+✅ Method Changes: 14 
+✅ Parameter Changes: 10
+✅ Type Changes: 3
+
+** Changes (List<ApiChange>) = 15 total changes **
+All parsed changes from the JSON file
+
+** ChangesByKind (Dictionary<string, List<ApiChange>>) **
+├─ "AddedClass": 1 change
+├─ "AddedMethod": 2 changes  
+├─ "AddedOverload": 2 changes
+├─ "ModifiedMethodParameterNames": 4 changes
+├─ "ModifiedMethodReturnType": 2 changes
+├─ "RemovedMethod": 2 changes
+└─ "RemovedOverload": 2 changes
+
+** MethodChanges (List<ApiChange>) = 14 changes **
+Changes that have:
+- Symbol contains "Method" OR
+- Kind contains "Method" OR  
+- Metadata contains "methodName"
+
+Includes: AddedMethod, ModifiedMethodParameterNames, ModifiedMethodReturnType, RemovedMethod, AddedOverload, RemovedOverload
+
+** ParameterChanges (List<ApiChange>) = 10 changes **
+Changes that have:
+- Kind contains "Parameter" OR
+- Metadata contains "parameterNames" OR
+- Metadata contains "paramNameChange"
+
+Includes: All 4 ModifiedMethodParameterNames + 6 others that have parameter metadata
+
+** TypeChanges (List<ApiChange>) = 3 changes **  
+Changes that have:
+- Kind contains "Type" OR
+- Kind contains "Class" OR
+- Metadata contains "className"
+
+Includes: AddedClass, ModifiedMethodReturnType changes
+
+== EXAMPLE INDIVIDUAL API CHANGES ==
+
+** Parameter Name Change Example **
+Kind: "ModifiedMethodParameterNames"
+Symbol: "beginAnalyzeDocument"  
+Detail: "public PollerFlux beginAnalyzeDocument(String modelId, AnalyzeDocumentOptions analyzeDocumentOptions) -> public PollerFlux beginAnalyzeDocument(String modelId, AnalyzeDocumentOptions analyzeDocumentRequest)"
+Metadata:
+├─ symbolKind: "Method"
+├─ fqn: "com.azure.ai.documentintelligence.DocumentIntelligenceAsyncClient"
+├─ methodName: "beginAnalyzeDocument"  
+├─ signature: "com.azure.ai.documentintelligence.DocumentIntelligenceAsyncClient#beginAnalyzeDocument(String,AnalyzeDocumentOptions)"
+├─ visibility: "public"
+├─ returnType: "PollerFlux"
+├─ parameterTypes: ["String","AnalyzeDocumentOptions"]
+├─ parameterNames: ["modelId","analyzeDocumentRequest"]
+└─ paramNameChange: "true"
+
+** Removed Method Example **
+Kind: "RemovedMethod"
+Symbol: "listAnalyzeBatchResults"
+Detail: "Removed: public PagedFlux listAnalyzeBatchResults(String modelId, RequestOptions requestOptions)"
+Metadata:
+├─ symbolKind: "Method"
+├─ fqn: "com.azure.ai.documentintelligence.DocumentIntelligenceAsyncClient"
+├─ methodName: "listAnalyzeBatchResults"
+├─ signature: "com.azure.ai.documentintelligence.DocumentIntelligenceAsyncClient#listAnalyzeBatchResults(String,RequestOptions)"
+├─ visibility: "public"
+├─ returnType: "PagedFlux" 
+├─ parameterTypes: ["String","RequestOptions"]
+└─ parameterNames: ["modelId","requestOptions"]
+
+== LLM ANALYSIS USAGE ==
+
+This structured context is then passed to the LLM with:
+- Critical changes (parameter/method changes): 10 changes shown to LLM
+- Other changes (additions): 5 changes shown as reference
+- Focus on changes most likely to break customization code
+
+The LLM analyzes dependency chains like:
+TSP Parameter Rename → Generated Method Signature → getParameterByName() calls fail in customization

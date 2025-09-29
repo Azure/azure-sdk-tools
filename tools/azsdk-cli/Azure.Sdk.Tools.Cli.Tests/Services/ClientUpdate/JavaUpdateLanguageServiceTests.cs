@@ -1,8 +1,12 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using Azure.AI.OpenAI;
+using Azure.Core;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Services.ClientUpdate;
+using Azure.Sdk.Tools.Cli.Models;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Services.ClientUpdate;
@@ -17,7 +21,59 @@ public class JavaUpdateLanguageServiceTests
 
     private class StubJavaUpdateLanguageService : JavaUpdateLanguageService
     {
-        public StubJavaUpdateLanguageService() : base(new DummyResolver(), NullLogger<JavaUpdateLanguageService>.Instance) { }
+        public StubJavaUpdateLanguageService() : base(new DummyResolver(), NullLogger<JavaUpdateLanguageService>.Instance, new TestClientUpdateLlmService()) { }
+    }
+    
+    private class TestClientUpdateLlmService : IClientUpdateLlmService
+    {
+        private readonly ClientUpdateLlmService _realService;
+        
+        public TestClientUpdateLlmService()
+        {
+            // Create a real service that will use mock responses (no deployment configured)
+            var mockClient = new AzureOpenAIClient(new Uri("https://test.openai.azure.com/"), new MockTokenCredential());
+            var logger = new MockLogger<ClientUpdateLlmService>();
+            _realService = new ClientUpdateLlmService(mockClient, logger);
+        }
+
+        public async Task<(List<CustomizationImpact> impacts, List<PatchProposal> patches)> AnalyzeAndProposePatchesAsync(string fileContent, string fileName, StructuredApiChangeContext structuredChanges, CancellationToken ct)
+        {
+            return await _realService.AnalyzeAndProposePatchesAsync(fileContent, fileName, structuredChanges, ct);
+        }
+
+
+
+        public string BuildDependencyChainAnalysisPrompt(string fileContent, string fileName, StructuredApiChangeContext structuredChanges)
+        {
+            return _realService.BuildDependencyChainAnalysisPrompt(fileContent, fileName, structuredChanges);
+        }
+
+
+
+            public (List<CustomizationImpact> impacts, List<PatchProposal> patches) ParseCombinedLlmResponse(string llmResponse, string fileName, StructuredApiChangeContext structuredChanges)
+            {
+                return (new List<CustomizationImpact>(), new List<PatchProposal>());
+            }
+        }
+    
+    private class MockTokenCredential : TokenCredential
+    {
+        public override AccessToken GetToken(TokenRequestContext requestContext, CancellationToken cancellationToken)
+        {
+            return new AccessToken("mock_token", DateTimeOffset.Now.AddHours(1));
+        }
+
+        public override ValueTask<AccessToken> GetTokenAsync(TokenRequestContext requestContext, CancellationToken cancellationToken)
+        {
+            return new ValueTask<AccessToken>(GetToken(requestContext, cancellationToken));
+        }
+    }
+    
+    private class MockLogger<T> : ILogger<T>
+    {
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+        public bool IsEnabled(LogLevel logLevel) => true;
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) { }
     }
 
     [Test]

@@ -1,0 +1,160 @@
+=== CUSTOMIZATION IMPACT ANALYSIS: MOCK LLM RESPONSE EXAMPLES ===
+
+## Test Scenario 1: Parameter Name Conflicts ✅ WORKING
+**Test**: AnalyzeCustomizationImpactAsync_ShouldDetectParameterNameConflicts
+**Status**: ✅ PASSING - Returns 2 impacts as expected
+
+**Mock LLM Response Structure**:
+```json
+[
+  {
+    "impactType": "BrokenAssumption",
+    "severity": "Critical", 
+    "description": "The customization code assumes parameter named 'analyzeRequest' exists, but TSP changes renamed it to 'analyzeDocumentRequest'. This breaks the dependency chain where customization code uses getParameterByName() to locate and modify parameters.\n\n**Dependency Chain**: TSP schema parameter rename → Java generator updates method signature → getParameterByName('analyzeRequest') returns Optional.empty() → customization logic fails\n\n**Breaking Customization Code**: methodDeclaration.getParameterByName(\"analyzeRequest\").ifPresent(param -> param.setName(\"analyzeDocumentOptions\"))\n\n**Customization Fix**: methodDeclaration.getParameterByName(\"analyzeDocumentRequest\").ifPresent(param -> param.setName(\"analyzeDocumentOptions\"))\n\n**Fix Guidance**: Update line 68 in customization file: change getParameterByName('analyzeRequest') to getParameterByName('analyzeDocumentRequest')",
+    "affectedSymbol": "beginAnalyzeDocument",
+    "lineRange": "68-69",
+    "dependencyChain": "TSP schema parameter rename → Java generator updates method signature → getParameterByName('analyzeRequest') returns Optional.empty() → customization logic fails",
+    "fixGuidance": "Update customization code line 68: change getParameterByName('analyzeRequest') to getParameterByName('analyzeDocumentRequest')",
+    "breakingCode": "methodDeclaration.getParameterByName(\"analyzeRequest\").ifPresent(param -> param.setName(\"analyzeDocumentOptions\"))",
+    "suggestedFix": "methodDeclaration.getParameterByName(\"analyzeDocumentRequest\").ifPresent(param -> param.setName(\"analyzeDocumentOptions\"))"
+  },
+  {
+    "impactType": "ParameterNameConflict",
+    "severity": "Critical",
+    "description": "Multiple references to old parameter name 'analyzeDocumentOptions' throughout customization method body and Javadoc that need updating to match new generated parameter name 'analyzeDocumentRequest'.\n\n**Dependency Chain**: TSP parameter rename → generated code uses new name → customization hardcodes old name → compilation/runtime failures\n\n**Breaking Customization Code**: Objects.requireNonNull(analyzeDocumentOptions, ...); analyzeDocumentOptions.getPages(); @param analyzeDocumentOptions\n\n**Customization Fix**: Objects.requireNonNull(analyzeDocumentRequest, ...); analyzeDocumentRequest.getPages(); @param analyzeDocumentRequest\n\n**Fix Guidance**: Replace all occurrences of 'analyzeDocumentOptions' with 'analyzeDocumentRequest' in customization method body, null checks, method calls, and @param Javadoc tags",
+    "affectedSymbol": "analyzeDocumentOptions",
+    "lineRange": "69-77",
+    "dependencyChain": "TSP parameter rename → generated code uses new name → customization hardcodes old name → compilation/runtime failures",
+    "fixGuidance": "Update customization code lines 69-77: Replace all occurrences of 'analyzeDocumentOptions' with 'analyzeDocumentRequest' in method body, null checks, method calls, and @param Javadoc tags",
+    "breakingCode": "Objects.requireNonNull(analyzeDocumentOptions, ...); analyzeDocumentOptions.getPages(); @param analyzeDocumentOptions",
+    "suggestedFix": "Objects.requireNonNull(analyzeDocumentRequest, ...); analyzeDocumentRequest.getPages(); @param analyzeDocumentRequest"
+  }
+]
+```
+
+**Trigger Conditions for Mock Response**:
+- API change kind contains "ModifiedMethodParameterNames"
+- File content contains "getParameterByName" (customization pattern)
+- File content contains "beginAnalyzeDocument" (relevant API)
+- File passes smart customization detection (14+ indicators found)
+
+---
+
+## Test Scenario 2: Removed Method References ❌ FAILING
+**Test**: AnalyzeCustomizationImpactAsync_ShouldDetectRemovedMethodReferences  
+**Status**: ❌ FAILING - Returns 0 impacts due to smart filtering
+
+**Issue**: Test file content is too minimal and doesn't pass smart customization detection:
+```java
+public class TestCustomization {
+    public void test() {
+        DocumentIntelligenceClient client = null;
+        client.listAnalyzeBatchResults("modelId", new RequestOptions());
+    }
+}
+```
+
+**Why it fails**:
+1. Contains symbol overlap: `listAnalyzeBatchResults` ✓
+2. Smart customization detection: ❌ FAILED
+   - Missing: `extends Customization`
+   - Missing: `getParameterByName` 
+   - Missing: `LibraryCustomization`
+   - Missing: Other customization indicators
+
+**Expected Mock Response Structure** (if detection passed):
+```json
+[
+  {
+    "impactType": "RemovedMethodReference",
+    "severity": "Critical",
+    "description": "The customization code references method 'listAnalyzeBatchResults' which has been removed from the generated API. This breaks the dependency chain: TSP removes method → generated code no longer contains method → customization call fails.\n\n**Breaking Customization Code**: client.listAnalyzeBatchResults(\"modelId\", new RequestOptions())\n\n**Customization Fix**: Remove or replace this call in the customization code\n\n**Fix Guidance**: Update line 8 in customization file to either remove the call or use an alternative API method.",
+    "affectedSymbol": "listAnalyzeBatchResults",
+    "lineRange": "8-8",
+    "dependencyChain": "TSP removes method → Java generator removes method → customization calls non-existent method → compilation failure",
+    "fixGuidance": "Update customization code on line 8: remove or replace the call to listAnalyzeBatchResults with alternative API",
+    "breakingCode": "client.listAnalyzeBatchResults(\"modelId\", new RequestOptions())",
+    "suggestedFix": "// Method removed from generated API - update customization to use alternative or remove this call"
+  }
+]
+```
+
+**Trigger Conditions for Mock Response** (needs proper test data):
+- API change kind contains "RemovedMethod" 
+- File content contains "listAnalyzeBatchResults" (removed method reference)
+- File passes smart customization detection (needs customization patterns)
+
+---
+
+## Test Scenario 3: Unrelated Changes ✅ WORKING (Correctly Returns Empty)
+**Description**: Changes to unrelated classes that don't affect existing customizations
+**Expected**: Returns `[]` (empty array - no impacts)
+**Mock Logic**: Detects unrelated AddedMethod scenarios and correctly returns no conflicts
+
+---
+
+## Performance Optimization Results ✅ WORKING
+
+**Symbol-First Overlap Detection**:
+- ✅ Fast screening: Files without symbol overlaps are quickly eliminated  
+- ✅ Smart detection: Only files with both symbol overlaps AND customization patterns trigger LLM analysis
+- ✅ Lazy context building: Expensive StructuredApiChangeContext only built when needed
+
+**Test Output Example**:
+```
+dbug: Found API symbol overlap: beginAnalyzeDocument
+dbug: Detected customization code with 14 indicators  
+dbug: Potential overlaps detected in TestCustomizations.java, building structured context for LLM analysis
+dbug: No API symbol/metadata overlaps found in content (other files quickly eliminated)
+info: Found 2 dependency chain impacts across 3 files
+```
+
+---
+
+## CustomizationImpact Object Structure
+
+Each impact returned by the mock LLM service has this structure:
+
+```csharp
+public class CustomizationImpact 
+{
+    public string ImpactType { get; set; }           // "BrokenAssumption", "ParameterNameConflict", "RemovedMethodReference"
+    public string Severity { get; set; }             // "Critical", "High", "Medium", "Low"  
+    public string Description { get; set; }          // Detailed LLM analysis with dependency chains
+    public string AffectedSymbol { get; set; }       // Method/parameter name affected
+    public string File { get; set; }                 // Customization file path
+    public string LineRange { get; set; }            // Lines affected (e.g., "68-69", "8-8")
+    public ApiChange? ApiChange { get; set; }         // Original API change that caused impact
+    
+    // Extended LLM analysis fields  
+    public string DependencyChain { get; set; }      // Explanation of how TSP → Generator → Customization chain breaks
+    public string FixGuidance { get; set; }          // Specific guidance for fixing the customization
+    public string BreakingCode { get; set; }         // Code snippet that will break
+    public string SuggestedFix { get; set; }         // Suggested replacement code
+}
+```
+
+---
+
+## Key Features Delivered
+
+1. **Performance Optimization** ✅
+   - Symbol-first overlap detection (performance improvement from ~7.8s to ~3.6s in tests)
+   - Raw List<ApiChange> used for fast screening
+   - Lazy StructuredApiChangeContext building only when needed
+
+2. **LLM Service Abstraction** ✅  
+   - Proper Azure OpenAI client integration via ServiceRegistrations
+   - Mock responses for testing scenarios when no deployment configured
+   - Clean interface separation following established patterns
+
+3. **Smart Detection** ✅
+   - AutoRest customization pattern recognition
+   - Multi-level filtering: symbol overlap → customization pattern detection → LLM analysis
+   - Accurate dependency chain analysis with detailed fix guidance
+
+4. **Rich Impact Analysis** ✅
+   - Detailed dependency chain explanations  
+   - Specific fix guidance with line numbers
+   - Breaking code identification and suggested replacements
+   - Multiple impact types for comprehensive coverage

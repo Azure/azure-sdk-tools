@@ -32,7 +32,7 @@ async function loadMetadata(fileName: string): Promise<Record<string, string> | 
     const metadata: CrossLanguageMetadata = JSON.parse(metadataContent);
     return metadata.crossLanguageDefinitions?.CrossLanguageDefinitionId;
   } catch (error) {
-    console.warn(`Warning: Could not load metadata file ${fileName}:`, error.message);
+    console.warn(`Warning: Could not load metadata file ${fileName}:`, String(error));
     return undefined;
   }
 }

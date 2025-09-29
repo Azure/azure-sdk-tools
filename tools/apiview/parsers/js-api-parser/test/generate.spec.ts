@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildDependencies, generateApiview } from "../src/generate";
+import { buildDependencies, generateApiView } from "../src/generate";
 import { ApiModel } from "@microsoft/api-extractor-model";
 import path from "path";
 import { ReviewLine } from "../src/models";
@@ -10,7 +10,7 @@ describe("generate", () => {
       const model: ApiModel = new ApiModel();
       model.loadPackage(path.join(__dirname, "./data/renamedEnum.json"));
 
-      const result = generateApiview({
+      const result = generateApiView({
         apiModel: model,
         dependencies: {},
         meta: {

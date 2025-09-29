@@ -473,6 +473,50 @@ describe.sequential("Verify commands", () => {
     }
   });
 
+  it("Init with --update-if-exists with undefined emitterPackageJsonPath in tsp-location.yaml", async () => {
+    try {
+      const libraryPath = joinPaths(repoRoot, "sdk/contosowidgetmanager/contosowidgetmanager-rest");
+      const args = {
+        "output-dir": libraryPath,
+        "tsp-config": joinPaths(
+          cwd(),
+          "./test/examples/specification/contosowidgetmanager/Contoso.WidgetManager/",
+        ),
+        "update-if-exists": true,
+        commit: "abc",
+      };
+
+      // Add a tsp-location.yaml file to the output directory for the initOrUpdate test to simulate an existing project
+      const existingTspLocation: TspLocation = {
+        directory: "specification/contosowidgetmanager/Contoso.WidgetManager",
+        commit: "45924e49834c4e01c0713e6b7ca21f94be17e396",
+        repo: "Azure/azure-rest-api-specs",
+        additionalDirectories: [
+          "tools/tsp-client/test/examples/specification/contosowidgetmanager/Contoso.WidgetManager.Shared",
+        ],
+      };
+      await mkdir(libraryPath, {
+        recursive: true,
+      });
+      await writeTspLocationYaml(existingTspLocation, libraryPath);
+      // Now run the init command with --update-if-exists with a local spec so that we can pass in a dummy commit for testing
+      const outputDir = await initCommand(args);
+      const tspLocation = await readTspLocation(outputDir);
+      // Verify that the tspLocation has been updated with the new commit and that emitterPackageJsonPath is still undefined
+      assert.deepEqual(tspLocation, {
+        directory: "specification/contosowidgetmanager/Contoso.WidgetManager",
+        commit: "abc",
+        repo: "Azure/azure-rest-api-specs",
+        additionalDirectories: [
+          "tools/tsp-client/test/examples/specification/contosowidgetmanager/Contoso.WidgetManager.Shared",
+        ],
+      });
+      await rm(joinPaths(repoRoot, "sdk"), { recursive: true });
+    } catch (error: any) {
+      assert.fail("Failed to init. Error: " + error);
+    }
+  });
+
   it("Init with global tspclientconfig.yaml", async () => {
     await cp(
       joinPaths(cwd(), "test/utils/tspclientconfig.yaml"),

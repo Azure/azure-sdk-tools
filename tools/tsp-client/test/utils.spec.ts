@@ -114,7 +114,7 @@ describe("Verify other utils functions", function () {
     const updatedTspLocationData = await updateExistingTspLocation(
       tspLocationData,
       newPackageDir,
-      "foo.json",
+      "test/utils/alternate-emitter-package.json",
     );
     // Verify that directory, commit, repo, and additionalDirectories are updated correctly
     // Verify that the entrypointFile remains unchanged
@@ -125,7 +125,7 @@ describe("Verify other utils functions", function () {
       repo: "Azure/foo-repo",
       additionalDirectories: [],
       entrypointFile: "foo.tsp",
-      emitterPackageJsonPath: "tools/tsp-client/foo.json",
+      emitterPackageJsonPath: "tools/tsp-client/test/utils/alternate-emitter-package.json",
     });
   });
 });

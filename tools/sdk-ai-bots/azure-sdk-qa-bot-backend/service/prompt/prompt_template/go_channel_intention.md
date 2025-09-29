@@ -36,6 +36,6 @@ Respond with a JSON object using this structure (no markdown formatting needed):
 Original: "How can I make a LRO operation in Go SDK to be synchronous?"
 Response:
 {
-  "question": "Could you provide the doc and example of making a LRO operation in Go SDK to be synchronous?",
+  "question": "How can I make a LRO operation in Go SDK to be synchronous?",
   "category": "sdk-usage"
 }

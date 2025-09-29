@@ -27,7 +27,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         };
 
         /// <summary>
-        /// When true, message bodies are compared during matching. In addition, when true incoming request bodies will not be sanitized.
+        /// When true, message bodies are compared during matching. In addition, when true incoming request bodies will be sanitized.
         /// </summary>
         public bool ShouldCompareBodies { get; set; }
 

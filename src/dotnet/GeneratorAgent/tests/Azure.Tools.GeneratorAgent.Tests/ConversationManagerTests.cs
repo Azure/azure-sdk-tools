@@ -82,7 +82,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var manager = CreateConversationManager();
             var agentId = "test-agent-id";
 
-            manager.SetAgentId(agentId);
+            manager.AgentId = agentId;
 
             Assert.That(manager.AgentId, Is.EqualTo(agentId));
         }
@@ -92,8 +92,8 @@ namespace Azure.Tools.GeneratorAgent.Tests
         {
             var manager = CreateConversationManager();
 
-            var ex = Assert.Throws<ArgumentNullException>(() => manager.SetAgentId(null!));
-            Assert.That(ex?.ParamName, Is.EqualTo("agentId"));
+            var ex = Assert.Throws<ArgumentNullException>(() => manager.AgentId = null!);
+            Assert.That(ex?.ParamName, Is.EqualTo("AgentId"));
         }
 
         [Test]
@@ -101,10 +101,10 @@ namespace Azure.Tools.GeneratorAgent.Tests
         {
             var manager = CreateConversationManager();
 
-            manager.SetAgentId("first-id");
+            manager.AgentId = "first-id";
             Assert.That(manager.AgentId, Is.EqualTo("first-id"));
 
-            manager.SetAgentId("second-id");
+            manager.AgentId = "second-id";
             Assert.That(manager.AgentId, Is.EqualTo("second-id"));
         }
 
@@ -161,8 +161,12 @@ namespace Azure.Tools.GeneratorAgent.Tests
         private static ToolExecutor CreateMockToolExecutor()
         {
             var mockToolHandler = Mock.Of<ITypeSpecToolHandler>();
+            var mockAppSettings = CreateMockAppSettings();
             var mockLogger = Mock.Of<ILogger<ToolExecutor>>();
-            return new ToolExecutor(mockToolHandler, mockLogger);
+            
+            Func<ValidationContext, ITypeSpecToolHandler> toolHandlerFactory = _ => mockToolHandler;
+            
+            return new ToolExecutor(toolHandlerFactory, mockAppSettings, mockLogger);
         }
 
         private static AppSettings CreateMockAppSettings()

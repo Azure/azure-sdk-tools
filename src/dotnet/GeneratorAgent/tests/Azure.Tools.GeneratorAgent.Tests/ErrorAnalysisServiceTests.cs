@@ -464,12 +464,13 @@ namespace Azure.Tools.GeneratorAgent.Tests
         private ToolExecutor CreateMockToolExecutor()
         {
             var mockToolHandler = Mock.Of<ITypeSpecToolHandler>();
+            var mockAppSettings = CreateMockAppSettings();
             var mockLogger = Mock.Of<ILogger<ToolExecutor>>();
-
-            return new ToolExecutor(mockToolHandler, mockLogger);
-        }
-
-        private FormatPromptService CreateMockFormatPromptService()
+            
+            Func<ValidationContext, ITypeSpecToolHandler> toolHandlerFactory = _ => mockToolHandler;
+            
+            return new ToolExecutor(toolHandlerFactory, mockAppSettings, mockLogger);
+        }        private FormatPromptService CreateMockFormatPromptService()
         {
             var mockLogger = Mock.Of<ILogger<FormatPromptService>>();
             var mockAppSettings = CreateMockAppSettings();

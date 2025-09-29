@@ -13,11 +13,11 @@ namespace Azure.Tools.GeneratorAgent.Models
         /// <summary>
         /// The file content at this version
         /// </summary>
-        public string Content { get; set; } = string.Empty;
+        public string? Content { get; set; }
 
         /// <summary>
         /// SHA256 hash of the content for integrity verification
         /// </summary>
-        public string Sha256 { get; set; } = string.Empty;
+        public string? Sha256 { get; set; }
     }
 }

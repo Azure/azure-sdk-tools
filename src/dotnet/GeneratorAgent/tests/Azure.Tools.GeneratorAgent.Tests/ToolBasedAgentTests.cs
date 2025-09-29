@@ -273,9 +273,12 @@ namespace Azure.Tools.GeneratorAgent.Tests
         {
             var mockClient = Mock.Of<PersistentAgentsClient>();
             var mockToolHandler = Mock.Of<ITypeSpecToolHandler>();
-            var mockToolExecutorLogger = Mock.Of<ILogger<ToolExecutor>>();
-            var mockToolExecutor = new Mock<ToolExecutor>(mockToolHandler, mockToolExecutorLogger);
             var mockAppSettings = CreateMockAppSettings();
+            var mockToolExecutorLogger = Mock.Of<ILogger<ToolExecutor>>();
+            
+            Func<ValidationContext, ITypeSpecToolHandler> toolHandlerFactory = _ => mockToolHandler;
+            
+            var mockToolExecutor = new Mock<ToolExecutor>(toolHandlerFactory, mockAppSettings, mockToolExecutorLogger);
             var mockLogger = Mock.Of<ILogger<ConversationManager>>();
             
             var mock = new Mock<ConversationManager>(

@@ -14,8 +14,6 @@ namespace Azure.Tools.GeneratorAgent
         private readonly ILogger<GitHubFileService> Logger;
         private readonly AppSettings AppSettings;
         private readonly HttpClient HttpClient;
-        private readonly string CommitId;
-        private readonly string TypespecSpecDir;
 
         // Static JSON options for better performance (reused across calls)
         private static readonly JsonSerializerOptions JsonOptions = new()
@@ -27,20 +25,14 @@ namespace Azure.Tools.GeneratorAgent
         public GitHubFileService(
             AppSettings appSettings,
             ILogger<GitHubFileService> logger,
-            ValidationContext validationContext,
             HttpClient httpClient)
         {
             ArgumentNullException.ThrowIfNull(appSettings);
             ArgumentNullException.ThrowIfNull(logger);
-            ArgumentNullException.ThrowIfNull(validationContext);
             ArgumentNullException.ThrowIfNull(httpClient);
 
             AppSettings = appSettings;
             Logger = logger;
-
-            CommitId = validationContext.ValidatedCommitId;
-            TypespecSpecDir = validationContext.ValidatedTypeSpecDir;
-
             HttpClient = httpClient;
             
             if (Logger.IsEnabled(LogLevel.Debug))
@@ -51,10 +43,13 @@ namespace Azure.Tools.GeneratorAgent
             }
         }
 
-        public async Task<Dictionary<string, string>> GetTypeSpecFilesAsync(CancellationToken cancellationToken = default)
+        public async Task<Dictionary<string, string>> GetTypeSpecFilesAsync(string commitId, string typeSpecDir, CancellationToken cancellationToken = default)
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(commitId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(typeSpecDir);
+            
             // GitHub API endpoint for directory contents
-            string apiUrl = $"https://api.github.com/repos/{AppSettings.AzureSpecRepository}/contents/{TypespecSpecDir}?ref={CommitId}";
+            string apiUrl = $"https://api.github.com/repos/{AppSettings.AzureSpecRepository}/contents/{typeSpecDir}?ref={commitId}";
 
             Logger.LogDebug("Fetching TypeSpec files from GitHub API: {ApiUrl}", apiUrl);
 
@@ -76,14 +71,14 @@ namespace Azure.Tools.GeneratorAgent
             }
             catch (JsonException ex)
             {
-                string errorMessage = $"Failed to deserialize GitHub API response for '{AppSettings.AzureSpecRepository}/{TypespecSpecDir}' at commit '{CommitId}'. Please verify the repository path and commit ID are correct.";
+                string errorMessage = $"Failed to deserialize GitHub API response for '{AppSettings.AzureSpecRepository}/{typeSpecDir}' at commit '{commitId}'. Please verify the repository path and commit ID are correct.";
                 Logger.LogError(ex, errorMessage);
                 throw new InvalidOperationException(errorMessage, ex);
             }
 
             if (contents == null)
             {
-                string errorMessage = $"GitHub API returned null content for '{AppSettings.AzureSpecRepository}/{TypespecSpecDir}' at commit '{CommitId}'";
+                string errorMessage = $"GitHub API returned null content for '{AppSettings.AzureSpecRepository}/{typeSpecDir}' at commit '{commitId}'";
                 Logger.LogError(errorMessage);
                 throw new InvalidOperationException(errorMessage);
             }

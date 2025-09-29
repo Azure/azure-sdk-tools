@@ -62,7 +62,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 var appSettings = CreateAppSettings();
                 var logger = new Mock<ILogger<GitHubFileService>>().Object;
                 var httpClient = new HttpClient();
-                return new GitHubFileService(appSettings, logger, validationContext, httpClient);
+                return new GitHubFileService(appSettings, logger, httpClient);
             };
         }
 
@@ -78,7 +78,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 var appSettings = CreateAppSettings();
                 var logger = new Mock<ILogger<GitHubFileService>>().Object;
                 var httpClient = new HttpClient();
-                return new GitHubFileService(appSettings, logger, validationContext, httpClient);
+                return new GitHubFileService(appSettings, logger, httpClient);
             };
         }
 
@@ -411,7 +411,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 var appSettings = CreateAppSettings();
                 var logger = new Mock<ILogger<GitHubFileService>>().Object;
                 var httpClient = new HttpClient();
-                return new GitHubFileService(appSettings, logger, context, httpClient);
+                return new GitHubFileService(appSettings, logger, httpClient);
             };
             
             var service = CreateService(validationContext: validationContext, gitHubServiceFactory: testFactory);

@@ -291,7 +291,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var httpClient = new HttpClient();
 
             // Act & Assert
-            var service = new GitHubFileService(appSettings, mockLogger.Object, validationContext, httpClient);
+            var service = new GitHubFileService(appSettings, mockLogger.Object, httpClient);
             Assert.That(service, Is.Not.Null);
             httpClient.Dispose();
         }
@@ -306,7 +306,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             // Act & Assert
             var exception = Assert.Throws<ArgumentNullException>(() =>
-                new GitHubFileService(null!, mockLogger.Object, validationContext, httpClient));
+                new GitHubFileService(null!, mockLogger.Object, httpClient));
             Assert.That(exception!.ParamName, Is.EqualTo("appSettings"));
             httpClient.Dispose();
         }
@@ -321,24 +321,22 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             // Act & Assert
             var exception = Assert.Throws<ArgumentNullException>(() =>
-                new GitHubFileService(appSettings, null!, validationContext, httpClient));
+                new GitHubFileService(appSettings, null!, httpClient));
             Assert.That(exception!.ParamName, Is.EqualTo("logger"));
             httpClient.Dispose();
         }
 
         [Test]
-        public void Constructor_WithNullValidationContext_ShouldThrowArgumentNullException()
+        public void Constructor_WithNullHttpClient_ShouldThrowArgumentNullException()
         {
             // Arrange
             var appSettings = CreateAppSettings();
             var mockLogger = CreateMockLogger();
-            var httpClient = new HttpClient();
 
             // Act & Assert
             var exception = Assert.Throws<ArgumentNullException>(() =>
-                new GitHubFileService(appSettings, mockLogger.Object, null!, httpClient));
-            Assert.That(exception!.ParamName, Is.EqualTo("validationContext"));
-            httpClient.Dispose();
+                new GitHubFileService(appSettings, mockLogger.Object, null!));
+            Assert.That(exception!.ParamName, Is.EqualTo("httpClient"));
         }
 
         #endregion
@@ -568,15 +566,21 @@ namespace Azure.Tools.GeneratorAgent.Tests
         /// </summary>
         private class TestableGitHubFilesService : GitHubFileService
         {
+            private readonly ValidationContext _validationContext;
+            
             public TestableGitHubFilesService(
                 AppSettings appSettings,
                 ILogger<GitHubFileService> logger,
                 ValidationContext validationContext,
-                HttpClient httpClient) : base(appSettings, logger, validationContext, httpClient)
+                HttpClient httpClient) : base(appSettings, logger, httpClient)
             {
+                _validationContext = validationContext;
             }
 
-            // No longer need Dispose method since GitHubFilesService doesn't implement IDisposable
+            public async Task<Dictionary<string, string>> GetTypeSpecFilesAsync(CancellationToken cancellationToken = default)
+            {
+                return await base.GetTypeSpecFilesAsync(_validationContext.ValidatedCommitId, _validationContext.ValidatedTypeSpecDir, cancellationToken);
+            }
         }
 
         #endregion

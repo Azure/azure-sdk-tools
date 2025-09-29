@@ -11,23 +11,19 @@ namespace Azure.Tools.GeneratorAgent
         private readonly AppSettings AppSettings;
         private readonly ILogger<LocalLibraryGenerationService> Logger;
         private readonly ProcessExecutionService ProcessExecutionService;
-        private readonly ValidationContext ValidationContext;
 
         public LocalLibraryGenerationService(
             AppSettings appSettings,
             ILogger<LocalLibraryGenerationService> logger,
-            ProcessExecutionService processExecutionService,
-            ValidationContext validationContext)
+            ProcessExecutionService processExecutionService)
         {
             ArgumentNullException.ThrowIfNull(appSettings);
             ArgumentNullException.ThrowIfNull(logger);
             ArgumentNullException.ThrowIfNull(processExecutionService);
-            ArgumentNullException.ThrowIfNull(validationContext);
 
             AppSettings = appSettings;
             Logger = logger;
             ProcessExecutionService = processExecutionService;
-            ValidationContext = validationContext;
         }
         
         public async Task InstallTypeSpecDependencies(CancellationToken cancellationToken)
@@ -65,12 +61,13 @@ namespace Azure.Tools.GeneratorAgent
             }
         }
 
-        public async Task<Result<object>> CompileTypeSpecAsync(CancellationToken cancellationToken)
+        public async Task<Result<object>> CompileTypeSpecAsync(ValidationContext validationContext, CancellationToken cancellationToken)
         {
+            ArgumentNullException.ThrowIfNull(validationContext);
             Logger.LogDebug("Compiling TypeSpec project");
 
-            string tspOutputPath = Path.Combine(ValidationContext.ValidatedSdkDir);
-            string currentTypeSpecDir = ValidationContext.CurrentTypeSpecDir;
+            string tspOutputPath = Path.Combine(validationContext.ValidatedSdkDir);
+            string currentTypeSpecDir = validationContext.CurrentTypeSpecDir;
 
             string arguments;
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))

@@ -14,7 +14,17 @@ internal class ConversationManager
     private readonly AppSettings AppSettings;
     private readonly ILogger<ConversationManager> Logger;
     
-    public string? AgentId { get; private set; }
+    private string? _agentId;
+    
+    public string? AgentId
+    {
+        get => _agentId;
+        set
+        {
+            ArgumentNullException.ThrowIfNull(value, nameof(AgentId));
+            _agentId = value;
+        }
+    }
     public string ThreadId { get; private set; }
 
     public ConversationManager(
@@ -31,11 +41,11 @@ internal class ConversationManager
     }
 
     /// <summary>
-    /// Sets the agent ID for this conversation manager
+    /// Sets the validation context on the tool executor
     /// </summary>
-    public void SetAgentId(string agentId)
+    public void SetValidationContext(ValidationContext validationContext)
     {
-        AgentId = agentId ?? throw new ArgumentNullException(nameof(agentId));
+        ToolExecutor.SetValidationContext(validationContext);
     }
 
     /// <summary>

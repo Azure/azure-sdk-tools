@@ -87,7 +87,10 @@ namespace Azure.Tools.GeneratorAgent
 
             GitHubFileService = GitHubServiceFactory(ValidationContext);
 
-            var githubFiles = await GitHubFileService.GetTypeSpecFilesAsync(cancellationToken).ConfigureAwait(false);
+            var githubFiles = await GitHubFileService.GetTypeSpecFilesAsync(
+                ValidationContext.ValidatedCommitId,
+                ValidationContext.ValidatedTypeSpecDir,
+                cancellationToken).ConfigureAwait(false);
             Logger.LogInformation("Successfully downloaded {FileCount} TypeSpec files", githubFiles.Count);
             
             if (githubFiles.Count == 0)

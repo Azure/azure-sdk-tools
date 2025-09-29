@@ -119,9 +119,9 @@ namespace Azure.Tools.GeneratorAgent
             // Get services from DI container
             var appSettings = ServiceProvider.GetRequiredService<AppSettings>();
             var fileServiceFactory = ServiceProvider.GetRequiredService<Func<ValidationContext, TypeSpecFileService>>();
-            var toolBasedAgentFactory = ServiceProvider.GetRequiredService<Func<ValidationContext, ToolBasedAgent>>();
-            var sdkServiceFactory = ServiceProvider.GetRequiredService<Func<ValidationContext, LocalLibraryGenerationService>>();
-            var libraryBuildServiceFactory = ServiceProvider.GetRequiredService<Func<ValidationContext, LibraryBuildService>>();
+            var toolBasedAgent = ServiceProvider.GetRequiredService<ToolBasedAgent>();
+            var libraryBuildService = ServiceProvider.GetRequiredService<LibraryBuildService>();            
+            var sdkGenerationService = ServiceProvider.GetRequiredService<LocalLibraryGenerationService>();
 
             
             // Download TypeSpec files if from GitHub (commitId provided)
@@ -134,13 +134,14 @@ namespace Azure.Tools.GeneratorAgent
             }
 
             // Initialize Tool-Based Agent with proper disposal   
-            var toolBasedAgent = toolBasedAgentFactory(validationContext);
             await using (toolBasedAgent.ConfigureAwait(false))
             {
+                // Set the validation context for tool execution
+                toolBasedAgent.SetValidationContext(validationContext);
+                
                 await toolBasedAgent.InitializeAsync(cancellationToken).ConfigureAwait(false);          
 
                 // Setup local machine for iterative generation
-                var sdkGenerationService = sdkServiceFactory(validationContext);
                 await sdkGenerationService.InstallTypeSpecDependencies(cancellationToken).ConfigureAwait(false);
             
                 // Iteratively: Compile -> generate library -> build library -> capture and fix error
@@ -150,7 +151,7 @@ namespace Azure.Tools.GeneratorAgent
                 while (currentIteration < maxIterations)
                 {
                     // Compile TypeSpec              
-                    var compileResult = await sdkGenerationService.CompileTypeSpecAsync(cancellationToken).ConfigureAwait(false);
+                    var compileResult = await sdkGenerationService.CompileTypeSpecAsync(validationContext, cancellationToken).ConfigureAwait(false);
 
                     // Compile Generated SDK (only if TypeSpec compilation succeeded)
                     Result<object>? buildResult = null;
@@ -158,8 +159,7 @@ namespace Azure.Tools.GeneratorAgent
                     {
                         Logger.LogInformation("TypeSpec compilation completed successfully. Building Library...\n");
 
-                        var libraryBuildService = libraryBuildServiceFactory(validationContext);
-                        buildResult = await libraryBuildService.BuildSdkAsync(cancellationToken).ConfigureAwait(false);
+                        buildResult = await libraryBuildService.BuildSdkAsync(validationContext.ValidatedSdkDir, cancellationToken).ConfigureAwait(false);
                     }
 
                     // Check if compile and build are successful
@@ -170,7 +170,7 @@ namespace Azure.Tools.GeneratorAgent
                     }
 
                     // Analyze errors and get fixes - use the already initialized agent
-                    var errorAnalyzer = new ErrorAnalysisService(toolBasedAgent, ServiceProvider.GetRequiredService<ILogger<ErrorAnalysisService>>());
+                    var errorAnalyzer = ServiceProvider.GetRequiredService<ErrorAnalysisService>();
                     var analysisResult = await errorAnalyzer.GenerateFixesFromResultsAsync(compileResult, buildResult, cancellationToken).ConfigureAwait(false);
                     if (analysisResult.IsFailure)
                     {
@@ -191,9 +191,29 @@ namespace Azure.Tools.GeneratorAgent
                     // Get patch proposal from agent
                     Logger.LogInformation("Processing fixes with Agent");
                     var patchResult = await toolBasedAgent.FixCodeAsync(allFixes, cancellationToken).ConfigureAwait(false);
+                    
+                    if (!patchResult.IsSuccess)
+                    {
+                        Logger.LogError("Failed to get patch from agent: {Error}", 
+                            patchResult.ProcessException?.Message ?? patchResult.Exception?.Message ?? "Unknown error");
+                        break;
+                    }
+                    
                     Logger.LogInformation("The patch result is {patchResult}", patchResult.Value);
 
-                    // TODO: Apply patch and continue iteration
+                    // Apply patch and continue iteration
+                    var patchApplicator = ServiceProvider.GetRequiredService<TypeSpecPatchApplicator>();
+                    bool success = await patchApplicator.ApplyPatchAsync(patchResult.Value!, validationContext.ValidatedTypeSpecDir, cancellationToken);
+
+                    if (success) {
+                        Logger.LogInformation("Patch applied, proceeding to next iteration");
+                        // Continue to next compile/build cycle
+                    } else {
+                        Logger.LogError("Patch failed, stopping iterations");
+                        break;
+                    }
+
+
                     currentIteration += 1;
                 }
             }

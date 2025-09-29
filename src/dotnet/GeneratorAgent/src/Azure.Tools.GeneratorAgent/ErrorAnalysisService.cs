@@ -108,8 +108,6 @@ namespace Azure.Tools.GeneratorAgent
             return TransformErrorsToFixes(allErrors);
         }
 
-
-
         /// <summary>
         /// Parses error output using regex patterns to extract structured error information.
         /// Returns both the parsed errors and the remaining unparsed content in a single pass.

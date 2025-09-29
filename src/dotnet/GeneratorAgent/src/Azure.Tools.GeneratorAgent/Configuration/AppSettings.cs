@@ -63,6 +63,10 @@ namespace Azure.Tools.GeneratorAgent.Configuration
         public string TypeSpecDirectoryName => "@typespec";
         public string HttpClientCSharpDirectoryName => "http-client-csharp";
 
+        // Tool names for Azure AI agent
+        public string ListTypeSpecFilesTool => "list_typespec_files";
+        public string GetTypeSpecFileTool => "get_typespec_file";
+
         public string AzureSpecRepository => "Azure/azure-rest-api-specs";
         public string AzureSdkDirectoryName => "azure-sdk-for-net";
 

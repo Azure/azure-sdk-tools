@@ -1,3 +1,4 @@
+using Azure.Tools.GeneratorAgent.Configuration;
 using Azure.Tools.GeneratorAgent.Tools;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
@@ -9,13 +10,24 @@ namespace Azure.Tools.GeneratorAgent.Agent;
 /// </summary>
 internal class ToolExecutor
 {
-    private readonly ITypeSpecToolHandler ToolHandler;
+    private readonly Func<ValidationContext, ITypeSpecToolHandler> ToolHandlerFactory;
+    private readonly AppSettings AppSettings;
     private readonly ILogger<ToolExecutor> Logger;
+    private ValidationContext? _validationContext;
 
-    public ToolExecutor(ITypeSpecToolHandler toolHandler, ILogger<ToolExecutor> logger)
+    public ToolExecutor(Func<ValidationContext, ITypeSpecToolHandler> toolHandlerFactory, AppSettings appSettings, ILogger<ToolExecutor> logger)
     {
-        ToolHandler = toolHandler ?? throw new ArgumentNullException(nameof(toolHandler));
+        ToolHandlerFactory = toolHandlerFactory ?? throw new ArgumentNullException(nameof(toolHandlerFactory));
+        AppSettings = appSettings ?? throw new ArgumentNullException(nameof(appSettings));
         Logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    /// <summary>
+    /// Sets the validation context for this tool executor
+    /// </summary>
+    public void SetValidationContext(ValidationContext validationContext)
+    {
+        _validationContext = validationContext ?? throw new ArgumentNullException(nameof(validationContext));
     }
 
     /// <summary>
@@ -27,8 +39,8 @@ internal class ToolExecutor
         {
             return toolName switch
             {
-                "list_typespec_files" => await ExecuteListTypeSpecFilesAsync(argumentsJson, cancellationToken),
-                "get_typespec_file" => await ExecuteGetTypeSpecFileAsync(argumentsJson, cancellationToken),
+                var name when name == AppSettings.ListTypeSpecFilesTool => await ExecuteListTypeSpecFilesAsync(argumentsJson, cancellationToken),
+                var name when name == AppSettings.GetTypeSpecFileTool => await ExecuteGetTypeSpecFileAsync(argumentsJson, cancellationToken),
                 _ => CreateErrorResponse($"Unknown tool: {toolName}")
             };
         }
@@ -41,13 +53,24 @@ internal class ToolExecutor
 
     private async Task<string> ExecuteListTypeSpecFilesAsync(string argumentsJson, CancellationToken cancellationToken)
     {
+        if (_validationContext == null)
+        {
+            throw new InvalidOperationException("ValidationContext not set. Call SetValidationContext() first.");
+        }
+
         // This tool doesn't need arguments
-        var result = await ToolHandler.ListTypeSpecFilesAsync(cancellationToken);
+        var toolHandler = ToolHandlerFactory(_validationContext);
+        var result = await toolHandler.ListTypeSpecFilesAsync(cancellationToken);
         return JsonSerializer.Serialize(result);
     }
 
     private async Task<string> ExecuteGetTypeSpecFileAsync(string argumentsJson, CancellationToken cancellationToken)
     {
+        if (_validationContext == null)
+        {
+            throw new InvalidOperationException("ValidationContext not set. Call SetValidationContext() first.");
+        }
+
         // Parse arguments to get the filename
         using var args = JsonSerializer.Deserialize<JsonDocument>(argumentsJson);
         if (args?.RootElement.TryGetProperty("path", out var pathElement) == true)
@@ -58,7 +81,8 @@ internal class ToolExecutor
                 throw new ArgumentException("Missing or empty 'path' in arguments");
             }
             
-            var result = await ToolHandler.GetTypeSpecFileAsync(filename, cancellationToken);
+            var toolHandler = ToolHandlerFactory(_validationContext);
+            var result = await toolHandler.GetTypeSpecFileAsync(filename, cancellationToken);
             return JsonSerializer.Serialize(result);
         }
         

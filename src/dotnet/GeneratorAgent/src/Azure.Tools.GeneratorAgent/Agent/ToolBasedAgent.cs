@@ -36,6 +36,14 @@ internal class ToolBasedAgent : IAsyncDisposable
     }
 
     /// <summary>
+    /// Sets the validation context for tool execution
+    /// </summary>
+    public void SetValidationContext(ValidationContext validationContext)
+    {
+        ConversationManager.SetValidationContext(validationContext);
+    }
+
+    /// <summary>
     /// Creates the agent (called only once when Agent.Value is first accessed)
     /// </summary>
     private PersistentAgent CreateAgent()
@@ -44,7 +52,7 @@ internal class ToolBasedAgent : IAsyncDisposable
         var toolDefinitions = new List<ToolDefinition>
         {
             new FunctionToolDefinition(
-                name: "list_typespec_files",
+                name: AppSettings.ListTypeSpecFilesTool,
                 description: "Lists all TypeSpec files with metadata including version, line count, and SHA256",
                 parameters: BinaryData.FromObjectAsJson(new
                 {
@@ -54,7 +62,7 @@ internal class ToolBasedAgent : IAsyncDisposable
                 })
             ),
             new FunctionToolDefinition(
-                name: "get_typespec_file",
+                name: AppSettings.GetTypeSpecFileTool,
                 description: "Retrieves the content of a specific TypeSpec file with metadata",
                 parameters: BinaryData.FromObjectAsJson(new
                 {
@@ -96,7 +104,7 @@ internal class ToolBasedAgent : IAsyncDisposable
     {
         Logger.LogInformation("Initializing tool-based agent...");
 
-        ConversationManager.SetAgentId(AgentId);
+        ConversationManager.AgentId = AgentId;
 
         await ConversationManager.StartConversationAsync(cancellationToken);
 
@@ -161,7 +169,7 @@ internal class ToolBasedAgent : IAsyncDisposable
             }
 
             // Create error analysis prompt
-            var analysisPrompt = string.Format(AppSettings.ErrorAnalysisPromptTemplate, errorLogs);
+            var analysisPrompt = AppSettings.ErrorAnalysisPromptTemplate.Replace("{0}", errorLogs);
 
             // Send to agent for analysis
             var agentResponse = await ConversationManager.SendMessageAsync(analysisPrompt, cancellationToken);

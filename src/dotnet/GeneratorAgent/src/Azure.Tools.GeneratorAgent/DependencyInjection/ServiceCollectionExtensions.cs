@@ -25,10 +25,12 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
 
             // Register configuration as singleton 
             services.AddSingleton(toolConfig);
-            services.AddSingleton(provider =>
+            
+            services.AddSingleton<AppSettings>(provider =>
             {
                 var logger = provider.GetRequiredService<ILogger<AppSettings>>();
-                return toolConfig.CreateAppSettings(logger);
+                var config = provider.GetRequiredService<ToolConfiguration>();
+                return config.CreateAppSettings(logger);
             });
 
             return services
@@ -109,87 +111,17 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
             services.AddSingleton<ProcessExecutionService>();
             services.AddSingleton<FormatPromptService>();
 
-            // Step 1: Add ToolExecutor for clean tool-based approach
-            services.AddSingleton<Func<ValidationContext, ToolExecutor>>(provider =>
-            {
-                return validationContext =>
-                {
-                    var toolHandlerFactory = provider.GetRequiredService<Func<ValidationContext, ITypeSpecToolHandler>>();
-                    var toolHandler = toolHandlerFactory(validationContext);
-                    return new ToolExecutor(
-                        toolHandler,
-                        provider.GetRequiredService<ILogger<ToolExecutor>>());
-                };
-            });
+            services.AddScoped<ToolExecutor>();
+            services.AddScoped<ConversationManager>();
+            services.AddScoped<ToolBasedAgent>();
+            services.AddScoped<ErrorAnalysisService>();
 
-            // Step 2: Add ConversationManager factory for agent conversations
-            services.AddSingleton<Func<ValidationContext, ConversationManager>>(provider =>
-            {
-                return validationContext =>
-                {
-                    var toolExecutorFactory = provider.GetRequiredService<Func<ValidationContext, ToolExecutor>>();
-                    var toolExecutor = toolExecutorFactory(validationContext);
-                    
-                    return new ConversationManager(
-                        provider.GetRequiredService<PersistentAgentsClient>(),
-                        toolExecutor,
-                        provider.GetRequiredService<AppSettings>(),
-                        provider.GetRequiredService<ILogger<ConversationManager>>());
-                };
-            });
-
-            // Step 3: Add ToolBasedAgent for complete workflow orchestration
-            services.AddSingleton<Func<ValidationContext, ToolBasedAgent>>(provider =>
-            {
-                return validationContext =>
-                {
-                    var conversationManagerFactory = provider.GetRequiredService<Func<ValidationContext, ConversationManager>>();
-                    var conversationManager = conversationManagerFactory(validationContext);
-                    
-                    return new ToolBasedAgent(
-                        conversationManager,
-                        provider.GetRequiredService<FormatPromptService>(),
-                        provider.GetRequiredService<AppSettings>(),
-                        provider.GetRequiredService<PersistentAgentsClient>(),
-                        provider.GetRequiredService<ILogger<ToolBasedAgent>>());
-                };
-            });
-
-
-
-            // Register ErrorAnalysisService with ToolBasedAgent
-            services.AddSingleton<Func<ValidationContext, ErrorAnalysisService>>(provider =>
-            {
-                return validationContext =>
-                {
-                    var toolBasedAgentFactory = provider.GetRequiredService<Func<ValidationContext, ToolBasedAgent>>();
-                    var toolBasedAgent = toolBasedAgentFactory(validationContext);
-                    
-                    return new ErrorAnalysisService(
-                        toolBasedAgent,
-                        provider.GetRequiredService<ILogger<ErrorAnalysisService>>());
-                };
-            });
-
-            // Add new tool-based services
             services.AddSingleton<TypeSpecFileVersionManager>();
+            services.AddSingleton<TypeSpecPatchApplicator>();
 
-            services.AddSingleton<Func<ValidationContext, LocalLibraryGenerationService>>(provider =>
-            {
-                return validationContext => new LocalLibraryGenerationService(
-                    provider.GetRequiredService<AppSettings>(),
-                    provider.GetRequiredService<ILoggerFactory>().CreateLogger<LocalLibraryGenerationService>(),
-                    provider.GetRequiredService<ProcessExecutionService>(),
-                    validationContext);
-            });
+            services.AddScoped<LocalLibraryGenerationService>();
 
-            services.AddSingleton<Func<ValidationContext, LibraryBuildService>>(provider =>
-            {
-                return validationContext => new LibraryBuildService(
-                    provider.GetRequiredService<ILogger<LibraryBuildService>>(),
-                    provider.GetRequiredService<ProcessExecutionService>(),
-                    validationContext.ValidatedSdkDir);
-            });
+            services.AddScoped<LibraryBuildService>();
 
             services.AddSingleton<Func<ValidationContext, TypeSpecFileService>>(provider =>
             {
@@ -198,6 +130,8 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
                     validationContext,
                     provider.GetRequiredService<Func<ValidationContext, GitHubFileService>>());
             });
+
+            // Note: ITypeSpecToolHandler is registered as a factory below to use proper ValidationContext
 
             services.AddSingleton<Func<ValidationContext, ITypeSpecToolHandler>>(provider =>
             {
@@ -217,11 +151,7 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
 
             services.AddSingleton<Func<ValidationContext, GitHubFileService>>(provider =>
             {
-                return validationContext => new GitHubFileService(
-                    provider.GetRequiredService<AppSettings>(),
-                    provider.GetRequiredService<ILogger<GitHubFileService>>(),
-                    validationContext,
-                    provider.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(GitHubFileService)));
+                return validationContext => provider.GetRequiredService<GitHubFileService>();
             });
 
             return services;

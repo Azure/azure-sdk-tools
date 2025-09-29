@@ -79,14 +79,12 @@ namespace Azure.Tools.GeneratorAgent.Tests
             public LocalLibraryGenerationService CreateService(
                 AppSettings? appSettings = null,
                 ILogger<LocalLibraryGenerationService>? logger = null,
-                ProcessExecutionService? ProcessExecutionService = null,
-                ValidationContext? validationContext = null)
+                ProcessExecutionService? ProcessExecutionService = null)
             {
                 return new LocalLibraryGenerationService(
                     appSettings ?? CreateAppSettings(),
                     logger ?? CreateMockLogger().Object,
-                    ProcessExecutionService ?? CreateMockProcessExecutionService().Object,
-                    validationContext ?? CreateValidationContext());
+                    ProcessExecutionService ?? CreateMockProcessExecutionService().Object);
             }
 
             private string CreateUniqueTestDirectory(string baseName)
@@ -162,8 +160,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 new LocalLibraryGenerationService(
                     null!, 
                     fixture.CreateMockLogger().Object, 
-                    fixture.CreateMockProcessExecutionService().Object, 
-                    fixture.CreateValidationContext()));
+                    fixture.CreateMockProcessExecutionService().Object));
             
             Assert.That(ex!.ParamName, Is.EqualTo("appSettings"));
         }
@@ -177,8 +174,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 new LocalLibraryGenerationService(
                     fixture.CreateAppSettings(), 
                     null!, 
-                    fixture.CreateMockProcessExecutionService().Object, 
-                    fixture.CreateValidationContext()));
+                    fixture.CreateMockProcessExecutionService().Object));
             
             Assert.That(ex!.ParamName, Is.EqualTo("logger"));
         }
@@ -192,25 +188,9 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 new LocalLibraryGenerationService(
                     fixture.CreateAppSettings(), 
                     fixture.CreateMockLogger().Object, 
-                    null!, 
-                    fixture.CreateValidationContext()));
-            
-            Assert.That(ex!.ParamName, Is.EqualTo("processExecutionService"));
-        }
-
-        [Test]
-        public void Constructor_WithNullValidationContext_ShouldThrowArgumentNullException()
-        {
-            using var fixture = new TestEnvironmentFixture();
-            
-            var ex = Assert.Throws<ArgumentNullException>(() => 
-                new LocalLibraryGenerationService(
-                    fixture.CreateAppSettings(), 
-                    fixture.CreateMockLogger().Object, 
-                    fixture.CreateMockProcessExecutionService().Object, 
                     null!));
             
-            Assert.That(ex!.ParamName, Is.EqualTo("validationContext"));
+            Assert.That(ex!.ParamName, Is.EqualTo("processExecutionService"));
         }
 
         [Test]
@@ -226,8 +206,9 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var service = fixture.CreateService(
                 logger: mockLogger.Object,
                 ProcessExecutionService: mockProcessExecutionService.Object);
-
-            var result = await service.CompileTypeSpecAsync(CancellationToken.None);
+                
+            var validationContext = fixture.CreateValidationContext();
+            var result = await service.CompileTypeSpecAsync(validationContext, CancellationToken.None);
 
             Assert.That(result.IsSuccess, Is.True);
             // CompileTypeSpecAsync logs at Debug level and doesn't do global install
@@ -249,7 +230,8 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 logger: mockLogger.Object,
                 ProcessExecutionService: mockProcessExecutionService.Object);
 
-            var result = await service.CompileTypeSpecAsync(CancellationToken.None);
+            var validationContext = fixture.CreateValidationContext();
+            var result = await service.CompileTypeSpecAsync(validationContext, CancellationToken.None);
             
             Assert.That(result.IsFailure, Is.True);
             Assert.That(result.Exception, Is.Not.Null);
@@ -270,7 +252,8 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 logger: mockLogger.Object,
                 ProcessExecutionService: mockProcessExecutionService.Object);
 
-            var result = await service.CompileTypeSpecAsync(CancellationToken.None);
+            var validationContext = fixture.CreateValidationContext();
+            var result = await service.CompileTypeSpecAsync(validationContext, CancellationToken.None);
             
             Assert.That(result.IsFailure, Is.True);
             Assert.That(result.Exception, Is.Not.Null);
@@ -297,7 +280,8 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 logger: mockLogger.Object,
                 ProcessExecutionService: mockProcessExecutionService.Object);
 
-            var ex = Assert.ThrowsAsync<InvalidOperationException>(() => service.CompileTypeSpecAsync(CancellationToken.None));
+            var validationContext = fixture.CreateValidationContext();
+            var ex = Assert.ThrowsAsync<InvalidOperationException>(() => service.CompileTypeSpecAsync(validationContext, CancellationToken.None));
             
             Assert.That(ex!.Message, Is.EqualTo("Test exception"));
         }
@@ -324,7 +308,8 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 logger: mockLogger.Object,
                 ProcessExecutionService: mockProcessExecutionService.Object);
 
-            Assert.ThrowsAsync<OperationCanceledException>(() => service.CompileTypeSpecAsync(cts.Token));
+            var validationContext = fixture.CreateValidationContext();
+            Assert.ThrowsAsync<OperationCanceledException>(() => service.CompileTypeSpecAsync(validationContext, cts.Token));
         }
 
         [Test]
@@ -337,7 +322,8 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             var service = fixture.CreateService(ProcessExecutionService: mockProcessExecutionService.Object);
 
-            await service.CompileTypeSpecAsync(CancellationToken.None);
+            var validationContext = fixture.CreateValidationContext();
+            await service.CompileTypeSpecAsync(validationContext, CancellationToken.None);
 
             mockProcessExecutionService.Verify(x => x.ExecuteAsync(
                 "pwsh",
@@ -358,7 +344,8 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             var service = fixture.CreateService(ProcessExecutionService: mockProcessExecutionService.Object);
 
-            await service.CompileTypeSpecAsync(CancellationToken.None);
+            var validationContext = fixture.CreateValidationContext();
+            await service.CompileTypeSpecAsync(validationContext, CancellationToken.None);
 
             var expectedTspOutputPath = Path.Combine(fixture.SdkOutputDir);
             var expectedCompileArgs = $"-Command \"npx tsp compile . --emit @typespec/http-client-csharp --option '@typespec/http-client-csharp.emitter-output-dir={expectedTspOutputPath}'\"";
@@ -381,7 +368,8 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             var service = fixture.CreateService(ProcessExecutionService: mockProcessExecutionService.Object);
 
-            await service.CompileTypeSpecAsync(CancellationToken.None);
+            var validationContext = fixture.CreateValidationContext();
+            await service.CompileTypeSpecAsync(validationContext, CancellationToken.None);
 
             mockProcessExecutionService.Verify(x => x.ExecuteAsync(
                 "pwsh",
@@ -402,7 +390,8 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             var service = fixture.CreateService(ProcessExecutionService: mockProcessExecutionService.Object);
 
-            await service.CompileTypeSpecAsync(CancellationToken.None);
+            var validationContext = fixture.CreateValidationContext();
+            await service.CompileTypeSpecAsync(validationContext, CancellationToken.None);
 
             var expectedTspOutputPath = Path.Combine(fixture.SdkOutputDir);
             mockProcessExecutionService.Verify(x => x.ExecuteAsync(
@@ -419,9 +408,9 @@ namespace Azure.Tools.GeneratorAgent.Tests
             using var customFixture = new TestEnvironmentFixture();
 
             var mockProcessExecutionService = customFixture.CreateMockProcessExecutionService();
-            
+
             SetupSuccessfulGlobalInstall(mockProcessExecutionService, customFixture);
-            
+
             var expectedTspOutputPath = Path.Combine(customFixture.SdkOutputDir);
             var expectedCompileArgs = $"-Command \"npx tsp compile . --emit @typespec/http-client-csharp --option '@typespec/http-client-csharp.emitter-output-dir={expectedTspOutputPath}'\"";
 
@@ -435,7 +424,8 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             var service = customFixture.CreateService(ProcessExecutionService: mockProcessExecutionService.Object);
 
-            await service.CompileTypeSpecAsync(CancellationToken.None);
+            var validationContext = customFixture.CreateValidationContext();
+            await service.CompileTypeSpecAsync(validationContext, CancellationToken.None);
 
             // Test passes if no exception is thrown
         }
@@ -462,8 +452,10 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var service = fixture.CreateService(
                 logger: mockLogger.Object,
                 ProcessExecutionService: mockProcessExecutionService.Object);
+            
+            var validationContext = fixture.CreateValidationContext();
 
-            TimeoutException caughtException = Assert.ThrowsAsync<TimeoutException>(() => service.CompileTypeSpecAsync(CancellationToken.None))!;
+            TimeoutException caughtException = Assert.ThrowsAsync<TimeoutException>(() => service.CompileTypeSpecAsync(validationContext, CancellationToken.None))!;
             Assert.That(caughtException.Message, Does.Contain("Compile timeout"));
         }
 
@@ -492,7 +484,9 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 logger: mockLogger.Object,
                 ProcessExecutionService: mockProcessExecutionService.Object);
 
-            TimeoutException caughtException = Assert.ThrowsAsync<TimeoutException>(() => service.CompileTypeSpecAsync(CancellationToken.None))!;
+            var validationContext = fixture.CreateValidationContext();
+
+            TimeoutException caughtException = Assert.ThrowsAsync<TimeoutException>(() => service.CompileTypeSpecAsync(validationContext, CancellationToken.None))!;
             Assert.That(caughtException.Message, Does.Contain("Compile timeout"));
         }
 
@@ -510,7 +504,8 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 logger: mockLogger.Object,
                 ProcessExecutionService: mockProcessExecutionService.Object);
 
-            await service.CompileTypeSpecAsync(CancellationToken.None);
+            var validationContext = fixture.CreateValidationContext();
+            await service.CompileTypeSpecAsync(validationContext, CancellationToken.None);
 
             VerifyLogMessage(mockLogger, LogLevel.Debug, "Compiling TypeSpec project");
         }
@@ -529,8 +524,9 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 logger: mockLogger.Object,
                 ProcessExecutionService: mockProcessExecutionService.Object);
 
-            var result = await service.CompileTypeSpecAsync(CancellationToken.None);
-            
+            var validationContext = fixture.CreateValidationContext();
+            var result = await service.CompileTypeSpecAsync(validationContext, CancellationToken.None);
+
             Assert.That(result.IsFailure, Is.True);
             Assert.That(result.Exception, Is.Not.Null);
         }
@@ -549,7 +545,8 @@ namespace Azure.Tools.GeneratorAgent.Tests
                 logger: mockLogger.Object,
                 ProcessExecutionService: mockProcessExecutionService.Object);
 
-            await service.CompileTypeSpecAsync(CancellationToken.None);
+            var validationContext = fixture.CreateValidationContext();
+            await service.CompileTypeSpecAsync(validationContext,CancellationToken.None);
 
             mockProcessExecutionService.Verify(x => x.ExecuteAsync(
                 It.IsAny<string>(),

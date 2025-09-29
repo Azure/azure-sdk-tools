@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@microsoft/api-extractor-model": "^7.29.8",
+    "command-line-args": "^6.0.1",
     "js-tokens": "^9.0.0"
   },
   "files": [
@@ -18,6 +19,7 @@
   "bin": "bin/ts-genapi.cjs",
   "devDependencies": {
     "@eslint/js": "^9.10.0",
+    "@types/command-line-args": "^5.2.3",
     "@types/eslint__js": "^8.42.3",
     "@types/node": "^18.0.0",
     "eslint": "^9.10.0",

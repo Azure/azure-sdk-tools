@@ -1,6 +1,7 @@
 import { ApiModel } from "@microsoft/api-extractor-model";
 import { readFile, writeFile } from "node:fs/promises";
 import { generateApiView } from "./generate";
+import commandLineArgs from "command-line-args";
 
 function getPackageVersion(fileName: string) {
   const match = fileName.match(/.*_(?<version>.*)\.api\.json/);
@@ -26,13 +27,43 @@ async function loadApiJson(fileName: string) {
 }
 
 async function main() {
-  if (process.argv.length < 4) {
-    console.log("Please run this tool with proper input");
-    console.log("ts-genapi <Path to api-extractor JSON output> <Path to apiviewFile>");
+  const optionDefinitions = [
+    { name: "input", type: String },
+    { name: "output", type: String },
+    { name: "metadata-file", type: String },
+    { name: "help", type: Boolean, alias: "h" },
+  ];
+
+  const options = commandLineArgs(optionDefinitions);
+
+  if (options.help) {
+    console.log("Usage:");
+    console.log(
+      "  ts-genapi --input <path-to-api-extractor-json> --output <path-to-output-json> [--metadata-file <path-to-metadata>]",
+    );
+    console.log("");
+    console.log("Options:");
+    console.log("  --input          Path to api-extractor JSON output");
+    console.log("  --output         Path to output JSON file");
+    console.log("  --metadata-file  Path to metadata file (optional)");
+    console.log("  --help, -h       Show this help message");
+    process.exit(0);
+  }
+
+  if (!options.input || !options.output) {
+    console.error("Error: Both --input and --output are required");
+    console.log("");
+    console.log("Usage:");
+    console.log(
+      "  ts-genapi --input <path-to-api-extractor-json> --output <path-to-output-json> [--metadata-file <path-to-metadata>]",
+    );
+    console.log("");
+    console.log("For more information, run: ts-genapi --help");
     process.exit(1);
   }
+
   const { Name, PackageName, PackageVersion, dependencies, apiModel } = await loadApiJson(
-    process.argv[2],
+    options.input,
   );
 
   const result = JSON.stringify(
@@ -49,7 +80,7 @@ async function main() {
     }),
   );
 
-  await writeFile(process.argv[3], result);
+  await writeFile(options.output, result);
 }
 
 main().catch(console.error);

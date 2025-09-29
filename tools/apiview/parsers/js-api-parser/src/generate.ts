@@ -179,7 +179,11 @@ function* getApiKindOrdering() {
  * @param apiModel {@link ApiModel} object loaded from the .api.json file
  * @param crossLanguageDefinitionIds Optional mapping of JS canonical references to cross-language IDs
  */
-function buildSubpathExports(reviewLines: ReviewLine[], apiModel: ApiModel, crossLanguageDefinitionIds?: Record<string, string>) {
+function buildSubpathExports(
+  reviewLines: ReviewLine[],
+  apiModel: ApiModel,
+  crossLanguageDefinitionIds?: Record<string, string>,
+) {
   for (const modelPackage of apiModel.packages) {
     for (const entryPoint of modelPackage.entryPoints) {
       const subpath = getSubPathName(entryPoint);
@@ -355,7 +359,11 @@ function buildMemberLineTokens(line: ReviewLine, item: ApiItem, deprecated: bool
  * @param item the Api to build review for
  * @param crossLanguageDefinitionIds Optional mapping of JS canonical references to cross-language IDs
  */
-function buildMember(reviewLines: ReviewLine[], item: ApiItem, crossLanguageDefinitionIds?: Record<string, string>) {
+function buildMember(
+  reviewLines: ReviewLine[],
+  item: ApiItem,
+  crossLanguageDefinitionIds: Record<string, string> = {},
+) {
   const itemId = item.canonicalReference.toString();
   const line: ReviewLine = {
     LineId: itemId,
@@ -364,7 +372,7 @@ function buildMember(reviewLines: ReviewLine[], item: ApiItem, crossLanguageDefi
   };
 
   // Set CrossLanguageId if mapping exists
-  if (crossLanguageDefinitionIds && crossLanguageDefinitionIds[itemId]) {
+  if (crossLanguageDefinitionIds[itemId]) {
     line.CrossLanguageId = crossLanguageDefinitionIds[itemId];
   }
 

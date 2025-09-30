@@ -282,7 +282,8 @@ export class ReviewPageComponent implements OnInit {
           this.updatePageTitle();
         },
         error: (error) => {
-          console.error('❌ loadReview() failed:', error);
+          this.loadFailed = true;
+          this.loadFailedMessage = "Failed to load review. Please refresh the page or try again later.";
         }
       });
   }

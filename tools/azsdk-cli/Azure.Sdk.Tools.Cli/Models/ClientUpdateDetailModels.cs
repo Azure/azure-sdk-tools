@@ -21,21 +21,13 @@ public class ApiChange
     [JsonPropertyName("detail")] public string Detail { get; set; } = string.Empty;
 }
 
-public class CustomizationImpact
+/// <summary>
+/// Represents a code patch to be applied to a file.
+/// </summary>
+public class CodePatch
 {
-    /// <summary>Customization source file impacted by at least one API change.</summary>
-    [JsonPropertyName("file")] public string File { get; set; } = string.Empty;
-    /// <summary>
-    /// List of reasons why the customization is impacted.
-    /// </summary>
-    [JsonPropertyName("reasons")] public List<string> Reasons { get; set; } = new();
-}
-
-public class PatchProposal
-{
-    /// <summary>Path to the customization file.</summary>
-    [JsonPropertyName("file")] public string File { get; set; } = string.Empty;
-
-    /// <summary>Proposed changes to be applied to the customization file.</summary>
-    [JsonPropertyName("diff")] public string Diff { get; set; } = string.Empty;
+    public string FilePath { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string OldContent { get; set; } = string.Empty;
+    public string NewContent { get; set; } = string.Empty;
 }

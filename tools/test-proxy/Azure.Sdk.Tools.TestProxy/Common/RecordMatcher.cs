@@ -29,12 +29,12 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// <summary>
         /// When true, message bodies are compared during matching. In addition, when true incoming request bodies will be sanitized.
         /// </summary>
-        public bool ShouldCompareBodies { get; set; }
+        public bool ShouldCompareBodies { get; private set; }
 
         /// <summary>
         /// When true, query parameter ordering is ignored during URI normalization.
         /// </summary>
-        public bool ShouldIgnoreQueryOrdering { get; set; }
+        public bool ShouldIgnoreQueryOrdering { get; private set; }
 
         public RecordMatcher(bool compareBodies = true, bool ignoreQueryOrdering = false)
         {

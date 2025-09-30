@@ -30,12 +30,14 @@ public class APIRevisionsControllerTests
     private readonly Mock<IBlobCodeFileRepository> _mockBlobCodeFileRepository;
     private readonly Mock<IAPIRevisionsManager> _mockApiRevisionsManager;
     private readonly Mock<ILogger<APIRevisionsTokenAuthController>> _mockLogger;
+    private readonly Mock<ICosmosReviewRepository> _mockCosmosReviewRepository;
 
     public APIRevisionsControllerTests()
     {
         _mockLogger = new Mock<ILogger<APIRevisionsTokenAuthController>>();
         _mockApiRevisionsManager = new Mock<IAPIRevisionsManager>();
         _mockBlobCodeFileRepository = new Mock<IBlobCodeFileRepository>();
+        _mockCosmosReviewRepository = new Mock<ICosmosReviewRepository>();
 
         Mock<IReviewManager> mockReviewManager = new();
         Mock<INotificationManager> mockNotificationManager = new();
@@ -47,6 +49,7 @@ public class APIRevisionsControllerTests
         _controller = new APIRevisionsTokenAuthController(
             _mockBlobCodeFileRepository.Object,
             _mockApiRevisionsManager.Object,
+            _mockCosmosReviewRepository.Object,
             _mockLogger.Object
         );
 
@@ -111,8 +114,8 @@ public class APIRevisionsControllerTests
         string reviewId = "review123";
         ActionResult<string> result = await _controller.GetAPIRevisionContentAsync(null, reviewId);
 
-        BadRequestObjectResult badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
-        Assert.Equal("apiRevisionId is required", badRequestResult.Value);
+        LeanJsonResult badRequestResult = Assert.IsType<LeanJsonResult>(result.Result);
+        Assert.Equal("The apiRevisionId parameter is required when there is not a selection type", badRequestResult.Value);
     }
 
     [Fact]
@@ -127,7 +130,7 @@ public class APIRevisionsControllerTests
 
         ActionResult<string> result = await _controller.GetAPIRevisionContentAsync(apiRevisionId);
 
-        NotFoundObjectResult notFoundResult = Assert.IsType<NotFoundObjectResult>(result.Result);
+        LeanJsonResult notFoundResult = Assert.IsType<LeanJsonResult>(result.Result);
         Assert.Equal("No API revision found for selection type: Undefined", notFoundResult.Value);
     }
 
@@ -208,7 +211,7 @@ public class APIRevisionsControllerTests
 
         ActionResult<string> result = await _controller.GetAPIRevisionContentAsync(null, reviewId, APIRevisionSelectionType.LatestApproved);
 
-        NotFoundObjectResult notFoundResult = Assert.IsType<NotFoundObjectResult>(result.Result);
+        LeanJsonResult notFoundResult = Assert.IsType<LeanJsonResult>(result.Result);
         Assert.Equal("No API revision found for selection type: LatestApproved", notFoundResult.Value);
     }
 
@@ -252,7 +255,7 @@ public class APIRevisionsControllerTests
             reviewId,
             APIRevisionSelectionType.Latest);
 
-        NotFoundObjectResult notFoundResult = Assert.IsType<NotFoundObjectResult>(result.Result);
+        LeanJsonResult notFoundResult = Assert.IsType<LeanJsonResult>(result.Result);
         Assert.Equal("No API revision found for selection type: Latest", notFoundResult.Value);
     }
 

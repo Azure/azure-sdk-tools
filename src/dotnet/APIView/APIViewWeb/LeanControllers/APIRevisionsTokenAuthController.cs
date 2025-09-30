@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 using ApiView;
@@ -22,14 +23,17 @@ public class APIRevisionsTokenAuthController : ControllerBase
 {
     private readonly IAPIRevisionsManager _apiRevisionsManager;
     private readonly IBlobCodeFileRepository _codeFileRepository;
+    private readonly ICosmosReviewRepository _cosmosReviewRepository;
     private readonly ILogger<APIRevisionsTokenAuthController> _logger;
 
     public APIRevisionsTokenAuthController(IBlobCodeFileRepository codeFileRepository,
         IAPIRevisionsManager apiRevisionsManager,
+        ICosmosReviewRepository cosmosReviewRepository,
         ILogger<APIRevisionsTokenAuthController> logger)
     {
         _apiRevisionsManager = apiRevisionsManager;
         _codeFileRepository = codeFileRepository;
+        _cosmosReviewRepository = cosmosReviewRepository;
         _logger = logger;
     }
 
@@ -68,28 +72,80 @@ public class APIRevisionsTokenAuthController : ControllerBase
         [FromQuery] APIRevisionSelectionType selectionType = APIRevisionSelectionType.Undefined,
         [FromQuery] APIRevisionContentReturnType contentReturnType = APIRevisionContentReturnType.Text)
     {
+        return await GetContentInternalAsync(apiRevisionId, reviewId, selectionType, contentReturnType);
+    }
+
+    /// <summary>
+    ///     Generate review tex or code file for a package by package name, language, and version
+    /// </summary>
+    /// <param name="packageName">The package name</param>
+    /// <param name="language">The programming language</param>
+    /// <param name="version">The package version (optional, defaults to latest)</param>
+    /// <param name="selectionType">How to select the API revision</param>
+    /// <param name="contentReturnType">The content return type. Default is text, but CodeFile can also be selected</param>
+    /// <returns>Plain text representation of the API review</returns>
+    [HttpGet("getPackageContent", Name = "GetPackageContent")]
+    public async Task<ActionResult> GetPackageContent(
+        [FromQuery, Required] string packageName,
+        [FromQuery, Required] string language,
+        [FromQuery] string version = "",
+        [FromQuery] APIRevisionSelectionType selectionType = APIRevisionSelectionType.Undefined,
+        [FromQuery] APIRevisionContentReturnType contentReturnType = APIRevisionContentReturnType.Text)
+    {
+        try
+        {
+            (ReviewListItemModel review, APIRevisionListItemModel revision, ActionResult errorResult) = await ControllerHelpers.GetReviewAndRevisionAsync(
+                _cosmosReviewRepository, _apiRevisionsManager, packageName, language, version);
+
+            if (errorResult != null)
+            {
+                return errorResult;
+            }
+
+            if (selectionType != APIRevisionSelectionType.Undefined)
+            {
+                return await GetContentInternalAsync(string.Empty, review.Id, selectionType, contentReturnType);
+            }
+
+            return await GetContentInternalAsync(revision.Id, string.Empty, selectionType, contentReturnType);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting package content for {PackageName} in {Language} version {Version}",
+                packageName, language, version);
+            return StatusCode(StatusCodes.Status500InternalServerError, "Failed to generate package content");
+        }
+    }
+
+    private async Task<ActionResult> GetContentInternalAsync(
+        string apiRevisionId,
+        string reviewId,
+        APIRevisionSelectionType selectionType,
+        APIRevisionContentReturnType contentReturnType)
+    {
         try
         {
             if (selectionType == APIRevisionSelectionType.Undefined && string.IsNullOrEmpty(apiRevisionId))
             {
-                return BadRequest("apiRevisionId is required");
+                return new LeanJsonResult("The apiRevisionId parameter is required when there is not a selection type", StatusCodes.Status400BadRequest);
             }
 
             if (selectionType != APIRevisionSelectionType.Undefined && string.IsNullOrEmpty(reviewId))
             {
-                return BadRequest($"reviewId is required when selectionType is {selectionType}");
+                return new LeanJsonResult($"The reviewId parameter is required when selectionType is {selectionType}", StatusCodes.Status400BadRequest);
             }
 
             APIRevisionListItemModel activeApiRevision = await GetApiRevisionBySelectionType(selectionType, reviewId, apiRevisionId);
             if (activeApiRevision == null || activeApiRevision.IsDeleted)
             {
-                return NotFound($"No API revision found for selection type: {selectionType}");
+                return new LeanJsonResult($"No API revision found for selection type: {selectionType}", StatusCodes.Status404NotFound);
             }
 
             if (IsValidateRevisionMatch(activeApiRevision, reviewId, apiRevisionId, selectionType))
             {
-                return BadRequest(
-                    $"Mismatch between reviewId and apiRevisionId: The API revision '{apiRevisionId}' does not belong to review '{reviewId}'. Ensure the revision ID corresponds to the specified review.");
+                return new LeanJsonResult(
+                    $"Mismatch between reviewId and apiRevisionId: The API revision '{apiRevisionId}' does not belong to review '{reviewId}'. Ensure the revision ID corresponds to the specified review.",
+                    StatusCodes.Status400BadRequest);
             }
 
             switch (contentReturnType)
@@ -98,16 +154,22 @@ public class APIRevisionsTokenAuthController : ControllerBase
                     string reviewText = await _apiRevisionsManager.GetApiRevisionText(activeApiRevision);
                     return new LeanJsonResult(reviewText, StatusCodes.Status200OK);
                 case APIRevisionContentReturnType.CodeFile:
+                    if (activeApiRevision.Files == null || !activeApiRevision.Files.Any())
+                    {
+                        return new LeanJsonResult($"No files found for API revision ID: {activeApiRevision.Id}", StatusCodes.Status404NotFound);
+                    }
+                    
                     CodeFile activeRevisionReviewCodeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(activeApiRevision.Id, activeApiRevision.Files[0].FileId);
                     if (activeRevisionReviewCodeFile == null)
                     {
-                        return NotFound($"No code file found for API revision ID: {activeApiRevision.Id}");
+                        return new LeanJsonResult($"No code file found for API revision ID: {activeApiRevision.Id}", StatusCodes.Status404NotFound);
                     }
 
                     return new LeanJsonResult(activeRevisionReviewCodeFile, StatusCodes.Status200OK);
                 default:
-                    return BadRequest(
-                        $"Unsupported contentReturnType: {contentReturnType}. Supported are {APIRevisionContentReturnType.Text} | {APIRevisionContentReturnType.CodeFile}");
+                    return new LeanJsonResult(
+                        $"Unsupported contentReturnType: {contentReturnType}. Supported filters are {APIRevisionContentReturnType.Text} and {APIRevisionContentReturnType.CodeFile}",
+                        StatusCodes.Status400BadRequest);
             }
         }
         catch (Exception ex)

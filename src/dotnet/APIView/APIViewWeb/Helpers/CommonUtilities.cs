@@ -4,6 +4,8 @@
 using System;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace APIViewWeb.Helpers
 {
@@ -72,6 +74,7 @@ namespace APIViewWeb.Helpers
     /// <summary>
     /// Represents the plane classification of a package
     /// </summary>
+    [JsonConverter(typeof(StringEnumConverter))]
     public enum PackageType
     {
         /// <summary>

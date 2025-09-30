@@ -22,7 +22,7 @@ export class Review {
   changeHistory: ChangeHistory[]
   subscribers: string[]
   namespaceReviewStatus: string
-  packageType: PackageType
+  packageType?: PackageType | null  // Optional - undefined or null if not yet classified
 
   constructor() {
     this.id = ''
@@ -35,7 +35,7 @@ export class Review {
     this.namespaceReviewStatus = 'NotStarted'
     this.changeHistory = []
     this.subscribers = []
-    this.packageType = PackageType.Unknown
+    // Don't set default PackageType - let it be undefined if not provided by backend
   }
 }
 

@@ -133,6 +133,8 @@ export class ReviewPageComponent implements OnInit {
     this.loadLatestSampleRevision(this.reviewId!);
   }
 
+
+
   createSideMenu() {
     const menu : MenuItem [] = [
       {
@@ -275,21 +277,24 @@ export class ReviewPageComponent implements OnInit {
     this.reviewsService.getReview(reviewId)
       .pipe(takeUntil(this.destroy$)).subscribe({
         next: (review: Review) => {
-          this.review = review;
+          this.updateReview(review);
           this.updateLoadingStateBasedOnReviewDeletionStatus();
           this.updatePageTitle();
-
-          // Check if PackageType needs to be classified
-          this.checkAndClassifyPackageType(review);
+        },
+        error: (error) => {
+          console.error('❌ loadReview() failed:', error);
         }
       });
+  }
+
+  updateReview(review: Review) {
+    this.review = review;
+    this.checkAndClassifyPackageType(review);
   }
 
   checkAndClassifyPackageType(review: Review) {
     // Check if PackageType is null, undefined, or Unknown
     if (!review.packageType || review.packageType === PackageType.Unknown) {
-      console.log(`PackageType is ${review.packageType || 'null'} for review ${review.id}, calling classification endpoint`);
-
       this.reviewsService.classifyPackageType(review.id)
         .pipe(takeUntil(this.destroy$)).subscribe({
           next: (updatedReview: Review) => {
@@ -572,7 +577,7 @@ export class ReviewPageComponent implements OnInit {
     if (value) {
       this.reviewsService.toggleReviewApproval(this.reviewId!, this.activeApiRevisionId!, true).pipe(take(1)).subscribe({
         next: (review: Review) => {
-          this.review = review;
+          this.updateReview(review);
         }
       });
     }
@@ -582,7 +587,7 @@ export class ReviewPageComponent implements OnInit {
     if (value) {
       this.reviewsService.requestNamespaceReview(this.reviewId!, this.activeApiRevisionId!).pipe(take(1)).subscribe({
         next: (review: Review) => {
-          this.review = review;
+          this.updateReview(review);
           // Reset loading state in the options component on success
           if (this.reviewPageOptionsComponent) {
             this.reviewPageOptionsComponent.resetNamespaceReviewLoadingState();
@@ -674,7 +679,7 @@ export class ReviewPageComponent implements OnInit {
     this.signalRService.onReviewUpdates().pipe(takeUntil(this.destroy$)).subscribe({
       next: (updatedReview: Review) => {
         if (updatedReview.id === this.reviewId) {
-          this.review = updatedReview;
+          this.updateReview(updatedReview);
         }
       }
     });

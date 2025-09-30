@@ -203,30 +203,31 @@ namespace APIViewWeb.LeanControllers
                     return NotFound($"Review with ID {reviewId} not found");
                 }
 
-                // Only classify if PackageType is not already defined (Unknown is the default)
-                if (review.PackageType != PackageType.Unknown)
+                // Only classify if PackageType is not already defined (null means not yet classified)
+                if (review.PackageType.HasValue)
                 {
-                    return Ok(review); // Already classified, return existing review
+                    return Ok(review); // Already classified (including Unknown), return existing review
                 }
 
                 PackageType packageType;
 
-                // Check if this is an SDK language
-                if (!LanguageHelper.IsSDKLanguage(review.Language))
-                {
-                    // If not SDK language, set as Unknown
-                    packageType = PackageType.Unknown;
-                }
-                // Special handling for TypeSpec
-                else if (review.Language == ApiViewConstants.TypeSpecLanguage)
+                // Special handling for TypeSpec (must come first since TypeSpec is not considered an SDK language)
+                if (review.Language == ApiViewConstants.TypeSpecLanguage)
                 {
                     review = await _reviewManager.ClassifyTypeSpecPackageAsync(reviewId);
                 }
-                else
+                // Check if this is an SDK language
+                else if (LanguageHelper.IsSDKLanguage(review.Language))
                 {
                     // Regular SDK language classification
                     packageType = PackageHelper.ClassifyPackageType(review.PackageName, review.Language);
                     review.PackageType = packageType;
+                    await _reviewManager.UpdateReviewAsync(review);
+                }
+                else
+                {
+                    // If not SDK language, set as Unknown and update database
+                    review.PackageType = PackageType.Unknown;
                     await _reviewManager.UpdateReviewAsync(review);
                 }
 

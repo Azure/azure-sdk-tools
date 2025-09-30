@@ -318,11 +318,11 @@ namespace APIViewWeb.Managers
                         // Single loop to check existing PackageType and classify if needed
                         foreach (var relatedReview in relatedReviews)
                         {
-                            // First check if this review already has a PackageType (not Unknown)
-                            if (relatedReview.PackageType != PackageType.Unknown)
+                            // First check if this review already has a PackageType (not null/Unknown)
+                            if (relatedReview.PackageType.HasValue && relatedReview.PackageType != PackageType.Unknown)
                             {
                                 // Found existing PackageType, use it and exit early
-                                if (typeSpecReview.PackageType == PackageType.Unknown)
+                                if (!typeSpecReview.PackageType.HasValue || typeSpecReview.PackageType == PackageType.Unknown)
                                 {
                                     typeSpecReview.PackageType = relatedReview.PackageType;
                                     await _reviewsRepository.UpsertReviewAsync(typeSpecReview);
@@ -345,9 +345,7 @@ namespace APIViewWeb.Managers
                                     await _reviewsRepository.UpsertReviewAsync(typeSpecReview);
                                     return typeSpecReview;
                                 }
-
                             }
-                        
                         }
                     }
                     catch (Exception ex)
@@ -355,7 +353,10 @@ namespace APIViewWeb.Managers
                         _telemetryClient.TrackException(ex);
                     }
                 }
-                typeSpecReview.PackageType =  PackageType.Unknown;
+                
+                // Leave PackageType as null (not classified) instead of setting to Unknown
+                // This allows future classification attempts to retry
+                await _reviewsRepository.UpsertReviewAsync(typeSpecReview);
                 return typeSpecReview;
             }
             catch (Exception ex)

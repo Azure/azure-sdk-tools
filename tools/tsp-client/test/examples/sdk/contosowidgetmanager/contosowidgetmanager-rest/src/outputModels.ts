@@ -1,8 +1,7 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
+// Licensed under the MIT License.
 
-import { Paged } from "@azure/core-paging";
-import { ErrorModel } from "@azure-rest/core-client";
+import type { ErrorModel } from "@azure-rest/core-client";
 
 /** A widget. */
 export interface WidgetSuiteOutput {
@@ -23,10 +22,14 @@ export interface FakedSharedModelOutput {
 }
 
 /** Provides status details for long running operations. */
-export interface ResourceOperationStatusOutput {
+export interface ResourceOperationStatusWidgetSuiteWidgetSuiteErrorOutput {
   /** The unique ID of the operation. */
   id: string;
-  /** The status of the operation */
+  /**
+   * The status of the operation
+   *
+   * Possible values: "NotStarted", "Running", "Succeeded", "Failed", "Canceled"
+   */
   status: OperationStateOutput;
   /** Error object that describes the error when status is "Failed". */
   error?: ErrorModel;
@@ -35,16 +38,26 @@ export interface ResourceOperationStatusOutput {
 }
 
 /** Provides status details for long running operations. */
-export interface OperationStatusOutput {
+export interface OperationStatusErrorOutput {
   /** The unique ID of the operation. */
   id: string;
-  /** The status of the operation */
+  /**
+   * The status of the operation
+   *
+   * Possible values: "NotStarted", "Running", "Succeeded", "Failed", "Canceled"
+   */
   status: OperationStateOutput;
   /** Error object that describes the error when status is "Failed". */
   error?: ErrorModel;
 }
 
+/** Paged collection of WidgetSuite items */
+export interface PagedWidgetSuiteOutput {
+  /** The WidgetSuite items on this page */
+  value: Array<WidgetSuiteOutput>;
+  /** The link to the next page of items */
+  nextLink?: string;
+}
+
 /** Alias for OperationStateOutput */
 export type OperationStateOutput = string;
-/** Paged collection of WidgetSuite items */
-export type PagedWidgetSuiteOutput = Paged<WidgetSuiteOutput>;

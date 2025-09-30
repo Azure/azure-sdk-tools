@@ -4,6 +4,7 @@ using Azure.Sdk.Tools.Cli.Tools;
 using Microsoft.Extensions.Logging.Abstractions;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models.Responses;
+using Moq;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.CustomizedCodeUpdateTool;
 
@@ -22,7 +23,7 @@ public class TspClientUpdateToolAutoTests
     {
         public string SupportedLanguage => "java";
         public Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath) => Task.FromResult(new List<ApiChange>());
-        public Task<string?> GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct) => Task.FromResult<string?>(null); // none
+        public string? GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct) => null; // none
         public Task<List<CustomizationImpact>> AnalyzeCustomizationImpactAsync(ClientUpdateSessionState session, string customizationRoot, IEnumerable<ApiChange> apiChanges, CancellationToken ct) => Task.FromResult(new List<CustomizationImpact>());
         public Task<List<PatchProposal>> ProposePatchesAsync(ClientUpdateSessionState session, IEnumerable<CustomizationImpact> impacts, CancellationToken ct) => Task.FromResult(new List<PatchProposal>());
         public Task<ValidationResult> ValidateAsync(ClientUpdateSessionState session, CancellationToken ct) => Task.FromResult(ValidationResult.CreateSuccess());
@@ -37,7 +38,7 @@ public class TspClientUpdateToolAutoTests
             => Task.FromResult(new List<ApiChange> {
                 new ApiChange { Kind = "MethodAdded", Symbol = "S1", Detail = "Added method S1" }
             });
-        public Task<string?> GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct) => Task.FromResult<string?>(null); // none
+        public string? GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct) => null; // none
         public Task<List<CustomizationImpact>> AnalyzeCustomizationImpactAsync(ClientUpdateSessionState session, string? customizationRoot, IEnumerable<ApiChange> apiChanges, CancellationToken ct)
             => Task.FromResult(new List<CustomizationImpact> { new CustomizationImpact { File = "Customization.java", Reasons = new List<string>{ "API change S1" } } });
         public Task<List<PatchProposal>> ProposePatchesAsync(ClientUpdateSessionState session, IEnumerable<CustomizationImpact> impacts, CancellationToken ct) => Task.FromResult(new List<PatchProposal>());
@@ -52,7 +53,8 @@ public class TspClientUpdateToolAutoTests
         var svc = new MockNoChangeLanguageService();
         var resolver = new SingleResolver(svc);
         var tsp = new MockTspHelper();
-        var tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), resolver, tsp);
+        var mockMicroagentHost = new Mock<Azure.Sdk.Tools.Cli.Microagents.IMicroagentHostService>();
+        var tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), resolver, tsp, mockMicroagentHost.Object);
         var pkg = CreateTempPackageDir();
         var run = await tool.UpdateAsync("0123456789abcdef0123456789abcdef01234567", packagePath: pkg, ct: CancellationToken.None);
         Assert.That(run.Session, Is.Not.Null, "Session should be created");
@@ -66,7 +68,8 @@ public class TspClientUpdateToolAutoTests
         var svc = new MockChangeLanguageService();
         var resolver = new SingleResolver(svc);
         var tsp = new MockTspHelper();
-        var tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), resolver, tsp);
+        var mockMicroagentHost = new Mock<Azure.Sdk.Tools.Cli.Microagents.IMicroagentHostService>();
+        var tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), resolver, tsp, mockMicroagentHost.Object);
         var pkg = CreateTempPackageDir();
         var first = await tool.UpdateAsync("89abcdef0123456789abcdef0123456789abcdef", packagePath: pkg, ct: CancellationToken.None);
         Assert.That(first.Session, Is.Not.Null);
@@ -77,9 +80,10 @@ public class TspClientUpdateToolAutoTests
     public async Task Validation_Failure_Then_AutoFixes_Applied()
     {
         var tsp = new MockTspHelper();
-        var tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), new SingleResolver(new MockNoChangeLanguageService()), tsp);
+        var mockMicroagentHost = new Mock<Azure.Sdk.Tools.Cli.Microagents.IMicroagentHostService>();
+        var tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), new SingleResolver(new MockNoChangeLanguageService()), tsp, mockMicroagentHost.Object);
         int calls = 0; var svc = new TestLanguageServiceFailThenFix(() => calls++);
-        tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), new SingleResolver(svc), tsp);
+        tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), new SingleResolver(svc), tsp, mockMicroagentHost.Object);
         var pkg = CreateTempPackageDir();
         var resp = await tool.UpdateAsync("fedcba9876543210fedcba9876543210fedcba98", packagePath: pkg, ct: CancellationToken.None);
         Assert.That(resp.Session, Is.Not.Null);
@@ -93,7 +97,7 @@ public class TspClientUpdateToolAutoTests
         public TestLanguageServiceFailThenFix(Func<int> next) { _next = next; }
         public string SupportedLanguage => "java";
         public Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath) => Task.FromResult(new List<ApiChange>());
-        public Task<string?> GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct) => Task.FromResult<string?>(null);
+        public string? GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct) => null;
         public Task<List<CustomizationImpact>> AnalyzeCustomizationImpactAsync(ClientUpdateSessionState session, string? customizationRoot, IEnumerable<ApiChange> apiChanges, CancellationToken ct) => Task.FromResult(new List<CustomizationImpact>());
         public Task<List<PatchProposal>> ProposePatchesAsync(ClientUpdateSessionState session, IEnumerable<CustomizationImpact> impacts, CancellationToken ct) => Task.FromResult(new List<PatchProposal>());
         public Task<ValidationResult> ValidateAsync(ClientUpdateSessionState session, CancellationToken ct)

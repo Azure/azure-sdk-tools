@@ -41,7 +41,7 @@ public abstract class ClientUpdateLanguageServiceBase : IClientUpdateLanguageSer
     /// <param name="generationRoot">Root path of the generated client currently under consideration.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>The absolute path to the customization root directory, or <c>null</c> if no customization area exists / is required.</returns>
-    public abstract Task<string?> GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct);
+    public abstract string? GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct);
     /// <summary>
     /// Analyzes how detected API changes impact existing user customizations.
     /// </summary>

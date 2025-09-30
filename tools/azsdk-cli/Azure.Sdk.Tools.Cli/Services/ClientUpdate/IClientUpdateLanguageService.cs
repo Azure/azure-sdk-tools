@@ -30,7 +30,7 @@ public interface IClientUpdateLanguageService
     /// <param name="generationRoot">Root folder of newly generated sources (e.g. a <c>src</c> directory).</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>Absolute path to customization root or <c>null</c> if none is found / applicable.</returns>
-    Task<string?> GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct);
+    string? GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct);
 
     /// <summary>
     /// Analyzes which customization files are impacted by the supplied API changes.

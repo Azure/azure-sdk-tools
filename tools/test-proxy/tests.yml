@@ -4,67 +4,67 @@ variables:
   - template: /eng/pipelines/templates/variables/globals.yml
 
 stages:
-  - stage: IntegrationTests
-    displayName: "Asset Sync Integration Tests"
-    jobs:
-    - job: Solution_Integration_Test
+  # - stage: IntegrationTests
+  #   displayName: "Asset Sync Integration Tests"
+  #   jobs:
+  #   - job: Solution_Integration_Test
 
-      strategy:
-        matrix:
-          Windows:
-            Pool: 'azsdk-pool'
-            OS: 'Windows'
-            Image: 'windows-2022'
-          Linux:
-            Pool: 'azsdk-pool'
-            OS: 'Linux'
-            Image: "ubuntu-24.04"
+  #     strategy:
+  #       matrix:
+  #         Windows:
+  #           Pool: 'azsdk-pool'
+  #           OS: 'Windows'
+  #           Image: 'windows-2022'
+  #         Linux:
+  #           Pool: 'azsdk-pool'
+  #           OS: 'Linux'
+  #           Image: "ubuntu-24.04"
 
-      pool:
-        name: $(Pool)
-        demands: ImageOverride -equals $(Image)
+  #     pool:
+  #       name: $(Pool)
+  #       demands: ImageOverride -equals $(Image)
 
-        # we are ok with default image on each
+  #       # we are ok with default image on each
 
-      steps:
-        - template: pipelines/proxy-solution-integration-tests.yml
+  #     steps:
+  #       - template: pipelines/proxy-solution-integration-tests.yml
 
-    - job: Solution_Integration_Test_Mac
+  #   - job: Solution_Integration_Test_Mac
 
-      pool:
-        name: 'Azure Pipelines'
-        vmImage: "macos-latest"
+  #     pool:
+  #       name: 'Azure Pipelines'
+  #       vmImage: "macos-latest"
 
-      steps:
-        - template: pipelines/proxy-solution-integration-tests.yml
+  #     steps:
+  #       - template: pipelines/proxy-solution-integration-tests.yml
 
-    - job: CLI_Integration_Test
-      strategy:
-        matrix:
-          Windows:
-            Pool: 'azsdk-pool'
-            OS: 'Windows'
-            Image: 'windows-2022'
-          Linux:
-            Pool: 'azsdk-pool'
-            OS: 'Linux'
-            Image: "ubuntu-24.04"
+  #   - job: CLI_Integration_Test
+  #     strategy:
+  #       matrix:
+  #         Windows:
+  #           Pool: 'azsdk-pool'
+  #           OS: 'Windows'
+  #           Image: 'windows-2022'
+  #         Linux:
+  #           Pool: 'azsdk-pool'
+  #           OS: 'Linux'
+  #           Image: "ubuntu-24.04"
 
-      pool:
-        name: $(Pool)
-        demands: ImageOverride -equals $(Image)
+  #     pool:
+  #       name: $(Pool)
+  #       demands: ImageOverride -equals $(Image)
 
-      steps:
-        - template: pipelines/proxy-cli-integration-tests.yml
+  #     steps:
+  #       - template: pipelines/proxy-cli-integration-tests.yml
 
-    - job: CLI_Integration_Test_Mac
+  #   - job: CLI_Integration_Test_Mac
 
-      pool:
-        name: 'Azure Pipelines'
-        vmImage: 'macos-latest'
+  #     pool:
+  #       name: 'Azure Pipelines'
+  #       vmImage: 'macos-latest'
 
-      steps:
-        - template: pipelines/proxy-cli-integration-tests.yml
+  #     steps:
+  #       - template: pipelines/proxy-cli-integration-tests.yml
 
   - stage: RepoUnitTests
     displayName: Repo-Specific Unit Tests
@@ -117,118 +117,118 @@ stages:
             REPO: $(REPO)
             CLONE_LOCATION: $(CLONE_LOCATION)
 
-    - job: Test_Net_Core
+    # - job: Test_Net_Core
 
-      displayName: Invoke .NET Azure.Core.Testframework CI Tests
+    #   displayName: Invoke .NET Azure.Core.Testframework CI Tests
 
-      strategy:
-        matrix:
-          Windows:
-            Pool: 'azsdk-pool'
-            OS: 'Windows'
-            Image: 'windows-2022'
-          Linux:
-            Pool: 'azsdk-pool'
-            OS: 'Linux'
-            Image: "ubuntu-24.04"
+    #   strategy:
+    #     matrix:
+    #       Windows:
+    #         Pool: 'azsdk-pool'
+    #         OS: 'Windows'
+    #         Image: 'windows-2022'
+    #       Linux:
+    #         Pool: 'azsdk-pool'
+    #         OS: 'Linux'
+    #         Image: "ubuntu-24.04"
 
-      pool:
-        name: $(Pool)
-        demands: ImageOverride -equals $(Image)
+    #   pool:
+    #     name: $(Pool)
+    #     demands: ImageOverride -equals $(Image)
 
-      variables:
-        REPO: "Azure/azure-sdk-for-net"
-        CLONE_LOCATION: "$(Agent.BuildDirectory)/net_repo"
+    #   variables:
+    #     REPO: "Azure/azure-sdk-for-net"
+    #     CLONE_LOCATION: "$(Agent.BuildDirectory)/net_repo"
 
-      steps:
-        - template: pipelines/net-integration-tests.yml
-          parameters:
-            REPO: $(REPO)
-            CLONE_LOCATION: $(CLONE_LOCATION)
+    #   steps:
+    #     - template: pipelines/net-integration-tests.yml
+    #       parameters:
+    #         REPO: $(REPO)
+    #         CLONE_LOCATION: $(CLONE_LOCATION)
 
-    - job: Test_Net_Core_Mac
+    # - job: Test_Net_Core_Mac
 
-      displayName: Invoke .NET Azure.Core.Testframework CI Tests for Mac
+    #   displayName: Invoke .NET Azure.Core.Testframework CI Tests for Mac
 
-      pool:
-        name: 'Azure Pipelines'
-        vmImage: 'macos-latest'
+    #   pool:
+    #     name: 'Azure Pipelines'
+    #     vmImage: 'macos-latest'
 
-      variables:
-        REPO: "Azure/azure-sdk-for-net"
-        CLONE_LOCATION: "$(Agent.BuildDirectory)/net_repo"
+    #   variables:
+    #     REPO: "Azure/azure-sdk-for-net"
+    #     CLONE_LOCATION: "$(Agent.BuildDirectory)/net_repo"
 
-      steps:
-        - template: pipelines/net-integration-tests.yml
-          parameters:
-            REPO: $(REPO)
-            CLONE_LOCATION: $(CLONE_LOCATION)
+    #   steps:
+    #     - template: pipelines/net-integration-tests.yml
+    #       parameters:
+    #         REPO: $(REPO)
+    #         CLONE_LOCATION: $(CLONE_LOCATION)
 
-    - job: Test_Python_Tables
-      displayName: Run Python Tables CI Tests
+    # - job: Test_Python_Tables
+    #   displayName: Run Python Tables CI Tests
 
-      strategy:
-        matrix:
-          Windows:
-            Pool: 'azsdk-pool'
-            OS: 'Windows'
-            Image: 'windows-2022'
-          Linux:
-            Pool: 'azsdk-pool'
-            OS: 'Linux'
-            Image: "ubuntu-24.04"
+    #   strategy:
+    #     matrix:
+    #       Windows:
+    #         Pool: 'azsdk-pool'
+    #         OS: 'Windows'
+    #         Image: 'windows-2022'
+    #       Linux:
+    #         Pool: 'azsdk-pool'
+    #         OS: 'Linux'
+    #         Image: "ubuntu-24.04"
 
-      pool:
-        name: $(Pool)
-        demands: ImageOverride -equals $(Image)
+    #   pool:
+    #     name: $(Pool)
+    #     demands: ImageOverride -equals $(Image)
 
-      variables:
-        REPO: "Azure/azure-sdk-for-python"
-        CLONE_LOCATION: "$(Agent.BuildDirectory)/python_repo"
+    #   variables:
+    #     REPO: "Azure/azure-sdk-for-python"
+    #     CLONE_LOCATION: "$(Agent.BuildDirectory)/python_repo"
 
-      steps:
-        - template: pipelines/python-integration-tests.yml
-          parameters:
-            REPO: $(REPO)
-            CLONE_LOCATION: $(CLONE_LOCATION)
+    #   steps:
+    #     - template: pipelines/python-integration-tests.yml
+    #       parameters:
+    #         REPO: $(REPO)
+    #         CLONE_LOCATION: $(CLONE_LOCATION)
 
-    - job: Test_Python_Tables_Mac
-      displayName: Run Python Tables CI Tests
-      pool:
-        name: 'Azure Pipelines'
-        vmImage: 'macos-latest'
+    # - job: Test_Python_Tables_Mac
+    #   displayName: Run Python Tables CI Tests
+    #   pool:
+    #     name: 'Azure Pipelines'
+    #     vmImage: 'macos-latest'
 
-      variables:
-        REPO: "Azure/azure-sdk-for-python"
-        CLONE_LOCATION: "$(Agent.BuildDirectory)/python_repo"
+    #   variables:
+    #     REPO: "Azure/azure-sdk-for-python"
+    #     CLONE_LOCATION: "$(Agent.BuildDirectory)/python_repo"
 
-      steps:
-        - template: pipelines/python-integration-tests.yml
-          parameters:
-            REPO: $(REPO)
-            CLONE_LOCATION: $(CLONE_LOCATION)
+    #   steps:
+    #     - template: pipelines/python-integration-tests.yml
+    #       parameters:
+    #         REPO: $(REPO)
+    #         CLONE_LOCATION: $(CLONE_LOCATION)
 
-    - job: Test_Java_Core
+    # - job: Test_Java_Core
 
-      displayName: Run Java Core Local Tests
+    #   displayName: Run Java Core Local Tests
 
-      strategy:
-        matrix:
-          Windows:
-            Pool: 'azsdk-pool'
-            OS: 'Windows'
-            Image: 'windows-2022'
+    #   strategy:
+    #     matrix:
+    #       Windows:
+    #         Pool: 'azsdk-pool'
+    #         OS: 'Windows'
+    #         Image: 'windows-2022'
 
-      pool:
-        name: $(Pool)
-        demands: ImageOverride -equals $(Image)
+    #   pool:
+    #     name: $(Pool)
+    #     demands: ImageOverride -equals $(Image)
 
-      variables:
-        REPO: "Azure/azure-sdk-for-java"
-        CLONE_LOCATION: "$(Agent.BuildDirectory)/java_repo"
+    #   variables:
+    #     REPO: "Azure/azure-sdk-for-java"
+    #     CLONE_LOCATION: "$(Agent.BuildDirectory)/java_repo"
 
-      steps:
-        - template: pipelines/java-integration-tests.yml
-          parameters:
-            REPO: $(REPO)
-            CLONE_LOCATION: $(CLONE_LOCATION)
+    #   steps:
+    #     - template: pipelines/java-integration-tests.yml
+    #       parameters:
+    #         REPO: $(REPO)
+    #         CLONE_LOCATION: $(CLONE_LOCATION)

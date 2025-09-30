@@ -186,5 +186,95 @@ namespace APIViewUnitTests
 
 
         #endregion
+
+        #region TypeSpec Scenario Tests
+
+        /// <summary>
+        /// Tests realistic TypeSpec scenario package names that would be classified via related reviews
+        /// </summary>
+        [Theory]
+        // Communication Service packages across languages - should all classify as Data plane
+        [InlineData("azure-communication-chat", "Python", PackageType.Data)]
+        [InlineData("azure-communication-sms", "Python", PackageType.Data)]
+        [InlineData("Azure.Communication.Chat", "C#", PackageType.Data)]
+        [InlineData("Azure.Communication.PhoneNumbers", "C#", PackageType.Data)]
+        [InlineData("com.azure:azure-communication-chat", "Java", PackageType.Data)]
+        [InlineData("com.azure:azure-communication-sms", "Java", PackageType.Data)]
+        [InlineData("@azure-rest/communication-chat", "JavaScript", PackageType.Data)]
+        [InlineData("@azure-rest/communication-sms", "JavaScript", PackageType.Data)]
+        [InlineData("sdk/communication/azcommunication", "Go", PackageType.Data)]
+        [InlineData("sdk/communication/azphone", "Go", PackageType.Data)]
+        
+        // Storage Service packages across languages - mixed Data and Management
+        [InlineData("azure-storage-blob", "Python", PackageType.Data)]
+        [InlineData("azure-mgmt-storage", "Python", PackageType.Management)]
+        [InlineData("Azure.Storage.Blobs", "C#", PackageType.Data)]
+        [InlineData("Azure.ResourceManager.Storage", "C#", PackageType.Management)]
+        [InlineData("com.azure:azure-storage-blob", "Java", PackageType.Data)]
+        [InlineData("azure-resourcemanager-storage", "Java", PackageType.Management)]
+        [InlineData("@azure-rest/storage-blob", "JavaScript", PackageType.Data)]
+        [InlineData("@azure/arm-storage", "JavaScript", PackageType.Management)]
+        [InlineData("sdk/storage/azblob", "Go", PackageType.Data)]
+        [InlineData("sdk/resourcemanager/storage", "Go", PackageType.Management)]
+        public void ClassifyPackageType_TypeSpecScenarios_ReturnsCorrectType(string packageName, string language, PackageType expected)
+        {
+            // Act
+            var result = PackageHelper.ClassifyPackageType(packageName, language);
+
+            // Assert
+            Assert.Equal(expected, result);
+        }
+
+        #endregion
+
+        #region Edge Cases and Boundary Tests
+
+        /// <summary>
+        /// Tests edge cases and boundary conditions for package classification
+        /// </summary>
+        [Theory]
+        // Case sensitivity tests
+        [InlineData("AZURE.STORAGE.BLOBS", "C#", PackageType.Unknown)] // Wrong case
+        [InlineData("azure.storage.blobs", "C#", PackageType.Unknown)] // Wrong case
+        [InlineData("Azure.Storage.Blobs", "c#", PackageType.Data)] // Language case shouldn't matter
+        [InlineData("Azure.Storage.Blobs", "C#", PackageType.Data)] // Correct case
+        
+        // Minimum/Maximum segments
+        [InlineData("azure", "Python", PackageType.Unknown)] // Too few segments for Python data plane
+        [InlineData("azure-storage", "Python", PackageType.Data)] // Minimum valid data plane
+        [InlineData("azure-identity-cache-persistent", "Python", PackageType.Data)] // Maximum valid data plane
+        [InlineData("azure-identity-cache-persistent-extra", "Python", PackageType.Unknown)] // Too many segments
+        
+        [InlineData("azure-mgmt", "Python", PackageType.Unknown)] // Too few segments for mgmt
+        [InlineData("azure-mgmt-storage", "Python", PackageType.Management)] // Minimum valid mgmt
+        [InlineData("azure-mgmt-compute-vm", "Python", PackageType.Management)] // Maximum valid mgmt
+        [InlineData("azure-mgmt-compute-vm-extra", "Python", PackageType.Unknown)] // Too many segments
+        
+        // JavaScript scoped package variations
+        [InlineData("@azure-rest/", "JavaScript", PackageType.Unknown)] // Empty service name
+        [InlineData("@azure-rest/storage-blob-extra-long-name", "JavaScript", PackageType.Data)] // Long service name
+        [InlineData("@azure/arm-", "JavaScript", PackageType.Unknown)] // Empty service name
+        [InlineData("@azure/arm-storage-very-long-service-name", "JavaScript", PackageType.Management)] // Long service name
+        
+        // Go path variations
+        [InlineData("sdk/", "Go", PackageType.Unknown)] // Incomplete path
+        [InlineData("sdk/storage/", "Go", PackageType.Unknown)] // Incomplete path
+        [InlineData("sdk/storage/azblob/v2", "Go", PackageType.Data)] // With version
+        [InlineData("github.com/Azure/azure-sdk-for-go/sdk/storage/azblob", "Go", PackageType.Data)] // Full import path
+        
+        // Special characters and numbers
+        [InlineData("Azure.Storage.Blobs.v12", "C#", PackageType.Data)] // With version
+        [InlineData("azure-storage-blob-12", "Python", PackageType.Data)] // With version number
+        [InlineData("com.azure:azure-storage-blob-batch", "Java", PackageType.Data)] // With extension
+        public void ClassifyPackageType_EdgeCases_ReturnsCorrectType(string packageName, string language, PackageType expected)
+        {
+            // Act
+            var result = PackageHelper.ClassifyPackageType(packageName, language);
+
+            // Assert
+            Assert.Equal(expected, result);
+        }
+
+        #endregion
     }
 }

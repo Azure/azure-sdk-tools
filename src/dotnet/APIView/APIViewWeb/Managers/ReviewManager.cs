@@ -350,7 +350,7 @@ namespace APIViewWeb.Managers
                     }
                     catch (Exception ex)
                     {
-                        _telemetryClient.TrackException(ex);
+                        _telemetryClient?.TrackException(ex);
                     }
                 }
                 
@@ -361,7 +361,7 @@ namespace APIViewWeb.Managers
             }
             catch (Exception ex)
             {
-                _telemetryClient.TrackException(ex);
+                _telemetryClient?.TrackException(ex);
                 return null;
             }
         }

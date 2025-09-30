@@ -76,7 +76,7 @@ public class APIRevisionsTokenAuthController : ControllerBase
     }
 
     /// <summary>
-    ///     Generate review tex or code file for a package by package name, language, and version
+    ///     Generate review text or code file for a package by package name, language, and version
     /// </summary>
     /// <param name="packageName">The package name</param>
     /// <param name="language">The programming language</param>

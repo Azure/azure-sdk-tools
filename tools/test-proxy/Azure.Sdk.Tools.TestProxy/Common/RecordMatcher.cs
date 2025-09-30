@@ -26,17 +26,24 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             "Content-Type"
         };
 
-        private bool _compareBodies;
-        private bool _ignoreQueryOrdering;
+        /// <summary>
+        /// When true, message bodies are compared during matching. In addition, when true incoming request bodies will be sanitized.
+        /// </summary>
+        public bool ShouldCompareBodies { get; private set; }
+
+        /// <summary>
+        /// When true, query parameter ordering is ignored during URI normalization.
+        /// </summary>
+        public bool ShouldIgnoreQueryOrdering { get; private set; }
 
         public RecordMatcher(bool compareBodies = true, bool ignoreQueryOrdering = false)
         {
-            _compareBodies = compareBodies;
-            _ignoreQueryOrdering = ignoreQueryOrdering;
+            ShouldCompareBodies = compareBodies;
+            ShouldIgnoreQueryOrdering = ignoreQueryOrdering;
         }
 
         /// <summary>
-        /// Headers that will be entirely ignored during matching. 
+        /// Headers that will be entirely ignored during matching.
         /// </summary>
         public HashSet<string> ExcludeHeaders = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -46,7 +53,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
 
         /// <summary>
-        /// Headers whose CONTENT will be ignored during matching, but whose PRESENCE will still be checked for on both request and record sides. 
+        /// Headers whose CONTENT will be ignored during matching, but whose PRESENCE will still be checked for on both request and record sides.
         /// </summary>
         public HashSet<string> IgnoredHeaders = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -137,7 +144,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
         public virtual int CompareBodies(byte[] requestBody, byte[] recordBody, string requestContentType, string recordContentType, Encoding encoding, StringBuilder descriptionBuilder = null)
         {
-            if (!_compareBodies)
+            if (!ShouldCompareBodies)
             {
                 return 0;
             }
@@ -252,7 +259,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             req.Query = "";
             NameValueCollection queryParams = HttpUtility.ParseQueryString(uri.Query);
 
-            if (_ignoreQueryOrdering)
+            if (ShouldIgnoreQueryOrdering)
             {
                 AddQueriesToUri(req, queryParams.AllKeys.OrderBy(x => x), queryParams);
             }

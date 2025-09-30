@@ -21,9 +21,10 @@ function tryFindVersionInFunctionBody(func: FunctionDeclaration): string | undef
 
 function getFunctionNameCaseInsensitive(sourceFile: SourceFile, functionName: string): string {
     const allFunctions = sourceFile.getFunctions();
+    const functionNameLower = functionName.toLowerCase();
     const matchingFunction = allFunctions.find(func => {
         const name = func.getName();
-        return name && name.toLowerCase() === functionName.toLowerCase();
+        return name && name.toLowerCase() === functionNameLower;
     });
     
     return matchingFunction?.getName() || functionName;

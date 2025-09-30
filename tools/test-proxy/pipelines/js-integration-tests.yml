@@ -25,7 +25,7 @@ steps:
       rootFolder: ${{ parameters.CLONE_LOCATION }}
 
   - pwsh: |
-      npm install -g pnpm
+      npm install -g pnpm@10.17.1
     workingDirectory: ${{ parameters.CLONE_LOCATION }}
     env:
       PROXY_MANUAL_START: "true"

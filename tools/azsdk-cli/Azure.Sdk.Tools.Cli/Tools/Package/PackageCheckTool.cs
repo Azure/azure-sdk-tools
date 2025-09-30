@@ -34,7 +34,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             parentCommand.AddOption(fixOption);
 
             // Create sub-commands for each check type
-            List<Command> subCommands = [];
             var checkTypeValues = Enum.GetValues<PackageCheckType>();
             foreach (var checkType in checkTypeValues)
             {
@@ -44,10 +43,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 subCommand.AddOption(fixOption);
 
                 parentCommand.AddCommand(subCommand);
-                subCommands.Add(subCommand);
             }
 
-            return [parentCommand, .. subCommands];
+            // Only return the parent command - subcommands are already added to it
+            return [parentCommand];
         }
 
         public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)

@@ -12,7 +12,6 @@
     <TypeScriptCompileBlocked>true</TypeScriptCompileBlocked>
     <SignAssembly>False</SignAssembly>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <RestoreConfigFile>nuget.config</RestoreConfigFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

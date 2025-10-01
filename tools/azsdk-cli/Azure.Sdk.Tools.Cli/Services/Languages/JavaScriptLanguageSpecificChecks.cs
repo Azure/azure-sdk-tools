@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
-using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Models;
 using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.Cli.Services;
@@ -38,6 +38,33 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
 
     public async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, CancellationToken cancellationToken = default)
     {
-        return await Task.FromResult(new CLICheckResponse());
+        try
+        {
+            _logger.LogInformation("Running 'pnpm run update-snippets' in {PackagePath}", packagePath);
+
+            var result = await _processHelper.Run(new(
+                    "pnpm",
+                    ["run", "update-snippets"],
+                    workingDirectory: packagePath
+                ),
+                cancellationToken
+            );
+
+            if (result.ExitCode != 0)
+            {
+                _logger.LogError("'pnpm run update-snippets' failed with exit code {ExitCode}", result.ExitCode);
+                return new CLICheckResponse(result)
+                {
+                    NextSteps = ["Review the error output and attempt to resolve the issue."]
+                };
+            }
+
+            return new CLICheckResponse(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating snippets for JavaScript project at: {PackagePath}", packagePath);
+            return new CLICheckResponse(1, "", $"Error updating snippets: {ex.Message}");
+        }
     }
 }

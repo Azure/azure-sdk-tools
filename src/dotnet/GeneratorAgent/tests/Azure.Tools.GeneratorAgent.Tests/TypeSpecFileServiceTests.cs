@@ -369,13 +369,9 @@ namespace Azure.Tools.GeneratorAgent.Tests
             
             var validationContext = CreateGitHubValidationContext(typeSpecPath, commitId, outputDir);
             
-            // With the new pattern, we pass GitHubFileService directly instead of using a factory
             var gitHubFileService = CreateGitHubFileService();
             var service = CreateService(gitHubFileService: gitHubFileService);
 
-            // Act & Assert
-            // This test verifies that GetTypeSpecFilesAsync fails when trying to access a GitHub path as local directory
-            // The service should throw DirectoryNotFoundException because the GitHub path doesn't exist as a local directory
             Assert.That(() => service.GetTypeSpecFilesAsync(validationContext, CancellationToken.None),
                 Throws.TypeOf<DirectoryNotFoundException>()
                 .With.Message.Contains("TypeSpec directory not found"));

@@ -2,7 +2,11 @@ using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Prompts;
+using Azure.Sdk.Tools.Cli.Microagents;
+using Azure.Sdk.Tools.Cli.Microagents.Tools;
 using Microsoft.Extensions.Logging;
+using System.ComponentModel;
+using System.Text.Json;
 
 namespace Azure.Sdk.Tools.Cli.Services;
 
@@ -70,14 +74,16 @@ public class LanguageChecks : ILanguageChecks
     private readonly IGitHelper _gitHelper;
     private readonly ILogger<LanguageChecks> _logger;
     private readonly ILanguageSpecificCheckResolver _languageSpecificCheckResolver;
+    private readonly IMicroagentHostService _microagentHostService;
 
-    public LanguageChecks(IProcessHelper processHelper, INpxHelper npxHelper, IGitHelper gitHelper, ILogger<LanguageChecks> logger, ILanguageSpecificCheckResolver languageSpecificCheckResolver)
+    public LanguageChecks(IProcessHelper processHelper, INpxHelper npxHelper, IGitHelper gitHelper, ILogger<LanguageChecks> logger, ILanguageSpecificCheckResolver languageSpecificCheckResolver, IMicroagentHostService microagentHostService)
     {
         _processHelper = processHelper;
         _npxHelper = npxHelper;
         _gitHelper = gitHelper;
         _logger = logger;
         _languageSpecificCheckResolver = languageSpecificCheckResolver;
+        _microagentHostService = microagentHostService;
     }
 
     /// <summary>
@@ -282,22 +288,19 @@ public class LanguageChecks : ILanguageChecks
             );
             var processResult = await _npxHelper.Run(npxOptions, ct: ct);
 
-            // If fix is requested and there are spelling issues, provide fix guidance
+            // If fix is requested and there are spelling issues, use Microagent to automatically apply fixes
             if (fixCheckErrors && processResult.ExitCode != 0 && !string.IsNullOrWhiteSpace(processResult.Output))
             {
-                // Get the spelling fix recommendation prompt from the prompts library
-                var prompt = ValidationPrompts.GetSpellingFixRecommendationPrompt(processResult.Output);
-                
-
-                var response = new CLICheckResponse(processResult.ExitCode, prompt);
-                response.NextSteps = new List<string>
+                try
                 {
-                    "Send the returned JSON prompt to your LLM to obtain fix/ignore recommendations.",
-                    "For 'ignore' recommendations, add the word to the repository's .vscode/cspell.json 'words' list.",
-                    "For 'fix' recommendations, apply the suggested replacements as a patch and review before committing."
-                };
-
-                return response;
+                    var fixResult = await RunSpellingFixMicroagent(packageRepoRoot, processResult.Output, ct);
+                    return new CLICheckResponse(0, fixResult.Summary);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error running spelling fix microagent");
+                    return new CLICheckResponse(processResult.ExitCode, processResult.Output, $"Spelling fix microagent failed: {ex.Message}");
+                }
             }
 
             return new CLICheckResponse(processResult);
@@ -312,5 +315,183 @@ public class LanguageChecks : ILanguageChecks
     public virtual string GetSDKPackagePath(string repo, string packagePath)
     {
         return Path.GetFileName(packagePath);
+    }
+
+    /// <summary>
+    /// Result of the spelling fix microagent operation.
+    /// </summary>
+    public record SpellingFixResult(
+        [property: Description("Summary of the operations performed")] string Summary,
+        [property: Description("Detailed information about the fixes applied")] string Details
+    );
+
+    /// <summary>
+    /// Input for reading file content tool.
+    /// </summary>
+    public record ReadFileToolInput(
+        [property: Description("Path to the file to read")] string FilePath
+    );
+
+    /// <summary>
+    /// Output for reading file content tool.
+    /// </summary>
+    public record ReadFileToolOutput(
+        [property: Description("Content of the file")] string Content
+    );
+
+    /// <summary>
+    /// Input for writing file content tool.
+    /// </summary>
+    public record WriteFileToolInput(
+        [property: Description("Path to the file to write")] string FilePath,
+        [property: Description("Content to write to the file")] string Content
+    );
+
+    /// <summary>
+    /// Output for writing file content tool.
+    /// </summary>
+    public record WriteFileToolOutput(
+        [property: Description("Success message")] string Message
+    );
+
+    /// <summary>
+    /// Input for updating cspell.json words list.
+    /// </summary>
+    public record UpdateCspellWordsInput(
+        [property: Description("List of words to add to the cspell.json words list")] List<string> Words
+    );
+
+    /// <summary>
+    /// Output for updating cspell.json words list.
+    /// </summary>
+    public record UpdateCspellWordsOutput(
+        [property: Description("Success message with number of words added")] string Message
+    );
+
+    /// <summary>
+    /// Runs a microagent to automatically fix spelling issues by either correcting typos or adding legitimate terms to cspell.json.
+    /// </summary>
+    /// <param name="repoRoot">Repository root path</param>
+    /// <param name="cspellOutput">Output from cspell lint command</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Result of the spelling fix operation</returns>
+    private async Task<SpellingFixResult> RunSpellingFixMicroagent(string repoRoot, string cspellOutput, CancellationToken ct)
+    {
+        var prompt = $"""
+            You are an automated spelling assistant for an Azure SDK repository. You will analyze cspell lint output and automatically fix spelling issues.
+
+            Your tasks:
+            1. Read the cspell output provided and analyze each reported spelling issue
+            2. For each issue, decide whether to:
+               - Fix the typo by correcting the spelling in the source file
+               - Add the word to cspell.json if it's a legitimate technical term, product name, or proper noun
+            3. Apply the fixes by reading files, making corrections, and writing them back
+            4. Update the cspell.json file to add legitimate words to the 'words' array. DO NOT remove any words from the cspell.json file, only add words on as needed.
+
+            Guidelines for decision making:
+            - Fix obvious typos in comments, documentation, and non-code text
+            - Add technical terms, API names, product names, acronyms, and proper nouns to cspell.json
+            - Preserve exact casing and formatting when making corrections
+
+            cspell lint output to analyze:
+            {cspellOutput}
+
+            Complete all fixes and return a summary of the operations performed.
+            """;
+
+        var agent = new Microagent<SpellingFixResult>
+        {
+            Instructions = prompt,
+            MaxToolCalls = 10,
+            Model = "gpt-4",
+            Tools = new IAgentTool[]
+            {
+                AgentTool<ReadFileToolInput, ReadFileToolOutput>.FromFunc(
+                    "read_file", 
+                    "Read the contents of a file", 
+                    async (input, ct) =>
+                    {
+                        var fullPath = Path.Combine(repoRoot, input.FilePath);
+                        if (!File.Exists(fullPath))
+                        {
+                            throw new FileNotFoundException($"File not found: {input.FilePath}");
+                        }
+                        var content = await File.ReadAllTextAsync(fullPath, ct);
+                        return new ReadFileToolOutput(content);
+                    }),
+
+                AgentTool<WriteFileToolInput, WriteFileToolOutput>.FromFunc(
+                    "write_file", 
+                    "Write content to a file", 
+                    async (input, ct) =>
+                    {
+                        var fullPath = Path.Combine(repoRoot, input.FilePath);
+                        var directory = Path.GetDirectoryName(fullPath);
+                        if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+                        {
+                            Directory.CreateDirectory(directory);
+                        }
+                        await File.WriteAllTextAsync(fullPath, input.Content, ct);
+                        return new WriteFileToolOutput($"Successfully wrote to {input.FilePath}");
+                    }),
+
+                AgentTool<UpdateCspellWordsInput, UpdateCspellWordsOutput>.FromFunc(
+                    "update_cspell_words", 
+                    "Add words to the cspell.json words list", 
+                    async (input, ct) =>
+                    {
+                        var cspellPath = Path.Combine(repoRoot, ".vscode", "cspell.json");
+                        if (!File.Exists(cspellPath))
+                        {
+                            throw new FileNotFoundException($"cspell.json not found at {cspellPath}");
+                        }
+
+                        var cspellContent = await File.ReadAllTextAsync(cspellPath, ct);
+                        var cspellConfig = JsonSerializer.Deserialize<JsonDocument>(cspellContent);
+                        
+                        // Parse as mutable dictionary
+                        var configDict = JsonSerializer.Deserialize<Dictionary<string, object>>(cspellContent);
+                        
+                        // Get existing words or create new array
+                        var existingWords = new List<string>();
+                        if (configDict != null && configDict.ContainsKey("words"))
+                        {
+                            var wordsElement = (JsonElement)configDict["words"];
+                            if (wordsElement.ValueKind == JsonValueKind.Array)
+                            {
+                                existingWords = wordsElement.EnumerateArray()
+                                    .Where(e => e.ValueKind == JsonValueKind.String)
+                                    .Select(e => e.GetString()!)
+                                    .ToList();
+                            }
+                        }
+
+                        // Add new words that don't already exist
+                        var wordsToAdd = input.Words.Where(w => !existingWords.Contains(w, StringComparer.OrdinalIgnoreCase)).ToList();
+                        existingWords.AddRange(wordsToAdd);
+                        existingWords.Sort(StringComparer.OrdinalIgnoreCase);
+
+                        // Update the config
+                        if (configDict == null) 
+                        {
+                            configDict = new Dictionary<string, object>();
+                        }
+                        configDict["words"] = existingWords;
+
+                        // Write back to file with formatting
+                        var options = new JsonSerializerOptions
+                        {
+                            WriteIndented = true,
+                            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                        };
+                        var updatedContent = JsonSerializer.Serialize(configDict, options);
+                        await File.WriteAllTextAsync(cspellPath, updatedContent, ct);
+
+                        return new UpdateCspellWordsOutput($"Successfully added {wordsToAdd.Count} words to cspell.json");
+                    })
+            }
+        };
+
+        return await _microagentHostService.RunAgentToCompletion(agent, ct);
     }
 }

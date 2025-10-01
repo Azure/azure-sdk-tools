@@ -4,6 +4,7 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Tools.Package;
 using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Microagents;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools
 {
@@ -17,6 +18,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         private Mock<ILogger<LanguageChecks>> _mockLanguageChecksLogger;
         private Mock<ILogger<PythonLanguageSpecificChecks>> _mockPythonLogger;
         private Mock<ILogger<LanguageSpecificCheckResolver>> _mockResolverLogger;
+        private Mock<IMicroagentHostService> _mockMicroagentHostService;
         private LanguageChecks _languageChecks;
         private PackageCheckTool _packageCheckTool;
         private string _testProjectPath;
@@ -31,13 +33,15 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             _mockLanguageChecksLogger = new Mock<ILogger<LanguageChecks>>();
             _mockPythonLogger = new Mock<ILogger<PythonLanguageSpecificChecks>>();
             _mockResolverLogger = new Mock<ILogger<LanguageSpecificCheckResolver>>();
+            _mockMicroagentHostService = new Mock<IMicroagentHostService>();
 
             // Create language-specific check implementations with mocked dependencies
             var pythonCheck = new PythonLanguageSpecificChecks(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _mockPythonLogger.Object);
 
             var languageChecks = new List<ILanguageSpecificChecks> { pythonCheck };
             var mockPowershellHelper = new Mock<IPowershellHelper>();
-            var resolver = new LanguageSpecificCheckResolver(languageChecks, _mockGitHelper.Object, mockPowershellHelper.Object, _mockResolverLogger.Object);            _languageChecks = new LanguageChecks(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _mockLanguageChecksLogger.Object, resolver);
+            var resolver = new LanguageSpecificCheckResolver(languageChecks, _mockGitHelper.Object, mockPowershellHelper.Object, _mockResolverLogger.Object);
+            _languageChecks = new LanguageChecks(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _mockLanguageChecksLogger.Object, resolver, _mockMicroagentHostService.Object);
             _packageCheckTool = new PackageCheckTool(_mockLogger.Object, _languageChecks);
 
             // Setup default mock responses
@@ -240,6 +244,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             _mockNpxHelper.Setup(x => x.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()))
                          .ReturnsAsync(cspellErrorResult);
 
+            // Setup mock microagent service to return a successful spelling fix result
+            var mockSpellingFixResult = new LanguageChecks.SpellingFixResult(
+                "Successfully fixed 4 spelling errors and added 0 words to cspell.json",
+                "Fixed 'contians' to 'contains', 'obvioius' to 'obvious', 'speling' to 'spelling', 'erors' to 'errors' in test_fix.md"
+            );
+            _mockMicroagentHostService.Setup(x => x.RunAgentToCompletion(It.IsAny<Microagent<LanguageChecks.SpellingFixResult>>(), It.IsAny<CancellationToken>()))
+                                     .ReturnsAsync(mockSpellingFixResult);
+
             try
             {
                 // Act - Test both regular cspell check and with fix enabled
@@ -252,13 +264,14 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 Assert.IsNotNull(normalResult.CheckStatusDetails);
                 Assert.IsNotNull(fixResult.CheckStatusDetails);
                 
-                // Both should fail since there are spelling errors
+                // Normal result should fail since there are spelling errors
                 Assert.That(normalResult.ExitCode, Is.EqualTo(1));
-                Assert.That(fixResult.ExitCode, Is.EqualTo(1));
                 
-                // The fix result should have different next steps indicating LLM guidance
-                Assert.IsNotNull(fixResult.NextSteps);
-                Assert.IsNotEmpty(fixResult.NextSteps);
+                // Fix result should succeed since the microagent fixed the issues
+                Assert.That(fixResult.ExitCode, Is.EqualTo(0));
+                
+                // The fix result should contain details about what was fixed
+                Assert.That(fixResult.CheckStatusDetails, Does.Contain("Successfully fixed"));
             }
             finally
             {

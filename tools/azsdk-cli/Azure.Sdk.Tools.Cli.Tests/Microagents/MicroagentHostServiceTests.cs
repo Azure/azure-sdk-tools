@@ -157,4 +157,139 @@ internal class MicroagentHostServiceTests
             await microagentHostService.RunAgentToCompletion(microagent);
         });
     }
+
+    [Test]
+    public async Task RunAgentToCompletion_ValidateResult_Success()
+    {
+        // Arrange
+        var exitToolCall = ChatToolCall.CreateFunctionToolCall(
+            "fakeid",
+            "Exit",
+            BinaryData.FromString("""{"Result":"ValidResult"}""")
+        );
+
+        var chatCompletion = OpenAIChatModelFactory.ChatCompletion(role: ChatMessageRole.Assistant, toolCalls: [exitToolCall]);
+
+        var validationCallbackCalled = false;
+        var agentDefinition = new Microagent<string>
+        {
+            Instructions = "You are a helpful assistant.",
+            ValidateResult = async (result) =>
+            {
+                validationCallbackCalled = true;
+                Assert.That(result, Is.EqualTo("ValidResult"));
+                return new MicroagentValidationResult { Success = true };
+            }
+        };
+
+        chatClientMock.Setup(client => client.CompleteChatAsync(It.IsAny<IReadOnlyList<ChatMessage>>(), It.IsAny<ChatCompletionOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ClientResult.FromValue(chatCompletion, Mock.Of<PipelineResponse>()));
+
+        // Act
+        var result = await microagentHostService.RunAgentToCompletion(agentDefinition);
+
+        // Assert
+        Assert.That(result, Is.EqualTo("ValidResult"));
+        Assert.That(validationCallbackCalled, Is.True, "Validation callback should have been called");
+    }
+
+    [Test]
+    public async Task RunAgentToCompletion_ValidateResult_FailureThenSuccess()
+    {
+        // Arrange
+        var firstExitToolCall = ChatToolCall.CreateFunctionToolCall(
+            "fakeid1",
+            "Exit",
+            BinaryData.FromString("""{"Result":"InvalidResult"}""")
+        );
+
+        var secondExitToolCall = ChatToolCall.CreateFunctionToolCall(
+            "fakeid2",
+            "Exit",
+            BinaryData.FromString("""{"Result":"ValidResult"}""")
+        );
+
+        var validationCallCount = 0;
+        var agentDefinition = new Microagent<string>
+        {
+            Instructions = "You are a helpful assistant.",
+            ValidateResult = async (result) =>
+            {
+                validationCallCount++;
+                if (result == "InvalidResult")
+                {
+                    return new MicroagentValidationResult 
+                    { 
+                        Success = false, 
+                        Reason = "Result is invalid because it contains 'Invalid'" 
+                    };
+                }
+                return new MicroagentValidationResult { Success = true };
+            }
+        };
+
+        chatClientMock.SetupSequence(client => client.CompleteChatAsync(It.IsAny<IReadOnlyList<ChatMessage>>(), It.IsAny<ChatCompletionOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ClientResult.FromValue(OpenAIChatModelFactory.ChatCompletion(role: ChatMessageRole.Assistant, toolCalls: [firstExitToolCall]), Mock.Of<PipelineResponse>()))
+            .ReturnsAsync(ClientResult.FromValue(OpenAIChatModelFactory.ChatCompletion(role: ChatMessageRole.Assistant, toolCalls: [secondExitToolCall]), Mock.Of<PipelineResponse>()));
+
+        // Act
+        var result = await microagentHostService.RunAgentToCompletion(agentDefinition);
+
+        // Assert
+        Assert.That(result, Is.EqualTo("ValidResult"));
+        Assert.That(validationCallCount, Is.EqualTo(2), "Validation should have been called twice");
+    }
+
+    [Test]
+    public async Task RunAgentToCompletion_ValidateResult_FailureWithReason()
+    {
+        // Arrange
+        var firstExitToolCall = ChatToolCall.CreateFunctionToolCall(
+            "fakeid1",
+            "Exit",
+            BinaryData.FromString("""{"Result":"InvalidResult"}""")
+        );
+
+        var secondExitToolCall = ChatToolCall.CreateFunctionToolCall(
+            "fakeid2",
+            "Exit",
+            BinaryData.FromString("""{"Result":"CorrectedResult"}""")
+        );
+
+        var agentDefinition = new Microagent<string>
+        {
+            Instructions = "You are a helpful assistant.",
+            ValidateResult = async (result) =>
+            {
+                if (result == "InvalidResult")
+                {
+                    return new MicroagentValidationResult 
+                    { 
+                        Success = false, 
+                        Reason = "Custom validation error message" 
+                    };
+                }
+                return new MicroagentValidationResult { Success = true };
+            }
+        };
+
+        chatClientMock.SetupSequence(client => client.CompleteChatAsync(It.IsAny<IReadOnlyList<ChatMessage>>(), It.IsAny<ChatCompletionOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ClientResult.FromValue(OpenAIChatModelFactory.ChatCompletion(role: ChatMessageRole.Assistant, toolCalls: [firstExitToolCall]), Mock.Of<PipelineResponse>()))
+            .ReturnsAsync(ClientResult.FromValue(OpenAIChatModelFactory.ChatCompletion(role: ChatMessageRole.Assistant, toolCalls: [secondExitToolCall]), Mock.Of<PipelineResponse>()));
+
+        // Act
+        var result = await microagentHostService.RunAgentToCompletion(agentDefinition);
+
+        // Assert
+        Assert.That(result, Is.EqualTo("CorrectedResult"));
+
+        // Verify that the validation error was passed to the chat completion
+        chatClientMock.Verify(client => client.CompleteChatAsync(
+            It.Is<IReadOnlyList<ChatMessage>>(messages => 
+            messages.Any(m => m.Content.Any(c => 
+                c.Text != null && c.Text.Contains("Custom validation error message")))),
+            It.IsAny<ChatCompletionOptions>(), 
+            It.IsAny<CancellationToken>()), 
+            Times.Exactly(2));
+    }
 }

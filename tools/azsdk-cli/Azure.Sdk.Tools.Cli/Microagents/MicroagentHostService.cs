@@ -85,6 +85,18 @@ public class MicroagentHostService(AzureOpenAIClient openAI, ILogger<MicroagentH
                     throw new InvalidOperationException($"Exit tool did not return a valid result: {toolCall.FunctionArguments}");
                 }
 
+                if (agentDefinition.ValidateResult != null)
+                {
+                    var validation = await agentDefinition.ValidateResult(result.Result);
+                    if (!validation.Success)
+                    {
+                        var serializedReason = validation.Reason is string str ? str : System.Text.Json.JsonSerializer.Serialize(validation.Reason);
+                        logger.LogWarning("Agent returned a result that did not pass validation: {Reason}. Continuing the run.", serializedReason);
+                        conversationHistory.Add(ChatMessage.CreateToolMessage(toolCall.Id, $"The result you provided did not pass validation: {serializedReason}. Please try again."));
+                        continue;
+                    }
+                }
+
                 return result.Result;
             }
 

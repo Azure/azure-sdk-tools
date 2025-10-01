@@ -1,6 +1,6 @@
 # Release History
 
-## Version 0.3.23 (Unreleased)
+## Version 0.3.23 (2025-10-02)
 Fixed a bug where unexpanded **kwargs in docstring will show duplicate/incorrect kwargs in the API review function signature.
 Fixed a bug where string Literal types were not quoted.
 

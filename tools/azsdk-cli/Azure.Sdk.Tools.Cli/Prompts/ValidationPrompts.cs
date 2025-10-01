@@ -6,41 +6,39 @@ namespace Azure.Sdk.Tools.Cli.Prompts;
 public static class ValidationPrompts
 {
     /// <summary>
-    /// Prompt template for automated spelling fix recommendations using LLM analysis.
-    /// Analyzes cspell output to determine whether tokens should be fixed or added to dictionary.
-    /// Use {0} as placeholder for cspell output.
+    /// Prompt template for microagent-based automated spelling fixes.
+    /// This prompt guides a microagent to automatically fix spelling issues by either correcting typos or adding legitimate terms to cspell.json.
     /// </summary>
-    public const string SpellingFixRecommendationTemplate = """
-        You are an automated spelling helper. You will be provided with the output from cspell lint for a code repository.
-        For each reported token, decide whether it is a typo that should be corrected, or a legitimate technical/proper term that should be added to the cspell dictionary (the cspell.json 'words' list).
+    public const string MicroagentSpellingFixTemplate = """
+        You are an automated spelling assistant for an Azure SDK repository. Analyze cspell lint output and fix spelling issues.
 
-        Requirements:
-        1) Output ONLY valid JSON: an array of objects. Each object must contain the following fields:
-           - file: path to the file containing the token (relative to repository root)
-           - line: the line number where the token appears
-           - original: the original token as reported by cspell
-           - recommendation: an object with these fields:
-               * action: one of 'fix' or 'ignore' ('fix' means propose a replacement, 'ignore' means add to cspell.json words)
-               * replacement: (string) present only if action == 'fix' — the corrected token or replacement text
-               * justification: (string) a brief one-line justification for the recommendation
+        Tasks:
+        1. Analyze each reported spelling issue from the cspell output
+        2. For each issue, either:
+           - Fix the typo by correcting spelling in the source file
+           - Add legitimate technical terms/product names/proper nouns to cspell.json
+        3. Apply fixes by reading files, making corrections, and writing them back
+        4. Update cspell.json 'words' array with legitimate words (never remove existing words)
 
-        2) If you recommend 'ignore', ensure you explain why this word should be kept (e.g. product name, acronym, code identifier, or language-specific term).
-        3) Keep replacements minimal and preserve code formatting and casing.
+        Guidelines:
+        - Fix obvious typos in comments, documentation, and non-code text
+        - Add technical terms, API names, product names, acronyms to cspell.json
+        - Preserve exact casing and formatting
+
+        Return a summary of operations performed.
         """;
 
     /// <summary>
-    /// Gets the spelling fix recommendation prompt with the provided cspell output.
+    /// Gets the microagent spelling fix prompt with the provided cspell output.
     /// </summary>
     /// <param name="cspellOutput">The output from cspell lint command</param>
-    /// <returns>Formatted prompt ready for LLM consumption</returns>
-    public static string GetSpellingFixRecommendationPrompt(string cspellOutput)
+    /// <returns>Formatted prompt ready for microagent consumption</returns>
+    public static string GetMicroagentSpellingFixPrompt(string cspellOutput)
     {
-        return SpellingFixRecommendationTemplate + $"""
+        return MicroagentSpellingFixTemplate + $"""
 
-        cspell lint output:
+        cspell lint output to analyze:
         {cspellOutput}
-
-        Return the JSON array now.
         """;
     }
 }

@@ -377,31 +377,9 @@ public class LanguageChecks : ILanguageChecks
     /// <returns>Result of the spelling fix operation</returns>
     private async Task<SpellingFixResult> RunSpellingFixMicroagent(string repoRoot, string cspellOutput, CancellationToken ct)
     {
-        var prompt = $"""
-            You are an automated spelling assistant for an Azure SDK repository. You will analyze cspell lint output and automatically fix spelling issues.
-
-            Your tasks:
-            1. Read the cspell output provided and analyze each reported spelling issue
-            2. For each issue, decide whether to:
-               - Fix the typo by correcting the spelling in the source file
-               - Add the word to cspell.json if it's a legitimate technical term, product name, or proper noun
-            3. Apply the fixes by reading files, making corrections, and writing them back
-            4. Update the cspell.json file to add legitimate words to the 'words' array. DO NOT remove any words from the cspell.json file, only add words on as needed.
-
-            Guidelines for decision making:
-            - Fix obvious typos in comments, documentation, and non-code text
-            - Add technical terms, API names, product names, acronyms, and proper nouns to cspell.json
-            - Preserve exact casing and formatting when making corrections
-
-            cspell lint output to analyze:
-            {cspellOutput}
-
-            Complete all fixes and return a summary of the operations performed.
-            """;
-
         var agent = new Microagent<SpellingFixResult>
         {
-            Instructions = prompt,
+            Instructions = ValidationPrompts.GetMicroagentSpellingFixPrompt(cspellOutput),
             MaxToolCalls = 10,
             Model = "gpt-4",
             Tools = new IAgentTool[]

@@ -6,7 +6,6 @@ using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Microagents.Tools;
 using Microsoft.Extensions.Logging;
 using System.ComponentModel;
-using System.Text.Json;
 
 namespace Azure.Sdk.Tools.Cli.Services;
 
@@ -299,7 +298,7 @@ public class LanguageChecks : ILanguageChecks
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error running spelling fix microagent");
-                    return new CLICheckResponse(processResult.ExitCode, processResult.Output, $"Spelling fix microagent failed: {ex.Message}");
+                    return new CLICheckResponse(processResult.ExitCode, processResult.Output, ex.Message);
                 }
             }
 
@@ -308,7 +307,7 @@ public class LanguageChecks : ILanguageChecks
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in CheckSpellingCommonAsync");
-            return new CLICheckResponse(1, "", $"Unhandled exception: {ex.Message}");
+            return new CLICheckResponse(1, "", ex.Message);
         }
     }
 
@@ -321,51 +320,7 @@ public class LanguageChecks : ILanguageChecks
     /// Result of the spelling fix microagent operation.
     /// </summary>
     public record SpellingFixResult(
-        [property: Description("Summary of the operations performed")] string Summary,
-        [property: Description("Detailed information about the fixes applied")] string Details
-    );
-
-    /// <summary>
-    /// Input for reading file content tool.
-    /// </summary>
-    public record ReadFileToolInput(
-        [property: Description("Path to the file to read")] string FilePath
-    );
-
-    /// <summary>
-    /// Output for reading file content tool.
-    /// </summary>
-    public record ReadFileToolOutput(
-        [property: Description("Content of the file")] string Content
-    );
-
-    /// <summary>
-    /// Input for writing file content tool.
-    /// </summary>
-    public record WriteFileToolInput(
-        [property: Description("Path to the file to write")] string FilePath,
-        [property: Description("Content to write to the file")] string Content
-    );
-
-    /// <summary>
-    /// Output for writing file content tool.
-    /// </summary>
-    public record WriteFileToolOutput(
-        [property: Description("Success message")] string Message
-    );
-
-    /// <summary>
-    /// Input for updating cspell.json words list.
-    /// </summary>
-    public record UpdateCspellWordsInput(
-        [property: Description("List of words to add to the cspell.json words list")] List<string> Words
-    );
-
-    /// <summary>
-    /// Output for updating cspell.json words list.
-    /// </summary>
-    public record UpdateCspellWordsOutput(
-        [property: Description("Success message with number of words added")] string Message
+        [property: Description("Summary of the operations performed")] string Summary
     );
 
     /// <summary>
@@ -384,89 +339,9 @@ public class LanguageChecks : ILanguageChecks
             Model = "gpt-4",
             Tools = new IAgentTool[]
             {
-                AgentTool<ReadFileToolInput, ReadFileToolOutput>.FromFunc(
-                    "read_file", 
-                    "Read the contents of a file", 
-                    async (input, ct) =>
-                    {
-                        var fullPath = Path.Combine(repoRoot, input.FilePath);
-                        if (!File.Exists(fullPath))
-                        {
-                            throw new FileNotFoundException($"File not found: {input.FilePath}");
-                        }
-                        var content = await File.ReadAllTextAsync(fullPath, ct);
-                        return new ReadFileToolOutput(content);
-                    }),
-
-                AgentTool<WriteFileToolInput, WriteFileToolOutput>.FromFunc(
-                    "write_file", 
-                    "Write content to a file", 
-                    async (input, ct) =>
-                    {
-                        var fullPath = Path.Combine(repoRoot, input.FilePath);
-                        var directory = Path.GetDirectoryName(fullPath);
-                        if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
-                        {
-                            Directory.CreateDirectory(directory);
-                        }
-                        await File.WriteAllTextAsync(fullPath, input.Content, ct);
-                        return new WriteFileToolOutput($"Successfully wrote to {input.FilePath}");
-                    }),
-
-                AgentTool<UpdateCspellWordsInput, UpdateCspellWordsOutput>.FromFunc(
-                    "update_cspell_words", 
-                    "Add words to the cspell.json words list", 
-                    async (input, ct) =>
-                    {
-                        var cspellPath = Path.Combine(repoRoot, ".vscode", "cspell.json");
-                        if (!File.Exists(cspellPath))
-                        {
-                            throw new FileNotFoundException($"cspell.json not found at {cspellPath}");
-                        }
-
-                        var cspellContent = await File.ReadAllTextAsync(cspellPath, ct);
-                        var cspellConfig = JsonSerializer.Deserialize<JsonDocument>(cspellContent);
-                        
-                        // Parse as mutable dictionary
-                        var configDict = JsonSerializer.Deserialize<Dictionary<string, object>>(cspellContent);
-                        
-                        // Get existing words or create new array
-                        var existingWords = new List<string>();
-                        if (configDict != null && configDict.ContainsKey("words"))
-                        {
-                            var wordsElement = (JsonElement)configDict["words"];
-                            if (wordsElement.ValueKind == JsonValueKind.Array)
-                            {
-                                existingWords = wordsElement.EnumerateArray()
-                                    .Where(e => e.ValueKind == JsonValueKind.String)
-                                    .Select(e => e.GetString()!)
-                                    .ToList();
-                            }
-                        }
-
-                        // Add new words that don't already exist
-                        var wordsToAdd = input.Words.Where(w => !existingWords.Contains(w, StringComparer.OrdinalIgnoreCase)).ToList();
-                        existingWords.AddRange(wordsToAdd);
-                        existingWords.Sort(StringComparer.OrdinalIgnoreCase);
-
-                        // Update the config
-                        if (configDict == null) 
-                        {
-                            configDict = new Dictionary<string, object>();
-                        }
-                        configDict["words"] = existingWords;
-
-                        // Write back to file with formatting
-                        var options = new JsonSerializerOptions
-                        {
-                            WriteIndented = true,
-                            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-                        };
-                        var updatedContent = JsonSerializer.Serialize(configDict, options);
-                        await File.WriteAllTextAsync(cspellPath, updatedContent, ct);
-
-                        return new UpdateCspellWordsOutput($"Successfully added {wordsToAdd.Count} words to cspell.json");
-                    })
+                new ReadFileTool(repoRoot),
+                new WriteFileTool(repoRoot),
+                new UpdateCspellWordsTool(repoRoot)
             }
         };
 

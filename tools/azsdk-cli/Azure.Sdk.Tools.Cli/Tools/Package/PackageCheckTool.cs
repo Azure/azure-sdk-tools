@@ -92,6 +92,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     PackageCheckType.Readme => await RunReadmeValidation(packagePath, ct),
                     PackageCheckType.Cspell => await RunSpellingValidation(packagePath, fixCheckErrors, ct),
                     PackageCheckType.Snippets => await RunSnippetUpdate(packagePath, ct),
+                    PackageCheckType.Linting => await RunLintCode(packagePath, ct),
+                    PackageCheckType.Format => await RunFormatCode(packagePath, ct),
                     _ => throw new ArgumentOutOfRangeException(
                         nameof(checkType),
                         checkType,
@@ -155,6 +157,25 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             if (snippetUpdateResult.ExitCode != 0)
             {
                 overallSuccess = false;
+                failedChecks.Add("Snippets");
+            }
+
+            // Run code linting
+            var lintCodeResult = await languageChecks.LintCodeAsync(packagePath, fix: false, ct);
+            results.Add(lintCodeResult);
+            if (lintCodeResult.ExitCode != 0)
+            {
+                overallSuccess = false;
+                failedChecks.Add("Linting");
+            }
+
+            // Run code formatting
+            var formatCodeResult = await languageChecks.FormatCodeAsync(packagePath, fix: false, ct);
+            results.Add(formatCodeResult);
+            if (formatCodeResult.ExitCode != 0)
+            {
+                overallSuccess = false;
+                failedChecks.Add("Format");
             }
 
             var message = overallSuccess ? "All checks completed successfully" : "Some checks failed";
@@ -282,5 +303,25 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             var result = await languageChecks.UpdateSnippetsAsync(packagePath, ct);
             return result;
         }
+
+        private async Task<CLICheckResponse> RunLintCode(string packagePath, CancellationToken ct = default)
+        {
+            logger.LogInformation("Running code linting");
+
+            var result = await languageChecks.LintCodeAsync(packagePath, fix: false, ct);
+            return result;
+        }
+
+        private async Task<CLICheckResponse> RunFormatCode(string packagePath, CancellationToken ct = default)
+        {
+            logger.LogInformation("Running code formatting");
+
+            var result = await languageChecks.FormatCodeAsync(packagePath, fix: false, ct);
+            return result;
+        }
+
+        // Back-compat overload for callers/tests that don't pass a CancellationToken
+        public Task<CLICheckResponse> RunPackageCheck(string packagePath, PackageCheckType checkType)
+            => RunPackageCheck(packagePath, checkType, ct: default);
     }
 }

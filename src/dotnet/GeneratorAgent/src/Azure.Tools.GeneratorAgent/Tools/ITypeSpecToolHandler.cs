@@ -1,3 +1,4 @@
+using Azure.Tools.GeneratorAgent.Configuration;
 using Azure.Tools.GeneratorAgent.Models;
 
 namespace Azure.Tools.GeneratorAgent.Tools
@@ -10,12 +11,12 @@ namespace Azure.Tools.GeneratorAgent.Tools
         /// <summary>
         /// Handles the list_typespec_files tool call
         /// </summary>
-        Task<ListTypeSpecFilesResponse> ListTypeSpecFilesAsync(CancellationToken cancellationToken = default);
+        Task<ListTypeSpecFilesResponse> ListTypeSpecFilesAsync(ValidationContext validationContext, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Gets the content of a specific TypeSpec file with metadata
         /// </summary>
-        Task<TypeSpecFileInfo> GetTypeSpecFileAsync(string filename, CancellationToken cancellationToken = default);
+        Task<TypeSpecFileInfo> GetTypeSpecFileAsync(string filename, ValidationContext validationContext, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Gets available version numbers for a file

@@ -161,12 +161,9 @@ namespace Azure.Tools.GeneratorAgent.Tests
         private static ToolExecutor CreateMockToolExecutor()
         {
             var mockToolHandler = Mock.Of<ITypeSpecToolHandler>();
-            var mockAppSettings = CreateMockAppSettings();
             var mockLogger = Mock.Of<ILogger<ToolExecutor>>();
             
-            Func<ValidationContext, ITypeSpecToolHandler> toolHandlerFactory = _ => mockToolHandler;
-            
-            return new ToolExecutor(toolHandlerFactory, mockLogger);
+            return new ToolExecutor(mockToolHandler, mockLogger);
         }
 
         private static AppSettings CreateMockAppSettings()

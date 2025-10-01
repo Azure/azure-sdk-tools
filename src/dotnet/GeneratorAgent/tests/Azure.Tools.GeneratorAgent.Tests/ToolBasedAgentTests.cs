@@ -276,9 +276,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var mockAppSettings = CreateMockAppSettings();
             var mockToolExecutorLogger = Mock.Of<ILogger<ToolExecutor>>();
             
-            Func<ValidationContext, ITypeSpecToolHandler> toolHandlerFactory = _ => mockToolHandler;
-            
-            var mockToolExecutor = new Mock<ToolExecutor>(toolHandlerFactory, mockToolExecutorLogger);
+            var mockToolExecutor = new Mock<ToolExecutor>(mockToolHandler, mockToolExecutorLogger);
             var mockLogger = Mock.Of<ILogger<ConversationManager>>();
             
             var mock = new Mock<ConversationManager>(

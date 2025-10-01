@@ -120,39 +120,11 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
             services.AddSingleton<TypeSpecPatchApplicator>();
 
             services.AddScoped<LocalLibraryGenerationService>();
-
             services.AddScoped<LibraryBuildService>();
 
-            services.AddSingleton<Func<ValidationContext, TypeSpecFileService>>(provider =>
-            {
-                return validationContext => new TypeSpecFileService(
-                    provider.GetRequiredService<ILogger<TypeSpecFileService>>(),
-                    validationContext,
-                    provider.GetRequiredService<Func<ValidationContext, GitHubFileService>>());
-            });
-
-            // Note: ITypeSpecToolHandler is registered as a factory below to use proper ValidationContext
-
-            services.AddSingleton<Func<ValidationContext, ITypeSpecToolHandler>>(provider =>
-            {
-                return validationContext =>
-                {
-                    var fileServiceFactory = provider.GetRequiredService<Func<ValidationContext, TypeSpecFileService>>();
-                    var fileService = fileServiceFactory(validationContext);
-                    var versionManager = provider.GetRequiredService<TypeSpecFileVersionManager>();
-                    
-
-                    return new TypeSpecToolHandler(
-                        fileService,
-                        versionManager,
-                        provider.GetRequiredService<ILogger<TypeSpecToolHandler>>());
-                };
-            });
-
-            services.AddSingleton<Func<ValidationContext, GitHubFileService>>(provider =>
-            {
-                return validationContext => provider.GetRequiredService<GitHubFileService>();
-            });
+            services.AddScoped<TypeSpecFileService>();
+            services.AddScoped<GitHubFileService>();
+            services.AddScoped<ITypeSpecToolHandler, TypeSpecToolHandler>();
 
             return services;
         }

@@ -29,11 +29,11 @@ namespace Azure.Tools.GeneratorAgent.Tools
             Logger = logger;
         }
 
-        public async Task<ListTypeSpecFilesResponse> ListTypeSpecFilesAsync(CancellationToken cancellationToken = default)
+        public async Task<ListTypeSpecFilesResponse> ListTypeSpecFilesAsync(ValidationContext validationContext, CancellationToken cancellationToken = default)
         {
             try
             {
-                var typeSpecFiles = await FileService.GetTypeSpecFilesAsync(cancellationToken).ConfigureAwait(false);
+                var typeSpecFiles = await FileService.GetTypeSpecFilesAsync(validationContext, cancellationToken).ConfigureAwait(false);
 
                 // Update version manager with current file contents
                 var fileInfoList = new List<TypeSpecFileInfo>();
@@ -58,12 +58,12 @@ namespace Azure.Tools.GeneratorAgent.Tools
             }
         }
 
-        public async Task<TypeSpecFileInfo> GetTypeSpecFileAsync(string filename, CancellationToken cancellationToken = default)
+        public async Task<TypeSpecFileInfo> GetTypeSpecFileAsync(string filename, ValidationContext validationContext, CancellationToken cancellationToken = default)
         {
             try
             {
                 // Get the TypeSpec files dictionary
-                var typeSpecFiles = await FileService.GetTypeSpecFilesAsync(cancellationToken).ConfigureAwait(false);
+                var typeSpecFiles = await FileService.GetTypeSpecFilesAsync(validationContext, cancellationToken).ConfigureAwait(false);
 
                 // Find the file by name (case-insensitive)
                 var fileEntry = typeSpecFiles

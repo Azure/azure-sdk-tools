@@ -118,17 +118,15 @@ namespace Azure.Tools.GeneratorAgent
 
             // Get services from DI container
             var appSettings = ServiceProvider.GetRequiredService<AppSettings>();
-            var fileServiceFactory = ServiceProvider.GetRequiredService<Func<ValidationContext, TypeSpecFileService>>();
+            var typeSpecFileService = ServiceProvider.GetRequiredService<TypeSpecFileService>();
             var toolBasedAgent = ServiceProvider.GetRequiredService<ToolBasedAgent>();
             var libraryBuildService = ServiceProvider.GetRequiredService<LibraryBuildService>();            
             var sdkGenerationService = ServiceProvider.GetRequiredService<LocalLibraryGenerationService>();
 
             // Download TypeSpec files if from GitHub (commitId provided)
-            var fileService = fileServiceFactory(validationContext);
-
             if (!string.IsNullOrWhiteSpace(validationContext.ValidatedCommitId))
             { 
-                await fileService.DownloadGitHubTypeSpecFilesAsync(cancellationToken).ConfigureAwait(false);
+                await typeSpecFileService.DownloadGitHubTypeSpecFilesAsync(validationContext, cancellationToken).ConfigureAwait(false);
                 Logger.LogInformation("GitHub TypeSpec files downloaded successfully");
             }
 

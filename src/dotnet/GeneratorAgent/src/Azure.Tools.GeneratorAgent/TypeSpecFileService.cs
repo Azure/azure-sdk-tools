@@ -12,9 +12,7 @@ namespace Azure.Tools.GeneratorAgent
     internal class TypeSpecFileService : IDisposable
     {
         private readonly ILogger<TypeSpecFileService> Logger;
-        private readonly ValidationContext ValidationContext;
-        private readonly Func<ValidationContext, GitHubFileService> GitHubServiceFactory;
-        private GitHubFileService? GitHubFileService;
+        private readonly GitHubFileService GitHubFileService;
         
         // Security: Track temp directories for proper cleanup
         private readonly List<string> TempDirectories = new();
@@ -22,23 +20,21 @@ namespace Azure.Tools.GeneratorAgent
 
         public TypeSpecFileService(
             ILogger<TypeSpecFileService> logger,
-            ValidationContext validationContext,
-            Func<ValidationContext, GitHubFileService> gitHubServiceFactory)
+            GitHubFileService gitHubFileService)
         {
             ArgumentNullException.ThrowIfNull(logger);
-            ArgumentNullException.ThrowIfNull(validationContext);
-            ArgumentNullException.ThrowIfNull(gitHubServiceFactory);
+            ArgumentNullException.ThrowIfNull(gitHubFileService);
 
             Logger = logger;
-            ValidationContext = validationContext;
-            GitHubServiceFactory = gitHubServiceFactory;
+            GitHubFileService = gitHubFileService;
         }
 
-        public async Task<Dictionary<string, string>> GetTypeSpecFilesAsync(CancellationToken cancellationToken = default)
+        public async Task<Dictionary<string, string>> GetTypeSpecFilesAsync(ValidationContext validationContext, CancellationToken cancellationToken = default)
         {
             ObjectDisposedException.ThrowIf(IsDisposed, this);
+            ArgumentNullException.ThrowIfNull(validationContext);
 
-            string? directoryToUse = ValidationContext.CurrentTypeSpecDir;
+            string? directoryToUse = validationContext.CurrentTypeSpecDir;
 
             if (string.IsNullOrWhiteSpace(directoryToUse))
             {
@@ -79,17 +75,16 @@ namespace Azure.Tools.GeneratorAgent
             }
         }
 
-        public async Task DownloadGitHubTypeSpecFilesAsync(CancellationToken cancellationToken)
+        public async Task DownloadGitHubTypeSpecFilesAsync(ValidationContext validationContext, CancellationToken cancellationToken)
         {
             ObjectDisposedException.ThrowIf(IsDisposed, this);
+            ArgumentNullException.ThrowIfNull(validationContext);
 
             Logger.LogInformation("Downloading TypeSpec files from GitHub repository");
 
-            GitHubFileService = GitHubServiceFactory(ValidationContext);
-
             var githubFiles = await GitHubFileService.GetTypeSpecFilesAsync(
-                ValidationContext.ValidatedCommitId,
-                ValidationContext.ValidatedTypeSpecDir,
+                validationContext.ValidatedCommitId,
+                validationContext.ValidatedTypeSpecDir,
                 cancellationToken).ConfigureAwait(false);
             Logger.LogInformation("Successfully downloaded {FileCount} TypeSpec files", githubFiles.Count);
             
@@ -99,8 +94,8 @@ namespace Azure.Tools.GeneratorAgent
             }
 
             // Create secure temporary directory for compilation
-            var tempDirectory = await WriteGithubFilesToTempDirectory(githubFiles, cancellationToken).ConfigureAwait(false);
-            ValidationContext.CurrentTypeSpecDirForCompilation = tempDirectory;
+            var tempDirectory = await WriteGithubFilesToTempDirectory(githubFiles, validationContext, cancellationToken).ConfigureAwait(false);
+            validationContext.CurrentTypeSpecDirForCompilation = tempDirectory;
 
             Logger.LogInformation("Successfully downloaded {Count} TypeSpec files from GitHub and created temp directory: {TempDir}", 
                 githubFiles.Count, tempDirectory);
@@ -112,10 +107,11 @@ namespace Azure.Tools.GeneratorAgent
         /// </summary>
         private async Task<string> WriteGithubFilesToTempDirectory(
             Dictionary<string, string> githubFiles, 
+            ValidationContext validationContext,
             CancellationToken cancellationToken)
         {
             // Create validated temp path
-            var tempPath = CreateSecureTempPath();
+            var tempPath = CreateSecureTempPath(validationContext);
 
             // Validate the constructed path
             var pathValidation = InputValidator.ValidateDirTraversal(tempPath, "temporary TypeSpec directory");
@@ -147,17 +143,17 @@ namespace Azure.Tools.GeneratorAgent
         /// Creates a secure temporary directory path with proper validation.
         /// Path format: {ValidatedSdkDir}\temp\typespec\{sanitized-spec-dir}\{timestamp}_{uniqueId}
         /// </summary>
-        private string CreateSecureTempPath()
+        private string CreateSecureTempPath(ValidationContext validationContext)
         {
             // Sanitize the TypeSpec directory name
-            string sanitizedSpecDir = SanitizeDirectoryNameSecurely(ValidationContext.ValidatedTypeSpecDir);
+            string sanitizedSpecDir = SanitizeDirectoryNameSecurely(validationContext.ValidatedTypeSpecDir);
             
             // Create unique timestamp + random identifier
             string timestamp = DateTimeOffset.UtcNow.ToString("yyyyMMdd_HHmmss_fff");
             string uniqueId = Path.GetRandomFileName()[..8]; // First 8 chars for uniqueness
             
             string tempPath = Path.Combine(
-                ValidationContext.ValidatedSdkDir,
+                validationContext.ValidatedSdkDir,
                 "temp",
                 "typespec",
                 sanitizedSpecDir,
@@ -261,11 +257,12 @@ namespace Azure.Tools.GeneratorAgent
         /// Updates a TypeSpec file in the current working directory with security validation.
         /// Used for iterative error fixing.
         /// </summary>
-        public async Task<Result<bool>> UpdateTypeSpecFileAsync(string fileName, string content, CancellationToken cancellationToken = default)
+        public async Task<Result<bool>> UpdateTypeSpecFileAsync(string fileName, string content, ValidationContext validationContext, CancellationToken cancellationToken = default)
         {
             ObjectDisposedException.ThrowIf(IsDisposed, this);
             ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
             ArgumentNullException.ThrowIfNull(content);
+            ArgumentNullException.ThrowIfNull(validationContext);
 
             // Validate filename
             Result<string> fileValidation = InputValidator.ValidateDirTraversal(fileName, "TypeSpec filename");
@@ -274,7 +271,7 @@ namespace Azure.Tools.GeneratorAgent
                 return Result<bool>.Failure(new SecurityException($"TypeSpec filename validation failed: {fileName}"));
             }
 
-            string currentDir = ValidationContext.CurrentTypeSpecDir;
+            string currentDir = validationContext.CurrentTypeSpecDir;
             string filePath = Path.Combine(currentDir, fileName);
             
             // Ensure file is within current directory

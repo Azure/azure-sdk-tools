@@ -38,7 +38,7 @@ public class Microagent<TResult> where TResult : notnull
     /// 
     /// If this callback is not provided, no validation is performed.
     /// </summary>
-    public Func<TResult, Task<MicroagentValidationResult>> ValidateResult { get; init; }
+    public Func<TResult, Task<MicroagentValidationResult>>? ValidateResult { get; init; }
 
     /// <summary>
     /// A list of tools that are made available to the agent. For a simple LLM call without tools, this can be left empty.

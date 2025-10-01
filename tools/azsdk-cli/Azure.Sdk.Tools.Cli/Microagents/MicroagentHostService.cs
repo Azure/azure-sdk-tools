@@ -12,7 +12,7 @@ public class MicroagentHostService(AzureOpenAIClient openAI, ILogger<MicroagentH
     private AzureOpenAIClient openAI = openAI;
     private ILogger logger = logger;
 
-    public async Task<TResult> RunAgentToCompletion<TResult>(Microagent<TResult> agentDefinition, CancellationToken ct = default)
+    public async Task<TResult> RunAgentToCompletion<TResult>(Microagent<TResult> agentDefinition, CancellationToken ct = default) where TResult : notnull
     {
         var tools = agentDefinition.Tools?.ToDictionary(t => t.Name) ?? new Dictionary<string, IAgentTool>();
         if (tools.ContainsKey(ExitToolName))
@@ -117,7 +117,7 @@ public class MicroagentHostService(AzureOpenAIClient openAI, ILogger<MicroagentH
     /// (OpenAI expects an object at the top level)
     /// </summary>
     /// <typeparam name="T">Type of the result</typeparam>
-    private class MicroagentResult<T>
+    private class MicroagentResult<T> where T : notnull
     {
         [Description("The result of the agent run. Output the result requested exactly, without additional padding, explanation, or code fences unless requested.")]
         public T Result { get; set; }

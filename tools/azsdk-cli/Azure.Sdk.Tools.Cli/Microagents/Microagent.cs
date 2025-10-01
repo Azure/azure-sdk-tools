@@ -8,7 +8,7 @@ namespace Azure.Sdk.Tools.Cli.Microagents;
 /// it calls the special sentinel "exit" tool with the result.
 /// </summary>
 /// <typeparam name="TResult">A type representing the schema of the result of the agent's execution</typeparam>
-public class Microagent<TResult>
+public class Microagent<TResult> where TResult : notnull
 {
     /// <summary>
     /// The instructions provided to the agent.

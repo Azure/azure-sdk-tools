@@ -1,24 +1,35 @@
 # Azure SDK Tools CLI Command Guidelines
 
 This document provides comprehensive guidelines for creating CLI commands in the `Azure.Sdk.Tools.Cli` project. All CLI commands must follow these established patterns and conventions to ensure consistency, maintainability, and proper integration with both CLI and MCP (Model Context Protocol) server functionality.
+Azure SDK developers and service team can use these CLI commands to generate, build, test and release Azure SDK.
+
+## Namespace Organization
+
+### Directory Structure
+
+```
+Tools/
+├── Package/          # Package-level operations 
+├── ReleasePlan/      # Release planning operations
+├── TypeSpec/         # TypeSpec operations
+```
 
 ## Command Hierarchy
 
 All CLI commands must follow a predefined top-level command hierarchy. Commands are organized into the following categories:
 
-
 ### 1. **package** - Package Operations
 
 **Namespace:** `Azure.Sdk.Tools.Cli.Tools.Package`  
 **Command Group:** `SharedCommandGroups.Package`  
-**Verb:** `package`  
+**Verb:** `package`  or `pkg`
 
 For operations at the SDK package level. The package group has further sub-grouping for better organization:
 
 #### Core Package Operations:
 
 - Build/compile SDK code
-- Generate source code
+- Generate SDKs
 - Release packages
 - Update version information
 - Validate packages
@@ -74,7 +85,6 @@ For release planning and SDK coordination:
 
 **Examples:**
 
-- `release-plan generate-sdk --typespec-project ./spec/storage --api-version 2023-01-01`
 - `release-plan get --workitem-id 456`
 - `release-plan link-sdk-pr --release-plan-id 123 --pr 789`
 
@@ -95,17 +105,5 @@ For TypeSpec-related operations:
 
 - `tsp convert --swagger-file ./swagger.json`
 - `tsp init --name MyService`
-- `tsp client generate --output-dir ./generated`
 - `tsp client update --config-path ./tspconfig.yaml`
 - `tsp validate --project-path ./typespec`
-
-## Namespace Organization
-
-### Directory Structure
-
-```
-Tools/
-├── Package/          # Package-level operations 
-├── ReleasePlan/      # Release planning operations
-├── TypeSpec/         # TypeSpec operations
-```

@@ -25,7 +25,7 @@ variables:
   - template: /eng/pipelines/templates/variables/image.yml
   - template: /eng/pipelines/templates/variables/globals.yml
   - name: VcpkgRelease
-    value: '2024.08.23'
+    value: '2025.09.17'
 
 resources:
   repositories:

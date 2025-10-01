@@ -131,7 +131,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var result = await agent.FixCodeAsync(null!);
 
             Assert.That(result.IsSuccess, Is.False);
-            Assert.That(result.Exception, Is.TypeOf<ArgumentException>());
+            Assert.That(result.Exception, Is.TypeOf<ArgumentNullException>());
         }
 
         [Test]
@@ -278,7 +278,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
             
             Func<ValidationContext, ITypeSpecToolHandler> toolHandlerFactory = _ => mockToolHandler;
             
-            var mockToolExecutor = new Mock<ToolExecutor>(toolHandlerFactory, mockAppSettings, mockToolExecutorLogger);
+            var mockToolExecutor = new Mock<ToolExecutor>(toolHandlerFactory, mockToolExecutorLogger);
             var mockLogger = Mock.Of<ILogger<ConversationManager>>();
             
             var mock = new Mock<ConversationManager>(

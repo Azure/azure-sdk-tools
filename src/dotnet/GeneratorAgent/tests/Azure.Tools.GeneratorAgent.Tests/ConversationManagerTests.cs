@@ -25,7 +25,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             Assert.That(manager, Is.Not.Null);
             Assert.That(manager.AgentId, Is.Null);
-            Assert.That(manager.ThreadId, Is.EqualTo(string.Empty));
+            Assert.That(manager.ThreadId, Is.Null);
         }
 
         [Test]
@@ -142,7 +142,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var manager = CreateConversationManager();
 
             Assert.That(manager.AgentId, Is.Null);
-            Assert.That(manager.ThreadId, Is.EqualTo(string.Empty));
+            Assert.That(manager.ThreadId, Is.Null);
         }
 
         private static ConversationManager CreateConversationManager(
@@ -166,7 +166,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
             
             Func<ValidationContext, ITypeSpecToolHandler> toolHandlerFactory = _ => mockToolHandler;
             
-            return new ToolExecutor(toolHandlerFactory, mockAppSettings, mockLogger);
+            return new ToolExecutor(toolHandlerFactory, mockLogger);
         }
 
         private static AppSettings CreateMockAppSettings()

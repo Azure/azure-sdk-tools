@@ -14,7 +14,7 @@ namespace Azure.Tools.GeneratorAgent.Agent
             PropertyNameCaseInsensitive = true,
             AllowTrailingCommas = true
         };
-        
+
         /// <summary>
         /// Parses the agent's error responses into a list of RuleError objects
         /// </summary>

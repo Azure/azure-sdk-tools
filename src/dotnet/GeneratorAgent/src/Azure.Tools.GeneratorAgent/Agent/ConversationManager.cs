@@ -13,6 +13,7 @@ internal class ConversationManager
     private readonly ToolExecutor ToolExecutor;
     private readonly AppSettings AppSettings;
     private readonly ILogger<ConversationManager> Logger;
+    private ValidationContext? ValidationContext;
     
     private string? _agentId;
     
@@ -25,7 +26,7 @@ internal class ConversationManager
             _agentId = value;
         }
     }
-    public string ThreadId { get; private set; }
+    public string? ThreadId { get; private set; }
 
     public ConversationManager(
         PersistentAgentsClient client,
@@ -37,7 +38,7 @@ internal class ConversationManager
         ToolExecutor = toolExecutor ?? throw new ArgumentNullException(nameof(toolExecutor));
         AppSettings = appSettings ?? throw new ArgumentNullException(nameof(appSettings));
         Logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        ThreadId = string.Empty; // Will be set when conversation starts
+        // ThreadId starts as null until conversation is started
     }
 
     /// <summary>
@@ -45,7 +46,7 @@ internal class ConversationManager
     /// </summary>
     public void SetValidationContext(ValidationContext validationContext)
     {
-        ToolExecutor.SetValidationContext(validationContext);
+        ValidationContext = validationContext;
     }
 
     /// <summary>
@@ -188,7 +189,7 @@ internal class ConversationManager
             var toolName = functionCall.Name;
             var arguments = functionCall.Arguments;
             
-            return await ToolExecutor.ExecuteToolCallAsync(toolName, arguments, cancellationToken);
+            return await ToolExecutor.ExecuteToolCallAsync(toolName, arguments, ValidationContext ?? throw new InvalidOperationException("ValidationContext has not been set"), cancellationToken);
         }
         
         Logger.LogWarning("Unknown tool call type: {Type}", toolCall.GetType().Name);
@@ -233,7 +234,7 @@ internal class ConversationManager
     {
         if (string.IsNullOrEmpty(ThreadId))
         {
-            Logger.LogDebug("No thread to delete - ThreadId is empty");
+            Logger.LogDebug("No thread to delete - ThreadId is null");
             return;
         }
 
@@ -241,7 +242,7 @@ internal class ConversationManager
         {
             await Client.Threads.DeleteThreadAsync(ThreadId, cancellationToken);
             Logger.LogInformation("Deleted conversation thread: {ThreadId}", ThreadId);
-            ThreadId = string.Empty;
+            ThreadId = null;
         }
         catch (Exception ex)
         {

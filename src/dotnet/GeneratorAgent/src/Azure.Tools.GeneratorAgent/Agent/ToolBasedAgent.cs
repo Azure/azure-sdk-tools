@@ -1,6 +1,7 @@
 using Azure.AI.Agents.Persistent;
 using Azure.Tools.ErrorAnalyzers;
 using Azure.Tools.GeneratorAgent.Configuration;
+using Azure.Tools.GeneratorAgent.Constants;
 using Microsoft.Extensions.Logging;
 
 namespace Azure.Tools.GeneratorAgent.Agent;
@@ -52,7 +53,7 @@ internal class ToolBasedAgent : IAsyncDisposable
         var toolDefinitions = new List<ToolDefinition>
         {
             new FunctionToolDefinition(
-                name: AppSettings.ListTypeSpecFilesTool,
+                name: ToolNames.ListTypeSpecFiles,
                 description: "Lists all TypeSpec files with metadata including version, line count, and SHA256",
                 parameters: BinaryData.FromObjectAsJson(new
                 {
@@ -62,7 +63,7 @@ internal class ToolBasedAgent : IAsyncDisposable
                 })
             ),
             new FunctionToolDefinition(
-                name: AppSettings.GetTypeSpecFileTool,
+                name: ToolNames.GetTypeSpecFile,
                 description: "Retrieves the content of a specific TypeSpec file with metadata",
                 parameters: BinaryData.FromObjectAsJson(new
                 {
@@ -119,13 +120,13 @@ internal class ToolBasedAgent : IAsyncDisposable
     {
         try
         {
-            if (fixes == null || fixes.Count == 0)
+            if (fixes?.Count == 0)
             {
                 Logger.LogWarning("No fixes provided to FixCodeAsync");
                 return Result<string>.Failure(new ArgumentException("No fixes provided"));
             }
 
-            Logger.LogInformation("Processing {FixCount} fixes with Agent", fixes.Count);
+            Logger.LogInformation("Processing {FixCount} fixes with Agent", fixes?.Count);
 
             // Create comprehensive prompt from fixes
             var batchPrompt = FormatPromptService.ConvertFixesToBatchPrompt(fixes);

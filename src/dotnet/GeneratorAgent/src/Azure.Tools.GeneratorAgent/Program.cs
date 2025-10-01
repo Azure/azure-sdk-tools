@@ -123,7 +123,6 @@ namespace Azure.Tools.GeneratorAgent
             var libraryBuildService = ServiceProvider.GetRequiredService<LibraryBuildService>();            
             var sdkGenerationService = ServiceProvider.GetRequiredService<LocalLibraryGenerationService>();
 
-            
             // Download TypeSpec files if from GitHub (commitId provided)
             var fileService = fileServiceFactory(validationContext);
 
@@ -212,8 +211,7 @@ namespace Azure.Tools.GeneratorAgent
                         Logger.LogError("Patch failed, stopping iterations");
                         break;
                     }
-
-
+                    
                     currentIteration += 1;
                 }
             }

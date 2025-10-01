@@ -14,6 +14,8 @@ namespace Azure.Tools.GeneratorAgent
         private static readonly Regex ErrorRegex = new(@"error\s+([A-Z]+\d+):\s*([^\[]+)", 
             RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.Compiled, TimeSpan.FromSeconds(1));
         
+        private static readonly List<Fix> EmptyFixList = new(0);
+        
         private readonly ToolBasedAgent ToolBasedAgent;
         private readonly ILogger<ErrorAnalysisService> Logger;
 
@@ -27,44 +29,33 @@ namespace Azure.Tools.GeneratorAgent
 
         /// <summary>
         /// Analyzes both compile and build results to generate a unified list of fixes.
+        /// Since compilation failure prevents build execution, only one result will contain errors.
         /// </summary>
         public async Task<Result<List<Fix>>> GenerateFixesFromResultsAsync(
             Result<object>? compileResult, 
             Result<object>? buildResult, 
             CancellationToken cancellationToken)
         {
-            var fixTasks = new List<Task<Result<IEnumerable<Fix>>>>();
-            
+            // Process compile result first (if compilation fails, build won't run)
             if (compileResult?.IsFailure == true && compileResult?.ProcessException?.Output != null)
             {
-                fixTasks.Add(GenerateFixesFromResultAsync(compileResult, cancellationToken));
+                var compileFixResult = await GenerateFixesFromResultAsync(compileResult, cancellationToken);
+                return compileFixResult.IsSuccess 
+                    ? Result<List<Fix>>.Success(compileFixResult.Value!.ToList())
+                    : Result<List<Fix>>.Failure(compileFixResult.Exception!);
             }
 
+            // Process build result (only if compile succeeded)
             if (buildResult?.IsFailure == true && buildResult?.ProcessException?.Output != null)
             {
-                fixTasks.Add(GenerateFixesFromResultAsync(buildResult, cancellationToken));
+                var buildFixResult = await GenerateFixesFromResultAsync(buildResult, cancellationToken);
+                return buildFixResult.IsSuccess 
+                    ? Result<List<Fix>>.Success(buildFixResult.Value!.ToList())
+                    : Result<List<Fix>>.Failure(buildFixResult.Exception!);
             }
 
-            if (fixTasks.Count == 0)
-            {
-                return Result<List<Fix>>.Success(new List<Fix>());
-            }
-
-            // Process all tasks and handle failures
-            var allFixResults = await Task.WhenAll(fixTasks).ConfigureAwait(false);
-
-            // Check for any failures and aggregate
-            var allFixes = new List<Fix>();
-            foreach (var fixResult in allFixResults)
-            {
-                if (fixResult.IsFailure)
-                {
-                    return Result<List<Fix>>.Failure(fixResult.Exception!);
-                }
-                allFixes.AddRange(fixResult.Value!);
-            }
-
-            return Result<List<Fix>>.Success(allFixes);
+            // No errors found in either result
+            return Result<List<Fix>>.Success(EmptyFixList);
         }
 
         /// <summary>

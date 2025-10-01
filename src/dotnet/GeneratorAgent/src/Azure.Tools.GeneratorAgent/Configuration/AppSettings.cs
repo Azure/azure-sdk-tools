@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Configuration;
-using Azure.Tools.GeneratorAgent.Security;
 using Microsoft.Extensions.Logging;
 
 namespace Azure.Tools.GeneratorAgent.Configuration
@@ -62,10 +61,6 @@ namespace Azure.Tools.GeneratorAgent.Configuration
         public string TypespecCompiler => "@typespec/compiler";
         public string TypeSpecDirectoryName => "@typespec";
         public string HttpClientCSharpDirectoryName => "http-client-csharp";
-
-        // Tool names for Azure AI agent
-        public string ListTypeSpecFilesTool => "list_typespec_files";
-        public string GetTypeSpecFileTool => "get_typespec_file";
 
         public string AzureSpecRepository => "Azure/azure-rest-api-specs";
         public string AzureSdkDirectoryName => "azure-sdk-for-net";

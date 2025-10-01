@@ -4,7 +4,7 @@ import os
 import pathlib
 import sys
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Set, Tuple
+from typing import Any, Dict, Set, Tuple, Optional
 
 import prompty
 import prompty.azure_beta
@@ -19,16 +19,6 @@ from src._utils import get_prompt_path
 
 from evals._config_loader import WorkflowConfigError, EvaluationConfig
 
-class PromptWorkflowTarget:
-    def __init__(self, prompty_subpath, prompty_filename):
-        self.prompty_path = Path(__file__).parent.parent / "prompts" / prompty_subpath / prompty_filename
-
-    def __call__(self, **kwargs):
-        prompty_kwargs = {k: v for k, v in kwargs.items() 
-                     if k not in {"response", "testcase"}}
-        result = prompty.execute(self.prompty_path, inputs=prompty_kwargs)
-        return {"actual": result}
-
 def _review_apiview(query: str, language: str):
     """APIView review target function for evals framework."""
     from src._apiview_reviewer import ApiViewReview
@@ -37,8 +27,32 @@ def _review_apiview(query: str, language: str):
     reviewer.close()
     return {"actual": review.model_dump_json()}
 
-_mention_action_workflow = PromptWorkflowTarget("mention", "parse_conversation_action.prompty")
-_thread_resolution_action_workflow = PromptWorkflowTarget("thread_resolution", "parse_thread_resolution_action.prompty")
+def _mention_action_workflow(testcase: str, response: str, language: str, package_name: str, code: str, other_comments: str, trigger_comment: str):
+    prompty_path = Path(__file__).parent.parent / "prompts" / "mention" / "parse_conversation_action.prompty"
+    prompty_kwargs = {
+        "testcase": testcase,
+        "response": response,
+        "language": language,
+        "package_name": package_name,
+        "code": code,
+        "other_comments": other_comments,
+        "trigger_comment": trigger_comment,
+    }
+    result = prompty.execute(prompty_path, inputs=prompty_kwargs)
+    return {"actual": result}
+
+def _thread_resolution_action_workflow(testcase: str, response: str, language: str, package_name: str, code: str, comments: str):
+    prompty_path = Path(__file__).parent.parent / "prompts" / "thread_resolution" / "parse_thread_resolution_action.prompty"
+    prompty_kwargs = {
+        "testcase": testcase,
+        "response": response,
+        "language": language,
+        "package_name": package_name,
+        "code": code,
+        "comments": comments
+    }
+    result = prompty.execute(prompty_path, inputs=prompty_kwargs)
+    return {"actual": result}
 
 class BaseEvaluator(ABC):
     """Base class for custom evaluators in the evals framework.
@@ -589,7 +603,7 @@ class PromptWorkflowEvaluator(BaseEvaluator):
             f"actual_{self.comparison_field}": actual_value,
         }
     
-    def process_results(self, raw_results: list, rule_ids: set = None) -> dict:
+    def process_results(self, raw_results: list, guideline_ids: set = None) -> dict:
         """Process prompt workflow results."""
         all_results = {}
         

@@ -246,8 +246,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
 
             // Setup mock microagent service to return a successful spelling fix result
             var mockSpellingFixResult = new LanguageChecks.SpellingFixResult(
-                "Successfully fixed 4 spelling errors and added 0 words to cspell.json",
-                "Fixed 'contians' to 'contains', 'obvioius' to 'obvious', 'speling' to 'spelling', 'erors' to 'errors' in test_fix.md"
+                "Successfully fixed 4 spelling errors and added 0 words to cspell.json. Fixed 'contians' to 'contains', 'obvioius' to 'obvious', 'speling' to 'spelling', 'erors' to 'errors' in test_fix.md"
             );
             _mockMicroagentHostService.Setup(x => x.RunAgentToCompletion(It.IsAny<Microagent<LanguageChecks.SpellingFixResult>>(), It.IsAny<CancellationToken>()))
                                      .ReturnsAsync(mockSpellingFixResult);

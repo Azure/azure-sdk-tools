@@ -718,6 +718,100 @@ class ApiViewReview:
             f"\nFiltered preexisting comments. Kept: {final_comment_count}. Discarded: {initial_comment_count - final_comment_count}."
         )
 
+    def _score_comments_with_judge_prompt(self):
+        """
+        Score all comments using the judge prompt, processing each comment in parallel.
+        """
+        prompt_file = "judge_comment_confidence.prompty"
+        prompt_path = get_prompt_path(folder="api_review", filename=prompt_file)
+
+        self._print_message("\nScoring comments...")
+
+        # Submit each comment to the executor for parallel processing
+        futures = {}
+        for idx, comment in enumerate(self.results.comments):
+            context_ids = comment.guideline_ids + comment.memory_ids
+            search_results = self.search.search_all_by_id(context_ids)
+            context = self.search.build_context(search_results)
+            futures[idx] = self.executor.submit(
+                self._run_prompt,
+                prompt_path,
+                inputs={
+                    "content": comment.model_dump(),
+                    "language": get_language_pretty_name(self.language),
+                    "context": context.to_markdown() if search_results else "NONE",
+                },
+            )
+
+        # Collect results as they complete, with % complete logging
+        total = len(futures)
+
+        # Collect raw judge results for optional debug output
+        judge_results = []
+
+        for progress_idx, (idx, future) in enumerate(futures.items()):
+            try:
+                # Capture original comment snapshot before we modify severity/confidence
+                orig_comment = self.results.comments[idx].model_dump()
+                response = future.result()
+                response_json = json.loads(response)
+                results = response_json.get("results", {})
+                severity = response_json.get("severity", "UNKNOWN").upper()
+
+                yes_votes = 0
+                no_votes = 0
+                unknown_votes = 0
+
+                for result in results:
+                    answer = result.get("answer", "").upper()
+                    if answer == "YES":
+                        yes_votes += 1
+                    elif answer == "NO":
+                        no_votes += 1
+                    elif answer == "UNKNOWN":
+                        unknown_votes += 1
+                    else:
+                        self.logger.warning(f"Unexpected answer {answer} for comment at index {idx}")
+                total_votes = yes_votes + no_votes + unknown_votes
+                confidence = (yes_votes / total_votes) if total_votes > 0 else 0.0
+                self.results.comments[idx].severity = severity
+                self.results.comments[idx].confidence_score = confidence
+
+                # Record the judge result for debug output
+                judge_results.append(
+                    {
+                        "index": idx,
+                        "original_comment": orig_comment,
+                        "results": results,
+                        "computed_severity": severity,
+                        "computed_confidence": confidence,
+                    }
+                )
+            except Exception as e:
+                self.logger.error(f"Error scoring comment at index {idx}: {str(e)}")
+            percent = int(((progress_idx + 1) / total) * 100) if total else 100
+            self._print_message(f"Scoring comments... {percent}% complete", overwrite=True)
+
+        # If debug logging is enabled, write individual and aggregated judge results
+        if self.write_debug_logs and self.output_dir:
+            try:
+                judge_dir = os.path.join(self.output_dir, "judge_comments")
+                os.makedirs(judge_dir, exist_ok=True)
+                # Write aggregated file
+                aggregated_path = os.path.join(judge_dir, "judge_comments_all.json")
+                with open(aggregated_path, "w", encoding="utf-8") as af:
+                    json.dump(judge_results, af, indent=2)
+                self.logger.debug(f"Aggregated judge results written to {aggregated_path}")
+
+                # Write one file per comment for easier inspection
+                for jr in judge_results:
+                    idx = jr.get("index")
+                    per_path = os.path.join(judge_dir, f"judge_comment_{idx}.json")
+                    with open(per_path, "w", encoding="utf-8") as pf:
+                        json.dump(jr, pf, indent=2)
+            except Exception as e:
+                self.logger.error(f"Failed to write judge debug logs: {str(e)}")
+
     def _run_prompt(self, prompt_path: str, inputs: dict, max_retries: int = 5) -> str:
         """
         Run a prompt with retry logic.
@@ -786,6 +880,13 @@ class ApiViewReview:
                 f"Preexisting comments filtered in {preexisting_end_time - preexisting_start_time:.2f} seconds."
             )
             self._print_comment_counts()
+
+            score_comments_start_time = time()
+            self._score_comments_with_judge_prompt()
+            score_comments_end_time = time()
+            self._print_message(
+                f"  Comment scoring completed in {score_comments_end_time - score_comments_start_time:.2f} seconds."
+            )
 
             results = self.results.sorted()
 

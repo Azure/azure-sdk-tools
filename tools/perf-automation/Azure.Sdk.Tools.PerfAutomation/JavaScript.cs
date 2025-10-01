@@ -78,7 +78,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             File.WriteAllText(testUtilsProjectFile, testUtilsProjectJson.ToString() + Environment.NewLine);
 
             await Util.RunAsync("npm", "install -g pnpm", WorkingDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
-            await Util.RunAsync("pnpm", "install", WorkingDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
+            await Util.RunAsync("pnpm", "install --no-frozen-lockfile", WorkingDirectory, outputBuilder: outputBuilder, errorBuilder: errorBuilder);
 
             var projectName = projectJson["name"];
 

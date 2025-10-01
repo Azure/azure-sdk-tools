@@ -13,6 +13,7 @@ export class CommentItemModel {
     sectionClass: string = '';
     commentText: string = '';
     crossLanguageId: string = '';
+    correlationId: string = '';
     changeHistory: ChangeHistory[] = [];
     isResolved: boolean = false;
     upvotes: string[] = [];
@@ -25,6 +26,8 @@ export class CommentItemModel {
     lastEditedOn: string | null = null;
     isDeleted: boolean = false;
     isInEditMode: boolean = false;
+    hasRelatedComments: boolean = false; 
+    relatedCommentsCount: number = 0; 
 
     constructor() {
         this.id = '';
@@ -34,6 +37,7 @@ export class CommentItemModel {
         this.sectionClass = '';
         this.commentText = '';
         this.crossLanguageId = '';
+        this.correlationId = '';
         this.changeHistory = [];
         this.isResolved = false;
         this.upvotes = [];
@@ -46,5 +50,7 @@ export class CommentItemModel {
         this.lastEditedOn = null;
         this.isDeleted = false;
         this.isInEditMode = false;
+        this.hasRelatedComments = false;
+        this.relatedCommentsCount = 0;
     }
 }

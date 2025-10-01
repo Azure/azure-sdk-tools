@@ -39,6 +39,9 @@ namespace APIViewWeb.Models
         public string Source { get; set; }
         [JsonPropertyName("is_generic")]
         public bool IsGeneric { get; set; }
+
+        [JsonPropertyName("correlationId")]
+        public string CorrelationId { get; set; }
     }
 
     public class AIReviewJobPolledResponseModel

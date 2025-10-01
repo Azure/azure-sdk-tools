@@ -7,6 +7,8 @@ import { CodePanelRowData } from 'src/app/_models/codePanelModels';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
 import { CodeLineRowNavigationDirection } from 'src/app/_helpers/common-helpers';
+import { CommentItemModel } from 'src/app/_models/commentItemModel';
+import { CommentRelationHelper } from 'src/app/_helpers/comment-relation.helper';
 
 @Component({
   selector: 'app-comment-thread',
@@ -21,6 +23,8 @@ export class CommentThreadComponent {
   @Input() associatedCodeLine: CodePanelRowData | undefined;
   @Input() instanceLocation: "code-panel" | "conversations" | "samples" = "code-panel";
   @Input() preferredApprovers : string[] = [];
+  @Input() allComments: CommentItemModel[] = [];
+  @Input() allCodePanelRowData: CodePanelRowData[] = [];
 
   @Input() userProfile : UserProfile | undefined;
   @Output() cancelCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
@@ -49,6 +53,12 @@ export class CommentThreadComponent {
 
   floatItemStart : string = ""
   floatItemEnd : string = ""
+
+  showRelatedCommentsDialog: boolean = false;
+  relatedComments: CommentItemModel[] = [];
+  selectedCommentId: string = ''; 
+
+  private visibleRelatedCommentsCache = new Map<string, CommentItemModel[]>();
 
   CodeLineRowNavigationDirection = CodeLineRowNavigationDirection;
 
@@ -116,6 +126,13 @@ export class CommentThreadComponent {
   ngOnChanges(changes: SimpleChanges) {
     if (changes['codePanelRowData']) {
       this.setCommentResolutionState();
+    }
+    
+    if (changes['allComments'] || changes['allCodePanelRowData']) {
+      if (this.allComments && this.allComments.length > 0) {
+        CommentRelationHelper.calculateRelatedComments(this.allComments);
+      }
+      this.visibleRelatedCommentsCache.clear();
     }
   }
 
@@ -392,5 +409,53 @@ export class CommentThreadComponent {
   
   handleContentEmitter(event: string) {
     this.changeDetectorRef.detectChanges();
+  }
+
+  getRelatedCommentsCount(comment: CommentItemModel): number {
+    return CommentRelationHelper.getRelatedCommentsCount(comment, this.allComments, this.allCodePanelRowData);
+  }
+
+  hasRelatedComments(comment: CommentItemModel): boolean {
+    return CommentRelationHelper.hasRelatedComments(comment, this.allComments, this.allCodePanelRowData);
+  }
+
+  showRelatedComments(comment: CommentItemModel) {
+    if (!comment.correlationId || !this.allComments) {
+      return;
+    }
+
+    this.selectedCommentId = comment.id;
+    const cacheKey = comment.correlationId;
+    if (this.visibleRelatedCommentsCache.has(cacheKey)) {
+      this.relatedComments = this.visibleRelatedCommentsCache.get(cacheKey)!;
+    } else {
+      if (this.allCodePanelRowData && this.allCodePanelRowData.length > 0) {
+        this.relatedComments = CommentRelationHelper.getVisibleRelatedComments(comment, this.allComments, this.allCodePanelRowData);
+      } else {
+        this.relatedComments = CommentRelationHelper.getRelatedComments(comment, this.allComments);
+      }
+      this.visibleRelatedCommentsCache.set(cacheKey, this.relatedComments);
+    }
+    
+    this.showRelatedCommentsDialog = true;
+  }
+
+  onResolveSelectedComments(commentIds: string[]) {
+    commentIds.forEach(commentId => {
+      const comment = this.relatedComments.find(c => c.id === commentId);
+      if (comment) {
+        const commentCodeRow = this.allCodePanelRowData?.find(row => row.nodeId === comment.elementId);
+        
+        this.commentResolutionActionEmitter.emit({
+          commentThreadUpdateAction: CommentThreadUpdateAction.CommentResolved,
+          elementId: comment.elementId,
+          nodeIdHashed: commentCodeRow?.nodeIdHashed || this.codePanelRowData!.nodeIdHashed,
+          associatedRowPositionInGroup: commentCodeRow?.associatedRowPositionInGroup || this.codePanelRowData!.associatedRowPositionInGroup,
+          resolvedBy: this.userProfile?.userName,
+          commentId: commentId
+        } as CommentUpdatesDto);
+      }
+    });
+    this.showRelatedCommentsDialog = false;
   }
 }

@@ -10,8 +10,8 @@ from azure.identity import AzurePipelinesCredential
 from src._settings import SettingsManager
 from tabulate import tabulate
 
-from _config_loader import load_workflow_config, WorkflowConfigError, get_evaluator_class
-import _custom
+from evals._config_loader import load_workflow_config, WorkflowConfigError, get_evaluator_class
+import evals._custom
 
 DEFAULT_NUM_RUNS: int = 1
 

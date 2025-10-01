@@ -17,7 +17,7 @@ from azure.ai.evaluation import GroundednessEvaluator, SimilarityEvaluator
 from src._settings import SettingsManager
 from src._utils import get_prompt_path
 
-from _config_loader import WorkflowConfigError, EvaluationConfig
+from evals._config_loader import WorkflowConfigError, EvaluationConfig
 
 class PromptWorkflowTarget:
     def __init__(self, prompty_subpath, prompty_filename):
@@ -740,7 +740,7 @@ class PromptWorkflowEvaluator(BaseEvaluator):
         )
     
 # Register evaluators at module load time to prevent circular imports
-from _config_loader import register_evaluator
+from evals._config_loader import register_evaluator
 
 register_evaluator("apiview", CustomAPIViewEvaluator)
 register_evaluator("prompt", PromptWorkflowEvaluator)

@@ -449,8 +449,8 @@ export class CommentThreadComponent {
         this.commentResolutionActionEmitter.emit({
           commentThreadUpdateAction: CommentThreadUpdateAction.CommentResolved,
           elementId: comment.elementId,
-          nodeIdHashed: commentCodeRow?.nodeIdHashed || this.codePanelRowData!.nodeIdHashed,
-          associatedRowPositionInGroup: commentCodeRow?.associatedRowPositionInGroup || this.codePanelRowData!.associatedRowPositionInGroup,
+          nodeIdHashed: commentCodeRow?.nodeIdHashed ?? this.codePanelRowData?.nodeIdHashed,
+          associatedRowPositionInGroup: commentCodeRow?.associatedRowPositionInGroup ?? this.codePanelRowData?.associatedRowPositionInGroup,
           resolvedBy: this.userProfile?.userName,
           commentId: commentId
         } as CommentUpdatesDto);

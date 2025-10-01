@@ -2,12 +2,9 @@ import { CommentItemModel } from '../_models/commentItemModel';
 import { CodePanelRowData } from '../_models/codePanelModels';
 
 export class CommentRelationHelper {
-  private static relatedCommentsCountCache = new Map<string, number>();
 
   static calculateRelatedComments(allComments: CommentItemModel[]): void {
     if (!allComments || allComments.length === 0) return;
-    
-    this.relatedCommentsCountCache.clear();
     
     allComments.forEach(comment => {
       comment.hasRelatedComments = false;
@@ -65,24 +62,14 @@ export class CommentRelationHelper {
       return 0;
     }
 
-    const cacheKey = `${comment.id}_${codePanelRowData ? 'visible' : 'all'}`;    
-    if (this.relatedCommentsCountCache.has(cacheKey)) {
-      return this.relatedCommentsCountCache.get(cacheKey)!;
-    }
-
-    let result: number;
-
     if (!codePanelRowData || codePanelRowData.length === 0) {
-      result = comment.relatedCommentsCount ?? 
-               allComments.find(c => c.id === comment.id)?.relatedCommentsCount ?? 
-               0;
-    } else {
-      const visibleRelatedComments = this.getVisibleRelatedComments(comment, allComments, codePanelRowData);
-      result = Math.max(0, visibleRelatedComments.length - 1);
+      return comment.relatedCommentsCount ?? 
+             allComments.find(c => c.id === comment.id)?.relatedCommentsCount ?? 
+             0;
     }
 
-    this.relatedCommentsCountCache.set(cacheKey, result);
-    return result;
+    const visibleRelatedComments = this.getVisibleRelatedComments(comment, allComments, codePanelRowData);
+    return Math.max(0, visibleRelatedComments.length - 1);
   }
 
   static hasRelatedComments(comment: CommentItemModel, allComments: CommentItemModel[], codePanelRowData?: CodePanelRowData[]): boolean {

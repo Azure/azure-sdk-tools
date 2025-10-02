@@ -1,7 +1,11 @@
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Configuration;
+using Azure.Sdk.Tools.Cli.Prompts;
+using Azure.Sdk.Tools.Cli.Microagents;
+using Azure.Sdk.Tools.Cli.Microagents.Tools;
 using Microsoft.Extensions.Logging;
+using System.ComponentModel;
 
 namespace Azure.Sdk.Tools.Cli.Services;
 
@@ -37,8 +41,10 @@ public interface ILanguageChecks
     /// Checks spelling in the specific package.
     /// </summary>
     /// <param name="packagePath">Path to the package directory</param>
+    /// <param name="fixCheckErrors">Whether to attempt to automatically fix spelling issues where supported by cspell</param>
+    /// <param name="ct">Cancellation token</param>
     /// <returns>Result of the spelling check</returns>
-    Task<CLICheckResponse> CheckSpellingAsync(string packagePath, CancellationToken ct = default);
+    Task<CLICheckResponse> CheckSpellingAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
 
     /// <summary>
     /// Updates code snippets in the specific package.
@@ -67,14 +73,16 @@ public class LanguageChecks : ILanguageChecks
     private readonly IGitHelper _gitHelper;
     private readonly ILogger<LanguageChecks> _logger;
     private readonly ILanguageSpecificCheckResolver _languageSpecificCheckResolver;
+    private readonly IMicroagentHostService _microagentHostService;
 
-    public LanguageChecks(IProcessHelper processHelper, INpxHelper npxHelper, IGitHelper gitHelper, ILogger<LanguageChecks> logger, ILanguageSpecificCheckResolver languageSpecificCheckResolver)
+    public LanguageChecks(IProcessHelper processHelper, INpxHelper npxHelper, IGitHelper gitHelper, ILogger<LanguageChecks> logger, ILanguageSpecificCheckResolver languageSpecificCheckResolver, IMicroagentHostService microagentHostService)
     {
         _processHelper = processHelper;
         _npxHelper = npxHelper;
         _gitHelper = gitHelper;
         _logger = logger;
         _languageSpecificCheckResolver = languageSpecificCheckResolver;
+        _microagentHostService = microagentHostService;
     }
 
     /// <summary>
@@ -126,9 +134,9 @@ public class LanguageChecks : ILanguageChecks
         return await ValidateReadmeCommonAsync(packagePath, ct);
     }
 
-    public virtual async Task<CLICheckResponse> CheckSpellingAsync(string packagePath, CancellationToken ct)
+    public virtual async Task<CLICheckResponse> CheckSpellingAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
-        return await CheckSpellingCommonAsync(packagePath, ct);
+        return await CheckSpellingCommonAsync(packagePath, fixCheckErrors, ct);
     }
 
     public virtual async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, CancellationToken ct = default)
@@ -245,12 +253,13 @@ public class LanguageChecks : ILanguageChecks
     }
 
     /// <summary>
-    /// Common spelling check implementation that works for most Azure SDK languages.
-    /// Uses cspell directly to check spelling in the package directory.
+    /// Common spelling check implementation that checks for spelling issues and optionally applies fixes.
     /// </summary>
     /// <param name="packagePath">Absolute path to the package directory</param>
+    /// <param name="fixCheckErrors">Whether to attempt to automatically fix spelling issues where supported by cspell</param>
+    /// <param name="ct">Cancellation token</param>
     /// <returns>CLI check response containing success/failure status and response message</returns>
-    protected async Task<CLICheckResponse> CheckSpellingCommonAsync(string packagePath, CancellationToken ct = default)
+    protected async Task<CLICheckResponse> CheckSpellingCommonAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         try
         {
@@ -277,17 +286,65 @@ public class LanguageChecks : ILanguageChecks
                 logOutputStream: true
             );
             var processResult = await _npxHelper.Run(npxOptions, ct: ct);
+
+            // If fix is requested and there are spelling issues, use Microagent to automatically apply fixes
+            if (fixCheckErrors && processResult.ExitCode != 0 && !string.IsNullOrWhiteSpace(processResult.Output))
+            {
+                try
+                {
+                    var fixResult = await RunSpellingFixMicroagent(packageRepoRoot, processResult.Output, ct);
+                    return new CLICheckResponse(0, fixResult.Summary);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error running spelling fix microagent");
+                    return new CLICheckResponse(processResult.ExitCode, processResult.Output, ex.Message);
+                }
+            }
+
             return new CLICheckResponse(processResult);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in CheckSpellingCommonAsync");
-            return new CLICheckResponse(1, "", $"Unhandled exception: {ex.Message}");
+            return new CLICheckResponse(1, "", ex.Message);
         }
     }
 
     public virtual string GetSDKPackagePath(string repo, string packagePath)
     {
         return Path.GetFileName(packagePath);
+    }
+
+    /// <summary>
+    /// Result of the spelling fix microagent operation.
+    /// </summary>
+    public record SpellingFixResult(
+        [property: Description("Summary of the operations performed")] string Summary
+    );
+
+    /// <summary>
+    /// Runs a microagent to automatically fix spelling issues by either correcting typos or adding legitimate terms to cspell.json.
+    /// </summary>
+    /// <param name="repoRoot">Repository root path</param>
+    /// <param name="cspellOutput">Output from cspell lint command</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Result of the spelling fix operation</returns>
+    private async Task<SpellingFixResult> RunSpellingFixMicroagent(string repoRoot, string cspellOutput, CancellationToken ct)
+    {
+        var agent = new Microagent<SpellingFixResult>
+        {
+            Instructions = ValidationPrompts.GetMicroagentSpellingFixPrompt(cspellOutput),
+            MaxToolCalls = 10,
+            Model = "gpt-4",
+            Tools = new IAgentTool[]
+            {
+                new ReadFileTool(repoRoot),
+                new WriteFileTool(repoRoot),
+                new UpdateCspellWordsTool(repoRoot)
+            }
+        };
+
+        return await _microagentHostService.RunAgentToCompletion(agent, ct);
     }
 }

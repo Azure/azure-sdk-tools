@@ -12,6 +12,7 @@ namespace Azure.Sdk.Tools.McpEvals.Scenarios
         protected static IChatClient? ChatClient;
         protected static IMcpClient? McpClient;
         protected static ChatCompletion? ChatCompletion;
+        protected static IEnumerable<string> ToolNames;
 
         [OneTimeSetUp]
         public async Task GlobalSetup()
@@ -19,6 +20,7 @@ namespace Azure.Sdk.Tools.McpEvals.Scenarios
             ChatClient = TestSetup.GetChatClient();
             McpClient = await TestSetup.GetMcpClientAsync();
             ChatCompletion = TestSetup.GetChatCompletion(ChatClient, McpClient);
+            ToolNames = (await McpClient.ListToolsAsync()).Select(tool => tool.Name)!;
         }
     }
 }

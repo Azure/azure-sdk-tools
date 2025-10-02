@@ -286,7 +286,6 @@ export class CommentThreadComponent {
     const title = target.closest(".user-comment-thread")?.getAttribute("title");
     if (replyEditorContainer) {
       this.codePanelRowData!.showReplyTextBox = false;
-      // Reset severity selection when canceling
       this.selectedSeverity = null;
       this.cancelCommentActionEmitter.emit(
         {

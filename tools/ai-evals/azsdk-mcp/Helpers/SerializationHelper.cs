@@ -1,11 +1,17 @@
-using System.ClientModel.Primitives;
 using System;
+using System.ClientModel.Primitives;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.McpEvals.Models;
 using Microsoft.Extensions.AI;
-using OpenAIChatMessage = OpenAI.Chat.ChatMessage;
+using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities;
 using MicrosoftExtensionsAIChatExtensions = OpenAI.Chat.MicrosoftExtensionsAIChatExtensions;
+using OpenAIChatMessage = OpenAI.Chat.ChatMessage;
+using AssistantChatMessage = OpenAI.Chat.AssistantChatMessage;
+using UserChatMessage = OpenAI.Chat.UserChatMessage;
+using SystemChatMessage = OpenAI.Chat.SystemChatMessage;
+using ToolChatMessage = OpenAI.Chat.ToolChatMessage;
 
 namespace Azure.Sdk.Tools.McpEvals.Helpers
 {
@@ -33,11 +39,14 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
 
             var chatMessages = DeserializeMessages(jsonBinary);
 
-            var translatedChatMessages = MicrosoftExtensionsAIChatExtensions.AsChatMessages(chatMessages).ToList();
+            var translatedChatMessages = MicrosoftExtensionsAIChatExtensions.AsChatMessages(chatMessages);
 
-            await RebuildAttachmentsInChatMessagesAsync(translatedChatMessages);
+            // For some reason above method will give all the messages user role. It still does the heavy lifting so I'll keep it and just change the roles. 
+            var fixedChatMessages = EnsureChatMessageRole(translatedChatMessages, chatMessages);
 
-            return ParseChatMessagesIntoScenarioData(translatedChatMessages);
+            await RebuildAttachmentsInChatMessagesAsync(fixedChatMessages);
+
+            return ParseChatMessagesIntoScenarioData(fixedChatMessages);
         }
 
         /// <summary>
@@ -135,6 +144,53 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
             {
                 yield return ModelReaderWriter.Read<OpenAIChatMessage>(BinaryData.FromObjectAsJson(jsonElement), ModelReaderWriterOptions.Json);
             }
+        }
+
+        private static List<ChatMessage> EnsureChatMessageRole(IEnumerable<ChatMessage> translatedMessages, IEnumerable<OpenAIChatMessage> openAIMessages)
+        {
+            var result = new List<ChatMessage>();
+
+            foreach (var (translated, openAI) in translatedMessages.Zip(openAIMessages))
+            {
+                // Create a copy or modify the existing one
+                var modifiedMessage = translated; // or create a copy if you don't want to modify the original
+
+                switch (openAI)
+                {
+                    case AssistantChatMessage:
+                        modifiedMessage.Role = ChatRole.Assistant;
+                        break;
+                    case UserChatMessage:
+                        modifiedMessage.Role = ChatRole.User;
+                        break;
+                    case SystemChatMessage:
+                        modifiedMessage.Role = ChatRole.System;
+                        break;
+                    case ToolChatMessage:
+                        modifiedMessage.Role = ChatRole.Tool;
+                        break;
+                }
+
+                result.Add(modifiedMessage);
+            }
+
+            return result;
+        }
+
+        public static int NumberOfToolCalls(IEnumerable<ChatMessage> messages, IEnumerable<string> toolNames)
+        {
+            var result = 0;
+            foreach (var message in messages)
+            {
+                foreach (var content in message.Contents)
+                {
+                    if (content is FunctionCallContent func && toolNames.Any(name => func.Name.EndsWith(name)))
+                    {
+                        result++;
+                    }
+                }
+            }
+            return result;
         }
     }
 }

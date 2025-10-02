@@ -20,10 +20,10 @@ DEFAULT_NUM_RUNS: int = 1
 class EvalRunner:
     """Class to run evals for APIView copilot."""
 
-    def __init__(self, *, language: str, test_path: str, testcase: list[str] = None, num_runs: int = DEFAULT_NUM_RUNS):
+    def __init__(self, *, language: str, test_path: str, test_cases: list[str] = None, num_runs: int = DEFAULT_NUM_RUNS):
         self.language = language
         self.test_path = test_path
-        self.testcase = testcase
+        self.test_cases = test_cases
         self.num_runs = num_runs
         self.settings = SettingsManager()
 
@@ -77,6 +77,7 @@ class EvalRunner:
                 if not file.exists():
                     raise ValueError(f"Test file not found: {file}")
 
+                # Filter JSONL to temporary file with specified testcases or return original file if no filter
                 filtered_file_path = self._filter_jsonl_data(str(file))
                 if filtered_file_path != str(file):
                     temp_files.append(filtered_file_path)
@@ -84,8 +85,8 @@ class EvalRunner:
                 file_run_results = []
                 for run in range(self.num_runs):
                     print(f"Running evals {run + 1}/{self.num_runs} for {file.name}...")
-                    if self.testcase:
-                        print(f"  (Filtered to testcases: {[testcase for testcase in self.testcase]})")
+                    if self.test_cases:
+                        print(f"  (Filtered to testcases: {[testcase for testcase in self.test_cases]})")
                     result = evaluate(
                         data=filtered_file_path,
                         evaluators={"metrics": evaluator},
@@ -123,7 +124,7 @@ class EvalRunner:
     
     def _filter_jsonl_data(self, file_path: str) -> str:
         """Filter JSONL data by testcase if specified, return path to filtered temp file."""
-        if not self.testcase:
+        if not self.test_cases:
             return file_path
         
         original_path = pathlib.Path(file_path)
@@ -139,14 +140,14 @@ class EvalRunner:
                         
                     try:
                         data = json.loads(line)
-                        if data.get('testcase') in self.testcase:
+                        if data.get('testcase') in self.test_cases:
                             filtered_lines.append(line)
                             found_testcase = True
                     except json.JSONDecodeError as e:
                         raise ValueError(f"Invalid JSON on line {line_num} in {file_path}: {e}")
             
             if not found_testcase:
-                raise ValueError(f"Testcase '{self.testcase}' not found in {file_path}")
+                raise ValueError(f"Testcase '{self.test_cases}' not found in {file_path}")
                 
             # Create temporary file with filtered data
             temp_file = tempfile.NamedTemporaryFile(

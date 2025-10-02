@@ -28,7 +28,7 @@ if __name__ == "__main__":
         help="Path to workflow YAML.",
     )
     parser.add_argument(
-        "--testcase",
+        "--test-cases",
         "-c",
         type=str,
         help="Filter to run only the specified testcases",
@@ -38,7 +38,7 @@ if __name__ == "__main__":
     runner = EvalRunner(
         language=args.language, 
         test_path=args.test_file,
-        testcase=args.testcase,
+        test_cases=args.test_cases,
         num_runs=args.num_runs
     )
     runner.run()

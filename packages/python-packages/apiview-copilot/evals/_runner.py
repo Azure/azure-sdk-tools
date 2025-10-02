@@ -142,6 +142,7 @@ class EvalRunner:
                         if data.get('testcase') == self.testcase:
                             filtered_lines.append(line)
                             found_testcase = True
+                            break
                     except json.JSONDecodeError as e:
                         raise ValueError(f"Invalid JSON on line {line_num} in {file_path}: {e}")
             

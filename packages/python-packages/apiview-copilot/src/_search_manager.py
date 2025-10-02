@@ -42,7 +42,6 @@ class SearchItem:
         self.service = result.get("service")
         self.is_exception = result.get("is_exception") or False
         self.example_type = result.get("example_type")
-        self.source = result.get("source")
         self.score = result.get("@search.score", None)
         self.reranker_score = result.get("@search.reranker_score", None)
         self.captions = []
@@ -128,7 +127,7 @@ class Context:
                 max_related = max(related_scores)
                 if score is None or (max_related is not None and max_related > score):
                     score = max_related
-            item = ContextItem(guideline, examples=examples, score=score)
+            item = ContextItem(guideline, examples=examples, score=score, kind="guideline")
             self.items.append(item)
 
         # For memories, use their own score, or the max score of their related examples
@@ -142,7 +141,7 @@ class Context:
                 max_related = max(related_scores)
                 if score is None or (max_related is not None and max_related > score):
                     score = max_related
-            item = ContextItem(memory, examples=examples, score=score)
+            item = ContextItem(memory, examples=examples, score=score, kind="memory")
             self.items.append(item)
         self._normalize_scores()
         # Only sort items with a valid normalized_score, put None scores at the end
@@ -203,13 +202,14 @@ class ContextItem:
     Represents a single item in the context.
     """
 
-    def __init__(self, item, *, examples: Dict[str, object], score=None):
+    def __init__(self, item, *, examples: Dict[str, object], score: int = None, kind: str = None):
         self.id = self._process_id(item.id)
         self.content = getattr(item, "content", getattr(item, "text", None))
         self.language = getattr(item, "language", None)
         self.title = getattr(item, "title", None)
         self.service = getattr(item, "service", None)
         self.is_exception = getattr(item, "is_exception", None)
+        self.kind = kind
         self.examples = []
         self.score = score
         self.normalized_score = None  # Will be set after normalization
@@ -237,7 +237,7 @@ class ContextItem:
         """
         Converts the metadata to a markdown string.
         """
-        markdown = f"> **id:** {self.id}<br>"
+        markdown = f"> **{self.kind}_id:** {self.id}<br>"
         if self.normalized_score is not None:
             markdown += f"**score:** {int(round(self.normalized_score))}<br>"
         if self.is_exception:

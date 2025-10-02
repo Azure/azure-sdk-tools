@@ -25,16 +25,25 @@ steps:
       rootFolder: ${{ parameters.CLONE_LOCATION }}
 
   - pwsh: |
-      npm install -g @microsoft/rush@5.109.2
-      rush update
-      rush build -t .
-    displayName: 'Install Rush, build and install proxy tests project'
-    workingDirectory: ${{ parameters.CLONE_LOCATION }}/sdk/test-utils/recorder
+      npm install -g pnpm@10.17.1
+    workingDirectory: ${{ parameters.CLONE_LOCATION }}
     env:
       PROXY_MANUAL_START: "true"
 
   - pwsh: |
-      rushx test:node
+      pnpm install
+    workingDirectory: ${{ parameters.CLONE_LOCATION }}
+    env:
+      PROXY_MANUAL_START: "true"
+
+  - pwsh: |
+      pnpm build --filter @azure-tools/test-recorder...
+    workingDirectory: ${{ parameters.CLONE_LOCATION }}
+    env:
+      PROXY_MANUAL_START: "true"
+
+  - pwsh: |
+      npm run test:node
     displayName: 'Invoke Tests'
     workingDirectory: ${{ parameters.CLONE_LOCATION }}/sdk/test-utils/recorder
     env:

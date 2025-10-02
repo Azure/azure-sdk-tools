@@ -26,7 +26,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
             if (!await LangService.CheckDependencies(CancellationToken.None))
             {
-                Assert.Ignore("go and golangci-lint aren't installed, can't run GoLanguageSpecificChecksTests");
+                Assert.Ignore("golang tooling dependencies are not installed, can't run GoLanguageSpecificChecksTests");
             }
 
             var resp = await LangService.CreateEmptyPackage(GoPackageDir, "untitleddotloop", CancellationToken.None);

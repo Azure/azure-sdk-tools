@@ -132,6 +132,6 @@ public class MicroagentHostService(AzureOpenAIClient openAI, ILogger<MicroagentH
     private class MicroagentResult<T> where T : notnull
     {
         [Description("The result of the agent run. Output the result requested exactly, without additional padding, explanation, or code fences unless requested.")]
-        public T Result { get; set; }
+        public required T Result { get; set; }
     }
 }

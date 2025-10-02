@@ -1,5 +1,10 @@
 # Release
 
+## 2025-09-29 - 0.29.0
+
+- When running the `init` command with the `update-if-exists` flag, if there is an existing tsp-location.yaml do not add or modify the `emitterPackageJsonPath` option, unless the `emitter-package-json-path` flag is passed to the command.
+- Ensure that the `output-dir` value is set to repo root when resolving `emitter-output-dir` in the `init` command.
+
 ## 2025-09-22 - 0.28.3
 
 - Fix a bug where tsp-client was always setting the `save-inputs` option under a given emitter to `false` when the --save-inputs flag wasn't passed to the tool.

@@ -53,7 +53,7 @@ namespace APIViewWeb.LeanModels
 
         public static CommentSeverity ParseSeverity(string value)
         {
-            return value?.ToUpper() switch
+            return value?.ToUpperInvariant() switch
             {
                 "QUESTION" => CommentSeverity.Question,
                 "SHOULD" => CommentSeverity.ShouldFix,

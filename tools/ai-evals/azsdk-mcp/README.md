@@ -15,22 +15,26 @@ A transcript of a copilot session that serves as the context for evaluation. The
 
 **Example Structure:**
 ```json
-{
-  [
-    {
-      "role": "system",
-      "authorName": "GitHub_Copilot",
-      "messageId": "msg_001",
-      "contents": [/* system instructions */]
-    },
-    {
-      "role": "user", 
-      "authorName": "developer",
-      "messageId": "msg_002",
-      "contents": [/* user request */]
-    }
-  ]
-}
+[
+  {
+    "role": "system",
+    "authorName": "GitHub_Copilot",
+    "messageId": "msg_001",
+    "contents": ["System instructions and context"]
+  },
+  {
+    "role": "user", 
+    "authorName": "developer",
+    "messageId": "msg_002",
+    "contents": ["User request or question"]
+  },
+  {
+    "role": "assistant",
+    "authorName": "GitHub_Copilot", 
+    "messageId": "msg_003",
+    "contents": ["Assistant response with tool calls"]
+  }
+]
 ```
 
 ### 2. Expected Outcome
@@ -57,6 +61,12 @@ LOCAL_MCP_POWERSHELL_SCRIPT_PATH=path/to/your/mcp-script.ps1
 # Instruction File Paths
 COPILOT_INSTRUCTIONS_PATH=path/to/copilot-instructions.md
 AZSDK_TOOLS_INSTRUCTIONS_PATH=path/to/azsdk-tools/instructions
+```
+
+## Running Evaluations
+
+```bash
+dotnet test
 ```
 
 ## Extending the Framework
@@ -88,4 +98,4 @@ public class CustomEvaluator : IEvaluator
 }
 ```
 
-Samples available (here)[https://github.com/dotnet/ai-samples/tree/main/src/microsoft-extensions-ai-evaluation/api]
+Samples available [here](https://github.com/dotnet/ai-samples/tree/main/src/microsoft-extensions-ai-evaluation/api).

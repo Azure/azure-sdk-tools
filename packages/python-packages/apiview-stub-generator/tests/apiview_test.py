@@ -261,7 +261,7 @@ class TestApiView:
         assert cross_language_lines[0].cross_language_id == "Formal_Model_Id"
         assert cross_language_lines[1].cross_language_id == "Docstring_DocstringWithFormalDefault"
         assert len(cross_language_lines) == 2
-        assert apiview.cross_language_package_id == "ApiStubGenTest"
+        assert apiview.cross_language_metadata.cross_language_package_id == "ApiStubGenTest"
 
     def test_source_url(self):
         temp_path = tempfile.gettempdir()

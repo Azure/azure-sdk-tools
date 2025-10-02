@@ -22,7 +22,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--test-file",
-        "-t",
+        "-f",
         type=str,
         required=True,
         help="Path to workflow YAML.",

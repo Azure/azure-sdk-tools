@@ -1,1 +1,1 @@
-entry: evals._runner:_review_apiview
+entry: evals._custom:_review_apiview

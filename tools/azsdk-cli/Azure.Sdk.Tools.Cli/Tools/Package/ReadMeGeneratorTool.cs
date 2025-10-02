@@ -146,9 +146,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
             var readmeText = await File.ReadAllTextAsync(templatePath, ct);
 
-            // Ensure templates are registered
-            PromptTemplates.RegisterBuiltInTemplates();
-
             // Use the standardized template system with built-in safety measures
             var prompt = PromptTemplates.GetReadMeGenerationPrompt(
                 templateContent: readmeText,

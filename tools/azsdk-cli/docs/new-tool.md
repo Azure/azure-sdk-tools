@@ -361,7 +361,6 @@ public DefaultCommandResponse EchoSuccess(string message)
 }
 ```
 
-
 ### Error Handling Patterns
 
 ```csharp
@@ -393,17 +392,13 @@ For tools using AI models (microagents, LLMs), use the standardized Prompt Templ
 
 ### Quick Start
 
-**1. Register templates (one-time setup):**
-```csharp
-PromptTemplates.RegisterBuiltInTemplates();
-```
-
-**2. Use built-in templates:**
+**Use built-in templates directly:**
 ```csharp
 // Common scenarios - spelling, README, log analysis
 var prompt = PromptTemplates.GetMicroagentSpellingFixPrompt(cspellOutput, "Azure SDK for .NET");
-var prompt = PromptTemplates.GetReadMeGenerationPrompt(template, docUrl, packagePath);
+var prompt = PromptTemplates.GetReadMeGenerationPrompt(templateContent, serviceDocUrl, packagePath);
 var prompt = PromptTemplates.GetLogAnalysisPrompt(logContent, "Azure DevOps Pipeline", "json");
+```
 
 ### Creating Custom Templates
 
@@ -416,19 +411,32 @@ public class MyCustomTemplate : BasePromptTemplate
     public override string Version => "1.0.0";
     public override string Description => "Analyzes custom data format";
 
-    protected override IEnumerable<string> RequiredParameters => new[] { "input_data" };
-
-    protected override string BuildTaskInstructions(IPromptContext context)
+    /// <summary>
+    /// Builds a custom analysis prompt with strongly typed parameters.
+    /// </summary>
+    /// <param name="inputData">The data to analyze</param>
+    /// <param name="analysisType">Type of analysis to perform</param>
+    /// <returns>Complete structured prompt for custom analysis</returns>
+    public string BuildPrompt(string inputData, string analysisType = "general")
     {
-        var data = context.GetParameter<string>("input_data") ?? "";
-        return $"Analyze this data: {data}";
+        var taskInstructions = $"""
+        You are a data analysis assistant.
+        
+        Analyze the following data using {analysisType} analysis techniques:
+        
+        **Data to Analyze:**
+        ```
+        {inputData}
+        ```
+        """;
+
+        return BuildStructuredPrompt(taskInstructions);
     }
 }
 
-// Register and use
-PromptTemplateRegistry.Instance.RegisterTemplate(new MyCustomTemplate());
-var prompt = PromptTemplateHelper.BuildPrompt("my-custom-analysis", builder =>
-    builder.WithParameter("input_data", analysisData));
+// Use the template directly
+var template = new MyCustomTemplate();
+var prompt = template.BuildPrompt(analysisData, "statistical");
 
 // Use with microagent
 var microagent = new Microagent<AnalysisResult>
@@ -450,7 +458,6 @@ All templates automatically include safety guidelines, Microsoft policy complian
 * Always include safety guidelines and validation
 * Design templates for reusability across similar use cases
 * Use clear, descriptive parameter names for LLM consumption
-
 
 ## Registration and Testing
 

@@ -13,15 +13,24 @@ public class SpellingValidationTemplate : BasePromptTemplate
     public override string Version => "1.0.0";
     public override string Description => "Automated spelling validation and correction for Azure SDK repositories";
 
-
-    protected override IEnumerable<string> RequiredParameters => new[] { "cspell_output" };
-    protected override IEnumerable<string> OptionalParameters => new[] { "repository_context", "additional_rules" };
-
-    protected override string BuildTaskInstructions(IPromptContext context)
+    /// <summary>
+    /// Builds a spelling validation prompt with strongly typed parameters.
+    /// </summary>
+    /// <param name="cspellOutput">The cspell lint output to analyze</param>
+    /// <param name="repositoryContext">Context about the repository (e.g., "Azure SDK repository")</param>
+    /// <param name="additionalRules">Additional rules or constraints for spelling validation</param>
+    /// <returns>Complete structured prompt for spelling validation</returns>
+    public string BuildPrompt(string cspellOutput, string repositoryContext = "Azure SDK repository", string? additionalRules = null)
     {
-        var cspellOutput = context.GetParameter<string>("cspell_output") ?? "";
-        var repositoryContext = context.GetParameter<string>("repository_context") ?? "Azure SDK repository";
-        
+        var taskInstructions = BuildTaskInstructions(cspellOutput, repositoryContext);
+        var constraints = BuildTaskConstraints(additionalRules);
+        var examples = BuildExamples();
+
+        return BuildStructuredPrompt(taskInstructions, constraints, examples);
+    }
+
+    private string BuildTaskInstructions(string cspellOutput, string repositoryContext)
+    {
         return $"""
         You are an automated spelling assistant for an {repositoryContext}.
         
@@ -42,10 +51,8 @@ public class SpellingValidationTemplate : BasePromptTemplate
         """;
     }
 
-    protected override string BuildTaskConstraints(IPromptContext context)
+    private string BuildTaskConstraints(string? additionalRules)
     {
-        var additionalRules = context.GetParameter<string>("additional_rules") ?? "";
-        
         var constraints = """
         **Spelling Correction Guidelines:**
         - Fix obvious typos in comments, documentation, and non-code text
@@ -74,52 +81,7 @@ public class SpellingValidationTemplate : BasePromptTemplate
         return constraints;
     }
 
-    protected override string BuildOutputRequirements(IPromptContext context)
-    {
-        return """
-        **Required Output Format:**
-        
-        Return a structured summary of operations performed:
-        
-        ```json
-        {
-            "summary": "Brief description of actions taken",
-            "files_modified": [
-                {
-                    "file_path": "path/to/file",
-                    "changes": [
-                        {
-                            "line": 42,
-                            "old_text": "misspelled word",
-                            "new_text": "corrected word",
-                            "reason": "Fixed typo"
-                        }
-                    ]
-                }
-            ],
-            "dictionary_additions": [
-                {
-                    "word": "technical-term",
-                    "reason": "Legitimate Azure service name"
-                }
-            ],
-            "skipped_items": [
-                {
-                    "word": "ambiguous-term",
-                    "reason": "Unclear if typo or legitimate term"
-                }
-            ]
-        }
-        ```
-        
-        **Validation:**
-        - Ensure all file paths are accurate
-        - Verify line numbers match the actual changes
-        - Provide clear reasoning for each decision
-        """;
-    }
-
-    protected override string BuildExamples(IPromptContext context)
+    private string BuildExamples()
     {
         return """
         **Example 1: Fixing a typo**

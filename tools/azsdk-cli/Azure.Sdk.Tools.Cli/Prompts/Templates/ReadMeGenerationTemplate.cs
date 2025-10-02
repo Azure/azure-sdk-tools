@@ -13,24 +13,26 @@ public class ReadMeGenerationTemplate : BasePromptTemplate
     public override string Version => "1.0.0";
     public override string Description => "Generate README files for Azure SDK packages following established standards";
 
-    protected override IEnumerable<string> RequiredParameters => new[] 
-    { 
-        "template_content", 
-        "service_documentation", 
-        "package_path" 
-    };
-
-    protected override IEnumerable<string> OptionalParameters => new[] 
-    { 
-        "additional_rules" 
-    };
-
-    protected override string BuildTaskInstructions(IPromptContext context)
+    /// <summary>
+    /// Builds a README generation prompt with strongly typed parameters.
+    /// </summary>
+    /// <param name="templateContent">The README template content to fill in</param>
+    /// <param name="serviceDocumentation">URL containing service documentation</param>
+    /// <param name="packagePath">Package path for generating documentation links</param>
+    /// <param name="additionalRules">Optional additional rules or constraints</param>
+    /// <returns>Complete structured prompt for README generation</returns>
+    public string BuildPrompt(string templateContent, string serviceDocumentation, string packagePath, string? additionalRules = null)
     {
-        var templateContent = context.GetParameter<string>("template_content") ?? "";
-        var serviceDocumentation = context.GetParameter<string>("service_documentation") ?? "";
-        var packagePath = context.GetParameter<string>("package_path") ?? "";
+        var taskInstructions = BuildTaskInstructions(templateContent, serviceDocumentation, packagePath);
+        var constraints = BuildTaskConstraints(additionalRules);
+        var examples = BuildExamples();
+        var outputRequirements = BuildOutputRequirements();
 
+        return BuildStructuredPrompt(taskInstructions, constraints, examples, outputRequirements);
+    }
+
+    private string BuildTaskInstructions(string templateContent, string serviceDocumentation, string packagePath)
+    {
         return $"""
         We're going to create README files for Azure SDK packages.
 
@@ -54,10 +56,8 @@ public class ReadMeGenerationTemplate : BasePromptTemplate
         """;
     }
 
-    protected override string BuildTaskConstraints(IPromptContext context)
+    private string BuildTaskConstraints(string? additionalRules)
     {
-        var additionalRules = context.GetParameter<string>("additional_rules") ?? "";
-
         var constraints = """
         **CRITICAL README Rules:**
         - Do NOT touch the following sections or their subsections: Contributing
@@ -83,24 +83,7 @@ public class ReadMeGenerationTemplate : BasePromptTemplate
         return constraints;
     }
 
-    protected override string BuildOutputRequirements(IPromptContext context)
-    {
-        return """
-        **Output Process:**
-        1. First, call check_readme_tool with your initial README content
-        2. Address any suggestions or issues returned by the tool
-        3. Continue iterating until check_readme_tool returns no further suggestions
-        4. Finally, provide the complete, validated README content
-
-        **Final Output Format:**
-        - Return only the final README content as plain text
-        - Ensure all template placeholders are properly filled
-        - Verify all links and references are correct
-        - Confirm the content follows Azure SDK standards
-        """;
-    }
-
-    protected override string BuildExamples(IPromptContext context)
+    private string BuildExamples()
     {
         return """
         **Example Template Placeholder Replacement:**
@@ -121,6 +104,23 @@ public class ReadMeGenerationTemplate : BasePromptTemplate
         ```
         [API reference documentation](https://docs.microsoft.com/dotnet/api/azure.ai.documentintelligence)
         ```
+        """;
+    }
+
+    private string BuildOutputRequirements()
+    {
+        return """
+        **Output Process:**
+        1. First, call check_readme_tool with your initial README content
+        2. Address any suggestions or issues returned by the tool
+        3. Continue iterating until check_readme_tool returns no further suggestions
+        4. Finally, provide the complete, validated README content
+
+        **Final Output Format:**
+        - Return only the final README content as plain text
+        - Ensure all template placeholders are properly filled
+        - Verify all links and references are correct
+        - Confirm the content follows Azure SDK standards
         """;
     }
 }

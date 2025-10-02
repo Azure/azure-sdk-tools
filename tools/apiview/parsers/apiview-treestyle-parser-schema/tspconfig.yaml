@@ -9,8 +9,8 @@ options:
   "@azure-tools/typespec-python":
     package-dir: "apiview-stub-generator"
     package-name: "treestyle-parser"
-    emitter-output-dir: "{project-root}/../../../../packages/python-packages/apiview-stub-generator/"
-    namespace: "apistub._generated.treestyle.parser"
+    emitter-output-dir: "{project-root}/../../../../packages/python-packages/apiview-stub-generator/apistub/_generated"
+    namespace: "treestyle.parser"
     package-version: 0.3.23
     generate-packaging-files: false
     generate-test: false

@@ -168,13 +168,13 @@ def _local_review(
     reviewer.close()
 
 
-def run_test_case(language: str, test_file: str, num_runs: int = 3):
+def run_test_case(language: str, test_file: str, num_runs: int = 1, testcase: List[str] = None):
     """
     Runs one or all eval test cases.
     """
     from evals._runner import EvalRunner
 
-    runner = EvalRunner(language=language, test_path=test_file, num_runs=num_runs)
+    runner = EvalRunner(language=language, test_path=test_file, num_runs=num_runs, testcase=testcase)
     runner.run()
 
 
@@ -1107,6 +1107,9 @@ class CliCommandsLoader(CLICommandsLoader):
         with ArgumentsContext(self, "eval run") as ac:
             ac.argument(
                 "num_runs", type=int, options_list=["--num-runs", "-n"], help="Number of times to run the test case."
+            )
+            ac.argument(
+                "testcase", type=str, nargs='*', options_list=["--testcase", "-c"], help="List of test cases to run."
             )
         with ArgumentsContext(self, "eval create") as ac:
             ac.argument("test_case", type=str, help="The name of the test case")

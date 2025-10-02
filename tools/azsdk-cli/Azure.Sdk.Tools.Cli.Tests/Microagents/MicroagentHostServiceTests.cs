@@ -178,7 +178,7 @@ internal class MicroagentHostServiceTests
             {
                 validationCallbackCalled = true;
                 Assert.That(result, Is.EqualTo("ValidResult"));
-                return new MicroagentValidationResult { Success = true };
+                return await Task.FromResult(new MicroagentValidationResult { Success = true });
             }
         };
 
@@ -213,18 +213,18 @@ internal class MicroagentHostServiceTests
         var agentDefinition = new Microagent<string>
         {
             Instructions = "You are a helpful assistant.",
-            ValidateResult = async (result) =>
+            ValidateResult = (result) =>
             {
                 validationCallCount++;
                 if (result == "InvalidResult")
                 {
-                    return new MicroagentValidationResult 
-                    { 
-                        Success = false, 
-                        Reason = "Result is invalid because it contains 'Invalid'" 
-                    };
+                    return Task.FromResult(new MicroagentValidationResult
+                    {
+                        Success = false,
+                        Reason = "Result is invalid because it contains 'Invalid'"
+                    });
                 }
-                return new MicroagentValidationResult { Success = true };
+                return Task.FromResult(new MicroagentValidationResult { Success = true });
             }
         };
 
@@ -259,17 +259,17 @@ internal class MicroagentHostServiceTests
         var agentDefinition = new Microagent<string>
         {
             Instructions = "You are a helpful assistant.",
-            ValidateResult = async (result) =>
+            ValidateResult = (result) =>
             {
                 if (result == "InvalidResult")
                 {
-                    return new MicroagentValidationResult 
-                    { 
-                        Success = false, 
-                        Reason = "Custom validation error message" 
-                    };
+                    return Task.FromResult(new MicroagentValidationResult
+                    {
+                        Success = false,
+                        Reason = "Custom validation error message"
+                    });
                 }
-                return new MicroagentValidationResult { Success = true };
+                return Task.FromResult(new MicroagentValidationResult { Success = true });
             }
         };
 

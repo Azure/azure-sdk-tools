@@ -24,11 +24,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
         private const string RunChecksCommandName = "run-checks";
 
+        private readonly Option<bool> fixOption = new(["--fix"], "Enable fix mode for supported checks (like spelling)") { IsRequired = false };
+
         protected override List<Command> GetCommands()
         {
             var parentCommand = new Command(RunChecksCommandName, "Run validation checks for SDK packages");
             // Add the package path option to the parent command so it can be used without subcommands
             parentCommand.AddOption(SharedOptions.PackagePath);
+            parentCommand.AddOption(fixOption);
 
             // Create sub-commands for each check type
             List<Command> subCommands = [];
@@ -38,6 +41,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 var checkName = checkType.ToString().ToLowerInvariant();
                 var subCommand = new Command(checkName, $"Run {checkName} validation check");
                 subCommand.AddOption(SharedOptions.PackagePath);
+                subCommand.AddOption(fixOption);
 
                 parentCommand.AddCommand(subCommand);
                 subCommands.Add(subCommand);
@@ -50,19 +54,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             // Get the command name which corresponds to the check type
             var commandName = ctx.ParseResult.CommandResult.Command.Name;
+            var packagePath = ctx.ParseResult.GetValueForOption(SharedOptions.PackagePath);
+            var fixCheckErrors = ctx.ParseResult.GetValueForOption(fixOption);
 
             // If this is the parent command (run-checks), default to All
             if (commandName == RunChecksCommandName)
             {
-                var packagePath = ctx.ParseResult.GetValueForOption(SharedOptions.PackagePath);
-                return await RunPackageCheck(packagePath, PackageCheckType.All, ct);
+                return await RunPackageCheck(packagePath, PackageCheckType.All, fixCheckErrors, ct);
             }
 
             // Parse the command name back to enum for subcommands
             if (Enum.TryParse<PackageCheckType>(commandName, true, out var checkType))
             {
-                var packagePath = ctx.ParseResult.GetValueForOption(SharedOptions.PackagePath);
-                return await RunPackageCheck(packagePath, checkType, ct);
+                return await RunPackageCheck(packagePath, checkType, fixCheckErrors, ct);
             }
             else
             {
@@ -70,8 +74,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
         }
 
-        [McpServerTool(Name = "azsdk_package_run_check"), Description("Run validation checks for SDK packages. Provide package path and check type (All, Changelog, Dependency, Readme, Cspell, Snippets).")]
-        public async Task<CLICheckResponse> RunPackageCheck(string packagePath, PackageCheckType checkType, CancellationToken ct = default)
+        [McpServerTool(Name = "azsdk_package_run_check"), Description("Run validation checks for SDK packages. Provide package path, check type (All, Changelog, Dependency, Readme, Cspell, Snippets), and whether to fix errors.")]
+        public async Task<CLICheckResponse> RunPackageCheck(string packagePath, PackageCheckType checkType, bool fixCheckErrors, CancellationToken ct = default)
         {
             try
             {
@@ -87,7 +91,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     PackageCheckType.Changelog => await RunChangelogValidation(packagePath, ct),
                     PackageCheckType.Dependency => await RunDependencyCheck(packagePath, ct),
                     PackageCheckType.Readme => await RunReadmeValidation(packagePath, ct),
-                    PackageCheckType.Cspell => await RunSpellingValidation(packagePath, ct),
+                    PackageCheckType.Cspell => await RunSpellingValidation(packagePath, fixCheckErrors, ct),
                     PackageCheckType.Snippets => await RunSnippetUpdate(packagePath, ct),
                     _ => throw new ArgumentOutOfRangeException(
                         nameof(checkType),
@@ -138,7 +142,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             // Run spelling check
-            var spellingCheckResult = await languageChecks.CheckSpellingAsync(packagePath);
+            var spellingCheckResult = await languageChecks.CheckSpellingAsync(packagePath, false, ct);
             results.Add(spellingCheckResult);
             if (spellingCheckResult.ExitCode != 0)
             {
@@ -264,30 +268,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return result;
         }
 
-        private async Task<CLICheckResponse> RunSpellingValidation(string packagePath, CancellationToken ct = default)
+        private async Task<CLICheckResponse> RunSpellingValidation(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
         {
-            logger.LogInformation("Running spelling validation");
+            logger.LogInformation("Running spelling validation{fixMode}", fixCheckErrors ? " with fix mode enabled" : "");
 
-            var result = await languageChecks.CheckSpellingAsync(packagePath, ct);
-
-            if (result.ExitCode != 0)
-            {
-                result.NextSteps = new List<string>
-                {
-                    "Fix spelling errors identified in the package files",
-                    "Add legitimate technical terms to the cspell dictionary if needed",
-                    "Review comments, documentation, and variable names for typos",
-                    "Run cspell locally to identify and fix spelling issues before committing"
-                };
-            }
-            else
-            {
-                result.NextSteps = new List<string>
-                {
-                    "Spelling check passed - no spelling errors found"
-                };
-            }
-
+            var result = await languageChecks.CheckSpellingAsync(packagePath, fixCheckErrors, ct);
             return result;
         }
 
@@ -298,9 +283,5 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             var result = await languageChecks.UpdateSnippetsAsync(packagePath, ct);
             return result;
         }
-
-        // Back-compat overload for callers/tests that don't pass a CancellationToken
-        public Task<CLICheckResponse> RunPackageCheck(string packagePath, PackageCheckType checkType)
-            => RunPackageCheck(packagePath, checkType, ct: default);
     }
 }

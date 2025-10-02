@@ -27,10 +27,17 @@ if __name__ == "__main__":
         required=True,
         help="Path to workflow YAML.",
     )
+    parser.add_argument(
+        "--testcase",
+        "-c",
+        type=str,
+        help="Filter to run only the specified testcase (by testcase field value)."
+    )
     args = parser.parse_args()
     runner = EvalRunner(
         language=args.language, 
         test_path=args.test_file,
+        testcase=args.testcase,
         num_runs=args.num_runs
     )
     runner.run()

@@ -44,7 +44,7 @@ namespace APIViewWeb.Controllers
         // regular CI pipeline will not send this flag in request
         [TypeFilter(typeof(ApiKeyAuthorizeAsyncFilter))]
         [HttpPost]
-        public async Task<ActionResult> UploadAutoReview([FromForm] IFormFile file, string label, bool compareAllRevisions = false, string packageVersion = null, bool setReleaseTag = false)
+        public async Task<ActionResult> UploadAutoReview([FromForm] IFormFile file, string label, bool compareAllRevisions = false, string packageVersion = null, bool setReleaseTag = false, string packageType = null)
         {
             if (file != null)
             {
@@ -142,7 +142,8 @@ namespace APIViewWeb.Controllers
             bool compareAllRevisions,
             string project,
             string packageVersion = null,
-            bool setReleaseTag = false
+            bool setReleaseTag = false,
+            string packageType = null
             )
         {
             using var memoryStream = new MemoryStream();

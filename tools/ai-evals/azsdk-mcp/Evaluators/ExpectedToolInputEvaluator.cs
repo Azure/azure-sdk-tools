@@ -2,6 +2,7 @@ using System.Text.Json;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.AI.Evaluation;
 using Azure.Sdk.Tools.McpEvals.Models;
+using ModelContextProtocol.Client;
 
 namespace Azure.Sdk.Tools.McpEvals.Evaluators
 {
@@ -24,33 +25,24 @@ namespace Azure.Sdk.Tools.McpEvals.Evaluators
             if (additionalContext?.OfType<ExpectedToolInputEvaluatorContext>().FirstOrDefault()
                 is not ExpectedToolInputEvaluatorContext context)
             {
-                metric.AddDiagnostics(
-                    EvaluationDiagnostic.Error(
-                        $"A value of type {nameof(ExpectedToolInputEvaluatorContext)} was not found in the {nameof(additionalContext)} collection."));
-
+                MetricError($"A value of type {nameof(ExpectedToolInputEvaluatorContext)} was not found in the {nameof(additionalContext)} collection.", metric);
                 return result;
             }
 
             // Get tool calls to compare them
-            var expectedToolCalls = GetToolContent(context.ChatMessages);
-            var actualToolCalls = GetToolContent(modelResponse.Messages);
+            var expectedToolCalls = await GetToolContent(context.ChatMessages, context.ToolNames, true);
+            var actualToolCalls = await GetToolContent(modelResponse.Messages, context.ToolNames, false);
 
             // Make sure we have tool calls to compare
             if (!expectedToolCalls.Any())
             {
-                metric.AddDiagnostics(
-                    EvaluationDiagnostic.Error(
-                        $"No Tool calls detected inside of {nameof(additionalContext)} collection."));
-
+                MetricError($"No Tool calls detected inside of {nameof(additionalContext)} collection.", metric);
                 return result;
             }
 
             if (!actualToolCalls.Any())
             {
-                metric.AddDiagnostics(
-                    EvaluationDiagnostic.Error(
-                        $"Provided LLM Result contained no tool call. Expected to call: {PrintToolNames(expectedToolCalls)}"));
-
+                MetricError($"Provided LLM Result contained no tool call. Expected to call: {PrintToolNames(expectedToolCalls)}", metric);
                 return result;
             }
 
@@ -59,10 +51,7 @@ namespace Azure.Sdk.Tools.McpEvals.Evaluators
             var actCount = actualToolCalls.Count();
             if (expCount != actCount)
             {
-                metric.AddDiagnostics(
-                    EvaluationDiagnostic.Error(
-                        $"The LLM Result had different set of tool calls than expected: Actual calls: {PrintToolNames(actualToolCalls)}, Expected calls: {PrintToolNames(expectedToolCalls)}"));
-
+                MetricError($"The LLM Result had different set of tool calls than expected: Actual calls: {PrintToolNames(actualToolCalls)}, Expected calls: {PrintToolNames(expectedToolCalls)}", metric);
                 return result;
             }
 
@@ -78,11 +67,10 @@ namespace Azure.Sdk.Tools.McpEvals.Evaluators
                         $"Tool call #{countCalls}, expected the {expToolName} tool, and LLM called the {actToolName} tool."));
 
                 // If the names do not align then the tool calls were made in the wrong order by the LLM
-                if (expToolName != actToolName)
+                // Ends with because copilot attaches mcp_ to name
+                if (actToolName.EndsWith(expToolName))
                 {
-                    metric.AddDiagnostics(
-                    EvaluationDiagnostic.Error(
-                        $"Tool call made in the wrong order. Expected the {expToolName} tool but the LLM called {actToolName} tool. This was tool call #{countCalls}"));
+                    MetricError($"Tool call made in the wrong order. Expected the {expToolName} tool but the LLM called {actToolName} tool. This was tool call #{countCalls}", metric);
                     return result;
                 }
 
@@ -94,9 +82,7 @@ namespace Azure.Sdk.Tools.McpEvals.Evaluators
 
                 if(toolCall.act.Arguments == null)
                 {
-                    metric.AddDiagnostics(
-                    EvaluationDiagnostic.Error(
-                        $"Tool call #{countCalls}, expected arguments for tool {expToolName} but LLM provided none."));
+                    MetricError($"Tool call #{countCalls}, expected arguments for tool {expToolName} but LLM provided none.", metric);
                     return result;
                 }
 
@@ -119,17 +105,13 @@ namespace Azure.Sdk.Tools.McpEvals.Evaluators
 
                     if (!string.Equals(expectedJson, actualJson, StringComparison.OrdinalIgnoreCase))
                     {
-                        metric.AddDiagnostics(
-                            EvaluationDiagnostic.Error(
-                                $"Tool call arguments did not match. This was tool call #{countCalls}\nExpected Argument JSON:{expectedJson}\nActual Argument JSON:{actualJson}"));
+                        MetricError($"Tool call arguments did not match. This was tool call #{countCalls}\nExpected Argument JSON:{expectedJson}\nActual Argument JSON:{actualJson}", metric);
                         return result;
                     }
                 }
                 catch (JsonException ex)
                 {
-                    metric.AddDiagnostics(
-                        EvaluationDiagnostic.Error(
-                            $"Tool call #{countCalls}, failed to serialize either the expected tool call or the actual tool call. Error: {ex}"));
+                    MetricError($"Tool call #{countCalls}, failed to serialize either the expected tool call or the actual tool call. Error: {ex}", metric);
                     return result;
                 }
                 
@@ -162,33 +144,42 @@ namespace Azure.Sdk.Tools.McpEvals.Evaluators
             }
         }
 
-        private static IEnumerable<FunctionCallContent> GetToolContent(IEnumerable<ChatMessage> messages, bool simplify)
+        private async Task<IEnumerable<FunctionCallContent>> GetToolContent(IEnumerable<ChatMessage> messages, IEnumerable<string> toolNames, bool simplify)
         {
             var result = messages
                 .Where(message => message.Role == ChatRole.Assistant)
                 .SelectMany(message => message.Contents)
-                .OfType<FunctionCallContent>();
+                .OfType<FunctionCallContent>()
+                // Filter for tool names in the MCP Server. 
+                // Ends with because copilot will often start mcp names with "mcp_<tool name>"
+                .Where(toolCall => toolNames.Any(name => toolCall.Name.EndsWith(name)));
+
 
             // Remove consecutive duplicates if requested
+            // Sometimes Copilot will call a tool multiple times if something went wrong (ex. wrong arguments to tool).
+            // This is expected, simplfiy down to last call. 
             if (simplify)
             {
-                string? lastToolName = null;
-
-                // Going in reverse as we want to maintain the last tool call from the duplicates
-                foreach (var message in result.Reverse())
-                {
-                    if(lastToolName == null || lastToolName != message.Name)
-                    {
-                        lastToolName = message.Name;
-                        yield return message;
-                    }
-                }
+                return result
+                    .GroupBy(m => m.Name)
+                    .Select(g => g.Last());
+            }
+            else
+            {
+                return result;
             }
         }
 
         private static string PrintToolNames(IEnumerable<FunctionCallContent> toolCalls)
         {
             return string.Join(",", toolCalls.Select(toolCall => toolCall.Name));
+        }
+
+        private static void MetricError(string message, BooleanMetric metric)
+        {
+            metric.AddDiagnostics(EvaluationDiagnostic.Error(message));
+            metric.Value = false;
+            Interpret(metric);
         }
     }
 }

@@ -51,7 +51,7 @@ namespace APIViewWeb.LeanModels
         public List<string> GuidelineIds { get; set; } = [];
         public List<string> MemoryIds { get; set; } = [];
 
-        public static CommentSeverity? ParseSeverity(string value)
+        public static CommentSeverity ParseSeverity(string value)
         {
             return value?.ToUpper() switch
             {

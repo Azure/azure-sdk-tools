@@ -16,49 +16,10 @@ namespace Azure.Tools.GeneratorAgent.Agent
         };
 
         /// <summary>
-        /// Parses the agent's response and extracts the updated client.tsp content from JSON
-        /// </summary>
-        public static AgentTypeSpecResponse ParseResponse(string rawResponse)
-        {
-            ArgumentNullException.ThrowIfNull(rawResponse);
-
-            try
-            {
-                // Extract JSON from markdown code blocks if present
-                var jsonContent = ExtractJsonFromResponse(rawResponse);
-
-                var response = JsonSerializer.Deserialize<AgentTypeSpecResponse>(jsonContent, JsonOptions);
-
-                if (response == null)
-                {
-                    throw new InvalidOperationException("Failed to deserialize agent response");
-                }
-
-                if (response.Path != "client.tsp")
-                {
-                    throw new InvalidOperationException($"Expected path 'client.tsp' but got '{response.Path}'");
-                }
-
-                if (string.IsNullOrWhiteSpace(response.Content))
-                {
-                    throw new InvalidOperationException("Agent response contains empty content");
-                }
-
-                return response;
-            }
-            catch (JsonException ex)
-            {
-                throw new InvalidOperationException("Agent response is not in the expected JSON format", ex);
-            }
-        }
-
-        /// <summary>
         /// Parses the agent's error responses into a list of RuleError objects
         /// </summary>
         public static IEnumerable<RuleError> ParseErrors(string rawResponse)
         {
-            ArgumentNullException.ThrowIfNull(rawResponse);
-
             try
             {
                 // Extract JSON from markdown code blocks if present
@@ -67,9 +28,15 @@ namespace Azure.Tools.GeneratorAgent.Agent
                 // Deserialize using shared static options (avoids allocation per call)
                 var response = JsonSerializer.Deserialize<AgentErrorResponse>(jsonContent, JsonOptions);
 
-                if (response == null || response.Errors == null || !response.Errors.Any())
+                if (response == null)
                 {
-                    throw new InvalidOperationException("No errors found in the agent response");
+                    throw new InvalidOperationException("Failed to deserialize agent response");
+                }
+
+                // Return empty collection if no errors found - this is valid behavior
+                if (response.Errors == null || !response.Errors.Any())
+                {
+                    return Enumerable.Empty<RuleError>();
                 }
 
                 return response.Errors.Select(e => new RuleError(e.Type, e.Message));

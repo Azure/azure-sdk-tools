@@ -11,27 +11,24 @@ namespace Azure.Tools.GeneratorAgent
     {
         private readonly ILogger<LibraryBuildService> Logger;
         private readonly ProcessExecutionService ProcessExecutionService;
-        private readonly string SdkOutputDir;
 
         public LibraryBuildService(
             ILogger<LibraryBuildService> logger,
-            ProcessExecutionService processExecutionService,
-            string sdkOutputDir)
+            ProcessExecutionService processExecutionService)
         {
             ArgumentNullException.ThrowIfNull(logger);
             ArgumentNullException.ThrowIfNull(processExecutionService);
-            ArgumentException.ThrowIfNullOrWhiteSpace(sdkOutputDir);
 
             Logger = logger;
             ProcessExecutionService = processExecutionService;
-            SdkOutputDir = sdkOutputDir;
         }
 
-        public async Task<Result<object>> BuildSdkAsync(CancellationToken cancellationToken = default)
+        public async Task<Result<object>> BuildSdkAsync(string sdkOutputDir, CancellationToken cancellationToken = default)
         {
-            Logger.LogDebug("Starting SDK build in directory: {SdkOutputDir}", SdkOutputDir);
+            ArgumentException.ThrowIfNullOrWhiteSpace(sdkOutputDir);
+            Logger.LogDebug("Starting library build in directory: {SdkOutputDir}", sdkOutputDir);
 
-            Result<string> buildTargetResult = DetermineBuildTarget(SdkOutputDir);
+            Result<string> buildTargetResult = DetermineBuildTarget(sdkOutputDir);
             if (buildTargetResult.IsFailure)
             {
                 return Result<object>.Failure(buildTargetResult.Exception!);
@@ -48,7 +45,7 @@ namespace Azure.Tools.GeneratorAgent
             Result<object> buildResult = await ProcessExecutionService.ExecuteAsync(
                 SecureProcessConfiguration.DotNetExecutable,
                 argValidation.Value!,
-                SdkOutputDir,
+                sdkOutputDir,
                 cancellationToken).ConfigureAwait(false);
 
             if (buildResult.IsFailure && buildResult.ProcessException != null)

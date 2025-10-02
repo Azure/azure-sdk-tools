@@ -74,6 +74,16 @@ export class CommentThreadComponent {
 
   private visibleRelatedCommentsCache = new Map<string, CommentItemModel[]>();
 
+  get canEditSeverity(): boolean {
+    if (!this.codePanelRowData?.comments || this.codePanelRowData.comments.length === 0) {
+      return false;
+    }
+    
+    const firstComment = this.codePanelRowData.comments[0];
+    return firstComment.createdBy === this.userProfile?.userName || 
+           (firstComment.createdBy === 'azure-sdk' && this.preferredApprovers.includes(this.userProfile?.userName!));
+  }
+
   CodeLineRowNavigationDirection = CodeLineRowNavigationDirection;
 
   constructor(private changeDetectorRef: ChangeDetectorRef, private messageService: MessageService, private commentsService: CommentsService) { }

@@ -102,7 +102,8 @@ namespace APIViewWeb.HostedServices
                         IsGeneric = comment.IsGeneric,
                         CorrelationId = comment.CorrelationId,
                         GuidelineIds = comment.GuidelineIds ?? [],
-                        MemoryIds = comment.MemoryIds ?? []
+                        MemoryIds = comment.MemoryIds ?? [],
+                        Severity = CommentItemModel.ParseSeverity(comment.Severity)
                     };
 
                     var commentText = new StringBuilder();

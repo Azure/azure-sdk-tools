@@ -1,5 +1,4 @@
 ﻿using System.CommandLine;
-using Azure.Tools.ErrorAnalyzers;
 using Azure.Tools.GeneratorAgent.Agent;
 using Azure.Tools.GeneratorAgent.Configuration;
 using Azure.Tools.GeneratorAgent.DependencyInjection;
@@ -117,113 +116,104 @@ namespace Azure.Tools.GeneratorAgent
         {
             Logger.LogInformation("Starting library generation process");
 
+            // Get services from DI container
             var appSettings = ServiceProvider.GetRequiredService<AppSettings>();
-            var maxIterations = appSettings.MaxIterations;
+            var typeSpecFileService = ServiceProvider.GetRequiredService<TypeSpecFileService>();
+            var toolBasedAgent = ServiceProvider.GetRequiredService<ToolBasedAgent>();
+            var libraryBuildService = ServiceProvider.GetRequiredService<LibraryBuildService>();            
+            var sdkGenerationService = ServiceProvider.GetRequiredService<LocalLibraryGenerationService>();
 
-            // Step 1: Get TypeSpec files (from local or GitHub)
-            var fileServiceFactory = ServiceProvider.GetRequiredService<Func<ValidationContext, TypeSpecFileService>>();
-            var fileService = fileServiceFactory(validationContext);
-
-            var typeSpecFilesResult = await fileService.GetTypeSpecFilesAsync(cancellationToken).ConfigureAwait(false);
-            if (typeSpecFilesResult.IsFailure)
-            {
-                typeSpecFilesResult.ThrowIfFailure();
+            // Download TypeSpec files if from GitHub (commitId provided)
+            if (!string.IsNullOrWhiteSpace(validationContext.ValidatedCommitId))
+            { 
+                await typeSpecFileService.DownloadGitHubTypeSpecFilesAsync(validationContext, cancellationToken).ConfigureAwait(false);
+                Logger.LogInformation("GitHub TypeSpec files downloaded successfully");
             }
 
-            var typeSpecFiles = typeSpecFilesResult.Value!;   
-
-            Logger.LogInformation("Successfully loaded {Count} TypeSpec files", typeSpecFiles.Count);
-
-            // Step 2: Initialize ErrorFixer Agent with files in memory
-            var errorFixerAgent = ServiceProvider.GetRequiredService<ErrorFixerAgent>();
-            await errorFixerAgent.InitializeAgentEnvironmentAsync(typeSpecFiles, cancellationToken).ConfigureAwait(false);
-            Logger.LogInformation("Agent environment initialized successfully");
-
-            //Iteratively: Compile -> generate library -> build library -> capture and fix error
-            var currentIteration = 0;
-
-            while (currentIteration < maxIterations)
+            // Initialize Tool-Based Agent with proper disposal   
+            await using (toolBasedAgent.ConfigureAwait(false))
             {
-                // Step 4: Compile Typespec 
-                var sdkServiceFactory = ServiceProvider.GetRequiredService<Func<ValidationContext, LocalLibraryGenerationService>>();
-                var sdkGenerationService = sdkServiceFactory(validationContext);
-                var compileResult = await sdkGenerationService.CompileTypeSpecAsync(cancellationToken).ConfigureAwait(false);
+                // Set the validation context for tool execution
+                toolBasedAgent.SetValidationContext(validationContext);
                 
-                // Step 5: Compile Generated SDK (only if TypeSpec compilation succeeded)
-                Result<object>? buildResult = null;
-                if (compileResult.IsSuccess)
-                {
-                    Logger.LogInformation("Step 4: TypeSpec compilation completed successfully. Building Library...");
+                await toolBasedAgent.InitializeAsync(cancellationToken).ConfigureAwait(false);          
 
-                    var libraryBuildServiceFactory = ServiceProvider.GetRequiredService<Func<ValidationContext, LibraryBuildService>>();
-                    var libraryBuildService = libraryBuildServiceFactory(validationContext);
-                    buildResult = await libraryBuildService.BuildSdkAsync(cancellationToken).ConfigureAwait(false);
-                    
-                    if (buildResult.IsSuccess)
+                // Setup local machine for iterative generation
+                await sdkGenerationService.InstallTypeSpecDependencies(cancellationToken).ConfigureAwait(false);
+            
+                // Iteratively: Compile -> generate library -> build library -> capture and fix error
+                var currentIteration = 0;
+                var maxIterations = appSettings.MaxIterations;
+
+                while (currentIteration < maxIterations)
+                {
+                    // Compile TypeSpec              
+                    var compileResult = await sdkGenerationService.CompileTypeSpecAsync(validationContext, cancellationToken).ConfigureAwait(false);
+
+                    // Compile Generated SDK (only if TypeSpec compilation succeeded)
+                    Result<object>? buildResult = null;
+                    if (compileResult.IsSuccess)
                     {
-                        Logger.LogInformation("Build completed successfully");
+                        Logger.LogInformation("TypeSpec compilation completed successfully. Building Library...\n");
+
+                        buildResult = await libraryBuildService.BuildSdkAsync(validationContext.ValidatedSdkDir, cancellationToken).ConfigureAwait(false);
                     }
+
+                    // Check if compile and build are successful
+                    if (compileResult.IsSuccess && (buildResult?.IsSuccess ?? true))
+                    {
+                        Logger.LogInformation("Generation process completed successfully - no errors found");
+                        break;
+                    }
+
+                    // Analyze errors and get fixes - use the already initialized agent
+                    var errorAnalyzer = ServiceProvider.GetRequiredService<ErrorAnalysisService>();
+                    var analysisResult = await errorAnalyzer.GenerateFixesFromResultsAsync(compileResult, buildResult, cancellationToken).ConfigureAwait(false);
+                    if (analysisResult.IsFailure)
+                    {
+                        Logger.LogError("Failed to analyze errors: {Error}", analysisResult.Exception?.Message);
+                        analysisResult.ThrowIfFailure();
+                    }
+
+                    var allFixes = analysisResult.Value!;
+                    Logger.LogInformation("Error analysis completed successfully - generated {FixCount} fixes\n", allFixes.Count);
+
+                    // No point continuing if no fixes were generated
+                    if (allFixes.Count == 0)
+                    {
+                        Logger.LogInformation("No fixes generated - compilation errors may not be addressable by this agent");
+                        break;
+                    }
+
+                    // Get patch proposal from agent
+                    Logger.LogInformation("Processing fixes with Agent");
+                    var patchResult = await toolBasedAgent.FixCodeAsync(allFixes, cancellationToken).ConfigureAwait(false);
+                    
+                    if (!patchResult.IsSuccess)
+                    {
+                        Logger.LogError("Failed to get patch from agent: {Error}", 
+                            patchResult.ProcessException?.Message ?? patchResult.Exception?.Message ?? "Unknown error");
+                        break;
+                    }
+                    
+                    Logger.LogInformation("The patch result is {patchResult}", patchResult.Value);
+
+                    // Apply patch and continue iteration
+                    var patchApplicator = ServiceProvider.GetRequiredService<TypeSpecPatchApplicator>();
+                    bool success = await patchApplicator.ApplyPatchAsync(patchResult.Value!, validationContext.ValidatedTypeSpecDir, cancellationToken);
+
+                    if (success) {
+                        Logger.LogInformation("Patch applied, proceeding to next iteration");
+                        // Continue to next compile/build cycle
+                    } else {
+                        Logger.LogError("Patch failed, stopping iterations");
+                        break;
+                    }
+                    
+                    currentIteration += 1;
                 }
-
-                // Step 6: Check if compile and build are successful
-                if (compileResult.IsSuccess && (buildResult?.IsSuccess ?? true))
-                {
-                    Logger.LogInformation("Generation process completed successfully - no errors found");
-                    break;
-                }
-
-                // Step 7: Analyze errors and get fixes
-                var analyzer = ServiceProvider.GetRequiredService<FixGeneratorService>();
-                var analysisResult = await analyzer.AnalyzeAndGetFixesAsync(compileResult, buildResult, cancellationToken).ConfigureAwait(false);
-                if (analysisResult.IsFailure)
-                {
-                    Logger.LogError("Failed to analyze errors: {Error}", analysisResult.Exception?.Message);
-                    analysisResult.ThrowIfFailure();
-                }
-
-                var allFixes = analysisResult.Value!;
-                Logger.LogInformation("Error analysis completed successfully - generated {FixCount} fixes", allFixes.Count);
-
-                //No point continuing if no fixes were generated
-                if (allFixes.Count == 0)
-                {
-                    Logger.LogInformation("No fixes generated - compilation errors may not be addressable by this agent");
-                    break;
-                }
-
-                // Step 8: Apply fixes - handle Result<T>
-                var fixResult = await errorFixerAgent.FixCodeAsync(allFixes, cancellationToken).ConfigureAwait(false);
-                if (fixResult.IsFailure)
-                {
-                    Logger.LogError("Agent failed to fix code: {Error}", fixResult.Exception?.Message);
-                    fixResult.ThrowIfFailure();
-                }
-                
-                var updatedClientTspContent = fixResult.Value!;
-                if (string.IsNullOrWhiteSpace(updatedClientTspContent))
-                {
-                    throw new InvalidOperationException("Agent returned empty content for client.tsp");
-                }
-
-                Logger.LogInformation("Agent successfully generated fixes for {FixCount} issues", allFixes.Count);
-
-                // Step 9: Update client.tsp files
-                var updateResult = await fileService.UpdateTypeSpecFileAsync("client.tsp", updatedClientTspContent, cancellationToken).ConfigureAwait(false);
-                if (updateResult.IsFailure)
-                {
-                    Logger.LogError("Failed to update TypeSpec file: {Error}", updateResult.Exception?.Message);
-                    updateResult.ThrowIfFailure();
-                }
-
-                Logger.LogInformation("Updated TypeSpec file locally");
-
-                await errorFixerAgent.UpdateFileAsync("client.tsp", updatedClientTspContent, cancellationToken);
-                
-                Logger.LogInformation("Successfully updated client.tsp with generated fixes");
-
-                currentIteration++;
             }
-                
+
             Logger.LogInformation("Library generation completed successfully");
             return ExitCodeSuccess;
         }

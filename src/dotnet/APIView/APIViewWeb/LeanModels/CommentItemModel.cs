@@ -51,5 +51,17 @@ namespace APIViewWeb.LeanModels
         public bool IsGeneric { get; set; }
         public List<string> GuidelineIds { get; set; } = [];
         public List<string> MemoryIds { get; set; } = [];
+
+        public static CommentSeverity ParseSeverity(string value)
+        {
+            return value?.ToUpperInvariant() switch
+            {
+                "QUESTION" => CommentSeverity.Question,
+                "SHOULD" => CommentSeverity.ShouldFix,
+                "SUGGESTION" => CommentSeverity.Suggestion,
+                "MUST" => CommentSeverity.MustFix,
+                _ => CommentSeverity.ShouldFix
+            };
+        }
     }
 }

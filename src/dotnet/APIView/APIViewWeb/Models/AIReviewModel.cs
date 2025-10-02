@@ -29,6 +29,8 @@ namespace APIViewWeb.Models
 
         [JsonPropertyName("correlationId")]
         public string CorrelationId { get; set; }
+        [JsonPropertyName("severity")]
+        public string Severity { get; set; }
     }
 
     public class AIReviewJobPolledResponseModel

@@ -31,7 +31,8 @@ if __name__ == "__main__":
         "--testcase",
         "-c",
         type=str,
-        help="Filter to run only the specified testcase (by testcase field value)."
+        help="Filter to run only the specified testcases",
+        nargs='*'
     )
     args = parser.parse_args()
     runner = EvalRunner(

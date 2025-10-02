@@ -89,7 +89,9 @@ export class NavBarComponent implements OnInit {
           }
         },
         error: (error) => {
+          console.error('Failed to fetch allowed approvers:', error);
           this.isApprover = false;
+          // Optionally, notify the user here if desired
         }
       });
     }

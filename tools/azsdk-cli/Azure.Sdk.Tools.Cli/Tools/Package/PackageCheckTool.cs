@@ -319,9 +319,5 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             var result = await languageChecks.FormatCodeAsync(packagePath, fix: false, ct);
             return result;
         }
-
-        // Back-compat overload for callers/tests that don't pass a CancellationToken
-        public Task<CLICheckResponse> RunPackageCheck(string packagePath, PackageCheckType checkType)
-            => RunPackageCheck(packagePath, checkType, ct: default);
     }
 }

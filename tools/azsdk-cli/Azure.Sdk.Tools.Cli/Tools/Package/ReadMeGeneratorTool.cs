@@ -9,6 +9,7 @@ using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Prompts;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package
 {
@@ -145,25 +146,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
             var readmeText = await File.ReadAllTextAsync(templatePath, ct);
 
-            var prompt = $"""
-                We're going to create some READMEs.
+            // Ensure templates are registered
+            Azure.Sdk.Tools.Cli.Prompts.Prompts.RegisterBuiltInTemplates();
 
-                The parameters are:
-                * A URL that contains service documentation, to be used when creating key concepts, an introduction blurb and any other places where conceptual docs are needed
-                * A package path that we can use to generate documentation links
-
-                Here are some more rules to follow:
-                - Do not touch the following sections, or its subsections: Contributing.
-                - Do not generate sample code.
-                - Rules for proper readmes can be found here: https://github.com/Azure/azure-sdk/blob/main/docs/policies/README-TEMPLATE.md
-
-                The readme template is this: {readmeText} which we fill in with the user parameters, which follow:
-                Service URL: {serviceDocumentation}
-                Package path: {subPackagePath}
-
-                Call the check_readme_tool with the readme contents, and follow any returned suggestions.
-                When there are no further suggestions, give me the readme contents.
-                """;
+            // Use the standardized template system with built-in safety measures
+            var prompt = Azure.Sdk.Tools.Cli.Prompts.Prompts.GetReadMeGenerationPrompt(
+                templateContent: readmeText,
+                serviceDocumentation: serviceDocumentation.ToString(),
+                packagePath: subPackagePath);
 
             var result = await this.microAgentHostService.RunAgentToCompletion(new Microagent<ReadmeContents>()
             {

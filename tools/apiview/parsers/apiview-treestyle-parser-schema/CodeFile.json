@@ -79,9 +79,9 @@
             "default": "None",
             "description": "Language variant is applicable only for java variants"
         },
-        "CrossLanguagePackageId": {
-            "type": "string",
-            "description": "Id to identify Reviews for different languages generated from the same TypeSpec specification."
+        "CrossLanguageMetadata": {
+            "$ref": "#/$defs/CrossLanguageMetadata",
+            "description": "Metadata to identify Reviews for different languages generated from the same TypeSpec specification."
         },
         "ReviewLines": {
             "type": "array",
@@ -295,6 +295,25 @@
                 6,
                 7,
                 8
+            ]
+        },
+        "CrossLanguageMetadata": {
+            "type": "object",
+            "properties": {
+                "CrossLanguagePackageId": {
+                    "type": "string"
+                },
+                "CrossLanguageDefinitionId": {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                }
+            },
+            "required": [
+                "CrossLanguagePackageId",
+                "CrossLanguageDefinitionId"
             ]
         }
     }

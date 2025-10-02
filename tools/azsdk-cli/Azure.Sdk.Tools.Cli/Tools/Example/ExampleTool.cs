@@ -466,6 +466,8 @@ public class ExampleTool(
                 Tools = [advanceTool],
                 ValidateResult = async result =>
                 {
+                    await Task.CompletedTask;
+                    
                     // Check the result for correctness using fibonacci formula.
                     var phi = (1 + Math.Sqrt(5)) / 2;
                     var psi = (1 - Math.Sqrt(5)) / 2;

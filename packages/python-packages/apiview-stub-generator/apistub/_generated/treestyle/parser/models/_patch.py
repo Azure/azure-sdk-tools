@@ -375,7 +375,7 @@ class ReviewLine(ReviewLineImpl):
         # Use short name unless last segment is ALL-CAPS (enum member should keep full name)
         parts = type_full_name.split(".")
         last = parts[-1]
-        if len(parts) > 1 and not (last.isupper() and any(c.isalpha() for c in last)):
+        if len(parts) > 1 and not last.isupper():
             token.value = last
         else:
             token.value = type_full_name

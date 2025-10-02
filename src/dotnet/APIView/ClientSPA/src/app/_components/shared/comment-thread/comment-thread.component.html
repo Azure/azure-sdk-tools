@@ -18,7 +18,8 @@
         <div *ngIf="codePanelRowData!.comments && codePanelRowData!.comments.length > 0 && 
                     hasSeverity(codePanelRowData!.comments[0].severity)" 
              class="severity-header-container">
-            <div *ngIf="codePanelRowData!.comments[0].createdBy === userProfile?.userName">
+            <div *ngIf="codePanelRowData!.comments[0].createdBy === userProfile?.userName || 
+                        (codePanelRowData!.comments[0].createdBy === 'azure-sdk' && preferredApprovers.includes(userProfile?.userName!))">
                 <div *ngIf="isEditingSeverity === codePanelRowData!.comments[0].id" class="severity-edit-container">
                     <p-dropdown 
                         [options]="severityOptions" 
@@ -40,7 +41,8 @@
                     <i class="pi pi-pencil ms-1 severity-edit-icon"></i>
                 </div>
             </div>
-            <div *ngIf="codePanelRowData!.comments[0].createdBy !== userProfile?.userName">
+            <div *ngIf="!(codePanelRowData!.comments[0].createdBy === userProfile?.userName || 
+                          (codePanelRowData!.comments[0].createdBy === 'azure-sdk' && preferredApprovers.includes(userProfile?.userName!)))">
                 <span [ngClass]="getSeverityBadgeClass(codePanelRowData!.comments[0].severity)" class="severity-badge px-2 py-1 rounded text-xs">
                     {{ getSeverityLabel(codePanelRowData!.comments[0].severity) }}
                 </span>

@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using APIViewWeb.Hubs;
 using APIViewWeb.LeanModels;
@@ -61,6 +63,8 @@ namespace APIViewWeb.Controllers
                 await _notificationManager.SubscribeAsync(review,User);
             }
             
+            // Query comments for the specific element instead of all review comments
+            // This is more efficient and avoids potential consistency issues
             return await CommentPartialAsync(reviewId, comment.ElementId); 
         }
 
@@ -105,10 +109,26 @@ namespace APIViewWeb.Controllers
             return await CommentPartialAsync(reviewId, elementId);
         }
 
-        private async Task<ActionResult> CommentPartialAsync(string reviewId, string elementId)
+        private async Task<ActionResult> CommentPartialAsync(string reviewId, string elementId, IEnumerable<CommentItemModel> knownComments = null)
         {
-            var comments = await _commentsManager.GetReviewCommentsAsync(reviewId);
-            comments.TryGetThreadForLine(elementId, out var partialModel);
+            CommentThreadModel partialModel = null;
+            
+            if (knownComments != null)
+            {
+                // Use the provided comments directly to build the thread model
+                // This avoids CosmosDB eventual consistency issues when comments are just added
+                partialModel = new CommentThreadModel(reviewId, elementId, knownComments);
+            }
+            else
+            {
+                // Query comments for the specific element to avoid loading all review comments
+                var elementComments = await _commentsManager.GetCommentsAsync(reviewId, elementId);
+                if (elementComments != null && elementComments.Any())
+                {
+                    partialModel = new CommentThreadModel(reviewId, elementId, elementComments);
+                }
+            }
+            
             return PartialView("_CommentThreadPartial", partialModel);
         }
     }

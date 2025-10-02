@@ -128,6 +128,11 @@ namespace APIViewWeb.Managers
             return new ReviewCommentsModel(reviewId, comments.Where(c => c.CommentType == LeanModels.CommentType.SampleRevision));
         }
 
+        public async Task<IEnumerable<CommentItemModel>> GetCommentsAsync(string reviewId, string elementId)
+        {
+            return await _commentsRepository.GetCommentsAsync(reviewId, elementId);
+        }
+
         public async Task AddCommentAsync(ClaimsPrincipal user, CommentItemModel comment)
         {
             comment.ChangeHistory.Add(

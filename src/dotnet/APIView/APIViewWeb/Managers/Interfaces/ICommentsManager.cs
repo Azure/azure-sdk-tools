@@ -14,6 +14,7 @@ namespace APIViewWeb.Managers
         public Task<ReviewCommentsModel> GetReviewCommentsAsync(string reviewId);
         public Task<IEnumerable<CommentItemModel>> GetAPIRevisionCommentsAsync(string apiRevisionId, string createdBy=null);
         public Task<ReviewCommentsModel> GetUsageSampleCommentsAsync(string reviewId);
+        public Task<IEnumerable<CommentItemModel>> GetCommentsAsync(string reviewId, string elementId);
         public Task AddCommentAsync(ClaimsPrincipal user, CommentItemModel comment);
         public Task<CommentItemModel> UpdateCommentAsync(ClaimsPrincipal user, string reviewId, string commentId, string commentText, string[] taggedUsers);
         public Task<CommentItemModel> UpdateCommentSeverityAsync(ClaimsPrincipal user, string reviewId, string commentId, CommentSeverity? severity);

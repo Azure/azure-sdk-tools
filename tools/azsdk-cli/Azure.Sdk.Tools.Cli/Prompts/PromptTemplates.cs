@@ -9,7 +9,7 @@ namespace Azure.Sdk.Tools.Cli.Prompts;
 /// Centralized prompt methods using the standardized template system.
 /// All prompts include built-in safety guidelines and consistent structure.
 /// </summary>
-public static class Prompts
+public static class PromptTemplates
 {
     /// <summary>
     /// Gets the microagent spelling fix prompt with built-in safety measures.

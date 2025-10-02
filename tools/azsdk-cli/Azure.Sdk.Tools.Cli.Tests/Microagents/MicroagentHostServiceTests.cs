@@ -174,7 +174,9 @@ internal class MicroagentHostServiceTests
             BinaryData.FromString("""{"Result":"ValidResult"}""")
         );
 
+#pragma warning disable OPENAI001
         var chatCompletion = OpenAIChatModelFactory.ChatCompletion(role: ChatMessageRole.Assistant, toolCalls: [exitToolCall]);
+#pragma warning restore OPENAI001
 
         var validationCallbackCalled = false;
         var agentDefinition = new Microagent<string>
@@ -234,9 +236,11 @@ internal class MicroagentHostServiceTests
             }
         };
 
+#pragma warning disable OPENAI001
         chatClientMock.SetupSequence(client => client.CompleteChatAsync(It.IsAny<IReadOnlyList<ChatMessage>>(), It.IsAny<ChatCompletionOptions>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ClientResult.FromValue(OpenAIChatModelFactory.ChatCompletion(role: ChatMessageRole.Assistant, toolCalls: [firstExitToolCall]), Mock.Of<PipelineResponse>()))
             .ReturnsAsync(ClientResult.FromValue(OpenAIChatModelFactory.ChatCompletion(role: ChatMessageRole.Assistant, toolCalls: [secondExitToolCall]), Mock.Of<PipelineResponse>()));
+#pragma warning restore OPENAI001
 
         // Act
         var result = await microagentHostService.RunAgentToCompletion(agentDefinition);
@@ -279,9 +283,11 @@ internal class MicroagentHostServiceTests
             }
         };
 
+#pragma warning disable OPENAI001
         chatClientMock.SetupSequence(client => client.CompleteChatAsync(It.IsAny<IReadOnlyList<ChatMessage>>(), It.IsAny<ChatCompletionOptions>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ClientResult.FromValue(OpenAIChatModelFactory.ChatCompletion(role: ChatMessageRole.Assistant, toolCalls: [firstExitToolCall]), Mock.Of<PipelineResponse>()))
             .ReturnsAsync(ClientResult.FromValue(OpenAIChatModelFactory.ChatCompletion(role: ChatMessageRole.Assistant, toolCalls: [secondExitToolCall]), Mock.Of<PipelineResponse>()));
+#pragma warning restore OPENAI001
 
         // Act
         var result = await microagentHostService.RunAgentToCompletion(agentDefinition);

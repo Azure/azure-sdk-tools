@@ -86,14 +86,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
                 return checkType switch
                 {
-                    PackageCheckType.All => await RunAllChecks(packagePath, ct),
+                    PackageCheckType.All => await RunAllChecks(packagePath, fixCheckErrors, ct),
                     PackageCheckType.Changelog => await RunChangelogValidation(packagePath, ct),
                     PackageCheckType.Dependency => await RunDependencyCheck(packagePath, ct),
                     PackageCheckType.Readme => await RunReadmeValidation(packagePath, ct),
                     PackageCheckType.Cspell => await RunSpellingValidation(packagePath, fixCheckErrors, ct),
                     PackageCheckType.Snippets => await RunSnippetUpdate(packagePath, ct),
-                    PackageCheckType.Linting => await RunLintCode(packagePath, ct),
-                    PackageCheckType.Format => await RunFormatCode(packagePath, ct),
+                    PackageCheckType.Linting => await RunLintCode(packagePath, fixCheckErrors, ct),
+                    PackageCheckType.Format => await RunFormatCode(packagePath, fixCheckErrors, ct),
                     _ => throw new ArgumentOutOfRangeException(
                         nameof(checkType),
                         checkType,
@@ -107,7 +107,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
         }
 
-        private async Task<CLICheckResponse> RunAllChecks(string packagePath, CancellationToken ct)
+        private async Task<CLICheckResponse> RunAllChecks(string packagePath, bool fixCheckErrors, CancellationToken ct)
         {
             logger.LogInformation("Running all validation checks");
 
@@ -143,7 +143,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             // Run spelling check
-            var spellingCheckResult = await languageChecks.CheckSpellingAsync(packagePath, false, ct);
+            var spellingCheckResult = await languageChecks.CheckSpellingAsync(packagePath, fixCheckErrors, ct);
             results.Add(spellingCheckResult);
             if (spellingCheckResult.ExitCode != 0)
             {
@@ -161,7 +161,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             // Run code linting
-            var lintCodeResult = await languageChecks.LintCodeAsync(packagePath, fix: false, ct);
+            var lintCodeResult = await languageChecks.LintCodeAsync(packagePath, fix: fixCheckErrors, ct);
             results.Add(lintCodeResult);
             if (lintCodeResult.ExitCode != 0)
             {
@@ -170,7 +170,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             // Run code formatting
-            var formatCodeResult = await languageChecks.FormatCodeAsync(packagePath, fix: false, ct);
+            var formatCodeResult = await languageChecks.FormatCodeAsync(packagePath, fix: fixCheckErrors, ct);
             results.Add(formatCodeResult);
             if (formatCodeResult.ExitCode != 0)
             {
@@ -304,19 +304,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return result;
         }
 
-        private async Task<CLICheckResponse> RunLintCode(string packagePath, CancellationToken ct = default)
+        private async Task<CLICheckResponse> RunLintCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             logger.LogInformation("Running code linting");
 
-            var result = await languageChecks.LintCodeAsync(packagePath, fix: false, ct);
+            var result = await languageChecks.LintCodeAsync(packagePath, fix: fixCheckErrors, ct);
             return result;
         }
 
-        private async Task<CLICheckResponse> RunFormatCode(string packagePath, CancellationToken ct = default)
+        private async Task<CLICheckResponse> RunFormatCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             logger.LogInformation("Running code formatting");
 
-            var result = await languageChecks.FormatCodeAsync(packagePath, fix: false, ct);
+            var result = await languageChecks.FormatCodeAsync(packagePath, fix: fixCheckErrors, ct);
             return result;
         }
     }

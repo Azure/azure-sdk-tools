@@ -40,22 +40,22 @@ For operations at the SDK package level. The package group has further sub-group
  
 For generating and updating README files:
 
-- Generate README file
-- Update README content
+- Generate README
+- Update README 
 
 ##### **sample** - Sample Operations
 
 For generating and updating SDK samples:
 
 - Create samples
-- Update existing samples
+- Update samples
 
 ##### **test** - Test Operations
 
 For creating, updating, and running tests for SDK packages:
 
 - Create tests
-- Update existing tests
+- Update tests
 - Run tests for specific packages
 
 **Examples:**
@@ -80,7 +80,7 @@ For creating, updating, and running tests for SDK packages:
 For release planning and SDK coordination:
 
 - Create release plans
-- Link SDK pull requests to release plans
+- Link SDK pull requests to release plan
 - Get release plan details
 
 **Examples:**

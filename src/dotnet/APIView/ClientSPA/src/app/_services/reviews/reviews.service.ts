@@ -181,19 +181,4 @@ export class ReviewsService {
     }
     return this.http.get<boolean>(url, { withCredentials: true });
   }
-
-  /**
-   * Get pending namespace approval reviews for requested reviews section
-   * @param limit Maximum number of reviews to return (default: 10)
-   * @returns Observable of requested reviews list
-   */
-  getRequestedReviews(limit: number = 10): Observable<Review[]> {
-    let params = new HttpParams();
-    params = params.append('limit', limit.toString());
-    
-    return this.http.get<Review[]>(`${this.baseUrl}/requestedReviews`, {
-      params: params,
-      withCredentials: true
-    });
-  }
 }

@@ -325,17 +325,5 @@ namespace APIViewWeb.LeanControllers
 
             return Ok(isReviewed);
         }
-
-        /// <summary>
-        /// Get pending namespace approval reviews for requested reviews section
-        /// </summary>
-        /// <param name="limit">Maximum number of reviews to return (default: 10)</param>
-        /// <returns></returns>
-        [HttpGet("requestedReviews", Name = "GetRequestedReviews")]
-        public async Task<ActionResult<List<ReviewListItemModel>>> GetRequestedReviewsAsync([FromQuery] int limit = 10)
-        {
-            var requestedReviews = await _reviewManager.GetPendingNamespaceApprovalsBatchAsync(limit);
-            return new LeanJsonResult(requestedReviews, StatusCodes.Status200OK);
-        }
     }
 }

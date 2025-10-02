@@ -37,7 +37,7 @@ namespace APIViewWeb.Managers
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<NotificationManager> _logger;
 
-        private const string ENDPOINT_SETTING = "Endpoint";
+        private const string ENDPOINT_SETTING = "APIVIew-Host-Url";
 
         public NotificationManager(IConfiguration configuration,
             ICosmosReviewRepository reviewRepository, ICosmosAPIRevisionsRepository apiRevisionRepository,
@@ -435,10 +435,6 @@ namespace APIViewWeb.Managers
                     autoApprovedDate: DateTime.UtcNow);
                 
                 var emailToList = string.Join("; ", emailAddresses);
-                
-                // Console log for debugging
-                Console.WriteLine($"[DEBUG] Auto-approval email recipients (Review: {review.Id}, Package: {review.PackageName}): [{emailToList}]");
-                
                 await SendEmailAsync(emailToList, subject, emailContent);
             }
             catch (Exception ex)

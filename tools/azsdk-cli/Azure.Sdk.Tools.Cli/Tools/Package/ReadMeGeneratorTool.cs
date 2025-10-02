@@ -9,7 +9,7 @@ using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Prompts;
+using Azure.Sdk.Tools.Cli.Prompts.Templates;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package
 {
@@ -147,10 +147,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             var readmeText = await File.ReadAllTextAsync(templatePath, ct);
 
             // Use the standardized template system with built-in safety measures
-            var prompt = PromptTemplates.GetReadMeGenerationPrompt(
+            var template = new ReadMeGenerationTemplate(
                 templateContent: readmeText,
                 serviceDocumentation: serviceDocumentation.ToString(),
                 packagePath: subPackagePath);
+            var prompt = template.BuildPrompt();
 
             var result = await this.microAgentHostService.RunAgentToCompletion(new Microagent<ReadmeContents>()
             {

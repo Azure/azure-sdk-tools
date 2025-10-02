@@ -13,17 +13,31 @@ public class SpellingValidationTemplate : BasePromptTemplate
     public override string Version => "1.0.0";
     public override string Description => "Automated spelling validation and correction for Azure SDK repositories";
 
+    private readonly string _cspellOutput;
+    private readonly string _repositoryContext;
+    private readonly string? _additionalRules;
+
     /// <summary>
-    /// Builds a spelling validation prompt with strongly typed parameters.
+    /// Initializes a new spelling validation template with the specified parameters.
     /// </summary>
     /// <param name="cspellOutput">The cspell lint output to analyze</param>
     /// <param name="repositoryContext">Context about the repository (e.g., "Azure SDK repository")</param>
     /// <param name="additionalRules">Additional rules or constraints for spelling validation</param>
-    /// <returns>Complete structured prompt for spelling validation</returns>
-    public string BuildPrompt(string cspellOutput, string repositoryContext = "Azure SDK repository", string? additionalRules = null)
+    public SpellingValidationTemplate(string cspellOutput, string repositoryContext = "Azure SDK repository", string? additionalRules = null)
     {
-        var taskInstructions = BuildTaskInstructions(cspellOutput, repositoryContext);
-        var constraints = BuildTaskConstraints(additionalRules);
+        _cspellOutput = cspellOutput;
+        _repositoryContext = repositoryContext;
+        _additionalRules = additionalRules;
+    }
+
+    /// <summary>
+    /// Builds the complete spelling validation prompt using the configured parameters.
+    /// </summary>
+    /// <returns>Complete structured prompt for spelling validation</returns>
+    public string BuildPrompt()
+    {
+        var taskInstructions = BuildTaskInstructions(_cspellOutput, _repositoryContext);
+        var constraints = BuildTaskConstraints(_additionalRules);
         var examples = BuildExamples();
 
         return BuildStructuredPrompt(taskInstructions, constraints, examples);

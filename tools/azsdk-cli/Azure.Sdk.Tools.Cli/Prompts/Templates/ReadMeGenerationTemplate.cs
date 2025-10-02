@@ -13,18 +13,34 @@ public class ReadMeGenerationTemplate : BasePromptTemplate
     public override string Version => "1.0.0";
     public override string Description => "Generate README files for Azure SDK packages following established standards";
 
+    private readonly string _templateContent;
+    private readonly string _serviceDocumentation;
+    private readonly string _packagePath;
+    private readonly string? _additionalRules;
+
     /// <summary>
-    /// Builds a README generation prompt with strongly typed parameters.
+    /// Initializes a new README generation template with the specified parameters.
     /// </summary>
     /// <param name="templateContent">The README template content to fill in</param>
     /// <param name="serviceDocumentation">URL containing service documentation</param>
     /// <param name="packagePath">Package path for generating documentation links</param>
     /// <param name="additionalRules">Optional additional rules or constraints</param>
-    /// <returns>Complete structured prompt for README generation</returns>
-    public string BuildPrompt(string templateContent, string serviceDocumentation, string packagePath, string? additionalRules = null)
+    public ReadMeGenerationTemplate(string templateContent, string serviceDocumentation, string packagePath, string? additionalRules = null)
     {
-        var taskInstructions = BuildTaskInstructions(templateContent, serviceDocumentation, packagePath);
-        var constraints = BuildTaskConstraints(additionalRules);
+        _templateContent = templateContent;
+        _serviceDocumentation = serviceDocumentation;
+        _packagePath = packagePath;
+        _additionalRules = additionalRules;
+    }
+
+    /// <summary>
+    /// Builds the complete README generation prompt using the configured parameters.
+    /// </summary>
+    /// <returns>Complete structured prompt for README generation</returns>
+    public string BuildPrompt()
+    {
+        var taskInstructions = BuildTaskInstructions(_templateContent, _serviceDocumentation, _packagePath);
+        var constraints = BuildTaskConstraints(_additionalRules);
         var examples = BuildExamples();
         var outputRequirements = BuildOutputRequirements();
 

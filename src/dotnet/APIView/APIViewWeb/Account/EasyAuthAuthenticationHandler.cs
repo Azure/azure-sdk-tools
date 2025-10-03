@@ -53,7 +53,7 @@ public class EasyAuthAuthenticationHandler : AuthenticationHandler<Authenticatio
         }
     }
 
-    private ClaimsPrincipal? CreateClaimsPrincipalFromEasyAuth()
+    private ClaimsPrincipal CreateClaimsPrincipalFromEasyAuth()
     {
 
         if (!Request.Headers.TryGetValue("X-MS-CLIENT-PRINCIPAL", out StringValues principalHeader))
@@ -96,7 +96,7 @@ public class EasyAuthAuthenticationHandler : AuthenticationHandler<Authenticatio
 
     private class EasyAuthPrincipal
     {
-        public List<EasyAuthClaim>? Claims { get; set; }
+        public List<EasyAuthClaim> Claims { get; set; }
         public string? IdentityProvider { get; set; }
     }
 

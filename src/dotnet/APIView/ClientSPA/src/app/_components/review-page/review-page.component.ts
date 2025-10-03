@@ -5,7 +5,7 @@ import { MenuItem, TreeNode } from 'primeng/api';
 import { concatMap, EMPTY, from, Observable, Subject, take, takeUntil, tap } from 'rxjs';
 import { CodeLineRowNavigationDirection, getLanguageCssSafeName } from 'src/app/_helpers/common-helpers';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
-import { Review } from 'src/app/_models/review';
+import { Review, PackageType } from 'src/app/_models/review';
 import { APIRevision, APIRevisionGroupedByLanguage, ApiTreeBuilderData } from 'src/app/_models/revision';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 import { APIRevisionsService } from 'src/app/_services/revisions/revisions.service';
@@ -133,6 +133,8 @@ export class ReviewPageComponent implements OnInit {
     this.handleRealTimeAPIRevisionUpdates();
     this.loadLatestSampleRevision(this.reviewId!);
   }
+
+
 
   createSideMenu() {
     const menu : MenuItem [] = [
@@ -277,11 +279,42 @@ export class ReviewPageComponent implements OnInit {
     this.reviewsService.getReview(reviewId)
       .pipe(takeUntil(this.destroy$)).subscribe({
         next: (review: Review) => {
-          this.review = review;
+          this.updateReview(review);
           this.updateLoadingStateBasedOnReviewDeletionStatus();
           this.updatePageTitle();
+        },
+        error: (error) => {
+          this.loadFailed = true;
+          this.loadFailedMessage = "Failed to load review. Please refresh the page or try again later.";
         }
       });
+  }
+
+  updateReview(review: Review) {
+    this.review = review;
+    this.checkAndClassifyPackageType(review);
+  }
+
+  checkAndClassifyPackageType(review: Review) {
+    // Check if PackageType is null, undefined, or Unknown
+    if (!review.packageType || review.packageType === PackageType.Unknown) {
+      this.reviewsService.classifyPackageType(review.id)
+        .pipe(takeUntil(this.destroy$)).subscribe({
+          next: (updatedReview: Review) => {
+            // Update the local review object with the classified type
+            if (this.review) {
+              this.review.packageType = updatedReview.packageType;
+            }
+          },
+          error: (error) => {
+            console.error('Failed to classify package type:', error);
+            // Set to Unknown on error
+            if (this.review) {
+              this.review.packageType = PackageType.Unknown;
+            }
+          }
+        });
+    }
   }
 
   loadPreferredApprovers(reviewId: string) {
@@ -569,7 +602,7 @@ export class ReviewPageComponent implements OnInit {
     if (value) {
       this.reviewsService.toggleReviewApproval(this.reviewId!, this.activeApiRevisionId!, true).pipe(take(1)).subscribe({
         next: (review: Review) => {
-          this.review = review;
+          this.updateReview(review);
         }
       });
     }
@@ -579,7 +612,7 @@ export class ReviewPageComponent implements OnInit {
     if (value) {
       this.reviewsService.requestNamespaceReview(this.reviewId!, this.activeApiRevisionId!).pipe(take(1)).subscribe({
         next: (review: Review) => {
-          this.review = review;
+          this.updateReview(review);
           // Reset loading state in the options component on success
           if (this.reviewPageOptionsComponent) {
             this.reviewPageOptionsComponent.resetNamespaceReviewLoadingState();
@@ -671,7 +704,7 @@ export class ReviewPageComponent implements OnInit {
     this.signalRService.onReviewUpdates().pipe(takeUntil(this.destroy$)).subscribe({
       next: (updatedReview: Review) => {
         if (updatedReview.id === this.reviewId) {
-          this.review = updatedReview;
+          this.updateReview(updatedReview);
         }
       }
     });

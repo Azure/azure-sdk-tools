@@ -28,6 +28,6 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
         _logger = logger;
     }
 
-    public string SupportedLanguage => "Java";
+    public SdkLanguage SupportedLanguage => SdkLanguage.Java;
 
 }

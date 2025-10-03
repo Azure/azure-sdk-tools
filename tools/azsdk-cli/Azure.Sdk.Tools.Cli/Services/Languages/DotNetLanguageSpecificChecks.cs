@@ -28,5 +28,5 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
         _logger = logger;
     }
 
-    public string SupportedLanguage => "dotnet";
+    public SdkLanguage SupportedLanguage => SdkLanguage.DotNet;
 }

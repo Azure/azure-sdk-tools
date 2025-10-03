@@ -31,6 +31,11 @@ public abstract class ProcessHelperBase<T>(ILogger<T> logger, IRawOutputHelper o
             CreateNoWindow = true
         };
 
+        foreach (var (key, value) in options.Environment)
+        {
+            processStartInfo.Environment[key] = value;
+        }
+
         foreach (var arg in options.Args)
         {
             processStartInfo.ArgumentList.Add(arg);

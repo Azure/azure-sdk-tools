@@ -11,15 +11,8 @@ namespace Azure.Sdk.Tools.Cli.Services.ClientUpdate;
 /// Each concrete implementation should be stateless (or at least thread-safe for concurrent calls)
 /// and rely on the supplied <see cref="ClientUpdateSessionState"/> for per-run mutable data.
 /// </summary>
-public interface IClientUpdateLanguageService
+public interface IClientUpdateLanguageService : ILanguageSpecificService
 {
-    /// <summary>
-    /// Canonical language identifier supported by this implementation (e.g. <c>"java"</c>, <c>"python"</c>).
-    /// Used by the resolver to match detected package language to this service.
-    /// </summary>
-    string SupportedLanguage { get; }
-
-
     /// <summary>
     /// Produces an API change list by diffing file contents between two generated source trees.
     /// Implementations may perform a structural or textual diff; when <paramref name="oldGenerationPath"/> is null

@@ -26,7 +26,7 @@ pool:
   demands: ImageOverride -equals ubuntu-24.04
 
 variables:
-  NodeVersion: '18.x'
+  NodeVersion: '20.x'
 
 jobs:
 - job: CompileApiViewTokenSchema

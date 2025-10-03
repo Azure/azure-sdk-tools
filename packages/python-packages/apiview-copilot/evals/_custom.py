@@ -733,7 +733,7 @@ class PromptWorkflowEvaluator(BaseEvaluator):
         workflow_targets = {
             "mention-action": _mention_action_workflow,
             "thread-resolution-action": _thread_resolution_action_workflow,
-            "filter-comment-metadata": _filter_comment_metadata
+            "filter-comment-metadata": _filter_comment_metadata,
             # Add more workflows as needed
         }
         

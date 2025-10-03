@@ -113,6 +113,21 @@
     ],
     "description": "ReviewFile represents entire API review object. This will be processed to render review lines.",
     "$defs": {
+        "CrossLanguageMetadata": {
+            "type": "object",
+            "properties": {
+                "CrossLanguagePackageId": {
+                    "type": "string"
+                },
+                "CrossLanguageDefinitionId": {
+                    "$ref": "#/$defs/RecordString"
+                }
+            },
+            "required": [
+                "CrossLanguagePackageId",
+                "CrossLanguageDefinitionId"
+            ]
+        },
         "ReviewLine": {
             "type": "object",
             "properties": {
@@ -211,6 +226,13 @@
                 "Tags"
             ]
         },
+        "RecordString": {
+            "type": "object",
+            "properties": {},
+            "unevaluatedProperties": {
+                "type": "string"
+            }
+        },
         "ReviewToken": {
             "type": "object",
             "properties": {
@@ -276,13 +298,6 @@
                 4
             ]
         },
-        "RecordString": {
-            "type": "object",
-            "properties": {},
-            "additionalProperties": {
-                "type": "string"
-            }
-        },
         "TokenKind": {
             "type": "number",
             "enum": [
@@ -295,25 +310,6 @@
                 6,
                 7,
                 8
-            ]
-        },
-        "CrossLanguageMetadata": {
-            "type": "object",
-            "properties": {
-                "CrossLanguagePackageId": {
-                    "type": "string"
-                },
-                "CrossLanguageDefinitionId": {
-                    "type": "object",
-                    "properties": {},
-                    "additionalProperties": {
-                        "type": "string"
-                    }
-                }
-            },
-            "required": [
-                "CrossLanguagePackageId",
-                "CrossLanguageDefinitionId"
             ]
         }
     }

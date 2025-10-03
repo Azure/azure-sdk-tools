@@ -24,6 +24,9 @@
                         <li><a class="dropdown-item" href="{{logoutPageWebAppUrl}}">Log Out</a></li>
                     </ul>
                 </li>
+                <li *ngIf="isLoggedIn && isApprover" class="nav-item">
+                    <a href="{{RequestReviewPageUrl}}" class="nav-link">Requested Reviews</a>
+                </li>
                 <li class="nav-item">
                     <a href="https://github.com/Azure/azure-sdk-tools/blob/main/src/dotnet/APIView/APIViewWeb/README.md" class="nav-link">Help</a>
                 </li>
@@ -45,7 +48,7 @@
         [options]="notificationsFilters"
         [(ngModel)]="notificationsFilter"
         (onChange)="updateNotificationsFilter($event)"
-        optionLabel="label" 
+        optionLabel="label"
         optionValue="value"
         [style]="{'margin-top':'8px'}" />
     <div *ngFor="let notification of filteredNotifications()" class="toast show my-3" role="alert" aria-live="assertive" aria-atomic="true">

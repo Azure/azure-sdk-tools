@@ -91,9 +91,18 @@ namespace APIViewWeb.Pages.Assemblies
                     userProfile = await _userProfileCache.GetUserProfileAsync(userId);
                 }
             }
-            catch (OperationCanceledException) { }
-            catch (InvalidOperationException ex) when (ex.Message.Contains("DefaultTempDataSerializer")) { }
-            catch (Exception) { }
+            catch (OperationCanceledException)
+            {
+                _telemetryClient?.TrackException(new TimeoutException("User profile loading timed out"));
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("DefaultTempDataSerializer"))
+            {
+                _telemetryClient?.TrackException(ex, new Dictionary<string, string> { { "Context", "TempDataSerializer error during user profile loading" } });
+            }
+            catch (Exception ex)
+            {
+                _telemetryClient?.TrackException(ex, new Dictionary<string, string> { { "Context", "Failed to load user profile" }, { "UserId", userId } });
+            }
             
             IEnumerable<APIRevisionListItemModel> assignedRevisions;
             try
@@ -103,21 +112,13 @@ namespace APIViewWeb.Pages.Assemblies
                     assignedRevisions = await _apiRevisionsManager.GetAPIRevisionsAssignedToUser(userId);
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _telemetryClient?.TrackException(ex, new Dictionary<string, string> { { "Context", "Failed to load assigned revisions" }, { "UserId", userId } });
                 assignedRevisions = new List<APIRevisionListItemModel>();
             }
             
             APIRevisions = assignedRevisions;
-
-            // Debug: Log APIRevisions content
-            _telemetryClient.TrackTrace($"[NAMESPACE DEBUG] APIRevisions contains {APIRevisions.Count()} revisions");
-            var namespaceReviewIds = new[] { "8aea98eee9724452a9ea9cf08c3fdcf6", "90544d0a5f9c42fa971e468d53ac7578" };
-            foreach (var nsReviewId in namespaceReviewIds)
-            {
-                var hasRevision = APIRevisions.Any(r => r.ReviewId == nsReviewId);
-                _telemetryClient.TrackTrace($"[NAMESPACE DEBUG] APIRevisions contains revision for review {nsReviewId}: {hasRevision}");
-            }
 
             var activeAPIRevs = new List<APIRevisionListItemModel>();
             var approvedAPIRevs = new List<APIRevisionListItemModel>();
@@ -130,16 +131,12 @@ namespace APIViewWeb.Pages.Assemblies
                 using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10)))
                 {
                     allNamespaceApprovalReviews = await _reviewManager.GetPendingNamespaceApprovalsBatchAsync(30);
-                    
-                    // Debug: Log what the page model received
-                    _telemetryClient.TrackTrace($"[NAMESPACE DEBUG] Page model received {allNamespaceApprovalReviews.Count} namespace approval reviews");
-                    foreach (var review in allNamespaceApprovalReviews)
-                    {
-                        _telemetryClient.TrackTrace($"[NAMESPACE DEBUG] Page received review: {review.Id} ({review.Language}) - Status: {review.NamespaceReviewStatus}");
-                    }
                 }
             }
-            catch (Exception) { }
+            catch (Exception ex)
+            {
+                _telemetryClient?.TrackException(ex, new Dictionary<string, string> { { "Context", "Failed to load namespace approval reviews" } });
+            }
             
             // Store namespace approval info for these reviews
             foreach (var nsReview in allNamespaceApprovalReviews)
@@ -169,8 +166,9 @@ namespace APIViewWeb.Pages.Assemblies
                             var review = await _reviewManager.GetReviewAsync(User, reviewId);
                             return (reviewId, review);
                         }
-                        catch (Exception)
+                        catch (Exception ex)
                         {
+                            _telemetryClient?.TrackException(ex, new Dictionary<string, string> { { "Context", "Failed to load individual review" }, { "ReviewId", reviewId } });
                             return (reviewId, (ReviewListItemModel)null);
                         }
                     });
@@ -185,7 +183,10 @@ namespace APIViewWeb.Pages.Assemblies
                     }
                 }
             }
-            catch (Exception) { }
+            catch (Exception ex)
+            {
+                _telemetryClient?.TrackException(ex, new Dictionary<string, string> { { "Context", "Failed to load reviews in batch" }, { "ReviewCount", reviewIds.Count.ToString() } });
+            }
 
             // Group revisions by ReviewId and track the latest one for namespace approval
             var latestRevisionsForNamespaceReviews = new Dictionary<string, APIRevisionListItemModel>();
@@ -255,29 +256,17 @@ namespace APIViewWeb.Pages.Assemblies
                         if (latestRevision != null)
                         {
                             UpdateLatestRevisionForNamespaceReview(latestRevisionsForNamespaceReviews, latestRevision);
-                            _telemetryClient.TrackTrace($"[NAMESPACE DEBUG] Added missing revision for namespace review {namespaceReview.Id}: {latestRevision.Id}");
-                        }
-                        else
-                        {
-                            _telemetryClient.TrackTrace($"[NAMESPACE DEBUG] No revisions found for namespace review {namespaceReview.Id}");
                         }
                     }
                     catch (Exception ex)
                     {
-                        _telemetryClient.TrackTrace($"[NAMESPACE DEBUG] Failed to get revision for namespace review {namespaceReview.Id}: {ex.Message}");
+                        _telemetryClient?.TrackException(ex, new Dictionary<string, string> { { "Context", "Failed to get revision for namespace review" }, { "ReviewId", namespaceReview.Id } });
                     }
                 }
             }
             
             // Convert the dictionary values to the final list
             namespaceApprovalAPIRevs = latestRevisionsForNamespaceReviews.Values.ToList();
-            
-            // Debug: Log final namespace approval revisions
-            _telemetryClient.TrackTrace($"[NAMESPACE DEBUG] Final NamespaceApprovalRequestedAPIRevisions count: {namespaceApprovalAPIRevs.Count}");
-            foreach (var revision in namespaceApprovalAPIRevs)
-            {
-                _telemetryClient.TrackTrace($"[NAMESPACE DEBUG] Final revision: {revision.Id} for review {revision.ReviewId}");
-            }
             
             ActiveAPIRevisions = activeAPIRevs;
             ApprovedAPIRevisions = approvedAPIRevs;

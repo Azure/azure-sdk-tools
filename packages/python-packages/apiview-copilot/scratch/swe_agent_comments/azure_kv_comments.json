@@ -1,0 +1,19 @@
+{
+    "repo": "swathipil/azure-sdk-for-python",
+    "folder": "sdk/keyvault/azure-keyvault-secrets",
+    "branch": "apiviewCopilotDemo",
+    "package": "azure-keyvault-secrets",
+    "comments": [
+        {
+            "LineID": "ApiVersion.V7_7_preview_1",
+            "Line": "V7_7_preview_1 = \"7.7-preview.1\"",
+            "Comment": "Enum member names should be fully uppercase to follow naming conventions and maintain consistency.\n\nSuggestion : V7_7_PREVIEW_1 = \"7.7-preview.1\"\n\nSee: https://azure.github.io/azure-sdk/python_design.html#python-models-enum-name-uppercase"
+        },
+        {
+            "LineID": "SecretClient.roll_secret.param(content_type)",
+            "Line": "content_type: Optional[str] = ...,",
+            "Comment": "This should be a keyword. Optional parameters should be specified as keyword-only."
+        }
+
+    ]
+}

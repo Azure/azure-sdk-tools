@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "APIView Comments",
+  "type": "object",
+  "properties": {
+    "repo": {
+      "type": "string",
+      "description": "The GitHub repository name."
+    },
+    "branch": {
+      "type": "string",
+      "description": "The branch name."
+    },
+    "package": {
+      "type": "string",
+      "description": "The package name."
+    },
+    "comments": {
+      "type": "array",
+      "description": "List of code comments.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "LineID": {
+            "type": "string",
+            "description": "A unique identifier for the line or code element."
+          },
+          "Line": {
+            "type": "string",
+            "description": "The code line or element being commented on."
+          },
+          "Comment": {
+            "type": "string",
+            "description": "The comment or suggestion for the code line."
+          }
+        },
+        "required": ["LineID", "Line", "Comment"]
+      }
+    }
+  },
+  "required": ["repo", "branch", "package", "comments"]
+}

@@ -1,0 +1,88 @@
+{
+  "package": "azure-schemaregistry",
+  "branch": "main",
+  "repositories_to_modify": [
+    "Azure/azure-sdk-for-python"
+  ],
+  "generated_files": [],
+  "handwritten_files": [
+    {
+      "repo": "Azure/azure-sdk-for-python",
+      "file_path": "sdk/schemaregistry/azure-schemaregistry/README.md",
+      "query": "SchemaFormat.JSON"
+    },
+    {
+      "repo": "Azure/azure-sdk-for-python",
+      "file_path": "sdk/schemaregistry/azure-schemaregistry/samples/sync_samples/schema_registry.py",
+      "query": "SchemaFormat.JSON"
+    },
+    {
+      "repo": "Azure/azure-sdk-for-python",
+      "file_path": "sdk/schemaregistry/azure-schemaregistry/azure/schemaregistry/_patch.py",
+      "query": "SchemaFormat.JSON"
+    },
+    {
+      "repo": "Azure/azure-sdk-for-python",
+      "file_path": "sdk/schemaregistry/azure-schemaregistry/azure/schemaregistry/encoder/jsonencoder/_schema_registry_json_encoder.py",
+      "query": "SchemaFormat.JSON"
+    },
+    {
+      "repo": "Azure/azure-sdk-for-python",
+      "file_path": "sdk/schemaregistry/azure-schemaregistry/azure/schemaregistry/encoder/jsonencoder/aio/_schema_registry_json_encoder_async.py",
+      "query": "SchemaFormat.JSON"
+    },
+    {
+      "repo": "Azure/azure-sdk-for-python",
+      "file_path": "sdk/schemaregistry/azure-schemaregistry/samples/async_samples/schema_registry_async.py",
+      "query": "SchemaFormat.JSON"
+    },
+    {
+      "repo": "Azure/azure-sdk-for-python",
+      "file_path": "sdk/schemaregistry/azure-schemaregistry/tests/test_json_encoder.py",
+      "query": "SchemaFormat.JSON"
+    },
+    {
+      "repo": "Azure/azure-sdk-for-python",
+      "file_path": "sdk/schemaregistry/azure-schemaregistry/tests/async_tests/test_json_encoder_async.py",
+      "query": "SchemaFormat.JSON"
+    },
+    {
+      "repo": "Azure/azure-sdk-for-python",
+      "file_path": "sdk/schemaregistry/azure-schemaregistry/azure/schemaregistry/models/_patch.py",
+      "query": "SchemaContentTypeValues.JSON"
+    }
+  ],
+  "unknown_files": [],
+  "changes_summary": [
+    {
+      "line_id": "azure.schemaregistry.SchemaFormat.JSON",
+      "comment": "Should include PROTOBUF and APPLEPIE.",
+      "line": "JSON = \"Json\"",
+      "recommended_action": "Manual investigation required"
+    },
+    {
+      "line_id": "azure.schemaregistry.models.SchemaContentTypeValues.PROTOBUF",
+      "comment": "Missing additional schema type APPLEPIE = \"application/json; serialization=ApplePie\".",
+      "line": "PROTOBUF = \"text/vnd.ms.protobuf\"",
+      "recommended_action": "Manual investigation required"
+    },
+    {
+      "line_id": "azure.schemaregistry.models.SchemaContentTypeValues.JSON",
+      "comment": "Need to add schema type APPLEPIE = \"application/json; serialization=ApplePie\".",
+      "line": "JSON = \"application/json; serialization=Json\"",
+      "recommended_action": "Manual investigation required"
+    },
+    {
+      "line_id": "azure.schemaregistry.encoder.jsonencoder.JsonSchemaEncoder.decode.param(message)",
+      "comment": "Add separate overloads for these two separate message types.",
+      "line": "message: Union[MessageContent, InboundMessageContent],",
+      "recommended_action": "Manual investigation required"
+    },
+    {
+      "line_id": "azure.schemaregistry.SchemaRegistryClient.register_schema.param(schema_name)",
+      "comment": "All kwargs should be explicit.",
+      "line": "schema_name: str,",
+      "recommended_action": "Manual investigation required"
+    }
+  ]
+}

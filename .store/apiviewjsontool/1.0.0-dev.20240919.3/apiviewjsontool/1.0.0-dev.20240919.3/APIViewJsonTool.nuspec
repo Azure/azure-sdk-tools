@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+  <metadata>
+    <id>APIViewJsonTool</id>
+    <version>1.0.0-dev.20240919.3</version>
+    <authors>Microsoft</authors>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <license type="expression">MIT</license>
+    <licenseUrl>https://licenses.nuget.org/MIT</licenseUrl>
+    <icon>pkgicon.png</icon>
+    <projectUrl>https://github.com/Azure/azure-sdk-tools</projectUrl>
+    <description>Package Description</description>
+    <copyright>© Microsoft Corporation. All rights reserved.</copyright>
+    <packageTypes>
+      <packageType name="DotnetTool" />
+    </packageTypes>
+    <repository type="git" url="https://github.com/Azure/azure-sdk-tools" commit="8f44ab8a5f374394facd2e66630ea74d58fea300" />
+  </metadata>
+</package>

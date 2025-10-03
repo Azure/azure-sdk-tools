@@ -1,0 +1,26 @@
+{
+    "package_path": "sdk/schemaregistry/azure-schemaregistry",
+    "branch": "main",
+    "comments": [
+        {
+            "LineID": "azure.schemaregistry.SchemaFormat.JSON",
+            "Line": "JSON = \"Json\"",
+            "Comment": "Should include PROTOBUF and APPLEPIE."
+        },
+        {
+            "LineID": "azure.schemaregistry.models.SchemaContentTypeValues.PROTOBUF",
+            "Line": "PROTOBUF = \"text/vnd.ms.protobuf\"",
+            "Comment": "Missing additional schema type APPLEPIE = \"application/json; serialization=ApplePie\"."
+        },
+        {
+            "LineID": "azure.schemaregistry.encoder.jsonencoder.JsonSchemaEncoder.decode.param(message)",
+            "Line": "message: Union[MessageContent, InboundMessageContent],",
+            "Comment": "Add separate overloads for these two separate message types."
+        },
+        {
+            "LineID": "azure.schemaregistry.SchemaRegistryClient.get_schema.param(schema_id)",
+            "Line": "schema_id: str,",
+            "Comment": "Make sure the docstring specifies that this can be found in the Azure Portal."
+        }
+    ]
+}

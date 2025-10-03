@@ -35,6 +35,7 @@ namespace APIViewWeb.LeanModels
         public string SectionClass { get; set; }
         public string CommentText { get; set; }
         public string CrossLanguageId { get; set; }
+        public string CorrelationId { get; set; }
         public List<CommentChangeHistoryModel> ChangeHistory { get; set; } = new List<CommentChangeHistoryModel>();        
         public bool IsResolved { get; set; }
         public List<string> Upvotes { get; set; } = new List<string>();

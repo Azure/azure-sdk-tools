@@ -54,6 +54,19 @@ def _thread_resolution_action_workflow(testcase: str, response: str, language: s
     result = prompty.execute(prompty_path, inputs=prompty_kwargs)
     return {"actual": result}
 
+def _filter_comment_metadata(testcase: str, response: str, language: str, exceptions: str, outline: str, content: str):
+    prompty_path = Path(__file__).parent.parent / "prompts" / "api_review" / "filter_comment_with_metadata.prompty"
+    prompty_kwargs = {
+        "testcase": testcase,
+        "response": response,
+        "language": language,
+        "exceptions": exceptions,
+        "outline": outline,
+        "content": content
+    }
+    result = prompty.execute(prompty_path, inputs=prompty_kwargs)
+    return {"actual": result}
+
 class BaseEvaluator(ABC):
     """Base class for custom evaluators in the evals framework.
     
@@ -720,7 +733,8 @@ class PromptWorkflowEvaluator(BaseEvaluator):
         workflow_targets = {
             "mention-action": _mention_action_workflow,
             "thread-resolution-action": _thread_resolution_action_workflow,
-            # Add more mappings as needed
+            "filter-comment-metadata": _filter_comment_metadata,
+            # Add more workflows as needed
         }
         
         workflow_name = self.config.name

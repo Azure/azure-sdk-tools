@@ -12,6 +12,7 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services.ClientUpdate;
 using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.Cli.Tools;
+using Azure.Sdk.Tools.Cli.Services.Tests;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -30,6 +31,8 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IDevOpsService, DevOpsService>();
             services.AddSingleton<IGitHubService, GitHubService>();
 
+            services.AddSingleton<ILanguageSpecificResolver, LanguageSpecificResolver>();
+
             // Language Check Services (Composition-based)
             services.AddSingleton<ILanguageChecks, LanguageChecks>();
             services.AddSingleton<ILanguageSpecificChecks, PythonLanguageSpecificChecks>();
@@ -37,12 +40,12 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ILanguageSpecificChecks, JavaScriptLanguageSpecificChecks>();
             services.AddSingleton<ILanguageSpecificChecks, DotNetLanguageSpecificChecks>();
             services.AddSingleton<ILanguageSpecificChecks, GoLanguageSpecificChecks>();
-            services.AddSingleton<ILanguageSpecificCheckResolver, LanguageSpecificCheckResolver>();
 
             // Client update language services
             services.AddSingleton<IClientUpdateLanguageService, JavaUpdateLanguageService>();
-            services.AddSingleton<IClientUpdateLanguageServiceResolver, ClientUpdateLanguageServiceResolver>();
             // Future: services.AddSingleton<IClientUpdateLanguageService, PythonClientUpdateLanguageService>(); etc.
+
+            services.AddSingleton<ITestRunner, JavaScriptTestRunner>();
 
             // Helper classes
             services.AddSingleton<ILogAnalysisHelper, LogAnalysisHelper>();

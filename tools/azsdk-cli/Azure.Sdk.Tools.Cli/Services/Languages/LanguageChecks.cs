@@ -344,7 +344,7 @@ public class LanguageChecks : ILanguageChecks
             {
                 try
                 {
-                    var fixResult = await RunSpellingFixMicroagent(packageRepoRoot, processResult.Output, ct);
+                    var fixResult = await RunSpellingFixMicroagent(packageRepoRoot, packagePath, processResult.Output, ct);
                     return new CLICheckResponse(0, fixResult.Summary);
                 }
                 catch (Exception ex)
@@ -379,10 +379,11 @@ public class LanguageChecks : ILanguageChecks
     /// Runs a microagent to automatically fix spelling issues by either correcting typos or adding legitimate terms to cspell.json.
     /// </summary>
     /// <param name="repoRoot">Repository root path</param>
+    /// <param name="packagePath">Package path for validation</param>
     /// <param name="cspellOutput">Output from cspell lint command</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Result of the spelling fix operation</returns>
-    private async Task<SpellingFixResult> RunSpellingFixMicroagent(string repoRoot, string cspellOutput, CancellationToken ct)
+    private async Task<SpellingFixResult> RunSpellingFixMicroagent(string repoRoot, string packagePath, string cspellOutput, CancellationToken ct)
     {
         var agent = new Microagent<SpellingFixResult>
         {
@@ -394,6 +395,30 @@ public class LanguageChecks : ILanguageChecks
                 new ReadFileTool(repoRoot),
                 new WriteFileTool(repoRoot),
                 new UpdateCspellWordsTool(repoRoot)
+            },
+            ValidateResult = async result =>
+            {
+                // Validate that spelling fixes were successful by running cspell again
+                var cspellConfigPath = Path.Combine(repoRoot, ".vscode", "cspell.json");
+                var relativePath = Path.GetRelativePath(repoRoot, packagePath);
+
+                var npxOptions = new NpxOptions(
+                    null,
+                    ["cspell", "lint", "--config", cspellConfigPath, "--root", repoRoot, $"." + Path.DirectorySeparatorChar + relativePath + Path.DirectorySeparatorChar + "**"],
+                    logOutputStream: true
+                );
+                var validationResult = await _npxHelper.Run(npxOptions, ct: ct);
+
+                if (validationResult.ExitCode != 0)
+                {
+                    // Tell the LLM to try again, the fixes were not sufficient
+                    return new()
+                    {
+                        Success = false,
+                        Reason = "There are still spelling errors, please try again"
+                    };
+                }
+                return new() { Success = true };
             }
         };
 

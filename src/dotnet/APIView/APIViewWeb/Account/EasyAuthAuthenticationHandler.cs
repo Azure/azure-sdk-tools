@@ -97,7 +97,7 @@ public class EasyAuthAuthenticationHandler : AuthenticationHandler<Authenticatio
     private class EasyAuthPrincipal
     {
         public List<EasyAuthClaim> Claims { get; set; }
-        public string? IdentityProvider { get; set; }
+        public string IdentityProvider { get; set; }
     }
 
     private class EasyAuthClaim

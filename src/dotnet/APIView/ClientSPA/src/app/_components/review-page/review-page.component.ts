@@ -82,7 +82,7 @@ export class ReviewPageComponent implements OnInit {
   codePanelData: CodePanelData | null = null;
   codePanelRowData: CodePanelRowData[] = [];
   crossLanguageRowData: CrossLanguageContentDto[] = [];
-  apiRevisionPageSize = 50;
+  apiRevisionPageSize = 200;
   lastNodeIdUnhashedDiscarded = '';
 
   codeLineSearchText: string | undefined = undefined;

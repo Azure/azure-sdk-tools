@@ -1,7 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using Azure.Sdk.Tools.Cli.Models;
-using Microsoft.Extensions.Logging;
+using Azure.Sdk.Tools.Cli.Microagents;
+using Azure.Sdk.Tools.Cli.Microagents.Tools;
 
 namespace Azure.Sdk.Tools.Cli.Services.ClientUpdate;
 
@@ -11,10 +12,12 @@ namespace Azure.Sdk.Tools.Cli.Services.ClientUpdate;
 public class JavaUpdateLanguageService : ClientUpdateLanguageServiceBase
 {
     private readonly ILogger<JavaUpdateLanguageService> _logger;
+    private readonly IMicroagentHostService _microagentHost;
 
-    public JavaUpdateLanguageService(ILanguageSpecificResolver<ILanguageSpecificChecks> languageSpecificChecks, ILogger<JavaUpdateLanguageService> logger) : base(languageSpecificChecks)
+    public JavaUpdateLanguageService(ILanguageSpecificResolver<ILanguageSpecificChecks> languageSpecificChecks, IMicroagentHostService microagentHost, ILogger<JavaUpdateLanguageService> logger) : base(languageSpecificChecks)
     {
         _logger = logger;
+        _microagentHost = microagentHost;
     }
 
     private const string CustomizationDirName = "customization";
@@ -54,223 +57,144 @@ public class JavaUpdateLanguageService : ClientUpdateLanguageServiceBase
         return null;
     }
 
-    private override async Task<List<CodePatch>> GenerateLlmPatchesAsync(
+    public override async Task<bool> ApplyLlmPatchesAsync(
         string commitSha,
         string customizationRoot,
-        string packagePath,
-        CancellationToken ct) 
-            {
-            try
-            {
-                logger.LogInformation("Generating LLM patches for customization files");
-                logger.LogInformation("Customization root: {CustomizationRoot}", customizationRoot);
-                logger.LogInformation("Package path: {PackagePath}", packagePath);
-                logger.LogInformation("Commit SHA: {CommitSha}", commitSha);
-
-                // Read all .java files under customizationRoot and concatenate their contents into customizationContent
-                var customizationContentBuilder = new System.Text.StringBuilder();
-                var customizationFiles = new List<string>();
-                
-                if (Directory.Exists(customizationRoot))
-                {
-                    var javaFiles = Directory.GetFiles(customizationRoot, "*.java", SearchOption.AllDirectories);
-                    logger.LogInformation("Found {FileCount} Java customization files in {Root}", javaFiles.Length, customizationRoot);
-                    
-                    foreach (var file in javaFiles)
-                    {
-                        logger.LogDebug("Reading customization file: {File}", file);
-                        var fileContent = await File.ReadAllTextAsync(file, ct);
-                        logger.LogInformation("File {File} has {Lines} lines and {Characters} characters", 
-                            Path.GetFileName(file), fileContent.Split('\n').Length, fileContent.Length);
-                        
-                        // Store the absolute file path for use in patches
-                        customizationFiles.Add(file);
-                        
-                        customizationContentBuilder.AppendLine($"// File: {file}");
-                        customizationContentBuilder.AppendLine(fileContent);
-                        customizationContentBuilder.AppendLine();
-                    }
-                }
-                else
-                {
-                    logger.LogWarning("Customization root directory does not exist: {Root}", customizationRoot);
-                }
-                
-                var customizationContent = customizationContentBuilder.ToString();
-                
-                // Read old (backup) and new generated code for comparison context
-                var (oldGeneratedCode, newGeneratedCode) = await ReadGeneratedCodeComparisonAsync(packagePath, ct);
-                
-                // Build prompt for patch generation
-                var prompt = BuildPatchGenerationPrompt(commitSha, customizationContent, packagePath, customizationRoot, oldGeneratedCode, newGeneratedCode);
-                
-                // Create microagent for patch generation
-                var patchMicroagent = new Microagents.Microagent<List<CodePatch>>
-                {
-                    Instructions = prompt,
-                    Model = "gpt-4",
-                    MaxToolCalls = 10
-                };
-
-                logger.LogInformation("Creating microagent with model: {Model}, MaxToolCalls: {MaxToolCalls}", "gpt-4", 10);
-                
-                // Check if microagent host is available
-                if (microagentHost == null)
-                {
-                    logger.LogError("MicroagentHost is null - cannot execute LLM patch generation");
-                    return new List<CodePatch>();
-                }
-
-                // Generate patches using LLM
-                try
-                {
-                    logger.LogInformation("Calling microagentHost.RunAgentToCompletion...");
-
-                    var patches = await microagentHost.RunAgentToCompletion(patchMicroagent, ct);
-                    
-                    logger.LogInformation("Microagent execution completed. Result type: {ResultType}, Is null: {IsNull}", 
-                        patches?.GetType().Name ?? "null", patches == null);
-                        
-                    // Enhanced debugging for the result
-                    if (patches != null)
-                    {
-                        logger.LogInformation("Patches collection count: {Count}", patches.Count);
-                        logger.LogInformation("Patches collection type: {Type}", patches.GetType().FullName);
-                    }
-                    else
-                    {
-                        logger.LogInformation("SUCCESS: Microagent returned {PatchCount} patches for review and application", patches.Count);
-                        foreach (var patch in patches.Take(3)) // Log first few patch descriptions
-                        {
-                            logger.LogInformation("Patch: {Description}", patch.Description);
-                        }
-                    }
-                    
-                    return patches;
-                }
-                catch (Exception microagentEx)
-                {
-                    logger.LogError(microagentEx, "Exception during microagent execution: {Message}", microagentEx.Message);
-                    logger.LogError("Microagent exception stack trace: {StackTrace}", microagentEx.StackTrace);
-                    return new List<CodePatch>();
-                }
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Failed to generate LLM patches");
-                return new List<CodePatch>();
-            }
-        }
-
-        private string BuildPatchGenerationPrompt(
-            string commitSha,
-            string customizationContent,
-            string packagePath,
-            string customizationRoot,
-            string oldGeneratedCode,
-            string newGeneratedCode)
+        string newGeneratedPath,
+        string oldGeneratedPath,
+        CancellationToken ct)
+    {
+        try
         {
-            var prompt = new System.Text.StringBuilder();
-            
-            prompt.AppendLine("# TASK: Find API changes and create patches for customization code");
-            prompt.AppendLine();
-            prompt.AppendLine("TypeSpec generated new Java client code. You need to update customization files to match the new API.");
-            prompt.AppendLine();
-            
-            prompt.AppendLine("## OLD Generated Code:");
-            prompt.AppendLine("```java");
-            prompt.AppendLine(oldGeneratedCode);
-            prompt.AppendLine("```");
-            prompt.AppendLine();
-            
-            prompt.AppendLine("## NEW Generated Code:");
-            prompt.AppendLine("```java");
-            prompt.AppendLine(newGeneratedCode);
-            prompt.AppendLine("```");
-            prompt.AppendLine();
-            
-            prompt.AppendLine("## Customization Code (needs updates):");
-            prompt.AppendLine("```java");
-            prompt.AppendLine(customizationContent);
-            prompt.AppendLine("```");
-            prompt.AppendLine();
-            
-            prompt.AppendLine("## What you need to do:");
-            prompt.AppendLine("1. **Compare OLD vs NEW**: Find what changed (method names, parameter names, class names)");
-            prompt.AppendLine("2. **Find in customization**: Look for the OLD names in the customization code");
-            prompt.AppendLine("3. **Create patches**: For each OLD name found, create a patch to update it to the NEW name");
-            prompt.AppendLine();
-            
-            prompt.AppendLine("## Common changes to look for:");
-            prompt.AppendLine("- Parameter name changes: `getParameterByName(\"oldName\")` → `getParameterByName(\"newName\")`");
-            prompt.AppendLine("- Method name changes: `oldMethodName()` → `newMethodName()`");
-            prompt.AppendLine("- Class name changes: `OldClassName` → `NewClassName`");
-            prompt.AppendLine("- Import statement changes: `import com.azure.OldClass` → `import com.azure.NewClass`");
-            prompt.AppendLine();
-            
-            prompt.AppendLine("## Example patch:");
-            prompt.AppendLine("If OLD code had `beginAnalyzeDocument(analyzeRequest)` and NEW code has `beginAnalyzeDocument(analyzeDocumentRequest)`,");
-            prompt.AppendLine("and customization has `getParameterByName(\"analyzeRequest\")`, create this patch:");
-            prompt.AppendLine("```json");
-            prompt.AppendLine("{");
-            prompt.AppendLine($"  \"FilePath\": \"{Path.Combine(customizationRoot, "DocumentIntelligenceCustomizations.java").Replace("\\", "\\\\")}\",");
-            prompt.AppendLine("  \"Description\": \"Update parameter name from analyzeRequest to analyzeDocumentRequest\",");
-            prompt.AppendLine("  \"OldContent\": \"getParameterByName(\\\"analyzeRequest\\\")\",");
-            prompt.AppendLine("  \"NewContent\": \"getParameterByName(\\\"analyzeDocumentRequest\\\")\"");
-            prompt.AppendLine("}");
-            prompt.AppendLine("```");
-            prompt.AppendLine();
-            
-            prompt.AppendLine("## IMPORTANT:");
-            prompt.AppendLine("- Only create patches for things ACTUALLY found in the customization code");
-            prompt.AppendLine("- Use EXACT file paths with double backslashes for Windows");
-            prompt.AppendLine("- Include enough context in OldContent/NewContent to uniquely identify the location");
-            prompt.AppendLine("- If no changes are needed, return empty array: Exit({\"Result\": []})");
-            prompt.AppendLine();
-            
-            prompt.AppendLine("## Your response format:");
-            prompt.AppendLine("1. First, tell me what differences you found between OLD and NEW code");
-            prompt.AppendLine("2. Then, tell me which of those differences exist in the customization code");
-            prompt.AppendLine("3. Finally, call Exit({\"Result\": [array of patches]})");
-            prompt.AppendLine();
-            prompt.AppendLine("Exit format:");
-            prompt.AppendLine("```json");
-            prompt.AppendLine("{\"Result\": [{\"FilePath\": \"full\\\\path\", \"Description\": \"what changed\", \"OldContent\": \"exact old text\", \"NewContent\": \"exact new text\"}]}");
-            prompt.AppendLine("```");
-            prompt.AppendLine();
-            prompt.AppendLine("⚠️ The OLD and NEW code ARE different - you MUST find what changed!");
-            
-            return prompt.ToString();
-        }
+            _logger.LogInformation("Generating LLM patches for customization files");
+            _logger.LogInformation("Customization root: {CustomizationRoot}", customizationRoot);
+            _logger.LogInformation("New generated path: {NewGeneratedPath}", newGeneratedPath);
+            _logger.LogInformation("Old generated path: {OldGeneratedPath}", oldGeneratedPath);
+            _logger.LogInformation("Commit SHA: {CommitSha}", commitSha);
 
-        private async Task<bool> ApplyPatchToFileAsync(string filePath, string oldContent, string newContent)
-        {
-            try
+            // Read all .java files under customizationRoot and concatenate their contents into customizationContent
+            var customizationContentBuilder = new System.Text.StringBuilder();
+            
+            if (Directory.Exists(customizationRoot))
             {
-                if (!File.Exists(filePath))
-                {
-                    logger.LogWarning("Patch target file does not exist: {FilePath}", filePath);
-                    return false;
-                }
-
-                var fileContent = await File.ReadAllTextAsync(filePath);
+                var javaFiles = Directory.GetFiles(customizationRoot, "*.java", SearchOption.AllDirectories);
+                _logger.LogInformation("Found {FileCount} Java customization files in {Root}", javaFiles.Length, customizationRoot);
                 
-                if (!fileContent.Contains(oldContent))
+                foreach (var file in javaFiles)
                 {
-                    logger.LogWarning("Old content not found in file {FilePath}", filePath);
-                    return false;
+                    _logger.LogDebug("Reading customization file: {File}", file);
+                    var fileContent = await File.ReadAllTextAsync(file, ct);
+                    _logger.LogInformation("File {File} has {Lines} lines and {Characters} characters", 
+                        Path.GetFileName(file), fileContent.Split('\n').Length, fileContent.Length);
+                    
+                    customizationContentBuilder.AppendLine($"// File: {file}");
+                    customizationContentBuilder.AppendLine(fileContent);
+                    customizationContentBuilder.AppendLine();
                 }
-
-                var updatedContent = fileContent.Replace(oldContent, newContent);
-                await File.WriteAllTextAsync(filePath, updatedContent);
-                
-                logger.LogInformation("Successfully applied patch to {FilePath}", filePath);
-                return true;
             }
-            catch (Exception ex)
+            else
             {
-                logger.LogError(ex, "Failed to apply patch to {FilePath}", filePath);
+                _logger.LogWarning("Customization root directory does not exist: {Root}", customizationRoot);
                 return false;
             }
+            
+            var customizationContent = customizationContentBuilder.ToString();
+            
+            // For now, using placeholder generated code - TODO: implement proper old/new code comparison  
+            // oldGeneratedPath contains the backup of old generated code
+            // newGeneratedPath contains the newly generated code
+            var oldGeneratedCode = $"// Placeholder old generated code from: {oldGeneratedPath}";
+            var newGeneratedCode = $"// Placeholder new generated code from: {newGeneratedPath}";
+            
+            // Use the package path directly - newGeneratedPath IS the package root
+            // Build prompt for direct patch application using the new template
+            var prompt = BuildDirectPatchApplicationPrompt(commitSha, customizationContent, customizationRoot, oldGeneratedCode, newGeneratedCode, newGeneratedPath);
+            
+            _logger.LogInformation("Generated prompt for patch analysis with {ContentLength} characters", prompt.Length);
+            
+            var agentDefinition = new Microagent<bool>
+            {
+                Instructions = prompt,
+                ValidateResult = ValidatePatchApplicationResult,
+                Tools = new List<IAgentTool>
+                {
+                    new ReadFileTool(newGeneratedPath)
+                    {
+                        Name = "ReadFile",
+                        Description = "Read files from the package directory (generated code, customization files, etc.)"
+                    },
+                    new Microagents.Tools.ClientCustomizationCodePatchTool(customizationRoot)
+                    {
+                        Name = "ClientCustomizationCodePatch",
+                        Description = "Apply code patches directly to customization files"
+                    }
+                }
+            };
+            
+            // Use microagent system to apply patches directly
+            _logger.LogInformation("Sending prompt to microagent for direct LLM-based patch application");
+            var patchApplicationSuccess = await _microagentHost.RunAgentToCompletion(agentDefinition, ct);
+            _logger.LogInformation("Patch application completed with result: {Success}", patchApplicationSuccess);
+            
+            // Return the result of patch application
+            return patchApplicationSuccess;
         }
-}
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to apply LLM patches");
+            return false;
+        }
+    }
+
+        private string BuildDirectPatchApplicationPrompt(
+            string commitSha,
+            string customizationContent,
+            string customizationRoot,
+            string oldGeneratedCode,
+            string newGeneratedCode,
+            string packagePath)
+        {
+            var template = new Prompts.Templates.JavaPatchGenerationTemplate(
+                oldGeneratedCode,
+                newGeneratedCode,
+                customizationContent,
+                customizationRoot,
+                commitSha);
+            
+            // Add directory structure information and direct patch application instructions
+            var basePrompt = template.BuildPrompt();
+            var directPatchInstructions = $"\n\n## Direct Patch Application Instructions\n" +
+                $"- Use the ClientCustomizationCodePatch tool to apply changes directly to customization files\n" +
+                $"- Do NOT return CodePatch objects - apply changes immediately using the tool\n" +
+                $"- Return true if patches were successfully applied, false if there were issues\n" +
+                $"\n## File Structure Context\n" +
+                $"- Package Path (ReadFile base): {packagePath}\n" +
+                $"- Customization Root: {customizationRoot}\n" +
+                $"- Generated Source: src/main/java (relative to package path)\n" +
+                $"- Customization Source: customization/src/main/java (relative to package path)\n" +
+                $"\nWhen using ReadFile tool:\n" +
+                $"- Use relative paths from package path: {packagePath}\n" +
+                $"- Generated files are in: src/main/java/com/azure/...\n" +
+                $"- Customization files are in: customization/src/main/java/\n" +
+                $"- Example: ReadFile('customization/src/main/java/DocumentIntelligenceCustomizations.java')\n" +
+                $"\nWhen using ClientCustomizationCodePatch tool:\n" +
+                $"- FilePath should be relative to customization root\n" +
+                $"- Provide exact OldContent and NewContent for safe replacement\n" +
+                $"- Example: ClientCustomizationCodePatch(FilePath='DocumentIntelligenceCustomizations.java', OldContent='...', NewContent='...')\n";
+            
+            return basePrompt + directPatchInstructions;
+        }
+
+        /// <summary>
+        /// Validates the patch application result returned by the microagent.
+        /// </summary>
+        /// <param name="success">Boolean indicating whether patch application was successful</param>
+        /// <returns>A validation result indicating success or failure with reason</returns>
+        private async Task<MicroagentValidationResult> ValidatePatchApplicationResult(bool success)
+        {
+            await Task.CompletedTask; // Make async to match signature
+            
+            _logger.LogInformation("Patch application result: {Success}", success);
+            return new MicroagentValidationResult { Success = true }; // Always accept the boolean result
+        }
+    }

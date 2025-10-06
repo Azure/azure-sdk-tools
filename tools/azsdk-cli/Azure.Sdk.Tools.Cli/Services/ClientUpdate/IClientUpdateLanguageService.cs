@@ -33,23 +33,15 @@ public interface IClientUpdateLanguageService
     string? GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct);
 
     /// <summary>
-    /// Analyzes which customization files are impacted by the supplied API changes.
+    /// Applies LLM-based patches directly to customization code using AI analysis.
     /// </summary>
-    /// <param name="session">Current update session.</param>
-    /// <param name="customizationRoot">Customization root (may be <c>null</c> for languages without customizations).</param>
-    /// <param name="apiChanges">Sequence of API changes from <see cref="DiffAsync"/>.</param>
-    /// <param name="ct">Cancellation token.</param>
-    /// <returns>List of impacted customization descriptors (empty if none).</returns>
-    Task<List<CustomizationImpact>> AnalyzeCustomizationImpactAsync(ClientUpdateSessionState session, string? customizationRoot, IEnumerable<ApiChange> apiChanges, CancellationToken ct);
-
-    /// <summary>
-    /// Proposes patch diffs for impacted customization files.
-    /// </summary>
-    /// <param name="session">Current session.</param>
-    /// <param name="impacts">Impacted customization items.</param>
-    /// <param name="ct">Cancellation token.</param>
-    /// <returns>Patch proposals (empty if no modifications recommended).</returns>
-    Task<List<PatchProposal>> ProposePatchesAsync(ClientUpdateSessionState session, IEnumerable<CustomizationImpact> impacts, CancellationToken ct);
+    /// <param name="commitSha">The commit SHA from TypeSpec changes for context</param>
+    /// <param name="customizationRoot">Path to the customization root directory</param>
+    /// <param name="newGeneratedPath">Path to the newly generated code (current packagePath)</param>
+    /// <param name="oldGeneratedPath">Path to the old generated code (backup directory)</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>True if patches were successfully applied; false otherwise</returns>
+    Task<bool> ApplyLlmPatchesAsync(string commitSha, string customizationRoot, string newGeneratedPath, string oldGeneratedPath, CancellationToken ct);
 
     /// <summary>
     /// Performs language-specific validation (build, compile, tests, lint, type-check, etc.).
@@ -58,14 +50,4 @@ public interface IClientUpdateLanguageService
     /// <param name="ct">Cancellation token.</param>
     /// <returns>A <see cref="ValidationResult"/> indicating success or a list of validation errors.</returns>
     Task<ValidationResult> ValidateAsync(ClientUpdateSessionState session, CancellationToken ct);
-
-    /// <summary>
-    /// Optionally proposes conservative patches that address validation failures (e.g. formatting, minor import fixes).
-    /// Implementations may return an empty list if no automatic fixes are available or safe.
-    /// </summary>
-    /// <param name="session">Current update session.</param>
-    /// <param name="validationErrors">Errors from the previous <see cref="ValidateAsync"/> invocation.</param>
-    /// <param name="ct">Cancellation token.</param>
-    /// <returns>List of patch proposals representing potential fixes (may be empty).</returns>
-    Task<List<PatchProposal>> ProposeFixesAsync(ClientUpdateSessionState session, List<string> validationErrors, CancellationToken ct);
 }

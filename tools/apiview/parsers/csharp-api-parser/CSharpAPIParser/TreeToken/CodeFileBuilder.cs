@@ -8,10 +8,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.SymbolDisplay;
 using System.Collections.Immutable;
 using System.ComponentModel;
-using System.Diagnostics;
-using System.Text;
 using ApiView;
-using System.Diagnostics.CodeAnalysis;
 
 namespace CSharpAPIParser.TreeToken
 {
@@ -47,6 +44,7 @@ namespace CSharpAPIParser.TreeToken
         );
 
         private IAssemblySymbol? _assembly;
+        private readonly HashSet<string> _usedLineIds = new HashSet<string>();
 
         public ICodeFileBuilderSymbolOrderProvider SymbolOrderProvider { get; set; } = new CodeFileBuilderSymbolOrderProvider();
 
@@ -871,6 +869,13 @@ namespace CSharpAPIParser.TreeToken
                 (true, IPropertySymbol prop) => $"{prop.ExplicitInterfaceImplementations.First().ContainingType.GetId()}.{lineId}",
                 (_, _) => lineId
             };
+            
+            // Check for duplicate line IDs and throw if found
+            if (!_usedLineIds.Add(value))
+            {
+                throw new InvalidOperationException($"Duplicate line ID detected: '{value}' for member: {member.ToDisplayString()}");
+            }
+            
             return value;
         }
     }

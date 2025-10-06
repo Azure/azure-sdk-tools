@@ -868,7 +868,6 @@ namespace CSharpAPIParser.TreeToken
                 (true, IPropertySymbol prop) => $"{prop.ExplicitInterfaceImplementations.First().ContainingType.GetId()}.{lineId}",
                 (_, _) => lineId
             };
-            
             return value;
         }
     }

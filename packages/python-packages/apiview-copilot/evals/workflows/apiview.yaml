@@ -1,3 +1,0 @@
-name: apiview
-kind: apiview
-tests: ../tests/python/apiview.jsonl

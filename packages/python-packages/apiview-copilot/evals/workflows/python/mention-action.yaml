@@ -1,7 +1,7 @@
 name: mention-action
 kind: prompt
-tests: ../tests/python/mention-action.jsonl
-prompty: ../../prompts/mention/parse_conversation_action.prompty
+tests: ../../tests/python/mention-action.jsonl
+prompty: ../../../prompts/mention/parse_conversation_action.prompty
 evaluation_config:
   comparison_field: recommendation
   display_name: Recommendation

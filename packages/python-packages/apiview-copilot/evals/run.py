@@ -24,14 +24,13 @@ if __name__ == "__main__":
         "--test-file",
         "-f",
         type=str,
-        required=True,
-        help="Path to workflow YAML.",
+        help="Path to workflow YAML. If not provided, runs all workflows for the language.",
     )
     parser.add_argument(
         "--test-cases",
         "-c",
         type=str,
-        help="Filter to run only the specified testcases",
+        help="Filter to run only the specified testcase.",
         nargs='*'
     )
     args = parser.parse_args()

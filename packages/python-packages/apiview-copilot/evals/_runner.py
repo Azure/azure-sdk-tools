@@ -1,9 +1,9 @@
 import os
 import tempfile
 import json
-import pathlib
 import sys
 from typing import Optional, List
+from pathlib import Path
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -42,20 +42,19 @@ class EvalRunner:
 
     def __init__(self, *, language: str, test_path: Optional[str], test_cases: Optional[List[str]] = None, num_runs: int = DEFAULT_NUM_RUNS):
         self.language = language
-        self.test_path = test_path
+        self.test_path = Path(test_path) if test_path else None
         self.test_cases = test_cases
         self.num_runs = num_runs
         self.settings = SettingsManager()
 
         self._workflow_configs: List[WorkflowConfig] = []
 
-        if test_path is None:
+        if self.test_path is None:
             # No test file specified - discover all workflows for specified language
             self._workflow_configs = self._discover_all_workflows()
         else:
-            path_obj = pathlib.Path(test_path)
             try:
-                workflow_config = load_workflow_config(path_obj)
+                workflow_config = load_workflow_config(self.test_path)
                 self._workflow_configs = [workflow_config]
             except WorkflowConfigError as e:
                 raise ValueError(f"Invalid workflow config: {e}") from e
@@ -121,8 +120,8 @@ class EvalRunner:
                     raise ValueError(f"Test file not found: {file}")
 
                 # Filter JSONL to temporary file with specified testcases or return original file if no filter
-                filtered_file_path = self._filter_jsonl_data(str(file))
-                if filtered_file_path != str(file):
+                filtered_file_path = self._filter_jsonl_data(file)
+                if filtered_file_path != file:
                     temp_files.append(filtered_file_path)
                 
                 file_run_results = self._execute_test_file_runs(file, filtered_file_path, evaluator, credentials)
@@ -143,7 +142,7 @@ class EvalRunner:
             'guideline_ids': guideline_ids
         }
 
-    def _execute_test_file_runs(self, file: pathlib.Path, filtered_file_path: str, evaluator, credentials: dict) -> list:
+    def _execute_test_file_runs(self, file: Path, filtered_file_path: Path, evaluator, credentials: dict) -> list:
         """Execute multiple runs for a single test file."""
         file_run_results = []
         
@@ -153,7 +152,7 @@ class EvalRunner:
                 print(f"  (Filtered to testcases: {[testcase for testcase in self.test_cases]})")
             
             result = evaluate(
-                data=filtered_file_path,
+                data=str(filtered_file_path),  # evaluate() API expects string path
                 evaluators={"metrics": evaluator},
                 evaluator_config={"metrics": evaluator.evaluator_config},
                 target=evaluator.target_function,
@@ -166,12 +165,12 @@ class EvalRunner:
             
         return file_run_results
 
-    def _cleanup_temp_files(self, temp_files: list) -> None:
+    def _cleanup_temp_files(self, temp_files: List[Path]) -> None:
         """Clean up temporary files created during execution."""
         for temp_file in temp_files:
             try:
-                os.unlink(temp_file)
-            except Exception as e:
+                temp_file.unlink()
+            except OSError as e:
                 print(f"Error removing temporary file {temp_file}: {e}")
 
     def _present_results(self, all_workflow_results: dict) -> None:
@@ -197,7 +196,7 @@ class EvalRunner:
                 "To run specific test cases, provide a workflow file."
             )
 
-        workflows_dir = pathlib.Path(__file__).parent / "workflows" / self.language
+        workflows_dir = Path(__file__).parent / "workflows" / self.language
         
         if not workflows_dir.exists():
             raise ValueError(f"No workflows directory found for language '{self.language}' at {workflows_dir}")
@@ -207,17 +206,16 @@ class EvalRunner:
         except WorkflowConfigError as e:
             raise ValueError(f"Error loading workflows from {workflows_dir}: {e}") from e
     
-    def _filter_jsonl_data(self, file_path: str) -> str:
+    def _filter_jsonl_data(self, file_path: Path) -> Path:
         """Filter JSONL data by testcase if specified, return path to filtered temp file."""
         if not self.test_cases:
             return file_path
         
-        original_path = pathlib.Path(file_path)
         filtered_lines = []
         found_testcase = False
         
         try:
-            with open(original_path, 'r', encoding='utf-8') as f:
+            with open(file_path, 'r', encoding='utf-8') as f:
                 for line_num, line in enumerate(f, 1):
                     line = line.strip()
                     if not line:
@@ -246,7 +244,7 @@ class EvalRunner:
                 temp_file.write(line + '\n')
             temp_file.close()
             
-            return temp_file.name
+            return Path(temp_file.name)
             
         except Exception as e:
             raise ValueError(f"Error filtering testcase data: {e}")
@@ -271,11 +269,11 @@ class EvalRunner:
             workflow_config = workflow_data['workflow_config']
             guideline_ids = workflow_data['guideline_ids']
             
-            tests_directory = str(workflow_config.tests_path.parent)
+            tests_directory = workflow_config.tests_path.parent
             
             evaluator.post_process(
                 processed_results,
                 self.language,
-                tests_directory,
+                str(tests_directory),
                 guideline_ids,
             )

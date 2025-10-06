@@ -5,15 +5,19 @@ from typing import List
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+import evals._custom
 from azure.ai.evaluation import evaluate
 from azure.identity import AzurePipelinesCredential
+from evals._config_loader import (
+    WorkflowConfigError,
+    get_evaluator_class,
+    load_workflow_config,
+)
 from src._settings import SettingsManager
 from tabulate import tabulate
 
-from evals._config_loader import load_workflow_config, WorkflowConfigError, get_evaluator_class
-import evals._custom
-
 DEFAULT_NUM_RUNS: int = 1
+
 
 class EvalRunner:
     """Class to run evals for APIView copilot."""
@@ -28,7 +32,7 @@ class EvalRunner:
         self._is_workflow = False
 
         path_obj = pathlib.Path(test_path)
-        
+
         try:
             self._workflow_config = load_workflow_config(path_obj)
         except WorkflowConfigError as e:
@@ -36,7 +40,7 @@ class EvalRunner:
 
         self._tests_directory = self._workflow_config.tests_path.parent
         self._test_files: List[pathlib.Path] = [self._workflow_config.tests_path]
-        
+
         evaluation_kind = self._workflow_config.kind
         self._evaluator_class = get_evaluator_class(evaluation_kind)
 

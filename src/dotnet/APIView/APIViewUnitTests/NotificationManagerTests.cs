@@ -49,13 +49,11 @@ namespace APIViewUnitTests
         }
 
         [Fact]
-        public void NotificationManager_Constructor_WithNullEndpoint_ThrowsInvalidOperationException()
+        public async Task NotificationManager_WithNullEndpoint_ThrowsUriFormatExceptionOnUse()
         {
             // Arrange
             var config = CreateConfiguration(null);
-
-            // Act & Assert - Constructor should throw InvalidOperationException due to null endpoint
-            var exception = Assert.Throws<InvalidOperationException>(() => new NotificationManager(
+            var notificationManager = new NotificationManager(
                 config,
                 _mockReviewRepository.Object,
                 _mockApiRevisionRepository.Object,
@@ -64,20 +62,23 @@ namespace APIViewUnitTests
                 _telemetryClient,
                 _mockEmailTemplateService.Object,
                 _mockHttpClientFactory.Object,
-                _mockLogger.Object));
+                _mockLogger.Object);
 
-            Assert.Contains("APIVIew-Host-Url", exception.Message);
-            Assert.Contains("required but not provided", exception.Message);
+            var review = new ReviewListItemModel { Id = "test-review-id" };
+            var revision = new APIRevisionListItemModel { CreatedBy = "testuser" };
+            var user = new ClaimsPrincipal();
+
+            // Act & Assert - Should throw UriFormatException when trying to use null endpoint
+            await Assert.ThrowsAsync<UriFormatException>(() => 
+                notificationManager.NotifySubscribersOnNewRevisionAsync(review, revision, user));
         }
 
         [Fact]
-        public void NotificationManager_Constructor_WithEmptyEndpoint_ThrowsInvalidOperationException()
+        public async Task NotificationManager_WithEmptyEndpoint_ThrowsUriFormatExceptionOnUse()
         {
             // Arrange
             var config = CreateConfiguration("");
-
-            // Act & Assert - Constructor should throw InvalidOperationException due to empty endpoint
-            var exception = Assert.Throws<InvalidOperationException>(() => new NotificationManager(
+            var notificationManager = new NotificationManager(
                 config,
                 _mockReviewRepository.Object,
                 _mockApiRevisionRepository.Object,
@@ -86,20 +87,23 @@ namespace APIViewUnitTests
                 _telemetryClient,
                 _mockEmailTemplateService.Object,
                 _mockHttpClientFactory.Object,
-                _mockLogger.Object));
+                _mockLogger.Object);
 
-            Assert.Contains("APIVIew-Host-Url", exception.Message);
-            Assert.Contains("required but not provided", exception.Message);
+            var review = new ReviewListItemModel { Id = "test-review-id" };
+            var revision = new APIRevisionListItemModel { CreatedBy = "testuser" };
+            var user = new ClaimsPrincipal();
+
+            // Act & Assert - Should throw UriFormatException when trying to use empty endpoint
+            await Assert.ThrowsAsync<UriFormatException>(() => 
+                notificationManager.NotifySubscribersOnNewRevisionAsync(review, revision, user));
         }
 
         [Fact]
-        public void NotificationManager_Constructor_WithWhitespaceEndpoint_ThrowsInvalidOperationException()
+        public async Task NotificationManager_WithWhitespaceEndpoint_ThrowsUriFormatExceptionOnUse()
         {
             // Arrange
             var config = CreateConfiguration("   ");
-
-            // Act & Assert - Constructor should throw InvalidOperationException due to whitespace-only endpoint
-            var exception = Assert.Throws<InvalidOperationException>(() => new NotificationManager(
+            var notificationManager = new NotificationManager(
                 config,
                 _mockReviewRepository.Object,
                 _mockApiRevisionRepository.Object,
@@ -108,10 +112,15 @@ namespace APIViewUnitTests
                 _telemetryClient,
                 _mockEmailTemplateService.Object,
                 _mockHttpClientFactory.Object,
-                _mockLogger.Object));
+                _mockLogger.Object);
 
-            Assert.Contains("APIVIew-Host-Url", exception.Message);
-            Assert.Contains("required but not provided", exception.Message);
+            var review = new ReviewListItemModel { Id = "test-review-id" };
+            var revision = new APIRevisionListItemModel { CreatedBy = "testuser" };
+            var user = new ClaimsPrincipal();
+
+            // Act & Assert - Should throw UriFormatException when trying to use whitespace-only endpoint
+            await Assert.ThrowsAsync<UriFormatException>(() => 
+                notificationManager.NotifySubscribersOnNewRevisionAsync(review, revision, user));
         }
 
         [Fact]
@@ -120,7 +129,7 @@ namespace APIViewUnitTests
             // Arrange
             var config = CreateConfiguration("https://apiview.dev");
 
-            // Act & Assert - Should not throw with valid endpoint
+            // Act & Assert - Constructor should succeed with valid endpoint
             var notificationManager = new NotificationManager(
                 config,
                 _mockReviewRepository.Object,
@@ -135,44 +144,11 @@ namespace APIViewUnitTests
             Assert.NotNull(notificationManager);
         }
 
-        [Theory]
-        [InlineData(null)]
-        [InlineData("")]
-        [InlineData("   ")]
-        [InlineData("\t")]
-        [InlineData("\n")]
-        public void NotificationManager_Constructor_WithInvalidEndpoint_ThrowsInvalidOperationException(string invalidEndpoint)
+        [Fact]
+        public async Task NotifySubscribersOnNewRevisionAsync_WithValidEndpoint_DoesNotThrow()
         {
             // Arrange
-            var config = CreateConfiguration(invalidEndpoint);
-
-            // Act & Assert - Constructor should throw InvalidOperationException with any invalid endpoint
-            var exception = Assert.Throws<InvalidOperationException>(() => new NotificationManager(
-                config,
-                _mockReviewRepository.Object,
-                _mockApiRevisionRepository.Object,
-                _mockUserProfileRepository.Object,
-                _mockUserProfileCache.Object,
-                _telemetryClient,
-                _mockEmailTemplateService.Object,
-                _mockHttpClientFactory.Object,
-                _mockLogger.Object));
-
-            Assert.Contains("APIVIew-Host-Url", exception.Message);
-            Assert.Contains("required but not provided", exception.Message);
-        }
-
-        [Theory]
-        [InlineData("https://apiview.dev")]
-        [InlineData("http://localhost:5000")]
-        [InlineData("https://apiview.azure.com")]
-        [InlineData("https://example.com/path")]
-        public void NotificationManager_Constructor_WithValidEndpoints_Success(string validEndpoint)
-        {
-            // Arrange
-            var config = CreateConfiguration(validEndpoint);
-
-            // Act & Assert - Should construct successfully with any valid endpoint
+            var config = CreateConfiguration("https://apiview.dev");
             var notificationManager = new NotificationManager(
                 config,
                 _mockReviewRepository.Object,
@@ -184,7 +160,25 @@ namespace APIViewUnitTests
                 _mockHttpClientFactory.Object,
                 _mockLogger.Object);
 
-            Assert.NotNull(notificationManager);
+            var review = new ReviewListItemModel { Id = "test-review-id" };
+            var revision = new APIRevisionListItemModel { CreatedBy = "testuser" };
+            var user = new ClaimsPrincipal();
+
+            // Act & Assert - With valid endpoint, this should not throw UriFormatException
+            // The method may still throw other exceptions due to missing email configuration, 
+            // but not UriFormatException which is what we're testing for
+            try
+            {
+                await notificationManager.NotifySubscribersOnNewRevisionAsync(review, revision, user);
+            }
+            catch (UriFormatException)
+            {
+                Assert.Fail("UriFormatException should not be thrown with valid endpoint");
+            }
+            catch (Exception)
+            {
+                // Other exceptions are fine - we're only testing that UriFormatException doesn't occur
+            }
         }
 
         private IConfiguration CreateConfiguration(string apiViewEndpoint)

@@ -15,8 +15,8 @@ Help me create a new tool using #new-tool.md as a reference
    * [Code Examples and Templates](#code-examples-and-templates)
    * [Dependency Injection](#dependency-injection)
    * [Response Handling](#response-handling)
-   * [Registration and Testing](#registration-and-testing)
    * [Prompt Template System](#prompt-template-system)
+   * [Registration and Testing](#registration-and-testing)
    * [Required Tool Conventions](#required-tool-conventions)
    * [Common Patterns and Anti-patterns](#common-patterns-and-anti-patterns)
 

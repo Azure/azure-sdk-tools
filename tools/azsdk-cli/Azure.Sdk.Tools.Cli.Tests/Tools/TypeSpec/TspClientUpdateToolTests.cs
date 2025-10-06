@@ -18,17 +18,17 @@ public class TspClientUpdateToolAutoTests
         return path;
     }
 
-    // Language service that produces no API changes
+    // Language service that produces no API changes and no customizations
     private class MockNoChangeLanguageService : IClientUpdateLanguageService
     {
         public string SupportedLanguage => "java";
         public Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath) => Task.FromResult(new List<ApiChange>());
-        public string? GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct) => null; // none
-        public Task<bool> ApplyLlmPatchesAsync(string commitSha, string customizationRoot, string newGeneratedPath, string oldGeneratedPath, CancellationToken ct) => Task.FromResult(false); // no patches to apply
+        public string? GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct) => null; // No customizations found
+        public Task<bool> ApplyPatchesAsync(string commitSha, string customizationRoot, string newGeneratedPath, string oldGeneratedPath, CancellationToken ct) => Task.FromResult(false); // No patches to apply
         public Task<ValidationResult> ValidateAsync(ClientUpdateSessionState session, CancellationToken ct) => Task.FromResult(ValidationResult.CreateSuccess());
     }
 
-    // Language service that produces a single API change
+    // Language service that has customizations and successful patch application
     private class MockChangeLanguageService : IClientUpdateLanguageService
     {
         public string SupportedLanguage => "java";
@@ -36,15 +36,16 @@ public class TspClientUpdateToolAutoTests
             => Task.FromResult(new List<ApiChange> {
                 new ApiChange { Kind = "MethodAdded", Symbol = "S1", Detail = "Added method S1" }
             });
-        public string? GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct) => null; // none
-        public Task<bool> ApplyLlmPatchesAsync(string commitSha, string customizationRoot, string newGeneratedPath, string oldGeneratedPath, CancellationToken ct)
-            => Task.FromResult(true); // simulate successful patch application
+        public string? GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct) => 
+            Path.Combine(session.NewGeneratedPath ?? "", "customization"); // Mock customization root exists
+        public Task<bool> ApplyPatchesAsync(string commitSha, string customizationRoot, string newGeneratedPath, string oldGeneratedPath, CancellationToken ct)
+            => Task.FromResult(true); // Simulate successful patch application
         public Task<ValidationResult> ValidateAsync(ClientUpdateSessionState session, CancellationToken ct) => Task.FromResult(ValidationResult.CreateSuccess());
     }
 
 
     [Test]
-    public async Task Auto_NoChanges_TerminatesAtValidation()
+    public async Task Auto_NoCustomizations_TerminatesAtMapped()
     {
         var svc = new MockNoChangeLanguageService();
         var resolver = new SingleResolver(svc);
@@ -53,21 +54,28 @@ public class TspClientUpdateToolAutoTests
         var pkg = CreateTempPackageDir();
         var run = await tool.UpdateAsync("0123456789abcdef0123456789abcdef01234567", packagePath: pkg, ct: CancellationToken.None);
         Assert.That(run.Session, Is.Not.Null, "Session should be created");
-        Assert.That(run.Session!.LastStage, Is.EqualTo(UpdateStage.Validated), "No changes now proceed through validation");
-    // Slim model: no stored API change count; reaching Validated implies no changes or all handled.
+        Assert.That(run.Session!.LastStage, Is.EqualTo(UpdateStage.Mapped), "No customizations should terminate at Mapped stage");
+        Assert.That(run.Session.RequiresManualIntervention, Is.False, "No customizations found should not require manual intervention");
+        Assert.That(run.NextSteps, Is.Not.Null.And.Not.Empty, "Should provide next steps guidance");
+        Assert.That(string.Join(" ", run.NextSteps), Does.Contain("No customizations found"), "Should indicate no customizations found");
     }
 
     [Test]
-    public async Task Auto_WithChanges_Validated()
+    public async Task Auto_WithCustomizations_AppliedSuccessfully()
     {
         var svc = new MockChangeLanguageService();
         var resolver = new SingleResolver(svc);
         var tsp = new MockTspHelper();
         var tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), resolver, tsp);
         var pkg = CreateTempPackageDir();
+        // Create a mock customization directory
+        Directory.CreateDirectory(Path.Combine(pkg, "customization"));
         var first = await tool.UpdateAsync("89abcdef0123456789abcdef0123456789abcdef", packagePath: pkg, ct: CancellationToken.None);
         Assert.That(first.Session, Is.Not.Null);
-        Assert.That(first.Session.LastStage, Is.EqualTo(UpdateStage.Validated), "Single-pass should reach validated");
+        Assert.That(first.Session.LastStage, Is.EqualTo(UpdateStage.Applied), "Successful patches should reach Applied stage");
+        Assert.That(first.Session.RequiresManualIntervention, Is.True, "Applied patches should always require manual review");
+        Assert.That(first.NextSteps, Is.Not.Null.And.Not.Empty, "Should provide guidance for applied patches");
+        Assert.That(string.Join(" ", first.NextSteps), Does.Contain("Patches applied automatically"), "Should indicate patches were applied");
     }
 
     [Test]
@@ -77,10 +85,14 @@ public class TspClientUpdateToolAutoTests
         int calls = 0; var svc = new TestLanguageServiceFailThenFix(() => calls++);
         var tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), new SingleResolver(svc), tsp);
         var pkg = CreateTempPackageDir();
+        // Create a mock customization directory to trigger patch application
+        Directory.CreateDirectory(Path.Combine(pkg, "customization"));
         var resp = await tool.UpdateAsync("fedcba9876543210fedcba9876543210fedcba98", packagePath: pkg, ct: CancellationToken.None);
         Assert.That(resp.Session, Is.Not.Null);
-        Assert.That(resp.Session!.LastStage, Is.EqualTo(UpdateStage.Validated));
-        Assert.That(resp.Session.RequiresManualIntervention, Is.True); // Validation failures now always require manual intervention
+        Assert.That(resp.Session!.LastStage, Is.EqualTo(UpdateStage.Applied)); // Patches applied but validation failed
+        Assert.That(resp.Session.RequiresManualIntervention, Is.True, "Validation failures should require manual intervention");
+        Assert.That(resp.NextSteps, Is.Not.Null.And.Not.Empty, "Should provide guidance for validation failure");
+        Assert.That(string.Join(" ", resp.NextSteps), Does.Contain("validation failed"), "Should indicate validation failure");
     }
 
     private class TestLanguageServiceFailThenFix : IClientUpdateLanguageService
@@ -89,8 +101,9 @@ public class TspClientUpdateToolAutoTests
         public TestLanguageServiceFailThenFix(Func<int> next) { _next = next; }
         public string SupportedLanguage => "java";
         public Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath) => Task.FromResult(new List<ApiChange>());
-        public string? GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct) => null;
-        public Task<bool> ApplyLlmPatchesAsync(string commitSha, string customizationRoot, string newGeneratedPath, string oldGeneratedPath, CancellationToken ct) => Task.FromResult(false); // no patches to apply
+        public string? GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct) => 
+            Path.Combine(session.NewGeneratedPath ?? "", "customization"); // Mock customization root exists
+        public Task<bool> ApplyPatchesAsync(string commitSha, string customizationRoot, string newGeneratedPath, string oldGeneratedPath, CancellationToken ct) => Task.FromResult(true); // Simulate patches applied
         public Task<ValidationResult> ValidateAsync(ClientUpdateSessionState session, CancellationToken ct)
         {
             var attempt = _next();

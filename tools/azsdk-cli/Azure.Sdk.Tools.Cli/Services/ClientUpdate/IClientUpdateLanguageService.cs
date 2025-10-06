@@ -33,7 +33,7 @@ public interface IClientUpdateLanguageService
     string? GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct);
 
     /// <summary>
-    /// Applies LLM-based patches directly to customization code using AI analysis.
+    /// Applies automated patches directly to customization code using intelligent analysis.
     /// </summary>
     /// <param name="commitSha">The commit SHA from TypeSpec changes for context</param>
     /// <param name="customizationRoot">Path to the customization root directory</param>
@@ -41,7 +41,7 @@ public interface IClientUpdateLanguageService
     /// <param name="oldGeneratedPath">Path to the old generated code (backup directory)</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>True if patches were successfully applied; false otherwise</returns>
-    Task<bool> ApplyLlmPatchesAsync(string commitSha, string customizationRoot, string newGeneratedPath, string oldGeneratedPath, CancellationToken ct);
+    Task<bool> ApplyPatchesAsync(string commitSha, string customizationRoot, string newGeneratedPath, string oldGeneratedPath, CancellationToken ct);
 
     /// <summary>
     /// Performs language-specific validation (build, compile, tests, lint, type-check, etc.).

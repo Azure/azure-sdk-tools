@@ -57,7 +57,7 @@ public class JavaUpdateLanguageService : ClientUpdateLanguageServiceBase
         return null;
     }
 
-    public override async Task<bool> ApplyLlmPatchesAsync(
+    public override async Task<bool> ApplyPatchesAsync(
         string commitSha,
         string customizationRoot,
         string newGeneratedPath,
@@ -66,7 +66,7 @@ public class JavaUpdateLanguageService : ClientUpdateLanguageServiceBase
     {
         try
         {
-            _logger.LogInformation("Generating LLM patches for customization files");
+            _logger.LogInformation("Generating automated patches for customization files");
             _logger.LogInformation("Customization root: {CustomizationRoot}", customizationRoot);
             _logger.LogInformation("New generated path: {NewGeneratedPath}", newGeneratedPath);
             _logger.LogInformation("Old generated path: {OldGeneratedPath}", oldGeneratedPath);
@@ -132,7 +132,7 @@ public class JavaUpdateLanguageService : ClientUpdateLanguageServiceBase
             };
             
             // Use microagent system to apply patches directly
-            _logger.LogInformation("Sending prompt to microagent for direct LLM-based patch application");
+            _logger.LogInformation("Sending prompt to microagent for direct patch application");
             var patchApplicationSuccess = await _microagentHost.RunAgentToCompletion(agentDefinition, ct);
             _logger.LogInformation("Patch application completed with result: {Success}", patchApplicationSuccess);
             
@@ -141,7 +141,7 @@ public class JavaUpdateLanguageService : ClientUpdateLanguageServiceBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to apply LLM patches");
+            _logger.LogError(ex, "Failed to apply automated patches");
             return false;
         }
     }

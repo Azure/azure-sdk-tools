@@ -44,7 +44,7 @@ public abstract class ClientUpdateLanguageServiceBase : IClientUpdateLanguageSer
     public abstract string? GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct);
     
     /// <summary>
-    /// Applies LLM-based patches directly to customization code using AI analysis.
+    /// Applies automated patches directly to customization code using intelligent analysis.
     /// </summary>
     /// <param name="commitSha">The commit SHA from TypeSpec changes for context</param>
     /// <param name="customizationRoot">Path to the customization root directory</param>
@@ -52,7 +52,7 @@ public abstract class ClientUpdateLanguageServiceBase : IClientUpdateLanguageSer
     /// <param name="oldGeneratedPath">Path to the old generated code (backup directory)</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>True if patches were successfully applied; false otherwise</returns>
-    public abstract Task<bool> ApplyLlmPatchesAsync(string commitSha, string customizationRoot, string newGeneratedPath, string oldGeneratedPath, CancellationToken ct);
+    public abstract Task<bool> ApplyPatchesAsync(string commitSha, string customizationRoot, string newGeneratedPath, string oldGeneratedPath, CancellationToken ct);
 
     /// <summary>
     /// Performs language-specific generation validation (typically dependency / build / type checks) against <see cref="ClientUpdateSessionState.NewGeneratedPath"/>.

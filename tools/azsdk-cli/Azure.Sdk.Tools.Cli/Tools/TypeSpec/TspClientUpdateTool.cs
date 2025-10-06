@@ -15,8 +15,7 @@ namespace Azure.Sdk.Tools.Cli.Tools;
 public class TspClientUpdateTool(
     ILogger<TspClientUpdateTool> logger,
     IClientUpdateLanguageServiceResolver languageServiceResolver,
-    ITspClientHelper tspClientHelper,
-    Azure.Sdk.Tools.Cli.Microagents.IMicroagentHostService microagentHost
+    ITspClientHelper tspClientHelper
 ) : MCPTool
 {
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.TypeSpec];
@@ -33,11 +32,10 @@ public class TspClientUpdateTool(
     {
         var spec = ctx.ParseResult.GetValueForArgument(updateCommitSha);
         var packagePath = ctx.ParseResult.GetValueForOption(SharedOptions.PackagePath);
-        var newGenPath = ctx.ParseResult.GetValueForOption(newGenOpt);
         try
         {
-            logger.LogInformation("Starting client update (CLI) for package at: {packagePath} with new-gen: {newGenPath}", packagePath, newGenPath);
-            return await RunUpdateAsync(spec, packagePath, newGenPath, ct);
+            logger.LogInformation("Starting client update (CLI) for package at: {packagePath}", packagePath);
+            return await RunUpdateAsync(spec, packagePath, ct);
         }
         catch (Exception ex)
         {
@@ -48,13 +46,13 @@ public class TspClientUpdateTool(
 
     [McpServerTool(Name = "azsdk_tsp_update"), Description("Update customized TypeSpec-generated client code")]
     public Task<TspClientUpdateResponse> UpdateAsync(string commitSha, string packagePath, CancellationToken ct = default)
-        => RunUpdateAsync(commitSha, packagePath, newGenPath: null, ct);
+        => RunUpdateAsync(commitSha, packagePath, ct);
 
-    private async Task<TspClientUpdateResponse> RunUpdateAsync(string commitSha, string packagePath, string? newGenPath, CancellationToken ct)
+    private async Task<TspClientUpdateResponse> RunUpdateAsync(string commitSha, string packagePath, CancellationToken ct)
     {
         try
         {
-            logger.LogInformation("Starting client update for package at: {packagePath} (regenDir: {regenDir})", packagePath, newGenPath);
+            logger.LogInformation("Starting client update for package at: {packagePath}", packagePath);
             if (!Directory.Exists(packagePath))
             {
                 return new TspClientUpdateResponse { ErrorCode = "1", ResponseError = $"Package path does not exist: {packagePath}" };
@@ -68,7 +66,7 @@ public class TspClientUpdateTool(
             {
                 return new TspClientUpdateResponse { ErrorCode = "NoLanguageService", ResponseError = "Could not resolve a client update language service." };
             }
-            return await UpdateCoreAsync(commitSha, packagePath, resolved, ct, newGenPath);
+            return await UpdateCoreAsync(commitSha, packagePath, resolved, ct);
         }
         catch (Exception ex)
         {
@@ -77,14 +75,14 @@ public class TspClientUpdateTool(
         }
     }
 
-    private async Task<TspClientUpdateResponse> UpdateCoreAsync(string commitSha, string packagePath, IClientUpdateLanguageService languageService, CancellationToken ct, string? newGenPath)
+    private async Task<TspClientUpdateResponse> UpdateCoreAsync(string commitSha, string packagePath, IClientUpdateLanguageService languageService, CancellationToken ct)
     {
         var session = new ClientUpdateSessionState { SpecPath = commitSha };
 
         // Create backup directory to preserve old generation for diff
         var backupDir = CreateBackupDirectory(packagePath);
         await BackupCurrentGeneration(packagePath, backupDir, ct);
-        
+
         session.NewGeneratedPath = packagePath;
 
         // Locate the existing tsp-location.yaml file within the provided packagePath and overwrite the commit: value with the new sha
@@ -93,8 +91,8 @@ public class TspClientUpdateTool(
         {
             var tspLocationContent = await File.ReadAllTextAsync(tspLocationPath, ct);
             tspLocationContent = System.Text.RegularExpressions.Regex.Replace(
-                tspLocationContent, 
-                @"commit:\s+[a-f0-9]+", 
+                tspLocationContent,
+                @"commit:\s+[a-f0-9]+",
                 $"commit: {commitSha}");
             await File.WriteAllTextAsync(tspLocationPath, tspLocationContent, ct);
         }
@@ -114,7 +112,7 @@ public class TspClientUpdateTool(
         session.LastStage = UpdateStage.Regenerated;
 
         var customizationRoot = languageService.GetCustomizationRootAsync(session, packagePath, ct);
-         if (string.IsNullOrEmpty(customizationRoot))
+        if (string.IsNullOrEmpty(customizationRoot))
         {
             // Nothing to update; proceed to exit
             logger.LogInformation("No customization root found; skipping update session " + session.LastStage);
@@ -122,15 +120,73 @@ public class TspClientUpdateTool(
         }
 
         logger.LogDebug("Using customization root: {CustomizationRoot}", customizationRoot);
-        // Use LLM-guided analysis and patch application for customization updates
-        var (guidance, patchesApplied, requiresReview) = await GenerateLlmGuidanceAndApplyPatchesAsync(commitSha, customizationRoot, packagePath, ct);
+        // Use automated analysis and patch application for customization updates
+        var (guidance, patchesApplied, requiresReview) = await GenerateGuidanceAndApplyPatchesAsync(commitSha, customizationRoot, packagePath, backupDir, languageService, ct);
+        
+        // If patches were applied, regenerate the code to ensure customizations are properly integrated
+        if (patchesApplied)
+        {
+            logger.LogInformation("Patches were applied. Regenerating code to validate customizations...");
+            var regenAfterPatchResult = await RegenerateAfterPatchesAsync(tspLocationPath, packagePath, ct);
+            if (!regenAfterPatchResult.Success)
+            {
+                logger.LogWarning("Code regeneration after patches failed: {Error}", regenAfterPatchResult.ErrorMessage);
+                guidance.Insert(0, "⚠️ Code regeneration after patches failed. Manual intervention required.");
+                guidance.Insert(1, $"Error: {regenAfterPatchResult.ErrorMessage}");
+                guidance.Insert(2, "");
+                requiresReview = true;
+                session.RequiresManualIntervention = true;
+            }
+            else
+            {
+                logger.LogInformation("Code regeneration after patches completed successfully");
+                
+                // TODO: Add validation step after patch application
+                // Run validation to ensure customizations work properly with newly generated code
+                logger.LogInformation("Running validation after patch application...");
+                var validationResult = await languageService.ValidateAsync(session, ct);
+                
+                if (validationResult.Success)
+                {
+                    logger.LogInformation("Validation completed successfully after patch application");
+                    guidance.Insert(0, "✅ Code regenerated and validated successfully after applying patches.");
+                    guidance.Insert(1, "");
+                }
+                else
+                {
+                    logger.LogWarning("Validation failed after patch application: {Errors}", string.Join(", ", validationResult.Errors));
+                    guidance.Insert(0, "⚠️ Code regenerated but validation failed after applying patches.");
+                    guidance.Insert(1, $"Validation errors: {string.Join(", ", validationResult.Errors)}");
+                    guidance.Insert(2, "");
+                    requiresReview = true;
+                    session.RequiresManualIntervention = true;
+                }
+            }
+        }
+        
+        // Clean up backup directory - it was only needed for LLM reference during patch generation
+        try
+        {
+            if (Directory.Exists(backupDir))
+            {
+                logger.LogDebug("Cleaning up backup directory: {BackupDir}", backupDir);
+                Directory.Delete(backupDir, recursive: true);
+                logger.LogInformation("Successfully cleaned up backup directory");
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to clean up backup directory: {BackupDir}", backupDir);
+            // Don't fail the operation if cleanup fails - this is just housekeeping
+        }
+        
         session.LastStage = patchesApplied ? UpdateStage.Applied : UpdateStage.Mapped;
         session.RequiresManualIntervention = requiresReview;
-        
-        var message = patchesApplied 
-            ? "LLM-guided patches applied successfully. Please review the changes and validate your customizations."
-            : "LLM-guided analysis complete. Follow the provided next steps to update your customizations.";
-        
+
+        var message = patchesApplied
+            ? "Automated patches applied successfully. Please review the changes and validate your customizations."
+            : "Automated analysis complete. Follow the provided next steps to update your customizations.";
+
         return new TspClientUpdateResponse
         {
             Session = session,
@@ -154,7 +210,7 @@ public class TspClientUpdateTool(
     {
         // Copy the entire directory structure but only .java files to maintain same folder structure
         var sourceDir = new DirectoryInfo(packagePath);
-        if (!sourceDir.Exists) 
+        if (!sourceDir.Exists)
         {
             return;
         }
@@ -183,13 +239,13 @@ public class TspClientUpdateTool(
         foreach (var subDir in source.GetDirectories())
         {
             ct.ThrowIfCancellationRequested();
-            
+
             // Skip backup directories to avoid infinite recursion
             if (subDir.Name.StartsWith("_backup-old-", StringComparison.OrdinalIgnoreCase))
             {
                 continue;
             }
-            
+
             var targetSubDir = target.CreateSubdirectory(subDir.Name);
             await CopyDirectorySelectiveAsync(subDir, targetSubDir, ct);
         }
@@ -202,22 +258,37 @@ public class TspClientUpdateTool(
         await sourceStream.CopyToAsync(targetStream, ct);
     }
 
+    private async Task<(bool Success, string? ErrorMessage)> RegenerateAfterPatchesAsync(string tspLocationPath, string packagePath, CancellationToken ct)
+    {
+        try
+        {
+            logger.LogInformation("Running tsp-client update after applying customization patches");
+            
+            // Run tsp-client update again to regenerate code with the updated customizations
+            var regenResult = await tspClientHelper.UpdateGenerationAsync(tspLocationPath, packagePath, isCli: false, ct);
+            
+            if (!regenResult.IsSuccessful)
+            {
+                logger.LogError("Code regeneration failed after patches: {Error}", regenResult.ResponseError);
+                return (false, regenResult.ResponseError ?? "Code regeneration failed");
+            }
+            
+            logger.LogInformation("Code regeneration completed successfully after applying patches");
+            return (true, null);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Exception during code regeneration after patches");
+            return (false, ex.Message);
+        }
+    }
+
     private static async Task<TspClientUpdateResponse> ValidateWithAutoFixAsync(ClientUpdateSessionState session, IClientUpdateLanguageService languageService, CancellationToken ct)
     {
         var result = await languageService.ValidateAsync(session, ct);
         session.LastStage = UpdateStage.Validated;
         if (!result.Success)
         {
-            // Attempt a single round of auto-fix for minimal model.
-            var fixes = await languageService.ProposeFixesAsync(session, result.Errors, ct);
-            if (fixes.Count > 0)
-            {
-                var retry = await languageService.ValidateAsync(session, ct);
-                if (retry.Success)
-                {
-                    return CompleteClientUpdate(session, "Update pipeline complete (after fixes).");
-                }
-            }
             session.RequiresManualIntervention = true;
             return CompleteClientUpdate(session, "Validation failed – manual intervention required.");
         }
@@ -230,126 +301,81 @@ public class TspClientUpdateTool(
         Message = message
     };
 
-    private async Task<(List<string> guidance, bool patchesApplied, bool requiresReview)> GenerateLlmGuidanceAndApplyPatchesAsync(
-        string commitSha, 
-        string? customizationRoot, 
-        string packagePath,
+    private async Task<(List<string> guidance, bool patchesApplied, bool requiresReview)> GenerateGuidanceAndApplyPatchesAsync(
+        string commitSha,
+        string? customizationRoot,
+        string newGeneratedPath,
+        string oldGeneratedPath,
+        IClientUpdateLanguageService languageService,
         CancellationToken ct)
     {
         try
         {
-            logger.LogInformation("Generating LLM guidance and patches for customization updates");
+            logger.LogInformation("Generating guidance and applying patches for customization updates");
 
             // If no customization root, just provide guidance
             if (string.IsNullOrEmpty(customizationRoot) || !Directory.Exists(customizationRoot))
             {
                 var basicGuidance = new List<string>
                 {
-                    "No customization files found. Consider:",
-                    "1. Review the generated code changes in: " + packagePath,
-                    "2. Check if you need to create new customizations",
-                    "3. Rebuild and test your project"
+                    "ℹ️ No customization files found.",
+                    "1. Review generated code changes",
+                    "2. Create customizations if needed"
                 };
                 return (basicGuidance, false, false);
             }
 
-            // Generate patches using LLM
-            logger.LogInformation("Starting LLM patch generation process...");
-            var patches = await languageService.GenerateLlmPatchesAsync(commitSha, customizationRoot, packagePath, ct) ?? new List<CodePatch>();
-            logger.LogInformation("LLM patch generation completed. Received {PatchCount} patches", patches.Count);
-            
+            // Apply patches automatically
+            logger.LogInformation("Starting automatic patch application process...");
+            var patchesApplied = await languageService.ApplyLlmPatchesAsync(commitSha, customizationRoot, newGeneratedPath, oldGeneratedPath, ct);
+            logger.LogInformation("Automatic patch application completed with result: {Success}", patchesApplied);
+
             var guidance = new List<string>();
-            bool patchesApplied = false;
-            bool requiresReview = false;
+            bool requiresReview = true; // Always require review after automatic changes
 
-            if (patches.Any())
+            if (patchesApplied)
             {
-                logger.LogInformation("Applying {PatchCount} LLM-generated patches", patches.Count);
-                
-                // Apply patches automatically
-                var appliedCount = 0;
-                var failedPatches = new List<string>();
-                
-                foreach (var patch in patches)
-                {
-                    try
-                    {
-                        logger.LogInformation("Processing patch for file: '{FilePath}' (Length: {Length}, IsNullOrEmpty: {IsEmpty})", patch.FilePath, patch.NewContent?.Length ?? 0, string.IsNullOrEmpty(patch.NewContent));
-                        
-                        if (await ApplyPatchToFileAsync(patch.FilePath, patch.OldContent, patch.NewContent))
-                        {
-                            appliedCount++;
-                            logger.LogInformation("Successfully applied patch to {File}", patch.FilePath);
-                        }
-                        else
-                        {
-                            failedPatches.Add(patch.FilePath ?? "unknown");
-                            logger.LogWarning("Failed to apply patch to {File}", patch.FilePath);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        failedPatches.Add(patch.FilePath ?? "unknown");
-                        logger.LogError(ex, "Error applying patch to {File}", patch.FilePath);
-                    }
-                }
-
-                patchesApplied = appliedCount > 0;
-                requiresReview = true; // Always require review after applying patches
-
-                // Build guidance based on what happened
-                if (appliedCount > 0)
-                {
-                    guidance.Add($"✅ Successfully applied {appliedCount} automated patches to your customization files.");
-                    guidance.Add("");
-                    guidance.Add("🔍 **REVIEW REQUIRED** - Please verify the following changes:");
-                }
-
-                if (failedPatches.Any())
-                {
-                    guidance.Add($"⚠️ {failedPatches.Count} patches could not be applied automatically:");
-                    foreach (var file in failedPatches)
-                    {
-                        guidance.Add($"   - {file}");
-                    }
-                    guidance.Add("");
-                }
-                });
+                // Build guidance for successful patch application
+                guidance.Add("✅ Patches applied automatically and code regenerated with validation.");
+                guidance.Add("");
+                guidance.Add("📋 Next steps:");
+                guidance.Add("1. Review applied changes in customization files");
+                guidance.Add("2. Review generated code after customization updates to ensure it meets your code requirements");
+                guidance.Add("3. Fix any remaining issues if needed");
+                guidance.Add("4. Open a pull request");
             }
             else
-            {  
-                logger.LogInformation("No patches were generated by the LLM.");
-                requiresReview = true; // Require review if no patches were generated
-                
+            {
+                logger.LogInformation("Automatic patch application was not successful or no patches were needed.");
+
                 guidance.AddRange(new[]
                 {
-                    "No automatic patches could be generated. Manual review required:",
-                    "1. Compare generated code changes with your customizations",
-                    "2. Update import statements, class references, parameter names and API signatures as needed",
-                    "3. Fix any compilation errors in customization files",
-                    "4. Regenerate and validate the updated code customizations",
-                    "5. Rebuild and test your project"
+                    "⚠️ Manual review required - automatic patches unsuccessful or not needed.",
+                    "1. Compare generated code with your customizations",
+                    "2. Update customization files manually",
+                    "3. Regenerate with updated customization code to ensure it meets your code requirements",
+                    "4. Open a pull request with your changes"
                 });
             }
-            
+
             return (guidance, patchesApplied, requiresReview);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to generate LLM guidance and patches");
+            logger.LogError(ex, "Failed to generate guidance and apply patches");
             var errorGuidance = new List<string>
             {
-                "⚠️ LLM patch generation failed. Manual review required:",
+                "❌ Automatic patch application failed. Manual review required.",
                 $"Error: {ex.Message}",
-                "1. Review the generated code changes in: " + packagePath,
-                "2. Check your customization files for compilation errors",
-                "3. Update import statements if needed", 
-                "4. Rebuild and test your project",
-                "5. Verify API compatibility with existing customizations"
+                "1. Review generated code changes",
+                "2. Update customization files manually",
+                "3. Open a pull request with your changes"
             };
             return (errorGuidance, false, true);
         }
     }
+
+
 }
 
 

@@ -8,6 +8,8 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.SymbolDisplay;
 using System.Collections.Immutable;
 using System.ComponentModel;
+using System.Diagnostics;
+using System.Text;
 using ApiView;
 using System.Diagnostics.CodeAnalysis;
 
@@ -140,7 +142,7 @@ namespace CSharpAPIParser.TreeToken
                             param = firstComma > 0 ? param?[..(int)firstComma] : param;
                             reviewLines.Add(new ReviewLine()
                             {
-                                LineId = attribute.AttributeClass?.Name,
+                                LineId = attribute.AttributeClass?.Name + "_" + param,
                                 Tokens = [
                                     ReviewToken.CreateStringLiteralToken(param)
                                 ]
@@ -174,7 +176,7 @@ namespace CSharpAPIParser.TreeToken
                     versionToken.SkipDiff = true;
                     var dependencyLine = new ReviewLine()
                     {
-                        LineId = dependency.Name,
+                        LineId = dependency.Name + versionToken.Value,
                         Tokens = [
                             ReviewToken.CreateStringLiteralToken(dependency.Name, false),
                             versionToken

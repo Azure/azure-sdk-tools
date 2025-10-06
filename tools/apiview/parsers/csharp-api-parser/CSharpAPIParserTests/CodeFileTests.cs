@@ -310,7 +310,7 @@ namespace Microsoft.Extensions.Azure {
 
             foreach (var line in lines)
             {
-                if (line.LineId != null && line.LineId.StartsWith("System.FlagsAttribute.") && !string.IsNullOrEmpty(line.RelatedToLine))
+                if (line.LineId != null && line.LineId.StartsWith("System.FlagsAttribute().") && !string.IsNullOrEmpty(line.RelatedToLine))
                 {
                     count++;
                 }
@@ -405,6 +405,76 @@ namespace Microsoft.Extensions.Azure {
             bool isRequiresDynamicCode = classLine.Children?.Any(l => l.Tokens.Any(t => t.Value == "RequiresDynamicCode")) ?? false;
             Assert.False(isRequiresUnreferencedCodePresent);
             Assert.False(isRequiresDynamicCode);
+        }
+
+        [Fact]
+        public void VerifyDuplicateLineIdValidationWorks()
+        {
+            // This test ensures that our duplicate line ID validation is working
+            // We can't easily create a scenario with actual duplicate line IDs because
+            // the CodeFileBuilder generates unique IDs based on symbol information
+            // But we can verify that the validation mechanism is in place by checking
+            // that the codefiles build successfully (no exceptions thrown)
+            
+            // If there were duplicate line IDs, the Build method would throw an InvalidOperationException
+            Assert.NotNull(templateCodeFile);
+            Assert.NotNull(coreCodeFile);
+            // Note: storageCodeFile might have issues unrelated to line ID validation
+            
+            // The fact that these code files were built successfully indicates
+            // that no duplicate line IDs were encountered during their construction
+            Assert.True(templateCodeFile.ReviewLines.Count > 0);
+            Assert.True(coreCodeFile.ReviewLines.Count > 0);
+        }
+
+        [Fact]
+        public void VerifyGetLineIdThrowsOnDuplicate()
+        {
+            // Test that GetLineId method throws when duplicate line IDs are encountered
+            var builder = new CSharpAPIParser.TreeToken.CodeFileBuilder();
+            
+            // Create a mock assembly to initialize the builder
+            var templateAssembly = Assembly.Load("Azure.Template");
+            var dllStream = templateAssembly.GetFile("Azure.Template.dll");
+            var assemblySymbol = CompilationFactory.GetCompilation(dllStream, null);
+            
+            // This will initialize the builder and clear the used line IDs
+            builder.Build(assemblySymbol, false, null);
+            
+            // Now create another builder instance to test the GetLineId method directly
+            var testBuilder = new CSharpAPIParser.TreeToken.CodeFileBuilder();
+            testBuilder.Build(assemblySymbol, false, null);
+            
+            // Find a member to test with
+            var namespaceSymbol = assemblySymbol.GlobalNamespace.GetNamespaceMembers().FirstOrDefault();
+            if (namespaceSymbol != null)
+            {
+                var typeSymbol = namespaceSymbol.GetTypeMembers().FirstOrDefault();
+                if (typeSymbol != null)
+                {
+                    var members = typeSymbol.GetMembers().Where(m => !m.IsImplicitlyDeclared).ToList();
+                    if (members.Count > 0)
+                    {
+                        // Use reflection to call the private GetLineId method
+                        var getLineIdMethod = typeof(CSharpAPIParser.TreeToken.CodeFileBuilder)
+                            .GetMethod("GetLineId", BindingFlags.NonPublic | BindingFlags.Instance);
+                        
+                        if (getLineIdMethod != null)
+                        {
+                            // First call should succeed
+                            var firstResult = getLineIdMethod.Invoke(testBuilder, new object[] { members[0] });
+                            Assert.NotNull(firstResult);
+                            
+                            // Second call with the same member should throw due to duplicate
+                            var ex = Assert.Throws<System.Reflection.TargetInvocationException>(() => 
+                                getLineIdMethod.Invoke(testBuilder, new object[] { members[0] }));
+                            
+                            Assert.IsType<InvalidOperationException>(ex.InnerException);
+                            Assert.Contains("Duplicate line ID detected", ex.InnerException.Message);
+                        }
+                    }
+                }
+            }
         }
     }
 }

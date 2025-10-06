@@ -106,6 +106,7 @@ namespace CSharpAPIParser.TreeToken
             }
 
             codeFile.Diagnostics = analyzer.Results.ToArray();
+            VerifyCodeFile(codeFile);
             return codeFile;
         }
 
@@ -869,6 +870,44 @@ namespace CSharpAPIParser.TreeToken
                 (_, _) => lineId
             };
             return value;
+        }
+
+        /// <summary>
+        /// Verifies that all LineId values in the codeFile's ReviewLines collection are unique.
+        /// </summary>
+        /// <param name="codeFile">The CodeFile to verify.</param>
+        /// <exception cref="InvalidOperationException">Thrown when duplicate LineId values are found.</exception>
+        private static void VerifyCodeFile(CodeFile codeFile)
+        {
+            var lineIds = new HashSet<string>();
+            var duplicates = new List<string>();
+
+            void CheckLineIds(IEnumerable<ReviewLine> lines)
+            {
+                foreach (var line in lines)
+                {
+                    if (!string.IsNullOrEmpty(line.LineId))
+                    {
+                        if (!lineIds.Add(line.LineId))
+                        {
+                            duplicates.Add(line.LineId);
+                        }
+                    }
+
+                    if (line.Children != null && line.Children.Count > 0)
+                    {
+                        CheckLineIds(line.Children);
+                    }
+                }
+            }
+
+            CheckLineIds(codeFile.ReviewLines);
+
+            if (duplicates.Count > 0)
+            {
+                throw new InvalidOperationException(
+                    $"Duplicate LineId values found: {string.Join(", ", duplicates.Distinct())}");
+            }
         }
     }
 }

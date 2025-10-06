@@ -105,5 +105,4 @@ For TypeSpec-related operations:
 
 - `tsp convert --swagger-file ./swagger.json`
 - `tsp init --name MyService`
-- `tsp client update --config-path ./tspconfig.yaml`
 - `tsp validate --project-path ./typespec`

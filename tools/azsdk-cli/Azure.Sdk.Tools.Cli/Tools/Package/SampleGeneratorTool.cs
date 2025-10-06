@@ -29,18 +29,21 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         private readonly IMicroagentHostService microagentHostService;
         private readonly IOutputHelper output;
         private readonly ILanguageSpecificCheckResolver languageResolver;
+        private readonly IDockerService dockerService;
 
         public SampleGeneratorTool(
             IMicroagentHostService microagentHostService,
             ILogger<SampleGeneratorTool> logger,
             IOutputHelper output,
-            ILanguageSpecificCheckResolver languageResolver
+            ILanguageSpecificCheckResolver languageResolver,
+            IDockerService dockerService
         ) : base()
         {
             this.microagentHostService = microagentHostService;
             this.logger = logger;
             this.output = output;
             this.languageResolver = languageResolver;
+            this.dockerService = dockerService;
 
             CommandHierarchy = [
                 SharedCommandGroups.Generators
@@ -230,27 +233,20 @@ Scenarios description:
 
                     foreach (var sample in samples)
                     {
-                        if (sample == null)
-                        {
-                            logger.LogWarning("Skipping null sample");
-                            continue;
-                        }
+                        var processedSample = await ProcessAndVerifySampleAsync(
+                            sample,
+                            verify,
+                            resolvedLanguage,
+                            packageInfo.PackageName);
 
-                        if (string.IsNullOrEmpty(sample.FileName))
+                        if (processedSample == null)
                         {
-                            logger.LogWarning("Skipping sample with null or empty filename");
-                            continue;
-                        }
-
-                        if (string.IsNullOrEmpty(sample.Content))
-                        {
-                            logger.LogWarning("Skipping sample with null or empty content: {fileName}", sample.FileName);
-                            continue;
+                            continue; // Sample was invalid and skipped
                         }
 
                         var fileExtension = LanguageSupport.GetFileExtension(resolvedLanguage);
 
-                        var cleanFileName = Path.GetFileNameWithoutExtension(sample.FileName.Replace('/', '_').Replace('\\', '_'));
+                        var cleanFileName = Path.GetFileNameWithoutExtension(processedSample.FileName.Replace('/', '_').Replace('\\', '_'));
                         var sampleFileName = $"{cleanFileName}{fileExtension}";
 
                         logger.LogDebug("Writing sample: {sampleFileName}", sampleFileName);
@@ -263,10 +259,11 @@ Scenarios description:
                         }
                         else
                         {
-                            await File.WriteAllTextAsync(sampleFilePath, sample.Content);
+                            await File.WriteAllTextAsync(sampleFilePath, processedSample.Content);
                             logger.LogInformation("Sample written to: {filePath}", sampleFilePath);
                         }
                     }
+
                 }
             }
             catch (Exception ex)
@@ -302,5 +299,226 @@ Scenarios description:
 
             return result;
         }
+
+        private List<FileHelper.SourceInput> CreateSourceInputsForLanguage(string packagePath, string language)
+        {
+            var sourceInputs = new List<FileHelper.SourceInput>();
+
+            switch (language.ToLowerInvariant())
+            {
+                case "dotnet":
+                    sourceInputs.Add(new FileHelper.SourceInput(
+                        Path: Path.Combine(packagePath, "src"),
+                        IncludeExtensions: [".cs"]
+                    ));
+
+                    var testsPath = Path.Combine(packagePath, "tests");
+                    if (Directory.Exists(testsPath))
+                    {
+                        var testEnvFiles = Directory.GetFiles(testsPath, "*TestEnvironment.cs", SearchOption.AllDirectories);
+                        foreach (var testEnvFile in testEnvFiles)
+                        {
+                            sourceInputs.Add(new FileHelper.SourceInput(
+                                Path: testEnvFile
+                            ));
+                        }
+                    }
+
+                    var samplesPath = Path.Combine(packagePath, "tests", "samples");
+                    if (Directory.Exists(samplesPath))
+                    {
+                        sourceInputs.Add(new FileHelper.SourceInput(
+                            Path: samplesPath,
+                            IncludeExtensions: [".cs"]
+                        ));
+                    }
+
+                    break;
+
+                case "java":
+                    sourceInputs.Add(new FileHelper.SourceInput(
+                        Path: packagePath,
+                        IncludeExtensions: [".java"],
+                        ExcludeGlobPatterns: [
+                            "**/target/**",
+                            "**/.gradle/**",
+                            "**/build/**",
+                            "**/.idea/**",
+                            "**/out/**"
+                        ]
+                    ));
+                    break;
+
+                case "typescript":
+                    var distEsmPath = Path.Combine(packagePath, "dist", "esm");
+                    var srcPath = Path.Combine(packagePath, "src");
+                    if (Directory.Exists(distEsmPath))
+                    {
+                        sourceInputs.Add(new FileHelper.SourceInput(
+                            Path: distEsmPath,
+                            IncludeExtensions: [".d.ts"]
+                        ));
+                    }
+                    else if (Directory.Exists(srcPath))
+                    {
+                        sourceInputs.Add(new FileHelper.SourceInput(
+                            Path: srcPath,
+                            IncludeExtensions: [".ts"],
+                            ExcludeGlobPatterns: [
+                                "**/node_modules/**",
+                                "**/*.min.js",
+                                "**/*.bundle.js",
+                                "**/*.map"
+                            ]
+                        ));
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException($"No valid TypeScript source directories found in package path '{packagePath}'. Expected 'dist/esm' or 'src'.");
+                    }
+
+                    var sampleEnvPath = Path.Combine(packagePath, "sample.env");
+                    if (File.Exists(sampleEnvPath))
+                    {
+                        sourceInputs.Add(new FileHelper.SourceInput(
+                            Path: sampleEnvPath
+                        ));
+                    }
+
+                    var samplesDevPath = Path.Combine(packagePath, "samples-dev");
+                    if (Directory.Exists(samplesDevPath))
+                    {
+                        sourceInputs.Add(new FileHelper.SourceInput(
+                            Path: samplesDevPath,
+                            IncludeExtensions: [".ts"]
+                        ));
+                    }
+
+                    var testSnippetsPath = Path.Combine(packagePath, "test", "snippets.spec.ts");
+                    if (File.Exists(testSnippetsPath))
+                    {
+                        sourceInputs.Add(new FileHelper.SourceInput(
+                            Path: testSnippetsPath
+                        ));
+                    }
+                    break;
+
+                case "python":
+                    sourceInputs.Add(new FileHelper.SourceInput(
+                        Path: packagePath,
+                        IncludeExtensions: [".py"],
+                        ExcludeGlobPatterns: [
+                            "**/__pycache__/**",
+                            "**/build/**",
+                            "**/dist/**",
+                            "**/.pytest_cache/**",
+                            "**/venv/**",
+                            "**/env/**",
+                            "**/.venv/**"
+                        ]
+                    ));
+                    break;
+
+                case "go":
+                    sourceInputs.Add(new FileHelper.SourceInput(
+                        Path: packagePath,
+                        IncludeExtensions: [".go"],
+                        ExcludeGlobPatterns: [
+                            "**/vendor/**",
+                            "**/bin/**"
+                        ]
+                    ));
+                    break;
+
+                default:
+                    throw new ArgumentException($"Unsupported language for source context loading: '{language}'. Supported languages are: dotnet, java, typescript, javascript, python, go", nameof(language));
+            }
+
+            return sourceInputs;
+        }
+
+        /// <summary>
+        /// Validates and optionally verifies a generated sample.
+        /// </summary>
+        /// <param name="sample">The sample to process</param>
+        /// <param name="verify">Whether to run verification on the sample</param>
+        /// <param name="language">The programming language of the sample</param>
+        /// <param name="packageName">The package name to exclude from dependency discovery</param>
+        /// <returns>The processed sample, or null if the sample was invalid and should be skipped</returns>
+        private async Task<GeneratedSample?> ProcessAndVerifySampleAsync(
+            GeneratedSample sample,
+            bool verify,
+            string language,
+            string? packageName)
+        {
+            // Validate sample before processing
+            if (sample == null)
+            {
+                logger.LogWarning("Skipping null sample");
+                return null;
+            }
+
+            if (string.IsNullOrEmpty(sample.FileName))
+            {
+                logger.LogWarning("Skipping sample with null or empty filename");
+                return null;
+            }
+
+            if (string.IsNullOrEmpty(sample.Content))
+            {
+                logger.LogWarning("Skipping sample with null or empty content: {fileName}", sample.FileName);
+                return null;
+            }
+
+            GeneratedSample finalSample = sample;
+
+            // Verify the sample if verification is enabled
+            if (verify)
+            {
+                logger.LogInformation("Verifying sample: {fileName}", sample.FileName);
+
+                try
+                {
+                    var verificationResult = await SampleVerification.VerifyAndFixSampleAsync(
+                        sample,
+                        language,
+                        dockerService,
+                        microagentHostService,
+                        logger,
+                        null, // clientDist
+                        packageName,
+                        CancellationToken.None);
+
+                    finalSample = sample with { Content = verificationResult.Content };
+
+                    if (verificationResult.Succeeded)
+                    {
+                        logger.LogInformation("Sample verification succeeded after {attempts} attempts for {fileName}",
+                            verificationResult.AttemptsMade, sample.FileName);
+                    }
+                    else
+                    {
+                        logger.LogWarning("Sample verification failed after {attempts} attempts for {fileName}",
+                            verificationResult.AttemptsMade, sample.FileName);
+
+                        // Log the last attempt's errors for debugging
+                        var lastAttempt = verificationResult.Attempts.LastOrDefault();
+                        if (lastAttempt != null)
+                        {
+                            logger.LogDebug("Last verification error for {fileName}: {error}",
+                                sample.FileName, lastAttempt.TypeCheckOutput);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Error during sample verification for {fileName}", sample.FileName);
+                    // Continue with unverified sample
+                }
+            }
+
+            return finalSample;
+        }
     }
+
 }

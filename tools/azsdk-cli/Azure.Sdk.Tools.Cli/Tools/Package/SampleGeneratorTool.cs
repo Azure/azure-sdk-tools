@@ -29,18 +29,21 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         private readonly IMicroagentHostService microagentHostService;
         private readonly IOutputHelper output;
         private readonly ILanguageSpecificCheckResolver languageResolver;
+        private readonly IDockerService dockerService;
 
         public SampleGeneratorTool(
             IMicroagentHostService microagentHostService,
             ILogger<SampleGeneratorTool> logger,
             IOutputHelper output,
-            ILanguageSpecificCheckResolver languageResolver
+            ILanguageSpecificCheckResolver languageResolver,
+            IDockerService dockerService
         ) : base()
         {
             this.microagentHostService = microagentHostService;
             this.logger = logger;
             this.output = output;
             this.languageResolver = languageResolver;
+            this.dockerService = dockerService;
 
             CommandHierarchy = [
                 SharedCommandGroups.Generators
@@ -228,6 +231,8 @@ Scenarios description:
                     logger.LogDebug("Output directory: {outputDirectory}", resolvedOutputDirectory);
                     Directory.CreateDirectory(resolvedOutputDirectory);
 
+                    var fileExtension = LanguageSupport.GetFileExtension(resolvedLanguage);
+
                     foreach (var sample in samples)
                     {
                         if (sample == null)
@@ -248,10 +253,17 @@ Scenarios description:
                             continue;
                         }
 
-                        var fileExtension = LanguageSupport.GetFileExtension(resolvedLanguage);
-
                         var cleanFileName = Path.GetFileNameWithoutExtension(sample.FileName.Replace('/', '_').Replace('\\', '_'));
                         var sampleFileName = $"{cleanFileName}{fileExtension}";
+                        var processedSample = verify switch
+                        {
+                            true => await ProcessAndVerifySampleAsync(
+                                sample with { FileName = sampleFileName },
+                                resolvedLanguage,
+                                packageInfo.PackagePath,
+                                packageInfo.RepoRoot),
+                            false => sample
+                        };
 
                         logger.LogDebug("Writing sample: {sampleFileName}", sampleFileName);
                         var sampleFilePath = Path.Combine(resolvedOutputDirectory, sampleFileName);
@@ -263,10 +275,11 @@ Scenarios description:
                         }
                         else
                         {
-                            await File.WriteAllTextAsync(sampleFilePath, sample.Content);
+                            await File.WriteAllTextAsync(sampleFilePath, processedSample.Content);
                             logger.LogInformation("Sample written to: {filePath}", sampleFilePath);
                         }
                     }
+
                 }
             }
             catch (Exception ex)
@@ -302,5 +315,67 @@ Scenarios description:
 
             return result;
         }
+
+        /// <summary>
+        /// Validates and optionally verifies a generated sample.
+        /// </summary>
+        /// <param name="sample">The sample to process</param>
+        /// <param name="verify">Whether to run verification on the sample</param>
+        /// <param name="language">The programming language of the sample</param>
+        /// <param name="packagePath">Full path to the package directory</param>
+        /// <param name="repoRoot">Root path of the monorepo</param>
+        /// <returns>The processed sample, or null if the sample was invalid and should be skipped</returns>
+        private async Task<GeneratedSample> ProcessAndVerifySampleAsync(
+            GeneratedSample sample,
+            string language,
+            string packagePath,
+            string repoRoot)
+        {
+            GeneratedSample finalSample = sample;
+
+            logger.LogInformation("Verifying sample: {fileName}", sample.FileName);
+
+            try
+            {
+                var verificationResult = await SampleVerification.VerifyAndFixSampleAsync(
+                    sample,
+                    language,
+                    dockerService,
+                    microagentHostService,
+                    logger,
+                    packagePath,
+                    repoRoot,
+                    CancellationToken.None);
+
+                finalSample = sample with { Content = verificationResult.Content };
+
+                if (verificationResult.Succeeded)
+                {
+                    logger.LogInformation("Sample verification succeeded after {attempts} attempts for {fileName}",
+                        verificationResult.AttemptsMade, sample.FileName);
+                }
+                else
+                {
+                    logger.LogWarning("Sample verification failed after {attempts} attempts for {fileName}",
+                        verificationResult.AttemptsMade, sample.FileName);
+
+                    // Log the last attempt's errors for debugging
+                    var lastAttempt = verificationResult.Attempts.LastOrDefault();
+                    if (lastAttempt != null)
+                    {
+                        logger.LogDebug("Last verification error for {fileName}: {error}",
+                            sample.FileName, lastAttempt.TypeCheckOutput);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error during sample verification for {fileName}", sample.FileName);
+                // Continue with unverified sample
+            }
+
+            return finalSample;
+        }
     }
+
 }

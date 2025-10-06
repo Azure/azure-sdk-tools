@@ -68,10 +68,10 @@ workloadAppIssuer:
   dev: 
   storage: https://southcentralus.oic.prod-aks.azure.com/70a036f6-8e4d-4615-bad6-149c02e7720d/b5e7dc96-dee7-4765-bccc-c18a50ecfa13/
 clusterGroup:
-  pg: rg-stress-cluster-pg
-  prod: rg-stress-cluster-prod
+  pg: SSS3PT_rg-stress-cluster-pg
+  prod: SSS3PT_rg-stress-cluster-prod
   dev: 
-  storage: rg-stress-cluster-storage
+  storage: SSS3PT_rg-stress-cluster-storage
 subscription:
   pg: public
   prod: public
@@ -86,4 +86,3 @@ tenantId:
   prod: 70a036f6-8e4d-4615-bad6-149c02e7720d
   dev: ""
   storage: 70a036f6-8e4d-4615-bad6-149c02e7720d
-

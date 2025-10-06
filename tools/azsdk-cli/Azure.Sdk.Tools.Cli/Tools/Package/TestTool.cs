@@ -59,7 +59,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     return new DefaultCommandResponse
                     {
                         ExitCode = 1,
-                        Result = $"No test runner found for package at '{packagePath}'."
+                        ResponseError = $"No test runner found for package at '{packagePath}'."
                     };
                 }
 
@@ -73,7 +73,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             catch (Exception ex)
             {
                 logger.LogError(ex, "Unhandled exception while running package tests");
-                throw;
+                return new DefaultCommandResponse
+                {
+                    ExitCode = 1,
+                    ResponseError = $"An unexpected error occurred while running package tests: {ex.Message}"
+                };
             }
         }
     }

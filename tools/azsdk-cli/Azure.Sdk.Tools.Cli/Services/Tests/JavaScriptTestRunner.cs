@@ -7,7 +7,7 @@ public class JavaScriptTestRunner(IProcessHelper processHelper) : ITestRunner
 {
     public SdkLanguage SupportedLanguage => SdkLanguage.JavaScript;
 
-    public async Task RunAllTestsAsync(string packagePath, TestMode mode, CancellationToken ct = default)
+    public async Task RunAllTests(string packagePath, TestMode mode, CancellationToken ct = default)
     {
         var testMode = mode switch
         {

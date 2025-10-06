@@ -39,7 +39,17 @@ public class LanguageSpecificResolver(IServiceProvider _serviceProvider, IGitHel
             if (!string.IsNullOrEmpty(language))
             {
                 _logger.LogDebug("Detected language: {Language} from Language-Settings.ps1 at {Path}", language, languageSettingsPath);
-                return Enum.Parse<SdkLanguage>(language, ignoreCase: true);
+
+                if (Enum.TryParse<SdkLanguage>(language, ignoreCase: true, out var parsedLanguage))
+                {
+                    return parsedLanguage;
+                }
+                else
+                {
+                    _logger.LogWarning("Unrecognized language '{Language}' in Language-Settings.ps1 at {Path}", language, languageSettingsPath);
+                    return null;
+                }
+                    
             }
 
             return null;

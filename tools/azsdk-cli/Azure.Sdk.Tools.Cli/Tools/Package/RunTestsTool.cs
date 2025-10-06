@@ -60,7 +60,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     };
                 }
 
-                await testRunner.RunAllTestsAsync(packagePath, TestMode.Playback, ct);
+                await testRunner.RunAllTests(packagePath, TestMode.Playback, ct);
 
                 return new DefaultCommandResponse
                 {

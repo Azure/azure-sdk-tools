@@ -27,12 +27,6 @@ public abstract class ClientUpdateLanguageServiceBase : IClientUpdateLanguageSer
     }
 
     /// <summary>
-    /// Gets the language identifier (e.g. <c>"csharp"</c>, <c>"java"</c>, <c>"python"</c>) supported by this implementation.
-    /// The value is used to route sessions to the correct language service.
-    /// </summary>
-    public abstract SdkLanguage SupportedLanguage { get; }
-
-    /// <summary>
     /// Produces a semantic API change list between an older generated package and a newly generated package.
     /// </summary>
     /// <param name="oldGenerationPath">File-system path to the previously generated client code ("old" baseline).</param>

@@ -17,8 +17,6 @@ public class JavaUpdateLanguageService : ClientUpdateLanguageServiceBase
         _logger = logger;
     }
 
-    public override SdkLanguage SupportedLanguage => SdkLanguage.Java;
-
     private const string CustomizationDirName = "customization";
 
     public override Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath)

@@ -5,16 +5,15 @@ namespace Azure.Sdk.Tools.Cli.Services;
 
 public class LanguageSpecificResolver(IServiceProvider _serviceProvider, IGitHelper _gitHelper, IPowershellHelper _powershellHelper, ILogger<LanguageSpecificResolver> _logger) : ILanguageSpecificResolver
 {
-    public async Task<TService?> Resolve<TService>(string packagePath, CancellationToken ct = default) where TService : ILanguageSpecificService
+    public async Task<TService?> Resolve<TService>(string packagePath, CancellationToken ct = default)
     {
-        var services = _serviceProvider.GetServices<TService>();
         var language = await DetectLanguageAsync(packagePath, ct);
         if (language == null)
         {
-            throw new InvalidOperationException($"Could not detect language for package at path: {packagePath}");
+            return default;
         }
 
-        return services.FirstOrDefault(s => s.SupportedLanguage == language);
+        return _serviceProvider.GetKeyedService<TService>(language);
     }
 
     private async Task<SdkLanguage?> DetectLanguageAsync(string packagePath, CancellationToken ct)

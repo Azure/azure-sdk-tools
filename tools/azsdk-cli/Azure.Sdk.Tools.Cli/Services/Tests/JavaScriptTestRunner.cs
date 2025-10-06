@@ -5,8 +5,6 @@ namespace Azure.Sdk.Tools.Cli.Services.Tests;
 
 public class JavaScriptTestRunner(IProcessHelper processHelper) : ITestRunner
 {
-    public SdkLanguage SupportedLanguage => SdkLanguage.JavaScript;
-
     public async Task RunAllTests(string packagePath, TestMode mode, CancellationToken ct = default)
     {
         var testMode = mode switch

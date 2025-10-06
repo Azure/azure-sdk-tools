@@ -13,6 +13,7 @@ using Azure.Sdk.Tools.Cli.Services.ClientUpdate;
 using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.Cli.Tools;
 using Azure.Sdk.Tools.Cli.Services.Tests;
+using Azure.Sdk.Tools.Cli.Models;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -35,17 +36,17 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             // Language Check Services (Composition-based)
             services.AddSingleton<ILanguageChecks, LanguageChecks>();
-            services.AddSingleton<ILanguageSpecificChecks, PythonLanguageSpecificChecks>();
-            services.AddSingleton<ILanguageSpecificChecks, JavaLanguageSpecificChecks>();
-            services.AddSingleton<ILanguageSpecificChecks, JavaScriptLanguageSpecificChecks>();
-            services.AddSingleton<ILanguageSpecificChecks, DotNetLanguageSpecificChecks>();
-            services.AddSingleton<ILanguageSpecificChecks, GoLanguageSpecificChecks>();
+            services.AddKeyedSingleton<ILanguageSpecificChecks, PythonLanguageSpecificChecks>(SdkLanguage.Python);
+            services.AddKeyedSingleton<ILanguageSpecificChecks, JavaLanguageSpecificChecks>(SdkLanguage.Java);
+            services.AddKeyedSingleton<ILanguageSpecificChecks, JavaScriptLanguageSpecificChecks>(SdkLanguage.JavaScript);
+            services.AddKeyedSingleton<ILanguageSpecificChecks, DotNetLanguageSpecificChecks>(SdkLanguage.DotNet);
+            services.AddKeyedSingleton<ILanguageSpecificChecks, GoLanguageSpecificChecks>(SdkLanguage.Go);
 
             // Client update language services
-            services.AddSingleton<IClientUpdateLanguageService, JavaUpdateLanguageService>();
+            services.AddKeyedSingleton<IClientUpdateLanguageService, JavaUpdateLanguageService>(SdkLanguage.Java);
             // Future: services.AddSingleton<IClientUpdateLanguageService, PythonClientUpdateLanguageService>(); etc.
 
-            services.AddSingleton<ITestRunner, JavaScriptTestRunner>();
+            services.AddKeyedSingleton<ITestRunner, JavaScriptTestRunner>(SdkLanguage.JavaScript);
 
             // Helper classes
             services.AddSingleton<ILogAnalysisHelper, LogAnalysisHelper>();

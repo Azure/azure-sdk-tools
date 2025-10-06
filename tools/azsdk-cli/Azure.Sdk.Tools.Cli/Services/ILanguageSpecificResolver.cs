@@ -13,5 +13,5 @@ public interface ILanguageSpecificResolver
     /// <param name="packagePath">The path to the package for which to resolve the service.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>The resolved service instance, or null if no matching service is found.</returns>
-    public Task<TService?> Resolve<TService>(string packagePath, CancellationToken ct = default) where TService : ILanguageSpecificService;
+    public Task<TService?> Resolve<TService>(string packagePath, CancellationToken ct = default);
 }

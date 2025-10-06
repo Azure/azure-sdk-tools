@@ -11,7 +11,7 @@ namespace Azure.Sdk.Tools.Cli.Services.ClientUpdate;
 /// Each concrete implementation should be stateless (or at least thread-safe for concurrent calls)
 /// and rely on the supplied <see cref="ClientUpdateSessionState"/> for per-run mutable data.
 /// </summary>
-public interface IClientUpdateLanguageService : ILanguageSpecificService
+public interface IClientUpdateLanguageService
 {
     /// <summary>
     /// Produces an API change list by diffing file contents between two generated source trees.

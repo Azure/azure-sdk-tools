@@ -26,8 +26,6 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
         _logger = logger;
     }
 
-    public SdkLanguage SupportedLanguage => SdkLanguage.JavaScript;
-
     public async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct)
     {
         // Implementation for analyzing dependencies in a JavaScript project

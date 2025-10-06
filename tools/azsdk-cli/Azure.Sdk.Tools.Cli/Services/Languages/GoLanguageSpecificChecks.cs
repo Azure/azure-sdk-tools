@@ -49,7 +49,7 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
         }
         catch (Exception ex)
         {
-            _logger.LogDebug($"Exception occurred while checking dependencies {ex}");
+            _logger.LogDebug(ex, "Exception occurred while checking dependencies");
             return false;
         }
     }
@@ -91,7 +91,7 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
             return new CLICheckResponse(1, "", $"{nameof(AnalyzeDependenciesAsync)} failed with an exception: {ex.Message}");
         }
     }
-    public async Task<CLICheckResponse> FormatCodeAsync(string packagePath, CancellationToken ct)
+    public async Task<CLICheckResponse> FormatCodeAsync(string packagePath, bool fix = false, CancellationToken ct = default)
     {
         try
         {
@@ -109,7 +109,7 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
         }
     }
 
-    public async Task<CLICheckResponse> LintCodeAsync(string packagePath, CancellationToken ct)
+    public async Task<CLICheckResponse> LintCodeAsync(string packagePath, bool fix = false, CancellationToken ct = default)
     {
         try
         {

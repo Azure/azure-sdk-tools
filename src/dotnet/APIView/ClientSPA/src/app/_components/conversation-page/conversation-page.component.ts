@@ -8,6 +8,7 @@ import { CommentItemModel, CommentType } from 'src/app/_models/commentItemModel'
 import { Review } from 'src/app/_models/review';
 import { APIRevision } from 'src/app/_models/revision';
 import { UserProfile } from 'src/app/_models/userProfile';
+import { CommentRelationHelper } from 'src/app/_helpers/comment-relation.helper';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 import { APIRevisionsService } from 'src/app/_services/revisions/revisions.service';
@@ -82,6 +83,7 @@ export class ConversationPageComponent {
       .pipe(takeUntil(this.destroy$)).subscribe({
         next: (comments: CommentItemModel[]) => {
           this.comments = comments;
+          CommentRelationHelper.calculateRelatedComments(this.comments);
         }
     });
   }

@@ -464,6 +464,28 @@ public class ExampleTool(
                 Instructions = instructions,
                 MaxToolCalls = 7,
                 Tools = [advanceTool],
+                ValidateResult = async result =>
+                {
+                    await Task.CompletedTask;
+                    
+                    // Check the result for correctness using fibonacci formula.
+                    var phi = (1 + Math.Sqrt(5)) / 2;
+                    var psi = (1 - Math.Sqrt(5)) / 2;
+                    var expected = (int)Math.Round((Math.Pow(phi, n) - Math.Pow(psi, n)) / Math.Sqrt(5));
+
+                    // Example validation
+                    if (result != expected)
+                    {
+                        // Failure reason will be provided to the LLM to self-correct
+                        return new()
+                        {
+                            Success = false,
+                            Reason = "Incorrect result, please try again"
+                        };
+                    }
+
+                    return new() { Success = true };
+                }
             };
 
             var resultValue = await microagentHostService.RunAgentToCompletion(agent, ct);

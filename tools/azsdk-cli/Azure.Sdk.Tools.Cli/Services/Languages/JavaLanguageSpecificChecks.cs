@@ -30,14 +30,4 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
 
     public string SupportedLanguage => "Java";
 
-    public async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct)
-    {
-        // Implementation for analyzing dependencies in a Java project
-        return await Task.FromResult(new CLICheckResponse());
-    }
-
-    public async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, CancellationToken cancellationToken = default)
-    {
-        return await Task.FromResult(new CLICheckResponse());
-    }
 }

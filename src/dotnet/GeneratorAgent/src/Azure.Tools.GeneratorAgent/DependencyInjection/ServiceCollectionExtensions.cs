@@ -4,6 +4,7 @@ using Azure.Identity;
 using Azure.Tools.GeneratorAgent.Agent;
 using Azure.Tools.GeneratorAgent.Authentication;
 using Azure.Tools.GeneratorAgent.Configuration;
+using Azure.Tools.GeneratorAgent.Tools;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -22,27 +23,21 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
             ArgumentNullException.ThrowIfNull(services);
             ArgumentNullException.ThrowIfNull(toolConfig);
 
-            // Register configuration
+            // Register configuration as singleton 
             services.AddSingleton(toolConfig);
-            services.AddSingleton(provider =>
+            
+            services.AddSingleton<AppSettings>(provider =>
             {
                 var logger = provider.GetRequiredService<ILogger<AppSettings>>();
-                return toolConfig.CreateAppSettings(logger);
+                var config = provider.GetRequiredService<ToolConfiguration>();
+                return config.CreateAppSettings(logger);
             });
 
-            // Register credential management services
-            services.AddCredentialServices();
-
-            // Register HttpClient management
-            services.AddHttpClientServices();
-
-            // Register Azure AI services
-            services.AddAzureAIServices();
-
-            // Register application services
-            services.AddApplicationServices();
-
-            return services;
+            return services
+                .AddCredentialServices()
+                .AddHttpClientServices()
+                .AddAzureAIServices()
+                .AddApplicationServices();
         }
 
         /// <summary>
@@ -114,47 +109,22 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
         private static IServiceCollection AddApplicationServices(this IServiceCollection services)
         {
             services.AddSingleton<ProcessExecutionService>();
-            services.AddSingleton<FixGeneratorService>();
-            services.AddSingleton<FixPromptService>();
+            services.AddSingleton<FormatPromptService>();
 
-            services.AddSingleton<AgentFileManager>();
-            services.AddSingleton<ErrorParsingService>();
+            services.AddScoped<ToolExecutor>();
+            services.AddScoped<ConversationManager>();
+            services.AddScoped<ToolBasedAgent>();
+            services.AddScoped<ErrorAnalysisService>();
 
-            services.AddSingleton<ErrorFixerAgent>();
+            services.AddSingleton<TypeSpecFileVersionManager>();
+            services.AddSingleton<TypeSpecPatchApplicator>();
 
-            services.AddSingleton<Func<ValidationContext, LocalLibraryGenerationService>>(provider =>
-            {
-                return validationContext => new LocalLibraryGenerationService(
-                    provider.GetRequiredService<AppSettings>(),
-                    provider.GetRequiredService<ILoggerFactory>().CreateLogger<LocalLibraryGenerationService>(),
-                    provider.GetRequiredService<ProcessExecutionService>(),
-                    validationContext);
-            });
+            services.AddScoped<LocalLibraryGenerationService>();
+            services.AddScoped<LibraryBuildService>();
 
-            services.AddSingleton<Func<ValidationContext, LibraryBuildService>>(provider =>
-            {
-                return validationContext => new LibraryBuildService(
-                    provider.GetRequiredService<ILogger<LibraryBuildService>>(),
-                    provider.GetRequiredService<ProcessExecutionService>(),
-                    validationContext.ValidatedSdkDir);
-            });
-
-            services.AddSingleton<Func<ValidationContext, TypeSpecFileService>>(provider =>
-            {
-                return validationContext => new TypeSpecFileService(
-                    provider.GetRequiredService<ILogger<TypeSpecFileService>>(),
-                    validationContext,
-                    provider.GetRequiredService<Func<ValidationContext, GitHubFileService>>());
-            });
-
-            services.AddSingleton<Func<ValidationContext, GitHubFileService>>(provider =>
-            {
-                return validationContext => new GitHubFileService(
-                    provider.GetRequiredService<AppSettings>(),
-                    provider.GetRequiredService<ILogger<GitHubFileService>>(),
-                    validationContext,
-                    provider.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(GitHubFileService)));
-            });
+            services.AddScoped<TypeSpecFileService>();
+            services.AddScoped<GitHubFileService>();
+            services.AddScoped<ITypeSpecToolHandler, TypeSpecToolHandler>();
 
             return services;
         }

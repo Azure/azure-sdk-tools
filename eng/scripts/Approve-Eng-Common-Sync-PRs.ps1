@@ -3,7 +3,9 @@
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
   [Parameter(Mandatory = $true)]
-  [string] $ToolsPRNumber
+  [string] $ToolsPRNumber,
+  [Parameter()]
+  [string] $PRFileOverride
 )
 
 $PSNativeCommandUseErrorActionPreference = $true
@@ -34,9 +36,15 @@ foreach ($check in $syncChecks) {
 
   $devOpsBuild = $check.link -replace "_build/results\?buildId=(\d+)", "_apis/build/builds/`$1/artifacts?artifactName=pullrequestdata"
   try {
-    $response = Invoke-RestMethod $devOpsBuild -Headers $headers
-    $artifactDownload = $response.resource.downloadUrl
-    $PrsCreatedContent = Invoke-RestMethod $artifactDownload.Replace("format=zip","format=file&subPath=/PRsCreated.txt") -headers $headers
+    if ($PRFileOverride) {
+        $PrsCreatedContent = Get-Content -Raw $PRFileOverride
+    }
+    else {
+        $response = Invoke-RestMethod $devOpsBuild -Headers $headers
+        $artifactDownload = $response.resource.downloadUrl
+        $PrsCreatedContent = Invoke-RestMethod $artifactDownload.Replace("format=zip","format=file&subPath=/PRsCreated.txt") -headers $headers
+    }
+
     if ($PrsCreatedContent) {
       $PrsCreatedContent = $PrsCreatedContent.Split("`n") | Where-Object { $_ }
       foreach ($line in $PrsCreatedContent) {

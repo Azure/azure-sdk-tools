@@ -16,6 +16,7 @@ Help me create a new tool using #new-tool.md as a reference
    * [Dependency Injection](#dependency-injection)
    * [Response Handling](#response-handling)
    * [Registration and Testing](#registration-and-testing)
+   * [Prompt Template System](#prompt-template-system)
    * [Required Tool Conventions](#required-tool-conventions)
    * [Common Patterns and Anti-patterns](#common-patterns-and-anti-patterns)
 
@@ -360,7 +361,6 @@ public DefaultCommandResponse EchoSuccess(string message)
 }
 ```
 
-
 ### Error Handling Patterns
 
 ```csharp
@@ -385,6 +385,79 @@ if (errors.Any())
     };
 }
 ```
+
+## Prompt Template System
+
+For tools using AI models (microagents, LLMs), use the standardized Prompt Template System instead of ad-hoc string formatting. This provides consistent structure, built-in safety guidelines, and Microsoft policy compliance.
+
+### Quick Start
+
+**Use built-in templates directly:**
+```csharp
+// Common scenarios - spelling, README, log analysis
+var prompt = PromptTemplates.GetMicroagentSpellingFixPrompt(cspellOutput, "Azure SDK for .NET");
+var prompt = PromptTemplates.GetReadMeGenerationPrompt(templateContent, serviceDocUrl, packagePath);
+var prompt = PromptTemplates.GetLogAnalysisPrompt(logContent, "Azure DevOps Pipeline", "json");
+```
+
+### Creating Custom Templates
+
+For specialized prompts, inherit from `BasePromptTemplate`:
+
+```csharp
+public class MyCustomTemplate : BasePromptTemplate
+{
+    public override string TemplateId => "my-custom-analysis";
+    public override string Version => "1.0.0";
+    public override string Description => "Analyzes custom data format";
+
+    /// <summary>
+    /// Builds a custom analysis prompt with strongly typed parameters.
+    /// </summary>
+    /// <param name="inputData">The data to analyze</param>
+    /// <param name="analysisType">Type of analysis to perform</param>
+    /// <returns>Complete structured prompt for custom analysis</returns>
+    public string BuildPrompt(string inputData, string analysisType = "general")
+    {
+        var taskInstructions = $"""
+        You are a data analysis assistant.
+        
+        Analyze the following data using {analysisType} analysis techniques:
+        
+        **Data to Analyze:**
+        ```
+        {inputData}
+        ```
+        """;
+
+        return BuildStructuredPrompt(taskInstructions);
+    }
+}
+
+// Use the template directly
+var template = new MyCustomTemplate();
+var prompt = template.BuildPrompt(analysisData, "statistical");
+
+// Use with microagent
+var microagent = new Microagent<AnalysisResult>
+{
+    Instructions = prompt,
+    Model = "gpt-4",
+    MaxToolCalls = 10
+};
+```
+
+All templates automatically include safety guidelines, Microsoft policy compliance, and structured output requirements.
+
+### Template System Guidelines
+
+**Best Practices:**
+
+* Use built-in templates when possible (spelling, README, log analysis)
+* Create custom templates for specialized domains
+* Always include safety guidelines and validation
+* Design templates for reusability across similar use cases
+* Use clear, descriptive parameter names for LLM consumption
 
 ## Registration and Testing
 

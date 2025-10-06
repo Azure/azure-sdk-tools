@@ -6,7 +6,8 @@ from src._apiview import (
     get_active_reviews,
     get_comments_in_date_range,
 )
-from src._models import APIViewComment
+from src._database_manager import get_database_manager
+from src._models import APIViewComment, CosmosMetricDocument
 from src._utils import get_prompt_path, to_epoch_seconds
 
 
@@ -109,7 +110,66 @@ def _calculate_good_vs_bad_comment_ratio(comments: list[APIViewComment]) -> floa
     return good_count / bad_count if bad_count > 0 else float("inf") if good_count > 0 else 0.0
 
 
-def get_metrics_report(start_date: str, end_date: str, environment: str, markdown: bool = False) -> Optional[dict]:
+def _generate_cosmosdb_documents(data: dict) -> list[dict]:
+    """Convert the report into CosmosDB metrics documents."""
+    documents = []
+    try:
+        start_date = to_epoch_seconds(data["start_date"])
+        end_date = to_epoch_seconds(data["end_date"], end_of_day=True)
+        metrics = data["metrics"]
+        for metric_name, metric_data in metrics.items():
+            if metric_name == "language_adoption":
+                # language_adoption is a dict of dicts, so we need to create a document for each language
+                for language, lang_data in metric_data.items():
+                    language = "csharp" if language == "c#" else language
+                    doc = {
+                        "id": f"{metric_name}_{language}-{start_date}-{end_date}",
+                        "pk": f"{metric_name}_{language}",
+                        "metric_name": f"{metric_name}_{language}",
+                        "dimensions": {"language": language},
+                        "period": {
+                            "anchor": start_date,
+                            "index": 0,  # triweek index since anchor (0 for the first window)
+                            "start_epoch_s": start_date,
+                            "end_epoch_s": end_date,
+                            "label": f"{start_date}_to_{end_date}",
+                        },
+                        "label": f"{start_date}_to_{end_date}",
+                        "values": lang_data,
+                        "updated_at_epoch_s": end_date,
+                    }
+                    # validate against Pydantic model
+                    cosmos_doc = CosmosMetricDocument(**doc)
+                    documents.append(cosmos_doc.model_dump())
+            else:
+                # For other metrics, create a single document
+                doc = {
+                    "id": f"{metric_name}-{start_date}-{end_date}",
+                    "pk": metric_name,
+                    "metric_name": metric_name,
+                    "dimensions": {},
+                    "period": {
+                        "anchor": start_date,
+                        "index": 0,  # triweek index since anchor (0 for the first window)
+                        "start_epoch_s": start_date,
+                        "end_epoch_s": end_date,
+                        "label": f"{start_date}_to_{end_date}",
+                    },
+                    "label": f"{start_date}_to_{end_date}",
+                    "values": {metric_name: metric_data},
+                    "updated_at_epoch_s": end_date,
+                }
+                # validate against Pydantic model
+                cosmos_doc = CosmosMetricDocument(**doc)
+                documents.append(cosmos_doc.model_dump())
+    except Exception as e:
+        print(f"Error generating CosmosDB documents: {e}")
+    return documents
+
+
+def get_metrics_report(
+    start_date: str, end_date: str, environment: str, markdown: bool = False, save: bool = False
+) -> Optional[dict]:
     """Generate a metrics report for a date range."""
     # validate that start_date and end_date are in YYYY-MM-DD format
     bad_dates = []
@@ -136,6 +196,19 @@ def get_metrics_report(start_date: str, end_date: str, environment: str, markdow
             "language_adoption": language_adoption,
         },
     }
+
+    if save:
+        documents = _generate_cosmosdb_documents(report)
+        if documents:
+            db_manager = get_database_manager()
+            cosmos_client = db_manager.get_container_client("metrics")
+            for doc in documents:
+                try:
+                    cosmos_client.upsert(doc["id"], data=doc)
+                except Exception as e:
+                    # FIXME: debug issues here...
+                    print(f"Error upserting document {doc['id']}: {e}")
+
     if markdown:
         prompt_path = get_prompt_path(folder="other", filename="summarize_metrics")
         inputs = {"data": report}

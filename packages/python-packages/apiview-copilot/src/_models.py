@@ -406,3 +406,25 @@ class ReviewResult(BaseModel):
         print(f"WARNING: Could not find match for code '{comment.bad_code}' at or near line {comment.line_no}")
         comment.comment = f"{comment.comment} (general comment)"
         return comment.line_no
+
+
+class CosmosMetricsPeriod(BaseModel):
+    """Represents the period information for CosmosDB metrics."""
+
+    start_epoch_s: int
+    end_epoch_s: int
+    label: str
+
+
+class CosmosMetricDocument(BaseModel):
+    """Pydantic model for CosmosDB metric document."""
+
+    id: str  # "overview|2025-09-13|2025-10-03"
+    pk: str  # "overview"  // partition by series, not time
+    metric_name: str  # "overview"
+    dimensions: Dict[str, str]  # {"language": "python"}
+    period: CosmosMetricsPeriod
+    label: str  # "2025-09-13_to_2025-10-03"    // or "2025-TW-0"
+    values: dict
+    updated_at_epoch_s: int  # 1759449600
+    source: str = "aggregator@1.0"

@@ -45,6 +45,8 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
             var result = await _processHelper.Run(new(
                     "pnpm",
                     ["run", "update-snippets"],
+                    "pnpm.cmd",
+                    ["run", "update-snippets"],
                     workingDirectory: packagePath
                 ),
                 cancellationToken
@@ -65,6 +67,79 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
         {
             _logger.LogError(ex, "Error updating snippets for JavaScript project at: {PackagePath}", packagePath);
             return new CLICheckResponse(1, "", $"Error updating snippets: {ex.Message}");
+        }
+    }
+
+    public async Task<CLICheckResponse> LintCodeAsync(string packagePath, bool fix = false, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var subcommand = fix ? "lint:fix" : "lint";
+            _logger.LogInformation($"Running 'pnpm run {subcommand}' in {packagePath}");
+
+            var result = await _processHelper.Run(new(
+                    "pnpm",
+                    ["run", subcommand],
+                    "pnpm.cmd",
+                    ["run", subcommand],
+                    workingDirectory: packagePath
+                ),
+                cancellationToken
+            );
+
+            if (result.ExitCode != 0)
+            {
+                _logger.LogError($"'pnpm run {subcommand}' failed with exit code {result.ExitCode}");
+
+                var nextSteps = fix ? "Review the linting errors and fix them manually." : "Run this tool in fix mode to automatically fix some of the errors.";
+
+                return new CLICheckResponse(result)
+                {
+                    NextSteps = [nextSteps]
+                };
+            }
+
+            return new CLICheckResponse(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error linting JavaScript project at: {PackagePath}", packagePath);
+            return new CLICheckResponse(1, "", $"Error linting code: {ex.Message}");
+        }
+    }
+
+    public async Task<CLICheckResponse> FormatCodeAsync(string packagePath, bool fix = false, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var subcommand = fix ? "format" : "check-format";
+            _logger.LogInformation($"Running 'pnpm run {subcommand}' in {packagePath}");
+            var result = await _processHelper.Run(new(
+                    "pnpm",
+                    ["run", subcommand],
+                    "pnpm.cmd",
+                    ["run", subcommand],
+                    workingDirectory: packagePath
+                ),
+                cancellationToken
+            );
+
+            if (result.ExitCode != 0)
+            {
+                _logger.LogError($"'pnpm run {subcommand}' failed with exit code {result.ExitCode}");
+                var nextSteps = fix ? "Review the error output and attempt to resolve the issue." : "Run this tool in fix mode to fix the formatting.";
+                return new CLICheckResponse(result)
+                {
+                    NextSteps = [nextSteps]
+                };
+            }
+
+            return new CLICheckResponse(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error formatting JavaScript project at: {PackagePath}", packagePath);
+            return new CLICheckResponse(1, "", $"Error formatting code: {ex.Message}");
         }
     }
 }

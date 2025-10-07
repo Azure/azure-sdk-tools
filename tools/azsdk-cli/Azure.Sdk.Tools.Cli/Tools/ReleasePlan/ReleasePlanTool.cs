@@ -301,9 +301,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                     return new ObjectCommandResponse
                     {
-                        Message = "Release plan created:",
+                        Message = "Release plan is being created",
                         Result = releasePlan,
-                        NextSteps = [$"Get release plan details using work item {releasePlan.WorkItemId}"]
+                        NextSteps = [$"Get release plan from `workItem`, work item value:{releasePlan.WorkItemId}."]
                     };
                 }
             }

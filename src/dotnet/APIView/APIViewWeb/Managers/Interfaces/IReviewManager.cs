@@ -21,7 +21,6 @@ namespace APIViewWeb.Managers
         public Task<ReviewListItemModel> GetOrCreateReview(IFormFile file, string filePath, string language, bool runAnalysis = false);
         public Task<ReviewListItemModel> CreateReviewAsync(string packageName, string language, bool isClosed = true, PackageType? packageType = null);
         public Task<ReviewListItemModel> UpdateReviewAsync(ReviewListItemModel review);
-        public Task<ReviewListItemModel> ClassifyTypeSpecPackageAsync(string typeSpecReviewId);
         public Task SoftDeleteReviewAsync(ClaimsPrincipal user, string id);
         public Task ToggleReviewIsClosedAsync(ClaimsPrincipal user, string id);
         public Task<ReviewListItemModel> ToggleReviewApprovalAsync(ClaimsPrincipal user, string id, string revisionId, string notes="");

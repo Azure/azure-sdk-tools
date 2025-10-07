@@ -187,58 +187,7 @@ namespace APIViewWeb.LeanControllers
             return Ok();
         }
 
-        /// <summary>
-        /// Classify and update package type for a review
-        /// </summary>
-        /// <param name="reviewId">The review ID to classify</param>
-        /// <returns>The updated review model with classified package type</returns>
-        [HttpPost("{reviewId}/classifyPackage", Name = "ClassifyPackageType")]
-        public async Task<ActionResult<ReviewListItemModel>> ClassifyPackageTypeAsync(string reviewId)
-        {
-            try
-            {
-                var review = await _reviewManager.GetReviewAsync(User, reviewId);
-                if (review == null)
-                {
-                    return NotFound($"Review with ID {reviewId} not found");
-                }
 
-                // Only classify if PackageType is not already defined (null means not yet classified)
-                if (review.PackageType.HasValue)
-                {
-                    return Ok(review); // Already classified (including Unknown), return existing review
-                }
-
-                PackageType packageType;
-
-                // Special handling for TypeSpec (must come first since TypeSpec is not considered an SDK language)
-                if (review.Language == ApiViewConstants.TypeSpecLanguage)
-                {
-                    review = await _reviewManager.ClassifyTypeSpecPackageAsync(reviewId);
-                }
-                // Check if this is an SDK language
-                else if (LanguageHelper.IsSDKLanguage(review.Language))
-                {
-                    // Regular SDK language classification
-                    packageType = PackageHelper.ClassifyPackageType(review.PackageName, review.Language);
-                    review.PackageType = packageType;
-                    await _reviewManager.UpdateReviewAsync(review);
-                }
-                else
-                {
-                    // If not SDK language, set as Unknown and update database
-                    review.PackageType = PackageType.Unknown;
-                    await _reviewManager.UpdateReviewAsync(review);
-                }
-
-                return Ok(review);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error classifying package type for review {ReviewId}", reviewId);
-                return StatusCode(500, "Internal server error while classifying package type");
-            }
-        }
 
         ///<summary>
         ///Retrieve the Content (codeLines and Navigation) of a review

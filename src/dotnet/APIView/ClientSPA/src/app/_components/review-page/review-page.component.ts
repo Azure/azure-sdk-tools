@@ -290,29 +290,6 @@ export class ReviewPageComponent implements OnInit {
 
   updateReview(review: Review) {
     this.review = review;
-    this.checkAndClassifyPackageType(review);
-  }
-
-  checkAndClassifyPackageType(review: Review) {
-    // Check if PackageType is null, undefined, or Unknown
-    if (!review.packageType || review.packageType === PackageType.Unknown) {
-      this.reviewsService.classifyPackageType(review.id)
-        .pipe(takeUntil(this.destroy$)).subscribe({
-          next: (updatedReview: Review) => {
-            // Update the local review object with the classified type
-            if (this.review) {
-              this.review.packageType = updatedReview.packageType;
-            }
-          },
-          error: (error) => {
-            console.error('Failed to classify package type:', error);
-            // Set to Unknown on error
-            if (this.review) {
-              this.review.packageType = PackageType.Unknown;
-            }
-          }
-        });
-    }
   }
 
   loadPreferredApprovers(reviewId: string) {

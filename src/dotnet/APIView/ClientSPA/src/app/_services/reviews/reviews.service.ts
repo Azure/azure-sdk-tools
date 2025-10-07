@@ -69,9 +69,7 @@ export class ReviewsService {
     return this.http.get<Review>(this.baseUrl + `/${reviewId}`, { withCredentials: true });
   }
 
-  classifyPackageType(reviewId: string) : Observable<Review> {
-    return this.http.post<Review>(this.baseUrl + `/${reviewId}/classifyPackage`, {}, { withCredentials: true });
-  }
+
 
   getAllowedApprovers() : Observable<string[]> {
     return this.http.get<string[]>(this.baseUrl + `/allowedApprovers`, { withCredentials: true });

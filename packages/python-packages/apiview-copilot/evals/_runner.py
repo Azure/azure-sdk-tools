@@ -152,7 +152,7 @@ class EvalRunner:
                 print(f"  (Filtered to testcases: {[testcase for testcase in self.test_cases]})")
             
             result = evaluate(
-                data=str(filtered_file_path),  # evaluate() API expects string path
+                data=str(filtered_file_path),
                 evaluators={"metrics": evaluator},
                 evaluator_config={"metrics": evaluator.evaluator_config},
                 target=evaluator.target_function,

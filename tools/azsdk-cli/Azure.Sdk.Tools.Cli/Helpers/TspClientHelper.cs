@@ -55,17 +55,18 @@ public class TspClientHelper : ITspClientHelper
         };
     }
 
-    public async Task<TspToolResponse> UpdateGenerationAsync(string tspLocationPath, string outputDirectory, bool isCli, CancellationToken ct)
+    public async Task<TspToolResponse> UpdateGenerationAsync(string tspLocationPath, string outputDirectory, string commitSha, bool isCli, CancellationToken ct)
     {
-        logger.LogInformation("tsp-client update (tsp-location): {loc} -> {out}", tspLocationPath, outputDirectory);
+        logger.LogInformation("tsp-client update (tsp-location): {loc} -> {out}, commit: {commit}", tspLocationPath, outputDirectory, commitSha);
         if (!File.Exists(tspLocationPath))
         {
             return new TspToolResponse { ResponseError = $"tsp-location.yaml not found at path: {tspLocationPath}" };
         }
         var workingDir = Path.GetDirectoryName(Path.GetFullPath(tspLocationPath))!;
+        var args = new List<string> { "tsp-client", "update", "--commit", commitSha };
         var npxOptions = new NpxOptions(
             "@azure-tools/typespec-client-generator-cli",
-            ["tsp-client", "update"],
+            args.ToArray(),
             logOutputStream: true,
             workingDirectory: workingDir
         );

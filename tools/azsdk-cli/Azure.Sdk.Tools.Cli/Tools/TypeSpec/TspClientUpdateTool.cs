@@ -25,7 +25,7 @@ public class TspClientUpdateTool(
         Description = "SHA of the commit to apply update changes for",
         Arity = ArgumentArity.ExactlyOne
     };
-        
+
     private const string NO_CUSTOMIZATIONS_FOUND_NEXT_STEPS =
         "No customizations found. Code regeneration completed successfully.\n" +
         "Next steps:\n" +
@@ -51,7 +51,7 @@ public class TspClientUpdateTool(
             updateCommitSha, SharedOptions.PackagePath,
        };
 
-     public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
+    public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
         var spec = parseResult.GetValue(updateCommitSha);
         var packagePath = parseResult.GetValue(SharedOptions.PackagePath);

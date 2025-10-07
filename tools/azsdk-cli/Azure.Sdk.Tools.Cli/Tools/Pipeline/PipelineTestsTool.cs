@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.ComponentModel;
 using Azure.Core;
 using Microsoft.TeamFoundation.Build.WebApi;
@@ -26,13 +26,17 @@ public class PipelineTestsTool(
 
     private readonly Argument<int> buildIdArg = new("Pipeline/Build ID");
 
-    protected override Command GetCommand() =>
-        new("test-results", "Get test results for a pipeline run") { buildIdArg };
+    protected override Command GetCommand()
+    {
+        var command = new Command("test-results", "Get test results for a pipeline run");
+        command.Arguments.Add(buildIdArg);
+        return command;
+    }
 
-    public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+    public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
         Initialize();
-        var buildId = ctx.ParseResult.GetValueForArgument(buildIdArg);
+        var buildId = parseResult.GetValue(buildIdArg);
 
         logger.LogInformation("Getting test results for pipeline {buildId}...", buildId);
         return await GetPipelineLlmArtifacts(buildId);

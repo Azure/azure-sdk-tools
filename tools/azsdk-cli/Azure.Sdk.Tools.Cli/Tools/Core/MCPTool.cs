@@ -11,7 +11,7 @@ public abstract class MCPTool : MCPToolBase
     public override List<Command> GetCommandInstances()
     {
         var command = GetCommand();
-        command.SetHandler(async ctx => await InstrumentedCommandHandler(command, ctx));
+        command.SetAction((parseResult, cancellationToken) => InstrumentedCommandHandler(command, parseResult, cancellationToken));
         return [command];
     }
 }

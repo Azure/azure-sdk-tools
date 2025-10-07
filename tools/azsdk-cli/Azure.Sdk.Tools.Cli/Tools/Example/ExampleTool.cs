@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.ComponentModel;
 using Azure.AI.OpenAI;
 using ModelContextProtocol.Server;
@@ -45,70 +45,105 @@ public class ExampleTool(
     ];
 
     // CLI Options and Arguments
-    private readonly Argument<string> aiInputArg = new(
-        name: "chat-prompt",
-        description: "Chat prompt surrounded with quotes"
-    )
-    { Arity = ArgumentArity.ExactlyOne };
-
-    private readonly Argument<string> packageArgument = new(
-        name: "package",
-        description: "Package name"
-    )
-    { Arity = ArgumentArity.ExactlyOne };
-
-    private readonly Argument<string> errorInputArg = new(
-        name: "error-input",
-        description: "Error type to simulate, can be argument, timeout, notfound, or any user input"
-    )
-    { Arity = ArgumentArity.ExactlyOne };
-
-    private readonly Argument<string> processSleepArg = new(
-        name: "sleep",
-        description: "How many seconds to sleep"
-    )
-    { Arity = ArgumentArity.ExactlyOne };
-
-    private readonly Argument<string> powershellMessageArg = new(
-        name: "message",
-        description: "Message to pass to the PowerShell script via parameter")
-    { Arity = ArgumentArity.ExactlyOne };
-
-    private readonly Option<int> fibonacciIndexOption = new(
-        name: "--fibonacci",
-        description: "Index (0-based) of Fibonacci number to compute using micro-agent")
-    { IsRequired = true };
-
-    private readonly Option<string> tenantOption = new(["--tenant", "-t"], "Tenant ID");
-    private readonly Option<string> languageOption = new(["--language", "-l"], "Programming language of the repository");
-    private readonly Option<bool> forceFailureOption = new(["--force-failure", "-f"], () => false, "Force an error for demonstration");
-
-    protected override List<Command> GetCommands() =>
-    [
-        new(AzureSubCommand, "Demonstrate Azure service integration") { tenantOption },
-        new(DevOpsSubCommand, "Demonstrate DevOps service integration") { packageArgument, languageOption },
-        new(GitHubSubCommand, "Demonstrate GitHub service integration"),
-        new(AISubCommand, "Demonstrate AI service integration") { aiInputArg },
-        new(ErrorSubCommand, "Demonstrate error handling patterns") { errorInputArg, forceFailureOption },
-        new(ProcessSubCommand, "Demonstrate spawning an external process (echo)") { processSleepArg },
-        new(PowershellSubCommand, "Demonstrate PowerShell helper running a temp script with a parameter") { powershellMessageArg },
-        new(MicroagentSubCommand, "Demonstrate micro-agent looping tool calls to compute Fibonacci") { fibonacciIndexOption }
-    ];
-
-    public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+    private readonly Argument<string> aiInputArg = new("chat-prompt")
     {
-        var commandName = ctx.ParseResult.CommandResult.Command.Name;
+        Description = "Chat prompt surrounded with quotes",
+        Arity = ArgumentArity.ExactlyOne
+    };
+
+    private readonly Argument<string> packageArgument = new("package")
+    {
+        Description = "Package name",
+        Arity = ArgumentArity.ExactlyOne
+    };
+
+    private readonly Argument<string> errorInputArg = new("error-input")
+    {
+        Description = "Error type to simulate, can be argument, timeout, notfound, or any user input",
+        Arity = ArgumentArity.ExactlyOne
+    };
+
+    private readonly Argument<string> processSleepArg = new("sleep")
+    {
+        Description = "How many seconds to sleep",
+        Arity = ArgumentArity.ExactlyOne
+    };
+
+    private readonly Argument<string> powershellMessageArg = new("message")
+    {
+        Description = "Message to pass to the PowerShell script via parameter",
+        Arity = ArgumentArity.ExactlyOne
+    };
+
+    private readonly Option<int> fibonacciIndexOption = new("--fibonacci")
+    {
+        Description = "Index (0-based) of Fibonacci number to compute using micro-agent",
+        Required = true,
+    };
+
+    private readonly Option<string> tenantOption = new("--tenant", "-t")
+    {
+        Description = "Tenant ID",
+        Required = false,
+    };
+
+    private readonly Option<string> languageOption = new("--language", "-l")
+    {
+        Description = "Programming language of the repository",
+        Required = false,
+    };
+
+    private readonly Option<bool> forceFailureOption = new("--force-failure", "-f")
+    {
+        Description = "Force an error for demonstration",
+        Required = false,
+        DefaultValueFactory = _ => false,
+    };
+
+    protected override List<Command> GetCommands()
+    {
+        var azureCommand = new Command(AzureSubCommand, "Demonstrate Azure service integration");
+        azureCommand.Options.Add(tenantOption);
+
+        var devOpsCommand = new Command(DevOpsSubCommand, "Demonstrate DevOps service integration");
+        devOpsCommand.Arguments.Add(packageArgument);
+        devOpsCommand.Options.Add(languageOption);
+
+        var gitHubCommand = new Command(GitHubSubCommand, "Demonstrate GitHub service integration");
+
+        var aiCommand = new Command(AISubCommand, "Demonstrate AI service integration");
+        aiCommand.Arguments.Add(aiInputArg);
+
+        var errorCommand = new Command(ErrorSubCommand, "Demonstrate error handling patterns");
+        errorCommand.Arguments.Add(errorInputArg);
+        errorCommand.Options.Add(forceFailureOption);
+
+        var processCommand = new Command(ProcessSubCommand, "Demonstrate spawning an external process (echo)");
+        processCommand.Arguments.Add(processSleepArg);
+
+        var powershellCommand = new Command(PowershellSubCommand, "Demonstrate PowerShell helper running a temp script with a parameter");
+        powershellCommand.Arguments.Add(powershellMessageArg);
+
+        var microagentCommand = new Command(MicroagentSubCommand, "Demonstrate micro-agent looping tool calls to compute Fibonacci");
+        microagentCommand.Options.Add(fibonacciIndexOption);
+
+        return [azureCommand, devOpsCommand, gitHubCommand, aiCommand, errorCommand, processCommand, powershellCommand, microagentCommand];
+    }
+
+    public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
+    {
+        var commandName = parseResult.CommandResult.Command.Name;
 
         CommandResponse result = commandName switch
         {
-            AzureSubCommand => await DemonstrateAzureService(ctx.ParseResult.GetValueForOption(tenantOption), ct),
-            DevOpsSubCommand => await DemonstrateDevOpsService(ctx.ParseResult.GetValueForArgument(packageArgument), ctx.ParseResult.GetValueForOption(languageOption), ct),
+            AzureSubCommand => await DemonstrateAzureService(parseResult.GetValue(tenantOption), ct),
+            DevOpsSubCommand => await DemonstrateDevOpsService(parseResult.GetValue(packageArgument), parseResult.GetValue(languageOption), ct),
             GitHubSubCommand => await DemonstrateGitHubService(ct),
-            AISubCommand => await DemonstrateAIService(ctx.ParseResult.GetValueForArgument(aiInputArg), ct),
-            ErrorSubCommand => await DemonstrateErrorHandling(ctx.ParseResult.GetValueForArgument(errorInputArg), ctx.ParseResult.GetValueForOption(forceFailureOption), ct),
-            ProcessSubCommand => await DemonstrateProcessExecution(ctx.ParseResult.GetValueForArgument(processSleepArg), ct),
-            PowershellSubCommand => await DemonstratePowershellExecution(ctx.ParseResult.GetValueForArgument(powershellMessageArg), ct),
-            MicroagentSubCommand => await DemonstrateMicroagentFibonacci(ctx.ParseResult.GetValueForOption(fibonacciIndexOption), ct),
+            AISubCommand => await DemonstrateAIService(parseResult.GetValue(aiInputArg), ct),
+            ErrorSubCommand => await DemonstrateErrorHandling(parseResult.GetValue(errorInputArg), parseResult.GetValue(forceFailureOption), ct),
+            ProcessSubCommand => await DemonstrateProcessExecution(parseResult.GetValue(processSleepArg), ct),
+            PowershellSubCommand => await DemonstratePowershellExecution(parseResult.GetValue(powershellMessageArg), ct),
+            MicroagentSubCommand => await DemonstrateMicroagentFibonacci(parseResult.GetValue(fibonacciIndexOption), ct),
             _ => new ExampleServiceResponse { ResponseError = $"Unknown command: {commandName}" }
         };
 

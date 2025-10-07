@@ -1,5 +1,5 @@
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.ComponentModel;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Models;
@@ -12,19 +12,40 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     public class SdkReleaseTool(IDevOpsService devopsService, ILogger<SdkReleaseTool> logger, ILogger<ReleaseReadinessTool> releaseReadinessLogger) : MCPTool
     {
         private readonly string commandName = "sdk-release";
-        private readonly Option<string> packageNameOpt = new(["--package"], "Package name") { IsRequired = true };
-        private readonly Option<string> languageOpt = new(["--language"], "Language of the package") { IsRequired = true };
-        private readonly Option<string> branchOpt = new(["--branch"], () => "main", "Branch to release the package from") { IsRequired = false };
+        private readonly Option<string> packageNameOpt = new("--package")
+        {
+            Description = "Package name",
+            Required = true,
+        };
+
+        private readonly Option<string> languageOpt = new("--language")
+        {
+            Description = "Language of the package",
+            Required = true,
+        };
+
+        private readonly Option<string> branchOpt = new("--branch")
+        {
+            Description = "Branch to release the package from",
+            Required = false,
+            DefaultValueFactory = _ => "main",
+        };
         public static readonly string[] ValidLanguages = [".NET", "Go", "Java", "JavaScript", "Python"];
 
-        protected override Command GetCommand() =>
-            new(commandName, "Run the release pipeline for the package") { packageNameOpt, languageOpt, branchOpt };
-
-        public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+        protected override Command GetCommand()
         {
-            var packageName = ctx.ParseResult.GetValueForOption(packageNameOpt);
-            var language = ctx.ParseResult.GetValueForOption(languageOpt);
-            var branch = ctx.ParseResult.GetValueForOption(branchOpt);
+            var command = new Command(commandName, "Run the release pipeline for the package");
+            command.Options.Add(packageNameOpt);
+            command.Options.Add(languageOpt);
+            command.Options.Add(branchOpt);
+            return command;
+        }
+
+        public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
+        {
+            var packageName = parseResult.GetValue(packageNameOpt);
+            var language = parseResult.GetValue(languageOpt);
+            var branch = parseResult.GetValue(branchOpt);
             return await ReleasePackageAsync(packageName, language, branch);
         }
 

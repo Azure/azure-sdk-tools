@@ -1,5 +1,5 @@
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.ComponentModel;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Commands;
@@ -26,17 +26,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         protected override Command GetCommand()
         {
             var command = new Command(BuildSdkCommandName, "Builds SDK source code for a specified language and project.");
-            command.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
-            command.AddOption(SharedOptions.PackagePath);
+            command.Options.Add(SharedOptions.PackagePath);
 
             return command;
         }
 
-        public async override Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+        public async override Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
-            var command = ctx.ParseResult.CommandResult.Command.Name;
-            var commandParser = ctx.ParseResult;
-            var packagePath = commandParser.GetValueForOption(SharedOptions.PackagePath);
+            var packagePath = parseResult.GetValue(SharedOptions.PackagePath);
             return await BuildSdkAsync(packagePath, ct);
         }
 

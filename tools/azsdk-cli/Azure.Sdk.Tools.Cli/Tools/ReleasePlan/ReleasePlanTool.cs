@@ -171,7 +171,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
         }
 
-        private async Task ValidateCreateReleasePlanInputAsync(string typeSpecProjectPath, string serviceTreeId, string productTreeId, string specPullRequestUrl, string sdkReleaseType, string specApiVersion)
+        private void ValidateCreateReleasePlanInputAsync(string typeSpecProjectPath, string serviceTreeId, string productTreeId, string specPullRequestUrl, string sdkReleaseType, string specApiVersion)
         {
             ValidatePullRequestUrl(specPullRequestUrl);            
 
@@ -222,7 +222,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             try
             {
                 sdkReleaseType = sdkReleaseType?.ToLower() ?? "";
-                await ValidateCreateReleasePlanInputAsync(typeSpecProjectPath, serviceTreeId, productTreeId, specPullRequestUrl, sdkReleaseType, specApiVersion);
+                ValidateCreateReleasePlanInputAsync(typeSpecProjectPath, serviceTreeId, productTreeId, specPullRequestUrl, sdkReleaseType, specApiVersion);
 
                 // Check for existing release plan for the given pull request URL.
                 logger.LogInformation("Checking for existing release plan for pull request URL: {specPullRequestUrl}", specPullRequestUrl);

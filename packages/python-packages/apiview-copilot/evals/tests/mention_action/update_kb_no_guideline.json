@@ -1,12 +1,12 @@
 {
-  "testcase": "mention_action_update_kb_case",
+  "testcase": "mention_action_update_kb_no_guideline",
   "language": "python",
-  "package_name": "azure.widget",
+  "package_name": "azure.widgets",
   "code": "class WidgetObject:",
   "other_comments": [
     {
       "CreatedBy": "azure-sdk",
-      "CommentText": "This name is unnecessarily verbose.\n\nSuggestion: `Widget`.\n\n**GUIDELINES**\n\n'https://azure.github.io/azure-sdk/python_design.html#naming-conventions'.",
+      "CommentText": "This name is unnecessarily verbose.\n\nSuggestion: `Widget`.",
       "Downvotes": ["tjprescott"],
       "CreatedOn": "2025-03-17T17:48:25.920445-04:00"
     },

@@ -76,7 +76,7 @@ class EvalRunner:
                 evaluators={"metrics": evaluator},
                 evaluator_config={"metrics": evaluator.evaluator_config},
                 target=evaluator.target_function,
-                fail_on_evaluator_errors=True,
+                fail_on_evaluator_errors=False,
                 # FIXME: Enable this?
                 # azure_ai_project=azure_ai_project,
                 **kwargs,

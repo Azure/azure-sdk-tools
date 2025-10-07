@@ -42,6 +42,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 subCommand.AddOption(SharedOptions.PackagePath);
                 subCommand.AddOption(fixOption);
 
+                // Set handler for each subcommand - this is crucial!
+                subCommand.SetHandler(async ctx => await InstrumentedCommandHandler(subCommand, ctx));
+
                 parentCommand.AddCommand(subCommand);
             }
 
@@ -52,7 +55,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
         {
             // Get the command name which corresponds to the check type
-            var commandName = ctx.ParseResult.CommandResult.Command.Name;
+            var command = ctx.ParseResult.CommandResult.Command;
+            var commandName = command.Name;
             var packagePath = ctx.ParseResult.GetValueForOption(SharedOptions.PackagePath);
             var fixCheckErrors = ctx.ParseResult.GetValueForOption(fixOption);
 
@@ -62,15 +66,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 return await RunPackageCheck(packagePath, PackageCheckType.All, fixCheckErrors, ct);
             }
 
-            // Parse the command name back to enum for subcommands
-            if (Enum.TryParse<PackageCheckType>(commandName, true, out var checkType))
+            // Check if this is a subcommand by checking if its parent is the run-checks command
+            if (command.Parents.Any(p => p.Name == RunChecksCommandName))
             {
-                return await RunPackageCheck(packagePath, checkType, fixCheckErrors, ct);
+                // Parse the subcommand name back to enum
+                if (Enum.TryParse<PackageCheckType>(commandName, true, out var checkType))
+                {
+                    return await RunPackageCheck(packagePath, checkType, fixCheckErrors, ct);
+                }
             }
-            else
-            {
-                throw new ArgumentException($"Unknown command: {commandName}");
-            }
+
+            throw new ArgumentException($"Unknown command: {commandName}");
         }
 
         [McpServerTool(Name = "azsdk_package_run_check"), Description("Run validation checks for SDK packages. Provide package path, check type (All, Changelog, Dependency, Readme, Cspell, Snippets), and whether to fix errors.")]

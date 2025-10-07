@@ -238,16 +238,14 @@ namespace APIViewWeb.Managers
         /// <param name="packageName"></param>
         /// <param name="language"></param>
         /// <param name="isClosed"></param>
+        /// <param name="packageType">Optional package type. If not provided, will be automatically classified.</param>
         /// <returns></returns>
-        public async Task<ReviewListItemModel> CreateReviewAsync(string packageName, string language, bool isClosed=true)
+        public async Task<ReviewListItemModel> CreateReviewAsync(string packageName, string language, bool isClosed = true, PackageType? packageType = null)
         {
             if (string.IsNullOrEmpty(packageName) || string.IsNullOrEmpty(language)) 
             {
                 throw new ArgumentException("Package Name and Language are required");
             }
-
-            // Classify package type using the PackageHelper
-            var packageType = PackageHelper.ClassifyPackageType(packageName, language);
 
             ReviewListItemModel review = new ReviewListItemModel()
             {

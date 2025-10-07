@@ -6,6 +6,7 @@ using Azure.Sdk.Tools.Cli.Prompts.Templates;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Microagents.Tools;
 using System.ComponentModel;
+using System.Text.Json;
 
 namespace Azure.Sdk.Tools.Cli.Services;
 
@@ -372,6 +373,30 @@ public class LanguageChecks : ILanguageChecks
 
     public virtual string GetSDKPackagePath(string repo, string packagePath)
     {
+        // For JavaScript packages, read the package name from package.json
+        var packageJsonPath = Path.Combine(packagePath, "package.json");
+        if (File.Exists(packageJsonPath))
+        {
+            try
+            {
+                var packageJsonContent = File.ReadAllText(packageJsonPath);
+                using var document = JsonDocument.Parse(packageJsonContent);
+                if (document.RootElement.TryGetProperty("name", out var nameProperty))
+                {
+                    var packageName = nameProperty.GetString();
+                    if (!string.IsNullOrEmpty(packageName))
+                    {
+                        return packageName;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to parse package.json at {PackageJsonPath}. Falling back to directory name.", packageJsonPath);
+            }
+        }
+
+        // Fallback to directory name for other languages or if package.json reading fails
         return Path.GetFileName(packagePath);
     }
 

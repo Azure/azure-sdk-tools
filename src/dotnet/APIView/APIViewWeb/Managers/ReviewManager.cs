@@ -271,22 +271,6 @@ namespace APIViewWeb.Managers
         }
 
         /// <summary>
-        /// Update an existing review
-        /// </summary>
-        /// <param name="review">The review to update</param>
-        /// <returns></returns>
-        public async Task<ReviewListItemModel> UpdateReviewAsync(ReviewListItemModel review)
-        {
-            if (review == null)
-            {
-                throw new ArgumentNullException(nameof(review));
-            }
-
-            await _reviewsRepository.UpsertReviewAsync(review);
-            return review;
-        }
-
-        /// <summary>
         /// SoftDeleteReviewAsync
         /// </summary>
         /// <param name="user"></param>

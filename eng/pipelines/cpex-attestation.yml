@@ -34,3 +34,4 @@ jobs:
             -ReleasePlanWorkItemId "$(ReleasePlanWorkItemId)"
             -TriageWorkItemId "$(TriageWorkItemId)"
             -TargetServiceTreeId "$(TargetServiceTreeId)"
+            -AzureSDKEmailUri "$(AzureSDKEmailerSasURL)"

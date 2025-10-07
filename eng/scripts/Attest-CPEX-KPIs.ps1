@@ -6,8 +6,11 @@ Automates CPEX KPI attestation by updating work items and logging evidence to Ku
 This script processes triage and release plan work items to validate whether the product meets the required KPI criteria for their lifecycle stage.
 It adds attestation entries to a Kusto table and updates work item fields accordingly. It also sends email notifications and includes error handling for service interactions.
 
+.PARAMETER AzureSDKEmailUri
+The Uri of the app used to send email notifications
+
 .PARAMETER TableName
-The name of the Kusto table where attestation entries will be written. Default is "ProdKpiEvidenceStream".
+The name of the Kusto table where attestation entries will be written.
 
 .PARAMETER ReleasePlanWorkItemId
 Specifies a single release plan work item to process for KPI attestation. If omitted, all eligible items are considered.
@@ -19,8 +22,11 @@ Specifies a single triage work item to process for KPI attestation. If omitted, 
 Specifies the Serivice Tree Id of the product whose attestation status should be evaluated. Used to scope triage and release plan queries to a specific product. 
 #>
 param (
-    [Parameter(Mandatory = $false)]
-    [string] $TableName = "ProdKpiEvidenceStream",
+    [Parameter(Mandatory = $true)]
+    [string] $AzureSDKEmailUri, 
+
+    [Parameter(Mandatory = $true)]
+    [string] $TableName,
 
     [Parameter(Mandatory = $false)]
     [string] $ReleasePlanWorkItemId,
@@ -29,7 +35,7 @@ param (
     [string] $TriageWorkItemId,
 
     [Parameter(Mandatory = $false)]
-    [string] $TargetServiceTreeId = "407ed0da-e187-49c4-a65b-f23cc058265f"
+    [string] $TargetServiceTreeId
 )
 
 Set-StrictMode -Version 3
@@ -49,7 +55,7 @@ $KPI_ID_Data_Public_Preview = "ad70777b-a1f5-4d77-8926-5c466d7a214d"
 $KPI_ID_Mgmt_GA = "210c095f-b3a2-4cf4-a899-eaab4c3ed958"
 $KPI_ID_Data_GA = "da768dff-8f90-4999-ad3a-adcd790911f3"
 
-$KPI_ID_TO_TITLE = @{
+$KPI_ID_TO_TITLE = [ordered]@{
     $KPI_ID_Onboarding             = "Onboarding"
     $KPI_ID_Mgmt_Private_Preview   = "Management Plane - Private Preview API readiness"
     $KPI_ID_Data_Private_Preview   = "Data Plane - Private Preview API readiness"
@@ -61,7 +67,11 @@ $KPI_ID_TO_TITLE = @{
 
 $SERVICE_TREE_URL = "https://microsoftservicetree.com/products/"
 
-$successfulAttestations = @{}
+$successfulAttestations = [ordered]@{}
+foreach ($kpiId in $KPI_ID_TO_TITLE.Keys) {
+    $successfulAttestations[$kpiId] = @()
+}
+
 $failedAttestations = @()
 
 function InvokeKustoCommand($command) {
@@ -96,10 +106,6 @@ print
     InvokeKustoCommand $command
     Write-Host "Added attestation entry for product [$targetId], with status [$status] for KPI action id [$actionItemId]."
 
-    if (-not $successfulAttestations.ContainsKey($actionItemId)) {
-        $successfulAttestations[$actionItemId] = @()
-    }
-
     $successfulAttestations[$actionItemId] += @{
         productId = $targetId
         productName = $productName
@@ -109,9 +115,8 @@ print
 
 function SendEmailNotification($emailTo, $emailCC, $emailSubject, $emailBody) {
     try {
-        $emailerUri = $env:azure_sdk_emailer_uri
         $body = @{ EmailTo = $emailTo; EmailCC = $emailCC; Subject = $emailSubject; Body = $emailBody} | ConvertTo-Json -Depth 3
-        $response = Invoke-RestMethod -Uri $emailerUri -Method Post -Body $body -ContentType "application/json"
+        $response = Invoke-RestMethod -Uri $AzureSDKEmailUri -Method Post -Body $body -ContentType "application/json"
     } catch {
         Write-Error "Failed to send email."
         Write-Error "To: $emailTo"
@@ -123,22 +128,30 @@ function SendEmailNotification($emailTo, $emailCC, $emailSubject, $emailBody) {
 }
 
 function BuildSuccessEmailBody {
-    if ($successfulAttestations.Count -eq 0) {
-        return "No products were marked as Completed or Not Applicable for any KPI in this latest run."
-    }
-
     $body = "<h2>Successful CPEX KPI Attestations</h2>"
     foreach ($kpiId in $successfulAttestations.Keys) {
+        $title = $KPI_ID_TO_TITLE[$kpiId]
+        $body += "<h3> $title ($kpiId)</h3><ul>"
         if ($successfulAttestations[$kpiId].Count -ne 0) {
-            $title = $KPI_ID_TO_TITLE[$kpiId]
-            $body += "<h3> $title ($kpiId)</h3><ul>"
+            $body += "<table border='1' cellpadding='5' cellspacing='0'>"
+            $body += "<tr><th>Product Name</th><th>Product ID</th><th>Status</th><th>Service Tree Product Link</th></tr>"
+            
             foreach ($entry in $successfulAttestations[$kpiId]) {
                 $productName = $entry.productName
                 $productId = $entry.productId
                 $status = $entry.status
                 $link = "$SERVICE_TREE_URL$productId"
-                $body += "<li><strong>$productName</strong></li> (<a href=$link>$productId</a>): $status"
+                
+                $body += "<tr>"
+                $body += "<td><strong>$productName</strong></td>"
+                $body += "<td>$productId</td>"
+                $body += "<td>$status</td>"
+                $body += "<td><a href=$link>Link</a></td>"
+                $body += "</tr>"
             }
+            $body += "</table>"
+        } else {
+            $body += "No product received an attestation for this KPI."
         }
 
         $body += "</ul>"
@@ -153,18 +166,28 @@ function BuildFailureEmailBody {
     }
 
     $body = "The following errors occurred during the latest CPEX KPI attestation automated run: `n`n"
-    
+    $body += "<table border='1' cellpadding='5' cellspacing='0'>"
+    $body += "<tr><th>Product Name</th><th>Product ID</th><th>Service Tree Product Link</th><th>Affected KPI</th><th>Work Item ID</th><th>Error</th></tr>"
+
     foreach ($entry in $failedAttestations) {
         $productName = $entry.productName
         $productId = $entry.productId
         $link = "$SERVICE_TREE_URL$productId"
         $workItemId = $entry.workItemId
+        $affectedKpi = $entry.affectedKpi
         $failure = $entry.error
-        $body += "<li><strong>$productName</strong></li> (<a href=$link>$productId</a>)"
-        $body += "Work Item Id: $workItemId</ul>"
-        $body += "Error: $failure</ul>"
+
+        $body += "<tr>"
+        $body += "<td><strong>$productName</strong></td>"
+        $body += "<td>$productId</td>"
+        $body += "<td><a href=$link>Link</a></td>"
+        $body += "<td>$affectedKpi</td>"
+        $body += "<td>$workItemId</td>"
+        $body += "<td>$failure</td>"
+        $body += "</tr>"
     }
 
+    $body += "</table>"
     $body += "</ul>"
 
     return $body
@@ -238,6 +261,7 @@ foreach ($triage in $triages) {
             productId = $productServiceTreeId
             productName = $productName
             workItemId = $triage.id
+            affectedKpi = "Onboarding"
             error = $_.Exception.Message
         }
     }
@@ -305,6 +329,7 @@ foreach ($releasePlan in $releasePlans) {
             productId = $productServiceTreeId
             productName = $productName
             workItemId = $releasePlan.id
+            affectedKpi = $KPI_ID_TO_TITLE[$kpiId]
             error = $_.Exception.Message
         }
     }

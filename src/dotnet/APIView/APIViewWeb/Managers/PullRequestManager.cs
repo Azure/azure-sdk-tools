@@ -255,8 +255,8 @@ namespace APIViewWeb.Managers
             if (review == null)
             {
                 // Parse package type if provided, otherwise pass null for automatic classification
-                Helpers.PackageType? validPackageType = null;
-                if (!string.IsNullOrEmpty(packageType) && Enum.TryParse<Helpers.PackageType>(packageType, true, out var packageTypeEnum))
+                APIViewWeb.Models.PackageType? validPackageType = null;
+                if (!string.IsNullOrEmpty(packageType) && Enum.TryParse<APIViewWeb.Models.PackageType>(packageType, true, out var packageTypeEnum))
                 {
                     validPackageType = packageTypeEnum;
                 }

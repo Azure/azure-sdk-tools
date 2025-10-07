@@ -36,6 +36,9 @@ public class Program
         // it doesn't recognize.
         WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
+        // Force validation on startup of any lifetime issues with dependency injection
+        // service registrations (e.g. Singleton depending on Scoped or Transient).
+        // Equivalent to running with DOTNET_ENVIRONMENT=Development
         builder.Host.UseDefaultServiceProvider((context, options) =>
         {
             options.ValidateScopes = true;

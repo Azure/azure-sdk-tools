@@ -1,7 +1,6 @@
 name: filter-comment-metadata
 kind: prompt
-tests: ../tests/python/filter-comment-metadata.jsonl
-prompty: ../../prompts/api_review/filter_comment_with_metadata.prompty
+prompty: ../../../prompts/api_review/filter_comment_with_metadata.prompty
 evaluation_config:
   comparison_field: action
   display_name: Action

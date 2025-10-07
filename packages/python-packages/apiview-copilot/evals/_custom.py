@@ -164,7 +164,7 @@ class BaseEvaluator(ABC):
 class CustomAPIViewEvaluator(BaseEvaluator):
     """Evaluator for comparing expected and actual APIView comments."""
 
-    def __init__(self, workflow_config=None):
+    def __init__(self, config=None):
         settings = SettingsManager()
         # for best results, this should always be a different model from the one we are evaluating
         self._judge_model = "gpt-4.1"
@@ -320,7 +320,10 @@ class CustomAPIViewEvaluator(BaseEvaluator):
         return similarity
 
     def __call__(self, *, response: str, query: str, language: str, actual: str, testcase: str, context: str, **kwargs):
-        expected = json.loads(response)
+        if isinstance(response, str):
+            expected = json.loads(response)
+        else:
+            expected = response
         actual = json.loads(actual)
 
         # Filter out summary comments
@@ -370,11 +373,13 @@ class CustomAPIViewEvaluator(BaseEvaluator):
         self, processed_results: dict, tests_directory: str, test_file: str, guideline_ids: set = None
     ) -> None:
         """APIView-specific post-processing: baselines and coverage."""
-        self._establish_baseline(processed_results, tests_directory)
+        # TODO: Re-enable or remove as desired
+        # self._establish_baseline(processed_results, tests_directory)
 
-        # Only calculate coverage if all tests were run and we have guideline_ids
-        if test_file == "all" and guideline_ids is not None:
-            self._calculate_coverage(guideline_ids, tests_directory)
+        # # Only calculate coverage if all tests were run and we have guideline_ids
+        # if test_file == "all" and guideline_ids is not None:
+        #     self._calculate_coverage(guideline_ids, tests_directory)
+        pass
 
     def process_results(self, raw_results: list, guideline_ids: set) -> dict:
         """Process  evaluation results for APIView evaluator."""

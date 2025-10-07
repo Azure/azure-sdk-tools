@@ -171,16 +171,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
         }
 
-        private async Task ValidateCreateReleasePlanInputAsync(string typeSpecProjectPath, string serviceTreeId, string productTreeId, string specPullRequestUrl, string sdkReleaseType, string specApiVersion)
+        private void ValidateCreateReleasePlanInputAsync(string typeSpecProjectPath, string serviceTreeId, string productTreeId, string specPullRequestUrl, string sdkReleaseType, string specApiVersion)
         {
-            ValidatePullRequestUrl(specPullRequestUrl);
-            // Check for existing release plan for the given pull request URL.
-            logger.LogInformation("Checking for existing release plan for pull request URL: {specPullRequestUrl}", specPullRequestUrl);
-            var existingReleasePlan = await devOpsService.GetReleasePlanAsync(specPullRequestUrl);
-            if (existingReleasePlan != null && existingReleasePlan.WorkItemId > 0)
-            {
-                throw new Exception($"Release plan already exists for the pull request: {specPullRequestUrl}. Work item Id: {existingReleasePlan.WorkItemId}");
-            }
+            ValidatePullRequestUrl(specPullRequestUrl);            
 
             if (string.IsNullOrEmpty(typeSpecProjectPath))
             {
@@ -229,7 +222,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             try
             {
                 sdkReleaseType = sdkReleaseType?.ToLower() ?? "";
-                await ValidateCreateReleasePlanInputAsync(typeSpecProjectPath, serviceTreeId, productTreeId, specPullRequestUrl, sdkReleaseType, specApiVersion);
+                ValidateCreateReleasePlanInputAsync(typeSpecProjectPath, serviceTreeId, productTreeId, specPullRequestUrl, sdkReleaseType, specApiVersion);
+
+                // Check for existing release plan for the given pull request URL.
+                logger.LogInformation("Checking for existing release plan for pull request URL: {specPullRequestUrl}", specPullRequestUrl);
+                var existingReleasePlan = await devOpsService.GetReleasePlanAsync(specPullRequestUrl);
+                if (existingReleasePlan != null && existingReleasePlan.WorkItemId > 0)
+                {
+                    return new ObjectCommandResponse
+                    {
+                        Message = $"Release plan already exists for the pull request: {specPullRequestUrl}. Release plan link: {existingReleasePlan.ReleasePlanLink}",
+                        Result = existingReleasePlan
+                    };                    
+                }
 
                 // Check environment variable to determine if this should be a test release plan
                 var isAgentTesting = environmentHelper.GetBooleanVariable("AZSDKTOOLS_AGENT_TESTING", false);
@@ -270,8 +275,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     IsTestReleasePlan = isTestReleasePlan,
                     SDKReleaseType = sdkReleaseType,
                     IsCreatedByAgent = true,
-                    ReleasePlanSubmittedByEmail = userEmail,
-                    Status = "In Progress"
+                    ReleasePlanSubmittedByEmail = userEmail
                 };
                 var workItem = await devOpsService.CreateReleasePlanWorkItemAsync(releasePlan);
                 if (workItem == null)
@@ -297,8 +301,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                     return new ObjectCommandResponse
                     {
-                        Message = "Release plan created:",
-                        Result = releasePlan
+                        Message = "Release plan is being created",
+                        Result = releasePlan,
+                        NextSteps = [$"Get release plan from `workItem`, work item value: {releasePlan.WorkItemId}"]
                     };
                 }
             }

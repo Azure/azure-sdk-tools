@@ -134,7 +134,7 @@ namespace APIViewWeb.Managers
             string buildId, string artifactName, string originalFileName, string commitSha, string repoName,
             string packageName, int prNumber, string hostName, CreateAPIRevisionAPIResponse responseContent,
             string codeFileName = null, string baselineCodeFileName = null, string language = null,
-            string project = "internal")
+            string project = "internal", string packageType = null)
         {
             language = LanguageServiceHelpers.MapLanguageAlias(language: language);
             originalFileName = originalFileName ?? codeFileName;
@@ -182,7 +182,7 @@ namespace APIViewWeb.Managers
                 if (codeFile != null)
                 {
                     await CreateAPIRevisionIfRequired(codeFile: codeFile, originalFileName: originalFileName, memoryStream: memoryStream, pullRequestModel: pullRequestModel,
-                        baselineCodeFile: baseLineCodeFile, baseLineStream: baselineStream, baselineFileName: baselineCodeFileName, responseContent: responseContent);
+                        baselineCodeFile: baseLineCodeFile, baseLineStream: baselineStream, baselineFileName: baselineCodeFileName, responseContent: responseContent, packageType: packageType);
                 }
                 else
                 {
@@ -248,13 +248,20 @@ namespace APIViewWeb.Managers
         }
 
         private async Task CreateAPIRevisionIfRequired(CodeFile codeFile, string originalFileName, MemoryStream memoryStream,
-            PullRequestModel pullRequestModel, CodeFile baselineCodeFile, MemoryStream baseLineStream, string baselineFileName, CreateAPIRevisionAPIResponse responseContent)
+            PullRequestModel pullRequestModel, CodeFile baselineCodeFile, MemoryStream baseLineStream, string baselineFileName, CreateAPIRevisionAPIResponse responseContent, string packageType = null)
         {
             // fetch review for the package or create brand new review
             var review = await _reviewManager.GetReviewAsync(language: codeFile.Language, packageName: codeFile.PackageName);
             if (review == null)
             {
-                review = await _reviewManager.CreateReviewAsync(language: codeFile.Language, packageName: codeFile.PackageName, isClosed: false);
+                // Parse package type if provided, otherwise pass null for automatic classification
+                APIViewWeb.Helpers.PackageType? parsedPackageType = null;
+                if (!string.IsNullOrEmpty(packageType) && Enum.TryParse<APIViewWeb.Helpers.PackageType>(packageType, true, out var packageTypeEnum))
+                {
+                    parsedPackageType = packageTypeEnum;
+                }
+                
+                review = await _reviewManager.CreateReviewAsync(language: codeFile.Language, packageName: codeFile.PackageName, isClosed: false, packageType: parsedPackageType);
                 responseContent.ActionsTaken.Add($"No existing review with packageName: '{codeFile.PackageName}' and language: '{codeFile.Language}'.");
                 responseContent.ActionsTaken.Add($"Created a new Review with Id: '{review.Id}'.");
             }

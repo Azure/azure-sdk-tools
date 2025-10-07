@@ -3,7 +3,8 @@
 
 using System;
 using System.Linq;
-using System.Text.RegularExpressions;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace APIViewWeb.Helpers
 {
@@ -68,6 +69,29 @@ namespace APIViewWeb.Helpers
             return ApiViewConstants.AllSupportedLanguages.Contains(language);
         }
     }
+
+    /// <summary>
+    /// Represents the plane classification of a package
+    /// </summary>
+    [JsonConverter(typeof(StringEnumConverter))]
+    public enum PackageType
+    {
+        /// <summary>
+        /// Data plane package (client libraries for Azure services)
+        /// </summary>
+        Data,
+
+        /// <summary>
+        /// Management plane package (resource management libraries)
+        /// </summary>
+        Management,
+
+        /// <summary>
+        /// Cannot determine plane type from package name
+        /// </summary>
+        Unknown
+    }
+}
 
     /*
     /// <summary>

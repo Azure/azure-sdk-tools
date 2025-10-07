@@ -212,7 +212,7 @@ class EvalRunner:
             return file_path
         
         filtered_lines = []
-        found_testcase = False
+        found_testcases = set()
         
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
@@ -225,13 +225,14 @@ class EvalRunner:
                         data = json.loads(line)
                         if data.get('testcase') in self.test_cases:
                             filtered_lines.append(line)
-                            found_testcase = True
+                            found_testcases.add(data.get('testcase'))
                     except json.JSONDecodeError as e:
                         raise ValueError(f"Invalid JSON on line {line_num} in {file_path}: {e}")
-            
-            if not found_testcase:
-                raise ValueError(f"Testcase '{self.test_cases}' not found in {file_path}")
-                
+                    
+            unfound_testcases = set(self.test_cases) - found_testcases
+            if unfound_testcases:
+                raise ValueError(f"Testcases '{unfound_testcases}' not found in {file_path}")
+
             # Create temporary file with filtered data
             temp_file = tempfile.NamedTemporaryFile(
                 mode='w', 

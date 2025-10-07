@@ -35,7 +35,6 @@ export class Review {
     this.namespaceReviewStatus = 'NotStarted'
     this.changeHistory = []
     this.subscribers = []
-    // Don't set default PackageType - let it be undefined if not provided by backend
   }
 }
 

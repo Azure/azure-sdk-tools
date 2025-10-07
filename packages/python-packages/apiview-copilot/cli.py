@@ -168,14 +168,15 @@ def _local_review(
     reviewer.close()
 
 
-def run_test_case(language: str, test_file: str, num_runs: int = 3):
+def run_test_case(test_paths: list[str], num_runs: int = 1):
     """
-    Runs one or all eval test cases.
+    Runs the specified test case(s).
     """
     from evals._runner import EvalRunner
 
-    runner = EvalRunner(language=language, test_path=test_file, num_runs=num_runs)
-    runner.run()
+    runners = [EvalRunner(test_path=x, num_runs=num_runs) for x in test_paths]
+    for runner in runners:
+        runner.run()
 
 
 def deploy_flask_app():
@@ -1015,24 +1016,14 @@ class CliCommandsLoader(CLICommandsLoader):
             ac.argument(
                 "num_runs", type=int, options_list=["--num-runs", "-n"], help="Number of times to run the test case."
             )
-        with ArgumentsContext(self, "eval create") as ac:
-            ac.argument("test_case", type=str, help="The name of the test case")
             ac.argument(
-                "expected_path",
+                "test_paths",
                 type=str,
-                help="The full path to the expected JSON output from the AI reviewer.",
+                nargs="+",
+                options_list=["--test-paths", "-p"],
+                help="The full paths to the folder(s) containing the test files. Must have a `test-config.yaml` file.",
             )
-            ac.argument(
-                "test_file",
-                type=str,
-                options_list=["--test-file", "-f"],
-                help="The full path to the JSONL test file. Can be an existing test file, or will create a new one.",
-            )
-            ac.argument(
-                "overwrite",
-                action="store_true",
-                help="Overwrite the test case if it already exists.",
-            )
+
         with ArgumentsContext(self, "search") as ac:
             ac.argument(
                 "path",

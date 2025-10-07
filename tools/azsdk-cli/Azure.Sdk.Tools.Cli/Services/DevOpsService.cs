@@ -100,6 +100,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<PackageResponse> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "");
         public Task<Build> RunPipelineAsync(int pipelineDefinitionId, Dictionary<string, string> templateParams, string apiSpecBranchRef = "main");
         public Task<Dictionary<string, List<string>>> GetPipelineLlmArtifacts(string project, int buildId);
+        public Task<WorkItem> UpdateWorkItem(int workItemId, Dictionary<string, string> fields);
     }
 
     public partial class DevOpsService(ILogger<DevOpsService> logger, IDevOpsConnection connection) : IDevOpsService
@@ -277,6 +278,13 @@ namespace Azure.Sdk.Tools.Cli.Services
 
                 // Link API spec as child of release plan
                 await LinkWorkItemAsChildAsync(releasePlanWorkItemId, apiSpecWorkItem.Url);
+
+                // Update release plan status to in progress
+                releasePlanWorkItem = await UpdateWorkItem(releasePlanWorkItemId, new Dictionary<string, string>
+                {
+                    { "System.State", "In Progress" }
+                });
+
                 if (releasePlanWorkItem != null)
                 {
                     return releasePlanWorkItem;
@@ -1121,6 +1129,26 @@ namespace Azure.Sdk.Tools.Cli.Services
                 return await GetLlmArtifactsUnauthenticated(project, buildId);
             }
             return await GetLlmArtifactsAuthenticated(project, buildId);
+        }
+
+        public async Task<WorkItem> UpdateWorkItem(int workItemId, Dictionary<string, string> fields)
+        {
+            var jsonLinkDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument();
+            foreach(var item in fields)
+            {
+                logger.LogDebug("Updating field {field} to {value}", item.Key, item.Value);
+                jsonLinkDocument.Add(
+                    new JsonPatchOperation
+                    {
+                        Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                        Path = $"/fields/{item.Key}",
+                        Value = item.Value
+                    }
+                );
+            }
+            var workItem = await connection.GetWorkItemClient().UpdateWorkItemAsync(jsonLinkDocument, workItemId);
+            logger.LogDebug("Updated work item {workItemId}", workItem.Id);
+            return workItem;
         }
     }
 }

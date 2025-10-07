@@ -121,5 +121,19 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
         {
             return Task.FromResult(new Dictionary<string, List<string>>());
         }
+
+        Task<WorkItem> IDevOpsService.UpdateWorkItem(int workItemId, Dictionary<string, string> fields)
+        {
+            var workItem = new WorkItem
+            {
+                Id = 1,
+                Fields = new Dictionary<string, object>
+                {
+                    { "System.Title", "Updated work item" },
+                    { "System.State", "In Progress" }
+                }
+            };
+            return Task.FromResult(workItem);
+        }
     }
 }

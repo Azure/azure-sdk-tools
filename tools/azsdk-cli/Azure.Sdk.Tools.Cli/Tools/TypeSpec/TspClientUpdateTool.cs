@@ -110,7 +110,7 @@ public class TspClientUpdateTool(
             var tspLocationContent = await File.ReadAllTextAsync(tspLocationPath, ct);
             tspLocationContent = System.Text.RegularExpressions.Regex.Replace(
                 tspLocationContent,
-                @"commit:\s+[a-f0-9]+",
+                @"commit:\s+[a-fA-F0-9]+",
                 $"commit: {commitSha}");
             await File.WriteAllTextAsync(tspLocationPath, tspLocationContent, ct);
         }

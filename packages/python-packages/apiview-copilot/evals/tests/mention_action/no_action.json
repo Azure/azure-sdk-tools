@@ -17,7 +17,7 @@
     "CommentText": "@azure-sdk yes that's right!"
   },
   "response": {
-    "recommendation": "no_action",
+    "action": "no_action",
     "reasoning": "The architect is merely agreeing with the copilot's comment without providing any additional insights or corrections. Therefore, there is no new information to add to the Knowledge Base."
   }
 }

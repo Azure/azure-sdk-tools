@@ -31,12 +31,12 @@ namespace APIViewWeb.Models
     public enum PackageType
     {
         /// <summary>
-        /// Data plane package (client libraries for Azure services)
+        /// Data plane package
         /// </summary>
         Data,
 
         /// <summary>
-        /// Management plane package (resource management libraries)
+        /// Management plane package
         /// </summary>
         Management,
     }

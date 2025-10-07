@@ -277,7 +277,7 @@ export class ReviewPageComponent implements OnInit {
     this.reviewsService.getReview(reviewId)
       .pipe(takeUntil(this.destroy$)).subscribe({
         next: (review: Review) => {
-          this.updateReview(review);
+          this.review = review;
           this.updateLoadingStateBasedOnReviewDeletionStatus();
           this.updatePageTitle();
         },
@@ -286,10 +286,6 @@ export class ReviewPageComponent implements OnInit {
           this.loadFailedMessage = "Failed to load review. Please refresh the page or try again later.";
         }
       });
-  }
-
-  updateReview(review: Review) {
-    this.review = review;
   }
 
   loadPreferredApprovers(reviewId: string) {

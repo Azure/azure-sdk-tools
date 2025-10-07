@@ -191,10 +191,16 @@ namespace APIViewWeb.Controllers
                 // Update package type if provided from controller parameter
                 if (!string.IsNullOrEmpty(packageType) && Enum.TryParse<PackageType>(packageType, true, out var parsedPackageType))
                 {
-                    if (review.PackageType != parsedPackageType)
+                    if (!review.PackageType.HasValue)
                     {
+                        // If the current review has no packageType and packageType is provided, update it
                         review.PackageType = parsedPackageType;
                         review = await _reviewManager.UpdateReviewAsync(review);
+                    }
+                    else if (review.PackageType.Value != parsedPackageType)
+                    {
+                        // If review has a packageType that doesn't match the provided packageType
+                        throw new InvalidOperationException($"Package type conflict: Review has PackageType '{review.PackageType.Value}' but supplied PackageType is '{parsedPackageType}'. Package types cannot be changed once set.");
                     }
                 }
 

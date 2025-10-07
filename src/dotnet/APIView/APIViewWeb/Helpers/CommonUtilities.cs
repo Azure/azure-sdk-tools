@@ -85,11 +85,6 @@ namespace APIViewWeb.Helpers
         /// Management plane package (resource management libraries)
         /// </summary>
         Management,
-
-        /// <summary>
-        /// Cannot determine plane type from package name
-        /// </summary>
-        Unknown
     }
 }
 

@@ -255,13 +255,13 @@ namespace APIViewWeb.Managers
             if (review == null)
             {
                 // Parse package type if provided, otherwise pass null for automatic classification
-                APIViewWeb.Helpers.PackageType? parsedPackageType = null;
-                if (!string.IsNullOrEmpty(packageType) && Enum.TryParse<APIViewWeb.Helpers.PackageType>(packageType, true, out var packageTypeEnum))
+                Helpers.PackageType? validPackageType = null;
+                if (!string.IsNullOrEmpty(packageType) && Enum.TryParse<Helpers.PackageType>(packageType, true, out var packageTypeEnum))
                 {
-                    parsedPackageType = packageTypeEnum;
+                    validPackageType = packageTypeEnum;
                 }
-                
-                review = await _reviewManager.CreateReviewAsync(language: codeFile.Language, packageName: codeFile.PackageName, isClosed: false, packageType: parsedPackageType);
+
+                review = await _reviewManager.CreateReviewAsync(language: codeFile.Language, packageName: codeFile.PackageName, isClosed: false, packageType: validPackageType);
                 responseContent.ActionsTaken.Add($"No existing review with packageName: '{codeFile.PackageName}' and language: '{codeFile.Language}'.");
                 responseContent.ActionsTaken.Add($"Created a new Review with Id: '{review.Id}'.");
             }

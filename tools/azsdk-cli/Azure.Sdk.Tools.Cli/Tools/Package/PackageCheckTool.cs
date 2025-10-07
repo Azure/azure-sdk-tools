@@ -42,7 +42,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 subCommand.AddOption(SharedOptions.PackagePath);
                 subCommand.AddOption(fixOption);
 
-                // Set handler for each subcommand - this is crucial!
                 subCommand.SetHandler(async ctx => await InstrumentedCommandHandler(subCommand, ctx));
 
                 parentCommand.AddCommand(subCommand);

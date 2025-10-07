@@ -15,7 +15,6 @@
 - Create release plan tool failure
 - Use existing release plan instead of failing when a release plan exists for spec PR.
 
-
 ## 0.5.0 (2025-09-25)
 
 ### Features

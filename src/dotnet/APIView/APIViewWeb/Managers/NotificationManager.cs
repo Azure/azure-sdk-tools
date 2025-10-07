@@ -37,7 +37,7 @@ namespace APIViewWeb.Managers
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<NotificationManager> _logger;
 
-        private const string ENDPOINT_SETTING = "Endpoint";
+        private const string ENDPOINT_SETTING = "APIVIew-Host-Url";
 
         public NotificationManager(IConfiguration configuration,
             ICosmosReviewRepository reviewRepository, ICosmosAPIRevisionsRepository apiRevisionRepository,

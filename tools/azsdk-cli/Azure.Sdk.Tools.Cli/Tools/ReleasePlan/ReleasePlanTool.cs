@@ -303,7 +303,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     {
                         Message = "Release plan is being created",
                         Result = releasePlan,
-                        NextSteps = [$"Get release plan from `workItem`, work item value:{releasePlan.WorkItemId}."]
+                        NextSteps = [$"Get release plan from `workItem`, work item value: {releasePlan.WorkItemId}"]
                     };
                 }
             }

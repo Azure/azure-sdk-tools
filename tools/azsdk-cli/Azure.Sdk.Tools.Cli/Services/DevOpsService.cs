@@ -1134,7 +1134,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public async Task<WorkItem> UpdateWorkItem(int workItemId, Dictionary<string, string> fields)
         {
             var jsonLinkDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument();
-            foreach(var item in fields)
+            foreach (var item in fields)
             {
                 logger.LogDebug("Updating field {field} to {value}", item.Key, item.Value);
                 jsonLinkDocument.Add(

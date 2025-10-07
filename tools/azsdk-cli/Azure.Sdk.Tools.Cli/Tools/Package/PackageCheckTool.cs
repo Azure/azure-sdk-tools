@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.ComponentModel;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Commands;
@@ -24,41 +24,37 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
         private const string RunChecksCommandName = "run-checks";
 
-        private readonly Option<bool> fixOption = new(["--fix"], "Enable fix mode for supported checks (like spelling)") { IsRequired = false };
+        private readonly Option<bool> fixOption = new("--fix")
+        {
+            Description = "Enable fix mode for supported checks (like spelling)",
+            Required = false,
+        };
 
         protected override List<Command> GetCommands()
         {
-            var parentCommand = new Command(RunChecksCommandName, "Run validation checks for SDK packages");
             // Add the package path option to the parent command so it can be used without subcommands
-            parentCommand.AddOption(SharedOptions.PackagePath);
-            parentCommand.AddOption(fixOption);
-
-            var commands = new List<Command> { parentCommand };
+            Command parentCommand = new(RunChecksCommandName, "Run validation checks for SDK packages") { SharedOptions.PackagePath, fixOption };
 
             // Create sub-commands for each check type
             var checkTypeValues = Enum.GetValues<PackageCheckType>();
             foreach (var checkType in checkTypeValues)
             {
                 var checkName = checkType.ToString().ToLowerInvariant();
-                var subCommand = new Command(checkName, $"Run {checkName} validation check");
-                subCommand.AddOption(SharedOptions.PackagePath);
-                subCommand.AddOption(fixOption);
-
-                parentCommand.AddCommand(subCommand);
-                commands.Add(subCommand);
+                Command subCommand = new(checkName, $"Run {checkName} validation check") { SharedOptions.PackagePath, fixOption };
+                parentCommand.Subcommands.Add(subCommand);
             }
 
-            // Return all commands - parent and subcommands
-            return commands;
+            // Return all commands - parent and subcommands so the handlers get registered
+            return [parentCommand, .. parentCommand.Subcommands];
         }
 
-        public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+        public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
             // Get the command name which corresponds to the check type
-            var command = ctx.ParseResult.CommandResult.Command;
+            var command = parseResult.CommandResult.Command;
             var commandName = command.Name;
-            var packagePath = ctx.ParseResult.GetValueForOption(SharedOptions.PackagePath);
-            var fixCheckErrors = ctx.ParseResult.GetValueForOption(fixOption);
+            var packagePath = parseResult.GetValue(SharedOptions.PackagePath);
+            var fixCheckErrors = parseResult.GetValue(fixOption);
 
             // If this is the parent command (run-checks), default to All
             if (commandName == RunChecksCommandName)

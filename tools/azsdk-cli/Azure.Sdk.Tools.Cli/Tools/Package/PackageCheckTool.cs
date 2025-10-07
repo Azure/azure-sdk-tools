@@ -33,6 +33,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             parentCommand.AddOption(SharedOptions.PackagePath);
             parentCommand.AddOption(fixOption);
 
+            var commands = new List<Command> { parentCommand };
+
             // Create sub-commands for each check type
             var checkTypeValues = Enum.GetValues<PackageCheckType>();
             foreach (var checkType in checkTypeValues)
@@ -42,13 +44,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 subCommand.AddOption(SharedOptions.PackagePath);
                 subCommand.AddOption(fixOption);
 
-                subCommand.SetHandler(async ctx => await InstrumentedCommandHandler(subCommand, ctx));
-
                 parentCommand.AddCommand(subCommand);
+                commands.Add(subCommand);
             }
 
-            // Only return the parent command - subcommands are already added to it
-            return [parentCommand];
+            // Return all commands - parent and subcommands
+            return commands;
         }
 
         public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)

@@ -1,6 +1,9 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Services.Languages;
+
 namespace Azure.Sdk.Tools.Cli.SampleGeneration
 {
     /// <summary>
@@ -112,6 +115,31 @@ Language-specific instructions for Go:
         {
             var supportedLanguages = GetSupportedLanguages();
             return supportedLanguages.Contains(language.ToLowerInvariant());
+        }
+
+        /// <summary>
+        /// Creates a typechecker for the specified language.
+        /// </summary>
+        public static ILanguageTypechecker CreateTypechecker(string language, IDockerService dockerService, ILogger logger)
+        {
+            return language.ToLowerInvariant() switch
+            {
+                "typescript" => new TypeScriptTypechecker(dockerService, logger),
+                _ => throw new ArgumentException($"Language '{language}' sample verification is not yet implemented.", nameof(language))
+            };
+        }
+
+        public static string GetTypecheckingInstructions(string language)
+        {
+            return language.ToLowerInvariant() switch
+            {
+                "dotnet" => "Ensure proper using statements, namespace declarations, and type safety. Fix any compilation errors.",
+                "typescript" => "Fix import statements, type annotations, and ensure strict TypeScript compliance. Resolve any tsc errors.",
+                "python" => "Fix import statements, type hints, and ensure mypy and flake8 compliance. Resolve type and lint errors.",
+                "java" => "Fix import statements, class declarations, and ensure javac compilation. Resolve compilation errors.",
+                "go" => "Fix import statements, package declarations, and ensure go build and golint compliance. Resolve build and lint errors.",
+                _ => "Fix syntax and type errors according to language best practices."
+            };
         }
     }
 }

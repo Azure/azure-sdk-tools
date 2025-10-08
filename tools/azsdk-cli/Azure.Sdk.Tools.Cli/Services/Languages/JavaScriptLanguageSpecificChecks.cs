@@ -161,6 +161,6 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
         }
 
         // Fallback to directory name if package.json reading fails
-        return Path.GetFileName(packagePath) ?? string.Empty;
+        return Path.GetFileName(packagePath);
     }
 }

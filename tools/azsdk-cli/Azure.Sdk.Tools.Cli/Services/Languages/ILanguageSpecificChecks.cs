@@ -64,6 +64,6 @@ public interface ILanguageSpecificChecks
     string GetSDKPackagePath(string repo, string packagePath)
     {
         // Default implementation: use the directory name as the package path
-        return Path.GetFileName(packagePath) ?? string.Empty;
+        return Path.GetFileName(packagePath);
     }
 }

@@ -28,6 +28,7 @@
 
 - Create release plan tool failure
 - Use existing release plan instead of failing when a release plan exists for spec PR.
+- Added a language specific way to get package name for validation checks, to account for different language naming (JS uses package.json name)
 
 ## 0.5.0 (2025-09-25)
 

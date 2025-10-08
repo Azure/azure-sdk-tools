@@ -96,7 +96,7 @@ class EvalRunner:
             guideline_ids,
         )
 
-    def create_temporary_jsonl_file(self, directory: pathlib.Path) -> pathlib.Path:
+    def create_temporary_jsonl_file(self, path: pathlib.Path) -> pathlib.Path:
         """
         Collect all test files with the *.json extension in the given directory
         and store them as a single JSONL file in a temporary directory.
@@ -104,15 +104,23 @@ class EvalRunner:
         Each source JSON file is parsed and written as one compact JSON object per line.
         Returns the Path to the created JSONL file.
         """
-        if not directory.exists() or not directory.is_dir():
-            raise ValueError(f"Test directory not found: {directory}")
+        if not path.exists():
+            raise ValueError(f"Test path not found: {path}")
 
-        test_files = sorted(directory.glob("*.json"))
+        if path.is_file():
+            if path.suffix != '.json':
+                raise ValueError(f"File must have .json extension: {path}")
+            test_files = [path]
+            output_name = f"{path.stem}.jsonl"
+        else:
+            test_files = sorted(path.glob("*.json"))
+            output_name = f"{path.name}.jsonl"
+    
         if not test_files:
-            raise ValueError(f"No test files found in: {directory}")
+            raise ValueError(f"No test files found in: {path} or path is not a .json file")
 
         tmp_dir = pathlib.Path(tempfile.mkdtemp(prefix="evals_jsonl_"))
-        out_path = tmp_dir / f"{directory.name}.jsonl"
+        out_path = tmp_dir / output_name
 
         with out_path.open("w", encoding="utf-8") as out_f:
             for src in test_files:

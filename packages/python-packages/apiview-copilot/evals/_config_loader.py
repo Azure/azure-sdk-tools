@@ -93,13 +93,14 @@ def load_workflow_config(path: str | os.PathLike) -> WorkflowConfig:
     input_path = Path(path).resolve()
 
     # require a directory (we expect a folder containing test-config.yaml)
-    if not input_path.exists() or not input_path.is_dir():
-        _fail(f"Workflow path must be a directory containing 'test-config.yaml': {input_path}")
+    if not input_path.exists():
+        _fail(f"Workflow path must be either a directory containing 'test-config.yaml' or a sibling of 'test-config.yaml': {input_path}")
 
     base_dir = input_path
 
-    # look for "test-config.yaml" or "test-config.yml" inside the directory
-    candidates = [base_dir / "test-config.yaml", base_dir / "test-config.yml"]
+    # look for "test-config.yaml" or "test-config.yml" inside the directory, or as a sibling of the input path
+    parent_dir = base_dir.parent
+    candidates = [base_dir / "test-config.yaml", base_dir / "test-config.yml", parent_dir / "test-config.yaml", parent_dir / "test-config.yml"]
     yaml_path = None
     for c in candidates:
         if c.exists() and c.is_file():
@@ -117,7 +118,7 @@ def load_workflow_config(path: str | os.PathLike) -> WorkflowConfig:
         _fail(f"Top-level YAML must be a mapping (file: {yaml_path})")
 
     # Derive the workflow name from the directory basename (folder name).
-    name = base_dir.name
+    name = base_dir.name if yaml_path.parent == base_dir else yaml_path.parent.name
     if not name or not isinstance(name, str):
         _fail("Could not derive workflow name from the directory path")
 

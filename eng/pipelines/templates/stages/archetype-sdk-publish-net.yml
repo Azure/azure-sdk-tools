@@ -38,69 +38,69 @@ stages:
       ${{ if parameters.PublishEnvironment }}:
         PublishEnvironment: ${{ parameters.PublishEnvironment }}
 
-  # - job: PostPackagePublish
-  #   displayName: Post Package Publish
-  #   dependsOn: PublishPackage
+  - job: PostPackagePublish
+    displayName: Post Package Publish
+    dependsOn: PublishPackage
 
-  #   pool:
-  #     name: $(WINDOWSPOOL)
-  #     image: $(WINDOWSVMIMAGE)
-  #     os: windows
+    pool:
+      name: $(WINDOWSPOOL)
+      image: $(WINDOWSVMIMAGE)
+      os: windows
 
-  #   steps:
-  #     # github release and tagging uses a local script in the build tools repo, so we need to checkout that repo
-  #     - checkout: azure-sdk-build-tools
-  #       path: _azure-sdk-build-tools
+    steps:
+      # github release and tagging uses a local script in the build tools repo, so we need to checkout that repo
+      - checkout: azure-sdk-build-tools
+        path: _azure-sdk-build-tools
 
-  #     - checkout: self
+      - checkout: self
 
-  #     - task: DownloadPipelineArtifact@2
-  #       displayName: Download Packages
-  #       inputs:
-  #         artifactName: packages-signed
-  #         targetPath: $(Artifacts)
+      - task: DownloadPipelineArtifact@2
+        displayName: Download Packages
+        inputs:
+          artifactName: packages-signed
+          targetPath: $(Artifacts)
 
-  #     - ${{ if eq(parameters.ShouldTag, 'true') }}:
-  #       # sets output variable $(release)
-  #       - task: PowerShell@2
-  #         displayName: 'Verify Package Tags and Create Git Releases'
-  #         inputs:
-  #           targetType: filePath
-  #           # This script is different from the azure-sdk-tools repo in that it A) doesn't need the eng/common $Language variable set
-  #           # AND it sets an output variable for all the release names that were created. The output variable should be added to the eng/common
-  #           # version and a basic override of $Language should be supported before we can remove this build-tools repo script.
-  #           filePath: '$(BuildToolScripts)/create-tags-and-git-release.ps1'
-  #           arguments: '-artifactLocation $(Artifacts) -workingDirectory $(System.DefaultWorkingDirectory) -packageRepository Nuget -releaseSha $(Build.SourceVersion) -repoId $(Build.Repository.Id)'
-  #         env:
-  #           GH_TOKEN: $(azuresdk-github-pat)
+      - ${{ if eq(parameters.ShouldTag, 'true') }}:
+        # sets output variable $(release)
+        - task: PowerShell@2
+          displayName: 'Verify Package Tags and Create Git Releases'
+          inputs:
+            targetType: filePath
+            # This script is different from the azure-sdk-tools repo in that it A) doesn't need the eng/common $Language variable set
+            # AND it sets an output variable for all the release names that were created. The output variable should be added to the eng/common
+            # version and a basic override of $Language should be supported before we can remove this build-tools repo script.
+            filePath: '$(BuildToolScripts)/create-tags-and-git-release.ps1'
+            arguments: '-artifactLocation $(Artifacts) -workingDirectory $(System.DefaultWorkingDirectory) -packageRepository Nuget -releaseSha $(Build.SourceVersion) -repoId $(Build.Repository.Id)'
+          env:
+            GH_TOKEN: $(azuresdk-github-pat)
 
-  #     - ${{ if and(eq(parameters.ShouldTag, 'true'), eq(parameters.ShouldPublishExecutables, 'true')) }}:
-  #       - ${{ each target in parameters.ExeMatrix }}:
-  #         - task: DownloadPipelineArtifact@2
-  #           displayName: Download ${{ target.rid }} Binary
-  #           inputs:
-  #             artifact: standalone-${{ target.rid }}
-  #             path: $(Binaries)
-  #       - template: ../steps/platform-specific-signing.yml
-  #         parameters:
-  #           BinariesPath: $(Binaries)
-  #           BuildScriptsPath: $(BuildToolScripts)
-  #           ExeMatrix: ${{ parameters.ExeMatrix }}
+      - ${{ if and(eq(parameters.ShouldTag, 'true'), eq(parameters.ShouldPublishExecutables, 'true')) }}:
+        - ${{ each target in parameters.ExeMatrix }}:
+          - task: DownloadPipelineArtifact@2
+            displayName: Download ${{ target.rid }} Binary
+            inputs:
+              artifact: standalone-${{ target.rid }}
+              path: $(Binaries)
+        - template: ../steps/platform-specific-signing.yml
+          parameters:
+            BinariesPath: $(Binaries)
+            BuildScriptsPath: $(BuildToolScripts)
+            ExeMatrix: ${{ parameters.ExeMatrix }}
 
-  #       - task: PowerShell@2
-  #         displayName: 'Post to github release'
-  #         inputs:
-  #           targetType: filePath
-  #           # todo, move this local script from the build tools repo as well
-  #           filePath: '$(Build.SourcesDirectory)/azure-sdk-tools/eng/pipelines/templates/scripts/post-files-to-git-release.ps1'
-  #           arguments: '-TargetRelease "$(release)" -BinariesDirectory "$(Binaries)" -RepoId $(ReleaseRepo)'
-  #           pwsh: true
-  #         env:
-  #           GH_TOKEN: $(azuresdk-github-pat)
+        - task: PowerShell@2
+          displayName: 'Post to github release'
+          inputs:
+            targetType: filePath
+            # todo, move this local script from the build tools repo as well
+            filePath: '$(Build.SourcesDirectory)/azure-sdk-tools/eng/pipelines/templates/scripts/post-files-to-git-release.ps1'
+            arguments: '-TargetRelease "$(release)" -BinariesDirectory "$(Binaries)" -RepoId $(ReleaseRepo)'
+            pwsh: true
+          env:
+            GH_TOKEN: $(azuresdk-github-pat)
 
-  #     - task: 1ES.PublishPipelineArtifact@1
-  #       displayName: 'Publish processed files'
-  #       inputs:
-  #         artifactName: processed-files
-  #         targetPath: $(Artifacts)
-  #       condition: always()
+      - task: 1ES.PublishPipelineArtifact@1
+        displayName: 'Publish processed files'
+        inputs:
+          artifactName: processed-files
+          targetPath: $(Artifacts)
+        condition: always()

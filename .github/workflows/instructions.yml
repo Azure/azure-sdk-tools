@@ -1,21 +1,6 @@
 name: Validate LLM Instructions Files
-#foo
 
-on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'eng/common/instructions/**'
-      - 'tools/azsdk-cli/Azure.Sdk.Tools.Cli/Tools/**'
-      - 'eng/scripts/Verify-McpToolReferences.ps1'
-      - '.github/workflows/instructions.yml'
-  pull_request:
-    paths:
-      - 'eng/common/instructions/**'
-      - 'tools/azsdk-cli/Azure.Sdk.Tools.Cli/Tools/**'
-      - 'eng/scripts/Verify-McpToolReferences.ps1'
-      - '.github/workflows/instructions.yml'
+on: workflow_dispatch
 
 jobs:
   verify-mcp-tools:
@@ -25,4 +10,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: azsdk-cli verify
         shell: pwsh
-        run: ./eng/scripts/Verify-McpToolReferences.ps1 -InstructionsPath ./eng/common/instructions/azsdk-tools -ToolSourcePath ./tools/azsdk-cli/Azure.Sdk.Tools.Cli/Tools
+        run: >
+          ./eng/scripts/Verify-McpToolReferences.ps1
+            -InstructionsPath ./eng/common/instructions/azsdk-tools
+            -ToolSourcePath ./tools/azsdk-cli/Azure.Sdk.Tools.Cli/Tools

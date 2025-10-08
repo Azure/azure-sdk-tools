@@ -215,7 +215,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             Assert.Multiple(() =>
             {
                 Assert.That(result.ExitCode, Is.EqualTo(1));
-                Assert.That(result.ResponseError, Does.Contain("Error formatting code: Process execution failed"));
+                Assert.That(result.ResponseError, Does.Contain("Error during code formatting: Process execution failed"));
             });
         }
 
@@ -264,6 +264,181 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             MockProcessHelper.Verify(x => x.Run(It.Is<ProcessOptions>(p => 
                 (p.Command == "mvn" || p.Command == "cmd.exe") &&
                 p.Args.Contains("spotless:apply") &&
+                p.Args.Contains("-f") &&
+                p.Args.Contains(pomPath) &&
+                p.WorkingDirectory == JavaPackageDir &&
+                p.Timeout == TimeSpan.FromMinutes(10)), 
+                It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Test]
+        public async Task TestUpdateSnippetsAsync_MavenNotAvailable_ReturnsError()
+        {
+            // Arrange
+            MockProcessHelper.Setup(x => x.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ProcessResult { ExitCode = 1, OutputDetails = [(StdioLevel.StandardError, "Maven not found")] });
+
+            // Act
+            var result = await LangService.UpdateSnippetsAsync(JavaPackageDir, CancellationToken.None);
+
+            // Assert
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.ExitCode, Is.EqualTo(1));
+                Assert.That(result.ResponseError, Does.Contain("Maven is not installed or not available in PATH"));
+            });
+        }
+
+        [Test]
+        public async Task TestUpdateSnippetsAsync_NoPomXml_ReturnsError()
+        {
+            // Arrange - Use a temp directory without pom.xml for this test
+            var emptyDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(emptyDir);
+            
+            MockProcessHelper.Setup(x => x.Run(It.Is<ProcessOptions>(p => 
+                ((p.Command == "mvn" || p.Command == "cmd.exe") || p.Command == "cmd.exe") && p.Args.Contains("--version")), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [(StdioLevel.StandardOutput, "Apache Maven 3.9.9")] });
+
+            // Act
+            var result = await LangService.UpdateSnippetsAsync(emptyDir, CancellationToken.None);
+            
+            // Cleanup
+            try { Directory.Delete(emptyDir, true); } catch { }
+
+            // Assert
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.ExitCode, Is.EqualTo(1));
+                Assert.That(result.ResponseError, Does.Contain("No pom.xml found"));
+                Assert.That(result.ResponseError, Does.Contain("This doesn't appear to be a Maven project"));
+            });
+        }
+
+        [Test]
+        public async Task TestUpdateSnippetsAsync_Success()
+        {
+            // Arrange
+            MockProcessHelper.Setup(x => x.Run(It.Is<ProcessOptions>(p => (p.Command == "mvn" || p.Command == "cmd.exe") && p.Args.Contains("--version")), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [(StdioLevel.StandardOutput, "Apache Maven 3.9.9")] });
+
+            MockProcessHelper.Setup(x => x.Run(It.Is<ProcessOptions>(p => (p.Command == "mvn" || p.Command == "cmd.exe") && p.Args.Contains("codesnippet:update-codesnippet")), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [(StdioLevel.StandardOutput, "BUILD SUCCESS")] });
+
+            // Act
+            var result = await LangService.UpdateSnippetsAsync(JavaPackageDir, CancellationToken.None);
+
+            // Assert
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.ExitCode, Is.EqualTo(0));
+                Assert.That(result.CheckStatusDetails, Is.EqualTo("Code snippets updated successfully"));
+            });
+        }
+
+        [Test]
+        public async Task TestUpdateSnippetsAsync_PluginNotConfigured_ReturnsError()
+        {
+            // Arrange
+            MockProcessHelper.Setup(x => x.Run(It.Is<ProcessOptions>(p => (p.Command == "mvn" || p.Command == "cmd.exe") && p.Args.Contains("--version")), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [(StdioLevel.StandardOutput, "Apache Maven 3.9.9")] });
+
+            MockProcessHelper.Setup(x => x.Run(It.Is<ProcessOptions>(p => (p.Command == "mvn" || p.Command == "cmd.exe") && p.Args.Contains("codesnippet:update-codesnippet")), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ProcessResult { ExitCode = 1, OutputDetails = [(StdioLevel.StandardError, "Plugin com.azure.tools:codesnippet-maven-plugin not found")] });
+
+            // Act
+            var result = await LangService.UpdateSnippetsAsync(JavaPackageDir, CancellationToken.None);
+
+            // Assert
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.ExitCode, Is.EqualTo(1));
+                Assert.That(result.ResponseError, Does.Contain("Code snippet update failed"));
+                Assert.That(result.CheckStatusDetails, Does.Contain("Plugin com.azure.tools:codesnippet-maven-plugin not found"));
+            });
+        }
+
+        [Test]
+        public async Task TestUpdateSnippetsAsync_GeneralError_ReturnsGuidance()
+        {
+            // Arrange
+            MockProcessHelper.Setup(x => x.Run(It.Is<ProcessOptions>(p => (p.Command == "mvn" || p.Command == "cmd.exe") && p.Args.Contains("--version")), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [(StdioLevel.StandardOutput, "Apache Maven 3.9.9")] });
+
+            MockProcessHelper.Setup(x => x.Run(It.Is<ProcessOptions>(p => (p.Command == "mvn" || p.Command == "cmd.exe") && p.Args.Contains("codesnippet:update-codesnippet")), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ProcessResult { ExitCode = 1, OutputDetails = [(StdioLevel.StandardError, "Build failed with general error")] });
+
+            // Act
+            var result = await LangService.UpdateSnippetsAsync(JavaPackageDir, CancellationToken.None);
+
+            // Assert
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.ExitCode, Is.EqualTo(1));
+                Assert.That(result.ResponseError, Does.Contain("Code snippet update failed"));
+                Assert.That(result.ResponseError, Does.Contain("com.azure.tools:codesnippet-maven-plugin"));
+            });
+        }
+
+        [Test]
+        public async Task TestUpdateSnippetsAsync_WithCodesnippetOutput_ReturnsCodesnippetInfo()
+        {
+            // Arrange
+            MockProcessHelper.Setup(x => x.Run(It.Is<ProcessOptions>(p => (p.Command == "mvn" || p.Command == "cmd.exe") && p.Args.Contains("--version")), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [(StdioLevel.StandardOutput, "Apache Maven 3.9.9")] });
+
+            MockProcessHelper.Setup(x => x.Run(It.Is<ProcessOptions>(p => (p.Command == "mvn" || p.Command == "cmd.exe") && p.Args.Contains("codesnippet:update-codesnippet")), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ProcessResult { ExitCode = 1, OutputDetails = [(StdioLevel.StandardOutput, "codesnippet plugin error: missing snippets found")] });
+
+            // Act
+            var result = await LangService.UpdateSnippetsAsync(JavaPackageDir, CancellationToken.None);
+
+            // Assert
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.ExitCode, Is.EqualTo(1));
+                Assert.That(result.CheckStatusDetails, Does.Contain("codesnippet plugin error: missing snippets found"));
+                Assert.That(result.ResponseError, Does.Contain("Code snippet update failed"));
+            });
+        }
+
+        [Test]
+        public async Task TestUpdateSnippetsAsync_Exception_ReturnsError()
+        {
+            // Arrange
+            MockProcessHelper.Setup(x => x.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new InvalidOperationException("Process execution failed"));
+
+            // Act
+            var result = await LangService.UpdateSnippetsAsync(JavaPackageDir, CancellationToken.None);
+
+            // Assert
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.ExitCode, Is.EqualTo(1));
+                Assert.That(result.ResponseError, Does.Contain("Error during snippet update: Process execution failed"));
+            });
+        }
+
+        [Test]
+        public async Task TestUpdateSnippetsAsync_VerifyCorrectMavenCommand()
+        {
+            // Arrange
+            var pomPath = Path.Combine(JavaPackageDir, "pom.xml");
+            
+            MockProcessHelper.Setup(x => x.Run(It.Is<ProcessOptions>(p => (p.Command == "mvn" || p.Command == "cmd.exe") && p.Args.Contains("--version")), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [(StdioLevel.StandardOutput, "Apache Maven 3.9.9")] });
+
+            MockProcessHelper.Setup(x => x.Run(It.Is<ProcessOptions>(p => (p.Command == "mvn" || p.Command == "cmd.exe") && p.Args.Contains("codesnippet:update-codesnippet")), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [(StdioLevel.StandardOutput, "BUILD SUCCESS")] });
+
+            // Act
+            await LangService.UpdateSnippetsAsync(JavaPackageDir, CancellationToken.None);
+
+            // Assert - verify the correct Maven command was called
+            MockProcessHelper.Verify(x => x.Run(It.Is<ProcessOptions>(p => 
+                (p.Command == "mvn" || p.Command == "cmd.exe") &&
+                p.Args.Contains("codesnippet:update-codesnippet") &&
                 p.Args.Contains("-f") &&
                 p.Args.Contains(pomPath) &&
                 p.WorkingDirectory == JavaPackageDir &&

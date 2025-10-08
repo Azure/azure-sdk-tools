@@ -52,8 +52,8 @@
 #####################
 # Attestation
 #####################              
-/eng/pipelines/cpex-attestation.yml @smw-ms @praveenkuttappan @maririos 
-/eng/scripts/Attest-CPEX-KPIs.ps1 @smw-ms @praveenkuttappan @maririos 
+/eng/pipelines/cpex-attestation.yml     @smw-ms @praveenkuttappan @maririos 
+/eng/scripts/Attest-CPEX-KPIs.ps1       @smw-ms @praveenkuttappan @maririos 
 
 #####################
 # Azure SDK Tools MCP

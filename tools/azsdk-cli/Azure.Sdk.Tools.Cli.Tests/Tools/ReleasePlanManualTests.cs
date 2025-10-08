@@ -65,6 +65,21 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
 
         [Test] // disabled by default because it makes real API calls
         [Ignore("Manual test - requires real API calls")]
+        public async Task Test_UpdateExclusionJustificationWithLanguage()
+        {
+            int releasePlanWorkItemId = 28940; // replace with a real release plan ID
+            string exclusionJustification = "Updated justification for exclusion.";
+            var updateStatus = await this.releasePlan.UpdateLanguageExclusionJustification(releasePlanWorkItemId, exclusionJustification, "Java");
+            Assert.IsNotNull(updateStatus);
+            Assert.That(updateStatus.Message, Does.Contain("Updated language exclusion"));
+
+            var releasePlanInfo = await this.devOpsService.GetReleasePlanForWorkItemAsync(releasePlanWorkItemId);
+            Assert.That(exclusionJustification, Is.EqualTo(releasePlanInfo.LanguageExclusionRequesterNote));
+        }
+
+
+        [Test] // disabled by default because it makes real API calls
+        [Ignore("Manual test - requires real API calls")]
         public async Task Test_Get_ReleaseExclusionStatus()
         {
             int releasePlan = 28940; // replace with a real release plan ID

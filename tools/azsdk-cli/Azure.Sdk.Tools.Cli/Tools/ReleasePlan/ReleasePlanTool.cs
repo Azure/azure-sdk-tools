@@ -489,8 +489,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
         }
 
-        [McpServerTool(Name = "azsdk_update_language_exclusion_justification"), Description("Update language exclusion justification in release plan work item. This tool is called to update justification for excluded languages in the release plan.")]
-        public async Task<DefaultCommandResponse> UpdateLanguageExclusionJustification(int releasePlanWorkItem, string justification)
+        [McpServerTool(Name = "azsdk_update_language_exclusion_justification"), Description("Update language exclusion justification in release plan work item. This tool is called to update justification for excluded languages in the release plan. " +
+            "Optionally pass a language name to explicitly request exclusion for a specific language.")]
+        public async Task<DefaultCommandResponse> UpdateLanguageExclusionJustification(int releasePlanWorkItem, string justification, string language = "")
         {
             try
             {
@@ -515,6 +516,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 {
                     { "Custom.ReleaseExclusionRequestNote", justification }
                 };
+
+                if (!string.IsNullOrEmpty(language))
+                {
+                    fieldsToUpdate[$"Custom.ReleaseExclusionStatusFor{ DevOpsService.MapLanguageToId(language)}"] = "Requested";
+                }
+
                 var updatedWorkItem = await devOpsService.UpdateWorkItemAsync(releasePlanWorkItem, fieldsToUpdate);
                 if (updatedWorkItem == null)
                 {

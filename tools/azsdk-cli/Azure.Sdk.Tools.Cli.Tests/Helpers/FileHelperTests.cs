@@ -1,0 +1,504 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+using Azure.Sdk.Tools.Cli.Helpers;
+using Microsoft.Extensions.Logging;
+
+namespace Azure.Sdk.Tools.Cli.Tests.Helpers
+{
+    [TestFixture]
+    public class FileHelperTests
+    {
+        private string _tempDir;
+        private ILogger _logger;
+
+        [SetUp]
+        public void SetUp()
+        {
+            _tempDir = Path.Combine(Path.GetTempPath(), "FileHelperTests_" + Guid.NewGuid().ToString("N")[..8]);
+            Directory.CreateDirectory(_tempDir);
+            
+            var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+            _logger = loggerFactory.CreateLogger<FileHelperTests>();
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            if (Directory.Exists(_tempDir))
+            {
+                Directory.Delete(_tempDir, true);
+            }
+        }
+
+        #region LoadFilesAsync Tests
+
+        [Test]
+        public async Task LoadFilesAsync_WithSingleFile_ShouldReturnFileContent()
+        {
+            // Arrange
+            var testFile = Path.Combine(_tempDir, "test.cs");
+            var content = "using System;\npublic class Test { }";
+            await File.WriteAllTextAsync(testFile, content);
+
+            // Act
+            var result = await FileHelper.LoadFilesAsync(
+                filePaths: new[] { testFile },
+                includeExtensions: new[] { ".cs" },
+                excludeGlobPatterns: Array.Empty<string>(),
+                relativeTo: _tempDir,
+                totalBudget: 1000,
+                perFileLimit: 500,
+                priorityFunc: _ => 1);
+
+            // Assert
+            Assert.That(result, Does.Contain("test.cs"));
+            Assert.That(result, Does.Contain(content));
+            Assert.That(result, Does.Contain("<file path="));
+        }
+
+        [Test]
+        public async Task LoadFilesAsync_WithDirectory_ShouldReturnFilteredFiles()
+        {
+            // Arrange
+            var subDir = Path.Combine(_tempDir, "src");
+            Directory.CreateDirectory(subDir);
+            
+            var csFile = Path.Combine(subDir, "code.cs");
+            var jsFile = Path.Combine(subDir, "script.js");
+            var txtFile = Path.Combine(subDir, "readme.txt");
+            
+            await File.WriteAllTextAsync(csFile, "// C# code");
+            await File.WriteAllTextAsync(jsFile, "// JS code");
+            await File.WriteAllTextAsync(txtFile, "Documentation");
+
+            // Act
+            var result = await FileHelper.LoadFilesAsync(
+                filePaths: new[] { _tempDir },
+                includeExtensions: new[] { ".cs", ".js" },
+                excludeGlobPatterns: Array.Empty<string>(),
+                relativeTo: _tempDir,
+                totalBudget: 2000,
+                perFileLimit: 1000,
+                priorityFunc: _ => 1);
+
+            // Assert
+            Assert.That(result, Does.Contain("code.cs"));
+            Assert.That(result, Does.Contain("script.js"));
+            Assert.That(result, Does.Not.Contain("readme.txt"));
+            Assert.That(result, Does.Contain("// C# code"));
+            Assert.That(result, Does.Contain("// JS code"));
+        }
+
+        [Test]
+        public async Task LoadFilesAsync_WithExcludePatterns_ShouldFilterOutMatchingFiles()
+        {
+            // Arrange
+            var testDir = Path.Combine(_tempDir, "test");
+            var srcDir = Path.Combine(_tempDir, "src");
+            Directory.CreateDirectory(testDir);
+            Directory.CreateDirectory(srcDir);
+            
+            var testFile = Path.Combine(testDir, "unit.cs");
+            var srcFile = Path.Combine(srcDir, "main.cs");
+            
+            await File.WriteAllTextAsync(testFile, "// Test code");
+            await File.WriteAllTextAsync(srcFile, "// Main code");
+
+            // Act
+            var result = await FileHelper.LoadFilesAsync(
+                filePaths: new[] { _tempDir },
+                includeExtensions: new[] { ".cs" },
+                excludeGlobPatterns: new[] { "**/test/**" },
+                relativeTo: _tempDir,
+                totalBudget: 2000,
+                perFileLimit: 1000,
+                priorityFunc: _ => 1);
+
+            // Assert
+            Assert.That(result, Does.Not.Contain("unit.cs"), "Files in test directory should be excluded");
+            Assert.That(result, Does.Contain("main.cs"), "Files in src directory should be included");
+            Assert.That(result, Does.Contain("// Main code"));
+        }
+
+        [Test]
+        public async Task LoadFilesAsync_WithBudgetConstraint_ShouldRespectTotalBudget()
+        {
+            // Arrange
+            var file1 = Path.Combine(_tempDir, "file1.cs");
+            var file2 = Path.Combine(_tempDir, "file2.cs");
+            var longContent = new string('a', 500);
+            
+            await File.WriteAllTextAsync(file1, longContent);
+            await File.WriteAllTextAsync(file2, longContent);
+
+            // Act - Set budget that can only fit one file + overhead
+            var result = await FileHelper.LoadFilesAsync(
+                filePaths: new[] { _tempDir },
+                includeExtensions: new[] { ".cs" },
+                excludeGlobPatterns: Array.Empty<string>(),
+                relativeTo: _tempDir,
+                totalBudget: 600, // Only enough for one file + headers
+                perFileLimit: 500,
+                priorityFunc: _ => 1);
+
+            // Assert
+            var fileMatches = System.Text.RegularExpressions.Regex.Matches(result, @"<file path=");
+            Assert.That(fileMatches.Count, Is.EqualTo(1), "Should only include one file due to budget constraint");
+            Assert.That(result, Does.Contain("additional files omitted"));
+        }
+
+        [Test]
+        public async Task LoadFilesAsync_WithPerFileLimit_ShouldTruncateFiles()
+        {
+            // Arrange
+            var testFile = Path.Combine(_tempDir, "large.cs");
+            var longContent = new string('x', 1000);
+            await File.WriteAllTextAsync(testFile, longContent);
+
+            // Act
+            var result = await FileHelper.LoadFilesAsync(
+                filePaths: new[] { testFile },
+                includeExtensions: new[] { ".cs" },
+                excludeGlobPatterns: Array.Empty<string>(),
+                relativeTo: _tempDir,
+                totalBudget: 2000,
+                perFileLimit: 500, // Smaller than file size
+                priorityFunc: _ => 1);
+
+            // Assert
+            Assert.That(result, Does.Contain("large.cs"));
+            Assert.That(result, Does.Contain("truncated"));
+            // The actual content should be less than the original
+            var contentStart = result.IndexOf(new string('x', 100));
+            Assert.That(contentStart, Is.GreaterThan(-1));
+        }
+
+        [Test]
+        public async Task LoadFilesAsync_WithSourceInputs_ShouldApplyPerInputFiltering()
+        {
+            // Arrange
+            var dir1 = Path.Combine(_tempDir, "dir1");
+            var dir2 = Path.Combine(_tempDir, "dir2");
+            Directory.CreateDirectory(dir1);
+            Directory.CreateDirectory(dir2);
+            
+            var csFile = Path.Combine(dir1, "code.cs");
+            var jsFile = Path.Combine(dir2, "script.js");
+            var testFile = Path.Combine(dir2, "test.js");
+            
+            await File.WriteAllTextAsync(csFile, "// C# code");
+            await File.WriteAllTextAsync(jsFile, "// JS code");
+            await File.WriteAllTextAsync(testFile, "// Test JS");
+
+            var inputs = new[]
+            {
+                new FileHelper.SourceInput(dir1, IncludeExtensions: new[] { ".cs" }),
+                new FileHelper.SourceInput(dir2, IncludeExtensions: new[] { ".js" }, ExcludeGlobPatterns: new[] { "**/test.js" })
+            };
+
+            // Act
+            var result = await FileHelper.LoadFilesAsync(
+                inputs: inputs,
+                relativeTo: _tempDir,
+                totalBudget: 2000,
+                perFileLimit: 1000,
+                priorityFunc: _ => 1);
+
+            // Assert
+            Assert.That(result, Does.Contain("code.cs"));
+            Assert.That(result, Does.Contain("script.js"));
+            Assert.That(result, Does.Not.Contain("test.js"), "test.js should be excluded by the glob pattern");
+        }
+
+        [Test]
+        public async Task LoadFilesAsync_WithEmptyDirectory_ShouldReturnEmptyString()
+        {
+            // Arrange
+            var emptyDir = Path.Combine(_tempDir, "empty");
+            Directory.CreateDirectory(emptyDir);
+
+            // Act
+            var result = await FileHelper.LoadFilesAsync(
+                filePaths: new[] { emptyDir },
+                includeExtensions: new[] { ".cs" },
+                excludeGlobPatterns: Array.Empty<string>(),
+                relativeTo: _tempDir,
+                totalBudget: 1000,
+                perFileLimit: 500,
+                priorityFunc: _ => 1);
+
+            // Assert
+            Assert.That(result, Is.Empty);
+        }
+
+        #endregion
+
+        #region DiscoverFiles Tests
+
+        [Test]
+        public void DiscoverFiles_WithMixedPaths_ShouldReturnCorrectMetadata()
+        {
+            // Arrange
+            var subDir = Path.Combine(_tempDir, "src");
+            Directory.CreateDirectory(subDir);
+            
+            var file1 = Path.Combine(_tempDir, "root.cs");
+            var file2 = Path.Combine(subDir, "nested.cs");
+            var file3 = Path.Combine(subDir, "script.js");
+            
+            File.WriteAllText(file1, "// Root");
+            File.WriteAllText(file2, "// Nested C#");
+            File.WriteAllText(file3, "// Script");
+
+            // Act
+            var files = FileHelper.DiscoverFiles(
+                filePaths: new[] { _tempDir },
+                includeExtensions: new[] { ".cs" },
+                excludeGlobPatterns: Array.Empty<string>(),
+                relativeTo: _tempDir,
+                priorityFunc: f => f.FileSize);
+
+            // Assert
+            Assert.That(files.Count, Is.EqualTo(2));
+            Assert.That(files.Any(f => f.RelativePath.EndsWith("root.cs")), Is.True);
+            Assert.That(files.Any(f => f.RelativePath.EndsWith("nested.cs")), Is.True);
+            Assert.That(files.Any(f => f.RelativePath.EndsWith("script.js")), Is.False);
+            
+            foreach (var file in files)
+            {
+                Assert.That(file.FileSize, Is.GreaterThan(0));
+                Assert.That(file.Priority, Is.EqualTo(file.FileSize));
+            }
+        }
+
+        [Test]
+        public void DiscoverFiles_WithPriorityFunction_ShouldSortCorrectly()
+        {
+            // Arrange
+            var smallFile = Path.Combine(_tempDir, "small.cs");
+            var largeFile = Path.Combine(_tempDir, "large.cs");
+            
+            File.WriteAllText(smallFile, "small");
+            File.WriteAllText(largeFile, new string('x', 100));
+
+            // Act - Priority by size (ascending)
+            var files = FileHelper.DiscoverFiles(
+                filePaths: new[] { _tempDir },
+                includeExtensions: new[] { ".cs" },
+                excludeGlobPatterns: Array.Empty<string>(),
+                relativeTo: _tempDir,
+                priorityFunc: f => f.FileSize);
+
+            // Assert
+            Assert.That(files.Count, Is.EqualTo(2));
+            Assert.That(files[0].RelativePath, Does.EndWith("small.cs"));
+            Assert.That(files[1].RelativePath, Does.EndWith("large.cs"));
+            Assert.That(files[0].Priority, Is.LessThan(files[1].Priority));
+        }
+
+        #endregion
+
+        #region CreateFileLoadingPlan Tests
+
+        [Test]
+        public void CreateFileLoadingPlan_WithBudgetConstraint_ShouldCreateValidPlan()
+        {
+            // Arrange
+            var files = new List<FileHelper.FileMetadata>
+            {
+                new("file1.cs", "file1.cs", 300, 1),
+                new("file2.cs", "file2.cs", 400, 2),
+                new("file3.cs", "file3.cs", 500, 3)
+            };
+
+            // Act
+            var plan = FileHelper.CreateLoadingPlanFromMetadata(files, totalBudget: 800, perFileLimit: 400);
+
+            // Assert
+            Assert.That(plan.TotalFilesFound, Is.EqualTo(3));
+            Assert.That(plan.TotalFilesIncluded, Is.LessThanOrEqualTo(3));
+            Assert.That(plan.BudgetUsed, Is.LessThanOrEqualTo(800));
+            Assert.That(plan.Items.All(i => i.ContentToLoad <= 400), Is.True);
+            
+            foreach (var item in plan.Items)
+            {
+                Assert.That(item.ContentToLoad, Is.LessThanOrEqualTo(item.FileSize));
+                Assert.That(item.IsTruncated, Is.EqualTo(item.ContentToLoad < item.FileSize));
+            }
+        }
+
+        [Test]
+        public void CreateFileLoadingPlan_WithZeroBudget_ShouldReturnEmptyPlan()
+        {
+            // Arrange
+            var files = new List<FileHelper.FileMetadata>
+            {
+                new("file1.cs", "file1.cs", 100, 1)
+            };
+
+            // Act
+            var plan = FileHelper.CreateLoadingPlanFromMetadata(files, totalBudget: 0, perFileLimit: 100);
+
+            // Assert
+            Assert.That(plan.Items.Count, Is.EqualTo(0));
+            Assert.That(plan.TotalFilesFound, Is.EqualTo(1));
+            Assert.That(plan.TotalFilesIncluded, Is.EqualTo(0));
+        }
+
+        #endregion
+
+        #region ExecuteFileLoadingPlan Tests
+
+        [Test]
+        public async Task ExecuteFileLoadingPlan_WithValidPlan_ShouldGenerateCorrectOutput()
+        {
+            // Arrange
+            var testFile = Path.Combine(_tempDir, "test.cs");
+            var content = "using System;\nclass Test { }";
+            await File.WriteAllTextAsync(testFile, content);
+
+            var plan = new FileHelper.FileLoadingPlan(
+                Items: new List<FileHelper.FileLoadingItem>
+                {
+                    new(testFile, "test.cs", content.Length, content.Length, content.Length / 4, false)
+                },
+                TotalFilesFound: 1,
+                TotalFilesIncluded: 1,
+                TotalEstimatedTokens: content.Length / 4,
+                BudgetUsed: content.Length + 50,
+                TotalBudget: 1000);
+
+            // Act
+            var result = await FileHelper.ExecuteFileLoadingPlanAsync(plan, _logger);
+
+            // Assert
+            Assert.That(result, Does.Contain("<file path=\"test.cs\""));
+            Assert.That(result, Does.Contain("using System;"));
+            Assert.That(result, Does.Contain("class Test"));
+            Assert.That(result, Does.Contain("</file>"));
+        }
+
+        [Test]
+        public async Task ExecuteFileLoadingPlan_WithTruncatedFile_ShouldShowTruncation()
+        {
+            // Arrange
+            var testFile = Path.Combine(_tempDir, "large.cs");
+            var content = new string('x', 1000);
+            await File.WriteAllTextAsync(testFile, content);
+
+            var plan = new FileHelper.FileLoadingPlan(
+                Items: new List<FileHelper.FileLoadingItem>
+                {
+                    new(testFile, "large.cs", content.Length, 500, 125, true)
+                },
+                TotalFilesFound: 1,
+                TotalFilesIncluded: 1,
+                TotalEstimatedTokens: 125,
+                BudgetUsed: 550,
+                TotalBudget: 1000);
+
+            // Act
+            var result = await FileHelper.ExecuteFileLoadingPlanAsync(plan, _logger);
+
+            // Assert
+            Assert.That(result, Does.Contain("large.cs"));
+            Assert.That(result, Does.Contain("truncated"));
+            // Should contain some x's but not all 1000
+            Assert.That(result, Does.Contain("xxx"));
+            var xMatches = System.Text.RegularExpressions.Regex.Matches(result, "x");
+            Assert.That(xMatches.Count, Is.LessThan(1000));
+        }
+
+        [Test]
+        public async Task ExecuteFileLoadingPlan_WithNonExistentFile_ShouldHandleGracefully()
+        {
+            // Arrange
+            var nonExistentFile = Path.Combine(_tempDir, "missing.cs");
+
+            var plan = new FileHelper.FileLoadingPlan(
+                Items: new List<FileHelper.FileLoadingItem>
+                {
+                    new(nonExistentFile, "missing.cs", 100, 100, 25, false)
+                },
+                TotalFilesFound: 1,
+                TotalFilesIncluded: 1,
+                TotalEstimatedTokens: 25,
+                BudgetUsed: 150,
+                TotalBudget: 1000);
+
+            // Act
+            var result = await FileHelper.ExecuteFileLoadingPlanAsync(plan, _logger);
+
+            // Assert
+            Assert.That(result, Does.Contain("missing.cs"));
+            Assert.That(result, Does.Contain("error="));
+        }
+
+        #endregion
+
+                #region IsMatchingExcludePattern Tests
+
+        [Test]
+        [TestCase("src/test/file.cs", new[] { "**/test/**" }, true)]
+        [TestCase("src/test/subfolder/file.cs", new[] { "**/test/**" }, true)]
+        [TestCase("src/main/file.cs", new[] { "**/test/**" }, false)]
+        [TestCase("file.tmp", new[] { "*.tmp" }, true)]
+        [TestCase("file.cs", new[] { "*.tmp" }, false)]
+        [TestCase("bin/Debug/file.dll", new[] { "bin/**" }, true)]
+        [TestCase("obj/Release/file.obj", new[] { "obj/**" }, true)]
+        [TestCase("src/file.cs", new[] { "bin/**", "obj/**" }, false)]
+        [TestCase("bin/file.dll", new[] { "bin/**", "obj/**" }, true)]
+        [TestCase("node_modules/package/file.js", new[] { "**/node_modules/**" }, true)]
+        [TestCase("src/node_modules/file.js", new[] { "**/node_modules/**" }, true)]
+        [TestCase("src/file.js", new[] { "**/node_modules/**" }, false)]
+        [TestCase("Bin/Debug/file.dll", new[] { "bin/**" }, true)]
+        [TestCase("BIN/DEBUG/FILE.DLL", new[] { "bin/**" }, true)]
+        [TestCase("test.tmp", new[] { "*.tmp", "*.bak", "**/test/**" }, true)]
+        [TestCase("test.bak", new[] { "*.tmp", "*.bak", "**/test/**" }, true)]
+        [TestCase("src/test/file.cs", new[] { "*.tmp", "*.bak", "**/test/**" }, true)]
+        [TestCase("src/main/file.cs", new[] { "*.tmp", "*.bak", "**/test/**" }, false)]
+        public void IsMatchingExcludePattern_ShouldReturnExpectedResult(string filePath, string[] patterns, bool expected)
+        {
+            var result = FileHelper.IsMatchingExcludePattern(filePath, patterns);
+
+            Assert.That(result, Is.EqualTo(expected), 
+                $"Path '{filePath}' with patterns [{string.Join(", ", patterns)}] should return {expected} but returned {result}");
+        }
+
+        [Test]
+        public void IsMatchingExcludePattern_WithEmptyPatterns_ShouldReturnFalse()
+        {
+            var filePath = "any/file.cs";
+            var patterns = Array.Empty<string>();
+
+            var result = FileHelper.IsMatchingExcludePattern(filePath, patterns);
+
+            Assert.That(result, Is.False);
+        }
+
+        [Test]
+        public void IsMatchingExcludePattern_WithNullPatterns_ShouldReturnFalse()
+        {
+            var filePath = "any/file.cs";
+            string[]? patterns = null;
+
+            var result = FileHelper.IsMatchingExcludePattern(filePath, patterns!);
+
+            Assert.That(result, Is.False);
+        }
+
+        [Test]
+        public void IsMatchingExcludePattern_WithEmptyFilePath_ShouldReturnFalse()
+        {
+            var filePath = "";
+            var patterns = new[] { "*.tmp" };
+
+            var result = FileHelper.IsMatchingExcludePattern(filePath, patterns);
+
+            Assert.That(result, Is.False);
+        }
+
+        #endregion
+    }
+}

@@ -24,7 +24,4 @@ jobs:
       - uses: actions/checkout@v4
       - name: azsdk-cli verify
         shell: pwsh
-        run: >
-          ./eng/scripts/Verify-McpToolReferences.ps1
-            -InstructionsPath ./eng/common/instructions/azsdk-tools
-            -ToolSourcePath ./tools/azsdk-cli/Azure.Sdk.Tools.Cli/Tools
+        run: ./eng/scripts/Verify-McpToolReferences.ps1 -InstructionsPath ./eng/common/instructions/azsdk-tools -ToolSourcePath ./tools/azsdk-cli/Azure.Sdk.Tools.Cli/Tools

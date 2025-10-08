@@ -53,8 +53,9 @@
 # Azure SDK Tools MCP
 #####################
 /eng/common/instructions/azsdk-tools/   @maririos @praveenkuttappan @MrJustinB 
-# PRLabel: %azsdk-cli
 /tools/azsdk-cli/                       @azure/azsdk-cli
+tools/ai-evals/azsdk-mcp/               @jeo02 @smw-ms @praveenkuttappan @maririos
+
 
 ###########
 # Stress

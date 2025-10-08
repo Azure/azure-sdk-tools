@@ -228,7 +228,7 @@ function main()
 
     if (!$Development) {
         $params = LoadEnvParams
-        $STRESS_CLUSTER_RESOURCE_GROUP = "rg-stress-cluster-$($params.groupSuffix)"
+        $STRESS_CLUSTER_RESOURCE_GROUP = "SSS3PT_rg-stress-cluster-$($params.groupSuffix)"
 
         az account set -s $params.subscriptionId
         if ($LASTEXITCODE) {

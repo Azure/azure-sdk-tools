@@ -45,8 +45,6 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
             var result = await _processHelper.Run(new(
                     "pnpm",
                     ["run", "update-snippets"],
-                    "pnpm.cmd",
-                    ["run", "update-snippets"],
                     workingDirectory: packagePath
                 ),
                 cancellationToken
@@ -79,8 +77,6 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
 
             var result = await _processHelper.Run(new(
                     "pnpm",
-                    ["run", subcommand],
-                    "pnpm.cmd",
                     ["run", subcommand],
                     workingDirectory: packagePath
                 ),
@@ -116,8 +112,6 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
             _logger.LogInformation($"Running 'pnpm run {subcommand}' in {packagePath}");
             var result = await _processHelper.Run(new(
                     "pnpm",
-                    ["run", subcommand],
-                    "pnpm.cmd",
                     ["run", subcommand],
                     workingDirectory: packagePath
                 ),

@@ -7,7 +7,6 @@ using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Microagents.Tools;
 using Microsoft.Extensions.Logging;
 using System.ComponentModel;
-using System.Text.Json;
 
 namespace Azure.Sdk.Tools.Cli.Services;
 

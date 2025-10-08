@@ -36,17 +36,18 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             // Language Check Services (Composition-based)
             services.AddSingleton<ILanguageChecks, LanguageChecks>();
-            services.AddKeyedSingleton<ILanguageSpecificChecks, PythonLanguageSpecificChecks>(SdkLanguage.Python);
-            services.AddKeyedSingleton<ILanguageSpecificChecks, JavaLanguageSpecificChecks>(SdkLanguage.Java);
-            services.AddKeyedSingleton<ILanguageSpecificChecks, JavaScriptLanguageSpecificChecks>(SdkLanguage.JavaScript);
-            services.AddKeyedSingleton<ILanguageSpecificChecks, DotNetLanguageSpecificChecks>(SdkLanguage.DotNet);
-            services.AddKeyedSingleton<ILanguageSpecificChecks, GoLanguageSpecificChecks>(SdkLanguage.Go);
+            services.AddKeyedScoped<ILanguageSpecificChecks, PythonLanguageSpecificChecks>(SdkLanguage.Python);
+            services.AddKeyedScoped<ILanguageSpecificChecks, JavaLanguageSpecificChecks>(SdkLanguage.Java);
+            services.AddKeyedScoped<ILanguageSpecificChecks, JavaScriptLanguageSpecificChecks>(SdkLanguage.JavaScript);
+            services.AddKeyedScoped<ILanguageSpecificChecks, DotNetLanguageSpecificChecks>(SdkLanguage.DotNet);
+            services.AddKeyedScoped<ILanguageSpecificChecks, GoLanguageSpecificChecks>(SdkLanguage.Go);
 
             // Client update language services
-            services.AddKeyedSingleton<IClientUpdateLanguageService, JavaUpdateLanguageService>(SdkLanguage.Java);
+            services.AddKeyedScoped<IClientUpdateLanguageService, JavaUpdateLanguageService>(SdkLanguage.Java);
             // Future: services.AddSingleton<IClientUpdateLanguageService, PythonClientUpdateLanguageService>(); etc.
 
-            services.AddKeyedSingleton<ITestRunner, JavaScriptTestRunner>(SdkLanguage.JavaScript);
+            services.AddKeyedScoped<ITestRunner, JavaScriptTestRunner>(SdkLanguage.JavaScript);
+            // TODO: add your language's test runner here.
 
             // Helper classes
             services.AddSingleton<ILogAnalysisHelper, LogAnalysisHelper>();

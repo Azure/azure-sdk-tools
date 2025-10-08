@@ -90,11 +90,6 @@ class EvalRunner:
         # Delegate all result processing to the evaluator
         processed_results = evaluator.process_results(all_run_results, guideline_ids)
         evaluator.show_results(processed_results)
-        evaluator.post_process(
-            processed_results,
-            str(self._tests_directory),
-            guideline_ids,
-        )
 
     def create_temporary_jsonl_file(self, path: pathlib.Path) -> pathlib.Path:
         """

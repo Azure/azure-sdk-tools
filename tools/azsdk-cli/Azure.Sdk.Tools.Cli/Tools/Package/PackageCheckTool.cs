@@ -122,7 +122,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             var failedChecks = new List<string>();
 
             // Run dependency check
-            var dependencyCheckResult = await languageChecks.AnalyzeDependenciesAsync(packagePath, ct);
+            var dependencyCheckResult = await languageChecks.AnalyzeDependenciesAsync(packagePath, fixCheckErrors, ct);
             results.Add(dependencyCheckResult);
             if (dependencyCheckResult.ExitCode != 0)
             {
@@ -131,7 +131,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             // Run changelog validation
-            var changelogValidationResult = await languageChecks.ValidateChangelogAsync(packagePath, ct);
+            var changelogValidationResult = await languageChecks.ValidateChangelogAsync(packagePath, fixCheckErrors, ct);
             results.Add(changelogValidationResult);
             if (changelogValidationResult.ExitCode != 0)
             {

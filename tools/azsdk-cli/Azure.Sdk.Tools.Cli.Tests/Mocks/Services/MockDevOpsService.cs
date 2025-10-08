@@ -83,6 +83,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
                 Title = "Mock Release Plan",
                 Description = "This is a mock release plan for testing purposes."
             };
+            releasePlan.IsDataPlane = workItemId > 1000;
+            releasePlan.IsManagementPlane = !releasePlan.IsDataPlane;
             return Task.FromResult(releasePlan);
         }
 
@@ -122,11 +124,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Mocks.Services
             return Task.FromResult(new Dictionary<string, List<string>>());
         }
 
-        Task<WorkItem> IDevOpsService.UpdateWorkItem(int workItemId, Dictionary<string, string> fields)
+        Task<WorkItem> IDevOpsService.UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields)
         {
             var workItem = new WorkItem
             {
-                Id = 1,
+                Id = workItemId,
                 Fields = new Dictionary<string, object>
                 {
                     { "System.Title", "Updated work item" },

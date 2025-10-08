@@ -1,5 +1,19 @@
 # Release History
 
+## 0.5.2 (Unreleased)
+
+### Features
+
+- Added new tool to update language exclusion justification and also to mark as language as excluded from release.
+
+### Breaking Changes
+
+- None
+
+### Bugs Fixed
+
+- None
+
 ## 0.5.1 (2025-10-07)
 
 ### Features

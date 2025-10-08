@@ -397,7 +397,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 return new DefaultCommandResponse
                 {
                     Message = sb.ToString(),
-                    NextSteps = excludedLangauges.Any() ? ["Prompt the user for justification for excluded languages and update it in the release plan."] : []
+                    NextSteps = excludedLanguages.Any() ? ["Prompt the user for justification for excluded languages and update it in the release plan."] : []
                 };
             }
             catch (Exception ex)

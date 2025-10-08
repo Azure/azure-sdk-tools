@@ -32,10 +32,10 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IDevOpsService, DevOpsService>();
             services.AddSingleton<IGitHubService, GitHubService>();
 
-            services.AddSingleton<ILanguageSpecificResolver, LanguageSpecificResolver>();
+            services.AddScoped<ILanguageSpecificResolver, LanguageSpecificResolver>();
 
             // Language Check Services (Composition-based)
-            services.AddSingleton<ILanguageChecks, LanguageChecks>();
+            services.AddScoped<ILanguageChecks, LanguageChecks>();
             services.AddKeyedScoped<ILanguageSpecificChecks, PythonLanguageSpecificChecks>(SdkLanguage.Python);
             services.AddKeyedScoped<ILanguageSpecificChecks, JavaLanguageSpecificChecks>(SdkLanguage.Java);
             services.AddKeyedScoped<ILanguageSpecificChecks, JavaScriptLanguageSpecificChecks>(SdkLanguage.JavaScript);

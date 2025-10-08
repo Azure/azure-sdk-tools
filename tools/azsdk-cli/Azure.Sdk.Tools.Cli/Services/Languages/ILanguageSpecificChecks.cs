@@ -56,13 +56,25 @@ public interface ILanguageSpecificChecks
     }
 
     /// <summary>
-    /// Gets the SDK package path for the given repository and package path.
+    /// Gets the SDK package path.
     /// </summary>
     /// <param name="repo">Repository root path</param>
     /// <param name="packagePath">Package path</param>
     /// <returns>SDK package path</returns>
     string GetSDKPackagePath(string repo, string packagePath)
     {
+        return packagePath;
+    }
+
+    /// <summary>
+    /// Gets the SDK package name.
+    /// </summary>
+    /// <param name="repo">Repository root path</param>
+    /// <param name="packagePath">Package path</param>
+    /// <returns>SDK package name</returns>
+    string GetSDKPackageName(string repo, string packagePath)
+    {
+        
         // Default implementation: use the directory name as the package path
         return Path.GetFileName(packagePath);
     }

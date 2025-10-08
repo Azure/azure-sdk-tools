@@ -134,8 +134,8 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
             return new CLICheckResponse(1, "", $"Error formatting code: {ex.Message}");
         }
     }
-}
-    public string GetSDKPackagePath(string repo, string packagePath)
+
+    public string GetSDKPackageName(string repo, string packagePath)
     {
         // For JavaScript packages, read the package name from package.json
         var packageJsonPath = Path.Combine(packagePath, "package.json");

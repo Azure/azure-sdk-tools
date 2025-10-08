@@ -133,7 +133,7 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
     {
         try
         {
-            var args = fixCheckErrors ? ["run", "--fix"] : ["run"];
+            var args = fixCheckErrors ? new[] { "run", "--fix" } : new[] { "run" };
             var result = await _processHelper.Run(new ProcessOptions(linterName, args, workingDirectory: packagePath), ct);
             return new CLICheckResponse(result);
         }

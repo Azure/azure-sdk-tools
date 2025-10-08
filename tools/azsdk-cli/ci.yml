@@ -20,6 +20,7 @@ extends:
   parameters:
     # ${{ if eq(variables['Build.SourceBranchName'], 'main') }}:
     #   SkipReleaseStage: false
+    SkipReleaseStage: false
     PublishEnvironment: 'package-publish'
     ReleaseBinaries: true
     ToolDirectory: tools/azsdk-cli/Azure.Sdk.Tools.Cli

@@ -16,6 +16,7 @@ from pathlib import Path
 
 from azure.ai.evaluation import GroundednessEvaluator, SimilarityEvaluator
 from evals._config_loader import EvaluationConfig, WorkflowConfigError
+from evals._util import ensure_json_obj
 from src._settings import SettingsManager
 from src._utils import get_prompt_path
 
@@ -320,11 +321,8 @@ class CustomAPIViewEvaluator(BaseEvaluator):
         return similarity
 
     def __call__(self, *, response: str, query: str, language: str, actual: str, testcase: str, context: str, **kwargs):
-        if isinstance(response, str):
-            expected = json.loads(response)
-        else:
-            expected = response
-        actual = json.loads(actual)
+        expected = ensure_json_obj(response)
+        actual = ensure_json_obj(actual)
 
         # Filter out summary comments
         expected["comments"] = [c for c in expected["comments"] if c.get("source") != "summary"]
@@ -407,17 +405,19 @@ class CustomAPIViewEvaluator(BaseEvaluator):
         total_score = 0
 
         for row in result["rows"]:
-            # Use the score calculated by the evaluator itself
             score = row["outputs.metrics.score"]
             total_score += score
-            rules = [rule["guideline_ids"] for rule in json.loads(row["inputs.response"])["comments"]]
+
+            response_obj = ensure_json_obj(row["inputs.response"])
+            actual_obj = ensure_json_obj(row["outputs.actual"])
+            rules = [rule["guideline_ids"] for rule in response_obj["comments"]]
             guideline_ids.update(*rules)
 
             run_result.append(
                 {
                     "testcase": row["inputs.testcase"],
-                    "expected": json.loads(row["inputs.response"]),
-                    "actual": json.loads(row["outputs.actual"]),
+                    "expected": response_obj,
+                    "actual": actual_obj,
                     "expected_comments": row["outputs.metrics.expected_comments"],
                     "comments_found": row["outputs.metrics.comments_found"],
                     "valid_generic_comments": row["outputs.metrics.valid_generic_comments"],
@@ -603,24 +603,9 @@ class PromptyEvaluator(BaseEvaluator):
         self.correct_field_name = f"correct_{self.comparison_field}"
 
     def __call__(self, *, response: str, actual: str, testcase: str, **kwargs):
-        # response and actual may already be parsed dicts (from prompt execution or JSONL loader).
-        # Accept dicts directly and fall back to json.loads for strings.
-        try:
-            if isinstance(response, (dict, list)):
-                expected_data = response
-            else:
-                expected_data = json.loads(response)
-        except (TypeError, json.JSONDecodeError):
-            # If response is not JSON, treat it as a plain string.
-            expected_data = response
-
-        try:
-            if isinstance(actual, (dict, list)):
-                actual_data = actual
-            else:
-                actual_data = json.loads(actual)
-        except (TypeError, json.JSONDecodeError):
-            actual_data = actual
+        # Use ensure_json_obj for both response and actual
+        expected_data = ensure_json_obj(response)
+        actual_data = ensure_json_obj(actual)
 
         # Safely extract comparison values
         try:

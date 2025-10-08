@@ -377,16 +377,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 }
 
                 // Check if any language is excluded
-                var excludedLangauges = supportedLanguages.Except(SdkInfos.Select(sdk => sdk.Language), StringComparer.OrdinalIgnoreCase);
-                if (excludedLangauges.Any())
+                var excludedLanguages = supportedLanguages.Except(SdkInfos.Select(sdk => sdk.Language), StringComparer.OrdinalIgnoreCase);
+                if (excludedLanguages.Any())
                 {
-                    logger.LogDebug("Languages excluded in release plan. Work Item: {releasePlanWorkItemId}, languages: {excludedLangauges}", releasePlanWorkItemId, string.Join(", ", excludedLangauges));
+                    logger.LogDebug("Languages excluded in release plan. Work Item: {releasePlanWorkItemId}, languages: {excludedLanguages}", releasePlanWorkItemId, string.Join(", ", excludedLanguages));
                     sb.AppendLine($"Important: The following languages were excluded in the release plan. SDK must be released for all languages. [{string.Join(", ", supportedLanguages)}]");
                     sb.AppendLine("Explanation is required for any language exclusion. Please provide a justification for each excluded language.");
 
                     // Mark excluded language as 'Requested' in the release plan work item.
                     Dictionary<string, string> fieldsToUpdate = [];
-                    foreach (var lang in excludedLangauges)
+                    foreach (var lang in excludedLanguages)
                     {
                         fieldsToUpdate[$"Custom.ReleaseExclusionStatusFor{DevOpsService.MapLanguageToId(lang)}"] = "Requested";
                     }
@@ -519,7 +519,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
 
                 if (!string.IsNullOrEmpty(language))
                 {
-                    fieldsToUpdate[$"Custom.ReleaseExclusionStatusFor{ DevOpsService.MapLanguageToId(language)}"] = "Requested";
+                    fieldsToUpdate[$"Custom.ReleaseExclusionStatusFor{DevOpsService.MapLanguageToId(language)}"] = "Requested";
                 }
 
                 var updatedWorkItem = await devOpsService.UpdateWorkItemAsync(releasePlanWorkItem, fieldsToUpdate);

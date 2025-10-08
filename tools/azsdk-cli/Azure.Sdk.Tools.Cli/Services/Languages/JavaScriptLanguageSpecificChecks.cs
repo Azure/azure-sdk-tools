@@ -1,3 +1,5 @@
+using System.Runtime.InteropServices;
+using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 
@@ -131,5 +133,34 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
             _logger.LogError(ex, "Error formatting JavaScript project at: {PackagePath}", packagePath);
             return new CLICheckResponse(1, "", $"Error formatting code: {ex.Message}");
         }
+    }
+}
+    public string GetSDKPackagePath(string repo, string packagePath)
+    {
+        // For JavaScript packages, read the package name from package.json
+        var packageJsonPath = Path.Combine(packagePath, "package.json");
+        if (File.Exists(packageJsonPath))
+        {
+            try
+            {
+                var packageJsonContent = File.ReadAllText(packageJsonPath);
+                using var document = JsonDocument.Parse(packageJsonContent);
+                if (document.RootElement.TryGetProperty("name", out var nameProperty))
+                {
+                    var packageName = nameProperty.GetString();
+                    if (!string.IsNullOrEmpty(packageName))
+                    {
+                        return packageName;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to parse package.json at {PackageJsonPath}. Falling back to directory name.", packageJsonPath);
+            }
+        }
+
+        // Fallback to directory name if package.json reading fails
+        return Path.GetFileName(packagePath) ?? string.Empty;
     }
 }

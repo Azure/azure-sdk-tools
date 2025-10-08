@@ -54,4 +54,16 @@ public interface ILanguageSpecificChecks
     {
         return Task.FromResult(new CLICheckResponse(1, "", "Not implemented for this language."));
     }
+
+    /// <summary>
+    /// Gets the SDK package path for the given repository and package path.
+    /// </summary>
+    /// <param name="repo">Repository root path</param>
+    /// <param name="packagePath">Package path</param>
+    /// <returns>SDK package path</returns>
+    string GetSDKPackagePath(string repo, string packagePath)
+    {
+        // Default implementation: use the directory name as the package path
+        return Path.GetFileName(packagePath) ?? string.Empty;
+    }
 }

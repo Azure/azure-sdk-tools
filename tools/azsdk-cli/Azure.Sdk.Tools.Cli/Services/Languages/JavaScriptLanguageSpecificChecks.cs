@@ -135,7 +135,7 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
         }
     }
 
-    public string GetSDKPackageName(string repo, string packagePath)
+    public async Task<string> GetSDKPackageNameAsync(string repo, string packagePath)
     {
         // For JavaScript packages, read the package name from package.json
         var packageJsonPath = Path.Combine(packagePath, "package.json");
@@ -143,7 +143,7 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
         {
             try
             {
-                var packageJsonContent = File.ReadAllText(packageJsonPath);
+                var packageJsonContent = await File.ReadAllTextAsync(packageJsonPath);
                 using var document = JsonDocument.Parse(packageJsonContent);
                 if (document.RootElement.TryGetProperty("name", out var nameProperty))
                 {

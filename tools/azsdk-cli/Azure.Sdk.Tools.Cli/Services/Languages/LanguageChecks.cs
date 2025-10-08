@@ -241,7 +241,7 @@ public class LanguageChecks : ILanguageChecks
             }
 
             var command = "pwsh";
-            var args = new[] { "-File", scriptPath, "-PackageName", languageSpecificCheck.GetSDKPackageName(packageRepoRoot, packagePath) };
+            var args = new[] { "-File", scriptPath, "-PackageName", await languageSpecificCheck.GetSDKPackageNameAsync(packageRepoRoot, packagePath) };
 
             // Use a longer timeout for changelog validation - 5 minutes should be sufficient
             var timeout = TimeSpan.FromMinutes(5);

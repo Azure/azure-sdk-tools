@@ -60,14 +60,6 @@ jobs:
           artifact: ${{ parameters.ArtifactName }}
           path: $(Artifacts)
 
-      - pwsh: |
-          Get-ChildItem -Recurse -Path "$(Pipeline.Workspace)" | ForEach-Object { $_.FullName }
-        displayName: Dump Pipeline.Workspace
-
-      - pwsh: |
-          Get-ChildItem -Recurse -Path "$(Artifacts)" | ForEach-Object { $_.FullName }
-        displayName: Dump $(Artifacts)
-
       - ${{ if eq(parameters.VerifyChangelog, true) }}:
         - pwsh: |
             $(Build.SourcesDirectory)\azure-sdk-tools\eng\scripts\Verify-Nuget-Artifact-Changelogs.ps1 -ArtifactsPath "$(Artifacts)" -ForRelease $true

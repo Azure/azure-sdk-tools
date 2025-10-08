@@ -60,7 +60,7 @@
 #####################
 /eng/common/instructions/azsdk-tools/   @maririos @praveenkuttappan @MrJustinB 
 /tools/azsdk-cli/                       @azure/azsdk-cli
-/tools/ai-evals/azsdk-mcp/               @jeo02 @smw-ms @praveenkuttappan @maririos
+/tools/ai-evals/azsdk-mcp/              @jeo02 @smw-ms @praveenkuttappan @maririos
 
 
 ###########

@@ -46,7 +46,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                 .ReturnsAsync(new ProcessResult { ExitCode = 1, OutputDetails = [(StdioLevel.StandardError, "Maven not found")] });
 
             // Act
-            var result = await LangService.FormatCodeAsync(JavaPackageDir, false, CancellationToken.None);
+            var result = await LangService.FormatCodeAsync(JavaPackageDir, CancellationToken.None, false);
 
             // Assert
             Assert.Multiple(() =>
@@ -68,7 +68,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                 .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [(StdioLevel.StandardOutput, "Apache Maven 3.9.9")] });
 
             // Act
-            var result = await LangService.FormatCodeAsync(emptyDir, false, CancellationToken.None);
+            var result = await LangService.FormatCodeAsync(emptyDir, CancellationToken.None, false);
             
             // Cleanup
             try { Directory.Delete(emptyDir, true); } catch { }
@@ -93,7 +93,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                 .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [(StdioLevel.StandardOutput, "BUILD SUCCESS")] });
 
             // Act
-            var result = await LangService.FormatCodeAsync(JavaPackageDir, false, CancellationToken.None);
+            var result = await LangService.FormatCodeAsync(JavaPackageDir, CancellationToken.None, false);
 
             // Assert
             Assert.Multiple(() =>
@@ -114,7 +114,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                 .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [(StdioLevel.StandardOutput, "BUILD SUCCESS")] });
 
             // Act
-            var result = await LangService.FormatCodeAsync(JavaPackageDir, true, CancellationToken.None);
+            var result = await LangService.FormatCodeAsync(JavaPackageDir, CancellationToken.None, true);
 
             // Assert
             Assert.Multiple(() =>
@@ -135,7 +135,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                 .ReturnsAsync(new ProcessResult { ExitCode = 1, OutputDetails = [(StdioLevel.StandardOutput, "The following files had format violations")] });
 
             // Act
-            var result = await LangService.FormatCodeAsync(JavaPackageDir, false, CancellationToken.None);
+            var result = await LangService.FormatCodeAsync(JavaPackageDir, CancellationToken.None, false);
 
             // Assert
             Assert.Multiple(() =>
@@ -158,7 +158,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                 .ReturnsAsync(new ProcessResult { ExitCode = 1, OutputDetails = [(StdioLevel.StandardOutput, "spotless failed with errors")] });
 
             // Act
-            var result = await LangService.FormatCodeAsync(JavaPackageDir, true, CancellationToken.None);
+            var result = await LangService.FormatCodeAsync(JavaPackageDir, CancellationToken.None, true);
 
             // Assert
             Assert.Multiple(() =>
@@ -185,7 +185,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                 .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [(StdioLevel.StandardOutput, "BUILD SUCCESS")] });
 
             // Act - run from subdirectory
-            var result = await LangService.FormatCodeAsync(subDir, false, CancellationToken.None);
+            var result = await LangService.FormatCodeAsync(subDir, CancellationToken.None, false);
 
             // Assert
             Assert.Multiple(() =>
@@ -209,7 +209,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                 .ThrowsAsync(new Exception("Process execution failed"));
 
             // Act
-            var result = await LangService.FormatCodeAsync(JavaPackageDir, false, CancellationToken.None);
+            var result = await LangService.FormatCodeAsync(JavaPackageDir, CancellationToken.None, false);
 
             // Assert
             Assert.Multiple(() =>
@@ -232,7 +232,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                 .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [(StdioLevel.StandardOutput, "BUILD SUCCESS")] });
 
             // Act
-            await LangService.FormatCodeAsync(JavaPackageDir, false, CancellationToken.None);
+            await LangService.FormatCodeAsync(JavaPackageDir, CancellationToken.None, false);
 
             // Assert - verify the correct Maven command was called
             MockProcessHelper.Verify(x => x.Run(It.Is<ProcessOptions>(p => 
@@ -258,7 +258,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                 .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [(StdioLevel.StandardOutput, "BUILD SUCCESS")] });
 
             // Act
-            await LangService.FormatCodeAsync(JavaPackageDir, true, CancellationToken.None);
+            await LangService.FormatCodeAsync(JavaPackageDir, CancellationToken.None, true);
 
             // Assert - verify the correct Maven command was called
             MockProcessHelper.Verify(x => x.Run(It.Is<ProcessOptions>(p => 

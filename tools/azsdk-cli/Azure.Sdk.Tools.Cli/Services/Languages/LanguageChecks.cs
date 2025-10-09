@@ -19,10 +19,10 @@ public interface ILanguageChecks
     /// Analyzes dependencies for the specific package.
     /// </summary>
     /// <param name="packagePath">Path to the package directory</param>
-    /// <param name="fixCheckErrors">Whether to attempt to automatically fix dependency issues</param>
     /// <param name="ct">Cancellation token</param>
+    /// <param name="fixCheckErrors">Whether to attempt to automatically fix dependency issues</param>
     /// <returns>Result of the dependency analysis</returns>
-    Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
+    Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct, bool fixCheckErrors = false);
 
     /// <summary>
     /// Validates the changelog for the specific package.
@@ -55,28 +55,28 @@ public interface ILanguageChecks
     /// Updates code snippets in the specific package.
     /// </summary>
     /// <param name="packagePath">Path to the package directory</param>
-    /// <param name="fixCheckErrors">Whether to attempt to automatically fix snippet issues</param>
     /// <param name="ct">Cancellation token</param>
+    /// <param name="fixCheckErrors">Whether to attempt to automatically fix snippet issues</param>
     /// <returns>Result of the snippet update operation</returns>
-    Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
+    Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, CancellationToken ct, bool fixCheckErrors = false);
 
     /// <summary>
     /// Lints code in the specific package.
     /// </summary>
     /// <param name="packagePath">Path to the package directory</param>
-    /// <param name="fixCheckErrors">Whether to automatically fix linting issues</param>
     /// <param name="ct">Cancellation token</param>
+    /// <param name="fixCheckErrors">Whether to automatically fix linting issues</param>
     /// <returns>Result of the code linting operation</returns>
-    Task<CLICheckResponse> LintCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
+    Task<CLICheckResponse> LintCodeAsync(string packagePath, CancellationToken ct, bool fixCheckErrors = false);
 
     /// <summary>
     /// Formats code in the specific package.
     /// </summary>
     /// <param name="packagePath">Path to the package directory</param>
-    /// <param name="fixCheckErrors">Whether to automatically apply code formatting</param>
     /// <param name="ct">Cancellation token</param>
+    /// <param name="fixCheckErrors">Whether to automatically apply code formatting</param>
     /// <returns>Result of the code formatting operation</returns>
-    Task<CLICheckResponse> FormatCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
+    Task<CLICheckResponse> FormatCodeAsync(string packagePath, CancellationToken ct, bool fixCheckErrors = false);
 
     /// <summary>
     /// Gets the SDK package path for the given repository and package path.
@@ -131,7 +131,7 @@ public class LanguageChecks : ILanguageChecks
         return (packageRepoRoot, null);
     }
 
-    public virtual async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    public virtual async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct, bool fixCheckErrors = false)
     {
         var languageSpecificCheck = await _languageSpecificCheckResolver.GetLanguageCheckAsync(packagePath);
 
@@ -145,7 +145,7 @@ public class LanguageChecks : ILanguageChecks
             );
         }
 
-        return await languageSpecificCheck.AnalyzeDependenciesAsync(packagePath, fixCheckErrors, ct);
+        return await languageSpecificCheck.AnalyzeDependenciesAsync(packagePath, ct, fixCheckErrors);
     }
 
     public virtual async Task<CLICheckResponse> ValidateChangelogAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
@@ -163,7 +163,7 @@ public class LanguageChecks : ILanguageChecks
         return await CheckSpellingCommonAsync(packagePath, fixCheckErrors, ct);
     }
 
-    public virtual async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    public virtual async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, CancellationToken ct, bool fixCheckErrors = false)
     {
         var languageSpecificCheck = await _languageSpecificCheckResolver.GetLanguageCheckAsync(packagePath);
 
@@ -177,10 +177,10 @@ public class LanguageChecks : ILanguageChecks
             );
         }
 
-        return await languageSpecificCheck.UpdateSnippetsAsync(packagePath, fixCheckErrors, ct);
+        return await languageSpecificCheck.UpdateSnippetsAsync(packagePath, ct, fixCheckErrors);
     }
 
-    public virtual async Task<CLICheckResponse> LintCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    public virtual async Task<CLICheckResponse> LintCodeAsync(string packagePath, CancellationToken ct, bool fixCheckErrors = false)
     {
         var languageSpecificCheck = await _languageSpecificCheckResolver.GetLanguageCheckAsync(packagePath);
 
@@ -194,10 +194,10 @@ public class LanguageChecks : ILanguageChecks
             );
         }
 
-        return await languageSpecificCheck.LintCodeAsync(packagePath, fixCheckErrors, ct);
+        return await languageSpecificCheck.LintCodeAsync(packagePath, ct, fixCheckErrors);
     }
 
-    public virtual async Task<CLICheckResponse> FormatCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    public virtual async Task<CLICheckResponse> FormatCodeAsync(string packagePath, CancellationToken ct, bool fixCheckErrors = false)
     {
         var languageSpecificCheck = await _languageSpecificCheckResolver.GetLanguageCheckAsync(packagePath);
 
@@ -211,7 +211,7 @@ public class LanguageChecks : ILanguageChecks
             );
         }
 
-        return await languageSpecificCheck.FormatCodeAsync(packagePath, fixCheckErrors, ct);
+        return await languageSpecificCheck.FormatCodeAsync(packagePath, ct, fixCheckErrors);
     }
 
     /// <summary>

@@ -30,7 +30,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
 
     public string SupportedLanguage => "Java";
 
-    public async Task<CLICheckResponse> FormatCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    public async Task<CLICheckResponse> FormatCodeAsync(string packagePath, CancellationToken cancellationToken, bool fixCheckErrors = false)
     {
         try
         {

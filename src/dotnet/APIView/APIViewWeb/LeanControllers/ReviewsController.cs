@@ -101,7 +101,7 @@ namespace APIViewWeb.LeanControllers
         }
 
         [HttpGet("enableNamespaceReview", Name = "EnableNamespaceReview")]
-        public ActionResult<bool> GetEnableNamespaceReviewAsync()
+        public ActionResult<bool> IsNamespaceReviewEnabled()
         {
             var enableNamespaceReview = _configuration["EnableNamespaceReview"];
             return new LeanJsonResult(enableNamespaceReview, StatusCodes.Status200OK);

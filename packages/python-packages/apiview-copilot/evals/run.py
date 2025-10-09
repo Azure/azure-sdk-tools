@@ -1,6 +1,7 @@
 import argparse
 
 import dotenv
+from _discovery import EvaluationDiscovery
 from _runner import EvalRunner
 
 dotenv.load_dotenv()
@@ -18,12 +19,14 @@ if __name__ == "__main__":
         "--test-paths",
         "-p",
         type=str,
-        nargs="+",
-        required=True,
+        nargs="*",
         help="Paths to directories containing test files.",
     )
     args = parser.parse_args()
-    test_paths = args.test_paths
-    for test_path in test_paths or [test_paths]:
-        runner = EvalRunner(test_path=test_path, num_runs=args.num_runs)
-        runner.run()
+    targets = EvaluationDiscovery.discover_targets(args.test_paths)
+    runner = EvalRunner()
+    try:
+        results = runner.run(targets)
+        runner.show_summary(results)
+    finally:
+        runner.cleanup()

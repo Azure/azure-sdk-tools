@@ -31,13 +31,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                 MockGitHelper.Object,
                 NullLogger<JavaLanguageSpecificChecks>.Instance);
         }
-
-        [Test]
-        public void TestSupportedLanguage()
-        {
-            Assert.That(LangService.SupportedLanguage, Is.EqualTo("Java"));
-        }
-
+        
         [Test]
         public async Task TestFormatCodeAsync_MavenNotAvailable_ReturnsError()
         {

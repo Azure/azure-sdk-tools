@@ -18,7 +18,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     [McpServerToolType]
     public class TestTool(
         ILogger<TestTool> logger,
-        ILanguageSpecificService<ITestRunner> testRunnerResolver
+        ILanguageSpecificResolver<ITestRunner> testRunnerResolver
     ) : MCPTool
     {
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];

@@ -90,10 +90,10 @@ public class LanguageChecks : ILanguageChecks
     private readonly INpxHelper _npxHelper;
     private readonly IGitHelper _gitHelper;
     private readonly ILogger<LanguageChecks> _logger;
-    private readonly ILanguageSpecificService<ILanguageSpecificChecks> _languageSpecificChecks;
+    private readonly ILanguageSpecificResolver<ILanguageSpecificChecks> _languageSpecificChecks;
     private readonly IMicroagentHostService _microagentHostService;
 
-    public LanguageChecks(IProcessHelper processHelper, INpxHelper npxHelper, IGitHelper gitHelper, ILogger<LanguageChecks> logger, ILanguageSpecificService<ILanguageSpecificChecks> languageSpecificChecks, IMicroagentHostService microagentHostService)
+    public LanguageChecks(IProcessHelper processHelper, INpxHelper npxHelper, IGitHelper gitHelper, ILogger<LanguageChecks> logger, ILanguageSpecificResolver<ILanguageSpecificChecks> languageSpecificChecks, IMicroagentHostService microagentHostService)
     {
         _processHelper = processHelper;
         _npxHelper = npxHelper;

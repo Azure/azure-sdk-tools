@@ -3,10 +3,10 @@ using Azure.Sdk.Tools.Cli.Models;
 
 namespace Azure.Sdk.Tools.Cli.Services;
 
-public class LanguageSpecificService<T>(
+public class LanguageSpecificResolver<T>(
     IGitHelper _gitHelper,
     IPowershellHelper _powershellHelper,
-    ILogger<LanguageSpecificService<T>> _logger,
+    ILogger<LanguageSpecificResolver<T>> _logger,
     [FromKeyedServices(SdkLanguage.DotNet)]
     T? dotnetService = default,
     [FromKeyedServices(SdkLanguage.Java)]
@@ -18,7 +18,7 @@ public class LanguageSpecificService<T>(
     [FromKeyedServices(SdkLanguage.Go)]
     T? goService = default
     // If adding languages in future, add a corresponding entry here.
-) : ILanguageSpecificService<T> where T : class
+) : ILanguageSpecificResolver<T> where T : class
 {
     public async Task<T?> Resolve(string packagePath, CancellationToken ct = default)
     {

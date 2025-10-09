@@ -114,7 +114,7 @@ public class TspClientUpdateToolAutoTests
         }
     }
 
-    private class SingleResolver : ILanguageSpecificService<IClientUpdateLanguageService>
+    private class SingleResolver : ILanguageSpecificResolver<IClientUpdateLanguageService>
     {
         private readonly IClientUpdateLanguageService _svc;
         public SingleResolver(IClientUpdateLanguageService svc) { _svc = svc; }

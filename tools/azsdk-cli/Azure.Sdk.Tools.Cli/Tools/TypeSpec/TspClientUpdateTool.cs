@@ -15,7 +15,7 @@ namespace Azure.Sdk.Tools.Cli.Tools;
 [McpServerToolType, Description("Update customized SDK code after TypeSpec regeneration: creates a new generation, diffs old vs new generated code, maps API changes to impacted customization files, applies patches.")]
 public class TspClientUpdateTool(
     ILogger<TspClientUpdateTool> logger,
-    ILanguageSpecificService<IClientUpdateLanguageService> clientUpdateLanguageSpecificService,
+    ILanguageSpecificResolver<IClientUpdateLanguageService> clientUpdateLanguageSpecificService,
     ITspClientHelper tspClientHelper
 ) : MCPTool
 {

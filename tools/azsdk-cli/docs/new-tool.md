@@ -417,7 +417,7 @@ public class MyCustomTemplate : BasePromptTemplate
     /// <param name="inputData">The data to analyze</param>
     /// <param name="analysisType">Type of analysis to perform</param>
     /// <returns>Complete structured prompt for custom analysis</returns>
-    public string BuildPrompt(string inputData, string analysisType = "general")
+    public override string BuildPrompt(string inputData, string analysisType = "general")
     {
         var taskInstructions = $"""
         You are a data analysis assistant.

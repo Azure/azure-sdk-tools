@@ -101,14 +101,15 @@ system:
   - Are names of reasonable length?
 
   # GENERAL RULES
-  - Focus on qualitative aspects rather than strict guidelines
   - Each line of the APIView is prepended with a line number and colon, followed by a diff marker. + means a line was added, - means a line was removed. No marker means the line is unchanged.
+  - Only comment on added lines (+), and only on the parts of those lines that actually changed compared to the removed (-) version. Ignore removed (-) and unchanged lines.
+  - Use the full code context to understand the change, but do not comment on unchanged tokens (e.g., parameter names that stayed the same).
+  - Focus on qualitative aspects rather than strict guidelines
   - Make concrete suggestions for improvements
   - Consider developer experience and ergonomics
   - Look for opportunities to make the API more idiomatic in {{language}}
   - Consider both experienced and novice {{language}} developers
   - APIView shows a high-level {{language}} pseudocode summary, not implementations
-  - ONLY comment on lines that were changed (marked with a +). DO NOT make comments on unchanged lines (no + or -) or lines removed (-).
   - ONLY comment on improvements that can be made. Do not say why something is good, or make general observations
 
   {{custom_rules}}

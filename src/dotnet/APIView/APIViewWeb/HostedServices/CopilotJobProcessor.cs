@@ -100,8 +100,10 @@ namespace APIViewWeb.HostedServices
                         APIRevisionId = jobInfo.APIRevision.Id,
                         ElementId = codeLine.lineId ?? (comment.Source == SummarySource ? CodeFileHelpers.FirstRowElementId : null),
                         IsGeneric = comment.IsGeneric,
+                        CorrelationId = comment.CorrelationId,
                         GuidelineIds = comment.GuidelineIds ?? [],
-                        MemoryIds = comment.MemoryIds ?? []
+                        MemoryIds = comment.MemoryIds ?? [],
+                        Severity = CommentItemModel.ParseSeverity(comment.Severity)
                     };
 
                     var commentText = new StringBuilder();

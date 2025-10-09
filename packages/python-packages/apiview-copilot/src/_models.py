@@ -111,6 +111,16 @@ class Comment(BaseModel):
         description="the suggested code which fixes the bad code. If code is not feasible, a description is fine."
     )
     comment: str = Field(description="the contents of the comment.")
+    correlation_id: Optional[str] = Field(
+        default=None, description="a correlation ID for grouping similar comments together."
+    )
+    confidence_score: Optional[float] = Field(
+        default=None, description="Confidence score from the judge prompt (0.0 - 1.0)."
+    )
+    severity: Optional[str] = Field(
+        default=None,
+        description="The severity level of the comment: 'SUGGESTION', 'SHOULD', 'MUST', or 'QUESTION'.",
+    )
 
     def __init__(self, **data):
         super().__init__(**data)

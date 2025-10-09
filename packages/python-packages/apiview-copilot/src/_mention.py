@@ -37,7 +37,8 @@ def handle_mention_request(*, comments: list[str], language: str, package_name: 
         trigger_comment=trigger_comment,
         other_comments=other_comments,
     )
-    if action_results.get("recommendation") == "update_kb":
+    action = action_results.get("action")
+    if action == "update_kb":
         plan = _parse_conversation_plan(
             language=language,
             code=code,
@@ -48,7 +49,7 @@ def handle_mention_request(*, comments: list[str], language: str, package_name: 
         )
         results = _execute_plan(plan=plan)
         return _summarize_results(results)
-    elif action_results.get("recommendation") == "no_action":
+    elif action == "no_action":
         return f"No action required: {action_results.get('reasoning')}"
     else:
         return "Something went wrong!"

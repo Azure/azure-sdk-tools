@@ -1,30 +1,6 @@
 # Azure SDK QA Bot Backend
 
-The Azure SDK QA Bot Backend is a service that powers a conversational assistant for Microsoft Teams, specifically designed to help developers with TypeSpec-related questions. It leverages Azure's AI services to provide accurate and context-aware responses by searching through comprehensive TypeSpec documentation.
-
-## Overview
-
-This service integrates with Microsoft Teams and provides an intelligent chatbot interface that can:
-- Answer questions about TypeSpec syntax and usage
-- Provide code examples and best practices
-- Search through official TypeSpec documentation
-- Assist with TypeSpec-related troubleshooting
-
-## Features
-
-The bot provides intelligent responses by searching through knowledge bases including:
-
-- [TypeSpec documentation](https://typespec.io/docs/)
-- [TypeSpec Azure documentation](https://azure.github.io/typespec-azure/docs/intro/)
-- ......
-
-Additional features include:
-
-- Real-time document search and retrieval
-- Context-aware responses
-- Integration with Microsoft Teams
-- Feedback collection for continuous improvement
-- Intent recognition
+The Azure SDK QA Bot Backend is designed to help developers with Azure SDK questions. This project builds on RAG framework, leverages Azure's AI services, AI search to provide accurate and context-aware responses by searching through knowledge base.
 
 ## Prerequisites
 
@@ -42,7 +18,6 @@ Additional features include:
 ### Grant Resource Permissions
 
 1. Configure Required Permissions:
-   - **Assign the following roles to your azure account**
      - Storage Blob Data Contributor
      - Key Vault Secrets User
      - App Configuration Data Reader
@@ -55,21 +30,24 @@ Additional features include:
    cd tools/sdk-ai-bots/azure-sdk-qa-bot-backend
    ```
 
-2. Install latest Go:
-
-   ```bash
-   sudo apt install golang-go
-   ```
+2. Install [Go 1.23.x](https://go.dev/doc/install) or later
 
 3. Install Azure Cli, reference https://learn.microsoft.com/en-us/cli/azure/install-azure-cli-windows?view=azure-cli-latest&pivots=msi
 
 4. Login to Azure:
 
    ```bash
-   az login
+   az login ### select the Azure SDK Engineering System subscription
    ```
 
-5. Start the server:
+5. Set environment
+   Create .env file under the project root with this content:
+
+   ```bash
+   AZURE_APPCONFIG_ENDPOINT=https://azuresdkqabot-dev-config.azconfig.io
+   ```
+
+6. Start the server:
 
    ```bash
    ./run.sh start
@@ -82,11 +60,21 @@ Additional features include:
 
 ## API Usage
 
-### Completion Endpoint
 The main endpoint for querying the bot is `/completion`. [Here](test/api_test.rest) is an example of how to use it
 
-The API_KEY could found in the [keyvalut](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/faa080af-c1d8-40ad-9cce-e1a450ca5b57/resourceGroups/typespec_helper/providers/Microsoft.KeyVault/vaults/azuresdkqabotea/secrets)
+### How to get remote endpoint?
 
+Choose the environment you want to test, the `Default domain` filed is the endpoint:
+
+- Prod: [azuresdkqabot-server](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot/providers/Microsoft.Web/sites/azuresdkqabot-server/appServices)
+- Preview: [azuresdkqabot-test-server](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-test/providers/Microsoft.Web/sites/azuresdkqabot-test-server/appServices)
+- Dev: [azuresdkqabot-dev-server](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/a18897a6-7e44-457d-9260-f2854c0aca42/resourceGroups/azure-sdk-qa-bot-dev/providers/Microsoft.Web/sites/azuresdkqabot-dev-server/appServices)
+
+### How to get access token?
+
+- Prod: `az account get-access-token --resource api://azure-sdk-qa-bot`
+- Preview: `az account get-access-token --resource api://azure-sdk-qa-bot-test`
+- Dev: `az account get-access-token --resource api://azure-sdk-qa-bot-dev`
 
 ## Development
 
@@ -107,8 +95,10 @@ go test ./...
 
 ## Deploy
 
+Before deploy, you need to install [Docker](https://docs.docker.com/engine/install/)
+
   ```bash
-  ./deploy.sh -t [tag] -m [slot|preview|prod]
+  ./deploy.sh -t [tag] -e [dev|preview|prod]
   ```
 
 ## Contributing

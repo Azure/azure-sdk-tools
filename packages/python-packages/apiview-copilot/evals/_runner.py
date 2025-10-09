@@ -137,13 +137,16 @@ class EvalRunner:
         Returns:
             List of EvaluationResult objects.
         """
-        self._ensure_context()
-        
-        print(f"🚀 Executing {len(discovery_result.targets)} evaluation targets...")
-        print(f"📊 {discovery_result.summary}")
-        print()
+        try:
+            self._ensure_context()
+            
+            print(f"🚀 Executing {len(discovery_result.targets)} evaluation targets...")
+            print(f"📊 {discovery_result.summary}")
+            print()
 
-        return self._run_parallel(discovery_result)
+            return self._run_parallel(discovery_result)
+        finally:
+            self.cleanup()
     
     def _run_parallel(self, discovery_result: DiscoveryResult) -> List[EvaluationResult]:
         """Parallel execution using ThreadPoolExecutor."""

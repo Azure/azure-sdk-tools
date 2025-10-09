@@ -25,8 +25,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
     targets = EvaluationDiscovery.discover_targets(args.test_paths)
     runner = EvalRunner()
-    try:
-        results = runner.run(targets)
-        runner.show_summary(results)
-    finally:
-        runner.cleanup()
+    results = runner.run(targets)
+    runner.show_summary(results)

@@ -150,7 +150,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             var results = ParseFromJsonFile(Path.Combine(_targetResultsDirectory, $"{testName}-results.json"));
 
             // once we have the timing of one operation( in nano seconds) divide one sec in nanos by the time to get ops/sec
-            var opsPerSecond = results.OperationsPerSecond ;
+            var opsPerSecond = results.OperationsPerSecond;
 
             return opsPerSecond;
         }

@@ -14,7 +14,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     /// <summary>
     /// This tool runs tests for the specified SDK package.
     /// </summary>
-    [Description("Run tests for SDK packages")]
+    [Description("Run tests for the specified SDK package")]
     [McpServerToolType]
     public class TestTool(
         ILogger<TestTool> logger,
@@ -37,7 +37,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return await RunPackageTests(packagePath, ct);
         }
 
-        [McpServerTool(Name = "azsdk_package_run_tests"), Description("Run tests for SDK packages. Provide package path.")]
+        [McpServerTool(Name = "azsdk_package_run_tests"), Description("Run tests for the specified SDK package. Provide package path.")]
         public async Task<DefaultCommandResponse> RunPackageTests(string packagePath, CancellationToken ct = default)
         {
             try

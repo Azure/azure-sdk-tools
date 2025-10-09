@@ -135,12 +135,17 @@ class EvaluationDiscovery:
     def _discover_single_workflow(workflow_dir: Path) -> list[EvaluationTarget]:
         """Discover a single workflow directory."""
         config = load_workflow_config(workflow_dir)
-        test_files = tuple(sorted(
+        all_files = (
             list(workflow_dir.glob("*.json")) +
             list(workflow_dir.glob("*.yaml")) +
             list(workflow_dir.glob("*.yml"))
-        ))
-        
+        )
+
+        test_files = tuple(sorted([
+            f for f in all_files
+            if f.name not in ["test-config.yaml", "test-config.yml"]
+        ]))
+
         if not test_files:
             raise ValueError(f"No test files found in workflow: {workflow_dir}")
         

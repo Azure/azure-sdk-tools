@@ -34,13 +34,11 @@ namespace APIViewWeb.Models
         /// <summary>
         /// Data plane package (client libraries for Azure services)
         /// </summary>
-        [EnumMember(Value = "client")]
-        Data,
+        client,
 
         /// <summary>
         /// Management plane package (resource management libraries)
         /// </summary>
-        [EnumMember(Value = "mgmt")]
-        Management,
+        mgmt,
     }
 }

@@ -88,7 +88,7 @@ public abstract class ClientUpdateLanguageServiceBase : IClientUpdateLanguageSer
         }
         try
         {
-            var depResult = await checks.AnalyzeDependenciesAsync(packagePath, false, ct);
+            var depResult = await checks.AnalyzeDependenciesAsync(packagePath, ct, false);
             if (depResult.ExitCode == 0)
             {
                 return ValidationResult.CreateSuccess();

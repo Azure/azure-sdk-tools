@@ -26,13 +26,13 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
         _logger = logger;
     }
 
-    public async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct)
+    public async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct, bool fixCheckErrors = false)
     {
         // Implementation for analyzing dependencies in a JavaScript project
         return await Task.FromResult(new CLICheckResponse());
     }
 
-    public async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, CancellationToken cancellationToken = default)
+    public async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, CancellationToken cancellationToken, bool fixCheckErrors = false)
     {
         try
         {

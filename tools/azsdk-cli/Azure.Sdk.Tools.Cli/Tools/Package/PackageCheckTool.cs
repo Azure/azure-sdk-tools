@@ -122,7 +122,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             var failedChecks = new List<string>();
 
             // Run dependency check
-            var dependencyCheckResult = await languageChecks.AnalyzeDependenciesAsync(packagePath, fixCheckErrors, ct);
+            var dependencyCheckResult = await languageChecks.AnalyzeDependenciesAsync(packagePath, ct, fixCheckErrors);
             results.Add(dependencyCheckResult);
             if (dependencyCheckResult.ExitCode != 0)
             {
@@ -158,7 +158,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             // Run snippet update
-            var snippetUpdateResult = await languageChecks.UpdateSnippetsAsync(packagePath, fixCheckErrors, ct);
+            var snippetUpdateResult = await languageChecks.UpdateSnippetsAsync(packagePath, ct, fixCheckErrors);
             results.Add(snippetUpdateResult);
             if (snippetUpdateResult.ExitCode != 0)
             {
@@ -167,7 +167,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             // Run code linting
-            var lintCodeResult = await languageChecks.LintCodeAsync(packagePath, fixCheckErrors, ct);
+            var lintCodeResult = await languageChecks.LintCodeAsync(packagePath, ct, fixCheckErrors);
             results.Add(lintCodeResult);
             if (lintCodeResult.ExitCode != 0)
             {
@@ -176,7 +176,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             // Run code formatting
-            var formatCodeResult = await languageChecks.FormatCodeAsync(packagePath, fixCheckErrors, ct);
+            var formatCodeResult = await languageChecks.FormatCodeAsync(packagePath, ct, fixCheckErrors);
             results.Add(formatCodeResult);
             if (formatCodeResult.ExitCode != 0)
             {
@@ -244,7 +244,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             logger.LogInformation("Running dependency check");
 
-            var result = await languageChecks.AnalyzeDependenciesAsync(packagePath, fixCheckErrors, ct);
+            var result = await languageChecks.AnalyzeDependenciesAsync(packagePath, ct, fixCheckErrors);
 
             if (result.ExitCode != 0)
             {
@@ -306,7 +306,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             logger.LogInformation("Running snippet update");
 
-            var result = await languageChecks.UpdateSnippetsAsync(packagePath, fixCheckErrors, ct);
+            var result = await languageChecks.UpdateSnippetsAsync(packagePath, ct, fixCheckErrors);
             return result;
         }
 
@@ -314,7 +314,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             logger.LogInformation("Running code linting");
 
-            var result = await languageChecks.LintCodeAsync(packagePath, fixCheckErrors, ct);
+            var result = await languageChecks.LintCodeAsync(packagePath, ct, fixCheckErrors);
             return result;
         }
 
@@ -322,7 +322,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             logger.LogInformation("Running code formatting");
 
-            var result = await languageChecks.FormatCodeAsync(packagePath, fixCheckErrors, ct);
+            var result = await languageChecks.FormatCodeAsync(packagePath, ct, fixCheckErrors);
             return result;
         }
     }

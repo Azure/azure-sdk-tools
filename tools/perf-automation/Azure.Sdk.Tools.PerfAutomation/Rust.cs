@@ -82,7 +82,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             // Set AZURE_TEST_MODE environment variable to "live" before invoking the compiler
             Environment.SetEnvironmentVariable("AZURE_TEST_MODE", "live");
             // set up the params for cargo
-            string finalParams = $"test --package {primaryPackage} --test performance_tests -- --test-results {_targetResultsDirectory}/{testName}-results.json \"{testName}\" {arguments}";
+            string finalParams = $"test --package {primaryPackage} --test perf -- --test-results {_targetResultsDirectory}/{testName}-results.json \"{testName}\" {arguments}";
             ProcessResult result = new ProcessResult(0, String.Empty, String.Empty);
             if (IsTest)
             {
@@ -149,10 +149,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             // the results are in the target directory under target/criterion/<testName>/new
             var results = ParseFromJsonFile(Path.Combine(_targetResultsDirectory, $"{testName}-results.json"));
 
-            // once we have the timing of one operation( in nano seconds) divide one sec in nanos by the time to get ops/sec
-            var opsPerSecond = results.OperationsPerSecond;
-
-            return opsPerSecond;
+            return results.OperationsPerSecond;
         }
 
         private Models.Rust.Samples ParseFromJsonFile(string filePath)

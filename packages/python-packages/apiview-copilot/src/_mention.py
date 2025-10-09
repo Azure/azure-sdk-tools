@@ -16,6 +16,7 @@ import prompty
 import prompty.azure
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from src._database_manager import DatabaseManager
+from src._github_manager import GithubManager
 from src._models import Example, Guideline, Memory
 from src._search_manager import SearchManager
 from src._utils import get_prompt_path
@@ -52,13 +53,48 @@ def handle_mention_request(*, comments: list[str], language: str, package_name: 
     elif action == "no_action":
         return f"No action required: {action_results.get('reasoning')}"
     elif action == "open_parser_issue":
-        _open_parser_issue()
+        plan = _plan_github_parser_issue(
+            language=language,
+            code=code,
+            package_name=package_name,
+            trigger_comment=trigger_comment,
+            other_comments=other_comments,
+            reasoning=action_results.get("reasoning", ""),
+        )
+        results = _post_github_issue(plan=plan)
+        return _summarize_results(results)
     else:
         return "Something went wrong!"
 
 
-def _open_parser_issue():
-    pass
+def _plan_github_parser_issue(
+    *, language: str, code: str, package_name: str, trigger_comment: str, other_comments: list[str], reasoning: str
+):
+    prompty_file = "parse_conversation_to_github_issue.prompty"
+    prompt_path = get_prompt_path(folder="mention", filename=prompty_file)
+    if not os.path.exists(prompt_path):
+        print(f"Prompt file {prompt_path} does not exist.")
+        return
+    inputs = {
+        "language": language,
+        "code": code,
+        "package_name": package_name,
+        "trigger_comment": trigger_comment,
+        "other_comments": other_comments,
+        "reasoning": reasoning,
+    }
+    raw_results = prompty.execute(prompt_path, inputs=inputs)
+    try:
+        results = json.loads(raw_results)
+        return results
+    except json.JSONDecodeError:
+        return raw_results
+
+
+def _post_github_issue(*, plan: dict):
+    client = GithubManager()
+    client.create_issue(owner="Azure", repo="azure-sdk-tools", title=plan.get("title"), body=plan.get("body"))
+    test = "best"
 
 
 def _parse_conversation_action(

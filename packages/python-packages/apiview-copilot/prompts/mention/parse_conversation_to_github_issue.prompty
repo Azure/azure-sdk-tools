@@ -48,7 +48,6 @@ how something is being misrepresented in the APIView due to a parser bug.
 - The title should begin with a tag in brackets: `[<LANGUAGE> APIView]`
 - The title should clearly express what is being done wrong. Example: "[Python APIView] Literal values are not quoted"
 - The body should provide the following information in a concise manner:
-  - a URL to the APIView revision
   - The bad code snippet
   - Description of what it should do
   - Example of a good code snippet

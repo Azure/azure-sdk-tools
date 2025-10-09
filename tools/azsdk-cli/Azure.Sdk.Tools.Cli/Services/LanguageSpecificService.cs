@@ -3,17 +3,37 @@ using Azure.Sdk.Tools.Cli.Models;
 
 namespace Azure.Sdk.Tools.Cli.Services;
 
-public class LanguageSpecificResolver(IServiceProvider _serviceProvider, IGitHelper _gitHelper, IPowershellHelper _powershellHelper, ILogger<LanguageSpecificResolver> _logger) : ILanguageSpecificResolver
+public class LanguageSpecificService<T>(
+    IGitHelper _gitHelper,
+    IPowershellHelper _powershellHelper,
+    ILogger<LanguageSpecificService<T>> _logger,
+    [FromKeyedServices(SdkLanguage.DotNet)]
+    T? dotnetService = default,
+    [FromKeyedServices(SdkLanguage.Java)]
+    T? javaService = default,
+    [FromKeyedServices(SdkLanguage.Python)]
+    T? pythonService = default,
+    [FromKeyedServices(SdkLanguage.JavaScript)]
+    T? javaScriptService = default,
+    [FromKeyedServices(SdkLanguage.Go)]
+    T? goService = default
+    // If adding languages in future, add a corresponding entry here.
+) : ILanguageSpecificService<T> where T : class
 {
-    public async Task<TService?> Resolve<TService>(string packagePath, CancellationToken ct = default)
+    public async Task<T?> Resolve(string packagePath, CancellationToken ct = default)
     {
         var language = await DetectLanguageAsync(packagePath, ct);
-        if (language == null)
-        {
-            return default;
-        }
 
-        return _serviceProvider.GetKeyedService<TService>(language);
+        return language switch
+        {
+            SdkLanguage.DotNet => dotnetService,
+            SdkLanguage.Java => javaService,
+            SdkLanguage.Python => pythonService,
+            SdkLanguage.JavaScript => javaScriptService,
+            SdkLanguage.Go => goService,
+            // If adding languages in future, add a corresponding entry here.
+            _ => default,
+        };
     }
 
     private async Task<SdkLanguage?> DetectLanguageAsync(string packagePath, CancellationToken ct)

@@ -32,22 +32,28 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IDevOpsService, DevOpsService>();
             services.AddSingleton<IGitHubService, GitHubService>();
 
-            services.AddScoped<ILanguageSpecificResolver, LanguageSpecificResolver>();
-
             // Language Check Services (Composition-based)
             services.AddScoped<ILanguageChecks, LanguageChecks>();
-            services.AddKeyedScoped<ILanguageSpecificChecks, PythonLanguageSpecificChecks>(SdkLanguage.Python);
-            services.AddKeyedScoped<ILanguageSpecificChecks, JavaLanguageSpecificChecks>(SdkLanguage.Java);
-            services.AddKeyedScoped<ILanguageSpecificChecks, JavaScriptLanguageSpecificChecks>(SdkLanguage.JavaScript);
-            services.AddKeyedScoped<ILanguageSpecificChecks, DotNetLanguageSpecificChecks>(SdkLanguage.DotNet);
-            services.AddKeyedScoped<ILanguageSpecificChecks, GoLanguageSpecificChecks>(SdkLanguage.Go);
+            services.AddLanguageSpecific<ILanguageSpecificChecks>(new LanguageSpecificImplementations
+            {
+                Python = typeof(PythonLanguageSpecificChecks),
+                Java = typeof(JavaLanguageSpecificChecks),
+                JavaScript = typeof(JavaScriptLanguageSpecificChecks),
+                DotNet = typeof(DotNetLanguageSpecificChecks),
+                Go = typeof(GoLanguageSpecificChecks),
+            });
 
             // Client update language services
-            services.AddKeyedScoped<IClientUpdateLanguageService, JavaUpdateLanguageService>(SdkLanguage.Java);
-            // Future: services.AddSingleton<IClientUpdateLanguageService, PythonClientUpdateLanguageService>(); etc.
+            services.AddLanguageSpecific<IClientUpdateLanguageService>(new LanguageSpecificImplementations
+            {
+                Java = typeof(JavaUpdateLanguageService),
+                // Future: Python = typeof(PythonUpdateLanguageService), etc
+            });
 
-            services.AddKeyedScoped<ITestRunner, JavaScriptTestRunner>(SdkLanguage.JavaScript);
-            // TODO: add your language's test runner here.
+            services.AddLanguageSpecific<ITestRunner>(new LanguageSpecificImplementations
+            {
+                JavaScript = typeof(JavaScriptTestRunner),
+            });
 
             // Helper classes
             services.AddSingleton<ILogAnalysisHelper, LogAnalysisHelper>();

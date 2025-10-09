@@ -15,7 +15,7 @@ namespace Azure.Sdk.Tools.Cli.Tools;
 [McpServerToolType, Description("Update customized SDK code after TypeSpec regeneration: creates a new generation, diffs old vs new generated code, maps API changes to impacted customization files, applies patches.")]
 public class TspClientUpdateTool(
     ILogger<TspClientUpdateTool> logger,
-    ILanguageSpecificResolver languageSpecificResolver,
+    ILanguageSpecificService<IClientUpdateLanguageService> clientUpdateLanguageSpecificService,
     ITspClientHelper tspClientHelper
 ) : MCPTool
 {
@@ -66,7 +66,7 @@ public class TspClientUpdateTool(
             {
                 return new TspClientUpdateResponse { ErrorCode = "1", ResponseError = "Commit SHA is required." };
             }
-            var resolved = await languageSpecificResolver.Resolve<IClientUpdateLanguageService>(packagePath, ct);
+            var resolved = await clientUpdateLanguageSpecificService.Resolve(packagePath, ct);
             if (resolved == null)
             {
                 return new TspClientUpdateResponse { ErrorCode = "NoLanguageService", ResponseError = "Could not resolve a client update language service." };

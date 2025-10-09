@@ -18,7 +18,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     [McpServerToolType]
     public class TestTool(
         ILogger<TestTool> logger,
-        ILanguageSpecificResolver languageServiceResolver
+        ILanguageSpecificService<ITestRunner> testRunnerResolver
     ) : MCPTool
     {
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
@@ -51,7 +51,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             try
             {
                 logger.LogInformation("Starting tests for package at: {packagePath}", packagePath);
-                var testRunner = await languageServiceResolver.Resolve<ITestRunner>(packagePath, ct);
+                var testRunner = await testRunnerResolver.Resolve(packagePath, ct);
 
                 if(testRunner == null)
                 {

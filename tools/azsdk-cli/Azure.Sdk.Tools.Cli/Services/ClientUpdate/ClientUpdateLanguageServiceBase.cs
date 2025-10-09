@@ -15,15 +15,15 @@ public abstract class ClientUpdateLanguageServiceBase : IClientUpdateLanguageSer
     /// Resolves language-specific dependency / quality checks for a generated client package.
     /// Implementations typically supply an instance able to run build / type / dependency validations.
     /// </summary>
-    protected ILanguageSpecificResolver LanguageServiceResolver { get; }
+    protected ILanguageSpecificService<ILanguageSpecificChecks> LanguageSpecificChecks { get; }
 
     /// <summary>
     /// Initializes the base language service.
     /// </summary>
-    /// <param name="languageServiceResolver">Resolver that returns an object capable of executing validation checks for a given generated package path.</param>
-    protected ClientUpdateLanguageServiceBase(ILanguageSpecificResolver languageServiceResolver)
+    /// <param name="languageSpecificChecks">Resolver that returns an object capable of executing validation checks for a given generated package path.</param>
+    protected ClientUpdateLanguageServiceBase(ILanguageSpecificService<ILanguageSpecificChecks> languageSpecificChecks)
     {
-        this.LanguageServiceResolver = languageServiceResolver;
+        this.LanguageSpecificChecks = languageSpecificChecks;
     }
 
     /// <summary>
@@ -81,7 +81,7 @@ public abstract class ClientUpdateLanguageServiceBase : IClientUpdateLanguageSer
         {
             return ValidationResult.CreateFailure($"Package path not found: {packagePath}");
         }
-        var checks = await LanguageServiceResolver.Resolve<ILanguageSpecificChecks>(packagePath);
+        var checks = await LanguageSpecificChecks.Resolve(packagePath);
         if (checks == null)
         {
             return ValidationResult.CreateSuccess();

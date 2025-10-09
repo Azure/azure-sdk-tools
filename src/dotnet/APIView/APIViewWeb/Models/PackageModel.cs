@@ -3,6 +3,7 @@
 using CsvHelper.Configuration.Attributes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using System.Runtime.Serialization;
 
 namespace APIViewWeb.Models
 {
@@ -31,13 +32,15 @@ namespace APIViewWeb.Models
     public enum PackageType
     {
         /// <summary>
-        /// Data plane package
+        /// Data plane package (client libraries for Azure services)
         /// </summary>
+        [EnumMember(Value = "client")]
         Data,
 
         /// <summary>
-        /// Management plane package
+        /// Management plane package (resource management libraries)
         /// </summary>
+        [EnumMember(Value = "mgmt")]
         Management,
     }
 }

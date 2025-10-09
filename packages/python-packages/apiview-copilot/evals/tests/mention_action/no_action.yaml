@@ -1,0 +1,26 @@
+testcase: mention_action_no_action
+language: python
+package_name: azure.widget
+code: "async def list_widgets(): AsyncPageItem[Widget]"
+
+other_comments:
+  - CreatedBy: azure-sdk
+    CreatedOn: "2025-07-03T09:15:00-07:00"
+    CommentText: |
+      You should not define list operations that return AsyncPageItem with the async keyword.
+
+      Suggestion: `def list_widgets(): AsyncPageItem[Widget]`
+    Upvotes:
+      - annatisch
+
+trigger_comment:
+  CreatedBy: annatisch
+  CreatedOn: "2025-07-03T09:20:00-07:00"
+  CommentText: "@azure-sdk yes that's right!"
+
+response:
+  action: no_action
+  reasoning: >
+    The architect is merely agreeing with the copilot's comment without providing 
+    any additional insights or corrections. Therefore, there is no new information 
+    to add to the Knowledge Base.

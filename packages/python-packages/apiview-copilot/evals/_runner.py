@@ -1,4 +1,5 @@
 import json
+import yaml
 import os
 import sys
 import tempfile
@@ -63,6 +64,19 @@ class ExecutionContext:
         """Get credential kwargs for Azure AI evaluation."""
         return self._credential_kwargs
     
+    def _load_test_file(self, test_file: Path) -> dict:
+        """Load test file - supports both JSON and YAML formats."""
+        try:
+            with test_file.open("r", encoding="utf-8") as f:
+                if test_file.suffix == '.json':
+                    return json.load(f)
+                elif test_file.suffix in ['.yaml', '.yml']:
+                    return yaml.safe_load(f)
+                else:
+                    raise ValueError(f"Unsupported file format: {test_file.suffix}")
+        except Exception as e:
+            raise ValueError(f"Failed to read/parse test file {test_file}: {e}") from e
+    
     def create_temporary_jsonl_file(self, target: EvaluationTarget) -> Path:
         """
         Collect all test files with the *.json extension in the given directory
@@ -77,11 +91,7 @@ class ExecutionContext:
 
         with out_path.open("w", encoding="utf-8") as out_f:
             for test_file in target.test_files:
-                try:
-                    with test_file.open("r", encoding="utf-8") as f:
-                        obj = json.load(f)
-                except Exception as e:
-                    raise ValueError(f"Failed to read/parse test file {test_file}: {e}") from e
+                obj = self._load_test_file(test_file)
                 out_f.write(json.dumps(obj, separators=(",", ":"), ensure_ascii=False))
                 out_f.write("\n")
 

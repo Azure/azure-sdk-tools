@@ -92,7 +92,7 @@ class EvaluationDiscovery:
         if not path.exists():
             raise ValueError(f"Path does not exist: {path}")
         
-        if path.is_file() and path.suffix == '.json':
+        if path.is_file() and path.suffix in ['.json', '.yaml', '.yml']:
             return EvaluationDiscovery._discover_single_test(path)
         elif path.is_dir():
             return EvaluationDiscovery._discover_from_directory(path)
@@ -135,7 +135,11 @@ class EvaluationDiscovery:
     def _discover_single_workflow(workflow_dir: Path) -> list[EvaluationTarget]:
         """Discover a single workflow directory."""
         config = load_workflow_config(workflow_dir)
-        test_files = tuple(sorted(workflow_dir.glob("*.json")))
+        test_files = tuple(sorted(
+            list(workflow_dir.glob("*.json")) +
+            list(workflow_dir.glob("*.yaml")) +
+            list(workflow_dir.glob("*.yml"))
+        ))
         
         if not test_files:
             raise ValueError(f"No test files found in workflow: {workflow_dir}")

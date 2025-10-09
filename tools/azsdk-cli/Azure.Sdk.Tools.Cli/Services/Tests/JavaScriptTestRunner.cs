@@ -5,22 +5,14 @@ namespace Azure.Sdk.Tools.Cli.Services.Tests;
 
 public class JavaScriptTestRunner(IProcessHelper processHelper) : ITestRunner
 {
-    public async Task RunAllTests(string packagePath, TestMode mode, CancellationToken ct = default)
+    public async Task RunAllTests(string packagePath, CancellationToken ct = default)
     {
-        var testMode = mode switch
-        {
-            TestMode.Live => "live",
-            TestMode.Record => "record",
-            _ => "playback",
-        };
-
         await processHelper.Run(new ProcessOptions(
                 unixCommand: "npm",
                 unixArgs: ["run", "test"],
                 windowsCommand: "npm.cmd",
                 windowsArgs: ["run", "test"],
-                workingDirectory: packagePath,
-                environment: new Dictionary<string, string?> { ["TEST_MODE"] = testMode }
+                workingDirectory: packagePath
             ),
             ct
         );

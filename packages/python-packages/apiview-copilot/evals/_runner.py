@@ -2,6 +2,8 @@ import json
 import os
 import sys
 import tempfile
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import List, Any
 from pathlib import Path
 
@@ -29,6 +31,7 @@ class ExecutionContext:
         }
         self._credential_kwargs = self._create_credential_kwargs()
         self._temp_files: list[Path] = []
+        self._temp_files_lock = threading.Lock()
 
     def _create_credential_kwargs(self) -> dict[str, Any]:
         if self.in_ci():
@@ -82,7 +85,8 @@ class ExecutionContext:
                 out_f.write(json.dumps(obj, separators=(",", ":"), ensure_ascii=False))
                 out_f.write("\n")
 
-        self._temp_files.append(out_path)
+        with self._temp_files_lock:
+            self._temp_files.append(out_path)
         return out_path
     
     def cleanup(self):
@@ -122,6 +126,7 @@ class EvalRunner:
     def __init__(self, *, num_runs: int = DEFAULT_NUM_RUNS):
         self.num_runs = num_runs
         self._context: ExecutionContext | None = None
+        self._results_lock = threading.Lock()
 
     def run(self, discovery_result: DiscoveryResult) -> List[EvaluationResult]:
         """Execute all targets in the discovery result.
@@ -138,28 +143,56 @@ class EvalRunner:
         print(f"📊 {discovery_result.summary}")
         print()
 
+        return self._run_parallel(discovery_result)
+    
+    def _run_parallel(self, discovery_result: DiscoveryResult) -> List[EvaluationResult]:
+        """Parallel execution using ThreadPoolExecutor."""
+        cpu_count = os.cpu_count() or 4
+        max_workers = min(cpu_count * 2, len(discovery_result.targets))
         results = []
-        for i, target in enumerate(discovery_result.targets, 1):
-            print(f"[{i}/{len(discovery_result.targets)}] Executing {target.workflow_name}...")
+        completed_count = 0
+        total_targets = len(discovery_result.targets)
+        
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # Submit all tasks
+            future_to_target = {
+                executor.submit(self._execute_target_with_progress, target, i + 1, total_targets): target 
+                for i, target in enumerate(discovery_result.targets)
+            }
             
-            try:
-                result = self._execute_target(target)
-                results.append(result)
+            # Collect results as they complete
+            for future in as_completed(future_to_target):
+                target = future_to_target[future]
                 
-                if result.success:
-                    print(f"✅ {target.workflow_name} completed successfully")
-                else:
-                    print(f"❌ {target.workflow_name} failed: {result.error}")
-            except Exception as e:
-                print(f"💥 {target.workflow_name} crashed: {e}")
-                results.append(EvaluationResult(
-                    target=target,
-                    raw_results=[],
-                    success=False,
-                    error=str(e)
-                ))
-            
-            print()  # Spacing
+                try:
+                    result = future.result()
+                    results.append(result)
+                    
+                    with self._results_lock:
+                        completed_count += 1
+                        
+                    if result.success:
+                        print(f"✅ {target.workflow_name} completed successfully ({completed_count}/{total_targets})")
+                    else:
+                        print(f"❌ {target.workflow_name} failed: {result.error} ({completed_count}/{total_targets})")
+                        
+                except Exception as e:
+                    with self._results_lock:
+                        completed_count += 1
+                    
+                    print(f"💥 {target.workflow_name} crashed: {e} ({completed_count}/{total_targets})")
+                    results.append(EvaluationResult(
+                        target=target,
+                        raw_results=[],
+                        success=False,
+                        error=str(e)
+                    ))
+                
+                print()  # Spacing
+        
+        # Sort results to match original target order 
+        target_order = {target.workflow_name: i for i, target in enumerate(discovery_result.targets)}
+        results.sort(key=lambda r: target_order.get(r.workflow_name, 999))
         
         return results
 
@@ -168,6 +201,11 @@ class EvalRunner:
         if self._context is None:
             print("🔧 Initializing shared execution context...")
             self._context = ExecutionContext()
+
+    def _execute_target_with_progress(self, target: EvaluationTarget, index: int, total: int) -> EvaluationResult:
+        """Thread-safe wrapper for _execute_target with progress reporting."""
+        print(f"[{index}/{total}] Started {target.workflow_name}...")
+        return self._execute_target(target)
 
     def _execute_target(self, target: EvaluationTarget) -> EvaluationResult:
         try:
@@ -199,7 +237,9 @@ class EvalRunner:
             # Process results with evaluator
             guideline_ids = set()
             processed_results = evaluator.process_results(all_run_results, guideline_ids)
-            evaluator.show_results(processed_results)
+
+            # NOTE: Skipping showing individual results to reduce noise in parallel runs
+            #    evaluator.show_results(processed_results)
             
             return EvaluationResult(
                 target=target,

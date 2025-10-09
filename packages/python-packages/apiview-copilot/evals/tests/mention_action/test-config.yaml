@@ -7,3 +7,4 @@ evaluation_config:
   breakdown_categories:
     no_action: {correct: 0, total: 0}
     update_kb: {correct: 0, total: 0}
+    open_parser_issue: {correct: 0, total: 0}

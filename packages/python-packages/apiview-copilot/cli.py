@@ -168,15 +168,15 @@ def _local_review(
     reviewer.close()
 
 
-def run_test_case(test_paths: list[str], num_runs: int = 1):
+def run_test_case(test_paths: list[str], num_runs: int = 1, max_parallel: int = 3):
     """
     Runs the specified test case(s).
     """
     from evals._discovery import EvaluationDiscovery
-    from evals._runner import EvalRunner
+    from evals._runner import EvaluationRunner
 
     targets = EvaluationDiscovery.discover_targets(test_paths)
-    runner = EvalRunner(num_runs=num_runs)
+    runner = EvaluationRunner(num_runs=num_runs, max_parallel=max_parallel)
     try:
         results = runner.run(targets)
         runner.show_summary(results)
@@ -1020,6 +1020,13 @@ class CliCommandsLoader(CLICommandsLoader):
         with ArgumentsContext(self, "eval run") as ac:
             ac.argument(
                 "num_runs", type=int, options_list=["--num-runs", "-n"], help="Number of times to run the test case."
+            )
+            ac.argument(
+                "max_parallel", 
+                type=int, 
+                options_list=["--max-parallel", "-j"], 
+                default=3,
+                help="Maximum number of evaluations to run in parallel (default: 3, set to 1 for sequential)"
             )
             ac.argument(
                 "test_paths",

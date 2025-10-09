@@ -44,7 +44,7 @@ public class PythonFormatter(/* add service dependencies to constructor here */)
 ### Register the services in `ServiceRegistrations.cs`:
 
 ```csharp
-services.AddPerLanguage<IFormatter>(new LanguageSpecificImplementations
+services.AddLanguageSpecific<IFormatter>(new LanguageSpecificImplementations
 {
     JavaScript = typeof(JavaScriptFormatter),
     Python = typeof(PythonFormatter),

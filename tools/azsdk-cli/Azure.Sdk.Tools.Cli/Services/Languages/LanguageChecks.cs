@@ -27,28 +27,28 @@ public interface ILanguageChecks
     /// Validates the changelog for the specific package.
     /// </summary>
     /// <param name="packagePath">Path to the package directory</param>
-    /// <param name="fixCheckErrors">Whether to attempt to automatically fix changelog issues</param>
     /// <param name="ct">Cancellation token</param>
+    /// <param name="fixCheckErrors">Whether to attempt to automatically fix changelog issues</param>
     /// <returns>Result of the changelog validation</returns>
-    Task<CLICheckResponse> ValidateChangelogAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
+    Task<CLICheckResponse> ValidateChangelogAsync(string packagePath, CancellationToken ct, bool fixCheckErrors = false);
 
     /// <summary>
     /// Validates the README for the specific package.
     /// </summary>
     /// <param name="packagePath">Path to the package directory</param>
-    /// <param name="fixCheckErrors">Whether to attempt to automatically fix README issues</param>
     /// <param name="ct">Cancellation token</param>
+    /// <param name="fixCheckErrors">Whether to attempt to automatically fix README issues</param>
     /// <returns>Result of the README validation</returns>
-    Task<CLICheckResponse> ValidateReadmeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
+    Task<CLICheckResponse> ValidateReadmeAsync(string packagePath, CancellationToken ct, bool fixCheckErrors = false);
 
     /// <summary>
     /// Checks spelling in the specific package.
     /// </summary>
     /// <param name="packagePath">Path to the package directory</param>
-    /// <param name="fixCheckErrors">Whether to attempt to automatically fix spelling issues where supported by cspell</param>
     /// <param name="ct">Cancellation token</param>
+    /// <param name="fixCheckErrors">Whether to attempt to automatically fix spelling issues where supported by cspell</param>
     /// <returns>Result of the spelling check</returns>
-    Task<CLICheckResponse> CheckSpellingAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
+    Task<CLICheckResponse> CheckSpellingAsync(string packagePath, CancellationToken ct, bool fixCheckErrors = false);
 
     /// <summary>
     /// Updates code snippets in the specific package.
@@ -147,17 +147,17 @@ public class LanguageChecks : ILanguageChecks
         return await languageSpecificCheck.AnalyzeDependenciesAsync(packagePath, ct, fixCheckErrors);
     }
 
-    public virtual async Task<CLICheckResponse> ValidateChangelogAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    public virtual async Task<CLICheckResponse> ValidateChangelogAsync(string packagePath, CancellationToken ct, bool fixCheckErrors = false)
     {
         return await ValidateChangelogCommonAsync(packagePath, fixCheckErrors, ct);
     }
 
-    public virtual async Task<CLICheckResponse> ValidateReadmeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    public virtual async Task<CLICheckResponse> ValidateReadmeAsync(string packagePath, CancellationToken ct, bool fixCheckErrors = false)
     {
         return await ValidateReadmeCommonAsync(packagePath, fixCheckErrors, ct);
     }
 
-    public virtual async Task<CLICheckResponse> CheckSpellingAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    public virtual async Task<CLICheckResponse> CheckSpellingAsync(string packagePath, CancellationToken ct, bool fixCheckErrors = false)
     {
         return await CheckSpellingCommonAsync(packagePath, fixCheckErrors, ct);
     }

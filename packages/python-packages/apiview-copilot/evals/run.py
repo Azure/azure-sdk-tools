@@ -2,7 +2,7 @@ import argparse
 
 import dotenv
 from _discovery import EvaluationDiscovery
-from _runner import EvalRunner
+from _runner import EvaluationRunner
 
 dotenv.load_dotenv()
 
@@ -24,6 +24,6 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     targets = EvaluationDiscovery.discover_targets(args.test_paths)
-    runner = EvalRunner()
+    runner = EvaluationRunner()
     results = runner.run(targets)
     runner.show_summary(results)

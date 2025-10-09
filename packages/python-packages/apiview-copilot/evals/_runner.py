@@ -120,7 +120,7 @@ class EvaluationResult:
     def num_test_files(self) -> int:
         return len(self.target.test_files)
 
-class EvalRunner:
+class EvaluationRunner:
     """Executes evaluations targets with shared context"""
 
     def __init__(self, *, num_runs: int = DEFAULT_NUM_RUNS):

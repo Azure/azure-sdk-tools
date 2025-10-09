@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
+// Licensed under the MIT license.
 
-import type { RequestParameters } from "@azure-rest/core-client";
-import type { WidgetSuite } from "./models.js";
+import { RequestParameters } from "@azure-rest/core-client";
+import { WidgetSuite } from "./models.js";
 
 export type GetWidgetParameters = RequestParameters;
 export type GetWidgetOperationStatusParameters = RequestParameters;

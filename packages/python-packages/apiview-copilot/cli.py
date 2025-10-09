@@ -28,7 +28,7 @@ from knack.help_files import helps
 from src._apiview import ApiViewClient
 from src._apiview import get_active_reviews as _get_active_reviews
 from src._apiview_reviewer import SUPPORTED_LANGUAGES, ApiViewReview
-from src._database_manager import ContainerNames, get_database_manager
+from src._database_manager import ContainerNames, DatabaseManager
 from src._garbage_collector import GarbageCollector
 from src._mention import handle_mention_request
 from src._metrics import get_metrics_report
@@ -625,7 +625,7 @@ def handle_agent_thread_resolution(comments_path: str, remote: bool = False):
 
 def db_get(container_name: str, id: str):
     """Retrieve an item from the database."""
-    db = get_database_manager()
+    db = DatabaseManager.get_instance()
     container = db.get_container_client(container_name)
     try:
         item = container.get(id)
@@ -636,7 +636,7 @@ def db_get(container_name: str, id: str):
 
 def db_delete(container_name: str, id: str):
     """Soft-delete an item from the database."""
-    db = get_database_manager()
+    db = DatabaseManager.get_instance()
     container = db.get_container_client(container_name)
     try:
         container.delete_item(item=id, partition_key=id)

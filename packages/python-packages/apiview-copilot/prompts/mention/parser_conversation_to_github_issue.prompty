@@ -1,0 +1,69 @@
+---
+name: Parse APIView Conversation
+description: A prompt that parses an APIView conversation thread into a format compatible with a GitHub issue.
+authors: 
+  - tjprescott
+version: 1.0.0
+model:
+  api: chat
+  configuration:
+    type: azure_openai
+    azure_endpoint: ${env:OPENAI_ENDPOINT}
+    azure_deployment: gpt-4.1
+    api_version: 2025-03-01-preview
+  parameters:
+    temperature: 0.0
+    top_p: 1.0
+    stop: []
+    max_tokens: 16384
+    response_format: ${file:github_issue_result_schema.json}
+sample:
+  language: python
+  package_name: azure.widget
+  code: "foo: Literal[foo]"
+  reasoning: |
+    The architect indicated that this is a Python parser bug that is not quoting literal values.
+  other_comments: | 
+    [
+      {
+          "CreatedBy": "azure-sdk",
+          "CommentText": "Literal values should be quoted. Suggest: `foo: Literal[\"foo\"]`.",
+          "Downvotes": [],
+          "CreatedOn": "2025-03-17T17:48:25.920445-04:00"
+      },
+    ]
+  trigger_comment: |
+    {
+        "CreatedBy": "tjprescott",
+        "CommentText": "@azure-sdk this looks like a bug in the parser. Please open an issue for this.",
+        "CreatedOn": "2025-03-18T13:15:19.1494832-04:00"
+    }
+---
+system:
+You are an agent that processes architects' mention requests from APIView. In this case, you are creating an issue that describes
+how something is being misrepresented in the APIView due to a parser bug.
+
+# INSTRUCTIONS
+
+- The title should begin with a tag in brackets: `[<LANGUAGE> APIView]`
+- The title should clearly express what is being done wrong. Example: "[Python APIView] Literal values are not quoted"
+- The body should provide the following information in a concise manner:
+  - a URL to the APIView revision
+  - The bad code snippet
+  - Description of what it should do
+  - Example of a good code snippet
+
+user:
+This {{language}} code is being discussed for the {{package_name}} package.
+```{{language}}
+{{code}}
+```
+
+We determined we need to open a Github issue because:
+  {{reasoning}} 
+
+Here is the background conversation:
+  {{other_comments}}
+
+This is the comment from the architect that you need to draft an issue for:
+  {{trigger_comment}}

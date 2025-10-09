@@ -1,0 +1,23 @@
+{
+  "testcase": "mention_action_open_parser_issue",
+  "language": "python",
+  "package_name": "azure.widgets",
+  "code": "foo: Literal[foo]",
+  "other_comments": [
+    {
+      "CreatedBy": "azure-sdk",
+      "CommentText": "Literal values should be quoted. Suggest: `foo: Literal[\"foo\"]`.",
+      "Downvotes": [],
+      "CreatedOn": "2025-03-17T17:48:25.920445-04:00"
+    }
+  ],
+  "trigger_comment": {
+    "CreatedBy": "tjprescott",
+    "CommentText": "@azure-sdk actually, this looks like a bug in the Python parser. Could you open an issue for this?",
+    "CreatedOn": "2025-03-19T17:48:25.920445-04:00"
+  },
+  "response": {
+    "action": "open_parser_issue",
+    "reasoning": "The architect indicates that the comment points to a bug in the Python parser, suggesting that an issue should be opened to address this problem."
+  }
+}

@@ -17,6 +17,8 @@ VARIABLES_WITH_STAGING_SUFFIX = {
     "SEARCH_INDEX_NAME",
     "SEARCH_NAME",
     "WEBAPP_NAME",
+    "GITHUB_APP_ID",
+    "GITHUB_APP_CLIENT_SECRET",
 }
 
 # List of variables that are the same in staging and production and will not

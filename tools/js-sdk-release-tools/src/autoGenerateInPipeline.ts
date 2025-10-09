@@ -37,7 +37,7 @@ async function automationGenerateInPipeline(
         sdkReleaseType,
     } = await parseInputJson(inputJson);
     // If --local parameter is used, local is true; otherwise, determine from runMode
-    const local = localOverride === true ? true : (runMode === RunMode.Local);
+    const local = localOverride || (runMode === RunMode.Local);
     try {
         if (!local) {
             await backupNodeModules(String(shell.pwd()));

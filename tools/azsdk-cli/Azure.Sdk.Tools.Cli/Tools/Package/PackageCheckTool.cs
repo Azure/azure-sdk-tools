@@ -131,7 +131,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             // Run changelog validation
-            var changelogValidationResult = await languageChecks.ValidateChangelogAsync(packagePath, fixCheckErrors, ct);
+            var changelogValidationResult = await languageChecks.ValidateChangelogAsync(packagePath, ct, fixCheckErrors);
             results.Add(changelogValidationResult);
             if (changelogValidationResult.ExitCode != 0)
             {
@@ -140,7 +140,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             // Run README validation
-            var readmeValidationResult = await languageChecks.ValidateReadmeAsync(packagePath, fixCheckErrors, ct);
+            var readmeValidationResult = await languageChecks.ValidateReadmeAsync(packagePath, ct, fixCheckErrors);
             results.Add(readmeValidationResult);
             if (readmeValidationResult.ExitCode != 0)
             {
@@ -149,7 +149,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             // Run spelling check
-            var spellingCheckResult = await languageChecks.CheckSpellingAsync(packagePath, fixCheckErrors, ct);
+            var spellingCheckResult = await languageChecks.CheckSpellingAsync(packagePath, ct, fixCheckErrors);
             results.Add(spellingCheckResult);
             if (spellingCheckResult.ExitCode != 0)
             {
@@ -216,7 +216,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             logger.LogInformation("Running changelog validation");
 
-            var result = await languageChecks.ValidateChangelogAsync(packagePath, fixCheckErrors, ct);
+            var result = await languageChecks.ValidateChangelogAsync(packagePath, ct, fixCheckErrors);
 
             if (result.ExitCode != 0)
             {
@@ -271,7 +271,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             logger.LogInformation("Running README validation");
 
-            var result = await languageChecks.ValidateReadmeAsync(packagePath, fixCheckErrors, ct);
+            var result = await languageChecks.ValidateReadmeAsync(packagePath, ct, fixCheckErrors);
 
             if (result.ExitCode != 0)
             {
@@ -298,7 +298,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             logger.LogInformation("Running spelling validation{fixMode}", fixCheckErrors ? " with fix mode enabled" : "");
 
-            var result = await languageChecks.CheckSpellingAsync(packagePath, fixCheckErrors, ct);
+            var result = await languageChecks.CheckSpellingAsync(packagePath, ct, fixCheckErrors);
             return result;
         }
 

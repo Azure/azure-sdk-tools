@@ -21,13 +21,4 @@ public class ApiChange
     [JsonPropertyName("detail")] public string Detail { get; set; } = string.Empty;
 }
 
-/// <summary>
-/// Represents a code patch to be applied to a file.
-/// </summary>
-public class CodePatch
-{
-    public string FilePath { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-    public string OldContent { get; set; } = string.Empty;
-    public string NewContent { get; set; } = string.Empty;
-}
+

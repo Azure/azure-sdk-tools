@@ -11,7 +11,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         private Mock<IProcessHelper> MockProcessHelper { get; set; }
         private JavaLanguageSpecificChecks LangService { get; set; }
 
-       [SetUp]
+        [SetUp]
         public void SetUp()
         {
             // Use TestAssets directory directly instead of temp directory
@@ -635,8 +635,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         {
             if (IsSpotBugsCommand(options))
             {
-                return options.Args.Any(arg => arg.Contains("-Dspotbugs.failOnViolation=false")) &&
-                       options.Args.Any(arg => arg.Contains("-Dspotbugs.failsOnError=false"));
+                return options.Args.Any(arg => arg.Contains("-Dspotbugs.failOnError=false"));
             }
             return false;
         }

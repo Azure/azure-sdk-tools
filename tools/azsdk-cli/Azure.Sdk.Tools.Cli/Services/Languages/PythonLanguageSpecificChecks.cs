@@ -26,6 +26,43 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
         _logger = logger;
     }
 
+    /// <summary>
+    /// Ensures azure-sdk-tools is installed and available for Python operations.
+    /// </summary>
+    /// <param name="packagePath">The package path to determine repository root</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>CLICheckResponse indicating success or failure</returns>
+    private async Task<CLICheckResponse> EnsureAzureSdkToolsInstalledAsync(string packagePath, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            // Check if azure-sdk-tools is already installed
+            var checkResult = await _processHelper.Run(new("pip", ["show", "azure-sdk-tools"], timeout: TimeSpan.FromSeconds(30)), cancellationToken);
+            
+            if (checkResult.ExitCode == 0)
+            {
+                return new CLICheckResponse(0, "azure-sdk-tools is already installed");
+            }
+
+            // Find repository root and construct path to azure-sdk-tools
+            var repoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
+            var azureSdkToolsPath = Path.Combine(repoRoot, "eng", "tools", "azure-sdk-tools");
+
+            _logger.LogInformation("Installing azure-sdk-tools from: {AzureSdkToolsPath}", azureSdkToolsPath);
+
+            var installResult = await _processHelper.Run(new("pip", ["install", azureSdkToolsPath], timeout: TimeSpan.FromMinutes(5)), cancellationToken);
+
+            return installResult.ExitCode == 0 
+                ? new CLICheckResponse(0, "Successfully installed azure-sdk-tools")
+                : new CLICheckResponse(installResult.ExitCode, installResult.Output, "Failed to install azure-sdk-tools");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Exception occurred while ensuring azure-sdk-tools is installed");
+            return new CLICheckResponse(1, "", $"Error ensuring azure-sdk-tools is installed: {ex.Message}");
+        }
+    }
+
     public async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         try
@@ -134,15 +171,120 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
 
     public async Task<CLICheckResponse> LintCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
-        // Implementation for linting code in a Python project
-        // Could use pylint, flake8, black --check, etc.
-        return await Task.FromResult(new CLICheckResponse(0, "Code linting not yet implemented for Python", ""));
+        try
+        {
+            _logger.LogInformation("Starting code linting for Python project at: {PackagePath}", packagePath);
+
+            // Ensure azure-sdk-tools is installed before proceeding
+            var installCheckResult = await EnsureAzureSdkToolsInstalledAsync(packagePath, cancellationToken);
+            if (installCheckResult.ExitCode != 0)
+            {
+                return installCheckResult;
+            }
+
+            // Check if Python is available
+            var pythonCheckResult = await _processHelper.Run(new("python", ["--version"], timeout: TimeSpan.FromSeconds(10)), cancellationToken);
+            if (pythonCheckResult.ExitCode != 0)
+            {
+                _logger.LogError("Python is not installed or not available in PATH");
+                return new CLICheckResponse(1, "", "Python is not installed or not available in PATH. Please install Python to use linting functionality.");
+            }
+
+            _logger.LogInformation("Python is available: {PythonVersion}", pythonCheckResult.Output.Trim());
+
+            var timeout = TimeSpan.FromMinutes(10); // Linting tools can take longer than other operations
+            var allResults = new List<(string tool, ProcessResult result)>();
+
+            // Run multiple linting tools
+            var lintingTools = new[]
+            {
+                ("azpysdk pylint", new[] { "azpysdk", "pylint", packagePath }),
+                ("azpysdk mypy", new[] { "azpysdk", "mypy", packagePath }),
+                ("azpysdk veriftypes", new[] { "azpysdk", "veriftypes", packagePath }),
+                ("pyright", new[] { "pyright", packagePath })
+            };
+
+            foreach (var (toolName, command) in lintingTools)
+            {
+                _logger.LogInformation("Executing command: {ToolName} - {Command}", toolName, string.Join(" ", command));
+                var result = await _processHelper.Run(new(command[0], command.Skip(1).ToArray(), workingDirectory: packagePath, timeout: timeout), cancellationToken);
+                allResults.Add((toolName, result));
+                
+                _logger.LogInformation("{ToolName} completed with exit code {ExitCode}", toolName, result.ExitCode);
+            }
+
+            // Analyze results
+            var failedTools = allResults.Where(r => r.result.ExitCode != 0).ToList();
+            
+            if (failedTools.Count == 0)
+            {
+                _logger.LogInformation("All linting tools completed successfully - no issues found");
+                return new CLICheckResponse(0, "All linting tools completed successfully - no issues found");
+            }
+            else
+            {
+                var failedToolNames = string.Join(", ", failedTools.Select(t => t.tool));
+                var combinedOutput = string.Join("\n\n", failedTools.Select(t => $"=== {t.tool} ===\n{t.result.Output}"));
+                
+                _logger.LogWarning("Linting found issues in {FailedCount}/{TotalCount} tools: {FailedTools}", 
+                    failedTools.Count, allResults.Count, failedToolNames);
+                
+                return new CLICheckResponse(1, combinedOutput, $"Linting issues found in: {failedToolNames}");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error running code linting for Python project at: {PackagePath}", packagePath);
+            return new CLICheckResponse(1, "", $"Error running code linting: {ex.Message}");
+        }
     }
 
     public async Task<CLICheckResponse> FormatCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
-        // Implementation for formatting code in a Python project
-        // Could use black, autopep8, yapf, etc.
-        return await Task.FromResult(new CLICheckResponse(0, "Code formatting not yet implemented for Python", ""));
+        try
+        {
+            _logger.LogInformation("Starting code formatting for Python project at: {PackagePath}", packagePath);
+
+            // Ensure azure-sdk-tools is installed before proceeding
+            var installCheckResult = await EnsureAzureSdkToolsInstalledAsync(packagePath, cancellationToken);
+            if (installCheckResult.ExitCode != 0)
+            {
+                return installCheckResult;
+            }
+
+            // Check if Python is available
+            var pythonCheckResult = await _processHelper.Run(new("python", ["--version"], timeout: TimeSpan.FromSeconds(10)), cancellationToken);
+            if (pythonCheckResult.ExitCode != 0)
+            {
+                _logger.LogError("Python is not installed or not available in PATH");
+                return new CLICheckResponse(1, "", "Python is not installed or not available in PATH. Please install Python to use linting functionality.");
+            }
+
+            _logger.LogInformation("Python is available: {PythonVersion}", pythonCheckResult.Output.Trim());
+
+            // Run azpysdk black
+            var command = "azpysdk";
+            var args = new[] { "black", packagePath };
+
+            _logger.LogInformation("Executing command: {Command} {Arguments}", command, string.Join(" ", args));
+            var timeout = TimeSpan.FromMinutes(10); // Pylint can take longer than other operations
+            var result = await _processHelper.Run(new(command, args, workingDirectory: packagePath, timeout: timeout), cancellationToken);
+
+            if (result.ExitCode == 0)
+            {
+                _logger.LogInformation("Code formatting completed successfully - no issues found");
+                return new CLICheckResponse(result.ExitCode, "Code formatting completed successfully - no issues found");
+            }
+            else
+            {
+                _logger.LogWarning("Code formatting found issues with exit code {ExitCode}", result.ExitCode);
+                return new CLICheckResponse(result.ExitCode, result.Output, "Code formatting found issues that need attention");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error running code formatting for Python project at: {PackagePath}", packagePath);
+            return new CLICheckResponse(1, "", $"Error running code formatting: {ex.Message}");
+        }
     }
 }

@@ -639,8 +639,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         {
             if (IsSpotBugsCommand(options))
             {
-                return options.Args.Any(arg => arg.Contains("-Dspotbugs.failOnViolation=false")) &&
-                       options.Args.Any(arg => arg.Contains("-Dspotbugs.failsOnError=false"));
+                return options.Args.Any(arg => arg.Contains("-Dspotbugs.failOnError=false"));
             }
             return false;
         }

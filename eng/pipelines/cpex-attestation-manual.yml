@@ -25,7 +25,7 @@ parameters:
     - Feature
   displayName: Target Type
 - name: Status
-  type: int
+  type: number
   displayName: Status (0 - Incomplete, 1 - Complete, 3 - N/A)
   values:
     - 0

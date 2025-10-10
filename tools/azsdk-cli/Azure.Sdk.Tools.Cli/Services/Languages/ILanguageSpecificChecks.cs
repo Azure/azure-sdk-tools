@@ -19,7 +19,7 @@ public interface ILanguageSpecificChecks
     /// <param name="fixCheckErrors">Whether to attempt to automatically fix dependency issues</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Result of the dependency analysis</returns>
-    Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, bool fixCheckErrors, CancellationToken cancellationToken = default)
+    Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         return Task.FromResult(new CLICheckResponse(1, "", "Not implemented for this language."));
     }
@@ -31,7 +31,7 @@ public interface ILanguageSpecificChecks
     /// <param name="fixCheckErrors">Whether to attempt to automatically fix snippet issues</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Result of the snippet update operation</returns>
-    Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, bool fixCheckErrors, CancellationToken cancellationToken = default)
+    Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         return Task.FromResult(new CLICheckResponse(1, "", "Not implemented for this language."));
     }
@@ -43,7 +43,7 @@ public interface ILanguageSpecificChecks
     /// <param name="fixCheckErrors">Whether to automatically fix linting issues</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Result of the code linting operation</returns>
-    Task<CLICheckResponse> LintCodeAsync(string packagePath, bool fixCheckErrors, CancellationToken cancellationToken = default)
+    Task<CLICheckResponse> LintCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         return Task.FromResult(new CLICheckResponse(1, "", "Not implemented for this language."));
     }
@@ -55,7 +55,7 @@ public interface ILanguageSpecificChecks
     /// <param name="fixCheckErrors">Whether to automatically apply code formatting</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Result of the code formatting operation</returns>
-    Task<CLICheckResponse> FormatCodeAsync(string packagePath, bool fixCheckErrors, CancellationToken cancellationToken = default)
+    Task<CLICheckResponse> FormatCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         return Task.FromResult(new CLICheckResponse(1, "", "Not implemented for this language."));
     }

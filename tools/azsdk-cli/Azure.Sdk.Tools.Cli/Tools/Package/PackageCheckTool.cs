@@ -80,7 +80,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         }
 
         [McpServerTool(Name = "azsdk_package_run_check"), Description("Run validation checks for SDK packages. Provide package path, check type (All, Changelog, Dependency, Readme, Cspell, Snippets), and whether to fix errors.")]
-        public async Task<CLICheckResponse> RunPackageCheck(string packagePath, PackageCheckType checkType, bool fixCheckErrors, CancellationToken ct = default)
+        public async Task<CLICheckResponse> RunPackageCheck(string packagePath, PackageCheckType checkType, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             try
             {
@@ -113,7 +113,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
         }
 
-        private async Task<CLICheckResponse> RunAllChecks(string packagePath, bool fixCheckErrors, CancellationToken ct)
+        private async Task<CLICheckResponse> RunAllChecks(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             logger.LogInformation("Running all validation checks");
 

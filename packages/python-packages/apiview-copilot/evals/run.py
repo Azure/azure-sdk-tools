@@ -1,7 +1,7 @@
 import argparse
 
 import dotenv
-from _discovery import EvaluationDiscovery
+from _discovery import discover_targets
 from _runner import EvaluationRunner
 
 dotenv.load_dotenv()
@@ -23,7 +23,7 @@ if __name__ == "__main__":
         help="Paths to directories containing test files.",
     )
     args = parser.parse_args()
-    targets = EvaluationDiscovery.discover_targets(args.test_paths)
+    targets = discover_targets(args.test_paths)
     runner = EvaluationRunner()
     results = runner.run(targets)
     runner.show_summary(results)

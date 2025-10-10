@@ -30,7 +30,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
 
     public string SupportedLanguage => "Java";
 
-    public async Task<CLICheckResponse> FormatCodeAsync(string packagePath, bool fix = false, CancellationToken cancellationToken = default)
+    public async Task<CLICheckResponse> FormatCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -58,7 +58,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
             _logger.LogInformation("Using Maven project at: {PomDirectory}", pomDirectory);
 
             // Determine the Maven goal based on fix parameter
-            var goal = fix ? "spotless:apply" : "spotless:check";
+            var goal = fixCheckErrors ? "spotless:apply" : "spotless:check";
             var command = "mvn";
             var args = new[] { goal, "-f", pomPath };
 
@@ -68,13 +68,13 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
 
             if (result.ExitCode == 0)
             {
-                var message = fix ? "Code formatting applied successfully" : "Code formatting check passed - all files are properly formatted";
+                var message = fixCheckErrors ? "Code formatting applied successfully" : "Code formatting check passed - all files are properly formatted";
                 _logger.LogInformation(message);
                 return new CLICheckResponse(result.ExitCode, message);
             }
             else
             {
-                var errorMessage = fix ? "Code formatting failed to apply" : "Code formatting check failed - some files need formatting";
+                var errorMessage = fixCheckErrors ? "Code formatting failed to apply" : "Code formatting check failed - some files need formatting";
                 _logger.LogWarning("{ErrorMessage} with exit code {ExitCode}", errorMessage, result.ExitCode);
                 
                 // Extract useful error information from output
@@ -87,7 +87,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
                 else
                 {
                     // Provide helpful guidance
-                    var guidance = fix ? 
+                    var guidance = fixCheckErrors ? 
                         "Run 'mvn spotless:apply' to automatically format code, or check if spotless-maven-plugin is configured in the pom.xml" :
                         "Run 'mvn spotless:apply' to fix formatting issues, or use --fix flag with this command";
                     return new CLICheckResponse(result.ExitCode, output, $"{errorMessage}. {guidance}");

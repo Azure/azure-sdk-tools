@@ -172,10 +172,10 @@ def run_test_case(test_paths: list[str], num_runs: int = 1, max_parallel: int = 
     """
     Runs the specified test case(s).
     """
-    from evals._discovery import EvaluationDiscovery
+    from evals._discovery import discover_targets
     from evals._runner import EvaluationRunner
 
-    targets = EvaluationDiscovery.discover_targets(test_paths)
+    targets = discover_targets(test_paths)
     runner = EvaluationRunner(num_runs=num_runs, max_parallel=max_parallel)
     try:
         results = runner.run(targets)

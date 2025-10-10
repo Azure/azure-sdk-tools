@@ -35,7 +35,7 @@ Without a concrete scenario, we risk building tools in isolation that don't inte
 
 - **All five languages** (.NET, Java, JavaScript, Python, Go) - no exceptions, all must pass
 - **Preview release** (not first preview, no architect review required)
-- **TypeSpec-based generation** from Health Deidentification service - creating noncompatible version that ignores existing code customizations
+- **TypeSpec-based generation** from Health Deidentification service - creating non-compatible version that ignores existing code customizations
 - **With or without client.tsp** - handles both scenarios
 - **Playback testing** using existing test recordings
 - **Both data plane and management plane** APIs

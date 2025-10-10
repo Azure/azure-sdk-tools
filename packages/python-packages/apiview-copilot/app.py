@@ -35,7 +35,7 @@ JOB_RETENTION_SECONDS = 1800  # 30 minutes
 db_manager = get_database_manager()
 settings = SettingsManager()
 
-app = FastAPI()
+app = FastAPI(openapi_url=None, docs_url=None, redoc_url=None)
 
 logger = logging.getLogger("uvicorn")  # Use Uvicorn's logger
 

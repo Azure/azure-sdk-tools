@@ -62,15 +62,49 @@ export interface NpmViewParameters {
     npmPackagePath: string;
 }
 
+function executeCommand(
+    command: string,
+    options: {
+        maxRetries?: number;
+        retryDelayMs?: number;
+    } = {}
+): string | null {
+    const {
+        maxRetries = 3,
+        retryDelayMs = 1000
+    } = options;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            const result = shell.exec(command, { silent: true });
+            if (result.code === 0) {
+                return result.stdout;
+            }
+            logger.warn(`Command failed (attempt ${attempt}/${maxRetries}): ${command}`);
+        } catch (err) {
+            logger.warn(`Exception executing command (attempt ${attempt}/${maxRetries}): ${err}`);
+        }
+        
+        if (attempt < maxRetries) {
+            logger.info(`Retrying in ${retryDelayMs}ms...`);
+            // Simple non-blocking sleep using shelljs
+            shell.exec(process.platform === 'win32' 
+                ? `ping -n ${Math.ceil(retryDelayMs/1000) + 1} 127.0.0.1 >nul`
+                : `sleep ${retryDelayMs/1000}`, { silent: true });
+        }
+    }
+    
+    logger.error(`Failed to execute command after ${maxRetries} attempts: ${command}`);
+    return null;
+}
+
 /**
  * Check if a Git tag exists in the repository
  * @param tag The Git tag to check
  * @returns boolean indicating if the tag exists
  */
 function checkGitTagExists(tag: string): boolean {
-    const tagCheckCommand = `git tag -l ${tag}`;
-    const tagExists = shell.exec(tagCheckCommand, { silent: true }).stdout.trim();
-    return !!tagExists;
+    const output = executeCommand(`git tag -l ${tag}`);
+    return !!output?.trim();
 }
 
 // TODO: refactor this function to support praparing files from github in general way
@@ -103,11 +137,11 @@ export function tryCreateLastestStableNpmViewFromGithub(NpmViewParameters: NpmVi
             sdkFilePath = relative(sdkRootPath, path.join(packageFolderPath, file)).replace(/\\/g, "/");
             // For CHANGELOG.md, use sdkFilePath directly
             const gitCommand = `git --no-pager show ${tag}:${sdkFilePath}`;
-            const changelogContent = shell.exec(gitCommand, { silent: true }).stdout;
-            if (!changelogContent.trim()) {
+            const changelogContent = executeCommand(gitCommand);
+            if (!changelogContent?.trim()) {
                 logger.warn(`Warning: CHANGELOG.md content is empty for tag ${tag} at path ${sdkFilePath}.`);
             }
-            fs.writeFileSync(targetFilePath, changelogContent, { encoding: 'utf-8' });
+            fs.writeFileSync(targetFilePath, changelogContent!, { encoding: 'utf-8' });
         }
         else {
             sdkFilePath = relative(sdkRootPath, getApiReviewBasePath(packageFolderPath)).replace(/\\/g, "/");
@@ -120,15 +154,15 @@ export function tryCreateLastestStableNpmViewFromGithub(NpmViewParameters: NpmVi
             const standardApiGitCommand = `git --no-pager show ${tag}:${standardApiFilePath}`;
 
             // Execute both git commands
-            const nodeApiResult = shell.exec(nodeApiGitCommand, { silent: true }).stdout;
-            const standardApiResult = shell.exec(standardApiGitCommand, { silent: true }).stdout;
+            const nodeApiResult = executeCommand(nodeApiGitCommand);
+            const standardApiResult = executeCommand(standardApiGitCommand);
 
             // Use nodeApi result if it has content, otherwise use standardApi result
-            let apiViewContent = nodeApiResult.trim() ? nodeApiResult : standardApiResult;
-            if (!apiViewContent.trim()) {
+            let apiViewContent = nodeApiResult?.trim() ? nodeApiResult : standardApiResult;
+            if (!apiViewContent?.trim()) {
                 logger.warn(`Warning: No API view content found for either ${nodeApiFilePath} or ${standardApiFilePath}. Using default content.`);
             }
-            fs.writeFileSync(targetFilePath, apiViewContent, { encoding: 'utf-8' });
+            fs.writeFileSync(targetFilePath, apiViewContent!, { encoding: 'utf-8' });
         }
         logger.info(`Create ${packageFolderPath} from the tag ${tag} successfully`);
     } catch (error) {
@@ -166,10 +200,9 @@ export async function checkDirectoryExistsInGithub(
         const relativePath = relative(sdkRootPath, join(packageRoot, directoryPath)).replace(/\\/g, "/");
         
         // Use git ls-tree to check if directory exists
-        const gitCommand = `git ls-tree -d ${tag} ${relativePath}`;
-        const result = shell.exec(gitCommand, { silent: true });
-        
-        if (result.code === 0 && result.stdout.trim()) {
+        const output = executeCommand(`git ls-tree -d ${tag} ${relativePath}`);
+
+        if (output?.trim()) {
             logger.info(`Directory ${directoryPath} exists in GitHub tag ${tag} for package ${packageName}`);
             return true;
         } else {

@@ -27,7 +27,7 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
     }
     public string SupportedLanguage => "Python";
 
-    public async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct, bool fixCheckErrors = false)
+    public async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, bool fixCheckErrors, CancellationToken ct = default)
     {
         try
         {
@@ -75,7 +75,7 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
         }
     }
 
-    public async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, CancellationToken cancellationToken, bool fixCheckErrors = false)
+    public async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, bool fixCheckErrors, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -133,14 +133,14 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
         }
     }
 
-    public async Task<CLICheckResponse> LintCodeAsync(string packagePath, CancellationToken cancellationToken, bool fix = false)
+    public async Task<CLICheckResponse> LintCodeAsync(string packagePath, bool fix, CancellationToken cancellationToken = default)
     {
         // Implementation for linting code in a Python project
         // Could use pylint, flake8, black --check, etc.
         return await Task.FromResult(new CLICheckResponse(0, "Code linting not yet implemented for Python", ""));
     }
 
-    public async Task<CLICheckResponse> FormatCodeAsync(string packagePath, CancellationToken cancellationToken, bool fix = false)
+    public async Task<CLICheckResponse> FormatCodeAsync(string packagePath, bool fix, CancellationToken cancellationToken = default)
     {
         // Implementation for formatting code in a Python project
         // Could use black, autopep8, yapf, etc.

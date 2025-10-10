@@ -122,7 +122,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             var failedChecks = new List<string>();
 
             // Run dependency check
-            var dependencyCheckResult = await languageChecks.AnalyzeDependenciesAsync(packagePath, ct, fixCheckErrors);
+            var dependencyCheckResult = await languageChecks.AnalyzeDependenciesAsync(packagePath, fixCheckErrors, ct);
             results.Add(dependencyCheckResult);
             if (dependencyCheckResult.ExitCode != 0)
             {
@@ -131,7 +131,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             // Run changelog validation
-            var changelogValidationResult = await languageChecks.ValidateChangelogAsync(packagePath, ct, fixCheckErrors);
+            var changelogValidationResult = await languageChecks.ValidateChangelogAsync(packagePath, fixCheckErrors, ct);
             results.Add(changelogValidationResult);
             if (changelogValidationResult.ExitCode != 0)
             {
@@ -140,7 +140,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             // Run README validation
-            var readmeValidationResult = await languageChecks.ValidateReadmeAsync(packagePath, ct, fixCheckErrors);
+            var readmeValidationResult = await languageChecks.ValidateReadmeAsync(packagePath, fixCheckErrors, ct);
             results.Add(readmeValidationResult);
             if (readmeValidationResult.ExitCode != 0)
             {
@@ -149,7 +149,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             // Run spelling check
-            var spellingCheckResult = await languageChecks.CheckSpellingAsync(packagePath, ct, fixCheckErrors);
+            var spellingCheckResult = await languageChecks.CheckSpellingAsync(packagePath, fixCheckErrors, ct);
             results.Add(spellingCheckResult);
             if (spellingCheckResult.ExitCode != 0)
             {
@@ -158,7 +158,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             // Run snippet update
-            var snippetUpdateResult = await languageChecks.UpdateSnippetsAsync(packagePath, ct, fixCheckErrors);
+            var snippetUpdateResult = await languageChecks.UpdateSnippetsAsync(packagePath, fixCheckErrors, ct);
             results.Add(snippetUpdateResult);
             if (snippetUpdateResult.ExitCode != 0)
             {
@@ -167,7 +167,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             // Run code linting
-            var lintCodeResult = await languageChecks.LintCodeAsync(packagePath, ct, fixCheckErrors);
+            var lintCodeResult = await languageChecks.LintCodeAsync(packagePath, fixCheckErrors, ct);
             results.Add(lintCodeResult);
             if (lintCodeResult.ExitCode != 0)
             {
@@ -176,7 +176,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             // Run code formatting
-            var formatCodeResult = await languageChecks.FormatCodeAsync(packagePath, ct, fixCheckErrors);
+            var formatCodeResult = await languageChecks.FormatCodeAsync(packagePath, fixCheckErrors, ct);
             results.Add(formatCodeResult);
             if (formatCodeResult.ExitCode != 0)
             {
@@ -216,7 +216,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             logger.LogInformation("Running changelog validation");
 
-            var result = await languageChecks.ValidateChangelogAsync(packagePath, ct, fixCheckErrors);
+            var result = await languageChecks.ValidateChangelogAsync(packagePath, fixCheckErrors, ct);
 
             if (result.ExitCode != 0)
             {
@@ -244,7 +244,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             logger.LogInformation("Running dependency check");
 
-            var result = await languageChecks.AnalyzeDependenciesAsync(packagePath, ct, fixCheckErrors);
+            var result = await languageChecks.AnalyzeDependenciesAsync(packagePath, fixCheckErrors, ct);
 
             if (result.ExitCode != 0)
             {
@@ -271,7 +271,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             logger.LogInformation("Running README validation");
 
-            var result = await languageChecks.ValidateReadmeAsync(packagePath, ct, fixCheckErrors);
+            var result = await languageChecks.ValidateReadmeAsync(packagePath, fixCheckErrors, ct);
 
             if (result.ExitCode != 0)
             {
@@ -298,7 +298,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             logger.LogInformation("Running spelling validation{fixMode}", fixCheckErrors ? " with fix mode enabled" : "");
 
-            var result = await languageChecks.CheckSpellingAsync(packagePath, ct, fixCheckErrors);
+            var result = await languageChecks.CheckSpellingAsync(packagePath, fixCheckErrors, ct);
             return result;
         }
 
@@ -306,7 +306,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             logger.LogInformation("Running snippet update");
 
-            var result = await languageChecks.UpdateSnippetsAsync(packagePath, ct, fixCheckErrors);
+            var result = await languageChecks.UpdateSnippetsAsync(packagePath, fixCheckErrors, ct);
             return result;
         }
 
@@ -314,7 +314,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             logger.LogInformation("Running code linting");
 
-            var result = await languageChecks.LintCodeAsync(packagePath, ct, fixCheckErrors);
+            var result = await languageChecks.LintCodeAsync(packagePath, fixCheckErrors, ct);
             return result;
         }
 
@@ -322,7 +322,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             logger.LogInformation("Running code formatting");
 
-            var result = await languageChecks.FormatCodeAsync(packagePath, ct, fixCheckErrors);
+            var result = await languageChecks.FormatCodeAsync(packagePath, fixCheckErrors, ct);
             return result;
         }
     }

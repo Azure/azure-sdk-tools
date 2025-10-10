@@ -98,8 +98,8 @@ public class TspClientUpdateTool(
         var session = new ClientUpdateSessionState { SpecPath = commitSha };
 
         // Create backup directory to preserve old generation for diff
-        var backupDir = FileHelper.CreateTempBackupDirectory(packagePath);
-        await BackupCurrentGeneration(packagePath, backupDir, ct);
+        var backupDir = FileHelper.CreateTimestampedBackupDirectory(packagePath);
+        BackupCurrentGeneration(packagePath, backupDir, ct);
 
         session.NewGeneratedPath = packagePath;
 
@@ -162,7 +162,8 @@ public class TspClientUpdateTool(
         }
 
         // Clean up backup directory - it was only needed for automated patch reference during generation
-        FileHelper.SafeDeleteDirectory(backupDir, logger);
+        Directory.Delete(backupDir, recursive: true);
+        logger.LogDebug("Cleaned up backup directory: {BackupDir}", backupDir);
 
         session.LastStage = patchesApplied ? UpdateStage.Applied : UpdateStage.Mapped;
         session.RequiresManualIntervention = requiresReview;
@@ -174,7 +175,7 @@ public class TspClientUpdateTool(
         };
     }
 
-    private static async Task BackupCurrentGeneration(string packagePath, string backupDir, CancellationToken ct)
+    private static void BackupCurrentGeneration(string packagePath, string backupDir, CancellationToken ct)
     {
         // Copy the entire directory structure to maintain complete backup
         var sourceDir = new DirectoryInfo(packagePath);
@@ -184,7 +185,7 @@ public class TspClientUpdateTool(
         }
 
         // Copy the complete directory structure starting from package root
-        await FileHelper.CopyDirectoryAsync(sourceDir, new DirectoryInfo(backupDir), ct);
+        FileHelper.CopyDirectory(sourceDir, new DirectoryInfo(backupDir), ct);
     }
 
     private async Task<(bool Success, string? ErrorMessage)> RegenerateAfterPatchesAsync(string tspLocationPath, string packagePath, CancellationToken ct)

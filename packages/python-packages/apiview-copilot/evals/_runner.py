@@ -241,7 +241,7 @@ class EvaluationRunner:
             guideline_ids = set()
             processed_results = evaluator.process_results(all_run_results, guideline_ids)
 
-            # NOTE: Skipping showing individual results to reduce noise in parallel runs
+            # TODO: Should show all results bundled at the end 
             #    evaluator.show_results(processed_results)
             
             return EvaluationResult(

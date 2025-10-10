@@ -31,7 +31,7 @@ For ex.
     {
       "requirement": "azpysdk"
       "check": ["azpysdk", "--help"]
-      "install_instruction": ["1. Ensure your venv is activated", "2. Run `python -m pip install eng/tools/azure-sdk-tools[build]", "3. Check that it was installed with `azpysdk --help`"]               
+      "install_instruction": ["1. Ensure your venv is activated", "2. Run `python -m pip install eng/tools/azure-sdk-tools[build]`", "3. Check that it was installed with `azpysdk --help`"]               
     },
     ...     
   ],
@@ -42,7 +42,7 @@ For ex.
 
 ### Inputs
 
-- `--langs`: List of languages to check requirements forBy default, checks requirements for the current repo's lang (can use LanguageResolver logic to detect)
+- `--langs`: List of languages to check requirements for. By default, checks requirements for the current repo's lang (can use LanguageResolver logic to detect)
 
 
 Example Usages: 

@@ -13,6 +13,7 @@ import com.azure.tools.apiview.processor.model.TokenKind;
 import com.azure.tools.apiview.processor.model.maven.Dependency;
 import com.azure.tools.apiview.processor.model.maven.Pom;
 import com.azure.tools.apiview.processor.model.traits.Parent;
+import com.azure.tools.apiview.processor.diff.collector.SymbolCollector;
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.JavaParserAdapter;
 import com.github.javaparser.ParserConfiguration;
@@ -179,6 +180,7 @@ public class JavaASTAnalyser implements Analyser {
     private final Diagnostics diagnostic;
 
     private final Map<String,String> shortClassNameToFullyQualfiedNameMap = new HashMap<>();
+    private final SymbolCollector symbolCollector; // nullable for diff mode
 
     private int JAVADOC_LINE_COUNT = 0;
 
@@ -190,8 +192,13 @@ public class JavaASTAnalyser implements Analyser {
      **********************************************************************************************/
 
     public JavaASTAnalyser(APIListing apiListing) {
+        this(apiListing, null, true);
+    }
+
+    public JavaASTAnalyser(APIListing apiListing, SymbolCollector collector, boolean enableDiagnostics) {
         this.apiListing = apiListing;
-        this.diagnostic = new Diagnostics(apiListing);
+        this.diagnostic = new Diagnostics(apiListing, enableDiagnostics);
+        this.symbolCollector = collector;
     }
 
 
@@ -384,9 +391,8 @@ public class JavaASTAnalyser implements Analyser {
 
     private void processPackage(String packageName, List<ScanElement> scanElements) {
         if (packageName.isEmpty()) {
-            // we are dealing with the root package, so we are looking at the maven pom and module-info.
-
-            // look for the maven pom.xml file, and put that in first, in the root package
+            // Root package: attempt to tokenise Maven POM (may be absent in diff directory mode) and module-info.
+            // Always attempt; tokeniseMavenPom will no-op if the Null Object (non-real) Pom is present.
             tokeniseMavenPom(apiListing.getMavenPom());
 
             // look for the module-info.java file, and put that second, after the maven pom
@@ -511,6 +517,9 @@ public class JavaASTAnalyser implements Analyser {
      **********************************************************************************************/
 
     private void tokeniseMavenPom(Pom mavenPom) {
+        if (mavenPom == null || !mavenPom.isPomFileReal()) {
+            return;
+        }
         ReviewLine mavenLine = apiListing.addChildLine();
 
         mavenLine
@@ -519,13 +528,15 @@ public class JavaASTAnalyser implements Analyser {
                 .setSkipDiff())
             .addContextStartTokens();
 
-        // parent
-        String gavStr = mavenPom.getParent().getGroupId() + ":" + mavenPom.getParent().getArtifactId() + ":"
+        // parent (may be absent if the sources jar didn't contain a real pom.xml)
+        if (mavenPom.getParent() != null) {
+            String gavStr = mavenPom.getParent().getGroupId() + ":" + mavenPom.getParent().getArtifactId() + ":"
                 + mavenPom.getParent().getVersion();
-        MiscUtils.tokeniseMavenKeyValue(mavenLine, "parent", gavStr, true);
+            MiscUtils.tokeniseMavenKeyValue(mavenLine, "parent", gavStr, true);
+        }
 
         // properties
-        gavStr = mavenPom.getGroupId() + ":" + mavenPom.getArtifactId() + ":" + mavenPom.getVersion();
+        String gavStr = mavenPom.getGroupId() + ":" + mavenPom.getArtifactId() + ":" + mavenPom.getVersion();
         MiscUtils.tokeniseMavenKeyValue(mavenLine, "properties", gavStr, true);
 
         // configuration
@@ -726,6 +737,7 @@ public class JavaASTAnalyser implements Analyser {
 
     // This method is for constructors, fields, methods, etc.
     private void visitDefinition(BodyDeclaration<?> definition, ReviewLine parentLine) {
+    TypeDeclaration<?> enclosingTypeForMembers = findEnclosingType(definition);
         boolean isTypeDeclaration = false;
         String id;
         String name;
@@ -734,6 +746,9 @@ public class JavaASTAnalyser implements Analyser {
             TypeDeclaration<?> typeDeclaration = definition.asTypeDeclaration();
             // Skip if the class is private or package-private, unless it is a nested type defined inside a public interface
             if (!isTypeAPublicAPI(typeDeclaration)) {
+            if (symbolCollector != null) {
+                try { symbolCollector.onType(typeDeclaration); } catch (Exception ignored) {}
+            }
                 return;
             }
 
@@ -746,10 +761,16 @@ public class JavaASTAnalyser implements Analyser {
             FieldDeclaration fieldDeclaration = definition.asFieldDeclaration();
             id = makeId(fieldDeclaration);
             name = fieldDeclaration.toString();
+            if (symbolCollector != null) {
+                try { symbolCollector.onField(enclosingTypeForMembers, fieldDeclaration); } catch (Exception ignored) {}
+            }
         } else if (definition.isCallableDeclaration()) {
             CallableDeclaration<?> callableDeclaration = definition.asCallableDeclaration();
             id = makeId(callableDeclaration);
             name = callableDeclaration.getNameAsString();
+            if (symbolCollector != null) {
+                try { symbolCollector.onMethod(enclosingTypeForMembers, callableDeclaration, callableDeclaration.isConstructorDeclaration()); } catch (Exception ignored) {}
+            }
         } else {
             System.out.println("Unknown definition type: " + definition.getClass().getName());
             System.exit(-1);
@@ -1510,7 +1531,7 @@ public class JavaASTAnalyser implements Analyser {
          * node two = List
          * node three = String
          *
-         * "java.util.Map<String, Integer>" has four nodes:
+         * "Map<String, Integer>" has four nodes:
          * node one = java.util
          * node two = Map
          * node three = String
@@ -1680,5 +1701,18 @@ public class JavaASTAnalyser implements Analyser {
         public Spacing getSpacing() {
             return spacing;
         }
+    }
+
+    // Helper used by diff symbol collection to determine the enclosing top-level or nested type
+    // of a member (field, method, constructor). Walks parent chain until a TypeDeclaration is found.
+    private TypeDeclaration<?> findEnclosingType(BodyDeclaration<?> definition) {
+        Node current = definition.getParentNode().orElse(null);
+        while (current != null) {
+            if (current instanceof TypeDeclaration) {
+                return (TypeDeclaration<?>) current;
+            }
+            current = current.getParentNode().orElse(null);
+        }
+        return null; // top-level type will be handled separately
     }
 }

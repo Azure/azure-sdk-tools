@@ -47,6 +47,7 @@ public class APIListing implements Parent, JsonSerializable<APIListing> {
         this.typeToPackageNameMap = new HashMap<>();
         this.reviewLines = new ArrayList<>();
         this.apiViewProperties = new ApiViewProperties();
+        this.mavenPom = Pom.empty();
     }
 
     @Override

@@ -9,41 +9,39 @@ using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Extensions;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Tools;
 using Azure.Sdk.Tools.Cli.Services.ClientUpdate;
 using Azure.Sdk.Tools.Cli.Telemetry;
+using Azure.Sdk.Tools.Cli.Tools;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
     public static class ServiceRegistrations
     {
         /// <summary>
-        /// This is the function that defines all of the services available to any of the MCPTool instantiations. This
-        /// same collection modification is run within the HostServerTool::CreateAppBuilder.
+        /// This is the function that defines all of the services available to any tool instantiations
         /// </summary>
         /// <param name="services"></param>
         /// todo: make this use reflection to populate itself with all of our services and helpers
-        public static void RegisterCommonServices(IServiceCollection services)
+        public static void RegisterCommonServices(IServiceCollection services, OutputHelper.OutputModes outputMode)
         {
             // Services
             services.AddSingleton<IAzureService, AzureService>();
-            services.AddSingleton<IAzureAgentServiceFactory, AzureAgentServiceFactory>();
             services.AddSingleton<IDevOpsConnection, DevOpsConnection>();
             services.AddSingleton<IDevOpsService, DevOpsService>();
             services.AddSingleton<IGitHubService, GitHubService>();
 
             // Language Check Services (Composition-based)
-            services.AddSingleton<ILanguageChecks, LanguageChecks>();
-            services.AddSingleton<ILanguageSpecificChecks, PythonLanguageSpecificChecks>();
-            services.AddSingleton<ILanguageSpecificChecks, JavaLanguageSpecificChecks>();
-            services.AddSingleton<ILanguageSpecificChecks, JavaScriptLanguageSpecificChecks>();
-            services.AddSingleton<ILanguageSpecificChecks, DotNetLanguageSpecificChecks>();
-            services.AddSingleton<ILanguageSpecificChecks, GoLanguageSpecificChecks>();
-            services.AddSingleton<ILanguageSpecificCheckResolver, LanguageSpecificCheckResolver>();
+            services.AddScoped<ILanguageChecks, LanguageChecks>();
+            services.AddScoped<ILanguageSpecificChecks, PythonLanguageSpecificChecks>();
+            services.AddScoped<ILanguageSpecificChecks, JavaLanguageSpecificChecks>();
+            services.AddScoped<ILanguageSpecificChecks, JavaScriptLanguageSpecificChecks>();
+            services.AddScoped<ILanguageSpecificChecks, DotNetLanguageSpecificChecks>();
+            services.AddScoped<ILanguageSpecificChecks, GoLanguageSpecificChecks>();
+            services.AddScoped<ILanguageSpecificCheckResolver, LanguageSpecificCheckResolver>();
 
             // Client update language services
-            services.AddSingleton<IClientUpdateLanguageService, JavaUpdateLanguageService>();
-            services.AddSingleton<IClientUpdateLanguageServiceResolver, ClientUpdateLanguageServiceResolver>();
+            services.AddScoped<IClientUpdateLanguageService, JavaUpdateLanguageService>();
+            services.AddScoped<IClientUpdateLanguageServiceResolver, ClientUpdateLanguageServiceResolver>();
             // Future: services.AddSingleton<IClientUpdateLanguageService, PythonClientUpdateLanguageService>(); etc.
 
             // Helper classes
@@ -55,6 +53,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IUserHelper, UserHelper>();
             services.AddSingleton<ICodeownersValidatorHelper, CodeownersValidatorHelper>();
             services.AddSingleton<IEnvironmentHelper, EnvironmentHelper>();
+            services.AddSingleton<IRawOutputHelper>(_ => new OutputHelper(outputMode));
             services.AddSingleton<ISpecGenSdkConfigHelper, SpecGenSdkConfigHelper>();
             services.AddSingleton<IInputSanitizer, InputSanitizer>();
             services.AddSingleton<ITspClientHelper, TspClientHelper>();
@@ -64,7 +63,17 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IPowershellHelper, PowershellHelper>();
             services.AddSingleton<IProcessHelper, ProcessHelper>();
 
-            services.AddSingleton<IMicroagentHostService, MicroagentHostService>();
+            // Services that need to be scoped so we can track/update state across services per request
+            services.AddScoped<TokenUsageHelper>();
+            services.AddScoped<IOutputHelper>(_ => new OutputHelper(outputMode));
+            // Services depending on other scoped services
+            services.AddScoped<IMicroagentHostService, MicroagentHostService>();
+            services.AddScoped<IAzureAgentServiceFactory, AzureAgentServiceFactory>();
+
+
+            // Telemetry
+            services.AddSingleton<ITelemetryService, TelemetryService>();
+            services.ConfigureOpenTelemetry();
 
             services.AddAzureClients(clientBuilder =>
             {
@@ -85,12 +94,9 @@ namespace Azure.Sdk.Tools.Cli.Services
                         return new AzureOpenAIClient(new Uri(ep), credential, options);
                     });
             });
-
-            // Telemetry
-            services.AddSingleton<ITelemetryService, TelemetryService>();
-            services.ConfigureOpenTelemetry();
         }
 
+        // Once middleware support is added to the MCP SDK this should be replaced
         public static void RegisterInstrumentedMcpTools(IServiceCollection services, string[] args)
         {
             JsonSerializerOptions? serializerOptions = null;

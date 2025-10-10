@@ -42,7 +42,6 @@ class SearchItem:
         self.service = result.get("service")
         self.is_exception = result.get("is_exception") or False
         self.example_type = result.get("example_type")
-        self.source = result.get("source")
         self.score = result.get("@search.score", None)
         self.reranker_score = result.get("@search.reranker_score", None)
         self.captions = []
@@ -128,7 +127,7 @@ class Context:
                 max_related = max(related_scores)
                 if score is None or (max_related is not None and max_related > score):
                     score = max_related
-            item = ContextItem(guideline, examples=examples, score=score)
+            item = ContextItem(guideline, examples=examples, score=score, kind="guideline")
             self.items.append(item)
 
         # For memories, use their own score, or the max score of their related examples
@@ -142,7 +141,7 @@ class Context:
                 max_related = max(related_scores)
                 if score is None or (max_related is not None and max_related > score):
                     score = max_related
-            item = ContextItem(memory, examples=examples, score=score)
+            item = ContextItem(memory, examples=examples, score=score, kind="memory")
             self.items.append(item)
         self._normalize_scores()
         # Only sort items with a valid normalized_score, put None scores at the end
@@ -203,13 +202,14 @@ class ContextItem:
     Represents a single item in the context.
     """
 
-    def __init__(self, item, *, examples: Dict[str, object], score=None):
+    def __init__(self, item, *, examples: Dict[str, object], score: int = None, kind: str = None):
         self.id = self._process_id(item.id)
         self.content = getattr(item, "content", getattr(item, "text", None))
         self.language = getattr(item, "language", None)
         self.title = getattr(item, "title", None)
         self.service = getattr(item, "service", None)
         self.is_exception = getattr(item, "is_exception", None)
+        self.kind = kind
         self.examples = []
         self.score = score
         self.normalized_score = None  # Will be set after normalization
@@ -237,7 +237,7 @@ class ContextItem:
         """
         Converts the metadata to a markdown string.
         """
-        markdown = f"> **id:** {self.id}<br>"
+        markdown = f"> **{self.kind}_id:** {self.id}<br>"
         if self.normalized_score is not None:
             markdown += f"**score:** {int(round(self.normalized_score))}<br>"
         if self.is_exception:
@@ -284,11 +284,17 @@ class ContextItem:
 class SearchManager:
     """Manages search operations using Azure Search."""
 
-    def __init__(self, *, language: str, include_general_guidelines: bool = False):
+    def __init__(self, *, language: Optional[str] = None, include_general_guidelines: bool = False):
         self.language = language
-        self.filter_expression = f"language eq '{language}'"
+        self.filter_expression = None
+        if language:
+            self.filter_expression = f"language eq '{language}'"
         if include_general_guidelines:
-            self.filter_expression += " or language eq '' or language eq null"
+            general_guidelines_filter = "language eq '' or language eq null"
+            if self.filter_expression:
+                self.filter_expression += f" or {general_guidelines_filter}"
+            else:
+                self.filter_expression = general_guidelines_filter
         self._settings = SettingsManager()
         self._search_endpoint = self._settings.get("SEARCH_ENDPOINT")
         self._credential = get_credential()
@@ -296,13 +302,18 @@ class SearchManager:
         self.client = SearchClient(
             endpoint=self._search_endpoint, index_name=self._index_name, credential=self._credential
         )
-        self.language_guidelines = self._fetch_language_guidelines(language)
+        self.language_guidelines = self._fetch_language_guidelines(language) if language else None
+
+    def _ensure_language(self):
+        if not self.language:
+            raise ValueError("Language must be specified for searches.")
 
     def _fetch_language_guidelines(self, language: str) -> SearchResult:
         """
         Fetch all language-specific guidelines (kind='guidelines') from Azure Search,
         excluding those tagged 'vague' or 'documentation'.
         """
+        self._ensure_language()
         filter_expr = (
             f"kind eq 'guidelines' and language eq '{language}'"
             " and not tags/any(t: t eq 'vague')"
@@ -317,6 +328,7 @@ class SearchManager:
         Internal method to perform a search on the Azure Search index.
         This method is used by the public search methods to perform the actual search.
         """
+        self._ensure_language()
         result = self.client.search(
             search_text=query,
             filter=filter,
@@ -333,6 +345,7 @@ class SearchManager:
 
     def search_guidelines(self, query: str, *, top: int = 20) -> SearchResult:
         """Searches for guidelines in the Azure Search index."""
+        self._ensure_language()
         filter = "kind eq 'guidelines'"
         if self.filter_expression:
             filter = f"({filter}) and ({self.filter_expression})"
@@ -340,13 +353,15 @@ class SearchManager:
 
     def search_examples(self, query: str, *, top: int = 20) -> SearchResult:
         """Searches for examples in the Azure Search index."""
+        self._ensure_language()
         filter = "kind eq 'examples'"
         if self.filter_expression:
             filter = f"({filter}) and ({self.filter_expression})"
         return self._search(query, filter=filter, top=top)
 
-    def search_api_view_comments(self, query: str, *, top: int = 20) -> SearchResult:
-        """Searches for APIView comments in the Azure Search index."""
+    def search_memories(self, query: str, *, top: int = 20) -> SearchResult:
+        """Search for memories in the Azure Search index."""
+        self._ensure_language()
         filter = "kind eq 'memories'"
         if self.filter_expression:
             filter = f"({filter}) and ({self.filter_expression})"
@@ -358,31 +373,23 @@ class SearchManager:
         """
         return self._search(query, filter=self.filter_expression, top=top)
 
-    def guidelines_for_ids(self, ids: List[str]) -> List[object]:
-        """
-        Retrieves the guidelines for the given IDs from CosmosDB.
-        """
-        ids = list(ids)  # Ensure ids is subscriptable
-        database = get_database_manager()
-        batch_size = 50
-        results = []
-        for i in range(0, len(ids), batch_size):
-            batch = ids[i : i + batch_size]
-            placeholders = ",".join([f"@id{j}" for j in range(len(batch))])
-            # TODO: Omit `isDeleted` from query?
-            query = f"SELECT * FROM c WHERE c.id IN ({placeholders})"
-            parameters = [{"name": f"@id{j}", "value": value} for j, value in enumerate(batch)]
-            items = list(
-                database.guidelines.client.query_items(
-                    query=query,
-                    parameters=parameters,
-                    enable_cross_partition_query=True,
-                )
-            )
-            results.extend([Guideline.model_validate(r) for r in items])
-        return results
+    def search_all_by_id(self, ids: List[str]) -> List[SearchItem]:
+        """Searches for items by their IDs in the Azure Search index."""
+        if not ids:
+            return []
+        escaped = ",".join(id.replace("'", "''") for id in ids)
+        filter = f"search.in(id, '{escaped}', ',')"
+        if self.filter_expression:
+            filter = f"({filter}) and ({self.filter_expression})"
+        result = self.client.search(
+            search_text="*",
+            filter=filter,
+            query_type=QueryType.SIMPLE,
+            top=len(ids),
+        )
+        return list(SearchResult(result).results)
 
-    def build_context(self, items: List[SearchItem]) -> Context:
+    def build_context(self, search_results: List[SearchItem]) -> Context:
         """
         Given a set of items (guidelines, examples, memories), resolve the knowledge graph by traversing
         all related links (related_examples, related_memories, guideline_ids, memory_ids, etc.) using
@@ -391,11 +398,18 @@ class SearchManager:
         database = get_database_manager()
 
         # Partition input items by kind using SearchItem attributes
-        guidelines = {item.id: item for item in items if item.kind == "guidelines"}
-        examples = {item.id: item for item in items if item.kind == "examples"}
-        memories = {item.id: item for item in items if item.kind == "memories"}
+        guidelines = {}
+        examples = {}
+        memories = {}
+        for item in search_results:
+            if item.kind == "guidelines":
+                guidelines[item.id] = item
+            elif item.kind == "examples":
+                examples[item.id] = item
+            elif item.kind == "memories":
+                memories[item.id] = item
         # Save scores for each id
-        scores = {item.id: item.score for item in items if hasattr(item, "score")}
+        scores = {item.id: item.score for item in search_results if hasattr(item, "score")}
 
         # Track seen IDs to avoid cycles
         seen_guideline_ids = set()

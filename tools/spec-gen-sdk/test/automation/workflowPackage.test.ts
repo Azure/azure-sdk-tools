@@ -113,6 +113,9 @@ describe('workflowPackage', () => {
             breakingChangeDetect: /BREAKING CHANGE/,
           },
         },
+        generateOptions: {
+          generateScript: 'generate.sh'
+        },
         artifactOptions: {
           artifactPathFromFileSearch: {
             searchRegex: /\.jar$/,
@@ -158,13 +161,21 @@ describe('workflowPackage', () => {
   });
 
   describe('workflowPkgCallBuildScript', () => {
+    it('should skip if buildScript is configured & generateScript is not configured', async () => {
+      mockContext.swaggerToSdkConfig.packageOptions.buildScript = undefined;
+      await workflowPkgCallBuildScript(mockContext, mockPackage);
+      expect(mockContext.logger.info).toHaveBeenCalledWith(expect.stringContaining('GenerateScript configured in swagger_to_sdk_config.json; skipping buildScript.'));
+    });
+
     it('should skip if buildScript is not configured', async () => {
       mockContext.swaggerToSdkConfig.packageOptions.buildScript = undefined;
+      mockContext.swaggerToSdkConfig.generateOptions.generateScript = undefined;
       await workflowPkgCallBuildScript(mockContext, mockPackage);
       expect(mockContext.logger.info).toHaveBeenCalledWith(expect.stringContaining('not configured'));
     });
 
     it('should execute build script with package paths', async () => {
+      mockContext.swaggerToSdkConfig.generateOptions.generateScript = undefined;
       await workflowPkgCallBuildScript(mockContext, mockPackage);
       expect(mockContext.logger.log).toHaveBeenCalledWith('section', 'Call BuildScript');
     });

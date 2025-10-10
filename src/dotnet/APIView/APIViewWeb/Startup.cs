@@ -37,6 +37,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json.Linq;
+using APIViewWeb.Services;
 
 namespace APIViewWeb
 {
@@ -116,12 +117,17 @@ namespace APIViewWeb
             services.AddSingleton<IAPIRevisionsManager, APIRevisionsManager>();
             services.AddSingleton<ICommentsManager, CommentsManager>();
             services.AddSingleton<INotificationManager, NotificationManager>();
+            services.AddSingleton<IEmailTemplateService, EmailTemplateService>();
             services.AddSingleton<IPullRequestManager, PullRequestManager>();
             services.AddSingleton<IPackageNameManager, PackageNameManager>();
             services.AddSingleton<ISamplesRevisionsManager, SamplesRevisionsManager>();
             services.AddSingleton<ICodeFileManager, CodeFileManager>();
             services.AddSingleton<IUserProfileManager, UserProfileManager>();
             services.AddSingleton<UserProfileCache>();
+
+            // Background services
+            // TODO: Re-enable when auto-approval feature is needed
+            // services.AddHostedService<NamespaceAutoApprovalService>();
 
             services.AddSingleton<LanguageService, JsonLanguageService>();
             services.AddSingleton<LanguageService, CSharpLanguageService>();

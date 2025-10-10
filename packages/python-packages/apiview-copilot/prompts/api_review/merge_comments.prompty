@@ -9,40 +9,80 @@ model:
   configuration:
     type: azure_openai
     azure_endpoint: ${env:OPENAI_ENDPOINT}
-    azure_deployment: gpt-5
+    azure_deployment: gpt-4.1
     api_version: 2025-03-01-preview
   parameters:
-    frequency_penalty: 0
-    presence_penalty: 0
-    max_completion_tokens: 80000
-    reasoning_effort: "minimal"
-    response_format: ${file:guideline_result_schema.json}
+    temperature: 0.0
+    top_p: 1.0
+    stop: []
+    max_tokens: 16384
+    response_format: ${file:comment_result_schema.json}
 sample:
   comments: |
     [{
-      "rule_ids": [
-        "python_design.html#python-models-enum-name-uppercase"
+      "guideline_ids": [
+        "python_design.html#python-models-no-class-suffix"
       ],
       "line_no": 517, 
-      "bad_code": "    tags = 'tags'",
-      "suggestion": "    TAGS = 'tags'",
-      "comment": "Enum member names must be uppercase for consistency.", 
-      "source": "guideline"
+      "bad_code": "def BlobObjectClass:",
+      "suggestion": "def BlobObject:",
+      "comment": "Class names should not end with a 'Class' suffix.", 
+      "is_generic": false,
     },
     {
-      "rule_ids": [],
+      "guideline_ids": [],
       "line_no": 517, 
-      "bad_code": "    tags = 'tags'", 
-      "suggestion": "    TAGS = 'tags'", 
-      "comment": "Enum members should be consistently capitalized. Use 'TAGS' to align with other members.", 
-      "source": "generic"
+      "bad_code": "def BlobObjectClass:", 
+      "suggestion": "def Blob:", 
+      "comment": "Use a simple, concise name for the class.", 
+      "is_generic": true
+    },
+    {
+      "memory_ids": [
+        "memory-abc123"
+      ],
+      "line_no": 517, 
+      "bad_code": "def BlobObjectClass:", 
+      "suggestion": "def Blob:", 
+      "comment": "Architects vetoed other names that used 'ObjectClass' suffix.", 
+      "is_generic": false
     }]
   context: |
-    [{
-      "id": "python_design.html#python-models-enum-name-uppercase",
-      "category": "Enumerations",
-      "text": "DO use UPPERCASE for enum member names.\n\n```python\n\n# Yes\nclass MyGoodEnum(str, Enum):\n    ONE = 'one'\n    TWO = 'two'\n\n# No\nclass MyBadEnum(str, Enum):\n    One = 'one' # No - using PascalCased name.\n    two = 'two' # No - using all lower case name.\n\n```"
-    }]
+    > **memory_id:** memory-abc123<br>**score:** 78<br>
+    ## Dont use 'ObjectClass' suffix in class names
+
+    It was suggested to avoid using the term "ObjectClass" in class names, as it is redundant. Instead, use a more concise name.
+
+    ### BAD Examples
+
+    ```python
+    def KeyObjectClass:
+    ```
+
+    ### GOOD Examples
+
+    ```python
+    def Key:
+    ```
+
+    > **guideline_id:** python_implementation.html#python-models-no-class-suffix<br>**score:** 51<br>
+    ## Don't use 'Class' suffix in class names
+
+    It is redundant and adds nothing.
+
+    ### BAD Examples
+
+    ```python
+    def FooClass:
+        ...
+    ```
+
+    ### GOOD Examples
+
+    ```python
+    def Foo:
+        ...
+    ```
 ---
 system:
   You are a code review assistant. Your task is to merge multiple comments into a single comment. 
@@ -50,7 +90,8 @@ system:
   Ensure that the merged comment maintains the context and intent of the original comments.
   If there are conflicting suggestions, prioritize the one based on the guidelines.
   Use the provided context to enhance the understanding of the comments.
-  Ensure the output maintains all of the rule_ids and line numbers from the original comments.
+  Ensure the output maintains all of the guideline_ids, memory_ids and line numbers from the original comments.
+  If any comment is marked as generic (is_generic: true), the merged comment should also be marked is_generic = true.
   Regardless of the number of input comments, the output should always be an array of one comment.
 
 user:

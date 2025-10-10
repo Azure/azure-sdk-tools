@@ -7,19 +7,20 @@ using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Configuration;
-using Azure.Sdk.Tools.Cli.Contract;
-using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Microagents;
+using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Prompts.Templates;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package
 {
     // Will add after we decide which tools are exported via the MCP.
     //[McpServerToolType, Description("Generates a README file, using service documentation")]
-    public class ReadMeGeneratorTool : MCPTool
+    public class ReadMeGeneratorTool(
+        ILogger<ReadMeGeneratorTool> logger,
+        IMicroagentHostService microAgentHostService
+    ) : MCPTool
     {
-        private readonly ILogger<ReadMeGeneratorTool> logger;
-        private readonly IOutputHelper output;
-        private readonly IMicroagentHostService microAgentHostService;
+        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Generators];
 
         private readonly Option<string> packagePathOption = new(
             name: "--package-path",
@@ -56,18 +57,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             IsRequired = true,
         };
 
-        public ReadMeGeneratorTool(ILogger<ReadMeGeneratorTool> logger, IOutputHelper output, IMicroagentHostService microAgentHostService)
-        {
-            this.CommandHierarchy = [SharedCommandGroups.Generators];
-
-            this.logger = logger;
-            this.output = output;
-            this.microAgentHostService = microAgentHostService;
-        }
-
-        public override Command GetCommand()
-        {
-            var command = new Command("readme", "README generator tool") {
+        protected override Command GetCommand() =>
+            new("readme", "README generator tool") {
                 modelOption,
                 outputPathOption,
                 packagePathOption,
@@ -75,12 +66,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 templatePathOption,
             };
 
-            command.SetHandler(async (ic) => await HandleCommand(ic, ic.GetCancellationToken()));
-
-            return command;
-        }
-
-        public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
+        public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
         {
             try
             {
@@ -93,7 +79,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
                 var generator = new ReadmeGenerator(
                     logger: logger,
-                    output: output,
                     microAgentHostService: microAgentHostService,
                     templatePath: templatePath,
                     serviceDocumentation: new Uri(serviceDocumentation),
@@ -102,19 +87,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     model: model);
 
                 await generator.Generate(ct);
-                output.Output($"Readme written to {outputPath}");
+                return new DefaultCommandResponse() { Message = $"Readme written to {outputPath}" };
             }
             catch (ReadmeValidationException ex)
             {
                 logger.LogError(ex, "ReadmeGeneratorTool failed");
-                output.OutputError($"ReadmeGenerator failed with validation errors: {ex.Message}");
-                ctx.ExitCode = 1;
+                return new DefaultCommandResponse() { ResponseError = $"ReadmeGenerator failed with validation errors: {ex.Message}" };
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "ReadmeGeneratorTool failed");
-                output.OutputError($"ReadmeGenerator threw an exception: {ex.Message}");
-                ctx.ExitCode = 1;
+                return new DefaultCommandResponse() { ResponseError = $"ReadmeGenerator threw an exception: {ex.Message}" };
             }
         }
     }
@@ -122,7 +105,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     public partial class ReadmeGenerator
     {
         private readonly ILogger<ReadMeGeneratorTool> logger;
-        private readonly IOutputHelper output;
         private readonly IMicroagentHostService microAgentHostService;
         private readonly string templatePath;
         private readonly Uri serviceDocumentation;
@@ -132,12 +114,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         private readonly string model;
 
         public ReadmeGenerator(
-            ILogger<ReadMeGeneratorTool> logger, IOutputHelper output, IMicroagentHostService microAgentHostService,
+            ILogger<ReadMeGeneratorTool> logger, IMicroagentHostService microAgentHostService,
             string templatePath, Uri serviceDocumentation, string packagePath, string outputPath,
             string model)
         {
             this.logger = logger;
-            this.output = output;
             this.microAgentHostService = microAgentHostService;
 
             this.templatePath = templatePath;
@@ -165,25 +146,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
             var readmeText = await File.ReadAllTextAsync(templatePath, ct);
 
-            var prompt = $"""
-                We're going to create some READMEs.
-                    
-                The parameters are:
-                * A URL that contains service documentation, to be used when creating key concepts, an introduction blurb and any other places where conceptual docs are needed
-                * A package path that we can use to generate documentation links
-                    
-                Here are some more rules to follow:
-                - Do not touch the following sections, or its subsections: Contributing.
-                - Do not generate sample code.
-                - Rules for proper readmes can be found here: https://github.com/Azure/azure-sdk/blob/main/docs/policies/README-TEMPLATE.md
-
-                The readme template is this: {readmeText} which we fill in with the user parameters, which follow:
-                Service URL: {serviceDocumentation}
-                Package path: {subPackagePath}
-
-                Call the check_readme_tool with the readme contents, and follow any returned suggestions.
-                When there are no further suggestions, give me the readme contents.
-                """;
+            // Use the standardized template system with built-in safety measures
+            var template = new ReadMeGenerationTemplate(
+                templateContent: readmeText,
+                serviceDocumentation: serviceDocumentation.ToString(),
+                packagePath: subPackagePath);
+            var prompt = template.BuildPrompt();
 
             var result = await this.microAgentHostService.RunAgentToCompletion(new Microagent<ReadmeContents>()
             {

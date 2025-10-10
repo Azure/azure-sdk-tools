@@ -2,10 +2,13 @@
 // Licensed under the MIT License.
 
 using System.Diagnostics;
-using Azure.Sdk.Tools.Cli.Configuration;
-using Azure.Sdk.Tools.Cli.Telemetry.InformationProvider;
 using Microsoft.Extensions.Options;
 using ModelContextProtocol.Protocol;
+using OpenTelemetry;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using Azure.Sdk.Tools.Cli.Configuration;
+using Azure.Sdk.Tools.Cli.Telemetry.InformationProvider;
 using static Azure.Sdk.Tools.Cli.Telemetry.TelemetryConstants;
 
 namespace Azure.Sdk.Tools.Cli.Telemetry;
@@ -26,13 +29,46 @@ internal class TelemetryService : ITelemetryService
         _isEnabled = options.Value.IsTelemetryEnabled;
         _tagsList = new List<KeyValuePair<string, object?>>()
         {
-            new(TagName.AzureMcpVersion, options.Value.Version),
+            new(TagName.AzSdkToolVersion, options.Value.Version),
         };
 
         Parent = new ActivitySource(options.Value.Name, options.Value.Version, _tagsList);
         _informationProvider = informationProvider;
 
         Task.Factory.StartNew(InitializeTagList);
+    }
+
+    public static TracerProvider RegisterCliTelemetry(bool debug)
+    {
+        var builder = OpenTelemetry.Sdk.CreateTracerProviderBuilder();
+        builder
+            .AddSource(Constants.TOOLS_ACTIVITY_SOURCE)
+            .SetSampler(new AlwaysOnSampler())
+            .AddProcessor(new TelemetryProcessor())
+            .AddOtlpExporter(otlp =>
+                otlp.ExportProcessorType = ExportProcessorType.Simple
+            );
+
+        if (debug)
+        {
+            builder.AddConsoleExporter();
+        }
+
+        return builder.Build();
+    }
+
+    public static void RegisterServerTelemetry(IServiceCollection services, bool debug = false)
+    {
+        services.AddOpenTelemetry()
+            .WithTracing(b =>
+            {
+                b.AddSource(Constants.TOOLS_ACTIVITY_SOURCE)
+                    .AddAspNetCoreInstrumentation()
+                    .AddHttpClientInstrumentation()
+                    .AddProcessor(new TelemetryProcessor());
+                if (debug) { b.AddConsoleExporter(); }
+            })
+            .UseOtlpExporter();
     }
 
     public ValueTask<Activity?> StartActivity(string activityId) => StartActivity(activityId, null);
@@ -79,6 +115,9 @@ internal class TelemetryService : ITelemetryService
 
             _tagsList.Add(new(TagName.MacAddressHash, macAddressHash));
             _tagsList.Add(new(TagName.DevDeviceId, deviceId));
+#if DEBUG
+            _tagsList.Add(new(TagName.DebugTag, "true"));
+#endif
 
             _isInitialized.SetResult();
         }

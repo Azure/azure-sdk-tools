@@ -6,32 +6,26 @@ using System.Text.RegularExpressions;
 using ModelContextProtocol.Server;
 using Octokit;
 
+using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
-using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.CodeownersUtils.Editing;
 using Azure.Sdk.Tools.CodeownersUtils.Parsing;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Models.Responses;
-using Azure.Sdk.Tools.Cli.Commands;
+using Azure.Sdk.Tools.CodeownersUtils.Utils;
 
 namespace Azure.Sdk.Tools.Cli.Tools.EngSys
 {
     [Description("Tool that validates and manipulates codeowners files.")]
     [McpServerToolType]
-    public class CodeownersTools : MCPTool
+    public class CodeownersTools : MCPMultiCommandTool
     {
-        private readonly IGitHubService githubService;
-        private readonly IOutputHelper output;
-        private readonly ILogger<CodeownersTools> logger;
-        private readonly ICodeownersValidatorHelper codeownersValidator;
-
-        // URL constants
-        private const string azureWriteTeamsBlobUrl = "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/azure-sdk-write-teams-blob";
-
-        // Command names
-        private const string updateCodeownersCommandName = "update";
-        private const string validateCodeownersEntryCommandName = "validate";
+        public override CommandGroup[] CommandHierarchy { get; set; } = [
+            SharedCommandGroups.EngSys,
+            new CommandGroup("codeowners", "A tool to validate and modify codeowners.")
+        ];
 
         // Core command options
         private readonly Option<string> repoOption = new(["--repo", "-r"], "The repository name") { IsRequired = true };
@@ -43,32 +37,35 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
         private readonly Option<bool> isAddingOption = new(["--is-adding"], "Whether to add (true) or remove (false) owners") { IsRequired = false };
         private readonly Option<string> workingBranchOption = new(["--branch"], "Branch to make edits to, only if provided.") { IsRequired = false };
 
+        private readonly IGitHubService githubService;
+        private readonly ILogger<CodeownersTools> logger;
+        private readonly ICodeownersValidatorHelper codeownersValidator;
+
+        // URL constants
+        private const string azureWriteTeamsBlobUrl = "https://azuresdkartifacts.blob.core.windows.net/azure-sdk-write-teams/azure-sdk-write-teams-blob";
+
+        // Command names
+        private const string updateCodeownersCommandName = "update";
+        private const string validateCodeownersEntryCommandName = "validate";
+
         public CodeownersTools(
             IGitHubService githubService,
-            IOutputHelper output,
             ILogger<CodeownersTools> logger,
             ILoggerFactory? loggerFactory,
-            ICodeownersValidatorHelper codeownersValidator) : base()
+            ICodeownersValidatorHelper codeownersValidator
+        )
         {
             this.githubService = githubService;
-            this.output = output;
             this.logger = logger;
             this.codeownersValidator = codeownersValidator;
 
             CodeownersUtils.Utils.Log.Configure(loggerFactory);
-
-            CommandHierarchy =
-            [
-                SharedCommandGroups.EngSys
-            ];
         }
 
-        public override Command GetCommand()
+        protected override List<Command> GetCommands()
         {
-            var command = new Command("codeowners", "A tool to validate and modify codeowners.");
-            var subCommands = new[]
-            {
-                new Command(updateCodeownersCommandName, "Update codeowners in a repository")
+            List<Command> subCommands = [
+                new(updateCodeownersCommandName, "Update codeowners in a repository")
                 {
                     repoOption,
                     isMgmtPlaneOption,
@@ -79,23 +76,18 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                     isAddingOption,
                     workingBranchOption,
                 },
-                new Command(validateCodeownersEntryCommandName, "Validate codeowners for an existing service entry")
+                new(validateCodeownersEntryCommandName, "Validate codeowners for an existing service entry")
                 {
                     repoOption,
                     serviceLabelOption,
                     pathOptionOptional
                 }
-            };
+            ];
 
-            foreach (var subCommand in subCommands)
-            {
-                subCommand.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
-                command.AddCommand(subCommand);
-            }
-            return command;
+            return subCommands;
         }
 
-        public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
+        public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
         {
             var command = ctx.ParseResult.CommandResult.Command.Name;
             var commandParser = ctx.ParseResult;
@@ -120,11 +112,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                     sourceOwnersValue?.ToList() ?? new List<string>(),
                     isAddingValue,
                     workingBranchValue ?? "");
-                ctx.ExitCode = ExitCode;
-                output.Output(addResult);
-                return;
+
+                return addResult;
             }
-            else if (command == validateCodeownersEntryCommandName)
+
+            if (command == validateCodeownersEntryCommandName)
             {
                 var validateRepo = commandParser.GetValueForOption(repoOption);
                 var validateServiceLabel = commandParser.GetValueForOption(serviceLabelOption);
@@ -134,20 +126,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                     validateRepo ?? "",
                     validateServiceLabel,
                     validateRepoPath);
-                ctx.ExitCode = ExitCode;
-                output.Output(validateResult);
-                return;
+
+                return validateResult;
             }
-            else
-            {
-                SetFailure();
-                output.OutputError($"Unknown command: '{command}'");
-                return;
-            }
+
+            return new DefaultCommandResponse { ResponseError = $"Unknown command: '{command}'" };
         }
 
         [McpServerTool(Name = "azsdk_engsys_codeowner_update"), Description("Adds or deletes codeowners for a given service label or path in a repo. When isAdding is false, the inputted users will be removed.")]
-        public async Task<string> UpdateCodeowners(
+        public async Task<DefaultCommandResponse> UpdateCodeowners(
             string repo,
             bool isMgmtPlane,
             string path = "",
@@ -238,13 +225,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                     identifier, // Identifier for the PR
                     workingBranch);
 
-                return string.Join("\n", resultMessages.Concat(new[] { codeownersValidationResultMessage }));
+                return new DefaultCommandResponse
+                {
+                    Result = resultMessages.Concat([codeownersValidationResultMessage])
+                };
             }
             catch (Exception ex)
             {
-                SetFailure();
-                logger.LogError($"Error: {ex}");
-                return $"Error: {ex.Message}";
+                logger.LogError(ex, "An error occurred while updating codeowners in repository '{RepoName}'.", repo);
+                return new DefaultCommandResponse { ResponseError = ex.Message };
             }
         }
 
@@ -287,16 +276,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
             await githubService.UpdateFileAsync(Constants.AZURE_OWNER_PATH, repo, Constants.AZURE_CODEOWNERS_PATH, description, modifiedContent, codeownersSha, branchName);
 
             var prInfoList = await githubService.CreatePullRequestAsync(repo, Constants.AZURE_OWNER_PATH, "main", branchName, "[CODEOWNERS] " + description, description);
-            if (prInfoList != null)
-            {
-                resultMessages.Add($"URL: {prInfoList.Url}");
-                resultMessages.AddRange(prInfoList.Messages);
-            }
-            else
-            {
-                resultMessages.Add("Error: Failed to create pull request. No PR info returned.");
-            }
-
+            resultMessages.Add($"URL: {prInfoList.Url}");
+            resultMessages.AddRange(prInfoList.Messages);
             return resultMessages;
         }
 
@@ -343,7 +324,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
                     var contents = await githubService.GetContentsSingleAsync("Azure", "azure-sdk-for-net", ".github/CODEOWNERS", workingBranch);
                     if (contents == null)
                     {
-                        throw new Exception("Could not retrieve upstream CODEOWNERS (azure-sdk-for-net) for the requested branch.");
+                        response.Message += "Could not retrieve upstream CODEOWNERS (azure-sdk-for-net) for the requested branch.";
+                        return response;
                     }
                     var codeownersContent = contents.Content;
                     var codeownersSha = contents.Sha;
@@ -387,7 +369,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
             }
             catch (Exception ex)
             {
-                SetFailure();
+                logger.LogError(ex, "Error processing repository");
                 response.Message += $"Error processing repository: {ex.Message}";
                 return response;
             }

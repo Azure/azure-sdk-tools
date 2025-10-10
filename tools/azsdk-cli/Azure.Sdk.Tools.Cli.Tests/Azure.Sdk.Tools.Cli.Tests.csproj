@@ -22,8 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Azure.Sdk.Tools.Cli.Contract\Azure.Sdk.Tools.Cli.Contract.csproj" />
-    <ProjectReference Include="..\Azure.Sdk.Tools.Cli\Azure.Sdk.Tools.Cli.csproj" />
+    <ProjectReference Include="../Azure.Sdk.Tools.Cli/Azure.Sdk.Tools.Cli.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -31,23 +30,23 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="TestAssets\**\*" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="TestAssets/**/*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\Azure.Sdk.Tools.Cli\Templates\ReadMeGenerator\README-template.go.md" Link="TestAssets\README-template.go.md">
+    <None Include="../Azure.Sdk.Tools.Cli/Templates/ReadMeGenerator/README-template.go.md" Link="TestAssets/README-template.go.md">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="TypeSpecTestData\specification\testcontoso\Contoso.Management\employee.tsp">
+    <None Update="TypeSpecTestData/specification/testcontoso/Contoso.Management/employee.tsp">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="TypeSpecTestData\specification\testcontoso\Contoso.Management\main.tsp">
+    <None Update="TypeSpecTestData/specification/testcontoso/Contoso.Management/main.tsp">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="TypeSpecTestData\specification\testcontoso\Contoso.Management\tspconfig.yaml">
+    <None Update="TypeSpecTestData/specification/testcontoso/Contoso.Management/tspconfig.yaml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

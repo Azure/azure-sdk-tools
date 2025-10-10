@@ -10,14 +10,14 @@ model:
   configuration:
     type: azure_openai
     azure_endpoint: ${env:OPENAI_ENDPOINT}
-    azure_deployment: gpt-5
+    azure_deployment: o3-mini
     api_version: 2025-03-01-preview
   parameters:
     frequency_penalty: 0
     presence_penalty: 0
     max_completion_tokens: 80000
-    reasoning_effort: "medium"
-    response_format: ${file:generic_result_schema.json}
+    reasoning_effort: "high"
+    response_format: ${file:comment_result_schema.json}
 sample:
   language: python
   custom_rules: |
@@ -30,7 +30,7 @@ sample:
     - Does the API use proper type hints and follow best static typing practices for Python?
   content: |
     ```python
-    500: class azure.ai.vision.imageanalysis.models.VisualFeatures(str, Enum):
+    500: class azure.ai.vision.imageanalysis.models.VisualFeaturesEnumClassObject(str, Enum):
     501:     CAPTION = 'caption'
     502:     DENSE_CAPTIONS = 'denseCaptions'
     503:     OBJECTS = 'objects'

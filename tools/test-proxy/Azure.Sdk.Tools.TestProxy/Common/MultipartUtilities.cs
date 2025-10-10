@@ -1,21 +1,21 @@
-using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.Extensions.Primitives;
+using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
-using System.Text.Json;
-using System.Text;
-using System;
-using Microsoft.Net.Http.Headers;
-using Microsoft.Extensions.Logging;
-using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
-using Newtonsoft.Json.Linq;
 using System.Net;
+using System.Text;
+using System.Text.Json;
+using Azure.Sdk.Tools.TestProxy.Common.Exceptions;
+using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Primitives;
+using Microsoft.Net.Http.Headers;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {
     public static class MultipartUtilities
     {
-        public static readonly byte[] CrLf = new byte[] { (byte)'\r', (byte)'\n' };
+        public static readonly byte[] CrLf = "\r\n"u8.ToArray();
 
         public static byte[] ReadAllBytes(Stream s)
         {
@@ -110,7 +110,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         public static string ResolveFirstBoundary(string boundary, byte[] raw)
         {
             // Boundary might have been sanitised to "REDACTED"
-            if (boundary == "REDACTED" || boundary.EndsWith("00000000-0000-0000-0000-000000000000"))
+            if (boundary == "REDACTED" || boundary == "BOUNDARY" || boundary.EndsWith("00000000-0000-0000-0000-000000000000"))
             {
                 ReadOnlySpan<byte> crlf = stackalloc byte[] { 0x0D, 0x0A };
                 int idx = raw.AsSpan().IndexOf(crlf);
@@ -284,6 +284,234 @@ File an issue on Azure/azure-sdk-tools and include this base64 string for reprod
             }
 
             return ms.ToArray();
+        }
+
+        /// <summary>
+        /// Given a multipart body, remove the boundary delimiters and return only the content.
+        /// Used for normalizing multipart bodies for comparison.
+        /// Uses <see cref="ReadOnlySequence{T}"/> to avoid unnecessary allocations.
+        /// </summary>
+        /// <param name="body">The body of a multipart request or response.</param>
+        /// <param name="boundary">The boundary.</param>
+        /// <param name="encoding">The encoding to use for comparing known strings to parts of the <paramref name="body"/>.</param>
+        public static ReadOnlySequence<byte> RemoveBoundaries(byte[] body, ReadOnlySpan<byte> boundary, Encoding encoding)
+        {
+            if (body == null || body.Length == 0)
+            {
+                return ReadOnlySequence<byte>.Empty;
+            }
+
+            if (boundary == null || boundary.Length == 0)
+            {
+                return new ReadOnlySequence<byte>(body);
+            }
+
+            Segment first = null;
+            Segment last = null;
+            int position = 0;
+
+            RemoveCurrentBoundary(body, boundary, ref position, ref first, ref last, encoding.GetBytes("Content-Type: multipart/"), encoding.GetBytes("boundary="));
+
+            if (first == null)
+            {
+                return ReadOnlySequence<byte>.Empty;
+            }
+
+            return new ReadOnlySequence<byte>(first, 0, last, last.Memory.Length);
+        }
+
+        /// <summary>
+        /// Add a new segment to the <see cref="ReadOnlySequence{T}"/>.
+        /// </summary>
+        /// <param name="first">First <see cref="Segment"/> in the sequence.</param>
+        /// <param name="last">Last <see cref="Segment"/> in the sequence.</param>
+        /// <param name="body">The original byte array.</param>
+        /// <param name="start">The start index of the slice.</param>
+        /// <param name="length">The length of the slice.</param>
+        private static void AddSlice(ref Segment first, ref Segment last, byte[] body, int start, int length)
+        {
+            if (length <= 0) return;
+
+            var mem = new ReadOnlyMemory<byte>(body, start, length);
+            if (first == null)
+            {
+                first = last = new Segment(mem, 0);
+            }
+            else
+            {
+                last = last.Append(mem);
+            }
+        }
+
+        /// <summary>
+        /// Recursively remove boundaries from a multipart body.
+        /// Each part itself can be another multipart body.
+        /// </summary>
+        /// <param name="body">The original byte array.</param>
+        /// <param name="boundary">Current boundary we are processing.</param>
+        /// <param name="position">Current position in the <paramref name="body"/>.</param>
+        /// <param name="first">First <see cref="Segment"/> of the sequence.</param>
+        /// <param name="last">Last <see cref="Segment"/> of the sequence.</param>
+        /// <param name="contentTypeMpfdBytes">Static byte array representation of "Content-Type: multipart/" in the correct encoding.</param>
+        /// <param name="boundaryBytes">Static byte array representation of "boundary=" in the correct encoding.</param>
+        private static void RemoveCurrentBoundary(
+            byte[] body,
+            ReadOnlySpan<byte> boundary,
+            ref int position,
+            ref Segment first,
+            ref Segment last,
+            ReadOnlySpan<byte> contentTypeMpfdBytes,
+            ReadOnlySpan<byte> boundaryBytes)
+        {
+            ReadOnlySpan<byte> span = body.AsSpan();
+            int spanLength = span.Length;
+            int boundaryBytesLength = boundaryBytes.Length;
+
+            const byte DASH = 0x2D;
+
+            // Scan line by line (CRLF terminated). We will skip lines that are boundary delimiter lines:
+            // --boundary
+            // --boundary--
+            int boundaryLength = boundary.Length;
+            int partStart = position;
+            while (position < spanLength)
+            {
+                int crlfIndex = span.Slice(position).IndexOf(CrLf);
+                if (crlfIndex == -1)
+                {
+                    AddSlice(ref first, ref last, body, partStart, spanLength - partStart);
+                    break;
+                }
+
+                ReadOnlySpan<byte> line = span.Slice(position, crlfIndex);
+                position += crlfIndex + 2;
+
+                // if we have a new content type with a boundary recursively process it
+                //        "Content-Type: multipart/mixed; boundary=changesetresponse_b03ffa4a-53fc-4036-8a02-509eec67ca53\r\n",
+                if (line.StartsWith(contentTypeMpfdBytes))
+                {
+                    int boundaryBytesIndex = line.IndexOf(boundaryBytes);
+                    if (boundaryBytesIndex != -1)
+                    {
+                        int innerBoundaryStart = boundaryBytesIndex + boundaryBytesLength;
+                        ReadOnlySpan<byte> innerBoundary = line.Slice(innerBoundaryStart, crlfIndex - innerBoundaryStart);
+                        RemoveCurrentBoundary(body, innerBoundary, ref position, ref first, ref last, contentTypeMpfdBytes, boundaryBytes);
+                        partStart = position;
+                        continue;
+                    }
+                }
+
+                bool isBoundaryLine = false;
+                bool isEndBoundaryLine = false;
+                if (line.Length >= 2 + boundaryLength)
+                {
+                    // Must start with "--"
+                    if (line[0] == DASH && line[1] == DASH)
+                    {
+                        var afterDashes = line.Slice(2);
+                        if (afterDashes.StartsWith(boundary))
+                        {
+                            int remaining = afterDashes.Length - boundaryLength;
+                            isBoundaryLine = remaining == 0;
+                            isEndBoundaryLine = remaining == 2 && afterDashes[boundaryLength] == DASH && afterDashes[boundaryLength + 1] == DASH;
+                        }
+                    }
+                }
+
+                if (isBoundaryLine || isEndBoundaryLine)
+                {
+                    AddSlice(ref first, ref last, body, partStart, position - (crlfIndex + 2) - partStart);
+                    partStart = position;
+                }
+
+                if (isEndBoundaryLine)
+                {
+                    break; // end boundary, stop processing this layer
+                }
+            }
+        }
+
+        /// <summary>
+        /// A class representing a segment in a <see cref="ReadOnlySequence{T}"/>.
+        /// </summary>
+        private sealed class Segment : ReadOnlySequenceSegment<byte>
+        {
+            public Segment(ReadOnlyMemory<byte> memory, long runningIndex)
+            {
+                Memory = memory;
+                RunningIndex = runningIndex;
+            }
+
+            public Segment Append(ReadOnlyMemory<byte> memory)
+            {
+                var next = new Segment(memory, RunningIndex + Memory.Length);
+                Next = next;
+                return next;
+            }
+        }
+
+        /// <summary>
+        /// Compares to <see cref="ReadOnlySequence{T}"/> instances for equality, returning the index and length of the first segment that has a difference.
+        /// </summary>
+        /// <param name="a">The first sequence to compare.</param>
+        /// <param name="b">The second sequence to compare.</param>
+        /// <param name="index">The index of the first difference.</param>
+        /// <param name="length">The length of the differing segment.</param>
+        /// <returns>True if the sequences are equal; otherwise, false.</returns>
+        public static bool SequenceEqual(this in ReadOnlySequence<byte> a, in ReadOnlySequence<byte> b, out int index, out int length)
+        {
+            index = 0;
+            length = 0;
+
+            // skipping length compare to get the index of first difference
+
+            if (a.IsSingleSegment && b.IsSingleSegment)
+            {
+                bool equal = a.FirstSpan.SequenceEqual(b.FirstSpan);
+                if (!equal)
+                {
+                    length = (int)Math.Min(a.Length, b.Length);
+                }
+                return equal;
+            }
+
+            var ra = new SequenceReader<byte>(a);
+            var rb = new SequenceReader<byte>(b);
+
+            while (!ra.End && !rb.End)
+            {
+                var sa = ra.UnreadSpan;
+                var sb = rb.UnreadSpan;
+                length = Math.Min(sa.Length, sb.Length);
+
+                index = (int)ra.Consumed;
+                if (!sa.Slice(0, length).SequenceEqual(sb.Slice(0, length)))
+                    return false;
+
+                ra.Advance(length);
+                rb.Advance(length);
+            }
+
+            return ra.End && rb.End;
+        }
+
+        /// <summary>
+        /// Given a slice of a <see cref="ReadOnlySequence{T}"/>, convert it to a string using the provided encoding.
+        /// </summary>
+        /// <param name="seq">The sequence to convert.</param>
+        /// <param name="index">The starting index of the slice.</param>
+        /// <param name="length">The length of the slice.</param>
+        /// <param name="encoding">The encoding to use.</param>
+        /// <returns>The string representation of the slice.</returns>
+        public static string SliceToString(this in ReadOnlySequence<byte> seq, long index, long length, Encoding encoding)
+        {
+            encoding ??= Encoding.UTF8;
+            var slice = seq.Slice(index, length);
+
+            if (slice.IsSingleSegment)
+                return encoding.GetString(slice.FirstSpan);
+
+            return encoding.GetString(slice.ToArray());
         }
     }
 }

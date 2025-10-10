@@ -99,6 +99,11 @@ namespace APIViewWeb.HostedServices
                         ReviewId = jobInfo.APIRevision.ReviewId,
                         APIRevisionId = jobInfo.APIRevision.Id,
                         ElementId = codeLine.lineId ?? (comment.Source == SummarySource ? CodeFileHelpers.FirstRowElementId : null),
+                        IsGeneric = comment.IsGeneric,
+                        CorrelationId = comment.CorrelationId,
+                        GuidelineIds = comment.GuidelineIds ?? [],
+                        MemoryIds = comment.MemoryIds ?? [],
+                        Severity = CommentItemModel.ParseSeverity(comment.Severity)
                     };
 
                     var commentText = new StringBuilder();
@@ -112,13 +117,13 @@ namespace APIViewWeb.HostedServices
                         commentText.AppendLine();
                     }
 
-                    if (comment.RuleIds.Count > 0)
+                    if (comment.GuidelineIds.Count > 0)
                     {
                         commentText.AppendLine("**Guidelines**");
-                        foreach (var ruleId in comment.RuleIds)
+                        foreach (string guidelineId in comment.GuidelineIds)
                         {
                             commentText.AppendLine();
-                            commentText.AppendLine($"https://azure.github.io/azure-sdk/{ruleId}");
+                            commentText.AppendLine($"https://azure.github.io/azure-sdk/{guidelineId}");
                         }
                     }
 

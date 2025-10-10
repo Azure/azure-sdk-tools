@@ -136,12 +136,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         public async Task TestGetSDKPackageName()
         {
             Assert.That(
-                await LangService.GetSDKPackageNameAsync(Path.Combine("/hello", "world", "az") + Path.DirectorySeparatorChar, Path.Combine("/hello", "world", "az", "sdk", "messaging", "azservicebus")),
+                await LangService.GetSDKPackageName(Path.Combine("/hello", "world", "az") + Path.DirectorySeparatorChar, Path.Combine("/hello", "world", "az", "sdk", "messaging", "azservicebus")),
                 Is.EqualTo(Path.Combine("sdk", "messaging", "azservicebus"))
             );
 
             Assert.That(
-                await LangService.GetSDKPackageNameAsync(Path.Combine("/hello", "world", "az"), Path.Combine("/hello", "world", "az", "sdk", "messaging", "azservicebus")),
+                await LangService.GetSDKPackageName(Path.Combine("/hello", "world", "az"), Path.Combine("/hello", "world", "az", "sdk", "messaging", "azservicebus")),
                 Is.EqualTo(Path.Combine("sdk", "messaging", "azservicebus")));
         }
     }

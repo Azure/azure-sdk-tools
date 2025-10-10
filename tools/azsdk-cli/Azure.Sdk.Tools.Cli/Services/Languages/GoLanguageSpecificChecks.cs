@@ -149,7 +149,7 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
         }
     }
 
-    public async Task<string> GetSDKPackageNameAsync(string repo, string packagePath)
+    public async Task<string> GetSDKPackageName(string repo, string packagePath, CancellationToken cancellationToken = default)
     {
         if (!repo.EndsWith(Path.DirectorySeparatorChar))
         {

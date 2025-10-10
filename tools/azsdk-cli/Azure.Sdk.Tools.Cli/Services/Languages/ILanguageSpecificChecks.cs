@@ -60,8 +60,9 @@ public interface ILanguageSpecificChecks
     /// </summary>
     /// <param name="repo">Repository root path</param>
     /// <param name="packagePath">Package path</param>
+    /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>SDK package name</returns>
-    Task<string> GetSDKPackageNameAsync(string repo, string packagePath)
+    Task<string> GetSDKPackageName(string repo, string packagePath, CancellationToken cancellationToken = default)
     {
         // Default implementation: use the directory name as the package path
         return Task.FromResult(Path.GetFileName(packagePath));

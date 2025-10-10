@@ -12,12 +12,10 @@ public class JavaUpdateLanguageService : ClientUpdateLanguageServiceBase
 {
     private readonly ILogger<JavaUpdateLanguageService> _logger;
 
-    public JavaUpdateLanguageService(ILanguageSpecificCheckResolver languageSpecificCheckResolver, ILogger<JavaUpdateLanguageService> logger) : base(languageSpecificCheckResolver)
+    public JavaUpdateLanguageService(ILanguageSpecificResolver<ILanguageSpecificChecks> languageSpecificChecks, ILogger<JavaUpdateLanguageService> logger) : base(languageSpecificChecks)
     {
         _logger = logger;
     }
-
-    public override string SupportedLanguage => "java";
 
     private const string CustomizationDirName = "customization";
 

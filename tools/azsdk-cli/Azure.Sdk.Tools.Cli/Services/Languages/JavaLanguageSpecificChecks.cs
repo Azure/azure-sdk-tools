@@ -28,8 +28,6 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
         _logger = logger;
     }
 
-    public string SupportedLanguage => "Java";
-
     public async Task<CLICheckResponse> FormatCodeAsync(string packagePath, bool fix = false, CancellationToken cancellationToken = default)
     {
         try

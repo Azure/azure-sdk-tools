@@ -68,7 +68,7 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
 
     #endregion
 
-    public async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct, bool fixCheckErrors = false)
+    public async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, bool fixCheckErrors, CancellationToken ct = default)
     {
         try
         {
@@ -89,7 +89,7 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
             return new CLICheckResponse(1, "", $"{nameof(AnalyzeDependenciesAsync)} failed with an exception: {ex.Message}");
         }
     }
-    public async Task<CLICheckResponse> FormatCodeAsync(string packagePath, CancellationToken ct, bool fixCheckErrors = false)
+    public async Task<CLICheckResponse> FormatCodeAsync(string packagePath, bool fixCheckErrors, CancellationToken ct = default)
     {
         try
         {
@@ -107,7 +107,7 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
         }
     }
 
-    public async Task<CLICheckResponse> LintCodeAsync(string packagePath, CancellationToken ct, bool fixCheckErrors = false)
+    public async Task<CLICheckResponse> LintCodeAsync(string packagePath, bool fixCheckErrors, CancellationToken ct = default)
     {
         try
         {
@@ -160,7 +160,7 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
         return packagePath.Replace(repo, "");
     }
 
-    public async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, CancellationToken cancellationToken, bool fixCheckErrors = false)
+    public async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, bool fixCheckErrors, CancellationToken cancellationToken = default)
     {
         return await Task.FromResult(new CLICheckResponse());
     }

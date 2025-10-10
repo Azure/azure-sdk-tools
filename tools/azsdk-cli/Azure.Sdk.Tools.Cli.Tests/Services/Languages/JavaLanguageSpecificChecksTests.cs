@@ -134,7 +134,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             SetupFailedMavenVersionCheck();
 
             // Act
-            var result = await LangService.FormatCodeAsync(JavaPackageDir, CancellationToken.None, false);
+            var result = await LangService.FormatCodeAsync(JavaPackageDir, false, CancellationToken.None);
 
             // Assert
             Assert.Multiple(() =>
@@ -154,7 +154,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             SetupSuccessfulMavenVersionCheck();
 
             // Act
-            var result = await LangService.FormatCodeAsync(emptyDir, CancellationToken.None, false);
+            var result = await LangService.FormatCodeAsync(emptyDir, false, CancellationToken.None);
             
             // Cleanup
             try { Directory.Delete(emptyDir, true); } catch { }
@@ -176,7 +176,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             SetupSuccessfulSpotlessCheck();
 
             // Act
-            var result = await LangService.FormatCodeAsync(JavaPackageDir, CancellationToken.None, false);
+            var result = await LangService.FormatCodeAsync(JavaPackageDir, false, CancellationToken.None);
 
             // Assert
             Assert.Multiple(() =>
@@ -194,7 +194,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             SetupSuccessfulSpotlessApply();
 
             // Act
-            var result = await LangService.FormatCodeAsync(JavaPackageDir, CancellationToken.None, true);
+            var result = await LangService.FormatCodeAsync(JavaPackageDir, true, CancellationToken.None);
 
             // Assert
             Assert.Multiple(() =>
@@ -212,7 +212,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             SetupFailedSpotlessCheck();
 
             // Act
-            var result = await LangService.FormatCodeAsync(JavaPackageDir, CancellationToken.None, false);
+            var result = await LangService.FormatCodeAsync(JavaPackageDir, false, CancellationToken.None);
 
             // Assert
             Assert.Multiple(() =>
@@ -234,7 +234,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             SetupFailedSpotlessApply();
 
             // Act
-            var result = await LangService.FormatCodeAsync(JavaPackageDir, CancellationToken.None, true);
+            var result = await LangService.FormatCodeAsync(JavaPackageDir, true, CancellationToken.None);
 
             // Assert
             Assert.Multiple(() =>
@@ -280,7 +280,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
                 .ThrowsAsync(new Exception("Process execution failed"));
 
             // Act
-            var result = await LangService.FormatCodeAsync(JavaPackageDir, CancellationToken.None, false);
+            var result = await LangService.FormatCodeAsync(JavaPackageDir, false, CancellationToken.None);
 
             // Assert
             Assert.Multiple(() =>
@@ -299,7 +299,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             SetupSuccessfulSpotlessCheck();
 
             // Act
-            await LangService.FormatCodeAsync(JavaPackageDir, CancellationToken.None, false);
+            await LangService.FormatCodeAsync(JavaPackageDir, false, CancellationToken.None);
 
             // Assert - verify the correct Maven command was called
             MockProcessHelper.Verify(x => x.Run(It.Is<ProcessOptions>(p => 
@@ -321,7 +321,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             SetupSuccessfulSpotlessApply();
 
             // Act
-            await LangService.FormatCodeAsync(JavaPackageDir, CancellationToken.None, true);
+            await LangService.FormatCodeAsync(JavaPackageDir, true, CancellationToken.None);
 
             // Assert - verify the correct Maven command was called
             MockProcessHelper.Verify(x => x.Run(It.Is<ProcessOptions>(p => 

@@ -30,7 +30,7 @@ namespace Azure.Sdk.Tools.PerfAutomation.Models
         public double OperationsPerSecondMedian => Iterations.Any() ? Median(Iterations.Select(i => i.OperationsPerSecond)) : -1;
         public double OperationsPerSecondMax => Iterations.Any() ? Iterations.Max(i => i.OperationsPerSecond) : -1;
 
-        public double CpuMean => Iterations.Any() ? Iterations.Average(i => i.AverageCpu) : -1;
+        public double CpuMean => Iterations.Any() ? Math.Round(Iterations.Average(i => i.AverageCpu), 2) : -1;
         public long MemoryMean => Iterations.Any() ? (long)Iterations.Average(i => i.AverageMemory) : -1;
 
         public AdvancedStatistics AdvancedStatistics { get; set; } = null;

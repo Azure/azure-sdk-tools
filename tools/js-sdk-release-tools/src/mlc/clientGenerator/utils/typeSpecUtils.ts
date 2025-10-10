@@ -31,6 +31,7 @@ export async function generateTypeScriptCodeFromTypeSpec(
             '--',
             'tsp-client',
             'init',
+            '--update-if-exists',
             '--debug',
             '--tsp-config',
             tspConfigPath,

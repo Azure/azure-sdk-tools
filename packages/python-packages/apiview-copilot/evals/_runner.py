@@ -54,16 +54,6 @@ class ExecutionContext:
     def in_ci(self) -> bool:
         return bool(os.getenv("TF_BUILD"))
     
-    @property
-    def azure_ai_project(self) -> dict[str, str]:
-        """Get Azure AI project configuration."""
-        return self._azure_ai_project
-    
-    @property
-    def credential_kwargs(self) -> dict[str, Any]:
-        """Get credential kwargs for Azure AI evaluation."""
-        return self._credential_kwargs
-    
     def _load_test_file(self, test_file: Path) -> dict:
         """Load test file - supports both JSON and YAML formats."""
         try:
@@ -243,7 +233,7 @@ class EvaluationRunner:
                     fail_on_evaluator_errors=False,
                     # FIXME: Enable this?
                     # azure_ai_project=azure_ai_project,
-                    **self._context.credential_kwargs,
+                    **self._context._credential_kwargs,
                 )
                 all_run_results.append({jsonl_file.name: result})
             

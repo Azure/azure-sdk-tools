@@ -8,8 +8,8 @@ Your goal is to guide the user through the process of generating SDKs from TypeS
 Wait for the user to respond with a confirmation before proceeding to Step 1. Use the provided tools to perform actions and gather information as needed.
 
 SDK languages to be generated:
-- Management Plane: Python, .NET, JavaScript, Java, Go
-- Data Plane: Python, .NET, JavaScript, Java
+- Management Plane: .NET, Go, Java, JavaScript, Python
+- Data Plane: .NET, Java, JavaScript, Python
 
 ## Step 1: Identify TypeSpec Project
 **Goal**: Locate the TypeSpec project root path
@@ -26,13 +26,13 @@ SDK languages to be generated:
 **Goal**: Determine if the TypeSpec spec is already merged or if it's being modified.
 **Actions**:
 1. Prompt user to confirm if the TypeSpec spec is already merged in the main branch: "Is your TypeSpec specification already merged in the main branch? (yes/no)"
-2. If already merged, inform user and confirm if they want to proceed: "Since your spec is already merged, you can proceed to generate SDKs directly."
-   - once confirmed, skip to step 6 for SDK generation
+2. If already merged, confirm if the user wants to proceed with the SDK generation 
+   - If confirmed, go to step 6 for SDK generation
 3. If no, proceed to Step 3 to review and commit changes
 **Success Criteria**: User decision on spec readiness obtained
 
 ## Step 3: Validate TypeSpec Specification
-**Goal**: Ensure TypeSpec specification compiles without errors
+**Goal**: Ensure TypeSpec specification compiles without errors. Povide a complete summary after running the tool. Highlight any errors and help user fix them.
 **Condition**: Only if the spec is not already merged (from Step 2)
 **Actions**:
 1. Before running, inform user that TypeSpec validation takes around 20 - 30 seconds. Provide complete summary after 

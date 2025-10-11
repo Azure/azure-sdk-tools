@@ -16,9 +16,6 @@ namespace Azure.Sdk.Tools.PerfAutomation
         //{ "sampling_mode":"Linear","iters":[216428.0, 432856.0, 649284.0, 865712.0, 1082140.0, 1298568.0, 1514996.0, 1731424.0, 1947852.0, 2164280.0],"times":[89284700.0, 182949300.0, 279225800.0, 370553800.0, 459758900.0, 544908000.0, 647300900.0, 757810300.0, 831844100.0, 926051100.0]}
         struct Samples
         {
-            [JsonPropertyName("package_versions")]
-            public string[] PackageVersions { get; set; }
-
             [JsonPropertyName("test_name")]
             public string TestName { get; set; }
 
@@ -82,7 +79,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
             // Set AZURE_TEST_MODE environment variable to "live" before invoking the compiler
             Environment.SetEnvironmentVariable("AZURE_TEST_MODE", "live");
             // set up the params for cargo
-            string finalParams = $"test --package {primaryPackage} --test perf -- --test-results {_targetResultsDirectory}/{testName}-results.json \"{testName}\" {arguments}";
+            string finalParams = $"test --release --package {primaryPackage} --test perf -- --test-results {_targetResultsDirectory}/{testName}-results.json \"{testName}\" {arguments}";
             ProcessResult result = new ProcessResult(0, String.Empty, String.Empty);
             if (IsTest)
             {

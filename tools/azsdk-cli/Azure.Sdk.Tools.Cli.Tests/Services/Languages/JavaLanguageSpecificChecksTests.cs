@@ -361,17 +361,23 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             
             var emptyDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
             Directory.CreateDirectory(emptyDir);
-            try { Directory.Delete(emptyDir, true); } catch { }
 
-            // Act
-            var result = await LangService.LintCodeAsync(emptyDir, false, CancellationToken.None);
-
-            // Assert
-            Assert.Multiple(() =>
+            try
             {
-                Assert.That(result.ExitCode, Is.EqualTo(1));
-                Assert.That(result.ResponseError, Does.Contain("No pom.xml found"));
-            });
+                // Act
+                var result = await LangService.LintCodeAsync(emptyDir, false, CancellationToken.None);
+
+                // Assert
+                Assert.Multiple(() =>
+                {
+                    Assert.That(result.ExitCode, Is.EqualTo(1));
+                    Assert.That(result.ResponseError, Does.Contain("No pom.xml found"));
+                });
+            }
+            finally
+            {
+                try { Directory.Delete(emptyDir, true); } catch { }
+            }
         }
 
         [Test]
@@ -629,8 +635,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         {
             if (IsSpotBugsCommand(options))
             {
-                return options.Args.Any(arg => arg.Contains("-Dspotbugs.failOnViolation=false")) &&
-                       options.Args.Any(arg => arg.Contains("-Dspotbugs.failsOnError=false"));
+                return options.Args.Any(arg => arg.Contains("-Dspotbugs.failOnError=false"));
             }
             return false;
         }

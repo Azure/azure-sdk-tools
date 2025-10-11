@@ -12,7 +12,7 @@
 
 ### Bugs Fixed
 
-- None
+- Added a language specific way to get package name for validation checks, to account for different language naming (JS uses package.json name)
 
 ## 0.5.1 (2025-10-07)
 

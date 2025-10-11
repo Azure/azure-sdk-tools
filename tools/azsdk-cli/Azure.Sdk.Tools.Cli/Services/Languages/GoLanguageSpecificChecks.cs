@@ -151,7 +151,7 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
         }
     }
 
-    public string GetSDKPackagePath(string repo, string packagePath)
+    public async Task<string> GetSDKPackageName(string repo, string packagePath, CancellationToken cancellationToken = default)
     {
         if (!repo.EndsWith(Path.DirectorySeparatorChar))
         {
@@ -159,7 +159,9 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
         }
 
         // ex: sdk/messaging/azservicebus/
-        return packagePath.Replace(repo, "");
+        var relativePath = packagePath.Replace(repo, "");
+        // Ensure forward slashes for Go package names
+        return await Task.FromResult(relativePath.Replace(Path.DirectorySeparatorChar, '/'));
     }
 
     public async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, CancellationToken cancellationToken = default)

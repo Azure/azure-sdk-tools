@@ -168,15 +168,20 @@ def _local_review(
     reviewer.close()
 
 
-def run_test_case(test_paths: list[str], num_runs: int = 1):
+def run_test_case(test_paths: list[str], num_runs: int = 1, max_parallel: int = 3):
     """
     Runs the specified test case(s).
     """
-    from evals._runner import EvalRunner
+    from evals._discovery import EvaluationDiscovery
+    from evals._runner import EvaluationRunner
 
-    runners = [EvalRunner(test_path=x, num_runs=num_runs) for x in test_paths]
-    for runner in runners:
-        runner.run()
+    targets = EvaluationDiscovery.discover_targets(test_paths)
+    runner = EvaluationRunner(num_runs=num_runs, max_parallel=max_parallel)
+    try:
+        results = runner.run(targets)
+        runner.show_summary(results)
+    finally:
+        runner.cleanup()
 
 
 def deploy_flask_app():
@@ -1017,11 +1022,19 @@ class CliCommandsLoader(CLICommandsLoader):
                 "num_runs", type=int, options_list=["--num-runs", "-n"], help="Number of times to run the test case."
             )
             ac.argument(
+                "max_parallel", 
+                type=int, 
+                options_list=["--max-parallel", "-j"], 
+                default=3,
+                help="Maximum number of evaluations to run in parallel (default: 3, set to 1 for sequential)"
+            )
+            ac.argument(
                 "test_paths",
                 type=str,
-                nargs="+",
+                nargs="*",
                 options_list=["--test-paths", "-p"],
-                help="The full paths to the folder(s) containing the test files. Must have a `test-config.yaml` file.",
+                default=None,
+                help="The full paths to the folder(s) containing the test files. Must have a `test-config.yaml` file. If omitted, runs all workflows.",
             )
 
         with ArgumentsContext(self, "search") as ac:

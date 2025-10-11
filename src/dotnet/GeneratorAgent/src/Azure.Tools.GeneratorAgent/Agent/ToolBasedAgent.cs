@@ -54,7 +54,7 @@ internal class ToolBasedAgent : IAsyncDisposable
         {
             new FunctionToolDefinition(
                 name: ToolNames.ListTypeSpecFiles,
-                description: "Lists all TypeSpec files with metadata including version, line count, and SHA256",
+                description: "Lists all TypeSpec files with complete content, metadata, version, line count, and SHA256 for comprehensive analysis",
                 parameters: BinaryData.FromObjectAsJson(new
                 {
                     type = "object",
@@ -140,14 +140,17 @@ internal class ToolBasedAgent : IAsyncDisposable
                 return Result<string>.Failure(new InvalidOperationException("Agent returned empty response"));
             }
 
+            // Clean the response - remove markdown code blocks if present
+            var cleanedResponse = CleanJsonResponse(agentResponse);
+
             // Validate response contains a JSON patch
-            if (!IsValidJsonPatch(agentResponse))
+            if (!IsValidJsonPatch(cleanedResponse))
             {
                 Logger.LogWarning("Agent response does not contain valid JSON patch");
                 return Result<string>.Failure(new InvalidOperationException("Agent response does not contain valid JSON patch"));
             }
 
-            return Result<string>.Success(agentResponse);
+            return Result<string>.Success(cleanedResponse);
         }
         catch (Exception ex)
         {
@@ -202,6 +205,46 @@ internal class ToolBasedAgent : IAsyncDisposable
         var containsJson = response.TrimStart().StartsWith("{") && response.TrimEnd().EndsWith("}");
 
         return containsFile && containsChanges && containsJson;
+    }
+
+    private string CleanJsonResponse(string response)
+    {
+        if (string.IsNullOrWhiteSpace(response))
+            return response;
+
+        string cleaned = response.Trim();
+
+        // Remove markdown code blocks if present
+        if (cleaned.StartsWith("```json", StringComparison.OrdinalIgnoreCase))
+        {
+            // Find the end of the opening ```json
+            int startIndex = cleaned.IndexOf('\n');
+            if (startIndex == -1) startIndex = 6; // If no newline, start after ```json
+            else startIndex++; // Skip the newline
+
+            // Find the closing ```
+            int endIndex = cleaned.LastIndexOf("```");
+            if (endIndex > startIndex)
+            {
+                cleaned = cleaned.Substring(startIndex, endIndex - startIndex).Trim();
+            }
+        }
+        else if (cleaned.StartsWith("```", StringComparison.OrdinalIgnoreCase))
+        {
+            // Handle generic code blocks
+            int startIndex = cleaned.IndexOf('\n');
+            if (startIndex != -1)
+            {
+                startIndex++; // Skip the newline
+                int endIndex = cleaned.LastIndexOf("```");
+                if (endIndex > startIndex)
+                {
+                    cleaned = cleaned.Substring(startIndex, endIndex - startIndex).Trim();
+                }
+            }
+        }
+
+        return cleaned;
     }
 
     /// <summary>

@@ -76,13 +76,12 @@ namespace Azure.Tools.GeneratorAgent.Tests
             {
                 Assert.That(result, Is.Not.Null);
                 Assert.That(result, Is.Not.Empty);
-                Assert.That(result, Does.Contain("### SPECIFIC FIX TO APPLY"));
-                Assert.That(result, Does.Contain("### CONTEXT"));
-                Assert.That(result, Does.Contain("SYSTEM INSTRUCTIONS"));
-                Assert.That(result, Does.Contain("Fix 1:"));
-                Assert.That(result, Does.Contain("Context for Fix 1:"));
+                Assert.That(result, Does.Contain("=== ERRORS TO FIX ==="));
+                Assert.That(result, Does.Contain("=== HOW TO FIX ==="));
+                Assert.That(result, Does.Contain("### SYSTEM INSTRUCTIONS"));
+                Assert.That(result, Does.Contain("GENERIC:"));
                 Assert.That(result, Does.Contain("Fix the generic type name"));
-                Assert.That(result, Does.Contain("Test context for agent prompt fix"));
+                Assert.That(result, Does.Contain("Error requiring analysis"));
             });
         }
 
@@ -101,12 +100,14 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             Assert.Multiple(() =>
             {
-                Assert.That(result, Does.Contain("Fix 1: First fix prompt"));
-                Assert.That(result, Does.Contain("Fix 2: Second fix prompt"));
-                Assert.That(result, Does.Contain("Fix 3: Third fix prompt"));
-                Assert.That(result, Does.Contain("Context for Fix 1: First context"));
-                Assert.That(result, Does.Contain("Context for Fix 2: Second context"));
-                Assert.That(result, Does.Not.Contain("Context for Fix 3:"));
+                Assert.That(result, Does.Contain("=== ERRORS TO FIX ==="));
+                Assert.That(result, Does.Contain("=== HOW TO FIX ==="));
+                Assert.That(result, Does.Contain("GENERIC (2 instances):"));
+                Assert.That(result, Does.Contain("UNKNOWN:"));
+                Assert.That(result, Does.Contain("GENERIC: First fix prompt"));
+                Assert.That(result, Does.Contain("UNKNOWN: Third fix prompt"));
+                Assert.That(result, Does.Contain("Error requiring analysis"));
+                Assert.That(result, Does.Contain("Unknown error"));
             });
         }
 
@@ -120,9 +121,9 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             Assert.Multiple(() =>
             {
-                Assert.That(result, Does.Contain("Fix 1: Generic fix prompt"));
-                Assert.That(result, Does.Contain("### SPECIFIC FIX TO APPLY"));
-                Assert.That(result, Does.Contain("Context for Fix 1: Generic context"));
+                Assert.That(result, Does.Contain("GENERIC: Generic fix prompt"));
+                Assert.That(result, Does.Contain("=== ERRORS TO FIX ==="));
+                Assert.That(result, Does.Contain("Error requiring analysis"));
             });
         }
 
@@ -140,12 +141,11 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             Assert.Multiple(() =>
             {
-                Assert.That(result, Does.Contain("Fix 1:"));
-                Assert.That(result, Does.Contain("Fix 2:"));
-                Assert.That(result, Does.Contain("Context for Fix 1:"));
-                Assert.That(result, Does.Contain("Context for Fix 2:"));
+                Assert.That(result, Does.Contain("=== ERRORS TO FIX ==="));
+                Assert.That(result, Does.Contain("=== HOW TO FIX ==="));
+                Assert.That(result, Does.Contain("GENERIC (2 instances):"));
                 Assert.That(result, Does.Contain("Fix the generic type name"));
-                Assert.That(result, Does.Contain("### SPECIFIC FIX TO APPLY"));
+                Assert.That(result, Does.Contain("Error requiring analysis"));
             });
         }
 

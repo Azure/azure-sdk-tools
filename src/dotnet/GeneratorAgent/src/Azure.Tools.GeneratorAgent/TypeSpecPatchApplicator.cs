@@ -231,6 +231,14 @@ namespace Azure.Tools.GeneratorAgent
             int startIndex = change.StartLine - 1;
             int endIndex = change.EndLine - 1;
 
+            // Handle "append to end" case when trying to add content beyond file end
+            if (startIndex == lines.Count && string.IsNullOrEmpty(change.OldContent.Trim()))
+            {
+                var newLines = change.NewContent.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+                lines.AddRange(newLines);
+                return true;
+            }
+
             if (startIndex < 0 || endIndex >= lines.Count || startIndex > endIndex)
             {
                 Logger.LogError("Replace change line numbers out of bounds. Start: {Start}, End: {End}, Total lines: {Total}",

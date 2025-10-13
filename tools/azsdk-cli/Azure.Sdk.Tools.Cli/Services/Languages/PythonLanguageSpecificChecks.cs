@@ -197,10 +197,10 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
             // Run multiple linting tools
             var lintingTools = new[]
             {
-                ("azpysdk pylint", new[] { "azpysdk", "pylint", packagePath }),
-                ("azpysdk mypy", new[] { "azpysdk", "mypy", packagePath }),
-                ("azpysdk veriftypes", new[] { "azpysdk", "veriftypes", packagePath }),
-                ("azpysdk pyright", new[] { "azpysdk", "pyright", packagePath })
+                ("pylint", new[] { "azpysdk", "pylint", packagePath }),
+                ("mypy", new[] { "azpysdk", "mypy", packagePath }),
+                ("veriftypes", new[] { "azpysdk", "veriftypes", packagePath }),
+                ("pyright", new[] { "azpysdk", "pyright", packagePath })
             };
 
             _logger.LogInformation("Starting {Count} linting tools in parallel", lintingTools.Length);

@@ -58,7 +58,7 @@ Use these stage prefixes when naming your spec files:
 ### 3. Gather Feedback and Obtain Sign-Off
 
 - Team members will use the PR review process to comment on and discuss the spec
-- Each SDK language team should provide sign-off via **PR approval**
+- Each SDK language team should provide sign-off via **PR approval** (management plane and data plane)
 - Once all required approvals are received, the spec is considered approved
 
 ### 4. Merge and Implement

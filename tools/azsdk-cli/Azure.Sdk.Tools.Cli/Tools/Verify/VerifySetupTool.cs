@@ -6,7 +6,7 @@ using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
-using Azure.Sdk.Tools.Cli.Utils;
+using Azure.Sdk.Tools.Cli.Helpers;
 using ModelContextProtocol.Server;
 using System.Text.Json;
 using System.Net;
@@ -22,11 +22,11 @@ public class VerifySetupTool(
 {
     // for V1 prototype only TODO
     private string PATH_TO_REQS = Path.Combine(AppContext.BaseDirectory, "Configuration", "RequirementsV1.json");
-    private static readonly List<string> LANGUAGES = new() { "python", "java", "dotnet", "javascript", "go" };
+    private readonly List<string> LANGUAGES = new() { "python", "java", "dotnet", "javascript", "go" };
     private const int COMMAND_TIMEOUT_IN_SECONDS = 30;
 
     public override CommandGroup[] CommandHierarchy { get; set; } = [
-        SharedCommandGroups.YourGroup,
+        SharedCommandGroups.Verify,
     ];
 
     private readonly Option<string> languagesParam = new(["--langs", "-l"], "Comma-separated list of programming languages to check requirements for (java, python, dotnet, javascript, go). Defaults to current repo's language.") { IsRequired = false };
@@ -43,16 +43,16 @@ public class VerifySetupTool(
     {
         var langs = ctx.ParseResult.GetValueForOption(languagesParam);
         var allLangs = ctx.ParseResult.GetValueForOption(allLangOption);
-        var parsed = ParseLanguages(langs);
-        return await VerifySetup(parsed, allLangs, ct);
+        var parsed = allLangs ? LANGUAGES : ParseLanguages(langs);
+        return await VerifySetup(parsed, ct);
     }
 
     [McpServerTool(Name = "azsdk_verify_setup"), Description("Verifies the developer environment for MCP release tool requirements")]
-    public async Task<DefaultCommandResponse> VerifySetup(string[]? langs = null, bool allLangs = false, CancellationToken ct = default)
+    public async Task<VerifySetupResponse> VerifySetup(List<string> langs, CancellationToken ct = default)
     {
         try
         {
-            List<SetupRequirements.Requirement> reqsToCheck = GetRequirements(allLangs ? LANGUAGES : ParseLanguages(langs));
+            List<SetupRequirements.Requirement> reqsToCheck = GetRequirements(langs);
             VerifySetupResponse response = new VerifySetupResponse
             {
                 AllRequirementsSatisfied = true,
@@ -61,30 +61,29 @@ public class VerifySetupTool(
 
             foreach (var req in reqsToCheck)
             {
-                logger.LogInformation("Checking requirement: {Requirement}, Version: {Version}, Check: {Check}, Install: {Install}",
-                    req.requirement, req.version, req.check, req.install);
+                logger.LogInformation("Checking requirement: {Requirement}, Version: {Version}, Check: {Check}, Instructions: {Instructions}",
+                    req.requirement, req.version, req.check, req.instructions);
 
                 var result = await RunCheck(req.check, ct);
 
                 if (result.ExitCode != 0)
                 {
-                    logger.LogWarning("Requirement check failed for {Requirement}. Suggested install command: {Install}", req.requirement, req.install);
+                    logger.LogWarning("Requirement check failed for {Requirement}. Suggested install command: {Instruction}", req.requirement, req.instructions);
                     response.AllRequirementsSatisfied = false;
                     response.Results.Add(new RequirementCheckResult
                     {
                         Requirement = req.requirement,
                         Version = req.version,
-                        Instructions = req.install
+                        Instructions = req.instructions
                     });
                 }
             }
-
             return response;
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error verifying setup: {input}", langs);
-            return new DefaultCommandResponse
+            return new ()
             {
                 ResponseError = $"Error processing request: {ex.Message}"
             };
@@ -93,13 +92,12 @@ public class VerifySetupTool(
 
     private async Task<DefaultCommandResponse> RunCheck(string command, CancellationToken ct)
     {
-        var options = new ProcessOptions(command, args)
-        {
-            Command = command,
-            WorkingDirectory = Environment.CurrentDirectory,
-            Timeout = TimeSpan.FromSeconds(COMMAND_TIMEOUT_IN_SECONDS),
-            LogOutputStream = true,
-        };
+        var options = new ProcessOptions(
+            command,
+            args: Array.Empty<string>(),
+            timeout: TimeSpan.FromSeconds(COMMAND_TIMEOUT_IN_SECONDS),
+            logOutputStream: true
+        );
 
         var result = await processHelper.Run(options, ct); 
         var trimmed = (result.Output ?? string.Empty).Trim();
@@ -117,22 +115,23 @@ public class VerifySetupTool(
         
         return new DefaultCommandResponse
         {
-            ResponseMessage = $"Command {command} succeeded. Output: {trimmed}"
+            Message = $"Command {command} succeeded. Output: {trimmed}"
         };
     }
 
-    private static SetupRequirements.Requirement<string> GetRequirements(List<string> languages)
+    private List<SetupRequirements.Requirement> GetRequirements(List<string> languages)
     {
         // Returns requirements to check
         String requirementsJson = File.ReadAllText(PATH_TO_REQS);
         var setupRequirements = JsonSerializer.Deserialize<List<SetupRequirements>>(requirementsJson);
-        List<SetupRequirements.Requirement> reqsToCheck = new List<>();
+        List<SetupRequirements.Requirement> reqsToCheck = new List<SetupRequirements.Requirement>();
         foreach (var lang in languages)
         {
             var reqs = setupRequirements?.FirstOrDefault(r => r.language.Equals(lang, StringComparison.OrdinalIgnoreCase));
             if (reqs != null)
             {
-                reqsToCheck.AddRange(reqs.requirements.Select(r => r.requirement));
+                // add the Requirement objects
+                reqsToCheck.AddRange(reqs.requirements);
             }
         }
 
@@ -144,55 +143,17 @@ public class VerifySetupTool(
         if (string.IsNullOrWhiteSpace(langs))
         {
             // TODO determine language from current repo if no arg given
-            return new List<string>().Add("python");
+            return new List<string> { "python" };
         }
         // TODO validate and sanitize languages
-        return langs.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-    }
-
-    public class VerifySetupResponse : Response
-    {
-        [JsonPropertyName("allRequirementsSatisfied")]
-        public bool? AllRequirementsSatisfied { get; set; }
-
-        [JsonPropertyName("results")]
-        public List<RequirementCheckResult>? Results { get; set; } // all checks with details
-
-        public override string ToString()
-        {
-            var sb = new StringBuilder();
-            sb.AppendLine($"AllRequirementsSatisfied: {AllRequirementsSatisfied}");
-            sb.AppendLine("Results:");
-
-            if (Results != null)
-            {
-                foreach (var result in Results)
-                {
-                    sb.AppendLine($"  - Requirement: {result.Requirement}");
-                    sb.AppendLine($"    Version: {result.Version}");
-                    sb.AppendLine($"    Instructions: {result.Instructions}");
-                }
-            }
-            else
-            {
-                sb.AppendLine("  None");
-            }
-            return sb.ToString();
-        }
-    }
-    
-    public class RequirementCheckResult
-    {
-        public string Requirement { get; set; }
-        public string Version { get; set; }
-        public string Instructions { get; set; }
+        return new List<string>(langs.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
     }
 
     // for V1 prototype only
     private class SetupRequirements
     {
-        private string language { get; set; }
-        private List<Requirement> requirements { get; set; }
+    public string language { get; set; }
+    public List<Requirement> requirements { get; set; }
 
         public class Requirement
         {

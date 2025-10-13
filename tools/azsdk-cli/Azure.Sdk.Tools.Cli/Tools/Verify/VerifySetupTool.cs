@@ -69,8 +69,8 @@ public class VerifySetupTool(
 
             foreach (var req in reqsToCheck)
             {
-                logger.LogInformation("Checking requirement: {Requirement}, Version: {Version}, Check: {Check}, Instructions: {Instructions}",
-                    req.requirement, req.version, req.check, req.instructions);
+                logger.LogInformation("Checking requirement: {Requirement}, Check: {Check}, Instructions: {Instructions}",
+                    req.requirement, req.check, req.instructions);
 
                 var result = await RunCheck(req.check, ct);
 
@@ -81,7 +81,6 @@ public class VerifySetupTool(
                     response.Results.Add(new RequirementCheckResult
                     {
                         Requirement = req.requirement,
-                        Version = req.version,
                         Instructions = req.instructions
                     });
                 }
@@ -98,11 +97,11 @@ public class VerifySetupTool(
         }
     }
 
-    private async Task<DefaultCommandResponse> RunCheck(string command, CancellationToken ct)
+    private async Task<DefaultCommandResponse> RunCheck(string[] command, CancellationToken ct)
     {
         var options = new ProcessOptions(
-            command,
-            args: Array.Empty<string>(),
+            command[0],
+            args: command.Skip(1).ToArray(),
             timeout: TimeSpan.FromSeconds(COMMAND_TIMEOUT_IN_SECONDS),
             logOutputStream: true
         );
@@ -174,10 +173,9 @@ public class VerifySetupTool(
         {
             [JsonPropertyName("requirement")]
             public string requirement { get; set; }
-            [JsonPropertyName("version")]
-            public string version { get; set; }
+
             [JsonPropertyName("check")]
-            public string check { get; set; }
+            public string[] check { get; set; }
             [JsonPropertyName("instructions")]
             public List<string> instructions { get; set; }
         }

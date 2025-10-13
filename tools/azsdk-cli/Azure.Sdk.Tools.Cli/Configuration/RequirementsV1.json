@@ -1,16 +1,27 @@
 {
-    "python": [
-        {
-            "requirement": "python",
-            "version": ">=3.8",
-            "check": "python --version",
-            "instructions": []
-        },
-        {
-            "requirement": "azpysdk",
-            "version": ">=20.0",
-            "check": "azpysdk --help",
-            "instructions": ["Ensure your virtual environment is activated", "python -m pip install eng/tools/azure-sdk-tools[build]", "Check that it was installed with `azpysdk --help`"]
-        }
-    ]
+    "categories": {
+        "core": [],
+        "java": [],
+        "javascript": [],
+        "dotnet": [
+            {
+                "requirement": "dotnet",
+                "check": ["dotnet", "--version"],
+                "instructions": []
+            }
+        ],
+        "go": [],
+        "python": [
+            {
+                "requirement": "python",
+                "check": ["python", "--version"],
+                "instructions": []
+            },
+            {
+                "requirement": "azpysdk",
+                "check": ["azpysdk", "--help"],
+                "instructions": ["Ensure your virtual environment is activated", "python -m pip install eng/tools/azure-sdk-tools[build]", "Check that it was installed with `azpysdk --help`"]
+            }
+        ]
+    }
 }

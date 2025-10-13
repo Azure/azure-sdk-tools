@@ -23,7 +23,6 @@ public class VerifySetupResponse : CommandResponse
             foreach (var result in Results)
             {
                 sb.AppendLine($"  - Requirement: {result.Requirement}");
-                sb.AppendLine($"    Version: {result.Version}");
                 sb.AppendLine($"    Instructions: {string.Join(", ", result.Instructions)}");
             }
         }
@@ -38,6 +37,5 @@ public class VerifySetupResponse : CommandResponse
 public class RequirementCheckResult
 {
     public string Requirement { get; set; }
-    public string Version { get; set; }
     public List<String> Instructions { get; set; }
 }

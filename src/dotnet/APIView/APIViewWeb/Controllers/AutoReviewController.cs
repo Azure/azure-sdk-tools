@@ -54,7 +54,7 @@ namespace APIViewWeb.Controllers
                     var codeFile = await _codeFileManager.CreateCodeFileAsync(originalName: file.FileName, fileStream: openReadStream,
                         runAnalysis: false, memoryStream: memoryStream);
 
-                    (var review, var apiRevision) = await CreateAutomaticRevisionAsync(codeFile: codeFile, label: label, originalName: file.FileName, memoryStream: memoryStream, compareAllRevisions, packageType);
+                    (var review, var apiRevision) = await CreateAutomaticRevisionAsync(codeFile: codeFile, label: label, originalName: file.FileName, memoryStream: memoryStream, packageType: packageType, compareAllRevisions: compareAllRevisions);
                     if (apiRevision != null)
                     {
                         apiRevision = await _apiRevisionsManager.UpdateRevisionMetadataAsync(apiRevision, packageVersion ?? codeFile.PackageVersion, label, setReleaseTag);
@@ -155,7 +155,7 @@ namespace APIViewWeb.Controllers
             {
                 return StatusCode(statusCode: StatusCodes.Status204NoContent, $"API review code file for package {packageName} is not found in DevOps pipeline artifacts.");
             }
-            (var review, var apiRevision) = await CreateAutomaticRevisionAsync(codeFile: codeFile, label: label, originalName: originalFilePath, memoryStream: memoryStream, compareAllRevisions, packageType);
+            (var review, var apiRevision) = await CreateAutomaticRevisionAsync(codeFile: codeFile, label: label, originalName: originalFilePath, memoryStream: memoryStream, packageType: packageType, compareAllRevisions: compareAllRevisions);
             if (apiRevision != null)
             {
                 apiRevision = await _apiRevisionsManager.UpdateRevisionMetadataAsync(apiRevision, packageVersion ?? codeFile.PackageVersion, label, setReleaseTag);
@@ -178,8 +178,20 @@ namespace APIViewWeb.Controllers
             return StatusCode(statusCode: StatusCodes.Status500InternalServerError);
         }
 
-        private async Task<(ReviewListItemModel review, APIRevisionListItemModel apiRevision)> CreateAutomaticRevisionAsync(CodeFile codeFile, string label, string originalName, MemoryStream memoryStream, bool compareAllRevisions = false, string packageType = null)
+        private static PackageType? ParsePackageType(string packageType)
         {
+            if (!string.IsNullOrEmpty(packageType) && Enum.TryParse<PackageType>(packageType, true, out var parsedPackageType))
+            {
+                return parsedPackageType;
+            }
+            return null;
+        }
+
+        private async Task<(ReviewListItemModel review, APIRevisionListItemModel apiRevision)> CreateAutomaticRevisionAsync(CodeFile codeFile, string label, string originalName, MemoryStream memoryStream, string packageType, bool compareAllRevisions = false)
+        {
+            // Parse package type once at the beginning
+            var parsedPackageType = ParsePackageType(packageType);
+            
             var createNewRevision = true;
             var review = await _reviewManager.GetReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language, isClosed: null);
             var apiRevision = default(APIRevisionListItemModel);
@@ -188,20 +200,11 @@ namespace APIViewWeb.Controllers
 
             if (review != null)
             {
-                // Update package type if provided from controller parameter
-                if (!string.IsNullOrEmpty(packageType) && Enum.TryParse<PackageType>(packageType, true, out var parsedPackageType))
+                // Update package type if provided from controller parameter and not already set
+                if (parsedPackageType.HasValue && !review.PackageType.HasValue)
                 {
-                    if (!review.PackageType.HasValue)
-                    {
-                        // If the current review has no packageType and packageType is provided, update it
-                        review.PackageType = parsedPackageType;
-                        review = await _reviewManager.UpdateReviewAsync(review);
-                    }
-                    else if (review.PackageType.Value != parsedPackageType)
-                    {
-                        // If review has a packageType that doesn't match the provided packageType
-                        throw new InvalidOperationException($"Package type conflict: Review has PackageType '{review.PackageType.Value}' but supplied PackageType is '{parsedPackageType}'. Package types cannot be changed once set.");
-                    }
+                    review.PackageType = parsedPackageType;
+                    review = await _reviewManager.UpdateReviewAsync(review);
                 }
 
                 apiRevisions = await _apiRevisionsManager.GetAPIRevisionsAsync(review.Id);
@@ -256,13 +259,6 @@ namespace APIViewWeb.Controllers
             }
             else
             {
-                // Parse package type if provided, otherwise pass null for automatic classification
-                PackageType? parsedPackageType = null;
-                if (!string.IsNullOrEmpty(packageType) && Enum.TryParse<PackageType>(packageType, true, out var packageTypeEnum))
-                {
-                    parsedPackageType = packageTypeEnum;
-                }
-                
                 review = await _reviewManager.CreateReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language, isClosed: false, packageType: parsedPackageType);
             }
             

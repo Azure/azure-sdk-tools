@@ -247,19 +247,25 @@ namespace APIViewWeb.Managers
             await _pullRequestsRepository.UpsertPullRequestAsync(pullRequestModel);
         }
 
+        private static Models.PackageType? ParsePackageType(string packageType)
+        {
+            if (!string.IsNullOrEmpty(packageType) && Enum.TryParse<Models.PackageType>(packageType, true, out var parsedPackageType))
+            {
+                return parsedPackageType;
+            }
+            return null;
+        }
+
         private async Task CreateAPIRevisionIfRequired(CodeFile codeFile, string originalFileName, MemoryStream memoryStream,
             PullRequestModel pullRequestModel, CodeFile baselineCodeFile, MemoryStream baseLineStream, string baselineFileName, CreateAPIRevisionAPIResponse responseContent, string packageType = null)
         {
+            // Parse package type once at the beginning
+            var validPackageType = ParsePackageType(packageType);
+            
             // fetch review for the package or create brand new review
             var review = await _reviewManager.GetReviewAsync(language: codeFile.Language, packageName: codeFile.PackageName);
             if (review == null)
             {
-                // Parse package type if provided, otherwise pass null
-                Models.PackageType? validPackageType = null;
-                if (!string.IsNullOrEmpty(packageType) && Enum.TryParse<Models.PackageType>(packageType, true, out var packageTypeEnum))
-                {
-                    validPackageType = packageTypeEnum;
-                }
                 review = await _reviewManager.CreateReviewAsync(language: codeFile.Language, packageName: codeFile.PackageName, isClosed: false, packageType: validPackageType);
                 responseContent.ActionsTaken.Add($"No existing review with packageName: '{codeFile.PackageName}' and language: '{codeFile.Language}'.");
                 responseContent.ActionsTaken.Add($"Created a new Review with Id: '{review.Id}'.");
@@ -268,14 +274,11 @@ namespace APIViewWeb.Managers
             else
             {
                 // Update existing review with packageType if provided and different from current value
-                if (!string.IsNullOrEmpty(packageType) && Enum.TryParse<Models.PackageType>(packageType, true, out var packageTypeEnum))
+                if (validPackageType.HasValue && (!review.PackageType.HasValue || review.PackageType.Value != validPackageType.Value))
                 {
-                    if (!review.PackageType.HasValue || review.PackageType.Value != packageTypeEnum)
-                    {
-                        review.PackageType = packageTypeEnum;
-                        review = await _reviewManager.UpdateReviewAsync(review);
-                        responseContent.ActionsTaken.Add($"Updated existing review '{review.Id}' with PackageType: '{packageTypeEnum}'.");
-                    }
+                    review.PackageType = validPackageType;
+                    review = await _reviewManager.UpdateReviewAsync(review);
+                    responseContent.ActionsTaken.Add($"Updated existing review '{review.Id}' with PackageType: '{validPackageType}'.");
                 }
             }
             pullRequestModel.ReviewId = review.Id;

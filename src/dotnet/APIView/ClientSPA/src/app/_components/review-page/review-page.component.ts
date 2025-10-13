@@ -572,7 +572,7 @@ export class ReviewPageComponent implements OnInit {
     if (value) {
       this.reviewsService.toggleReviewApproval(this.reviewId!, this.activeApiRevisionId!, true).pipe(take(1)).subscribe({
         next: (review: Review) => {
-          this.updateReview(review);
+          this.review = review;
         }
       });
     }
@@ -582,7 +582,7 @@ export class ReviewPageComponent implements OnInit {
     if (value) {
       this.reviewsService.requestNamespaceReview(this.reviewId!, this.activeApiRevisionId!).pipe(take(1)).subscribe({
         next: (review: Review) => {
-          this.updateReview(review);
+          this.review = review;
           // Reset loading state in the options component on success
           if (this.reviewPageOptionsComponent) {
             this.reviewPageOptionsComponent.resetNamespaceReviewLoadingState();
@@ -674,7 +674,7 @@ export class ReviewPageComponent implements OnInit {
     this.signalRService.onReviewUpdates().pipe(takeUntil(this.destroy$)).subscribe({
       next: (updatedReview: Review) => {
         if (updatedReview.id === this.reviewId) {
-          this.updateReview(updatedReview);
+          this.review = updatedReview;
         }
       }
     });

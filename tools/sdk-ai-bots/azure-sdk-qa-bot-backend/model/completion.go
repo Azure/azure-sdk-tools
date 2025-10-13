@@ -27,6 +27,7 @@ const (
 	Source_TypeSpecAzureHttpSpecs  Source = "typespec_azure_http_specs"
 	Source_TypeSpecHttpSpecs       Source = "typespec_http_specs"
 	Source_AzureSDKForGo           Source = "azure_sdk_for_go_docs"
+	Source_StaticAzureDocs         Source = "static_azure_docs"
 )
 
 type Role string

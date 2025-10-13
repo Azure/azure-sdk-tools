@@ -15,8 +15,7 @@ public class JavaUpdateLanguageService : ClientUpdateLanguageServiceBase
     private readonly ILogger<JavaUpdateLanguageService> _logger;
     private readonly IMicroagentHostService _microagentHost;
 
-    public JavaUpdateLanguageService(
-        ILanguageSpecificCheckResolver languageSpecificCheckResolver,
+    public JavaUpdateLanguageService(ILanguageSpecificResolver<ILanguageSpecificChecks> languageSpecificChecks,
         ILogger<JavaUpdateLanguageService> logger,
         IMicroagentHostService microagentHost) : base(languageSpecificChecks)
     {

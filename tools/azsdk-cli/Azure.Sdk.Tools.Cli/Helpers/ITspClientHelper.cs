@@ -17,7 +17,7 @@ public interface ITspClientHelper
     Task<TspToolResponse> ConvertSwaggerAsync(string swaggerReadmePath, string outputDirectory, bool isArm, bool fullyCompatible, bool isCli, CancellationToken ct);
 
     /// <summary>
-     /// Runs `tsp-client update --commit <commitSha>` to regenerate a TypeSpec client into the specified output directory.
+    /// Runs `tsp-client update --commit <commitSha>` to regenerate a TypeSpec client into the specified output directory.
     /// </summary>
     /// <param name="tspLocationPath">Path to the tsp-location.yaml file.</param>
     /// <param name="outputDirectory">Directory to place regenerated output (created if missing, must be empty or created new).</param>

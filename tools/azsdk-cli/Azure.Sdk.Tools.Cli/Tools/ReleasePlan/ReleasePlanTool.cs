@@ -53,9 +53,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         private const string namespaceApprovalRepoOwner = "Azure";
 
 
-        private readonly HashSet<string> supportedLanguages = [
-            ".NET","Java","Python","JavaScript","Go"
+        private readonly HashSet<string> languagesforDataplane = [
+            ".NET","Java","Python","JavaScript"
         ];
+
+        private readonly HashSet<string> languagesforMgmtplane = [
+           ".NET","Java","Python","JavaScript","Go"
+       ];
 
         [GeneratedRegex("https:\\/\\/github.com\\/Azure\\/azure-sdk\\/issues\\/([0-9]+)")]
         private static partial Regex NameSpaceIssueUrlRegex();
@@ -342,12 +346,22 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return "Failed to deserialize SDK details.";
                 }
 
+                // Get release plan
+                var releasePlan = await devOpsService.GetReleasePlanForWorkItemAsync(releasePlanWorkItemId);
+                if (releasePlan == null)
+                {
+                    return new DefaultCommandResponse { ResponseError = $"No release plan found with work item ID {releasePlanWorkItemId}" };
+                }
+
+                var supportedLanguages = releasePlan.IsManagementPlane ? languagesforMgmtplane : languagesforDataplane;
                 // Validate SDK language name
                 if (SdkInfos.Any(sdk => !supportedLanguages.Contains(sdk.Language, StringComparer.OrdinalIgnoreCase)))
                 {
                     return $"Unsupported SDK language found. Supported languages are: {string.Join(", ", supportedLanguages)}";
                 }
 
+                StringBuilder sb = new();
+                // Update SDK package name and languages in work item
                 var updated = await devOpsService.UpdateReleasePlanSDKDetailsAsync(releasePlanWorkItemId, SdkInfos);
                 if (!updated)
                 {
@@ -355,14 +369,36 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 }
                 else
                 {
-                    StringBuilder sb = new("Updated SDK details in release plan.");
-                    sb.AppendLine();
+                    sb.Append("Updated SDK details in release plan.").AppendLine();
                     foreach (var sdk in SdkInfos)
                     {
                         sb.AppendLine($"Language: {sdk.Language}, Package name: {sdk.PackageName}");
                     }
-                    return sb.ToString();
                 }
+
+                // Check if any language is excluded
+                var excludedLanguages = supportedLanguages.Except(SdkInfos.Select(sdk => sdk.Language), StringComparer.OrdinalIgnoreCase);
+                if (excludedLanguages.Any())
+                {
+                    logger.LogDebug("Languages excluded in release plan. Work Item: {releasePlanWorkItemId}, languages: {excludedLanguages}", releasePlanWorkItemId, string.Join(", ", excludedLanguages));
+                    sb.AppendLine($"Important: The following languages were excluded in the release plan. SDK must be released for all languages. [{string.Join(", ", supportedLanguages)}]");
+                    sb.AppendLine("Explanation is required for any language exclusion. Please provide a justification for each excluded language.");
+
+                    // Mark excluded language as 'Requested' in the release plan work item.
+                    Dictionary<string, string> fieldsToUpdate = [];
+                    foreach (var lang in excludedLanguages)
+                    {
+                        fieldsToUpdate[$"Custom.ReleaseExclusionStatusFor{DevOpsService.MapLanguageToId(lang)}"] = "Requested";
+                    }
+                    await devOpsService.UpdateWorkItemAsync(releasePlanWorkItemId, fieldsToUpdate);
+                    logger.LogDebug("Marked excluded languages as 'Requested' in release plan work item {releasePlanWorkItemId}.", releasePlanWorkItemId);
+                }
+
+                return new DefaultCommandResponse
+                {
+                    Message = sb.ToString(),
+                    NextSteps = excludedLanguages.Any() && string.IsNullOrEmpty(releasePlan.LanguageExclusionRequesterNote) ? ["Prompt the user for justification for excluded languages and update it in the release plan."] : []
+                };
             }
             catch (Exception ex)
             {
@@ -450,6 +486,60 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 {
                     ResponseError = $"Failed to verify package namespace approval: {ex.Message}"
                 };
+            }
+        }
+
+        [McpServerTool(Name = "azsdk_update_language_exclusion_justification"), Description("Update language exclusion justification in release plan work item. This tool is called to update justification for excluded languages in the release plan. " +
+            "Optionally pass a language name to explicitly request exclusion for a specific language.")]
+        public async Task<DefaultCommandResponse> UpdateLanguageExclusionJustification(int releasePlanWorkItem, string justification, string language = "")
+        {
+            try
+            {
+                if (releasePlanWorkItem <= 0)
+                {
+                    return "Invalid release plan work item ID.";
+                }
+                if (string.IsNullOrEmpty(justification))
+                {
+                    return "No justification provided to update the release plan.";
+                }
+
+                // Get release plan
+                var releasePlan = await devOpsService.GetReleasePlanForWorkItemAsync(releasePlanWorkItem);
+                if (releasePlan == null)
+                {
+                    return new DefaultCommandResponse { ResponseError = $"No release plan found with work item ID {releasePlanWorkItem}" };
+                }
+
+                // Update language exclusion justification in work item
+                Dictionary<string, string> fieldsToUpdate = new()
+                {
+                    { "Custom.ReleaseExclusionRequestNote", justification }
+                };
+
+                if (!string.IsNullOrEmpty(language))
+                {
+                    fieldsToUpdate[$"Custom.ReleaseExclusionStatusFor{DevOpsService.MapLanguageToId(language)}"] = "Requested";
+                }
+
+                var updatedWorkItem = await devOpsService.UpdateWorkItemAsync(releasePlanWorkItem, fieldsToUpdate);
+                if (updatedWorkItem == null)
+                {
+                    return new DefaultCommandResponse { ResponseError = $"Failed to update the language exclusion justification in release plan work item {releasePlanWorkItem}." };
+                }
+                else
+                {
+                    return new DefaultCommandResponse
+                    {
+                        Message = "Updated language exclusion justification in release plan.",
+                        NextSteps = []
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, $"Failed to update release plan with language exclusion justification in release plan work item {releasePlanWorkItem}");
+                return new DefaultCommandResponse { ResponseError = $"Failed to update release plan with language exclusion justification: {ex.Message}" };
             }
         }
     }

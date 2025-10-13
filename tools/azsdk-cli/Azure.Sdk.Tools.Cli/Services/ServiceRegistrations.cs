@@ -13,6 +13,7 @@ using Azure.Sdk.Tools.Cli.Services.ClientUpdate;
 using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.Cli.Tools;
 using Azure.Sdk.Tools.Cli.SampleGeneration;
+using Azure.Sdk.Tools.Cli.Services.Tests;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -65,6 +66,11 @@ namespace Azure.Sdk.Tools.Cli.Services
                 Python = typeof(PythonSampleLanguageContext),
                 JavaScript = typeof(TypeScriptSampleLanguageContext),
                 Go = typeof(GoSampleLanguageContext),
+            });
+
+            services.AddLanguageSpecific<ITestRunner>(new LanguageSpecificImplementations
+            {
+                JavaScript = typeof(JavaScriptTestRunner),
             });
 
             // Helper classes

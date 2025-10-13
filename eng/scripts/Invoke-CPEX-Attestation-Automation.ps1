@@ -11,31 +11,13 @@ The Uri of the app used to send email notifications
 
 .PARAMETER TableName
 The name of the Kusto table where attestation entries will be written.
-
-.PARAMETER ReleasePlanWorkItemId
-Specifies a single release plan work item to process for KPI attestation. If omitted, all eligible items are considered.
-
-.PARAMETER TriageWorkItemId
-Specifies a single triage work item to process for KPI attestation. If omitted, all eligible items are considered.
-
-.PARAMETER TargetServiceTreeId
-Specifies the Serivice Tree Id of the product whose attestation status should be evaluated. Used to scope triage and release plan queries to a specific product. 
 #>
 param (
     [Parameter(Mandatory = $true)]
     [string] $AzureSDKEmailUri, 
 
     [Parameter(Mandatory = $true)]
-    [string] $TableName,
-
-    [Parameter(Mandatory = $false)]
-    [string] $ReleasePlanWorkItemId,
-
-    [Parameter(Mandatory = $false)]
-    [string] $TriageWorkItemId,
-
-    [Parameter(Mandatory = $false)]
-    [string] $TargetServiceTreeId
+    [string] $TableName
 )
 
 Set-StrictMode -Version 3
@@ -74,37 +56,8 @@ foreach ($kpiId in $KPI_ID_TO_TITLE.Keys) {
 
 $failedAttestations = @()
 
-function InvokeKustoCommand($command) {
-    try {
-        $clusterUri = "https://azsdk-cpex-attestation.westus2.kusto.windows.net"
-        $databaseName = "CPEX_Attestation_DB"
-        $accessToken = az account get-access-token --resource "https://api.kusto.windows.net" --query "accessToken" --output tsv
-        $headers = @{ Authorization="Bearer $accessToken" }
-        $body = @{ csl = $command; db = $databaseName } | ConvertTo-Json -Depth 3
-        Invoke-RestMethod -Uri "$clusterUri/v1/rest/mgmt" -Headers $headers -Method Post -Body $body -ContentType "application/json"
-    } catch {
-        Write-Error "Failed to invoke Kusto command: $command"
-        Write-Error "Exception message: $($_.Exception.Message)"
-        throw "Terminating due to failure in invoking kusto command"
-    }
-
-}
-
 function AddAttestationEntry($targetId, $actionItemId, $status, $targetType, $url, $productName) {
-    $command = @"
-.append $TableName <|
-print
-    ActionItemId = "$actionItemId",
-    TargetId = "$targetId",
-    TargetType = "$targetType",
-    Status = int($status),
-    CreatedTime = datetime(now),
-    EvidenceUrl = "$url"
-"@
-
-    Write-Host "Adding attestation entry for product [$targetId], with status [$status] for KPI action id [$actionItemId]."
-    InvokeKustoCommand $command
-    Write-Host "Added attestation entry for product [$targetId], with status [$status] for KPI action id [$actionItemId]."
+    & (Join-Path $PSScriptRoot "Add-CPEX-Attestation-Entry.ps1") -TableName $TableName -ActionItemId $actionItemId -TargetId $targetId -TargetType $targetType -Status $status -EvidenceUrl $url
 
     $successfulAttestations[$actionItemId] += @{
         productId = $targetId
@@ -118,12 +71,7 @@ function SendEmailNotification($emailTo, $emailCC, $emailSubject, $emailBody) {
         $body = @{ EmailTo = $emailTo; EmailCC = $emailCC; Subject = $emailSubject; Body = $emailBody} | ConvertTo-Json -Depth 3
         $response = Invoke-RestMethod -Uri $AzureSDKEmailUri -Method Post -Body $body -ContentType "application/json"
     } catch {
-        Write-Error "Failed to send email."
-        Write-Error "To: $emailTo"
-        Write-Error "CC: $emailCC"
-        Write-Error "Subject: $emailSubject"
-        Write-Error "Body: $emailBody"
-        Write-Error "Exception message: $($_.Exception.Message)"
+        Write-Error "Failed to send email.`nTo: $emailTo`nCC: $emailCC`nSubject: $emailSubject`nBody: $emailBody`nException message: $($_.Exception.Message)"
     }
 }
 
@@ -193,7 +141,7 @@ function BuildFailureEmailBody {
     return $body
 }
 
-$triages =  Get-TriagesForCPEXAttestation -triageWorkItemId $TriageWorkItemId -targetServiceTreeId $TargetServiceTreeId
+$triages =  Get-TriagesForCPEXAttestation
 
 foreach ($triage in $triages) {
     try {
@@ -254,8 +202,7 @@ foreach ($triage in $triages) {
             }
         }
     } catch {
-        Write-Error "Error processing triage item [$($triage.id)]"
-        Write-Error "Exception message: $($_.Exception.Message)"
+        Write-Error "Error processing triage item [$($triage.id)]`nException message: $($_.Exception.Message)"
 
         $failedAttestations += @{
             productId = $productServiceTreeId
@@ -267,7 +214,7 @@ foreach ($triage in $triages) {
     }
 }
 
-$releasePlans = Get-ReleasePlansForCPEXAttestation -releasePlanWorkItemId $ReleasePlanWorkItemId -targetServiceTreeId $TargetServiceTreeId
+$releasePlans = Get-ReleasePlansForCPEXAttestation
 
 foreach ($releasePlan in $releasePlans) {
     try {
@@ -323,8 +270,8 @@ foreach ($releasePlan in $releasePlans) {
 
         Update-AttestationStatusInWorkItem -workItemId $releasePlan.id -fieldName "Custom.AttestationStatus" -status "Completed"
     } catch {
-        Write-Error "Error processing release plan item [$($releasePlan.id)]"
-        Write-Error "Exception message: $($_.Exception.Message)"
+        Write-Error "Error processing release plan item [$($releasePlan.id)]`nException message: $($_.Exception.Message)"
+
         $failedAttestations += @{
             productId = $productServiceTreeId
             productName = $productName

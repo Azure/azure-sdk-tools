@@ -97,9 +97,10 @@ model CodeDiagnostic {
   HelpLinkUri?: string;
 }
 
+alias LanguageSpecificId = string; 
 model CrossLanguageMetadata {
   CrossLanguagePackageId: string;
-  CrossLanguageDefinitionId: Dictionary<string, string>;
+  CrossLanguageDefinitionId: Record<LanguageSpecificId>;
 }
 
 enum TokenKind {
@@ -138,14 +139,4 @@ model NavigationItem {
   NavigationId: string;
   ChildItems: Array<NavigationItem>;
   Tags: Record<string>;
-}
-
-
-@doc("The generic name value pair.")
-model Dictionary<TName, TValue> {
-  @doc("The name.")
-  name?: TName;
-
-  @doc("The value.")
-  value?: TValue;
 }

@@ -1,7 +1,5 @@
-using System.Runtime.InteropServices;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
-using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.Cli.Services;
 
@@ -27,8 +25,6 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
         _gitHelper = gitHelper;
         _logger = logger;
     }
-
-    public string SupportedLanguage => "JavaScript";
 
     public async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct)
     {

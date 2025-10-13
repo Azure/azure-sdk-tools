@@ -52,6 +52,8 @@ Without a concrete scenario, we risk building tools in isolation that don't inte
 - First preview releases
 - GA releases
 
+*Note: When testing this scenario, we will not be releasing the versions of the Health Deidentificiation libraries we create. When work on this scenario is completed, services teams should be able to run it all the way to release.*
+
 ---
 
 ## Workflow

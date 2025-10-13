@@ -103,19 +103,9 @@ public class TspClientUpdateTool(
 
         session.NewGeneratedPath = packagePath;
 
-        // Locate the existing tsp-location.yaml file within the provided packagePath and overwrite the commit: value with the new sha
         var tspLocationPath = Path.Combine(packagePath, "tsp-location.yaml");
-        if (File.Exists(tspLocationPath))
-        {
-            var tspLocationContent = await File.ReadAllTextAsync(tspLocationPath, ct);
-            tspLocationContent = System.Text.RegularExpressions.Regex.Replace(
-                tspLocationContent,
-                @"commit:\s+[a-fA-F0-9]+",
-                $"commit: {commitSha}");
-            await File.WriteAllTextAsync(tspLocationPath, tspLocationContent, ct);
-        }
         logger.LogInformation("Regenerating code...");
-        var regenResult = await tspClientHelper.UpdateGenerationAsync(tspLocationPath, packagePath, isCli: false, ct);
+        var regenResult = await tspClientHelper.UpdateGenerationAsync(tspLocationPath, packagePath, commitSha, isCli: false, ct);
         if (!regenResult.IsSuccessful)
         {
             session.LastStage = UpdateStage.Failed;
@@ -138,7 +128,7 @@ public class TspClientUpdateTool(
         if (patchesApplied)
         {
             logger.LogInformation("Patches were applied. Regenerating code to validate customizations...");
-            var regenAfterPatchResult = await RegenerateAfterPatchesAsync(tspLocationPath, packagePath, ct);
+            var regenAfterPatchResult = await RegenerateAfterPatchesAsync(tspLocationPath, packagePath, commitSha, ct);
             if (!regenAfterPatchResult.Success)
             {
                 logger.LogWarning("Code regeneration failed: {Error}", regenAfterPatchResult.ErrorMessage);
@@ -188,11 +178,11 @@ public class TspClientUpdateTool(
         FileHelper.CopyDirectory(sourceDir, new DirectoryInfo(backupDir), ct);
     }
 
-    private async Task<(bool Success, string? ErrorMessage)> RegenerateAfterPatchesAsync(string tspLocationPath, string packagePath, CancellationToken ct)
+    private async Task<(bool Success, string? ErrorMessage)> RegenerateAfterPatchesAsync(string tspLocationPath, string packagePath, string commitSha, CancellationToken ct)
     {
         try
         {
-            var regenResult = await tspClientHelper.UpdateGenerationAsync(tspLocationPath, packagePath, isCli: false, ct);
+            var regenResult = await tspClientHelper.UpdateGenerationAsync(tspLocationPath, packagePath, commitSha, isCli: false, ct);
 
             if (!regenResult.IsSuccessful)
             {

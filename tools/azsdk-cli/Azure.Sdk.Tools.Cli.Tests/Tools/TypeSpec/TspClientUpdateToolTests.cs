@@ -4,7 +4,6 @@ using Azure.Sdk.Tools.Cli.Tools;
 using Microsoft.Extensions.Logging.Abstractions;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models.Responses;
-using Moq;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.CustomizedCodeUpdateTool;
 
@@ -36,7 +35,7 @@ public class TspClientUpdateToolAutoTests
             => Task.FromResult(new List<ApiChange> {
                 new ApiChange { Kind = "MethodAdded", Symbol = "S1", Detail = "Added method S1" }
             });
-        public string? GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct) => 
+        public string? GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct) =>
             Path.Combine(session.NewGeneratedPath ?? "", "customization"); // Mock customization root exists
         public Task<bool> ApplyPatchesAsync(string commitSha, string customizationRoot, string newGeneratedPath, string oldGeneratedPath, CancellationToken ct)
             => Task.FromResult(true); // Simulate successful patch application
@@ -101,7 +100,7 @@ public class TspClientUpdateToolAutoTests
         public TestLanguageServiceFailThenFix(Func<int> next) { _next = next; }
         public string SupportedLanguage => "java";
         public Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath) => Task.FromResult(new List<ApiChange>());
-        public string? GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct) => 
+        public string? GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct) =>
             Path.Combine(session.NewGeneratedPath ?? "", "customization"); // Mock customization root exists
         public Task<bool> ApplyPatchesAsync(string commitSha, string customizationRoot, string newGeneratedPath, string oldGeneratedPath, CancellationToken ct) => Task.FromResult(true); // Simulate patches applied
         public Task<ValidationResult> ValidateAsync(ClientUpdateSessionState session, CancellationToken ct)
@@ -127,6 +126,6 @@ internal class MockTspHelper : ITspClientHelper
 {
     public Task<TspToolResponse> ConvertSwaggerAsync(string swaggerReadmePath, string outputDirectory, bool isArm, bool fullyCompatible, bool isCli, CancellationToken ct)
         => Task.FromResult(new TspToolResponse { IsSuccessful = true, TypeSpecProjectPath = outputDirectory });
-    public Task<TspToolResponse> UpdateGenerationAsync(string tspLocationPath, string outputDirectory, bool isCli, CancellationToken ct)
+    public Task<TspToolResponse> UpdateGenerationAsync(string tspLocationPath, string outputDirectory, string commitSha, bool isCli, CancellationToken ct)
         => Task.FromResult(new TspToolResponse { IsSuccessful = true, TypeSpecProjectPath = outputDirectory });
 }

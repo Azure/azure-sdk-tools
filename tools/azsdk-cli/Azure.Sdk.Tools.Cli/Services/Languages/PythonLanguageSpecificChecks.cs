@@ -32,12 +32,12 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
     /// <param name="packagePath">The package path to determine repository root</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>CLICheckResponse indicating success or failure</returns>
-    private async Task<CLICheckResponse> EnsureAzureSdkToolsInstalledAsync(string packagePath, CancellationToken cancellationToken = default)
+    private async Task<CLICheckResponse> EnsureAzureSdkToolsInstalled(string packagePath, CancellationToken cancellationToken = default)
     {
         try
         {
             // Check if azure-sdk-tools is already installed
-            var checkResult = await _processHelper.Run(new("pip", ["show", "azure-sdk-tools"], timeout: TimeSpan.FromSeconds(30)), cancellationToken);
+            var checkResult = await _processHelper.Run(new("python", ["-m", "pip", "show", "azure-sdk-tools"], timeout: TimeSpan.FromSeconds(30)), cancellationToken);
             
             if (checkResult.ExitCode == 0)
             {
@@ -46,11 +46,11 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
 
             // Find repository root and construct path to azure-sdk-tools
             var repoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
-            var azureSdkToolsPath = Path.Combine(repoRoot, "eng", "tools", "azure-sdk-tools");
+            var azureSdkToolsPath = Path.Combine(repoRoot, "eng", "tools", "azure-sdk-tools[build]");
 
             _logger.LogInformation("Installing azure-sdk-tools from: {AzureSdkToolsPath}", azureSdkToolsPath);
 
-            var installResult = await _processHelper.Run(new("pip", ["install", azureSdkToolsPath], timeout: TimeSpan.FromMinutes(5)), cancellationToken);
+            var installResult = await _processHelper.Run(new("python", ["-m", "pip", "install", azureSdkToolsPath], timeout: TimeSpan.FromMinutes(5)), cancellationToken);
 
             return installResult.ExitCode == 0 
                 ? new CLICheckResponse(0, "Successfully installed azure-sdk-tools")
@@ -176,7 +176,7 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
             _logger.LogInformation("Starting code linting for Python project at: {PackagePath}", packagePath);
 
             // Ensure azure-sdk-tools is installed before proceeding
-            var installCheckResult = await EnsureAzureSdkToolsInstalledAsync(packagePath, cancellationToken);
+            var installCheckResult = await EnsureAzureSdkToolsInstalled(packagePath, cancellationToken);
             if (installCheckResult.ExitCode != 0)
             {
                 return installCheckResult;
@@ -193,7 +193,6 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
             _logger.LogInformation("Python is available: {PythonVersion}", pythonCheckResult.Output.Trim());
 
             var timeout = TimeSpan.FromMinutes(10); // Linting tools can take longer than other operations
-            var allResults = new List<(string tool, ProcessResult result)>();
 
             // Run multiple linting tools
             var lintingTools = new[]
@@ -201,17 +200,22 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
                 ("azpysdk pylint", new[] { "azpysdk", "pylint", packagePath }),
                 ("azpysdk mypy", new[] { "azpysdk", "mypy", packagePath }),
                 ("azpysdk veriftypes", new[] { "azpysdk", "veriftypes", packagePath }),
-                ("pyright", new[] { "pyright", packagePath })
+                ("azpysdk pyright", new[] { "azpysdk", "pyright", packagePath })
             };
 
-            foreach (var (toolName, command) in lintingTools)
+            _logger.LogInformation("Starting {Count} linting tools in parallel", lintingTools.Length);
+
+            // Create tasks for all linting tools to run in parallel
+            var lintingTasks = lintingTools.Select(async tool =>
             {
-                _logger.LogInformation("Executing command: {ToolName} - {Command}", toolName, string.Join(" ", command));
+                var (toolName, command) = tool;
                 var result = await _processHelper.Run(new(command[0], command.Skip(1).ToArray(), workingDirectory: packagePath, timeout: timeout), cancellationToken);
-                allResults.Add((toolName, result));
-                
                 _logger.LogInformation("{ToolName} completed with exit code {ExitCode}", toolName, result.ExitCode);
-            }
+                return (toolName, result);
+            });
+
+            // Wait for all linting tools to complete
+            var allResults = await Task.WhenAll(lintingTasks);
 
             // Analyze results
             var failedTools = allResults.Where(r => r.result.ExitCode != 0).ToList();
@@ -223,11 +227,11 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
             }
             else
             {
-                var failedToolNames = string.Join(", ", failedTools.Select(t => t.tool));
-                var combinedOutput = string.Join("\n\n", failedTools.Select(t => $"=== {t.tool} ===\n{t.result.Output}"));
+                var failedToolNames = string.Join(", ", failedTools.Select(t => t.toolName));
+                var combinedOutput = string.Join("\n\n", failedTools.Select(t => $"=== {t.toolName} ===\n{t.result.Output}"));
                 
                 _logger.LogWarning("Linting found issues in {FailedCount}/{TotalCount} tools: {FailedTools}", 
-                    failedTools.Count, allResults.Count, failedToolNames);
+                    failedTools.Count, allResults.Length, failedToolNames);
                 
                 return new CLICheckResponse(1, combinedOutput, $"Linting issues found in: {failedToolNames}");
             }
@@ -246,7 +250,7 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
             _logger.LogInformation("Starting code formatting for Python project at: {PackagePath}", packagePath);
 
             // Ensure azure-sdk-tools is installed before proceeding
-            var installCheckResult = await EnsureAzureSdkToolsInstalledAsync(packagePath, cancellationToken);
+            var installCheckResult = await EnsureAzureSdkToolsInstalled(packagePath, cancellationToken);
             if (installCheckResult.ExitCode != 0)
             {
                 return installCheckResult;

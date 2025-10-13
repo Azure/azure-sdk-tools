@@ -2,6 +2,7 @@ using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Prompts;
+using Azure.Sdk.Tools.Cli.Prompts.Templates;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Microagents.Tools;
 using Microsoft.Extensions.Logging;
@@ -384,9 +385,10 @@ public class LanguageChecks : ILanguageChecks
     /// <returns>Result of the spelling fix operation</returns>
     private async Task<SpellingFixResult> RunSpellingFixMicroagent(string repoRoot, string cspellOutput, CancellationToken ct)
     {
+        var spellingTemplate = new SpellingValidationTemplate(cspellOutput, repoRoot);
         var agent = new Microagent<SpellingFixResult>
         {
-            Instructions = ValidationPrompts.GetMicroagentSpellingFixPrompt(cspellOutput),
+            Instructions = spellingTemplate.BuildPrompt(),
             MaxToolCalls = 10,
             Model = "gpt-4",
             Tools = new IAgentTool[]

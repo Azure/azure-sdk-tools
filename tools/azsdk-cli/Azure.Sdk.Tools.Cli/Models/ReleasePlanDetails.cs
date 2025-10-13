@@ -33,18 +33,14 @@ namespace Azure.Sdk.Tools.Cli.Models
         public string SDKLanguages { get; set; } = string.Empty;
         public bool IsSpecApproved { get; set; } = false;
         public int ApiSpecWorkItemId { get; set; } = 0;
+        public string LanguageExclusionRequesterNote { get; set; } = string.Empty;
+        public string LanguageExclusionApproverNote { get; set; } = string.Empty;
 
         public Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument GetPatchDocument()
         {
 
             var jsonDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument
             {
-                new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchOperation
-                {
-                    Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
-                    Path = "/fields/System.State",
-                    Value = Status
-                },
                 new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchOperation
                 {
                     Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
@@ -140,5 +136,8 @@ namespace Azure.Sdk.Tools.Cli.Models
         public string GenerationPipelineUrl { get; set; } = string.Empty;
         public string SdkPullRequestUrl { get; set; } = string.Empty;
         public string PackageName { get; set; } = string.Empty;
+        public string ReleaseStatus { get; set; } = string.Empty;
+        public string PullRequestStatus { get; set; } = string.Empty;
+        public string ReleaseExclusionStatus { get; set; } = string.Empty;
     }
 }

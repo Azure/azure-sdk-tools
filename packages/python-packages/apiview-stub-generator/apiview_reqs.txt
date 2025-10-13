@@ -12,6 +12,6 @@ azure-pylint-guidelines-checker==0.5.6
 six==1.17.0
 tomli==2.2.1
 tomlkit==0.13.2
-typing_extensions==4.12.2
+typing_extensions==4.15.0
 wrapt==1.17.2
 ./

@@ -1,4 +1,4 @@
-# Spec: V1 Scenario
+# Spec: V1 scenario
 
 ## Overview
 
@@ -12,9 +12,9 @@ The V1 scenario defines the end-to-end workflow for generating and releasing pre
 
 ## Why V1 Scenario Matters
 
-Without a concrete scenario, we risk building tools in isolation that don't integrate well. V1 provides:
+Without a concrete end-to-end scenario, we risk building tools in isolation that don't integrate well. V1 provides:
 
-- Clear definition of "done" for all teams
+- Clear definition of successful completion for all teams
 - Repeatable test case for validation
 - Scope boundaries to prevent feature creep
 - Foundation for cross-language consistency

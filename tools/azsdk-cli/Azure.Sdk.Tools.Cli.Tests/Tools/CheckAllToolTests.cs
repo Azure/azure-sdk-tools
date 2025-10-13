@@ -15,10 +15,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         private Mock<IProcessHelper> _mockProcessHelper;
         private Mock<INpxHelper> _mockNpxHelper;
         private Mock<IGitHelper> _mockGitHelper;
-        private Mock<ILogger<LanguageChecks>> _mockLanguageChecksLogger;
-        private Mock<ILogger<PythonLanguageSpecificChecks>> _mockPythonLogger;
+        private Mock<ILogger<ValidationChecks>> _mockLanguageChecksLogger;
+        private Mock<ILogger<PythonValidationChecks>> _mockPythonLogger;
         private Mock<IMicroagentHostService> _mockMicroagentHostService;
-        private LanguageChecks _languageChecks;
+        private ValidationChecks _languageChecks;
         private PackageCheckTool _packageCheckTool;
         private string _testProjectPath;
 
@@ -29,18 +29,18 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             _mockProcessHelper = new Mock<IProcessHelper>();
             _mockNpxHelper = new Mock<INpxHelper>();
             _mockGitHelper = new Mock<IGitHelper>();
-            _mockLanguageChecksLogger = new Mock<ILogger<LanguageChecks>>();
-            _mockPythonLogger = new Mock<ILogger<PythonLanguageSpecificChecks>>();
+            _mockLanguageChecksLogger = new Mock<ILogger<ValidationChecks>>();
+            _mockPythonLogger = new Mock<ILogger<PythonValidationChecks>>();
             _mockMicroagentHostService = new Mock<IMicroagentHostService>();
 
             // Create language-specific check implementations with mocked dependencies
-            var pythonCheck = new PythonLanguageSpecificChecks(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _mockPythonLogger.Object);
+            var pythonCheck = new PythonValidationChecks(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _mockPythonLogger.Object);
 
-            var languageChecks = new List<ILanguageSpecificChecks> { pythonCheck };
+            var languageChecks = new List<ISpecificValidationChecks> { pythonCheck };
             var mockPowershellHelper = new Mock<IPowershellHelper>();
-            var resolver = Mock.Of<ILanguageSpecificResolver<ILanguageSpecificChecks>>();
-            
-            _languageChecks = new LanguageChecks(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _mockLanguageChecksLogger.Object, resolver, _mockMicroagentHostService.Object);
+            var resolver = Mock.Of<ILanguageSpecificResolver<ISpecificValidationChecks>>();
+
+            _languageChecks = new ValidationChecks(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _mockLanguageChecksLogger.Object, resolver, _mockMicroagentHostService.Object);
             _packageCheckTool = new PackageCheckTool(_mockLogger.Object, _languageChecks);
 
             // Setup default mock responses
@@ -244,10 +244,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                          .ReturnsAsync(cspellErrorResult);
 
             // Setup mock microagent service to return a successful spelling fix result
-            var mockSpellingFixResult = new LanguageChecks.SpellingFixResult(
+            var mockSpellingFixResult = new ValidationChecks.SpellingFixResult(
                 "Successfully fixed 4 spelling errors and added 0 words to cspell.json. Fixed 'contians' to 'contains', 'obvioius' to 'obvious', 'speling' to 'spelling', 'erors' to 'errors' in test_fix.md"
             );
-            _mockMicroagentHostService.Setup(x => x.RunAgentToCompletion(It.IsAny<Microagent<LanguageChecks.SpellingFixResult>>(), It.IsAny<CancellationToken>()))
+            _mockMicroagentHostService.Setup(x => x.RunAgentToCompletion(It.IsAny<Microagent<ValidationChecks.SpellingFixResult>>(), It.IsAny<CancellationToken>()))
                                      .ReturnsAsync(mockSpellingFixResult);
 
             try

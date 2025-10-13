@@ -9,7 +9,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
     {
         private string JavaPackageDir { get; set; }
         private Mock<IProcessHelper> MockProcessHelper { get; set; }
-        private JavaLanguageSpecificChecks LangService { get; set; }
+        private JavaValidationChecks LangService { get; set; }
 
         [SetUp]
         public void SetUp()
@@ -21,9 +21,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
 
             MockProcessHelper = new Mock<IProcessHelper>();
 
-            LangService = new JavaLanguageSpecificChecks(
+            LangService = new JavaValidationChecks(
                 MockProcessHelper.Object,
-                NullLogger<JavaLanguageSpecificChecks>.Instance);
+                NullLogger<JavaValidationChecks>.Instance);
         }
 
         #region Setup Helpers

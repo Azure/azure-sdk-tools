@@ -12,7 +12,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         private string GoPackageDir { get; set; }
         private static string GoProgram => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "go.exe" : "go";
 
-        private GoLanguageSpecificChecks LangService { get; set; }
+        private GoValidationChecks LangService { get; set; }
 
         [SetUp]
         public async Task SetUp()
@@ -22,11 +22,11 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
             var mockGitHubService = new Mock<IGitHubService>();
             var gitHelper = new GitHelper(mockGitHubService.Object, NullLogger<GitHelper>.Instance);
-            LangService = new GoLanguageSpecificChecks(new ProcessHelper(NullLogger<ProcessHelper>.Instance, Mock.Of<IRawOutputHelper>()), new NpxHelper(NullLogger<NpxHelper>.Instance, Mock.Of<IRawOutputHelper>()), gitHelper, NullLogger<GoLanguageSpecificChecks>.Instance);
+            LangService = new GoValidationChecks(new ProcessHelper(NullLogger<ProcessHelper>.Instance, Mock.Of<IRawOutputHelper>()), new NpxHelper(NullLogger<NpxHelper>.Instance, Mock.Of<IRawOutputHelper>()), gitHelper, NullLogger<GoValidationChecks>.Instance);
 
             if (!await LangService.CheckDependencies(CancellationToken.None))
             {
-                Assert.Ignore("golang tooling dependencies are not installed, can't run GoLanguageSpecificChecksTests");
+                Assert.Ignore("golang tooling dependencies are not installed, can't run GoValidationChecksTests");
             }
 
             var resp = await LangService.CreateEmptyPackage(GoPackageDir, "untitleddotloop", CancellationToken.None);

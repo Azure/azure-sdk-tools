@@ -7,10 +7,10 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// Java-specific implementation of language repository service.
 /// Uses tools like Maven, Gradle, javac, etc. for Java development workflows.
 /// </summary>
-public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
+public class JavaValidationChecks : ISpecificValidationChecks
 {
     private readonly IProcessHelper _processHelper;
-    private readonly ILogger<JavaLanguageSpecificChecks> _logger;
+    private readonly ILogger<JavaValidationChecks> _logger;
 
     // Maven operation timeouts
     private static readonly TimeSpan MavenFormatTimeout = TimeSpan.FromMinutes(10);
@@ -34,9 +34,9 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
         "Check Maven logs for more detailed error information"
     ];
 
-    public JavaLanguageSpecificChecks(
+    public JavaValidationChecks(
         IProcessHelper processHelper,
-        ILogger<JavaLanguageSpecificChecks> logger)
+        ILogger<JavaValidationChecks> logger)
     {
         _processHelper = processHelper;
         _logger = logger;

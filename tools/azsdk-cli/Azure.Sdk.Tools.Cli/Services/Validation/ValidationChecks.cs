@@ -12,7 +12,7 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// <summary>
 /// Interface for language repository service operations.
 /// </summary>
-public interface ILanguageChecks
+public interface IValidationChecks
 {
     /// <summary>
     /// Analyzes dependencies for the specific package.
@@ -84,16 +84,16 @@ public interface ILanguageChecks
 /// <summary>
 /// Implementation of language repository service.
 /// </summary>
-public class LanguageChecks : ILanguageChecks
+public class ValidationChecks : IValidationChecks
 {
     private readonly IProcessHelper _processHelper;
     private readonly INpxHelper _npxHelper;
     private readonly IGitHelper _gitHelper;
-    private readonly ILogger<LanguageChecks> _logger;
-    private readonly ILanguageSpecificResolver<ILanguageSpecificChecks> _languageSpecificChecks;
+    private readonly ILogger<ValidationChecks> _logger;
+    private readonly ILanguageSpecificResolver<ISpecificValidationChecks> _languageSpecificChecks;
     private readonly IMicroagentHostService _microagentHostService;
 
-    public LanguageChecks(IProcessHelper processHelper, INpxHelper npxHelper, IGitHelper gitHelper, ILogger<LanguageChecks> logger, ILanguageSpecificResolver<ILanguageSpecificChecks> languageSpecificChecks, IMicroagentHostService microagentHostService)
+    public ValidationChecks(IProcessHelper processHelper, INpxHelper npxHelper, IGitHelper gitHelper, ILogger<ValidationChecks> logger, ILanguageSpecificResolver<ISpecificValidationChecks> languageSpecificChecks, IMicroagentHostService microagentHostService)
     {
         _processHelper = processHelper;
         _npxHelper = npxHelper;

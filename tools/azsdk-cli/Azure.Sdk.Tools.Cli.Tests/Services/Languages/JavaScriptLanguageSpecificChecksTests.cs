@@ -11,7 +11,7 @@ internal class JavaScriptLanguageSpecificChecksTests
     private Mock<IProcessHelper> _processHelperMock = null!;
     private Mock<INpxHelper> _npxHelperMock = null!;
     private Mock<IGitHelper> _gitHelperMock = null!;
-    private JavaScriptLanguageSpecificChecks _languageChecks = null!;
+    private JavaScriptValidationChecks _languageChecks = null!;
     private string _packagePath = null!;
 
     [SetUp]
@@ -21,11 +21,11 @@ internal class JavaScriptLanguageSpecificChecksTests
         _npxHelperMock = new Mock<INpxHelper>();
         _gitHelperMock = new Mock<IGitHelper>();
 
-        _languageChecks = new JavaScriptLanguageSpecificChecks(
+        _languageChecks = new JavaScriptValidationChecks(
             _processHelperMock.Object,
             _npxHelperMock.Object,
             _gitHelperMock.Object,
-            NullLogger<JavaScriptLanguageSpecificChecks>.Instance);
+            NullLogger<JavaScriptValidationChecks>.Instance);
 
         _packagePath = "/tmp/javascript-package";
     }

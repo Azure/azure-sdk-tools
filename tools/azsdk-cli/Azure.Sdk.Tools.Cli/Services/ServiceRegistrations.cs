@@ -33,14 +33,14 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IGitHubService, GitHubService>();
 
             // Language Check Services (Composition-based)
-            services.AddScoped<ILanguageChecks, LanguageChecks>();
-            services.AddLanguageSpecific<ILanguageSpecificChecks>(new LanguageSpecificImplementations
+            services.AddScoped<IValidationChecks, ValidationChecks>();
+            services.AddLanguageSpecific<ISpecificValidationChecks>(new LanguageSpecificImplementations
             {
-                Python = typeof(PythonLanguageSpecificChecks),
-                Java = typeof(JavaLanguageSpecificChecks),
-                JavaScript = typeof(JavaScriptLanguageSpecificChecks),
-                DotNet = typeof(DotNetLanguageSpecificChecks),
-                Go = typeof(GoLanguageSpecificChecks),
+                Python = typeof(PythonValidationChecks),
+                Java = typeof(JavaValidationChecks),
+                JavaScript = typeof(JavaScriptValidationChecks),
+                DotNet = typeof(DotNetValidationChecks),
+                Go = typeof(GoValidationChecks),
             });
 
             // Client update language services

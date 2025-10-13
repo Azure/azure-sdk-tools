@@ -171,14 +171,14 @@ foreach ($triage in $triages) {
 
         if ($dataAttestationStatus -ne "Completed") {
             if ($dataScope -eq "Yes") {
-                Update-AttestationStatusInWorkItem -workItemId $triage.id -fieldName "Custom.DataplaneAttestationStatus" -status "Completed"
+                # Update-AttestationStatusInWorkItem -workItemId $triage.id -fieldName "Custom.DataplaneAttestationStatus" -status "Completed"
             } else {
                 if ($lifecycleToDataKpis.ContainsKey($productLifecycle)) {
                     foreach ($kpiId in $lifecycleToDataKpis[$productLifecycle]) {
                         AddAttestationEntry $productServiceTreeId $kpiId $NA $productType $url $productName
                     }
                 }
-                Update-AttestationStatusInWorkItem -workItemId $triage.id -fieldName "Custom.DataplaneAttestationStatus" -status "Not applicable"
+                # Update-AttestationStatusInWorkItem -workItemId $triage.id -fieldName "Custom.DataplaneAttestationStatus" -status "Not applicable"
             }
         }
 
@@ -191,14 +191,14 @@ foreach ($triage in $triages) {
 
         if ($mgmtAttestationStatus -ne "Completed") {
             if ($mgmtScope -eq "Yes") {
-                Update-AttestationStatusInWorkItem -workItemId $triage.id -fieldName "Custom.ManagementPlaneAttestationStatus" -status "Completed"
+                # Update-AttestationStatusInWorkItem -workItemId $triage.id -fieldName "Custom.ManagementPlaneAttestationStatus" -status "Completed"
             } else {
                 if ($lifecycleToMgmtKpis.ContainsKey($productLifecycle)) {
                     foreach ($kpiId in $lifecycleToMgmtKpis[$productLifecycle]) {
                         AddAttestationEntry $productServiceTreeId $kpiId $NA $productType $url $productName
                     }
                 }
-                Update-AttestationStatusInWorkItem -workItemId $triage.id -fieldName "Custom.ManagementPlaneAttestationStatus" -status "Not applicable"
+                # Update-AttestationStatusInWorkItem -workItemId $triage.id -fieldName "Custom.ManagementPlaneAttestationStatus" -status "Not applicable"
             }
         }
     } catch {
@@ -268,7 +268,7 @@ foreach ($releasePlan in $releasePlans) {
             AddAttestationEntry $productServiceTreeId $kpiId $COMPLETED $productType $url $productName
         }
 
-        Update-AttestationStatusInWorkItem -workItemId $releasePlan.id -fieldName "Custom.AttestationStatus" -status "Completed"
+        # Update-AttestationStatusInWorkItem -workItemId $releasePlan.id -fieldName "Custom.AttestationStatus" -status "Completed"
     } catch {
         Write-Error "Error processing release plan item [$($releasePlan.id)]`nException message: $($_.Exception.Message)"
 

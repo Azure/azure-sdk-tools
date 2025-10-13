@@ -7,7 +7,7 @@ using Moq;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Services
 {
-    internal class GoLanguageSpecificChecksTests
+    internal class GoValidationChecksTests
     {
         private string GoPackageDir { get; set; }
         private static string GoProgram => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "go.exe" : "go";

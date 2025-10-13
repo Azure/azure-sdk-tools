@@ -5,7 +5,7 @@ using Moq;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
 {
-    internal class JavaLanguageSpecificChecksTests
+    internal class JavaValidationChecksTests
     {
         private string JavaPackageDir { get; set; }
         private Mock<IProcessHelper> MockProcessHelper { get; set; }
@@ -16,7 +16,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         {
             // Use TestAssets directory directly instead of temp directory
             JavaPackageDir = Path.Combine(
-                Path.GetDirectoryName(typeof(JavaLanguageSpecificChecksTests).Assembly.Location)!,
+                Path.GetDirectoryName(typeof(JavaValidationChecksTests).Assembly.Location)!,
                 "TestAssets", "Java");
 
             MockProcessHelper = new Mock<IProcessHelper>();

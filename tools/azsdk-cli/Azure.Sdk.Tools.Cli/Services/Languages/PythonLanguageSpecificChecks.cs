@@ -15,9 +15,9 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
     private readonly ILogger<PythonLanguageSpecificChecks> _logger;
 
     public PythonLanguageSpecificChecks(
-        IProcessHelper processHelper, 
-        INpxHelper npxHelper, 
-        IGitHelper gitHelper, 
+        IProcessHelper processHelper,
+        INpxHelper npxHelper,
+        IGitHelper gitHelper,
         ILogger<PythonLanguageSpecificChecks> logger)
     {
         _processHelper = processHelper;
@@ -25,7 +25,6 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
         _gitHelper = gitHelper;
         _logger = logger;
     }
-    public string SupportedLanguage => "Python";
 
     public async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct = default)
     {

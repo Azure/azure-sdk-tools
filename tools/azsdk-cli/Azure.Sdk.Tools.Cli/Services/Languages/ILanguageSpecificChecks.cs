@@ -8,11 +8,6 @@ namespace Azure.Sdk.Tools.Cli.Services;
 public interface ILanguageSpecificChecks
 {
     /// <summary>
-    /// Gets the language this implementation supports.
-    /// </summary>
-    string SupportedLanguage { get; }
-
-    /// <summary>
     /// Analyzes dependencies for the specific package.
     /// </summary>
     /// <param name="packagePath">Path to the package directory</param>

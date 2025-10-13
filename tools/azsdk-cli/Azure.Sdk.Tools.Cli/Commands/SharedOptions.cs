@@ -42,7 +42,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(TspClientUpdateTool),
             typeof(TypeSpecPublicRepoValidationTool),
             typeof(VerifySetupTool),
-
+            typeof(TestTool),
 #if DEBUG
             // only add these tools in debug mode
             typeof(ExampleTool),

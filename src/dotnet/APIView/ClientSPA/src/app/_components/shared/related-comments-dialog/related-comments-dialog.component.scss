@@ -1,0 +1,119 @@
+.dialog-content {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.related-comments-list {
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 1rem;
+  background-color: #f8f9fa;
+}
+
+.comment-item {
+  background-color: white;
+  border: 1px solid #dee2e6 !important;
+  transition: all 0.2s ease;
+  
+  &.selected {
+    border-color: #0d6efd !important;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    background-color: #f8f9ff;
+  }
+
+  &:hover {
+    border-color: #adb5bd !important;
+  }
+}
+
+.user-avatar {
+  object-fit: cover;
+}
+
+.rendered-comment-content {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  
+  p {
+    margin-bottom: 0.5rem;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+  
+  code {
+    background-color: #f1f3f4;
+    padding: 0.125rem 0.25rem;
+    border-radius: 0.25rem;
+    font-size: 0.875em;
+  }
+  
+  pre {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 0.375rem;
+    padding: 1rem;
+    margin: 0.5rem 0;
+    
+    code {
+      background: none;
+      padding: 0;
+    }
+  }
+}
+
+// Dialog customizations
+:host ::ng-deep {
+  .p-dialog {
+    z-index: 10000 !important;
+  }
+  
+  .p-dialog-mask {
+    z-index: 9999 !important;
+  }
+  
+  .p-dialog .p-dialog-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+  }
+  
+  .p-dialog .p-dialog-content {
+    padding: 1.5rem;
+  }
+  
+  .p-dialog .p-dialog-footer {
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    padding: 1rem 1.5rem;
+  }
+  
+  .p-checkbox .p-checkbox-box {
+    border: 2px solid #ced4da;
+    
+    &.p-highlight {
+      background-color: #0d6efd;
+      border-color: #0d6efd;
+    }
+  }
+}
+
+.code-github {
+  background-color: #f6f8fa !important;
+  border: 1px solid #d1d9e0 !important;
+  font-family: 'SFMono-Regular', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', monospace;
+  
+  code {
+    font-size: 0.875rem;
+    line-height: 1.45;
+    background: transparent !important;
+    color: #24292f;
+    font-weight: 400;
+    white-space: pre;
+    word-wrap: break-word;
+    
+    &::before,
+    &::after {
+      content: none; 
+    }
+  }
+}

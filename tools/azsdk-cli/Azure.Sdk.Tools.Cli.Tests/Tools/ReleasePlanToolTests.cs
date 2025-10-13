@@ -229,5 +229,34 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             updateStatus = await releasePlanTool.UpdateSDKDetailsInReleasePlan(100, sdkDetails);
             Assert.That(updateStatus.Message, Does.Contain("Updated SDK details in release plan"));
         }
+
+        [Test]
+        public async Task Test_Update_SDK_Details_Mgmt_language_excl()
+        {
+            string sdkDetails = "[{\"language\":\".NET\",\"packageName\":\"Azure.ResourceManager.Contoso\"},{\"language\":\"JavaScript\",\"packageName\":\"@azure/arm-contoso\"}]";
+            var updateStatus = await releasePlanTool.UpdateSDKDetailsInReleasePlan(100, sdkDetails);
+            Assert.That(updateStatus.Message, Does.Contain("Updated SDK details in release plan"));
+            Assert.That(updateStatus.Message, Does.Contain("Important: The following languages were excluded in the release plan. SDK must be released for all languages."));
+            Assert.True(updateStatus.NextSteps?.Contains("Prompt the user for justification for excluded languages and update it in the release plan.") ?? false);
+        }
+
+
+        [Test]
+        public async Task Test_Update_SDK_Details_Data_language_excl()
+        {
+            string sdkDetails = "[{\"language\":\".NET\",\"packageName\":\"Azure.Contoso\"},{\"language\":\"JavaScript\",\"packageName\":\"@azure/contoso\"}]";
+            var updateStatus = await releasePlanTool.UpdateSDKDetailsInReleasePlan(1001, sdkDetails);
+            Assert.That(updateStatus.Message, Does.Contain("Updated SDK details in release plan"));
+            Assert.That(updateStatus.Message, Does.Contain("Important: The following languages were excluded in the release plan. SDK must be released for all languages."));
+            Assert.That(updateStatus.NextSteps?.Contains("Prompt the user for justification for excluded languages and update it in the release plan.") ?? false);
+        }
+
+        [Test]
+        public  async Task Test_update_language_exclusion_justification()
+        {
+            var updateStatus = await releasePlanTool.UpdateLanguageExclusionJustification(100, "This is a test justification for excluding certain languages.");
+            Assert.That(updateStatus.Message, Does.Contain("Updated language exclusion justification in release plan"));
+        }
+
     }
 }

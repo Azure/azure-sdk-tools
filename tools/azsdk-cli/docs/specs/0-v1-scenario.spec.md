@@ -46,7 +46,8 @@ Without a concrete end-to-end scenario, we risk building tools in isolation that
 
 ### Out of scope for V1
 
-- SDK code customizations
+- Working with or creating new SDK code customizations
+- Creating new client.tsp customizations
 - Breaking changes
 - Live test execution
 - Test resource management

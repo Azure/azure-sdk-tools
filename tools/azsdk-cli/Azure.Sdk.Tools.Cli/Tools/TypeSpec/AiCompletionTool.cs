@@ -4,7 +4,6 @@ using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Text.Json.Serialization;
-using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Models.AiCompletion;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
@@ -34,26 +33,22 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public override Command GetCommand()
+        protected override Command GetCommand()
         {
             var command = new Command("ai-completion", "Query the Azure SDK QA Bot AI agent for answers about TypeSpec, Azure SDK, and API guidelines");
-
             command.AddArgument(_questionArgument);
-
-            command.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
 
             return command;
         }
 
-        public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
+        public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
         {
             var question = ctx.ParseResult.GetValueForArgument(_questionArgument);
 
             if (string.IsNullOrWhiteSpace(question))
             {
                 _logger.LogError("Question cannot be empty");
-                SetFailure();
-                return;
+                return new() { ResponseError = "Question cannot be empty" };
             }
 
             try
@@ -62,22 +57,21 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
 
                 var response = await QueryAzureSDKDocumentation(
                   question,
-                  ct: ct);
+                  ct: ct
+                );
 
-                if (response.IsSuccessful)
-                {
-                    _logger.LogDebug(response.ToString());
-                }
-                else
+                if (!response.IsSuccessful)
                 {
                     _logger.LogError("AI query failed: {Error}", response.ResponseError);
-                    SetFailure();
+                    return new() { ResponseError = $"AI query failed: {response.ResponseError}" };
                 }
+                _logger.LogDebug(response.ToString());
+                return response;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to query AI agent via CLI");
-                SetFailure();
+                return new() { ResponseError = $"Failed to query AI agent: {ex.Message}" };
             }
         }
 
@@ -95,7 +89,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                 // Validate inputs
                 if (string.IsNullOrWhiteSpace(question))
                 {
-                    SetFailure();
                     return new AiCompletionToolResponse
                     {
                         ResponseError = "Question cannot be empty"
@@ -141,7 +134,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             catch (OperationCanceledException) when (ct.IsCancellationRequested)
             {
                 _logger.LogWarning("AI query was cancelled");
-                SetFailure();
                 return new AiCompletionToolResponse
                 {
                     ResponseError = "Query was cancelled"
@@ -150,7 +142,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error querying AI agent");
-                SetFailure();
                 return new AiCompletionToolResponse
                 {
                     ResponseError = $"Failed to query AI agent: {ex.Message}"
@@ -189,7 +180,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
     }
 
     // Response models for the MCP tool
-    public class AiCompletionToolResponse : Azure.Sdk.Tools.Cli.Models.Response
+    public class AiCompletionToolResponse : CommandResponse
     {
         [JsonPropertyName("is_successful")]
         public bool IsSuccessful { get; set; }

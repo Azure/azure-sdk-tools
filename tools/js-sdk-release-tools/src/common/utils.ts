@@ -1,7 +1,7 @@
 import shell from 'shelljs';
 import path, { join, posix } from 'path';
 import fs from 'fs';
-import { SDKType, RunMode } from './types.js';
+import { SDKType, RunMode, ModularSDKType } from './types.js';
 import { logger } from '../utils/logger.js';
 import { Project, ScriptTarget, SourceFile } from 'ts-morph';
 import { readFile } from 'fs/promises';
@@ -11,6 +11,8 @@ import { SpawnOptions, spawn } from 'child_process';
 import * as compiler from '@typespec/compiler';
 import { dump, load as yamlLoad } from 'js-yaml';
 import { NpmViewParameters, tryCreateLastestStableNpmViewFromGithub } from './npmUtils.js';
+import { exists } from 'fs-extra';
+import { getModularSDKType } from '../utils/generateInputUtils.js';
 
 // ./eng/common/scripts/TypeSpec-Project-Process.ps1 script forces to use emitter '@azure-tools/typespec-ts',
 // so do NOT change the emitter
@@ -392,8 +394,10 @@ export async function cleanUpDirectory(
         await rm(directory, { recursive: true, force: true });
         await mkdir(directory, { recursive: true });
         return;
+    }else if(entriesToPreserve.length === 1){
+        await rm(path.join(directory, entriesToPreserve[0]), { recursive: true, force: true });
     }
-    
+
     // If we need to preserve some entries, selectively remove others
     logger.info(`Cleaning ${directory} directory, preserving: ${entriesToPreserve.join(', ')}`);
     
@@ -422,10 +426,21 @@ export async function cleanUpPackageDirectory(
 ): Promise<void> {
     // Preserve test directory and assets.json file only in Release and Local modes
     // In SpecPullRequest and Batch modes, remove everything
-    const shouldPreserveTestAndAssets = runMode !== RunMode.SpecPullRequest && runMode !== RunMode.Batch;
-    const entriesToPreserve = shouldPreserveTestAndAssets ? ["test", "assets.json"] : [];
+    const pipelineRunMode = runMode !== RunMode.SpecPullRequest && runMode !== RunMode.Batch;
+    const entriesToPreserveForMgmtPackages = pipelineRunMode ? ["test", "assets.json"] : [];
 
-    await cleanUpDirectory(packageDirectory, entriesToPreserve);
+    const modularSDKType = getModularSDKType(packageDirectory);
+    let entriesForDataPlanePackages = ["src"];
+    if (modularSDKType === ModularSDKType.DataPlane && pipelineRunMode) {
+            if (await exists(path.join(packageDirectory, "generated"))) {
+                entriesForDataPlanePackages[0] = "generated";
+            } else if (await exists(path.join(packageDirectory, "src", "generated"))) {
+                entriesForDataPlanePackages[0] = posix.join("src", "generated");
+            }
+            logger.info(`Should only remove ${entriesForDataPlanePackages[0]} for DataPlane Modular generation in ${runMode} mode.`)
+        }
+
+    await cleanUpDirectory(packageDirectory, modularSDKType === ModularSDKType.ManagementPlane ? entriesToPreserveForMgmtPackages : entriesForDataPlanePackages);
 }
 
 export async function getPackageNameFromTspConfig(typeSpecDirectory: string): Promise<string | undefined> {

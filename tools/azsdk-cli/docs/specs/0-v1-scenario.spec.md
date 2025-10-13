@@ -4,7 +4,9 @@
 
 The V1 scenario defines the end-to-end workflow for generating and releasing preview SDKs across all five languages (.NET, Java, JavaScript, Python, Go) using the Health Deidentification service as the test case.
 
-**Service**: [Health Deidentification](https://github.com/Azure/azure-rest-api-specs/tree/ded7abde9c48ba84df36b53dfcaef48a2c134097/specification/healthdataaiservices/HealthDataAIServices.DeidServices)  
+**Service**: Health Deidentification
+- [Health Deidentification Data Plane Spec](https://github.com/Azure/azure-rest-api-specs/tree/ded7abde9c48ba84df36b53dfcaef48a2c134097/specification/healthdataaiservices/HealthDataAIServices.DeidServices)  
+- [Health Deidentification MGMT Plane Spec](https://github.com/Azure/azure-rest-api-specs/tree/main/specification/healthdataaiservices/HealthDataAIServices.Management)
 **Mode**: Works in both agent and CLI modes  
 **Goal**: Prove complete SDK local workflow from setup → generate → validate until release
 

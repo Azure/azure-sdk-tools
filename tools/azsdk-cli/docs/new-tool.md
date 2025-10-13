@@ -12,6 +12,7 @@ Help me create a new tool using #new-tool.md as a reference
 
    * [Tool Architecture Overview](#tool-architecture-overview)
    * [Step-by-Step Implementation Guide](#step-by-step-implementation-guide)
+   * [CLI Command Hierarchy](#cli-command-hierarchy)
    * [Code Examples and Templates](#code-examples-and-templates)
    * [Dependency Injection](#dependency-injection)
    * [Response Handling](#response-handling)
@@ -102,6 +103,10 @@ public override CommandGroup[] CommandHierarchy { get; set; } = [
 - `IAzureService` - For Azure authentication and credentials
 - `IDevOpsService` - For Azure DevOps operations
 - Custom service interfaces for your tool's specific needs
+
+## CLI command hierarchy
+
+Refer to [CLI command hierarchy](cli-commands-guidelines.md) for guidelines on CLI command structure.
 
 ## Code Examples and Templates
 

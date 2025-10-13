@@ -18,13 +18,11 @@ public class JavaUpdateLanguageService : ClientUpdateLanguageServiceBase
     public JavaUpdateLanguageService(
         ILanguageSpecificCheckResolver languageSpecificCheckResolver,
         ILogger<JavaUpdateLanguageService> logger,
-        IMicroagentHostService microagentHost) : base(languageSpecificCheckResolver)
+        IMicroagentHostService microagentHost) : base(languageSpecificChecks)
     {
         _logger = logger;
         _microagentHost = microagentHost;
     }
-
-    public override string SupportedLanguage => "java";
 
     private const string CustomizationDirName = "customization";
 

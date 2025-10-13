@@ -165,36 +165,7 @@ namespace APIViewWeb
                     options.AccessDeniedPath = "/Unauthorized";
                 })
                 .AddScheme<AuthenticationSchemeOptions, TokenAuthenticationHandler>("TokenAuth", options => { })
-                .AddJwtBearer("Bearer", options =>
-                {
-                    string tenantId = Configuration["AzureAd:TenantId"];
-                    string clientId = Configuration["AzureAd:ClientId"];
-
-                    if (string.IsNullOrEmpty(tenantId) || string.IsNullOrEmpty(clientId))
-                    {
-                        return;
-                    }
-
-                    options.Authority = $"https://login.microsoftonline.com/{tenantId}";
-                    options.Audience = clientId;
-                    options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
-                    {
-                        ValidateIssuer = true,
-                        ValidateAudience = true,
-                        ValidateLifetime = true,
-                        ValidateIssuerSigningKey = true,
-                        ClockSkew = TimeSpan.FromMinutes(5),
-                        ValidAudiences = [
-                            clientId, 
-                            $"api://{clientId}"
-                        ],
-                        ValidIssuers = [
-                            $"https://login.microsoftonline.com/{tenantId}/v2.0",
-                            $"https://login.microsoftonline.com/{tenantId}/",
-                            $"https://sts.windows.net/{tenantId}/"
-                        ]
-                    };
-                })
+                .AddScheme<AuthenticationSchemeOptions, EasyAuthAuthenticationHandler>("EasyAuth", options => { })
                 .AddOAuth("GitHub", options =>
                 {
                     options.ClientId = Configuration["Github:ClientId"];

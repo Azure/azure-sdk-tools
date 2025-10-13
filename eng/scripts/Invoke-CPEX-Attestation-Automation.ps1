@@ -71,12 +71,7 @@ function SendEmailNotification($emailTo, $emailCC, $emailSubject, $emailBody) {
         $body = @{ EmailTo = $emailTo; EmailCC = $emailCC; Subject = $emailSubject; Body = $emailBody} | ConvertTo-Json -Depth 3
         $response = Invoke-RestMethod -Uri $AzureSDKEmailUri -Method Post -Body $body -ContentType "application/json"
     } catch {
-        Write-Error "Failed to send email."
-        Write-Error "To: $emailTo"
-        Write-Error "CC: $emailCC"
-        Write-Error "Subject: $emailSubject"
-        Write-Error "Body: $emailBody"
-        Write-Error "Exception message: $($_.Exception.Message)"
+        Write-Error "Failed to send email.`nTo: $emailTo`nCC: $emailCC`nSubject: $emailSubject`nBody: $emailBody`nException message: $($_.Exception.Message)"
     }
 }
 
@@ -207,8 +202,7 @@ foreach ($triage in $triages) {
             }
         }
     } catch {
-        Write-Error "Error processing triage item [$($triage.id)]"
-        Write-Error "Exception message: $($_.Exception.Message)"
+        Write-Error "Error processing triage item [$($triage.id)]`nException message: $($_.Exception.Message)"
 
         $failedAttestations += @{
             productId = $productServiceTreeId
@@ -276,8 +270,8 @@ foreach ($releasePlan in $releasePlans) {
 
         Update-AttestationStatusInWorkItem -workItemId $releasePlan.id -fieldName "Custom.AttestationStatus" -status "Completed"
     } catch {
-        Write-Error "Error processing release plan item [$($releasePlan.id)]"
-        Write-Error "Exception message: $($_.Exception.Message)"
+        Write-Error "Error processing release plan item [$($releasePlan.id)]`nException message: $($_.Exception.Message)"
+
         $failedAttestations += @{
             productId = $productServiceTreeId
             productName = $productName

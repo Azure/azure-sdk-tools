@@ -5,7 +5,6 @@ using Azure.Sdk.Tools.Cli.Prompts;
 using Azure.Sdk.Tools.Cli.Prompts.Templates;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Microagents.Tools;
-using Microsoft.Extensions.Logging;
 using System.ComponentModel;
 
 namespace Azure.Sdk.Tools.Cli.Services;
@@ -91,16 +90,16 @@ public class LanguageChecks : ILanguageChecks
     private readonly INpxHelper _npxHelper;
     private readonly IGitHelper _gitHelper;
     private readonly ILogger<LanguageChecks> _logger;
-    private readonly ILanguageSpecificCheckResolver _languageSpecificCheckResolver;
+    private readonly ILanguageSpecificResolver<ILanguageSpecificChecks> _languageSpecificChecks;
     private readonly IMicroagentHostService _microagentHostService;
 
-    public LanguageChecks(IProcessHelper processHelper, INpxHelper npxHelper, IGitHelper gitHelper, ILogger<LanguageChecks> logger, ILanguageSpecificCheckResolver languageSpecificCheckResolver, IMicroagentHostService microagentHostService)
+    public LanguageChecks(IProcessHelper processHelper, INpxHelper npxHelper, IGitHelper gitHelper, ILogger<LanguageChecks> logger, ILanguageSpecificResolver<ILanguageSpecificChecks> languageSpecificChecks, IMicroagentHostService microagentHostService)
     {
         _processHelper = processHelper;
         _npxHelper = npxHelper;
         _gitHelper = gitHelper;
         _logger = logger;
-        _languageSpecificCheckResolver = languageSpecificCheckResolver;
+        _languageSpecificChecks = languageSpecificChecks;
         _microagentHostService = microagentHostService;
     }
 
@@ -128,7 +127,7 @@ public class LanguageChecks : ILanguageChecks
 
     public virtual async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct)
     {
-        var languageSpecificCheck = await _languageSpecificCheckResolver.GetLanguageCheckAsync(packagePath);
+        var languageSpecificCheck = await _languageSpecificChecks.Resolve(packagePath);
 
         if (languageSpecificCheck == null)
         {
@@ -160,7 +159,7 @@ public class LanguageChecks : ILanguageChecks
 
     public virtual async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, CancellationToken ct = default)
     {
-        var languageSpecificCheck = await _languageSpecificCheckResolver.GetLanguageCheckAsync(packagePath);
+        var languageSpecificCheck = await _languageSpecificChecks.Resolve(packagePath);
 
         if (languageSpecificCheck == null)
         {
@@ -177,7 +176,7 @@ public class LanguageChecks : ILanguageChecks
 
     public virtual async Task<CLICheckResponse> LintCodeAsync(string packagePath, bool fix = false, CancellationToken ct = default)
     {
-        var languageSpecificCheck = await _languageSpecificCheckResolver.GetLanguageCheckAsync(packagePath);
+        var languageSpecificCheck = await _languageSpecificChecks.Resolve(packagePath);
 
         if (languageSpecificCheck == null)
         {
@@ -194,7 +193,7 @@ public class LanguageChecks : ILanguageChecks
 
     public virtual async Task<CLICheckResponse> FormatCodeAsync(string packagePath, bool fix = false, CancellationToken ct = default)
     {
-        var languageSpecificCheck = await _languageSpecificCheckResolver.GetLanguageCheckAsync(packagePath);
+        var languageSpecificCheck = await _languageSpecificChecks.Resolve(packagePath);
 
         if (languageSpecificCheck == null)
         {

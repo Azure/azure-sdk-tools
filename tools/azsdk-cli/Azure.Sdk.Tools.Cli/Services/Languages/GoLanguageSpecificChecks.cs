@@ -36,8 +36,6 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
 
     #region Go specific functions, not part of the LanguageRepoService
 
-    public string SupportedLanguage => "Go";
-
     public async Task<bool> CheckDependencies(CancellationToken ct)
     {
         try

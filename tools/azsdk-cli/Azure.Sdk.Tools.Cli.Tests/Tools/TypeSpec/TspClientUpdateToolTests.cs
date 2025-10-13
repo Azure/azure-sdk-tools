@@ -4,6 +4,7 @@ using Azure.Sdk.Tools.Cli.Tools;
 using Microsoft.Extensions.Logging.Abstractions;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models.Responses;
+using Azure.Sdk.Tools.Cli.Services;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.CustomizedCodeUpdateTool;
 
@@ -20,7 +21,7 @@ public class TspClientUpdateToolAutoTests
     // Language service that produces no API changes and no customizations
     private class MockNoChangeLanguageService : IClientUpdateLanguageService
     {
-        public string SupportedLanguage => "java";
+        public SdkLanguage SupportedLanguage => SdkLanguage.Java;
         public Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath) => Task.FromResult(new List<ApiChange>());
         public string? GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct) => null; // No customizations found
         public Task<bool> ApplyPatchesAsync(string commitSha, string customizationRoot, string newGeneratedPath, string oldGeneratedPath, CancellationToken ct) => Task.FromResult(false); // No patches to apply
@@ -30,7 +31,7 @@ public class TspClientUpdateToolAutoTests
     // Language service that has customizations and successful patch application
     private class MockChangeLanguageService : IClientUpdateLanguageService
     {
-        public string SupportedLanguage => "java";
+        public SdkLanguage SupportedLanguage => SdkLanguage.Java;
         public Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath)
             => Task.FromResult(new List<ApiChange> {
                 new ApiChange { Kind = "MethodAdded", Symbol = "S1", Detail = "Added method S1" }
@@ -98,7 +99,7 @@ public class TspClientUpdateToolAutoTests
     {
         private readonly Func<int> _next;
         public TestLanguageServiceFailThenFix(Func<int> next) { _next = next; }
-        public string SupportedLanguage => "java";
+        public SdkLanguage SupportedLanguage => SdkLanguage.Java;
         public Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath) => Task.FromResult(new List<ApiChange>());
         public string? GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct) =>
             Path.Combine(session.NewGeneratedPath ?? "", "customization"); // Mock customization root exists
@@ -114,11 +115,11 @@ public class TspClientUpdateToolAutoTests
         }
     }
 
-    private class SingleResolver : IClientUpdateLanguageServiceResolver
+    private class SingleResolver : ILanguageSpecificResolver<IClientUpdateLanguageService>
     {
         private readonly IClientUpdateLanguageService _svc;
         public SingleResolver(IClientUpdateLanguageService svc) { _svc = svc; }
-        public Task<IClientUpdateLanguageService?> ResolveAsync(string? packagePath, CancellationToken ct = default) => Task.FromResult<IClientUpdateLanguageService?>(_svc);
+        public Task<IClientUpdateLanguageService?> Resolve(string packagePath, CancellationToken ct = default) => Task.FromResult(_svc);
     }
 }
 

@@ -56,6 +56,7 @@ app.activity(isSubmitMessage, async (context: TurnContext) => {
   const ragOptions: RAGOptions = {
     endpoint: ragEndpoint,
     apiKey: config.ragApiKey,
+    accessToken: ""
   };
   const action = context.activity.value?.action;
   const feedbackComment = context.activity.value?.feedbackComment;

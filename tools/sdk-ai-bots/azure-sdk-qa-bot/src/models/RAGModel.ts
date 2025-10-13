@@ -10,6 +10,8 @@ import { getTurnContextLogMeta } from '../logging/utils.js';
 import { ChannelConfigManager } from '../config/channel.js';
 import { ConversationHandler, ConversationMessage, Prompt } from '../input/ConversationHandler.js';
 import { parseConversationId } from '../common/shared.js';
+import { AccessToken, ManagedIdentityCredential } from '@azure/identity';
+import { promises } from 'node:dns';
 
 export class RAGModel implements PromptCompletionModel {
   private readonly conversationHandler: ConversationHandler;
@@ -22,6 +24,20 @@ export class RAGModel implements PromptCompletionModel {
     this.channelConfigManager = channelConfigManager;
   }
 
+  
+  public async getAccessTokenByManagedIdentity(userAssignedClientId: string, scope: string) : Promise<AccessToken>{
+    // If using user-assigned identity, pass the clientId. For system-assigned, omit it.
+    const credential = new ManagedIdentityCredential(userAssignedClientId);
+
+    try {
+      const token = await credential.getToken(scope);
+      logger.info(`Succeed to get Access Token for ${userAssignedClientId}`);
+      return token;
+    } catch (err) {
+      console.error(`Failed to acquire token for ${userAssignedClientId}`, err.message);
+    }
+  }
+
   public async completePrompt(
     context: TurnContext,
     memory: Memory,
@@ -29,6 +45,7 @@ export class RAGModel implements PromptCompletionModel {
     tokenizer: Tokenizer,
     template: PromptTemplate
   ): Promise<PromptResponse<string>> {
+    const token = await this.getAccessTokenByManagedIdentity(config.userManagedIdentityClientID, config.ragScope);
     const meta = getTurnContextLogMeta(context);
     const { channelId } = parseConversationId(context.activity.conversation.id);
     const [ ragTenantId, ragEndpoint ] = await Promise.all([
@@ -39,6 +56,7 @@ export class RAGModel implements PromptCompletionModel {
     const ragOptions: RAGOptions = {
       endpoint: ragEndpoint,
       apiKey: config.ragApiKey,
+      accessToken: token.token
     };
     logger.info(`Received activity: ${JSON.stringify(context.activity)}`, { meta });
 

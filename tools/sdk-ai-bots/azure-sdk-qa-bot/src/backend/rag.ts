@@ -5,6 +5,7 @@ import { ragApiPaths } from '../config/config.js';
 export interface RAGOptions {
   endpoint: string;
   apiKey: string;
+  accessToken: string;
 }
 
 // Source definitions
@@ -154,6 +155,7 @@ export async function getRAGReply(
       headers: {
         'X-API-Key': options.apiKey,
         'Content-Type': 'application/json; charset=utf-8',
+        'Authorization': `Bearer ${options.accessToken}`
       },
     });
     if (response.status !== 200) {

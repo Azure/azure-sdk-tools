@@ -3,7 +3,7 @@
 
 using Azure.Sdk.Tools.Cli.Helpers;
 
-namespace Azure.Sdk.Tools.Cli.SampleGeneration.Languages;
+namespace Azure.Sdk.Tools.Cli.SampleGeneration;
 
 public class GoSourceInputProvider : ILanguageSourceInputProvider
 {

@@ -4,23 +4,19 @@ using Azure.Sdk.Tools.Cli.Tools;
 using Microsoft.Extensions.Logging.Abstractions;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models.Responses;
+using Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Tools.CustomizedCodeUpdateTool;
 
 [TestFixture]
 public class TspClientUpdateToolAutoTests
 {
-    private static string CreateTempPackageDir()
-    {
-        var path = Path.Combine(Path.GetTempPath(), "azsdk-test-" + Guid.NewGuid().ToString("n"));
-        Directory.CreateDirectory(path);
-        return path;
-    }
 
     // Language service that produces no API changes
     private class MockNoChangeLanguageService : IClientUpdateLanguageService
     {
-        public string SupportedLanguage => "java";
+        public SdkLanguage SupportedLanguage => SdkLanguage.Java;
         public Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath) => Task.FromResult(new List<ApiChange>());
         public Task<string?> GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct) => Task.FromResult<string?>(null); // none
         public Task<List<CustomizationImpact>> AnalyzeCustomizationImpactAsync(ClientUpdateSessionState session, string customizationRoot, IEnumerable<ApiChange> apiChanges, CancellationToken ct) => Task.FromResult(new List<CustomizationImpact>());
@@ -32,7 +28,7 @@ public class TspClientUpdateToolAutoTests
     // Language service that produces a single API change
     private class MockChangeLanguageService : IClientUpdateLanguageService
     {
-        public string SupportedLanguage => "java";
+        public SdkLanguage SupportedLanguage => SdkLanguage.Java;
         public Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath)
             => Task.FromResult(new List<ApiChange> {
                 new ApiChange { Kind = "MethodAdded", Symbol = "S1", Detail = "Added method S1" }
@@ -53,8 +49,8 @@ public class TspClientUpdateToolAutoTests
         var resolver = new SingleResolver(svc);
         var tsp = new MockTspHelper();
         var tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), resolver, tsp);
-        var pkg = CreateTempPackageDir();
-        var run = await tool.UpdateAsync("0123456789abcdef0123456789abcdef01234567", packagePath: pkg, ct: CancellationToken.None);
+    using var pkg = TempDirectory.Create("azsdk-test");
+    var run = await tool.UpdateAsync("0123456789abcdef0123456789abcdef01234567", packagePath: pkg.DirectoryPath, ct: CancellationToken.None);
         Assert.That(run.Session, Is.Not.Null, "Session should be created");
         Assert.That(run.Session!.LastStage, Is.EqualTo(UpdateStage.Validated), "No changes now proceed through validation");
     // Slim model: no stored API change count; reaching Validated implies no changes or all handled.
@@ -67,8 +63,8 @@ public class TspClientUpdateToolAutoTests
         var resolver = new SingleResolver(svc);
         var tsp = new MockTspHelper();
         var tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), resolver, tsp);
-        var pkg = CreateTempPackageDir();
-        var first = await tool.UpdateAsync("89abcdef0123456789abcdef0123456789abcdef", packagePath: pkg, ct: CancellationToken.None);
+    using var pkg = TempDirectory.Create("azsdk-test");
+    var first = await tool.UpdateAsync("89abcdef0123456789abcdef0123456789abcdef", packagePath: pkg.DirectoryPath, ct: CancellationToken.None);
         Assert.That(first.Session, Is.Not.Null);
         Assert.That(first.Session.LastStage, Is.EqualTo(UpdateStage.Validated), "Single-pass should reach validated");
     }
@@ -80,8 +76,8 @@ public class TspClientUpdateToolAutoTests
         var tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), new SingleResolver(new MockNoChangeLanguageService()), tsp);
         int calls = 0; var svc = new TestLanguageServiceFailThenFix(() => calls++);
         tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), new SingleResolver(svc), tsp);
-        var pkg = CreateTempPackageDir();
-        var resp = await tool.UpdateAsync("fedcba9876543210fedcba9876543210fedcba98", packagePath: pkg, ct: CancellationToken.None);
+    using var pkg = TempDirectory.Create("azsdk-test");
+    var resp = await tool.UpdateAsync("fedcba9876543210fedcba9876543210fedcba98", packagePath: pkg.DirectoryPath, ct: CancellationToken.None);
         Assert.That(resp.Session, Is.Not.Null);
         Assert.That(resp.Session!.LastStage, Is.EqualTo(UpdateStage.Validated));
         Assert.That(resp.Session.RequiresManualIntervention, Is.False);
@@ -91,7 +87,7 @@ public class TspClientUpdateToolAutoTests
     {
         private readonly Func<int> _next;
         public TestLanguageServiceFailThenFix(Func<int> next) { _next = next; }
-        public string SupportedLanguage => "java";
+        public SdkLanguage SupportedLanguage => SdkLanguage.Java;
         public Task<List<ApiChange>> DiffAsync(string oldGenerationPath, string newGenerationPath) => Task.FromResult(new List<ApiChange>());
         public Task<string?> GetCustomizationRootAsync(ClientUpdateSessionState session, string generationRoot, CancellationToken ct) => Task.FromResult<string?>(null);
         public Task<List<CustomizationImpact>> AnalyzeCustomizationImpactAsync(ClientUpdateSessionState session, string? customizationRoot, IEnumerable<ApiChange> apiChanges, CancellationToken ct) => Task.FromResult(new List<CustomizationImpact>());
@@ -113,11 +109,11 @@ public class TspClientUpdateToolAutoTests
         }
     }
 
-    private class SingleResolver : IClientUpdateLanguageServiceResolver
+    private class SingleResolver : ILanguageSpecificResolver<IClientUpdateLanguageService>
     {
         private readonly IClientUpdateLanguageService _svc;
         public SingleResolver(IClientUpdateLanguageService svc) { _svc = svc; }
-        public Task<IClientUpdateLanguageService?> ResolveAsync(string? packagePath, CancellationToken ct = default) => Task.FromResult<IClientUpdateLanguageService?>(_svc);
+        public Task<IClientUpdateLanguageService?> Resolve(string packagePath, CancellationToken ct = default) => Task.FromResult(_svc);
     }
 }
 

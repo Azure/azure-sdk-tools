@@ -12,6 +12,7 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services.ClientUpdate;
 using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.Cli.Tools;
+using Azure.Sdk.Tools.Cli.SampleGeneration;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -32,17 +33,39 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             // Language Check Services (Composition-based)
             services.AddScoped<ILanguageChecks, LanguageChecks>();
-            services.AddScoped<ILanguageSpecificChecks, PythonLanguageSpecificChecks>();
-            services.AddScoped<ILanguageSpecificChecks, JavaLanguageSpecificChecks>();
-            services.AddScoped<ILanguageSpecificChecks, JavaScriptLanguageSpecificChecks>();
-            services.AddScoped<ILanguageSpecificChecks, DotNetLanguageSpecificChecks>();
-            services.AddScoped<ILanguageSpecificChecks, GoLanguageSpecificChecks>();
-            services.AddScoped<ILanguageSpecificCheckResolver, LanguageSpecificCheckResolver>();
+            services.AddLanguageSpecific<ILanguageSpecificChecks>(new LanguageSpecificImplementations
+            {
+                Python = typeof(PythonLanguageSpecificChecks),
+                Java = typeof(JavaLanguageSpecificChecks),
+                JavaScript = typeof(JavaScriptLanguageSpecificChecks),
+                DotNet = typeof(DotNetLanguageSpecificChecks),
+                Go = typeof(GoLanguageSpecificChecks),
+            });
 
             // Client update language services
-            services.AddScoped<IClientUpdateLanguageService, JavaUpdateLanguageService>();
-            services.AddScoped<IClientUpdateLanguageServiceResolver, ClientUpdateLanguageServiceResolver>();
-            // Future: services.AddSingleton<IClientUpdateLanguageService, PythonClientUpdateLanguageService>(); etc.
+            services.AddLanguageSpecific<IClientUpdateLanguageService>(new LanguageSpecificImplementations
+            {
+                Java = typeof(JavaUpdateLanguageService),
+                // Future: Python = typeof(PythonUpdateLanguageService), etc
+            });
+
+            services.AddLanguageSpecific<IPackageInfo>(new LanguageSpecificImplementations
+            {
+                DotNet = typeof(DotNetPackageInfo),
+                Java = typeof(JavaPackageInfo),
+                Python = typeof(PythonPackageInfo),
+                JavaScript = typeof(TypeScriptPackageInfo),
+                Go = typeof(GoPackageInfo),
+            });
+
+            services.AddLanguageSpecific<ISampleLanguageContext>(new LanguageSpecificImplementations
+            {
+                DotNet = typeof(DotNetSampleLanguageContext),
+                Java = typeof(JavaSampleLanguageContext),
+                Python = typeof(PythonSampleLanguageContext),
+                JavaScript = typeof(TypeScriptSampleLanguageContext),
+                Go = typeof(GoSampleLanguageContext),
+            });
 
             // Helper classes
             services.AddSingleton<ILogAnalysisHelper, LogAnalysisHelper>();

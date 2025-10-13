@@ -1,17 +1,16 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using Azure.Sdk.Tools.Cli.SampleGeneration.Languages;
+using Azure.Sdk.Tools.Cli.SampleGeneration;
+using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 
 namespace Azure.Sdk.Tools.Cli.Tests.SampleGeneration;
 
 public class JavaSourceInputProviderTests
 {
-    private static string CreateTempPackage()
+    private static TempDirectory CreateTempPackage()
     {
-        string root = Path.Combine(Path.GetTempPath(), "azsdk-java-test-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(root);
-        return root;
+        return TempDirectory.Create("azsdk-java-test");
     }
 
     private static void WriteFile(string dir, string name, string content)
@@ -25,12 +24,12 @@ public class JavaSourceInputProviderTests
     public void Includes_Src_Directory_When_Present()
     {
         var provider = new JavaSourceInputProvider();
-        var root = CreateTempPackage();
-        var srcDir = Path.Combine(root, "src");
+        using var root = CreateTempPackage();
+        var srcDir = Path.Combine(root.DirectoryPath, "src");
         Directory.CreateDirectory(srcDir);
         WriteFile(srcDir, "Client.java", "class Client {}");
 
-        var inputs = provider.Create(root);
+        var inputs = provider.Create(root.DirectoryPath);
 
         Assert.Multiple(() =>
         {
@@ -45,13 +44,12 @@ public class JavaSourceInputProviderTests
     public void Throws_When_Src_Directory_Missing()
     {
         var provider = new JavaSourceInputProvider();
-        var root = CreateTempPackage();
-
-        var ex = Assert.Throws<ArgumentException>(() => provider.Create(root));
+        using var root = CreateTempPackage();
+        var ex = Assert.Throws<ArgumentException>(() => provider.Create(root.DirectoryPath));
         Assert.Multiple(() =>
         {
             Assert.That(ex!.Message, Does.Contain("src"), "Error message should mention src directory");
-            Assert.That(ex.Message, Does.Contain(root), "Error message should include the provided path");
+            Assert.That(ex.Message, Does.Contain(root.DirectoryPath), "Error message should include the provided path");
             Assert.That(ex.ParamName, Is.EqualTo("packagePath"), "Should specify packagePath as the problem parameter");
         });
     }
@@ -60,15 +58,15 @@ public class JavaSourceInputProviderTests
     public void Includes_Samples_Directory_When_Present()
     {
         var provider = new JavaSourceInputProvider();
-        var root = CreateTempPackage();
-        var srcDir = Path.Combine(root, "src");
-        var samplesDir = Path.Combine(root, "samples");
+        using var root = CreateTempPackage();
+        var srcDir = Path.Combine(root.DirectoryPath, "src");
+        var samplesDir = Path.Combine(root.DirectoryPath, "samples");
         Directory.CreateDirectory(srcDir);
         Directory.CreateDirectory(samplesDir);
         WriteFile(srcDir, "Client.java", "class Client {}");
         WriteFile(samplesDir, "Sample1.java", "class Sample1 {}");
 
-        var inputs = provider.Create(root);
+        var inputs = provider.Create(root.DirectoryPath);
 
         Assert.Multiple(() =>
         {
@@ -84,12 +82,12 @@ public class JavaSourceInputProviderTests
     public void Works_Without_Samples_Directory()
     {
         var provider = new JavaSourceInputProvider();
-        var root = CreateTempPackage();
-        var srcDir = Path.Combine(root, "src");
+        using var root = CreateTempPackage();
+        var srcDir = Path.Combine(root.DirectoryPath, "src");
         Directory.CreateDirectory(srcDir);
         WriteFile(srcDir, "Client.java", "class Client {}");
 
-        var inputs = provider.Create(root);
+        var inputs = provider.Create(root.DirectoryPath);
 
         Assert.Multiple(() =>
         {
@@ -102,8 +100,8 @@ public class JavaSourceInputProviderTests
     public void Includes_Test_Resources_Files_From_Parent_Directory()
     {
         var provider = new JavaSourceInputProvider();
-        var tempRoot = Path.GetTempPath();
-        var parentDir = Path.Combine(tempRoot, "azsdk-java-parent-" + Guid.NewGuid().ToString("N"));
+        using var parentDirTemp = TempDirectory.Create("azsdk-java-parent");
+        var parentDir = parentDirTemp.DirectoryPath;
         var packageDir = Path.Combine(parentDir, "package");
         Directory.CreateDirectory(packageDir);
 
@@ -131,12 +129,12 @@ public class JavaSourceInputProviderTests
     public void Works_Without_Test_Resources_Files()
     {
         var provider = new JavaSourceInputProvider();
-        var root = CreateTempPackage();
-        var srcDir = Path.Combine(root, "src");
+        using var root = CreateTempPackage();
+        var srcDir = Path.Combine(root.DirectoryPath, "src");
         Directory.CreateDirectory(srcDir);
         WriteFile(srcDir, "Client.java", "class Client {}");
 
-        var inputs = provider.Create(root);
+        var inputs = provider.Create(root.DirectoryPath);
 
         Assert.Multiple(() =>
         {
@@ -149,8 +147,8 @@ public class JavaSourceInputProviderTests
     public void Includes_All_Components_When_Everything_Present()
     {
         var provider = new JavaSourceInputProvider();
-        var tempRoot = Path.GetTempPath();
-        var parentDir = Path.Combine(tempRoot, "azsdk-java-full-" + Guid.NewGuid().ToString("N"));
+        using var parentDirTemp = TempDirectory.Create("azsdk-java-full");
+        var parentDir = parentDirTemp.DirectoryPath;
         var packageDir = Path.Combine(parentDir, "package");
         Directory.CreateDirectory(packageDir);
 

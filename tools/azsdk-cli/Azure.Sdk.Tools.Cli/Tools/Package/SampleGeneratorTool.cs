@@ -9,8 +9,8 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.SampleGeneration;
-using Azure.Sdk.Tools.Cli.Services;
 using ModelContextProtocol.Server;
+using Azure.Sdk.Tools.Cli.Services;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Package
 {
@@ -22,30 +22,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     public record GeneratedSample(string FileName, string Content);
 
     [McpServerToolType, Description("Generates sample files")]
-    public class SampleGeneratorTool : MCPTool
+    public class SampleGeneratorTool(
+        IMicroagentHostService microagentHostService,
+        ILogger<SampleGeneratorTool> logger,
+        ILanguageSpecificResolver<IPackageInfo> packageInfoResolver,
+        ILanguageSpecificResolver<ISampleLanguageContext> sampleContextResolver
+    ) : MCPTool
     {
-        // Dependencies
-        private readonly ILogger<SampleGeneratorTool> logger;
-        private readonly IMicroagentHostService microagentHostService;
-        private readonly IOutputHelper output;
-        private readonly ILanguageSpecificCheckResolver languageResolver;
-
-        public SampleGeneratorTool(
-            IMicroagentHostService microagentHostService,
-            ILogger<SampleGeneratorTool> logger,
-            IOutputHelper output,
-            ILanguageSpecificCheckResolver languageResolver
-        ) : base()
-        {
-            this.microagentHostService = microagentHostService;
-            this.logger = logger;
-            this.output = output;
-            this.languageResolver = languageResolver;
-
-            CommandHierarchy = [
-                SharedCommandGroups.Generators
-            ];
-        }
+        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Generators];
 
         private readonly Option<string> promptOption = new(
             name: "--prompt",
@@ -55,28 +39,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             IsRequired = true,
         };
 
-        private readonly Option<string> packagePathOption = new(
-            name: "--package-path",
-            getDefaultValue: () => ".",
-            description: "Path to a module, underneath the 'sdk' folder for your repository (ex: /yoursource/azure-sdk-for-js/sdk/openai/openai)")
-        {
-            IsRequired = false,
-        };
-
-        private readonly Option<string> languageOption = new(
-            name: "--language",
-            description: "`dotnet|java|typescript|python|go` (default: auto-detect from repo)")
-        {
-            IsRequired = false,
-        };
-
-        private readonly Option<bool> verifyOption = new(
-            name: "--verify",
-            getDefaultValue: () => false,
-            description: "Verify that the generated sample builds. Defaults to false")
-        {
-            IsRequired = false,
-        };
 
         private readonly Option<bool> overwriteOption = new(
             name: "--overwrite",
@@ -94,78 +56,81 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             IsRequired = false,
         };
 
-        protected override Command GetCommand()
+        protected override Command GetCommand() => new("samples", "Generates sample files")
         {
-            Command command = new("samples", "Generates sample files");
-            command.AddOption(promptOption);
-            command.AddOption(packagePathOption);
-            command.AddOption(languageOption);
-            command.AddOption(verifyOption);
-            command.AddOption(overwriteOption);
-            command.AddOption(modelOption);
-            command.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
-            return command;
-        }
+            SharedOptions.PackagePath,
+            promptOption,
+            overwriteOption,
+            modelOption
+        };
 
         public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
         {
-            string prompt = ctx.ParseResult.GetValueForOption(promptOption) ?? "";
-            string packagePath = ctx.ParseResult.GetValueForOption(packagePathOption) ?? ".";
-            string? languageFromOption = ctx.ParseResult.GetValueForOption(languageOption);
-            bool verify = ctx.ParseResult.GetValueForOption(verifyOption);
+            // Retrieve raw prompt argument
+            string rawPrompt = ctx.ParseResult.GetValueForOption(promptOption) ?? "";
+            string prompt = rawPrompt;
+
+            // If the raw prompt looks like a path to a markdown file (no newlines, ends with .md/.markdown, file exists), load its content.
+            if (!string.IsNullOrWhiteSpace(rawPrompt)
+                && rawPrompt.IndexOf('\n') == -1
+                && rawPrompt.IndexOf('\r') == -1)
+            {
+                try
+                {
+                    var trimmed = rawPrompt.Trim();
+                    if ((trimmed.EndsWith(".md", StringComparison.OrdinalIgnoreCase) || trimmed.EndsWith(".markdown", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        var fullPath = Path.GetFullPath(trimmed);
+                        if (File.Exists(fullPath))
+                        {
+                            logger.LogInformation("Loading prompt content from file: {promptFile}", fullPath);
+                            prompt = await File.ReadAllTextAsync(fullPath, ct);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Failed to read prompt file '{file}'. Falling back to raw prompt text.", rawPrompt);
+                    prompt = rawPrompt; // fallback
+                }
+            }
+            string packagePath = ctx.ParseResult.GetValueForOption(SharedOptions.PackagePath) ?? ".";
             bool overwrite = ctx.ParseResult.GetValueForOption(overwriteOption);
             string model = ctx.ParseResult.GetValueForOption(modelOption) ?? "gpt-4.1";
 
             try
             {
-                await GenerateSampleAsync(prompt, packagePath, languageFromOption, verify, overwrite, model);
+                await GenerateSampleAsync(prompt, packagePath, overwrite, model, ct);
                 return new DefaultCommandResponse { Message = "Sample generation completed successfully" };
             }
             catch (ArgumentException ex)
             {
-                output.Output($"SampleGenerator failed with validation errors: {ex.Message}");
+                logger.LogError(ex, "SampleGenerator failed with validation errors");
                 return new DefaultCommandResponse { ResponseError = $"SampleGenerator failed with validation errors: {ex.Message}" };
             }
             catch (Exception ex)
             {
-                output.Output($"SampleGenerator threw an exception: {ex.Message}");
+                logger.LogError(ex, "SampleGenerator threw an exception");
                 return new DefaultCommandResponse { ResponseError = $"SampleGenerator threw an exception: {ex.Message}" };
             }
         }
 
-        [McpServerTool(Name = "azsdk_package_sample_generator"), Description("Generates sample files")]
-        public DefaultCommandResponse GenerateSample(string prompt, string packagePath, string language, bool verify, bool overwrite, string model)
+        private async Task GenerateSampleAsync(string prompt, string packagePath, bool overwrite, string model, CancellationToken ct)
         {
-            try
-            {
-                GenerateSampleAsync(prompt, packagePath, language, verify, overwrite, model).Wait();
-                return new DefaultCommandResponse() { Message = $"Sample generation completed" };
-            }
-            catch (ArgumentException ex)
-            {
-                return new DefaultCommandResponse() { ResponseError = $"SampleGenerator failed with validation errors: {ex.Message}" };
-            }
-            catch (Exception ex)
-            {
-                return new DefaultCommandResponse() { ResponseError = $"SampleGenerator threw an exception: {ex.Message}" };
-            }
-        }
-
-        private async Task GenerateSampleAsync(string prompt, string packagePath, string? language, bool verify, bool overwrite, string model)
-        {
-            var packageInfo = new FileHelper.PackageInfo(packagePath, languageResolver);
-
-            var resolvedLanguage = language ?? packageInfo.Language;
-            var resolvedOutputDirectory = packageInfo.GetSamplesDirectory();
+            IPackageInfo? packageInfo = await packageInfoResolver.Resolve(packagePath, ct) ?? throw new ArgumentException("Unable to determine language for package (resolver returned null). Ensure repository structure and Language-Settings.ps1 are correct.");
+            packageInfo.Init(packagePath);
+            var resolvedLanguage = packageInfo.Language;
+            var resolvedOutputDirectory = await packageInfo.GetSamplesDirectoryAsync(ct);
 
             logger.LogInformation("Starting sample generation with prompt: {prompt}", prompt);
             logger.LogDebug("Package path: {packagePath}, Language: {language}, Output: {outputDirectory}", packageInfo.PackagePath, resolvedLanguage, resolvedOutputDirectory);
             logger.LogDebug("Package info: {packageName} at {repoRoot}", packageInfo.PackageName, packageInfo.RepoRoot);
-            logger.LogDebug("Detected language: {detectedLanguage}, Using language: {language}", packageInfo.Language, resolvedLanguage);
-            logger.LogDebug("Default samples directory: {defaultSamplesDir}, Using output directory: {outputDirectory}", packageInfo.GetSamplesDirectory(), resolvedOutputDirectory);
+            logger.LogDebug("Detected/Resolved language: {language}", resolvedLanguage);
+            logger.LogDebug("Samples directory: {outputDirectory}", resolvedOutputDirectory);
 
             logger.LogDebug("Loading source code context from {packagePath}", packageInfo.PackagePath);
-            var sourceContext = await GetSourceContextAsync(packageInfo.PackagePath, resolvedLanguage, maxBudget: 3000000, priorityBudget: 8000);
+            ISampleLanguageContext sampleContext = await sampleContextResolver.Resolve(packagePath, ct) ?? throw new ArgumentException("Unable to determine language for package (resolver returned null). Ensure repository structure and Language-Settings.ps1 are correct.");
+            var sourceContext = await sampleContext.GetClientLibrarySourceCodeAsync(packageInfo.PackagePath, totalBudget: 3000000, perFileLimit: 50000, logger: logger, ct);
             logger.LogDebug("Loaded source context: {length} characters", sourceContext.Length);
 
             if (string.IsNullOrWhiteSpace(sourceContext))
@@ -173,7 +138,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 throw new InvalidOperationException($"No source code content could be loaded from the package path '{packageInfo.PackagePath}'. Please verify the path contains valid source files for language '{resolvedLanguage}'.");
             }
 
-            var languageInstructions = LanguageSupport.GetInstructions(resolvedLanguage);
+            var languageInstructions = sampleContext.GetSampleGenerationInstructions();
             logger.LogDebug("Using language-specific instructions for: {language}", resolvedLanguage);
 
             var enhancedPrompt = $@"
@@ -203,7 +168,7 @@ Scenarios description:
             try
             {
                 logger.LogInformation("Calling microagent service...");
-                var samples = await microagentHostService.RunAgentToCompletion(microagent);
+                var samples = await microagentHostService.RunAgentToCompletion(microagent, ct);
                 logger.LogInformation("Microagent service returned");
                 logger.LogDebug("Microagent completed, returned {sampleCount} samples", samples?.Count ?? 0);
 
@@ -239,7 +204,7 @@ Scenarios description:
                             continue;
                         }
 
-                        var fileExtension = LanguageSupport.GetFileExtension(resolvedLanguage);
+                        var fileExtension = sampleContext.FileExtension;
 
                         var cleanFileName = Path.GetFileNameWithoutExtension(sample.FileName.Replace('/', '_').Replace('\\', '_'));
                         var sampleFileName = $"{cleanFileName}{fileExtension}";
@@ -269,29 +234,6 @@ Scenarios description:
             logger.LogInformation("Sample generation completed");
         }
 
-        private async Task<string> GetSourceContextAsync(string packagePath, string language, int maxBudget = 3000000, int priorityBudget = 8000)
-        {
-            static int IsClientLikeName(FileHelper.FileMetadata file)
-            {
-                var fileName = Path.GetFileNameWithoutExtension(file.FilePath).ToLowerInvariant();
-                return fileName.Contains("client") ||
-                       fileName.Contains("service") ||
-                       fileName.EndsWith("client") ||
-                       fileName.EndsWith("service") ? 1 : 10;
-            }
-
-            var sourceInputs = LanguageSourceContextProvider.CreateSourceInputs(packagePath, language);
-
-            var result = await FileHelper.LoadFilesAsync(
-                inputs: sourceInputs,
-                relativeTo: packagePath,
-                totalBudget: maxBudget,
-                perFileLimit: priorityBudget,
-                priorityFunc: IsClientLikeName,
-                logger: logger
-            );
-
-            return result;
-        }
+        // Removed old helper (GetSourceContextAsync) in favor of ISampleLanguageContext implementations.
     }
 }

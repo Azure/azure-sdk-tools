@@ -27,7 +27,4 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
         _gitHelper = gitHelper;
         _logger = logger;
     }
-
-    public string SupportedLanguage => "Java";
-
 }

@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.Cli.Tests.Helpers
@@ -9,14 +10,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
     [TestFixture]
     public class FileHelperTests
     {
-        private string _tempDir;
+    private TempDirectory _tempDir;
         private ILogger _logger;
 
         [SetUp]
         public void SetUp()
         {
-            _tempDir = Path.Combine(Path.GetTempPath(), "FileHelperTests_" + Guid.NewGuid().ToString("N")[..8]);
-            Directory.CreateDirectory(_tempDir);
+            _tempDir = TempDirectory.Create("FileHelperTests");
             
             var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
             _logger = loggerFactory.CreateLogger<FileHelperTests>();
@@ -25,10 +25,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         [TearDown]
         public void TearDown()
         {
-            if (Directory.Exists(_tempDir))
-            {
-                Directory.Delete(_tempDir, true);
-            }
+            _tempDir.Dispose();
         }
 
         #region LoadFilesAsync Tests
@@ -37,7 +34,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         public async Task LoadFilesAsync_WithSingleFile_ShouldReturnFileContent()
         {
             // Arrange
-            var testFile = Path.Combine(_tempDir, "test.cs");
+            var testFile = Path.Combine(_tempDir.DirectoryPath, "test.cs");
             var content = "using System;\npublic class Test { }";
             await File.WriteAllTextAsync(testFile, content);
 
@@ -46,7 +43,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
                 filePaths: new[] { testFile },
                 includeExtensions: new[] { ".cs" },
                 excludeGlobPatterns: Array.Empty<string>(),
-                relativeTo: _tempDir,
+                relativeTo: _tempDir.DirectoryPath,
                 totalBudget: 1000,
                 perFileLimit: 500,
                 priorityFunc: _ => 1);
@@ -61,7 +58,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         public async Task LoadFilesAsync_WithDirectory_ShouldReturnFilteredFiles()
         {
             // Arrange
-            var subDir = Path.Combine(_tempDir, "src");
+            var subDir = Path.Combine(_tempDir.DirectoryPath, "src");
             Directory.CreateDirectory(subDir);
             
             var csFile = Path.Combine(subDir, "code.cs");
@@ -74,10 +71,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
 
             // Act
             var result = await FileHelper.LoadFilesAsync(
-                filePaths: new[] { _tempDir },
+                filePaths: new[] { _tempDir.DirectoryPath },
                 includeExtensions: new[] { ".cs", ".js" },
                 excludeGlobPatterns: Array.Empty<string>(),
-                relativeTo: _tempDir,
+                relativeTo: _tempDir.DirectoryPath,
                 totalBudget: 2000,
                 perFileLimit: 1000,
                 priorityFunc: _ => 1);
@@ -94,8 +91,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         public async Task LoadFilesAsync_WithExcludePatterns_ShouldFilterOutMatchingFiles()
         {
             // Arrange
-            var testDir = Path.Combine(_tempDir, "test");
-            var srcDir = Path.Combine(_tempDir, "src");
+            var testDir = Path.Combine(_tempDir.DirectoryPath, "test");
+            var srcDir = Path.Combine(_tempDir.DirectoryPath, "src");
             Directory.CreateDirectory(testDir);
             Directory.CreateDirectory(srcDir);
             
@@ -107,10 +104,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
 
             // Act
             var result = await FileHelper.LoadFilesAsync(
-                filePaths: new[] { _tempDir },
+                filePaths: new[] { _tempDir.DirectoryPath },
                 includeExtensions: new[] { ".cs" },
                 excludeGlobPatterns: new[] { "**/test/**" },
-                relativeTo: _tempDir,
+                relativeTo: _tempDir.DirectoryPath,
                 totalBudget: 2000,
                 perFileLimit: 1000,
                 priorityFunc: _ => 1);
@@ -125,8 +122,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         public async Task LoadFilesAsync_WithBudgetConstraint_ShouldRespectTotalBudget()
         {
             // Arrange
-            var file1 = Path.Combine(_tempDir, "file1.cs");
-            var file2 = Path.Combine(_tempDir, "file2.cs");
+            var file1 = Path.Combine(_tempDir.DirectoryPath, "file1.cs");
+            var file2 = Path.Combine(_tempDir.DirectoryPath, "file2.cs");
             var longContent = new string('a', 500);
             
             await File.WriteAllTextAsync(file1, longContent);
@@ -134,10 +131,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
 
             // Act - Set budget that can only fit one file + overhead
             var result = await FileHelper.LoadFilesAsync(
-                filePaths: new[] { _tempDir },
+                filePaths: new[] { _tempDir.DirectoryPath },
                 includeExtensions: new[] { ".cs" },
                 excludeGlobPatterns: Array.Empty<string>(),
-                relativeTo: _tempDir,
+                relativeTo: _tempDir.DirectoryPath,
                 totalBudget: 600, // Only enough for one file + headers
                 perFileLimit: 500,
                 priorityFunc: _ => 1);
@@ -152,7 +149,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         public async Task LoadFilesAsync_WithPerFileLimit_ShouldTruncateFiles()
         {
             // Arrange
-            var testFile = Path.Combine(_tempDir, "large.cs");
+            var testFile = Path.Combine(_tempDir.DirectoryPath, "large.cs");
             var longContent = new string('x', 1000);
             await File.WriteAllTextAsync(testFile, longContent);
 
@@ -161,7 +158,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
                 filePaths: new[] { testFile },
                 includeExtensions: new[] { ".cs" },
                 excludeGlobPatterns: Array.Empty<string>(),
-                relativeTo: _tempDir,
+                relativeTo: _tempDir.DirectoryPath,
                 totalBudget: 2000,
                 perFileLimit: 500, // Smaller than file size
                 priorityFunc: _ => 1);
@@ -178,8 +175,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         public async Task LoadFilesAsync_WithSourceInputs_ShouldApplyPerInputFiltering()
         {
             // Arrange
-            var dir1 = Path.Combine(_tempDir, "dir1");
-            var dir2 = Path.Combine(_tempDir, "dir2");
+            var dir1 = Path.Combine(_tempDir.DirectoryPath, "dir1");
+            var dir2 = Path.Combine(_tempDir.DirectoryPath, "dir2");
             Directory.CreateDirectory(dir1);
             Directory.CreateDirectory(dir2);
             
@@ -200,7 +197,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             // Act
             var result = await FileHelper.LoadFilesAsync(
                 inputs: inputs,
-                relativeTo: _tempDir,
+                relativeTo: _tempDir.DirectoryPath,
                 totalBudget: 2000,
                 perFileLimit: 1000,
                 priorityFunc: _ => 1);
@@ -215,7 +212,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         public async Task LoadFilesAsync_WithEmptyDirectory_ShouldReturnEmptyString()
         {
             // Arrange
-            var emptyDir = Path.Combine(_tempDir, "empty");
+            var emptyDir = Path.Combine(_tempDir.DirectoryPath, "empty");
             Directory.CreateDirectory(emptyDir);
 
             // Act
@@ -223,7 +220,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
                 filePaths: new[] { emptyDir },
                 includeExtensions: new[] { ".cs" },
                 excludeGlobPatterns: Array.Empty<string>(),
-                relativeTo: _tempDir,
+                relativeTo: _tempDir.DirectoryPath,
                 totalBudget: 1000,
                 perFileLimit: 500,
                 priorityFunc: _ => 1);
@@ -240,10 +237,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         public void DiscoverFiles_WithMixedPaths_ShouldReturnCorrectMetadata()
         {
             // Arrange
-            var subDir = Path.Combine(_tempDir, "src");
+            var subDir = Path.Combine(_tempDir.DirectoryPath, "src");
             Directory.CreateDirectory(subDir);
             
-            var file1 = Path.Combine(_tempDir, "root.cs");
+            var file1 = Path.Combine(_tempDir.DirectoryPath, "root.cs");
             var file2 = Path.Combine(subDir, "nested.cs");
             var file3 = Path.Combine(subDir, "script.js");
             
@@ -253,10 +250,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
 
             // Act
             var files = FileHelper.DiscoverFiles(
-                filePaths: new[] { _tempDir },
+                filePaths: new[] { _tempDir.DirectoryPath },
                 includeExtensions: new[] { ".cs" },
                 excludeGlobPatterns: Array.Empty<string>(),
-                relativeTo: _tempDir,
+                relativeTo: _tempDir.DirectoryPath,
                 priorityFunc: f => f.FileSize);
 
             // Assert
@@ -276,18 +273,18 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         public void DiscoverFiles_WithPriorityFunction_ShouldSortCorrectly()
         {
             // Arrange
-            var smallFile = Path.Combine(_tempDir, "small.cs");
-            var largeFile = Path.Combine(_tempDir, "large.cs");
+            var smallFile = Path.Combine(_tempDir.DirectoryPath, "small.cs");
+            var largeFile = Path.Combine(_tempDir.DirectoryPath, "large.cs");
             
             File.WriteAllText(smallFile, "small");
             File.WriteAllText(largeFile, new string('x', 100));
 
             // Act - Priority by size (ascending)
             var files = FileHelper.DiscoverFiles(
-                filePaths: new[] { _tempDir },
+                filePaths: new[] { _tempDir.DirectoryPath },
                 includeExtensions: new[] { ".cs" },
                 excludeGlobPatterns: Array.Empty<string>(),
-                relativeTo: _tempDir,
+                relativeTo: _tempDir.DirectoryPath,
                 priorityFunc: f => f.FileSize);
 
             // Assert
@@ -354,7 +351,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         public async Task ExecuteFileLoadingPlan_WithValidPlan_ShouldGenerateCorrectOutput()
         {
             // Arrange
-            var testFile = Path.Combine(_tempDir, "test.cs");
+            var testFile = Path.Combine(_tempDir.DirectoryPath, "test.cs");
             var content = "using System;\nclass Test { }";
             await File.WriteAllTextAsync(testFile, content);
 
@@ -383,7 +380,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         public async Task ExecuteFileLoadingPlan_WithTruncatedFile_ShouldShowTruncation()
         {
             // Arrange
-            var testFile = Path.Combine(_tempDir, "large.cs");
+            var testFile = Path.Combine(_tempDir.DirectoryPath, "large.cs");
             var content = new string('x', 1000);
             await File.WriteAllTextAsync(testFile, content);
 
@@ -414,7 +411,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         public async Task ExecuteFileLoadingPlan_WithNonExistentFile_ShouldHandleGracefully()
         {
             // Arrange
-            var nonExistentFile = Path.Combine(_tempDir, "missing.cs");
+            var nonExistentFile = Path.Combine(_tempDir.DirectoryPath, "missing.cs");
 
             var plan = new FileHelper.FileLoadingPlan(
                 Items: new List<FileHelper.FileLoadingItem>

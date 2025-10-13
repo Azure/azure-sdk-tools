@@ -14,13 +14,6 @@ namespace Azure.Sdk.Tools.Cli.Services.ClientUpdate;
 public interface IClientUpdateLanguageService
 {
     /// <summary>
-    /// Canonical language identifier supported by this implementation (e.g. <c>"java"</c>, <c>"python"</c>).
-    /// Used by the resolver to match detected package language to this service.
-    /// </summary>
-    string SupportedLanguage { get; }
-
-
-    /// <summary>
     /// Produces an API change list by diffing file contents between two generated source trees.
     /// Implementations may perform a structural or textual diff; when <paramref name="oldGenerationPath"/> is null
     /// they should treat the operation as an initial generation (returning an empty change list).

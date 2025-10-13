@@ -24,108 +24,53 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         [Test]
         public void GetRepoRemoteUri_WithSshOrigin_ReturnsHttpsUri()
         {
-            var testRepoPath = CreateTestRepoWithRemote("git@github.com:Azure/azure-rest-api-specs.git");
-
-            try
-            {
-                var result = gitHelper.GetRepoRemoteUri(testRepoPath);
-
-                Assert.That(result.ToString(), Is.EqualTo("https://github.com/Azure/azure-rest-api-specs.git"));
-            }
-            finally
-            {
-                CleanupTestRepo(testRepoPath);
-            }
+            using var repo = CreateTestRepoWithRemote("git@github.com:Azure/azure-rest-api-specs.git");
+            var result = gitHelper.GetRepoRemoteUri(repo.DirectoryPath);
+            Assert.That(result.ToString(), Is.EqualTo("https://github.com/Azure/azure-rest-api-specs.git"));
         }
 
         [Test]
         public void GetRepoRemoteUri_WithHttpsOrigin_ReturnsHttpsUri()
         {
-            var testRepoPath = CreateTestRepoWithRemote("https://github.com/Azure/azure-rest-api-specs.git");
-
-            try
-            {
-                var result = gitHelper.GetRepoRemoteUri(testRepoPath);
-
-                Assert.That(result.ToString(), Is.EqualTo("https://github.com/Azure/azure-rest-api-specs.git"));
-            }
-            finally
-            {
-                CleanupTestRepo(testRepoPath);
-            }
+            using var repo = CreateTestRepoWithRemote("https://github.com/Azure/azure-rest-api-specs.git");
+            var result = gitHelper.GetRepoRemoteUri(repo.DirectoryPath);
+            Assert.That(result.ToString(), Is.EqualTo("https://github.com/Azure/azure-rest-api-specs.git"));
         }
 
         [Test]
         public void GetRepoRemoteUri_WithNoOrigin_ThrowsException()
         {
-            var testRepoPath = CreateTestRepoWithoutRemote();
-
-            try
-            {
-                var ex = Assert.Throws<InvalidOperationException>(() => gitHelper.GetRepoRemoteUri(testRepoPath));
-                Assert.That(ex.Message, Is.EqualTo("Unable to determine remote URL."));
-            }
-            finally
-            {
-                CleanupTestRepo(testRepoPath);
-            }
+            using var repo = CreateTestRepoWithoutRemote();
+            var ex = Assert.Throws<InvalidOperationException>(() => gitHelper.GetRepoRemoteUri(repo.DirectoryPath));
+            Assert.That(ex.Message, Is.EqualTo("Unable to determine remote URL."));
         }
 
         [Test]
         public void GetRepoRemoteUri_WithNonGitDirectory_ThrowsException()
         {
-            var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-            Directory.CreateDirectory(tempDir);
-
-            try
-            {
-                Assert.Throws<InvalidOperationException>(() => gitHelper.GetRepoRemoteUri(tempDir));
-            }
-            finally
-            {
-                if (Directory.Exists(tempDir))
-                {
-                    Directory.Delete(tempDir, true);
-                }
-            }
+            using var tempDir = TempDirectory.Create("non_git");
+            Assert.Throws<InvalidOperationException>(() => gitHelper.GetRepoRemoteUri(tempDir.DirectoryPath));
         }
 
         [Test]
         public async Task GetRepoFullNameAsync_WithSubdirectoryPath_ReturnsCorrectFullName()
         {
-            var testRepoPath = CreateTestRepoWithRemote("git@github.com:Azure/azure-rest-api-specs.git");
-            var subDir = Path.Combine(testRepoPath, "subdirectory");
+            using var repo = CreateTestRepoWithRemote("git@github.com:Azure/azure-rest-api-specs.git");
+            var subDir = Path.Combine(repo.DirectoryPath, "subdirectory");
             Directory.CreateDirectory(subDir);
             mockGitHubService.Setup(x => x.GetGitHubParentRepoUrlAsync("Azure", "azure-rest-api-specs"))
                            .ReturnsAsync(string.Empty); // Not a fork
 
-            try
-            {
-                var result = await gitHelper.GetRepoFullNameAsync(subDir);
-
-                Assert.That(result, Is.EqualTo("Azure/azure-rest-api-specs"));
-            }
-            finally
-            {
-                CleanupTestRepo(testRepoPath);
-            }
+            var result = await gitHelper.GetRepoFullNameAsync(subDir);
+            Assert.That(result, Is.EqualTo("Azure/azure-rest-api-specs"));
         }
 
         [Test]
         public async Task GetRepoFullNameAsync_WithForkRepoButDontFindUpstream_ReturnsDirectFullName()
         {
-            var testRepoPath = CreateTestRepoWithRemote("https://github.com/UserFork/azure-rest-api-specs.git");
-            
-            try
-            {
-                var result = await gitHelper.GetRepoFullNameAsync(testRepoPath, findUpstreamParent: false);
-
-                Assert.That(result, Is.EqualTo("UserFork/azure-rest-api-specs"));
-            }
-            finally
-            {
-                CleanupTestRepo(testRepoPath);
-            }
+            using var repo = CreateTestRepoWithRemote("https://github.com/UserFork/azure-rest-api-specs.git");
+            var result = await gitHelper.GetRepoFullNameAsync(repo.DirectoryPath, findUpstreamParent: false);
+            Assert.That(result, Is.EqualTo("UserFork/azure-rest-api-specs"));
         }
 
         [Test]
@@ -157,67 +102,26 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
         [Test]
         public void GetRepoFullNameAsync_WithNonGitDirectory_ThrowsException()
         {
-            var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-            Directory.CreateDirectory(tempDir);
-
-            try
-            {
-                Assert.ThrowsAsync<InvalidOperationException>(async () => await gitHelper.GetRepoFullNameAsync(tempDir));
-            }
-            finally
-            {
-                if (Directory.Exists(tempDir))
-                {
-                    Directory.Delete(tempDir, true);
-                }
-            }
+            using var tempDir = TempDirectory.Create("non_git_fullname");
+            Assert.ThrowsAsync<InvalidOperationException>(async () => await gitHelper.GetRepoFullNameAsync(tempDir.DirectoryPath));
         }
 
         #region Helper Methods
 
-        private static string CreateTestRepoWithRemote(string url)
+        private static TempDirectory CreateTestRepoWithRemote(string url)
         {
-            var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-            Directory.CreateDirectory(tempDir);
-
-            Repository.Init(tempDir);
-            using var repo = new Repository(tempDir);
+            var temp = TempDirectory.Create("gitrepo");
+            Repository.Init(temp.DirectoryPath);
+            using var repo = new Repository(temp.DirectoryPath);
             repo.Network.Remotes.Add("origin", url);
-
-            return tempDir;
+            return temp;
         }
 
-        private static string CreateTestRepoWithoutRemote()
+        private static TempDirectory CreateTestRepoWithoutRemote()
         {
-            var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-            Directory.CreateDirectory(tempDir);
-            Repository.Init(tempDir);
-            return tempDir;
-        }
-
-        private static void CleanupTestRepo(string path)
-        {
-            if (Directory.Exists(path))
-            {
-                try
-                {
-                    // Remove read-only attributes from .git folder
-                    var gitDir = Path.Combine(path, ".git");
-                    if (Directory.Exists(gitDir))
-                    {
-                        foreach (var file in Directory.GetFiles(gitDir, "*", SearchOption.AllDirectories))
-                        {
-                            File.SetAttributes(file, FileAttributes.Normal);
-                        }
-                    }
-
-                    Directory.Delete(path, true);
-                }
-                catch (Exception)
-                {
-                    // Ignore cleanup errors in tests
-                }
-            }
+            var temp = TempDirectory.Create("gitrepo");
+            Repository.Init(temp.DirectoryPath);
+            return temp;
         }
 
         #endregion

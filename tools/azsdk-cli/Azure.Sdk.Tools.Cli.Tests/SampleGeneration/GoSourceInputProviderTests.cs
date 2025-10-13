@@ -1,7 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using Azure.Sdk.Tools.Cli.SampleGeneration.Languages;
+using Azure.Sdk.Tools.Cli.SampleGeneration;
+using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 
 namespace Azure.Sdk.Tools.Cli.Tests.SampleGeneration;
 
@@ -11,8 +12,8 @@ public class GoSourceInputProviderTests
     public void Create_Returns_Single_Input_With_Go_Extension()
     {
         var provider = new GoSourceInputProvider();
-        var packagePath = Path.Combine(Path.GetTempPath(), "azsdk-go-test-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(packagePath);
+    using var temp = TempDirectory.Create("azsdk-go-test");
+    var packagePath = temp.DirectoryPath;
 
         var inputs = provider.Create(packagePath);
 
@@ -29,7 +30,7 @@ public class GoSourceInputProviderTests
     public void Create_Does_Not_Require_Existing_Path()
     {
         var provider = new GoSourceInputProvider();
-        var nonExistentPath = Path.Combine(Path.GetTempPath(), "azsdk-go-missing-" + Guid.NewGuid().ToString("N"));
+    var nonExistentPath = Path.Combine(Path.GetTempPath(), "azsdk-go-missing-" + Guid.NewGuid().ToString("N"));
         // Intentionally do NOT create the directory
 
         var inputs = provider.Create(nonExistentPath);
@@ -46,10 +47,10 @@ public class GoSourceInputProviderTests
     public void Create_Returns_New_List_Instance_On_Each_Call()
     {
         var provider = new GoSourceInputProvider();
-        var path1 = Path.Combine(Path.GetTempPath(), "azsdk-go-test1-" + Guid.NewGuid().ToString("N"));
-        var path2 = Path.Combine(Path.GetTempPath(), "azsdk-go-test2-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(path1);
-        Directory.CreateDirectory(path2);
+    using var temp1 = TempDirectory.Create("azsdk-go-test1");
+    using var temp2 = TempDirectory.Create("azsdk-go-test2");
+    var path1 = temp1.DirectoryPath;
+    var path2 = temp2.DirectoryPath;
 
         var first = provider.Create(path1);
         var second = provider.Create(path2);

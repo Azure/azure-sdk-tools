@@ -1,19 +1,23 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using Azure.Sdk.Tools.Cli.SampleGeneration.Languages;
+using Azure.Sdk.Tools.Cli.SampleGeneration;
+using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 
 namespace Azure.Sdk.Tools.Cli.Tests.SampleGeneration;
 
 public class TypeScriptSourceInputProviderTests
 {
-    private static string CreateTempRoot() => Path.Combine(Path.GetTempPath(), "azsdk-ts-test-" + Guid.NewGuid().ToString("N"));
 
     [Test]
     public void Prefers_DistEsm_Over_Src_When_Both_Exist()
     {
-        var provider = new TypeScriptSourceInputProvider();
-        var root = CreateTempRoot();
+    var provider = new TypeScriptSourceInputProvider();
+    using var temp = TempDirectory.Create("azsdk-ts-test");
+    var root = temp.DirectoryPath;
+    // directory already created by TempDirectory
+        // realistic TS package requires a package.json
+        File.WriteAllText(Path.Combine(root, "package.json"), "{\n  \"name\": \"@azure/testpkg\",\n  \"version\": \"1.0.0\"\n}");
         var distEsm = Path.Combine(root, "dist", "esm");
         var src = Path.Combine(root, "src");
         Directory.CreateDirectory(distEsm);
@@ -36,8 +40,10 @@ public class TypeScriptSourceInputProviderTests
     [Test]
     public void Includes_Src_When_DistEsm_Missing()
     {
-        var provider = new TypeScriptSourceInputProvider();
-        var root = CreateTempRoot();
+    var provider = new TypeScriptSourceInputProvider();
+    using var temp = TempDirectory.Create("azsdk-ts-test");
+    var root = temp.DirectoryPath;
+        File.WriteAllText(Path.Combine(root, "package.json"), "{\n  \"name\": \"@azure/testpkg\",\n  \"version\": \"1.0.0\"\n}");
         var src = Path.Combine(root, "src");
         Directory.CreateDirectory(src);
 
@@ -49,18 +55,21 @@ public class TypeScriptSourceInputProviderTests
     [Test]
     public void Throws_When_No_Source_Directories()
     {
-        var provider = new TypeScriptSourceInputProvider();
-        var root = CreateTempRoot();
-        Directory.CreateDirectory(root);
-
-        Assert.Throws<InvalidOperationException>(() => provider.Create(root));
+    var provider = new TypeScriptSourceInputProvider();
+    using var temp = TempDirectory.Create("azsdk-ts-test");
+    var root = temp.DirectoryPath;
+        File.WriteAllText(Path.Combine(root, "package.json"), "{\n  \"name\": \"@azure/testpkg\",\n  \"version\": \"1.0.0\"\n}");
+        var ex = Assert.Throws<InvalidOperationException>(() => provider.Create(root));
+        Assert.That(ex!.Message, Does.Contain("No valid TypeScript source directories"));
     }
 
     [Test]
     public void Includes_sample_env_When_Present()
     {
-        var provider = new TypeScriptSourceInputProvider();
-        var root = CreateTempRoot();
+    var provider = new TypeScriptSourceInputProvider();
+    using var temp = TempDirectory.Create("azsdk-ts-test");
+    var root = temp.DirectoryPath;
+        File.WriteAllText(Path.Combine(root, "package.json"), "{\n  \"name\": \"@azure/testpkg\",\n  \"version\": \"1.0.0\"\n}");
         var src = Path.Combine(root, "src");
         Directory.CreateDirectory(src);
         var sampleEnv = Path.Combine(root, "sample.env");
@@ -73,8 +82,10 @@ public class TypeScriptSourceInputProviderTests
     [Test]
     public void Includes_samples_dev_Directory()
     {
-        var provider = new TypeScriptSourceInputProvider();
-        var root = CreateTempRoot();
+    var provider = new TypeScriptSourceInputProvider();
+    using var temp = TempDirectory.Create("azsdk-ts-test");
+    var root = temp.DirectoryPath;
+        File.WriteAllText(Path.Combine(root, "package.json"), "{\n  \"name\": \"@azure/testpkg\",\n  \"version\": \"1.0.0\"\n}");
         var src = Path.Combine(root, "src");
         Directory.CreateDirectory(src);
         var samplesDev = Path.Combine(root, "samples-dev");
@@ -89,8 +100,10 @@ public class TypeScriptSourceInputProviderTests
     [Test]
     public void Includes_snippets_spec_File()
     {
-        var provider = new TypeScriptSourceInputProvider();
-        var root = CreateTempRoot();
+    var provider = new TypeScriptSourceInputProvider();
+    using var temp = TempDirectory.Create("azsdk-ts-test");
+    var root = temp.DirectoryPath;
+        File.WriteAllText(Path.Combine(root, "package.json"), "{\n  \"name\": \"@azure/testpkg\",\n  \"version\": \"1.0.0\"\n}");
         var src = Path.Combine(root, "src");
         Directory.CreateDirectory(src);
         var testDir = Path.Combine(root, "test");

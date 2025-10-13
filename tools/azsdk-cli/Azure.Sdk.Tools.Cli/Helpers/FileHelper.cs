@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 using System.Collections.Concurrent;
 using System.Text;
-using Azure.Sdk.Tools.Cli.Services;
 using Microsoft.Extensions.FileSystemGlobbing;
 
 namespace Azure.Sdk.Tools.Cli.Helpers
@@ -57,331 +56,6 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             return null; // Validation passed
         }
 
-        /// <summary>
-        /// Represents information and operations for an Azure SDK package directory.
-        /// </summary>
-        public class PackageInfo
-        {
-            private readonly string packagePath;
-            private readonly string repoRoot;
-            private readonly string relativePath;
-            private readonly ILanguageSpecificCheckResolver? languageResolver;
-            private string? cachedLanguage;
-
-            /// <summary>
-            /// Initializes a new instance of the PackageInfo class.
-            /// </summary>
-            /// <param name="packagePath">Path to an Azure SDK package directory</param>
-            /// <param name="languageResolver">Optional language resolver for accurate language detection</param>
-            /// <exception cref="ArgumentException">Thrown when the path is not under an Azure SDK repository structure</exception>
-            public PackageInfo(string packagePath, ILanguageSpecificCheckResolver? languageResolver = null)
-            {
-                this.packagePath = Path.GetFullPath(packagePath);
-                this.languageResolver = languageResolver;
-
-                var sdkSeparator = $"{Path.DirectorySeparatorChar}sdk{Path.DirectorySeparatorChar}";
-                var pieces = this.packagePath.Split(sdkSeparator);
-
-                if (pieces.Length != 2)
-                {
-                    throw new ArgumentException(
-                        $"Path '{packagePath}' is not under an Azure SDK repository with 'sdk' subfolder. " +
-                        "Expected structure: /path/to/azure-sdk-for-<language>/sdk/<service>/<package>",
-                        nameof(packagePath));
-                }
-
-                repoRoot = pieces[0];
-                relativePath = pieces[1];
-            }
-
-            /// <summary>
-            /// Gets the repository root path.
-            /// </summary>
-            public string RepoRoot => repoRoot;
-
-            /// <summary>
-            /// Gets the relative path under 'sdk/'.
-            /// </summary>
-            public string RelativePath => relativePath;
-
-            /// <summary>
-            /// Gets the full package path.
-            /// </summary>
-            public string PackagePath => packagePath;
-
-            /// <summary>
-            /// Gets the package name (last directory component).
-            /// </summary>
-            public string PackageName => Path.GetFileName(packagePath);
-
-            /// <summary>
-            /// Gets the service name (parent directory of package).
-            /// </summary>
-            public string ServiceName => Path.GetFileName(Path.GetDirectoryName(packagePath)) ?? string.Empty;
-
-            /// <summary>
-            /// Gets the programming language, first trying the LanguageSpecificCheckResolver if available,
-            /// then falling back to file-based detection, then repository name patterns.
-            /// </summary>
-            public string Language
-            {
-                get
-                {
-                    if (cachedLanguage != null)
-                    {
-                        return cachedLanguage;
-                    }
-
-                    // Try to get language from the resolver first (most accurate)
-                    if (languageResolver != null)
-                    {
-                        var languageCheck = languageResolver.GetLanguageCheckAsync(packagePath).GetAwaiter().GetResult();
-                        if (languageCheck?.SupportedLanguage != null)
-                        {
-                            // Normalize the language (convert JavaScript to TypeScript, etc.)
-                            cachedLanguage = NormalizeLanguage(languageCheck.SupportedLanguage);
-                            return cachedLanguage;
-                        }
-                    }
-                    throw new InvalidOperationException(
-                    $"Unable to detect programming language for package at '{packagePath}'. ");
-                }
-            }
-
-            /// <summary>
-            /// Gets the default samples directory path for this package's language.
-            /// </summary>
-            public string GetSamplesDirectory()
-            {
-                return GetLanguageDefaultSamplesDir(Language, packagePath);
-            }
-
-            /// <summary>
-            /// Gets the appropriate file extension for this package's language.
-            /// </summary>
-            public string GetFileExtension()
-            {
-                return GetLanguageFileExtension(Language);
-            }
-
-            /// <summary>
-            /// Gets the package version by looking for common version files or directory patterns.
-            /// </summary>
-            public string? GetPackageVersion()
-            {
-                var versionFiles = new[]
-                {
-                    Path.Combine(packagePath, "package.json"),
-                    Path.Combine(packagePath, "pom.xml"),
-                    Path.Combine(packagePath, "setup.py"),
-                    Path.Combine(packagePath, "pyproject.toml"),
-                    Path.Combine(packagePath, "go.mod"),
-                    Path.Combine(packagePath, "*.csproj")
-                };
-
-                if (Language == "dotnet")
-                {
-                    var csprojFiles = Directory.GetFiles(packagePath, "*.csproj");
-                    if (csprojFiles.Length > 0)
-                    {
-                        return TryExtractVersionFromCsProj(csprojFiles[0]);
-                    }
-                }
-
-                foreach (var versionFile in versionFiles.Where(f => !f.Contains("*")))
-                {
-                    if (File.Exists(versionFile))
-                    {
-                        return TryExtractVersionFromFile(versionFile);
-                    }
-                }
-
-                return null;
-            }
-
-            private string? TryExtractVersionFromFile(string filePath)
-            {
-                try
-                {
-                    var content = File.ReadAllText(filePath);
-                    var fileName = Path.GetFileName(filePath);
-
-                    return fileName switch
-                    {
-                        "package.json" => ExtractFromJson(content, "version"),
-                        "setup.py" => ExtractFromPython(content),
-                        "pyproject.toml" => ExtractFromToml(content),
-                        "go.mod" => ExtractFromGoMod(content),
-                        _ => null
-                    };
-                }
-                catch
-                {
-                    return null;
-                }
-            }
-
-            private string? TryExtractVersionFromCsProj(string csprojPath)
-            {
-                try
-                {
-                    var content = File.ReadAllText(csprojPath);
-                    var versionMatch = System.Text.RegularExpressions.Regex.Match(content, @"<Version>([^<]+)</Version>");
-                    return versionMatch.Success ? versionMatch.Groups[1].Value : null;
-                }
-                catch
-                {
-                    return null;
-                }
-            }
-
-            private string? ExtractFromJson(string content, string key)
-            {
-                var match = System.Text.RegularExpressions.Regex.Match(content, $@"""{key}""\s*:\s*""([^""]+)""");
-                return match.Success ? match.Groups[1].Value : null;
-            }
-
-            private string? ExtractFromPython(string content)
-            {
-                var match = System.Text.RegularExpressions.Regex.Match(content, @"version\s*=\s*[""']([^""']+)[""']");
-                return match.Success ? match.Groups[1].Value : null;
-            }
-
-            private string? ExtractFromToml(string content)
-            {
-                var match = System.Text.RegularExpressions.Regex.Match(content, @"version\s*=\s*[""']([^""']+)[""']");
-                return match.Success ? match.Groups[1].Value : null;
-            }
-
-            private string? ExtractFromGoMod(string content)
-            {
-                // Todo: Implement Go module version extraction if applicable
-                return null;
-            }
-        }
-
-        /// <summary>
-        /// Gets the default output directory for samples based on the target language and package path.
-        /// </summary>
-        /// <param name="language">The target programming language</param>
-        /// <param name="packagePath">Path to the package directory</param>
-        /// <returns>The appropriate samples directory path for the language</returns>
-        public static string GetLanguageDefaultSamplesDir(string language, string packagePath)
-        {
-            var normalized = language.ToLowerInvariant();
-            if (normalized == "java")
-            {
-                // Attempt to read the Java module name from module-info.java and
-                // mirror the package structure under src/samples/java/<module path>/
-                // Example: module com.azure.security.keyvault.keys { -> src/samples/java/com/azure/security/keyvault/keys
-                var moduleName = TryGetJavaModuleName(packagePath);
-                if (!string.IsNullOrWhiteSpace(moduleName))
-                {
-                    var modulePath = moduleName!.Replace('.', Path.DirectorySeparatorChar);
-                    return Path.Combine(packagePath, "src", "samples", "java", modulePath);
-                }
-
-                // Fallback if module-info.java not found or unparsable
-                return Path.Combine(packagePath, "src", "samples", "java");
-            }
-
-            return normalized switch
-            {
-                "dotnet" => Path.Combine(packagePath, "tests", "samples"),
-                "typescript" => Path.Combine(packagePath, "samples-dev"),
-                "python" => Path.Combine(packagePath, "samples"),
-                "go" => packagePath,
-                _ => throw new ArgumentException($"Unsupported language: '{language}'. Supported languages are: dotnet, java, typescript, python, go", nameof(language))
-            };
-        }
-
-        /// <summary>
-        /// Gets the appropriate file extension for the target language.
-        /// </summary>
-        /// <param name="language">The target programming language</param>
-        /// <returns>The file extension including the dot (e.g., ".ts", ".py")</returns>
-        public static string GetLanguageFileExtension(string language)
-        {
-            return language.ToLowerInvariant() switch
-            {
-                "dotnet" => ".cs",
-                "java" => ".java",
-                "typescript" => ".ts",
-                "javascript" => ".js",
-                "python" => ".py",
-                "go" => ".go",
-                _ => throw new ArgumentException($"Unsupported language: '{language}'. Supported languages are: dotnet, java, typescript, python, go", nameof(language))
-            };
-        }
-
-        /// <summary>
-        /// Normalizes a language identifier to lowercase and converts javascript to typescript.
-        /// </summary>
-        /// <param name="language">The language identifier to normalize</param>
-        /// <returns>The normalized language identifier</returns>
-        private static string NormalizeLanguage(string language)
-        {
-            var normalized = language.ToLowerInvariant();
-            if (normalized == "javascript")
-            {
-                return "typescript";
-            }
-
-            return normalized;
-        }
-
-        /// <summary>
-        /// Attempts to extract the Java module name from src/main/java/module-info.java.
-        /// </summary>
-        /// <param name="packagePath">The root path of the package.</param>
-        /// <returns>The module name (e.g., com.azure.foo.bar) or null if not found.</returns>
-        private static string? TryGetJavaModuleName(string packagePath)
-        {
-            try
-            {
-                var moduleInfoPath = Path.Combine(packagePath, "src", "main", "java", "module-info.java");
-                if (!File.Exists(moduleInfoPath))
-                {
-                    return null;
-                }
-
-                // Read a small portion; file is typically tiny
-                var content = File.ReadAllText(moduleInfoPath);
-                // Regex: capture the identifier after 'module' up to first '{' or whitespace before '{'
-                var match = System.Text.RegularExpressions.Regex.Match(content, @"^\s*module\s+([^{\s]+)\s*\{", System.Text.RegularExpressions.RegexOptions.Multiline);
-                if (match.Success && match.Groups.Count > 1)
-                {
-                    return match.Groups[1].Value.Trim();
-                }
-            }
-            catch
-            {
-                // Swallow and fallback
-            }
-            return null;
-        }
-
-        /// <summary>
-        /// Determines if a file matches any of the specified extensions, including compound extensions like .d.ts.
-        /// </summary>
-        /// <param name="filePath">The file path to check</param>
-        /// <param name="extensions">The extensions to match against</param>
-        /// <returns>True if the file matches any extension, false otherwise</returns>
-        private static bool MatchesAnyExtension(string filePath, ISet<string> extensions)
-        {
-            var fileName = Path.GetFileName(filePath.AsSpan());
-            
-            // Check each extension to see if the filename ends with it
-            foreach (var extension in extensions)
-            {
-                if (fileName.EndsWith(extension.AsSpan(), StringComparison.OrdinalIgnoreCase))
-                {
-                    return true;
-                }
-            }
-            
-            return false;
-        }
 
         /// <summary>
         /// Optimized extension matching using ReadOnlySpan to avoid string allocations.
@@ -464,16 +138,33 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         );
 
         /// <summary>
-        /// Loads and concatenates files from multiple inputs with individual filtering rules, applying file extension filters and exclusion patterns per input.
+        /// Discovers, plans, and loads source files described by a set of <see cref="SourceInput"/> entries, applying per-input
+        /// extension and glob-based exclusion rules. This is the highest-level convenience overload.
         /// </summary>
-        /// <param name="inputs">List of inputs, each with its own path and filtering rules</param>
-        /// <param name="relativeTo">Base path for computing relative file paths in output</param>
-        /// <param name="totalBudget">Maximum characters for all included files</param>
-        /// <param name="perFileLimit">Maximum characters per individual file</param>
-        /// <param name="priorityFunc">Function to calculate priority for a file (lower numbers = higher priority)</param>
-        /// <param name="logger">Optional logger for debugging file loading process</param>
-        /// <param name="ct">Cancellation token</param>
-        /// <returns>Concatenated file content with file headers, truncated to budget</returns>
+        /// <param name="inputs">A collection of inputs describing one or more files or directories plus optional filtering rules.</param>
+        /// <param name="relativeTo">Root path used to compute stable relative paths for output. Should normally be the repository root.</param>
+        /// <param name="totalBudget">Maximum number of characters across all included file contents (exclusive of some minor header overhead).</param>
+        /// <param name="perFileLimit">Maximum number of characters permitted for any single file before truncation is applied.</param>
+        /// <param name="priorityFunc">A deterministic function returning an integer priority for each file (lower values are loaded first). Ties are broken by smaller file size.</param>
+        /// <param name="logger">Optional logger for tracing discovery and loading decisions. Uses Debug for summary and Trace for per-file discovery.</param>
+        /// <param name="ct">Cancellation token that aborts file content reads. Discovery and planning are synchronous and ignore cancellation.</param>
+        /// <returns>A single string containing XML-like <c>&lt;file&gt;</c> blocks for each included file. Truncated files append a <c>// ... truncated ...</c> marker. Files that failed to load produce a self-closing <c>&lt;file error=.../&gt;</c> element.</returns>
+        /// <remarks>
+        /// Processing pipeline:
+        /// <list type="number">
+        /// <item><description>Discover files per input (deduplicated, extension &amp; glob exclusions applied).</description></item>
+        /// <item><description>Create a loading plan honoring <paramref name="totalBudget"/> and <paramref name="perFileLimit"/>.</description></item>
+        /// <item><description>Execute the plan, streaming partial file content when truncation is needed.</description></item>
+        /// </list>
+        /// Edge cases &amp; behavior:
+        /// <list type="bullet">
+        /// <item><description>If no files qualify, returns <see cref="string.Empty"/>.</description></item>
+        /// <item><description>IO and parsing errors for individual files are captured; the exception message is surfaced in an error element without failing the entire operation.</description></item>
+        /// <item><description>Character budget accounting includes an estimated 50 character header overhead per file (see implementation constant).</description></item>
+        /// <item><description>The output ordering is strictly by ascending priority then ascending file size.</description></item>
+        /// </list>
+        /// Recommended usage: supply a lightweight <paramref name="priorityFunc"/> (e.g. categorize by path prefixes) to avoid perf costs during large repository scans.
+        /// </remarks>
         public static async Task<string> LoadFilesAsync(
             IEnumerable<SourceInput> inputs,
             string relativeTo,
@@ -488,18 +179,21 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         }
 
         /// <summary>
-        /// Loads and concatenates files from multiple file paths and directories, applying file extension filters and exclusion patterns.
+        /// Discovers, plans, and loads source files specified directly by explicit paths (files and/or directories).
         /// </summary>
-        /// <param name="filePaths">List of file paths and directory paths to scan</param>
-        /// <param name="includeExtensions">File extensions to include (e.g., [".cs", ".ts"])</param>
-        /// <param name="excludeGlobPatterns">Glob patterns for paths to exclude (e.g., ["**/test/**", "**/bin/**"])</param>
-        /// <param name="relativeTo">Base path for computing relative file paths in output</param>
-        /// <param name="totalBudget">Maximum characters for all included files</param>
-        /// <param name="perFileLimit">Maximum characters per individual file</param>
-        /// <param name="priorityFunc">Function to calculate priority for a file (lower numbers = higher priority)</param>
-        /// <param name="logger">Optional logger for debugging file loading process</param>
-        /// <param name="ct">Cancellation token</param>
-        /// <returns>Concatenated file content with file headers, truncated to budget</returns>
+        /// <param name="filePaths">A collection of file or directory paths. Directories are scanned recursively.</param>
+        /// <param name="includeExtensions">Case-insensitive set of extensions to include (e.g. <c>[".cs", ".ts"]</c>). Provide an empty array to include all extensions.</param>
+        /// <param name="excludeGlobPatterns">Glob patterns evaluated against the path relative to <paramref name="relativeTo"/>. Provide an empty array for no exclusions.</param>
+        /// <param name="relativeTo">Base path used to compute relative output paths and as the root for glob evaluation.</param>
+        /// <param name="totalBudget">Maximum aggregate character budget for loaded content.</param>
+        /// <param name="perFileLimit">Maximum per-file character allocation before truncation occurs.</param>
+        /// <param name="priorityFunc">Function computing file priority (lower loads first). Should be inexpensive; called once per candidate.</param>
+        /// <param name="logger">Optional logger for discovery and planning diagnostics.</param>
+        /// <param name="ct">Cancellation token applied only during file reads.</param>
+        /// <returns>A concatenated representation of included files in XML-ish blocks with metadata attributes.</returns>
+        /// <remarks>
+        /// Behaves identically to the <see cref="LoadFilesAsync(IEnumerable{SourceInput}, string, int, int, Func{FileMetadata, int}, ILogger?, CancellationToken)"/> overload except that filtering rules are shared across all <paramref name="filePaths"/>.
+        /// </remarks>
         public static async Task<string> LoadFilesAsync(
             IEnumerable<string> filePaths,
             string[] includeExtensions,
@@ -516,18 +210,18 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         }
 
         /// <summary>
-        /// Loads and concatenates files from a directory, applying file extension filters and exclusion patterns.
+        /// Convenience overload for loading files from a single directory using shared filtering rules.
         /// </summary>
-        /// <param name="dir">Directory to scan for files</param>
-        /// <param name="includeExtensions">File extensions to include (e.g., [".cs", ".ts"])</param>
-        /// <param name="excludeGlobPatterns">Glob patterns for paths to exclude (e.g., ["**/test/**", "**/bin/**"])</param>
-        /// <param name="relativeTo">Base path for computing relative file paths in output</param>
-        /// <param name="totalBudget">Maximum characters for all included files</param>
-        /// <param name="perFileLimit">Maximum characters per individual file</param>
-        /// <param name="priorityFunc">Function to calculate priority for a file (lower numbers = higher priority)</param>
-        /// <param name="logger">Optional logger for debugging file loading process</param>
-        /// <param name="ct">Cancellation token</param>
-        /// <returns>Concatenated file content with file headers, truncated to budget</returns>
+        /// <param name="dir">Directory to scan recursively.</param>
+        /// <param name="includeExtensions">Extensions to include or empty array for all.</param>
+        /// <param name="excludeGlobPatterns">Glob exclusion patterns relative to <paramref name="relativeTo"/>.</param>
+        /// <param name="relativeTo">Root path for relative output formatting.</param>
+        /// <param name="totalBudget">Aggregate character budget across all files.</param>
+        /// <param name="perFileLimit">Maximum characters per file before truncation.</param>
+        /// <param name="priorityFunc">Priority selector (lower first); see remarks in other overloads.</param>
+        /// <param name="logger">Optional logger.</param>
+        /// <param name="ct">Cancellation token applied during file reads only.</param>
+        /// <returns>Concatenated structured content string for included files.</returns>
         public static async Task<string> LoadFilesAsync(
             string dir,
             string[] includeExtensions,
@@ -552,13 +246,17 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         }
 
         /// <summary>
-        /// Discovers and analyzes all files from multiple inputs with individual filtering rules, returning metadata without budget constraints.
+        /// Discovers candidate files from multiple <see cref="SourceInput"/> definitions applying per-input include extension
+        /// and exclusion glob patterns, returning ordered metadata without any budgeting applied.
         /// </summary>
-        /// <param name="inputs">List of inputs, each with its own path and filtering rules</param>
-        /// <param name="relativeTo">Base path for computing relative file paths in output</param>
-        /// <param name="priorityFunc">Function to calculate priority for a file (lower numbers = higher priority)</param>
-        /// <param name="logger">Optional logger for debugging file discovery process</param>
-        /// <returns>List of discovered files with metadata</returns>
+        /// <param name="inputs">Input descriptors (each may specify its own include and exclude patterns).</param>
+        /// <param name="relativeTo">Root path used for computing human-readable <see cref="FileMetadata.RelativePath"/> values.</param>
+        /// <param name="priorityFunc">Function computing relative priority (lower loads first). Invoked once per discovered file.</param>
+        /// <param name="logger">Optional logger used for summary information and Trace-level per-file discovery.</param>
+        /// <returns>Sorted list of unique file metadata entries across all inputs.</returns>
+        /// <remarks>
+        /// Duplicates (same full path) are removed across inputs. Sorting occurs by ascending priority then ascending file size.
+        /// </remarks>
         public static List<FileMetadata> DiscoverFiles(
             IEnumerable<SourceInput> inputs,
             string relativeTo,
@@ -612,15 +310,19 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         }
 
         /// <summary>
-        /// Discovers and analyzes all files from multiple file paths and directories, returning metadata without budget constraints.
+        /// Discovers candidate files from explicit paths (files and directories) applying shared include extension and exclusion glob patterns.
         /// </summary>
-        /// <param name="filePaths">List of file paths and directory paths to scan</param>
-        /// <param name="includeExtensions">File extensions to include (e.g., [".cs", ".ts"])</param>
-        /// <param name="excludeGlobPatterns">Glob patterns for paths to exclude (e.g., ["**/test/**", "**/bin/**"])</param>
-        /// <param name="relativeTo">Base path for computing relative file paths in output</param>
-        /// <param name="priorityFunc">Function to calculate priority for a file (lower numbers = higher priority)</param>
-        /// <param name="logger">Optional logger for debugging file discovery process</param>
-        /// <returns>List of discovered files with metadata</returns>
+        /// <param name="filePaths">File or directory paths. Non-existent paths produce a warning entry via <paramref name="logger"/>.</param>
+        /// <param name="includeExtensions">Extensions to include (empty array = include all). Case-insensitive match.</param>
+        /// <param name="excludeGlobPatterns">Glob exclusion patterns evaluated against path relative to <paramref name="relativeTo"/>.</param>
+        /// <param name="relativeTo">Base path for computing relative output paths and performing glob evaluation.</param>
+        /// <param name="priorityFunc">Function computing file priority (lower is higher priority).</param>
+        /// <param name="logger">Optional logger.</param>
+        /// <returns>Sorted list of unique file metadata entries.</returns>
+        /// <remarks>
+        /// Directory enumeration uses <see cref="EnumerationOptions"/> with recursion enabled and skips hidden/system entries.
+        /// Individual file access failures during size retrieval will throw; there is no suppression at discovery time.
+        /// </remarks>
         public static List<FileMetadata> DiscoverFiles(
             IEnumerable<string> filePaths,
             string[] includeExtensions,
@@ -693,15 +395,15 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         }
 
         /// <summary>
-        /// Discovers and analyzes all files in a directory, returning metadata without budget constraints.
+        /// Convenience overload for discovering files from a single directory.
         /// </summary>
-        /// <param name="dir">Directory to scan for files</param>
-        /// <param name="includeExtensions">File extensions to include (e.g., [".cs", ".ts"])</param>
-        /// <param name="excludeGlobPatterns">Glob patterns for paths to exclude (e.g., ["**/test/**", "**/bin/**"])</param>
-        /// <param name="relativeTo">Base path for computing relative file paths in output</param>
-        /// <param name="priorityFunc">Function to calculate priority for a file (lower numbers = higher priority)</param>
-        /// <param name="logger">Optional logger for debugging file discovery process</param>
-        /// <returns>List of discovered files with metadata</returns>
+        /// <param name="dir">Directory path to scan recursively.</param>
+        /// <param name="includeExtensions">Extensions filter (empty = all).</param>
+        /// <param name="excludeGlobPatterns">Glob exclusions relative to <paramref name="relativeTo"/>.</param>
+        /// <param name="relativeTo">Root path for relative path calculation.</param>
+        /// <param name="priorityFunc">Priority function.</param>
+        /// <param name="logger">Optional logger.</param>
+        /// <returns>Sorted list of discovered file metadata.</returns>
         public static List<FileMetadata> DiscoverFiles(
             string dir,
             string[] includeExtensions,
@@ -720,13 +422,21 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         }
 
         /// <summary>
-        /// Creates a budget-constrained loading plan from discovered file metadata.
+        /// Produces a <see cref="FileLoadingPlan"/> from raw file metadata honoring the provided total and per-file character budgets.
         /// </summary>
-        /// <param name="files">List of discovered files with metadata</param>
-        /// <param name="totalBudget">Maximum characters for all included files</param>
-        /// <param name="perFileLimit">Maximum characters per individual file</param>
-        /// <param name="logger">Optional logger for debugging loading plan creation</param>
-        /// <returns>A loading plan with file metadata and token allocations</returns>
+        /// <param name="files">Pre-sorted file metadata (priority ascending then size ascending).</param>
+        /// <param name="totalBudget">Maximum aggregate character budget for all file contents plus header overhead.</param>
+        /// <param name="perFileLimit">Maximum characters allocated to any single file before truncation.</param>
+        /// <param name="logger">Optional logger for plan diagnostics.</param>
+        /// <returns>A plan describing which files to load and how many characters per file.</returns>
+        /// <remarks>
+        /// Implementation details:
+        /// <list type="bullet">
+        /// <item><description>Reserves an estimated 50 characters of overhead per file for the output header (constant).</description></item>
+        /// <item><description>Stops allocation when remaining budget cannot cover another header + at least 1 character.</description></item>
+        /// <item><description>Token estimation uses a simple 4 characters ≈ 1 token heuristic suitable for coarse budgeting.</description></item>
+        /// </list>
+        /// </remarks>
         public static FileLoadingPlan CreateLoadingPlanFromMetadata(
             List<FileMetadata> files,
             int totalBudget,
@@ -781,15 +491,15 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         }
 
         /// <summary>
-        /// Creates a plan for loading files from multiple inputs with individual filtering rules, specifying which files to include and how much content to load from each.
+        /// Discovers files from multiple <see cref="SourceInput"/> entries and produces a constrained loading plan.
         /// </summary>
-        /// <param name="inputs">List of inputs, each with its own path and filtering rules</param>
-        /// <param name="relativeTo">Base path for computing relative file paths in output</param>
-        /// <param name="totalBudget">Maximum characters for all included files</param>
-        /// <param name="perFileLimit">Maximum characters per individual file</param>
-        /// <param name="priorityFunc">Function to calculate priority for a file (lower numbers = higher priority)</param>
-        /// <param name="logger">Optional logger for debugging file loading plan creation</param>
-        /// <returns>A loading plan with file metadata and token allocations</returns>
+        /// <param name="inputs">Inputs describing paths and per-input filters.</param>
+        /// <param name="relativeTo">Root path for relative path computation.</param>
+        /// <param name="totalBudget">Aggregate character budget.</param>
+        /// <param name="perFileLimit">Per-file character limit.</param>
+        /// <param name="priorityFunc">Priority selector (lower first).</param>
+        /// <param name="logger">Optional logger.</param>
+        /// <returns>Loading plan ready for execution.</returns>
         public static FileLoadingPlan CreateFileLoadingPlan(
             IEnumerable<SourceInput> inputs,
             string relativeTo,
@@ -806,17 +516,17 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         }
 
         /// <summary>
-        /// Creates a plan for loading files from multiple file paths and directories, specifying which files to include and how much content to load from each.
+        /// Discovers files from explicit paths and produces a constrained loading plan.
         /// </summary>
-        /// <param name="filePaths">List of file paths and directory paths to scan</param>
-        /// <param name="includeExtensions">File extensions to include (e.g., [".cs", ".ts"])</param>
-        /// <param name="excludeGlobPatterns">Glob patterns for paths to exclude (e.g., ["**/test/**", "**/bin/**"])</param>
-        /// <param name="relativeTo">Base path for computing relative file paths in output</param>
-        /// <param name="totalBudget">Maximum characters for all included files</param>
-        /// <param name="perFileLimit">Maximum characters per individual file</param>
-        /// <param name="priorityFunc">Function to calculate priority for a file (lower numbers = higher priority)</param>
-        /// <param name="logger">Optional logger for debugging file loading plan creation</param>
-        /// <returns>A loading plan with file metadata and token allocations</returns>
+        /// <param name="filePaths">File and/or directory paths.</param>
+        /// <param name="includeExtensions">Extensions filter; empty for all.</param>
+        /// <param name="excludeGlobPatterns">Glob exclusion patterns (relative to <paramref name="relativeTo"/>).</param>
+        /// <param name="relativeTo">Root path for relative path computation.</param>
+        /// <param name="totalBudget">Aggregate character budget.</param>
+        /// <param name="perFileLimit">Per-file character limit.</param>
+        /// <param name="priorityFunc">Priority selector (lower first).</param>
+        /// <param name="logger">Optional logger.</param>
+        /// <returns>Loading plan ready for execution.</returns>
         public static FileLoadingPlan CreateFileLoadingPlan(
             IEnumerable<string> filePaths,
             string[] includeExtensions,
@@ -835,17 +545,17 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         }
 
         /// <summary>
-        /// Creates a plan for loading files, specifying which files to include and how much content to load from each.
+        /// Convenience overload for producing a loading plan from a single directory.
         /// </summary>
-        /// <param name="dir">Directory to scan for files</param>
-        /// <param name="includeExtensions">File extensions to include (e.g., [".cs", ".ts"])</param>
-        /// <param name="excludeGlobPatterns">Glob patterns for paths to exclude (e.g., ["**/test/**", "**/bin/**"])</param>
-        /// <param name="relativeTo">Base path for computing relative file paths in output</param>
-        /// <param name="totalBudget">Maximum characters for all included files</param>
-        /// <param name="perFileLimit">Maximum characters per individual file</param>
-        /// <param name="priorityFunc">Function to calculate priority for a file (lower numbers = higher priority)</param>
-        /// <param name="logger">Optional logger for debugging file loading plan creation</param>
-        /// <returns>A loading plan with file metadata and token allocations</returns>
+        /// <param name="dir">Directory to scan recursively.</param>
+        /// <param name="includeExtensions">Extensions filter; empty array for all.</param>
+        /// <param name="excludeGlobPatterns">Glob exclusion patterns relative to <paramref name="relativeTo"/>.</param>
+        /// <param name="relativeTo">Root path for relative path computation.</param>
+        /// <param name="totalBudget">Aggregate character budget.</param>
+        /// <param name="perFileLimit">Per-file character limit.</param>
+        /// <param name="priorityFunc">Priority selector (lower first).</param>
+        /// <param name="logger">Optional logger.</param>
+        /// <returns>Loading plan ready for execution.</returns>
         public static FileLoadingPlan CreateFileLoadingPlan(
             string dir,
             string[] includeExtensions,
@@ -867,13 +577,18 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 logger);
         }
 
-        /// <summary>
-        /// Executes a file loading plan to produce the concatenated content.
-        /// </summary>
-        /// <param name="plan">The loading plan to execute</param>
-        /// <param name="logger">Optional logger for debugging file loading execution</param>
-        /// <param name="ct">Cancellation token</param>
-        /// <returns>Concatenated file content with file headers</returns>
+    /// <summary>
+    /// Executes a previously prepared <see cref="FileLoadingPlan"/>, reading file contents (subject to truncation) and
+    /// emitting a concatenated XML-like representation suitable for downstream processing or prompting.
+    /// </summary>
+    /// <param name="plan">Plan created by <see cref="CreateFileLoadingPlan"/> or <see cref="CreateLoadingPlanFromMetadata"/>.</param>
+    /// <param name="logger">Optional logger for progress and warnings during read.</param>
+    /// <param name="ct">Cancellation token that aborts file reads; already processed content is retained.</param>
+    /// <returns>Structured concatenated content or empty string if no files are included.</returns>
+    /// <remarks>
+    /// Individual file read failures do not throw; instead an error element is written. This design favors resilience
+    /// for large scans where sporadic IO issues may occur. Partial reads (truncation) append a human-readable marker.
+    /// </remarks>
         public static async Task<string> ExecuteFileLoadingPlanAsync(FileLoadingPlan plan, ILogger? logger = null, CancellationToken ct = default)
         {
             if (plan.Items.Count == 0)
@@ -994,12 +709,16 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 metadata.RelativePath, metadata.FileSize, metadata.Priority);
         }
 
-        /// <summary>
-        /// Checks if a file path matches any of the provided glob exclusion patterns.
-        /// </summary>
-        /// <param name="filePath">File path to check (expected to be relative to a known root)</param>
-        /// <param name="excludeGlobPatterns">Array of glob patterns (e.g., "**/test/**", "*.tmp", "bin/**")</param>
-        /// <returns>True if the path should be excluded</returns>
+    /// <summary>
+    /// Determines whether a relative file path matches any exclusion glob pattern.
+    /// </summary>
+    /// <param name="filePath">Path relative to the chosen root (<c>relativeTo</c> in discovery methods).</param>
+    /// <param name="excludeGlobPatterns">Glob patterns treated as exclusions. An empty array yields <c>false</c>.</param>
+    /// <returns><c>true</c> if the path is excluded; otherwise <c>false</c>.</returns>
+    /// <remarks>
+    /// Internally caches compiled <see cref="Matcher"/> instances keyed by the joined pattern list (up to 100 entries, then reset) to reduce allocations
+    /// for repeated discovery passes in long-running processes.
+    /// </remarks>
         public static bool IsMatchingExcludePattern(string filePath, string[] excludeGlobPatterns)
         {
             if (excludeGlobPatterns == null || excludeGlobPatterns.Length == 0)

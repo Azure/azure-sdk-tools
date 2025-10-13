@@ -40,7 +40,7 @@ public class SdkGenerationToolTests
     private Mock<IGitHelper> _mockGitHelper;
     private Mock<INpxHelper> _mockNpxHelper;
     private TestLogger<SdkGenerationTool> _logger;
-    private string _tempDirectory;
+    private TempDirectory _tempDirectory = null!;
 
     [SetUp]
     public void Setup()
@@ -50,9 +50,8 @@ public class SdkGenerationToolTests
         _mockNpxHelper = new Mock<INpxHelper>();
         _logger = new TestLogger<SdkGenerationTool>();
 
-        // Create temp directory for tests
-        _tempDirectory = Path.Combine(Path.GetTempPath(), "SdkGenerationToolTests", Guid.NewGuid().ToString());
-        Directory.CreateDirectory(_tempDirectory);
+    // Create temp directory for tests
+    _tempDirectory = TempDirectory.Create("SdkGenerationToolTests");
 
         // Create the tool instance
         _tool = new SdkGenerationTool(
@@ -66,10 +65,7 @@ public class SdkGenerationToolTests
     public void TearDown()
     {
         // Clean up temp directory
-        if (Directory.Exists(_tempDirectory))
-        {
-            Directory.Delete(_tempDirectory, true);
-        }
+        _tempDirectory.Dispose();
     }
 
     #region GenerateSdkAsync Tests
@@ -88,7 +84,7 @@ public class SdkGenerationToolTests
     public async Task GenerateSdkAsync_WithTspLocationPath_CallsRunTspUpdate()
     {
         // Arrange
-        var tspLocationPath = Path.Combine(_tempDirectory, TspLocationFileName);
+    var tspLocationPath = Path.Combine(_tempDirectory.DirectoryPath, TspLocationFileName);
         File.WriteAllText(tspLocationPath, TestTspLocationContent);
 
         var expectedResult = new ProcessResult { ExitCode = 0 };
@@ -110,7 +106,7 @@ public class SdkGenerationToolTests
     public async Task GenerateSdkAsync_WithTspLocationPath_FileNotExists_ReturnsFailure()
     {
         // Arrange
-        var tspLocationPath = Path.Combine(_tempDirectory, "nonexistent-" + TspLocationFileName);
+    var tspLocationPath = Path.Combine(_tempDirectory.DirectoryPath, "nonexistent-" + TspLocationFileName);
 
         // Act
         var result = await _tool.GenerateSdkAsync("/some/path", null, tspLocationPath, null);
@@ -124,7 +120,7 @@ public class SdkGenerationToolTests
     {
         // Arrange
         // Mock GitHelper to return valid repo root
-        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory)).Returns(_tempDirectory);
+    _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory.DirectoryPath)).Returns(_tempDirectory.DirectoryPath);
 
         var expectedResult = new ProcessResult { ExitCode = 0 };
         expectedResult.AppendStdout(ProcessSuccessOutput);
@@ -133,7 +129,7 @@ public class SdkGenerationToolTests
             .ReturnsAsync(expectedResult);
 
         // Act
-        var result = await _tool.GenerateSdkAsync(_tempDirectory, RemoteTspConfigUrl, null, null);
+    var result = await _tool.GenerateSdkAsync(_tempDirectory.DirectoryPath, RemoteTspConfigUrl, null, null);
 
         // Assert
         Assert.That(result.Result, Is.EqualTo("succeeded"));
@@ -145,12 +141,12 @@ public class SdkGenerationToolTests
     public async Task GenerateSdkAsync_WithLocalTspConfigPath_ValidInputs_CallsRunTspInit()
     {
         // Arrange
-        var tspConfigPath = Path.Combine(_tempDirectory, TspConfigFileName);
+    var tspConfigPath = Path.Combine(_tempDirectory.DirectoryPath, TspConfigFileName);
         File.WriteAllText(tspConfigPath, TestTspConfigContent);
 
         // Mock GitHelper to return valid repo root
-        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory)).Returns(_tempDirectory);
-        _mockGitHelper.Setup(x => x.GetRepoFullNameAsync(tspConfigPath, true)).ReturnsAsync(DefaultSpecRepo);
+    _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory.DirectoryPath)).Returns(_tempDirectory.DirectoryPath);
+    _mockGitHelper.Setup(x => x.GetRepoFullNameAsync(tspConfigPath, true)).ReturnsAsync(DefaultSpecRepo);
 
         var expectedResult = new ProcessResult { ExitCode = 0 };
         expectedResult.AppendStdout(ProcessSuccessOutput);
@@ -159,7 +155,7 @@ public class SdkGenerationToolTests
             .ReturnsAsync(expectedResult);
 
         // Act
-        var result = await _tool.GenerateSdkAsync(_tempDirectory, tspConfigPath, null, null);
+    var result = await _tool.GenerateSdkAsync(_tempDirectory.DirectoryPath, tspConfigPath, null, null);
 
         // Assert
         Assert.That(result.Result, Is.EqualTo("succeeded"));
@@ -172,10 +168,10 @@ public class SdkGenerationToolTests
     {
         // Arrange
         // Mock GitHelper to return valid repo root
-        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory)).Returns(_tempDirectory);
+    _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory.DirectoryPath)).Returns(_tempDirectory.DirectoryPath);
 
         // Act - Use a non-existent file path
-        var result = await _tool.GenerateSdkAsync(_tempDirectory, "/nonexistent/" + TspConfigFileName, null, null);
+    var result = await _tool.GenerateSdkAsync(_tempDirectory.DirectoryPath, "/nonexistent/" + TspConfigFileName, null, null);
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain(FileNotExistError));
@@ -186,7 +182,7 @@ public class SdkGenerationToolTests
     {
         // Arrange
         // Mock GitHelper to return valid repo root
-        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory)).Returns(_tempDirectory);
+    _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory.DirectoryPath)).Returns(_tempDirectory.DirectoryPath);
 
         var failedResult = new ProcessResult { ExitCode = 1 };
         failedResult.AppendStderr(ProcessErrorOutput);
@@ -195,7 +191,7 @@ public class SdkGenerationToolTests
             .ReturnsAsync(failedResult);
 
         // Act
-        var result = await _tool.GenerateSdkAsync(_tempDirectory, RemoteTspConfigUrl, null, null);
+    var result = await _tool.GenerateSdkAsync(_tempDirectory.DirectoryPath, RemoteTspConfigUrl, null, null);
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain(TspClientInitFailedError));
@@ -206,10 +202,10 @@ public class SdkGenerationToolTests
     {
         // Arrange
         // Mock GitHelper to return valid repo root
-        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory)).Returns(_tempDirectory);
+    _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory.DirectoryPath)).Returns(_tempDirectory.DirectoryPath);
 
         // Act - Use invalid remote URL that doesn't match GitHub blob pattern
-        var result = await _tool.GenerateSdkAsync(_tempDirectory, InvalidRemoteTspConfigUrl, null, null);
+    var result = await _tool.GenerateSdkAsync(_tempDirectory.DirectoryPath, InvalidRemoteTspConfigUrl, null, null);
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain("Invalid remote GitHub URL with commit"));
@@ -220,14 +216,14 @@ public class SdkGenerationToolTests
     {
         // Arrange
         // Mock GitHelper to return valid repo root
-        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory)).Returns(_tempDirectory);
+    _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory.DirectoryPath)).Returns(_tempDirectory.DirectoryPath);
 
         _mockNpxHelper
             .Setup(x => x.Run(It.IsAny<NpxOptions>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Test exception"));
 
         // Act - Now remote URLs work properly
-        var result = await _tool.GenerateSdkAsync(_tempDirectory, RemoteTspConfigUrl, null, null);
+    var result = await _tool.GenerateSdkAsync(_tempDirectory.DirectoryPath, RemoteTspConfigUrl, null, null);
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain("Test exception"));
@@ -247,13 +243,13 @@ public class SdkGenerationToolTests
     public async Task GenerateSdkAsync_WithLocalTspConfigAndEmitterOptions_PassesOptionsToNpx()
     {
         // Arrange
-        var tspConfigPath = Path.Combine(_tempDirectory, TspConfigFileName);
+    var tspConfigPath = Path.Combine(_tempDirectory.DirectoryPath, TspConfigFileName);
         File.WriteAllText(tspConfigPath, TestTspConfigContent);
         var emitterOptions = "package-version=1.0.0-beta.1";
 
         // Mock GitHelper to return valid repo root
-        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory)).Returns(_tempDirectory);
-        _mockGitHelper.Setup(x => x.GetRepoFullNameAsync(tspConfigPath, false)).ReturnsAsync(DefaultSpecRepo);
+    _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory.DirectoryPath)).Returns(_tempDirectory.DirectoryPath);
+    _mockGitHelper.Setup(x => x.GetRepoFullNameAsync(tspConfigPath, false)).ReturnsAsync(DefaultSpecRepo);
 
         var expectedResult = new ProcessResult { ExitCode = 0 };
         expectedResult.AppendStdout(ProcessSuccessOutput);
@@ -262,7 +258,7 @@ public class SdkGenerationToolTests
             .ReturnsAsync(expectedResult);
 
         // Act
-        var result = await _tool.GenerateSdkAsync(_tempDirectory, tspConfigPath, null, emitterOptions);
+    var result = await _tool.GenerateSdkAsync(_tempDirectory.DirectoryPath, tspConfigPath, null, emitterOptions);
 
         // Assert
         Assert.That(result.Result, Is.EqualTo("succeeded"));
@@ -289,7 +285,7 @@ public class SdkGenerationToolTests
         var emitterOptions = "package-version=1.0.0-beta.1";
 
         // Mock GitHelper to return valid repo root
-        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory)).Returns(_tempDirectory);
+    _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory.DirectoryPath)).Returns(_tempDirectory.DirectoryPath);
 
         var expectedResult = new ProcessResult { ExitCode = 0 };
         expectedResult.AppendStdout(ProcessSuccessOutput);
@@ -298,7 +294,7 @@ public class SdkGenerationToolTests
             .ReturnsAsync(expectedResult);
 
         // Act
-        var result = await _tool.GenerateSdkAsync(_tempDirectory, RemoteTspConfigUrl, null, emitterOptions);
+    var result = await _tool.GenerateSdkAsync(_tempDirectory.DirectoryPath, RemoteTspConfigUrl, null, emitterOptions);
 
         // Assert
         Assert.That(result.Result, Is.EqualTo("succeeded"));
@@ -314,12 +310,12 @@ public class SdkGenerationToolTests
     public async Task GenerateSdkAsync_WithLocalTspConfigNoEmitterOptions_DoesNotPassEmitterOptionsToNpx()
     {
         // Arrange
-        var tspConfigPath = Path.Combine(_tempDirectory, TspConfigFileName);
+    var tspConfigPath = Path.Combine(_tempDirectory.DirectoryPath, TspConfigFileName);
         File.WriteAllText(tspConfigPath, TestTspConfigContent);
 
         // Mock GitHelper to return valid repo root
-        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory)).Returns(_tempDirectory);
-        _mockGitHelper.Setup(x => x.GetRepoFullNameAsync(tspConfigPath, false)).ReturnsAsync(DefaultSpecRepo);
+    _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory.DirectoryPath)).Returns(_tempDirectory.DirectoryPath);
+    _mockGitHelper.Setup(x => x.GetRepoFullNameAsync(tspConfigPath, false)).ReturnsAsync(DefaultSpecRepo);
 
         var expectedResult = new ProcessResult { ExitCode = 0 };
         expectedResult.AppendStdout(ProcessSuccessOutput);
@@ -328,7 +324,7 @@ public class SdkGenerationToolTests
             .ReturnsAsync(expectedResult);
 
         // Act
-        var result = await _tool.GenerateSdkAsync(_tempDirectory, tspConfigPath, null, null);
+    var result = await _tool.GenerateSdkAsync(_tempDirectory.DirectoryPath, tspConfigPath, null, null);
 
         // Assert
         Assert.That(result.Result, Is.EqualTo("succeeded"));

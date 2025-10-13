@@ -44,7 +44,7 @@ Without a concrete end-to-end scenario, we risk building tools in isolation that
 - **Agent and CLI modes** - both must work
 - **Existing changelog generation** - no changes to current process
 
-### Out of Scope for V1
+### Out of scope for V1
 
 - SDK code customizations
 - Breaking changes

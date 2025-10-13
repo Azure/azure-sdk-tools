@@ -107,6 +107,7 @@ public class VerifySetupTool : MCPTool
         var trimmed = string.Empty;
         try
         {
+            logger.LogInformation("Running command: {Command}", string.Join(' ', command));
             var result = await processHelper.Run(options, ct);
             trimmed = (result.Output ?? string.Empty).Trim();
 
@@ -172,17 +173,18 @@ public class VerifySetupTool : MCPTool
 
         // validate and sanitize languages
         List<string> parsed = new List<string>(langs.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
-
+        List<string> parsedResult = new List<string>();
         foreach (var lang in parsed)
         {
             if (!LANGUAGES.Contains(lang.ToLower().Trim()))
             {
                 logger.LogError("Unsupported language: {lang}. Supported languages are: {supportedLanguages}.", lang, string.Join(", ", LANGUAGES));
-                parsed.Remove(lang);
+                continue;
             }
+            parsedResult.Add(lang);
         }
 
-        return parsed;
+        return parsedResult;
     }
 
     // for V1 prototype only

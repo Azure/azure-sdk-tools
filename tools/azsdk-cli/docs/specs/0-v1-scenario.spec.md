@@ -1,4 +1,4 @@
-# Spec: V1 Scenario
+# Spec: V1 scenario
 
 ## Overview
 

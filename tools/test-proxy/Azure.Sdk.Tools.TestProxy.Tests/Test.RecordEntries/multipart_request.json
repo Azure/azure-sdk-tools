@@ -7,7 +7,7 @@
         "Accept": "*/*",
         "Authorization": "Sanitized",
         "Content-Length": "3505",
-        "Content-Type": "multipart/mixed; boundary=REDACTED",
+        "Content-Type": "multipart/mixed; boundary=batch_41ee0728-dac8-4887-a5f6-fcf5a69252c9",
         "DataServiceVersion": "3.0",
         "Date": "Sat, 26 Apr 2025 01:09:57 GMT",
         "User-Agent": "azsdk-java-azure-data-tables/12.6.0-beta.1 (17.0.15; Windows 11; 10.0)",
@@ -66,7 +66,7 @@
       ],
       "StatusCode": 202,
       "ResponseHeaders": {
-        "Content-Type": "multipart/mixed; boundary=REDACTED",
+        "Content-Type": "multipart/mixed; boundary=batchresponse_32c36dfe-6fad-46c7-9a9a-5472c406b4a8",
         "Date": "Sat, 26 Apr 2025 01:09:58 GMT",
         "Transfer-Encoding": "chunked"
       },

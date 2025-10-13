@@ -45,17 +45,13 @@
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="navbar-collapse collapse">
-                    <ul class="navbar-nav me-auto">
+                    <ul class="navbar-nav ms-auto">
                         @if (User.Identity.IsAuthenticated) {
                             <li class="nav-item">
                                 <span asp-resource="@Model" asp-requirement="@ApproverRequirement.Instance">
                                     <a class="nav-link" asp-area="" asp-page="/Assemblies/RequestedReviews">Requested Reviews</a>
                                 </span>
                             </li>
-                        }
-                    </ul>
-                    <ul class="navbar-nav ms-auto">
-                        @if (User.Identity.IsAuthenticated) {
                             <li class="nav-item">
                                 <a asp-page="Profile" asp-route-UserName="@User.GetGitHubLogin()" class="nav-link">Profile</a>
                             </li>

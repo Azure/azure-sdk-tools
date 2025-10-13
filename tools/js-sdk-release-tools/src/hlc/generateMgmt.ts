@@ -16,8 +16,9 @@ import {getReleaseTool} from "./utils/getReleaseTool.js";
 import { addApiViewInfo } from "../utils/addApiViewInfo.js";
 import { defaultChildProcessTimeout } from '../common/utils.js'
 import { isRushRepo } from "../common/rushUtils.js";
-import { updateSnippets } from "../common/devToolUtils.js";
+import { lintFix, updateSnippets } from "../common/devToolUtils.js";
 import { ChangelogResult } from "../changelog/v2/ChangelogGenerator.js";
+import { RunMode } from "../common/types.js";
 
 export async function generateMgmt(options: {
     sdkRepo: string,
@@ -34,6 +35,7 @@ export async function generateMgmt(options: {
     runningEnvironment?: RunningEnvironment;
     apiVersion: string | undefined;
     sdkReleaseType: string | undefined;
+    runMode?: RunMode;
 }) {
     logger.info(`Start to generate SDK from '${options.readmeMd}'.`);
     let cmd = '';
@@ -131,6 +133,10 @@ export async function generateMgmt(options: {
             } else {
                 logger.info(`Start to run command: 'pnpm install'.`);
                 execSync('pnpm install', {stdio: 'inherit'});
+
+                if(options.runMode === RunMode.Local || options.runMode === RunMode.Release){
+                    await lintFix(packagePath);
+                }
                                 
                 logger.info(`Start to run command: 'pnpm build --filter ${packageName}...', that builds generated codes, except test and sample, which may be written manually.`);
                 execSync(`pnpm build --filter ${packageName}...`, {stdio: 'inherit'});

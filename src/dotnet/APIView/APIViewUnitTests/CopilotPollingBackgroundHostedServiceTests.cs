@@ -179,9 +179,9 @@ namespace APIViewUnitTests
         [InlineData(true, new[] { "dotnet-client-design", "dotnet-naming-conventions" })]
         [InlineData(false, new string[0])]
         public async Task ProcessJobAsync_GuidelinesHandling_FormatsCorrectly(bool shouldIncludeGuidelines,
-            string[] ruleIds)
+            string[] guidelineIds)
         {
-            AIReviewComment comment = CreateAIReviewComment(ruleIds.ToList());
+            AIReviewComment comment = CreateAIReviewComment(guidelineIds.ToList());
             var jobInfo = CreateTestJobInfo();
             var pollResponse = new AIReviewJobPolledResponseModel
             {
@@ -205,7 +205,7 @@ namespace APIViewUnitTests
             if (shouldIncludeGuidelines)
             {
                 Assert.Contains("**Guidelines**", commentText);
-                foreach (var ruleId in ruleIds)
+                foreach (var ruleId in guidelineIds)
                 {
                     Assert.Contains($"https://azure.github.io/azure-sdk/{ruleId}", commentText);
                 }
@@ -271,7 +271,7 @@ namespace APIViewUnitTests
                         LineNo = 1,
                         Comment = "This is a test comment",
                         Source = "analysis",
-                        RuleIds = ["test-rule-1"],
+                        GuidelineIds = ["test-rule-1"],
                         Suggestion = null,
                         Code = "public class TestClass"
                     }
@@ -305,19 +305,19 @@ namespace APIViewUnitTests
             _mockLogger.Verify(x => x.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Error while processing Copilot job")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Error processing Copilot job")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception, string>>()), Times.AtLeastOnce);
         }
 
-        private AIReviewComment CreateAIReviewComment(List<string> ruleIds)
+        private AIReviewComment CreateAIReviewComment(List<string> guidelineIds)
         {
             return new AIReviewComment
             {
                 LineNo = 1,
                 Comment = "Test comment",
                 Source = "analysis",
-                RuleIds = ruleIds,
+                GuidelineIds = guidelineIds,
                 Suggestion = "Test suggestion",
                 Code = "public void Method()"
             };
@@ -330,7 +330,7 @@ namespace APIViewUnitTests
                 LineNo = lineNo,
                 Comment = "Consider improving this method",
                 Source = "analysis",
-                RuleIds = new List<string> { "design-rule-1", "naming-rule-2" },
+                GuidelineIds = new List<string> { "design-rule-1", "naming-rule-2" },
                 Suggestion = "Test suggestion",
                 Code = "public class TestClass"
             };
@@ -343,7 +343,7 @@ namespace APIViewUnitTests
                 LineNo = lineNo,
                 Comment = "Overall summary of the review",
                 Source = "summary",
-                RuleIds = new List<string>(),
+                GuidelineIds = new List<string>(),
                 Suggestion = null,
                 Code = "// Summary comment"
             };

@@ -321,6 +321,20 @@ namespace APIViewWeb.Managers
             return apiRevision;
         }
 
+
+        public async Task<string> GetOutlineAPIRevisionsAsync(string activeApiRevisionId)
+        {
+            APIRevisionListItemModel activeApiRevision = await GetAPIRevisionAsync(activeApiRevisionId);
+            RenderedCodeFile activeCodeFile = await _codeFileRepository.GetCodeFileAsync(activeApiRevision, false);
+            return activeCodeFile.CodeFile.GetApiOutlineText();
+        }
+
+        public async Task<string> GetApiRevisionText(APIRevisionListItemModel activeApiRevision)
+        {
+            RenderedCodeFile activeRevisionCodeFile = await _codeFileRepository.GetCodeFileAsync(activeApiRevision);
+            return activeRevisionCodeFile.CodeFile.GetApiText();
+        }
+
         /// <summary>
         /// Add API Revision to Review
         /// </summary>
@@ -544,7 +558,7 @@ namespace APIViewWeb.Managers
             await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
             await _notificationManager.NotifySubscribersOnNewRevisionAsync(review, apiRevision, user);
 
-            if (!String.IsNullOrEmpty(review.Language) && review.Language == "Swagger")
+            if (!String.IsNullOrEmpty(review.Language) && review.Language == ApiViewConstants.SwaggerLanguage)
             {
                 if (awaitComputeDiff)
                 {
@@ -708,7 +722,7 @@ namespace APIViewWeb.Managers
                         await _reviewsRepository.UpsertReviewAsync(review);
                         await _apiRevisionsRepository.UpsertAPIRevisionAsync(apiRevision);
 
-                        if (!String.IsNullOrEmpty(review.Language) && review.Language == "Swagger")
+                        if (!String.IsNullOrEmpty(review.Language) && review.Language == ApiViewConstants.SwaggerLanguage)
                         {
                             // Trigger diff calculation using updated code file from sandboxing pipeline
                             await GetLineNumbersOfHeadingsOfSectionsWithDiff(review.Id, apiRevision);

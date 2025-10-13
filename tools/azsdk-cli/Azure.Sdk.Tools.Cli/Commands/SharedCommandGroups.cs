@@ -1,5 +1,3 @@
-using Azure.Sdk.Tools.Cli.Contract;
-
 namespace Azure.Sdk.Tools.Cli.Commands
 {
     public static class SharedCommandGroups
@@ -41,12 +39,30 @@ namespace Azure.Sdk.Tools.Cli.Commands
             Options: []
         );
 
-        #if DEBUG
+        public static readonly CommandGroup SourceCode = new(
+            Verb: "source-code",
+            Description: "Source code generation and build commands",
+            Options: []
+        );
+
+        public static readonly CommandGroup TypeSpec = new(
+            Verb: "tsp",
+            Description: "Tools for setting up or working with TypeSpec projects",
+            Options: []
+        );
+
+#if DEBUG
         public static readonly CommandGroup Example = new(
             Verb: "example",
             Description: "Example tool demonstrating framework features",
             Options: []
         );
-        #endif
+
+        public static readonly CommandGroup Demo = new(
+            Verb: "demo",
+            Description: "Demo commands exercising services and helpers",
+            Options: []
+        );
+#endif
     }
 }

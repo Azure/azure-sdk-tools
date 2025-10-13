@@ -1,17 +1,19 @@
 using System.Text.Json.Serialization;
+using Azure.Sdk.Tools.Cli.Helpers;
 
 namespace Azure.Sdk.Tools.Cli.Models;
 
 /// <summary>
 /// Base class for CLI check responses with exit code and output.
 /// </summary>
-public class CLICheckResponse: Response
+public class CLICheckResponse : CommandResponse
 {
+    // Map ExitCode to CliExitCode for JSON serialization
     [JsonPropertyName("exit_code")]
-    public int ExitCode { get; set;}
-    
+    public int CliExitCode => ExitCode;
+
     [JsonPropertyName("check_status_details")]
-    public string CheckStatusDetails { get; set;}
+    public string CheckStatusDetails { get; set; }
 
     public CLICheckResponse() { }
 
@@ -23,6 +25,12 @@ public class CLICheckResponse: Response
         {
             ResponseError = error;
         }
+    }
+
+    public CLICheckResponse(ProcessResult processResult)
+    {
+        ExitCode = processResult.ExitCode;
+        CheckStatusDetails = processResult.Output;
     }
 
     public override string ToString()
@@ -37,7 +45,7 @@ public class CLICheckResponse: Response
 public class CookbookCLICheckResponse : CLICheckResponse
 {
     [JsonPropertyName("cookbook_reference")]
-    public string CookbookReference { get; set;}
+    public string CookbookReference { get; set; }
 
     public CookbookCLICheckResponse(int exitCode, string checkStatusDetails, string cookbookReference) : base(exitCode, checkStatusDetails)
     {

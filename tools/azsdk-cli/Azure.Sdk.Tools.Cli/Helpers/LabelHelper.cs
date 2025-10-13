@@ -12,7 +12,8 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         {
             Exists,
             DoesNotExist,
-            NotAServiceLabel
+            NotAServiceLabel,
+            InReview
         }
 
         public static ServiceLabelStatus CheckServiceLabel(string csvContent, string serviceName)
@@ -57,6 +58,46 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             return ServiceLabelStatus.DoesNotExist;
         }
 
+        public static bool CheckServiceLabelInReview(IReadOnlyList<Octokit.PullRequest?> pullRequests, string serviceLabel)
+        {
+            if (pullRequests == null || pullRequests.Count == 0 || string.IsNullOrWhiteSpace(serviceLabel))
+            {
+                return false;
+            }
+
+            foreach (var pr in pullRequests)
+            {
+                if (pr == null)
+                {
+                    continue;
+                }
+
+                var headLabel = pr.Head?.Label;
+                if (string.IsNullOrEmpty(headLabel))
+                {
+                    continue;
+                }
+
+                if (!headLabel.Contains(serviceLabel, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                var labels = pr.Labels;
+                if (labels == null)
+                {
+                    continue;
+                }
+
+                if (labels.Any(l => string.Equals(l?.Name, "Created by copilot", StringComparison.OrdinalIgnoreCase)))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         public static string CreateServiceLabel(string csvContent, string serviceLabel)
         {
             // Filter out empty or whitespace-only lines
@@ -97,12 +138,5 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                     .ToLowerInvariant();
             return normalizedLabel;
         }
-    }
-
-    public class LabelData
-    {
-        public string Name { get; set; }
-        public string Description { get; set; }
-        public string Color { get; set; }
     }
 }

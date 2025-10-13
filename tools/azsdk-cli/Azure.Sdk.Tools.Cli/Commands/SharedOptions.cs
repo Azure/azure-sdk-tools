@@ -1,3 +1,4 @@
+using System;
 using System.CommandLine;
 using System.CommandLine.Parsing;
 using System.IO.Enumeration;
@@ -17,8 +18,8 @@ namespace Azure.Sdk.Tools.Cli.Commands
         public static readonly List<Type> ToolsList = [
             typeof(PackageCheckTool),
             typeof(CleanupTool),
+            typeof(CodeownersTools),
             typeof(GitHubLabelsTool),
-            typeof(HostServerTool),
             typeof(LogAnalysisTool),
             typeof(PipelineTool),
             typeof(PipelineAnalysisTool),
@@ -27,20 +28,25 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(ReadMeGeneratorTool),
             typeof(ReleasePlanTool),
             typeof(ReleaseReadinessTool),
+            typeof(SdkBuildTool),
+            typeof(SdkGenerationTool),
             typeof(SdkReleaseTool),
             typeof(SpecCommonTools),
             typeof(PullRequestTools),
             typeof(SpecWorkflowTool),
             typeof(SpecValidationTools),
             typeof(TestAnalysisTool),
-            typeof(TypeSpecTool),
+            typeof(TypeSpecConvertTool),
+            typeof(TypeSpecInitTool),
+            typeof(TspClientUpdateTool),
+            typeof(TypeSpecPublicRepoValidationTool),
             typeof(AiCompletionTool),
 
-            #if DEBUG
+#if DEBUG
             // only add these tools in debug mode
             typeof(ExampleTool),
             typeof(HelloWorldTool),
-            #endif
+#endif
         ];
 
         public static Option<string> ToolOption = new("--tools")
@@ -61,12 +67,12 @@ namespace Azure.Sdk.Tools.Cli.Commands
             IsRequired = false,
         };
 
-        public static Option<string> PackagePath = new(["--package-path", "-p"], "Path to the package directory to check")
+        public static Option<string> PackagePath = new(["--package-path", "-p"], () => Environment.CurrentDirectory, "Path to the package directory to check. Defaults to the current working directory")
         {
-            IsRequired = true
+            IsRequired = false
         };
 
-        public static (string, bool) GetGlobalOptionValues(string[] args)
+        public static (string outputFormat, bool debug) GetGlobalOptionValues(string[] args)
         {
             var root = new RootCommand
             {
@@ -78,9 +84,9 @@ namespace Azure.Sdk.Tools.Cli.Commands
             var parser = new Parser(root);
             var result = parser.Parse(args);
 
-            var raw = result.GetValueForOption(Format)?.ToLowerInvariant() ?? "";
+            var outputFormat = result.GetValueForOption(Format)?.ToLowerInvariant() ?? "";
             var debug = result.GetValueForOption(Debug);
-            return (raw, debug);
+            return (outputFormat, debug);
         }
 
         public static string[] GetToolsFromArgs(string[] args)

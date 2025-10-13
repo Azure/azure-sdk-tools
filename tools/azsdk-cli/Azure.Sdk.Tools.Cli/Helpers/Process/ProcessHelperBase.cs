@@ -4,7 +4,7 @@ using System.Diagnostics;
 
 namespace Azure.Sdk.Tools.Cli.Helpers;
 
-public abstract class ProcessHelperBase<T>(ILogger<T> logger, IOutputHelper outputHelper)
+public abstract class ProcessHelperBase<T>(ILogger<T> logger, IRawOutputHelper outputHelper)
 {
     /// <summary>
     /// Runs a process with the specified command and arguments in the given working directory.

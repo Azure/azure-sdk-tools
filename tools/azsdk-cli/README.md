@@ -21,6 +21,8 @@ This project is the primary integration point for all `azure-sdk` provided [MCP]
       * [Pipelines](#pipelines)
    * [Design Guidelines](#design-guidelines)
    * [Adding a New Tool](#adding-a-new-tool)
+   * [Data Collection](#data-collection)
+      * [Telemetry Configuration](#telemetry-configuration)
 
 ## Getting Started
 
@@ -86,6 +88,11 @@ To run the tests:
 ```sh
 dotnet test
 ```
+
+### Test Mode
+
+This tool can be run in test mode when the `AZSDKTOOLS_AGENT_TESTING` environment variable is set to `true`.
+When testing is enabled, release plans will be automatically generated in the test environment.
 
 ### Test with GitHub Coding Agent
 
@@ -325,10 +332,13 @@ Release - https://dev.azure.com/azure-sdk/internal/_build?definitionId=7684
     - Add attributes to enable MCP hooks, but MCP server functionality is a pluggable feature, not foundational to the architecture
     - Rapid ad-hoc testing is easier via CLI than MCP, and any tools we build can be consumed by other software/scripts outside of MCP
     - For example, the engsys/azsdk cli app is built around System.CommandLine along with some dependency injection and ASP.net glue + attributes to get it working with the MCP C# sdk
+- Tools SHOULD be implemented as both MCP tools and CLI commands wherever possible.
+  - We expect partners to primarily consume our tools via Copilot and other AI agent tools. First-class MCP support is necessary for this.
+  - CLI support is helpful to enable development and testing scenarios, and to allow customers to use our tools in places where an AI agent is not available
+  - For functionality that differs in implementation between CLI and MCP, create abstractions where possible.
 - Return structured data from all tools/commands. Define response classes that can `ToString()` or `ToJson()` for different output modes (and handle failure flows)
 - Use structured logging with appropriate levels: `LogInformation` for business events, `LogDebug` for diagnostics.
-- Write debug logging to stderr and/or a file in MCP mode to avoid the misleading "FAILURE TO PARSE MESSAGE" type errors in the MCP client logs
-- Support both stdio and http mode for MCP to enable easy debugging with tools like mcp inspector
+- Tools SHOULD NOT log to standard output directly using `Console` APIs. Instead, use available abstractions such as response classes and the logger. This helps ensure that the output is directed to the right place regardless of whether the tool is being run as an MCP tool or through the CLI directly.
 - Where possible, avoid dependencies/pre-requisites requiring manual setup, prefer being able to set them up within the app (e.g. az login, gh login, etc.)
 - Reusable instructions should be placed under [azsdk instructions](https://github.com/Azure/azure-sdk-tools/tree/main/eng/common/instructions/azsdk-tools) where they will be synced to all azure sdk repositories.
 
@@ -343,3 +353,7 @@ Help me create a new tool using #new-tool.md as a reference
 ```
 
 Or manually, see [docs/new-tool.md](./docs/new-tool.md) for more details.
+
+## Data Collection
+
+The software may collect information about you and your use of the software and send it to Microsoft. Microsoft may use this information to provide services and improve our products and services. You may turn off the telemetry as described in the repository. There are also some features in the software that may enable you and Microsoft to collect data from users of your applications. If you use these features, you must comply with applicable law, including providing appropriate notices to users of your applications together with a copy of Microsoft's [privacy statement](https://www.microsoft.com/privacy/privacystatement) and [data privacy statement](https://www.microsoft.com/en-us/privacy/data-privacy-notice). You can learn more about data collection and use in the help documentation and our privacy statement. Your use of the software operates as your consent to these practices.

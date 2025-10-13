@@ -372,7 +372,13 @@ class ReviewLine(ReviewLineImpl):
             has_suffix_space=has_suffix_space,
         )
         type_full_name = type_name[1:] if type_name.startswith("~") else type_name
-        token.value = type_full_name.split(".")[-1]
+        # Use short name unless last segment is ALL-CAPS (enum member should keep full name)
+        parts = type_full_name.split(".")
+        last = parts[-1]
+        if len(parts) > 1 and not last.isupper():
+            token.value = last
+        else:
+            token.value = type_full_name
         navigate_to_id = apiview.node_index.get_id(type_full_name)
         if navigate_to_id:
             token.navigate_to_id = navigate_to_id

@@ -11,7 +11,7 @@ import { glob } from 'glob';
 import { logger } from '../utils/logger.js';
 import unixify from 'unixify';
 import { existsSync } from 'fs';
-import { formatSdk, updateSnippets } from './devToolUtils.js';
+import { formatSdk, lintFix, updateSnippets } from './devToolUtils.js';
 
 interface ProjectItem {
     packageName: string;
@@ -134,8 +134,12 @@ export async function buildPackage(
         await runCommand(`pnpm`, ['install'], runCommandOptions, false);
         logger.info(`Pnpm install successfully.`);
 
+        if(options.runMode === RunMode.Local || options.runMode === RunMode.Release){
+            await lintFix(packageDirectory);
+        }
+
         logger.info(`Start to build package '${name}'.`);
-        await runCommand('pnpm', ['build', '--filter', `${name}...`], runCommandOptions);
+        await runCommand('pnpm', ['turbo', 'build', '--filter', `${name}...`, '--token 1'], runCommandOptions);
     }
 
     const apiViewContext = await addApiViewInfo(packageDirectory, options.sdkRepoRoot, name, packageResult);

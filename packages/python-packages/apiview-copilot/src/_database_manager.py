@@ -8,7 +8,6 @@
 Module for managing the database connections and operations for APIView Copilot.
 """
 
-import os
 import time
 from enum import Enum
 from functools import lru_cache
@@ -20,6 +19,7 @@ from azure.identity import ChainedTokenCredential
 from azure.search.documents.indexes import SearchIndexerClient
 from pydantic import BaseModel
 from src._credential import get_credential
+from src._settings import SettingsManager
 
 
 class ContainerNames(Enum):
@@ -34,6 +34,11 @@ class ContainerNames(Enum):
     def values(cls) -> list[str]:
         """Return a list of container names."""
         return [name.value for name in cls]
+
+    @classmethod
+    def data_containers(cls) -> list[str]:
+        """Return a list of all data container names, omitting containers that are for internal bookkeeping."""
+        return [name.value for name in cls if name != cls.REVIEW_JOBS]
 
 
 class DatabaseManager:
@@ -157,12 +162,10 @@ class BasicContainer:
         """
         Trigger the Azure Search indexer for this container (examples, guidelines, or memories).
         """
+        settings = SettingsManager()
         indexer_name = f"{self.container_name}-indexer"
-        search_service = os.environ.get("AZURE_SEARCH_NAME")
-        if not search_service:
-            raise RuntimeError("AZURE_SEARCH_NAME not set in environment.")
-        endpoint = f"https://{search_service}.search.windows.net"
-        client = SearchIndexerClient(endpoint=endpoint, credential=get_credential())
+        search_endpoint = settings.get("SEARCH_ENDPOINT")
+        client = SearchIndexerClient(endpoint=search_endpoint, credential=get_credential())
         status = client.get_indexer_status(indexer_name)
         if status.status in ["inProgress"]:
             return
@@ -199,14 +202,7 @@ class ReviewJobsContainer(BasicContainer):
 @lru_cache()
 def get_database_manager():
     """Get a singleton instance of the DatabaseManager."""
-
-    acc_name = os.environ.get("AZURE_COSMOS_ACC_NAME")
-    db_name = os.environ.get("AZURE_COSMOS_DB_NAME")
-    endpoint = f"https://{acc_name}.documents.azure.com:443/"
-    if not acc_name or not db_name:
-        raise ValueError(
-            # pylint: disable=line-too-long
-            "Missing Azure Cosmos DB configuration. Set AZURE_COSMOS_ACC_NAME and AZURE_COSMOS_DB_NAME environment variables."
-        )
-    credential = get_credential()
-    return DatabaseManager(endpoint, db_name, credential)
+    settings = SettingsManager()
+    db_name = settings.get("COSMOS_DB_NAME")
+    endpoint = settings.get("COSMOS_ENDPOINT")
+    return DatabaseManager(endpoint, db_name, get_credential())

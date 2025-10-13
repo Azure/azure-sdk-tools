@@ -128,3 +128,11 @@ export enum CodeDiagnosticLevel {
    * override fatal level system comments before approving a review.*/
   Fatal = 4,
 }
+
+/** Metadata structure for cross-language definitions */
+export interface CrossLanguageMetadata {
+  crossLanguageDefinitions?: {
+    CrossLanguagePackageId?: string;
+    CrossLanguageDefinitionId?: Record<string, string>;
+  };
+}

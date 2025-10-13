@@ -1,10 +1,11 @@
 using Azure.AI.Agents.Persistent;
 using Azure.Core;
 using Azure.Identity;
+using Azure.Tools.GeneratorAgent.Agent;
 using Azure.Tools.GeneratorAgent.Authentication;
 using Azure.Tools.GeneratorAgent.Configuration;
+using Azure.Tools.GeneratorAgent.Tools;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Http;
 using Microsoft.Extensions.Logging;
 
 namespace Azure.Tools.GeneratorAgent.DependencyInjection
@@ -22,27 +23,21 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
             ArgumentNullException.ThrowIfNull(services);
             ArgumentNullException.ThrowIfNull(toolConfig);
 
-            // Register configuration
+            // Register configuration as singleton 
             services.AddSingleton(toolConfig);
-            services.AddSingleton(provider =>
+            
+            services.AddSingleton<AppSettings>(provider =>
             {
                 var logger = provider.GetRequiredService<ILogger<AppSettings>>();
-                return toolConfig.CreateAppSettings(logger);
+                var config = provider.GetRequiredService<ToolConfiguration>();
+                return config.CreateAppSettings(logger);
             });
 
-            // Register credential management services
-            services.AddCredentialServices();
-
-            // Register HttpClient management
-            services.AddHttpClientServices();
-
-            // Register Azure AI services
-            services.AddAzureAIServices();
-
-            // Register application services
-            services.AddApplicationServices();
-
-            return services;
+            return services
+                .AddCredentialServices()
+                .AddHttpClientServices()
+                .AddAzureAIServices()
+                .AddApplicationServices();
         }
 
         /// <summary>
@@ -74,7 +69,7 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
                 client.DefaultRequestHeaders.UserAgent.Clear();
                 client.DefaultRequestHeaders.UserAgent.ParseAdd("AzureSDK-TypeSpecGenerator/1.0");
 
-                string? githubToken = EnvironmentVariables.GitHubToken;
+                var githubToken = EnvironmentVariables.GitHubToken;
                 
                 if (string.IsNullOrEmpty(githubToken))
                 {
@@ -113,55 +108,23 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
         /// </summary>
         private static IServiceCollection AddApplicationServices(this IServiceCollection services)
         {
-            // All core services are stateless and can be singletons for better performance
-            services.AddSingleton<ErrorFixerAgent>();      // Thread-safe, uses threadId for isolation
-            services.AddSingleton<ProcessExecutor>();      // Stateless - just executes commands
-            services.AddSingleton<BuildErrorAnalyzer>();   // Stateless - just analyzes errors
+            services.AddSingleton<ProcessExecutionService>();
+            services.AddSingleton<FormatPromptService>();
 
-            // Factory services create ValidationContext-dependent instances, but factories themselves are stateless
-            services.AddSingleton<Func<ValidationContext, ISdkGenerationService>>(provider =>
-            {
-                return validationContext => SdkGenerationServiceFactory.CreateSdkGenerationService(
-                    validationContext,
-                    provider.GetRequiredService<AppSettings>(),
-                    provider.GetRequiredService<ILoggerFactory>(),
-                    provider.GetRequiredService<ProcessExecutor>());
-            });
+            services.AddScoped<ToolExecutor>();
+            services.AddScoped<ConversationManager>();
+            services.AddScoped<ToolBasedAgent>();
+            services.AddScoped<ErrorAnalysisService>();
 
-            services.AddSingleton<Func<ValidationContext, SdkBuildService>>(provider =>
-            {
-                return validationContext => new SdkBuildService(
-                    provider.GetRequiredService<ILogger<SdkBuildService>>(),
-                    provider.GetRequiredService<ProcessExecutor>(),
-                    validationContext.ValidatedSdkDir);
-            });
+            services.AddSingleton<TypeSpecFileVersionManager>();
+            services.AddSingleton<TypeSpecPatchApplicator>();
 
-            // Register factory method for TypeSpecFileService that requires ValidationContext
-            services.AddSingleton<Func<ValidationContext, TypeSpecFileService>>(provider =>
-            {
-                return validationContext => new TypeSpecFileService(
-                    provider.GetRequiredService<AppSettings>(),
-                    provider.GetRequiredService<ILogger<TypeSpecFileService>>(),
-                    provider.GetRequiredService<ILoggerFactory>(),
-                    validationContext,
-                    provider.GetRequiredService<Func<ValidationContext, GitHubFileService>>());
-            });
+            services.AddScoped<LocalLibraryGenerationService>();
+            services.AddScoped<LibraryBuildService>();
 
-            // Register factory method for GitHubFilesService that requires ValidationContext
-            services.AddSingleton<Func<ValidationContext, GitHubFileService>>(provider =>
-            {
-                return validationContext => 
-                {
-                    var httpClientFactory = provider.GetRequiredService<IHttpClientFactory>();
-                    var httpClient = httpClientFactory.CreateClient(nameof(GitHubFileService));
-                    
-                    return new GitHubFileService(
-                        provider.GetRequiredService<AppSettings>(),
-                        provider.GetRequiredService<ILogger<GitHubFileService>>(),
-                        validationContext,
-                        httpClient);
-                };
-            });
+            services.AddScoped<TypeSpecFileService>();
+            services.AddScoped<GitHubFileService>();
+            services.AddScoped<ITypeSpecToolHandler, TypeSpecToolHandler>();
 
             return services;
         }
@@ -171,7 +134,7 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
         /// </summary>
         private static RuntimeEnvironment DetermineRuntimeEnvironment()
         {
-            bool isGitHubActions = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable(EnvironmentVariables.GitHubActions)) ||
+            var isGitHubActions = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable(EnvironmentVariables.GitHubActions)) ||
                                  !string.IsNullOrEmpty(Environment.GetEnvironmentVariable(EnvironmentVariables.GitHubWorkflow));
 
             if (isGitHubActions)
@@ -187,10 +150,10 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
         /// </summary>
         private static TokenCredentialOptions? CreateCredentialOptions()
         {
-            string? tenantId = Environment.GetEnvironmentVariable(EnvironmentVariables.AzureTenantId);
+            var tenantId = Environment.GetEnvironmentVariable(EnvironmentVariables.AzureTenantId);
             Uri? authorityHost = null;
 
-            string? authority = Environment.GetEnvironmentVariable(EnvironmentVariables.AzureAuthorityHost);
+            var authority = Environment.GetEnvironmentVariable(EnvironmentVariables.AzureAuthorityHost);
             if (!string.IsNullOrEmpty(authority) && Uri.TryCreate(authority, UriKind.Absolute, out Uri? parsedAuthority))
             {
                 authorityHost = parsedAuthority;
@@ -201,7 +164,7 @@ namespace Azure.Tools.GeneratorAgent.DependencyInjection
                 return null;
             }
 
-            TokenCredentialOptions options = new TokenCredentialOptions();
+            var options = new TokenCredentialOptions();
 
             if (authorityHost != null)
             {

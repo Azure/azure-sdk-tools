@@ -20,6 +20,9 @@ parameters:
   - name: ShouldPublishSymbols
     type: boolean
     default: true
+  - name: VerifyChangelog
+    type: boolean
+    default: false
 
 jobs:
   - job: PrePackagePublish
@@ -48,12 +51,19 @@ jobs:
       - checkout: azure-sdk-build-tools
         path: _azure-sdk-build-tools
 
+      - checkout: self
+
       - download: none # Disable the automatic downloading so that we can download ourselves to the location we want.
       - task: DownloadPipelineArtifact@2
         displayName: Download Packages
         inputs:
           artifact: ${{ parameters.ArtifactName }}
           path: $(Artifacts)
+
+      - ${{ if eq(parameters.VerifyChangelog, true) }}:
+        - pwsh: |
+            $(Build.SourcesDirectory)\azure-sdk-tools\eng\scripts\Verify-Nuget-Artifact-Changelogs.ps1 -ArtifactsPath "$(Artifacts)" -ForRelease $true
+          displayName: Verify Changelogs for artifacts
 
       - ${{ if eq(parameters.ShouldSign, true) }}:
         - template: pipelines/steps/net-signing.yml@azure-sdk-build-tools

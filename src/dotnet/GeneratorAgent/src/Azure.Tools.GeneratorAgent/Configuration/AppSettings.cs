@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Configuration;
-using Azure.Tools.GeneratorAgent.Security;
 using Microsoft.Extensions.Logging;
 
 namespace Azure.Tools.GeneratorAgent.Configuration
@@ -22,7 +21,10 @@ namespace Azure.Tools.GeneratorAgent.Configuration
         public string ProjectEndpoint => GetRequiredSetting("AzureSettings:ProjectEndpoint");
         public string Model => Configuration.GetSection("AzureSettings:Model").Value ?? "gpt-4o";
         public string AgentName => Configuration.GetSection("AzureSettings:AgentName").Value ?? "AZC Fixer";
+        public int MaxIterations => Configuration.GetSection("AzureSettings:MaxIterations").Get<int>();
         public string AgentInstructions => Configuration.GetSection("AzureSettings:AgentInstructions").Value ?? "";
+        public string FixPromptTemplate => Configuration.GetSection("AzureSettings:FixPromptTemplate").Value ?? "";
+        public string ErrorAnalysisPromptTemplate => Configuration.GetSection("AzureSettings:ErrorAnalysisPromptTemplate").Value ?? "";
 
         // Timeout and polling configurations
         public TimeSpan IndexingMaxWaitTime => TimeSpan.FromSeconds(
@@ -44,7 +46,19 @@ namespace Azure.Tools.GeneratorAgent.Configuration
         public TimeSpan VectorStoreReadyWaitTime => TimeSpan.FromMilliseconds(
             int.Parse(Configuration.GetSection("AzureSettings:VectorStoreReadyWaitTimeMs").Value ?? "5000"));
         
+
+        // Agent run settings
+        public TimeSpan AgentRunMaxWaitTime =>
+            TimeSpan.FromSeconds(int.Parse(Configuration.GetSection("AzureSettings:AgentRunMaxWaitTimeSeconds").Value ?? "600"));
+        public TimeSpan AgentRunPollingInterval =>
+            TimeSpan.FromSeconds(int.Parse(Configuration.GetSection("AzureSettings:AgentRunPollingIntervalSeconds").Value ?? "5"));
+        
+        // Fix processing settings
+        public int DelayBetweenFixesMs => 
+            int.Parse(Configuration.GetSection("AzureSettings:DelayBetweenFixesMs").Value ?? "500");
+        
         public string TypespecEmitterPackage => "@typespec/http-client-csharp";
+        public string TypespecCompiler => "@typespec/compiler";
         public string TypeSpecDirectoryName => "@typespec";
         public string HttpClientCSharpDirectoryName => "http-client-csharp";
 

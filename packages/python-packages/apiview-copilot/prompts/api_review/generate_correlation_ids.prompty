@@ -1,0 +1,66 @@
+---
+name: Generate Generic Comment Correlation IDs
+description: A prompt that generates correlation IDs for similar generic API review comments.
+authors:
+  - tjprescott
+version: 1.0.0
+model:
+  api: chat
+  configuration:
+    type: azure_openai
+    azure_endpoint: ${env:OPENAI_ENDPOINT}
+    azure_deployment: o3-mini
+    api_version: 2025-03-01-preview
+  parameters:
+    frequency_penalty: 0
+    presence_penalty: 0
+    max_completion_tokens: 80000
+    reasoning_effort: "high"
+    response_format: ${file:correlation_ids_schema.json}
+sample:
+  language: Python
+  content: |
+    {
+        2: "Star",
+        4: "Red",
+        6: "Dog",
+        8: "Cat",
+        10: "Planet",
+        12: "Green",
+        14: "Penguin",
+        16: "Octopus",
+        18: "Moon",
+        20: "Black",
+        21: "BOOP",
+        22: "BOOP",
+    }
+---
+system:
+  You are a helpful AI that reviews generic {{language}} design comments from another AI. Is to determine which comments, if any, are similar enough to be grouped together with a correlation ID.
+  
+  Each item starts with an index followed by a colon and a space, then the content of the comment. The comments may be multi-line, but each new comment will always start with an index followed by a colon and a space.
+
+  Example:
+  1: "This is a comment."
+
+  # OUTPUT REQUIREMENTS
+  Output a list of tuples for which indices are similar and the theme of the comment. All indices should be included, even if they are in a tuple alone.
+  Example:
+    "results": [
+      {
+        "result": (1, 2),
+        "theme": "Descriptive Method Names"
+      }, {
+        "result": (3,),
+        "theme": "Excessive Parameters"
+      }, {
+        "result": (4, 5, 6),
+        "theme": "Logical Class Hierarchy"
+      }
+    ]
+
+user:
+  Please group the following {{language}} generic comments:
+  {{content}}
+
+  Ensure each entry is included in the output, even if it is alone.

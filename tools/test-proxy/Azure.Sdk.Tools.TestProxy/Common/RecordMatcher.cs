@@ -1,13 +1,14 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using Azure.Core;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
 using System.Text;
 using System.Web;
+using Azure.Core;
 
 namespace Azure.Sdk.Tools.TestProxy.Common
 {
@@ -25,17 +26,24 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             "Content-Type"
         };
 
-        private bool _compareBodies;
-        private bool _ignoreQueryOrdering;
+        /// <summary>
+        /// When true, message bodies are compared during matching. In addition, when true incoming request bodies will be sanitized.
+        /// </summary>
+        public bool ShouldCompareBodies { get; private set; }
+
+        /// <summary>
+        /// When true, query parameter ordering is ignored during URI normalization.
+        /// </summary>
+        public bool ShouldIgnoreQueryOrdering { get; private set; }
 
         public RecordMatcher(bool compareBodies = true, bool ignoreQueryOrdering = false)
         {
-            _compareBodies = compareBodies;
-            _ignoreQueryOrdering = ignoreQueryOrdering;
+            ShouldCompareBodies = compareBodies;
+            ShouldIgnoreQueryOrdering = ignoreQueryOrdering;
         }
 
         /// <summary>
-        /// Headers that will be entirely ignored during matching. 
+        /// Headers that will be entirely ignored during matching.
         /// </summary>
         public HashSet<string> ExcludeHeaders = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -45,7 +53,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
 
         /// <summary>
-        /// Headers whose CONTENT will be ignored during matching, but whose PRESENCE will still be checked for on both request and record sides. 
+        /// Headers whose CONTENT will be ignored during matching, but whose PRESENCE will still be checked for on both request and record sides.
         /// </summary>
         public HashSet<string> IgnoredHeaders = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -113,9 +121,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 {
                     score += CompareHeaderDictionaries(request.Request.Headers, entry.Request.Headers, IgnoredHeaders, ExcludeHeaders);
 
-                    request.Request.TryGetContentType(out var contentType);
-
-                    score += CompareBodies(request.Request.Body, entry.Request.Body, descriptionBuilder: null, contentType: contentType);
+                    request.Request.TryGetContentType(out var requestContentType);
+                    entry.Request.TryGetContentType(out var recordContentType);
+                    ContentTypeUtilities.TryGetTextEncoding(requestContentType, out var encoding);
+                    score += CompareBodies(request.Request.Body, entry.Request.Body, requestContentType, recordContentType, encoding, descriptionBuilder: null);
                 }
 
                 if (score == 0)
@@ -133,9 +142,9 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             throw new TestRecordingMismatchException(GenerateException(request, bestScoreEntry, entries));
         }
 
-        public virtual int CompareBodies(byte[] requestBody, byte[] recordBody, string contentType, StringBuilder descriptionBuilder = null)
+        public virtual int CompareBodies(byte[] requestBody, byte[] recordBody, string requestContentType, string recordContentType, Encoding encoding, StringBuilder descriptionBuilder = null)
         {
-            if (!_compareBodies)
+            if (!ShouldCompareBodies)
             {
                 return 0;
             }
@@ -157,11 +166,33 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                 return 1;
             }
 
+            if (ContentTypeUtilities.IsMultiPart(requestContentType, out var requestBoundary) &&
+                ContentTypeUtilities.IsMultiPart(recordContentType, out var recordBoundary) &&
+                !requestBoundary.AsSpan().SequenceEqual(recordBoundary.AsSpan()))
+            {
+                encoding ??= Encoding.UTF8;
+
+                ReadOnlySequence<byte> requestMinusBoundary = MultipartUtilities.RemoveBoundaries(requestBody, encoding.GetBytes(requestBoundary), encoding);
+                ReadOnlySequence<byte> recordMinusBoundary = MultipartUtilities.RemoveBoundaries(recordBody, encoding.GetBytes(recordBoundary), encoding);
+
+                if (!requestMinusBoundary.SequenceEqual(recordMinusBoundary, out int index, out int length))
+                {
+                    descriptionBuilder?.AppendLine("Multipart bodies differ after removing boundaries.");
+                    if (length > 0)
+                    {
+                        descriptionBuilder?.AppendLine($"First difference inside the snippet from {index} to {length}.");
+                        descriptionBuilder?.AppendLine($"Request snippet: \"{requestMinusBoundary.SliceToString(index, Math.Min(length, requestMinusBoundary.Length - index), encoding)}\"");
+                        descriptionBuilder?.AppendLine($"Record snippet:  \"{recordMinusBoundary.SliceToString(index, Math.Min(length, recordMinusBoundary.Length - index), encoding)}\"");
+                    }
+                    return 1;
+                }
+                return 0;
+            }
 
             if (!requestBody.SequenceEqual(recordBody))
             {
                 // we just failed sequence equality, before erroring, lets check if we're a json body and check for property equality
-                if (!string.IsNullOrWhiteSpace(contentType) && contentType.Contains("json"))
+                if (!string.IsNullOrWhiteSpace(requestContentType) && requestContentType.Contains("json"))
                 {
                     var jsonDifferences = JsonComparer.CompareJson(requestBody, recordBody);
 
@@ -179,8 +210,9 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
                         return 1;
                     }
-                } 
-                else {
+                }
+                else
+                {
                     if (descriptionBuilder != null)
                     {
                         var minLength = Math.Min(requestBody.Length, recordBody.Length);
@@ -227,7 +259,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
             req.Query = "";
             NameValueCollection queryParams = HttpUtility.ParseQueryString(uri.Query);
 
-            if (_ignoreQueryOrdering)
+            if (ShouldIgnoreQueryOrdering)
             {
                 AddQueriesToUri(req, queryParams.AllKeys.OrderBy(x => x), queryParams);
             }
@@ -268,8 +300,10 @@ namespace Azure.Sdk.Tools.TestProxy.Common
 
             builder.AppendLine("Body differences:");
 
-            request.Request.TryGetContentType(out var contentType);
-            CompareBodies(request.Request.Body, bestScoreEntry.Request.Body, contentType, descriptionBuilder: builder);
+            request.Request.TryGetContentType(out var requestContentType);
+            bestScoreEntry.Request.TryGetContentType(out var recordContentType);
+            ContentTypeUtilities.TryGetTextEncoding(requestContentType, out var encoding);
+            CompareBodies(request.Request.Body, bestScoreEntry.Request.Body, requestContentType, recordContentType, encoding, descriptionBuilder: builder);
 
             if (entries != null && entries.Count >= 1)
             {
@@ -326,6 +360,28 @@ namespace Azure.Sdk.Tools.TestProxy.Common
                     {
                         requestHeaderValues = RenormalizeContentHeaders(requestHeaderValues);
                         entryHeaderValues = RenormalizeContentHeaders(entryHeaderValues);
+                    }
+
+                    if (headerName.Equals("Content-Type", StringComparison.Ordinal))
+                    {
+                        if (requestHeaderValues.Length == 1 && entryHeaderValues.Length == 1)
+                        {
+                            var requestContentType = requestHeaderValues[0];
+                            var entryContentType = entryHeaderValues[0];
+                            if (ContentTypeUtilities.IsMultiPart(requestContentType, out var requestBoundary) &&
+                                ContentTypeUtilities.IsMultiPart(entryContentType, out var entryBoundary))
+                            {
+                                string requestContentTypeWithoutBoundary = requestContentType.Replace(requestBoundary, string.Empty);
+                                string entryContentTypeWithoutBoundary = entryContentType.Replace(entryBoundary, string.Empty);
+                                if (!requestContentTypeWithoutBoundary.Equals(entryContentTypeWithoutBoundary, StringComparison.Ordinal))
+                                {
+                                    difference++;
+                                    descriptionBuilder?.AppendLine($"    <{headerName}> values differ, request <{requestContentTypeWithoutBoundary}>, record <{entryContentTypeWithoutBoundary}>");
+                                }
+                                remaining.Remove(headerName);
+                                continue;
+                            }
+                        }
                     }
 
                     remaining.Remove(headerName);

@@ -39,6 +39,11 @@ jobs:
                 Ours: '@("specification")'
                 Merge: '@("specification/common-types")'
                 AcceptTheirsForFinalMerge: true
+              RPSaaSCanary:
+                Theirs: '@("**")'
+                Ours: '@("specification")'
+                Merge: '@("specification/common-types")'
+                AcceptTheirsForFinalMerge: true
               RPSaaSDev:
                 Theirs: '@("**")'
                 Ours: '@("specification")'
@@ -134,10 +139,6 @@ jobs:
           MicrosoftDocs/azure-dev-docs-pr:
             TargetRepos:
               azure-sdk/azure-dev-docs-pr:
-
-          Azure/azure-mcp:
-            TargetRepos:
-              Azure/azure-mcp-pr:
 
           microsoft/mcp:
             TargetRepos:

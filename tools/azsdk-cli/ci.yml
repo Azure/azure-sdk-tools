@@ -24,19 +24,20 @@ extends:
     ReleaseBinaries: true
     ToolDirectory: tools/azsdk-cli/Azure.Sdk.Tools.Cli
     TestDirectory: tools/azsdk-cli/Azure.Sdk.Tools.Cli.Tests
+    VerifyChangelog: true
     StandaloneExeMatrix:
-    - rid: osx-x64
-      framework: net8.0
-      assembly: azsdk
-    - rid: osx-arm64
-      framework: net8.0
-      assembly: azsdk
-    - rid: win-x64
-      framework: net8.0
-      assembly: azsdk
-    - rid: linux-x64
-      framework: net8.0
-      assembly: azsdk
-    - rid: linux-arm64
-      framework: net8.0
-      assembly: azsdk
+      - rid: linux-x64
+        framework: net8.0
+        assembly: azsdk
+      - rid: linux-arm64
+        framework: net8.0
+        assembly: azsdk
+      - rid: osx-x64
+        framework: net8.0
+        assembly: azsdk
+      - rid: osx-arm64
+        framework: net8.0
+        assembly: azsdk
+      - rid: win-x64
+        framework: net8.0
+        assembly: azsdk

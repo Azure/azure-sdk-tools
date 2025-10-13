@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Azure.Tools.GeneratorAgent.Configuration;
+using Azure.Tools.GeneratorAgent.Models;
 using Microsoft.Extensions.Logging;
 
 namespace Azure.Tools.GeneratorAgent
@@ -13,8 +14,6 @@ namespace Azure.Tools.GeneratorAgent
         private readonly ILogger<GitHubFileService> Logger;
         private readonly AppSettings AppSettings;
         private readonly HttpClient HttpClient;
-        private readonly string CommitId;
-        private readonly string TypespecSpecDir;
 
         // Static JSON options for better performance (reused across calls)
         private static readonly JsonSerializerOptions JsonOptions = new()
@@ -26,88 +25,85 @@ namespace Azure.Tools.GeneratorAgent
         public GitHubFileService(
             AppSettings appSettings,
             ILogger<GitHubFileService> logger,
-            ValidationContext validationContext,
             HttpClient httpClient)
         {
             ArgumentNullException.ThrowIfNull(appSettings);
             ArgumentNullException.ThrowIfNull(logger);
-            ArgumentNullException.ThrowIfNull(validationContext);
             ArgumentNullException.ThrowIfNull(httpClient);
 
             AppSettings = appSettings;
             Logger = logger;
-
-            CommitId = validationContext.ValidatedCommitId;
-            TypespecSpecDir = validationContext.ValidatedTypeSpecDir;
-
             HttpClient = httpClient;
             
-            // Log GitHub authentication status
-            bool hasAuthHeader = httpClient.DefaultRequestHeaders.Authorization != null;
-            Logger.LogInformation("GitHub API client initialized. Authentication: {AuthStatus}", 
-                hasAuthHeader ? "Configured" : "Not configured - using rate-limited access");
+            if (Logger.IsEnabled(LogLevel.Debug))
+            {
+                bool hasAuthHeader = httpClient.DefaultRequestHeaders.Authorization != null;
+                Logger.LogDebug("GitHub API client initialized. Authentication: {AuthStatus}", 
+                    hasAuthHeader ? "Configured" : "Not configured - using rate-limited access");
+            }
         }
 
-        public async Task<Dictionary<string, string>> GetTypeSpecFilesAsync(CancellationToken cancellationToken = default)
+        public async Task<Dictionary<string, string>> GetTypeSpecFilesAsync(string commitId, string typeSpecDir, CancellationToken cancellationToken = default)
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(commitId);
+            ArgumentException.ThrowIfNullOrWhiteSpace(typeSpecDir);
+            
+            // GitHub API endpoint for directory contents
+            string apiUrl = $"https://api.github.com/repos/{AppSettings.AzureSpecRepository}/contents/{typeSpecDir}?ref={commitId}";
+
+            Logger.LogDebug("Fetching TypeSpec files from GitHub API: {ApiUrl}", apiUrl);
+
+            using HttpResponseMessage response = await HttpClient.GetAsync(apiUrl, cancellationToken).ConfigureAwait(false);
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                string errorMessage = $"GitHub API request failed: {response.StatusCode} {response.ReasonPhrase} for {apiUrl}";
+                Logger.LogError(errorMessage);
+                throw new HttpRequestException(errorMessage);
+            }
+
+            string jsonContent = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+            
+            GitHubContent[]? contents;
             try
             {
-                // GitHub API endpoint for directory contents
-                string apiUrl = $"https://api.github.com/repos/{AppSettings.AzureSpecRepository}/contents/{TypespecSpecDir}?ref={CommitId}";
-
-                HttpResponseMessage response = await HttpClient.GetAsync(apiUrl, cancellationToken).ConfigureAwait(false);
-                
-                if (!response.IsSuccessStatusCode)
-                {
-                    Logger.LogCritical("GitHub API request failed: {StatusCode} {ReasonPhrase}", 
-                        response.StatusCode, response.ReasonPhrase);
-                    throw new HttpRequestException($"GitHub API request failed: {response.StatusCode} {response.ReasonPhrase}");
-                }
-
-                string jsonContent = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-                GitHubContent[]? contents = JsonSerializer.Deserialize<GitHubContent[]>(jsonContent, JsonOptions);
-
-                if (contents == null)
-                {
-                    Logger.LogCritical("Failed to deserialize GitHub API response from {ApiUrl}. " +
-                        "Response content: {JsonContent}", apiUrl, jsonContent);
-                    throw new InvalidOperationException($"Failed to deserialize GitHub API response for " +
-                        $"'{AppSettings.AzureSpecRepository}/{TypespecSpecDir}' at commit '{CommitId}'. " +
-                        $"Please verify the repository path and commit ID are correct.");
-                }
-
-                Dictionary<string, string> typeSpecFiles = new(contents.Length);
-
-                IEnumerable<GitHubContent> tspFiles = contents
-                    .Where(c => string.Equals(c.Type, "file", StringComparison.Ordinal) && 
-                               c.Name.EndsWith(".tsp", StringComparison.OrdinalIgnoreCase) &&
-                               !string.IsNullOrEmpty(c.DownloadUrl));
-
-                IEnumerable<Task<(string FileName, string Content)>> downloadTasks = tspFiles
-                    .Select(tspFile => DownloadFileContentAsync(tspFile.Name, tspFile.DownloadUrl, cancellationToken));
-
-                (string FileName, string Content)[] downloadedFiles = await Task.WhenAll(downloadTasks).ConfigureAwait(false);
-
-                foreach ((string fileName, string content) in downloadedFiles)
-                {
-                    if (!string.IsNullOrEmpty(content))
-                    {
-                        typeSpecFiles[fileName] = content;
-                        Logger.LogDebug("Downloaded file: {FileName} ({Size} characters)", fileName, content.Length);
-                    }
-                    else
-                    {
-                        Logger.LogWarning("Failed to download content for file: {FileName}", fileName);
-                    }
-                }
-
-                return typeSpecFiles;
+                contents = JsonSerializer.Deserialize<GitHubContent[]>(jsonContent, JsonOptions);
             }
-            catch (Exception ex)
+            catch (JsonException ex)
             {
-                Logger.LogCritical(ex, "Error in GitHub API TypeSpec files fetch");
-                throw;
+                string errorMessage = $"Failed to deserialize GitHub API response for '{AppSettings.AzureSpecRepository}/{typeSpecDir}' at commit '{commitId}'. Please verify the repository path and commit ID are correct.";
+                Logger.LogError(ex, errorMessage);
+                throw new InvalidOperationException(errorMessage, ex);
             }
+
+            if (contents == null)
+            {
+                string errorMessage = $"GitHub API returned null content for '{AppSettings.AzureSpecRepository}/{typeSpecDir}' at commit '{commitId}'";
+                Logger.LogError(errorMessage);
+                throw new InvalidOperationException(errorMessage);
+            }
+
+            Dictionary<string, string> typeSpecFiles = new(contents.Length);
+
+            // Get all files 
+            IEnumerable<GitHubContent> allFiles = contents
+                .Where(c => string.Equals(c.Type, "file", StringComparison.Ordinal) &&
+                        !string.IsNullOrEmpty(c.DownloadUrl));
+
+            Logger.LogDebug("Found {FileCount} files to download", allFiles.Count());
+
+            // Download files
+            foreach (GitHubContent file in allFiles)
+            {
+                var (fileName, content) = await DownloadFileContentAsync(file.Name, file.DownloadUrl, cancellationToken).ConfigureAwait(false);
+                typeSpecFiles[fileName] = content;
+                if (Logger.IsEnabled(LogLevel.Debug))
+                {
+                    Logger.LogDebug("Downloaded file: {FileName} ({Size} characters)", fileName, content.Length);
+                }
+            }
+
+            return typeSpecFiles;
         }
 
         private async Task<(string FileName, string Content)> DownloadFileContentAsync(string fileName, string? downloadUrl, CancellationToken cancellationToken)
@@ -117,7 +113,7 @@ namespace Azure.Tools.GeneratorAgent
                 throw new InvalidOperationException($"Download URL is null or empty for file {fileName}");
             }
 
-            HttpResponseMessage response = await HttpClient.GetAsync(downloadUrl, cancellationToken).ConfigureAwait(false);
+            using HttpResponseMessage response = await HttpClient.GetAsync(downloadUrl, cancellationToken).ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
             {

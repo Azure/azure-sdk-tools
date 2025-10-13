@@ -1,0 +1,111 @@
+parameters:
+- name: PythonVersion
+  type: string
+  default: '3.10'
+
+trigger:
+  branches:
+    include:
+      - release/qa-bot
+      - main
+  paths:
+    include:
+      - tools/sdk-ai-bots/azure-sdk-qa-bot-backend/
+
+pr:
+  branches:
+    include:
+      - release/qa-bot
+      - main
+  paths:
+    include:
+      - tools/sdk-ai-bots/azure-sdk-qa-bot-backend/
+extends:
+  template: /eng/pipelines/templates/stages/1es-redirect.yml
+  parameters:
+    Use1ESOfficial: false
+    stages:
+      - stage: 'evaluation'
+        variables:
+          - template: /eng/pipelines/templates/variables/globals.yml
+          - template: /eng/pipelines/templates/variables/image.yml
+        pool:
+              name: $(LINUXPOOL)
+              image: $(LINUXVMIMAGE)
+              os: linux
+        jobs:
+          - job: 'evaluation'
+            displayName: 'evaluation'
+            steps:
+              - template: /eng/pipelines/templates/steps/use-python-version.yml
+                parameters:
+                  versionSpec: '${{ parameters.PythonVersion }}'
+              - script: |
+                  python --version
+                displayName: 'check python'
+              - script: |
+                  echo "Downloading Go 1.23.0..."
+                  curl -LO https://go.dev/dl/go1.23.0.linux-amd64.tar.gz
+
+                  echo "Removing existing Go installation..."
+                  sudo rm -rf /usr/local/go
+
+                  echo "Extracting Go 1.23.0..."
+                  sudo tar -C /usr/local -xzf go1.23.0.linux-amd64.tar.gz
+
+                  echo "Setting environment variables..."
+                  echo "##vso[task.setvariable variable=GOROOT]/usr/local/go"
+                  echo "##vso[task.prependpath]/usr/local/go/bin"
+                displayName: 'install go'
+              - script: |
+                  go version
+                displayName: 'check go'
+              - task: AzureCLI@2
+                inputs:
+                  azureSubscription: 'azuresdkqabot-dev'
+                  addSpnToEnvironment: true
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  inlineScript: |
+                    echo "##vso[task.setvariable variable=AZURE_CLIENT_ID]$servicePrincipalId"
+                    echo "##vso[task.setvariable variable=AZURE_TENANT_ID]$tenantId"
+                    echo "##vso[task.setvariable variable=AZURE_SUBSCRIPTION_ID]$(az account show --query id -o tsv)"
+                    echo "$idToken" > "$(Agent.BuildDirectory)/id_token"
+                    echo "##vso[task.setvariable variable=AZURE_FEDERATED_TOKEN_FILE]$(Agent.BuildDirectory)/id_token"
+              
+              - script: |
+                  go build -o qa-bot-service
+                  chmod +x qa-bot-service
+                  ./qa-bot-service &
+                  sleep 20
+                  lsof -ti:8088
+                displayName: 'start backend AI agent service'
+                workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-backend
+                env:
+                  AZURE_CLIENT_ID: $(AZURE_CLIENT_ID)
+                  AZURE_TENANT_ID: $(AZURE_TENANT_ID)
+                  AZURE_SUBSCRIPTION_ID: $(AZURE_SUBSCRIPTION_ID)
+                  AZURE_FEDERATED_TOKEN_FILE: $(AZURE_FEDERATED_TOKEN_FILE)
+                  AZURE_APPCONFIG_ENDPOINT: $(AZURE_APPCONFIG_ENDPOINT)
+              - script: |
+                  pip install -r requirements.txt
+                displayName: 'install requirements'
+                workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
+              - script: |
+                  python run.py --evaluation_name_prefix $(Build.BuildId)
+                displayName: 'Run Evals'
+                workingDirectory: $(Build.SourcesDirectory)/tools/sdk-ai-bots/azure-sdk-qa-bot-evaluation
+                env:
+                  AZURE_AI_PROJECT_ENDPOINT: $(AZURE_AI_PROJECT_ENDPOINT)
+                  AZURE_SUBSCRIPTION_ID: $(AZURE_SUBSCRIPTION_ID)
+                  AZURE_CLIENT_ID: $(AZURE_CLIENT_ID)
+                  AZURE_TENANT_ID: $(AZURE_TENANT_ID)
+                  AZURE_FEDERATED_TOKEN_FILE: $(AZURE_FEDERATED_TOKEN_FILE)
+                  AZURE_OPENAI_ENDPOINT: $(AZURE_OPENAI_ENDPOINT)
+                  AZURE_OPENAI_API_KEY: $(AZURE_OPENAI_API_KEY)
+                  AZURE_COMPLETION_MODEL_NAME: $(AZURE_COMPLETION_MODEL_NAME)
+                  AZURE_EVALUATION_MODEL_NAME: $(AZURE_EVALUATION_MODEL_NAME)
+                  AZURE_API_VERSION: $(AZURE_API_VERSION)
+                  STORAGE_BLOB_ACCOUNT: $(STORAGE_BLOB_ACCOUNT)
+                  BOT_CONFIG_CONTAINER: $(BOT_CONFIG_CONTAINER)
+                  BOT_CONFIG_CHANNEL_BLOB: $(BOT_CONFIG_CHANNEL_BLOB)

@@ -1,0 +1,17 @@
+[
+  {
+    "packages": [
+        "Microsoft.Azure.WebJobs.Extensions.EventHubs",
+        "Microsoft.Azure.WebJobs.Extensions.Tables",
+        "Microsoft.Azure.WebJobs.Extensions.ServiceBus",
+        "Microsoft.Azure.WebJobs.Extensions.EventGrid",
+        "Azure.ResourceManager",
+        "Azure.Communication.CallingServer",
+        "Azure.Communication.NetworkTraversal",
+        "Azure.Monitor.OpenTelemetry.LiveMetrics",
+        "Azure.Analytics.Purview.Catalog",
+        "Azure.Analytics.Purview.Share",
+        "Azure.Media.VideoAnalyzer.Edge"
+    ]
+  }
+]

@@ -14,6 +14,7 @@ namespace APIViewWeb.Repositories
         public Task<LegacyReviewModel> GetLegacyReviewAsync(string reviewId);
         public Task<ReviewListItemModel> GetReviewAsync(string language, string packageName, bool? isClosed = false);
         public Task<IEnumerable<ReviewListItemModel>> GetReviewsAsync(string language, bool? isClosed = false);
+        public Task<IEnumerable<ReviewListItemModel>> GetPendingNamespaceApprovalReviewsAsync(IEnumerable<string> languages);
         public Task<(IEnumerable<ReviewListItemModel> Reviews, int TotalCount)> GetReviewsAsync(
             IEnumerable<string> search, IEnumerable<string> languages, bool? isClosed, bool? isApproved, int offset, int limit, string orderBy);
     }

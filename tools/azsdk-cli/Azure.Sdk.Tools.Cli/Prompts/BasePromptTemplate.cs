@@ -16,6 +16,13 @@ public abstract class BasePromptTemplate
     public abstract string Description { get; }
 
     /// <summary>
+    /// Builds the complete prompt using the configured parameters.
+    /// This method must be implemented by derived classes to provide their specific prompt building logic.
+    /// </summary>
+    /// <returns>Complete structured prompt</returns>
+    public abstract string BuildPrompt();
+
+    /// <summary>
     /// Builds a complete prompt with safety guidelines and structured sections.
     /// </summary>
     protected string BuildStructuredPrompt(string taskInstructions, string? constraints = null, string? examples = null, string? outputRequirements = null)

@@ -182,17 +182,7 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
                 return installCheckResult;
             }
 
-            // Check if Python is available
-            var pythonCheckResult = await _processHelper.Run(new("python", ["--version"], timeout: TimeSpan.FromSeconds(10)), cancellationToken);
-            if (pythonCheckResult.ExitCode != 0)
-            {
-                _logger.LogError("Python is not installed or not available in PATH");
-                return new CLICheckResponse(1, "", "Python is not installed or not available in PATH. Please install Python to use linting functionality.");
-            }
-
-            _logger.LogInformation("Python is available: {PythonVersion}", pythonCheckResult.Output.Trim());
-
-            var timeout = TimeSpan.FromMinutes(10); // Linting tools can take longer than other operations
+            var timeout = TimeSpan.FromMinutes(10); 
 
             // Run multiple linting tools
             var lintingTools = new[]
@@ -256,22 +246,12 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
                 return installCheckResult;
             }
 
-            // Check if Python is available
-            var pythonCheckResult = await _processHelper.Run(new("python", ["--version"], timeout: TimeSpan.FromSeconds(10)), cancellationToken);
-            if (pythonCheckResult.ExitCode != 0)
-            {
-                _logger.LogError("Python is not installed or not available in PATH");
-                return new CLICheckResponse(1, "", "Python is not installed or not available in PATH. Please install Python to use linting functionality.");
-            }
-
-            _logger.LogInformation("Python is available: {PythonVersion}", pythonCheckResult.Output.Trim());
-
             // Run azpysdk black
             var command = "azpysdk";
             var args = new[] { "black", packagePath };
 
             _logger.LogInformation("Executing command: {Command} {Arguments}", command, string.Join(" ", args));
-            var timeout = TimeSpan.FromMinutes(10); // Pylint can take longer than other operations
+            var timeout = TimeSpan.FromMinutes(10);
             var result = await _processHelper.Run(new(command, args, workingDirectory: packagePath, timeout: timeout), cancellationToken);
 
             if (result.ExitCode == 0)

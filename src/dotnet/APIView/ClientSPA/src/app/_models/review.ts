@@ -7,8 +7,8 @@ export enum FirstReleaseApproval {
 }
 
 export enum PackageType {
-  Data = 'Data',
-  Management = 'Management'
+  client = 'client',
+  mgmt = 'mgmt'
 }
 
 export class Review {

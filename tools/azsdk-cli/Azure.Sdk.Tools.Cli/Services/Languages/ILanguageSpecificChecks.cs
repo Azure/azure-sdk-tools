@@ -52,4 +52,15 @@ public interface ILanguageSpecificChecks
     {
         return Task.FromResult(new CLICheckResponse(1, "", "Not implemented for this language."));
     }
+
+    /// <summary>
+    /// Validate samples for the specific package.
+    /// </summary>
+    /// <param name="packagePath">Path to the package directory</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Result of the sample validation</returns>
+    Task<CLICheckResponse> ValidateSamplesAsync(string packagePath, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(new CLICheckResponse(1, "", "Not implemented for this language."));
+    }
 }

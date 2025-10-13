@@ -26,12 +26,38 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
         _logger = logger;
     }
 
-    public async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct)
+    public async Task<CLICheckResponse> ValidateSamplesAsync(string packagePath, CancellationToken cancellationToken = default)
     {
-        // Implementation for analyzing dependencies in a JavaScript project
-        return await Task.FromResult(new CLICheckResponse());
-    }
+        try
+        {
+            _logger.LogInformation("Running 'pnpm run build:samples' in {PackagePath}", packagePath);
 
+            var result = await _processHelper.Run(new(
+                    "pnpm",
+                    ["run", "build:samples"],
+                    workingDirectory: packagePath
+                ),
+                cancellationToken
+            );
+
+            if (result.ExitCode != 0)
+            {
+                _logger.LogError("'pnpm run build:samples' failed with exit code {ExitCode}", result.ExitCode);
+                return new CLICheckResponse(result)
+                {
+                    NextSteps = ["Review the error output and attempt to resolve the issue."]
+                };
+            }
+
+            return new CLICheckResponse(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error validating samples for JavaScript project at: {PackagePath}", packagePath);
+            return new CLICheckResponse(1, "", $"Error validating samples: {ex.Message}");
+        }
+    }
+    
     public async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, CancellationToken cancellationToken = default)
     {
         try

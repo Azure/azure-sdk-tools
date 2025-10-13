@@ -79,6 +79,14 @@ public interface ILanguageChecks
     /// <param name="packagePath">Package path</param>
     /// <returns>SDK package path</returns>
     string GetSDKPackagePath(string repo, string packagePath);
+
+    /// <summary>
+    /// Validates samples for the specific package.
+    /// </summary>
+    /// <param name="packagePath">Path to the package directory</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Result of the sample validation</returns>
+    Task<CLICheckResponse> ValidateSamplesAsync(string packagePath, CancellationToken ct);
 }
 
 /// <summary>
@@ -207,6 +215,24 @@ public class LanguageChecks : ILanguageChecks
 
         return await languageSpecificCheck.FormatCodeAsync(packagePath, fix, ct);
     }
+
+    public virtual async Task<CLICheckResponse> ValidateSamplesAsync(string packagePath, CancellationToken ct)
+    {
+        var languageSpecificCheck = await _languageSpecificChecks.Resolve(packagePath);
+
+        if (languageSpecificCheck == null)
+        {
+            _logger.LogError("No language-specific check handler found for package at {PackagePath}. Supported languages may not include this package type.", packagePath);
+            return new CLICheckResponse(
+                exitCode: 1,
+                checkStatusDetails: $"No language-specific check handler found for package at {packagePath}. Supported languages may not include this package type.",
+                error: "Unsupported package type"
+            );
+        }
+
+        return await languageSpecificCheck.ValidateSamplesAsync(packagePath, ct);
+    }
+
 
     /// <summary>
     /// Common changelog validation implementation that works for most Azure SDK languages.

@@ -24,7 +24,7 @@ public class VerifySetupResponse : CommandResponse
             {
                 sb.AppendLine($"  - Requirement: {result.Requirement}");
                 sb.AppendLine($"    Version: {result.Version}");
-                sb.AppendLine($"    Instructions: {result.Instructions}");
+                sb.AppendLine($"    Instructions: {string.Join(", ", result.Instructions)}");
             }
         }
         else
@@ -39,5 +39,5 @@ public class RequirementCheckResult
 {
     public string Requirement { get; set; }
     public string Version { get; set; }
-    public string Instructions { get; set; }
+    public List<String> Instructions { get; set; }
 }

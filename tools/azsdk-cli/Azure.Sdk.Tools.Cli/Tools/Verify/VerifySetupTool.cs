@@ -52,7 +52,15 @@ public class VerifySetupTool(
     {
         try
         {
+            // TODO debug
+            logger.LogInformation($"Verifying setup for languages: {string.Join(", ", langs)}");
+            logger.LogInformation($"Using requirements file at: {PATH_TO_REQS}");
+
             List<SetupRequirements.Requirement> reqsToCheck = GetRequirements(langs);
+
+            // TODO debug
+            logger.LogInformation($"Found {reqsToCheck.Count} requirements to check.");
+
             VerifySetupResponse response = new VerifySetupResponse
             {
                 AllRequirementsSatisfied = true,
@@ -119,19 +127,26 @@ public class VerifySetupTool(
         };
     }
 
+    // for V1 prototype only
     private List<SetupRequirements.Requirement> GetRequirements(List<string> languages)
     {
-        // Returns requirements to check
         String requirementsJson = File.ReadAllText(PATH_TO_REQS);
-        var setupRequirements = JsonSerializer.Deserialize<List<SetupRequirements>>(requirementsJson);
-        List<SetupRequirements.Requirement> reqsToCheck = new List<SetupRequirements.Requirement>();
-        foreach (var lang in languages)
+        var setupRequirements = JsonSerializer.Deserialize<SetupRequirements>(requirementsJson);
+
+        if (setupRequirements == null)
         {
-            var reqs = setupRequirements?.FirstOrDefault(r => r.language.Equals(lang, StringComparison.OrdinalIgnoreCase));
-            if (reqs != null)
+            throw new Exception("Failed to parse requirements JSON.");
+        }
+
+        List<SetupRequirements.Requirement> reqsToCheck = new List<SetupRequirements.Requirement>();
+        foreach (var category in setupRequirements.categories.Keys)
+        {
+            if (category.Equals("core") || languages.Contains(category))
             {
-                // add the Requirement objects
-                reqsToCheck.AddRange(reqs.requirements);
+                setupRequirements.categories.TryGetValue(category, out var requirements);
+                if (requirements != null) {
+                    reqsToCheck.AddRange(requirements);
+                }
             }
         }
 
@@ -152,15 +167,19 @@ public class VerifySetupTool(
     // for V1 prototype only
     private class SetupRequirements
     {
-    public string language { get; set; }
-    public List<Requirement> requirements { get; set; }
+        [JsonPropertyName("categories")]
+        public Dictionary<string, List<Requirement>> categories { get; set; }
 
         public class Requirement
         {
+            [JsonPropertyName("requirement")]
             public string requirement { get; set; }
+            [JsonPropertyName("version")]
             public string version { get; set; }
+            [JsonPropertyName("check")]
             public string check { get; set; }
-            public string instructions { get; set; }
+            [JsonPropertyName("instructions")]
+            public List<string> instructions { get; set; }
         }
     }
 }

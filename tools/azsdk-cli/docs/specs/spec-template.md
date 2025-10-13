@@ -6,12 +6,15 @@
 - [Background / Problem Statement](#background--problem-statement)
 - [Goals and Exceptions/Limitations](#goals-and-exceptionslimitations)
 - [Design Proposal](#design-proposal)
-- [Alternatives Considered](#alternatives-considered)
+- [Alternatives Considered](#alternatives-considered) _(optional)_
 - [Open Questions](#open-questions)
-- [Implementation Plan](#implementation-plan) _(optional)_
-- [Testing Strategy](#testing-strategy) _(optional)_
-- [Documentation Updates](#documentation-updates) _(optional)_
-- [Metrics/Telemetry](#metricstelemetry) _(optional)_
+- [Success Criteria](#success-criteria)
+- [Agent Prompts](#agent-prompts)
+- [CLI Commands](#cli-commands)
+- [Implementation Plan](#implementation-plan)
+- [Testing Strategy](#testing-strategy)
+- [Documentation Updates](#documentation-updates)
+- [Metrics/Telemetry](#metricstelemetry)
 
 ---
 
@@ -147,7 +150,7 @@ azsdk some-command --option value
 
 ---
 
-## Alternatives Considered
+## Alternatives Considered _(optional)_
 
 _What other approaches did you evaluate? Why was this design chosen?_
 
@@ -192,7 +195,116 @@ _Unresolved items that need discussion and input from reviewers._
 
 ---
 
-## Implementation Plan _(optional)_
+## Success Criteria
+
+_Measurable criteria that define when this feature/tool is complete and working as intended._
+
+This feature/tool is complete when:
+
+- [ ] [Criterion 1: e.g., All five languages successfully execute the workflow]
+- [ ] [Criterion 2: e.g., Agent prompts produce expected behavior]
+- [ ] [Criterion 3: e.g., CLI commands work with all documented options]
+- [ ] [Criterion 4: e.g., Documentation is complete and accurate]
+
+---
+
+## Agent Prompts
+
+_Natural language prompts that users can provide to the AI agent (GitHub Copilot) to execute this tool or workflow. Include both simple and complex scenarios._
+
+### [Scenario Name 1]
+
+**Prompt:**
+
+```text
+[Example natural language prompt that a user would type]
+```
+
+**Expected Agent Activity:**
+
+1. [First action the agent should take]
+2. [Second action the agent should take]
+3. [Third action the agent should take]
+4. [Final action or report to user]
+
+### [Scenario Name 2]
+
+**Prompt:**
+
+```text
+[Another example prompt for a different use case]
+```
+
+**Expected Agent Activity:**
+
+1. [Action 1]
+2. [Action 2]
+3. [Report results]
+
+---
+
+## CLI Commands
+
+_Direct command-line interface usage showing exact commands, options, and expected outputs._
+
+### [Command Name 1]
+
+**Command:**
+
+```bash
+azsdk [command-name] --option1 value1 --option2 value2
+```
+
+**Options:**
+
+- `--option1 <value>`: Description of what this option does (required/optional)
+- `--option2 <value>`: Description of what this option does (default: some-value)
+- `--flag`: Description of this boolean flag
+
+**Expected Output:**
+
+```text
+[Example of what the command outputs when successful]
+
+✓ Action completed successfully
+✓ Files generated: 5
+✓ All checks passed
+
+Summary: [Brief summary of what was accomplished]
+```
+
+**Error Cases:**
+
+```text
+[Example of error output when something goes wrong]
+
+✗ Error: Missing required option --option1
+  
+Usage: azsdk [command-name] --option1 <value> [options]
+```
+
+### [Command Name 2]
+
+**Command:**
+
+```bash
+azsdk [another-command] --required-param value
+```
+
+**Options:**
+
+- `--required-param <value>`: [Description]
+- `--optional-param <value>`: [Description] (optional)
+
+**Expected Output:**
+
+```text
+[Expected output example]
+```
+
+---
+
+## Implementation Plan
 
 _If this is a large effort, break down the implementation into phases._
 
@@ -212,7 +324,7 @@ _If this is a large effort, break down the implementation into phases._
 
 ---
 
-## Testing Strategy _(optional)_
+## Testing Strategy
 
 _How will this design be validated?_
 
@@ -234,7 +346,7 @@ _How will this design be validated?_
 
 ---
 
-## Metrics/Telemetry _(optional)_
+## Metrics/Telemetry
 
 _What data should we collect to measure success or diagnose issues?_
 
@@ -251,7 +363,7 @@ _What data should we collect to measure success or diagnose issues?_
 
 ---
 
-## Documentation Updates _(optional)_
+## Documentation Updates
 
 _What documentation needs to be created or updated?_
 

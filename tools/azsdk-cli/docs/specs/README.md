@@ -95,20 +95,34 @@ Every spec should include the following sections (see [spec-template.md](./spec-
    - Architecture diagrams, code samples, or workflows as appropriate
    - How will this work across different SDK languages?
 
-6. **Alternatives Considered**
-   - What other approaches were evaluated?
-   - Why was this design chosen over alternatives?
-
-7. **Open Questions**
+6. **Open Questions**
    - Unresolved items that need discussion
    - Areas where input is specifically needed
 
+7. **Success Criteria**
+   - Measurable criteria that define when the feature/tool is complete
+
+8. **Agent Prompts**
+   - Natural language prompts users can provide to the AI agent (GitHub Copilot) with expected agent behavior
+
+9. **CLI Commands**
+   - Direct command-line usage examples with options and expected outputs
+
+10. **Implementation Plan**
+    - Phasing, milestones, dependencies
+
+11. **Testing Strategy**
+    - How will this be validated?
+
+12. **Documentation Updates**
+    - What docs need to change?
+
+13. **Metrics/Telemetry**
+    - What data should we collect?
+
 ### Optional Sections (as relevant)
 
-- **Implementation Plan**: Phasing, milestones, dependencies
-- **Testing Strategy**: How will this be validated?
-- **Documentation Updates**: What docs need to change?
-- **Metrics/Telemetry**: What data should we collect?
+- **Alternatives Considered**: What other approaches were evaluated? Why was this design chosen over alternatives?
 
 ## Examples
 
@@ -117,8 +131,12 @@ Example specs will be added here as they are created and approved.
 ## Tips for Writing Good Specs
 
 - **Start with Definitions**: Don't assume everyone interprets terms the same way
+- **Use Definition Links**: When using defined terms throughout your spec, link to their definitions using anchor tags (e.g., `[preview release](#preview-release)`)
 - **Be Specific**: Vague proposals lead to vague feedback
 - **Show, Don't Just Tell**: Include diagrams, code samples, or examples
+- **Include Agent Prompts**: For user-facing tools, document natural language prompts that should work in agent mode
+- **Document CLI Usage**: Provide concrete CLI command examples with all options and expected outputs
+- **Define Success Criteria**: Be explicit about what "done" looks like with measurable criteria
 - **Anticipate Questions**: Address obvious concerns preemptively in your spec
 - **Document Exceptions**: If your design doesn't work for a specific case, say so explicitly
 - **Keep It Current**: Update the spec as discussions evolve

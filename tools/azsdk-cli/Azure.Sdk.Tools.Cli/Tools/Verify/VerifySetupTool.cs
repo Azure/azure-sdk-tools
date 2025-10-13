@@ -106,20 +106,32 @@ public class VerifySetupTool(
             logOutputStream: true
         );
 
-        var result = await processHelper.Run(options, ct); 
-        var trimmed = (result.Output ?? string.Empty).Trim();
-
-        if (result.ExitCode != 0)
+        var trimmed = string.Empty;
+        try
         {
-            logger.LogError("Command {Command} failed with exit code {ExitCode}. Output: {Output}", command, result.ExitCode, trimmed);
+            var result = await processHelper.Run(options, ct);
+            trimmed = (result.Output ?? string.Empty).Trim();
+
+            if (result.ExitCode != 0)
+            {
+                logger.LogError("Command {Command} failed with exit code {ExitCode}. Output: {Output}", command, result.ExitCode, trimmed);
+                return new DefaultCommandResponse
+                {
+                    ResponseError = $"Command {command} failed with exit code {result.ExitCode}. Output: {trimmed}"
+                };
+            }
+        }
+        catch
+        {
+            logger.LogError("Command {Command} failed to execute.", command);
             return new DefaultCommandResponse
             {
-                ResponseError = $"Command {command} failed with exit code {result.ExitCode}. Output: {trimmed}"
+                ResponseError = $"Command {command} failed to execute."
             };
         }
-        
+
         logger.LogInformation("Command {Command} succeeded. Output: {Output}", command, trimmed);
-        
+
         return new DefaultCommandResponse
         {
             Message = $"Command {command} succeeded. Output: {trimmed}"

@@ -225,8 +225,7 @@ public class LanguageChecks : ILanguageChecks
                 return errorResponse;
             }
 
-            // Get the language-specific check to determine the package name
-            var languageSpecificCheck = await _languageSpecificCheckResolver.GetLanguageCheckAsync(packagePath);
+            var languageSpecificCheck = await _languageSpecificChecks.Resolve(packagePath);
             if (languageSpecificCheck == null)
             {
                 return new CLICheckResponse(1, "", $"No language-specific check handler found for package at {packagePath}. Supported languages may not include this package type.");

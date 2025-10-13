@@ -15,14 +15,19 @@ using System.Text.Json.Serialization;
 namespace Azure.Sdk.Tools.Cli.Tools.Verify;
 
 [McpServerToolType, Description("This tool verifies that the environment is set up with the required installations to run MCP release tools.")]
-public class VerifySetupTool(
-    IProcessHelper processHelper,
-    ILogger<VerifySetupTool> logger
-) : MCPTool
+public class VerifySetupTool : MCPTool
 {
+    private readonly IProcessHelper processHelper;
+    private readonly ILogger<VerifySetupTool> logger;
+
+    public VerifySetupTool(IProcessHelper processHelper, ILogger<VerifySetupTool> logger)
+    {
+        this.processHelper = processHelper;
+        this.logger = logger;
+    }
     // for V1 prototype only TODO
     private string PATH_TO_REQS = Path.Combine(AppContext.BaseDirectory, "Configuration", "RequirementsV1.json");
-    private readonly List<string> LANGUAGES = new() { "python", "java", "dotnet", "javascript", "go" };
+    private static readonly List<string> LANGUAGES = new() { "python", "java", "dotnet", "javascript", "go" };
     private const int COMMAND_TIMEOUT_IN_SECONDS = 30;
 
     public override CommandGroup[] CommandHierarchy { get; set; } = [
@@ -52,14 +57,7 @@ public class VerifySetupTool(
     {
         try
         {
-            // TODO debug
-            logger.LogInformation($"Verifying setup for languages: {string.Join(", ", langs)}");
-            logger.LogInformation($"Using requirements file at: {PATH_TO_REQS}");
-
             List<SetupRequirements.Requirement> reqsToCheck = GetRequirements(langs);
-
-            // TODO debug
-            logger.LogInformation($"Found {reqsToCheck.Count} requirements to check.");
 
             VerifySetupResponse response = new VerifySetupResponse
             {
@@ -89,7 +87,7 @@ public class VerifySetupTool(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error verifying setup: {input}", langs);
+            logger.LogError("Error verifying setup for {input}: {ex}", langs, ex);
             return new ()
             {
                 ResponseError = $"Error processing request: {ex.Message}"
@@ -164,15 +162,27 @@ public class VerifySetupTool(
         return reqsToCheck;
     }
 
-    private static List<string> ParseLanguages(string? langs)
+    private List<string> ParseLanguages(string? langs)
     {
         if (string.IsNullOrWhiteSpace(langs))
         {
             // TODO determine language from current repo if no arg given
             return new List<string> { "python" };
         }
-        // TODO validate and sanitize languages
-        return new List<string>(langs.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+
+        // validate and sanitize languages
+        List<string> parsed = new List<string>(langs.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+
+        foreach (var lang in parsed)
+        {
+            if (!LANGUAGES.Contains(lang.ToLower().Trim()))
+            {
+                logger.LogError("Unsupported language: {lang}. Supported languages are: {supportedLanguages}.", lang, string.Join(", ", LANGUAGES));
+                parsed.Remove(lang);
+            }
+        }
+
+        return parsed;
     }
 
     // for V1 prototype only

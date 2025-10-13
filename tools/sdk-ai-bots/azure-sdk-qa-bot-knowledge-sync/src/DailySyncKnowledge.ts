@@ -72,11 +72,6 @@ export async function processDailySyncKnowledge(): Promise<void> {
         fs.mkdirSync(workingDir, { recursive: true });
         fs.mkdirSync(docsDir, { recursive: true });
 
-        console.log('Loading existing blob metadata for change detection...');
-
-        // Load existing blob metadata for change detection
-        const existingBlobs = await blobService.listBlobs();
-
         console.log('Setting up documentation repositories...');
         
         // Setup documentation repositories
@@ -89,6 +84,10 @@ export async function processDailySyncKnowledge(): Promise<void> {
 
         console.log('Processing documentation sources...');
         
+        console.log('Loading existing blob metadata for change detection...');
+        // Load existing blob metadata for change detection
+        const existingBlobs = await blobService.listBlobs();
+
         let totalProcessed = 0;
         let changedDocuments = 0;
         let unchangedDocuments = 0;

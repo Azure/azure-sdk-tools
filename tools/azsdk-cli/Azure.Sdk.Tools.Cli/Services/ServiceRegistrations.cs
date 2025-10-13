@@ -31,17 +31,17 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IGitHubService, GitHubService>();
 
             // Language Check Services (Composition-based)
-            services.AddSingleton<ILanguageChecks, LanguageChecks>();
-            services.AddSingleton<ILanguageSpecificChecks, PythonLanguageSpecificChecks>();
-            services.AddSingleton<ILanguageSpecificChecks, JavaLanguageSpecificChecks>();
-            services.AddSingleton<ILanguageSpecificChecks, JavaScriptLanguageSpecificChecks>();
-            services.AddSingleton<ILanguageSpecificChecks, DotNetLanguageSpecificChecks>();
-            services.AddSingleton<ILanguageSpecificChecks, GoLanguageSpecificChecks>();
-            services.AddSingleton<ILanguageSpecificCheckResolver, LanguageSpecificCheckResolver>();
+            services.AddScoped<ILanguageChecks, LanguageChecks>();
+            services.AddScoped<ILanguageSpecificChecks, PythonLanguageSpecificChecks>();
+            services.AddScoped<ILanguageSpecificChecks, JavaLanguageSpecificChecks>();
+            services.AddScoped<ILanguageSpecificChecks, JavaScriptLanguageSpecificChecks>();
+            services.AddScoped<ILanguageSpecificChecks, DotNetLanguageSpecificChecks>();
+            services.AddScoped<ILanguageSpecificChecks, GoLanguageSpecificChecks>();
+            services.AddScoped<ILanguageSpecificCheckResolver, LanguageSpecificCheckResolver>();
 
             // Client update language services
-            services.AddSingleton<IClientUpdateLanguageService, JavaUpdateLanguageService>();
-            services.AddSingleton<IClientUpdateLanguageServiceResolver, ClientUpdateLanguageServiceResolver>();
+            services.AddScoped<IClientUpdateLanguageService, JavaUpdateLanguageService>();
+            services.AddScoped<IClientUpdateLanguageServiceResolver, ClientUpdateLanguageServiceResolver>();
             // Future: services.AddSingleton<IClientUpdateLanguageService, PythonClientUpdateLanguageService>(); etc.
 
             // Helper classes

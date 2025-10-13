@@ -18,8 +18,8 @@ model CodeFile {
   Language: "C"|"C++"|"C#"|"Go"|"Java"|"JavaScript"|"Kotlin"|"Python"|"Swagger"|"Swift"|"TypeSpec";
   /** Language variant is applicable only for java variants*/
   LanguageVariant?: "None" | "Spring" | "Android" = "None";
-  /** Id to identify Reviews for different languages generated from the same TypeSpec specification. */
-  CrossLanguagePackageId?: string;
+  /** Metadata for different languages generated from the same TypeSpec specification. */
+  CrossLanguageMetadata?: CrossLanguageMetadata;
   ReviewLines: Array<ReviewLine>;
   /** Add any system generated comments. Each comment is linked to review line ID */
   Diagnostics?: Array<CodeDiagnostic>;
@@ -97,6 +97,11 @@ model CodeDiagnostic {
   HelpLinkUri?: string;
 }
 
+model CrossLanguageMetadata {
+  CrossLanguagePackageId: string;
+  CrossLanguageDefinitionId: Dictionary<string, string>;
+}
+
 enum TokenKind {
   /** Text: Token kind should be set as Text for any plan text token. for e.g documentation, namespace value, or attribute or decorator tokens **/
   Text: 0,
@@ -133,4 +138,14 @@ model NavigationItem {
   NavigationId: string;
   ChildItems: Array<NavigationItem>;
   Tags: Record<string>;
+}
+
+
+@doc("The generic name value pair.")
+model Dictionary<TName, TValue> {
+  @doc("The name.")
+  name?: TName;
+
+  @doc("The value.")
+  value?: TValue;
 }

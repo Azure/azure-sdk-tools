@@ -6,7 +6,7 @@ The V1 scenario defines the end-to-end workflow for generating and releasing pre
 
 **Service**: [Health Deidentification](https://github.com/Azure/azure-rest-api-specs/tree/ded7abde9c48ba84df36b53dfcaef48a2c134097/specification/healthdataaiservices/HealthDataAIServices.DeidServices)  
 **Mode**: Works in both agent and CLI modes  
-**Goal**: Prove complete workflow from setup → generate → validate → release
+**Goal**: Prove complete SDK local workflow from setup → generate → validate until release
 
 ---
 

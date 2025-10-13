@@ -57,9 +57,8 @@ function InvokeKustoCommand($command) {
         $body = @{ csl = $command; db = $databaseName } | ConvertTo-Json -Depth 3
         Invoke-RestMethod -Uri "$clusterUri/v1/rest/mgmt" -Headers $headers -Method Post -Body $body -ContentType "application/json"
     } catch {
-        Write-Error "Failed to invoke Kusto command: $command"
-        Write-Error "Exception message: $($_.Exception.Message)"
-        throw "Terminating due to failure in invoking kusto command"
+        $errorMessage = "Failed to invoke Kusto command: $command`nException message: $($_.Exception.Message)"
+        throw $errorMessage
     }
 
 }

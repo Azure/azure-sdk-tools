@@ -10,8 +10,12 @@ public sealed class DotNetPackageInfo : IPackageInfo
     private string? _repoRoot;
     private string? _relativePath;
     public bool IsInitialized { get; private set; }
+    private readonly IGitHelper _gitHelper;
 
-    public DotNetPackageInfo() { }
+    public DotNetPackageInfo(IGitHelper gitHelper)
+    {
+        _gitHelper = gitHelper;
+    }
 
     public void Init(string packagePath)
     {
@@ -66,16 +70,26 @@ public sealed class DotNetPackageInfo : IPackageInfo
         catch { return null; }
     }
 
-    private static (string RepoRoot, string RelativePath, string FullPath) Parse(string packagePath)
+    private (string RepoRoot, string RelativePath, string FullPath) Parse(string packagePath)
     {
         var full = Path.GetFullPath(packagePath);
-        var sdkSeparator = $"{Path.DirectorySeparatorChar}sdk{Path.DirectorySeparatorChar}";
-        var pieces = full.Split(sdkSeparator, StringSplitOptions.None);
-        if (pieces.Length != 2)
+
+        // Use GitHelper to discover the repository root (parent of .git)
+        var repoRoot = _gitHelper.DiscoverRepoRoot(full);
+        var sdkRoot = Path.Combine(repoRoot, "sdk");
+
+        // Ensure the provided path is under the sdk directory
+        if (!full.StartsWith(sdkRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(full, sdkRoot, StringComparison.OrdinalIgnoreCase))
         {
-            throw new ArgumentException($"Path '{packagePath}' is not under an Azure SDK repository with 'sdk' subfolder. Expected structure: /path/to/azure sdk repo/sdk/<service>/<package>", nameof(packagePath));
+            throw new ArgumentException($"Path '{packagePath}' is not under the expected 'sdk' folder of repo root '{repoRoot}'. Expected structure: <repoRoot>/sdk/<service>/<package>", nameof(packagePath));
         }
-        return (pieces[0], pieces[1], full);
+
+        // Relative path under sdk (e.g. storage/storage-blob)
+        var relativePath = Path.GetRelativePath(sdkRoot, full)
+            .TrimStart(Path.DirectorySeparatorChar);
+
+        return (repoRoot, relativePath, full);
     }
 
     private static readonly Lazy<Regex> _csProjVersionRegex = new(() => new Regex("<Version>([^<]+)</Version>", RegexOptions.Compiled));

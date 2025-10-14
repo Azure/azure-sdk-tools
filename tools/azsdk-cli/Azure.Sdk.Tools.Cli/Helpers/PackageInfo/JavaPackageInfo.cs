@@ -10,8 +10,12 @@ public sealed class JavaPackageInfo : IPackageInfo
     private string? _repoRoot;
     private string? _relativePath;
     public bool IsInitialized { get; private set; }
+    private readonly IGitHelper _gitHelper;
 
-    public JavaPackageInfo() { }
+    public JavaPackageInfo(IGitHelper gitHelper)
+    {
+        _gitHelper = gitHelper;
+    }
 
     public void Init(string packagePath)
     {
@@ -94,16 +98,17 @@ public sealed class JavaPackageInfo : IPackageInfo
         catch { return null; }
     }
 
-    private static (string RepoRoot, string RelativePath, string FullPath) Parse(string packagePath)
+    private (string RepoRoot, string RelativePath, string FullPath) Parse(string packagePath)
     {
         var full = Path.GetFullPath(packagePath);
-        var sdkSeparator = $"{Path.DirectorySeparatorChar}sdk{Path.DirectorySeparatorChar}";
-        var pieces = full.Split(sdkSeparator, StringSplitOptions.None);
-        if (pieces.Length != 2)
+        var repoRoot = _gitHelper.DiscoverRepoRoot(full);
+        var sdkRoot = Path.Combine(repoRoot, "sdk");
+        if (!full.StartsWith(sdkRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) && !string.Equals(full, sdkRoot, StringComparison.OrdinalIgnoreCase))
         {
-            throw new ArgumentException($"Path '{packagePath}' is not under an Azure SDK repository with 'sdk' subfolder. Expected structure: /path/to/azure sdk repo/sdk/<service>/<package>", nameof(packagePath));
+            throw new ArgumentException($"Path '{packagePath}' is not under the expected 'sdk' folder of repo root '{repoRoot}'. Expected structure: <repoRoot>/sdk/<service>/<package>", nameof(packagePath));
         }
-        return (pieces[0], pieces[1], full);
+        var relativePath = Path.GetRelativePath(sdkRoot, full).TrimStart(Path.DirectorySeparatorChar);
+        return (repoRoot, relativePath, full);
     }
 
     private static readonly Lazy<Regex> _pomVersionRegex = new(() => new Regex("<version>([^<]+)</version>", RegexOptions.Compiled));

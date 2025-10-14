@@ -10,8 +10,12 @@ public sealed class GoPackageInfo : IPackageInfo
     private string? _repoRoot;
     private string? _relativePath;
     public bool IsInitialized { get; private set; }
+    private readonly IGitHelper _gitHelper;
 
-    public GoPackageInfo() { }
+    public GoPackageInfo(IGitHelper gitHelper)
+    {
+        _gitHelper = gitHelper;
+    }
 
     public void Init(string packagePath)
     {
@@ -61,26 +65,21 @@ public sealed class GoPackageInfo : IPackageInfo
         catch { return null; }
     }
 
-    private static (string RepoRoot, string RelativePath, string FullPath) Parse(string packagePath)
+    private (string RepoRoot, string RelativePath, string FullPath) Parse(string packagePath)
     {
         var full = Path.GetFullPath(packagePath);
-        var sdkMarker = $"{Path.DirectorySeparatorChar}sdk{Path.DirectorySeparatorChar}";
-
-        var sdkIndex = full.IndexOf(sdkMarker, StringComparison.OrdinalIgnoreCase);
-        if (sdkIndex < 0)
+        var repoRoot = _gitHelper.DiscoverRepoRoot(full);
+        var sdkRoot = Path.Combine(repoRoot, "sdk");
+        if (!full.StartsWith(sdkRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) && !string.Equals(full, sdkRoot, StringComparison.OrdinalIgnoreCase))
         {
-            throw new ArgumentException($"Path '{packagePath}' is not under an Azure SDK repository with 'sdk' subfolder.", nameof(packagePath));
+            throw new ArgumentException($"Path '{packagePath}' is not under the expected 'sdk' folder of repo root '{repoRoot}'. Expected structure: <repoRoot>/sdk/<group>/<service>/<package>", nameof(packagePath));
         }
-
-        var repoRoot = full[..sdkIndex];
-        var relativePath = full[(sdkIndex + sdkMarker.Length)..].TrimStart(Path.DirectorySeparatorChar);
-
+        var relativePath = Path.GetRelativePath(sdkRoot, full).TrimStart(Path.DirectorySeparatorChar);
         var segments = relativePath.Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries);
         if (segments.Length < 3)
         {
             throw new ArgumentException($"Path '{packagePath}' must be at least three folders deep under 'sdk' (expected: sdk/<group>/<service>/<package>). Actual relative path: 'sdk/{relativePath}'", nameof(packagePath));
         }
-
         return (repoRoot, relativePath, full);
     }
 

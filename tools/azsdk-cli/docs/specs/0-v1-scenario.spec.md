@@ -266,7 +266,7 @@ azsdk verify-setup --languages .NET,Java,JavaScript,Python,Go
 ```
 Checking environment setup for 5 languages...
 
-✓ .NET SDK 8.0.100 installed
+✓ .NET SDK 9.0.205 installed
 ✓ Java JDK 11 installed
 ✓ Node.js 18.x installed
 ✓ Python 3.11 installed

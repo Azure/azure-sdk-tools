@@ -64,15 +64,11 @@ export interface NpmViewParameters {
 
 function executeCommand(
     command: string,
-    options: {
-        maxRetries?: number;
-        retryDelayMs?: number;
-    } = {}
+    maxRetries = 3,
+    retryDelayMs = 1000
 ): string | null {
-    const {
-        maxRetries = 3,
-        retryDelayMs = 1000
-    } = options;
+    logger.info(`Executing command: ${command}`);
+    
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
             const result = shell.exec(command, { silent: true });

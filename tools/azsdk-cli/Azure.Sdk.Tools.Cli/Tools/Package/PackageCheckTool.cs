@@ -100,7 +100,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     PackageCheckType.Snippets => await RunSnippetUpdate(packagePath, fixCheckErrors, ct),
                     PackageCheckType.Linting => await RunLintCode(packagePath, fixCheckErrors, ct),
                     PackageCheckType.Format => await RunFormatCode(packagePath, fixCheckErrors, ct),
-                    PackageCheckType.Samples => await RunSampleValidation(packagePath, ct),
+                    PackageCheckType.Samples => await RunSampleValidation(packagePath, fixCheckErrors, ct),
                     _ => throw new ArgumentOutOfRangeException(
                         nameof(checkType),
                         checkType,
@@ -336,11 +336,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return result;
         }
 
-        private async Task<CLICheckResponse> RunSampleValidation(string packagePath, CancellationToken ct = default)
+        private async Task<CLICheckResponse> RunSampleValidation(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             logger.LogInformation("Running sample validation");
 
-            var result = await languageChecks.ValidateSamplesAsync(packagePath, ct);
+            var result = await languageChecks.ValidateSamplesAsync(packagePath, fixCheckErrors, ct);
             return result;
         }
     }

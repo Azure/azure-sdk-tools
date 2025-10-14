@@ -123,6 +123,8 @@ Without a concrete end-to-end scenario, we risk building tools in isolation that
 
 4. Validating → run-pr-checks
    └─ Run all PR CI checks locally to ensure green PR
+
+⚠️  STOP: This is a test scenario only. Do NOT commit these changes or create release PRs.
 ```
 
 ---

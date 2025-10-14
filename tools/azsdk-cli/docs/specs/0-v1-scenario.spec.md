@@ -82,7 +82,7 @@ Without a concrete end-to-end scenario, we risk building tools in isolation that
 
 ### In Scope for V1
 
-- **All 5 languages** (.NET, Java, JavaScript, Python, Go) - no exceptions, all must pass
+- **All 5 languages** (.NET, Java, JavaScript, Python, Go) - All activities defined in this scenario must be supported across all languages listed. Each activity should behave consistently with existing tooling—successfully completing or erroring out as expected given the same inputs.
 - **[Preview release](#preview-release)** (not first preview, no architect review required)
 - **[TypeSpec](#typespec)-based generation** from Health Deidentification service - creating non-compatible version that ignores existing [code customizations](#code-customizations)
 - **With or without [client.tsp](#client-tsp)** - handles both scenarios
@@ -97,6 +97,7 @@ Without a concrete end-to-end scenario, we risk building tools in isolation that
 
 - **Working with or creating new [SDK code customizations](#code-customizations)** - Eliminates the complexity of merging newly generated code with existing custom code
 - **Creating new [TypeSpec customizations](#typespec-customizations) ([client.tsp](#client-tsp))** - Limits scope; we're not focusing on helping authors create code customizations or client.tsp customizations at this stage
+- **Error resolution assistance** - Tools should report errors but not provide automated resolution; if generation or validation fails, error messages are displayed without additional tooling to help users resolve issues
 
 **Review Requirements:**
 

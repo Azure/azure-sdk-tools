@@ -226,16 +226,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             try
             {
                 sdkReleaseType = sdkReleaseType?.ToLower() ?? "";
-                switch (sdkReleaseType)
+                var sdkReleaseTypeMappings = new Dictionary<string, string>
                 {
-                    case "ga":
-                        sdkReleaseType = "stable";
-                        break;
-
-                    case "preview":
-                        sdkReleaseType = "beta";
-                        break;
+                    { "ga", "stable" },
+                    { "preview", "beta" }
+                };
+                if (sdkReleaseTypeMappings.TryGetValue(sdkReleaseType, out var mappedType))
+                {
+                    sdkReleaseType = mappedType;
                 }
+                
                 
                 ValidateCreateReleasePlanInputAsync(typeSpecProjectPath, serviceTreeId, productTreeId, specPullRequestUrl, sdkReleaseType, specApiVersion);
 

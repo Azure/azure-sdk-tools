@@ -15,13 +15,13 @@ public abstract class ClientUpdateLanguageServiceBase : IClientUpdateLanguageSer
     /// Resolves language-specific dependency / quality checks for a generated client package.
     /// Implementations typically supply an instance able to run build / type / dependency validations.
     /// </summary>
-    protected ILanguageSpecificResolver<ISpecificValidationChecks> LanguageSpecificChecks { get; }
+    protected ILanguageSpecificResolver<ILanguageValidationChecks> LanguageSpecificChecks { get; }
 
     /// <summary>
     /// Initializes the base language service.
     /// </summary>
     /// <param name="languageSpecificChecks">Resolver that returns an object capable of executing validation checks for a given generated package path.</param>
-    protected ClientUpdateLanguageServiceBase(ILanguageSpecificResolver<ISpecificValidationChecks> languageSpecificChecks)
+    protected ClientUpdateLanguageServiceBase(ILanguageSpecificResolver<ILanguageValidationChecks> languageSpecificChecks)
     {
         this.LanguageSpecificChecks = languageSpecificChecks;
     }

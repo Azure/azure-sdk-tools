@@ -34,7 +34,7 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             // Language Check Services (Composition-based)
             services.AddScoped<IValidationChecks, ValidationChecks>();
-            services.AddLanguageSpecific<ISpecificValidationChecks>(new LanguageSpecificImplementations
+            services.AddLanguageSpecific<ILanguageValidationChecks>(new LanguageSpecificImplementations
             {
                 Python = typeof(PythonValidationChecks),
                 Java = typeof(JavaValidationChecks),

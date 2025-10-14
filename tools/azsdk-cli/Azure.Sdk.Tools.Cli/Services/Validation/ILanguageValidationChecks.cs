@@ -5,7 +5,7 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// <summary>
 /// Interface for language-specific check implementations.
 /// </summary>
-public interface ISpecificValidationChecks
+public interface ILanguageValidationChecks
 {
     /// <summary>
     /// Analyzes dependencies for the specific package.

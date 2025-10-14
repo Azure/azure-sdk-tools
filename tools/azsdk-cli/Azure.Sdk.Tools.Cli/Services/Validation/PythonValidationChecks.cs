@@ -7,7 +7,7 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// <summary>
 /// Python-specific implementation of language checks.
 /// </summary>
-public class PythonValidationChecks : ISpecificValidationChecks
+public class PythonValidationChecks : ILanguageValidationChecks
 {
     private readonly IProcessHelper _processHelper;
     private readonly INpxHelper _npxHelper;

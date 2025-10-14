@@ -12,7 +12,7 @@ public class JavaUpdateLanguageService : ClientUpdateLanguageServiceBase
 {
     private readonly ILogger<JavaUpdateLanguageService> _logger;
 
-    public JavaUpdateLanguageService(ILanguageSpecificResolver<ISpecificValidationChecks> languageSpecificChecks, ILogger<JavaUpdateLanguageService> logger) : base(languageSpecificChecks)
+    public JavaUpdateLanguageService(ILanguageSpecificResolver<ILanguageValidationChecks> languageSpecificChecks, ILogger<JavaUpdateLanguageService> logger) : base(languageSpecificChecks)
     {
         _logger = logger;
     }

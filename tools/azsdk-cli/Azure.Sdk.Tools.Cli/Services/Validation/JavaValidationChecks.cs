@@ -7,7 +7,7 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// Java-specific implementation of language repository service.
 /// Uses tools like Maven, Gradle, javac, etc. for Java development workflows.
 /// </summary>
-public class JavaValidationChecks : ISpecificValidationChecks
+public class JavaValidationChecks : ILanguageValidationChecks
 {
     private readonly IProcessHelper _processHelper;
     private readonly ILogger<JavaValidationChecks> _logger;

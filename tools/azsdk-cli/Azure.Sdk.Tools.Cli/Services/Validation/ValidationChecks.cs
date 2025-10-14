@@ -90,10 +90,10 @@ public class ValidationChecks : IValidationChecks
     private readonly INpxHelper _npxHelper;
     private readonly IGitHelper _gitHelper;
     private readonly ILogger<ValidationChecks> _logger;
-    private readonly ILanguageSpecificResolver<ISpecificValidationChecks> _languageSpecificChecks;
+    private readonly ILanguageSpecificResolver<ILanguageValidationChecks> _languageSpecificChecks;
     private readonly IMicroagentHostService _microagentHostService;
 
-    public ValidationChecks(IProcessHelper processHelper, INpxHelper npxHelper, IGitHelper gitHelper, ILogger<ValidationChecks> logger, ILanguageSpecificResolver<ISpecificValidationChecks> languageSpecificChecks, IMicroagentHostService microagentHostService)
+    public ValidationChecks(IProcessHelper processHelper, INpxHelper npxHelper, IGitHelper gitHelper, ILogger<ValidationChecks> logger, ILanguageSpecificResolver<ILanguageValidationChecks> languageSpecificChecks, IMicroagentHostService microagentHostService)
     {
         _processHelper = processHelper;
         _npxHelper = npxHelper;

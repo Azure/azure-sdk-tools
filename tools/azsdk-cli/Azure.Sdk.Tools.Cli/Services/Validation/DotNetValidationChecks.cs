@@ -9,7 +9,7 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// .NET-specific implementation of language repository service.
 /// Uses tools like dotnet CLI, MSBuild, NuGet, etc. for .NET development workflows.
 /// </summary>
-public class DotNetValidationChecks : ISpecificValidationChecks
+public class DotNetValidationChecks : ILanguageValidationChecks
 {
     private readonly IProcessHelper _processHelper;
     private readonly INpxHelper _npxHelper;

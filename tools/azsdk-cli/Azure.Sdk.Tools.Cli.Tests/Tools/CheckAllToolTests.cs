@@ -36,9 +36,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             // Create language-specific check implementations with mocked dependencies
             var pythonCheck = new PythonValidationChecks(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _mockPythonLogger.Object);
 
-            var languageChecks = new List<ISpecificValidationChecks> { pythonCheck };
+            var languageChecks = new List<ILanguageValidationChecks> { pythonCheck };
             var mockPowershellHelper = new Mock<IPowershellHelper>();
-            var resolver = Mock.Of<ILanguageSpecificResolver<ISpecificValidationChecks>>();
+            var resolver = Mock.Of<ILanguageSpecificResolver<ILanguageValidationChecks>>();
 
             _languageChecks = new ValidationChecks(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _mockLanguageChecksLogger.Object, resolver, _mockMicroagentHostService.Object);
             _packageCheckTool = new PackageCheckTool(_mockLogger.Object, _languageChecks);

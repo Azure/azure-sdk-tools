@@ -7,7 +7,7 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// JavaScript-specific implementation of language repository service.
 /// Uses tools like npm, yarn, node, eslint, etc. for JavaScript development workflows.
 /// </summary>
-public class JavaScriptValidationChecks : ISpecificValidationChecks
+public class JavaScriptValidationChecks : ILanguageValidationChecks
 {
     private readonly IProcessHelper _processHelper;
     private readonly INpxHelper _npxHelper;

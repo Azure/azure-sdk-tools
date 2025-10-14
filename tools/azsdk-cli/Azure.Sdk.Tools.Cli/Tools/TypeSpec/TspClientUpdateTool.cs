@@ -102,68 +102,76 @@ public class TspClientUpdateTool(
         var backupDir = FileHelper.CreateTimestampedBackupDirectory(packagePath);
         BackupCurrentGeneration(packagePath, backupDir, ct);
 
-        session.NewGeneratedPath = packagePath;
-
-        var tspLocationPath = Path.Combine(packagePath, "tsp-location.yaml");
-        logger.LogInformation("Regenerating code...");
-        var regenResult = await tspClientHelper.UpdateGenerationAsync(tspLocationPath, packagePath, commitSha, isCli: false, ct);
-        if (!regenResult.IsSuccessful)
+        try
         {
-            session.LastStage = UpdateStage.Failed;
-            return new TspClientUpdateResponse
-            {
-                Session = session,
-                ErrorCode = "RegenerateFailed",
-                ResponseError = regenResult.ResponseError
-            };
-        }
-        session.LastStage = UpdateStage.Regenerated;
+            session.NewGeneratedPath = packagePath;
 
-        var customizationRoot = languageService.GetCustomizationRootAsync(session, packagePath, ct);
-        logger.LogDebug("Customization root: {CustomizationRoot}", customizationRoot ?? "(none)");
-
-        // Use automated analysis and patch application for customization updates
-        var (guidance, patchesApplied, requiresReview) = await GenerateGuidanceAndApplyPatchesAsync(commitSha, customizationRoot, packagePath, backupDir, languageService, ct);
-
-        // If patches were applied, regenerate the code to ensure customizations are properly integrated
-        if (patchesApplied)
-        {
-            logger.LogInformation("Patches were applied. Regenerating code to validate customizations...");
-            var regenAfterPatchResult = await RegenerateAfterPatchesAsync(tspLocationPath, packagePath, commitSha, ct);
-            if (!regenAfterPatchResult.Success)
+            var tspLocationPath = Path.Combine(packagePath, "tsp-location.yaml");
+            logger.LogInformation("Regenerating code...");
+            var regenResult = await tspClientHelper.UpdateGenerationAsync(tspLocationPath, packagePath, commitSha, isCli: false, ct);
+            if (!regenResult.IsSuccessful)
             {
-                logger.LogWarning("Code regeneration failed: {Error}", regenAfterPatchResult.ErrorMessage);
-                guidance.Insert(0, "Code regeneration after patches failed. Manual intervention required.");
-                guidance.Insert(1, $"Error: {regenAfterPatchResult.ErrorMessage}");
-                guidance.Insert(2, "");
-                requiresReview = true;
-                session.RequiresManualIntervention = true;
-            }
-            else
-            {
-                logger.LogInformation("Regeneration successful, validating...");
-                var (validationSuccess, validationRequiresReview) = await ValidateAndUpdateGuidanceAsync(session, languageService, guidance, ct);
-                if (!validationSuccess)
+                session.LastStage = UpdateStage.Failed;
+                return new TspClientUpdateResponse
                 {
+                    Session = session,
+                    ErrorCode = "RegenerateFailed",
+                    ResponseError = regenResult.ResponseError
+                };
+            }
+            session.LastStage = UpdateStage.Regenerated;
+
+            var customizationRoot = languageService.GetCustomizationRootAsync(session, packagePath, ct);
+            logger.LogDebug("Customization root: {CustomizationRoot}", customizationRoot ?? "(none)");
+
+            // Use automated analysis and patch application for customization updates
+            var (guidance, patchesApplied, requiresReview) = await GenerateGuidanceAndApplyPatchesAsync(commitSha, customizationRoot, packagePath, backupDir, languageService, ct);
+
+            // If patches were applied, regenerate the code to ensure customizations are properly integrated
+            if (patchesApplied)
+            {
+                logger.LogInformation("Patches were applied. Regenerating code to validate customizations...");
+                var regenAfterPatchResult = await RegenerateAfterPatchesAsync(tspLocationPath, packagePath, commitSha, ct);
+                if (!regenAfterPatchResult.Success)
+                {
+                    logger.LogWarning("Code regeneration failed: {Error}", regenAfterPatchResult.ErrorMessage);
+                    guidance.Insert(0, "Code regeneration after patches failed. Manual intervention required.");
+                    guidance.Insert(1, $"Error: {regenAfterPatchResult.ErrorMessage}");
+                    guidance.Insert(2, "");
                     requiresReview = true;
                     session.RequiresManualIntervention = true;
                 }
-                requiresReview = requiresReview || validationRequiresReview;
+                else
+                {
+                    logger.LogInformation("Regeneration successful, validating...");
+                    var (validationSuccess, validationRequiresReview) = await ValidateAndUpdateGuidanceAsync(session, languageService, guidance, ct);
+                    if (!validationSuccess)
+                    {
+                        requiresReview = true;
+                        session.RequiresManualIntervention = true;
+                    }
+                    requiresReview = requiresReview || validationRequiresReview;
+                }
+            }
+
+            session.LastStage = patchesApplied ? UpdateStage.Applied : UpdateStage.Mapped;
+            session.RequiresManualIntervention = requiresReview;
+
+            return new TspClientUpdateResponse
+            {
+                Session = session,
+                NextSteps = guidance
+            };
+        }
+        finally
+        {
+            // Clean up backup directory - it was only needed for automated patch reference during generation
+            if (Directory.Exists(backupDir))
+            {
+                Directory.Delete(backupDir, recursive: true);
+                logger.LogDebug("Cleaned up backup directory: {BackupDir}", backupDir);
             }
         }
-
-        // Clean up backup directory - it was only needed for automated patch reference during generation
-        Directory.Delete(backupDir, recursive: true);
-        logger.LogDebug("Cleaned up backup directory: {BackupDir}", backupDir);
-
-        session.LastStage = patchesApplied ? UpdateStage.Applied : UpdateStage.Mapped;
-        session.RequiresManualIntervention = requiresReview;
-
-        return new TspClientUpdateResponse
-        {
-            Session = session,
-            NextSteps = guidance
-        };
     }
 
     private static void BackupCurrentGeneration(string packagePath, string backupDir, CancellationToken ct)

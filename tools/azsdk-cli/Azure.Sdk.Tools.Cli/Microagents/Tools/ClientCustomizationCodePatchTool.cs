@@ -55,19 +55,18 @@ public class ClientCustomizationCodePatchTool(string baseDir) : AgentTool<Client
                 return new ClientCustomizationCodePatchOutput(false, $"Old content not found in file: {input.FilePath}");
             }
 
-            // Check if the old content appears multiple times
+            // Count occurrences for informative feedback
             var occurrences = CountOccurrences(fileContent, input.OldContent);
-            if (occurrences > 1)
-            {
-                return new ClientCustomizationCodePatchOutput(false, 
-                    $"Old content appears {occurrences} times in file. Please provide more specific content to avoid ambiguous replacements: {input.FilePath}");
-            }
 
-            // Apply the patch
+            // Apply the patch (replace all occurrences)
             var updatedContent = fileContent.Replace(input.OldContent, input.NewContent);
             await File.WriteAllTextAsync(safeFilePath, updatedContent, ct);
 
-            return new ClientCustomizationCodePatchOutput(true, $"Successfully applied patch to {input.FilePath}");
+            var message = occurrences == 1 
+                ? $"Successfully applied patch to {input.FilePath}"
+                : $"Successfully applied patch to {input.FilePath} ({occurrences} replacements made)";
+
+            return new ClientCustomizationCodePatchOutput(true, message);
         }
         catch (Exception ex)
         {

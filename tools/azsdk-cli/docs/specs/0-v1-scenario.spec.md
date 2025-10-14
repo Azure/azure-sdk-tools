@@ -149,6 +149,7 @@ _Note: V1 focuses on local development workflow up to the point where SDKs are r
 ## Stage Details
 
 ### 1. Environment Setup
+
 **Tool**: `verify-setup` ([#12287](https://github.com/Azure/azure-sdk-tools/issues/12287))  
 **Action**: Check all requirements upfront for all languages  
 **Success**: All tools/SDKs installed, user knows what's missing

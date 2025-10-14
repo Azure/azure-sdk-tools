@@ -4,19 +4,6 @@ using Azure.Sdk.Tools.Cli.Helpers;
 namespace Azure.Sdk.Tools.Cli.Services;
 
 /// <summary>
-/// Configuration for a Maven operation execution.
-/// </summary>
-internal record JavaMavenOperation
-{
-    public required string OperationName { get; init; }
-    public required string Goal { get; init; }
-    public required string SuccessMessage { get; init; }
-    public required string ErrorMessage { get; init; }
-    public required string OutputKeyword { get; init; }
-    public required string Guidance { get; init; }
-}
-
-/// <summary>
 /// Java-specific implementation of language repository service.
 /// Uses tools like Maven, Gradle, javac, etc. for Java development workflows.
 /// </summary>
@@ -28,6 +15,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
     // Maven operation timeouts
     private static readonly TimeSpan MavenFormatTimeout = TimeSpan.FromMinutes(10);
     private static readonly TimeSpan MavenLintTimeout = TimeSpan.FromMinutes(15);
+    private static readonly TimeSpan MavenSnippetTimeout = TimeSpan.FromMinutes(5);
 
     // Common NextSteps messages
     private static readonly string[] mavenInstallationNextSteps = [
@@ -57,79 +45,34 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
 
     public async Task<CLICheckResponse> FormatCodeAsync(string packagePath, bool fix = false, CancellationToken cancellationToken = default)
     {
-        var operation = new JavaMavenOperation
-        {
-            OperationName = "code formatting",
-            Goal = fix ? "spotless:apply" : "spotless:check",
-            SuccessMessage = fix ? "Code formatting applied successfully" : "Code formatting check passed - all files are properly formatted",
-            ErrorMessage = fix ? "Code formatting failed to apply" : "Code formatting check failed - some files need formatting",
-            OutputKeyword = "spotless",
-            Guidance = fix ? 
-                "Run 'mvn spotless:apply' to automatically format code, or check if spotless-maven-plugin is configured in the pom.xml" :
-                "Run 'mvn spotless:apply' to fix formatting issues, or use --fix flag with this command"
-        };
-
-        return await ExecuteMavenOperationAsync(packagePath, operation, cancellationToken);
-    }
-
-    public async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, CancellationToken cancellationToken = default)
-    {
-        var operation = new JavaMavenOperation
-        {
-            OperationName = "snippet update",
-            Goal = "codesnippet:update-codesnippet",
-            SuccessMessage = "Code snippets updated successfully",
-            ErrorMessage = "Code snippet update failed",
-            OutputKeyword = "codesnippet",
-            Guidance = "Check if com.azure.tools:codesnippet-maven-plugin is configured in the pom.xml. " +
-                      "The plugin should be available for snippet processing in Azure SDK for Java projects."
-        };
-
-        return await ExecuteMavenOperationAsync(packagePath, operation, cancellationToken);
-    }
-
-    /// <summary>
-    /// Executes a Maven operation with shared logic for Maven availability check, 
-    /// pom.xml discovery, command execution, and error handling.
-    /// </summary>
-    /// <param name="packagePath">Path to the package directory</param>
-    /// <param name="operation">Configuration for the Maven operation</param>
-    /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>Result of the Maven operation</returns>
-    private async Task<CLICheckResponse> ExecuteMavenOperationAsync(string packagePath, JavaMavenOperation operation, CancellationToken cancellationToken)
-    {
         try
         {
-            _logger.LogInformation("Starting {OperationName} for Java project at: {PackagePath}", operation.OperationName, packagePath);
+            _logger.LogInformation("Starting code formatting for Java project at: {PackagePath}", packagePath);
 
             // Validate Maven and POM prerequisites
             var pomPath = Path.Combine(packagePath, "pom.xml");
             var prerequisiteCheck = await ValidateMavenPrerequisitesAsync(packagePath, pomPath, cancellationToken);
             if (prerequisiteCheck != null)
             {
-<<<<<<< HEAD
                 return prerequisiteCheck;
-=======
-                _logger.LogError("Maven is not installed or not available in PATH");
-                return new CLICheckResponse(1, "", $"Maven is not installed or not available in PATH. Please install Maven to use {operation.OperationName} functionality.");
->>>>>>> ea577eddf (Implement update code-snippets for Java)
             }
 
 
-            // Execute the Maven goal
+            // Determine the Maven goal based on fix parameter
+            var goal = fix ? "spotless:apply" : "spotless:check";
             var command = "mvn";
-            var args = new[] { operation.Goal, "-f", pomPath };
+            var args = new[] { goal, "-f", pomPath };
 
             var result = await _processHelper.Run(new(command, args, workingDirectory: packagePath, timeout: MavenFormatTimeout), cancellationToken);
 
             if (result.ExitCode == 0)
             {
-                _logger.LogInformation(operation.SuccessMessage);
-                return new CLICheckResponse(result.ExitCode, operation.SuccessMessage);
+                var message = fix ? "Code formatting applied successfully" : "Code formatting check passed - all files are properly formatted";
+                _logger.LogInformation(message);
+                return new CLICheckResponse(result.ExitCode, message);
             }
             else
             {
-<<<<<<< HEAD
                 var errorMessage = fix ? "Code formatting failed to apply" : "Code formatting check failed - some files need formatting";
                 _logger.LogWarning("{ErrorMessage} with exit code {ExitCode}", errorMessage, result.ExitCode);
 
@@ -142,27 +85,10 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
                 {
                     NextSteps = [nextSteps]
                 };
-=======
-                _logger.LogWarning("{ErrorMessage} with exit code {ExitCode}", operation.ErrorMessage, result.ExitCode);
-                
-                // Extract useful error information from output
-                var output = result.Output;
-                if (output.Contains(operation.OutputKeyword))
-                {
-                    // If the output contains operation-specific information, include it
-                    return new CLICheckResponse(result.ExitCode, output, operation.ErrorMessage);
-                }
-                else
-                {
-                    // Provide helpful guidance
-                    return new CLICheckResponse(result.ExitCode, output, $"{operation.ErrorMessage}. {operation.Guidance}");
-                }
->>>>>>> ea577eddf (Implement update code-snippets for Java)
             }
         }
         catch (Exception ex)
         {
-<<<<<<< HEAD
             _logger.LogError(ex, "Error during code formatting for Java project at: {PackagePath}", packagePath);
             return new CLICheckResponse(1, "", $"Error during code formatting: {ex.Message}")
             {
@@ -267,10 +193,6 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
             {
                 NextSteps = [.. exceptionHandlingNextSteps, "Verify that the project's pom.xml is valid and contains required linting plugins"]
             };
-=======
-            _logger.LogError(ex, "Error during {OperationName} for Java project at: {PackagePath}", operation.OperationName, packagePath);
-            return new CLICheckResponse(1, "", $"Error during {operation.OperationName}: {ex.Message}");
->>>>>>> ea577eddf (Implement update code-snippets for Java)
         }
     }
 
@@ -324,6 +246,55 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
             checkstyleRan, checkstyleHasIssues, spotbugsRan, spotbugsHasIssues, revapiRan, revapiHasIssues);
 
         return results;
+    }
+
+    public async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("Starting code snippet update for Java project at: {PackagePath}", packagePath);
+
+            // Validate Maven and POM prerequisites
+            var pomPath = Path.Combine(packagePath, "pom.xml");
+            var prerequisiteCheck = await ValidateMavenPrerequisitesAsync(packagePath, pomPath, cancellationToken);
+            if (prerequisiteCheck != null)
+            {
+                return prerequisiteCheck;
+            }
+
+            // Use Azure SDK approach: mvn codesnippet:update-codesnippet with --no-transfer-progress
+            // This matches the Azure SDK for Java pipeline approach as seen in Compare-CurrentToCodegeneration.ps1
+            var command = Environment.OSVersion.Platform == PlatformID.Win32NT ? "cmd.exe" : "mvn";
+            var args = Environment.OSVersion.Platform == PlatformID.Win32NT 
+                ? new[] { "/C", "mvn", "--no-transfer-progress", "com.azure.tools:codesnippet-maven-plugin:update-snippets", "-am", "-f", pomPath }
+                : new[] { "--no-transfer-progress", "com.azure.tools:codesnippet-maven-plugin:update-snippets", "-am", "-f", pomPath };
+
+            var result = await _processHelper.Run(new(command, args, workingDirectory: packagePath, timeout: MavenSnippetTimeout), cancellationToken);
+
+            if (result.ExitCode == 0)
+            {
+                _logger.LogInformation("Code snippets updated successfully");
+                return new CLICheckResponse(result.ExitCode, "Code snippets updated successfully");
+            }
+            else
+            {
+                _logger.LogWarning("Code snippet update failed with exit code {ExitCode}", result.ExitCode);
+
+                var output = result.Output;
+                return new CLICheckResponse(result.ExitCode, output, "Code snippet update failed - some snippets may be outdated or missing")
+                {
+                    NextSteps = ["Ensure that code snippets in documentation match the actual code implementation, or check if codesnippet-maven-plugin is configured in the pom.xml"]
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during code snippet update for Java project at: {PackagePath}", packagePath);
+            return new CLICheckResponse(1, "", $"Error during code snippet update: {ex.Message}")
+            {
+                NextSteps = [.. exceptionHandlingNextSteps]
+            };
+        }
     }
 
     /// <summary>

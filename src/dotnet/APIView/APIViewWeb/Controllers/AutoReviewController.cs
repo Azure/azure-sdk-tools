@@ -181,7 +181,7 @@ namespace APIViewWeb.Controllers
         private async Task<(ReviewListItemModel review, APIRevisionListItemModel apiRevision)> CreateAutomaticRevisionAsync(CodeFile codeFile, string label, string originalName, MemoryStream memoryStream, string packageType, bool compareAllRevisions = false)
         {
             // Parse package type once at the beginning
-            var parsedPackageType = PackageTypeHelper.ParsePackageType(packageType);
+            var parsedPackageType = !string.IsNullOrEmpty(packageType) ? Enum.TryParse<PackageType>(packageType, true, out var result) ? (PackageType?)result : null : null;
             
             var createNewRevision = true;
             var review = await _reviewManager.GetReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language, isClosed: null);
@@ -192,7 +192,7 @@ namespace APIViewWeb.Controllers
             if (review != null)
             {
                 // Update package type if provided from controller parameter and not already set
-                if (parsedPackageType != PackageType.Unknown && !review.PackageType.HasValue)
+                if (parsedPackageType.HasValue && !review.PackageType.HasValue)
                 {
                     review.PackageType = parsedPackageType;
                     review = await _reviewManager.UpdateReviewAsync(review);

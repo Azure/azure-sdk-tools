@@ -250,7 +250,7 @@ namespace APIViewWeb.Managers
         private async Task CreateAPIRevisionIfRequired(CodeFile codeFile, string originalFileName, MemoryStream memoryStream,
             PullRequestModel pullRequestModel, CodeFile baselineCodeFile, MemoryStream baseLineStream, string baselineFileName, CreateAPIRevisionAPIResponse responseContent, string packageType = null)
         {
-            var validPackageType = PackageTypeHelper.ParsePackageType(packageType);
+            var validPackageType = !string.IsNullOrEmpty(packageType) ? Enum.TryParse<Models.PackageType>(packageType, true, out var result) ? (Models.PackageType?)result : null : null;
             
             // fetch review for the package or create brand new review
             var review = await _reviewManager.GetReviewAsync(language: codeFile.Language, packageName: codeFile.PackageName);
@@ -264,7 +264,7 @@ namespace APIViewWeb.Managers
             else
             {
                 // Update existing review with packageType if provided and different from current value
-                if (validPackageType != Models.PackageType.Unknown && (!review.PackageType.HasValue || review.PackageType.Value != validPackageType))
+                if (validPackageType.HasValue && (!review.PackageType.HasValue || review.PackageType.Value != validPackageType.Value))
                 {
                     review.PackageType = validPackageType;
                     review = await _reviewManager.UpdateReviewAsync(review);

@@ -30,11 +30,6 @@ namespace APIViewWeb.Models
     public enum PackageType
     {
         /// <summary>
-        /// Unknown or unspecified package type
-        /// </summary>
-        Unknown,
-
-        /// <summary>
         /// Data plane package (client libraries for Azure services)
         /// </summary>
         client,

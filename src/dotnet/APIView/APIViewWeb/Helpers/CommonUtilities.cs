@@ -69,24 +69,4 @@ namespace APIViewWeb.Helpers
             return ApiViewConstants.AllSupportedLanguages.Contains(language);
         }
     }
-
-    /// <summary>
-    /// Package type parsing and validation utilities for APIView
-    /// </summary>
-    public static class PackageTypeHelper
-    {
-        /// <summary>
-        /// Parse a package type string into a PackageType enum value
-        /// </summary>
-        /// <param name="packageType">The package type string to parse (e.g., "client", "mgmt")</param>
-        /// <returns>The parsed PackageType enum value, or PackageType.Unknown if invalid or null</returns>
-        public static Models.PackageType ParsePackageType(string packageType)
-        {
-            if (!string.IsNullOrEmpty(packageType) && Enum.TryParse<Models.PackageType>(packageType, true, out var parsedPackageType))
-            {
-                return parsedPackageType;
-            }
-            return Models.PackageType.Unknown;
-        }
-    }
 }

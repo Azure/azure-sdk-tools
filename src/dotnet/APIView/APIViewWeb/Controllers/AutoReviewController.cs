@@ -178,19 +178,10 @@ namespace APIViewWeb.Controllers
             return StatusCode(statusCode: StatusCodes.Status500InternalServerError);
         }
 
-        private static PackageType? ParsePackageType(string packageType)
-        {
-            if (!string.IsNullOrEmpty(packageType) && Enum.TryParse<PackageType>(packageType, true, out var parsedPackageType))
-            {
-                return parsedPackageType;
-            }
-            return null;
-        }
-
         private async Task<(ReviewListItemModel review, APIRevisionListItemModel apiRevision)> CreateAutomaticRevisionAsync(CodeFile codeFile, string label, string originalName, MemoryStream memoryStream, string packageType, bool compareAllRevisions = false)
         {
             // Parse package type once at the beginning
-            var parsedPackageType = ParsePackageType(packageType);
+            var parsedPackageType = PackageTypeHelper.ParsePackageType(packageType);
             
             var createNewRevision = true;
             var review = await _reviewManager.GetReviewAsync(packageName: codeFile.PackageName, language: codeFile.Language, isClosed: null);
@@ -201,7 +192,7 @@ namespace APIViewWeb.Controllers
             if (review != null)
             {
                 // Update package type if provided from controller parameter and not already set
-                if (parsedPackageType.HasValue && !review.PackageType.HasValue)
+                if (parsedPackageType != PackageType.Unknown && !review.PackageType.HasValue)
                 {
                     review.PackageType = parsedPackageType;
                     review = await _reviewManager.UpdateReviewAsync(review);

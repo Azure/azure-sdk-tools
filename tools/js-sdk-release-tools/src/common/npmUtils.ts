@@ -66,14 +66,14 @@ function executeCommand(
     command: string,
     maxRetries = 3,
     retryDelayMs = 1000
-): string | null {
-    logger.info(`Executing command: ${command}`);
+): shell.ShellString | null {
+    logger.info(`Executing command with retry mode (max attempts: ${maxRetries}): ${command}`);
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
             const result = shell.exec(command, { silent: true });
             if (result.code === 0) {
-                return result.stdout;
+                return result;
             }
             logger.warn(`Command failed (attempt ${attempt}/${maxRetries}): ${command}`);
         } catch (err) {
@@ -99,8 +99,9 @@ function executeCommand(
  * @returns boolean indicating if the tag exists
  */
 function checkGitTagExists(tag: string): boolean {
-    const output = executeCommand(`git tag -l ${tag}`);
-    return !!output?.trim();
+    const tagCheckCommand = `git tag -l ${tag}`;
+    const tagExists = executeCommand(tagCheckCommand)?.stdout.trim();
+    return !!tagExists;
 }
 
 // TODO: refactor this function to support praparing files from github in general way
@@ -133,11 +134,11 @@ export function tryCreateLastestStableNpmViewFromGithub(NpmViewParameters: NpmVi
             sdkFilePath = relative(sdkRootPath, path.join(packageFolderPath, file)).replace(/\\/g, "/");
             // For CHANGELOG.md, use sdkFilePath directly
             const gitCommand = `git --no-pager show ${tag}:${sdkFilePath}`;
-            const changelogContent = executeCommand(gitCommand);
-            if (!changelogContent?.trim()) {
+            const changelogContent = executeCommand(gitCommand)?.stdout || "";
+            if (!changelogContent.trim()) {
                 logger.warn(`Warning: CHANGELOG.md content is empty for tag ${tag} at path ${sdkFilePath}.`);
             }
-            fs.writeFileSync(targetFilePath, changelogContent!, { encoding: 'utf-8' });
+            fs.writeFileSync(targetFilePath, changelogContent, { encoding: 'utf-8' });
         }
         else {
             sdkFilePath = relative(sdkRootPath, getApiReviewBasePath(packageFolderPath)).replace(/\\/g, "/");
@@ -150,15 +151,16 @@ export function tryCreateLastestStableNpmViewFromGithub(NpmViewParameters: NpmVi
             const standardApiGitCommand = `git --no-pager show ${tag}:${standardApiFilePath}`;
 
             // Execute both git commands
-            const nodeApiResult = executeCommand(nodeApiGitCommand);
-            const standardApiResult = executeCommand(standardApiGitCommand);
+            const nodeApiExecResult = executeCommand(nodeApiGitCommand)?.stdout || "";
+            const standardApiExecResult = executeCommand(standardApiGitCommand)?.stdout || "";
 
             // Use nodeApi result if it has content, otherwise use standardApi result
-            let apiViewContent = nodeApiResult?.trim() ? nodeApiResult : standardApiResult;
-            if (!apiViewContent?.trim()) {
+            let apiViewContent = nodeApiExecResult.trim() ? nodeApiExecResult : standardApiExecResult;
+            if (!apiViewContent.trim()) {
                 logger.warn(`Warning: No API view content found for either ${nodeApiFilePath} or ${standardApiFilePath}. Using default content.`);
+                apiViewContent = defaultContent;
             }
-            fs.writeFileSync(targetFilePath, apiViewContent!, { encoding: 'utf-8' });
+            fs.writeFileSync(targetFilePath, apiViewContent, { encoding: 'utf-8' });
         }
         logger.info(`Create ${packageFolderPath} from the tag ${tag} successfully`);
     } catch (error) {
@@ -196,9 +198,10 @@ export async function checkDirectoryExistsInGithub(
         const relativePath = relative(sdkRootPath, join(packageRoot, directoryPath)).replace(/\\/g, "/");
         
         // Use git ls-tree to check if directory exists
-        const output = executeCommand(`git ls-tree -d ${tag} ${relativePath}`);
+        const gitCommand = `git ls-tree -d ${tag} ${relativePath}`;
+        const result = executeCommand(gitCommand);
 
-        if (output?.trim()) {
+        if (result && result.code === 0 && result.stdout.trim()) {
             logger.info(`Directory ${directoryPath} exists in GitHub tag ${tag} for package ${packageName}`);
             return true;
         } else {

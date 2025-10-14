@@ -36,6 +36,32 @@ public class LanguageSpecificResolver<T>(
         };
     }
 
+    public List<T?> Resolve(List<string> languages, CancellationToken ct = default)
+    {
+        var services = new List<T?>();
+
+        foreach (var lang in languages)
+        {
+            if (Enum.TryParse<SdkLanguage>(lang, ignoreCase: true, out var parsedLang))
+            {
+                var service = parsedLang switch
+                {
+                    SdkLanguage.DotNet => dotnetService,
+                    SdkLanguage.Java => javaService,
+                    SdkLanguage.Python => pythonService,
+                    SdkLanguage.JavaScript => javaScriptService,
+                    SdkLanguage.Go => goService,
+                    // If adding languages in future, add a corresponding entry here.
+                    _ => default,
+                };
+
+                services.Add(service);
+            }
+        }
+
+        return services;
+    }
+
     private async Task<SdkLanguage?> DetectLanguageAsync(string packagePath, CancellationToken ct)
     {
         try

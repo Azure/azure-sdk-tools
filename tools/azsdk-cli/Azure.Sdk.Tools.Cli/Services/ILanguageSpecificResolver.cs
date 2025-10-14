@@ -13,9 +13,7 @@ public interface ILanguageSpecificResolver<T> where T : class
     /// <param name="ct">Cancellation token.</param>
     /// <returns>The resolved service instance, or null if no matching service is found.</returns>
     public Task<T?> Resolve(string packagePath, CancellationToken ct = default);
-}
 
-public interface ILanguageSpecificResolverVerifySetup<T> : ILanguageSpecificResolver<T> where T : class {
     /// <summary>
     /// Resolves language-specific service implementations for a list of language identifiers.
     /// This is used by tools that need to check or operate across multiple languages in one request.

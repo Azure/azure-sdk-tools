@@ -24,9 +24,9 @@ public class VerifySetupTool : MCPTool
     private readonly IProcessHelper processHelper;
     private readonly ILogger<VerifySetupTool> logger;
 
-    private readonly ILanguageSpecificResolverVerifySetup<IEnvRequirementsCheck> envRequirementsCheck;
+    private readonly ILanguageSpecificResolver<IEnvRequirementsCheck> envRequirementsCheck;
 
-    public VerifySetupTool(IProcessHelper processHelper, ILogger<VerifySetupTool> logger, ILanguageSpecificResolverVerifySetup<IEnvRequirementsCheck> envRequirementsCheck)
+    public VerifySetupTool(IProcessHelper processHelper, ILogger<VerifySetupTool> logger, ILanguageSpecificResolver<IEnvRequirementsCheck> envRequirementsCheck)
     {
         this.processHelper = processHelper;
         this.logger = logger;

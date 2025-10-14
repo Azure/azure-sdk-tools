@@ -290,7 +290,7 @@ OR
 - Issue is closed
 - Issue has label "no-recent-activity"
 - Issue has label "needs-author-feedback"
-- Issue was closed for 7 days or less
+- Issue was closed for 3 business days or less
 - Commenter is the original issue author
 - Action is not "comment and close"
 
@@ -310,7 +310,7 @@ OR
 ### Criteria
 
 - Issue is closed
-- Issue was closed for more than 7 days ago
+- Issue was closed for more than 3 business days ago
 - Commenter does NOT have a collaborator association
 - Commenter does NOT have write permission
 - Commenter does NOT have admin permission
@@ -596,13 +596,13 @@ OR
 - Issue is open
 - Issue has "needs-author-feedback" label
 - Issue does NOT have "no-recent-activity" label
-- Issue was last updated more than 7 days ago
+- Issue was last updated more than 3 business days ago
 
 ### Actions
 
 - Add "no-recent-activity" label
 - Create the following comment
-  - "Hi, we're sending this friendly reminder because we haven't heard back from you in **7 days**. We need more information about this issue to help address it. Please be sure to give us your input. If we don't hear back from you within **14 days** of this comment the issue will be automatically closed. Thank you!"
+  - "Hi, we're sending this friendly reminder because we haven't heard back from you in **3 business days**. We need more information about this issue to help address it. Please be sure to give us your input. If we don't hear back from you within **5 business days** of this comment the issue will be automatically closed. Thank you!"
 
 ## Identify stale pull requests
 

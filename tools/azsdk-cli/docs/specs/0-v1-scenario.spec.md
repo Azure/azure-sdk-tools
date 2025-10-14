@@ -99,11 +99,14 @@ Without a concrete end-to-end scenario, we risk building tools in isolation that
 - Live test execution
 - Test resource management
 - Linux/macOS support
-- First preview releases
-- GA releases
-- Release management and PR creation
+- First preview version
+- GA version
+- Committing changes to repositories
+- Creating or merging pull requests
+- Release management
+- Publishing packages to package managers
 
-*Note: V1 focuses on local development workflow up to the point where SDKs are ready for PR creation. The outer loop release process is out of scope.*
+_Note: V1 focuses on local development workflow up to the point where SDKs are ready for PR creation. The outer loop release process is out of scope. This is a test scenario - do not commit changes or create release PRs._
 
 ---
 

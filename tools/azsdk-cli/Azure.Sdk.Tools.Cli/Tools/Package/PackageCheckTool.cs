@@ -184,6 +184,33 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 failedChecks.Add("Format");
             }
 
+            // Run code packing
+            var packCodeResult = await languageChecks.PackCodeAsync(packagePath, ct);
+            results.Add(packCodeResult);
+            if (packCodeResult.ExitCode != 0)
+            {
+                overallSuccess = false;
+                failedChecks.Add("Pack");
+            }
+
+            // Run AOT compatibility check
+            var aotCompatResult = await languageChecks.CheckAotCompatAsync(packagePath, ct);
+            results.Add(aotCompatResult);
+            if (aotCompatResult.ExitCode != 0)
+            {
+                overallSuccess = false;
+                failedChecks.Add("AOT Compatibility");
+            }
+
+            // Run generated code check
+            var generatedCodeResult = await languageChecks.CheckGeneratedCodeAsync(packagePath, ct);
+            results.Add(generatedCodeResult);
+            if (generatedCodeResult.ExitCode != 0)
+            {
+                overallSuccess = false;
+                failedChecks.Add("Generated Code");
+            }
+
             var message = overallSuccess ? "All checks completed successfully" : "Some checks failed";
             var combinedOutput = string.Join("\n", results.Select(r => r.CheckStatusDetails));
 

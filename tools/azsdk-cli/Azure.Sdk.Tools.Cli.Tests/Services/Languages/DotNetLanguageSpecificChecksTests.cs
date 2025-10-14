@@ -237,7 +237,7 @@ internal class DotNetLanguageSpecificChecksTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(processResult);
 
-        var result = await _languageChecks.CheckGeneratedCodeAsync(_packagePath, CancellationToken.None);
+        var result = await _languageChecks.RunGeneratedCodeChecksAsync(_packagePath, CancellationToken.None);
 
         Assert.Multiple(() =>
         {
@@ -252,7 +252,7 @@ internal class DotNetLanguageSpecificChecksTests
         SetupSuccessfulDotNetVersionCheck();
         var invalidPath = "/tmp/not-in-sdk-folder";
 
-        var result = await _languageChecks.CheckGeneratedCodeAsync(invalidPath, CancellationToken.None);
+        var result = await _languageChecks.RunGeneratedCodeChecksAsync(invalidPath, CancellationToken.None);
 
         Assert.Multiple(() =>
         {
@@ -278,7 +278,7 @@ internal class DotNetLanguageSpecificChecksTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(processResult);
 
-        var result = await _languageChecks.CheckGeneratedCodeAsync(_packagePath, CancellationToken.None);
+        var result = await _languageChecks.RunGeneratedCodeChecksAsync(_packagePath, CancellationToken.None);
 
         Assert.Multiple(() =>
         {
@@ -318,7 +318,7 @@ internal class DotNetLanguageSpecificChecksTests
 
         SetupGitRepoDiscovery();
 
-        var result = await _languageChecks.CheckGeneratedCodeAsync(_packagePath, CancellationToken.None);
+        var result = await _languageChecks.RunGeneratedCodeChecksAsync(_packagePath, CancellationToken.None);
 
         Assert.Multiple(() =>
         {

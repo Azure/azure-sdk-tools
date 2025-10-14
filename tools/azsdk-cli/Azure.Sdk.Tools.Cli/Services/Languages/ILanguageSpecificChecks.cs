@@ -54,4 +54,37 @@ public interface ILanguageSpecificChecks
     {
         return Task.FromResult(new CLICheckResponse(1, "", "Not implemented for this language."));
     }
+
+    /// <summary>
+    /// Packs code in the specific package using language-specific tools.
+    /// </summary>
+    /// <param name="packagePath">Path to the package directory</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Result of the code packing operation</returns>
+    Task<CLICheckResponse> PackCodeAsync(string packagePath, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(new CLICheckResponse(1, "", "Not implemented for this language."));
+    }
+
+    /// <summary>
+    /// Checks AOT compatibility for the specific package using language-specific tools.
+    /// </summary>
+    /// <param name="packagePath">Path to the package directory</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Result of the AOT compatibility check</returns>
+    Task<CLICheckResponse> CheckAotCompatAsync(string packagePath, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(new CLICheckResponse(1, "", "Not implemented for this language."));
+    }
+
+    /// <summary>
+    /// Checks generated code for the specific package using language-specific tools.
+    /// </summary>
+    /// <param name="packagePath">Path to the package directory</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Result of the generated code check</returns>
+    Task<CLICheckResponse> CheckGeneratedCodeAsync(string packagePath, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(new CLICheckResponse(1, "", "Not implemented for this language."));
+    }
 }

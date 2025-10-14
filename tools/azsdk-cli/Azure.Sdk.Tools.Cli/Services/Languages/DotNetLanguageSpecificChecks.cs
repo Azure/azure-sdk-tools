@@ -108,7 +108,7 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
         }
     }
 
-    public async Task<CLICheckResponse> CheckGeneratedCodeAsync(string packagePath, CancellationToken cancellationToken = default)
+    public async Task<CLICheckResponse> RunGeneratedCodeChecksAsync(string packagePath, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -136,8 +136,8 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(CheckGeneratedCodeAsync));
-            return new CLICheckResponse(1, "", $"{nameof(CheckGeneratedCodeAsync)} failed with an exception: {ex.Message}");
+            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(RunGeneratedCodeChecksAsync));
+            return new CLICheckResponse(1, "", $"{nameof(RunGeneratedCodeChecksAsync)} failed with an exception: {ex.Message}");
         }
     }
 

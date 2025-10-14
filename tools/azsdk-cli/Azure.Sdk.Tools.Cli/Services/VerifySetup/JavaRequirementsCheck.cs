@@ -7,7 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.Cli.Models;
 
-public class PythonRequirementsCheck : IEnvRequirementsCheck
+public class JavaRequirementsCheck : IEnvRequirementsCheck
 {
     private readonly string PATH_TO_REQS = Path.Combine(AppContext.BaseDirectory, "Configuration", "RequirementsV1.json");
 
@@ -21,14 +21,12 @@ public class PythonRequirementsCheck : IEnvRequirementsCheck
             throw new Exception("Failed to parse requirements JSON.");
         }
 
-        // The JSON model in SetupRequirements has categories -> list of Requirement
         var reqs = new List<SetupRequirements.Requirement>();
         foreach (var kv in setupRequirements.categories)
         {
             var category = kv.Key;
             var requirements = kv.Value;
-            if (string.Equals(category, "core", StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(category, "python", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(category, "java", StringComparison.OrdinalIgnoreCase))
             {
                 if (requirements != null)
                 {

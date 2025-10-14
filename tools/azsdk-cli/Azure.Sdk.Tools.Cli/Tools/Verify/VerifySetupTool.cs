@@ -32,8 +32,7 @@ public class VerifySetupTool : MCPTool
         this.logger = logger;
         this.envRequirementsCheck = envRequirementsCheck;
     }
-    // for V1 prototype only TODO
-    // private string PATH_TO_REQS = Path.Combine(AppContext.BaseDirectory, "Configuration", "RequirementsV1.json");
+
     private static readonly List<string> LANGUAGES = new() { "python", "java", "dotnet", "javascript", "go" };
     private const int COMMAND_TIMEOUT_IN_SECONDS = 30;
 
@@ -144,7 +143,6 @@ public class VerifySetupTool : MCPTool
         };
     }
 
-    // for V1 prototype only
     private async Task<List<SetupRequirements.Requirement>> GetRequirements(List<string> languages, CancellationToken ct)
     {
         var reqGetter = null as IEnvRequirementsCheck;

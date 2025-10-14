@@ -532,10 +532,16 @@ class PromptyEvaluator(BaseEvaluator):
 
         # Get evaluation fields from config
         self.evaluation_config = self.config.evaluation_config
-        self.comparison_field = self.evaluation_config.comparison_field
-        self.display_name = self.evaluation_config.display_name
         self.breakdown_categories = self.evaluation_config.breakdown_categories
-        self.correct_field_name = f"correct_{self.comparison_field}"
+
+        # Optionally, you can set up a model config for SimilarityEvaluator if needed
+        settings = SettingsManager()
+        self._model_config = {
+            "azure_endpoint": settings.get("OPENAI_ENDPOINT"),
+            "api_key": settings.get("OPENAI_API_KEY"),
+            "azure_deployment": "gpt-4.1",
+            "api_version": "2025-03-01-preview",
+        }
 
     def __call__(self, *, response: str, actual: str, testcase: str, **kwargs):
         # Use ensure_json_obj for both response and actual
@@ -545,7 +551,7 @@ class PromptyEvaluator(BaseEvaluator):
         # Safely extract comparison values
         try:
             expected_value = (
-                expected_data.get(self.comparison_field, "").strip()
+                expected_data.get("action", "").strip()
                 if isinstance(expected_data, dict)
                 else str(expected_data).strip()
             )
@@ -554,23 +560,34 @@ class PromptyEvaluator(BaseEvaluator):
 
         try:
             actual_value = (
-                actual_data.get(self.comparison_field, "").strip()
-                if isinstance(actual_data, dict)
-                else str(actual_data).strip()
+                actual_data.get("action", "").strip() if isinstance(actual_data, dict) else str(actual_data).strip()
             )
         except Exception:
             actual_value = str(actual_data).strip()
 
         is_correct = expected_value == actual_value
 
+        expected_rationale = expected_data.get("rationale", "").strip() if isinstance(expected_data, dict) else ""
+        actual_rationale = actual_data.get("rationale", "").strip() if isinstance(actual_data, dict) else ""
+
+        if expected_rationale or actual_rationale:
+            similarity_result = SimilarityEvaluator(model_config=self._model_config)(
+                response=actual_rationale,
+                query="",  # not used for rationale
+                ground_truth=expected_rationale,
+            )
+            rationale_similarity = similarity_result.get("similarity", 0.0) / 5.0
+        else:
+            rationale_similarity = 1.0 if expected_rationale == actual_rationale else 0.0
+
         return {
-            self.correct_field_name: is_correct,
+            "correct_action": is_correct,
             "actual": actual,
             "expected": response,
             "testcase": testcase,
-            "score": 100 if is_correct else 0,
-            f"expected_{self.comparison_field}": expected_value,
-            f"actual_{self.comparison_field}": actual_value,
+            "score": rationale_similarity * 100 if is_correct else 0,
+            "expected_action": expected_value,
+            "actual_action": actual_value,
         }
 
     def process_results(self, raw_results: list, guideline_ids: set = None) -> dict:
@@ -584,42 +601,40 @@ class PromptyEvaluator(BaseEvaluator):
 
                 run_summary = {
                     "total_tests": 0,
-                    f"{self.correct_field_name}s": 0,
+                    "correct_actions": 0,
                     "test_results": [],
-                    f"{self.comparison_field}_breakdown": self.breakdown_categories.copy(),
+                    "action_breakdown": self.breakdown_categories.copy(),
                 }
 
                 # Process each test case in this run
+                total_score = 0.0
+                total_max_score = 0.0
                 for row in result.get("rows", []):
                     test_result = {
                         "testcase": row.get("inputs.testcase", "unknown"),
-                        "correct": row.get(f"outputs.metrics.{self.correct_field_name}", False),
-                        f"expected_{self.comparison_field}": row.get(
-                            f"outputs.metrics.expected_{self.comparison_field}", ""
-                        ),
-                        f"actual_{self.comparison_field}": row.get(
-                            f"outputs.metrics.actual_{self.comparison_field}", ""
-                        ),
+                        "correct": row.get("outputs.metrics.correct_action", False),
+                        "expected_action": row.get("outputs.metrics.expected_action", ""),
+                        "actual_action": row.get("outputs.metrics.actual_action", ""),
                         "score": row.get("outputs.metrics.score", 0),
                     }
 
                     run_summary["test_results"].append(test_result)
                     run_summary["total_tests"] += 1
+                    run_summary["max_score"] += 100
 
                     if test_result["correct"]:
-                        run_summary[f"{self.correct_field_name}s"] += 1
+                        run_summary["correct_actions"] += 1
+                        run_summary["sum_score"] += test_result["score"]
 
-                    # Track breakdown by comparison field
-                    expected_val = test_result[f"expected_{self.comparison_field}"]
-                    if expected_val in run_summary[f"{self.comparison_field}_breakdown"]:
-                        run_summary[f"{self.comparison_field}_breakdown"][expected_val]["total"] += 1
+                    # Track breakdown by action
+                    expected_val = test_result["expected_action"]
+                    if expected_val in run_summary["action_breakdown"]:
+                        run_summary["action_breakdown"][expected_val]["total"] += 1
                         if test_result["correct"]:
-                            run_summary[f"{self.comparison_field}_breakdown"][expected_val]["correct"] += 1
+                            run_summary["action_breakdown"][expected_val]["correct"] += 1
 
                 run_summary["accuracy"] = (
-                    (run_summary[f"{self.correct_field_name}s"] / run_summary["total_tests"]) * 100
-                    if run_summary["total_tests"] > 0
-                    else 0
+                    (run_summary["sum_score"] / run_summary["max_score"]) * 100 if run_summary["max_score"] > 0 else 0
                 )
                 all_results[file_name].append(run_summary)
 
@@ -642,15 +657,15 @@ class PromptyEvaluator(BaseEvaluator):
 
         for file_name, results in processed_results.items():
             accuracy = results["accuracy"]
-            correct = results[f"{self.correct_field_name}s"]
+            correct = results["correct_actions"]
             total = results["total_tests"]
 
             print("====================================================")
             print(f"\n\n✨ {file_name} results:\n")
-            print(f"Overall {self.display_name} Accuracy: {correct}/{total} ({accuracy:.1f}%)\n")
+            print(f"Overall Action Accuracy: {correct}/{total} ({accuracy:.1f}%)\n")
 
             # Show breakdown by category
-            breakdown = results[f"{self.comparison_field}_breakdown"]
+            breakdown = results["action_breakdown"]
             breakdown_rows = []
             for rec_type, stats in breakdown.items():
                 if stats["total"] > 0:
@@ -658,7 +673,7 @@ class PromptyEvaluator(BaseEvaluator):
                     breakdown_rows.append([rec_type, f"{stats['correct']}/{stats['total']}", f"{type_accuracy:.1f}%"])
 
             if breakdown_rows:
-                print(f"{self.display_name} Breakdown:")
+                print(f"Action Breakdown:")
                 print(tabulate(breakdown_rows, headers=["Type", "Correct", "Accuracy"], tablefmt="simple"))
                 print()
 
@@ -668,8 +683,8 @@ class PromptyEvaluator(BaseEvaluator):
                 print("Failed Cases:")
                 for test in failed_cases:
                     print(f"  ❌ {test['testcase']}")
-                    print(f"     Expected {self.display_name}: {test[f'expected_{self.comparison_field}']}")
-                    print(f"     Actual {self.display_name}:   {test[f'actual_{self.comparison_field}']}")
+                    print(f"     Expected Action: {test['expected_action']}")
+                    print(f"     Actual Action:   {test['actual_action']}")
                     print()
 
     def _discover_jsonl_fields(self) -> set[str]:
@@ -709,8 +724,6 @@ class PromptyEvaluator(BaseEvaluator):
         if not raw_config or not isinstance(raw_config, dict):
             return None
 
-        comparison_field = raw_config.get("comparison_field", "action")
-        display_name = raw_config.get("display_name", "Action")
         breakdown_categories = raw_config.get("breakdown_categories", {})
 
         # Validate breakdown_categories structure
@@ -722,7 +735,7 @@ class PromptyEvaluator(BaseEvaluator):
                     raise WorkflowConfigError(f"breakdown_categories.{key} correct/total must be integers")
 
         return EvaluationConfig(
-            comparison_field=comparison_field, display_name=display_name, breakdown_categories=breakdown_categories
+            breakdown_categories=breakdown_categories,
         )
 
 

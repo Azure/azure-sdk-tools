@@ -25,12 +25,12 @@ public class PythonSourceInputProviderTests
     public void Includes_Azure_Directory_When_Present()
     {
         var provider = new PythonSourceInputProvider();
-    using var root = CreateTempPackage();
-    var azureDir = Path.Combine(root.DirectoryPath, "azure");
+        using var root = CreateTempPackage();
+        var azureDir = Path.Combine(root.DirectoryPath, "azure");
         Directory.CreateDirectory(azureDir);
         WriteFile(azureDir, "client.py", "class Client: pass");
 
-    var inputs = provider.Create(root.DirectoryPath);
+        var inputs = provider.Create(root.DirectoryPath);
 
         Assert.Multiple(() =>
         {
@@ -45,9 +45,9 @@ public class PythonSourceInputProviderTests
     public void Throws_When_Azure_Directory_Missing()
     {
         var provider = new PythonSourceInputProvider();
-    using var root = CreateTempPackage();
+        using var root = CreateTempPackage();
 
-    var ex = Assert.Throws<ArgumentException>(() => provider.Create(root.DirectoryPath));
+        var ex = Assert.Throws<ArgumentException>(() => provider.Create(root.DirectoryPath));
         Assert.Multiple(() =>
         {
             Assert.That(ex!.Message, Does.Contain("azure"), "Error message should mention azure directory");
@@ -60,15 +60,15 @@ public class PythonSourceInputProviderTests
     public void Includes_Samples_Directory_When_Present()
     {
         var provider = new PythonSourceInputProvider();
-    using var root = CreateTempPackage();
-    var azureDir = Path.Combine(root.DirectoryPath, "azure");
-    var samplesDir = Path.Combine(root.DirectoryPath, "samples");
+        using var root = CreateTempPackage();
+        var azureDir = Path.Combine(root.DirectoryPath, "azure");
+        var samplesDir = Path.Combine(root.DirectoryPath, "samples");
         Directory.CreateDirectory(azureDir);
         Directory.CreateDirectory(samplesDir);
         WriteFile(azureDir, "client.py", "class Client: pass");
         WriteFile(samplesDir, "sample1.py", "# Sample code");
 
-    var inputs = provider.Create(root.DirectoryPath);
+        var inputs = provider.Create(root.DirectoryPath);
 
         Assert.Multiple(() =>
         {
@@ -85,12 +85,12 @@ public class PythonSourceInputProviderTests
     public void Works_Without_Samples_Directory()
     {
         var provider = new PythonSourceInputProvider();
-    using var root = CreateTempPackage();
-    var azureDir = Path.Combine(root.DirectoryPath, "azure");
+        using var root = CreateTempPackage();
+        var azureDir = Path.Combine(root.DirectoryPath, "azure");
         Directory.CreateDirectory(azureDir);
         WriteFile(azureDir, "client.py", "class Client: pass");
 
-    var inputs = provider.Create(root.DirectoryPath);
+        var inputs = provider.Create(root.DirectoryPath);
 
         Assert.Multiple(() =>
         {
@@ -103,8 +103,8 @@ public class PythonSourceInputProviderTests
     public void Includes_Test_Resources_Files_From_Parent_Directory()
     {
         var provider = new PythonSourceInputProvider();
-    using var parentDirTemp = TempDirectory.Create("azsdk-python-parent");
-    var parentDir = parentDirTemp.DirectoryPath;
+        using var parentDirTemp = TempDirectory.Create("azsdk-python-parent");
+        var parentDir = parentDirTemp.DirectoryPath;
         var packageDir = Path.Combine(parentDir, "package");
         Directory.CreateDirectory(packageDir);
         
@@ -117,7 +117,7 @@ public class PythonSourceInputProviderTests
         File.WriteAllText(testResourcesFile1, "{}");
         File.WriteAllText(testResourcesFile2, "{}");
 
-    var inputs = provider.Create(packageDir);
+        var inputs = provider.Create(packageDir);
 
         Assert.Multiple(() =>
         {
@@ -132,12 +132,12 @@ public class PythonSourceInputProviderTests
     public void Works_Without_Test_Resources_Files()
     {
         var provider = new PythonSourceInputProvider();
-    using var root = CreateTempPackage();
-    var azureDir = Path.Combine(root.DirectoryPath, "azure");
+        using var root = CreateTempPackage();
+        var azureDir = Path.Combine(root.DirectoryPath, "azure");
         Directory.CreateDirectory(azureDir);
         WriteFile(azureDir, "client.py", "class Client: pass");
 
-    var inputs = provider.Create(root.DirectoryPath);
+        var inputs = provider.Create(root.DirectoryPath);
 
         Assert.Multiple(() =>
         {
@@ -150,12 +150,12 @@ public class PythonSourceInputProviderTests
     public void Works_When_Package_Has_No_Parent_Directory()
     {
         var provider = new PythonSourceInputProvider();
-    using var root = CreateTempPackage();
-    var azureDir = Path.Combine(root.DirectoryPath, "azure");
+        using var root = CreateTempPackage();
+        var azureDir = Path.Combine(root.DirectoryPath, "azure");
         Directory.CreateDirectory(azureDir);
         WriteFile(azureDir, "client.py", "class Client: pass");
 
-    var inputs = provider.Create(root.DirectoryPath);
+        var inputs = provider.Create(root.DirectoryPath);
 
         Assert.Multiple(() =>
         {
@@ -168,8 +168,8 @@ public class PythonSourceInputProviderTests
     public void Includes_All_Components_When_Everything_Present()
     {
         var provider = new PythonSourceInputProvider();
-    using var parentDirTemp = TempDirectory.Create("azsdk-python-full");
-    var parentDir = parentDirTemp.DirectoryPath;
+        using var parentDirTemp = TempDirectory.Create("azsdk-python-full");
+        var parentDir = parentDirTemp.DirectoryPath;
         var packageDir = Path.Combine(parentDir, "package");
         Directory.CreateDirectory(packageDir);
         
@@ -186,7 +186,7 @@ public class PythonSourceInputProviderTests
         var testResourcesFile = Path.Combine(parentDir, "test-resources.json");
         File.WriteAllText(testResourcesFile, "{}");
 
-    var inputs = provider.Create(packageDir);
+        var inputs = provider.Create(packageDir);
 
         Assert.Multiple(() =>
         {

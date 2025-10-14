@@ -53,13 +53,12 @@ public class SampleGeneratorToolTests
     [TestCase("java", "src/samples/java", ".java")]
     [TestCase("typescript", "samples-dev", ".ts")]
     [TestCase("python", "samples", ".py")]
-    [TestCase("go", "", ".go")] // go uses root
+    [TestCase("go", "", ".go")]
     public void GenerateSamples_LanguageSpecificOutputPath(string language, string expectedSubPath, string ext)
     {
-        // Arrange fake repo structure for each language (ensure depth sdk/group/service/package)
-    var repoRoot = Directory.CreateTempSubdirectory($"sample-gen-{language}").FullName;
-    // Initialize git repository for GitHelper usage in DotNetPackageInfo
-    Repository.Init(repoRoot);
+        using var tempRepo = TempDirectory.Create($"sample-gen-{language}");
+        var repoRoot = tempRepo.DirectoryPath;
+        Repository.Init(repoRoot);
         var packagePath = Path.Combine(repoRoot, "sdk", "group", "service", "pkg");
         Directory.CreateDirectory(packagePath);
 
@@ -97,7 +96,6 @@ public class SampleGeneratorToolTests
             .Setup(m => m.RunAgentToCompletion(It.IsAny<Microagent<List<GeneratedSample>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(generatedSamples);
 
-        // Replace resolver to return correct IPackageInfo
         var resolverMock = new Mock<ILanguageSpecificResolver<IPackageInfo>>();
         var gitHubServiceMock = new Mock<IGitHubService>();
         var gitLogger = new TestLogger<GitHelper>();
@@ -115,18 +113,18 @@ public class SampleGeneratorToolTests
             if (language == "go") { return new GoPackageInfo(realGitHelper); }
             throw new InvalidOperationException($"Unexpected language value '{language}' in test case.");
         });
-    var sampleCtxResolverMock = new Mock<ILanguageSpecificResolver<ISampleLanguageContext>>();
-    sampleCtxResolverMock.Setup(r => r.Resolve(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(() =>
-    {
-        if (string.IsNullOrWhiteSpace(language)) { throw new InvalidOperationException("Language test parameter was null/empty/whitespace."); }
-        if (language == "dotnet") { return new DotNetSampleLanguageContext(); }
-        if (language == "java") { return new JavaSampleLanguageContext(); }
-        if (language == "python") { return new PythonSampleLanguageContext(); }
-        if (language == "typescript") { return new TypeScriptSampleLanguageContext(); }
-        if (language == "go") { return new GoSampleLanguageContext(); }
-        throw new InvalidOperationException($"Unexpected language value '{language}' in test sample context resolver.");
-    });
-    tool = new SampleGeneratorTool(microagentHostServiceMock.Object, logger, resolverMock.Object, sampleCtxResolverMock.Object);
+        var sampleCtxResolverMock = new Mock<ILanguageSpecificResolver<ISampleLanguageContext>>();
+        sampleCtxResolverMock.Setup(r => r.Resolve(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(() =>
+        {
+            if (string.IsNullOrWhiteSpace(language)) { throw new InvalidOperationException("Language test parameter was null/empty/whitespace."); }
+            if (language == "dotnet") { return new DotNetSampleLanguageContext(); }
+            if (language == "java") { return new JavaSampleLanguageContext(); }
+            if (language == "python") { return new PythonSampleLanguageContext(); }
+            if (language == "typescript") { return new TypeScriptSampleLanguageContext(); }
+            if (language == "go") { return new GoSampleLanguageContext(); }
+            throw new InvalidOperationException($"Unexpected language value '{language}' in test sample context resolver.");
+        });
+        tool = new SampleGeneratorTool(microagentHostServiceMock.Object, logger, resolverMock.Object, sampleCtxResolverMock.Object);
         tool.Initialize(_outputHelper, telemetryServiceMock.Object);
         var command = tool.GetCommandInstances().First();
         int exitCode = command.Invoke($"--prompt \"Do thing\" --package-path {packagePath}");
@@ -163,9 +161,8 @@ public class SampleGeneratorToolTests
     [Test]
     public void GenerateSamples_PromptFilePath_LoadsFileContent()
     {
-        var (_, packagePath) = CreateFakeGoPackage();
-        // Create a temporary markdown file that describes scenarios
-        var promptFile = Path.Combine(Path.GetTempPath(), $"prompt-{Guid.NewGuid():N}.md");
+        var (repoRoot, packagePath) = CreateFakeGoPackage();
+        var promptFile = Path.Combine(repoRoot, "prompt.md");
         File.WriteAllText(promptFile, "# Scenarios\n1) Create key\n2) List keys\n");
 
         Microagent<List<GeneratedSample>>? captured = null;
@@ -183,11 +180,9 @@ public class SampleGeneratorToolTests
             Assert.That(captured, Is.Not.Null, "Microagent should have been invoked");
         });
 
-        // Verify the enhanced prompt includes content from the markdown file
         Assert.That(captured!.Instructions, Does.Contain("Create key"));
         Assert.That(captured.Instructions, Does.Contain("List keys"));
 
-        // Verify generated sample file was created using returned sample
         var sampleFile = Path.Combine(packagePath, "create_key.go");
         Assert.That(File.Exists(sampleFile), Is.True, $"Expected generated sample file '{sampleFile}'");
     }
@@ -195,8 +190,8 @@ public class SampleGeneratorToolTests
     [Test]
     public void GenerateSamples_PromptFilePath_Nonexistent_FallsBackToRawText()
     {
-        var (_, packagePath) = CreateFakeGoPackage();
-        var missingPromptPath = Path.Combine(Path.GetTempPath(), $"noexist-{Guid.NewGuid():N}.md"); // do not create file
+        var (repoRoot, packagePath) = CreateFakeGoPackage();
+        var missingPromptPath = Path.Combine(repoRoot, "nonexistent-prompt.md");
 
         Microagent<List<GeneratedSample>>? captured = null;
         microagentHostServiceMock
@@ -213,7 +208,6 @@ public class SampleGeneratorToolTests
             Assert.That(captured, Is.Not.Null);
         });
 
-        // Should fall back to raw prompt text (the path string itself)
         Assert.That(captured!.Instructions, Does.Contain(missingPromptPath));
     }
 
@@ -229,7 +223,6 @@ public class SampleGeneratorToolTests
         int exitCode = command.Invoke($"--prompt \"Do thing\" --package-path {packagePath}");
         Assert.That(exitCode, Is.EqualTo(0));
 
-        // Expect slashes replaced by underscores and proper .go extension
         var expectedFile = Path.Combine(packagePath, "nested_folder_sample-name.go");
         Assert.That(File.Exists(expectedFile), Is.True, $"Expected sanitized file '{expectedFile}' to be created");
     }
@@ -240,9 +233,9 @@ public class SampleGeneratorToolTests
         var (_, packagePath) = CreateFakeGoPackage();
         var samples = new List<GeneratedSample>
         {
-            new("", "package main\nfunc main(){}"), // empty filename -> skip
-            new("valid", ""), // empty content -> skip
-            new("ok_sample", "package main\nfunc main(){ println(\"hi\") }") // valid
+            new("", "package main\nfunc main(){}"),
+            new("valid", ""),
+            new("ok_sample", "package main\nfunc main(){ println(\"hi\") }")
         };
         microagentHostServiceMock
             .Setup(m => m.RunAgentToCompletion(It.IsAny<Microagent<List<GeneratedSample>>>(), It.IsAny<CancellationToken>()))
@@ -252,7 +245,7 @@ public class SampleGeneratorToolTests
         int exitCode = command.Invoke($"--prompt \"Do thing\" --package-path {packagePath}");
         Assert.That(exitCode, Is.EqualTo(0));
 
-        var skippedEmptyName = Path.Combine(packagePath, ".go"); // would have been name .go if not skipped
+        var skippedEmptyName = Path.Combine(packagePath, ".go");
         Assert.That(File.Exists(skippedEmptyName), Is.False, "File with empty name should not be created");
         var skippedEmptyContent = Path.Combine(packagePath, "valid.go");
         Assert.That(File.Exists(skippedEmptyContent), Is.False, "File with empty content should not be created");
@@ -265,8 +258,8 @@ public class SampleGeneratorToolTests
     [Test]
     public void GenerateSamples_PackageInfoResolverReturnsNull_ReturnsError()
     {
-        var tempDir = Directory.CreateTempSubdirectory("null-resolver-repo").FullName;
-        var pkgPath = Path.Combine(tempDir, "sdk", "group", "service", "pkg");
+        using var tempDir = TempDirectory.Create("null-resolver-repo");
+        var pkgPath = Path.Combine(tempDir.DirectoryPath, "sdk", "group", "service", "pkg");
         Directory.CreateDirectory(pkgPath);
 
         var nullResolver = new Mock<ILanguageSpecificResolver<IPackageInfo>>();
@@ -279,7 +272,7 @@ public class SampleGeneratorToolTests
         var command = errorTool.GetCommandInstances().First();
         int exitCode = command.Invoke($"--prompt \"Anything\" --package-path {pkgPath}");
         Assert.That(exitCode, Is.EqualTo(1));
-    var error = _outputHelper.Outputs.FirstOrDefault(o => o.Stream == OutputHelper.StreamType.Stdout || o.Stream == OutputHelper.StreamType.Stderr).Output;
+        var error = _outputHelper.Outputs.FirstOrDefault(o => o.Stream == OutputHelper.StreamType.Stdout || o.Stream == OutputHelper.StreamType.Stderr).Output;
         Assert.That(error, Does.Contain("validation errors"));
         Assert.That(error, Does.Contain("Unable to determine language"));
     }
@@ -304,7 +297,7 @@ public class SampleGeneratorToolTests
     public void GenerateSamples_MultilinePrompt_NotTreatedAsFile()
     {
         var (_, packagePath) = CreateFakeGoPackage();
-        var multilinePrompt = "First line\nSecond line"; // contains newline -> should not be interpreted as file path
+        var multilinePrompt = "First line\nSecond line";
         Microagent<List<GeneratedSample>>? captured = null;
         microagentHostServiceMock
             .Setup(m => m.RunAgentToCompletion(It.IsAny<Microagent<List<GeneratedSample>>>(), It.IsAny<CancellationToken>()))
@@ -323,13 +316,13 @@ public class SampleGeneratorToolTests
         logger = new TestLogger<SampleGeneratorTool>();
         _outputHelper = new OutputHelper();
         microagentHostServiceMock = new Mock<IMicroagentHostService>();
-    telemetryServiceMock = new Mock<ITelemetryService>();
+        telemetryServiceMock = new Mock<ITelemetryService>();
         var packageInfoResolverMock = new Mock<ILanguageSpecificResolver<IPackageInfo>>();
         packageInfoResolverMock
             .Setup(r => r.Resolve(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync((string p, CancellationToken _) => new GoPackageInfo(new GitHelper(new Mock<IGitHubService>().Object, new TestLogger<GitHelper>()))); // defer Init to tool
-    var sampleCtxResolverMock = new Mock<ILanguageSpecificResolver<ISampleLanguageContext>>();
-    sampleCtxResolverMock.Setup(r => r.Resolve(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(new GoSampleLanguageContext());
+                .ReturnsAsync((string p, CancellationToken _) => new GoPackageInfo(new GitHelper(new Mock<IGitHubService>().Object, new TestLogger<GitHelper>())));
+        var sampleCtxResolverMock = new Mock<ILanguageSpecificResolver<ISampleLanguageContext>>();
+        sampleCtxResolverMock.Setup(r => r.Resolve(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(new GoSampleLanguageContext());
         tool = new SampleGeneratorTool(
             microagentHostServiceMock.Object,
             logger,
@@ -340,29 +333,22 @@ public class SampleGeneratorToolTests
         tool.Initialize(_outputHelper, telemetryServiceMock.Object);
     }
 
-        private static (string repoRoot, string packagePath) CreateFakeGoPackage()
+    private (string repoRoot, string packagePath) CreateFakeGoPackage()
     {
-        var repoRoot = Directory.CreateTempSubdirectory("sample-gen-repo").FullName;
-            var packagePath = Path.Combine(repoRoot, "sdk", "security", "keys", "azkeys");
+        var tempDir = TempDirectory.Create("sample-gen-repo");
+        var repoRoot = tempDir.DirectoryPath;
+        var packagePath = Path.Combine(repoRoot, "sdk", "security", "keys", "azkeys");
         Directory.CreateDirectory(packagePath);
         if (!Directory.Exists(Path.Combine(repoRoot, ".git")))
         {
-            LibGit2Sharp.Repository.Init(repoRoot);
+            Repository.Init(repoRoot);
         }
         File.WriteAllText(Path.Combine(packagePath, "client.go"), "package azkeys\n// minimal source for tests\nfunc noop() {}\n");
-        // Add Language-Settings.ps1 for Go detection
         var engScripts = Path.Combine(repoRoot, "eng", "scripts");
         Directory.CreateDirectory(engScripts);
         File.WriteAllText(Path.Combine(engScripts, "Language-Settings.ps1"), "$Language = 'Go'\n");
         return (repoRoot, packagePath);
     }
-
-    [TearDown]
-    public void TearDown()
-    {
-        // Best-effort cleanup for any temp repos created in tests
-    }
-
     [Test]
     public async Task GenerateSamples_CreatesFiles()
     {
@@ -377,11 +363,11 @@ public class SampleGeneratorToolTests
             .ReturnsAsync(generatedSamples);
 
         var command = tool.GetCommandInstances().First();
-    int exitCode = command.Invoke($"--prompt \"List keys\" --package-path {packagePath}");
+        int exitCode = command.Invoke($"--prompt \"List keys\" --package-path {packagePath}");
 
         Assert.That(exitCode, Is.EqualTo(0), "Command should succeed");
 
-        var expectedFile = Path.Combine(packagePath, "retrieve_keys.go"); // go uses package root as samples dir
+        var expectedFile = Path.Combine(packagePath, "retrieve_keys.go");
         Assert.That(File.Exists(expectedFile), Is.True, $"Expected sample file '{expectedFile}' to be created");
         var content = await File.ReadAllTextAsync(expectedFile);
         Assert.That(content, Does.Contain("println"));
@@ -404,7 +390,7 @@ public class SampleGeneratorToolTests
             .ReturnsAsync(generatedSamples);
 
         var command = tool.GetCommandInstances().First();
-    int exitCode = command.Invoke($"--prompt \"List keys\" --package-path {packagePath}");
+        int exitCode = command.Invoke($"--prompt \"List keys\" --package-path {packagePath}");
 
         Assert.That(exitCode, Is.EqualTo(0));
         var finalContent = await File.ReadAllTextAsync(existingFile);
@@ -428,7 +414,7 @@ public class SampleGeneratorToolTests
             .ReturnsAsync(generatedSamples);
 
         var command = tool.GetCommandInstances().First();
-    int exitCode = command.Invoke($"--prompt \"List keys\" --package-path {packagePath} --overwrite");
+        int exitCode = command.Invoke($"--prompt \"List keys\" --package-path {packagePath} --overwrite");
 
         Assert.That(exitCode, Is.EqualTo(0));
         var finalContent = await File.ReadAllTextAsync(existingFile);
@@ -446,7 +432,7 @@ public class SampleGeneratorToolTests
             .ReturnsAsync([]);
 
         var command = tool.GetCommandInstances().First();
-    int exitCode = command.Invoke($"--prompt \"List keys\" --package-path {packagePath}");
+        int exitCode = command.Invoke($"--prompt \"List keys\" --package-path {packagePath}");
 
         Assert.That(exitCode, Is.EqualTo(0));
         var after = Directory.GetFiles(packagePath, "*.go").ToHashSet();
@@ -457,10 +443,11 @@ public class SampleGeneratorToolTests
     [Test]
     public void HandleCommand_InvalidPackagePath_ReturnsError()
     {
-        var invalidPath = Directory.CreateTempSubdirectory("invalid-sample-gen").FullName; // missing sdk segment
+        using var invalidTemp = TempDirectory.Create("invalid-sample-gen");
+        var invalidPath = invalidTemp.DirectoryPath;
 
         var command = tool.GetCommandInstances().First();
-    int exitCode = command.Invoke($"--prompt \"List keys\" --package-path {invalidPath}");
+        int exitCode = command.Invoke($"--prompt \"List keys\" --package-path {invalidPath}");
 
         Assert.Multiple(() =>
         {

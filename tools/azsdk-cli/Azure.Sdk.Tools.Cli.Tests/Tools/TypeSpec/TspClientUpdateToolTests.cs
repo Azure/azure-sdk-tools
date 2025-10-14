@@ -49,8 +49,8 @@ public class TspClientUpdateToolAutoTests
         var resolver = new SingleResolver(svc);
         var tsp = new MockTspHelper();
         var tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), resolver, tsp);
-    using var pkg = TempDirectory.Create("azsdk-test");
-    var run = await tool.UpdateAsync("0123456789abcdef0123456789abcdef01234567", packagePath: pkg.DirectoryPath, ct: CancellationToken.None);
+        using var pkg = TempDirectory.Create("azsdk-test");
+        var run = await tool.UpdateAsync("0123456789abcdef0123456789abcdef01234567", packagePath: pkg.DirectoryPath, ct: CancellationToken.None);
         Assert.That(run.Session, Is.Not.Null, "Session should be created");
         Assert.That(run.Session!.LastStage, Is.EqualTo(UpdateStage.Validated), "No changes now proceed through validation");
     // Slim model: no stored API change count; reaching Validated implies no changes or all handled.
@@ -63,8 +63,8 @@ public class TspClientUpdateToolAutoTests
         var resolver = new SingleResolver(svc);
         var tsp = new MockTspHelper();
         var tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), resolver, tsp);
-    using var pkg = TempDirectory.Create("azsdk-test");
-    var first = await tool.UpdateAsync("89abcdef0123456789abcdef0123456789abcdef", packagePath: pkg.DirectoryPath, ct: CancellationToken.None);
+        using var pkg = TempDirectory.Create("azsdk-test");
+        var first = await tool.UpdateAsync("89abcdef0123456789abcdef0123456789abcdef", packagePath: pkg.DirectoryPath, ct: CancellationToken.None);
         Assert.That(first.Session, Is.Not.Null);
         Assert.That(first.Session.LastStage, Is.EqualTo(UpdateStage.Validated), "Single-pass should reach validated");
     }
@@ -76,8 +76,8 @@ public class TspClientUpdateToolAutoTests
         var tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), new SingleResolver(new MockNoChangeLanguageService()), tsp);
         int calls = 0; var svc = new TestLanguageServiceFailThenFix(() => calls++);
         tool = new TspClientUpdateTool(new NullLogger<TspClientUpdateTool>(), new SingleResolver(svc), tsp);
-    using var pkg = TempDirectory.Create("azsdk-test");
-    var resp = await tool.UpdateAsync("fedcba9876543210fedcba9876543210fedcba98", packagePath: pkg.DirectoryPath, ct: CancellationToken.None);
+        using var pkg = TempDirectory.Create("azsdk-test");
+        var resp = await tool.UpdateAsync("fedcba9876543210fedcba9876543210fedcba98", packagePath: pkg.DirectoryPath, ct: CancellationToken.None);
         Assert.That(resp.Session, Is.Not.Null);
         Assert.That(resp.Session!.LastStage, Is.EqualTo(UpdateStage.Validated));
         Assert.That(resp.Session.RequiresManualIntervention, Is.False);

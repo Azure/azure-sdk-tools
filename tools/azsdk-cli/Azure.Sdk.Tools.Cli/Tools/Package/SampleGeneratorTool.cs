@@ -33,7 +33,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
         private readonly Option<string> promptOption = new(
             name: "--prompt",
-            getDefaultValue: () => "Generate a sample",
             description: "Prompt to use for the sample generation. It is either a path to a .md file containing the sample description, or a text prompt")
         {
             IsRequired = true,

@@ -21,7 +21,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         private Mock<IMicroagentHostService> _mockMicroagentHostService;
         private LanguageChecks _languageChecks;
         private PackageCheckTool _packageCheckTool;
-    private TempDirectory _testProjectPath;
+        private TempDirectory _testProjectPath;
 
         [SetUp]
         public void Setup()

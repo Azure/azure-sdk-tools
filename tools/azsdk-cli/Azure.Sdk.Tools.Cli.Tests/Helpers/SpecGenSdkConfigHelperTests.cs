@@ -64,7 +64,7 @@ public class SpecGenSdkConfigHelperTests
         File.WriteAllText(_configFilePath, JsonSerializer.Serialize(configContent, new JsonSerializerOptions { WriteIndented = true }));
 
         // Act
-    var result = await _helper.GetBuildConfigurationAsync(_tempDirectory.DirectoryPath);
+        var result = await _helper.GetBuildConfigurationAsync(_tempDirectory.DirectoryPath);
 
         // Assert
         Assert.That(result.type, Is.EqualTo(BuildConfigType.Command));
@@ -88,7 +88,7 @@ public class SpecGenSdkConfigHelperTests
         File.WriteAllText(_configFilePath, JsonSerializer.Serialize(configContent, new JsonSerializerOptions { WriteIndented = true }));
 
         // Act
-    var result = await _helper.GetBuildConfigurationAsync(_tempDirectory.DirectoryPath);
+        var result = await _helper.GetBuildConfigurationAsync(_tempDirectory.DirectoryPath);
 
         // Assert
         Assert.That(result.type, Is.EqualTo(BuildConfigType.ScriptPath));
@@ -113,7 +113,7 @@ public class SpecGenSdkConfigHelperTests
         File.WriteAllText(_configFilePath, JsonSerializer.Serialize(configContent, new JsonSerializerOptions { WriteIndented = true }));
 
         // Act
-    var result = await _helper.GetBuildConfigurationAsync(_tempDirectory.DirectoryPath);
+        var result = await _helper.GetBuildConfigurationAsync(_tempDirectory.DirectoryPath);
 
         // Assert
         Assert.That(result.type, Is.EqualTo(BuildConfigType.Command));
@@ -134,7 +134,7 @@ public class SpecGenSdkConfigHelperTests
         File.WriteAllText(_configFilePath, JsonSerializer.Serialize(configContent, new JsonSerializerOptions { WriteIndented = true }));
 
         // Act & Assert
-    var ex = Assert.ThrowsAsync<InvalidOperationException>(() => _helper.GetBuildConfigurationAsync(_tempDirectory.DirectoryPath));
+        var ex = Assert.ThrowsAsync<InvalidOperationException>(() => _helper.GetBuildConfigurationAsync(_tempDirectory.DirectoryPath));
         Assert.That(ex.Message, Does.Contain("Neither 'packageOptions/buildScript/command' nor 'packageOptions/buildScript/path' found"));
     }
 
@@ -142,7 +142,7 @@ public class SpecGenSdkConfigHelperTests
     public void GetBuildConfigurationAsync_ConfigFileNotFound_ThrowsException()
     {
         // Act & Assert
-    var ex = Assert.ThrowsAsync<FileNotFoundException>(() => _helper.GetBuildConfigurationAsync(_tempDirectory.DirectoryPath));
+        var ex = Assert.ThrowsAsync<FileNotFoundException>(() => _helper.GetBuildConfigurationAsync(_tempDirectory.DirectoryPath));
         Assert.That(ex.Message, Does.Contain("Configuration file not found"));
     }
 
@@ -167,7 +167,7 @@ public class SpecGenSdkConfigHelperTests
         File.WriteAllText(_configFilePath, JsonSerializer.Serialize(configContent, new JsonSerializerOptions { WriteIndented = true }));
 
         // Act
-    var result = await _helper.GetConfigValueFromRepoAsync<string>(_tempDirectory.DirectoryPath, BuildCommandJsonPath);
+        var result = await _helper.GetConfigValueFromRepoAsync<string>(_tempDirectory.DirectoryPath, BuildCommandJsonPath);
 
         // Assert
         Assert.That(result, Is.EqualTo("dotnet build {packagePath}"));
@@ -188,7 +188,7 @@ public class SpecGenSdkConfigHelperTests
         File.WriteAllText(_configFilePath, JsonSerializer.Serialize(configContent, new JsonSerializerOptions { WriteIndented = true }));
 
         // Act
-    var result = await _helper.GetConfigValueFromRepoAsync<Dictionary<string, string>>(_tempDirectory.DirectoryPath, "packageOptions/buildOptions");
+        var result = await _helper.GetConfigValueFromRepoAsync<Dictionary<string, string>>(_tempDirectory.DirectoryPath, "packageOptions/buildOptions");
 
         // Assert
         Assert.That(result["configuration"], Is.EqualTo("Release"));
@@ -203,7 +203,7 @@ public class SpecGenSdkConfigHelperTests
         File.WriteAllText(_configFilePath, JsonSerializer.Serialize(configContent, new JsonSerializerOptions { WriteIndented = true }));
 
         // Act & Assert
-    var ex = Assert.ThrowsAsync<InvalidOperationException>(() => _helper.GetConfigValueFromRepoAsync<string>(_tempDirectory.DirectoryPath, "nonexistent/path"));
+        var ex = Assert.ThrowsAsync<InvalidOperationException>(() => _helper.GetConfigValueFromRepoAsync<string>(_tempDirectory.DirectoryPath, "nonexistent/path"));
         Assert.That(ex.Message, Does.Contain("Property not found at JSON path"));
     }
 

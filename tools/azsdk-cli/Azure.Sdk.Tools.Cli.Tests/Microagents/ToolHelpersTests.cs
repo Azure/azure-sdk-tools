@@ -78,11 +78,11 @@ internal class ToolHelpersTests
         var relativePath = $"test{Path.DirectorySeparatorChar}test.txt";
 
         // Act
-  var result = ToolHelpers.TryGetSafeFullPath(baseDir.DirectoryPath, relativePath, out var fullPath);
+        var result = ToolHelpers.TryGetSafeFullPath(baseDir.DirectoryPath, relativePath, out var fullPath);
 
         // Assert
         Assert.IsTrue(result);
-  Assert.That(fullPath, Is.EqualTo(Path.Combine(baseDir.DirectoryPath, "test", "test.txt")));
+        Assert.That(fullPath, Is.EqualTo(Path.Combine(baseDir.DirectoryPath, "test", "test.txt")));
     }
 
     [Test]
@@ -92,21 +92,21 @@ internal class ToolHelpersTests
         var relativePath = ".";
 
         // Act
-  var result = ToolHelpers.TryGetSafeFullPath(baseDir.DirectoryPath, relativePath, out var fullPath);
+        var result = ToolHelpers.TryGetSafeFullPath(baseDir.DirectoryPath, relativePath, out var fullPath);
 
         // Assert
         Assert.IsTrue(result);
-  Assert.That(fullPath, Is.EqualTo(baseDir.DirectoryPath));
+        Assert.That(fullPath, Is.EqualTo(baseDir.DirectoryPath));
     }
 
     [Test]
     public void TryGetSafePath_RejectsFullPathOutsideOfPath()
     {
         // Arrange
-  var relativePath = Path.Join(Path.GetPathRoot(Path.GetFullPath(baseDir.DirectoryPath)), "test.txt")!;
+      var relativePath = Path.Join(Path.GetPathRoot(Path.GetFullPath(baseDir.DirectoryPath)), "test.txt")!;
 
         // Act
-  var result = ToolHelpers.TryGetSafeFullPath(baseDir.DirectoryPath, relativePath, out var _);
+      var result = ToolHelpers.TryGetSafeFullPath(baseDir.DirectoryPath, relativePath, out var _);
 
         // Assert
         Assert.IsFalse(result);
@@ -119,7 +119,7 @@ internal class ToolHelpersTests
         var relativePath = Path.Join("..", "test.txt");
 
         // Act
-  var result = ToolHelpers.TryGetSafeFullPath(baseDir.DirectoryPath, relativePath, out var _);
+        var result = ToolHelpers.TryGetSafeFullPath(baseDir.DirectoryPath, relativePath, out var _);
 
         // Assert
         Assert.IsFalse(result);

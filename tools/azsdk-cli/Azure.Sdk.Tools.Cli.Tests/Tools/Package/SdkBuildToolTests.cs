@@ -42,7 +42,7 @@ public class SdkBuildToolTests
         _logger = new TestLogger<SdkBuildTool>();
 
         // Create temp directory for tests
-    _tempDirectory = TempDirectory.Create("SdkBuildToolTests");
+        _tempDirectory = TempDirectory.Create("SdkBuildToolTests");
 
         // Create the tool instance
         _tool = new SdkBuildTool(
@@ -104,7 +104,7 @@ public class SdkBuildToolTests
             .Throws(new Exception(FailedToDiscoverRepoError));
 
         // Act
-    var result = await _tool.BuildSdkAsync(_tempDirectory.DirectoryPath);
+        var result = await _tool.BuildSdkAsync(_tempDirectory.DirectoryPath);
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain(FailedToDiscoverRepoError));
@@ -126,7 +126,7 @@ public class SdkBuildToolTests
             .ThrowsAsync(new InvalidOperationException("Neither 'packageOptions/buildScript/command' nor 'packageOptions/buildScript/path' found in configuration."));
 
         // Act
-    var result = await _tool.BuildSdkAsync(_tempDirectory.DirectoryPath);
+        var result = await _tool.BuildSdkAsync(_tempDirectory.DirectoryPath);
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain("Failed to get build configuration"));
@@ -136,8 +136,8 @@ public class SdkBuildToolTests
     public async Task BuildSdkAsync_InvalidJsonConfig_ReturnsError()
     {
         // Arrange
-    _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory.DirectoryPath)).Returns(_tempDirectory.DirectoryPath);
-    _mockGitHelper.Setup(x => x.GetRepoName(_tempDirectory.DirectoryPath)).Returns("azure-sdk-for-net");
+        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory.DirectoryPath)).Returns(_tempDirectory.DirectoryPath);
+        _mockGitHelper.Setup(x => x.GetRepoName(_tempDirectory.DirectoryPath)).Returns("azure-sdk-for-net");
         _mockGitHelper
             .Setup(x => x.GetRepoRemoteUri(_tempDirectory.DirectoryPath))
             .Returns(new Uri("https://github.com/Azure/azure-sdk-for-net.git"));
@@ -148,7 +148,7 @@ public class SdkBuildToolTests
             .ThrowsAsync(new InvalidOperationException("Error parsing JSON configuration: Invalid JSON"));
 
         // Act
-    var result = await _tool.BuildSdkAsync(_tempDirectory.DirectoryPath);
+        var result = await _tool.BuildSdkAsync(_tempDirectory.DirectoryPath);
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain("Failed to get build configuration"));
@@ -162,8 +162,8 @@ public class SdkBuildToolTests
     public async Task BuildSdkAsync_ConfigurationFileNotFound_ReturnsError()
     {
         // Arrange
-    _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory.DirectoryPath)).Returns(_tempDirectory.DirectoryPath);
-    _mockGitHelper.Setup(x => x.GetRepoName(_tempDirectory.DirectoryPath)).Returns("azure-sdk-for-net");
+        _mockGitHelper.Setup(x => x.DiscoverRepoRoot(_tempDirectory.DirectoryPath)).Returns(_tempDirectory.DirectoryPath);
+        _mockGitHelper.Setup(x => x.GetRepoName(_tempDirectory.DirectoryPath)).Returns("azure-sdk-for-net");
         _mockGitHelper
             .Setup(x => x.GetRepoRemoteUri(_tempDirectory.DirectoryPath))
             .Returns(new Uri("https://github.com/Azure/azure-sdk-for-net.git"));
@@ -174,13 +174,13 @@ public class SdkBuildToolTests
             .ThrowsAsync(new FileNotFoundException("Configuration file not found"));
 
         // Act
-    var result = await _tool.BuildSdkAsync(_tempDirectory.DirectoryPath);
+        var result = await _tool.BuildSdkAsync(_tempDirectory.DirectoryPath);
 
         // Assert
         Assert.That(result.ResponseErrors?.First(), Does.Contain("Configuration file not found"));
-    _mockGitHelper.Verify(x => x.DiscoverRepoRoot(_tempDirectory.DirectoryPath), Times.Once);
-    _mockGitHelper.Verify(x => x.GetRepoName(_tempDirectory.DirectoryPath), Times.Once);
-    _mockSpecGenSdkConfigHelper.Verify(x => x.GetBuildConfigurationAsync(_tempDirectory.DirectoryPath), Times.Once);
+        _mockGitHelper.Verify(x => x.DiscoverRepoRoot(_tempDirectory.DirectoryPath), Times.Once);
+        _mockGitHelper.Verify(x => x.GetRepoName(_tempDirectory.DirectoryPath), Times.Once);
+        _mockSpecGenSdkConfigHelper.Verify(x => x.GetBuildConfigurationAsync(_tempDirectory.DirectoryPath), Times.Once);
     }
 
     #endregion

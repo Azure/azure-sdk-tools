@@ -12,8 +12,8 @@ public class GoSourceInputProviderTests
     public void Create_Returns_Single_Input_With_Go_Extension()
     {
         var provider = new GoSourceInputProvider();
-    using var temp = TempDirectory.Create("azsdk-go-test");
-    var packagePath = temp.DirectoryPath;
+        using var temp = TempDirectory.Create("azsdk-go-test");
+        var packagePath = temp.DirectoryPath;
 
         var inputs = provider.Create(packagePath);
 
@@ -30,8 +30,7 @@ public class GoSourceInputProviderTests
     public void Create_Does_Not_Require_Existing_Path()
     {
         var provider = new GoSourceInputProvider();
-    var nonExistentPath = Path.Combine(Path.GetTempPath(), "azsdk-go-missing-" + Guid.NewGuid().ToString("N"));
-        // Intentionally do NOT create the directory
+        var nonExistentPath = Path.Combine(Path.GetTempPath(), "azsdk-go-missing-" + Guid.NewGuid().ToString("N"));
 
         var inputs = provider.Create(nonExistentPath);
 
@@ -47,10 +46,10 @@ public class GoSourceInputProviderTests
     public void Create_Returns_New_List_Instance_On_Each_Call()
     {
         var provider = new GoSourceInputProvider();
-    using var temp1 = TempDirectory.Create("azsdk-go-test1");
-    using var temp2 = TempDirectory.Create("azsdk-go-test2");
-    var path1 = temp1.DirectoryPath;
-    var path2 = temp2.DirectoryPath;
+        using var temp1 = TempDirectory.Create("azsdk-go-test1");
+        using var temp2 = TempDirectory.Create("azsdk-go-test2");
+        var path1 = temp1.DirectoryPath;
+        var path2 = temp2.DirectoryPath;
 
         var first = provider.Create(path1);
         var second = provider.Create(path2);

@@ -42,7 +42,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
         _logger = logger;
     }
 
-    public async Task<CLICheckResponse> FormatCodeAsync(string packagePath, bool fix = false, CancellationToken cancellationToken = default)
+    public async Task<CLICheckResponse> FormatCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -58,7 +58,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
 
 
             // Determine the Maven goal based on fix parameter
-            var goal = fix ? "spotless:apply" : "spotless:check";
+            var goal = fixCheckErrors ? "spotless:apply" : "spotless:check";
             var command = "mvn";
             var args = new[] { goal, "-f", pomPath };
 
@@ -66,17 +66,17 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
 
             if (result.ExitCode == 0)
             {
-                var message = fix ? "Code formatting applied successfully" : "Code formatting check passed - all files are properly formatted";
+                var message = fixCheckErrors ? "Code formatting applied successfully" : "Code formatting check passed - all files are properly formatted";
                 _logger.LogInformation(message);
                 return new CLICheckResponse(result.ExitCode, message);
             }
             else
             {
-                var errorMessage = fix ? "Code formatting failed to apply" : "Code formatting check failed - some files need formatting";
+                var errorMessage = fixCheckErrors ? "Code formatting failed to apply" : "Code formatting check failed - some files need formatting";
                 _logger.LogWarning("{ErrorMessage} with exit code {ExitCode}", errorMessage, result.ExitCode);
 
                 var output = result.Output;
-                var nextSteps = fix ?
+                var nextSteps = fixCheckErrors ?
                     "Review the error output and check if spotless-maven-plugin is properly configured in the pom.xml" :
                     "Run with --fix flag to automatically format code, or run 'mvn spotless:apply' manually";
 
@@ -96,11 +96,11 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
         }
     }
 
-    public async Task<CLICheckResponse> LintCodeAsync(string packagePath, bool fix = false, CancellationToken cancellationToken = default)
+    public async Task<CLICheckResponse> LintCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Starting code linting for Java project at: {PackagePath} (Fix: {Fix})", packagePath, fix);
+            _logger.LogInformation("Starting code linting for Java project at: {PackagePath} (Fix: {Fix})", packagePath, fixCheckErrors);
 
             // Validate Maven and POM prerequisites
             var pomPath = Path.Combine(packagePath, "pom.xml");

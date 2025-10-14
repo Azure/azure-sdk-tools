@@ -226,6 +226,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             try
             {
                 sdkReleaseType = sdkReleaseType?.ToLower() ?? "";
+                switch (sdkReleaseType)
+                {
+                    case "ga":
+                        sdkReleaseType = "stable";
+                        break;
+
+                    case "preview":
+                        sdkReleaseType = "beta";
+                        break;
+                }
+                
                 ValidateCreateReleasePlanInputAsync(typeSpecProjectPath, serviceTreeId, productTreeId, specPullRequestUrl, sdkReleaseType, specApiVersion);
 
                 // Check for existing release plan for the given pull request URL.

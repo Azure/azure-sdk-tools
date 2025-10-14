@@ -7,6 +7,7 @@ param azureTableNameForConversation string
 // RAG
 @secure()
 param ragApiKey string
+param ragScope string
 
 // Resources
 @maxLength(20)
@@ -135,6 +136,10 @@ resource webApp 'Microsoft.Web/sites@2021-02-01' = {
         {
           name: 'RAG_API_KEY'
           value: ragApiKey
+        }
+        {
+          name: 'RAG_SERVICE_SCOPE'
+          value: ragScope
         }
         // Azure Table
         {

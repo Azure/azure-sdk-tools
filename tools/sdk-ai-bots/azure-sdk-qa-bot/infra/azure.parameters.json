@@ -14,6 +14,9 @@
     "ragApiKey": {
       "value": "${{SECRET_RAG_API_KEY}}"
     },
+    "ragScope": {
+      "value": "${{RAG_SERVICE_SCOPE}}"
+    },
     "webAppSKU": {
       "value": "B3"
     },

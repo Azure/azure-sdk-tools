@@ -30,6 +30,7 @@ export class RAGModel implements PromptCompletionModel {
     const credential = new ManagedIdentityCredential(userAssignedClientId);
 
     try {
+      logger.info(`get Access Token for ${userAssignedClientId}, scope ${scope}`);
       const token = await credential.getToken(scope);
       logger.info(`Succeed to get Access Token for ${userAssignedClientId}`);
       return token;

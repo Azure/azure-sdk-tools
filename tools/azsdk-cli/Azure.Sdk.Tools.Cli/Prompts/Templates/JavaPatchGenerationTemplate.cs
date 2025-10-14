@@ -63,7 +63,7 @@ public class JavaPatchGenerationTemplate : BasePromptTemplate
     private string BuildTaskInstructions()
     {
         var tspChangeContext = !string.IsNullOrEmpty(_commitSha) 
-            ? $"## TSP CHANGE CONTEXT:\nTypeSpec changes: https://github.com/Azure/azure-rest-api-specs/commit/{_commitSha}\n**Chain Reasoning**: Can trace through TSP change → generated code → customization impact\n\n" 
+            ? $"## TSP CHANGE CONTEXT:\nTypeSpec changes from commit: {_commitSha}\n**Analysis Focus**: Compare OLD vs NEW generated code to identify what changed in the TypeSpec that impacts customization\n\n" 
             : "";
 
         return $"""
@@ -94,7 +94,7 @@ public class JavaPatchGenerationTemplate : BasePromptTemplate
         1. **Compare OLD vs NEW**: Find what changed (method names, parameter names, class names)
         2. **Use ReadFile tool**: Examine customization files to find OLD names
         3. **Use ClientCustomizationCodePatch tool**: Apply patches to update OLD names to NEW names
-        4. **Reference TSP context**: Use the commit link above to understand the root cause of changes
+        4. **Trace impact**: The changes stem from TypeSpec commit {_commitSha} - focus on concrete differences in the provided code
         
         ## Common changes to look for:
         - Parameter name changes: `getParameterByName("oldName")` → `getParameterByName("newName")`

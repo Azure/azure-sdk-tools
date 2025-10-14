@@ -80,6 +80,19 @@ def _filter_comment_metadata(testcase: str, response: str, language: str, except
     return {"actual": result}
 
 
+def _filter_existing_comment(testcase: str, response: str, language: str, existing: str, comment: str):
+    prompty_path = Path(__file__).parent.parent / "prompts" / "api_review" / "filter_existing_comment.prompty"
+    prompty_kwargs = {
+        "testcase": testcase,
+        "response": response,
+        "language": language,
+        "existing": existing,
+        "comment": comment,
+    }
+    result = prompty.execute(prompty_path, inputs=prompty_kwargs)
+    return {"actual": result}
+
+
 class BaseEvaluator(ABC):
     """Base class for custom evaluators in the evals framework.
 
@@ -758,6 +771,7 @@ class PromptyEvaluator(BaseEvaluator):
             "mention_action": _mention_action_workflow,
             "thread_resolution_action": _thread_resolution_action_workflow,
             "filter_comment_metadata": _filter_comment_metadata,
+            "filter_existing_comment": _filter_existing_comment,
             # Add more workflows as needed
         }
 

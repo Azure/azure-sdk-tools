@@ -93,18 +93,32 @@ Without a concrete end-to-end scenario, we risk building tools in isolation that
 
 ### Out of scope for V1
 
-- Working with or creating new [SDK code customizations](#code-customizations)
-- Creating new [TypeSpec customizations](#typespec-customizations) ([client.tsp](#client-tsp))
-- Breaking changes
-- Live test execution
-- Test resource management
-- Linux/macOS support
-- First preview version
-- GA version
-- Committing changes to repositories
-- Creating or merging pull requests
-- Release management
-- Publishing packages to package managers
+**Development Complexity:**
+
+- **Working with or creating new [SDK code customizations](#code-customizations)** - Eliminates the complexity of merging newly generated code with existing custom code
+- **Creating new [TypeSpec customizations](#typespec-customizations) ([client.tsp](#client-tsp))** - Limits scope; we're not focusing on helping authors create code customizations or client.tsp customizations at this stage
+
+**Review Requirements:**
+
+- **Breaking changes** - Ensures we don't trigger review requirements when moving towards release
+- **First preview version** - Requires architect board review, adding complexity beyond V1 scope
+- **GA version** - Requires architect board review, adding complexity beyond V1 scope
+
+**Resource Management:**
+
+- **Live test execution** - Eliminates the need to manage Azure test resources
+- **Test resource management** - Eliminates the complexity of managing Azure resources for this milestone
+
+**Platform Scope:**
+
+- **Linux/macOS support** - Focuses requirements on a single OS (Windows) to limit initial scope
+
+**Outer Loop Activities:**
+
+- **Committing changes to repositories** - V1 focuses on local development experience (inner loop), not outer loop integration
+- **Creating or merging pull requests** - V1 focuses on inner loop; PR creation engages with outer loop
+- **Release management** - Outer loop activity beyond V1 scope
+- **Publishing packages to package managers** - Outer loop activity beyond V1 scope
 
 _Note: V1 focuses on local development workflow up to the point where SDKs are ready for PR creation. The outer loop release process is out of scope. This is a test scenario - do not commit changes or create release PRs._
 

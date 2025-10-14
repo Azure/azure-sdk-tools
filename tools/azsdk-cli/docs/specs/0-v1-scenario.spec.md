@@ -82,7 +82,7 @@ Without a concrete end-to-end scenario, we risk building tools in isolation that
 
 ### In Scope for V1
 
-- **All five languages** (.NET, Java, JavaScript, Python, Go) - no exceptions, all must pass
+- **All 5 languages** (.NET, Java, JavaScript, Python, Go) - no exceptions, all must pass
 - **[Preview release](#preview-release)** (not first preview, no architect review required)
 - **[TypeSpec](#typespec)-based generation** from Health Deidentification service - creating non-compatible version that ignores existing [code customizations](#code-customizations)
 - **With or without [client.tsp](#client-tsp)** - handles both scenarios

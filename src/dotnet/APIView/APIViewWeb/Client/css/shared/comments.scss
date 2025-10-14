@@ -11,7 +11,7 @@
 }
 
 .comment-thread-contents.new-thread-comment {
-    background-color: #FFF;
+    background-color: var(--base-fg-color);
     border: 0;
     margin: -8px -16px;
 }
@@ -114,10 +114,10 @@
 .review-comment blockquote {
     padding-left: 14px;
     padding-right: 14px;
-    border-left-color: #E9E5E2;
+    border-left-color: var(--border-color);
     border-left-style: solid;
     border-left-width: 3.5px;
-    color: #6A737D;
+    color: var(--text-muted-color);
 }
 
 .review-thread-reply {

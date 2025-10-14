@@ -17,7 +17,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         private Mock<IGitHelper> _mockGitHelper;
         private Mock<ILogger<LanguageChecks>> _mockLanguageChecksLogger;
         private Mock<ILogger<PythonLanguageSpecificChecks>> _mockPythonLogger;
-        private Mock<ILogger<LanguageSpecificCheckResolver>> _mockResolverLogger;
         private Mock<IMicroagentHostService> _mockMicroagentHostService;
         private LanguageChecks _languageChecks;
         private PackageCheckTool _packageCheckTool;
@@ -32,7 +31,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             _mockGitHelper = new Mock<IGitHelper>();
             _mockLanguageChecksLogger = new Mock<ILogger<LanguageChecks>>();
             _mockPythonLogger = new Mock<ILogger<PythonLanguageSpecificChecks>>();
-            _mockResolverLogger = new Mock<ILogger<LanguageSpecificCheckResolver>>();
             _mockMicroagentHostService = new Mock<IMicroagentHostService>();
 
             // Create language-specific check implementations with mocked dependencies
@@ -40,7 +38,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
 
             var languageChecks = new List<ILanguageSpecificChecks> { pythonCheck };
             var mockPowershellHelper = new Mock<IPowershellHelper>();
-            var resolver = new LanguageSpecificCheckResolver(languageChecks, _mockGitHelper.Object, mockPowershellHelper.Object, _mockResolverLogger.Object);
+            var resolver = Mock.Of<ILanguageSpecificResolver<ILanguageSpecificChecks>>();
+            
             _languageChecks = new LanguageChecks(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _mockLanguageChecksLogger.Object, resolver, _mockMicroagentHostService.Object);
             _packageCheckTool = new PackageCheckTool(_mockLogger.Object, _languageChecks);
 

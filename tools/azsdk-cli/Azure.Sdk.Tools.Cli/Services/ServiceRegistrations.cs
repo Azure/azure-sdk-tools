@@ -12,6 +12,8 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services.ClientUpdate;
 using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.Cli.Tools;
+using Azure.Sdk.Tools.Cli.Services.Tests;
+using Azure.Sdk.Tools.Cli.Models;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -32,17 +34,26 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             // Language Check Services (Composition-based)
             services.AddScoped<ILanguageChecks, LanguageChecks>();
-            services.AddScoped<ILanguageSpecificChecks, PythonLanguageSpecificChecks>();
-            services.AddScoped<ILanguageSpecificChecks, JavaLanguageSpecificChecks>();
-            services.AddScoped<ILanguageSpecificChecks, JavaScriptLanguageSpecificChecks>();
-            services.AddScoped<ILanguageSpecificChecks, DotNetLanguageSpecificChecks>();
-            services.AddScoped<ILanguageSpecificChecks, GoLanguageSpecificChecks>();
-            services.AddScoped<ILanguageSpecificCheckResolver, LanguageSpecificCheckResolver>();
+            services.AddLanguageSpecific<ILanguageSpecificChecks>(new LanguageSpecificImplementations
+            {
+                Python = typeof(PythonLanguageSpecificChecks),
+                Java = typeof(JavaLanguageSpecificChecks),
+                JavaScript = typeof(JavaScriptLanguageSpecificChecks),
+                DotNet = typeof(DotNetLanguageSpecificChecks),
+                Go = typeof(GoLanguageSpecificChecks),
+            });
 
             // Client update language services
-            services.AddScoped<IClientUpdateLanguageService, JavaUpdateLanguageService>();
-            services.AddScoped<IClientUpdateLanguageServiceResolver, ClientUpdateLanguageServiceResolver>();
-            // Future: services.AddSingleton<IClientUpdateLanguageService, PythonClientUpdateLanguageService>(); etc.
+            services.AddLanguageSpecific<IClientUpdateLanguageService>(new LanguageSpecificImplementations
+            {
+                Java = typeof(JavaUpdateLanguageService),
+                // Future: Python = typeof(PythonUpdateLanguageService), etc
+            });
+
+            services.AddLanguageSpecific<ITestRunner>(new LanguageSpecificImplementations
+            {
+                JavaScript = typeof(JavaScriptTestRunner),
+            });
 
             // Helper classes
             services.AddSingleton<ILogAnalysisHelper, LogAnalysisHelper>();

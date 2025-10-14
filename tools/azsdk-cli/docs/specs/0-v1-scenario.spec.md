@@ -120,7 +120,7 @@ Without a concrete end-to-end scenario, we risk building tools in isolation that
 - **Release management** - Outer loop activity beyond V1 scope
 - **Publishing packages to package managers** - Outer loop activity beyond V1 scope
 
-_Note: V1 focuses on local development workflow up to the point where SDKs are ready for PR creation. The outer loop release process is out of scope. This is a test scenario - do not commit changes or create release PRs._
+_Note: V1 focuses on local development workflow up to the point where SDKs are ready for PR creation. The outer loop process is out of scope. This is a test scenario - do not commit changes or create release PRs._
 
 ---
 

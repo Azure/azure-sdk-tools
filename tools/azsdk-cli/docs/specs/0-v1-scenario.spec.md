@@ -17,14 +17,15 @@
 
 ## Overview
 
-The V1 scenario defines the end-to-end workflow for generating and releasing [preview SDKs](#preview-release) across all five languages (.NET, Java, JavaScript, Python, Go) using the Health Deidentification service as the test case.
+The V1 scenario defines the end-to-end workflow for generating and validating [preview SDKs](#preview-release) across all five languages (.NET, Java, JavaScript, Python, Go) using the Health Deidentification service as the test case.
 
 **Service**: Health Deidentification
+
 - [Health Deidentification Data Plane Spec](https://github.com/Azure/azure-rest-api-specs/tree/ded7abde9c48ba84df36b53dfcaef48a2c134097/specification/healthdataaiservices/HealthDataAIServices.DeidServices)  
 - [Health Deidentification MGMT Plane Spec](https://github.com/Azure/azure-rest-api-specs/tree/main/specification/healthdataaiservices/HealthDataAIServices.Management)
 
 **Modes**: Works in both [agent mode](#agent-mode) and [CLI mode](#cli-mode)  
-**Goal**: Prove complete SDK local workflow from setup → generate → validate until release
+**Goal**: Prove complete SDK local workflow from setup → generate → validate
 
 ---
 
@@ -100,8 +101,9 @@ Without a concrete end-to-end scenario, we risk building tools in isolation that
 - Linux/macOS support
 - First preview releases
 - GA releases
+- Release management and PR creation
 
-*Note: When testing this scenario, we will not be releasing the versions of the Health Deidentificiation libraries we create. When work on this scenario is completed, services teams should be able to run it all the way to release.*
+*Note: V1 focuses on local development workflow up to the point where SDKs are ready for PR creation. The outer loop release process is out of scope.*
 
 ---
 
@@ -121,10 +123,6 @@ Without a concrete end-to-end scenario, we risk building tools in isolation that
 
 4. Validating → run-pr-checks
    └─ Run all PR CI checks locally to ensure green PR
-
-5. Releasing (Outer Loop) → create-release-plan, create-prs, validate-release, release, close-plan
-   └─ Create release plan → create all PRs → validate readiness → release all → confirm & close
-   └─ All 5 languages released successfully
 ```
 
 ---
@@ -156,19 +154,6 @@ Without a concrete end-to-end scenario, we risk building tools in isolation that
 **Action**: Run all [PR CI checks](#pr-checks) locally before creating PRs  
 **Success**: All checks pass for all languages - PR will be green
 
-### 5. Releasing (Outer Loop)
-
-**Tools**: [Release plan](#release-plan) creation, PR creation, readiness validation, release execution, plan closure  
-**Action**: Complete release workflow:
-
-1. Create [release plan](#release-plan) for all 5 languages
-2. Create all PRs (one per language)
-3. Validate release readiness
-4. Execute release for all languages
-5. Confirm all languages released and close [release plan](#release-plan)
-
-**Success**: All 5 languages released successfully, [release plan](#release-plan) closed
-
 ---
 
 ## Success Criteria
@@ -191,17 +176,18 @@ _Natural language prompts that should work in [agent mode](#agent-mode) when V1 
 ### Full Workflow
 
 **Prompt:**
-```
-I want to release a preview version of the Health Deidentification SDK for all languages. Please verify my setup, generate the SDKs, update package metadata, run all PR checks, and create a release plan.
+
+```text
+I want to prepare a preview version of the Health Deidentification SDK for all languages. Please verify my setup, generate the SDKs, update package metadata, and run all PR checks.
 ```
 
 **Expected Agent Activity:**
+
 1. Execute `verify-setup` for all 5 languages
 2. Execute `generate-sdk` for Health Deidentification service
 3. Execute `update-package` to update versions, changelogs, READMEs
 4. Execute `run-pr-checks` locally to validate all checks pass
-5. Create [release plan](#release-plan) for all languages
-6. Report status and next steps
+5. Report status and next steps
 
 ### Environment Setup
 
@@ -257,19 +243,6 @@ Run all PR checks locally for the Health Deidentification SDKs before I create p
 2. Run build, test, lint, breaking change detection
 3. Report which checks passed and which failed
 4. Provide guidance on fixing any failures
-
-### Create Release Plan
-
-**Prompt:**
-```
-Create a release plan for the Health Deidentification SDKs across all languages.
-```
-
-**Expected Agent Activity:**
-1. Create [release plan](#release-plan) tracking all 5 languages
-2. Validate all languages are ready for release
-3. Create PRs for each language
-4. Report release plan status and next steps
 
 ---
 
@@ -407,47 +380,13 @@ Java:
 PR checks complete: 5/5 languages passed all checks
 ```
 
-### 5. Create Release Plan
-
-**Command:**
-```bash
-azsdk create-release-plan --service healthdataaiservices --version 1.1.0-beta.1 --languages .NET,Java,JavaScript,Python,Go
-```
-
-**Options:**
-- `--service <name>`: Service name (required)
-- `--version <version>`: Release version (required)
-- `--languages <list>`: Languages to include (default: all)
-- `--auto-create-prs`: Automatically create PRs for all languages
-- `--target-date <date>`: Target release date
-
-**Expected Output:**
-```
-Creating release plan for Health Deidentification SDK v1.1.0-beta.1...
-
-Release Plan ID: rp-healthdeid-20251013-001
-
-Languages:
-  ✓ .NET - Ready for release
-  ✓ Java - Ready for release
-  ✓ JavaScript - Ready for release
-  ✓ Python - Ready for release
-  ✓ Go - Ready for release
-
-Next steps:
-  1. Review release plan: azsdk view-release-plan rp-healthdeid-20251013-001
-  2. Create PRs: azsdk create-prs --plan-id rp-healthdeid-20251013-001
-  3. Execute release: azsdk release --plan-id rp-healthdeid-20251013-001
-```
-
 ---
 
 ## Open Questions
 
 1. **Cross-language failures**: If one language fails validation, block all or continue with others? → _Proposal: Block all for V1_
-2. **Partial release success**: If 4/5 languages release successfully, what happens? → _Proposal: All must succeed in validation before releasing_
-3. **Rollback**: Include automated rollback or rely on Git? → _Proposal: Git-based rollback for V1_
-4. **Real-world validation**: How to ensure scenario isn't too simplified? → _Proposal: Pilot with 2-3 service teams_
+2. **Rollback**: Include automated rollback or rely on Git? → _Proposal: Git-based rollback for V1_
+3. **Real-world validation**: How to ensure scenario isn't too simplified? → _Proposal: Pilot with 2-3 service teams_
 
 ---
 

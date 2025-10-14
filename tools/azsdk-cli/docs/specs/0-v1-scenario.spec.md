@@ -166,6 +166,7 @@ V1 is complete when:
 - ✅ Repeatable with consistent results
 - ✅ Agent prompts produce expected behavior
 - ✅ CLI commands execute with expected options and outputs
+- ✅ Workflow runs completely locally *Nothing is committed to the repo*
 
 ---
 

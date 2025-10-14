@@ -30,8 +30,6 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
     {
         try
         {
-            _logger.LogInformation("Running 'pnpm run build:samples' in {PackagePath}", packagePath);
-
             var result = await _processHelper.Run(new(
                     "pnpm",
                     ["run", "build:samples"],
@@ -62,8 +60,6 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
     {
         try
         {
-            _logger.LogInformation("Running 'pnpm run update-snippets' in {PackagePath}", packagePath);
-
             var result = await _processHelper.Run(new(
                     "pnpm",
                     ["run", "update-snippets"],
@@ -95,7 +91,6 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
         try
         {
             var subcommand = fix ? "lint:fix" : "lint";
-            _logger.LogInformation($"Running 'pnpm run {subcommand}' in {packagePath}");
 
             var result = await _processHelper.Run(new(
                     "pnpm",
@@ -131,7 +126,6 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
         try
         {
             var subcommand = fix ? "format" : "check-format";
-            _logger.LogInformation($"Running 'pnpm run {subcommand}' in {packagePath}");
             var result = await _processHelper.Run(new(
                     "pnpm",
                     ["run", subcommand],

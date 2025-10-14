@@ -120,7 +120,7 @@
                     "type": "string"
                 },
                 "CrossLanguageDefinitionId": {
-                    "$ref": "#/$defs/RecordString"
+                    "$ref": "#/$defs/CrossLanguageDefinitionMetadataStringString"
                 }
             },
             "required": [
@@ -226,12 +226,20 @@
                 "Tags"
             ]
         },
-        "RecordString": {
+        "CrossLanguageDefinitionMetadataStringString": {
             "type": "object",
-            "properties": {},
-            "additionalProperties": {
-                "type": "string"
-            }
+            "properties": {
+                "key": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "key",
+                "value"
+            ]
         },
         "ReviewToken": {
             "type": "object",
@@ -297,6 +305,13 @@
                 3,
                 4
             ]
+        },
+        "RecordString": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": {
+                "type": "string"
+            }
         },
         "TokenKind": {
             "type": "number",

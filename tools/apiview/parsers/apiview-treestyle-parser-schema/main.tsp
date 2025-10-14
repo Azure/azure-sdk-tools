@@ -97,10 +97,9 @@ model CodeDiagnostic {
   HelpLinkUri?: string;
 }
 
-alias LanguageSpecificId = string; 
 model CrossLanguageMetadata {
   CrossLanguagePackageId: string;
-  CrossLanguageDefinitionId: Record<LanguageSpecificId>;
+  CrossLanguageDefinitionId: CrossLanguageDefinitionMetadata<string,string>;
 }
 
 enum TokenKind {
@@ -139,4 +138,9 @@ model NavigationItem {
   NavigationId: string;
   ChildItems: Array<NavigationItem>;
   Tags: Record<string>;
+}
+
+model CrossLanguageDefinitionMetadata<TLanguageSpecificId, TCrossLanguageId> {
+  key: TLanguageSpecificId;
+  value: TCrossLanguageId;
 }

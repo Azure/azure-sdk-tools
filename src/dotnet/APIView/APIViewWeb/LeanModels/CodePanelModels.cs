@@ -41,6 +41,7 @@ namespace APIViewWeb.LeanModels
         public List<CommentItemModel> CommentsObj { get; set; } = new List<CommentItemModel>();
         public List<CommentItemModel> Comments => CommentsObj.Count > 0 ? CommentsObj : null;
         public bool IsResolvedCommentThread { get; set; }
+        public string CommentThreadIsResolvedBy { get; set; }
         public bool IsHiddenAPI { get; set; }
 
         public override string ToString()

@@ -390,6 +390,16 @@ namespace APIViewWeb.Helpers
                 commentRowData.CommentsObj = commentsForRow.ToList();
                 codePanelRowData.ToggleCommentsClasses = codePanelRowData.ToggleCommentsClasses.Replace("can-show", "show");
                 commentRowData.IsResolvedCommentThread = commentsForRow.Any(c => c.IsResolved);
+                // Find who resolved the thread by looking at the change history for the 'Resolved' action
+                var resolvedComment = commentsForRow.FirstOrDefault(c => c.IsResolved);
+                if (resolvedComment != null)
+                {
+                    commentRowData.CommentThreadIsResolvedBy = commentsForRow
+                        .Where(c => c.IsResolved && c.ChangeHistory != null)
+                        .SelectMany(c => c.ChangeHistory.Where(h => h.ChangeAction == CommentChangeAction.Resolved))
+                        .OrderByDescending(h => h.ChangedOn)
+                        .FirstOrDefault()?.ChangedBy ?? resolvedComment.CreatedBy;
+                }
                 commentRowData.IsHiddenAPI = codePanelRowData.IsHiddenAPI;
             }
             return commentRowData;

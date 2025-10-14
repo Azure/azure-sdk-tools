@@ -35,11 +35,15 @@ namespace Azure.Tools.GeneratorAgent.Tools
             {
                 var typeSpecFiles = await FileService.GetTypeSpecFilesAsync(validationContext, cancellationToken).ConfigureAwait(false);
 
-                // Update version manager with current file contents
+                // Get or create metadata for current files
                 var fileInfoList = new List<TypeSpecFileInfo>();
                 foreach (var kvp in typeSpecFiles)
                 {
-                    var fileInfo = VersionManager.UpdateFileMetadata(kvp.Key, kvp.Value);
+                    var fileInfo = VersionManager.GetOrCreateFileMetadata(kvp.Key, kvp.Value);
+                    
+                    // Always include content for comprehensive analysis
+                    fileInfo.Content = kvp.Value;
+                    
                     fileInfoList.Add(fileInfo);
                 }
 
@@ -48,7 +52,7 @@ namespace Azure.Tools.GeneratorAgent.Tools
                     Files = fileInfoList
                 };
 
-                Logger.LogInformation("Returning {Count} TypeSpec files metadata", response.Files.Count);
+                Logger.LogInformation("Returning {Count} TypeSpec files with complete content for analysis", response.Files.Count);
                 return response;
             }
             catch (Exception ex)
@@ -74,8 +78,8 @@ namespace Azure.Tools.GeneratorAgent.Tools
                     throw new FileNotFoundException($"TypeSpec file '{filename}' not found. Available files: {string.Join(", ", typeSpecFiles.Keys.Select(Path.GetFileName))}");
                 }
 
-                // Update version manager with current file content and get metadata
-                var fileInfo = VersionManager.UpdateFileMetadata(fileEntry.Key, fileEntry.Value);
+                // Get or create metadata for current file
+                var fileInfo = VersionManager.GetOrCreateFileMetadata(fileEntry.Key, fileEntry.Value);
 
                 // Add the file content to the response for agent analysis
                 fileInfo.Content = fileEntry.Value;

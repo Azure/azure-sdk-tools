@@ -17,7 +17,7 @@
 
 ## Overview
 
-The V1 scenario defines the end-to-end workflow for generating and validating [preview SDKs](#preview-release) across all five languages (.NET, Java, JavaScript, Python, Go) using the Health Deidentification service as the test case.
+The V1 scenario defines the end-to-end workflow for generating and validating [preview SDKs](#preview-release) across all 5 languages (.NET, Java, JavaScript, Python, Go) using the Health Deidentification service as the test case.
 
 **Service**: Health Deidentification
 

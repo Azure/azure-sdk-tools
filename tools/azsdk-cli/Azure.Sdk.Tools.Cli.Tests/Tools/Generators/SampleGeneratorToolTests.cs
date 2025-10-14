@@ -345,6 +345,10 @@ public class SampleGeneratorToolTests
         var repoRoot = Directory.CreateTempSubdirectory("sample-gen-repo").FullName;
             var packagePath = Path.Combine(repoRoot, "sdk", "security", "keys", "azkeys");
         Directory.CreateDirectory(packagePath);
+        if (!Directory.Exists(Path.Combine(repoRoot, ".git")))
+        {
+            LibGit2Sharp.Repository.Init(repoRoot);
+        }
         File.WriteAllText(Path.Combine(packagePath, "client.go"), "package azkeys\n// minimal source for tests\nfunc noop() {}\n");
         // Add Language-Settings.ps1 for Go detection
         var engScripts = Path.Combine(repoRoot, "eng", "scripts");
@@ -464,6 +468,6 @@ public class SampleGeneratorToolTests
             Assert.That(_outputHelper.Outputs.Count, Is.GreaterThan(0));
         });
         var error = _outputHelper.Outputs.FirstOrDefault(o => o.Stream == OutputHelper.StreamType.Stdout || o.Stream == OutputHelper.StreamType.Stderr).Output;
-    Assert.That(error, Does.Contain("not under an Azure SDK repository"));
+        Assert.That(error, Does.Contain("No git repository found"));
     }
 }

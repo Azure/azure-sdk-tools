@@ -54,13 +54,15 @@ public class PackageInfoContractTests
     [TestCase("go")]
     public void Init_Idempotent_SamePath(string language)
     {
-        var (pkgPath, gitHelper) = CreateSdkPackage(language, "service", "pkgA");
+        // Go packages require sdk/<group>/<service>/<package>; other languages use sdk/<service>/<package>
+        var servicePath = language == "go" ? "group1/service" : "service";
+        var (pkgPath, gitHelper) = CreateSdkPackage(language, servicePath, "pkgA");
         var info = CreateForLanguage(language, gitHelper);
         info.Init(pkgPath);
         // Second init with same path should be silent
         Assert.DoesNotThrow(() => info.Init(pkgPath));
         // Attempt re-init with different path should throw
-        var (otherPath, _) = CreateSdkPackage(language, "service", "pkgB");
+        var (otherPath, _) = CreateSdkPackage(language, servicePath, "pkgB");
         var ex = Assert.Throws<InvalidOperationException>(() => info.Init(otherPath));
         Assert.That(ex!.Message, Does.Contain("already initialized"));
     }
@@ -73,9 +75,11 @@ public class PackageInfoContractTests
     [TestCase("go")]
     public void CommonProperties_AreDerivedCorrectly(string language)
     {
-        var service = "storage";
-        var package = language switch { "dotnet" => "Azure.Storage.Blobs", "java" => "azure-storage-blob", _ => "storage-blob" };
-        var (pkgPath, gitHelper) = CreateSdkPackage(language, service, package);
+        string group = language == "go" ? "security" : string.Empty; // Representative group for go
+        var service = language == "go" ? "keyvault" : "storage";
+        var package = language switch { "dotnet" => "Azure.Storage.Blobs", "java" => "azure-storage-blob", "go" => "azkeys", _ => "storage-blob" };
+        var servicePath = language == "go" ? Path.Combine(group, service) : service;
+        var (pkgPath, gitHelper) = CreateSdkPackage(language, servicePath, package);
         var info = CreateForLanguage(language, gitHelper);
         info.Init(pkgPath);
 
@@ -84,7 +88,8 @@ public class PackageInfoContractTests
             Assert.That(info.IsInitialized, Is.True, "Should be initialized after Init");
             Assert.That(info.PackagePath, Is.EqualTo(Path.GetFullPath(pkgPath)));
             Assert.That(info.RepoRoot, Does.EndWith($"azure-sdk-for-{language}"));
-            Assert.That(info.RelativePath, Is.EqualTo(Path.Combine(service, package)));
+            var expectedRelative = language == "go" ? Path.Combine(group, service, package) : Path.Combine(service, package);
+            Assert.That(info.RelativePath, Is.EqualTo(expectedRelative));
             Assert.That(info.ServiceName, Is.EqualTo(service));
             Assert.That(info.PackageName, Is.EqualTo(package));
             Assert.That(info.Language, Is.EqualTo(language));
@@ -112,7 +117,8 @@ public class PackageInfoContractTests
     [TestCase("go", "azkeys", "package azkeys\n\nconst (\n    moduleName = \"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azkeys\"\n    version    = \"v1.4.1-beta.1\"\n)\n", "version.go", "v1.4.1-beta.1")]
     public async Task VersionParsing_Works(string language, string package, string fileContent, string fileName, string expectedVersion)
     {
-        var (pkgPath, gitHelper) = CreateSdkPackage(language, "ai", package);
+        var servicePath = language == "go" ? "security/keyvault" : "ai";
+        var (pkgPath, gitHelper) = CreateSdkPackage(language, servicePath, package);
         File.WriteAllText(Path.Combine(pkgPath, fileName), fileContent);
         var info = CreateForLanguage(language, gitHelper);
         info.Init(pkgPath);
@@ -128,7 +134,8 @@ public class PackageInfoContractTests
     [TestCase("go", "azempty")]
     public async Task VersionParsing_MissingFile_ReturnsNull(string language, string package)
     {
-        var (pkgPath, gitHelper) = CreateSdkPackage(language, "missing", package);
+        var servicePath = language == "go" ? "security/keyvault" : "missing";
+        var (pkgPath, gitHelper) = CreateSdkPackage(language, servicePath, package);
         var info = CreateForLanguage(language, gitHelper);
         info.Init(pkgPath);
         var parsed = await info.GetPackageVersionAsync();

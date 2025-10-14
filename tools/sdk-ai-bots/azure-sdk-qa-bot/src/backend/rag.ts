@@ -1,11 +1,11 @@
 import axios from 'axios';
 import { logger } from '../logging/logger.js';
 import { ragApiPaths } from '../config/config.js';
+import { TokenCredential } from '@azure/identity';
 
 export interface RAGOptions {
   endpoint: string;
-  apiKey: string;
-  accessToken: string;
+  accessToken?: string;
 }
 
 // Source definitions
@@ -150,13 +150,14 @@ export async function getRAGReply(
   );
   try {
     logger.info('Completion payload:', { payload });
-
-    const response = await axios.post(options.endpoint + ragApiPaths.completion, payload, {
-      headers: {
-        'X-API-Key': options.apiKey,
+    let headers = {
         'Content-Type': 'application/json; charset=utf-8',
-        'Authorization': `Bearer ${options.accessToken}`
-      },
+    };
+    if (options.accessToken) {
+        headers['Authorization'] = `Bearer ${options.accessToken}`
+    }
+    const response = await axios.post(options.endpoint + ragApiPaths.completion, payload, {
+      headers: headers,
     });
     if (response.status !== 200) {
       logger.warn(`Failed to fetch data from RAG backend. Status: ${response.status}`, { meta });
@@ -178,11 +179,14 @@ export async function sendFeedback(payload: FeedbackRequestPayload, options: RAG
     { meta }
   );
   try {
-    const response = await axios.post(options.endpoint + ragApiPaths.feedback, payload, {
-      headers: {
-        'X-API-Key': options.apiKey,
+    let headers = {
         'Content-Type': 'application/json; charset=utf-8',
-      },
+    };
+    if (options.accessToken) {
+        headers['Authorization'] = `Bearer ${options.accessToken}`
+    }
+    const response = await axios.post(options.endpoint + ragApiPaths.feedback, payload, {
+      headers: headers,
     });
     if (response.status !== 200) {
       logger.warn(`Failed to fetch data from feedback backend. Status: ${response.status}`);

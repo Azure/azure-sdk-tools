@@ -10,34 +10,23 @@ import { getTurnContextLogMeta } from '../logging/utils.js';
 import { ChannelConfigManager } from '../config/channel.js';
 import { ConversationHandler, ConversationMessage, Prompt } from '../input/ConversationHandler.js';
 import { parseConversationId } from '../common/shared.js';
-import { AccessToken, ManagedIdentityCredential } from '@azure/identity';
+import { AccessToken, ManagedIdentityCredential, TokenCredential } from '@azure/identity';
 import { promises } from 'node:dns';
+import { getAccessTokenByManagedIdentity } from '../backend/auth.js';
 
 export class RAGModel implements PromptCompletionModel {
   private readonly conversationHandler: ConversationHandler;
   private readonly promptGenerator: PromptGenerator;
   private readonly channelConfigManager: ChannelConfigManager;
+  private readonly credential: TokenCredential;
 
-  constructor(conversationHandler: ConversationHandler, channelConfigManager: ChannelConfigManager) {
+  constructor(conversationHandler: ConversationHandler, channelConfigManager: ChannelConfigManager, credential: TokenCredential) {
     this.conversationHandler = conversationHandler;
     this.promptGenerator = new PromptGenerator();
     this.channelConfigManager = channelConfigManager;
+    this.credential = credential;
   }
 
-  
-  public async getAccessTokenByManagedIdentity(userAssignedClientId: string, scope: string) : Promise<AccessToken>{
-    // If using user-assigned identity, pass the clientId. For system-assigned, omit it.
-    const credential = new ManagedIdentityCredential(userAssignedClientId);
-
-    try {
-      logger.info(`get Access Token for ${userAssignedClientId}, scope ${scope}`);
-      const token = await credential.getToken(scope);
-      logger.info(`Succeed to get Access Token for ${userAssignedClientId}`);
-      return token;
-    } catch (err) {
-      console.error(`Failed to acquire token for ${userAssignedClientId}`, err.message);
-    }
-  }
 
   public async completePrompt(
     context: TurnContext,
@@ -46,7 +35,7 @@ export class RAGModel implements PromptCompletionModel {
     tokenizer: Tokenizer,
     template: PromptTemplate
   ): Promise<PromptResponse<string>> {
-    const token = await this.getAccessTokenByManagedIdentity(config.userManagedIdentityClientID, config.ragScope);
+    const token = await getAccessTokenByManagedIdentity(this.credential, config.ragScope);
     const meta = getTurnContextLogMeta(context);
     const { channelId } = parseConversationId(context.activity.conversation.id);
     const [ ragTenantId, ragEndpoint ] = await Promise.all([
@@ -56,8 +45,7 @@ export class RAGModel implements PromptCompletionModel {
     logger.info(`Processing request for channel ${channelId} on rag tenant: ${ragTenantId}`, { meta });
     const ragOptions: RAGOptions = {
       endpoint: ragEndpoint,
-      apiKey: config.ragApiKey,
-      accessToken: token.token
+      accessToken: token ? token.token : undefined
     };
     logger.info(`Received activity: ${JSON.stringify(context.activity)}`, { meta });
 

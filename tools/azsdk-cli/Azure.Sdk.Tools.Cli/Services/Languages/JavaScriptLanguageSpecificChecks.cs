@@ -26,7 +26,7 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
         _logger = logger;
     }
 
-    public async Task<CLICheckResponse> ValidateSamplesAsync(string packagePath, CancellationToken cancellationToken = default)
+    public async Task<CLICheckResponse> ValidateSamplesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         try
         {
@@ -37,7 +37,7 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
                     ["run", "build:samples"],
                     workingDirectory: packagePath
                 ),
-                cancellationToken
+                ct
             );
 
             if (result.ExitCode != 0)
@@ -58,7 +58,7 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
         }
     }
     
-    public async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, CancellationToken cancellationToken = default)
+    public async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         try
         {

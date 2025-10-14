@@ -17,7 +17,13 @@ namespace APIViewWeb.Models
             Comments = comments;
             var resolveComment = comments.FirstOrDefault(c => c.IsResolved);
             IsResolved = resolveComment != null;
-            ResolvedBy = resolveComment?.CreatedBy;
+            // Find who resolved the thread by looking at the change history for the 'Resolved' action
+            // Look through all comments to find the most recent resolution action
+            ResolvedBy = comments
+                .Where(c => c.IsResolved && c.ChangeHistory != null)
+                .SelectMany(c => c.ChangeHistory.Where(h => h.ChangeAction == CommentChangeAction.Resolved))
+                .OrderByDescending(h => h.ChangedOn)
+                .FirstOrDefault()?.ChangedBy ?? resolveComment?.CreatedBy;
         }
 
         public string ReviewId { get; set; }

@@ -33,7 +33,7 @@ namespace Azure.Tools.GeneratorAgent
             ArgumentNullException.ThrowIfNull(content);
 
             var sha256 = ComputeSha256Hash(content);
-            var lines = content.Split('\n').Length;
+            var lines = content.Split(Environment.NewLine.ToCharArray()).Length;
 
             if (FileMetadata.TryGetValue(fileName, out var existing))
             {

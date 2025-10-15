@@ -71,7 +71,7 @@ function SendEmailNotification($emailTo, $emailCC, $emailSubject, $emailBody) {
         $body = @{ EmailTo = $emailTo; EmailCC = $emailCC; Subject = $emailSubject; Body = $emailBody} | ConvertTo-Json -Depth 3
         $response = Invoke-RestMethod -Uri $AzureSDKEmailUri -Method Post -Body $body -ContentType "application/json"
     } catch {
-        Write-Warning "Failed to send email.`nTo: $emailTo`nCC: $emailCC`nSubject: $emailSubject`nBody: $emailBody`nException message: $($_.Exception.Message)"
+        Write-Error "Failed to send email.`nTo: $emailTo`nCC: $emailCC`nSubject: $emailSubject`nBody: $emailBody`nException message: $($_.Exception.Message)"
     }
 }
 

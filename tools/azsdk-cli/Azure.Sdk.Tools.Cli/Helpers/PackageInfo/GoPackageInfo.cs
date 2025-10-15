@@ -19,15 +19,16 @@ public sealed class GoPackageInfo : IPackageInfo
 
     public void Init(string packagePath)
     {
+        var realPath = RealPath.GetRealPath(packagePath);
         if (IsInitialized)
         {
-            if (!string.Equals(_packagePath, Path.GetFullPath(packagePath), StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(_packagePath, realPath, StringComparison.OrdinalIgnoreCase))
             {
                 throw new InvalidOperationException("PackageInfo already initialized with a different path.");
             }
             return;
         }
-        (_repoRoot, _relativePath, _packagePath) = Parse(packagePath);
+        (_repoRoot, _relativePath, _packagePath) = Parse(realPath);
         IsInitialized = true;
     }
 
@@ -65,20 +66,20 @@ public sealed class GoPackageInfo : IPackageInfo
         catch { return null; }
     }
 
-    private (string RepoRoot, string RelativePath, string FullPath) Parse(string packagePath)
+    private (string RepoRoot, string RelativePath, string FullPath) Parse(string realPackagePath)
     {
-        var full = RealPath.GetRealPath(packagePath);
-        var repoRoot = RealPath.GetRealPath(_gitHelper.DiscoverRepoRoot(full));
+        var full = realPackagePath;
+        var repoRoot = _gitHelper.DiscoverRepoRoot(full);
         var sdkRoot = Path.Combine(repoRoot, "sdk");
         if (!full.StartsWith(sdkRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) && !string.Equals(full, sdkRoot, StringComparison.OrdinalIgnoreCase))
         {
-            throw new ArgumentException($"Path '{packagePath}' is not under the expected 'sdk' folder of repo root '{repoRoot}'. Expected structure: <repoRoot>/sdk/<group>/<service>/<package>", nameof(packagePath));
+            throw new ArgumentException($"Path '{realPackagePath}' is not under the expected 'sdk' folder of repo root '{repoRoot}'. Expected structure: <repoRoot>/sdk/<group>/<service>/<package>", nameof(realPackagePath));
         }
         var relativePath = Path.GetRelativePath(sdkRoot, full).TrimStart(Path.DirectorySeparatorChar);
         var segments = relativePath.Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries);
         if (segments.Length < 3)
         {
-            throw new ArgumentException($"Path '{packagePath}' must be at least three folders deep under 'sdk' (expected: sdk/<group>/<service>/<package>). Actual relative path: 'sdk/{relativePath}'", nameof(packagePath));
+            throw new ArgumentException($"Path '{realPackagePath}' must be at least three folders deep under 'sdk' (expected: sdk/<group>/<service>/<package>). Actual relative path: 'sdk/{relativePath}'", nameof(realPackagePath));
         }
         return (repoRoot, relativePath, full);
     }

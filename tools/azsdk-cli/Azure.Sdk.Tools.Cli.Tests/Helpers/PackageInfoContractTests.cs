@@ -86,7 +86,7 @@ public class PackageInfoContractTests
         Assert.Multiple(() =>
         {
             Assert.That(info.IsInitialized, Is.True, "Should be initialized after Init");
-            Assert.That(info.PackagePath, Is.EqualTo(Path.GetFullPath(pkgPath)));
+            Assert.That(info.PackagePath, Is.EqualTo(RealPath.GetRealPath(Path.GetFullPath(pkgPath))));
             Assert.That(info.RepoRoot, Does.EndWith($"azure-sdk-for-{language}"));
             var expectedRelative = language == "go" ? Path.Combine(group, service, package) : Path.Combine(service, package);
             Assert.That(info.RelativePath, Is.EqualTo(expectedRelative));

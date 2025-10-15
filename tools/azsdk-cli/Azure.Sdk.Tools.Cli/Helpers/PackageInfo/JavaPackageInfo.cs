@@ -19,15 +19,16 @@ public sealed class JavaPackageInfo : IPackageInfo
 
     public void Init(string packagePath)
     {
+        var realPath = RealPath.GetRealPath(packagePath);
         if (IsInitialized)
         {
-            if (!string.Equals(_packagePath, Path.GetFullPath(packagePath), StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(_packagePath, realPath, StringComparison.OrdinalIgnoreCase))
             {
                 throw new InvalidOperationException("PackageInfo already initialized with a different path.");
             }
             return;
         }
-        (_repoRoot, _relativePath, _packagePath) = Parse(packagePath);
+        (_repoRoot, _relativePath, _packagePath) = Parse(realPath);
         IsInitialized = true;
     }
 
@@ -98,14 +99,14 @@ public sealed class JavaPackageInfo : IPackageInfo
         catch { return null; }
     }
 
-    private (string RepoRoot, string RelativePath, string FullPath) Parse(string packagePath)
+    private (string RepoRoot, string RelativePath, string FullPath) Parse(string realPackagePath)
     {
-        var full = RealPath.GetRealPath(packagePath);
-        var repoRoot = RealPath.GetRealPath(_gitHelper.DiscoverRepoRoot(full));
+        var full = realPackagePath;
+        var repoRoot = _gitHelper.DiscoverRepoRoot(full);
         var sdkRoot = Path.Combine(repoRoot, "sdk");
         if (!full.StartsWith(sdkRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) && !string.Equals(full, sdkRoot, StringComparison.OrdinalIgnoreCase))
         {
-            throw new ArgumentException($"Path '{packagePath}' is not under the expected 'sdk' folder of repo root '{repoRoot}'. Expected structure: <repoRoot>/sdk/<service>/<package>", nameof(packagePath));
+            throw new ArgumentException($"Path '{realPackagePath}' is not under the expected 'sdk' folder of repo root '{repoRoot}'. Expected structure: <repoRoot>/sdk/<service>/<package>", nameof(realPackagePath));
         }
         var relativePath = Path.GetRelativePath(sdkRoot, full).TrimStart(Path.DirectorySeparatorChar);
         return (repoRoot, relativePath, full);

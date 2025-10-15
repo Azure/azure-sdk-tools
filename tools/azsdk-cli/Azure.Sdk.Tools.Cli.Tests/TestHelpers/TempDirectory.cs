@@ -4,6 +4,7 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Azure.Sdk.Tools.Cli.Helpers;
 
 namespace Azure.Sdk.Tools.Cli.Tests.TestHelpers;
 
@@ -30,7 +31,7 @@ public sealed class TempDirectory : IDisposable, IAsyncDisposable
     public static TempDirectory Create(string? prefix = null)
     {
         var name = (prefix ?? "azsdk-temp") + "_" + Guid.NewGuid().ToString("N");
-        var fullPath = Path.Combine(Path.GetTempPath(), name);
+        var fullPath = RealPath.GetRealPath(Path.Combine(Path.GetTempPath(), name));
         return new TempDirectory(fullPath);
     }
 

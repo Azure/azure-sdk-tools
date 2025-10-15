@@ -110,7 +110,7 @@ stages:
           displayName: 'Increment version in csproj'
           inputs:
             targetType: filePath
-            filePath: '$(Build.SourcesDirectory)/azure-sdk-tools/eng/pipelines/Increment-dotnet-packages.ps1'
+            filePath: '$(Build.SourcesDirectory)/azure-sdk-tools/eng/pipelines/Increment-dotnet-package.ps1'
             arguments: '-ToolDirectory "$(Build.SourcesDirectory)/azure-sdk-tools/${{ parameters.ToolDirectory }}"'
             pwsh: true
 

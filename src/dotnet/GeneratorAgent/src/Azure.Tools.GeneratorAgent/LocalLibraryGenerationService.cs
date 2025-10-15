@@ -33,7 +33,7 @@ namespace Azure.Tools.GeneratorAgent
             
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                arguments = $"-Command \"npm install --global --legacy-peer-deps {AppSettings.TypespecCompiler} {AppSettings.TypespecEmitterPackage}\"";
+                arguments = $"-Command \"npm install --global {AppSettings.TypespecCompiler} {AppSettings.TypespecEmitterPackage}\"";
             }
             else
             {

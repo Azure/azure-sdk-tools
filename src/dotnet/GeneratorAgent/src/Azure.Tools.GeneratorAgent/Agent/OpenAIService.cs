@@ -57,6 +57,13 @@ internal class OpenAIService
         Logger.LogDebug("Sending error analysis request to OpenAI");
         
         var response = await ChatClient.CompleteChatAsync(messages, cancellationToken: cancellationToken);
+        
+        if (response?.Value == null || response.Value.Content == null || response.Value.Content.Count == 0)
+        {
+            Logger.LogWarning("OpenAI response is null or does not contain any content.");
+            return Enumerable.Empty<RuleError>();
+        }
+        
         var jsonResponse = response.Value.Content[0].Text;
         
         // Clean the response - remove markdown code blocks if present
@@ -102,7 +109,15 @@ internal class OpenAIService
         }
         else
         {
-            result = response.Value.Content[0].Text;
+            if (response.Value.Content != null && response.Value.Content.Count > 0)
+            {
+                result = response.Value.Content[0].Text;
+            }
+            else
+            {
+                Logger.LogWarning("OpenAI response content is empty in GenerateFixesAsync.");
+                result = string.Empty;
+            }
         }
         
         // Clean the response - remove markdown code blocks if present
@@ -171,7 +186,17 @@ internal class OpenAIService
         }
         
         var finalResponse = await chatClient.CompleteChatAsync(messages, cancellationToken: cancellationToken);
-        var finalResult = finalResponse.Value.Content[0].Text;
+        
+        string finalResult;
+        if (finalResponse?.Value?.Content != null && finalResponse.Value.Content.Count > 0 && finalResponse.Value.Content[0] != null)
+        {
+            finalResult = finalResponse.Value.Content[0].Text;
+        }
+        else
+        {
+            Logger.LogWarning("OpenAI response did not contain any content.");
+            finalResult = string.Empty;
+        }
         
         return finalResult;
     }

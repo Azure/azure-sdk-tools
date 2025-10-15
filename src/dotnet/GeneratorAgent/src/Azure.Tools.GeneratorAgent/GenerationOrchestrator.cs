@@ -86,7 +86,7 @@ internal class GenerationOrchestrator
             if (string.IsNullOrEmpty(errorOutput))
             {
                 Logger.LogWarning("No output available for analysis");
-                return;
+                throw new InvalidOperationException("Build workflow failed without producing any error output for analysis.");
             }
 
             // Generate fixes from error output

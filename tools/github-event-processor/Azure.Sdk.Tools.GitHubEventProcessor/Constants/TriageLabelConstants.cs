@@ -22,5 +22,9 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Constants
         public const string Question = "question";
         public const string ServiceAttention = "Service Attention";
         public const string AutoCloseExempt = "auto-close-exempt";
+        
+        // Category labels for issue classification
+        public const string Bug = "bug";
+        public const string FeatureRequest = "feature-request";
     }
 }

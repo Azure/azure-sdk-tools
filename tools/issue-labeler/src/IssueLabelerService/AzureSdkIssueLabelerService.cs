@@ -58,18 +58,46 @@ namespace IssueLabelerService
                     // Predict labels for the issue
                     labels = await labeler.PredictLabels(issue);
 
-                    // If no labels are returned, do not generate an answer
-                    // Fixing the issue by replacing 'Length' with 'Count' for Dictionary
+                    // If no labels are returned from ML models, try keyword-based labeling as fallback
                     if (labels?.Count == 0)
                     {
-                        _logger.LogInformation($"No labels predicted for issue #{issue.IssueNumber} in repository {issue.RepositoryName}.");
-                        return EmptyResult;
+                        _logger.LogInformation($"No labels predicted by ML models for issue #{issue.IssueNumber} in repository {issue.RepositoryName}. Attempting keyword-based labeling.");
+                        labels = ApplyKeywordBasedLabels(issue);
+                        
+                        if (labels?.Count == 0)
+                        {
+                            _logger.LogInformation($"No labels could be determined for issue #{issue.IssueNumber} in repository {issue.RepositoryName}.");
+                            return EmptyResult;
+                        }
+                    }
+                    else
+                    {
+                        // Supplement ML predictions with keyword-based labels if they're missing basic category labels
+                        var keywordLabels = ApplyKeywordBasedLabels(issue);
+                        if (keywordLabels?.Count > 0)
+                        {
+                            foreach (var kvp in keywordLabels)
+                            {
+                                if (!labels.ContainsKey(kvp.Key))
+                                {
+                                    labels.Add(kvp.Key, kvp.Value);
+                                    _logger.LogInformation($"Added keyword-based label '{kvp.Key}' to supplement ML predictions for issue #{issue.IssueNumber}.");
+                                }
+                            }
+                        }
                     }
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError($"Error labeling issue #{issue.IssueNumber} in repository {issue.RepositoryName}: {ex.Message}{Environment.NewLine}\t{ex}{Environment.NewLine}");
-                    return EmptyResult;
+                    
+                    // Try keyword-based labeling as fallback even when ML fails
+                    labels = ApplyKeywordBasedLabels(issue);
+                    if (labels?.Count == 0)
+                    {
+                        return EmptyResult;
+                    }
+                    _logger.LogInformation($"Applied keyword-based labels as fallback after ML error for issue #{issue.IssueNumber}.");
                 }
 
             }
@@ -111,6 +139,44 @@ namespace IssueLabelerService
             using var bodyReader = new StreamReader(request.Body);
             var requestBody = await bodyReader.ReadToEndAsync();
             return JsonConvert.DeserializeObject<IssuePayload>(requestBody);
+        }
+
+        /// <summary>
+        /// Apply keyword-based labels as a fallback mechanism when ML models don't predict labels
+        /// or to supplement existing predictions with basic category labels.
+        /// </summary>
+        /// <param name="issue">The issue payload containing title and body</param>
+        /// <returns>Dictionary of labels to apply based on keywords</returns>
+        private Dictionary<string, string> ApplyKeywordBasedLabels(IssuePayload issue)
+        {
+            var labels = new Dictionary<string, string>();
+            var combinedText = $"{issue.Title} {issue.Body}".ToLowerInvariant();
+
+            // Define keyword patterns for different label types
+            var keywordPatterns = new Dictionary<string, string[]>
+            {
+                ["bug"] = new[] { "bug", "error", "exception", "crash", "failure", "broken", "not working", "issue", "problem" },
+                ["feature-request"] = new[] { "feature request", "enhancement", "improve", "add support", "new feature", "would like", "suggestion", "could you add" },
+                ["question"] = new[] { "question", "how to", "how do i", "how can i", "help", "clarification", "understand", "explain", "what is", "why does" }
+            };
+
+            foreach (var pattern in keywordPatterns)
+            {
+                foreach (var keyword in pattern.Value)
+                {
+                    if (combinedText.Contains(keyword))
+                    {
+                        if (!labels.ContainsKey(pattern.Key))
+                        {
+                            labels.Add(pattern.Key, pattern.Key);
+                            _logger.LogInformation($"Applied keyword-based label '{pattern.Key}' based on keyword '{keyword}' for issue #{issue.IssueNumber}.");
+                        }
+                        break; // Found a match for this label type, no need to check other keywords
+                    }
+                }
+            }
+
+            return labels;
         }
 
         public static string FormatTemplate(string template, Dictionary<string, string> replacements, ILogger logger)

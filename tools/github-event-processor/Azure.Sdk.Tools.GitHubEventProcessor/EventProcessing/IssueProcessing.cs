@@ -90,7 +90,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         ///         IF the user is NOT a member of the Azure Org
         ///           IF the user does not have Admin or Write Collaborator permission
         ///             - Add "customer-reported" label
-        ///             - Add "question" label
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="issueEventPayload">IssueEventGitHubPayload deserialized from the json event payload</param>
@@ -110,7 +109,6 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         if (!hasAdminOrWritePermission)
                         {
                             gitHubEventClient.AddLabel(TriageLabelConstants.CustomerReported);
-                            gitHubEventClient.AddLabel(TriageLabelConstants.Question);
                             isCustomerReported = true;
                         }
                     }
@@ -246,6 +244,20 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                             {
                                 gitHubEventClient.AddLabel(TriageLabelConstants.NeedsTeamAttention);
                             }
+
+                            // Check if any category labels were assigned, if not and this is customer reported, add question as fallback
+                            if (isCustomerReported)
+                            {
+                                bool hasCategoryLabel = triageOutput.Labels.Any(label => 
+                                    label.Equals(TriageLabelConstants.Bug, StringComparison.OrdinalIgnoreCase) ||
+                                    label.Equals(TriageLabelConstants.FeatureRequest, StringComparison.OrdinalIgnoreCase) ||
+                                    label.Equals(TriageLabelConstants.Question, StringComparison.OrdinalIgnoreCase));
+                                
+                                if (!hasCategoryLabel)
+                                {
+                                    gitHubEventClient.AddLabel(TriageLabelConstants.Question);
+                                }
+                            }
                             
                             // Making sure the Answer is valid
                             if(!string.IsNullOrEmpty(triageOutput.Answer))
@@ -273,6 +285,12 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         else
                         {
                             gitHubEventClient.AddLabel(TriageLabelConstants.NeedsTriage);
+                            
+                            // For external users, add question as category fallback when no labels predicted
+                            if (isCustomerReported)
+                            {
+                                gitHubEventClient.AddLabel(TriageLabelConstants.Question);
+                            }
                         }
                     }
                 }

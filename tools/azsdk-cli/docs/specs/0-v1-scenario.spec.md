@@ -277,6 +277,8 @@ _Direct command-line interface usage for [CLI mode](#cli-mode):_
 
 ### 1. Verify Setup
 
+> Sample: will be changed when the spec for this tool is added
+
 **Command:**
 ```bash
 azsdk verify-setup --languages .NET,Java,JavaScript,Python,Go
@@ -302,6 +304,8 @@ Run with --fix to install missing dependencies
 ```
 
 ### 2. Generate SDK
+
+> Sample: will be changed when the spec for this tool is added
 
 **Command:**
 ```bash
@@ -338,6 +342,8 @@ Generation complete: 5/5 languages successful
 
 ### 3. Update Package Metadata
 
+> Sample: will be changed when the spec for this tool is added
+
 **Command:**
 ```bash
 azsdk update-package --service healthdataaiservices --version 1.1.0-beta.1 --languages .NET,Java,JavaScript,Python,Go
@@ -371,6 +377,8 @@ Package metadata updated for 5/5 languages
 ```
 
 ### 4. Run PR Checks
+
+> Sample: will be changed when the spec for this tool is added
 
 **Command:**
 ```bash

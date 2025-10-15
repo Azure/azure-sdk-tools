@@ -1,6 +1,7 @@
 import json
 import os
 import threading
+from typing import Union
 
 from azure.appconfiguration import AzureAppConfigurationClient
 from azure.identity import DefaultAzureCredential
@@ -38,12 +39,15 @@ class SettingsManager:
         self._keyvault_clients = {}
         self._cache = {}
 
-    def get(self, key):
+    def get(self, key) -> Union[str, None]:
         key = key.strip().lower()
         cache_key = (key, self.label)
         if cache_key in self._cache:
             return self._cache[cache_key]
-        setting = self.app_config_client.get_configuration_setting(key=key, label=self.label)
+        try:
+            setting = self.app_config_client.get_configuration_setting(key=key, label=self.label)
+        except Exception:
+            return None
         value = setting.value
         content_type = getattr(setting, "content_type", None)
         # Check for Key Vault reference by content type

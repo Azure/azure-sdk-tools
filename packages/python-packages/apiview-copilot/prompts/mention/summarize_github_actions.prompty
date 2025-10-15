@@ -1,0 +1,115 @@
+---
+name: Summarize APIView Github Action
+description: A prompt that summarizes the results of an @mention request involving Github.
+authors: 
+  - tjprescott
+version: 1.0.0
+inputs:
+  results:
+    description: The results of the @mention request to summarize.
+    type: object
+model:
+  api: chat
+  configuration:
+    type: azure_openai
+    azure_endpoint: ${env:OPENAI_ENDPOINT}
+    azure_deployment: gpt-4.1
+    api_version: 2025-03-01-preview
+  parameters:
+    temperature: 0.0
+    top_p: 1.0
+    stop: []
+    max_tokens: 16384
+sample:
+  results: | 
+    {
+      "url": "https://api.github.com/repos/tjprescott/azure-sdk-tools/issues/6",
+      "repository_url": "https://api.github.com/repos/tjprescott/azure-sdk-tools",
+      "labels_url": "https://api.github.com/repos/tjprescott/azure-sdk-tools/issues/6/labels{/name}",
+      "comments_url": "https://api.github.com/repos/tjprescott/azure-sdk-tools/issues/6/comments",
+      "events_url": "https://api.github.com/repos/tjprescott/azure-sdk-tools/issues/6/events",
+      "html_url": "https://github.com/tjprescott/azure-sdk-tools/issues/6",
+      "id": 3519320375,
+      "node_id": "I_kwDOQDK0a87RxJE3",
+      "number": 6,
+      "title": "[Python APIView] Literal values are not quoted in type annotations",
+      "user": {
+        "login": "azure-sdk",
+        "id": 53356347,
+        "node_id": "MDQ6VXNlcjUzMzU2MzQ3",
+        "avatar_url": "https://avatars.githubusercontent.com/u/53356347?v=4",
+        "gravatar_id": "",
+        "url": "https://api.github.com/users/azure-sdk",
+        "html_url": "https://github.com/azure-sdk",
+        "followers_url": "https://api.github.com/users/azure-sdk/followers",
+        "following_url": "https://api.github.com/users/azure-sdk/following{/other_user}",
+        "gists_url": "https://api.github.com/users/azure-sdk/gists{/gist_id}",
+        "starred_url": "https://api.github.com/users/azure-sdk/starred{/owner}{/repo}",
+        "subscriptions_url": "https://api.github.com/users/azure-sdk/subscriptions",
+        "organizations_url": "https://api.github.com/users/azure-sdk/orgs",
+        "repos_url": "https://api.github.com/users/azure-sdk/repos",
+        "events_url": "https://api.github.com/users/azure-sdk/events{/privacy}",
+        "received_events_url": "https://api.github.com/users/azure-sdk/received_events",
+        "type": "User",
+        "user_view_type": "public",
+        "site_admin": false
+      },
+      "labels": [],
+      "state": "open",
+      "locked": false,
+      "assignee": null,
+      "assignees": [],
+      "milestone": null,
+      "comments": 0,
+      "created_at": "2025-10-15T19:36:45Z",
+      "updated_at": "2025-10-15T19:36:45Z",
+      "closed_at": null,
+      "author_association": "NONE",
+      "active_lock_reason": null,
+      "sub_issues_summary": {
+        "total": 0,
+        "completed": 0,
+        "percent_completed": 0
+      },
+      "issue_dependencies_summary": {
+        "blocked_by": 0,
+        "total_blocked_by": 0,
+        "blocking": 0,
+        "total_blocking": 0
+      },
+      "body": "**Bad code snippet:**\n```python\nfoo: Literal[Foo]\n```\n\n**Description:**\nThe APIView parser is incorrectly displaying literal values in type annotations without quotes. According to Python typing conventions, literal values should be quoted, e.g., `Literal[\"Foo\"]`.\n\n**Expected (good) code snippet:**\n```python\nfoo: Literal[\"Foo\"]\n```\n\nPlease update the parser to ensure literal values are properly quoted in the APIView output.",
+      "closed_by": null,
+      "reactions": {
+        "url": "https://api.github.com/repos/tjprescott/azure-sdk-tools/issues/6/reactions",
+        "total_count": 0,
+        "+1": 0,
+        "-1": 0,
+        "laugh": 0,
+        "hooray": 0,
+        "confused": 0,
+        "heart": 0,
+        "rocket": 0,
+        "eyes": 0
+      },
+      "timeline_url": "https://api.github.com/repos/tjprescott/azure-sdk-tools/issues/6/timeline",
+      "performed_via_github_app": null,
+      "state_reason": null
+    }
+---
+system:
+You are an AI that summarizes the results of an @mention request from APIView. This request required taking some action on Github.
+
+# INSTRUCTIONS
+
+## NO FAILURES
+- Thank the user for their feedback and note the action you have taken (opened issue, etc).
+- If there is an issue URL, ALWAYS include it.
+- Be succinct in your response.
+
+## FAILURES
+- If there were successes, say so and provide what information you can. Provide a generic message about what the failure was.
+- DO NOT invite the user to provide more information or ask more questions. Invite them to reach out to `trpresco@microsoft.com`.
+
+user:
+Please summarize the results described:
+  {{results}}

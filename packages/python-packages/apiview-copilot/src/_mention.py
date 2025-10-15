@@ -62,7 +62,8 @@ def handle_mention_request(*, comments: list[str], language: str, package_name: 
             reasoning=action_results.get("reasoning", ""),
         )
         results = _post_github_issue(plan=plan)
-        return _summarize_results(results)
+        print(json.dumps(results, indent=2))
+        return _summarize_gh_action_results(results)
     else:
         return "Something went wrong!"
 
@@ -92,9 +93,11 @@ def _plan_github_parser_issue(
 
 
 def _post_github_issue(*, plan: dict):
-    client = GithubManager()
-    client.create_issue(owner="Azure", repo="azure-sdk-tools", title=plan.get("title"), body=plan.get("body"))
-    test = "best"
+    client = GithubManager.get_instance()
+    issue = client.create_issue(
+        owner="tjprescott", repo="azure-sdk-tools", title=plan.get("title"), body=plan.get("body")
+    )
+    return issue
 
 
 def _parse_conversation_action(
@@ -214,6 +217,26 @@ def _summarize_results(results: dict):
     Summarizes the results of the plan execution.
     """
     prompt_file = "summarize_actions.prompty"
+    prompt_path = get_prompt_path(folder="mention", filename=prompt_file)
+    if not os.path.exists(prompt_path):
+        print(f"Prompt file {prompt_path} does not exist.")
+        return "No prompt file found."
+    inputs = {
+        "results": results,
+    }
+    try:
+        summary = prompty.execute(prompt_path, inputs=inputs)
+        return summary
+    except Exception as e:
+        print(f"Error summarizing results: {e}")
+        return "Error summarizing results."
+
+
+def _summarize_gh_action_results(results: dict):
+    """
+    Summarizes the results of the Github plan execution.
+    """
+    prompt_file = "summarize_github_actions.prompty"
     prompt_path = get_prompt_path(folder="mention", filename=prompt_file)
     if not os.path.exists(prompt_path):
         print(f"Prompt file {prompt_path} does not exist.")

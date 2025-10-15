@@ -88,6 +88,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<ReleasePlanDetails> GetReleasePlanAsync(int releasePlanId);
         public Task<ReleasePlanDetails> GetReleasePlanForWorkItemAsync(int workItemId);
         public Task<ReleasePlanDetails> GetReleasePlanAsync(string pullRequestUrl);
+        public Task<List<ReleasePlanDetails>> GetReleasePlansForProductAsync(string productTreeId, string specApiVersion);
         public Task<WorkItem> CreateReleasePlanWorkItemAsync(ReleasePlanDetails releasePlan);
         public Task<Build> RunSDKGenerationPipelineAsync(string apiSpecBranchRef, string typespecProjectRoot, string apiVersion, string sdkReleaseType, string language, int workItemId, string sdkRepoBranch = "");
         public Task<Build> GetPipelineRunAsync(int buildId);
@@ -136,6 +137,38 @@ namespace Azure.Sdk.Tools.Cli.Services
             return await MapWorkItemToReleasePlanAsync(releasePlanWorkItems[0]);
         }
 
+        public async Task<List<ReleasePlanDetails>> GetReleasePlansForProductAsync(string productTreeId, string specApiVersion)
+        {
+            try
+            {
+                var query = $"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{Constants.AZURE_SDK_DEVOPS_RELEASE_PROJECT}' AND [Custom.ProductServiceTreeID] = '{productTreeId}' AND [System.WorkItemType] = 'Release Plan' AND [System.State] IN ('New','Not Started','In Progress')";
+                var releasePlanWorkItems = await FetchWorkItemsAsync(query);
+                if (releasePlanWorkItems.Count == 0)
+                {
+                    logger.LogInformation($"Release plan does not exist for the given product id {productTreeId}");
+                    return null;
+                }
+
+                var releasePlans = new List<ReleasePlanDetails>();
+
+                foreach (var workItem in releasePlanWorkItems)
+                {
+                    var releasePlan = await MapWorkItemToReleasePlanAsync(workItem);
+                    if (releasePlan.SpecAPIVersion == specApiVersion)
+                    {
+                        releasePlans.Add(releasePlan);
+                    }
+                }
+
+                return releasePlans;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"Failed to get release plans for product id {productTreeId}. Error: {ex.Message}");
+                throw new Exception($"Failed to get release plans for product id {productTreeId}. Error: {ex.Message}");
+            }
+        }
+
         private async Task<ReleasePlanDetails> MapWorkItemToReleasePlanAsync(WorkItem workItem)
         {
             var releasePlan = new ReleasePlanDetails()
@@ -178,7 +211,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                         {
                             Language = MapLanguageIdToName(lang),
                             GenerationPipelineUrl = sdkGenPipelineUrl,
-                            SdkPullRequestUrl = sdkPullRequestUrl,          
+                            SdkPullRequestUrl = sdkPullRequestUrl,
                             ReleaseStatus = releaseStatus,
                             PackageName = packageName,
                             ReleaseExclusionStatus = exclusionStatus

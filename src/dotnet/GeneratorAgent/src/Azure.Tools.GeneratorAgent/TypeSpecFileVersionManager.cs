@@ -25,6 +25,41 @@ namespace Azure.Tools.GeneratorAgent
         }
 
         /// <summary>
+        /// Gets or creates file metadata without updating versions (for read-only operations)
+        /// </summary>
+        public TypeSpecFileInfo GetOrCreateFileMetadata(string fileName, string content)
+        {
+            ArgumentNullException.ThrowIfNull(fileName);
+            ArgumentNullException.ThrowIfNull(content);
+
+            var sha256 = ComputeSha256Hash(content);
+            var lines = content.Split('\n').Length;
+
+            if (FileMetadata.TryGetValue(fileName, out var existing))
+            {
+                // File already tracked, just return existing metadata
+                Logger.LogDebug("Retrieved existing metadata for {FileName} (hash: {Hash})", 
+                    fileName, existing.Sha256[..8]);
+                return existing;
+            }
+            else
+            {
+                // New file - create metadata without incrementing version
+                var newFileInfo = new TypeSpecFileInfo
+                {
+                    Path = fileName,
+                    Lines = lines,
+                    Version = _currentVersion,
+                    Sha256 = sha256
+                };
+                FileMetadata[fileName] = newFileInfo;
+                Logger.LogDebug("Created new metadata for {FileName} with current version {Version} (hash: {Hash})", 
+                    fileName, _currentVersion, sha256[..8]);
+                return newFileInfo;
+            }
+        }
+
+        /// <summary>
         /// Updates file metadata and increments all file versions if any content changed
         /// </summary>
         public TypeSpecFileInfo UpdateFileMetadata(string fileName, string content)
@@ -54,7 +89,8 @@ namespace Azure.Tools.GeneratorAgent
             }
             else
             {
-                // New file
+                // New file with new content - treat as content change
+                contentChanged = true;
                 existing = new TypeSpecFileInfo
                 {
                     Path = fileName,
@@ -74,13 +110,8 @@ namespace Azure.Tools.GeneratorAgent
                 {
                     fileInfo.Version = _currentVersion;
                 }
-                Logger.LogDebug("Incremented all file versions to {Version} due to content change", _currentVersion);
-            }
-            else if (!FileMetadata.ContainsKey(fileName))
-            {
-                // For new files, use current version without incrementing
-                existing.Version = _currentVersion;
-                Logger.LogDebug("Added new file {FileName} with current version {Version}", fileName, _currentVersion);
+                Logger.LogDebug("Incremented ALL file versions to {Version} due to content change in {FileName}", 
+                    _currentVersion, fileName);
             }
 
             return existing;

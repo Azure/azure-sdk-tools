@@ -99,6 +99,7 @@ Without a concrete end-to-end scenario, we risk building tools in isolation that
 - **Working with or creating new [SDK code customizations](#code-customizations)** - Eliminates the complexity of merging newly generated code with existing custom code
 - **Creating new [TypeSpec customizations](#typespec-customizations) ([client.tsp](#client-tsp))** - Limits scope; we're not focusing on helping authors create code customizations or client.tsp customizations at this stage
 - **Error resolution assistance** - Tools should report errors but not provide automated resolution; if generation or validation fails, error messages are displayed without additional tooling to help users resolve issues
+- **Updating changelog for data plane libraries** - This is currently a manual process; adding it would require additional work to implement it using our microagent framework, which is more complex than we want for this scenario
 
 **Review Requirements:**
 
@@ -167,7 +168,7 @@ _Note: V1 focuses on local development workflow up to the point where SDKs are r
 ### 3. Update Package/Docs/Metadata
 
 **Tool**: `update-package` ([#11827](https://github.com/Azure/azure-sdk-tools/issues/11827))  
-**Action**: Update versions, changelogs, READMEs, language-specific files (pom.xml, _meta.json, etc.)  
+**Action**: Update versions, changelogs (management plane only), READMEs, language-specific files (pom.xml, _meta.json, etc.)  
 **Success**: All metadata correctly updated for preview release  
 **Validation**: Validate versions, READMEs, changelogs are correctly formatted and updated
 
@@ -250,7 +251,7 @@ Update the package metadata for Health Deidentification SDKs to prepare for a pr
 **Expected Agent Activity:**
 1. Execute `update-package` for all 5 languages
 2. Update version numbers for [preview release](#preview-release)
-3. Update changelogs with recent changes
+3. Update changelogs with recent changes (only management plane)
 4. Update READMEs and language-specific metadata files
 5. Validate all updates are correctly formatted
 6. Report what was updated

@@ -202,7 +202,7 @@ foreach ($triage in $triages) {
             }
         }
     } catch {
-        Write-Error "Error processing triage item [$($triage.id)]`nException message: $($_.Exception.Message)"
+        Write-Warning "Error processing triage item [$($triage.id)]`nException message: $($_.Exception.Message)"
 
         $failedAttestations += @{
             productId = $productServiceTreeId
@@ -238,7 +238,7 @@ foreach ($releasePlan in $releasePlans) {
                     "*Private Preview*" { $KPI_ID_Mgmt_Private_Preview }
                     "*GA*" { $KPI_ID_Mgmt_GA }
                     default {
-                        Write-Output "Release Plan ID $($releasePlan.id): Management plane in scope, unknown lifecycle $($lifecycle)"
+                        Write-Warning "Release Plan ID $($releasePlan.id): Management plane in scope, unknown lifecycle $($lifecycle)"
                         $null
                     }
                 }
@@ -251,13 +251,13 @@ foreach ($releasePlan in $releasePlans) {
                             "*Private Preview*" { $KPI_ID_Data_Private_Preview }
                             "*GA*" { $KPI_ID_Data_GA }
                             default {
-                                Write-Output "Release Plan ID $($releasePlan.id): Dataplane in scope, unknown lifecycle $($lifecycle)"
+                                Write-Warning "Release Plan ID $($releasePlan.id): Dataplane in scope, unknown lifecycle $($lifecycle)"
                                 $null
                             }
                         }
                     }
                     default {
-                        Write-Output "Release Plan ID: Both Management Plane and DataPlane not in scope"
+                        Write-Warning "Release Plan ID $($releasePlan.id): Both Management Plane and DataPlane not in scope"
                         $null
                     }
                 }
@@ -270,7 +270,7 @@ foreach ($releasePlan in $releasePlans) {
 
         Update-AttestationStatusInWorkItem -workItemId $releasePlan.id -fieldName "Custom.AttestationStatus" -status "Completed"
     } catch {
-        Write-Error "Error processing release plan item [$($releasePlan.id)]`nException message: $($_.Exception.Message)"
+        Write-Warning "Error processing release plan item [$($releasePlan.id)]`nException message: $($_.Exception.Message)"
 
         $failedAttestations += @{
             productId = $productServiceTreeId

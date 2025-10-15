@@ -15,7 +15,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from pathlib import Path
 
 from azure.ai.evaluation import GroundednessEvaluator, SimilarityEvaluator
-from evals._config_loader import EvaluationConfig, WorkflowConfigError
 from evals._util import ensure_json_obj
 from src._settings import SettingsManager
 from src._utils import get_prompt_path
@@ -152,11 +151,6 @@ class BaseEvaluator(ABC):
             processed_results: Results from process_results method
         """
         pass
-
-    @classmethod
-    def validate_config_schema(cls, raw_config: dict) -> dict | None:
-        """Base validation - subclasses should override as needed."""
-        return None
 
 
 class CustomAPIViewEvaluator(BaseEvaluator):
@@ -530,10 +524,6 @@ class PromptyEvaluator(BaseEvaluator):
             raise ValueError("PromptyEvaluator requires config")
         self.config = config
 
-        # Get evaluation fields from config
-        self.evaluation_config = self.config.evaluation_config
-        self.breakdown_categories = self.evaluation_config.breakdown_categories
-
         # Optionally, you can set up a model config for SimilarityEvaluator if needed
         settings = SettingsManager()
         self._model_config = {
@@ -603,7 +593,6 @@ class PromptyEvaluator(BaseEvaluator):
                     "sum_score": 0.0,
                     "max_score": 0.0,
                     "test_results": [],
-                    "action_breakdown": self.breakdown_categories.copy(),
                 }
 
                 # Process each test case in this run
@@ -641,7 +630,7 @@ class PromptyEvaluator(BaseEvaluator):
         return final_results
 
     def show_results(self, processed_results: dict) -> None:
-        """Display prompt workflow results with category breakdown."""
+        """Display prompt workflow results."""
         from tabulate import tabulate
 
         for file_name, results in processed_results.items():
@@ -687,26 +676,6 @@ class PromptyEvaluator(BaseEvaluator):
             raise ValueError(f"No target function defined for workflow: {workflow_name}")
 
         return workflow_targets[workflow_name]
-
-    @classmethod
-    def validate_config_schema(cls, raw_config: dict) -> dict | None:
-        """Validate prompt workflow configuration."""
-        if not raw_config or not isinstance(raw_config, dict):
-            return None
-
-        breakdown_categories = raw_config.get("breakdown_categories", {})
-
-        # Validate breakdown_categories structure
-        if breakdown_categories:
-            for key, value in breakdown_categories.items():
-                if not isinstance(value, dict) or "correct" not in value or "total" not in value:
-                    raise WorkflowConfigError(f"breakdown_categories.{key} must have 'correct' and 'total' fields")
-                if not isinstance(value["correct"], int) or not isinstance(value["total"], int):
-                    raise WorkflowConfigError(f"breakdown_categories.{key} correct/total must be integers")
-
-        return EvaluationConfig(
-            breakdown_categories=breakdown_categories,
-        )
 
 
 # Register evaluators at module load time to prevent circular imports

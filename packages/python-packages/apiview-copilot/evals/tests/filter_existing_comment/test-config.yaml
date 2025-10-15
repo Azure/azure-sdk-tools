@@ -1,6 +1,2 @@
 name: filter-existing-comment
 kind: prompt
-evaluation_config:
-  breakdown_categories:
-    KEEP: {correct: 0, total: 0}
-    DISCARD: {correct: 0, total: 0}

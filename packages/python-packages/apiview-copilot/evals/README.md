@@ -53,14 +53,6 @@ Workflow YAML structure:
 ```yaml
 name: workflow-name
 kind: prompt
-tests: ../tests/python/test-file.jsonl
-prompty: ../../prompts/path/to/prompt.prompty
-evaluation_config:
-  comparison_field: field_name
-  display_name: Display Name
-  breakdown_categories:
-    CATEGORY1: {correct: 0, total: 0}
-    CATEGORY2: {correct: 0, total: 0}
 ```
 
 ## Workflow vs Test File Relationship

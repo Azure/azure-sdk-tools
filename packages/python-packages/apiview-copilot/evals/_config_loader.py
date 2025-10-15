@@ -26,13 +26,7 @@ _EVALUATOR_REGISTRY: Dict[str, Type] = {}
 class WorkflowConfig:
     name: str
     kind: str
-    evaluation_config: EvaluationConfig | None
     source_file: Path | None = None  # for diagnostics
-
-
-@dataclasses.dataclass(slots=True)
-class EvaluationConfig:
-    breakdown_categories: dict[str, dict[str, int]]
 
 
 class WorkflowConfigError(ValueError):
@@ -132,19 +126,16 @@ def load_workflow_config(path: str | os.PathLike) -> WorkflowConfig:
         _fail(f"runs must be positive integer (got: {runs!r})")
 
     evaluator_class = get_evaluator_class(kind)
-    evaluation_config = evaluator_class.validate_config_schema(raw.get("evaluation_config"))
 
     return WorkflowConfig(
         name=name,
         kind=kind,
-        evaluation_config=evaluation_config,
         source_file=yaml_path,
     )
 
 
 __all__ = [
     "WorkflowConfig",
-    "EvaluationConfig",
     "WorkflowConfigError",
     "register_evaluator",
     "get_evaluator_class",

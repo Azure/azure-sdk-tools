@@ -600,15 +600,13 @@ class PromptyEvaluator(BaseEvaluator):
                     all_results[file_name] = []
 
                 run_summary = {
-                    "total_tests": 0,
-                    "correct_actions": 0,
+                    "sum_score": 0.0,
+                    "max_score": 0.0,
                     "test_results": [],
                     "action_breakdown": self.breakdown_categories.copy(),
                 }
 
                 # Process each test case in this run
-                total_score = 0.0
-                total_max_score = 0.0
                 for row in result.get("rows", []):
                     test_result = {
                         "testcase": row.get("inputs.testcase", "unknown"),
@@ -619,19 +617,10 @@ class PromptyEvaluator(BaseEvaluator):
                     }
 
                     run_summary["test_results"].append(test_result)
-                    run_summary["total_tests"] += 1
                     run_summary["max_score"] += 100
 
                     if test_result["correct"]:
-                        run_summary["correct_actions"] += 1
                         run_summary["sum_score"] += test_result["score"]
-
-                    # Track breakdown by action
-                    expected_val = test_result["expected_action"]
-                    if expected_val in run_summary["action_breakdown"]:
-                        run_summary["action_breakdown"][expected_val]["total"] += 1
-                        if test_result["correct"]:
-                            run_summary["action_breakdown"][expected_val]["correct"] += 1
 
                 run_summary["accuracy"] = (
                     (run_summary["sum_score"] / run_summary["max_score"]) * 100 if run_summary["max_score"] > 0 else 0
@@ -657,35 +646,16 @@ class PromptyEvaluator(BaseEvaluator):
 
         for file_name, results in processed_results.items():
             accuracy = results["accuracy"]
-            correct = results["correct_actions"]
-            total = results["total_tests"]
 
             print("====================================================")
             print(f"\n\n✨ {file_name} results:\n")
-            print(f"Overall Action Accuracy: {correct}/{total} ({accuracy:.1f}%)\n")
+            print(f"Overall Score: ({accuracy:.0f}%)\n")
 
-            # Show breakdown by category
-            breakdown = results["action_breakdown"]
-            breakdown_rows = []
-            for rec_type, stats in breakdown.items():
-                if stats["total"] > 0:
-                    type_accuracy = (stats["correct"] / stats["total"]) * 100
-                    breakdown_rows.append([rec_type, f"{stats['correct']}/{stats['total']}", f"{type_accuracy:.1f}%"])
-
-            if breakdown_rows:
-                print(f"Action Breakdown:")
-                print(tabulate(breakdown_rows, headers=["Type", "Correct", "Accuracy"], tablefmt="simple"))
-                print()
-
-            # Show failed cases with details
-            failed_cases = [test for test in results["test_results"] if not test["correct"]]
-            if failed_cases:
-                print("Failed Cases:")
-                for test in failed_cases:
-                    print(f"  ❌ {test['testcase']}")
-                    print(f"     Expected Action: {test['expected_action']}")
-                    print(f"     Actual Action:   {test['actual_action']}")
-                    print()
+            # Show each test result
+            print("== TEST RESULTS ==")
+            for test in results["test_results"]:
+                status = "✅" if test["correct"] else "❌"
+                print(f"  {status} {test['score']}% - {test['testcase']} ")
 
     def _discover_jsonl_fields(self) -> set[str]:
         """Peek at JSONL to see what fields are available."""

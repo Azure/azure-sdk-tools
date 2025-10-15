@@ -17,6 +17,6 @@
   },
   "response": {
     "action": "KEEP",
-    "rationale": "The proposed comment provides additional clarity and should be retained."
+    "rationale": "The proposed comment provides specific guidance about the async client naming and namespace, which is not present in the existing comment."
   }
 }

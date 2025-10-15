@@ -370,6 +370,24 @@ namespace APIViewWeb.Managers
             var requestedOn = DateTime.UtcNow;
             var reviewGroupId = $"rg-{Guid.NewGuid():N}";
             
+            // Mark the specific revision as having requested namespace review
+            if (!string.IsNullOrEmpty(revisionId))
+            {
+                try
+                {
+                    var revision = await _apiRevisionsManager.GetAPIRevisionAsync(revisionId);
+                    if (revision != null)
+                    {
+                        revision.HasRequestedNamespaceReview = true;
+                        await _apiRevisionsManager.UpdateAPIRevisionAsync(revision);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _telemetryClient.TrackException(ex);
+                    // Continue - don't fail the namespace request if this fails
+                }
+            }
 
             // Get related reviews using pull request number from specific TypeSpec revision
             var relatedReviews = await FindRelatedReviewsByPullRequestAsync(reviewId, revisionId);

@@ -424,8 +424,9 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     // Only show namespace review request for TypeSpec language AND if feature is enabled
     this.canRequestNamespaceReview = this.review?.language === 'TypeSpec' && this.namespaceReviewEnabled;
     console.log("Namespace review request can be made:",  this.namespaceReviewEnabled);
-    // Always keep the button available for requesting namespace review
-    this.isNamespaceReviewRequested = false;
+
+    // Check if namespace review has been requested for this revision
+    this.isNamespaceReviewRequested = this.activeAPIRevision?.hasRequestedNamespaceReview || false;
 
     if (this.isNamespaceReviewInProgress && (this.review?.namespaceReviewStatus === 'pending' || this.review?.namespaceReviewStatus === 'approved')) {
       this.isNamespaceReviewInProgress = false;
@@ -704,7 +705,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     const isJavaScript = this.review.language == "JavaScript";
 
     const isTypeSpec = this.review.language === "TypeSpec";
-    
+
     return !(isAzureRestPackage && isJavaScript) && !isTypeSpec;
   }
 }

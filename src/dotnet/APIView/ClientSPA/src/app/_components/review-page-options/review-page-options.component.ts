@@ -180,6 +180,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
       this.selectedApprovers = this.activeAPIRevision!.assignedReviewers.map(reviewer => reviewer.assingedTo);
       this.isCopilotReviewSupported = this.isCopilotReviewSupportedForPackage();
       this.setAPIRevisionApprovalStates();
+      this.setNamespaceReviewStates();
       this.setPullRequestsInfo();
       if (this.activeAPIRevision?.copilotReviewInProgress) {
         this.aiReviewGenerationState = 'InProgress';
@@ -421,8 +422,8 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   }
 
   setNamespaceReviewStates() {
-    // Only show namespace review request for TypeSpec language AND if feature is enabled
-    this.canRequestNamespaceReview = this.review?.language === 'TypeSpec' && this.namespaceReviewEnabled;
+    // Only show namespace review request for TypeSpec language AND if feature is enabled AND review is not already approved
+    this.canRequestNamespaceReview = this.review?.language === 'TypeSpec' && this.namespaceReviewEnabled && !this.review?.isApproved;
     console.log("Namespace review request can be made:",  this.namespaceReviewEnabled);
 
     // Check if namespace review has been requested for this revision
@@ -626,7 +627,11 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   }
 
   updateNamespaceReviewButtonState() {
-    if (this.isNamespaceReviewInProgress) {
+    if (this.review?.isApproved) {
+      this.namespaceReviewBtnClass = "btn btn-outline-success disabled";
+      this.namespaceReviewBtnLabel = "Review Approved";
+      this.namespaceReviewMessage = "This review has already been approved - namespace review is not needed.";
+    } else if (this.isNamespaceReviewInProgress) {
       this.namespaceReviewBtnClass = "btn btn-outline-primary";
       this.namespaceReviewBtnLabel = "Requesting...";
       this.namespaceReviewMessage = "";
@@ -646,11 +651,12 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
   }
 
   /**
-   * Reset the namespace review loading state (called when request fails)
+   * Reset the namespace review loading state (called when request completes)
    */
   resetNamespaceReviewLoadingState() {
     this.isNamespaceReviewInProgress = false;
-    this.updateNamespaceReviewButtonState();
+    // Re-check the namespace review states to update isNamespaceReviewRequested based on activeAPIRevision
+    this.setNamespaceReviewStates();
   }
 
   isNamespaceApproved(): boolean {

@@ -371,7 +371,7 @@ export class ReviewPageComponent implements OnInit {
 
   private processEmbeddedComments() {
     if (!this.codePanelData || !this.comments) return;
-    
+
     Object.values(this.codePanelData.nodeMetaData).forEach(nodeData => {
       if (nodeData.commentThread) {
         Object.values(nodeData.commentThread).forEach(commentThreadRow => {
@@ -580,6 +580,18 @@ export class ReviewPageComponent implements OnInit {
       this.reviewsService.requestNamespaceReview(this.reviewId!, this.activeApiRevisionId!).pipe(take(1)).subscribe({
         next: (review: Review) => {
           this.review = review;
+
+          // Update the active revision to reflect that namespace review has been requested
+          if (this.activeAPIRevision) {
+            this.activeAPIRevision.hasRequestedNamespaceReview = true;
+
+            // Also update the revision in the apiRevisions array
+            const revisionIndex = this.apiRevisions.findIndex(r => r.id === this.activeAPIRevision!.id);
+            if (revisionIndex >= 0) {
+              this.apiRevisions[revisionIndex].hasRequestedNamespaceReview = true;
+            }
+          }
+
           // Reset loading state in the options component on success
           if (this.reviewPageOptionsComponent) {
             this.reviewPageOptionsComponent.resetNamespaceReviewLoadingState();

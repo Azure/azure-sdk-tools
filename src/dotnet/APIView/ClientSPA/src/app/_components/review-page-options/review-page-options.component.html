@@ -6,7 +6,7 @@
                 <ng-container *ngIf="canToggleApproveAPIRevision; else cantToggleApproveAPIRevision">
                     <span *ngIf="apiRevisionApprovalMessage" class="small text-muted">{{apiRevisionApprovalMessage}}</span>
                     <div class="d-grid gap-2">
-                        <button class="{{apiRevisionApprovalBtnClass}}" type="button" 
+                        <button class="{{apiRevisionApprovalBtnClass}}" type="button"
                             (click)="handleAPIRevisionApprovalAction()"
                             [disabled]="isAPIRevisionApprovalDisabled">{{apiRevisionApprovalBtnLabel}}</button>
                     </div>
@@ -54,7 +54,7 @@
             <div class="d-grid gap-2">
                 <button class="{{namespaceReviewBtnClass}}" type="button"
                         (click)="handleNamespaceReviewAction()"
-                        [disabled]="isNamespaceReviewRequested || isNamespaceApproved() || isNamespaceReviewInProgress">
+                        [disabled]="review?.isApproved || isNamespaceReviewRequested || isNamespaceApproved() || isNamespaceReviewInProgress">
                     <span *ngIf="isNamespaceReviewInProgress" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                     {{namespaceReviewBtnLabel}}
                 </button>

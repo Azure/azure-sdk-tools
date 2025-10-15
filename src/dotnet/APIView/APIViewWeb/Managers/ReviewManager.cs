@@ -391,11 +391,37 @@ namespace APIViewWeb.Managers
 
             // Get related reviews using pull request number from specific TypeSpec revision
             var relatedReviews = await FindRelatedReviewsByPullRequestAsync(reviewId, revisionId);
+            
+            // Add the current TypeSpec review to the list so it also gets marked with namespace review status
+            if (!relatedReviews.Any(r => r.Id == reviewId))
+            {
+                relatedReviews.Add(typeSpecReview);
+            }
+
+            // Log the related reviews found
+            _logger.LogInformation("Namespace review request - Found {RelatedReviewCount} related reviews for TypeSpec review {ReviewId}, revision {RevisionId}", 
+                relatedReviews.Count, reviewId, revisionId);
+            
+            foreach (var review in relatedReviews)
+            {
+                _logger.LogInformation("Related review: ID={ReviewId}, Language={Language}, PackageName={PackageName}", 
+                    review.Id, review.Language, review.PackageName);
+            }
 
             // Filter SDK language reviews before processing to avoid unnecessary work
             var sdkLanguageReviews = relatedReviews
                                 .Where(r => r != null && LanguageHelper.IsSDKLanguage(r.Language))
                                 .ToList();
+
+            // Log the SDK language reviews after filtering
+            _logger.LogInformation("Namespace review request - Found {SdkLanguageReviewCount} SDK language reviews after filtering", 
+                sdkLanguageReviews.Count);
+            
+            foreach (var review in sdkLanguageReviews)
+            {
+                _logger.LogInformation("SDK Language review: ID={ReviewId}, Language={Language}, PackageName={PackageName}", 
+                    review.Id, review.Language, review.PackageName);
+            }
 
             // Update the reviews identified by review IDs with namespace approval fields
             await MarkAssociatedReviewsForNamespaceReview(relatedReviews, userId, requestedOn, reviewGroupId);
@@ -474,17 +500,40 @@ namespace APIViewWeb.Managers
                 try
                 {
                     // Look up pull requests directly by revision ID - much more reliable than extracting PR numbers
-                    PullRequestModel prModel = (await _pullRequestsRepository.GetPullRequestsAsync(typeSpecReviewId, revisionId)).FirstOrDefault();
-                    var pullRequests = await _pullRequestsRepository.GetPullRequestsAsync(prModel.PullRequestNumber, "Azure/azure-rest-api-specs");
-                    // Get all review IDs from pull requests first to batch the database calls
-                    var reviewIds = pullRequests
-                        .Select(pr => pr.ReviewId)
-                        .Distinct()
-                        .ToList();
-
-                    if (reviewIds.Count > 0)
+                    var pullRequestModels = await _pullRequestsRepository.GetPullRequestsAsync(typeSpecReviewId, revisionId);
+                    _logger.LogInformation("FindRelatedReviewsByPullRequestAsync - Found {PullRequestCount} pull request models for review {ReviewId}, revision {RevisionId}", 
+                        pullRequestModels.Count(), typeSpecReviewId, revisionId);
+                    
+                    PullRequestModel prModel = pullRequestModels.FirstOrDefault();
+                    if (prModel != null)
                     {
-                        relatedReviews = (List<ReviewListItemModel>)await _reviewsRepository.GetReviewsAsync(reviewIds);
+                        _logger.LogInformation("Using pull request: Number={PullRequestNumber}, RepoName={RepoName}", 
+                            prModel.PullRequestNumber, prModel.RepoName);
+                        
+                        // Use the repository name from the pull request model instead of hardcoding
+                        var repoName = !string.IsNullOrEmpty(prModel.RepoName) ? prModel.RepoName : "Azure/azure-rest-api-specs";
+                        var pullRequests = await _pullRequestsRepository.GetPullRequestsAsync(prModel.PullRequestNumber, repoName);
+                        
+                        _logger.LogInformation("Found {PullRequestCount} pull requests for PR number {PullRequestNumber} in repo {RepoName}", 
+                            pullRequests.Count(), prModel.PullRequestNumber, repoName);
+                        
+                        // Get all review IDs from pull requests first to batch the database calls
+                        var reviewIds = pullRequests
+                            .Select(pr => pr.ReviewId)
+                            .Distinct()
+                            .ToList();
+
+                        _logger.LogInformation("Extracted {ReviewIdCount} unique review IDs from pull requests", reviewIds.Count);
+
+                        if (reviewIds.Count > 0)
+                        {
+                            relatedReviews = (List<ReviewListItemModel>)await _reviewsRepository.GetReviewsAsync(reviewIds);
+                            _logger.LogInformation("Retrieved {RelatedReviewCount} related reviews from database", relatedReviews.Count);
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogWarning("No pull request model found for review {ReviewId}, revision {RevisionId}", typeSpecReviewId, revisionId);
                     }
                 }
                 catch (Exception ex)

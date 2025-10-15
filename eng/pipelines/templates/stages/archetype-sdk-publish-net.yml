@@ -111,8 +111,8 @@ stages:
 
         - task: PowerShell@2
           displayName: 'Update Changelog'
-          workingDirectory: $(Build.SourcesDirectory)/azure-sdk-tools/
           inputs:
+            workingDirectory: '$(Build.SourcesDirectory)/azure-sdk-tools/'
             targetType: filePath
             filePath: '$(Build.SourcesDirectory)/azure-sdk-tools/eng/common/scripts/Update-Changelog.ps1'
             # run this locally and figure out what the inputs should be

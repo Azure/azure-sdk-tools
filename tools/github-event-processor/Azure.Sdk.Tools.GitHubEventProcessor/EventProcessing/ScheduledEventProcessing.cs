@@ -188,7 +188,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                 };
 
                 // Calculate the equivalent calendar days for 5 business days ago
-                // This uses approximately 7 calendar days to ensure we capture issues that are 5+ business days old
+                // This calculates the actual calendar days needed to represent 5 business days, accounting for weekends
                 DateTime fiveBusinessDaysAgo = Utils.BusinessDaysUtils.CalculateBusinessDaysAgo(5);
                 int calendarDaysEquivalent = (int)Math.Ceiling((DateTime.UtcNow - fiveBusinessDaysAgo).TotalDays);
 

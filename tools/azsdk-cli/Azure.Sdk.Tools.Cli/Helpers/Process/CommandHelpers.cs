@@ -25,6 +25,11 @@ public interface INpxHelper
     public Task<ProcessResult> Run(NpxOptions options, CancellationToken ct);
 }
 
+public interface IPythonProcessHelper
+{
+    public Task<ProcessResult> RunWithVenv(ProcessOptions options, CancellationToken ct);
+}
+
 public sealed class ProcessHelper(ILogger<ProcessHelper> logger, IRawOutputHelper outputHelper)
     : ProcessHelperBase<ProcessHelper>(logger, outputHelper), IProcessHelper
 {

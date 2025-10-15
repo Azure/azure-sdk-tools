@@ -21,12 +21,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Verify;
 [McpServerToolType, Description("This tool verifies that the environment is set up with the required installations to run MCP release tools.")]
 public class VerifySetupTool : MCPTool
 {
-    private readonly IProcessHelper processHelper;
+    private readonly IPythonProcessHelper processHelper;
     private readonly ILogger<VerifySetupTool> logger;
 
     private readonly ILanguageSpecificResolver<IEnvRequirementsCheck> envRequirementsCheck;
 
-    public VerifySetupTool(IProcessHelper processHelper, ILogger<VerifySetupTool> logger, ILanguageSpecificResolver<IEnvRequirementsCheck> envRequirementsCheck)
+    public VerifySetupTool(IPythonProcessHelper processHelper, ILogger<VerifySetupTool> logger, ILanguageSpecificResolver<IEnvRequirementsCheck> envRequirementsCheck)
     {
         this.processHelper = processHelper;
         this.logger = logger;
@@ -61,7 +61,7 @@ public class VerifySetupTool : MCPTool
     }
 
     [McpServerTool(Name = "azsdk_verify_setup"), Description("Verifies the developer environment for MCP release tool requirements")]
-    public async Task<VerifySetupResponse> VerifySetup(List<string> langs, string packagePath = null, CancellationToken ct = default)
+    public async Task<VerifySetupResponse> VerifySetup(List<string> langs = null, string packagePath = null, CancellationToken ct = default)
     {
         try
         {
@@ -117,7 +117,7 @@ public class VerifySetupTool : MCPTool
         try
         {
             logger.LogInformation("Running command: {Command} in {packagePath}", string.Join(' ', command), packagePath);
-            var result = await processHelper.Run(options, ct);
+            var result = await processHelper.RunWithVenv(options, ct);
             trimmed = (result.Output ?? string.Empty).Trim();
 
             if (result.ExitCode != 0)
@@ -149,7 +149,7 @@ public class VerifySetupTool : MCPTool
     private async Task<List<SetupRequirements.Requirement>> GetRequirements(List<string> languages, string packagePath, CancellationToken ct)
     {
         var reqGetter = null as IEnvRequirementsCheck;
-        if (languages.Count == 0)
+        if (languages == null ||languages.Count == 0)
         {
             // detect language if none given
             reqGetter = await envRequirementsCheck.Resolve(packagePath); 

@@ -28,6 +28,7 @@ Use these stage prefixes when naming your spec files:
 
 | Stage # | Stage Name | Prefix | Example Spec Name |
 |---------|------------|--------|-------------------|
+| 0 | Scenarios | `0-scenario` | `0-scenario-1.spec.md` |
 | 1 | Environment Setup | `1-env-setup` | `1-env-setup-env-verification.spec.md` |
 | 2 | Generating | `2-generating` | `2-generating-typespec-sdk.spec.md` |
 | 3 | Customizing | `3-customizing` | `3-customizing-typespec-validation.spec.md` |
@@ -39,6 +40,7 @@ Use these stage prefixes when naming your spec files:
 
 **Notes:**
 
+- **Stage 0 (Scenarios)**: End-to-end scenarios that span multiple stages
 - **Stage 3 (Customizing)**: Covers customizing TypeSpec or SDK libraries
 - **Stage 6 (Package)**: Covers package metadata and documentation updates
 - **Stage 99 (Operations)**: For architecture-level or cross-cutting concerns between inner and outer loop

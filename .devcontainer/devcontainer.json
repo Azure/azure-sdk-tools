@@ -10,7 +10,8 @@
 			"version": "lts"
 		},
 		"ghcr.io/devcontainers/features/python:1": {
-			"version": "latest"
+			"version": "3.12",
+			"installTools": true
 		},
 		"ghcr.io/devcontainers/features/go:1": {
 			"version": "latest"

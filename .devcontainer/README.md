@@ -8,7 +8,7 @@ The devcontainer is configured with the following tools and features:
 
 - **.NET SDK** - For building and running C# projects
 - **Node.js (LTS)** - For JavaScript/TypeScript development
-- **Python** - For Python tools and scripts
+- **Python 3.12** - For Python tools and scripts
 - **Go** - For Go-based tools
 - **Docker-in-Docker** - For building and running containers
 - **Git & Git LFS** - For version control with large file support

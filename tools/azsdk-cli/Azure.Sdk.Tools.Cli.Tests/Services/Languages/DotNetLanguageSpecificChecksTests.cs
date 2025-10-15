@@ -267,6 +267,11 @@ internal class DotNetLanguageSpecificChecksTests
         SetupSuccessfulDotNetVersionCheck();
         SetupGitRepoDiscovery();
 
+        // Create the expected script path and ensure the directory exists
+        var scriptPath = Path.Combine(_repoRoot, "eng", "scripts", "CodeChecks.ps1");
+        Directory.CreateDirectory(Path.GetDirectoryName(scriptPath)!);
+        File.WriteAllText(scriptPath, "# Mock PowerShell script");
+
         var processResult = new ProcessResult { ExitCode = 0 };
         processResult.AppendStdout("All checks passed successfully!");
 
@@ -278,13 +283,21 @@ internal class DotNetLanguageSpecificChecksTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(processResult);
 
-        var result = await _languageChecks.CheckGeneratedCodeAsync(_packagePath, CancellationToken.None);
-
-        Assert.Multiple(() =>
+        try
         {
-            Assert.That(result.ExitCode, Is.EqualTo(0));
-            Assert.That(result.CheckStatusDetails, Does.Contain("All checks passed successfully"));
-        });
+            var result = await _languageChecks.CheckGeneratedCodeAsync(_packagePath, CancellationToken.None);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.ExitCode, Is.EqualTo(0));
+                Assert.That(result.CheckStatusDetails, Does.Contain("All checks passed successfully"));
+            });
+        }
+        finally
+        {
+            // Cleanup
+            try { File.Delete(scriptPath); Directory.Delete(Path.GetDirectoryName(scriptPath)!, true); } catch { }
+        }
     }
 
     [TestCase(true)]
@@ -302,6 +315,12 @@ internal class DotNetLanguageSpecificChecksTests
             "Spell check failed";
 
         SetupSuccessfulDotNetVersionCheck();
+        SetupGitRepoDiscovery();
+
+        // Create the expected script path and ensure the directory exists
+        var scriptPath = Path.Combine(_repoRoot, "eng", "scripts", "CodeChecks.ps1");
+        Directory.CreateDirectory(Path.GetDirectoryName(scriptPath)!);
+        File.WriteAllText(scriptPath, "# Mock PowerShell script");
 
         _processHelperMock
             .Setup(x => x.Run(
@@ -312,11 +331,9 @@ internal class DotNetLanguageSpecificChecksTests
             .ReturnsAsync(() =>
             {
                 var processResult = new ProcessResult { ExitCode = 1 };
-                processResult.AppendStderr(errorMessage);
+                processResult.AppendStdout(errorMessage);  // Changed from AppendStderr to AppendStdout
                 return processResult;
             });
-
-        SetupGitRepoDiscovery();
 
         var result = await _languageChecks.CheckGeneratedCodeAsync(_packagePath, CancellationToken.None);
 
@@ -373,6 +390,11 @@ internal class DotNetLanguageSpecificChecksTests
         SetupSuccessfulDotNetVersionCheck();
         SetupGitRepoDiscovery();
 
+        // Create the expected script path and ensure the directory exists
+        var scriptPath = Path.Combine(_repoRoot, "eng", "scripts", "compatibility", "Check-AOT-Compatibility.ps1");
+        Directory.CreateDirectory(Path.GetDirectoryName(scriptPath)!);
+        File.WriteAllText(scriptPath, "# Mock PowerShell script");
+
         var processResult = new ProcessResult { ExitCode = 0 };
         processResult.AppendStdout("AOT compatibility check passed!");
 
@@ -384,13 +406,21 @@ internal class DotNetLanguageSpecificChecksTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(processResult);
 
-        var result = await _languageChecks.CheckAotCompatAsync(_packagePath, CancellationToken.None);
-
-        Assert.Multiple(() =>
+        try
         {
-            Assert.That(result.ExitCode, Is.EqualTo(0));
-            Assert.That(result.CheckStatusDetails, Does.Contain("AOT compatibility check passed"));
-        });
+            var result = await _languageChecks.CheckAotCompatAsync(_packagePath, CancellationToken.None);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.ExitCode, Is.EqualTo(0));
+                Assert.That(result.CheckStatusDetails, Does.Contain("AOT compatibility check passed"));
+            });
+        }
+        finally
+        {
+            // Cleanup
+            try { File.Delete(scriptPath); Directory.Delete(Path.GetDirectoryName(scriptPath)!, true); } catch { }
+        }
     }
 
     [Test]
@@ -399,12 +429,17 @@ internal class DotNetLanguageSpecificChecksTests
         SetupSuccessfulDotNetVersionCheck();
         SetupGitRepoDiscovery();
 
+        // Create the expected script path and ensure the directory exists
+        var scriptPath = Path.Combine(_repoRoot, "eng", "scripts", "compatibility", "Check-AOT-Compatibility.ps1");
+        Directory.CreateDirectory(Path.GetDirectoryName(scriptPath)!);
+        File.WriteAllText(scriptPath, "# Mock PowerShell script");
+
         var errorMessage = "ILLink : Trim analysis warning IL2026: Azure.Storage.Blobs.BlobClient.Upload: " +
             "Using member 'System.Reflection.Assembly.GetTypes()' which has 'RequiresUnreferencedCodeAttribute' " +
             "can break functionality when trimming application code.";
         
         var processResult = new ProcessResult { ExitCode = 1 };
-        processResult.AppendStderr(errorMessage);
+        processResult.AppendStdout(errorMessage);  // Changed from AppendStderr to AppendStdout
         
         _processHelperMock
             .Setup(x => x.Run(
@@ -414,13 +449,21 @@ internal class DotNetLanguageSpecificChecksTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(processResult);
 
-        var result = await _languageChecks.CheckAotCompatAsync(_packagePath, CancellationToken.None);
-
-        Assert.Multiple(() =>
+        try
         {
-            Assert.That(result.ExitCode, Is.EqualTo(1));
-            Assert.That(result.CheckStatusDetails, Does.Contain("Trim analysis warning"));
-            Assert.That(result.CheckStatusDetails, Does.Contain("RequiresUnreferencedCodeAttribute"));
-        });
+            var result = await _languageChecks.CheckAotCompatAsync(_packagePath, CancellationToken.None);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.ExitCode, Is.EqualTo(1));
+                Assert.That(result.CheckStatusDetails, Does.Contain("Trim analysis warning"));
+                Assert.That(result.CheckStatusDetails, Does.Contain("RequiresUnreferencedCodeAttribute"));
+            });
+        }
+        finally
+        {
+            // Cleanup
+            try { File.Delete(scriptPath); Directory.Delete(Path.GetDirectoryName(scriptPath)!, true); } catch { }
+        }
     }
 }

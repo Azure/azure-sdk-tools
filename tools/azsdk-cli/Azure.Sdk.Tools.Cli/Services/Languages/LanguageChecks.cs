@@ -308,6 +308,12 @@ public class LanguageChecks : ILanguageChecks
                 return errorResponse;
             }
 
+            var languageSpecificCheck = await _languageSpecificChecks.Resolve(packagePath);
+            if (languageSpecificCheck == null)
+            {
+                return new CLICheckResponse(1, "", $"No language-specific check handler found for package at {packagePath}. Supported languages may not include this package type.");
+            }
+
             // Construct the path to the PowerShell script in the SDK repository
             var scriptPath = Path.Combine(packageRepoRoot, "eng", "common", "scripts", "Verify-ChangeLog.ps1");
 
@@ -317,7 +323,7 @@ public class LanguageChecks : ILanguageChecks
             }
 
             var command = "pwsh";
-            var args = new[] { "-File", scriptPath, "-PackageName", this.GetSDKPackagePath(packageRepoRoot, packagePath) };
+            var args = new[] { "-File", scriptPath, "-PackageName", await languageSpecificCheck.GetSDKPackageName(packageRepoRoot, packagePath, ct) };
 
             // Use a longer timeout for changelog validation - 5 minutes should be sufficient
             var timeout = TimeSpan.FromMinutes(5);
@@ -443,11 +449,6 @@ public class LanguageChecks : ILanguageChecks
             _logger.LogError(ex, "Error in CheckSpellingCommonAsync");
             return new CLICheckResponse(1, "", ex.Message);
         }
-    }
-
-    public virtual string GetSDKPackagePath(string repo, string packagePath)
-    {
-        return Path.GetFileName(packagePath);
     }
 
     /// <summary>

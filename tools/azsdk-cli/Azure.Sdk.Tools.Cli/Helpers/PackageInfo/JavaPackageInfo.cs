@@ -100,8 +100,8 @@ public sealed class JavaPackageInfo : IPackageInfo
 
     private (string RepoRoot, string RelativePath, string FullPath) Parse(string packagePath)
     {
-        var full = Path.GetFullPath(packagePath);
-        var repoRoot = _gitHelper.DiscoverRepoRoot(full);
+        var full = RealPath.GetRealPath(packagePath);
+        var repoRoot = RealPath.GetRealPath(_gitHelper.DiscoverRepoRoot(full));
         var sdkRoot = Path.Combine(repoRoot, "sdk");
         if (!full.StartsWith(sdkRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) && !string.Equals(full, sdkRoot, StringComparison.OrdinalIgnoreCase))
         {

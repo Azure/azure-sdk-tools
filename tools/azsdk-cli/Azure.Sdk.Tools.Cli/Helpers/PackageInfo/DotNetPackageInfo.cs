@@ -72,10 +72,10 @@ public sealed class DotNetPackageInfo : IPackageInfo
 
     private (string RepoRoot, string RelativePath, string FullPath) Parse(string packagePath)
     {
-        var full = Path.GetFullPath(packagePath);
+        var full = RealPath.GetRealPath(packagePath);
 
-        // Use GitHelper to discover the repository root (parent of .git)
-        var repoRoot = _gitHelper.DiscoverRepoRoot(full);
+        // Use GitHelper to discover the repository root (parent of .git) and normalize both
+        var repoRoot = RealPath.GetRealPath(_gitHelper.DiscoverRepoRoot(full));
         var sdkRoot = Path.Combine(repoRoot, "sdk");
 
         // Ensure the provided path is under the sdk directory

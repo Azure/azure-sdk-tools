@@ -120,7 +120,7 @@
                     "type": "string"
                 },
                 "CrossLanguageDefinitionId": {
-                    "$ref": "#/$defs/CrossLanguageDefinitionMetadataStringString"
+                    "$ref": "#/$defs/LanguageIdMap"
                 }
             },
             "required": [
@@ -226,20 +226,13 @@
                 "Tags"
             ]
         },
-        "CrossLanguageDefinitionMetadataStringString": {
+        "LanguageIdMap": {
             "type": "object",
-            "properties": {
-                "key": {
-                    "type": "string"
-                },
-                "value": {
-                    "type": "string"
-                }
+            "properties": {},
+            "additionalProperties": {
+                "type": "string"
             },
-            "required": [
-                "key",
-                "value"
-            ]
+            "description": "Maps a language-specific ID (key) to a TypeSpec ID (value).\nKey: Language-specific ID (e.g., 'en-US', 'fr-FR')\nValue: Cross-language TypeSpec ID"
         },
         "ReviewToken": {
             "type": "object",

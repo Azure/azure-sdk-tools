@@ -99,7 +99,7 @@ model CodeDiagnostic {
 
 model CrossLanguageMetadata {
   CrossLanguagePackageId: string;
-  CrossLanguageDefinitionId: CrossLanguageDefinitionMetadata<string,string>;
+  CrossLanguageDefinitionId: LanguageIdMap;
 }
 
 enum TokenKind {
@@ -140,7 +140,9 @@ model NavigationItem {
   Tags: Record<string>;
 }
 
-model CrossLanguageDefinitionMetadata<TLanguageSpecificId, TCrossLanguageId> {
-  key: TLanguageSpecificId;
-  value: TCrossLanguageId;
-}
+/**
+ * Maps a language-specific ID (key) to a TypeSpec ID (value).
+ * Key: Language-specific ID (e.g., 'en-US', 'fr-FR')
+ * Value: Cross-language TypeSpec ID
+ */
+model LanguageIdMap is Record<string>;

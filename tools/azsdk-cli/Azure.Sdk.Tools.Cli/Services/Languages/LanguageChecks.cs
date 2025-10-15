@@ -100,14 +100,6 @@ public interface ILanguageChecks
     /// <param name="ct">Cancellation token</param>
     /// <returns>Result of the generated code check</returns>
     Task<CLICheckResponse> CheckGeneratedCodeAsync(string packagePath, CancellationToken ct = default);
-
-    /// <summary>
-    /// Gets the SDK package path for the given repository and package path.
-    /// </summary>
-    /// <param name="repo">Repository root path</param>
-    /// <param name="packagePath">Package path</param>
-    /// <returns>SDK package path</returns>
-    string GetSDKPackagePath(string repo, string packagePath);
 }
 
 /// <summary>

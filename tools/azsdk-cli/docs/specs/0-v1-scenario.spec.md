@@ -1,10 +1,10 @@
-# Spec: V1 scenario
+# Spec: Scenario 1
 
 ## Table of Contents
 
 - [Overview](#overview)
 - [Definitions](#definitions)
-- [Why V1 Scenario Matters](#why-v1-scenario-matters)
+- [Why Scenario 1 Matters](#why-scenario-1-matters)
 - [Context & Assumptions](#context--assumptions)
 - [Workflow](#workflow)
 - [Stage Details](#stage-details)
@@ -17,7 +17,7 @@
 
 ## Overview
 
-The V1 scenario defines the end-to-end workflow for generating and validating [preview SDKs](#preview-release) across all 5 languages (.NET, Java, JavaScript, Python, Go) using the Health Deidentification service as the test case.
+Scenario 1 defines the end-to-end workflow for generating and validating [preview SDKs](#preview-release) across all 5 languages (.NET, Java, JavaScript, Python, Go) using the Health Deidentification service as the test case.
 
 **Service**: Health Deidentification
 
@@ -59,9 +59,9 @@ _Terms used throughout this spec with precise meanings:_
 
 ---
 
-## Why V1 Scenario Matters
+## Why Scenario 1 Matters
 
-Without a concrete end-to-end scenario, we risk building tools in isolation that don't integrate well. V1 provides:
+Without a concrete end-to-end scenario, we risk building tools in isolation that don't integrate well. Scenario 1 provides:
 
 - Clear definition of successful completion for all teams
 - Repeatable test case for validation
@@ -80,7 +80,7 @@ Without a concrete end-to-end scenario, we risk building tools in isolation that
 - Test recordings already exist ([playback mode](#playback-mode) only)
 - [TypeSpec](#typespec) modifications are local only (single repo)
 
-### In Scope for V1
+### In Scope for Scenario 1
 
 - **All 5 languages** (.NET, Java, JavaScript, Python, Go) - All activities defined in this scenario must be supported across all languages listed. Each activity should behave consistently with existing tooling—successfully completing or erroring out as expected given the same inputs.
 - **Subsequent [preview releases](#preview-release)** - Releases after the first preview that do not require architect review and where initial library setup has already been completed
@@ -92,7 +92,7 @@ Without a concrete end-to-end scenario, we risk building tools in isolation that
 - **Existing changelog generation** - no changes to current process
 - **VS Code with GitHub Copilot** - All functionality will be validated to work in VS Code with GitHub Copilot
 
-### Out of scope for V1
+### Out of scope for Scenario 1
 
 **Development Complexity:**
 
@@ -104,8 +104,8 @@ Without a concrete end-to-end scenario, we risk building tools in isolation that
 **Review Requirements:**
 
 - **Breaking changes** - Ensures we don't trigger review requirements when moving towards release
-- **First [preview release](#preview-release)** - Requires architect board review, adding complexity beyond V1 scope
-- **GA release** - Requires architect board review, adding complexity beyond V1 scope
+- **First [preview release](#preview-release)** - Requires architect board review, adding complexity beyond Scenario 1 scope
+- **GA release** - Requires architect board review, adding complexity beyond Scenario 1 scope
 
 **Resource Management:**
 
@@ -119,12 +119,12 @@ Without a concrete end-to-end scenario, we risk building tools in isolation that
 
 **Outer Loop Activities:**
 
-- **Committing changes to repositories** - V1 focuses on local development experience (inner loop), not outer loop integration
-- **Creating or merging pull requests** - V1 focuses on inner loop; PR creation engages with outer loop
-- **Release management** - Outer loop activity beyond V1 scope
-- **Publishing packages to package managers** - Outer loop activity beyond V1 scope
+- **Committing changes to repositories** - Scenario 1 focuses on local development experience (inner loop), not outer loop integration
+- **Creating or merging pull requests** - Scenario 1 focuses on inner loop; PR creation engages with outer loop
+- **Release management** - Outer loop activity beyond Scenario 1 scope
+- **Publishing packages to package managers** - Outer loop activity beyond Scenario 1 scope
 
-_Note: V1 focuses on local development workflow up to the point where SDKs are ready for PR creation. The outer loop process is out of scope. This is a test scenario - do not commit changes or create release PRs._
+_Note: Scenario 1 focuses on local development workflow up to the point where SDKs are ready for PR creation. The outer loop process is out of scope. This is a test scenario - do not commit changes or create release PRs._
 
 ---
 
@@ -182,7 +182,7 @@ _Note: V1 focuses on local development workflow up to the point where SDKs are r
 
 ## Success Criteria
 
-V1 is complete when:
+Scenario 1 is complete when:
 
 - ✅ Complete workflow executes successfully for all 5 languages
 - ✅ Works in both [agent mode](#agent-mode) and [CLI mode](#cli-mode)
@@ -196,7 +196,7 @@ V1 is complete when:
 
 ## Agent Prompts
 
-_Natural language prompts that should work in [agent mode](#agent-mode) when V1 is complete:_
+_Natural language prompts that should work in [agent mode](#agent-mode) when Scenario 1 is complete:_
 
 ### Full Workflow
 
@@ -409,8 +409,8 @@ PR checks complete: 5/5 languages passed all checks
 
 ## Open Questions
 
-1. **Cross-language failures**: If one language fails validation, block all or continue with others? → _Proposal: Block all for V1_
-2. **Rollback**: Include automated rollback or rely on Git? → _Proposal: Git-based rollback for V1_
+1. **Cross-language failures**: If one language fails validation, block all or continue with others? → _Proposal: Block all for Scenario 1_
+2. **Rollback**: Include automated rollback or rely on Git? → _Proposal: Git-based rollback for Scenario 1_
 3. **Real-world validation**: How to ensure scenario isn't too simplified? → _Proposal: Pilot with 2-3 service teams_
 
 ---

@@ -1,17 +1,15 @@
-using OpenAI;
-using OpenAI.Chat;
+using System.Text.Json;
 using Azure.Tools.ErrorAnalyzers;
-using Azure.Tools.GeneratorAgent.Configuration;
 using Azure.Tools.GeneratorAgent.Agent;
+using Azure.Tools.GeneratorAgent.Configuration;
 using Azure.Tools.GeneratorAgent.Constants;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
+using OpenAI.Chat;
 
 namespace Azure.Tools.GeneratorAgent;
 
 /// <summary>
 /// OpenAI service implementation that provides AI-powered code fixing capabilities
-/// using OpenAI's API (either direct or Azure OpenAI)
 /// </summary>
 internal class OpenAIService
 {

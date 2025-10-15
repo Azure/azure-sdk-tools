@@ -43,9 +43,7 @@ _Terms used throughout this spec with precise meanings:_
 
 - **<a id="typespec"></a>TypeSpec**: The specification language used to define Azure service APIs. SDK code is generated from TypeSpec specifications located in the azure-rest-api-specs repository.
 
-- **<a id="typespec-customizations"></a>TypeSpec Customizations**: Modifications made to TypeSpec files (such as [client.tsp](#client-tsp)) to customize the SDK generation process. These customizations affect what code is generated but do not modify the generated code itself. Examples include renaming operations, changing parameter types, or customizing client interfaces.
-
-- **<a id="client-tsp"></a>client.tsp**: An optional TypeSpec customization file that allows SDK authors to customize the generated client interface without modifying the service specification. This is a specific type of [TypeSpec customization](#typespec-customizations).
+- **<a id="typespec-customizations"></a>TypeSpec Customizations**: SDK-specific customizations made in the `client.tsp` file to control SDK generation. This term does not refer to modifications of the service API TypeSpec files.
 
 - **<a id="code-customizations"></a>Code Customizations**: Hand-written modifications made directly to generated SDK code after generation. These customizations exist within the SDK language repositories and must be preserved across regeneration. Examples include adding convenience methods, custom error handling, or language-specific optimizations. Also known as "handwritten code" or "customization layer."
 
@@ -85,7 +83,7 @@ Without a concrete end-to-end scenario, we risk building tools in isolation that
 - **All 5 languages** (.NET, Java, JavaScript, Python, Go) - All activities defined in this scenario must be supported across all languages listed. Each activity should behave consistently with existing tooling—successfully completing or erroring out as expected given the same inputs.
 - **Subsequent [preview releases](#preview-release)** - Releases after the first preview that do not require architect review and where initial library setup has already been completed
 - **[TypeSpec](#typespec)-based generation** from Health Deidentification service - creating non-compatible version that ignores existing [code customizations](#code-customizations)
-- **With or without [client.tsp](#client-tsp)** - handles both scenarios
+- **With or without [TypeSpec customizations](#typespec-customizations)** - handles both scenarios
 - **[Playback testing](#playback-mode)** using existing test recordings
 - **Both [data plane](#data-plane) and [management plane](#management-plane)** APIs
 - **[Agent](#agent-mode) and [CLI modes](#cli-mode)** - both must work
@@ -97,7 +95,7 @@ Without a concrete end-to-end scenario, we risk building tools in isolation that
 **Development Complexity:**
 
 - **Working with or creating new [SDK code customizations](#code-customizations)** - Eliminates the complexity of merging newly generated code with existing custom code
-- **Creating new [TypeSpec customizations](#typespec-customizations) ([client.tsp](#client-tsp))** - Limits scope; we're not focusing on helping authors create code customizations or client.tsp customizations at this stage
+- **Creating new [TypeSpec customizations](#typespec-customizations)** - Limits scope; we're not focusing on helping authors create TypeSpec customizations or SDK code customizations at this stage
 - **Error resolution assistance** - Tools should report errors but not provide automated resolution; if generation or validation fails, error messages are displayed without additional tooling to help users resolve issues
 - **Updating changelog for data plane libraries** - This is currently a manual process; adding it would require additional work to implement it using our microagent framework, which is more complex than we want for this scenario
 

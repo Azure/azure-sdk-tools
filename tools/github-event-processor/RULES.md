@@ -561,7 +561,7 @@ OR
 - Issue is open
 - Issue has "needs-author-feedback" label
 - Issue has "no-recent-activity" label
-- Issue was last modified more than 14 days ago
+- Issue was last modified more than 5 business days ago
 
 ### Actions
 

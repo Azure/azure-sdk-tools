@@ -28,7 +28,8 @@ function IncrementPackageVersion {
     }
     else
     {
-        $sv.IncrementAndSetToPrerelease('patch') | Out-Null
+        # Just increment patch version without setting to prerelease
+        $sv.Patch = $sv.Patch + 1
     }
 
     return $sv.ToString()
@@ -85,6 +86,30 @@ function Get-CsprojVersion {
     throw "No Version or VersionPrefix element with a literal value was found in '$CsprojPath'"
 }
 
+function Update-CsprojVersion {
+    param (
+        [Parameter(Mandatory = $true)] [string]$CsprojPath,
+        [Parameter(Mandatory = $true)] [string]$OldVersion,
+        [Parameter(Mandatory = $true)] [string]$NewVersion
+    )
+
+    try {
+        $content = Get-Content -LiteralPath $CsprojPath -Raw
+        $updatedContent = $content.Replace($OldVersion, $NewVersion)
+
+        if ($content -eq $updatedContent) {
+            Write-Warning "No replacement made - old version '$OldVersion' not found as text in csproj"
+        } else {
+            Write-Host "Updating version from '$OldVersion' to '$NewVersion'"
+            Set-Content -LiteralPath $CsprojPath -Value $updatedContent -NoNewline
+            Write-Host "Successfully updated version in '$CsprojPath'"
+        }
+    }
+    catch {
+        throw "Failed to update csproj file: $CsprojPath`n$($_.Exception.Message)"
+    }
+}
+
 # Main
 try {
   if (-not (Test-Path -LiteralPath $ToolDirectory -PathType Container)) {
@@ -100,10 +125,11 @@ try {
   $newVersion = IncrementPackageVersion -OldVersion $currentVersion
   Write-Host "Computed new version: $newVersion"
 
+  Update-CsprojVersion -CsprojPath $csprojPath -OldVersion $currentVersion -NewVersion $newVersion
+
   Write-Host "##vso[task.setvariable variable=NewVersion]$newVersion"
 
   Write-Host "NewVersion=$newVersion"
-
 } catch {
   Write-Error $_.Exception.Message
   exit 1

@@ -18,24 +18,28 @@ public interface ILanguageChecks
     /// Analyzes dependencies for the specific package.
     /// </summary>
     /// <param name="packagePath">Path to the package directory</param>
+    /// <param name="fixCheckErrors">Whether to attempt to automatically fix dependency issues</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Result of the dependency analysis</returns>
-    Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct);
+    Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
 
     /// <summary>
     /// Validates the changelog for the specific package.
     /// </summary>
     /// <param name="packagePath">Path to the package directory</param>
+    /// <param name="fixCheckErrors">Whether to attempt to automatically fix changelog issues</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Result of the changelog validation</returns>
-    Task<CLICheckResponse> ValidateChangelogAsync(string packagePath, CancellationToken ct);
+    Task<CLICheckResponse> ValidateChangelogAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
 
     /// <summary>
     /// Validates the README for the specific package.
     /// </summary>
     /// <param name="packagePath">Path to the package directory</param>
+    /// <param name="fixCheckErrors">Whether to attempt to automatically fix README issues</param>
+    /// <param name="ct">Cancellation token</param>
     /// <returns>Result of the README validation</returns>
-    Task<CLICheckResponse> ValidateReadmeAsync(string packagePath, CancellationToken ct);
+    Task<CLICheckResponse> ValidateReadmeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
 
     /// <summary>
     /// Checks spelling in the specific package.
@@ -50,35 +54,28 @@ public interface ILanguageChecks
     /// Updates code snippets in the specific package.
     /// </summary>
     /// <param name="packagePath">Path to the package directory</param>
+    /// <param name="fixCheckErrors">Whether to attempt to automatically fix snippet issues</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Result of the snippet update operation</returns>
-    Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, CancellationToken ct = default);
+    Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
 
     /// <summary>
     /// Lints code in the specific package.
     /// </summary>
     /// <param name="packagePath">Path to the package directory</param>
-    /// <param name="fix">Whether to automatically fix linting issues</param>
+    /// <param name="fixCheckErrors">Whether to automatically fix linting issues</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Result of the code linting operation</returns>
-    Task<CLICheckResponse> LintCodeAsync(string packagePath, bool fix = false, CancellationToken ct = default);
+    Task<CLICheckResponse> LintCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
 
     /// <summary>
     /// Formats code in the specific package.
     /// </summary>
     /// <param name="packagePath">Path to the package directory</param>
-    /// <param name="fix">Whether to automatically apply code formatting</param>
+    /// <param name="fixCheckErrors">Whether to automatically apply code formatting</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Result of the code formatting operation</returns>
-    Task<CLICheckResponse> FormatCodeAsync(string packagePath, bool fix = false, CancellationToken ct = default);
-
-    /// <summary>
-    /// Gets the SDK package path for the given repository and package path.
-    /// </summary>
-    /// <param name="repo">Repository root path</param>
-    /// <param name="packagePath">Package path</param>
-    /// <returns>SDK package path</returns>
-    string GetSDKPackagePath(string repo, string packagePath);
+    Task<CLICheckResponse> FormatCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
 }
 
 /// <summary>
@@ -125,7 +122,7 @@ public class LanguageChecks : ILanguageChecks
         return (packageRepoRoot, null);
     }
 
-    public virtual async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct)
+    public virtual async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         var languageSpecificCheck = await _languageSpecificChecks.Resolve(packagePath);
 
@@ -139,17 +136,17 @@ public class LanguageChecks : ILanguageChecks
             );
         }
 
-        return await languageSpecificCheck.AnalyzeDependenciesAsync(packagePath, ct);
+        return await languageSpecificCheck.AnalyzeDependenciesAsync(packagePath, fixCheckErrors, ct);
     }
 
-    public virtual async Task<CLICheckResponse> ValidateChangelogAsync(string packagePath, CancellationToken ct)
+    public virtual async Task<CLICheckResponse> ValidateChangelogAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
-        return await ValidateChangelogCommonAsync(packagePath, ct);
+        return await ValidateChangelogCommonAsync(packagePath, fixCheckErrors, ct);
     }
 
-    public virtual async Task<CLICheckResponse> ValidateReadmeAsync(string packagePath, CancellationToken ct = default)
+    public virtual async Task<CLICheckResponse> ValidateReadmeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
-        return await ValidateReadmeCommonAsync(packagePath, ct);
+        return await ValidateReadmeCommonAsync(packagePath, fixCheckErrors, ct);
     }
 
     public virtual async Task<CLICheckResponse> CheckSpellingAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
@@ -157,7 +154,7 @@ public class LanguageChecks : ILanguageChecks
         return await CheckSpellingCommonAsync(packagePath, fixCheckErrors, ct);
     }
 
-    public virtual async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, CancellationToken ct = default)
+    public virtual async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         var languageSpecificCheck = await _languageSpecificChecks.Resolve(packagePath);
 
@@ -171,10 +168,10 @@ public class LanguageChecks : ILanguageChecks
             );
         }
 
-        return await languageSpecificCheck.UpdateSnippetsAsync(packagePath, ct);
+        return await languageSpecificCheck.UpdateSnippetsAsync(packagePath, fixCheckErrors, ct);
     }
 
-    public virtual async Task<CLICheckResponse> LintCodeAsync(string packagePath, bool fix = false, CancellationToken ct = default)
+    public virtual async Task<CLICheckResponse> LintCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         var languageSpecificCheck = await _languageSpecificChecks.Resolve(packagePath);
 
@@ -188,10 +185,10 @@ public class LanguageChecks : ILanguageChecks
             );
         }
 
-        return await languageSpecificCheck.LintCodeAsync(packagePath, fix, ct);
+        return await languageSpecificCheck.LintCodeAsync(packagePath, fixCheckErrors, ct);
     }
 
-    public virtual async Task<CLICheckResponse> FormatCodeAsync(string packagePath, bool fix = false, CancellationToken ct = default)
+    public virtual async Task<CLICheckResponse> FormatCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         var languageSpecificCheck = await _languageSpecificChecks.Resolve(packagePath);
 
@@ -205,7 +202,7 @@ public class LanguageChecks : ILanguageChecks
             );
         }
 
-        return await languageSpecificCheck.FormatCodeAsync(packagePath, fix, ct);
+        return await languageSpecificCheck.FormatCodeAsync(packagePath, fixCheckErrors, ct);
     }
 
     /// <summary>
@@ -213,9 +210,10 @@ public class LanguageChecks : ILanguageChecks
     /// Uses the PowerShell script from eng/common/scripts/Verify-ChangeLog.ps1.
     /// </summary>
     /// <param name="packagePath">Absolute path to the package directory</param>
+    /// <param name="fixCheckErrors">Whether to attempt to automatically fix changelog issues</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>CLI check response containing success/failure status and response message</returns>
-    protected async Task<CLICheckResponse> ValidateChangelogCommonAsync(string packagePath, CancellationToken ct)
+    protected async Task<CLICheckResponse> ValidateChangelogCommonAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
@@ -227,6 +225,12 @@ public class LanguageChecks : ILanguageChecks
                 return errorResponse;
             }
 
+            var languageSpecificCheck = await _languageSpecificChecks.Resolve(packagePath);
+            if (languageSpecificCheck == null)
+            {
+                return new CLICheckResponse(1, "", $"No language-specific check handler found for package at {packagePath}. Supported languages may not include this package type.");
+            }
+
             // Construct the path to the PowerShell script in the SDK repository
             var scriptPath = Path.Combine(packageRepoRoot, "eng", "common", "scripts", "Verify-ChangeLog.ps1");
 
@@ -236,7 +240,7 @@ public class LanguageChecks : ILanguageChecks
             }
 
             var command = "pwsh";
-            var args = new[] { "-File", scriptPath, "-PackageName", this.GetSDKPackagePath(packageRepoRoot, packagePath) };
+            var args = new[] { "-File", scriptPath, "-PackageName", await languageSpecificCheck.GetSDKPackageName(packageRepoRoot, packagePath, ct) };
 
             // Use a longer timeout for changelog validation - 5 minutes should be sufficient
             var timeout = TimeSpan.FromMinutes(5);
@@ -257,9 +261,10 @@ public class LanguageChecks : ILanguageChecks
     /// Uses the PowerShell script from eng/common/scripts/Verify-Readme.ps1.
     /// </summary>
     /// <param name="packagePath">Absolute path to the package directory</param>
+    /// <param name="fixCheckErrors">Whether to attempt to automatically fix README issues</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>CLI check response containing success/failure status and response message</returns>
-    protected async Task<CLICheckResponse> ValidateReadmeCommonAsync(string packagePath, CancellationToken ct = default)
+    protected async Task<CLICheckResponse> ValidateReadmeCommonAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         try
         {
@@ -361,11 +366,6 @@ public class LanguageChecks : ILanguageChecks
             _logger.LogError(ex, "Error in CheckSpellingCommonAsync");
             return new CLICheckResponse(1, "", ex.Message);
         }
-    }
-
-    public virtual string GetSDKPackagePath(string repo, string packagePath)
-    {
-        return Path.GetFileName(packagePath);
     }
 
     /// <summary>

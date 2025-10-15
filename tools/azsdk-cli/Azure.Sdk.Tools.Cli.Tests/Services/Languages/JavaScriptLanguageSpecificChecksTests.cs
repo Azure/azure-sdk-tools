@@ -42,7 +42,7 @@ internal class JavaScriptLanguageSpecificChecksTests
             .Callback<ProcessOptions, CancellationToken>((options, _) => capturedOptions = options)
             .ReturnsAsync(processResult);
 
-        var response = await _languageChecks.UpdateSnippetsAsync(_packagePath, CancellationToken.None);
+        var response = await _languageChecks.UpdateSnippetsAsync(_packagePath, false, CancellationToken.None);
 
         Assert.That(response.ExitCode, Is.EqualTo(0));
         Assert.That(response.CheckStatusDetails, Is.EqualTo("snippets updated"));
@@ -73,7 +73,7 @@ internal class JavaScriptLanguageSpecificChecksTests
             .Setup(p => p.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(processResult);
 
-        var response = await _languageChecks.UpdateSnippetsAsync(_packagePath, CancellationToken.None);
+        var response = await _languageChecks.UpdateSnippetsAsync(_packagePath, false, CancellationToken.None);
 
         Assert.That(response.ExitCode, Is.EqualTo(1));
         Assert.That(response.CheckStatusDetails, Is.EqualTo("failure output"));
@@ -89,7 +89,7 @@ internal class JavaScriptLanguageSpecificChecksTests
             .Setup(p => p.Run(It.IsAny<ProcessOptions>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("process failed"));
 
-        var response = await _languageChecks.UpdateSnippetsAsync(_packagePath, CancellationToken.None);
+        var response = await _languageChecks.UpdateSnippetsAsync(_packagePath, false, CancellationToken.None);
 
         Assert.That(response.ExitCode, Is.EqualTo(1));
         Assert.That(response.CheckStatusDetails, Is.EqualTo(string.Empty));

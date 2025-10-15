@@ -441,7 +441,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                 };
                 
                 // Calculate the equivalent calendar days for 3 business days ago
-                // This uses approximately 5 calendar days to ensure we capture issues that are 3+ business days old
+                // This calculates the actual calendar days needed to represent 3 business days
                 DateTime threeBusinessDaysAgo = Utils.BusinessDaysUtils.CalculateBusinessDaysAgo(3);
                 int calendarDaysEquivalent = (int)Math.Ceiling((DateTime.UtcNow - threeBusinessDaysAgo).TotalDays);
                 

@@ -119,12 +119,17 @@ stages:
             arguments: '-Version $(NewVersion) -ChangelogPath "${{ parameters.ToolDirectory }}/CHANGELOG.md"'
             pwsh: true
 
-        - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
-          parameters:
-            RepoName: azure-sdk-tools
-            PRBranchName: increment-package-version-${{ parameters.ToolDirectory }}-$(Build.BuildId)
-            CommitMsg: "Increment package version after release of ${{ parameters.ToolDirectory }}"
-            PRTitle: "Increment version for ${{ parameters.ToolDirectory }} releases"
+        - pwsh: |
+            git diff
+          displayName: Dump what we generated
+          workingDirectory: $(Build.SourcesDirectory)/azure-sdk-tools/
+
+        # - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
+        #   parameters:
+        #     RepoName: azure-sdk-tools
+        #     PRBranchName: increment-package-version-${{ parameters.ToolDirectory }}-$(Build.BuildId)
+        #     CommitMsg: "Increment package version after release of ${{ parameters.ToolDirectory }}"
+        #     PRTitle: "Increment version for ${{ parameters.ToolDirectory }} releases"
 
       - task: 1ES.PublishPipelineArtifact@1
         displayName: 'Publish processed files'

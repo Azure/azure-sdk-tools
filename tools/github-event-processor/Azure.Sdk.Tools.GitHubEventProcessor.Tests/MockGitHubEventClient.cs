@@ -210,6 +210,12 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests
             {
                 //
                 User user = CreateFakeUser("FakeUser1");
+                
+                // For business day tests, create mock issues with updatedAt dates that are 
+                // at least 6 business days old to ensure they pass the business day validation
+                DateTimeOffset createdAt = DateTimeOffset.UtcNow.AddDays(-10); // 10 days ago
+                DateTimeOffset updatedAt = DateTimeOffset.UtcNow.AddDays(-8);  // 8 days ago (will be >5 business days)
+                
                 // public Issue(string url, string htmlUrl, string commentsUrl, string eventsUrl, int number, ItemState state, string title, string body, User closedBy, User user, IReadOnlyList<Label> labels, User assignee, IReadOnlyList<User> assignees, Milestone milestone, int comments, PullRequest pullRequest, DateTimeOffset? closedAt, DateTimeOffset createdAt, DateTimeOffset? updatedAt, int id, string nodeId, bool locked, Repository repository, ReactionSummary reactions, LockReason? activeLockReason) 
                 Issue issue = new Issue(
                     "url",
@@ -229,8 +235,8 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.Tests
                     0,
                     null,
                     null,
-                    DateTimeOffset.UtcNow,
-                    null,
+                    createdAt,
+                    updatedAt,
                     iCounter+100,
                     "",
                     false,

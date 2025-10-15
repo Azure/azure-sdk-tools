@@ -169,7 +169,7 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         ///     Issue is open
         ///     Issue has "needs-author-feedback" label
         ///     Issue has "no-recent-activity" label
-        ///     Issue was last modified more than 14 days ago
+        ///     Issue was last modified more than 5 business days ago
         /// Resulting Action: 
         ///     Close the issue
         /// </summary>
@@ -187,11 +187,16 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                     TriageLabelConstants.NoRecentActivity
                 };
 
+                // Calculate the equivalent calendar days for 5 business days ago
+                // This uses approximately 7 calendar days to ensure we capture issues that are 5+ business days old
+                DateTime fiveBusinessDaysAgo = Utils.BusinessDaysUtils.CalculateBusinessDaysAgo(5);
+                int calendarDaysEquivalent = (int)Math.Ceiling((DateTime.UtcNow - fiveBusinessDaysAgo).TotalDays);
+
                 SearchIssuesRequest request = gitHubEventClient.CreateSearchRequest(scheduledEventPayload.Repository.Owner.Login,
                                                                  scheduledEventPayload.Repository.Name,
                                                                  IssueTypeQualifier.Issue,
                                                                  ItemState.Open,
-                                                                 14, // more than 14 days since last update
+                                                                 calendarDaysEquivalent, // equivalent calendar days for 5 business days
                                                                  new List<IssueIsQualifier> { IssueIsQualifier.Unlocked },
                                                                  includeLabels);
 
@@ -213,14 +218,19 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         )
                     {
                         Issue issue = result.Items[iCounter++];
-                        // This rule only sets the state
-                        IssueUpdate issueUpdate = gitHubEventClient.GetIssueUpdate(issue, false);
-                        issueUpdate.State = ItemState.Closed;
-                        issueUpdate.StateReason = ItemStateReason.NotPlanned;
-                        gitHubEventClient.AddToIssueUpdateList(scheduledEventPayload.Repository.Id, 
-                                                               issue.Number, 
-                                                               issueUpdate);
-                        numUpdates++;
+                        
+                        // Verify that the issue has actually been inactive for 5 business days
+                        if (issue.UpdatedAt.HasValue && Utils.BusinessDaysUtils.HasBusinessDaysElapsed(issue.UpdatedAt.Value.UtcDateTime, 5))
+                        {
+                            // This rule only sets the state
+                            IssueUpdate issueUpdate = gitHubEventClient.GetIssueUpdate(issue, false);
+                            issueUpdate.State = ItemState.Closed;
+                            issueUpdate.StateReason = ItemStateReason.NotPlanned;
+                            gitHubEventClient.AddToIssueUpdateList(scheduledEventPayload.Repository.Id, 
+                                                                   issue.Number, 
+                                                                   issueUpdate);
+                            numUpdates++;
+                        }
                     }
 
                     // The number of items in the query isn't known until the query is run.
@@ -408,10 +418,10 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         ///     Issue is open
         ///     Issue has "needs-author-feedback" label
         ///     Issue does NOT have "no-recent-activity" label
-        ///     Issue was last updated more than 7 days ago
+        ///     Issue was last updated more than 3 business days ago
         /// Resulting Action: 
         ///     Add "no-recent-activity" label
-        ///     Create a comment: "Hi @{issueAuthor}, we're sending this friendly reminder because we haven't heard back from you in **7 days**. We need more information about this issue to help address it. Please be sure to give us your input. If we don't hear back from you within **14 days** of this comment the issue will be automatically closed. Thank you!"
+        ///     Create a comment: "Hi @{issueAuthor}, we're sending this friendly reminder because we haven't heard back from you in **3 business days**. We need more information about this issue to help address it. Please be sure to give us your input. If we don't hear back from you within **5 business days** of this comment the issue will be automatically closed. Thank you!"
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="scheduledEventPayload">ScheduledEventGitHubPayload deserialized from the json event payload</param>
@@ -429,11 +439,17 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                 {
                     TriageLabelConstants.NoRecentActivity
                 };
+                
+                // Calculate the equivalent calendar days for 3 business days ago
+                // This uses approximately 5 calendar days to ensure we capture issues that are 3+ business days old
+                DateTime threeBusinessDaysAgo = Utils.BusinessDaysUtils.CalculateBusinessDaysAgo(3);
+                int calendarDaysEquivalent = (int)Math.Ceiling((DateTime.UtcNow - threeBusinessDaysAgo).TotalDays);
+                
                 SearchIssuesRequest request = gitHubEventClient.CreateSearchRequest(scheduledEventPayload.Repository.Owner.Login,
                                                                  scheduledEventPayload.Repository.Name,
                                                                  IssueTypeQualifier.Issue,
                                                                  ItemState.Open,
-                                                                 7, // more than 7 days since the last update
+                                                                 calendarDaysEquivalent, // equivalent calendar days for 3 business days
                                                                  new List<IssueIsQualifier> { IssueIsQualifier.Unlocked },
                                                                  includeLabels,
                                                                  excludeLabels);
@@ -456,18 +472,23 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         )
                     {
                         Issue issue = result.Items[iCounter++];
-                        // This rule needs to the full IssueUpdate as it's adding a label
-                        IssueUpdate issueUpdate = gitHubEventClient.GetIssueUpdate(issue, false, false);
-                        issueUpdate.AddLabel(TriageLabelConstants.NoRecentActivity);
-                        gitHubEventClient.AddToIssueUpdateList(scheduledEventPayload.Repository.Id,
-                                                               issue.Number,
-                                                               issueUpdate);
-                        string comment = $"Hi @{issue.User.Login}, we're sending this friendly reminder because we haven't heard back from you in **7 days**. We need more information about this issue to help address it. Please be sure to give us your input. If we don't hear back from you within **14 days** of this comment the issue will be automatically closed. Thank you!";
-                        gitHubEventClient.CreateComment(scheduledEventPayload.Repository.Id,
-                                                        issue.Number,
-                                                        comment);
-                        // There are 2 updates per result
-                        numUpdates += 2;
+                        
+                        // Verify that the issue has actually been inactive for 3 business days
+                        if (issue.UpdatedAt.HasValue && Utils.BusinessDaysUtils.HasBusinessDaysElapsed(issue.UpdatedAt.Value.UtcDateTime, 3))
+                        {
+                            // This rule needs to the full IssueUpdate as it's adding a label
+                            IssueUpdate issueUpdate = gitHubEventClient.GetIssueUpdate(issue, false, false);
+                            issueUpdate.AddLabel(TriageLabelConstants.NoRecentActivity);
+                            gitHubEventClient.AddToIssueUpdateList(scheduledEventPayload.Repository.Id,
+                                                                   issue.Number,
+                                                                   issueUpdate);
+                            string comment = $"Hi @{issue.User.Login}, we're sending this friendly reminder because we haven't heard back from you in **3 business days**. We need more information about this issue to help address it. Please be sure to give us your input. If we don't hear back from you within **5 business days** of this comment the issue will be automatically closed. Thank you!";
+                            gitHubEventClient.CreateComment(scheduledEventPayload.Repository.Id,
+                                                            issue.Number,
+                                                            comment);
+                            // There are 2 updates per result
+                            numUpdates += 2;
+                        }
                     }
 
                     // The number of items in the query isn't known until the query is run.

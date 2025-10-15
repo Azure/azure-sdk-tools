@@ -5,7 +5,6 @@ param(
 
 . (Join-Path $PSScriptRoot ".." "common" "scripts" "SemVer.ps1")
 
-# Use SemVer helper's AzureEngSemanticVersion to increment versions
 function IncrementPackageVersion {
     param (
         [Parameter(Mandatory = $true)] [string]$OldVersion
@@ -65,7 +64,7 @@ function Get-CsprojVersion {
     param (
         [Parameter(Mandatory = $true)] [string]$CsprojPath
     )
-    Write-Host "Discovering current version in directory: $ToolDirectory"
+    Write-Host "Discovering current version in directory: $CsprojPath"
     try {
         [xml]$xml = Get-Content -LiteralPath $CsprojPath -Raw
     }

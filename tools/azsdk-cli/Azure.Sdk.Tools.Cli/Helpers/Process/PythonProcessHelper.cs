@@ -118,10 +118,6 @@ public sealed class PythonProcessHelper : ProcessHelperBase<PythonProcessHelper>
             }
         }
         // TODO just trying to make this work, refactor later?
-        logger.LogInformation(
-            "ProcessStartInfo Environment: {env}",
-            string.Join(", ", processStartInfo.Environment.Select(kv => $"{kv.Key}={kv.Value}")));
-
         ProcessResult result = new() { ExitCode = 1 };
 
         using (var process = new Process())

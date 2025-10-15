@@ -62,7 +62,7 @@ _Terms used throughout this spec with precise meanings:_
 Without a concrete end-to-end scenario, we risk building tools in isolation that don't integrate well. Scenario 1 provides:
 
 - Clear definition of successful completion for all teams
-- Repeatable test case for validation
+- Repeatable validation framework to ensure reliability
 - Scope boundaries to prevent feature creep
 - Foundation for cross-language consistency
 

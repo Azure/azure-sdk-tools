@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using Microsoft.Extensions.Logging;
+
 namespace Azure.Sdk.Tools.Cli.Helpers
 {
     /// <summary>
@@ -37,6 +39,55 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             }
 
             return null; // Validation passed
+        }
+
+        /// <summary>
+        /// Creates a timestamped backup directory within the specified base directory.
+        /// The backup directory name follows the pattern "backup-yyyyMMdd_HHmmss".
+        /// </summary>
+        /// <param name="baseDirectory">The base directory where backup should be created.</param>
+        /// <returns>The path to the created timestamped backup directory.</returns>
+        public static string CreateTimestampedBackupDirectory(string baseDirectory)
+        {
+            var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+            var backupDirName = $"backup-{timestamp}";
+            var backupPath = Path.Combine(baseDirectory, backupDirName);
+            Directory.CreateDirectory(backupPath);
+            return backupPath;
+        }
+
+        /// <summary>
+        /// Copies all files from source to target directory recursively.
+        /// Uses the built-in File.Copy for better performance and reliability.
+        /// </summary>
+        /// <param name="source">Source directory.</param>
+        /// <param name="target">Target directory.</param>
+        /// <param name="ct">Cancellation token.</param>
+        public static void CopyDirectory(DirectoryInfo source, DirectoryInfo target, CancellationToken ct = default)
+        {
+            if (!target.Exists)
+            {
+                target.Create();
+            }
+
+            // Copy all files using built-in File.Copy
+            foreach (var file in source.GetFiles())
+            {
+                ct.ThrowIfCancellationRequested();
+                var targetFilePath = Path.Combine(target.FullName, file.Name);
+                File.Copy(file.FullName, targetFilePath, overwrite: true);
+            }
+
+            // Recursively copy subdirectories (excluding backup directories)
+            var subDirectories = source.GetDirectories()
+                .Where(d => !d.Name.StartsWith("backup-", StringComparison.OrdinalIgnoreCase));
+
+            foreach (var subDir in subDirectories)
+            {
+                ct.ThrowIfCancellationRequested();
+                var targetSubDir = target.CreateSubdirectory(subDir.Name);
+                CopyDirectory(subDir, targetSubDir, ct);
+            }
         }
     }
 }

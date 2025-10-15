@@ -20,7 +20,7 @@ from evals._discovery import (
 )
 
 # Import to register evaluators
-import evals._custom
+import evals._custom # pylint: disable=unused-import
 
 # Path to test fixtures
 FIXTURES_DIR = Path(__file__).parent / "fixtures"

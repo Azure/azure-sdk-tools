@@ -427,7 +427,17 @@ namespace APIViewWeb.Managers
             await MarkAssociatedReviewsForNamespaceReview(relatedReviews, userId, requestedOn, reviewGroupId);
 
             // Send email notifications to preferred approvers with the actual language review data
-            await _notificationManager.NotifyApproversOnNamespaceReviewRequest(user, typeSpecReview, sdkLanguageReviews);            return typeSpecReview;
+            try
+            {
+                await _notificationManager.NotifyApproversOnNamespaceReviewRequest(user, typeSpecReview, sdkLanguageReviews);
+            }
+            catch (Exception ex)
+            {
+                _telemetryClient.TrackException(ex);
+                // Continue - don't fail the namespace request if notification fails
+            }
+            
+            return typeSpecReview;
         }
 
         /// <summary>
@@ -447,7 +457,7 @@ namespace APIViewWeb.Managers
                 {
                     try
                     {
-                        if (review != null && LanguageHelper.IsSDKLanguageOrTypeSpec(review.Language) && review.NamespaceReviewStatus != NamespaceReviewStatus.Approved && !review.IsApproved)
+                        if (review != null && LanguageHelper.IsSDKLanguageOrTypeSpec(review.Language) && review.NamespaceReviewStatus == NamespaceReviewStatus.NotStarted && !review.IsApproved)
                         {
                             review.ReviewGroupId = reviewGroupId;
                             

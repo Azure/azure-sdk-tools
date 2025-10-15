@@ -183,11 +183,11 @@ namespace APIViewUnitTests
 
             // Assert - Verify namespace review was requested
             result.Should().NotBeNull();
-            // The main TypeSpec review itself doesn't get updated, only associated reviews do
-            result.NamespaceReviewStatus.Should().Be(NamespaceReviewStatus.NotStarted);
+            // The main TypeSpec review itself now gets updated with namespace review status
+            result.NamespaceReviewStatus.Should().Be(NamespaceReviewStatus.Pending);
 
-            // No associated reviews are found due to empty pull request setup, so no reviews are updated
-            updatedReviews.Should().HaveCount(0);
+            // The TypeSpec review is updated even when no associated reviews are found
+            updatedReviews.Should().HaveCount(1);
 
             // Verify notification was sent
             _mockNotificationManager.Verify(n => n.NotifyApproversOnNamespaceReviewRequest(
@@ -242,14 +242,15 @@ namespace APIViewUnitTests
                     It.IsAny<ClaimsPrincipal>(), It.IsAny<ReviewListItemModel>(), It.IsAny<IEnumerable<ReviewListItemModel>>(), It.IsAny<string>()))
                 .ThrowsAsync(new InvalidOperationException("Email service unavailable"));
 
-            // Act & Assert - Should throw exception due to notification failure
-            var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-                () => _reviewManager.RequestNamespaceReviewAsync(_testUser, reviewId, revisionId));
-
-            exception.Message.Should().Be("Email service unavailable");
+            // Act - Should complete successfully even with notification failure
+            var result = await _reviewManager.RequestNamespaceReviewAsync(_testUser, reviewId, revisionId);
             
-            // Since no associated reviews are found (empty PR list), no reviews get updated before notification failure
-            updatedReviews.Should().HaveCount(0);
+            // Assert - Request should complete successfully
+            result.Should().NotBeNull();
+            result.NamespaceReviewStatus.Should().Be(NamespaceReviewStatus.Pending);
+            
+            // The TypeSpec review should still be updated even if notification fails
+            updatedReviews.Should().HaveCount(1);
         }
 
         [Fact]
@@ -296,11 +297,11 @@ namespace APIViewUnitTests
 
             // Assert - Should include auto-discovered reviews
             result.Should().NotBeNull();
-            // The main TypeSpec review itself doesn't get updated, only associated reviews do
-            result.NamespaceReviewStatus.Should().Be(NamespaceReviewStatus.NotStarted);
+            // The main TypeSpec review itself now gets updated with namespace review status
+            result.NamespaceReviewStatus.Should().Be(NamespaceReviewStatus.Pending);
             
-            // Auto-discovery doesn't work due to incomplete mock setup, so no reviews are updated
-            updatedReviews.Should().HaveCount(0);
+            // The TypeSpec review is updated even when auto-discovery doesn't find associated reviews
+            updatedReviews.Should().HaveCount(1);
         }
 
         [Fact]
@@ -373,11 +374,11 @@ namespace APIViewUnitTests
 
             // Assert - Should process all provided reviews (implementation doesn't filter by status)
             result.Should().NotBeNull();
-            // Main TypeSpec review doesn't get updated, remains NotStarted
-            result.NamespaceReviewStatus.Should().Be(NamespaceReviewStatus.NotStarted);
+            // Main TypeSpec review now gets updated with namespace review status
+            result.NamespaceReviewStatus.Should().Be(NamespaceReviewStatus.Pending);
             
-            // No associated reviews are found due to empty pull request setup, so no reviews are updated
-            updatedReviews.Should().HaveCount(0);
+            // The TypeSpec review is updated even when no associated reviews are found
+            updatedReviews.Should().HaveCount(1);
         }
 
         [Fact]
@@ -556,8 +557,8 @@ namespace APIViewUnitTests
             
             // Assert - Should complete successfully even with feature disabled
             result.Should().NotBeNull();
-            // Main TypeSpec review doesn't get updated, remains NotStarted
-            result.NamespaceReviewStatus.Should().Be(NamespaceReviewStatus.NotStarted);
+            // Main TypeSpec review now gets updated with namespace review status
+            result.NamespaceReviewStatus.Should().Be(NamespaceReviewStatus.Pending);
         }
 
         #region Helper Methods

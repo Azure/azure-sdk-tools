@@ -47,7 +47,8 @@ public class VerifySetupTool : MCPTool
         new("setup", "Verify environment setup for MCP release tools")
         {
             languagesParam,
-            allLangOption
+            allLangOption,
+            SharedOptions.PackagePath
         };
 
     public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
@@ -55,15 +56,16 @@ public class VerifySetupTool : MCPTool
         var langs = ctx.ParseResult.GetValueForOption(languagesParam);
         var allLangs = ctx.ParseResult.GetValueForOption(allLangOption);
         var parsed = allLangs ? LANGUAGES : ParseLanguages(langs);
-        return await VerifySetup(parsed, ct);
+        var packagePath = ctx.ParseResult.GetValueForOption(SharedOptions.PackagePath);
+        return await VerifySetup(parsed, packagePath, ct);
     }
 
     [McpServerTool(Name = "azsdk_verify_setup"), Description("Verifies the developer environment for MCP release tool requirements")]
-    public async Task<VerifySetupResponse> VerifySetup(List<string> langs, CancellationToken ct = default)
+    public async Task<VerifySetupResponse> VerifySetup(List<string> langs, string packagePath = null, CancellationToken ct = default)
     {
         try
         {
-            List<SetupRequirements.Requirement> reqsToCheck = await GetRequirements(langs, ct);
+            List<SetupRequirements.Requirement> reqsToCheck = await GetRequirements(langs, packagePath, ct);
 
             VerifySetupResponse response = new VerifySetupResponse
             {
@@ -76,7 +78,7 @@ public class VerifySetupTool : MCPTool
                 logger.LogInformation("Checking requirement: {Requirement}, Check: {Check}, Instructions: {Instructions}",
                     req.requirement, req.check, req.instructions);
 
-                var result = await RunCheck(req.check, ct);
+                var result = await RunCheck(req.check, packagePath, ct);
 
                 if (result.ExitCode != 0)
                 {
@@ -101,19 +103,20 @@ public class VerifySetupTool : MCPTool
         }
     }
 
-    private async Task<DefaultCommandResponse> RunCheck(string[] command, CancellationToken ct)
+    private async Task<DefaultCommandResponse> RunCheck(string[] command, string packagePath, CancellationToken ct)
     {
         var options = new ProcessOptions(
             command[0],
             args: command.Skip(1).ToArray(),
             timeout: TimeSpan.FromSeconds(COMMAND_TIMEOUT_IN_SECONDS),
-            logOutputStream: true
+            logOutputStream: true,
+            workingDirectory: packagePath
         );
 
         var trimmed = string.Empty;
         try
         {
-            logger.LogInformation("Running command: {Command}", string.Join(' ', command));
+            logger.LogInformation("Running command: {Command} in {packagePath}", string.Join(' ', command), packagePath);
             var result = await processHelper.Run(options, ct);
             trimmed = (result.Output ?? string.Empty).Trim();
 
@@ -143,17 +146,17 @@ public class VerifySetupTool : MCPTool
         };
     }
 
-    private async Task<List<SetupRequirements.Requirement>> GetRequirements(List<string> languages, CancellationToken ct)
+    private async Task<List<SetupRequirements.Requirement>> GetRequirements(List<string> languages, string packagePath, CancellationToken ct)
     {
         var reqGetter = null as IEnvRequirementsCheck;
         if (languages.Count == 0)
         {
             // detect language if none given
-            reqGetter = await envRequirementsCheck.Resolve("."); // TODO add package dir as option?
+            reqGetter = await envRequirementsCheck.Resolve(packagePath); 
 
             if (reqGetter == null)
             {
-                throw new Exception("Could not resolve requirements checker for the specified languages.");
+                throw new Exception("Could not resolve requirements checker for the specified languages. Please provide languages using --langs option.");
             }
 
             return await reqGetter.GetRequirements(ct);

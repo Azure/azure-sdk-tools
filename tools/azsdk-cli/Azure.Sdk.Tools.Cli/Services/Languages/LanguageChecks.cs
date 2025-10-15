@@ -91,7 +91,7 @@ public interface ILanguageChecks
     /// <param name="packagePath">Path to the package directory</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Result of the sample validation</returns>
-    Task<CLICheckResponse> ValidateSamplesAsync(string packagePath, CancellationToken ct);
+    Task<CLICheckResponse> ValidateSamplesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
 }
 
 /// <summary>
@@ -221,7 +221,7 @@ public class LanguageChecks : ILanguageChecks
         return await languageSpecificCheck.FormatCodeAsync(packagePath, fixCheckErrors, ct);
     }
 
-    public virtual async Task<CLICheckResponse> ValidateSamplesAsync(string packagePath, CancellationToken ct)
+    public virtual async Task<CLICheckResponse> ValidateSamplesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         var languageSpecificCheck = await _languageSpecificChecks.Resolve(packagePath);
 
@@ -235,7 +235,7 @@ public class LanguageChecks : ILanguageChecks
             );
         }
 
-        return await languageSpecificCheck.ValidateSamplesAsync(packagePath, ct);
+        return await languageSpecificCheck.ValidateSamplesAsync(packagePath, fixCheckErrors, ct);
     }
 
 

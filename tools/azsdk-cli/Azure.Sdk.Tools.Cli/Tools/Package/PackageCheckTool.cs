@@ -186,7 +186,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             // Run sample validation
-            var sampleValidationResult = await languageChecks.ValidateSamplesAsync(packagePath, ct);
+            var sampleValidationResult = await languageChecks.ValidateSamplesAsync(packagePath, fixCheckErrors, ct);
             results.Add(sampleValidationResult);
             if (sampleValidationResult.ExitCode != 0)
             {

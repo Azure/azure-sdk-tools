@@ -37,7 +37,7 @@ _Terms used throughout this spec with precise meanings:_
 
 - **<a id="cli-mode"></a>CLI Mode**: Direct command-line interface mode where the user manually executes specific `azsdk` commands with explicit options and parameters.
 
-- **<a id="preview-release"></a>Preview Release**: A pre-GA (beta) release of an SDK package (not the first preview). Does not require architect review. Indicates the API is not yet stable and may have breaking changes in future releases.
+- **<a id="preview-release"></a>Preview Release**: A pre-GA (beta) release of an SDK package. Indicates the API is not yet stable and may have breaking changes in future releases.
 
 - **<a id="playback-mode"></a>Playback Mode**: Test execution mode that uses pre-recorded HTTP interactions instead of making live calls to Azure services. Enables fast, reliable testing without requiring live Azure resources.
 
@@ -83,13 +83,14 @@ Without a concrete end-to-end scenario, we risk building tools in isolation that
 ### In Scope for V1
 
 - **All 5 languages** (.NET, Java, JavaScript, Python, Go) - All activities defined in this scenario must be supported across all languages listed. Each activity should behave consistently with existing tooling—successfully completing or erroring out as expected given the same inputs.
-- **[Preview release](#preview-release)** (not first preview, no architect review required)
+- **Subsequent [preview releases](#preview-release)** - Releases after the first preview that do not require architect review and where initial library setup has already been completed
 - **[TypeSpec](#typespec)-based generation** from Health Deidentification service - creating non-compatible version that ignores existing [code customizations](#code-customizations)
 - **With or without [client.tsp](#client-tsp)** - handles both scenarios
 - **[Playback testing](#playback-mode)** using existing test recordings
 - **Both [data plane](#data-plane) and [management plane](#management-plane)** APIs
 - **[Agent](#agent-mode) and [CLI modes](#cli-mode)** - both must work
 - **Existing changelog generation** - no changes to current process
+- **VS Code with GitHub Copilot** - All functionality will be validated to work in VS Code with GitHub Copilot
 
 ### Out of scope for V1
 
@@ -102,8 +103,8 @@ Without a concrete end-to-end scenario, we risk building tools in isolation that
 **Review Requirements:**
 
 - **Breaking changes** - Ensures we don't trigger review requirements when moving towards release
-- **First preview version** - Requires architect board review, adding complexity beyond V1 scope
-- **GA version** - Requires architect board review, adding complexity beyond V1 scope
+- **First [preview release](#preview-release)** - Requires architect board review, adding complexity beyond V1 scope
+- **GA release** - Requires architect board review, adding complexity beyond V1 scope
 
 **Resource Management:**
 
@@ -113,6 +114,7 @@ Without a concrete end-to-end scenario, we risk building tools in isolation that
 **Platform Scope:**
 
 - **Linux/macOS support** - Focuses requirements on a single OS (Windows) to limit initial scope
+- **Other editors (IntelliJ, Visual Studio, etc.)** - All editors besides VS Code are out of scope; VS Code is the only supported development environment for scenario 1.
 
 **Outer Loop Activities:**
 

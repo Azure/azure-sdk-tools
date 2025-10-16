@@ -14,15 +14,60 @@ public class PythonOptions : IProcessOptions
     public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(DEFAULT_TIMEOUT_SECONDS);
     public bool LogOutputStream { get; set; } = true;
     public string ShortName { get; private set; } = "python";
+    public Dictionary<string, string> EnvironmentVariables { get; private set; } = new();
 
     public static PythonOptions Pip(string[] args, string workingDirectory = "", string? virtualEnvPath = null) =>
-        new() { Command = GetCommand("pip", virtualEnvPath), Args = [..args], WorkingDirectory = workingDirectory, ShortName = "pip" };
+        CreateOptions("pip", args, workingDirectory, virtualEnvPath, "pip");
 
     public static PythonOptions Python(string[] args, string workingDirectory = "", string? virtualEnvPath = null) =>
-        new() { Command = GetCommand("python", virtualEnvPath), Args = [..args], WorkingDirectory = workingDirectory, ShortName = "python" };
+        CreateOptions("python", args, workingDirectory, virtualEnvPath, "python");
 
     public static PythonOptions Pytest(string[] args, string workingDirectory = "", string? virtualEnvPath = null) =>
-        new() { Command = GetCommand("pytest", virtualEnvPath), Args = [..args], WorkingDirectory = workingDirectory, ShortName = "pytest" };
+        CreateOptions("pytest", args, workingDirectory, virtualEnvPath, "pytest");
+
+    private static PythonOptions CreateOptions(string tool, string[] args, string workingDirectory, string? virtualEnvPath, string shortName)
+    {
+        var options = new PythonOptions
+        {
+            Command = GetCommand(tool, virtualEnvPath),
+            Args = [..args],
+            WorkingDirectory = workingDirectory,
+            ShortName = shortName
+        };
+
+        // Set up virtual environment variables if using a venv
+        if (!string.IsNullOrEmpty(virtualEnvPath))
+        {
+            var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+            var scriptsDir = Path.Combine(virtualEnvPath, isWindows ? "Scripts" : "bin");
+            
+            options.EnvironmentVariables["VIRTUAL_ENV"] = virtualEnvPath;
+            options.EnvironmentVariables["PATH"] = $"{scriptsDir}{Path.PathSeparator}{Environment.GetEnvironmentVariable("PATH")}";
+            
+            // Set PYTHONPATH to include the site-packages directory
+            if (isWindows)
+            {
+                var sitePackages = Path.Combine(virtualEnvPath, "Lib", "site-packages");
+                options.EnvironmentVariables["PYTHONPATH"] = sitePackages;
+            }
+            else
+            {
+                // On Unix, we need to find the python version directory
+                var libDir = Path.Combine(virtualEnvPath, "lib");
+                if (Directory.Exists(libDir))
+                {
+                    var pythonDirs = Directory.GetDirectories(libDir, "python*");
+                    if (pythonDirs.Length > 0)
+                    {
+                        var sitePackages = Path.Combine(pythonDirs[0], "site-packages");
+                        options.EnvironmentVariables["PYTHONPATH"] = sitePackages;
+                    }
+                }
+            }
+        }
+
+        return options;
+    }
 
     private static string GetCommand(string tool, string? virtualEnvPath)
     {

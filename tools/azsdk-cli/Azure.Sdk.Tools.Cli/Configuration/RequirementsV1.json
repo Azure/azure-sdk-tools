@@ -2,12 +2,12 @@
     "categories": {
         "core": [
         {   
-                "requirement": "Node.js >= 20.0.0",
+                "requirement": "Node.js >= 22.16.0",
                 "check": ["node", "--version"],
                 "instructions": ["Download Node.js"]
             },
             {
-                "requirement": "Node.js >= 20.0.0",
+                "requirement": "Node.js >= 22.0.0",
                 "check": ["npm", "--version"],
                 "instructions": ["Download Node.js"]
             },
@@ -20,6 +20,21 @@
                 "requirement": "tsp >= 1.0.0",
                 "check": ["tsp", "--version"],
                 "instructions": ["npm install -g @azure-tools/typespec-client-generator-cli@latest @typespec/compiler@latest"]
+            },
+            {
+                "requirement": "Powershell >= 7",
+                "check": ["pwsh", "--version"],
+                "instructions": ["Download and install PowerShell"]
+            },
+            {
+                "requirement": "python >= 3.9",
+                "check": ["python", "--version"],
+                "instructions": []
+            },
+            {
+                "requirement": "github CLI >= 2.30.0",
+                "check": ["gh", "--version"],
+                "instructions": ["Download and install GitHub CLI"]
             }
         ],
         "java": [
@@ -34,21 +49,22 @@
                 "instructions": ["Download the latest version of Maven.", "Set MAVEN_HOME environment variable to the Maven installation path", "Add MAVEN_HOME/bin to your PATH environment variable", "Restart your IDE."]
             }
         ],
-        "javascript": [],
+        "javascript": [
+            {
+                "requirement": "pnpm",
+                "check": ["pnpm", "--version"],
+                "instructions": ["npm install -g pnpm", "Run pnpm install in the repo root."]
+            }
+        ],
         "dotnet": [
             {
                 "requirement": "dotnet",
                 "check": ["dotnet", "--version"],
-                "instructions": []
+                "instructions": ["Install .NET SDK with version at least higher than defined in global.json file in the repo root."]
             }
         ],
         "go": [],
         "python": [
-            {
-                "requirement": "python >= 3.9",
-                "check": ["python", "--version"],
-                "instructions": []
-            },
             {
                 "requirement": "azpysdk",
                 "check": ["azpysdk", "--help"],

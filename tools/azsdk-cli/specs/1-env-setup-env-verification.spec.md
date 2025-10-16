@@ -15,15 +15,15 @@
 
 ## Definitions
 
-**Environment Setup**: The process of ensuring all required tools, SDKs, and dependencies are installed and properly configured for SDK development work.
+**Environment Setup**: The process of ensuring all required tools and dependencies are installed and properly configured for SDK development work.
 
-**Requirements**: Language-specific and core tools needed to successfully run Dev Inner Loop MCP tools (e.g., TypeSpec compiler, language SDKs, build tools).
+**Requirements**: Language-specific and core tools needed to successfully run Azure SDK MCP tools (e.g., TypeSpec compiler, language SDKs, build tools).
 
 **Verification Check**: A command or script that determines whether a specific requirement is installed and accessible in the developer's environment.
 
-**Lazy Loading**: Checking only the requirements for the language(s) currently being worked on, rather than checking all languages upfront.
+**Lazy Loading**: Checking only the requirements for the repository currently being worked on, rather than checking all requirements upfront.
 
-**Source of Truth**: A single, authoritative configuration that defines what requirements are needed for each language and how to install them.
+**Source of Truth**: A single, authoritative configuration that defines what requirements are needed for each tool and how to install them.
 
 ---
 
@@ -36,12 +36,8 @@
 - **.NET**: Developers manually discover missing dependencies when build or generation commands fail. No proactive verification.
 - **Java**: Same as .NET - reactive discovery through failures.
 - **JavaScript**: Same as .NET - reactive discovery through failures.
-- **Python**: Some repos have `azpysdk` which can be checked, but no unified verification across all required tools.
+- **Python**: `azure-sdk-for-python` has `azpysdk` which can be used for some validation checks, but no unified verification across all required tools.
 - **Go**: Same as .NET - reactive discovery through failures.
-
-**Data plane vs. Management plane:**
-
-Both data plane and management plane SDK development currently lack proactive environment verification. TypeSpec-based generation (common in data plane) and Swagger-based generation (common in management plane) each have their own tooling requirements, but neither has automated verification.
 
 ### Why This Matters
 
@@ -151,7 +147,7 @@ Developer experience depends on this decision - blocking is safer but less infor
 
 ### Overview
 
-The `verify-setup` tool checks whether required dependencies for SDK development are installed in the developer's environment. It operates in two modes:
+The `verify-setup` tool checks whether required dependencies for SDK development are installed in the environment. It operates in two modes:
 
 1. **Automatic**: Runs when MCP server starts, checking requirements for the detected language
 2. **Explicit**: Developer or agent explicitly invokes the tool with specific language(s)

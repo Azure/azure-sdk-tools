@@ -100,6 +100,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     PackageCheckType.Snippets => await RunSnippetUpdate(packagePath, fixCheckErrors, ct),
                     PackageCheckType.Linting => await RunLintCode(packagePath, fixCheckErrors, ct),
                     PackageCheckType.Format => await RunFormatCode(packagePath, fixCheckErrors, ct),
+                    PackageCheckType.CheckAotCompat => await languageChecks.CheckAotCompatAsync(packagePath, fixCheckErrors, ct),
+                    PackageCheckType.GeneratedCodeChecks => await languageChecks.CheckGeneratedCodeAsync(packagePath, fixCheckErrors, ct),
                     _ => throw new ArgumentOutOfRangeException(
                         nameof(checkType),
                         checkType,
@@ -184,17 +186,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 failedChecks.Add("Format");
             }
 
-            // Run code packing
-            var packCodeResult = await languageChecks.PackCodeAsync(packagePath, ct);
-            results.Add(packCodeResult);
-            if (packCodeResult.ExitCode != 0)
-            {
-                overallSuccess = false;
-                failedChecks.Add("Pack");
-            }
-
             // Run AOT compatibility check
-            var aotCompatResult = await languageChecks.CheckAotCompatAsync(packagePath, ct);
+            var aotCompatResult = await languageChecks.CheckAotCompatAsync(packagePath, fixCheckErrors, ct);
             results.Add(aotCompatResult);
             if (aotCompatResult.ExitCode != 0)
             {
@@ -203,7 +196,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             // Run generated code check
-            var generatedCodeResult = await languageChecks.CheckGeneratedCodeAsync(packagePath, ct);
+            var generatedCodeResult = await languageChecks.CheckGeneratedCodeAsync(packagePath, fixCheckErrors, ct);
             results.Add(generatedCodeResult);
             if (generatedCodeResult.ExitCode != 0)
             {

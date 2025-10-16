@@ -14,7 +14,7 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
     private readonly ILogger<DotNetLanguageSpecificChecks> _logger;
     private const string DotNetCommand = "dotnet";
     private const string PowerShellCommand = "pwsh";
-    private const string RequiredDotNetVersion = "9.0.102";
+    private const string RequiredDotNetVersion = "9.0.102"; // TODO - centralize this as part of env setup tool
 
     public DotNetLanguageSpecificChecks(
         IProcessHelper processHelper,
@@ -26,16 +26,16 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
         _logger = logger;
     }
 
-    public async Task<CLICheckResponse> PackCodeAsync(string packagePath, CancellationToken cancellationToken = default)
+    public async Task<CLICheckResponse> CheckGeneratedCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Starting code packing for .NET project at: {PackagePath}", packagePath);
+            _logger.LogInformation("Starting generated code checks for .NET project at: {PackagePath}", packagePath);
 
             var dotnetVersionValidation = await VerifyDotnetVersion();
             if (dotnetVersionValidation.ExitCode != 0)
             {
-                _logger.LogError("Dotnet version validation failed");
+                _logger.LogError("Dotnet version validation failed for generated code checks");
                 return dotnetVersionValidation;
             }
 
@@ -46,54 +46,40 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
                 return new CLICheckResponse(1, "", "Failed to determine service directory from the provided package path.");
             }
 
-            _logger.LogInformation("Determined service directory: {ServiceDirectory}", serviceDirectory);
-
             var repoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
-            _logger.LogInformation("Found repository root at: {RepoRoot}", repoRoot);
+            var scriptPath = Path.Combine(repoRoot, "eng", "scripts", "CodeChecks.ps1");
 
-            var serviceProj = Path.Combine(repoRoot, "eng", "service.proj");
-            _logger.LogInformation("Using service project file: {ServiceProj}", serviceProj);
-
-            // Run dotnet pack with the same parameters as CI
-            var args = new List<string>
+            if (!File.Exists(scriptPath))
             {
-                "pack",
-                serviceProj,
-                "-warnaserror",
-                "/p:ValidateRunApiCompat=true",
-                "/p:SDKType=client",
-                $"/p:ServiceDirectory={serviceDirectory}",
-                "/p:IncludeTests=false",
-                "/p:PublicSign=false",
-                "/p:Configuration=Release",
-                "/p:IncludePerf=false",
-                "/p:IncludeStress=false",
-                "/p:IncludeIntegrationTests=false"
-            };
+                _logger.LogError("Code checks script not found at: {ScriptPath}", scriptPath);
+                return new CLICheckResponse(1, "", $"Code checks script not found at: {scriptPath}");
+            }
 
-            _logger.LogInformation("Executing command: {Command} {Arguments}", DotNetCommand, string.Join(" ", args));
-            var timeout = TimeSpan.FromMinutes(10);
-            var result = await _processHelper.Run(new ProcessOptions(DotNetCommand, args.ToArray(), timeout: timeout, workingDirectory: repoRoot), cancellationToken);
-            
+            var args = new[] { scriptPath, "-ServiceDirectory", serviceDirectory, "-SpellCheckPublicApiSurface" };
+            _logger.LogInformation("Executing command: {Command} {Arguments}", PowerShellCommand, string.Join(" ", args));
+
+            var timeout = TimeSpan.FromMinutes(6);
+            var result = await _processHelper.Run(new(PowerShellCommand, args, timeout: timeout, workingDirectory: repoRoot), ct);
+
             if (result.ExitCode == 0)
             {
-                _logger.LogInformation("Code packing completed successfully");
+                _logger.LogInformation("Generated code checks completed successfully");
+                return new CLICheckResponse(result.ExitCode, result.Output);
             }
             else
             {
-                _logger.LogWarning("Code packing failed with exit code {ExitCode}", result.ExitCode);
+                _logger.LogWarning("Generated code checks failed with exit code {ExitCode}", result.ExitCode);
+                return new CLICheckResponse(result.ExitCode, result.Output, "Generated code checks failed");
             }
-
-            return new CLICheckResponse(result);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(PackCodeAsync));
-            return new CLICheckResponse(1, "", $"{nameof(PackCodeAsync)} failed with an exception: {ex.Message}");
+            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(CheckGeneratedCodeAsync));
+            return new CLICheckResponse(1, "", $"{nameof(CheckGeneratedCodeAsync)} failed with an exception: {ex.Message}");
         }
     }
 
-    public async Task<CLICheckResponse> CheckAotCompatAsync(string packagePath, CancellationToken cancellationToken = default)
+    public async Task<CLICheckResponse> CheckAotCompatAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         try
         {
@@ -114,13 +100,9 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
                 return new CLICheckResponse(1, "", "Failed to determine service directory or package name from the provided package path.");
             }
 
-            _logger.LogInformation("Determined service directory: {ServiceDirectory}, package name: {PackageName}", serviceDirectory, packageName);
-
             var repoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
-            _logger.LogInformation("Found repository root at: {RepoRoot}", repoRoot);
 
             var scriptPath = Path.Combine(repoRoot, "eng", "scripts", "compatibility", "Check-AOT-Compatibility.ps1");
-            _logger.LogInformation("Using AOT compatibility script: {ScriptPath}", scriptPath);
 
             if (!File.Exists(scriptPath))
             {
@@ -132,7 +114,7 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
             _logger.LogInformation("Executing command: {Command} {Arguments}", PowerShellCommand, string.Join(" ", args));
 
             var timeout = TimeSpan.FromMinutes(6);
-            var result = await _processHelper.Run(new(PowerShellCommand, args, timeout: timeout, workingDirectory: repoRoot), cancellationToken);
+            var result = await _processHelper.Run(new(PowerShellCommand, args, timeout: timeout, workingDirectory: repoRoot), ct);
 
             if (result.ExitCode == 0)
             {
@@ -149,64 +131,6 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
         {
             _logger.LogError(ex, "{MethodName} failed with an exception", nameof(CheckAotCompatAsync));
             return new CLICheckResponse(1, "", $"{nameof(CheckAotCompatAsync)} failed with an exception: {ex.Message}");
-        }
-    }
-
-    public async Task<CLICheckResponse> CheckGeneratedCodeAsync(string packagePath, CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            _logger.LogInformation("Starting generated code checks for .NET project at: {PackagePath}", packagePath);
-
-            var dotnetVersionValidation = await VerifyDotnetVersion();
-            if (dotnetVersionValidation.ExitCode != 0)
-            {
-                _logger.LogError("Dotnet version validation failed for generated code checks");
-                return dotnetVersionValidation;
-            }
-
-            var serviceDirectory = GetServiceDirectoryFromPath(packagePath);
-            if (serviceDirectory == null)
-            {
-                _logger.LogError("Failed to determine service directory from package path: {PackagePath}", packagePath);
-                return new CLICheckResponse(1, "", "Failed to determine service directory from the provided package path.");
-            }
-
-            _logger.LogInformation("Determined service directory: {ServiceDirectory}", serviceDirectory);
-
-            var repoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
-            _logger.LogInformation("Found repository root at: {RepoRoot}", repoRoot);
-
-            var scriptPath = Path.Combine(repoRoot, "eng", "scripts", "CodeChecks.ps1");
-            _logger.LogInformation("Using code checks script: {ScriptPath}", scriptPath);
-
-            if (!File.Exists(scriptPath))
-            {
-                _logger.LogError("Code checks script not found at: {ScriptPath}", scriptPath);
-                return new CLICheckResponse(1, "", $"Code checks script not found at: {scriptPath}");
-            }
-
-            var args = new[] { scriptPath, "-ServiceDirectory", serviceDirectory, "-SpellCheckPublicApiSurface" };
-            _logger.LogInformation("Executing command: {Command} {Arguments}", PowerShellCommand, string.Join(" ", args));
-
-            var timeout = TimeSpan.FromMinutes(6);
-            var result = await _processHelper.Run(new(PowerShellCommand, args, timeout: timeout, workingDirectory: repoRoot), cancellationToken);
-
-            if (result.ExitCode == 0)
-            {
-                _logger.LogInformation("Generated code checks completed successfully");
-                return new CLICheckResponse(result.ExitCode, result.Output);
-            }
-            else
-            {
-                _logger.LogWarning("Generated code checks failed with exit code {ExitCode}", result.ExitCode);
-                return new CLICheckResponse(result.ExitCode, result.Output, "Generated code checks failed");
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(CheckGeneratedCodeAsync));
-            return new CLICheckResponse(1, "", $"{nameof(CheckGeneratedCodeAsync)} failed with an exception: {ex.Message}");
         }
     }
 

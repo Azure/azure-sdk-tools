@@ -43,6 +43,16 @@ public enum PackageCheckType
     /// <summary>
     /// Format code
     /// </summary>
-    Format
+    Format,
+
+    /// <summary>
+    /// .NET validation for AOT compatibility.
+    /// </summary>
+    CheckAotCompat,
+
+    /// <summary>
+    /// .NET validation for generated code.
+    /// </summary>
+    GeneratedCodeChecks
 
 }

@@ -55,173 +55,6 @@ internal class DotNetLanguageSpecificChecksTests
     }
 
     [Test]
-    public async Task TestPackCodeAsyncDotNetNotInstalledReturnsError()
-    {
-        var processResult = new ProcessResult { ExitCode = 1 };
-        processResult.AppendStderr("dotnet command not found");
-
-        _processHelperMock
-            .Setup(x => x.Run(
-                It.Is<ProcessOptions>(p => 
-                    p.Command == "cmd.exe" && 
-                    p.Args.Contains("/C") && 
-                    p.Args.Contains("dotnet") && 
-                    p.Args.Contains("--list-sdks")),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(processResult);
-
-        var result = await _languageChecks.PackCodeAsync(_packagePath, CancellationToken.None);
-        
-        Assert.Multiple(() =>
-        {
-            Assert.That(result.ExitCode, Is.EqualTo(1));
-            Assert.That(result.CheckStatusDetails, Does.Contain("dotnet --list-sdks failed"));
-        });
-
-        _processHelperMock.Verify(
-            x => x.Run(
-                It.Is<ProcessOptions>(p => p.Args.Contains("pack")),
-                It.IsAny<CancellationToken>()),
-            Times.Never);
-    }
-
-    [Test]
-    public async Task TestPackCodeAsyncOldDotNetVersionReturnsError()
-    {
-        var versionOutput = "8.0.100 [C:\\Program Files\\dotnet\\sdk]\n8.0.200 [C:\\Program Files\\dotnet\\sdk]";
-        var processResult = new ProcessResult { ExitCode = 0 };
-        processResult.AppendStdout(versionOutput);
-
-        _processHelperMock
-            .Setup(x => x.Run(
-                It.Is<ProcessOptions>(p =>
-                    p.Command == "cmd.exe" &&
-                    p.Args.Contains("/C") &&
-                    p.Args.Contains("dotnet") &&
-                    p.Args.Contains("--list-sdks")),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(processResult);
-
-        var result = await _languageChecks.PackCodeAsync(_packagePath, CancellationToken.None);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(result.ExitCode, Is.EqualTo(1));
-            Assert.That(result.ResponseError, Does.Contain("below minimum requirement"));
-            Assert.That(result.ResponseError, Does.Contain(RequiredDotNetVersion));
-        });
-    }
-
-    [Test]
-    public async Task TestPackCodeAsyncInvalidPackagePathReturnsError()
-    {
-        SetupSuccessfulDotNetVersionCheck();
-        var invalidPath = "/tmp/not-in-sdk-folder";
-
-        var result = await _languageChecks.PackCodeAsync(invalidPath, CancellationToken.None);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(result.ExitCode, Is.EqualTo(1));
-            Assert.That(result.ResponseError, Does.Contain("Failed to determine service directory"));
-        });
-    }
-
-    [Test]
-    public async Task TestPackCodeAsyncSuccessReturnsSuccess()
-    {
-        SetupSuccessfulDotNetVersionCheck();
-
-        var processResult = new ProcessResult { ExitCode = 0 };
-        processResult.AppendStdout(
-            "Microsoft (R) Build Engine version 17.10.0+1\n" +
-            "Build started 1/9/2025 10:30:00 AM.\n" +
-            "  Determining projects to restore...\n" +
-            "  All projects are up-to-date for restore.\n" +
-            "  Azure.Storage.Blobs -> bin/Release/net8.0/Azure.Storage.Blobs.dll\n" +
-            "  Successfully created package 'bin/Release/Azure.Storage.Blobs.1.0.0.nupkg'.\n" +
-            "Build succeeded.\n" +
-            "    0 Warning(s)\n" +
-            "    0 Error(s)"
-        );
-
-        _processHelperMock
-            .Setup(x => x.Run(
-                It.Is<ProcessOptions>(p =>
-                    p.Command == "cmd.exe" &&
-                    p.Args.Contains("/C") &&
-                    p.Args.Contains("dotnet") &&
-                    p.Args.Contains("pack") &&
-                    p.Args.Any(a => a.Contains("service.proj"))),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(processResult);
-
-        SetupGitRepoDiscovery();
-
-        var result = await _languageChecks.PackCodeAsync(_packagePath, CancellationToken.None);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(result.ExitCode, Is.EqualTo(0));
-            Assert.That(result.CheckStatusDetails, Does.Contain("Build succeeded"));
-        });
-
-        _processHelperMock.Verify(
-            x => x.Run(
-                It.Is<ProcessOptions>(p =>
-                    p.Command == "cmd.exe" &&
-                    p.Args.Contains("/C") &&
-                    p.Args.Contains("dotnet") &&
-                    p.Args.Contains("pack") &&
-                    p.Args.Any(a => a.Contains("service.proj")) &&
-                    p.Args.Contains("-warnaserror") &&
-                    p.Args.Contains("/p:ValidateRunApiCompat=true") &&
-                    p.Args.Contains("/p:SDKType=client") &&
-                    p.Args.Contains("/p:ServiceDirectory=storage") &&
-                    p.Args.Contains("/p:IncludeTests=false") &&
-                    p.Args.Contains("/p:PublicSign=false") &&
-                    p.Args.Contains("/p:Configuration=Release") &&
-                    p.Args.Contains("/p:IncludePerf=false") &&
-                    p.Args.Contains("/p:IncludeStress=false") &&
-                    p.Args.Contains("/p:IncludeIntegrationTests=false") &&
-                    p.WorkingDirectory == _repoRoot &&
-                    p.Timeout == TimeSpan.FromMinutes(10)),
-                It.IsAny<CancellationToken>()),
-            Times.Once);
-    }
-
-    [Test]
-    public async Task TestPackCodeAsyncBuildFailureReturnsError()
-    {
-        SetupSuccessfulDotNetVersionCheck();
-
-        _processHelperMock
-            .Setup(x => x.Run(
-                It.Is<ProcessOptions>(p =>
-                    p.Command == "cmd.exe" &&
-                    p.Args.Contains("/C") &&
-                    p.Args.Contains("dotnet") &&
-                    p.Args.Contains("pack")),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(() =>
-            {
-                var processResult = new ProcessResult { ExitCode = 1 };
-                processResult.AppendStderr("error CS0246: The type or namespace name 'Azure' could not be found");
-                return processResult;
-            });
-
-        SetupGitRepoDiscovery();
-
-        var result = await _languageChecks.PackCodeAsync(_packagePath, CancellationToken.None);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(result.ExitCode, Is.EqualTo(1));
-            Assert.That(result.CheckStatusDetails, Does.Contain("could not be found"));
-        });
-    }
-
-    [Test]
     public async Task TestCheckGeneratedCodeAsyncDotNetNotInstalledReturnsError()
     {
         var processResult = new ProcessResult { ExitCode = 1 };
@@ -237,7 +70,7 @@ internal class DotNetLanguageSpecificChecksTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(processResult);
 
-        var result = await _languageChecks.CheckGeneratedCodeAsync(_packagePath, CancellationToken.None);
+        var result = await _languageChecks.CheckGeneratedCodeAsync(_packagePath, ct: CancellationToken.None);
 
         Assert.Multiple(() =>
         {
@@ -252,7 +85,7 @@ internal class DotNetLanguageSpecificChecksTests
         SetupSuccessfulDotNetVersionCheck();
         var invalidPath = "/tmp/not-in-sdk-folder";
 
-        var result = await _languageChecks.CheckGeneratedCodeAsync(invalidPath, CancellationToken.None);
+        var result = await _languageChecks.CheckGeneratedCodeAsync(invalidPath, ct: CancellationToken.None);
 
         Assert.Multiple(() =>
         {
@@ -285,7 +118,7 @@ internal class DotNetLanguageSpecificChecksTests
 
         try
         {
-            var result = await _languageChecks.CheckGeneratedCodeAsync(_packagePath, CancellationToken.None);
+            var result = await _languageChecks.CheckGeneratedCodeAsync(_packagePath, ct: CancellationToken.None);
 
             Assert.Multiple(() =>
             {
@@ -335,7 +168,7 @@ internal class DotNetLanguageSpecificChecksTests
                 return processResult;
             });
 
-        var result = await _languageChecks.CheckGeneratedCodeAsync(_packagePath, CancellationToken.None);
+        var result = await _languageChecks.CheckGeneratedCodeAsync(_packagePath, ct: CancellationToken.None);
 
         Assert.Multiple(() =>
         {
@@ -360,7 +193,7 @@ internal class DotNetLanguageSpecificChecksTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(processResult);
 
-        var result = await _languageChecks.CheckAotCompatAsync(_packagePath, CancellationToken.None);
+        var result = await _languageChecks.CheckAotCompatAsync(_packagePath, ct: CancellationToken.None);
 
         Assert.Multiple(() =>
         {
@@ -375,7 +208,7 @@ internal class DotNetLanguageSpecificChecksTests
         SetupSuccessfulDotNetVersionCheck();
         var invalidPath = "/tmp/not-in-sdk-folder";
 
-        var result = await _languageChecks.CheckAotCompatAsync(invalidPath, CancellationToken.None);
+        var result = await _languageChecks.CheckAotCompatAsync(invalidPath, ct: CancellationToken.None);
 
         Assert.Multiple(() =>
         {
@@ -408,7 +241,7 @@ internal class DotNetLanguageSpecificChecksTests
 
         try
         {
-            var result = await _languageChecks.CheckAotCompatAsync(_packagePath, CancellationToken.None);
+            var result = await _languageChecks.CheckAotCompatAsync(_packagePath, ct: CancellationToken.None);
 
             Assert.Multiple(() =>
             {
@@ -451,7 +284,7 @@ internal class DotNetLanguageSpecificChecksTests
 
         try
         {
-            var result = await _languageChecks.CheckAotCompatAsync(_packagePath, CancellationToken.None);
+            var result = await _languageChecks.CheckAotCompatAsync(_packagePath, ct: CancellationToken.None);
 
             Assert.Multiple(() =>
             {

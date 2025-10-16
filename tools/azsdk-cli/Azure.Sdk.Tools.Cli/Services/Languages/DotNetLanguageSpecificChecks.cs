@@ -109,8 +109,8 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
             }
 
             var repoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
-
             var scriptPath = Path.Combine(repoRoot, "eng", "scripts", "compatibility", "Check-AOT-Compatibility.ps1");
+            var workingDirectory = Path.Combine(repoRoot, "eng", "scripts", "compatibility");
 
             if (!File.Exists(scriptPath))
             {
@@ -122,7 +122,7 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
             _logger.LogInformation("Executing command: {Command} {Arguments}", PowerShellCommand, string.Join(" ", args));
 
             var timeout = TimeSpan.FromMinutes(6);
-            var result = await _processHelper.Run(new(PowerShellCommand, args, timeout: timeout, workingDirectory: repoRoot), ct);
+            var result = await _processHelper.Run(new(PowerShellCommand, args, timeout: timeout, workingDirectory: workingDirectory), ct);
 
             if (result.ExitCode == 0)
             {

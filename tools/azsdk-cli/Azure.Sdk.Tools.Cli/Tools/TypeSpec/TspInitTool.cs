@@ -47,6 +47,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         {
             Description = "The namespace of the service you are creating. This should be in Pascal case and represent the service's namespace.",
             Required = true,
+            Validators =
+            {
+                result =>
+                {
+                    var value = result.GetValueOrDefault<string>();
+                    if (string.IsNullOrWhiteSpace(value))
+                    {
+                        result.AddError("The service namespace cannot be empty or whitespace.");
+                    }
+                }
+            }
         };
 
         private enum ServiceType
@@ -61,27 +72,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             { "azure-core", ServiceType.DataPlane }
         };
 
-        protected override Command GetCommand() => BuildCommand();
-
-        private Command BuildCommand()
+        protected override Command GetCommand() => new(InitCommandName, "Initialize a new TypeSpec project")
         {
-            if (serviceNamespaceArg.Validators.Count == 0)
-            {
-                serviceNamespaceArg.Validators.Add(result =>
-                {
-                    var value = result.GetValueOrDefault<string>();
-                    if (string.IsNullOrWhiteSpace(value))
-                    {
-                        result.AddError("The service namespace cannot be empty or whitespace.");
-                    }
-                });
-            }
-
-            return new(InitCommandName, "Initialize a new TypeSpec project")
-            {
-                outputDirectoryArg, templateArg, serviceNamespaceArg,
-            };
-        }
+            outputDirectoryArg, templateArg, serviceNamespaceArg,
+        };
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {

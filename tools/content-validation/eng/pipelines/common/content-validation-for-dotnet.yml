@@ -99,7 +99,7 @@ steps:
     Rules: ${{ parameters.rules }}
     GitHubToken: $(GITHUB_PAT)
     Owner: $(GITHUB_OWNER)
-    Repo: $(GITHUB_REPO)
+    Repo: $(GITHUB_REPO_FOR_DOTNET)
   inputs:
     command: 'run'
     workingDirectory: '$(System.DefaultWorkingDirectory)/tools/content-validation/ReportHelper'

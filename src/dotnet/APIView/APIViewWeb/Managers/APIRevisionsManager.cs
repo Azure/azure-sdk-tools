@@ -1046,7 +1046,7 @@ namespace APIViewWeb.Managers
                 return revisionModel;
             }
             var codeFileDetails = revisionModel.Files[0];
-            if (codeFileDetails.Language == "Python")
+            if (_upgradeDisabledLangs.Contains(codeFileDetails.Language))
             {
                 return revisionModel;
             }

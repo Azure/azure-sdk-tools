@@ -47,29 +47,29 @@ namespace APIViewWeb
 
         public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis, string crossLanguageMetadata = null)
         {
-                var tempPath = Path.GetTempPath();
-                _telemetryClient.TrackEvent("Creating code file for " + originalName);
-                var randomSegment = Guid.NewGuid().ToString("N");
-                var tempDirectory = Path.Combine(tempPath, "ApiView", randomSegment);
-                Directory.CreateDirectory(tempDirectory);
-                var originalFilePath = Path.Combine(tempDirectory, originalName);
-                var jsonFilePath = Path.ChangeExtension(originalFilePath, ".json");
+            var tempPath = Path.GetTempPath();
+            _telemetryClient.TrackEvent("Creating code file for " + originalName);
+            var randomSegment = Guid.NewGuid().ToString("N");
+            var tempDirectory = Path.Combine(tempPath, "ApiView", randomSegment);
+            Directory.CreateDirectory(tempDirectory);
+            var originalFilePath = Path.Combine(tempDirectory, originalName);
+            var jsonFilePath = Path.ChangeExtension(originalFilePath, ".json");
 
-                using (var file = File.Create(originalFilePath))
-                {
-                    await stream.CopyToAsync(file);
-                }
+            using (var file = File.Create(originalFilePath))
+            {
+                await stream.CopyToAsync(file);
+            }
 
-                string mappingFilePath = null;
-                if (!string.IsNullOrEmpty(crossLanguageMetadata))
-                {
-                    mappingFilePath = Path.Combine(tempDirectory, "apiview-properties.json");
-                    await File.WriteAllTextAsync(mappingFilePath, crossLanguageMetadata);
-                }
+            string mappingFilePath = null;
+            if (!string.IsNullOrEmpty(crossLanguageMetadata))
+            {
+                mappingFilePath = Path.Combine(tempDirectory, "apiview-properties.json");
+                await File.WriteAllTextAsync(mappingFilePath, crossLanguageMetadata);
+            }
 
-                string pythonVenvPath = GetPythonVirtualEnv(tempDirectory);
-                string arguments = GetProcessorArgumentsWithMapping(originalName, tempDirectory, jsonFilePath, mappingFilePath);
-                return await RunParserProcess(originalName, pythonVenvPath, jsonFilePath, arguments); ;
+            string pythonVenvPath = GetPythonVirtualEnv(tempDirectory);
+            string arguments = GetProcessorArgumentsWithMapping(originalName, tempDirectory, jsonFilePath, mappingFilePath);
+            return await RunParserProcess(originalName, pythonVenvPath, jsonFilePath, arguments);
         }
 
         public string GetProcessorArgumentsWithMapping(string originalName, string tempDirectory, string jsonPath, string mappingFilePath)

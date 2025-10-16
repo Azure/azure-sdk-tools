@@ -277,7 +277,7 @@ To fix missing requirements:
   2. Set MAVEN_HOME environment variable to the Maven installation path
   3. Add MAVEN_HOME/bin to your PATH environment variable
   4. Restart your IDE
-  
+
 After installing, run 'azsdk verify-setup --langs python' again to verify.
 ```
 
@@ -565,9 +565,9 @@ Verify:
    - Richard suggested lang-specific copilot-instructions.md (similar to PowerShell installation approach)
 
 3. **Lazy Loading**: Agreement on "lazy loading" approach
-   - Only check requirements for current language being developed
+   - Only check requirements for current repository being developed
    - Don't block the developer with requirements for languages they're not using
-   - Example: Dev in Python repo starts MCP → check only Python requirements
+   - Example: Dev in Python repo starts MCP → check only core and Python requirements
 
 4. **Tool vs. Feature Question**: Discussion whether this needs to be standalone tool
    - Alternative: When other MCP tools fail, they return specific installation instructions

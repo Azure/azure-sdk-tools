@@ -22,15 +22,7 @@ function IncrementPackageVersion {
       throw "Failed to parse version string '$OldVersion'"
     }
 
-    if ($sv.IsPrerelease)
-    {
-        $sv.IncrementAndSetToPrerelease() | Out-Null
-    }
-    else
-    {
-        # Just increment patch version without setting to prerelease
-        $sv.Patch = $sv.Patch + 1
-    }
+    $sv.Patch = $sv.Patch + 1
 
     return $sv.ToString()
 }
@@ -110,7 +102,6 @@ function Update-CsprojVersion {
     }
 }
 
-# Main
 try {
   if (-not (Test-Path -LiteralPath $ToolDirectory -PathType Container)) {
     throw "ToolDirectory '$ToolDirectory' does not exist or is not a directory"

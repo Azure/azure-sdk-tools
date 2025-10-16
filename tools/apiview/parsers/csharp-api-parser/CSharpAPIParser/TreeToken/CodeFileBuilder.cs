@@ -451,6 +451,15 @@ namespace CSharpAPIParser.TreeToken
             }
         }
 
+        private string GetTypedConstantValue(TypedConstant typedConstant)
+        {
+            return typedConstant.Kind switch
+            {
+                TypedConstantKind.Array => string.Join(", ", typedConstant.Values.Select(v => v.ToString())),
+                _ => typedConstant.Value?.ToString() ?? string.Empty
+            };
+        }
+
         private void BuildAttributes(List<ReviewLine> reviewLines, ImmutableArray<AttributeData> attributes, bool isHidden, string relatedTo)
         {
             const string attributeSuffix = "Attribute";
@@ -472,7 +481,7 @@ namespace CSharpAPIParser.TreeToken
                     {
                         // GetId() is not unique for attribute class. for e.g. attribute class id is something like "System.FlagsAttribute"
                         // So, using a unique id for attribute line
-                        LineId = $"{attribute.AttributeClass.GetId()}({(arg.Kind == TypedConstantKind.Array ? string.Join(", ", arg.Values.Select(v => v.ToString())) : arg.Value)}).{relatedTo}",
+                        LineId = $"{attribute.AttributeClass.GetId()}({GetTypedConstantValue(arg)}).{relatedTo}",
                         IsHidden = isHidden
                     };
 

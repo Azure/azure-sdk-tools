@@ -1,11 +1,8 @@
-using System;
 using System.ClientModel.Primitives;
-using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Azure.Sdk.Tools.McpEvals.Models;
 using Microsoft.Extensions.AI;
-using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities;
 using MicrosoftExtensionsAIChatExtensions = OpenAI.Chat.MicrosoftExtensionsAIChatExtensions;
 using OpenAIChatMessage = OpenAI.Chat.ChatMessage;
 using AssistantChatMessage = OpenAI.Chat.AssistantChatMessage;
@@ -177,20 +174,39 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
             return result;
         }
 
-        public static int NumberOfToolCalls(IEnumerable<ChatMessage> messages, IEnumerable<string> toolNames)
+        public static Dictionary<string, ChatMessage> GetExpectedToolsByName(IEnumerable<ChatMessage> expectedOutcome, IEnumerable<string> toolNames)
         {
-            var result = 0;
-            foreach (var message in messages)
+            var expectedToolResults = new Dictionary<string, ChatMessage>();
+
+            // Create CallId -> ToolName mapping
+            // Tool Name is not available in FunctionResultContent
+            // Normalize function names and remove tools used not in toolNames list
+            var callIdToName = expectedOutcome
+                .SelectMany(m => m.Contents.OfType<FunctionCallContent>())
+                .Select(fc => new { fc.CallId, Normalized = NormalizeFunctionName(fc.Name, toolNames) })
+                .Where(x => !string.IsNullOrEmpty(x.Normalized))
+                .ToDictionary(x => x.CallId, x => x.Normalized);
+
+            foreach (var message in expectedOutcome)
             {
                 foreach (var content in message.Contents)
                 {
-                    if (content is FunctionCallContent func && toolNames.Any(name => func.Name.EndsWith(name)))
+                    if (content is FunctionResultContent funcResult && callIdToName.TryGetValue(funcResult.CallId, out var functionName))
                     {
-                        result++;
+                        expectedToolResults[functionName] = message;
                     }
                 }
             }
-            return result;
+
+            return expectedToolResults;
+        }
+        
+        public static string NormalizeFunctionName(string functionName, IEnumerable<string> toolNames)
+        {
+            // Copilot often prefixes tool names with "mcp_" or similar. 
+            // Normalize by looking for tool names that end with the function name. 
+            var match = toolNames.FirstOrDefault(name => functionName.EndsWith(name, StringComparison.OrdinalIgnoreCase));
+            return match;
         }
     }
 }

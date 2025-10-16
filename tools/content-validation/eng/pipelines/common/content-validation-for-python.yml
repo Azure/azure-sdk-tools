@@ -97,7 +97,7 @@ steps:
     PackageName: ${{ parameters.packageName }}
     Language: ${{ parameters.language }}
     Rules: ${{ parameters.rules }}
-    GitHubToken: ""
+    GitHubToken: $(azuresdk-github-pat)
     Owner: 'Azure'
     Repo: 'azure-sdk-for-python'
   inputs:

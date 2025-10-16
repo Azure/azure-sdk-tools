@@ -68,8 +68,10 @@ function AddAttestationEntry($targetId, $actionItemId, $status, $targetType, $ur
 
 function SendEmailNotification($emailTo, $emailCC, $emailSubject, $emailBody) {
     try {
-        $body = @{ EmailTo = $emailTo; EmailCC = $emailCC; Subject = $emailSubject; Body = $emailBody} | ConvertTo-Json -Depth 3
+        $body = @{ EmailTo = $emailTo; CC = $emailCC; Subject = $emailSubject; Body = $emailBody} | ConvertTo-Json -Depth 3
+        Write-Host "Sending Email - To: $emailTo`nCC: $emailCC`nSubject: $emailSubject`nBody: $emailBody"
         $response = Invoke-RestMethod -Uri $AzureSDKEmailUri -Method Post -Body $body -ContentType "application/json"
+        Write-Host "Successfully Sent Email - To: $emailTo`nCC: $emailCC`nSubject: $emailSubject`nBody: $emailBody"
     } catch {
         Write-Error "Failed to send email.`nTo: $emailTo`nCC: $emailCC`nSubject: $emailSubject`nBody: $emailBody`nException message: $($_.Exception.Message)"
     }

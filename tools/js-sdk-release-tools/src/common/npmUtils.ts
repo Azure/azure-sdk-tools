@@ -146,7 +146,7 @@ export function tryCreateLastestStableNpmViewFromGithub(NpmViewParameters: NpmVi
  */
 export async function checkDirectoryExistsInGithub(
     packageRoot: string,
-    directoryPath: string,
+    directoryPath: string[],
     packageName: string,
     version: string
 ): Promise<boolean> {
@@ -162,20 +162,23 @@ export async function checkDirectoryExistsInGithub(
         // Get SDK root path
         const sdkRootPath = process.cwd(); // Assuming we're running from SDK root
         
-        // Construct the path relative to SDK root
-        const relativePath = relative(sdkRootPath, join(packageRoot, directoryPath)).replace(/\\/g, "/");
-        
-        // Use git ls-tree to check if directory exists
-        const gitCommand = `git ls-tree -d ${tag} ${relativePath}`;
-        const result = shell.exec(gitCommand, { silent: true });
-        
-        if (result.code === 0 && result.stdout.trim()) {
-            logger.info(`Directory ${directoryPath} exists in GitHub tag ${tag} for package ${packageName}`);
-            return true;
-        } else {
-            logger.info(`Directory ${directoryPath} does not exist in GitHub tag ${tag} for package ${packageName}`);
-            return false;
+        // directoryPath is expected to be an array of candidate paths
+        for (const dirPath of directoryPath) {
+            // Construct the path relative to SDK root
+            const relativePath = relative(sdkRootPath, join(packageRoot, dirPath)).replace(/\\/g, "/");
+            // Use git ls-tree to check if directory exists
+            const gitCommand = `git ls-tree -d ${tag} ${relativePath}`;
+            const result = shell.exec(gitCommand, { silent: true });
+            
+            if (result.code === 0 && result.stdout.trim()) {
+                logger.info(`Directory ${dirPath} exists in GitHub tag ${tag} for package ${packageName}`);
+                return true;
+            }
         }
+
+        // If none of the paths exist
+        logger.info(`None of the directories [${directoryPath.join(", ")}] exist in GitHub tag ${tag} for package ${packageName}`);
+        return false;
     } catch (error) {
         logger.error(`Error checking directory existence in GitHub: ${error}`);
         return false;

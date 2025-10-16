@@ -126,7 +126,8 @@ Without a concrete end-to-end scenario, we risk building tools in isolation that
 - **Release management** - Outer loop activity beyond Scenario 1 scope
 - **Publishing packages to package managers** - Outer loop activity beyond Scenario 1 scope
 
-_Note: Scenario 1 focuses on local development workflow up to the point where SDKs are ready for PR creation. The outer loop process is out of scope. This is a test scenario - do not commit changes or create release PRs._
+_Note: Scenario 1 focuses on local development workflow up to the point where SDKs are ready for PR creation. The outer loop process is out of scope. This is a test scenario - do not commit changes or create releases._
+_If you create a PR to compare the generated library with the existing library and validate PR CI, it must be created as a draft PR, DO NOT merge it, and add `[DO NOT REVIEW OR MERGE]` to the title._
 
 ---
 

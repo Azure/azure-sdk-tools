@@ -26,7 +26,7 @@ namespace APIViewUnitTests
             public override string[] Extensions => new string[0];
             public override string VersionString => "1.0";
             public override bool CanUpdate(string versionString) => true;
-            public override Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis, string crossLanguagePackageMetadata = null) => Task.FromResult<CodeFile>(null);
+            public override Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis, string crossLanguageMetadata = null) => Task.FromResult<CodeFile>(null);
             public override bool UsesTreeStyleParser => _usesTreeStyleParser;
             public override CodeFile GetReviewGenPendingCodeFile(string fileName) => null;
             public override bool GeneratePipelineRunParams(APIRevisionGenerationPipelineParamModel param) => false;

@@ -19,7 +19,7 @@
 
 **Requirements**: Language-specific and core tools needed to successfully run Azure SDK MCP tools (e.g., TypeSpec compiler, language SDKs, build tools).
 
-**Verification Check**: A command or script that determines whether a specific requirement is installed and accessible in the developer's environment.
+**Verification Check**: A command or script that determines whether a specific requirement is installed and accessible in the environment.
 
 **Lazy Loading**: Checking only the requirements for the repository currently being worked on, rather than checking all requirements upfront.
 
@@ -231,7 +231,6 @@ azsdk verify-setup --all
 
 1. **MCP Server Start**: Automatically check requirements for detected language when server starts
 2. **Before Generation**: When user requests SDK generation, verify requirements first
-3. **(V2 Idea) On Failure**: When another tool fails due to missing dependencies, suggest running verify-setup. 
 
 ### User Experience
 
@@ -267,6 +266,11 @@ Java Requirements:
 ---
 
 To fix missing requirements:
+📦 Maven:
+  1. Download the latest version of Maven.
+  2. Set MAVEN_HOME environment variable to the Maven installation path
+  3. Add MAVEN_HOME/bin to your PATH environment variable
+  4. Restart your IDE
 
 📦 azpysdk:
    1. Navigate to your azure-sdk-for-python repo
@@ -505,7 +509,7 @@ Too heavy for a V1 environment verification tool. This could be a future option 
    - Expected: Correctly identify which are installed vs. missing
 
 3. **Multi-Language**: Run with `--langs python,java`
-   - Expected: Check requirements for both languages, report combined results
+   - Expected: Check requirements for both languages, report combined results, and ensure no other languages were evaluated
 
 4. **Current Repo Detection**: Run without parameters in different language repos
    - Expected: Automatically detect and check correct language
@@ -542,6 +546,11 @@ Verify:
 - [Python MCP Implementation Reference](https://github.com/Azure/azure-sdk-for-python/blob/ad3e09230bfbf31030c375102ecef366f4bcb35a/eng/tools/mcp/azure-sdk-python-mcp/main.py)
 
 ---
+
+## Future Work
+
+- Determine how to dynamically get requirements, instead of relying on a hard-coded config
+- Explore invoking verifySetup when another tool fails due to missing dependencies
 
 ## Meeting Notes
 

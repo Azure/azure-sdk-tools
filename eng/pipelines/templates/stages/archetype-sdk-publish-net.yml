@@ -102,10 +102,6 @@ stages:
 
       # if we are verifying the changelog, we should definitely submit an increment version + changelog update PR
       - ${{ if eq(parameters.VerifyChangelog, true) }}:
-        - pwsh: |
-            Get-ChildItem -R $(Build.SourcesDirectory) | ForEach-Object { $_.FullName }
-          displayName: "dump current repo state"
-
         - task: PowerShell@2 # will set runtime variable $(NewVersion)
           displayName: 'Increment version in csproj'
           inputs:
@@ -124,17 +120,13 @@ stages:
             arguments: '-Version $(NewVersion) -ChangelogPath "${{ parameters.ToolDirectory }}/CHANGELOG.md"'
             pwsh: true
 
-        - pwsh: |
-            git diff
-          displayName: Dump what we generated
-          workingDirectory: $(Build.SourcesDirectory)/azure-sdk-tools/
-
-        # - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
-        #   parameters:
-        #     RepoName: azure-sdk-tools
-        #     PRBranchName: increment-package-version-${{ parameters.ToolDirectory }}-$(Build.BuildId)
-        #     CommitMsg: "Increment package version after release of ${{ parameters.ToolDirectory }}"
-        #     PRTitle: "Increment version for ${{ parameters.ToolDirectory }} releases"
+        - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
+          parameters:
+            RepoName: azure-sdk-tools
+            PRBranchName: increment-package-version-${{ parameters.ToolDirectory }}-$(Build.BuildId)
+            CommitMsg: "Increment package version after release of ${{ parameters.ToolDirectory }}"
+            PRTitle: "Increment version for ${{ parameters.ToolDirectory }} releases"
+            WorkingDirectory: $(Build.SourcesDirectory)/azure-sdk-tools/
 
       - task: 1ES.PublishPipelineArtifact@1
         displayName: 'Publish processed files'

@@ -204,19 +204,15 @@ class EvaluationRunner:
             self._context = ExecutionContext()
 
     def _execute_target_with_progress(self, target: EvaluationTarget, index: int, total: int) -> EvaluationResult:
-        """Thread-safe wrapper for _execute_target with progress reporting."""
         print(f"[{index}/{total}] Started {target.workflow_name}...")
         return self._execute_target(target)
 
     def _execute_target(self, target: EvaluationTarget) -> EvaluationResult:
         try:
-            # Create evaluator for target
-            evaluator_class = get_evaluator_class(target.config.kind)
-            evaluator = evaluator_class(target.config)
-
-            # Create jsonl file for target
+            # Create evaluator for target, passing jsonl_file as argument
             jsonl_file = self._context.create_temporary_jsonl_file(target)
-            evaluator._jsonl_file = jsonl_file
+            evaluator_class = get_evaluator_class(target.config.kind)
+            evaluator = evaluator_class(target.config, jsonl_file=jsonl_file)
 
             # Execute runs
             all_run_results = []

@@ -519,10 +519,9 @@ class CustomAPIViewEvaluator(BaseEvaluator):
 
 
 class PromptyEvaluator(BaseEvaluator):
-    def __init__(self, config):
-        if config is None:
-            raise ValueError("PromptyEvaluator requires config")
+    def __init__(self, config, jsonl_file=None):
         self.config = config
+        self._jsonl_file = jsonl_file
 
         # Optionally, you can set up a model config for SimilarityEvaluator if needed
         settings = SettingsManager()

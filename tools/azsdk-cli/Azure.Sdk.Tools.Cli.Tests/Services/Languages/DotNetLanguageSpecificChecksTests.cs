@@ -288,6 +288,205 @@ internal class DotNetLanguageSpecificChecksTests
         }
     }
 
+    [Test]
+    public async Task TestCheckAotCompatAsyncWithOptOutReturnsSkipped()
+    {
+        SetupSuccessfulDotNetVersionCheck();
+        SetupGitRepoDiscovery();
+
+        // Create a temporary directory structure for the test
+        var testPackagePath = Path.Combine(_repoRoot, "sdk", "testservice", "Azure.TestService");
+        Directory.CreateDirectory(testPackagePath);
+
+        // Create a .csproj file with AotCompatOptOut set to true
+        var csprojPath = Path.Combine(testPackagePath, "Azure.TestService.csproj");
+        var csprojContent = @"<Project Sdk=""Microsoft.NET.Sdk"">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <AotCompatOptOut>true</AotCompatOptOut>
+  </PropertyGroup>
+</Project>";
+        File.WriteAllText(csprojPath, csprojContent);
+
+        try
+        {
+            var result = await _languageChecks.CheckAotCompatAsync(testPackagePath, ct: CancellationToken.None);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.ExitCode, Is.EqualTo(0));
+                Assert.That(result.CheckStatusDetails, Does.Contain("AOT compatibility check skipped"));
+                Assert.That(result.CheckStatusDetails, Does.Contain("AotCompatOptOut is set to true"));
+            });
+        }
+        finally
+        {
+            // Cleanup
+            try { Directory.Delete(testPackagePath, true); } catch { }
+        }
+    }
+
+    [Test]
+    public async Task TestCheckAotCompatAsyncWithoutOptOutRunsCheck()
+    {
+        SetupSuccessfulDotNetVersionCheck();
+        SetupGitRepoDiscovery();
+
+        // Create a temporary directory structure for the test
+        var testPackagePath = Path.Combine(_repoRoot, "sdk", "testservice", "Azure.TestService");
+        Directory.CreateDirectory(testPackagePath);
+
+        // Create a .csproj file without AotCompatOptOut (or set to false)
+        var csprojPath = Path.Combine(testPackagePath, "Azure.TestService.csproj");
+        var csprojContent = @"<Project Sdk=""Microsoft.NET.Sdk"">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+  </PropertyGroup>
+</Project>";
+        File.WriteAllText(csprojPath, csprojContent);
+
+        // Create the expected script path and ensure the directory exists
+        var scriptPath = Path.Combine(_repoRoot, "eng", "scripts", "compatibility", "Check-AOT-Compatibility.ps1");
+        Directory.CreateDirectory(Path.GetDirectoryName(scriptPath)!);
+        File.WriteAllText(scriptPath, "# Mock PowerShell script");
+
+        var processResult = new ProcessResult { ExitCode = 0 };
+        processResult.AppendStdout("AOT compatibility check passed!");
+
+        _processHelperMock
+            .Setup(x => x.Run(
+                It.Is<ProcessOptions>(p => 
+                    IsPowerShellCommand(p) && 
+                    p.Args.Any(a => a.Contains("Check-AOT-Compatibility.ps1"))),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(processResult);
+
+        try
+        {
+            var result = await _languageChecks.CheckAotCompatAsync(testPackagePath, ct: CancellationToken.None);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.ExitCode, Is.EqualTo(0));
+                Assert.That(result.CheckStatusDetails, Does.Contain("AOT compatibility check passed"));
+                Assert.That(result.CheckStatusDetails, Does.Not.Contain("skipped"));
+            });
+
+            // Verify that the PowerShell script was actually called
+            _processHelperMock.Verify(x => x.Run(
+                It.Is<ProcessOptions>(p => 
+                    IsPowerShellCommand(p) && 
+                    p.Args.Any(a => a.Contains("Check-AOT-Compatibility.ps1"))),
+                It.IsAny<CancellationToken>()), Times.Once);
+        }
+        finally
+        {
+            // Cleanup
+            try 
+            { 
+                Directory.Delete(testPackagePath, true);
+                File.Delete(scriptPath); 
+                Directory.Delete(Path.GetDirectoryName(scriptPath)!, true); 
+            } 
+            catch { }
+        }
+    }
+
+    [Test]
+    public async Task TestCheckAotCompatAsyncOptOutCaseInsensitive()
+    {
+        SetupSuccessfulDotNetVersionCheck();
+        SetupGitRepoDiscovery();
+
+        // Create a temporary directory structure for the test
+        var testPackagePath = Path.Combine(_repoRoot, "sdk", "testservice", "Azure.TestService");
+        Directory.CreateDirectory(testPackagePath);
+
+        // Create a .csproj file with AotCompatOptOut in different case combinations
+        var csprojPath = Path.Combine(testPackagePath, "Azure.TestService.csproj");
+        var csprojContent = @"<Project Sdk=""Microsoft.NET.Sdk"">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <AOTCOMPATOPTOUT>TRUE</AOTCOMPATOPTOUT>
+  </PropertyGroup>
+</Project>";
+        File.WriteAllText(csprojPath, csprojContent);
+
+        try
+        {
+            var result = await _languageChecks.CheckAotCompatAsync(testPackagePath, ct: CancellationToken.None);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.ExitCode, Is.EqualTo(0));
+                Assert.That(result.CheckStatusDetails, Does.Contain("AOT compatibility check skipped"));
+                Assert.That(result.CheckStatusDetails, Does.Contain("AotCompatOptOut is set to true"));
+            });
+        }
+        finally
+        {
+            // Cleanup
+            try { Directory.Delete(testPackagePath, true); } catch { }
+        }
+    }
+
+    [Test]
+    public async Task TestCheckAotCompatAsyncNoCsprojFileRunsCheck()
+    {
+        SetupSuccessfulDotNetVersionCheck();
+        SetupGitRepoDiscovery();
+
+        // Create a temporary directory structure for the test without any .csproj file
+        var testPackagePath = Path.Combine(_repoRoot, "sdk", "testservice", "Azure.TestService");
+        Directory.CreateDirectory(testPackagePath);
+
+        // Create the expected script path and ensure the directory exists
+        var scriptPath = Path.Combine(_repoRoot, "eng", "scripts", "compatibility", "Check-AOT-Compatibility.ps1");
+        Directory.CreateDirectory(Path.GetDirectoryName(scriptPath)!);
+        File.WriteAllText(scriptPath, "# Mock PowerShell script");
+
+        var processResult = new ProcessResult { ExitCode = 0 };
+        processResult.AppendStdout("AOT compatibility check passed!");
+
+        _processHelperMock
+            .Setup(x => x.Run(
+                It.Is<ProcessOptions>(p => 
+                    IsPowerShellCommand(p) && 
+                    p.Args.Any(a => a.Contains("Check-AOT-Compatibility.ps1"))),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(processResult);
+
+        try
+        {
+            var result = await _languageChecks.CheckAotCompatAsync(testPackagePath, ct: CancellationToken.None);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.ExitCode, Is.EqualTo(0));
+                Assert.That(result.CheckStatusDetails, Does.Contain("AOT compatibility check passed"));
+                Assert.That(result.CheckStatusDetails, Does.Not.Contain("skipped"));
+            });
+
+            // Verify that the PowerShell script was actually called since no opt-out was found
+            _processHelperMock.Verify(x => x.Run(
+                It.Is<ProcessOptions>(p => 
+                    IsPowerShellCommand(p) && 
+                    p.Args.Any(a => a.Contains("Check-AOT-Compatibility.ps1"))),
+                It.IsAny<CancellationToken>()), Times.Once);
+        }
+        finally
+        {
+            // Cleanup
+            try 
+            { 
+                Directory.Delete(testPackagePath, true);
+                File.Delete(scriptPath); 
+                Directory.Delete(Path.GetDirectoryName(scriptPath)!, true); 
+            } 
+            catch { }
+        }
+    }
+
     #region Helper Methods for Cross-Platform Command Validation
 
     /// <summary>

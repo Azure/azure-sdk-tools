@@ -100,6 +100,14 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
                 return new CLICheckResponse(1, "", "Failed to determine service directory or package name from the provided package path.");
             }
 
+            // Check if AOT compatibility is opted out in the project file
+            var isAotOptedOut = CheckAotCompatOptOut(packagePath, packageName);
+            if (isAotOptedOut)
+            {
+                _logger.LogInformation("AOT compatibility check skipped - AotCompatOptOut is set to true in project file");
+                return new CLICheckResponse(0, "AOT compatibility check skipped - AotCompatOptOut is set to true in project file");
+            }
+
             var repoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
 
             var scriptPath = Path.Combine(repoRoot, "eng", "scripts", "compatibility", "Check-AOT-Compatibility.ps1");
@@ -217,5 +225,47 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
             }
         }
         return packageName;
+    }
+
+    private bool CheckAotCompatOptOut(string packagePath, string packageName)
+    {
+        try
+        {
+            // Look for .csproj files in the package directory
+            var csprojFiles = Directory.GetFiles(packagePath, "*.csproj", SearchOption.AllDirectories);
+            
+            // Try to find the main project file first (matching package name)
+            var mainCsprojFile = csprojFiles.FirstOrDefault(f => 
+                Path.GetFileNameWithoutExtension(f).Equals(packageName, StringComparison.OrdinalIgnoreCase));
+            
+            // If no matching file found, use the first .csproj file
+            var csprojFile = mainCsprojFile ?? csprojFiles.FirstOrDefault();
+            
+            if (csprojFile == null)
+            {
+                _logger.LogDebug("No .csproj file found in package path: {PackagePath}", packagePath);
+                return false;
+            }
+
+            _logger.LogDebug("Checking AOT opt-out in project file: {CsprojFile}", csprojFile);
+
+            var projectContent = File.ReadAllText(csprojFile);
+            
+            // Check for <AotCompatOptOut>true</AotCompatOptOut> (case-insensitive)
+            var hasAotOptOut = projectContent.Contains("<AotCompatOptOut>true</AotCompatOptOut>", StringComparison.OrdinalIgnoreCase);
+            
+            if (hasAotOptOut)
+            {
+                _logger.LogInformation("Found AotCompatOptOut=true in project file: {CsprojFile}", csprojFile);
+                return true;
+            }
+            
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to check AotCompatOptOut in project file for package: {PackageName}", packageName);
+            return false;
+        }
     }
 }

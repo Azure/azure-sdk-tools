@@ -42,6 +42,8 @@ namespace ApiView
         public string ServiceName { get; set; }
         public string PackageDisplayName { get; set; }
         public string PackageVersion { get; set; }
+        // Deprecated: Use CrossLanguageMetadata.CrossLanguagePackageId instead. Kept for backward compatibility with TypeSpec parsers.
+        public string CrossLanguagePackageId { get; set; }
         public CrossLanguageMetadata CrossLanguageMetadata { get; set; }
         public CodeFileToken[] Tokens { get; set; } = Array.Empty<CodeFileToken>();
         // APIForest will be removed once server changes are added to dereference this property

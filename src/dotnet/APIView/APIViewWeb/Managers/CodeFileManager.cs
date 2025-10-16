@@ -238,7 +238,7 @@ namespace APIViewWeb.Managers
             file.Name = codeFile.Name;
             file.PackageName = codeFile.PackageName;
             file.PackageVersion = codeFile.PackageVersion;
-            file.CrossLanguagePackageId = codeFile.CrossLanguageMetadata.CrossLanguagePackageId;
+            file.CrossLanguagePackageId = codeFile.CrossLanguageMetadata != null ? codeFile.CrossLanguageMetadata.CrossLanguagePackageId : codeFile.CrossLanguagePackageId;
             file.ParserStyle = (codeFile.ReviewLines.Count > 0) ? ParserStyle.Tree : ParserStyle.Flat;
         }
     }

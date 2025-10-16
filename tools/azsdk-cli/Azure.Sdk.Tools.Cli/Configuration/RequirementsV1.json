@@ -1,7 +1,39 @@
 {
     "categories": {
-        "core": [],
-        "java": [],
+        "core": [
+            {
+                "requirement": "tsp-client >= 0.24.0",
+                "check": ["tsp-client", "--version"],
+                "instructions": ["npm install -g @azure-tools/typespec-client-generator-cli@latest @typespec/compiler@latest"]
+            },
+            {
+                "requirement": "tsp >= 1.0.0",
+                "check": ["tsp", "--version"],
+                "instructions": ["npm install -g @azure-tools/typespec-client-generator-cli@latest @typespec/compiler@latest"]
+            }
+        ],
+        "java": [
+            {   
+                "requirement": "Node.js >= 20.0.0",
+                "check": ["node", "--version"],
+                "instructions": ["Download Node.js"]
+            },
+        {
+                "requirement": "Node.js >= 20.0.0",
+                "check": ["npm", "--version"],
+                "instructions": ["Download Node.js"]
+            },
+            {
+                "requirement": "java >= 17",
+                "check": ["java", "-version"],
+                "instructions": ["Download JDK", "Set JAVA_HOME environment variable to the JDK installation path", "Add JAVA_HOME/bin to your PATH environment variable", "Restart your IDE."]
+            },
+            {
+                "requirement": "maven",
+                "check": ["mvn", "-v"],
+                "instructions": ["Download the latest version of Maven.", "Set MAVEN_HOME environment variable to the Maven installation path", "Add MAVEN_HOME/bin to your PATH environment variable", "Restart your IDE."]
+            }
+        ],
         "javascript": [],
         "dotnet": [
             {

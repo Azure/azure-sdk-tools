@@ -79,6 +79,7 @@ Without a concrete end-to-end scenario, we risk building tools in isolation that
 - Test resources already provisioned
 - Test recordings already exist ([playback mode](#playback-mode) only)
 - [TypeSpec](#typespec) modifications are local only (single repo)
+- All [agent mode](#agent-mode) interactions are performed in VS Code with GitHub Copilot with the Azure/azure-rest-api-specs repository is open in VSCode.
 
 ### In Scope for Scenario 1
 

@@ -514,7 +514,7 @@ namespace APIViewUnitTests
             // We can verify the operation succeeded by checking the data was processed correctly
 
             // Verify that reviews were updated with namespace status and timestamp
-            updatedReviews.Should().HaveCount(2); // Only associated reviews are updated (not the main TypeSpec review)
+            updatedReviews.Should().HaveCount(3); // Associated reviews AND the main TypeSpec review are updated
             
             // Verify that the associated reviews were updated correctly
             var javaReviewUpdated = updatedReviews.FirstOrDefault(r => r.Id == "java-review-id");

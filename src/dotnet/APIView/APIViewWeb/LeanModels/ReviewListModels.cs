@@ -148,6 +148,7 @@ namespace APIViewWeb.LeanModels
         public bool CopilotReviewInProgress { get; set; }
         public string CopilotReviewJobId { get; set; }
         public HashSet<string> Approvers { get; set; } = new HashSet<string>();
+        public bool HasRequestedNamespaceReview { get; set; } = false;
         public string CreatedBy { get; set; }
         public DateTime CreatedOn { get; set; }
         public DateTime LastUpdatedOn { get; set; }

@@ -1,52 +1,61 @@
 {
-	"name": "GitHub Codespaces (Default)",
-	"build": {
-		"dockerfile": "Dockerfile",
-		"args": {
-			"INSTALL_DOCKER": "true"
+	"name": "Azure SDK Tools Development",
+	"image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+	"features": {
+		"ghcr.io/devcontainers/features/dotnet:2": {
+			"version": "latest",
+			"installUsingApt": false
+		},
+		"ghcr.io/devcontainers/features/node:1": {
+			"version": "lts"
+		},
+		"ghcr.io/devcontainers/features/python:1": {
+			"version": "3.12",
+			"installTools": true
+		},
+		"ghcr.io/devcontainers/features/go:1": {
+			"version": "latest"
+		},
+		"ghcr.io/devcontainers/features/docker-in-docker:2": {
+			"version": "latest",
+			"dockerDashComposeVersion": "v2"
+		},
+		"ghcr.io/devcontainers/features/git:1": {
+			"version": "latest"
+		},
+		"ghcr.io/devcontainers/features/git-lfs:1": {
+			"version": "latest"
+		},
+		"ghcr.io/devcontainers/features/github-cli:1": {
+			"version": "latest"
 		}
 	},
-	"settings": {
-		"terminal.integrated.shell.linux": "/bin/bash",
-		"go.useGoProxyToCheckForToolUpdates": false,
-		"go.useLanguageServer": true,
-		"go.gopath": "/go",
-		"go.goroot": "/usr/local/go",
-		"go.toolsGopath": "/go/bin",
-		"python.pythonPath": "/opt/python/latest/bin/python",
-		"python.linting.enabled": true,
-		"python.linting.pylintEnabled": true,
-		"python.formatting.autopep8Path": "/usr/local/py-utils/bin/autopep8",
-		"python.formatting.blackPath": "/usr/local/py-utils/bin/black",
-		"python.formatting.yapfPath": "/usr/local/py-utils/bin/yapf",
-		"python.linting.banditPath": "/usr/local/py-utils/bin/bandit",
-		"python.linting.flake8Path": "/usr/local/py-utils/bin/flake8",
-		"python.linting.mypyPath": "/usr/local/py-utils/bin/mypy",
-		"python.linting.pycodestylePath": "/usr/local/py-utils/bin/pycodestyle",
-		"python.linting.pydocstylePath": "/usr/local/py-utils/bin/pydocstyle",
-		"python.linting.pylintPath": "/usr/local/py-utils/bin/pylint",
-		"lldb.executable": "/usr/bin/lldb",
-		"files.watcherExclude": {
-			"**/target/**": true
+	"customizations": {
+		"vscode": {
+			"settings": {
+				"terminal.integrated.defaultProfile.linux": "bash",
+				"go.useLanguageServer": true,
+				"python.defaultInterpreterPath": "/usr/local/python/current/bin/python",
+				"python.linting.enabled": true,
+				"python.linting.pylintEnabled": true,
+				"files.watcherExclude": {
+					"**/target/**": true
+				}
+			},
+			"extensions": [
+				"GitHub.vscode-pull-request-github",
+				"MS-vsliveshare.vsliveshare",
+				"VisualStudioExptTeam.vscodeintellicode"
+			]
 		}
 	},
-	"remoteUser": "codespace",
-	"overrideCommand": false,
-	"workspaceMount": "source=${localWorkspaceFolder},target=/home/codespace/workspace,type=bind,consistency=cached",
-	"workspaceFolder": "/home/codespace/workspace",
-	"mounts": [ "source=/var/run/docker.sock,target=/var/run/docker-host.sock,type=bind" ],
-	"runArgs": [ "--cap-add=SYS_PTRACE", "--security-opt", "seccomp=unconfined" ],
-
-	// Add the IDs of extensions you want installed when the container is created.
-	"extensions": [
-		"GitHub.vscode-pull-request-github",
-		"MS-vsliveshare.vsliveshare",
-		"VisualStudioExptTeam.vscodeintellicode"
+	"remoteUser": "vscode",
+	"mounts": [
+		"source=/var/run/docker.sock,target=/var/run/docker-host.sock,type=bind"
+	],
+	"runArgs": [
+		"--cap-add=SYS_PTRACE",
+		"--security-opt",
+		"seccomp=unconfined"
 	]
-
-	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [],
-
-	// Use 'postCreateCommand' to run commands after the container is created.
-	// "postCreateCommand": "uname -a"
 }

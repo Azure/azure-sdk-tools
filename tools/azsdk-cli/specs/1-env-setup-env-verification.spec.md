@@ -36,7 +36,7 @@
 - **.NET**: Developers manually discover missing dependencies when build or generation commands fail. No proactive verification.
 - **Java**: Same as .NET - reactive discovery through failures.
 - **JavaScript**: Same as .NET - reactive discovery through failures.
-- **Python**: `azure-sdk-for-python` has `azpysdk` which can be used for some validation checks, but no unified verification across all required tools.
+- **Python**: `azure-sdk-for-python` has `azpysdk` which can be used for some validation checks, but no proactive verification.
 - **Go**: Same as .NET - reactive discovery through failures.
 
 ### Why This Matters
@@ -266,18 +266,18 @@ Java Requirements:
 ---
 
 To fix missing requirements:
-📦 Maven:
-  1. Download the latest version of Maven.
-  2. Set MAVEN_HOME environment variable to the Maven installation path
-  3. Add MAVEN_HOME/bin to your PATH environment variable
-  4. Restart your IDE
-
 📦 azpysdk:
    1. Navigate to your azure-sdk-for-python repo
    2. Ensure your virtual environment is activated
    3. Run: python -m pip install -e eng/tools/azure-sdk-tools[build]
    4. Verify installation with: azpysdk --help
 
+📦 Maven:
+  1. Download the latest version of Maven.
+  2. Set MAVEN_HOME environment variable to the Maven installation path
+  3. Add MAVEN_HOME/bin to your PATH environment variable
+  4. Restart your IDE
+  
 After installing, run 'azsdk verify-setup --langs python' again to verify.
 ```
 

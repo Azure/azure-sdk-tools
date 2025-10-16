@@ -1,13 +1,13 @@
 import json
-import yaml
 import os
 import sys
 import tempfile
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import List, Any
 from pathlib import Path
+from typing import Any, List
 
+import yaml
 from azure.ai.evaluation import evaluate
 from azure.identity import AzurePipelinesCredential
 
@@ -15,10 +15,11 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import evals._custom
 from evals._config_loader import get_evaluator_class
-from evals._discovery import EvaluationTarget, DiscoveryResult
+from evals._discovery import DiscoveryResult, EvaluationTarget
 from src._settings import SettingsManager
 
 DEFAULT_NUM_RUNS: int = 1
+
 
 class ExecutionContext:
     """Shared context for evaluation execution."""
@@ -40,7 +41,7 @@ class ExecutionContext:
             client_id = os.environ.get("AZURESUBSCRIPTION_CLIENT_ID")
             tenant_id = os.environ.get("AZURESUBSCRIPTION_TENANT_ID")
             system_access_token = os.environ.get("SYSTEM_ACCESSTOKEN")
-            
+
             return {
                 "credential": AzurePipelinesCredential(
                     service_connection_id=service_connection_id,
@@ -53,20 +54,20 @@ class ExecutionContext:
 
     def in_ci(self) -> bool:
         return bool(os.getenv("TF_BUILD"))
-    
+
     def _load_test_file(self, test_file: Path) -> dict:
         """Load test file - supports both JSON and YAML formats."""
         try:
             with test_file.open("r", encoding="utf-8") as f:
-                if test_file.suffix == '.json':
+                if test_file.suffix == ".json":
                     return json.load(f)
-                elif test_file.suffix in ['.yaml', '.yml']:
+                elif test_file.suffix in [".yaml", ".yml"]:
                     return yaml.safe_load(f)
                 else:
                     raise ValueError(f"Unsupported file format: {test_file.suffix}")
         except Exception as e:
             raise ValueError(f"Failed to read/parse test file {test_file}: {e}") from e
-    
+
     def create_temporary_jsonl_file(self, target: EvaluationTarget) -> Path:
         """
         Collect all test files with the *.json extension in the given directory
@@ -88,7 +89,7 @@ class ExecutionContext:
         with self._temp_files_lock:
             self._temp_files.append(out_path)
         return out_path
-    
+
     def cleanup(self):
         """Clean up temporary files."""
         for temp_file in self._temp_files:
@@ -103,6 +104,7 @@ class ExecutionContext:
             except Exception:
                 pass
 
+
 class EvaluationResult:
     """Result of evaluating a single evaluation target."""
 
@@ -111,14 +113,15 @@ class EvaluationResult:
         self.raw_results = raw_results
         self.success = success
         self.error = error
-    
+
     @property
     def workflow_name(self) -> str:
         return self.target.workflow_name
-    
+
     @property
     def num_test_files(self) -> int:
         return len(self.target.test_files)
+
 
 class EvaluationRunner:
     """Executes evaluations targets with shared context"""
@@ -130,16 +133,16 @@ class EvaluationRunner:
 
     def run(self, discovery_result: DiscoveryResult) -> List[EvaluationResult]:
         """Execute all targets in the discovery result.
-        
+
         Args:
             discovery_result: Result from EvaluationDiscovery containing targets to execute.
-            
+
         Returns:
             List of EvaluationResult objects.
         """
         try:
             self._ensure_context()
-            
+
             print(f"🚀 Executing {len(discovery_result.targets)} evaluation targets...")
             print(f"📊 {discovery_result.summary}")
             print()
@@ -147,7 +150,7 @@ class EvaluationRunner:
             return self._run_parallel(discovery_result)
         finally:
             self.cleanup()
-    
+
     def _run_parallel(self, discovery_result: DiscoveryResult) -> List[EvaluationResult]:
         """Parallel execution using ThreadPoolExecutor."""
         cpu_count = os.cpu_count() or 4
@@ -155,48 +158,43 @@ class EvaluationRunner:
         results = []
         completed_count = 0
         total_targets = len(discovery_result.targets)
-        
+
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             # Submit all tasks
             future_to_target = {
-                executor.submit(self._execute_target_with_progress, target, i + 1, total_targets): target 
+                executor.submit(self._execute_target_with_progress, target, i + 1, total_targets): target
                 for i, target in enumerate(discovery_result.targets)
             }
-            
+
             # Collect results as they complete
             for future in as_completed(future_to_target):
                 target = future_to_target[future]
-                
+
                 try:
                     result = future.result()
                     results.append(result)
-                    
+
                     with self._results_lock:
                         completed_count += 1
-                        
+
                     if result.success:
                         print(f"✅ {target.workflow_name} completed successfully ({completed_count}/{total_targets})")
                     else:
                         print(f"❌ {target.workflow_name} failed: {result.error} ({completed_count}/{total_targets})")
-                        
+
                 except Exception as e:
                     with self._results_lock:
                         completed_count += 1
-                    
+
                     print(f"💥 {target.workflow_name} crashed: {e} ({completed_count}/{total_targets})")
-                    results.append(EvaluationResult(
-                        target=target,
-                        raw_results=[],
-                        success=False,
-                        error=str(e)
-                    ))
-                
+                    results.append(EvaluationResult(target=target, raw_results=[], success=False, error=str(e)))
+
                 print()  # Spacing
-        
-        # Sort results to match original target order 
+
+        # Sort results to match original target order
         target_order = {target.workflow_name: i for i, target in enumerate(discovery_result.targets)}
         results.sort(key=lambda r: target_order.get(r.workflow_name, 999))
-        
+
         return results
 
     def _ensure_context(self):
@@ -236,33 +234,42 @@ class EvaluationRunner:
                     **self._context._credential_kwargs,
                 )
                 all_run_results.append({jsonl_file.name: result})
-            
+
             # Process results with evaluator
             guideline_ids = set()
             processed_results = evaluator.process_results(all_run_results, guideline_ids)
 
-            # TODO: Should show all results bundled at the end 
-            #    evaluator.show_results(processed_results)
-            
             return EvaluationResult(
                 target=target,
                 raw_results=all_run_results,
                 success=True,
             )
-        
+
         except Exception as e:
-            return EvaluationResult(
-                target=target,
-                raw_results=[],
-                success=False,
-                error=str(e)
-            )
-        
+            return EvaluationResult(target=target, raw_results=[], success=False, error=str(e))
+
+    def show_results(self, results: List[EvaluationResult]):
+        """Display detailed results from all evaluations."""
+        print("=" * 60)
+        print("📈 EVALUATION RESULTS")
+        print("=" * 60)
+        print()
+
+        raw_results = results[0].raw_results[0]
+        for filename, result in raw_results.items():
+            print(f"== {filename} ==")
+            for res in result["rows"]:
+                success = res["outputs.metrics.correct_action"]
+                testcase_name = res["inputs.testcase"]
+                score = res["outputs.metrics.score"]
+                print(f"  -  {'✅' if success else '❌'} {score} - {testcase_name}")
+        print()
+
     def show_summary(self, results: List[EvaluationResult]):
         """Display aggregated results from all evaluations."""
         successful = [r for r in results if r.success]
         failed = [r for r in results if not r.success]
-        
+
         print("=" * 60)
         print("📈 EVALUATION SUMMARY")
         print("=" * 60)
@@ -270,24 +277,24 @@ class EvaluationRunner:
         print(f"✅ Successful: {len(successful)}")
         print(f"❌ Failed: {len(failed)}")
         print()
-        
+
         if failed:
             print("❌ FAILED EVALUATIONS:")
             for result in failed:
                 print(f"  • {result.workflow_name}: {result.error}")
             print()
-        
+
         if successful:
             print("✅ SUCCESSFUL EVALUATIONS:")
             total_test_files = sum(r.num_test_files for r in successful)
             print(f"  • Processed {total_test_files} test files across {len(successful)} workflows")
-            
+
             # Group by workflow type
             by_type = {}
             for result in successful:
                 workflow_type = result.target.config.kind
                 by_type.setdefault(workflow_type, []).append(result)
-            
+
             for workflow_type, type_results in by_type.items():
                 print(f"  • {workflow_type}: {len(type_results)} workflows")
 
@@ -296,8 +303,9 @@ class EvaluationRunner:
         if self._context:
             self._context.cleanup()
 
+
 __all__ = [
     "ExecutionContext",
-    "EvaluationResult", 
+    "EvaluationResult",
     "EvaluationExecutor",
 ]

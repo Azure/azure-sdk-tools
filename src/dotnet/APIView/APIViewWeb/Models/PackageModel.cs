@@ -38,6 +38,6 @@ namespace APIViewWeb.Models
         /// <summary>
         /// Management plane package (resource management libraries)
         /// </summary>
-        Management = 1,
+        mgmt = 1,
     }
 }

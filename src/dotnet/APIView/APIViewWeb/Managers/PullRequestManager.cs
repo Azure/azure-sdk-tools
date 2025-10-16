@@ -150,6 +150,12 @@ namespace APIViewWeb.Managers
                 baselineCodeFileName: baselineCodeFileName, baselineStream: baselineStream,
                 project: project, language: language);
 
+            if (codeFile == null)
+            {
+                responseContent.ActionsTaken.Add($"Failed to process code file. Language processor for '{language}' may not be available or file format is unsupported.");
+                return "";
+            }
+
             if (codeFile.PackageName != null && (packageName == null || packageName != codeFile.PackageName))
             {
                 packageName = codeFile.PackageName;

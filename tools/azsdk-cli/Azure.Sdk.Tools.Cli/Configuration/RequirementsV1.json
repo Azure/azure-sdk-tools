@@ -1,6 +1,16 @@
 {
     "categories": {
         "core": [
+        {   
+                "requirement": "Node.js >= 20.0.0",
+                "check": ["node", "--version"],
+                "instructions": ["Download Node.js"]
+            },
+            {
+                "requirement": "Node.js >= 20.0.0",
+                "check": ["npm", "--version"],
+                "instructions": ["Download Node.js"]
+            },
             {
                 "requirement": "tsp-client >= 0.24.0",
                 "check": ["tsp-client", "--version"],
@@ -13,16 +23,6 @@
             }
         ],
         "java": [
-            {   
-                "requirement": "Node.js >= 20.0.0",
-                "check": ["node", "--version"],
-                "instructions": ["Download Node.js"]
-            },
-        {
-                "requirement": "Node.js >= 20.0.0",
-                "check": ["npm", "--version"],
-                "instructions": ["Download Node.js"]
-            },
             {
                 "requirement": "java >= 17",
                 "check": ["java", "-version"],
@@ -45,7 +45,7 @@
         "go": [],
         "python": [
             {
-                "requirement": "python",
+                "requirement": "python >= 3.9",
                 "check": ["python", "--version"],
                 "instructions": []
             },

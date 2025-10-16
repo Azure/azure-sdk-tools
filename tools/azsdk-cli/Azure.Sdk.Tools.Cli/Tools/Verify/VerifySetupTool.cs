@@ -26,6 +26,8 @@ public class VerifySetupTool : MCPTool
 
     private readonly ILanguageSpecificResolver<IEnvRequirementsCheck> envRequirementsCheck;
 
+    private readonly string PATH_TO_REQS = Path.Combine(AppContext.BaseDirectory, "Configuration", "RequirementsV1.json");
+
     public VerifySetupTool(IPythonProcessHelper processHelper, ILogger<VerifySetupTool> logger, ILanguageSpecificResolver<IEnvRequirementsCheck> envRequirementsCheck)
     {
         this.processHelper = processHelper;
@@ -78,6 +80,7 @@ public class VerifySetupTool : MCPTool
                 logger.LogInformation("Checking requirement: {Requirement}, Check: {Check}, Instructions: {Instructions}",
                     req.requirement, req.check, req.instructions);
 
+                // TODO handle actual version checking of the output?
                 var result = await RunCheck(req.check, packagePath, ct);
 
                 if (result.ExitCode != 0)
@@ -88,7 +91,7 @@ public class VerifySetupTool : MCPTool
                     {
                         Requirement = req.requirement,
                         Instructions = req.instructions,
-                        Output = result.ResponseError
+                        Output = result.ResponseError,
                     });
                 }
             }
@@ -149,11 +152,15 @@ public class VerifySetupTool : MCPTool
 
     private async Task<List<SetupRequirements.Requirement>> GetRequirements(List<string> languages, string packagePath, CancellationToken ct)
     {
+        // Check core requirements before language-specific requirements
+        var reqsToCheck = await GetCoreRequirements(ct);
+
+        // Per-language requirements
         var reqGetter = null as IEnvRequirementsCheck;
-        if (languages == null ||languages.Count == 0)
+        if (languages == null || languages.Count == 0)
         {
             // detect language if none given
-            reqGetter = await envRequirementsCheck.Resolve(packagePath); 
+            reqGetter = await envRequirementsCheck.Resolve(packagePath);
 
             if (reqGetter == null)
             {
@@ -163,15 +170,13 @@ public class VerifySetupTool : MCPTool
             return await reqGetter.GetRequirements(ct);
         }
 
-        List<SetupRequirements.Requirement> reqsToCheck = new List<SetupRequirements.Requirement>();
-
         var reqGetters = envRequirementsCheck.Resolve(languages);
 
         if (reqGetters == null)
         {
             throw new Exception("Could not resolve requirements checker for the specified languages.");
         }
-        
+
         foreach (var getter in reqGetters)
         {
             if (getter == null)
@@ -187,6 +192,34 @@ public class VerifySetupTool : MCPTool
         }
 
         return reqsToCheck ?? new List<SetupRequirements.Requirement>();
+    }
+
+    private async Task<List<SetupRequirements.Requirement>> GetCoreRequirements(CancellationToken ct)
+    {
+        // TODO this code is redundant but functional for V1 purposes 
+        var requirementsJson = await File.ReadAllTextAsync(PATH_TO_REQS, ct);
+        var setupRequirements = JsonSerializer.Deserialize<SetupRequirements>(requirementsJson);
+
+        if (setupRequirements == null)
+        {
+            throw new Exception("Failed to parse requirements JSON.");
+        }
+
+        var reqs = new List<SetupRequirements.Requirement>();
+        foreach (var kv in setupRequirements.categories)
+        {
+            var category = kv.Key;
+            var requirements = kv.Value;
+            if (string.Equals(category, "core", StringComparison.OrdinalIgnoreCase))
+            {
+                if (requirements != null)
+                {
+                    reqs.AddRange(requirements);
+                }
+            }
+        }
+
+        return reqs;
     }
 
     private List<string> ParseLanguages(string? langs)

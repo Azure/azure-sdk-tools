@@ -38,11 +38,7 @@ internal class DotNetLanguageSpecificChecksTests
 
         _processHelperMock
             .Setup(x => x.Run(
-                It.Is<ProcessOptions>(p => 
-                    p.Command == "cmd.exe" && 
-                    p.Args.Contains("/C") && 
-                    p.Args.Contains("dotnet") && 
-                    p.Args.Contains("--list-sdks")),
+                It.Is<ProcessOptions>(p => IsDotNetListSdksCommand(p)),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(processResult);
     }
@@ -62,11 +58,7 @@ internal class DotNetLanguageSpecificChecksTests
 
         _processHelperMock
             .Setup(x => x.Run(
-                It.Is<ProcessOptions>(p => 
-                    p.Command == "cmd.exe" && 
-                    p.Args.Contains("/C") && 
-                    p.Args.Contains("dotnet") && 
-                    p.Args.Contains("--list-sdks")),
+                It.Is<ProcessOptions>(p => IsDotNetListSdksCommand(p)),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(processResult);
 
@@ -111,7 +103,7 @@ internal class DotNetLanguageSpecificChecksTests
         _processHelperMock
             .Setup(x => x.Run(
                 It.Is<ProcessOptions>(p => 
-                    p.Command == "pwsh" && 
+                    IsPowerShellCommand(p) && 
                     p.Args.Any(a => a.Contains("CodeChecks.ps1"))),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(processResult);
@@ -158,7 +150,7 @@ internal class DotNetLanguageSpecificChecksTests
         _processHelperMock
             .Setup(x => x.Run(
                 It.Is<ProcessOptions>(p =>
-                    p.Command == "pwsh" &&
+                    IsPowerShellCommand(p) &&
                     p.Args.Any(a => a.Contains("CodeChecks.ps1"))),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(() =>
@@ -185,11 +177,7 @@ internal class DotNetLanguageSpecificChecksTests
 
         _processHelperMock
             .Setup(x => x.Run(
-                It.Is<ProcessOptions>(p => 
-                    p.Command == "cmd.exe" && 
-                    p.Args.Contains("/C") && 
-                    p.Args.Contains("dotnet") && 
-                    p.Args.Contains("--list-sdks")),
+                It.Is<ProcessOptions>(p => IsDotNetListSdksCommand(p)),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(processResult);
 
@@ -234,7 +222,7 @@ internal class DotNetLanguageSpecificChecksTests
         _processHelperMock
             .Setup(x => x.Run(
                 It.Is<ProcessOptions>(p => 
-                    p.Command == "pwsh" && 
+                    IsPowerShellCommand(p) && 
                     p.Args.Any(a => a.Contains("Check-AOT-Compatibility.ps1"))),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(processResult);
@@ -277,7 +265,7 @@ internal class DotNetLanguageSpecificChecksTests
         _processHelperMock
             .Setup(x => x.Run(
                 It.Is<ProcessOptions>(p => 
-                    p.Command == "pwsh" && 
+                    IsPowerShellCommand(p) && 
                     p.Args.Any(a => a.Contains("Check-AOT-Compatibility.ps1"))),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(processResult);
@@ -299,4 +287,23 @@ internal class DotNetLanguageSpecificChecksTests
             try { File.Delete(scriptPath); Directory.Delete(Path.GetDirectoryName(scriptPath)!, true); } catch { }
         }
     }
+
+    #region Helper Methods for Cross-Platform Command Validation
+
+    /// <summary>
+    /// Checks if the ProcessOptions represents a dotnet --list-sdks command.
+    /// Handles both Unix (dotnet --list-sdks) and Windows (cmd.exe /C dotnet --list-sdks) patterns.
+    /// </summary>
+    private static bool IsDotNetListSdksCommand(ProcessOptions options) =>
+        (options.Command == "dotnet" && options.Args.Contains("--list-sdks")) ||
+        (options.Command == "cmd.exe" && options.Args.Contains("dotnet") && options.Args.Contains("--list-sdks"));
+
+    /// <summary>
+    /// Checks if the ProcessOptions represents a PowerShell command.
+    /// Handles both Unix (pwsh) and Windows (pwsh) patterns.
+    /// </summary>
+    private static bool IsPowerShellCommand(ProcessOptions options) =>
+        options.Command == "pwsh" || options.Command == "powershell";
+
+    #endregion
 }

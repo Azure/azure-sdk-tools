@@ -127,6 +127,7 @@ stages:
             CommitMsg: "Increment package version after release of ${{ parameters.ToolDirectory }}"
             PRTitle: "Increment version for ${{ parameters.ToolDirectory }} releases"
             WorkingDirectory: $(Build.SourcesDirectory)/azure-sdk-tools/
+            ScriptDirectory: azure-sdk-tools/eng/common/scripts/
 
       - task: 1ES.PublishPipelineArtifact@1
         displayName: 'Publish processed files'

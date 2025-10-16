@@ -87,7 +87,8 @@ public class VerifySetupTool : MCPTool
                     response.Results.Add(new RequirementCheckResult
                     {
                         Requirement = req.requirement,
-                        Instructions = req.instructions
+                        Instructions = req.instructions,
+                        Output = result.ResponseError
                     });
                 }
             }

@@ -56,7 +56,6 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
             }
 
             var args = new[] { scriptPath, "-ServiceDirectory", serviceDirectory, "-SpellCheckPublicApiSurface" };
-            _logger.LogInformation("Executing command: {Command} {Arguments}", PowerShellCommand, string.Join(" ", args));
 
             var timeout = TimeSpan.FromMinutes(6);
             var result = await _processHelper.Run(new(PowerShellCommand, args, timeout: timeout, workingDirectory: repoRoot), ct);
@@ -100,7 +99,6 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
                 return new CLICheckResponse(1, "", "Failed to determine service directory or package name from the provided package path.");
             }
 
-            // Check if AOT compatibility is opted out in the project file
             var isAotOptedOut = CheckAotCompatOptOut(packagePath, packageName);
             if (isAotOptedOut)
             {
@@ -119,8 +117,6 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
             }
 
             var args = new[] { scriptPath, "-ServiceDirectory", serviceDirectory, "-PackageName", packageName };
-            _logger.LogInformation("Executing command: {Command} {Arguments}", PowerShellCommand, string.Join(" ", args));
-
             var timeout = TimeSpan.FromMinutes(6);
             var result = await _processHelper.Run(new(PowerShellCommand, args, timeout: timeout, workingDirectory: workingDirectory), ct);
 
@@ -144,8 +140,6 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
 
     private async ValueTask<CLICheckResponse> VerifyDotnetVersion()
     {
-        _logger.LogDebug("Verifying .NET SDK version");
-
         var dotnetSDKCheck = await _processHelper.Run(new ProcessOptions(DotNetCommand, ["--list-sdks"]), CancellationToken.None);
         if (dotnetSDKCheck.ExitCode != 0)
         {
@@ -155,8 +149,6 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
 
         var dotnetVersions = dotnetSDKCheck.Output.Split(Environment.NewLine.ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
         var latestVersionNumber = dotnetVersions[dotnetVersions.Length - 1].Split('[')[0].Trim();
-
-        _logger.LogInformation("Found .NET SDK version: {LatestVersion}", latestVersionNumber);
 
         if (Version.TryParse(latestVersionNumber, out var installedVersion) &&
             Version.TryParse(RequiredDotNetVersion, out var minimumVersion))
@@ -184,8 +176,6 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
         string? serviceDirectory = null;
         var normalizedPath = packagePath.Replace('\\', '/');
         var sdkIndex = normalizedPath.IndexOf("/sdk/", StringComparison.OrdinalIgnoreCase);
-
-        _logger.LogDebug("Parsing service directory from path: {PackagePath}", packagePath);
 
         if (sdkIndex >= 0)
         {
@@ -231,14 +221,9 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
     {
         try
         {
-            // Look for .csproj files in the package directory
             var csprojFiles = Directory.GetFiles(packagePath, "*.csproj", SearchOption.AllDirectories);
-            
-            // Try to find the main project file first (matching package name)
             var mainCsprojFile = csprojFiles.FirstOrDefault(f => 
                 Path.GetFileNameWithoutExtension(f).Equals(packageName, StringComparison.OrdinalIgnoreCase));
-            
-            // If no matching file found, use the first .csproj file
             var csprojFile = mainCsprojFile ?? csprojFiles.FirstOrDefault();
             
             if (csprojFile == null)
@@ -247,11 +232,8 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
                 return false;
             }
 
-            _logger.LogDebug("Checking AOT opt-out in project file: {CsprojFile}", csprojFile);
-
             var projectContent = File.ReadAllText(csprojFile);
             
-            // Check for <AotCompatOptOut>true</AotCompatOptOut> (case-insensitive)
             var hasAotOptOut = projectContent.Contains("<AotCompatOptOut>true</AotCompatOptOut>", StringComparison.OrdinalIgnoreCase);
             
             if (hasAotOptOut)

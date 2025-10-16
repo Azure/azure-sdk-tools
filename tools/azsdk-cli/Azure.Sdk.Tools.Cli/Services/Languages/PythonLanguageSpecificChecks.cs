@@ -205,10 +205,10 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
             });
 
             // Wait for all linting tools to complete
-            var allResults = await Task.WhenAll(lintingTasks);
+            var allResults = Task.WhenAll(lintingTasks);
 
             // Analyze results
-            var failedTools = allResults.Where(r => r.result.ExitCode != 0).ToList();
+            var failedTools = allResults.Result.Where(r => r.result.ExitCode != 0).ToList();
             
             if (failedTools.Count == 0)
             {
@@ -221,7 +221,7 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
                 var combinedOutput = string.Join("\n\n", failedTools.Select(t => $"=== {t.toolName} ===\n{t.result.Output}"));
                 
                 _logger.LogWarning("Linting found issues in {FailedCount}/{TotalCount} tools: {FailedTools}", 
-                    failedTools.Count, allResults.Length, failedToolNames);
+                    failedTools.Count, allResults.Result.Length, failedToolNames);
                 
                 return new CLICheckResponse(1, combinedOutput, $"Linting issues found in: {failedToolNames}");
             }

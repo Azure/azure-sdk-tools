@@ -168,105 +168,21 @@ def _local_review(
     reviewer.close()
 
 
-def run_test_case(language: str, test_file: str, num_runs: int = 3):
+def run_test_case(test_paths: list[str], num_runs: int = 1):
     """
-    Runs one or all eval test cases.
+    Runs the specified test case(s).
     """
-    from evals._runner import EvalRunner
+    from evals._discovery import discover_targets
+    from evals._runner import EvaluationRunner
 
-    runner = EvalRunner(language=language, test_path=test_file, num_runs=num_runs)
-    runner.run()
-
-
-def create_test_case(
-    language: str,
-    test_case: str,
-    apiview_path: str,
-    expected_path: str,
-    test_file: str,
-    overwrite: bool = False,
-):
-    """
-    Creates or updates a test case for the APIView reviewer.
-    """
-    with open(apiview_path, "r", encoding="utf-8") as f:
-        apiview_contents = f.read()
-
-    with open(expected_path, "r", encoding="utf-8") as f:
-        expected_contents = json.loads(f.read())
-
-    guidelines_path = pathlib.Path(__file__).parent / "guidelines" / language
-    guidelines = []
-    for file in guidelines_path.glob("*.json"):
-        with open(file, "r", encoding="utf-8") as f:
-            guidelines.extend(json.loads(f.read()))
-
-    context = ""
-    for violation in expected_contents["comments"]:
-        for rule_id in violation["guideline_ids"]:
-            for rule in guidelines:
-                if rule["id"] == rule_id:
-                    if rule["text"] not in context:
-                        context += f"\n{rule['text']}"
-
-    test_case = {
-        "testcase": test_case,
-        "query": apiview_contents.replace("\t", ""),
-        "language": language,
-        "context": context,
-        "response": json.dumps(expected_contents),
-    }
-
-    if os.path.exists(test_file):
-        if overwrite:
-            with open(test_file, "r", encoding="utf-8") as f:
-                existing_test_cases = [json.loads(line) for line in f if line.strip()]
-            for existing_test_case in existing_test_cases:
-                if existing_test_case["testcase"] == test_case["testcase"]:
-                    existing_test_cases.remove(existing_test_case)
-                    break
-            existing_test_cases.append(test_case)
-            with open(test_file, "w", encoding="utf-8") as f:
-                for existing_test_case in existing_test_cases:
-                    f.write(json.dumps(existing_test_case) + "\n")
-        else:
-            with open(test_file, "a", encoding="utf-8") as f:
-                f.write("\n")
-                json.dump(test_case, f)
-    else:
-        with open(test_file, "w", encoding="utf-8") as f:
-            json.dump(test_case, f)
-
-
-def deconstruct_test_case(language: str, test_case: str, test_file: str):
-    """
-    Deconstructs a test case into its component APIView test and expected results file.
-    """
-    test_cases = {}
-    with open(test_file, "r", encoding="utf-8") as f:
-        for line in f:
-            if line.strip():
-                parsed = json.loads(line)
-                if "testcase" in parsed:
-                    test_cases[parsed["testcase"]] = parsed
-
-    if test_case not in test_cases:
-        raise ValueError(f"Test case '{test_case}' not found in the file.")
-
-    apiview = test_cases[test_case].get("query", "")
-    expected = test_cases[test_case].get("response", "")
-    deconstructed_apiview = pathlib.Path(__file__).parent / "evals" / "tests" / language / f"{test_case}.txt"
-    deconstructed_expected = pathlib.Path(__file__).parent / "evals" / "tests" / language / f"{test_case}.json"
-    with open(deconstructed_apiview, "w", encoding="utf-8") as f:
-        f.write(apiview)
-
-    with open(deconstructed_expected, "w", encoding="utf-8") as f:
-        # sort comments by line number
-        expected = json.loads(expected)
-        expected["comments"] = sorted(expected["comments"], key=lambda x: x["line_no"])
-        f.write(json.dumps(expected, indent=4))
-
-    print(f"Deconstructed test case '{test_case}' into {deconstructed_apiview} and {deconstructed_expected}.")
+    targets = discover_targets(test_paths)
+    runner = EvaluationRunner(num_runs=num_runs)
+    try:
+        results = runner.run(targets)
+        runner.show_results(results)
+        runner.show_summary(results)
+    finally:
+        runner.cleanup()
 
 
 def deploy_flask_app():
@@ -973,8 +889,6 @@ class CliCommandsLoader(CLICommandsLoader):
             g.command("resolve-thread", "handle_agent_thread_resolution")
         with CommandGroup(self, "eval", "__main__#{}") as g:
             g.command("run", "run_test_case")
-            g.command("create", "create_test_case")
-            g.command("deconstruct", "deconstruct_test_case")
             g.command("extract-section", "extract_document_section")
         with CommandGroup(self, "app", "__main__#{}") as g:
             g.command("deploy", "deploy_flask_app")
@@ -1108,24 +1022,15 @@ class CliCommandsLoader(CLICommandsLoader):
             ac.argument(
                 "num_runs", type=int, options_list=["--num-runs", "-n"], help="Number of times to run the test case."
             )
-        with ArgumentsContext(self, "eval create") as ac:
-            ac.argument("test_case", type=str, help="The name of the test case")
             ac.argument(
-                "expected_path",
+                "test_paths",
                 type=str,
-                help="The full path to the expected JSON output from the AI reviewer.",
+                nargs="*",
+                options_list=["--test-paths", "-p"],
+                default=[],
+                help="The full paths to the folder(s) containing the test files. Must have a `test-config.yaml` file. If omitted, runs all workflows.",
             )
-            ac.argument(
-                "test_file",
-                type=str,
-                options_list=["--test-file", "-f"],
-                help="The full path to the JSONL test file. Can be an existing test file, or will create a new one.",
-            )
-            ac.argument(
-                "overwrite",
-                action="store_true",
-                help="Overwrite the test case if it already exists.",
-            )
+
         with ArgumentsContext(self, "search") as ac:
             ac.argument(
                 "path",

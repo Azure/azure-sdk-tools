@@ -582,7 +582,11 @@ func (s *CompletionService) runParallelSearchAndMergeResults(ctx context.Context
 func (s *CompletionService) searchKnowledgeBase(req *model.CompletionReq, query string) ([]model.Index, error) {
 	searchStart := time.Now()
 	searchClient := search.NewSearchClient()
-	results, err := searchClient.SearchTopKRelatedDocuments(query, *req.TopK, req.Sources)
+	sourceFilter := map[model.Source]string{}
+	if tenantConfig, hasConfig := config.GetTenantConfig(req.TenantID); hasConfig && tenantConfig.SourceFilter != nil {
+		sourceFilter = tenantConfig.SourceFilter
+	}
+	results, err := searchClient.SearchTopKRelatedDocuments(query, *req.TopK, req.Sources, sourceFilter)
 	if err != nil {
 		return nil, fmt.Errorf("failed to search for related documents: %w", err)
 	}

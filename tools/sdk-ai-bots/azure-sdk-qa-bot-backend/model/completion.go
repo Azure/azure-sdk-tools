@@ -7,6 +7,7 @@ const (
 	TenantID_TypeSpecExtension  TenantID = "typespec_extension"
 	TenantID_PythonChannelQaBot TenantID = "python_channel_qa_bot"
 	TenantID_AzureSDKOnboarding TenantID = "azure_sdk_onboarding"
+	TenantID_GolangChannelQaBot TenantID = "golang_channel_qa_bot"
 )
 
 type Source string
@@ -25,6 +26,7 @@ const (
 	Source_AzureSDKGuidelines      Source = "azure-sdk-guidelines"
 	Source_TypeSpecAzureHttpSpecs  Source = "typespec_azure_http_specs"
 	Source_TypeSpecHttpSpecs       Source = "typespec_http_specs"
+	Source_AzureSDKForGo           Source = "azure_sdk_for_go_docs"
 )
 
 type Role string

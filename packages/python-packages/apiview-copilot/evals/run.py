@@ -1,18 +1,13 @@
 import argparse
+
 import dotenv
-from _runner import EvalRunner
+from _discovery import discover_targets
+from _runner import EvaluationRunner
 
 dotenv.load_dotenv()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run evaluations.")
-    parser.add_argument(
-        "--language",
-        "-l",
-        type=str,
-        default="python",
-        help="The language to run evals for. Defaults to python.",
-    )
     parser.add_argument(
         "--num-runs",
         "-n",
@@ -21,16 +16,15 @@ if __name__ == "__main__":
         help="The number of runs to perform, with the median of results kept. Defaults to 1.",
     )
     parser.add_argument(
-        "--test-file",
-        "-t",
+        "--test-paths",
+        "-p",
         type=str,
-        required=True,
-        help="Path to workflow YAML.",
+        nargs="*",
+        help="Paths to directories containing test files.",
     )
     args = parser.parse_args()
-    runner = EvalRunner(
-        language=args.language, 
-        test_path=args.test_file,
-        num_runs=args.num_runs
-    )
-    runner.run()
+    targets = discover_targets(args.test_paths)
+    runner = EvaluationRunner()
+    results = runner.run(targets)
+    runner.show_results(results)
+    runner.show_summary(results)

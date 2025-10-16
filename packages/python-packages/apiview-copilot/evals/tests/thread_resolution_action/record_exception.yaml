@@ -1,9 +1,9 @@
-{
-  "testcase": "thread_resolution_record_exception",
-  "language": "python",
-  "package_name": "azure.widget",
-  "code": "class WidgetObject:",
-  "comments": [
+testcase: thread_resolution_record_exception
+language: python
+package_name: azure.widget
+code: "class WidgetObject:"
+comments: |
+  [
     {
       "CreatedBy": "azure-sdk",
       "CommentText": "This name is unnecessarily verbose.\n\nSuggestion: `Widget`.\n\n**GUIDELINES**\n\n'https://azure.github.io/azure-sdk/python_design.html#naming-conventions'.",
@@ -29,9 +29,10 @@
       "CommentText": "Noodle, ugh, okay. Since it is already used in other places that have released, this is an allowable exception.",
       "CreatedOn": "2025-03-19T17:49:25.920445-04:00"
     }
-  ],
-  "response": {
-    "action": "record_exception",
-    "reasoning": "The architect (tjprescott) acknowledges that while the naming convention should normally be followed, this is an allowable exception due to existing usage in other released components. This creates a specific exception for this service that should be recorded in the Knowledge Base."
-  }
-}
+  ]
+response:
+  action: record_exception
+  reasoning: |
+    The architect (tjprescott) acknowledges that while the naming convention should normally be followed,
+    this is an allowable exception due to existing usage in other released components. This creates a specific
+    exception for this service that should be recorded in the Knowledge Base.

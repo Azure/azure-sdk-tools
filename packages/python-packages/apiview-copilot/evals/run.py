@@ -26,4 +26,5 @@ if __name__ == "__main__":
     targets = discover_targets(args.test_paths)
     runner = EvaluationRunner()
     results = runner.run(targets)
+    runner.show_results(results)
     runner.show_summary(results)

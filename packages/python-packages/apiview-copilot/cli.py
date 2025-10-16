@@ -179,6 +179,7 @@ def run_test_case(test_paths: list[str], num_runs: int = 1):
     runner = EvaluationRunner(num_runs=num_runs)
     try:
         results = runner.run(targets)
+        runner.show_results(results)
         runner.show_summary(results)
     finally:
         runner.cleanup()

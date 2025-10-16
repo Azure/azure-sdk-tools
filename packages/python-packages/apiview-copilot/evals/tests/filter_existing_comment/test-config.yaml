@@ -1,9 +1,2 @@
 name: filter-existing-comment
 kind: prompt
-prompty: ../../../prompts/api_review/filter_existing_comment.prompty
-evaluation_config:
-  comparison_field: action
-  display_name: Action
-  breakdown_categories:
-    KEEP: {correct: 0, total: 0}
-    DISCARD: {correct: 0, total: 0}

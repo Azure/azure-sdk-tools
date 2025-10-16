@@ -1,8 +1,9 @@
-{
-  "language": "python",
-  "package_name": "azure.widgets",
-  "code": "class WidgetObject:",
-  "comments": [
+testcase: thread_resolution_unclear
+language: python
+package_name: azure.widgets
+code: "class WidgetObject:"
+comments: |
+  [
     {
       "CreatedBy": "azure-sdk",
       "CommentText": "This name is unnecessarily verbose.\n\nSuggestion: `Widget`.\n\n**GUIDELINES**\n\n'https://azure.github.io/azure-sdk/python_design.html#naming-conventions'.",
@@ -23,9 +24,9 @@
       "CommentText": "But it actually is important and we use it elsewhere, for example BloopObject.",
       "CreatedOn": "2025-03-19T17:48:26.920445-04:00"
     }
-  ],
-  "response": {
-    "action": "unclear",
-    "reasoning": "The architect (tjprescott) challenges the reasoning provided by the copilot, indicating that the justification for keeping the verbose name is weak. However, the service team challenged this and did not receive an acknowledgement from the architect."
-  }
-}
+  ]
+response:
+  action: unclear
+  reasoning: |
+    The architect (tjprescott) challenges the reasoning provided by the copilot, indicating that the justification for keeping the verbose name is weak.
+    However, the service team challenged this and did not receive an acknowledgement from the architect.

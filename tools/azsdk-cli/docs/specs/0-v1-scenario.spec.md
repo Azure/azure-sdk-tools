@@ -92,6 +92,7 @@ Without a concrete end-to-end scenario, we risk building tools in isolation that
 - **[Agent](#agent-mode) and [CLI modes](#cli-mode)** - both must work
 - **Existing changelog generation** - no changes to current process
 - **VS Code with GitHub Copilot** - All functionality will be validated to work in VS Code with GitHub Copilot
+- **AI models** - Claude Sonnet 4, Claude Sonnet 4.1, GPT-4, and GPT-5
 
 ### Out of scope for Scenario 1
 

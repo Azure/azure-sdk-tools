@@ -466,11 +466,13 @@ namespace CSharpAPIParser.TreeToken
                         continue;
                     }
 
+                    var arg = attribute.ConstructorArguments.FirstOrDefault();
+
                     var attributeLine = new ReviewLine()
                     {
                         // GetId() is not unique for attribute class. for e.g. attribute class id is something like "System.FlagsAttribute"
                         // So, using a unique id for attribute line
-                        LineId = $"{attribute.AttributeClass.GetId()}({attribute.ConstructorArguments.FirstOrDefault().Value}).{relatedTo}",
+                        LineId = $"{attribute.AttributeClass.GetId()}({(arg.Kind == TypedConstantKind.Array ? string.Join(", ", arg.Values.Select(v => v.ToString())) : arg.Value)}).{relatedTo}",
                         IsHidden = isHidden
                     };
 

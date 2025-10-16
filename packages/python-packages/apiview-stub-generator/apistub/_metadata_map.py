@@ -31,17 +31,13 @@ class MetadataMap:
             with open(mapping_path, "r") as json_file:
                 mapping = json.load(json_file)
                 self.cross_language_map = mapping.get("CrossLanguageDefinitionId", {})
-                self.cross_language_package_id = mapping.get(
-                    "CrossLanguagePackageId", ""
-                )
+                self.cross_language_package_id = mapping.get("CrossLanguagePackageId", "")
         except OSError:
             try:
                 with open(old_mapping_path, "r") as json_file:
                     mapping = json.load(json_file)
                     self.cross_language_map = mapping.get("CrossLanguageDefinitionId", {})
-                    self.cross_language_package_id = mapping.get(
-                        "CrossLanguagePackageId", ""
-                    )
+                    self.cross_language_package_id = mapping.get("CrossLanguagePackageId", "")
             except OSError:
                 self.cross_language_map = {}
                 self.cross_language_package_id = ""

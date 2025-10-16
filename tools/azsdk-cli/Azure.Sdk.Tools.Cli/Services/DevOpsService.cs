@@ -146,7 +146,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 if (releasePlanWorkItems.Count == 0)
                 {
                     logger.LogInformation($"Release plan does not exist for the given product id {productTreeId}");
-                    return null;
+                    return new List<ReleasePlanDetails>();
                 }
 
                 var releasePlans = new List<ReleasePlanDetails>();

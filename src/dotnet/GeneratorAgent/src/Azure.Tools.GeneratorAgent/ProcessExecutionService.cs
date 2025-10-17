@@ -32,11 +32,8 @@ namespace Azure.Tools.GeneratorAgent
                 throw new UnauthorizedAccessException($"Command '{command}' is not in the allowed commands list");
             }
 
-            if (!string.IsNullOrEmpty(workingDir))
-            {
-                workingDir = InputValidator.ValidateWorkingDirectory(workingDir);
-            }
-
+            workingDir = InputValidator.ValidateWorkingDirectory(workingDir);
+            
             arguments ??= string.Empty;
 
             try
@@ -62,7 +59,7 @@ namespace Azure.Tools.GeneratorAgent
                 if (!success)
                 {
                     return Result<object>.Failure(
-                        new GeneralProcessExecutionException($"Process failed with exit code {process.ExitCode}", 
+                        new ProcessExecutionException($"Process failed with exit code {process.ExitCode}", 
                             command, 
                             output, 
                             error,
@@ -71,25 +68,9 @@ namespace Azure.Tools.GeneratorAgent
 
                 return Result<object>.Success(output.TrimEnd());
             }
-            catch (Win32Exception ex) when (ex.NativeErrorCode == 2)
-            {
-                Logger.LogError(ex, "Command not found: {Command}", command);
-                return Result<object>.Failure(ex);
-            }
-            catch (Win32Exception ex)
-            {
-                Logger.LogError(ex, "Win32 error starting process: {Command}", command);
-                return Result<object>.Failure(ex);
-            }
-            catch (InvalidOperationException ex)
-            {
-                Logger.LogError(ex, "Invalid operation starting process: {Command}", command);
-                return Result<object>.Failure(ex);
-            }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                Logger.LogError(ex, "Unexpected error executing command: {Command}", command);
-                return Result<object>.Failure(ex);
+                throw new InvalidOperationException("Failed to execute process", ex);
             }
         }
 
@@ -132,6 +113,8 @@ namespace Azure.Tools.GeneratorAgent
             }
         }
 
+
+        //TODO: test how the Agent handles the partial output and partial
         private async Task<Result<object>> HandleTimeoutAsync(
             Process process,
             Task<string> outputTask,
@@ -169,13 +152,12 @@ namespace Azure.Tools.GeneratorAgent
                 Logger.LogWarning(ex, "Failed to capture partial output from timed-out process");
             }
 
-            string timeoutMessage = $"Process timed out after {timeout.TotalMilliseconds}ms";
-            if (!string.IsNullOrEmpty(partialError))
-            {
-                timeoutMessage += $". Partial error output: {partialError}";
-            }
-
-            return Result<object>.Failure(new TimeoutException(timeoutMessage));
+            return Result<object>.Failure(
+                        new ProcessExecutionException($"Process failed with exit code {process.ExitCode} because of timeout",
+                            command,
+                            partialOutput,
+                            partialError,
+                            process.ExitCode));
         }
 
         private void LogExecutionResult(bool success, int exitCode, string command, string error, string output = "")

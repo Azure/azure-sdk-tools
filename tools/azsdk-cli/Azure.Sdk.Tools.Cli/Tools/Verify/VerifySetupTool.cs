@@ -126,36 +126,40 @@ public class VerifySetupTool : MCPTool
             var result = await processHelper.Run(options, ct);
             trimmed = (result.Output ?? string.Empty).Trim();
 
-            var versionCheckResult = CheckVersion(trimmed, req);
-
-            if (!versionCheckResult.Equals(String.Empty))
+            if (result.ExitCode != 0)
             {
-                versionCheckResult = $" Upgrade to version {versionCheckResult}";
-            }
-            
-            if (result.ExitCode != 0 || !versionCheckResult.Equals(String.Empty))
-            {
-                logger.LogError("Command {Command} failed with exit code {ExitCode}. Output: {Output}", command, result.ExitCode, trimmed);
+                logger.LogError("Command {Command} failed with exit code {ExitCode}. Output: {Output}", string.Join(' ', command), result.ExitCode, trimmed);
                 return new DefaultCommandResponse
                 {
-                    ResponseError = $"Command {command} failed with exit code {result.ExitCode}. Output: {trimmed}." + versionCheckResult
+                    ResponseError = $"Command {string.Join(' ', command)} failed with exit code {result.ExitCode}. Output: {trimmed}."
+                };
+            }
+
+            var versionCheckResult = CheckVersion(trimmed, req);
+
+            if (!versionCheckResult.Equals(string.Empty))
+            {
+                logger.LogError("Command {Command} failed version check.", string.Join(' ', command));
+                return new DefaultCommandResponse
+                {
+                    ResponseError = $"Command {string.Join(' ', command)} failed, requires upgrade to version {versionCheckResult}"
                 };
             }
         }
         catch
         {
-            logger.LogError("Command {Command} failed to execute.", command);
+            logger.LogError("Command {Command} failed to execute.", string.Join(' ', command));
             return new DefaultCommandResponse
             {
-                ResponseError = $"Command {command} failed to execute."
+                ResponseError = $"Command {string.Join(' ', command)} failed to execute."
             };
         }
 
-        logger.LogInformation("Command {Command} succeeded. Output: {Output}", command, trimmed);
+        logger.LogInformation("Command {Command} succeeded. Output: {Output}", string.Join(' ', command), trimmed);
 
         return new DefaultCommandResponse
         {
-            Message = $"Command {command} succeeded. Output: {trimmed}"
+            Message = $"Command {string.Join(' ', command)} succeeded. Output: {trimmed}"
         };
     }
 
@@ -260,7 +264,6 @@ public class VerifySetupTool : MCPTool
 
         logger.LogInformation($"Installed version: {installedVersion}");
 
-        // Compare versions
         int comparison = CompareVersions(installedVersion, requiredVersion);
 
         return operatorSymbol switch

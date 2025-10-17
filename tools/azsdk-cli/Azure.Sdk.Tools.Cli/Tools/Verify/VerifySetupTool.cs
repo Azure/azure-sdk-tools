@@ -12,6 +12,7 @@ using ModelContextProtocol.Server;
 using System.Text.Json;
 using System.Net;
 using System.Text.Json.Serialization;
+using System.IO.Pipelines;
 
 namespace Azure.Sdk.Tools.Cli.Tools.Verify;
 
@@ -81,7 +82,7 @@ public class VerifySetupTool : MCPTool
                     req.requirement, req.check, req.instructions);
 
                 // TODO handle actual version checking of the output?
-                var result = await RunCheck(req.check, packagePath, ct);
+                var result = await RunCheck(req, packagePath, ct);
 
                 if (result.ExitCode != 0)
                 {
@@ -107,8 +108,9 @@ public class VerifySetupTool : MCPTool
         }
     }
 
-    private async Task<DefaultCommandResponse> RunCheck(string[] command, string packagePath, CancellationToken ct)
+    private async Task<DefaultCommandResponse> RunCheck(SetupRequirements.Requirement req, string packagePath, CancellationToken ct)
     {
+        var command = req.check;
         var options = new ProcessOptions(
             command[0],
             args: command.Skip(1).ToArray(),
@@ -124,12 +126,19 @@ public class VerifySetupTool : MCPTool
             var result = await processHelper.Run(options, ct);
             trimmed = (result.Output ?? string.Empty).Trim();
 
-            if (result.ExitCode != 0)
+            var versionCheckResult = CheckVersion(trimmed, req);
+
+            if (!versionCheckResult.Equals(String.Empty))
+            {
+                versionCheckResult = $" Upgrade to version {versionCheckResult}";
+            }
+            
+            if (result.ExitCode != 0 || !versionCheckResult.Equals(String.Empty))
             {
                 logger.LogError("Command {Command} failed with exit code {ExitCode}. Output: {Output}", command, result.ExitCode, trimmed);
                 return new DefaultCommandResponse
                 {
-                    ResponseError = $"Command {command} failed with exit code {result.ExitCode}. Output: {trimmed}"
+                    ResponseError = $"Command {command} failed with exit code {result.ExitCode}. Output: {trimmed}." + versionCheckResult
                 };
             }
         }
@@ -220,6 +229,70 @@ public class VerifySetupTool : MCPTool
         }
 
         return reqs;
+    }
+
+    private string CheckVersion(string output, SetupRequirements.Requirement req)
+    {
+        // Return empty string if version requirement is satisfied, else return version to upgrade to
+        string versionPattern = @"(>=|<=|>|<|=)\s*([\d\.]+)";
+        
+        var match = System.Text.RegularExpressions.Regex.Match(req.requirement, versionPattern);
+        if (!match.Success)
+        {
+            // No version specified in the requirement
+            return String.Empty;
+        }
+
+        string operatorSymbol = match.Groups[1].Value;
+        string requiredVersion = match.Groups[2].Value;
+
+        logger.LogInformation($"Requires version: {requiredVersion}");
+
+        // Parse the output version
+        var outputVersionMatch = System.Text.RegularExpressions.Regex.Match(output, @"[\d\.]+");
+        if (!outputVersionMatch.Success)
+        {
+            // Unable to parse the version from the output
+            return requiredVersion;
+        }
+
+        string installedVersion = outputVersionMatch.Value;
+
+        logger.LogInformation($"Installed version: {installedVersion}");
+
+        // Compare versions
+        int comparison = CompareVersions(installedVersion, requiredVersion);
+
+        return operatorSymbol switch
+        {
+            ">=" => comparison >= 0 ? string.Empty : requiredVersion,
+            "<=" => comparison <= 0 ? string.Empty : requiredVersion,
+            ">" => comparison > 0 ? string.Empty : requiredVersion,
+            "<" => comparison < 0 ? string.Empty : requiredVersion,
+            "=" => comparison == 0 ? string.Empty : requiredVersion,
+            _ => requiredVersion,
+        };
+    }
+
+    private int CompareVersions(string version1, string version2)
+    {
+        var v1Parts = version1.Split('.');
+        var v2Parts = version2.Split('.');
+
+        int length = Math.Max(v1Parts.Length, v2Parts.Length);
+        for (int i = 0; i < length; i++)
+        {
+            int v1Part = i < v1Parts.Length ? int.Parse(v1Parts[i]) : 0;
+            int v2Part = i < v2Parts.Length ? int.Parse(v2Parts[i]) : 0;
+
+            int comparison = v1Part.CompareTo(v2Part);
+            if (comparison != 0)
+            {
+                return comparison;
+            }
+        }
+
+        return 0;
     }
 
     private List<string> ParseLanguages(string? langs)

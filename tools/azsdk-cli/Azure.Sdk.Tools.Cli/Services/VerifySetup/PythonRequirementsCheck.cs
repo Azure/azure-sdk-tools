@@ -84,7 +84,6 @@ public class PythonRequirementsCheck : EnvRequirementsCheck, IEnvRequirementsChe
         }
         catch
         {
-            // Log or handle the error as needed
             return null;
         }
 

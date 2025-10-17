@@ -1,13 +1,13 @@
 {
     "categories": {
         "core": [
-        {   
+            {   
                 "requirement": "Node.js >= 22.16.0",
                 "check": ["node", "--version"],
                 "instructions": ["Download Node.js"]
             },
             {
-                "requirement": "Node.js >= 22.0.0",
+                "requirement": "npm",
                 "check": ["npm", "--version"],
                 "instructions": ["Download Node.js"]
             },
@@ -25,11 +25,6 @@
                 "requirement": "Powershell >= 7",
                 "check": ["pwsh", "--version"],
                 "instructions": ["Download and install PowerShell"]
-            },
-            {
-                "requirement": "python >= 3.9",
-                "check": ["python", "--version"],
-                "instructions": ["Install Python from https://www.python.org/downloads/"]
             },
             {
                 "requirement": "github CLI >= 2.30.0",
@@ -111,6 +106,11 @@
             }
         ],
         "python": [
+            {
+                "requirement": "python >= 3.9",
+                "check": ["python", "--version"],
+                "instructions": ["Install Python from https://www.python.org/downloads/"]
+            },
             {
                 "requirement": "azpysdk",
                 "check": ["azpysdk", "--help"],

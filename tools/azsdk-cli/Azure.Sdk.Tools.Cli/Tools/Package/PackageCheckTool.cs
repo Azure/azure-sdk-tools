@@ -184,7 +184,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             // Run AOT compatibility check
-            var aotCompatResult = await languageChecks.CheckAotCompatAsync(packagePath, fixCheckErrors, ct);
+            var aotCompatResult = await languageChecks.CheckAotCompat(packagePath, fixCheckErrors, ct);
             results.Add(aotCompatResult);
             if (aotCompatResult.ExitCode != 0)
             {
@@ -193,12 +193,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             // Run generated code check
-            var generatedCodeResult = await languageChecks.CheckGeneratedCodeAsync(packagePath, fixCheckErrors, ct);
+            var generatedCodeResult = await languageChecks.CheckGeneratedCode(packagePath, fixCheckErrors, ct);
             results.Add(generatedCodeResult);
             if (generatedCodeResult.ExitCode != 0)
             {
                 overallSuccess = false;
                 failedChecks.Add("Generated Code");
+            }
 
             // Run sample validation
             var sampleValidationResult = await languageChecks.ValidateSamplesAsync(packagePath, fixCheckErrors, ct);
@@ -355,7 +356,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             logger.LogInformation("Running generated code checks");
 
-            var result = await languageChecks.CheckGeneratedCodeAsync(packagePath, fixCheckErrors, ct);
+            var result = await languageChecks.CheckGeneratedCode(packagePath, fixCheckErrors, ct);
             return result;
         }
 
@@ -363,7 +364,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             logger.LogInformation("Running AOT compatibility checks");
 
-            var result = await languageChecks.CheckAotCompatAsync(packagePath, fixCheckErrors, ct);
+            var result = await languageChecks.CheckAotCompat(packagePath, fixCheckErrors, ct);
             return result;
         }
 

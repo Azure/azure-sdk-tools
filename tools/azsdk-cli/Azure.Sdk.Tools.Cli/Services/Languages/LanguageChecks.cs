@@ -85,7 +85,7 @@ public interface ILanguageChecks
     /// <param name="packagePath">Path to the package directory</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Result of the AOT compatibility check</returns>
-    Task<CLICheckResponse> CheckAotCompatAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
+    Task<CLICheckResponse> CheckAotCompat(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
 
     /// <summary>
     /// Checks generated code for the specific package.
@@ -93,7 +93,7 @@ public interface ILanguageChecks
     /// <param name="packagePath">Path to the package directory</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Result of the generated code check</returns>
-    Task<CLICheckResponse> CheckGeneratedCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
+    Task<CLICheckResponse> CheckGeneratedCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
     
     /// <summary>
     /// Validates samples for the specific package.
@@ -232,23 +232,6 @@ public class LanguageChecks : ILanguageChecks
         return await languageSpecificCheck.FormatCodeAsync(packagePath, fixCheckErrors, ct);
     }
 
-
-    public virtual async Task<CLICheckResponse> CheckAotCompatAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
-    {
-        var languageSpecificCheck = await _languageSpecificChecks.Resolve(packagePath);
-
-        if (languageSpecificCheck == null)
-        {
-            _logger.LogError("No language-specific check handler found for package at {PackagePath}. Supported languages may not include this package type.", packagePath);
-            return new CLICheckResponse(
-                exitCode: 1,
-                checkStatusDetails: $"No language-specific check handler found for package at {packagePath}. Supported languages may not include this package type.",
-                error: "Unsupported package type"
-            );
-        }
-        return await languageSpecificCheck.CheckAotCompatAsync(packagePath, fixCheckErrors, ct);
-    }
-
     public virtual async Task<CLICheckResponse> ValidateSamplesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         var languageSpecificCheck = await _languageSpecificChecks.Resolve(packagePath);
@@ -265,7 +248,23 @@ public class LanguageChecks : ILanguageChecks
         return await languageSpecificCheck.ValidateSamplesAsync(packagePath, fixCheckErrors, ct);
     }
 
-    public virtual async Task<CLICheckResponse> CheckGeneratedCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    public virtual async Task<CLICheckResponse> CheckAotCompat(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    {
+        var languageSpecificCheck = await _languageSpecificChecks.Resolve(packagePath);
+
+        if (languageSpecificCheck == null)
+        {
+            _logger.LogError("No language-specific check handler found for package at {PackagePath}. Supported languages may not include this package type.", packagePath);
+            return new CLICheckResponse(
+                exitCode: 1,
+                checkStatusDetails: $"No language-specific check handler found for package at {packagePath}. Supported languages may not include this package type.",
+                error: "Unsupported package type"
+            );
+        }
+        return await languageSpecificCheck.CheckAotCompat(packagePath, fixCheckErrors, ct);
+    }
+
+    public virtual async Task<CLICheckResponse> CheckGeneratedCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         var languageSpecificCheck = await _languageSpecificChecks.Resolve(packagePath);
 
@@ -279,7 +278,7 @@ public class LanguageChecks : ILanguageChecks
             );
         }
 
-        return await languageSpecificCheck.CheckGeneratedCodeAsync(packagePath, fixCheckErrors, ct);
+        return await languageSpecificCheck.CheckGeneratedCode(packagePath, fixCheckErrors, ct);
     }
 
     /// <summary>

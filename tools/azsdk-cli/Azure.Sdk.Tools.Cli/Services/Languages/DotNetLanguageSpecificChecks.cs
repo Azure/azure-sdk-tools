@@ -11,24 +11,26 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
 {
     private readonly IProcessHelper _processHelper;
     private readonly IGitHelper _gitHelper;
+    private readonly IPowershellHelper _powershellHelper;
     private readonly ILogger<DotNetLanguageSpecificChecks> _logger;
     private const string DotNetCommand = "dotnet";
-    private const string PowerShellCommand = "pwsh";
     private const string RequiredDotNetVersion = "9.0.102"; // TODO - centralize this as part of env setup tool
     private static readonly TimeSpan CodeChecksTimeout = TimeSpan.FromMinutes(6);
     private static readonly TimeSpan AotCompatTimeout = TimeSpan.FromMinutes(5);
 
     public DotNetLanguageSpecificChecks(
         IProcessHelper processHelper,
+        IPowershellHelper powershellHelper,
         IGitHelper gitHelper,
         ILogger<DotNetLanguageSpecificChecks> logger)
     {
         _processHelper = processHelper;
+        _powershellHelper = powershellHelper;
         _gitHelper = gitHelper;
         _logger = logger;
     }
 
-    public async Task<CLICheckResponse> CheckGeneratedCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    public async Task<CLICheckResponse> CheckGeneratedCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         try
         {
@@ -57,7 +59,8 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
             }
 
             var args = new[] { scriptPath, "-ServiceDirectory", serviceDirectory, "-SpellCheckPublicApiSurface" };
-            var result = await _processHelper.Run(new(PowerShellCommand, args, timeout: CodeChecksTimeout, workingDirectory: repoRoot), ct);
+            var options = new PowershellOptions(scriptPath, args, workingDirectory: repoRoot, timeout: CodeChecksTimeout);
+            var result = await _powershellHelper.Run(options, ct);
 
             if (result.ExitCode == 0)
             {
@@ -77,7 +80,7 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
         }
     }
 
-    public async Task<CLICheckResponse> CheckAotCompatAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    public async Task<CLICheckResponse> CheckAotCompat(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         try
         {
@@ -98,7 +101,7 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
                 return new CLICheckResponse(1, "", "Failed to determine service directory or package name from the provided package path.");
             }
 
-            var isAotOptedOut = CheckAotCompatOptOut(packagePath, packageName);
+            var isAotOptedOut = await CheckAotCompatOptOut(packagePath, packageName, ct);
             if (isAotOptedOut)
             {
                 _logger.LogInformation("AOT compatibility check skipped - AotCompatOptOut is set to true in project file");
@@ -116,7 +119,8 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
             var workingDirectory = Path.Combine(repoRoot, "eng", "scripts", "compatibility");
             var args = new[] { scriptPath, "-ServiceDirectory", serviceDirectory, "-PackageName", packageName };
             var timeout = AotCompatTimeout;
-            var result = await _processHelper.Run(new(PowerShellCommand, args, timeout: timeout, workingDirectory: workingDirectory), ct);
+            var options = new PowershellOptions(scriptPath, args, workingDirectory: workingDirectory, timeout: timeout);
+            var result = await _powershellHelper.Run(options, ct);
 
             if (result.ExitCode == 0)
             {
@@ -215,7 +219,7 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
         return packageName;
     }
 
-    private bool CheckAotCompatOptOut(string packagePath, string packageName)
+    private async ValueTask<bool> CheckAotCompatOptOut(string packagePath, string packageName, CancellationToken ct)
     {
         try
         {
@@ -230,7 +234,7 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
                 return false;
             }
 
-            var projectContent = File.ReadAllText(csprojFile);
+            var projectContent = await File.ReadAllTextAsync(csprojFile, ct);
             
             var hasAotOptOut = projectContent.Contains("<AotCompatOptOut>true</AotCompatOptOut>", StringComparison.OrdinalIgnoreCase);
             

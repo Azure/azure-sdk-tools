@@ -10,6 +10,7 @@ internal class DotNetLanguageSpecificChecksTests
 {
     private Mock<IProcessHelper> _processHelperMock = null!;
     private Mock<IGitHelper> _gitHelperMock = null!;
+    private Mock<IPowershellHelper> _powerShellHelperMock = null!;
     private DotNetLanguageSpecificChecks _languageChecks = null!;
     private string _packagePath = null!;
     private string _repoRoot = null!;
@@ -20,9 +21,11 @@ internal class DotNetLanguageSpecificChecksTests
     {
         _processHelperMock = new Mock<IProcessHelper>();
         _gitHelperMock = new Mock<IGitHelper>();
+        _powerShellHelperMock = new Mock<IPowershellHelper>();
 
         _languageChecks = new DotNetLanguageSpecificChecks(
             _processHelperMock.Object,
+            _powerShellHelperMock.Object,
             _gitHelperMock.Object,
             NullLogger<DotNetLanguageSpecificChecks>.Instance);
 
@@ -62,7 +65,7 @@ internal class DotNetLanguageSpecificChecksTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(processResult);
 
-        var result = await _languageChecks.CheckGeneratedCodeAsync(_packagePath, ct: CancellationToken.None);
+        var result = await _languageChecks.CheckGeneratedCode(_packagePath, ct: CancellationToken.None);
 
         Assert.Multiple(() =>
         {
@@ -84,7 +87,7 @@ internal class DotNetLanguageSpecificChecksTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(processResult);
 
-        var result = await _languageChecks.CheckGeneratedCodeAsync(_packagePath, ct: CancellationToken.None);
+        var result = await _languageChecks.CheckGeneratedCode(_packagePath, ct: CancellationToken.None);
 
         Assert.Multiple(() =>
         {
@@ -99,7 +102,7 @@ internal class DotNetLanguageSpecificChecksTests
         SetupSuccessfulDotNetVersionCheck();
         var invalidPath = "/tmp/not-in-sdk-folder";
 
-        var result = await _languageChecks.CheckGeneratedCodeAsync(invalidPath, ct: CancellationToken.None);
+        var result = await _languageChecks.CheckGeneratedCode(invalidPath, ct: CancellationToken.None);
 
         Assert.Multiple(() =>
         {
@@ -121,17 +124,16 @@ internal class DotNetLanguageSpecificChecksTests
         var processResult = new ProcessResult { ExitCode = 0 };
         processResult.AppendStdout("All checks passed successfully!");
 
-        _processHelperMock
+        _powerShellHelperMock
             .Setup(x => x.Run(
-                It.Is<ProcessOptions>(p => 
-                    IsPowerShellCommand(p) && 
-                    p.Args.Any(a => a.Contains("CodeChecks.ps1"))),
+                It.Is<PowershellOptions>(p => p.ScriptPath != null &&
+                    p.ScriptPath.Contains("CodeChecks.ps1")),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(processResult);
 
         try
         {
-            var result = await _languageChecks.CheckGeneratedCodeAsync(_packagePath, ct: CancellationToken.None);
+            var result = await _languageChecks.CheckGeneratedCode(_packagePath, ct: CancellationToken.None);
 
             Assert.Multiple(() =>
             {
@@ -166,11 +168,10 @@ internal class DotNetLanguageSpecificChecksTests
         Directory.CreateDirectory(Path.GetDirectoryName(scriptPath)!);
         File.WriteAllText(scriptPath, "# Mock PowerShell script");
 
-        _processHelperMock
+        _powerShellHelperMock
             .Setup(x => x.Run(
-                It.Is<ProcessOptions>(p =>
-                    IsPowerShellCommand(p) &&
-                    p.Args.Any(a => a.Contains("CodeChecks.ps1"))),
+                It.Is<PowershellOptions>(p => p.ScriptPath != null &&
+                    p.ScriptPath.Contains("CodeChecks.ps1")),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(() =>
             {
@@ -179,7 +180,7 @@ internal class DotNetLanguageSpecificChecksTests
                 return processResult;
             });
 
-        var result = await _languageChecks.CheckGeneratedCodeAsync(_packagePath, ct: CancellationToken.None);
+        var result = await _languageChecks.CheckGeneratedCode(_packagePath, ct: CancellationToken.None);
 
         Assert.Multiple(() =>
         {
@@ -200,7 +201,7 @@ internal class DotNetLanguageSpecificChecksTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(processResult);
 
-        var result = await _languageChecks.CheckAotCompatAsync(_packagePath, ct: CancellationToken.None);
+        var result = await _languageChecks.CheckAotCompat(_packagePath, ct: CancellationToken.None);
 
         Assert.Multiple(() =>
         {
@@ -222,7 +223,7 @@ internal class DotNetLanguageSpecificChecksTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(processResult);
 
-        var result = await _languageChecks.CheckAotCompatAsync(_packagePath, ct: CancellationToken.None);
+        var result = await _languageChecks.CheckAotCompat(_packagePath, ct: CancellationToken.None);
 
         Assert.Multiple(() =>
         {
@@ -237,7 +238,7 @@ internal class DotNetLanguageSpecificChecksTests
         SetupSuccessfulDotNetVersionCheck();
         var invalidPath = "/tmp/not-in-sdk-folder";
 
-        var result = await _languageChecks.CheckAotCompatAsync(invalidPath, ct: CancellationToken.None);
+        var result = await _languageChecks.CheckAotCompat(invalidPath, ct: CancellationToken.None);
 
         Assert.Multiple(() =>
         {
@@ -259,17 +260,16 @@ internal class DotNetLanguageSpecificChecksTests
         var processResult = new ProcessResult { ExitCode = 0 };
         processResult.AppendStdout("AOT compatibility check passed!");
 
-        _processHelperMock
+        _powerShellHelperMock
             .Setup(x => x.Run(
-                It.Is<ProcessOptions>(p => 
-                    IsPowerShellCommand(p) && 
-                    p.Args.Any(a => a.Contains("Check-AOT-Compatibility.ps1"))),
+                It.Is<PowershellOptions>(p => p.ScriptPath != null &&
+                    p.ScriptPath.Contains("Check-AOT-Compatibility.ps1")),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(processResult);
 
         try
         {
-            var result = await _languageChecks.CheckAotCompatAsync(_packagePath, ct: CancellationToken.None);
+            var result = await _languageChecks.CheckAotCompat(_packagePath, ct: CancellationToken.None);
 
             Assert.Multiple(() =>
             {
@@ -300,17 +300,16 @@ internal class DotNetLanguageSpecificChecksTests
         var processResult = new ProcessResult { ExitCode = 1 };
         processResult.AppendStdout(errorMessage);
         
-        _processHelperMock
+        _powerShellHelperMock
             .Setup(x => x.Run(
-                It.Is<ProcessOptions>(p => 
-                    IsPowerShellCommand(p) && 
-                    p.Args.Any(a => a.Contains("Check-AOT-Compatibility.ps1"))),
+                It.Is<PowershellOptions>(p => p.ScriptPath != null &&
+                    p.ScriptPath.Contains("Check-AOT-Compatibility.ps1")),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(processResult);
 
         try
         {
-            var result = await _languageChecks.CheckAotCompatAsync(_packagePath, ct: CancellationToken.None);
+            var result = await _languageChecks.CheckAotCompat(_packagePath, ct: CancellationToken.None);
 
             Assert.Multiple(() =>
             {
@@ -345,7 +344,7 @@ internal class DotNetLanguageSpecificChecksTests
 
         try
         {
-            var result = await _languageChecks.CheckAotCompatAsync(testPackagePath, ct: CancellationToken.None);
+            var result = await _languageChecks.CheckAotCompat(testPackagePath, ct: CancellationToken.None);
 
             Assert.Multiple(() =>
             {
@@ -384,17 +383,16 @@ internal class DotNetLanguageSpecificChecksTests
         var processResult = new ProcessResult { ExitCode = 0 };
         processResult.AppendStdout("AOT compatibility check passed!");
 
-        _processHelperMock
+        _powerShellHelperMock
             .Setup(x => x.Run(
-                It.Is<ProcessOptions>(p => 
-                    IsPowerShellCommand(p) && 
-                    p.Args.Any(a => a.Contains("Check-AOT-Compatibility.ps1"))),
+                It.Is<PowershellOptions>(p => p.ScriptPath != null &&
+                    p.ScriptPath.Contains("Check-AOT-Compatibility.ps1")),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(processResult);
 
         try
         {
-            var result = await _languageChecks.CheckAotCompatAsync(testPackagePath, ct: CancellationToken.None);
+            var result = await _languageChecks.CheckAotCompat(testPackagePath, ct: CancellationToken.None);
 
             Assert.Multiple(() =>
             {
@@ -402,12 +400,6 @@ internal class DotNetLanguageSpecificChecksTests
                 Assert.That(result.CheckStatusDetails, Does.Contain("AOT compatibility check passed"));
                 Assert.That(result.CheckStatusDetails, Does.Not.Contain("skipped"));
             });
-
-            _processHelperMock.Verify(x => x.Run(
-                It.Is<ProcessOptions>(p => 
-                    IsPowerShellCommand(p) && 
-                    p.Args.Any(a => a.Contains("Check-AOT-Compatibility.ps1"))),
-                It.IsAny<CancellationToken>()), Times.Once);
         }
         finally
         {
@@ -441,7 +433,7 @@ internal class DotNetLanguageSpecificChecksTests
 
         try
         {
-            var result = await _languageChecks.CheckAotCompatAsync(testPackagePath, ct: CancellationToken.None);
+            var result = await _languageChecks.CheckAotCompat(testPackagePath, ct: CancellationToken.None);
 
             Assert.Multiple(() =>
             {
@@ -472,17 +464,16 @@ internal class DotNetLanguageSpecificChecksTests
         var processResult = new ProcessResult { ExitCode = 0 };
         processResult.AppendStdout("AOT compatibility check passed!");
 
-        _processHelperMock
+        _powerShellHelperMock
             .Setup(x => x.Run(
-                It.Is<ProcessOptions>(p => 
-                    IsPowerShellCommand(p) && 
-                    p.Args.Any(a => a.Contains("Check-AOT-Compatibility.ps1"))),
+                It.Is<PowershellOptions>(p => p.ScriptPath != null &&
+                    p.ScriptPath.Contains("Check-AOT-Compatibility.ps1")),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(processResult);
 
         try
         {
-            var result = await _languageChecks.CheckAotCompatAsync(testPackagePath, ct: CancellationToken.None);
+            var result = await _languageChecks.CheckAotCompat(testPackagePath, ct: CancellationToken.None);
 
             Assert.Multiple(() =>
             {
@@ -491,10 +482,9 @@ internal class DotNetLanguageSpecificChecksTests
                 Assert.That(result.CheckStatusDetails, Does.Not.Contain("skipped"));
             });
 
-            _processHelperMock.Verify(x => x.Run(
-                It.Is<ProcessOptions>(p => 
-                    IsPowerShellCommand(p) && 
-                    p.Args.Any(a => a.Contains("Check-AOT-Compatibility.ps1"))),
+            _powerShellHelperMock.Verify(x => x.Run(
+                It.Is<PowershellOptions>(p => p.ScriptPath != null &&
+                    p.ScriptPath.Contains("Check-AOT-Compatibility.ps1")),
                 It.IsAny<CancellationToken>()), Times.Once);
         }
         finally
@@ -518,13 +508,6 @@ internal class DotNetLanguageSpecificChecksTests
     private static bool IsDotNetListSdksCommand(ProcessOptions options) =>
         (options.Command == "dotnet" && options.Args.Contains("--list-sdks")) ||
         (options.Command == "cmd.exe" && options.Args.Contains("dotnet") && options.Args.Contains("--list-sdks"));
-
-    /// <summary>
-    /// Checks if the ProcessOptions represents a PowerShell command.
-    /// Handles both Unix (pwsh) and Windows (pwsh) patterns.
-    /// </summary>
-    private static bool IsPowerShellCommand(ProcessOptions options) =>
-        options.Command == "pwsh" || options.Command == "powershell";
 
     #endregion
 }

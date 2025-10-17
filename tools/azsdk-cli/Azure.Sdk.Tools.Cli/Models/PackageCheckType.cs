@@ -53,7 +53,7 @@ public enum PackageCheckType
     /// <summary>
     /// .NET validation for generated code.
     /// </summary>
-    GeneratedCodeChecks
+    GeneratedCodeChecks,
 
     /// <summary>
     /// Validate samples

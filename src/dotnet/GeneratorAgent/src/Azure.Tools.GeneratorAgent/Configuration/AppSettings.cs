@@ -59,7 +59,7 @@ namespace Azure.Tools.GeneratorAgent.Configuration
         
 
         // OpenAI Settings
-        public string? OpenAIApiKey => Configuration.GetSection("OpenAI:ApiKey").Value;
+        public string? OpenAIApiKey => Configuration.GetSection("OpenAI:ApiKey").Value ?? EnvironmentVariables.OpenAIApiKey;
         public string? OpenAIEndpoint => Configuration.GetSection("OpenAI:Endpoint").Value;
         public string OpenAIModel => Configuration.GetSection("OpenAI:Model").Value ?? "gpt-4o";
         

@@ -101,7 +101,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
             var githubPath = "specification/testservice/TestService";
             
             // For GitHub paths (isLocalPath = false), directory existence isn't checked
-            var result = InputValidator.ValidateTypeSpecDir(githubPath, isLocalPath: false);
+            var result = InputValidator.ValidateandNormalizeTypeSpecDir(githubPath, isLocalPath: false);
             
             Assert.That(result, Is.EqualTo(githubPath));
         }
@@ -109,7 +109,7 @@ namespace Azure.Tools.GeneratorAgent.Tests.Security
         [Test]
         public void ValidateTypeSpecDir_WithNullPath_ThrowsArgumentException()
         {
-            Assert.Throws<ArgumentException>(() => InputValidator.ValidateTypeSpecDir(null));
+            Assert.Throws<ArgumentException>(() => InputValidator.ValidateandNormalizeTypeSpecDir(null));
         }
     }
 }

@@ -40,7 +40,7 @@ namespace Azure.Tools.GeneratorAgent.Configuration
         {
             bool isLocalPath = string.IsNullOrWhiteSpace(commitId);
 
-            var validatedTypeSpecPath = InputValidator.ValidateTypeSpecDir(typespecPath, isLocalPath);
+            var validatedTypeSpecPath = InputValidator.ValidateandNormalizeTypeSpecDir(typespecPath, isLocalPath);
             var validatedCommitId = InputValidator.ValidateCommitId(commitId);
             var validatedOutputPath = InputValidator.ValidateOutputDirectory(sdkOutputPath);
 

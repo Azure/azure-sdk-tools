@@ -185,20 +185,52 @@ internal class OpenAIService
             }
         }
         
-        var finalResponse = await chatClient.CompleteChatAsync(messages, cancellationToken: cancellationToken);
+        // Keep calling until we get a non-tool response
+        ChatCompletion finalResponse;
+        int maxIterations = 10; // Prevent infinite loops
+        int iteration = 0;
         
-        string finalResult;
-        if (finalResponse?.Value?.Content != null && finalResponse.Value.Content.Count > 0 && finalResponse.Value.Content[0] != null)
+        do
         {
-            finalResult = finalResponse.Value.Content[0].Text;
+            var response = await chatClient.CompleteChatAsync(messages, cancellationToken: cancellationToken);
+            finalResponse = response.Value;
+            
+            // If we get more tool calls, handle them
+            if (finalResponse.FinishReason == ChatFinishReason.ToolCalls)
+            {
+                messages.Add(new AssistantChatMessage(finalResponse));
+                
+                foreach (var toolCall in finalResponse.ToolCalls)
+                {
+                    if (toolCall is ChatToolCall functionCall)
+                    {
+                        Logger.LogDebug("Executing additional tool: {ToolName} (iteration {Iteration})", 
+                            functionCall.FunctionName, iteration + 1);
+                        var argumentsJson = functionCall.FunctionArguments.ToString();
+                        var result = await ToolExecutor.ExecuteToolCallAsync(functionCall.FunctionName, argumentsJson, validationContext, cancellationToken);
+                        messages.Add(new ToolChatMessage(functionCall.Id, result));
+                    }
+                }
+            }
+            
+            iteration++;
+        } 
+        while (finalResponse.FinishReason == ChatFinishReason.ToolCalls && iteration < maxIterations);
+        
+        if (iteration >= maxIterations)
+        {
+            Logger.LogWarning("Maximum tool call iterations reached ({MaxIterations}), stopping", maxIterations);
+        }
+        
+        if (finalResponse?.Content != null && finalResponse.Content.Count > 0 && finalResponse.Content[0] != null)
+        {
+            return finalResponse.Content[0].Text;
         }
         else
         {
-            Logger.LogWarning("OpenAI response did not contain any content.");
-            finalResult = string.Empty;
+            Logger.LogWarning("OpenAI response did not contain any content after tool calls.");
+            return string.Empty;
         }
-        
-        return finalResult;
     }
 
     /// <summary>

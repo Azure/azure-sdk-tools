@@ -14,11 +14,6 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
     <PackageReference Include="Azure.Core" Version="1.47.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="9.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.0" />
-    <PackageReference Include="OpenAI" Version="2.1.0" />
   </ItemGroup>
 
   <ItemGroup>

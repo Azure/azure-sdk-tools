@@ -41,7 +41,7 @@ namespace Azure.Tools.GeneratorAgent.Security
         /// </summary>
         /// <param name="path">The TypeSpec path to validate</param>
         /// <param name="isLocalPath">True if this is a local filesystem path, false if it's a relative repository path</param>
-        public static string ValidateTypeSpecDir(string? path, bool isLocalPath = true)
+        public static string ValidateandNormalizeTypeSpecDir(string? path, bool isLocalPath = true)
         {
             var pathTraversalValidation = ValidateDirTraversal(path, "TypeSpec path");
 

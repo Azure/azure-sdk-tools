@@ -34,13 +34,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             _mockMicroagentHostService = new Mock<IMicroagentHostService>();
 
             // Create language-specific check implementations with mocked dependencies
-            var pythonCheck = new PythonLanguageSpecificChecks(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _mockPythonLogger.Object);
+            var pythonCheck = new PythonLanguageSpecificChecks(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _mockPythonLogger.Object, _mockMicroagentHostService.Object);
 
             var languageChecks = new List<ILanguageSpecificChecks> { pythonCheck };
             var mockPowershellHelper = new Mock<IPowershellHelper>();
             var resolver = Mock.Of<ILanguageSpecificResolver<ILanguageSpecificChecks>>();
             
-            _languageChecks = new LanguageChecks(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _mockLanguageChecksLogger.Object, resolver, _mockMicroagentHostService.Object);
+            _languageChecks = new LanguageChecks(_mockLanguageChecksLogger.Object, resolver);
             _packageCheckTool = new PackageCheckTool(_mockLogger.Object, _languageChecks);
 
             // Setup default mock responses
@@ -244,10 +244,10 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                          .ReturnsAsync(cspellErrorResult);
 
             // Setup mock microagent service to return a successful spelling fix result
-            var mockSpellingFixResult = new LanguageChecks.SpellingFixResult(
+            var mockSpellingFixResult = new CommonLanguageHelpers.SpellingFixResult(
                 "Successfully fixed 4 spelling errors and added 0 words to cspell.json. Fixed 'contians' to 'contains', 'obvioius' to 'obvious', 'speling' to 'spelling', 'erors' to 'errors' in test_fix.md"
             );
-            _mockMicroagentHostService.Setup(x => x.RunAgentToCompletion(It.IsAny<Microagent<LanguageChecks.SpellingFixResult>>(), It.IsAny<CancellationToken>()))
+            _mockMicroagentHostService.Setup(x => x.RunAgentToCompletion(It.IsAny<Microagent<CommonLanguageHelpers.SpellingFixResult>>(), It.IsAny<CancellationToken>()))
                                      .ReturnsAsync(mockSpellingFixResult);
 
             try

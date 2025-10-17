@@ -10,6 +10,7 @@ namespace Azure.Sdk.Tools.Cli.Services;
 public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
 {
     private readonly IProcessHelper _processHelper;
+    private readonly IGitHelper _gitHelper;
     private readonly ILogger<JavaLanguageSpecificChecks> _logger;
 
     // Maven operation timeouts
@@ -37,9 +38,11 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
 
     public JavaLanguageSpecificChecks(
         IProcessHelper processHelper,
+        IGitHelper gitHelper,
         ILogger<JavaLanguageSpecificChecks> logger)
     {
         _processHelper = processHelper;
+        _gitHelper = gitHelper;
         _logger = logger;
     }
 
@@ -343,5 +346,19 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
 
         _logger.LogInformation("Using Maven project at: {PackagePath}", packagePath);
         return null; // No error, prerequisites are valid
+    }
+
+        public async Task<CLICheckResponse> ValidateReadmeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    {
+        // Implementation for validating README in a Python project
+        // Could use markdownlint, etc.
+        return await CommonLanguageHelpers.ValidateReadmeCommonAsync(_processHelper, _gitHelper, _logger, packagePath, fixCheckErrors, cancellationToken);
+    }
+
+    public async Task<CLICheckResponse> ValidateChangelogAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    {
+        // Implementation for validating CHANGELOG in a Python project
+        // Could use markdownlint, etc.
+        return await CommonLanguageHelpers.ValidateChangelogCommonAsync(this, _processHelper, _gitHelper, _logger, packagePath, fixCheckErrors, cancellationToken);
     }
 }

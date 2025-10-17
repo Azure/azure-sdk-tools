@@ -1,6 +1,7 @@
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Microsoft.Extensions.Logging;
+using Azure.Sdk.Tools.Cli.Microagents;
 
 namespace Azure.Sdk.Tools.Cli.Services;
 
@@ -13,17 +14,20 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
     private readonly INpxHelper _npxHelper;
     private readonly IGitHelper _gitHelper;
     private readonly ILogger<PythonLanguageSpecificChecks> _logger;
+    private readonly IMicroagentHostService _microagentHostService;
 
     public PythonLanguageSpecificChecks(
         IProcessHelper processHelper,
         INpxHelper npxHelper,
         IGitHelper gitHelper,
-        ILogger<PythonLanguageSpecificChecks> logger)
+        ILogger<PythonLanguageSpecificChecks> logger,
+        IMicroagentHostService microagentHostService)
     {
         _processHelper = processHelper;
         _npxHelper = npxHelper;
         _gitHelper = gitHelper;
         _logger = logger;
+        _microagentHostService = microagentHostService;
     }
 
     public async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
@@ -214,5 +218,24 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
             _logger.LogError(ex, "Error running code formatting for Python project at: {PackagePath}", packagePath);
             return new CLICheckResponse(1, "", $"Error running code formatting: {ex.Message}");
         }
+    }
+
+    public async Task<CLICheckResponse> ValidateReadmeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    {
+        // Implementation for validating README in a Python project
+        // Could use markdownlint, etc.
+        return await CommonLanguageHelpers.ValidateReadmeCommonAsync(_processHelper, _gitHelper, _logger, packagePath, fixCheckErrors, cancellationToken);
+    }
+
+    public async Task<CLICheckResponse> ValidateChangelogAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    {
+        // Implementation for validating CHANGELOG in a Python project
+        // Could use markdownlint, etc.
+        return await CommonLanguageHelpers.ValidateChangelogCommonAsync(this, _processHelper, _gitHelper, _logger, packagePath, fixCheckErrors, cancellationToken);
+    }
+
+    public async Task<CLICheckResponse> CheckSpellingAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    {
+        return await CommonLanguageHelpers.CheckSpellingCommonAsync(this, _processHelper, _npxHelper, _gitHelper, _logger, _microagentHostService, packagePath, fixCheckErrors, cancellationToken);
     }
 }

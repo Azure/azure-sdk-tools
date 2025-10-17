@@ -36,7 +36,7 @@ namespace Azure.Sdk.Tools.TestProxy.Common
         /// </summary>
         public bool ShouldIgnoreQueryOrdering { get; private set; }
 
-        public RecordMatcher(bool compareBodies = true, bool ignoreQueryOrdering = false)
+        public RecordMatcher(bool compareBodies = true, bool ignoreQueryOrdering = true)
         {
             ShouldCompareBodies = compareBodies;
             ShouldIgnoreQueryOrdering = ignoreQueryOrdering;

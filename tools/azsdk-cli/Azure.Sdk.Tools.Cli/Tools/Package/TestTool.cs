@@ -25,14 +25,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
         private const string TestCommandName = "test";
 
-        protected override Command GetCommand() => new Command(TestCommandName, "Run tests for SDK packages")
+        protected override Command GetCommand() => new(TestCommandName, "Run tests for SDK packages")
         {
             SharedOptions.PackagePath,
         };
 
-        public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+        public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
-            var packagePath = ctx.ParseResult.GetValueForOption(SharedOptions.PackagePath);
+            var packagePath = parseResult.GetValue(SharedOptions.PackagePath);
 
             return await RunPackageTests(packagePath, ct);
         }

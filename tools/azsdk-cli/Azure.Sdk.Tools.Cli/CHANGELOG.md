@@ -1,5 +1,11 @@
 # Release History
 
+## 0.5.4 (2025-10-17)
+
+### Features
+
+- Updated System.CommandLine dependency to 2.5 beta
+
 ## 0.5.3 (Unreleased)
 
 ### Bugs Fixed

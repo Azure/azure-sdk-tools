@@ -28,7 +28,7 @@ public static class CommonLanguageHelpers
     /// <param name="fixCheckErrors">Whether to attempt to automatically fix changelog issues</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>CLI check response containing success/failure status and response message</returns>
-    public static async Task<CLICheckResponse> ValidateChangelogCommonAsync(
+    public static async Task<CLICheckResponse> ValidateChangelogCommon(
         ILanguageSpecificChecks languageChecks,
         IProcessHelper processHelper,
         IGitHelper gitHelper,
@@ -67,7 +67,7 @@ public static class CommonLanguageHelpers
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error in ValidateChangelogCommonAsync");
+            logger.LogError(ex, "Error in ValidateChangelogCommon");
             return new CLICheckResponse(1, "", $"Unhandled exception: {ex.Message}");
         }
     }
@@ -83,7 +83,7 @@ public static class CommonLanguageHelpers
     /// <param name="fixCheckErrors">Whether to attempt to automatically fix README issues</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>CLI check response containing success/failure status and response message</returns>
-    public static async Task<CLICheckResponse> ValidateReadmeCommonAsync(
+    public static async Task<CLICheckResponse> ValidateReadmeCommon(
         IProcessHelper processHelper,
         IGitHelper gitHelper,
         ILogger logger,
@@ -129,7 +129,7 @@ public static class CommonLanguageHelpers
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error in ValidateReadmeCommonAsync");
+            logger.LogError(ex, "Error in ValidateReadmeCommon");
             return new CLICheckResponse(1, "", $"Unhandled exception: {ex.Message}");
         }
     }
@@ -147,7 +147,7 @@ public static class CommonLanguageHelpers
     /// <param name="fixCheckErrors">Whether to attempt to automatically fix spelling issues where supported by cspell</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>CLI check response containing success/failure status and response message</returns>
-    public static async Task<CLICheckResponse> CheckSpellingCommonAsync(
+    public static async Task<CLICheckResponse> CheckSpellingCommon(
         ILanguageSpecificChecks languageChecks,
         IProcessHelper processHelper,
         INpxHelper npxHelper,
@@ -206,7 +206,7 @@ public static class CommonLanguageHelpers
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error in CheckSpellingCommonAsync");
+            logger.LogError(ex, "Error in CheckSpellingCommon");
             return new CLICheckResponse(1, "", ex.Message);
         }
     }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ApiView;
 using APIViewWeb.Extensions;
 using APIViewWeb.Helpers;
 using APIViewWeb.Hubs;
@@ -219,8 +220,8 @@ namespace APIViewWeb.LeanControllers
 
             if (activeAPIRevision.Files[0].ParserStyle == ParserStyle.Tree)
             {
-                var comments = await _commentsManager.GetCommentsAsync(reviewId, commentType: CommentType.APIRevision);
-                var activeRevisionReviewCodeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(revisionId: activeAPIRevision.Id, codeFileId: activeAPIRevision.Files[0].FileId);
+                IEnumerable<CommentItemModel> comments = await _commentsManager.GetCommentsAsync(reviewId, commentType: CommentType.APIRevision);
+                CodeFile activeRevisionReviewCodeFile = await _codeFileRepository.GetCodeFileFromStorageAsync(revisionId: activeAPIRevision.Id, codeFileId: activeAPIRevision.Files[0].FileId);
 
                 if (activeRevisionReviewCodeFile.ContentGenerationInProgress)
                 {
@@ -228,10 +229,11 @@ namespace APIViewWeb.LeanControllers
                     return new LeanJsonResult("Content generation in progress", StatusCodes.Status202Accepted, languageServices.ReviewGenerationPipelineUrl);
                 }
 
+                List<CommentItemModel> filteredComments = comments.Where(c => !c.IsResolved || c.APIRevisionId == activeApiRevisionId).ToList();
                 var codePanelRawData = new CodePanelRawData()
                 {
                     activeRevisionCodeFile = activeRevisionReviewCodeFile,
-                    Comments = comments
+                    Comments = filteredComments
                 };
 
                 if (diffAPIRevision != null)

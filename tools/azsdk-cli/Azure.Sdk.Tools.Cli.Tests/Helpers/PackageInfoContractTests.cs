@@ -70,7 +70,7 @@ public class PackageInfoContractTests
     [TestCase("python")]
     [TestCase("typescript")]
     [TestCase("go")]
-    public async Task Resolve_InvalidPath_Throws(string language)
+    public void Resolve_InvalidPath_Throws(string language)
     {
         // Construct a path inside the repo root but not under the required sdk/<service>/<package> (and in go case sdk/<group>/<service>/<package>) depth.
     var repoRoot = Path.Combine(_tempRoot.DirectoryPath, "azure-sdk-repo-root-invalid");
@@ -82,7 +82,7 @@ public class PackageInfoContractTests
         var ghMock = new Mock<IGitHubService>();
         var gitHelper = new GitHelper(ghMock.Object, new TestLogger<GitHelper>());
         var helper = CreateHelperForLanguage(language, gitHelper);
-        Assert.ThrowsAsync<ArgumentException>(async () => await helper.ResolvePackageInfo(badRoot));
+        Assert.ThrowsAsync<ArgumentException>(() => helper.ResolvePackageInfo(badRoot));
     }
 
     [Test]

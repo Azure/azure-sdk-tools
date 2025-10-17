@@ -134,7 +134,7 @@ namespace APIViewWeb.Managers
             string buildId, string artifactName, string originalFileName, string commitSha, string repoName,
             string packageName, int prNumber, string hostName, CreateAPIRevisionAPIResponse responseContent,
             string codeFileName = null, string baselineCodeFileName = null, string language = null,
-            string project = "internal")
+            string project = "internal", string packageType = null)
         {
             language = LanguageServiceHelpers.MapLanguageAlias(language: language);
             originalFileName = originalFileName ?? codeFileName;
@@ -149,6 +149,12 @@ namespace APIViewWeb.Managers
                 codeFileName: codeFileName, originalFileStream: memoryStream,
                 baselineCodeFileName: baselineCodeFileName, baselineStream: baselineStream,
                 project: project, language: language);
+
+            if (codeFile == null)
+            {
+                responseContent.ActionsTaken.Add($"Failed to process code file. Language processor for '{language}' may not be available or file format is unsupported.");
+                return "";
+            }
 
             if (codeFile.PackageName != null && (packageName == null || packageName != codeFile.PackageName))
             {
@@ -182,7 +188,7 @@ namespace APIViewWeb.Managers
                 if (codeFile != null)
                 {
                     await CreateAPIRevisionIfRequired(codeFile: codeFile, originalFileName: originalFileName, memoryStream: memoryStream, pullRequestModel: pullRequestModel,
-                        baselineCodeFile: baseLineCodeFile, baseLineStream: baselineStream, baselineFileName: baselineCodeFileName, responseContent: responseContent);
+                        baselineCodeFile: baseLineCodeFile, baseLineStream: baselineStream, baselineFileName: baselineCodeFileName, responseContent: responseContent, packageType: packageType);
                 }
                 else
                 {
@@ -248,15 +254,28 @@ namespace APIViewWeb.Managers
         }
 
         private async Task CreateAPIRevisionIfRequired(CodeFile codeFile, string originalFileName, MemoryStream memoryStream,
-            PullRequestModel pullRequestModel, CodeFile baselineCodeFile, MemoryStream baseLineStream, string baselineFileName, CreateAPIRevisionAPIResponse responseContent)
+            PullRequestModel pullRequestModel, CodeFile baselineCodeFile, MemoryStream baseLineStream, string baselineFileName, CreateAPIRevisionAPIResponse responseContent, string packageType = null)
         {
+            var validPackageType = !string.IsNullOrEmpty(packageType) && Enum.TryParse<Models.PackageType>(packageType, true, out var result) ? (Models.PackageType?)result : null;
+            
             // fetch review for the package or create brand new review
             var review = await _reviewManager.GetReviewAsync(language: codeFile.Language, packageName: codeFile.PackageName);
             if (review == null)
             {
-                review = await _reviewManager.CreateReviewAsync(language: codeFile.Language, packageName: codeFile.PackageName, isClosed: false);
+                review = await _reviewManager.CreateReviewAsync(language: codeFile.Language, packageName: codeFile.PackageName, isClosed: false, packageType: validPackageType);
                 responseContent.ActionsTaken.Add($"No existing review with packageName: '{codeFile.PackageName}' and language: '{codeFile.Language}'.");
                 responseContent.ActionsTaken.Add($"Created a new Review with Id: '{review.Id}'.");
+                responseContent.ActionsTaken.Add($"Review created with packageType: '{validPackageType}'.");
+            }
+            else
+            {
+                // Update existing review with packageType if provided and different from current value
+                if (validPackageType.HasValue && (!review.PackageType.HasValue || review.PackageType.Value != validPackageType.Value))
+                {
+                    review.PackageType = validPackageType;
+                    review = await _reviewManager.UpdateReviewAsync(review);
+                    responseContent.ActionsTaken.Add($"Updated existing review '{review.Id}' with PackageType: '{validPackageType}'.");
+                }
             }
             pullRequestModel.ReviewId = review.Id;
             responseContent.ActionsTaken.Add($"Pull Request data ReviewId set to '{pullRequestModel.ReviewId}' in memory - not yet saved to database.");

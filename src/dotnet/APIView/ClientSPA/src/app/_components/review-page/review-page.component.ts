@@ -5,7 +5,7 @@ import { MenuItem, TreeNode } from 'primeng/api';
 import { concatMap, EMPTY, from, Observable, Subject, take, takeUntil, tap } from 'rxjs';
 import { CodeLineRowNavigationDirection, getLanguageCssSafeName } from 'src/app/_helpers/common-helpers';
 import { getQueryParams } from 'src/app/_helpers/router-helpers';
-import { Review } from 'src/app/_models/review';
+import { Review, PackageType } from 'src/app/_models/review';
 import { APIRevision, APIRevisionGroupedByLanguage, ApiTreeBuilderData } from 'src/app/_models/revision';
 import { ReviewsService } from 'src/app/_services/reviews/reviews.service';
 import { APIRevisionsService } from 'src/app/_services/revisions/revisions.service';
@@ -280,6 +280,10 @@ export class ReviewPageComponent implements OnInit {
           this.review = review;
           this.updateLoadingStateBasedOnReviewDeletionStatus();
           this.updatePageTitle();
+        },
+        error: (error) => {
+          this.loadFailed = true;
+          this.loadFailedMessage = "Failed to load review. Please refresh the page or try again later.";
         }
       });
   }
@@ -371,7 +375,6 @@ export class ReviewPageComponent implements OnInit {
 
   private processEmbeddedComments() {
     if (!this.codePanelData || !this.comments) return;
-    
     Object.values(this.codePanelData.nodeMetaData).forEach(nodeData => {
       if (nodeData.commentThread) {
         Object.values(nodeData.commentThread).forEach(commentThreadRow => {

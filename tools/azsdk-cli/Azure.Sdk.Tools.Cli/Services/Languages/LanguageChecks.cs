@@ -425,6 +425,12 @@ public class LanguageChecks : ILanguageChecks
             );
             var processResult = await _npxHelper.Run(npxOptions, ct: ct);
 
+            // If cspell checked 0 files, treat as success
+            if (processResult.Output != null && processResult.Output.Contains("Files checked: 0"))
+            {
+                return new CLICheckResponse(0, processResult.Output);
+            }
+
             // If fix is requested and there are spelling issues, use Microagent to automatically apply fixes
             if (fixCheckErrors && processResult.ExitCode != 0 && !string.IsNullOrWhiteSpace(processResult.Output))
             {

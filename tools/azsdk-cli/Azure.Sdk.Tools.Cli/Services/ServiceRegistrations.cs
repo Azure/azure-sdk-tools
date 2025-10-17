@@ -12,8 +12,8 @@ using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services.ClientUpdate;
 using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.Cli.Tools;
+using Azure.Sdk.Tools.Cli.SampleGeneration;
 using Azure.Sdk.Tools.Cli.Services.Tests;
-using Azure.Sdk.Tools.Cli.Models;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -48,6 +48,24 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 Java = typeof(JavaUpdateLanguageService),
                 // Future: Python = typeof(PythonUpdateLanguageService), etc
+            });
+
+            services.AddLanguageSpecific<IPackageInfoHelper>(new LanguageSpecificImplementations
+            {
+                DotNet = typeof(DotNetPackageInfoHelper),
+                Java = typeof(JavaPackageInfoHelper),
+                Python = typeof(PythonPackageInfoHelper),
+                JavaScript = typeof(TypeScriptPackageInfoHelper),
+                Go = typeof(GoPackageInfoHelper),
+            });
+
+            services.AddLanguageSpecific<ISampleLanguageContext>(new LanguageSpecificImplementations
+            {
+                DotNet = typeof(DotNetSampleLanguageContext),
+                Java = typeof(JavaSampleLanguageContext),
+                Python = typeof(PythonSampleLanguageContext),
+                JavaScript = typeof(TypeScriptSampleLanguageContext),
+                Go = typeof(GoSampleLanguageContext),
             });
 
             services.AddLanguageSpecific<ITestRunner>(new LanguageSpecificImplementations

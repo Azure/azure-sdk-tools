@@ -115,7 +115,6 @@ public class LanguageChecks : ILanguageChecks
     private readonly ILogger<LanguageChecks> _logger;
     private readonly ILanguageSpecificResolver<ILanguageSpecificChecks> _languageSpecificChecks;
     private readonly IMicroagentHostService _microagentHostService;
-    private const string PowerShellCommand = "pwsh";
 
     public LanguageChecks(IProcessHelper processHelper, INpxHelper npxHelper, IGitHelper gitHelper, ILogger<LanguageChecks> logger, ILanguageSpecificResolver<ILanguageSpecificChecks> languageSpecificChecks, IMicroagentHostService microagentHostService)
     {

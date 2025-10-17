@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 
@@ -26,18 +27,40 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
         _logger = logger;
     }
 
-    public async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct)
-    {
-        // Implementation for analyzing dependencies in a JavaScript project
-        return await Task.FromResult(new CLICheckResponse());
-    }
-
-    public async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, CancellationToken cancellationToken = default)
+    public async Task<CLICheckResponse> ValidateSamplesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Running 'pnpm run update-snippets' in {PackagePath}", packagePath);
+            var result = await _processHelper.Run(new(
+                    "pnpm",
+                    ["run", "build:samples"],
+                    workingDirectory: packagePath
+                ),
+                ct
+            );
 
+            if (result.ExitCode != 0)
+            {
+                _logger.LogError("'pnpm run build:samples' failed with exit code {ExitCode}", result.ExitCode);
+                return new CLICheckResponse(result)
+                {
+                    NextSteps = ["Review the error output and attempt to resolve the issue."]
+                };
+            }
+
+            return new CLICheckResponse(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error validating samples for JavaScript project at: {PackagePath}", packagePath);
+            return new CLICheckResponse(1, "", $"Error validating samples: {ex.Message}");
+        }
+    }
+    
+    public async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    {
+        try
+        {
             var result = await _processHelper.Run(new(
                     "pnpm",
                     ["run", "update-snippets"],
@@ -69,7 +92,6 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
         try
         {
             var subcommand = fix ? "lint:fix" : "lint";
-            _logger.LogInformation($"Running 'pnpm run {subcommand}' in {packagePath}");
 
             var result = await _processHelper.Run(new(
                     "pnpm",
@@ -105,7 +127,6 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
         try
         {
             var subcommand = fix ? "format" : "check-format";
-            _logger.LogInformation($"Running 'pnpm run {subcommand}' in {packagePath}");
             var result = await _processHelper.Run(new(
                     "pnpm",
                     ["run", subcommand],
@@ -131,5 +152,34 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
             _logger.LogError(ex, "Error formatting JavaScript project at: {PackagePath}", packagePath);
             return new CLICheckResponse(1, "", $"Error formatting code: {ex.Message}");
         }
+    }
+
+    public async Task<string> GetSDKPackageName(string repo, string packagePath, CancellationToken cancellationToken = default)
+    {
+        // For JavaScript packages, read the package name from package.json
+        var packageJsonPath = Path.Combine(packagePath, "package.json");
+        if (File.Exists(packageJsonPath))
+        {
+            try
+            {
+                var packageJsonContent = await File.ReadAllTextAsync(packageJsonPath, cancellationToken);
+                using var document = JsonDocument.Parse(packageJsonContent);
+                if (document.RootElement.TryGetProperty("name", out var nameProperty))
+                {
+                    var packageName = nameProperty.GetString();
+                    if (!string.IsNullOrEmpty(packageName))
+                    {
+                        return packageName;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to parse package.json at {PackageJsonPath}. Falling back to directory name.", packageJsonPath);
+            }
+        }
+
+        // Fallback to directory name if package.json reading fails
+        return Path.GetFileName(packagePath);
     }
 }

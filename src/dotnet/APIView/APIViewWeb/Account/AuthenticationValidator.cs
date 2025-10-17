@@ -33,19 +33,20 @@ namespace APIViewWeb.Account
 
         private static bool HasRequiredAzureIdentityClaims(ClaimsPrincipal user)
         {
-            return user.FindFirst("oid") != null;
+            Claim oidClaim = user.FindFirst("oid") ?? user.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier");
+            return oidClaim != null;
         }
 
         private static bool HasValidAuthenticationType(ClaimsPrincipal user)
         {
             var authType = user.Identity.AuthenticationType;
-            return authType == "EasyAuth";
+            return authType == "Bearer" || authType == "AuthenticationTypes.Federation";
         }
 
         private static bool HasValidIdentityProvider(ClaimsPrincipal user)
         {
-            Claim authMethodClaim = user.FindFirst("auth_method");
-            return authMethodClaim?.Value == "aad";
+            Claim identityProviderClaim = user.FindFirst("idp");
+            return identityProviderClaim?.Value?.Contains("login.microsoftonline.com") == true;
         }
 
         #endregion
@@ -96,14 +97,9 @@ namespace APIViewWeb.Account
         
         public static string GetAuthenticationMethod(ClaimsPrincipal user)
         {
-            if (!IsAuthenticated(user))
-            {
-                return "Anonymous";
-            }
-
             if (IsValidAzureIdentity(user))
             {
-                return "AzureAD";
+                return "ManagedIdentity";
             }
 
             if (HasAnyOrganizationAccess(user))
@@ -111,7 +107,7 @@ namespace APIViewWeb.Account
                 return "GitHubOrganization";
             }
 
-            return "Other";
+            return IsAuthenticated(user) ? "Other" : "Anonymous";
         }
         #endregion
 

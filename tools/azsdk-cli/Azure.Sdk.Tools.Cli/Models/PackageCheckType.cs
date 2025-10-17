@@ -34,7 +34,7 @@ public enum PackageCheckType
     /// Run snippet update check.
     /// </summary>
     Snippets,
-    
+
     /// <summary>
     /// Run linting on code.
     /// </summary>
@@ -43,6 +43,10 @@ public enum PackageCheckType
     /// <summary>
     /// Format code
     /// </summary>
-    Format
+    Format,
 
+    /// <summary>
+    /// Validate samples
+    /// </summary>
+    Samples
 }

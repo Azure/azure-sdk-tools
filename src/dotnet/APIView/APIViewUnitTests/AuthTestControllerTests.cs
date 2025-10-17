@@ -198,7 +198,7 @@ public class AuthTestControllerTests
 #endif
 
     [Theory]
-    [InlineData("EasyAuth", true, "Managed Identity", "oid", "12345")]
+    [InlineData("Bearer", true, "Managed Identity", "oid", "12345")]
     [InlineData("GitHubToken", false, "GitHub Token", "urn:github:orgs", "org1")]
     public void TestTokenOnly_VariousPrincipals(string authType, bool expectMi, string tokenType, string extraClaimType, string extraClaimValue)
     {
@@ -217,7 +217,7 @@ public class AuthTestControllerTests
     public void GetAuthStatus_VariousAuthSources(bool managedIdentity)
     {
         ClaimsPrincipal principal = managedIdentity
-            ? CreatePrincipal("EasyAuth", new Claim(ClaimTypes.Name, "mi-user"), new Claim("oid", Guid.NewGuid().ToString()))
+            ? CreatePrincipal("Bearer", new Claim(ClaimTypes.Name, "mi-user"), new Claim("oid", Guid.NewGuid().ToString()))
             : CreatePrincipal("GitHubToken", new Claim(ClaimTypes.Name, "gh-user"), new Claim("urn:github:login", "gh-user"), new Claim("urn:github:orgs", "orgX"));
         SetUser(principal);
         var json = InvokeJson(() => _controller.GetAuthStatus());

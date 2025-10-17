@@ -55,12 +55,25 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     };
                 }
 
-                await testRunner.RunAllTests(packagePath, ct);
+                var success = await testRunner.RunAllTests(packagePath, ct);
 
-                return new DefaultCommandResponse
+                if (success)
                 {
-                    Result = $"Tests for package at '{packagePath}' completed successfully."
-                };
+                    return new DefaultCommandResponse
+                    {
+                        ExitCode = 0,
+                        Result = $"Test run for package at '{packagePath}' completed successfully.",
+                    };
+                }
+                else
+                {
+                    return new DefaultCommandResponse
+                    {
+                        ExitCode = 1,
+                        Result = $"Test run for package at '{packagePath}' was not successful.",
+                        NextSteps = ["Analyze the test output to identify the cause of the failure."],
+                    };
+                }
             }
             catch (Exception ex)
             {

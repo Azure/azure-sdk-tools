@@ -9,8 +9,8 @@ using Azure.Sdk.Tools.Cli.Models;
 
 public class JavaRequirementsCheck : EnvRequirementsCheck, IEnvRequirementsCheck
 {
-    public async Task<List<SetupRequirements.Requirement>> GetRequirements(CancellationToken ct = default)
+    public async Task<List<SetupRequirements.Requirement>> GetRequirements(string packagePath, CancellationToken ct = default)
     {
-        return await base.GetRequirements("java", ct);
+        return await base.ParseRequirements("java", ct);
     }
 }

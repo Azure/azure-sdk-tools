@@ -9,8 +9,8 @@ using Azure.Sdk.Tools.Cli.Models;
 
 public class DotNetRequirementsCheck : EnvRequirementsCheck, IEnvRequirementsCheck
 {
-    public async Task<List<SetupRequirements.Requirement>> GetRequirements(CancellationToken ct = default)
+    public async Task<List<SetupRequirements.Requirement>> GetRequirements(string packagePath, CancellationToken ct = default)
     {
-        return await base.GetRequirements("dotnet", ct);
+        return await base.ParseRequirements("dotnet", ct);
     }
 }

@@ -15,6 +15,7 @@ public class SetupRequirements
 
         [JsonPropertyName("check")]
         public string[] check { get; set; }
+        
         [JsonPropertyName("instructions")]
         public List<string> instructions { get; set; }
     }

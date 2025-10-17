@@ -21,14 +21,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Verify;
 [McpServerToolType, Description("This tool verifies that the environment is set up with the required installations to run MCP release tools.")]
 public class VerifySetupTool : MCPTool
 {
-    private readonly IPythonProcessHelper processHelper;
+    private readonly IProcessHelper processHelper;
     private readonly ILogger<VerifySetupTool> logger;
 
     private readonly ILanguageSpecificResolver<IEnvRequirementsCheck> envRequirementsCheck;
 
     private readonly string PATH_TO_REQS = Path.Combine(AppContext.BaseDirectory, "Configuration", "RequirementsV1.json");
 
-    public VerifySetupTool(IPythonProcessHelper processHelper, ILogger<VerifySetupTool> logger, ILanguageSpecificResolver<IEnvRequirementsCheck> envRequirementsCheck)
+    public VerifySetupTool(IProcessHelper processHelper, ILogger<VerifySetupTool> logger, ILanguageSpecificResolver<IEnvRequirementsCheck> envRequirementsCheck)
     {
         this.processHelper = processHelper;
         this.logger = logger;
@@ -121,7 +121,7 @@ public class VerifySetupTool : MCPTool
         try
         {
             logger.LogInformation("Running command: {Command} in {packagePath}", string.Join(' ', command), packagePath);
-            var result = await processHelper.RunWithVenv(options, ct);
+            var result = await processHelper.Run(options, ct);
             trimmed = (result.Output ?? string.Empty).Trim();
 
             if (result.ExitCode != 0)
@@ -167,7 +167,7 @@ public class VerifySetupTool : MCPTool
                 throw new Exception("Could not resolve requirements checker for the specified languages. Please provide languages using --langs option.");
             }
 
-            return await reqGetter.GetRequirements(ct);
+            return await reqGetter.GetRequirements(packagePath, ct);
         }
 
         var reqGetters = envRequirementsCheck.Resolve(languages);
@@ -184,7 +184,7 @@ public class VerifySetupTool : MCPTool
                 logger.LogError("Could not resolve requirements checker for one of the specified languages.");
                 continue;
             }
-            var langReqs = await getter.GetRequirements(ct);
+            var langReqs = await getter.GetRequirements(packagePath, ct);
             if (langReqs != null)
             {
                 reqsToCheck.AddRange(langReqs);

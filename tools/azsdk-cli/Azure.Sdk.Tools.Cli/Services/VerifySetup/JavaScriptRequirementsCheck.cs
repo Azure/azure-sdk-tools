@@ -9,8 +9,8 @@ using Azure.Sdk.Tools.Cli.Models;
 
 public class JavaScriptRequirementsCheck : EnvRequirementsCheck, IEnvRequirementsCheck
 {
-    public async Task<List<SetupRequirements.Requirement>> GetRequirements(CancellationToken ct = default)
+    public async Task<List<SetupRequirements.Requirement>> GetRequirements(string packagePath, CancellationToken ct = default)
     {
-        return await base.GetRequirements("javascript", ct);
+        return await base.ParseRequirements("javascript", ct);
     }
 }

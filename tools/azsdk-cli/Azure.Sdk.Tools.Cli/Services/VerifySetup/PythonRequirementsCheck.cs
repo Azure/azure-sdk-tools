@@ -6,11 +6,88 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Helpers;
+using System.Runtime.InteropServices;
 
 public class PythonRequirementsCheck : EnvRequirementsCheck, IEnvRequirementsCheck
 {
-    public async Task<List<SetupRequirements.Requirement>> GetRequirements(CancellationToken ct = default)
+    private readonly IProcessHelper processHelper;
+
+    private readonly ILogger<PythonRequirementsCheck> logger;
+
+    public PythonRequirementsCheck(IProcessHelper processHelper, ILogger<PythonRequirementsCheck> logger)
     {
-        return await base.GetRequirements("python", ct);
+        this.processHelper = processHelper;
+        this.logger = logger;
+    }
+
+    public async Task<List<SetupRequirements.Requirement>> GetRequirements(string packagePath, CancellationToken ct = default)
+    {
+        var reqs = await base.ParseRequirements("python", ct);
+
+        // use venv
+        var venvPath = FindOrCreateVenv(packagePath);
+
+        logger.LogInformation("Using virtual environment at: {VenvPath}", venvPath);
+        
+        if (venvPath == null)
+        {
+            logger.LogWarning("No venv path determined for Python requirements check");
+            return reqs;
+        }
+
+        // update checks to use venv path
+        foreach (var req in reqs)
+        {
+            var binDir = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Scripts" : "bin";
+            req.check[0] = Path.Combine(venvPath, binDir, req.check[0]);
+        }
+
+        return reqs;
+    }
+
+    private string? FindOrCreateVenv(string workingDirectory)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(workingDirectory))
+            {
+                workingDirectory = Environment.CurrentDirectory;
+            }
+
+            var candidates = new[] { ".venv", "venv", ".env", "env" };
+
+            foreach (var c in candidates)
+            {
+                var path = Path.Combine(workingDirectory, c);
+                if (Directory.Exists(path))
+                {
+                    return Path.GetFullPath(path);
+                }
+            }
+
+            // no venv found, create one
+            var venvPath = Path.Combine(workingDirectory, ".venv");
+
+            var processOptions = new ProcessOptions(
+                "python",
+                new[] { "-m", "venv", venvPath },
+                workingDirectory: workingDirectory
+            );
+
+            var result = processHelper.Run(processOptions, CancellationToken.None).GetAwaiter().GetResult();
+
+            if (result.ExitCode == 0 && Directory.Exists(venvPath))
+            {
+                return Path.GetFullPath(venvPath);
+            }
+        }
+        catch
+        {
+            // Log or handle the error as needed
+            return null;
+        }
+
+        return null;
     }
 }

@@ -11,7 +11,7 @@ public abstract class EnvRequirementsCheck
 {
     private readonly string PATH_TO_REQS = Path.Combine(AppContext.BaseDirectory, "Configuration", "RequirementsV1.json");
 
-    public async Task<List<SetupRequirements.Requirement>> GetRequirements(string checkCategory, CancellationToken ct = default)
+    public async Task<List<SetupRequirements.Requirement>> ParseRequirements(string checkCategory, CancellationToken ct = default)
     {
         var requirementsJson = await File.ReadAllTextAsync(PATH_TO_REQS, ct);
         var setupRequirements = JsonSerializer.Deserialize<SetupRequirements>(requirementsJson);

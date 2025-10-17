@@ -55,7 +55,6 @@ public interface ILanguageSpecificChecks
         return Task.FromResult(new CLICheckResponse(1, "", "Not implemented for this language."));
     }
 
-    /// <summary>
     /// Validate samples for the specific package.
     /// </summary>
     /// <param name="packagePath">Path to the package directory</param>
@@ -65,7 +64,30 @@ public interface ILanguageSpecificChecks
     {
         return Task.FromResult(new CLICheckResponse(1, "", "Not implemented for this language."));
     }
-    
+
+    /// <summary>
+    /// Checks AOT compatibility for the specific package using language-specific tools.
+    /// </summary>
+    /// <param name="packagePath">Path to the package directory</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Result of the AOT compatibility check</returns>
+    Task<CLICheckResponse> CheckAotCompat(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(new CLICheckResponse(1, "", "Not implemented for this language."));
+    }
+
+    /// <summary>
+    /// Checks generated code for the specific package using language-specific tools.
+    /// </summary>
+    /// <param name="packagePath">Path to the package directory</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Result of the generated code check</returns>
+    Task<CLICheckResponse> CheckGeneratedCode(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(new CLICheckResponse(1, "", "Not implemented for this language."));
+    }
+
+    /// <summary>
     /// Gets the SDK package name.
     /// </summary>
     /// <param name="repo">Repository root path</param>

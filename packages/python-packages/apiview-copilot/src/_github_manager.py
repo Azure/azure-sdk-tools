@@ -6,11 +6,17 @@
 
 from __future__ import annotations
 
+import base64
+import hashlib
+import json
 import logging
 import time
 from typing import Iterable, Optional
 
 import httpx
+from azure.identity import DefaultAzureCredential
+from azure.keyvault.keys import KeyClient
+from azure.keyvault.keys.crypto import CryptographyClient, SignatureAlgorithm
 from src._settings import SettingsManager
 
 logger = logging.getLogger(__name__)
@@ -19,29 +25,29 @@ logger = logging.getLogger(__name__)
 class GithubManager:
     """
     Encapsulates GitHub authentication and common operations (create issues, comments, labels).
-    Uses a Personal Access Token (PAT) for authentication.
-    GitHub App logic is stubbed for future use.
+    Uses GitHub App authentication by default, with option to use PAT.
     """
 
     _instance: "GithubManager" = None
 
     @classmethod
-    def get_instance(cls, force_new: bool = False) -> "GithubManager":
+    def get_instance(cls, force_new: bool = False, use_app_auth: bool = True) -> "GithubManager":
         """
         Returns a singleton instance of GithubManager.
         If force_new is True, creates a new instance.
         """
         if cls._instance is None or force_new:
-            cls._instance = cls()
+            cls._instance = cls(use_app_auth=use_app_auth)
         return cls._instance
 
-    def __init__(self):
+    def __init__(self, use_app_auth: bool = True):
         settings = SettingsManager()
         self._pat = settings.get("azuresdk-github-pat")
         self._user_agent = "APIView-Copilot/1.0"
         self._timeout = 10
         self._max_retries = 3
         self._backoff_s = 1.0
+        self.use_app_auth = use_app_auth
 
         self._client = httpx.Client(
             timeout=self._timeout,
@@ -51,7 +57,6 @@ class GithubManager:
             },
         )
 
-        # Stubs for future GitHub App support
         self._app_id = settings.get("github_app_id")
         self._client_secret = settings.get("github_app_client_secret")
         self._installation_tokens: dict[str, tuple[str, int]] = {}
@@ -99,6 +104,7 @@ class GithubManager:
         body: str,
         labels: Optional[Iterable[str]] = None,
         assignees: Optional[Iterable[str]] = None,
+        use_app_auth: Optional[bool] = None,
     ) -> dict:
         """
         Creates a new Github issue.
@@ -109,28 +115,40 @@ class GithubManager:
             payload["labels"] = list(labels)
         if assignees:
             payload["assignees"] = list(assignees)
-        return self._request_json("POST", url, self._pat, json=payload)
+        use_app = self.use_app_auth if use_app_auth is None else use_app_auth
+        token = self._get_installation_token(owner) if use_app else self._pat
+        return self._request_json("POST", url, token, json=payload)
 
-    def post_comment_on_issue(self, *, owner: str, repo: str, issue_number: int, body: str) -> dict:
+    def post_comment_on_issue(
+        self, *, owner: str, repo: str, issue_number: int, body: str, use_app_auth: Optional[bool] = None
+    ) -> dict:
         """
         Posts a comment on a GitHub issue.
         """
         url = f"https://api.github.com/repos/{owner}/{repo}/issues/{issue_number}/comments"
-        return self._request_json("POST", url, self._pat, json={"body": body})
+        use_app = self.use_app_auth if use_app_auth is None else use_app_auth
+        token = self._get_installation_token(owner) if use_app else self._pat
+        return self._request_json("POST", url, token, json={"body": body})
 
-    def add_labels(self, *, owner: str, repo: str, issue_number: int, labels: Iterable[str]) -> dict:
+    def add_labels(
+        self, *, owner: str, repo: str, issue_number: int, labels: Iterable[str], use_app_auth: Optional[bool] = None
+    ) -> dict:
         """
         Adds labels to a GitHub issue.
         """
         url = f"https://api.github.com/repos/{owner}/{repo}/issues/{issue_number}/labels"
-        return self._request_json("POST", url, self._pat, json={"labels": list(labels)})
+        use_app = self.use_app_auth if use_app_auth is None else use_app_auth
+        token = self._get_installation_token(owner) if use_app else self._pat
+        return self._request_json("POST", url, token, json={"labels": list(labels)})
 
-    def close_issue(self, *, owner: str, repo: str, issue_number: int) -> dict:
+    def close_issue(self, *, owner: str, repo: str, issue_number: int, use_app_auth: Optional[bool] = None) -> dict:
         """
         Closes a GitHub issue.
         """
         url = f"https://api.github.com/repos/{owner}/{repo}/issues/{issue_number}"
-        return self._request_json("PATCH", url, self._pat, json={"state": "closed"})
+        use_app = self.use_app_auth if use_app_auth is None else use_app_auth
+        token = self._get_installation_token(owner) if use_app else self._pat
+        return self._request_json("PATCH", url, token, json={"state": "closed"})
 
     def _request_json(
         self,
@@ -169,3 +187,87 @@ class GithubManager:
                 detail = last_exc.response.text
             raise RuntimeError(f"GitHub API error {last_exc.response.status_code}: {detail}") from last_exc
         raise last_exc or RuntimeError("Unknown GitHub request failure")
+
+    # === GitHub App authentication ===
+
+    def _create_app_jwt(self) -> str:
+        """
+        Mint a GitHub App JWT using Azure Key Vault 'sign' (non-exportable key).
+        """
+        settings = SettingsManager()
+        keyvault_url = settings.get("github_app_keyvault_url")
+        key_name = settings.get("github_app_key_name")
+        app_id = settings.get("github_app_id")
+
+        credential = DefaultAzureCredential()
+        key_client = KeyClient(vault_url=keyvault_url, credential=credential)
+        key = key_client.get_key(key_name)
+        crypto_client = CryptographyClient(key, credential=credential)
+
+        # JWT header and payload
+        header = {"alg": "RS256", "typ": "JWT"}
+        now = int(time.time())
+        payload = {"iat": now, "exp": now + 600, "iss": app_id}  # 10 minutes
+
+        def b64url(data):
+            raw = json.dumps(data, separators=(",", ":")).encode("utf-8")
+            b64 = base64.urlsafe_b64encode(raw).rstrip(b"=")
+            return b64.decode("utf-8")
+
+        encoded_header = b64url(header)
+        encoded_payload = b64url(payload)
+        unsigned_token = f"{encoded_header}.{encoded_payload}"
+
+        # Compute SHA-256 digest of the unsigned token
+        digest_bytes = hashlib.sha256(unsigned_token.encode("ascii")).digest()
+
+        # Sign the digest using Key Vault
+        sign_result = crypto_client.sign(SignatureAlgorithm.rs256, digest_bytes)
+        signature = base64.urlsafe_b64encode(sign_result.signature).rstrip(b"=").decode("utf-8")
+
+        jwt = f"{unsigned_token}.{signature}"
+        return jwt
+
+    def _find_installation_id(self, app_jwt: str, owner: str) -> int:
+        """
+        Find the installation ID for the given owner using the App JWT.
+        """
+        url = "https://api.github.com/app/installations"
+        headers = {
+            "Authorization": f"Bearer {app_jwt}",
+            "Accept": "application/vnd.github+json",
+            "User-Agent": self._user_agent,
+            "X-GitHub-Api-Version": "2022-11-28",
+        }
+        resp = self._client.get(url, headers=headers)
+        resp.raise_for_status()
+        installations = resp.json()
+        for inst in installations:
+            acct = inst.get("account") or {}
+            if (acct.get("login") or "").lower() == owner.lower():
+                return inst["id"]
+        raise RuntimeError(f"No GitHub App installation found for owner '{owner}'")
+
+    def _create_installation_token(self, app_jwt: str, installation_id: int) -> dict:
+        """
+        Exchange the App JWT and installation ID for an installation access token.
+        """
+        url = f"https://api.github.com/app/installations/{installation_id}/access_tokens"
+        headers = {
+            "Authorization": f"Bearer {app_jwt}",
+            "Accept": "application/vnd.github+json",
+            "User-Agent": self._user_agent,
+            "X-GitHub-Api-Version": "2022-11-28",
+        }
+        resp = self._client.post(url, headers=headers, json={})
+        resp.raise_for_status()
+        return resp.json()
+
+    def _get_installation_token(self, owner: str) -> str:
+        """
+        Get a fresh installation token for the given owner using GitHub App authentication.
+        """
+        app_jwt = self._create_app_jwt()
+        installation_id = self._find_installation_id(app_jwt, owner)
+        token_info = self._create_installation_token(app_jwt, installation_id)
+        return token_info["token"]

@@ -9,9 +9,9 @@ using Moq;
 namespace Azure.Sdk.Tools.Cli.Tests.Helpers;
 
 /// <summary>
-/// Contract-focused tests for all <see cref="IPackageInfo"/> implementations.
-/// Ensures consistent parsing of repo root, relative path, idempotent initialization,
-/// and language-specific version extraction without duplicating per-language edge case tests.
+/// Contract-focused tests for all language-specific <see cref="IPackageInfoHelper"/> implementations.
+/// Ensures consistent parsing of repo root, relative path, and language-specific version extraction
+/// without duplicating per-language edge case tests.
 /// </summary>
 [TestFixture]
 public class PackageInfoContractTests
@@ -23,9 +23,9 @@ public class PackageInfoContractTests
     [TearDown]
     public void TearDown() => _tempRoot.Dispose();
 
-    private (string packagePath, GitHelper gitHelper) CreateSdkPackage(string language, string service, string package)
+    private (string packagePath, GitHelper gitHelper) CreateSdkPackage(string service, string package)
     {
-        var repoRoot = Path.Combine(_tempRoot.DirectoryPath, $"azure-sdk-for-{language}");
+        var repoRoot = Path.Combine(_tempRoot.DirectoryPath, "azure-sdk-repo-root");
         Directory.CreateDirectory(repoRoot);
         if (!Directory.Exists(Path.Combine(repoRoot, ".git"))) { Repository.Init(repoRoot); }
         var sdkPath = Path.Combine(repoRoot, "sdk", service, package);
@@ -35,16 +35,6 @@ public class PackageInfoContractTests
         return (sdkPath, gitHelper);
     }
 
-    private IPackageInfo CreateForLanguage(string language, GitHelper gitHelper)
-        => language switch
-        {
-            "dotnet" => new DotNetPackageInfo(gitHelper),
-            "java" => new JavaPackageInfo(gitHelper),
-            "python" => new PythonPackageInfo(gitHelper),
-            "typescript" => new TypeScriptPackageInfo(gitHelper),
-            "go" => new GoPackageInfo(gitHelper),
-            _ => throw new ArgumentOutOfRangeException(nameof(language), language, "Unsupported test language")
-        };
 
     [Test]
     [TestCase("dotnet")]
@@ -52,42 +42,20 @@ public class PackageInfoContractTests
     [TestCase("python")]
     [TestCase("typescript")]
     [TestCase("go")]
-    public void Init_Idempotent_SamePath(string language)
-    {
-        // Go packages require sdk/<group>/<service>/<package>; other languages use sdk/<service>/<package>
-        var servicePath = language == "go" ? "group1/service" : "service";
-        var (pkgPath, gitHelper) = CreateSdkPackage(language, servicePath, "pkgA");
-        var info = CreateForLanguage(language, gitHelper);
-        info.Init(pkgPath);
-        // Second init with same path should be silent
-        Assert.DoesNotThrow(() => info.Init(pkgPath));
-        // Attempt re-init with different path should throw
-        var (otherPath, _) = CreateSdkPackage(language, servicePath, "pkgB");
-        var ex = Assert.Throws<InvalidOperationException>(() => info.Init(otherPath));
-        Assert.That(ex!.Message, Does.Contain("already initialized"));
-    }
-
-    [Test]
-    [TestCase("dotnet")]
-    [TestCase("java")]
-    [TestCase("python")]
-    [TestCase("typescript")]
-    [TestCase("go")]
-    public void CommonProperties_AreDerivedCorrectly(string language)
+    public async Task CommonProperties_AreDerivedCorrectly(string language)
     {
         string group = language == "go" ? "security" : string.Empty; // Representative group for go
         var service = language == "go" ? "keyvault" : "storage";
         var package = language switch { "dotnet" => "Azure.Storage.Blobs", "java" => "azure-storage-blob", "go" => "azkeys", _ => "storage-blob" };
         var servicePath = language == "go" ? Path.Combine(group, service) : service;
-        var (pkgPath, gitHelper) = CreateSdkPackage(language, servicePath, package);
-        var info = CreateForLanguage(language, gitHelper);
-        info.Init(pkgPath);
+        var (pkgPath, gitHelper) = CreateSdkPackage(servicePath, package);
+        var helper = CreateHelperForLanguage(language, gitHelper);
+        var info = await helper.ResolvePackageInfo(pkgPath);
 
         Assert.Multiple(() =>
         {
-            Assert.That(info.IsInitialized, Is.True, "Should be initialized after Init");
             Assert.That(info.PackagePath, Is.EqualTo(RealPath.GetRealPath(Path.GetFullPath(pkgPath))));
-            Assert.That(info.RepoRoot, Does.EndWith($"azure-sdk-for-{language}"));
+            Assert.That(info.RepoRoot, Does.EndWith("azure-sdk-repo-root"));
             var expectedRelative = language == "go" ? Path.Combine(group, service, package) : Path.Combine(service, package);
             Assert.That(info.RelativePath, Is.EqualTo(expectedRelative));
             Assert.That(info.ServiceName, Is.EqualTo(service));
@@ -97,16 +65,24 @@ public class PackageInfoContractTests
     }
 
     [Test]
-    public void Init_InvalidPath_Throws()
+    [TestCase("dotnet")]
+    [TestCase("java")]
+    [TestCase("python")]
+    [TestCase("typescript")]
+    [TestCase("go")]
+    public async Task Resolve_InvalidPath_Throws(string language)
     {
-        var badRoot = Path.Combine(_tempRoot.DirectoryPath, "azure-sdk-for-python", "storage", "notUnderSdkProperly");
+        // Construct a path inside the repo root but not under the required sdk/<service>/<package> (and in go case sdk/<group>/<service>/<package>) depth.
+    var repoRoot = Path.Combine(_tempRoot.DirectoryPath, "azure-sdk-repo-root-invalid");
+        Directory.CreateDirectory(repoRoot);
+        if (!Directory.Exists(Path.Combine(repoRoot, ".git"))) { Repository.Init(repoRoot); }
+        // Invalid because missing sdk segment entirely or insufficient depth under sdk.
+        var badRoot = Path.Combine(repoRoot, "random", "folder");
         Directory.CreateDirectory(badRoot);
-        // Need git at repo root
-        Repository.Init(Path.Combine(_tempRoot.DirectoryPath, "azure-sdk-for-python"));
         var ghMock = new Mock<IGitHubService>();
         var gitHelper = new GitHelper(ghMock.Object, new TestLogger<GitHelper>());
-        var info = new PythonPackageInfo(gitHelper);
-        Assert.Throws<ArgumentException>(() => info.Init(badRoot));
+        var helper = CreateHelperForLanguage(language, gitHelper);
+        Assert.ThrowsAsync<ArgumentException>(async () => await helper.ResolvePackageInfo(badRoot));
     }
 
     [Test]
@@ -118,10 +94,10 @@ public class PackageInfoContractTests
     public async Task VersionParsing_Works(string language, string package, string fileContent, string fileName, string expectedVersion)
     {
         var servicePath = language == "go" ? "security/keyvault" : "ai";
-        var (pkgPath, gitHelper) = CreateSdkPackage(language, servicePath, package);
+        var (pkgPath, gitHelper) = CreateSdkPackage(servicePath, package);
         File.WriteAllText(Path.Combine(pkgPath, fileName), fileContent);
-        var info = CreateForLanguage(language, gitHelper);
-        info.Init(pkgPath);
+        var helper = CreateHelperForLanguage(language, gitHelper);
+        var info = await helper.ResolvePackageInfo(pkgPath);
         var parsed = await info.GetPackageVersionAsync();
         Assert.That(parsed, Is.EqualTo(expectedVersion));
     }
@@ -135,10 +111,20 @@ public class PackageInfoContractTests
     public async Task VersionParsing_MissingFile_ReturnsNull(string language, string package)
     {
         var servicePath = language == "go" ? "security/keyvault" : "missing";
-        var (pkgPath, gitHelper) = CreateSdkPackage(language, servicePath, package);
-        var info = CreateForLanguage(language, gitHelper);
-        info.Init(pkgPath);
+        var (pkgPath, gitHelper) = CreateSdkPackage(servicePath, package);
+        var helper = CreateHelperForLanguage(language, gitHelper);
+        var info = await helper.ResolvePackageInfo(pkgPath);
         var parsed = await info.GetPackageVersionAsync();
         Assert.That(parsed, Is.Null);
     }
+
+    private static IPackageInfoHelper CreateHelperForLanguage(string language, IGitHelper gitHelper) => language switch
+    {
+        "dotnet" => new DotNetPackageInfoHelper(gitHelper),
+        "java" => new JavaPackageInfoHelper(gitHelper),
+        "python" => new PythonPackageInfoHelper(gitHelper),
+        "typescript" => new TypeScriptPackageInfoHelper(gitHelper),
+        "go" => new GoPackageInfoHelper(gitHelper),
+        _ => throw new ArgumentException($"Unsupported language '{language}'", nameof(language))
+    };
 }

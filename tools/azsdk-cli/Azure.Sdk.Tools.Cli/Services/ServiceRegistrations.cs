@@ -50,13 +50,13 @@ namespace Azure.Sdk.Tools.Cli.Services
                 // Future: Python = typeof(PythonUpdateLanguageService), etc
             });
 
-            services.AddLanguageSpecific<IPackageInfo>(new LanguageSpecificImplementations
+            services.AddLanguageSpecific<IPackageInfoHelper>(new LanguageSpecificImplementations
             {
-                DotNet = typeof(DotNetPackageInfo),
-                Java = typeof(JavaPackageInfo),
-                Python = typeof(PythonPackageInfo),
-                JavaScript = typeof(TypeScriptPackageInfo),
-                Go = typeof(GoPackageInfo),
+                DotNet = typeof(DotNetPackageInfoHelper),
+                Java = typeof(JavaPackageInfoHelper),
+                Python = typeof(PythonPackageInfoHelper),
+                JavaScript = typeof(TypeScriptPackageInfoHelper),
+                Go = typeof(GoPackageInfoHelper),
             });
 
             services.AddLanguageSpecific<ISampleLanguageContext>(new LanguageSpecificImplementations

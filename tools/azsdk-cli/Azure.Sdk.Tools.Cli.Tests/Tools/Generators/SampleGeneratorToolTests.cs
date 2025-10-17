@@ -25,7 +25,7 @@ public class SampleGeneratorToolTests
 
 
     [Test]
-    public void GenerateSamples_MultiScenarioPrompt_ProducesMultipleFiles()
+    public async Task GenerateSamples_MultiScenarioPrompt_ProducesMultipleFiles()
     {
         var (_, packagePath) = CreateFakeGoPackage();
         var generatedSamples = new List<GeneratedSample>
@@ -39,7 +39,7 @@ public class SampleGeneratorToolTests
             .ReturnsAsync(generatedSamples);
 
         var command = tool.GetCommandInstances().First();
-        int exitCode = command.Invoke($"--prompt \"1) Create key 2) List keys\" --package-path {packagePath}");
+        int exitCode = await command.InvokeAsync($"--prompt \"1) Create key 2) List keys\" --package-path {packagePath}");
         Assert.Multiple(() =>
         {
             Assert.That(exitCode, Is.EqualTo(0));
@@ -54,7 +54,7 @@ public class SampleGeneratorToolTests
     [TestCase("typescript", "samples-dev", ".ts")]
     [TestCase("python", "samples", ".py")]
     [TestCase("go", "", ".go")]
-    public void GenerateSamples_LanguageSpecificOutputPath(string language, string expectedSubPath, string ext)
+    public async Task GenerateSamples_LanguageSpecificOutputPath(string language, string expectedSubPath, string ext)
     {
         using var tempRepo = TempDirectory.Create($"sample-gen-{language}");
         var repoRoot = tempRepo.DirectoryPath;
@@ -96,21 +96,18 @@ public class SampleGeneratorToolTests
             .Setup(m => m.RunAgentToCompletion(It.IsAny<Microagent<List<GeneratedSample>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(generatedSamples);
 
-        var resolverMock = new Mock<ILanguageSpecificResolver<IPackageInfo>>();
+        var resolverMock = new Mock<ILanguageSpecificResolver<IPackageInfoHelper>>();
         var gitHubServiceMock = new Mock<IGitHubService>();
         var gitLogger = new TestLogger<GitHelper>();
         var realGitHelper = new GitHelper(gitHubServiceMock.Object, gitLogger);
         resolverMock.Setup(r => r.Resolve(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(() =>
         {
-            if (string.IsNullOrWhiteSpace(language))
-            {
-                throw new InvalidOperationException("Language test parameter was null/empty/whitespace.");
-            }
-            if (language == "dotnet") { return new DotNetPackageInfo(realGitHelper); }
-            if (language == "java") { return new JavaPackageInfo(realGitHelper); }
-            if (language == "python") { return new PythonPackageInfo(realGitHelper); }
-            if (language == "typescript") { return new TypeScriptPackageInfo(realGitHelper); }
-            if (language == "go") { return new GoPackageInfo(realGitHelper); }
+            if (string.IsNullOrWhiteSpace(language)) { throw new InvalidOperationException("Language test parameter was null/empty/whitespace."); }
+            if (language == "dotnet") { return new DotNetPackageInfoHelper(realGitHelper); }
+            if (language == "java") { return new JavaPackageInfoHelper(realGitHelper); }
+            if (language == "python") { return new PythonPackageInfoHelper(realGitHelper); }
+            if (language == "typescript") { return new TypeScriptPackageInfoHelper(realGitHelper); }
+            if (language == "go") { return new GoPackageInfoHelper(realGitHelper); }
             throw new InvalidOperationException($"Unexpected language value '{language}' in test case.");
         });
         var sampleCtxResolverMock = new Mock<ILanguageSpecificResolver<ISampleLanguageContext>>();
@@ -127,7 +124,7 @@ public class SampleGeneratorToolTests
         tool = new SampleGeneratorTool(microagentHostServiceMock.Object, logger, resolverMock.Object, sampleCtxResolverMock.Object);
         tool.Initialize(_outputHelper, telemetryServiceMock.Object);
         var command = tool.GetCommandInstances().First();
-        int exitCode = command.Invoke($"--prompt \"Do thing\" --package-path {packagePath}");
+        int exitCode = await command.InvokeAsync($"--prompt \"Do thing\" --package-path {packagePath}");
         Assert.That(exitCode, Is.EqualTo(0));
 
         var expectedDir = string.IsNullOrEmpty(expectedSubPath)
@@ -138,7 +135,7 @@ public class SampleGeneratorToolTests
     }
 
     [Test]
-    public void GenerateSamples_ModelOption_PassedToMicroagent()
+    public async Task GenerateSamples_ModelOption_PassedToMicroagent()
     {
         var (_, packagePath) = CreateFakeGoPackage();
         Microagent<List<GeneratedSample>>? captured = null;
@@ -148,7 +145,7 @@ public class SampleGeneratorToolTests
             .ReturnsAsync(new List<GeneratedSample> { new("sample_one", "package main\nfunc main(){}") });
 
         var command = tool.GetCommandInstances().First();
-        int exitCode = command.Invoke($"--prompt \"One\" --package-path {packagePath} --model custom-model");
+        int exitCode = await command.InvokeAsync($"--prompt \"One\" --package-path {packagePath} --model custom-model");
         Assert.Multiple(() =>
         {
             Assert.That(exitCode, Is.EqualTo(0));
@@ -159,7 +156,7 @@ public class SampleGeneratorToolTests
     }
 
     [Test]
-    public void GenerateSamples_PromptFilePath_LoadsFileContent()
+    public async Task GenerateSamples_PromptFilePath_LoadsFileContent()
     {
         var (repoRoot, packagePath) = CreateFakeGoPackage();
         var promptFile = Path.Combine(repoRoot, "prompt.md");
@@ -172,7 +169,7 @@ public class SampleGeneratorToolTests
             .ReturnsAsync(new List<GeneratedSample> { new("create_key", "package main\nfunc main(){}") });
 
         var command = tool.GetCommandInstances().First();
-        int exitCode = command.Invoke($"--prompt {promptFile} --package-path {packagePath}");
+        int exitCode = await command.InvokeAsync($"--prompt {promptFile} --package-path {packagePath}");
 
         Assert.Multiple(() =>
         {
@@ -188,7 +185,7 @@ public class SampleGeneratorToolTests
     }
 
     [Test]
-    public void GenerateSamples_PromptFilePath_Nonexistent_FallsBackToRawText()
+    public async Task GenerateSamples_PromptFilePath_Nonexistent_FallsBackToRawText()
     {
         var (repoRoot, packagePath) = CreateFakeGoPackage();
         var missingPromptPath = Path.Combine(repoRoot, "nonexistent-prompt.md");
@@ -200,7 +197,7 @@ public class SampleGeneratorToolTests
             .ReturnsAsync(new List<GeneratedSample> { new("scenario", "package main\nfunc main(){}") });
 
         var command = tool.GetCommandInstances().First();
-        int exitCode = command.Invoke($"--prompt {missingPromptPath} --package-path {packagePath}");
+        int exitCode = await command.InvokeAsync($"--prompt {missingPromptPath} --package-path {packagePath}");
 
         Assert.Multiple(() =>
         {
@@ -212,7 +209,7 @@ public class SampleGeneratorToolTests
     }
 
     [Test]
-    public void GenerateSamples_SanitizesFileName()
+    public async Task GenerateSamples_SanitizesFileName()
     {
         var (_, packagePath) = CreateFakeGoPackage();
         microagentHostServiceMock
@@ -220,7 +217,7 @@ public class SampleGeneratorToolTests
             .ReturnsAsync(new List<GeneratedSample> { new("nested/folder/sample-name", "package main\nfunc main(){}") });
 
         var command = tool.GetCommandInstances().First();
-        int exitCode = command.Invoke($"--prompt \"Do thing\" --package-path {packagePath}");
+        int exitCode = await command.InvokeAsync($"--prompt \"Do thing\" --package-path {packagePath}");
         Assert.That(exitCode, Is.EqualTo(0));
 
         var expectedFile = Path.Combine(packagePath, "nested_folder_sample-name.go");
@@ -242,7 +239,7 @@ public class SampleGeneratorToolTests
             .ReturnsAsync(samples);
 
         var command = tool.GetCommandInstances().First();
-        int exitCode = command.Invoke($"--prompt \"Do thing\" --package-path {packagePath}");
+        int exitCode = await command.InvokeAsync($"--prompt \"Do thing\" --package-path {packagePath}");
         Assert.That(exitCode, Is.EqualTo(0));
 
         var skippedEmptyName = Path.Combine(packagePath, ".go");
@@ -256,21 +253,21 @@ public class SampleGeneratorToolTests
     }
 
     [Test]
-    public void GenerateSamples_PackageInfoResolverReturnsNull_ReturnsError()
+    public async Task GenerateSamples_PackageInfoResolverReturnsNull_ReturnsError()
     {
         using var tempDir = TempDirectory.Create("null-resolver-repo");
         var pkgPath = Path.Combine(tempDir.DirectoryPath, "sdk", "group", "service", "pkg");
         Directory.CreateDirectory(pkgPath);
 
-        var nullResolver = new Mock<ILanguageSpecificResolver<IPackageInfo>>();
-        nullResolver.Setup(r => r.Resolve(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((IPackageInfo?)null);
+        var nullResolver = new Mock<ILanguageSpecificResolver<IPackageInfoHelper>>();
+        nullResolver.Setup(r => r.Resolve(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((IPackageInfoHelper?)null);
         var sampleCtxResolver = new Mock<ILanguageSpecificResolver<ISampleLanguageContext>>();
         sampleCtxResolver.Setup(r => r.Resolve(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(new GoSampleLanguageContext());
 
         var errorTool = new SampleGeneratorTool(microagentHostServiceMock.Object, logger, nullResolver.Object, sampleCtxResolver.Object);
         errorTool.Initialize(_outputHelper, telemetryServiceMock.Object);
         var command = errorTool.GetCommandInstances().First();
-        int exitCode = command.Invoke($"--prompt \"Anything\" --package-path {pkgPath}");
+        int exitCode = await command.InvokeAsync($"--prompt \"Anything\" --package-path {pkgPath}");
         Assert.That(exitCode, Is.EqualTo(1));
         var error = _outputHelper.Outputs.FirstOrDefault(o => o.Stream == OutputHelper.StreamType.Stdout || o.Stream == OutputHelper.StreamType.Stderr).Output;
         Assert.That(error, Does.Contain("validation errors"));
@@ -278,7 +275,7 @@ public class SampleGeneratorToolTests
     }
 
     [Test]
-    public void GenerateSamples_DefaultModelUsedWhenNotSpecified()
+    public async Task GenerateSamples_DefaultModelUsedWhenNotSpecified()
     {
         var (_, packagePath) = CreateFakeGoPackage();
         Microagent<List<GeneratedSample>>? captured = null;
@@ -287,14 +284,14 @@ public class SampleGeneratorToolTests
             .Callback<Microagent<List<GeneratedSample>>, CancellationToken>((agent, _) => captured = agent)
             .ReturnsAsync(new List<GeneratedSample> { new("one", "package main\nfunc main(){}") });
         var command = tool.GetCommandInstances().First();
-        int exitCode = command.Invoke($"--prompt \"Scenario\" --package-path {packagePath}");
+        int exitCode = await command.InvokeAsync($"--prompt \"Scenario\" --package-path {packagePath}");
         Assert.That(exitCode, Is.EqualTo(0));
         Assert.That(captured, Is.Not.Null);
         Assert.That(captured!.Model, Is.EqualTo("gpt-4.1"));
     }
 
     [Test]
-    public void GenerateSamples_MultilinePrompt_NotTreatedAsFile()
+    public async Task GenerateSamples_MultilinePrompt_NotTreatedAsFile()
     {
         var (_, packagePath) = CreateFakeGoPackage();
         var multilinePrompt = "First line\nSecond line";
@@ -304,7 +301,7 @@ public class SampleGeneratorToolTests
             .Callback<Microagent<List<GeneratedSample>>, CancellationToken>((agent, _) => captured = agent)
             .ReturnsAsync(new List<GeneratedSample> { new("multi", "package main\nfunc main(){}`") });
         var command = tool.GetCommandInstances().First();
-        int exitCode = command.Invoke($"--prompt \"{multilinePrompt}\" --package-path {packagePath}");
+        int exitCode = await command.InvokeAsync($"--prompt \"{multilinePrompt}\" --package-path {packagePath}");
         Assert.That(exitCode, Is.EqualTo(0));
         Assert.That(captured, Is.Not.Null);
         Assert.That(captured!.Instructions, Does.Contain(multilinePrompt));
@@ -317,10 +314,10 @@ public class SampleGeneratorToolTests
         _outputHelper = new OutputHelper();
         microagentHostServiceMock = new Mock<IMicroagentHostService>();
         telemetryServiceMock = new Mock<ITelemetryService>();
-        var packageInfoResolverMock = new Mock<ILanguageSpecificResolver<IPackageInfo>>();
+        var packageInfoResolverMock = new Mock<ILanguageSpecificResolver<IPackageInfoHelper>>();
         packageInfoResolverMock
             .Setup(r => r.Resolve(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync((string p, CancellationToken _) => new GoPackageInfo(new GitHelper(new Mock<IGitHubService>().Object, new TestLogger<GitHelper>())));
+                .ReturnsAsync((string p, CancellationToken _) => new GoPackageInfoHelper(new GitHelper(new Mock<IGitHubService>().Object, new TestLogger<GitHelper>())));
         var sampleCtxResolverMock = new Mock<ILanguageSpecificResolver<ISampleLanguageContext>>();
         sampleCtxResolverMock.Setup(r => r.Resolve(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(new GoSampleLanguageContext());
         tool = new SampleGeneratorTool(
@@ -363,7 +360,7 @@ public class SampleGeneratorToolTests
             .ReturnsAsync(generatedSamples);
 
         var command = tool.GetCommandInstances().First();
-        int exitCode = command.Invoke($"--prompt \"List keys\" --package-path {packagePath}");
+        int exitCode = await command.InvokeAsync($"--prompt \"List keys\" --package-path {packagePath}");
 
         Assert.That(exitCode, Is.EqualTo(0), "Command should succeed");
 
@@ -390,7 +387,7 @@ public class SampleGeneratorToolTests
             .ReturnsAsync(generatedSamples);
 
         var command = tool.GetCommandInstances().First();
-        int exitCode = command.Invoke($"--prompt \"List keys\" --package-path {packagePath}");
+        int exitCode = await command.InvokeAsync($"--prompt \"List keys\" --package-path {packagePath}");
 
         Assert.That(exitCode, Is.EqualTo(0));
         var finalContent = await File.ReadAllTextAsync(existingFile);
@@ -414,7 +411,7 @@ public class SampleGeneratorToolTests
             .ReturnsAsync(generatedSamples);
 
         var command = tool.GetCommandInstances().First();
-        int exitCode = command.Invoke($"--prompt \"List keys\" --package-path {packagePath} --overwrite");
+        int exitCode = await command.InvokeAsync($"--prompt \"List keys\" --package-path {packagePath} --overwrite");
 
         Assert.That(exitCode, Is.EqualTo(0));
         var finalContent = await File.ReadAllTextAsync(existingFile);
@@ -422,7 +419,7 @@ public class SampleGeneratorToolTests
     }
 
     [Test]
-    public void GenerateSamples_NoSamplesReturned_NoFilesCreated()
+    public async Task GenerateSamples_NoSamplesReturned_NoFilesCreated()
     {
         var (_, packagePath) = CreateFakeGoPackage();
         var baseline = Directory.GetFiles(packagePath, "*.go").ToHashSet();
@@ -432,7 +429,7 @@ public class SampleGeneratorToolTests
             .ReturnsAsync([]);
 
         var command = tool.GetCommandInstances().First();
-        int exitCode = command.Invoke($"--prompt \"List keys\" --package-path {packagePath}");
+        int exitCode = await command.InvokeAsync($"--prompt \"List keys\" --package-path {packagePath}");
 
         Assert.That(exitCode, Is.EqualTo(0));
         var after = Directory.GetFiles(packagePath, "*.go").ToHashSet();
@@ -441,13 +438,13 @@ public class SampleGeneratorToolTests
     }
 
     [Test]
-    public void HandleCommand_InvalidPackagePath_ReturnsError()
+    public async Task HandleCommand_InvalidPackagePath_ReturnsError()
     {
         using var invalidTemp = TempDirectory.Create("invalid-sample-gen");
         var invalidPath = invalidTemp.DirectoryPath;
 
         var command = tool.GetCommandInstances().First();
-        int exitCode = command.Invoke($"--prompt \"List keys\" --package-path {invalidPath}");
+        int exitCode = await command.InvokeAsync($"--prompt \"List keys\" --package-path {invalidPath}");
 
         Assert.Multiple(() =>
         {

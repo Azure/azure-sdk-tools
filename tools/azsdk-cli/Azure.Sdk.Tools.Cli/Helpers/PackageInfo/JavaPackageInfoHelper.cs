@@ -4,67 +4,45 @@ using System.Text.RegularExpressions;
 
 namespace Azure.Sdk.Tools.Cli.Helpers;
 
-public sealed class JavaPackageInfo : IPackageInfo
+public sealed class JavaPackageInfoHelper(IGitHelper gitHelper) : IPackageInfoHelper
 {
-    private string? _packagePath;
-    private string? _repoRoot;
-    private string? _relativePath;
-    public bool IsInitialized { get; private set; }
-    private readonly IGitHelper _gitHelper;
-
-    public JavaPackageInfo(IGitHelper gitHelper)
-    {
-        _gitHelper = gitHelper;
-    }
-
-    public void Init(string packagePath)
+    public Task<PackageInfo> ResolvePackageInfo(string packagePath, CancellationToken ct = default)
     {
         var realPath = RealPath.GetRealPath(packagePath);
-        if (IsInitialized)
+        var (repoRoot, relativePath, fullPath) = Parse(gitHelper, realPath);
+        var model = new PackageInfo
         {
-            if (!string.Equals(_packagePath, realPath, StringComparison.OrdinalIgnoreCase))
-            {
-                throw new InvalidOperationException("PackageInfo already initialized with a different path.");
-            }
-            return;
-        }
-        (_repoRoot, _relativePath, _packagePath) = Parse(realPath);
-        IsInitialized = true;
+            PackagePath = fullPath,
+            RepoRoot = repoRoot,
+            RelativePath = relativePath,
+            PackageName = Path.GetFileName(fullPath),
+            ServiceName = Path.GetFileName(Path.GetDirectoryName(fullPath)) ?? string.Empty,
+            Language = "java",
+            SamplesDirectoryProvider = (pi, _) => Task.FromResult(BuildSamplesDirectory(pi.PackagePath)),
+            FileExtensionProvider = _ => ".java",
+            VersionProvider = (pi, token) => TryGetVersionAsync(pi.PackagePath, token)
+        };
+        return Task.FromResult(model);
     }
 
-    private string Ensure(string? value) => value ?? throw new InvalidOperationException("JavaPackageInfo not initialized. Call Init(packagePath) first.");
-
-    public string RepoRoot => Ensure(_repoRoot);
-    public string RelativePath => Ensure(_relativePath);
-    public string PackagePath => Ensure(_packagePath);
-    public string PackageName => Path.GetFileName(PackagePath);
-    public string ServiceName => Path.GetFileName(Path.GetDirectoryName(PackagePath)) ?? string.Empty;
-    public string Language => "java";
-
-    public Task<string> GetSamplesDirectoryAsync(CancellationToken cancellationToken = default)
+    private static string BuildSamplesDirectory(string packagePath)
     {
-        // Attempt to infer module path for samples: src/samples/java/<module path>
-        var moduleName = TryGetJavaModuleName(PackagePath);
+        var moduleName = TryGetJavaModuleName(packagePath);
         if (!string.IsNullOrWhiteSpace(moduleName))
         {
             var modulePath = moduleName!.Replace('.', Path.DirectorySeparatorChar);
-            return Task.FromResult(Path.Combine(PackagePath, "src", "samples", "java", modulePath));
+            return Path.Combine(packagePath, "src", "samples", "java", modulePath);
         }
-        return Task.FromResult(Path.Combine(PackagePath, "src", "samples", "java"));
+        return Path.Combine(packagePath, "src", "samples", "java");
     }
 
-    public string GetFileExtension() => ".java";
-
-    public async Task<string?> GetPackageVersionAsync(CancellationToken cancellationToken = default)
+    private static async Task<string?> TryGetVersionAsync(string packagePath, CancellationToken ct)
     {
-        var path = Path.Combine(PackagePath, "pom.xml");
-        if (!File.Exists(path))
-        {
-            return null;
-        }
+        var path = Path.Combine(packagePath, "pom.xml");
+        if (!File.Exists(path)) { return null; }
         try
         {
-            var content = await File.ReadAllTextAsync(path, cancellationToken);
+            var content = await File.ReadAllTextAsync(path, ct);
             var projectStart = content.IndexOf("<project", StringComparison.OrdinalIgnoreCase);
             if (projectStart >= 0)
             {
@@ -88,10 +66,7 @@ public sealed class JavaPackageInfo : IPackageInfo
         try
         {
             var moduleInfoPath = Path.Combine(packagePath, "src", "main", "java", "module-info.java");
-            if (!File.Exists(moduleInfoPath))
-            {
-                return null;
-            }
+            if (!File.Exists(moduleInfoPath)) { return null; }
             var content = File.ReadAllText(moduleInfoPath);
             var match = Regex.Match(content, @"^\s*module\s+([^\{\s]+)\s*\{", RegexOptions.Multiline);
             return match.Success ? match.Groups[1].Value.Trim() : null;
@@ -99,10 +74,10 @@ public sealed class JavaPackageInfo : IPackageInfo
         catch { return null; }
     }
 
-    private (string RepoRoot, string RelativePath, string FullPath) Parse(string realPackagePath)
+    private static (string RepoRoot, string RelativePath, string FullPath) Parse(IGitHelper gitHelper, string realPackagePath)
     {
         var full = realPackagePath;
-        var repoRoot = _gitHelper.DiscoverRepoRoot(full);
+        var repoRoot = gitHelper.DiscoverRepoRoot(full);
         var sdkRoot = Path.Combine(repoRoot, "sdk");
         if (!full.StartsWith(sdkRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) && !string.Equals(full, sdkRoot, StringComparison.OrdinalIgnoreCase))
         {

@@ -25,7 +25,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     public class SampleGeneratorTool(
         IMicroagentHostService microagentHostService,
         ILogger<SampleGeneratorTool> logger,
-        ILanguageSpecificResolver<IPackageInfo> packageInfoResolver,
+        ILanguageSpecificResolver<IPackageInfoHelper> packageInfoResolver,
         ILanguageSpecificResolver<ISampleLanguageContext> sampleContextResolver
     ) : MCPTool
     {
@@ -116,8 +116,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
         private async Task GenerateSampleAsync(string prompt, string packagePath, bool overwrite, string model, CancellationToken ct)
         {
-            IPackageInfo? packageInfo = await packageInfoResolver.Resolve(packagePath, ct) ?? throw new ArgumentException("Unable to determine language for package (resolver returned null). Ensure repository structure and Language-Settings.ps1 are correct.");
-            packageInfo.Init(packagePath);
+            IPackageInfoHelper? helper = await packageInfoResolver.Resolve(packagePath, ct) ?? throw new ArgumentException("Unable to determine language for package (resolver returned null). Ensure repository structure and Language-Settings.ps1 are correct.");
+            var packageInfo = await helper.ResolvePackageInfo(packagePath, ct);
             var resolvedLanguage = packageInfo.Language;
             var resolvedOutputDirectory = await packageInfo.GetSamplesDirectoryAsync(ct);
 
@@ -203,7 +203,9 @@ Scenarios description:
                             continue;
                         }
 
-                        var fileExtension = sampleContext.FileExtension;
+                        // Prefer language helper's canonical extension if provided; fall back to sampleContext.
+                        var fileExtension = packageInfo.GetFileExtension();
+                        if (string.IsNullOrWhiteSpace(fileExtension)) { fileExtension = sampleContext.FileExtension; }
 
                         var cleanFileName = Path.GetFileNameWithoutExtension(sample.FileName.Replace('/', '_').Replace('\\', '_'));
                         var sampleFileName = $"{cleanFileName}{fileExtension}";

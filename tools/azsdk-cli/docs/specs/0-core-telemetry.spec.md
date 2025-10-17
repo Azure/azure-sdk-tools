@@ -1172,6 +1172,37 @@ RawEventsDependencies
 | order by CallCount desc
 ```
 
+**Question**: Which MCP clients and AI models have higher success rates vs. failure rates?
+```kusto
+RawEventsDependencies
+| where name == "ToolExecuted"
+| extend clientName = tostring(customDimensions.clientName)
+| extend agentModel = tostring(customDimensions.agentModel)
+| where isnotempty(clientName) and isnotempty(agentModel)
+| summarize 
+    TotalCalls = count(),
+    Successes = countif(success == true),
+    Failures = countif(success == false),
+    AvgDurationMs = avg(duration)
+    by clientName, agentModel
+| extend SuccessRate = round(100.0 * Successes / TotalCalls, 2)
+| order by TotalCalls desc
+```
+
+**Question**: Are certain types of errors or failures more common with specific MCP clients or AI models?
+```kusto
+RawEventsDependencies
+| where name == "ToolExecuted"
+| where success == false
+| extend clientName = tostring(customDimensions.clientName)
+| extend agentModel = tostring(customDimensions.agentModel)
+| extend errorType = tostring(customDimensions.errorType)
+| where isnotempty(clientName) and isnotempty(agentModel) and isnotempty(errorType)
+| summarize ErrorCount = count() by clientName, agentModel, errorType
+| order by ErrorCount desc
+| take 50
+```
+
 #### D. Workflow and Process Analysis
 
 **Question**: How long does it take users to complete each workflow step?

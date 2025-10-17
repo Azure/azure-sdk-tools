@@ -77,6 +77,8 @@ public interface ILanguageSpecificChecks
         return Task.FromResult(new CLICheckResponse(1, "", "Not implemented for this language."));
     }
 
+    /// <summary>
+    /// Gets the SDK package name for the specified package using language-specific rules.
     /// </summary>
     /// <param name="repo">Repository root path</param>
     /// <param name="packagePath">Package path</param>

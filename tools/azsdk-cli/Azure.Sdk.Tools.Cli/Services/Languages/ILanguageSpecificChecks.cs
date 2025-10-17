@@ -48,6 +48,30 @@ public interface ILanguageSpecificChecks
     }
 
     /// <summary>
+    /// Validates the README for the specific package.
+    /// </summary>
+    /// <param name="packagePath">Path to the package directory</param>
+    /// <param name="fixCheckErrors">Whether to attempt to automatically fix README issues</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Result of the README validation</returns>
+    Task<CLICheckResponse> ValidateReadmeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(new CLICheckResponse(1, "", "Not implemented for this language."));
+    }
+
+    /// <summary>
+    /// Checks spelling in the specific package.
+    /// </summary>
+    /// <param name="packagePath">Path to the package directory</param>
+    /// <param name="fixCheckErrors">Whether to attempt to automatically fix spelling issues where supported by cspell</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Result of the spelling check</returns>
+    Task<CLICheckResponse> CheckSpellingAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(new CLICheckResponse(1, "", "Not implemented for this language."));
+    }
+
+    /// <summary>
     /// Updates code snippets in the specific package using language-specific tools.
     /// </summary>
     /// <param name="packagePath">Path to the package directory</param>
@@ -123,6 +147,18 @@ public interface ILanguageSpecificChecks
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Result of the changelog validation</returns>
     Task<CLICheckResponse> ValidateChangelog(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(new CLICheckResponse(1, "", "Not implemented for this language."));
+    }
+
+    /// <summary>
+    /// Validates the changelog for the specific package.
+    /// </summary>
+    /// <param name="packagePath">Path to the package directory</param>
+    /// <param name="fixCheckErrors">Whether to attempt to automatically fix changelog issues</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Result of the changelog validation</returns>
+    Task<CLICheckResponse> ValidateChangelogAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         return Task.FromResult(new CLICheckResponse(1, "", "Not implemented for this language."));
     }

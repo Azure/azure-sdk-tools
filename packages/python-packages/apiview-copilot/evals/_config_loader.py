@@ -8,56 +8,54 @@ Minimal schema (intentionally lean):
 
 Future (not implemented yet): metrics, model, post_process, baseline, coverage.
 """
+
 from __future__ import annotations
 
 import dataclasses
 import os
 from pathlib import Path
-from typing import List, Dict, Type, Any
+from typing import Any, Dict, List, Type
+
 import yaml
 
 # Global evaluator registry
 _EVALUATOR_REGISTRY: Dict[str, Type] = {}
 
+
 @dataclasses.dataclass(slots=True)
 class WorkflowConfig:
     name: str
     kind: str
-    tests_path: Path
-    prompty_path: Path | None
-    evaluation_config: EvaluationConfig | None
     source_file: Path | None = None  # for diagnostics
 
-@dataclasses.dataclass(slots=True)
-class EvaluationConfig:
-    comparison_field: str
-    display_name: str
-    breakdown_categories: dict[str, dict[str, int]]
 
 class WorkflowConfigError(ValueError):
     pass
 
+
 def register_evaluator(kind: str, evaluator_class: Type) -> None:
     """Register an evaluator class for a given kind.
-    
+
     Args:
         kind: The workflow kind (e.g., 'apiview', 'prompt')
         evaluator_class: The evaluator class to register
     """
     _EVALUATOR_REGISTRY[kind] = evaluator_class
 
+
 def _fail(msg: str) -> None:
     raise WorkflowConfigError(msg)
 
+
 def get_evaluator_class(kind: str) -> Type:
     """Get an evaluator class by kind.
-    
+
     Args:
         kind: The workflow kind
-        
+
     Returns:
         The evaluator class
-        
+
     Raises:
         WorkflowConfigError: If the kind is not registered
     """
@@ -66,25 +64,41 @@ def get_evaluator_class(kind: str) -> Type:
         raise WorkflowConfigError(f"Unknown evaluator kind: {kind!r}. Available: {available}")
     return _EVALUATOR_REGISTRY[kind]
 
+
 def get_supported_workflows() -> set[str]:
     """Get the set of supported workflow kinds."""
     return set(_EVALUATOR_REGISTRY.keys())
+
 
 def load_workflow_config(path: str | os.PathLike) -> WorkflowConfig:
     """Load and validate a single workflow yaml file.
 
     Args:
-        path: Path to YAML file.
+        path: Path to a directory containing `test-config.yaml`.
+              The workflow name will be inferred from the directory name.
     Returns:
         WorkflowConfig
     Raises:
         WorkflowConfigError for any validation issue.
     """
-    yaml_path = Path(path).resolve()
-    if not yaml_path.exists():
-        _fail(f"Workflow file not found: {yaml_path}")
-    if yaml_path.suffix.lower() not in {".yml", ".yaml"}:
-        _fail(f"Unsupported workflow file extension: {yaml_path.suffix}")
+    input_path = Path(path).resolve()
+
+    # require a directory (we expect a folder containing test-config.yaml)
+    if not input_path.exists():
+        _fail(f"Workflow path must be either a directory containing 'test-config.yaml' or a sibling of 'test-config.yaml': {input_path}")
+
+    base_dir = input_path
+
+    # look for "test-config.yaml" or "test-config.yml" inside the directory, or as a sibling of the input path
+    parent_dir = base_dir.parent
+    candidates = [base_dir / "test-config.yaml", base_dir / "test-config.yml", parent_dir / "test-config.yaml", parent_dir / "test-config.yml"]
+    yaml_path = None
+    for c in candidates:
+        if c.exists() and c.is_file():
+            yaml_path = c.resolve()
+            break
+    if not yaml_path:
+        _fail(f"Workflow directory provided but no 'test-config.yaml' found in: {base_dir}")
 
     try:
         raw = yaml.safe_load(yaml_path.read_text(encoding="utf-8")) or {}
@@ -94,22 +108,10 @@ def load_workflow_config(path: str | os.PathLike) -> WorkflowConfig:
     if not isinstance(raw, dict):
         _fail(f"Top-level YAML must be a mapping (file: {yaml_path})")
 
-    name = raw.get("name")
+    # Derive the workflow name from the directory basename (folder name).
+    name = base_dir.name if yaml_path.parent == base_dir else yaml_path.parent.name
     if not name or not isinstance(name, str):
-        _fail("Missing required string field: name")
-    
-    # naming conventions
-    if any(c for c in name if c.isupper()) or " " in name:
-        _fail("Workflow name should be lowercase kebab/underscore (no spaces or uppercase)")
-
-    tests_rel = raw.get("tests")
-    if not tests_rel or not isinstance(tests_rel, str):
-        _fail("Missing required string field: tests")
-    tests_path = (yaml_path.parent / tests_rel).resolve()
-    if not tests_path.exists():
-        _fail(f"Tests file not found: {tests_path}")
-    if tests_path.suffix != ".jsonl":
-        _fail(f"Tests file must be .jsonl: {tests_path}")
+        _fail("Could not derive workflow name from the directory path")
 
     kind = raw.get("kind")
     if not kind or not isinstance(kind, str):
@@ -119,60 +121,24 @@ def load_workflow_config(path: str | os.PathLike) -> WorkflowConfig:
     if kind not in supported_workflows:
         _fail(f"Invalid kind: {kind!r}. Supported: {sorted(supported_workflows)}")
 
-    prompty_path: Path | None = None
-    if kind == "prompt":
-        prompty_rel = raw.get("prompty")
-        if not prompty_rel or not isinstance(prompty_rel, str):
-            _fail("kind=prompt requires field: prompty")
-        prompty_path = (yaml_path.parent / prompty_rel).resolve()
-        if not prompty_path.exists():
-            _fail(f"Prompty file not found: {prompty_path}")
-        if not prompty_path.suffix.startswith(".prompty"):
-            _fail(f"Prompty path does not point to a prompty file")
-
     runs = raw.get("runs", 1)
     if not isinstance(runs, int) or runs < 1:
         _fail(f"runs must be positive integer (got: {runs!r})")
 
     evaluator_class = get_evaluator_class(kind)
-    evaluation_config = evaluator_class.validate_config_schema(raw.get("evaluation_config"))
 
-    cfg = WorkflowConfig(
+    return WorkflowConfig(
         name=name,
         kind=kind,
-        tests_path=tests_path,
-        prompty_path=prompty_path,
-        evaluation_config=evaluation_config,
         source_file=yaml_path,
     )
-    return cfg
-
-def load_workflow_directory(dir_path: str | os.PathLike) -> List[WorkflowConfig]:
-    base = Path(dir_path).resolve()
-    if not base.exists() or not base.is_dir():
-        _fail(f"Workflow directory not found: {base}")
-    yaml_files = sorted([p for p in base.iterdir() if p.suffix in (".yaml", ".yml")])
-    if not yaml_files:
-        _fail(f"No workflow yaml files found in: {base}")
-
-    configs: List[WorkflowConfig] = []
-    seen_names: set[str] = set()
-    for yf in yaml_files:
-        cfg = load_workflow_config(yf)
-        if cfg.name in seen_names:
-            _fail(f"Duplicate workflow name detected: {cfg.name}")
-        seen_names.add(cfg.name)
-        configs.append(cfg)
-    return configs
 
 
 __all__ = [
     "WorkflowConfig",
-    "EvaluationConfig",
     "WorkflowConfigError",
     "register_evaluator",
-    "get_evaluator_class", 
+    "get_evaluator_class",
     "get_supported_workflows",
     "load_workflow_config",
-    "load_workflow_directory",
 ]

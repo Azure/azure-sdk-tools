@@ -50,11 +50,20 @@
 /tools/perf-regression-finder/          @m-redding @jsquire
 
 #####################
+# Attestation
+#####################              
+/eng/pipelines/cpex-attestation.yml     @smw-ms @praveenkuttappan @maririos 
+/eng/scripts/Attest-CPEX-KPIs.ps1       @smw-ms @praveenkuttappan @maririos 
+
+#####################
 # Azure SDK Tools MCP
 #####################
 /eng/common/instructions/azsdk-tools/   @maririos @praveenkuttappan @MrJustinB 
 # PRLabel: %azsdk-cli
+/tools/ai-evals/azsdk-mcp/              @jeo02 @smw-ms @praveenkuttappan @maririos
+# PRLabel: %azsdk-cli
 /tools/azsdk-cli/                       @azure/azsdk-cli
+
 
 ###########
 # Stress

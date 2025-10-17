@@ -9,6 +9,8 @@ import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/comm
 import { CodeLineRowNavigationDirection } from 'src/app/_helpers/common-helpers';
 import { CommentSeverity } from 'src/app/_models/commentItemModel';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
+import { CommentItemModel } from 'src/app/_models/commentItemModel';
+import { CommentRelationHelper } from 'src/app/_helpers/comment-relation.helper';
 
 @Component({
   selector: 'app-comment-thread',
@@ -25,6 +27,8 @@ export class CommentThreadComponent {
   @Input() instanceLocation: "code-panel" | "conversations" | "samples" = "code-panel";
   @Input() preferredApprovers : string[] = [];
   @Input() reviewId: string = '';
+  @Input() allComments: CommentItemModel[] = [];
+  @Input() allCodePanelRowData: CodePanelRowData[] = [];
 
   @Input() userProfile : UserProfile | undefined;
   @Output() cancelCommentActionEmitter : EventEmitter<any> = new EventEmitter<any>();
@@ -63,6 +67,12 @@ export class CommentThreadComponent {
     { label: 'Should fix', value: CommentSeverity.ShouldFix },
     { label: 'Must fix', value: CommentSeverity.MustFix }
   ];
+
+  showRelatedCommentsDialog: boolean = false;
+  relatedComments: CommentItemModel[] = [];
+  selectedCommentId: string = ''; 
+
+  private visibleRelatedCommentsCache = new Map<string, CommentItemModel[]>();
 
   get canEditSeverity(): boolean {
     if (!this.codePanelRowData?.comments || this.codePanelRowData.comments.length === 0) {
@@ -140,6 +150,13 @@ export class CommentThreadComponent {
   ngOnChanges(changes: SimpleChanges) {
     if (changes['codePanelRowData']) {
       this.setCommentResolutionState();
+    }
+    
+    if (changes['allComments'] || changes['allCodePanelRowData']) {
+      if (this.allComments && this.allComments.length > 0) {
+        CommentRelationHelper.calculateRelatedComments(this.allComments);
+      }
+      this.visibleRelatedCommentsCache.clear();
     }
   }
 
@@ -279,7 +296,6 @@ export class CommentThreadComponent {
     const title = target.closest(".user-comment-thread")?.getAttribute("title");
     if (replyEditorContainer) {
       this.codePanelRowData!.showReplyTextBox = false;
-      // Reset severity selection when canceling
       this.selectedSeverity = null;
       this.cancelCommentActionEmitter.emit(
         {
@@ -545,5 +561,55 @@ export class CommentThreadComponent {
     }
     
     this.changeDetectorRef.detectChanges();
+  }
+
+  getRelatedCommentsCount(comment: CommentItemModel): number {
+    return CommentRelationHelper.getRelatedCommentsCount(comment, this.allComments, this.allCodePanelRowData);
+  }
+
+  hasRelatedComments(comment: CommentItemModel): boolean {
+    // Temporarily disabled for production - return false to hide related comments feature
+    return false;
+    // return CommentRelationHelper.hasRelatedComments(comment, this.allComments, this.allCodePanelRowData);
+  }
+
+  showRelatedComments(comment: CommentItemModel) {
+    if (!comment.correlationId || !this.allComments) {
+      return;
+    }
+
+    this.selectedCommentId = comment.id;
+    const cacheKey = comment.correlationId;
+    if (this.visibleRelatedCommentsCache.has(cacheKey)) {
+      this.relatedComments = this.visibleRelatedCommentsCache.get(cacheKey)!;
+    } else {
+      if (this.allCodePanelRowData && this.allCodePanelRowData.length > 0) {
+        this.relatedComments = CommentRelationHelper.getVisibleRelatedComments(comment, this.allComments, this.allCodePanelRowData);
+      } else {
+        this.relatedComments = CommentRelationHelper.getRelatedComments(comment, this.allComments);
+      }
+      this.visibleRelatedCommentsCache.set(cacheKey, this.relatedComments);
+    }
+    
+    this.showRelatedCommentsDialog = true;
+  }
+
+  onResolveSelectedComments(commentIds: string[]) {
+    commentIds.forEach(commentId => {
+      const comment = this.relatedComments.find(c => c.id === commentId);
+      if (comment) {
+        const commentCodeRow = this.allCodePanelRowData?.find(row => row.nodeId === comment.elementId);
+        
+        this.commentResolutionActionEmitter.emit({
+          commentThreadUpdateAction: CommentThreadUpdateAction.CommentResolved,
+          elementId: comment.elementId,
+          nodeIdHashed: commentCodeRow?.nodeIdHashed ?? this.codePanelRowData?.nodeIdHashed,
+          associatedRowPositionInGroup: commentCodeRow?.associatedRowPositionInGroup ?? this.codePanelRowData?.associatedRowPositionInGroup,
+          resolvedBy: this.userProfile?.userName,
+          commentId: commentId
+        } as CommentUpdatesDto);
+      }
+    });
+    this.showRelatedCommentsDialog = false;
   }
 }

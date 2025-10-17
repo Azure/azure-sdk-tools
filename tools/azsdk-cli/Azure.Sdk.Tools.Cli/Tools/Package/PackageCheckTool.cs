@@ -96,6 +96,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     PackageCheckType.Snippets => await RunSnippetUpdate(packagePath, fixCheckErrors, ct),
                     PackageCheckType.Linting => await RunLintCode(packagePath, fixCheckErrors, ct),
                     PackageCheckType.Format => await RunFormatCode(packagePath, fixCheckErrors, ct),
+                    PackageCheckType.Samples => await RunSampleValidation(packagePath, fixCheckErrors, ct),
                     _ => throw new ArgumentOutOfRangeException(
                         nameof(checkType),
                         checkType,
@@ -178,6 +179,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             {
                 overallSuccess = false;
                 failedChecks.Add("Format");
+            }
+
+            // Run sample validation
+            var sampleValidationResult = await languageChecks.ValidateSamplesAsync(packagePath, fixCheckErrors, ct);
+            results.Add(sampleValidationResult);
+            if (sampleValidationResult.ExitCode != 0)
+            {
+                overallSuccess = false;
+                failedChecks.Add("Samples");
             }
 
             var message = overallSuccess ? "All checks completed successfully" : "Some checks failed";
@@ -319,6 +329,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             logger.LogInformation("Running code formatting");
 
             var result = await languageChecks.FormatCodeAsync(packagePath, fixCheckErrors, ct);
+            return result;
+        }
+
+        private async Task<CLICheckResponse> RunSampleValidation(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+        {
+            logger.LogInformation("Running sample validation");
+
+            var result = await languageChecks.ValidateSamplesAsync(packagePath, fixCheckErrors, ct);
             return result;
         }
     }

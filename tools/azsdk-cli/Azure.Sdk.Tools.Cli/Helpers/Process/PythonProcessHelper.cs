@@ -6,8 +6,7 @@ using System.Runtime.InteropServices;
 namespace Azure.Sdk.Tools.Cli.Helpers;
 
 /// <summary>
-/// Process helper that detects and "activates" a Python virtual environment for the spawned process by
-/// adjusting environment variables (PATH and VIRTUAL_ENV). If no venv is found it falls back to typical ProcessHelper behavior.
+/// Process helper that checks for a Python venv for running commands that rely on dependencies.
 /// </summary>
 public sealed class PythonProcessHelper : ProcessHelperBase<PythonProcessHelper>, IPythonProcessHelper
 {

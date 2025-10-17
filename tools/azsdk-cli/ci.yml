@@ -41,4 +41,3 @@ extends:
       - rid: win-x64
         framework: net8.0
         assembly: azsdk
-

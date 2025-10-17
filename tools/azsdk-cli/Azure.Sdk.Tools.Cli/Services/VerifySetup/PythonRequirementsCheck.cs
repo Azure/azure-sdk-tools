@@ -40,26 +40,26 @@ public class PythonRequirementsCheck : EnvRequirementsCheck, IEnvRequirementsChe
         foreach (var req in reqs)
         {
             var binDir = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Scripts" : "bin";
-            req.check[0] = Path.Combine(venvPath, binDir, req.check[0]);
+            req.check[0] = Path.Combine(venvPath, binDir, req.check[0]); // this assumes all checks are of the form <command> --<flag>
         }
 
         return reqs;
     }
 
-    private string? FindOrCreateVenv(string workingDirectory)
+    private string? FindOrCreateVenv(string packagePath)
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(workingDirectory))
+            if (string.IsNullOrWhiteSpace(packagePath))
             {
-                workingDirectory = Environment.CurrentDirectory;
+                packagePath = Environment.CurrentDirectory;
             }
 
             var candidates = new[] { ".venv", "venv", ".env", "env" };
 
             foreach (var c in candidates)
             {
-                var path = Path.Combine(workingDirectory, c);
+                var path = Path.Combine(packagePath, c);
                 if (Directory.Exists(path))
                 {
                     return Path.GetFullPath(path);
@@ -67,12 +67,12 @@ public class PythonRequirementsCheck : EnvRequirementsCheck, IEnvRequirementsChe
             }
 
             // no venv found, create one
-            var venvPath = Path.Combine(workingDirectory, ".venv");
+            var venvPath = Path.Combine(packagePath, ".venv");
 
             var processOptions = new ProcessOptions(
                 "python",
                 new[] { "-m", "venv", venvPath },
-                workingDirectory: workingDirectory
+                workingDirectory: packagePath
             );
 
             var result = processHelper.Run(processOptions, CancellationToken.None).GetAwaiter().GetResult();

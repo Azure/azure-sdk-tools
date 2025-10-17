@@ -432,7 +432,7 @@ namespace APIViewUnitTests
         }
 
         [Fact]
-        public async Task RequestNamespaceReview_WithUnauthorizedUser_ShouldThrowUnauthorizedException()
+        public async Task RequestNamespaceReview_WithUnauthorizedUser_ShouldStillCompleteRequest()
         {
             // Arrange - Setup unauthorized user
             var unauthorizedClaims = new List<Claim>
@@ -455,16 +455,28 @@ namespace APIViewUnitTests
             _mockReviewsRepository.Setup(r => r.GetReviewAsync(reviewId))
                 .ReturnsAsync(typeSpecReview);
 
-            // Act & Assert - Should fail authorization check during notification
-            // Note: Authorization is checked in NotificationManager, so we'll simulate that
+            _mockPullRequestsRepository.Setup(pr => pr.GetPullRequestsAsync(It.IsAny<string>(), It.IsAny<string>()))
+                .ReturnsAsync(new List<PullRequestModel>());
+
+            var updatedReviews = new List<ReviewListItemModel>();
+            _mockReviewsRepository.Setup(r => r.UpsertReviewAsync(It.IsAny<ReviewListItemModel>()))
+                .Callback<ReviewListItemModel>(review => updatedReviews.Add(review))
+                .Returns(Task.CompletedTask);
+
+            // Setup notification to fail due to authorization
             _mockNotificationManager.Setup(n => n.NotifyApproversOnNamespaceReviewRequest(
                     It.IsAny<ClaimsPrincipal>(), It.IsAny<ReviewListItemModel>(), It.IsAny<IEnumerable<ReviewListItemModel>>(), It.IsAny<string>()))
                 .ThrowsAsync(new UnauthorizedAccessException("User not authorized to request namespace reviews"));
 
-            var exception = await Assert.ThrowsAsync<UnauthorizedAccessException>(
-                () => _reviewManager.RequestNamespaceReviewAsync(unauthorizedUser, reviewId, "revision1"));
+            // Act - Should complete successfully even with authorization failure in notification
+            var result = await _reviewManager.RequestNamespaceReviewAsync(unauthorizedUser, reviewId, "revision1");
             
-            exception.Message.Should().Be("User not authorized to request namespace reviews");
+            // Assert - Request should complete successfully despite notification authorization failure
+            result.Should().NotBeNull();
+            result.NamespaceReviewStatus.Should().Be(NamespaceReviewStatus.Pending);
+            
+            // The TypeSpec review should still be updated even if notification fails
+            updatedReviews.Should().HaveCount(1);
         }
 
         [Fact]

@@ -32,7 +32,7 @@ internal class DotNetLanguageSpecificChecksTests
 
     private void SetupSuccessfulDotNetVersionCheck()
     {
-        var versionOutput = $"9.0.100 [C:\\Program Files\\dotnet\\sdk]\n{RequiredDotNetVersion} [C:\\Program Files\\dotnet\\sdk]";
+        var versionOutput = $"9.0.102 [C:\\Program Files\\dotnet\\sdk]\n{RequiredDotNetVersion} [C:\\Program Files\\dotnet\\sdk]";
         var processResult = new ProcessResult { ExitCode = 0 };
         processResult.AppendStdout(versionOutput);
 
@@ -68,6 +68,28 @@ internal class DotNetLanguageSpecificChecksTests
         {
             Assert.That(result.ExitCode, Is.EqualTo(1));
             Assert.That(result.CheckStatusDetails, Does.Contain("dotnet --list-sdks failed"));
+        });
+    }
+
+    [Test]
+    public async Task TestCheckGeneratedCodeAsyncDotNetVersionTooLowReturnsError()
+    {
+        var versionOutput = "6.0.427 [C:\\Program Files\\dotnet\\sdk]\n8.0.404 [C:\\Program Files\\dotnet\\sdk]";
+        var processResult = new ProcessResult { ExitCode = 0 };
+        processResult.AppendStdout(versionOutput);
+
+        _processHelperMock
+            .Setup(x => x.Run(
+                It.Is<ProcessOptions>(p => IsDotNetListSdksCommand(p)),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(processResult);
+
+        var result = await _languageChecks.CheckGeneratedCodeAsync(_packagePath, ct: CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ExitCode, Is.EqualTo(1));
+            Assert.That(result.ResponseError, Does.Contain(".NET SDK version 8.0.404 is below minimum requirement of 9.0.102"));
         });
     }
 
@@ -184,6 +206,28 @@ internal class DotNetLanguageSpecificChecksTests
         {
             Assert.That(result.ExitCode, Is.EqualTo(1));
             Assert.That(result.CheckStatusDetails, Does.Contain("dotnet --list-sdks failed"));
+        });
+    }
+
+    [Test]
+    public async Task TestCheckAotCompatAsyncDotNetVersionTooLowReturnsError()
+    {
+        var versionOutput = "6.0.427 [C:\\Program Files\\dotnet\\sdk]\n8.0.404 [C:\\Program Files\\dotnet\\sdk]";
+        var processResult = new ProcessResult { ExitCode = 0 };
+        processResult.AppendStdout(versionOutput);
+
+        _processHelperMock
+            .Setup(x => x.Run(
+                It.Is<ProcessOptions>(p => IsDotNetListSdksCommand(p)),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(processResult);
+
+        var result = await _languageChecks.CheckAotCompatAsync(_packagePath, ct: CancellationToken.None);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ExitCode, Is.EqualTo(1));
+            Assert.That(result.ResponseError, Does.Contain(".NET SDK version 8.0.404 is below minimum requirement of 9.0.102"));
         });
     }
 

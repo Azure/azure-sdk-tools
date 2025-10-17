@@ -22,7 +22,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from semantic_kernel.exceptions.agent_exceptions import AgentInvokeException
 from src._apiview_reviewer import SUPPORTED_LANGUAGES, ApiViewReview
-from src._database_manager import get_database_manager
+from src._database_manager import DatabaseManager
 from src._diff import create_diff_with_line_numbers
 from src._mention import handle_mention_request
 from src._settings import SettingsManager
@@ -32,7 +32,7 @@ from src.agent._agent import get_main_agent, invoke_agent
 
 # How long to keep completed jobs (seconds)
 JOB_RETENTION_SECONDS = 1800  # 30 minutes
-db_manager = get_database_manager()
+db_manager = DatabaseManager.get_instance()
 settings = SettingsManager()
 
 app = FastAPI(openapi_url=None, docs_url=None, redoc_url=None)

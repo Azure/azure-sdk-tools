@@ -100,8 +100,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     PackageCheckType.Snippets => await RunSnippetUpdate(packagePath, fixCheckErrors, ct),
                     PackageCheckType.Linting => await RunLintCode(packagePath, fixCheckErrors, ct),
                     PackageCheckType.Format => await RunFormatCode(packagePath, fixCheckErrors, ct),
-                    PackageCheckType.CheckAotCompat => await languageChecks.CheckAotCompatAsync(packagePath, fixCheckErrors, ct),
-                    PackageCheckType.GeneratedCodeChecks => await languageChecks.CheckGeneratedCodeAsync(packagePath, fixCheckErrors, ct),
+                    PackageCheckType.CheckAotCompat => await RunCheckAotCompat(packagePath, fixCheckErrors, ct),
+                    PackageCheckType.GeneratedCodeChecks => await RunCheckGeneratedCode(packagePath, fixCheckErrors, ct),
                     _ => throw new ArgumentOutOfRangeException(
                         nameof(checkType),
                         checkType,
@@ -343,6 +343,22 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             logger.LogInformation("Running code formatting");
 
             var result = await languageChecks.FormatCodeAsync(packagePath, fixCheckErrors, ct);
+            return result;
+        }
+
+        private async Task<CLICheckResponse> RunCheckGeneratedCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+        {
+            logger.LogInformation("Running generated code checks");
+
+            var result = await languageChecks.CheckGeneratedCodeAsync(packagePath, fixCheckErrors, ct);
+            return result;
+        }
+
+        private async Task<CLICheckResponse> RunCheckAotCompat(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+        {
+            logger.LogInformation("Running AOT compatibility checks");
+
+            var result = await languageChecks.CheckAotCompatAsync(packagePath, fixCheckErrors, ct);
             return result;
         }
     }

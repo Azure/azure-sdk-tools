@@ -173,11 +173,6 @@ public class LanguageChecks : ILanguageChecks
         return await CheckSpellingCommonAsync(packagePath, fixCheckErrors, ct);
     }
 
-    public Task<CLICheckResponse> ValidateFilePathsAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
-    {
-        throw new NotImplementedException();
-    }
-
     public virtual async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         var languageSpecificCheck = await _languageSpecificChecks.Resolve(packagePath);

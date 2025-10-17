@@ -27,7 +27,7 @@ internal class DotNetLanguageSpecificChecksTests
             NullLogger<DotNetLanguageSpecificChecks>.Instance);
 
         _repoRoot = Path.Combine(Path.GetTempPath(), "azure-sdk-for-net");
-        _packagePath = Path.Combine(_repoRoot, "sdk", "storage", "Azure.Storage.Blobs");
+        _packagePath = Path.Combine(_repoRoot, "sdk", "healthdataaiservices", "Azure.Health.Deidentification");
     }
 
     private void SetupSuccessfulDotNetVersionCheck()

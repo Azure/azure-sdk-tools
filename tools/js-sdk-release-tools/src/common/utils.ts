@@ -396,6 +396,7 @@ export async function cleanUpDirectory(
         return;
     }else if(entriesToPreserve.length === 1){
         await rm(path.join(directory, entriesToPreserve[0]), { recursive: true, force: true });
+        return;
     }
 
     // If we need to preserve some entries, selectively remove others

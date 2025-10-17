@@ -49,6 +49,7 @@ public class VerifySetupTool : MCPTool
         Required = false
     };
 
+
     private readonly Option<bool> allLangOption = new("--all")
     {
         Description = "Check requirements for all supported languages.",
@@ -90,7 +91,6 @@ public class VerifySetupTool : MCPTool
                 logger.LogInformation("Checking requirement: {Requirement}, Check: {Check}, Instructions: {Instructions}",
                     req.requirement, req.check, req.instructions);
 
-                // TODO handle actual version checking of the output?
                 var result = await RunCheck(req, packagePath, ct);
 
                 if (result.ExitCode != 0)
@@ -186,10 +186,12 @@ public class VerifySetupTool : MCPTool
 
             if (reqGetter == null)
             {
-                throw new Exception("Could not resolve requirements checker for the specified languages. Please provide languages using --langs option.");
+                logger.LogWarning("Could not resolve requirements checker for the specified languages. Checking only core requirements. Please provide languages using --langs option to check language requirements.");
+                return reqsToCheck;
             }
 
-            return await reqGetter.GetRequirements(packagePath, ct);
+            reqsToCheck.AddRange(await reqGetter.GetRequirements(packagePath, ct));
+            return reqsToCheck;
         }
 
         var reqGetters = envRequirementsCheck.Resolve(languages);

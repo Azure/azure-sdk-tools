@@ -251,15 +251,32 @@ class EvaluationRunner:
         print("=" * 60)
         print()
 
-        raw_results = results[0].raw_results[0]
-        for filename, result in raw_results.items():
-            print(f"== {filename} ==")
-            for res in result["rows"]:
-                success = res["outputs.metrics.correct_action"]
-                testcase_name = res["inputs.testcase"]
-                score = res["outputs.metrics.score"]
-                print(f"  -  {'✅' if success else '❌'} {score} - {testcase_name}")
-        print()
+        successful = [r for r in results if r.success and r.raw_results]
+        failed = [r for r in results if not r.success]
+
+        if successful:
+            for result in successful:
+                print(f"✅ {result.workflow_name}")
+                if result.raw_results:
+                    raw_results = result.raw_results[0]
+                    for filename, eval_result in raw_results.items():
+                        print(f"  == {filename} ==")
+                        for res in eval_result["rows"]:
+                            success = res["outputs.metrics.correct_action"]
+                            testcase_name = res["inputs.testcase"]
+                            score = res["outputs.metrics.score"]
+                            print(f"    -  {'✅' if success else '❌'} {score} - {testcase_name}")
+                print()
+
+        if failed:
+            print("❌ FAILED EVALUATIONS:")
+            for result in failed:
+                print(f"  • {result.workflow_name}: {result.error}")
+            print()
+
+        if not successful and not failed:
+            print("No evaluation results to display.")
+            print()
 
     def show_summary(self, results: List[EvaluationResult]):
         """Display aggregated results from all evaluations."""

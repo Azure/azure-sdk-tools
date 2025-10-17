@@ -147,9 +147,9 @@ All telemetry flows through Azure Application Insights' `RawEventsDependencies` 
 │  │  - System    │              │  - System    │            │
 │  │    Events    │              │    Events    │            │
 │  └──────┬───────┘              └──────┬───────┘            │
-│         │                             │                     │
-│         └──────────┬──────────────────┘                     │
-│                    │                                         │
+│         │                             │                    │
+│         └──────────┬──────────────────┘                    │
+│                    │                                       │
 │         ┌──────────▼──────────┐                            │
 │         │ Telemetry Collector │                            │
 │         │                     │                            │

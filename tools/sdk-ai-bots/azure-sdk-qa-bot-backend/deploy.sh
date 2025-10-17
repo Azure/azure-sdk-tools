@@ -127,7 +127,7 @@ if [[ "$ENVIRONMENT" == "prod" ]]; then
     echo "Production deployment: Checking if image exists in registry..."
     
     # Check if the image exists in the container registry
-    if az acr repository show --name $ACR_NAME --repository $IMAGE_NAME --tag $IMAGE_TAG --resource-group $ACR_RESOURCE_GROUP >/dev/null 2>&1; then
+    if az acr repository show-tags --name $ACR_NAME --repository $IMAGE_NAME --output tsv | grep -q "^${IMAGE_TAG}$"; then
         echo "Image ${IMAGE_NAME}:${IMAGE_TAG} found in registry. Proceeding with production deployment..."
     else
         echo "Error: Image ${IMAGE_NAME}:${IMAGE_TAG} not found in registry."

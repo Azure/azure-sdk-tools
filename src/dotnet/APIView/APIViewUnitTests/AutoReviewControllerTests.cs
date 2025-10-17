@@ -28,12 +28,15 @@ namespace APIViewUnitTests
         [InlineData("MGMT", PackageType.mgmt)]
         public void PackageTypeEnumParsing_WithValidValues_ParsesCorrectly(string packageTypeString, PackageType expectedPackageType)
         {
-            // Act
-            var result = Enum.TryParse<PackageType>(packageTypeString, true, out var parsedPackageType);
+            // Act - test both direct enum parsing and controller logic
+            var directParseResult = Enum.TryParse<PackageType>(packageTypeString, true, out var directParsedPackageType);
+            var controllerLogicResult = !string.IsNullOrEmpty(packageTypeString) && Enum.TryParse<PackageType>(packageTypeString, true, out var controllerParsedType) ? (PackageType?)controllerParsedType : null;
 
             // Assert
-            result.Should().BeTrue();
-            parsedPackageType.Should().Be(expectedPackageType);
+            directParseResult.Should().BeTrue();
+            directParsedPackageType.Should().Be(expectedPackageType);
+            controllerLogicResult.Should().NotBeNull();
+            controllerLogicResult.Value.Should().Be(expectedPackageType);
         }
 
         [Theory]
@@ -42,41 +45,93 @@ namespace APIViewUnitTests
         [InlineData("   ")]
         [InlineData("invalid")]
         [InlineData("unknown")]
-        public void PackageTypeEnumParsing_WithInvalidValues_ReturnsFalse(string packageTypeString)
+        public void PackageTypeEnumParsing_WithInvalidValues_ReturnsExpectedResults(string packageTypeString)
         {
-            // Act
-            var result = Enum.TryParse<PackageType>(packageTypeString, true, out var parsedPackageType);
+            // Act - test both direct enum parsing and controller logic
+            var directParseResult = Enum.TryParse<PackageType>(packageTypeString, true, out var directParsedPackageType);
+            var controllerLogicResult = !string.IsNullOrEmpty(packageTypeString) && Enum.TryParse<PackageType>(packageTypeString, true, out var controllerParsedType) ? (PackageType?)controllerParsedType : null;
 
             // Assert
-            result.Should().BeFalse();
-            parsedPackageType.Should().Be(default(PackageType));
+            directParseResult.Should().BeFalse();
+            directParsedPackageType.Should().Be(default(PackageType));
+            controllerLogicResult.Should().BeNull();
         }
 
-        [Theory]
-        [InlineData("client", PackageType.client)]
-        [InlineData("mgmt", PackageType.mgmt)]
-        public void PackageTypeEnumParsing_WithStringValues_ProducesCorrectNullableResult(string packageTypeString, PackageType expectedPackageType)
+        [Fact]
+        public void ReviewUpdate_WithExistingReviewWithoutPackageType_ShouldSetPackageType()
         {
-            // Act - simulate the logic from AutoReviewController.CreateAutomaticRevisionAsync
+            // Arrange - simulate existing review without PackageType
+            var existingReview = new ReviewListItemModel()
+            {
+                Id = "existing-review-id",
+                PackageName = "TestPackage",
+                Language = "C#",
+                PackageType = null  // No package type set initially
+            };
+
+            var packageTypeString = "mgmt";
             var parsedPackageType = !string.IsNullOrEmpty(packageTypeString) && Enum.TryParse<PackageType>(packageTypeString, true, out var result) ? (PackageType?)result : null;
 
+            // Act - simulate the logic from AutoReviewController.CreateAutomaticRevisionAsync
+            if (parsedPackageType.HasValue && !existingReview.PackageType.HasValue)
+            {
+                existingReview.PackageType = parsedPackageType;
+            }
+
             // Assert
-            parsedPackageType.Should().NotBeNull();
-            parsedPackageType.Value.Should().Be(expectedPackageType);
+            existingReview.PackageType.Should().Be(PackageType.mgmt);
+        }
+
+        [Fact]
+        public void ReviewUpdate_WithExistingReviewWithPackageType_ShouldNotOverridePackageType()
+        {
+            // Arrange - simulate existing review with PackageType already set
+            var existingReview = new ReviewListItemModel()
+            {
+                Id = "existing-review-id",
+                PackageName = "TestPackage",
+                Language = "C#",
+                PackageType = PackageType.client  // Already has package type set
+            };
+
+            var packageTypeString = "mgmt";
+            var parsedPackageType = !string.IsNullOrEmpty(packageTypeString) && Enum.TryParse<PackageType>(packageTypeString, true, out var result) ? (PackageType?)result : null;
+
+            // Act - simulate the logic from AutoReviewController.CreateAutomaticRevisionAsync
+            if (parsedPackageType.HasValue && !existingReview.PackageType.HasValue)
+            {
+                existingReview.PackageType = parsedPackageType;
+            }
+
+            // Assert - PackageType should remain unchanged
+            existingReview.PackageType.Should().Be(PackageType.client);
         }
 
         [Theory]
+        [InlineData("invalid-package-type")]
         [InlineData(null)]
         [InlineData("")]
-        [InlineData("   ")]
-        [InlineData("invalid")]
-        public void PackageTypeEnumParsing_WithInvalidStringValues_ProducesNullResult(string packageTypeString)
+        public void ReviewUpdate_WithInvalidOrNullPackageType_ShouldNotSetPackageType(string packageTypeString)
         {
-            // Act - simulate the logic from AutoReviewController.CreateAutomaticRevisionAsync  
+            // Arrange - simulate existing review without PackageType
+            var existingReview = new ReviewListItemModel()
+            {
+                Id = "existing-review-id",
+                PackageName = "TestPackage",
+                Language = "C#",
+                PackageType = null  // No package type set initially
+            };
+
             var parsedPackageType = !string.IsNullOrEmpty(packageTypeString) && Enum.TryParse<PackageType>(packageTypeString, true, out var result) ? (PackageType?)result : null;
 
-            // Assert
-            parsedPackageType.Should().BeNull();
+            // Act - simulate the logic from AutoReviewController.CreateAutomaticRevisionAsync
+            if (parsedPackageType.HasValue && !existingReview.PackageType.HasValue)
+            {
+                existingReview.PackageType = parsedPackageType;
+            }
+
+            // Assert - PackageType should remain null due to invalid/null input
+            existingReview.PackageType.Should().BeNull();
         }
     }
 }

@@ -47,6 +47,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         private readonly Option<bool> isTestReleasePlanOpt = new(["--test-release"], () => false, "Create release plan in test environment") { IsRequired = false };
         private readonly Option<string> userEmailOpt = new(["--user-email"], "User email for release plan creation") { IsRequired = false };
         private readonly Option<string> namespaceApprovalIssueOpt = new Option<string>(["--namespace-approval-issue"], "Namespace approval issue URL") { IsRequired = true };
+        private readonly Option<bool> forceCreateReleasePlanOpt = new(["--force-create-release"], () => false, "Force creation of release plan even if one already exists") { IsRequired = false };
 
         //Namespace approval repo details
         private const string namespaceApprovalRepoName = "azure-sdk";
@@ -73,7 +74,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         protected override List<Command> GetCommands() =>
         [
             new(getReleasePlanDetailsCommandName, "Get release plan details") {workItemIdOpt, releasePlanNumberOpt},
-            new(createReleasePlanCommandName, "Create a release plan") { typeSpecProjectPathOpt, targetReleaseOpt, serviceTreeIdOpt, productTreeIdOpt, apiVersionOpt, pullRequestOpt, sdkReleaseTypeOpt, userEmailOpt, isTestReleasePlanOpt },
+            new(createReleasePlanCommandName, "Create a release plan") { typeSpecProjectPathOpt, targetReleaseOpt, serviceTreeIdOpt, productTreeIdOpt, apiVersionOpt, pullRequestOpt, sdkReleaseTypeOpt, userEmailOpt, isTestReleasePlanOpt, forceCreateReleasePlanOpt },
             new(linkNamespaceApprovalIssueCommandName, "Link namespace approval issue to release plan") { workItemIdOpt, namespaceApprovalIssueOpt }
         ];
 
@@ -98,7 +99,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     var sdkReleaseType = commandParser.GetValueForOption(sdkReleaseTypeOpt);
                     var isTestReleasePlan = commandParser.GetValueForOption(isTestReleasePlanOpt);
                     var userEmail = commandParser.GetValueForOption(userEmailOpt);
-                    return await CreateReleasePlan(typeSpecProjectPath, targetReleaseMonthYear, serviceTreeId, productTreeId, specApiVersion, specPullRequestUrl, sdkReleaseType, userEmail: userEmail, isTestReleasePlan: isTestReleasePlan);
+                    var forceCreateReleasePlan = commandParser.GetValueForOption(forceCreateReleasePlanOpt);
+                    return await CreateReleasePlan(typeSpecProjectPath, targetReleaseMonthYear, serviceTreeId, productTreeId, specApiVersion, specPullRequestUrl, sdkReleaseType, userEmail: userEmail, isTestReleasePlan: isTestReleasePlan, forceCreateReleasePlan);
 
                 case linkNamespaceApprovalIssueCommandName:
                     return await LinkNamespaceApprovalIssue(commandParser.GetValueForOption(workItemIdOpt), commandParser.GetValueForOption(namespaceApprovalIssueOpt));
@@ -221,7 +223,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
         }
 
         [McpServerTool(Name = "azsdk_create_release_plan"), Description("Create Release Plan")]
-        public async Task<ObjectCommandResponse> CreateReleasePlan(string typeSpecProjectPath, string targetReleaseMonthYear, string serviceTreeId, string productTreeId, string specApiVersion, string specPullRequestUrl, string sdkReleaseType, string userEmail = "", bool isTestReleasePlan = false)
+        public async Task<ObjectCommandResponse> CreateReleasePlan(string typeSpecProjectPath, string targetReleaseMonthYear, string serviceTreeId, string productTreeId, string specApiVersion, string specPullRequestUrl, string sdkReleaseType, string userEmail = "", bool isTestReleasePlan = false, bool forceCreateReleasePlan = false)
         {
             try
             {
@@ -235,21 +237,37 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 {
                     sdkReleaseType = mappedType;
                 }
-                
+
                 ValidateCreateReleasePlanInputAsync(typeSpecProjectPath, serviceTreeId, productTreeId, specPullRequestUrl, sdkReleaseType, specApiVersion);
-
-                // Check for existing release plan for the given pull request URL.
-                logger.LogInformation("Checking for existing release plan for pull request URL: {specPullRequestUrl}", specPullRequestUrl);
-                var existingReleasePlan = await devOpsService.GetReleasePlanAsync(specPullRequestUrl);
-                if (existingReleasePlan != null && existingReleasePlan.WorkItemId > 0)
+                
+                if (!forceCreateReleasePlan)
                 {
-                    return new ObjectCommandResponse
+                    // Check for existing release plan for the given pull request URL.
+                    logger.LogInformation("Checking for existing release plan for pull request URL: {specPullRequestUrl}", specPullRequestUrl);
+                    var existingReleasePlan = await devOpsService.GetReleasePlanAsync(specPullRequestUrl);
+                    if (existingReleasePlan != null && existingReleasePlan.WorkItemId > 0)
                     {
-                        Message = $"Release plan already exists for the pull request: {specPullRequestUrl}. Release plan link: {existingReleasePlan.ReleasePlanLink}",
-                        Result = existingReleasePlan
-                    };                    
-                }
+                        return new ObjectCommandResponse
+                        {
+                            Message = $"Release plan not created. Release plan already exists for the pull request: {specPullRequestUrl}. Release plan link: {existingReleasePlan.ReleasePlanLink}",
+                            Result = existingReleasePlan
+                        };
+                    }
 
+                    logger.LogInformation("Checking for existing release plans for product: {productTreeId}", productTreeId);
+                    var existingReleasePlans = await devOpsService.GetReleasePlansForProductAsync(productTreeId, specApiVersion);
+                    existingReleasePlans = existingReleasePlans.Where(releasePlan => releasePlan.WorkItemId > 0).ToList();
+                    if (existingReleasePlans.Any())
+                    {
+                        return new ObjectCommandResponse
+                        {
+                            Message = $" Release plan not created. Release plan(s) already exist for the product: {productTreeId}." 
+                            +  $"Release plan link(s): {string.Join("\n ", existingReleasePlans.Select(p => p.ReleasePlanLink))}",
+                            Result = existingReleasePlans
+                        };
+                    }
+                }
+                
                 // Check environment variable to determine if this should be a test release plan
                 var isAgentTesting = environmentHelper.GetBooleanVariable("AZSDKTOOLS_AGENT_TESTING", false);
                 if (isAgentTesting)

@@ -15,6 +15,8 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
     private const string DotNetCommand = "dotnet";
     private const string PowerShellCommand = "pwsh";
     private const string RequiredDotNetVersion = "9.0.102"; // TODO - centralize this as part of env setup tool
+    private static readonly TimeSpan CodeChecksTimeout = TimeSpan.FromMinutes(6);
+    private static readonly TimeSpan AotCompatTimeout = TimeSpan.FromMinutes(5);
 
     public DotNetLanguageSpecificChecks(
         IProcessHelper processHelper,
@@ -48,7 +50,6 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
 
             var repoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
             var scriptPath = Path.Combine(repoRoot, "eng", "scripts", "CodeChecks.ps1");
-
             if (!File.Exists(scriptPath))
             {
                 _logger.LogError("Code checks script not found at: {ScriptPath}", scriptPath);
@@ -56,9 +57,7 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
             }
 
             var args = new[] { scriptPath, "-ServiceDirectory", serviceDirectory, "-SpellCheckPublicApiSurface" };
-
-            var timeout = TimeSpan.FromMinutes(6);
-            var result = await _processHelper.Run(new(PowerShellCommand, args, timeout: timeout, workingDirectory: repoRoot), ct);
+            var result = await _processHelper.Run(new(PowerShellCommand, args, timeout: CodeChecksTimeout, workingDirectory: repoRoot), ct);
 
             if (result.ExitCode == 0)
             {
@@ -67,14 +66,14 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
             }
             else
             {
-                _logger.LogWarning("Generated code checks failed with exit code {ExitCode}", result.ExitCode);
+                _logger.LogWarning("Generated code checks for package at {PackagePath} failed with exit code {ExitCode}", packagePath, result.ExitCode);
                 return new CLICheckResponse(result.ExitCode, result.Output, "Generated code checks failed");
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(CheckGeneratedCodeAsync));
-            return new CLICheckResponse(1, "", $"{nameof(CheckGeneratedCodeAsync)} failed with an exception: {ex.Message}");
+            _logger.LogError(ex, "Error running generated code checks at {PackagePath}", packagePath);
+            return new CLICheckResponse(1, "", $"Error running generated code checks: {ex.Message}");
         }
     }
 
@@ -108,16 +107,15 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
 
             var repoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
             var scriptPath = Path.Combine(repoRoot, "eng", "scripts", "compatibility", "Check-AOT-Compatibility.ps1");
-            var workingDirectory = Path.Combine(repoRoot, "eng", "scripts", "compatibility");
-
             if (!File.Exists(scriptPath))
             {
                 _logger.LogError("AOT compatibility script not found at: {ScriptPath}", scriptPath);
                 return new CLICheckResponse(1, "", $"AOT compatibility script not found at: {scriptPath}");
             }
 
+            var workingDirectory = Path.Combine(repoRoot, "eng", "scripts", "compatibility");
             var args = new[] { scriptPath, "-ServiceDirectory", serviceDirectory, "-PackageName", packageName };
-            var timeout = TimeSpan.FromMinutes(6);
+            var timeout = AotCompatTimeout;
             var result = await _processHelper.Run(new(PowerShellCommand, args, timeout: timeout, workingDirectory: workingDirectory), ct);
 
             if (result.ExitCode == 0)
@@ -133,8 +131,8 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(CheckAotCompatAsync));
-            return new CLICheckResponse(1, "", $"{nameof(CheckAotCompatAsync)} failed with an exception: {ex.Message}");
+            _logger.LogError(ex, "Error running AOT compatibility check at {PackagePath}", packagePath);
+            return new CLICheckResponse(1, "", $"Error running AOT compatibility check: {ex.Message}");
         }
     }
 

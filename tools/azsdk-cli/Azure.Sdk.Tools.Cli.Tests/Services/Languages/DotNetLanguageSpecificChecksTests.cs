@@ -92,7 +92,6 @@ internal class DotNetLanguageSpecificChecksTests
         SetupSuccessfulDotNetVersionCheck();
         SetupGitRepoDiscovery();
 
-        // Create the expected script path and ensure the directory exists
         var scriptPath = Path.Combine(_repoRoot, "eng", "scripts", "CodeChecks.ps1");
         Directory.CreateDirectory(Path.GetDirectoryName(scriptPath)!);
         File.WriteAllText(scriptPath, "# Mock PowerShell script");
@@ -120,7 +119,6 @@ internal class DotNetLanguageSpecificChecksTests
         }
         finally
         {
-            // Cleanup
             try { File.Delete(scriptPath); Directory.Delete(Path.GetDirectoryName(scriptPath)!, true); } catch { }
         }
     }
@@ -142,7 +140,6 @@ internal class DotNetLanguageSpecificChecksTests
         SetupSuccessfulDotNetVersionCheck();
         SetupGitRepoDiscovery();
 
-        // Create the expected script path and ensure the directory exists
         var scriptPath = Path.Combine(_repoRoot, "eng", "scripts", "CodeChecks.ps1");
         Directory.CreateDirectory(Path.GetDirectoryName(scriptPath)!);
         File.WriteAllText(scriptPath, "# Mock PowerShell script");
@@ -156,7 +153,7 @@ internal class DotNetLanguageSpecificChecksTests
             .ReturnsAsync(() =>
             {
                 var processResult = new ProcessResult { ExitCode = 1 };
-                processResult.AppendStdout(errorMessage);  // Changed from AppendStderr to AppendStdout
+                processResult.AppendStdout(errorMessage);
                 return processResult;
             });
 
@@ -211,7 +208,6 @@ internal class DotNetLanguageSpecificChecksTests
         SetupSuccessfulDotNetVersionCheck();
         SetupGitRepoDiscovery();
 
-        // Create the expected script path and ensure the directory exists
         var scriptPath = Path.Combine(_repoRoot, "eng", "scripts", "compatibility", "Check-AOT-Compatibility.ps1");
         Directory.CreateDirectory(Path.GetDirectoryName(scriptPath)!);
         File.WriteAllText(scriptPath, "# Mock PowerShell script");
@@ -239,7 +235,6 @@ internal class DotNetLanguageSpecificChecksTests
         }
         finally
         {
-            // Cleanup
             try { File.Delete(scriptPath); Directory.Delete(Path.GetDirectoryName(scriptPath)!, true); } catch { }
         }
     }
@@ -250,7 +245,6 @@ internal class DotNetLanguageSpecificChecksTests
         SetupSuccessfulDotNetVersionCheck();
         SetupGitRepoDiscovery();
 
-        // Create the expected script path and ensure the directory exists
         var scriptPath = Path.Combine(_repoRoot, "eng", "scripts", "compatibility", "Check-AOT-Compatibility.ps1");
         Directory.CreateDirectory(Path.GetDirectoryName(scriptPath)!);
         File.WriteAllText(scriptPath, "# Mock PowerShell script");
@@ -260,7 +254,7 @@ internal class DotNetLanguageSpecificChecksTests
             "can break functionality when trimming application code.";
         
         var processResult = new ProcessResult { ExitCode = 1 };
-        processResult.AppendStdout(errorMessage);  // Changed from AppendStderr to AppendStdout
+        processResult.AppendStdout(errorMessage);
         
         _processHelperMock
             .Setup(x => x.Run(
@@ -283,7 +277,6 @@ internal class DotNetLanguageSpecificChecksTests
         }
         finally
         {
-            // Cleanup
             try { File.Delete(scriptPath); Directory.Delete(Path.GetDirectoryName(scriptPath)!, true); } catch { }
         }
     }
@@ -294,11 +287,9 @@ internal class DotNetLanguageSpecificChecksTests
         SetupSuccessfulDotNetVersionCheck();
         SetupGitRepoDiscovery();
 
-        // Create a temporary directory structure for the test
         var testPackagePath = Path.Combine(_repoRoot, "sdk", "testservice", "Azure.TestService");
         Directory.CreateDirectory(testPackagePath);
 
-        // Create a .csproj file with AotCompatOptOut set to true
         var csprojPath = Path.Combine(testPackagePath, "Azure.TestService.csproj");
         var csprojContent = @"<Project Sdk=""Microsoft.NET.Sdk"">
   <PropertyGroup>
@@ -321,7 +312,6 @@ internal class DotNetLanguageSpecificChecksTests
         }
         finally
         {
-            // Cleanup
             try { Directory.Delete(testPackagePath, true); } catch { }
         }
     }
@@ -332,11 +322,9 @@ internal class DotNetLanguageSpecificChecksTests
         SetupSuccessfulDotNetVersionCheck();
         SetupGitRepoDiscovery();
 
-        // Create a temporary directory structure for the test
         var testPackagePath = Path.Combine(_repoRoot, "sdk", "testservice", "Azure.TestService");
         Directory.CreateDirectory(testPackagePath);
 
-        // Create a .csproj file without AotCompatOptOut (or set to false)
         var csprojPath = Path.Combine(testPackagePath, "Azure.TestService.csproj");
         var csprojContent = @"<Project Sdk=""Microsoft.NET.Sdk"">
   <PropertyGroup>
@@ -345,7 +333,6 @@ internal class DotNetLanguageSpecificChecksTests
 </Project>";
         File.WriteAllText(csprojPath, csprojContent);
 
-        // Create the expected script path and ensure the directory exists
         var scriptPath = Path.Combine(_repoRoot, "eng", "scripts", "compatibility", "Check-AOT-Compatibility.ps1");
         Directory.CreateDirectory(Path.GetDirectoryName(scriptPath)!);
         File.WriteAllText(scriptPath, "# Mock PowerShell script");
@@ -372,7 +359,6 @@ internal class DotNetLanguageSpecificChecksTests
                 Assert.That(result.CheckStatusDetails, Does.Not.Contain("skipped"));
             });
 
-            // Verify that the PowerShell script was actually called
             _processHelperMock.Verify(x => x.Run(
                 It.Is<ProcessOptions>(p => 
                     IsPowerShellCommand(p) && 
@@ -381,7 +367,6 @@ internal class DotNetLanguageSpecificChecksTests
         }
         finally
         {
-            // Cleanup
             try 
             { 
                 Directory.Delete(testPackagePath, true);
@@ -398,11 +383,9 @@ internal class DotNetLanguageSpecificChecksTests
         SetupSuccessfulDotNetVersionCheck();
         SetupGitRepoDiscovery();
 
-        // Create a temporary directory structure for the test
         var testPackagePath = Path.Combine(_repoRoot, "sdk", "testservice", "Azure.TestService");
         Directory.CreateDirectory(testPackagePath);
 
-        // Create a .csproj file with AotCompatOptOut in different case combinations
         var csprojPath = Path.Combine(testPackagePath, "Azure.TestService.csproj");
         var csprojContent = @"<Project Sdk=""Microsoft.NET.Sdk"">
   <PropertyGroup>
@@ -425,7 +408,6 @@ internal class DotNetLanguageSpecificChecksTests
         }
         finally
         {
-            // Cleanup
             try { Directory.Delete(testPackagePath, true); } catch { }
         }
     }
@@ -436,11 +418,9 @@ internal class DotNetLanguageSpecificChecksTests
         SetupSuccessfulDotNetVersionCheck();
         SetupGitRepoDiscovery();
 
-        // Create a temporary directory structure for the test without any .csproj file
         var testPackagePath = Path.Combine(_repoRoot, "sdk", "testservice", "Azure.TestService");
         Directory.CreateDirectory(testPackagePath);
 
-        // Create the expected script path and ensure the directory exists
         var scriptPath = Path.Combine(_repoRoot, "eng", "scripts", "compatibility", "Check-AOT-Compatibility.ps1");
         Directory.CreateDirectory(Path.GetDirectoryName(scriptPath)!);
         File.WriteAllText(scriptPath, "# Mock PowerShell script");
@@ -467,7 +447,6 @@ internal class DotNetLanguageSpecificChecksTests
                 Assert.That(result.CheckStatusDetails, Does.Not.Contain("skipped"));
             });
 
-            // Verify that the PowerShell script was actually called since no opt-out was found
             _processHelperMock.Verify(x => x.Run(
                 It.Is<ProcessOptions>(p => 
                     IsPowerShellCommand(p) && 
@@ -476,7 +455,6 @@ internal class DotNetLanguageSpecificChecksTests
         }
         finally
         {
-            // Cleanup
             try 
             { 
                 Directory.Delete(testPackagePath, true);

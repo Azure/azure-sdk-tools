@@ -257,15 +257,14 @@ class EvaluationRunner:
         if successful:
             for result in successful:
                 print(f"✅ {result.workflow_name}")
-                if result.raw_results:
-                    raw_results = result.raw_results[0]
-                    for filename, eval_result in raw_results.items():
-                        print(f"  == {filename} ==")
-                        for res in eval_result["rows"]:
-                            success = res["outputs.metrics.correct_action"]
-                            testcase_name = res["inputs.testcase"]
-                            score = res["outputs.metrics.score"]
-                            print(f"    -  {'✅' if success else '❌'} {score} - {testcase_name}")
+                raw_results = result.raw_results[0]
+                for filename, eval_result in raw_results.items():
+                    print(f"  == {filename} ==")
+                    for res in eval_result["rows"]:
+                        success = res["outputs.metrics.correct_action"]
+                        testcase_name = res["inputs.testcase"]
+                        score = res["outputs.metrics.score"]
+                        print(f"    -  {'✅' if success else '❌'} {score} - {testcase_name}")
                 print()
 
         if failed:

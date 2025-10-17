@@ -16,10 +16,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         private Mock<IProcessHelper> _mockProcessHelper;
         private Mock<INpxHelper> _mockNpxHelper;
         private Mock<IGitHelper> _mockGitHelper;
-        private Mock<ILogger<LanguageChecks>> _mockLanguageChecksLogger;
         private Mock<ILogger<PythonLanguageSpecificChecks>> _mockPythonLogger;
         private Mock<IMicroagentHostService> _mockMicroagentHostService;
-        private LanguageChecks _languageChecks;
         private PackageCheckTool _packageCheckTool;
         private TempDirectory _testProjectPath;
 
@@ -30,7 +28,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             _mockProcessHelper = new Mock<IProcessHelper>();
             _mockNpxHelper = new Mock<INpxHelper>();
             _mockGitHelper = new Mock<IGitHelper>();
-            _mockLanguageChecksLogger = new Mock<ILogger<LanguageChecks>>();
             _mockPythonLogger = new Mock<ILogger<PythonLanguageSpecificChecks>>();
             _mockMicroagentHostService = new Mock<IMicroagentHostService>();
 
@@ -40,10 +37,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
             var languageChecks = new List<ILanguageSpecificChecks> { pythonCheck };
             var mockPowershellHelper = new Mock<IPowershellHelper>();
             var resolver = Mock.Of<ILanguageSpecificResolver<ILanguageSpecificChecks>>();
-            var packageInfoHelper = Mock.Of<ILanguageSpecificResolver<IPackageInfoHelper>>();
-
-            _languageChecks = new LanguageChecks(_mockProcessHelper.Object, _mockNpxHelper.Object, _mockGitHelper.Object, _mockLanguageChecksLogger.Object, resolver, _mockMicroagentHostService.Object);
-            _packageCheckTool = new PackageCheckTool(_mockLogger.Object, _languageChecks, packageInfoHelper);
+            
+            _packageCheckTool = new PackageCheckTool(_mockLogger.Object, resolver);
 
             // Setup default mock responses
             var defaultProcessResult = new ProcessResult { ExitCode = 0, OutputDetails = new List<(StdioLevel, string)>() };

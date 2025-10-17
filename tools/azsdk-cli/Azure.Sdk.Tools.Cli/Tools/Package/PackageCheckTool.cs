@@ -127,6 +127,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             var notImplementedChecks = new List<string>();
 
             // Run dependency check
+            var languageChecks = await ResolveLanguageChecks(packagePath, ct);
+            if (languageChecks == null)
+            {
+                return CreateUnsupportedLanguageResponse(packagePath);
+            }
+
             var dependencyCheckResult = await languageChecks.AnalyzeDependenciesAsync(packagePath, fixCheckErrors, ct);
             results.Add(dependencyCheckResult);
             if (dependencyCheckResult.ExitCode != 0)
@@ -309,6 +315,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             logger.LogInformation("Running changelog validation");
 
+            var languageChecks = await ResolveLanguageChecks(packagePath, ct);
+            if (languageChecks == null)
+            {
+                return CreateUnsupportedLanguageResponse(packagePath);
+            }
+
             var result = await languageChecks.ValidateChangelogAsync(packagePath, fixCheckErrors, ct);
 
             if (result.ExitCode != 0)
@@ -337,6 +349,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             logger.LogInformation("Running dependency check");
 
+            var languageChecks = await ResolveLanguageChecks(packagePath, ct);
+            if (languageChecks == null)
+            {
+                return CreateUnsupportedLanguageResponse(packagePath);
+            }
+
             var result = await languageChecks.AnalyzeDependenciesAsync(packagePath, fixCheckErrors, ct);
 
             if (result.ExitCode != 0)
@@ -363,6 +381,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         private async Task<PackageCheckResponse> RunReadmeValidation(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             logger.LogInformation("Running README validation");
+
+            var languageChecks = await ResolveLanguageChecks(packagePath, ct);
+            if (languageChecks == null)
+            {
+                return CreateUnsupportedLanguageResponse(packagePath);
+            }
 
             var result = await languageChecks.ValidateReadmeAsync(packagePath, fixCheckErrors, ct);
 
@@ -391,6 +415,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             logger.LogInformation("Running spelling validation{fixMode}", fixCheckErrors ? " with fix mode enabled" : "");
 
+            var languageChecks = await ResolveLanguageChecks(packagePath, ct);
+            if (languageChecks == null)
+            {
+                return CreateUnsupportedLanguageResponse(packagePath);
+            }
+
             var result = await languageChecks.CheckSpellingAsync(packagePath, fixCheckErrors, ct);
             return result;
         }
@@ -398,6 +428,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         private async Task<PackageCheckResponse> RunSnippetUpdate(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             logger.LogInformation("Running snippet update");
+
+            var languageChecks = await ResolveLanguageChecks(packagePath, ct);
+            if (languageChecks == null)
+            {
+                return CreateUnsupportedLanguageResponse(packagePath);
+            }
 
             var result = await languageChecks.UpdateSnippetsAsync(packagePath, fixCheckErrors, ct);
             return result;
@@ -407,6 +443,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             logger.LogInformation("Running code linting");
 
+            var languageChecks = await ResolveLanguageChecks(packagePath, ct);
+            if (languageChecks == null)
+            {
+                return CreateUnsupportedLanguageResponse(packagePath);
+            }
+
             var result = await languageChecks.LintCodeAsync(packagePath, fixCheckErrors, ct);
             return result;
         }
@@ -415,6 +457,12 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             logger.LogInformation("Running code formatting");
 
+            var languageChecks = await ResolveLanguageChecks(packagePath, ct);
+            if (languageChecks == null)
+            {
+                return CreateUnsupportedLanguageResponse(packagePath);
+            }
+
             var result = await languageChecks.FormatCodeAsync(packagePath, fixCheckErrors, ct);
             return result;
         }
@@ -422,6 +470,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         private async Task<PackageCheckResponse> RunCheckGeneratedCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             logger.LogInformation("Running generated code checks");
+            var languageChecks = await ResolveLanguageChecks(packagePath, ct);
+            if (languageChecks == null)
+            {
+                return CreateUnsupportedLanguageResponse(packagePath);
+            }
 
             var result = await languageChecks.CheckGeneratedCode(packagePath, fixCheckErrors, ct);
             return result;
@@ -430,6 +483,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         private async Task<PackageCheckResponse> RunCheckAotCompat(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             logger.LogInformation("Running AOT compatibility checks");
+            var languageChecks = await ResolveLanguageChecks(packagePath, ct);
+            if (languageChecks == null)
+            {
+                return CreateUnsupportedLanguageResponse(packagePath);
+            }
 
             var result = await languageChecks.CheckAotCompat(packagePath, fixCheckErrors, ct);
             return result;
@@ -438,6 +496,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         private async Task<PackageCheckResponse> RunSampleValidation(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             logger.LogInformation("Running sample validation");
+            var languageChecks = await ResolveLanguageChecks(packagePath, ct);
+            if (languageChecks == null)
+            {
+                return CreateUnsupportedLanguageResponse(packagePath);
+            }
 
             var result = await languageChecks.ValidateSamplesAsync(packagePath, fixCheckErrors, ct);
             return result;
@@ -461,6 +524,19 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             {
                 logger.LogError(ex, "Error in AddPackageDetailsInResponse");
             }
+        
+        private async Task<ILanguageSpecificChecks?> ResolveLanguageChecks(string packagePath, CancellationToken ct)
+        {
+            return await languageSpecificResolver.Resolve(packagePath, ct);
+        }
+
+        private static PackageCheckResponse CreateUnsupportedLanguageResponse(string packagePath)
+        {
+            return new PackageCheckResponse(
+                exitCode: 1,
+                checkStatusDetails: $"No language-specific check handler found for package at {packagePath}. Supported languages may not include this package type.",
+                error: "Unsupported package type"
+            );
         }
     }
 }

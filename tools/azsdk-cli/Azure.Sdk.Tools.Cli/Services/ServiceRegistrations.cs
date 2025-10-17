@@ -34,7 +34,6 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<IGitHubService, GitHubService>();
 
             // Language Check Services (Composition-based)
-            services.AddScoped<ILanguageChecks, LanguageChecks>();
             services.AddLanguageSpecific<ILanguageSpecificChecks>(new LanguageSpecificImplementations
             {
                 Python = typeof(PythonLanguageSpecificChecks),

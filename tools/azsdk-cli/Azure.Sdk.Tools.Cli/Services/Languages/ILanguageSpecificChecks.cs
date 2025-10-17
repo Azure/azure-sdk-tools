@@ -77,8 +77,18 @@ public interface ILanguageSpecificChecks
         return Task.FromResult(new CLICheckResponse(1, "", "Not implemented for this language."));
     }
 
+    /// Validate samples for the specific package.
+    /// </summary>
+    /// <param name="packagePath">Path to the package directory</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Result of the sample validation</returns>
+    Task<CLICheckResponse> ValidateSamplesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(new CLICheckResponse(1, "", "Not implemented for this language."));
+    }
+    
     /// <summary>
-    /// Gets the SDK package name for the specified package using language-specific rules.
+    /// Gets the SDK package name.
     /// </summary>
     /// <param name="repo">Repository root path</param>
     /// <param name="packagePath">Package path</param>

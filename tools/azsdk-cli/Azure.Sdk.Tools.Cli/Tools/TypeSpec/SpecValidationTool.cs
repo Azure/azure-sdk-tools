@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System.CommandLine;
+using System.CommandLine.Parsing;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -23,19 +24,24 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         private const string TypespecValidationCommandName = "validate-typespec";
 
         // Options
-        private readonly Option<string> typeSpecProjectPathOpt = new(["--typespec-project"], "Path to typespec project") { IsRequired = true };
+        private readonly Option<string> typeSpecProjectPathOpt = new("--typespec-project")
+        {
+            Description = "Path to typespec project",
+            Required = true,
+        };
 
-        protected override Command GetCommand() => new(TypespecValidationCommandName, "Run typespec validation") { typeSpecProjectPathOpt };
+        protected override Command GetCommand() =>
+            new(TypespecValidationCommandName, "Run typespec validation") { typeSpecProjectPathOpt };
 
-        public override async Task<CommandResponse> HandleCommand(System.CommandLine.Invocation.InvocationContext ctx, CancellationToken ct)
+        public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
             await Task.CompletedTask;
-            var command = ctx.ParseResult.CommandResult.Command.Name;
+            var command = parseResult.CommandResult.Command.Name;
 
             switch (command)
             {
                 case TypespecValidationCommandName:
-                    var repoRootPath = ctx.ParseResult.GetValueForOption(typeSpecProjectPathOpt);
+                    var repoRootPath = parseResult.GetValue(typeSpecProjectPathOpt);
                     var validationResults = RunTypeSpecValidation(repoRootPath);
                     validationResults.Message = "Validation results:";
                     return validationResults;

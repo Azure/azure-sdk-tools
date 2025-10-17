@@ -17,7 +17,8 @@ internal class HelloWorldToolTests
         tool.Initialize(outputHelper, new Mock<ITelemetryService>().Object);
         var cmd = tool.GetCommandInstances().First();
 
-        var exitCode = await cmd.InvokeAsync(["hello-world", "HI. MY NAME IS"]);
+        var parseResult = cmd.Parse(["hello-world", "HI. MY NAME IS"]);
+        var exitCode = await parseResult.InvokeAsync();
         Assert.That(exitCode, Is.EqualTo(0));
 
         var expected = @"
@@ -38,7 +39,8 @@ Duration: 1ms
         tool.Initialize(outputHelper, new Mock<ITelemetryService>().Object);
         var cmd = tool.GetCommandInstances().First();
 
-        var exitCode = await cmd.InvokeAsync(["hello-world", "HI. MY NAME IS", "--fail"]);
+        var parseResult = cmd.Parse(["hello-world", "HI. MY NAME IS", "--fail"]);
+        var exitCode = await parseResult.InvokeAsync();
         Assert.That(exitCode, Is.EqualTo(1));
 
         var expected = "[ERROR] RESPONDING TO 'HI. MY NAME IS' with FAIL: 1";

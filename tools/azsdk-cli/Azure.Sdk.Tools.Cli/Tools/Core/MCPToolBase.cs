@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.Diagnostics;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
@@ -36,7 +36,7 @@ public abstract class MCPToolBase
         this.initialized = true;
     }
 
-    public async Task InstrumentedCommandHandler(Command command, InvocationContext ctx)
+    public async Task<int> InstrumentedCommandHandler(Command command, ParseResult parseResult, CancellationToken cancellationToken)
     {
         if (!initialized)
         {
@@ -52,13 +52,12 @@ public abstract class MCPToolBase
         try
         {
             var fullCommandName = string.Join('.', command.Parents.Reverse().Select(p => p.Name).Append(command.Name));
-            var commandLine = string.Join(" ", ctx.ParseResult.Tokens.Select(t => t.Value));
+            var commandLine = string.Join(" ", parseResult.Tokens.Select(t => t.Value));
             activity?.AddTag(TagName.CommandName, fullCommandName);
             activity?.SetTag(TagName.CommandArgs, commandLine);
 
-            CommandResponse response = await HandleCommand(ctx, ctx.GetCancellationToken());
+            CommandResponse response = await HandleCommand(parseResult, cancellationToken);
             var result = output.Format(response);
-            ctx.ExitCode = response.ExitCode;
 
             activity?.SetTag(TagName.CommandResponse, result);
 
@@ -72,6 +71,8 @@ public abstract class MCPToolBase
             }
 
             output.OutputCommandResponse(response);
+
+            return response.ExitCode;
         }
         catch (Exception ex)
         {
@@ -83,5 +84,5 @@ public abstract class MCPToolBase
 
     public abstract List<Command> GetCommandInstances();
 
-    public abstract Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct);
+    public abstract Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct);
 }

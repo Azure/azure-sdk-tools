@@ -27,18 +27,4 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
         _gitHelper = gitHelper;
         _logger = logger;
     }
-
-    public string SupportedLanguage => "dotnet";
-
-    public async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct)
-    {
-        // Implementation for analyzing dependencies in a .NET project
-        return await Task.FromResult(new CLICheckResponse());
-    }
-
-    public async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, CancellationToken cancellationToken = default)
-    {
-       // Implementation for updating snippets in a .NET project
-        return await Task.FromResult(new CLICheckResponse());
-    }
 }

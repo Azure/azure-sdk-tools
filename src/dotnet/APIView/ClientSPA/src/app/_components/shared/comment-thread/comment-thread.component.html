@@ -12,7 +12,7 @@
             <i class="bi" 
                [class.bi-chevron-down]="!isThreadCollapsed" 
                [class.bi-chevron-right]="isThreadCollapsed" 
-               style="font-size: 0.8rem; color: #666; margin-right: 0.5rem;"></i>
+               style="font-size: 0.8rem; color: var(--text-muted-color); margin-right: 0.5rem;"></i>
             <span class="text-muted" style="font-size: 0.9rem;">Comment on line {{ actualLineNumber }}</span>
         </div>
         <div *ngIf="codePanelRowData!.comments && codePanelRowData!.comments.length > 0 && 
@@ -62,6 +62,13 @@
                     </div>
                 </ng-template>
                 <div *ngIf="!comment.isInEditMode" [innerHTML]="(comment.commentText | markdownToHtml | async)" class="pe-5 rendered-comment-content">
+                </div>
+                <div *ngIf="!comment.isInEditMode && hasRelatedComments(comment)" class="mt-2">
+                    <button class="related-comments-btn" (click)="showRelatedComments(comment)" pTooltip="View related issues" tooltipPosition="bottom">
+                        <span class="related-comments-indicator">
+                            <i class="pi pi-eye me-1"></i>{{ getRelatedCommentsCount(comment) }} related
+                        </span>
+                    </button>
                 </div>
                 <div *ngIf="comment.isInEditMode" class="mt-2 p-2 edit-editor-container">
                     <app-editor [content]="comment.commentText" [editorId]="comment.id" [style]="{ width: '100%'}"></app-editor>
@@ -154,3 +161,11 @@
     <button type="button" class="btn btn-sm btn-outline-secondary" pTooltip="Previous Comment" tooltipPosition="top" (click)="handleCommentThreadNavaigation($event, CodeLineRowNavigationDirection.prev)"><i class="bi bi-arrow-up"></i></button>
     <button type="button" class="btn btn-sm btn-outline-secondary" pTooltip="Next Comment" tooltipPosition="bottom" (click)="handleCommentThreadNavaigation($event, CodeLineRowNavigationDirection.next)"><i class="bi bi-arrow-down"></i></button>
 </div>
+
+<app-related-comments-dialog
+  [relatedComments]="relatedComments"
+  [selectedCommentId]="selectedCommentId"
+  [allCodePanelRowData]="allCodePanelRowData"
+  [(visible)]="showRelatedCommentsDialog"
+  (resolveSelectedComments)="onResolveSelectedComments($event)">
+</app-related-comments-dialog>

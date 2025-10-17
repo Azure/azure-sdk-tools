@@ -35,6 +35,8 @@
     <ng-container *ngIf="item.type === CodePanelRowDatatype.CommentThread">
       <app-comment-thread
         [codePanelRowData]="item"
+        [allComments]="allComments"
+        [allCodePanelRowData]="codePanelRowData"
         [associatedCodeLine]="getAssociatedCodeLine(item)"
         [actualLineNumber]="index"
         [userProfile]="userProfile"

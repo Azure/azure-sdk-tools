@@ -12,7 +12,7 @@ public class MicroagentHostService(AzureOpenAIClient openAI, ILogger<MicroagentH
     private AzureOpenAIClient openAI = openAI;
     private ILogger logger = logger;
 
-    public async Task<TResult> RunAgentToCompletion<TResult>(Microagent<TResult> agentDefinition, CancellationToken ct = default)
+    public async Task<TResult> RunAgentToCompletion<TResult>(Microagent<TResult> agentDefinition, CancellationToken ct = default) where TResult : notnull
     {
         var tools = agentDefinition.Tools?.ToDictionary(t => t.Name) ?? new Dictionary<string, IAgentTool>();
         if (tools.ContainsKey(ExitToolName))
@@ -85,6 +85,18 @@ public class MicroagentHostService(AzureOpenAIClient openAI, ILogger<MicroagentH
                     throw new InvalidOperationException($"Exit tool did not return a valid result: {toolCall.FunctionArguments}");
                 }
 
+                if (agentDefinition.ValidateResult != null)
+                {
+                    var validation = await agentDefinition.ValidateResult(result.Result);
+                    if (!validation.Success)
+                    {
+                        var serializedReason = validation.Reason is string str ? str : System.Text.Json.JsonSerializer.Serialize(validation.Reason);
+                        logger.LogWarning("Agent returned a result that did not pass validation: {Reason}. Continuing the run.", serializedReason);
+                        conversationHistory.Add(ChatMessage.CreateToolMessage(toolCall.Id, $"The result you provided did not pass validation: {serializedReason}. Please try again."));
+                        continue;
+                    }
+                }
+
                 return result.Result;
             }
 
@@ -117,7 +129,7 @@ public class MicroagentHostService(AzureOpenAIClient openAI, ILogger<MicroagentH
     /// (OpenAI expects an object at the top level)
     /// </summary>
     /// <typeparam name="T">Type of the result</typeparam>
-    private class MicroagentResult<T>
+    private class MicroagentResult<T> where T : notnull
     {
         [Description("The result of the agent run. Output the result requested exactly, without additional padding, explanation, or code fences unless requested.")]
         public required T Result { get; set; }

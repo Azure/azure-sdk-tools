@@ -14,6 +14,7 @@ import { WorkerService } from 'src/app/_services/worker/worker.service';
 import { CodePanelComponent } from '../code-panel/code-panel.component';
 import { ReviewPageOptionsComponent } from '../review-page-options/review-page-options.component';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
+import { CommentRelationHelper } from 'src/app/_helpers/comment-relation.helper';
 import { ACTIVE_API_REVISION_ID_QUERY_PARAM, DIFF_API_REVISION_ID_QUERY_PARAM, DIFF_STYLE_QUERY_PARAM, REVIEW_ID_ROUTE_PARAM, SCROLL_TO_NODE_QUERY_PARAM } from 'src/app/_helpers/router-helpers';
 import { CodePanelData, CodePanelRowData, CodePanelRowDatatype, CrossLanguageContentDto } from 'src/app/_models/codePanelModels';
 import { UserProfile } from 'src/app/_models/userProfile';
@@ -227,6 +228,7 @@ export class ReviewPageComponent implements OnInit {
       if (data.directive === ReviewPageWorkerMessageDirective.UpdateCodePanelData) {
         this.codePanelData = data.payload as CodePanelData;
         this.hasHiddenAPIThatIsDiff = this.codePanelData.hasHiddenAPIThatIsDiff;
+        this.processEmbeddedComments();
         this.workerService.terminateWorker();
       }
     });
@@ -361,8 +363,30 @@ export class ReviewPageComponent implements OnInit {
       .pipe(takeUntil(this.destroy$)).subscribe({
         next: (comments: CommentItemModel[]) => {
           this.comments = comments;
+          CommentRelationHelper.calculateRelatedComments(this.comments);
+          this.processEmbeddedComments();
         }
       });
+  }
+
+  private processEmbeddedComments() {
+    if (!this.codePanelData || !this.comments) return;
+    
+    Object.values(this.codePanelData.nodeMetaData).forEach(nodeData => {
+      if (nodeData.commentThread) {
+        Object.values(nodeData.commentThread).forEach(commentThreadRow => {
+          if (commentThreadRow.comments) {
+            commentThreadRow.comments.forEach(embeddedComment => {
+              const globalComment = this.comments.find(c => c.id === embeddedComment.id);
+              if (globalComment) {
+                embeddedComment.hasRelatedComments = globalComment.hasRelatedComments;
+                embeddedComment.relatedCommentsCount = globalComment.relatedCommentsCount;
+              }
+            });
+          }
+        });
+      }
+    });
   }
 
   loadLatestSampleRevision(reviewId: string) {

@@ -15,9 +15,9 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
     private readonly ILogger<PythonLanguageSpecificChecks> _logger;
 
     public PythonLanguageSpecificChecks(
-        IProcessHelper processHelper, 
-        INpxHelper npxHelper, 
-        IGitHelper gitHelper, 
+        IProcessHelper processHelper,
+        INpxHelper npxHelper,
+        IGitHelper gitHelper,
         ILogger<PythonLanguageSpecificChecks> logger)
     {
         _processHelper = processHelper;
@@ -25,9 +25,8 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
         _gitHelper = gitHelper;
         _logger = logger;
     }
-    public string SupportedLanguage => "Python";
 
-    public async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct = default)
+    public async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         try
         {
@@ -75,7 +74,7 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
         }
     }
 
-    public async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, CancellationToken cancellationToken = default)
+    public async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -131,5 +130,19 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
             _logger.LogError(ex, "Error updating snippets for Python project at: {PackagePath}", packagePath);
             return new CLICheckResponse(1, "", $"Error updating snippets: {ex.Message}");
         }
+    }
+
+    public async Task<CLICheckResponse> LintCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    {
+        // Implementation for linting code in a Python project
+        // Could use pylint, flake8, black --check, etc.
+        return await Task.FromResult(new CLICheckResponse(0, "Code linting not yet implemented for Python", ""));
+    }
+
+    public async Task<CLICheckResponse> FormatCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    {
+        // Implementation for formatting code in a Python project
+        // Could use black, autopep8, yapf, etc.
+        return await Task.FromResult(new CLICheckResponse(0, "Code formatting not yet implemented for Python", ""));
     }
 }

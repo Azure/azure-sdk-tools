@@ -97,47 +97,27 @@ What are we trying to achieve with this telemetry design?
 
 #### Exception 1: No Personally Identifiable Information (PII)
 
-**Description:**
-Telemetry must not collect usernames, email addresses, file paths, or any other PII.
-
-**Impact:**
-We cannot track individual users by name, only by hashed device identifiers.
-
-**Workaround:**
-Use DevDeviceId and MAC address hashes for user aggregation while maintaining privacy.
+- **Description**: Telemetry must not collect usernames, email addresses, file paths, or any other PII.
+- **Impact**: We cannot track individual users by name, only by hashed device identifiers.
+- **Workaround**: Use DevDeviceId and MAC address hashes for user aggregation while maintaining privacy.
 
 #### Exception 2: Optional Telemetry Collection
 
-**Description:**
-Users must be able to opt out of telemetry collection.
-
-**Impact:**
-Telemetry data may be incomplete if significant users opt out.
-
-**Workaround:**
-Make telemetry opt-out rather than opt-in to maximize data collection while respecting user choice.
+- **Description**: Users must be able to opt out of telemetry collection.
+- **Impact**: Telemetry data may be incomplete if significant users opt out.
+- **Workaround**: Make telemetry opt-out rather than opt-in to maximize data collection while respecting user choice.
 
 #### Exception 3: Network Failures
 
-**Description:**
-Telemetry transmission may fail due to network issues or firewall restrictions.
-
-**Impact:**
-Some telemetry events may be lost and never reach the backend.
-
-**Workaround:**
-Implement local queuing and retry logic with exponential backoff. Telemetry failures should never block user workflows.
+- **Description**: Telemetry transmission may fail due to network issues or firewall restrictions.
+- **Impact**: Some telemetry events may be lost and never reach the backend.
+- **Workaround**: Implement local queuing and retry logic with exponential backoff. Telemetry failures should never block user workflows.
 
 #### Exception 4: Tool Argument Sensitivity
 
-**Description:**
-Some tool arguments may contain sensitive data (API keys, connection strings, internal URLs).
-
-**Impact:**
-Full tool argument logging could expose sensitive information.
-
-**Workaround:**
-Implement argument sanitization to remove or redact sensitive patterns before transmission.
+- **Description**: Some tool arguments may contain sensitive data (API keys, connection strings, internal URLs).
+- **Impact**: Full tool argument logging could expose sensitive information.
+- **Workaround**: Implement argument sanitization to remove or redact sensitive patterns before transmission.
 
 ---
 

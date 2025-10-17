@@ -43,7 +43,7 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
         {
             var azureClient = GetAzureOpenAIClient();
             return new ChatClientBuilder(azureClient.GetChatClient(AzureOpenAIModelDeploymentName).AsIChatClient())
-                .UseFunctionInvocation()
+                //.UseFunctionInvocation()
                 .Build();
         }
 

@@ -1,9 +1,2 @@
 name: mention-action
 kind: prompt
-prompty: ../../../prompts/mention/parse_conversation_action.prompty
-evaluation_config:
-  comparison_field: action
-  display_name: Action
-  breakdown_categories:
-    no_action: {correct: 0, total: 0}
-    update_kb: {correct: 0, total: 0}

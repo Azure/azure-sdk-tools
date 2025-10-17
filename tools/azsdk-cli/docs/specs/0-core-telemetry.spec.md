@@ -230,7 +230,6 @@ The `customDimensions` column contains a JSON object with the following properti
 | `macAddressHash` | SHA-256 hash of MAC address | `7b1a2a70a41d8154f6aeaf50e67b052fb9ca194de22c...` |
 | `devDeviceId` | Hash of DevDeviceId | `9b705c2e5b927992ab862a50e3552cadcc35f0fa0000...` |
 | `platform` | Execution platform | `VSCode`, `CLI`, `GitHub`, `JetBrains` |
-| `isOptedIn` | User opted into telemetry | `true`, `false` |
 
 #### Agent-Specific Properties (MCP Server Only)
 
@@ -286,7 +285,6 @@ The `customDimensions` column contains a JSON object with the following properti
     "macAddressHash": "7b1a2a70a41d8154f6aeaf50e67b052fb9ca194de22c...",
     "devDeviceId": "9b705c2e5b927992ab862a50e3552cadcc35f0fa0000...",
     "platform": "VSCode",
-    "isOptedIn": true,
     "clientName": "Visual Studio Code",
     "clientVersion": "1.100.1",
     "agentName": "GitHub Copilot",
@@ -322,7 +320,6 @@ The `customDimensions` column contains a JSON object with the following properti
     "macAddressHash": "7b1a2a70a41d8154f6aeaf50e67b052fb9ca194de22c...",
     "devDeviceId": "9b705c2e5b927992ab862a50e3552cadcc35f0fa0000...",
     "platform": "VSCode",
-    "isOptedIn": true,
     "clientName": "Visual Studio Code",
     "clientVersion": "1.100.1",
     "agentName": "GitHub Copilot",
@@ -360,7 +357,6 @@ The `customDimensions` column contains a JSON object with the following properti
     "macAddressHash": "7b1a2a70a41d8154f6aeaf50e67b052fb9ca194de22c...",
     "devDeviceId": "9b705c2e5b927992ab862a50e3552cadcc35f0fa0000...",
     "platform": "VSCode",
-    "isOptedIn": true,
     "clientName": "Visual Studio Code",
     "clientVersion": "1.100.1",
     "eventType": "start"
@@ -386,7 +382,6 @@ The `customDimensions` column contains a JSON object with the following properti
     "macAddressHash": "8c2b3b81b52e9265g7bgbg61f78c163gc0db205ef33d...",
     "devDeviceId": "a0816d3f6c038aa3bc973b61f4663dbedd46g1gb1111...",
     "platform": "CLI",
-    "isOptedIn": true,
     "toolName": "azsdk_verify_setup",
     "toolCategory": "env-setup",
     "toolArgs": "{\"languages\":\".NET,Java,JavaScript,Python,Go\"}",

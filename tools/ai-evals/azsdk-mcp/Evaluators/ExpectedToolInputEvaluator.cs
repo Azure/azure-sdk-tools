@@ -30,8 +30,8 @@ namespace Azure.Sdk.Tools.McpEvals.Evaluators
             }
 
             // Get tool calls to compare them
-            var expectedToolCalls = await GetToolContent(context.ChatMessages, context.ToolNames, true);
-            var actualToolCalls = await GetToolContent(modelResponse.Messages, context.ToolNames, false);
+            var expectedToolCalls = GetToolContent(context.ChatMessages, context.ToolNames, true);
+            var actualToolCalls = GetToolContent(modelResponse.Messages, context.ToolNames, false);
 
             // Make sure we have tool calls to compare
             if (!expectedToolCalls.Any())
@@ -144,7 +144,7 @@ namespace Azure.Sdk.Tools.McpEvals.Evaluators
             }
         }
 
-        private async Task<IEnumerable<FunctionCallContent>> GetToolContent(IEnumerable<ChatMessage> messages, IEnumerable<string> toolNames, bool simplify)
+        private IEnumerable<FunctionCallContent> GetToolContent(IEnumerable<ChatMessage> messages, IEnumerable<string> toolNames, bool simplify)
         {
             var result = messages
                 .Where(message => message.Role == ChatRole.Assistant)

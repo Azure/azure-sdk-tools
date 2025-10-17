@@ -15,22 +15,16 @@ public abstract class ClientUpdateLanguageServiceBase : IClientUpdateLanguageSer
     /// Resolves language-specific dependency / quality checks for a generated client package.
     /// Implementations typically supply an instance able to run build / type / dependency validations.
     /// </summary>
-    protected ILanguageSpecificCheckResolver languageSpecificCheckResolver { get; }
+    protected ILanguageSpecificResolver<ILanguageSpecificChecks> LanguageSpecificChecks { get; }
 
     /// <summary>
     /// Initializes the base language service.
     /// </summary>
-    /// <param name="languageSpecificCheckResolver">Resolver that returns an object capable of executing validation checks for a given generated package path.</param>
-    protected ClientUpdateLanguageServiceBase(ILanguageSpecificCheckResolver languageSpecificCheckResolver)
+    /// <param name="languageSpecificChecks">Resolver that returns an object capable of executing validation checks for a given generated package path.</param>
+    protected ClientUpdateLanguageServiceBase(ILanguageSpecificResolver<ILanguageSpecificChecks> languageSpecificChecks)
     {
-        this.languageSpecificCheckResolver = languageSpecificCheckResolver;
+        this.LanguageSpecificChecks = languageSpecificChecks;
     }
-
-    /// <summary>
-    /// Gets the language identifier (e.g. <c>"csharp"</c>, <c>"java"</c>, <c>"python"</c>) supported by this implementation.
-    /// The value is used to route sessions to the correct language service.
-    /// </summary>
-    public abstract string SupportedLanguage { get; }
 
     /// <summary>
     /// Produces a semantic API change list between an older generated package and a newly generated package.
@@ -87,14 +81,14 @@ public abstract class ClientUpdateLanguageServiceBase : IClientUpdateLanguageSer
         {
             return ValidationResult.CreateFailure($"Package path not found: {packagePath}");
         }
-        var checks = await languageSpecificCheckResolver.GetLanguageCheckAsync(packagePath);
+        var checks = await LanguageSpecificChecks.Resolve(packagePath);
         if (checks == null)
         {
             return ValidationResult.CreateSuccess();
         }
         try
         {
-            var depResult = await checks.AnalyzeDependenciesAsync(packagePath, ct);
+            var depResult = await checks.AnalyzeDependenciesAsync(packagePath, false, ct);
             if (depResult.ExitCode == 0)
             {
                 return ValidationResult.CreateSuccess();

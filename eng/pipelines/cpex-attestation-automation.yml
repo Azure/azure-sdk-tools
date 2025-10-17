@@ -1,0 +1,25 @@
+trigger: none
+pr: none 
+
+pool:
+  name: azsdk-pool
+  demands: ImageOverride -equals ubuntu-24.04
+
+parameters:
+- name: TableName
+  type: string
+  default: 'ProdKpiEvidenceStream'
+
+jobs:
+  - job: AttestCPEXKPIs
+    steps:
+      - checkout: self
+      - task: AzureCLI@2
+        displayName: Invoke CPEX KPI Attestation Automation
+        inputs:
+          azureSubscription: opensource-api-connection
+          scriptType: pscore
+          scriptPath: eng/scripts/Invoke-CPEX-Attestation-Automation.ps1
+          arguments: >
+            -AzureSDKEmailUri "$(AzureSDKEmailerSasURL)"
+            -TableName ${{ parameters.TableName }}

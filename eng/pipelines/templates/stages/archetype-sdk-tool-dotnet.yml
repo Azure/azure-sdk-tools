@@ -233,6 +233,7 @@ extends:
               PublishEnvironment: ${{ parameters.PublishEnvironment }}
             dependsOn: BuildTestAndPackage
             VerifyChangelog: ${{ parameters.VerifyChangelog }}
+            ToolDirectory: '${{ coalesce(parameters.PackageDirectory, parameters.ToolDirectory) }}'
 
       - ${{ if and(ne(parameters.SkipReleaseStage, true), not(eq(length(parameters.DockerDeployments), 0)), eq(variables['System.TeamProject'], 'internal'))}}:
         - stage: PublishDockerImages

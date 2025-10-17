@@ -12,7 +12,7 @@
             <i class="bi" 
                [class.bi-chevron-down]="!isThreadCollapsed" 
                [class.bi-chevron-right]="isThreadCollapsed" 
-               style="font-size: 0.8rem; color: #666; margin-right: 0.5rem;"></i>
+               style="font-size: 0.8rem; color: var(--text-muted-color); margin-right: 0.5rem;"></i>
             <span class="text-muted" style="font-size: 0.9rem;">Comment on line {{ actualLineNumber }}</span>
         </div>
         <div *ngIf="codePanelRowData!.comments && codePanelRowData!.comments.length > 0 && 

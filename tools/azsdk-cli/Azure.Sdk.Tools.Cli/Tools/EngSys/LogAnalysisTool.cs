@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
@@ -22,30 +22,49 @@ public class LogAnalysisTool(
     private const string AnalyzeCommandName = "analyze";
 
     // Options
-    private readonly Option<string> filePathOpt = new(["--file", "-f"], "Path to the file to analyze") { IsRequired = true };
-    private readonly Option<string> keywordsOpt = new(["--keywords", "-k"], "Custom keywords to search for (comma-separated)");
-    private readonly Option<bool> fullSearchOpt = new(["--full"], "Enable full keyword search from a catalog of terms");
-    private readonly Option<int> contextLinesOpt = new(["--context", "-c"], () => -1, "Number of context lines to include around matches");
+    private readonly Option<string> filePathOpt = new("--file", "-f")
+    {
+        Description = "Path to the file to analyze",
+        Required = true,
+    };
+
+    private readonly Option<string> keywordsOpt = new("--keywords", "-k")
+    {
+        Description = "Custom keywords to search for (comma-separated)",
+        Required = false,
+    };
+
+    private readonly Option<bool> fullSearchOpt = new("--full")
+    {
+        Description = "Enable full keyword search from a catalog of terms",
+        Required = false,
+    };
+
+    private readonly Option<int> contextLinesOpt = new("--context", "-c")
+    {
+        Description = "Number of context lines to include around matches",
+        Required = false,
+        DefaultValueFactory = _ => -1,
+    };
 
     private const int DEFAULT_CONTEXT_LINES = 20;
 
-    protected override Command GetCommand() =>
-        new(AnalyzeCommandName, "Analyze a log file for errors and issues")
-        {
-            filePathOpt, keywordsOpt, fullSearchOpt, contextLinesOpt
-        };
-
-    public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+    protected override Command GetCommand() => new(AnalyzeCommandName, "Analyze a log file for errors and issues")
     {
-        var command = ctx.ParseResult.CommandResult.Command.Name;
+        filePathOpt, keywordsOpt, fullSearchOpt, contextLinesOpt,
+    };
+
+    public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
+    {
+        var command = parseResult.CommandResult.Command.Name;
 
         switch (command)
         {
             case AnalyzeCommandName:
-                var filePath = ctx.ParseResult.GetValueForOption(filePathOpt);
-                var customKeywords = ctx.ParseResult.GetValueForOption(keywordsOpt);
-                var fullSearch = ctx.ParseResult.GetValueForOption(fullSearchOpt);
-                var contextLines = ctx.ParseResult.GetValueForOption(contextLinesOpt);
+                var filePath = parseResult.GetValue(filePathOpt);
+                var customKeywords = parseResult.GetValue(keywordsOpt);
+                var fullSearch = parseResult.GetValue(fullSearchOpt);
+                var contextLines = parseResult.GetValue(contextLinesOpt);
 
                 var keywords = ParseCustomKeywords(customKeywords);
                 var result = await AnalyzeLogFile(filePath, fullSearch, keywords, contextLines);

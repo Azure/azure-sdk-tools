@@ -71,7 +71,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
 
             await Process.Start(new ProcessStartInfo() { FileName = GoProgram, ArgumentList = { "get", "github.com/Azure/azure-sdk-for-go/sdk/azidentity@v1.10.0" }, WorkingDirectory = GoPackageDir })!.WaitForExitAsync();
 
-            var resp = await LangService.AnalyzeDependenciesAsync(GoPackageDir, CancellationToken.None);
+            var resp = await LangService.AnalyzeDependenciesAsync(GoPackageDir, false, CancellationToken.None);
             Assert.That(resp.ExitCode, Is.EqualTo(0));
 
             var identityLine = File.ReadAllLines(Path.Join(GoPackageDir, "go.mod")).Where(line => line.Contains("azidentity")).Select(line => line.Trim()).First();
@@ -133,15 +133,15 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
         }
 
         [Test]
-        public void TestGetSDKPackagePath()
+        public async Task TestGetSDKPackageName()
         {
             Assert.That(
-                LangService.GetSDKPackagePath(Path.Combine("/hello", "world", "az") + Path.DirectorySeparatorChar, Path.Combine("/hello", "world", "az", "sdk", "messaging", "azservicebus")),
+                await LangService.GetSDKPackageName(Path.Combine("/hello", "world", "az") + Path.DirectorySeparatorChar, Path.Combine("/hello", "world", "az", "sdk", "messaging", "azservicebus")),
                 Is.EqualTo(Path.Combine("sdk", "messaging", "azservicebus"))
             );
 
             Assert.That(
-                LangService.GetSDKPackagePath(Path.Combine("/hello", "world", "az"), Path.Combine("/hello", "world", "az", "sdk", "messaging", "azservicebus")),
+                await LangService.GetSDKPackageName(Path.Combine("/hello", "world", "az"), Path.Combine("/hello", "world", "az", "sdk", "messaging", "azservicebus")),
                 Is.EqualTo(Path.Combine("sdk", "messaging", "azservicebus")));
         }
     }

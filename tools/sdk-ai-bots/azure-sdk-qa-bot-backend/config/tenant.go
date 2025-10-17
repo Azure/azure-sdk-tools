@@ -4,6 +4,7 @@ import "github.com/azure-sdk-tools/tools/sdk-ai-bots/azure-sdk-qa-bot-backend/mo
 
 type TenantConfig struct {
 	Sources                 []model.Source
+	SourceFilter            map[model.Source]string
 	PromptTemplate          string
 	AgenticSearchPrompt     string
 	IntensionPromptTemplate string
@@ -28,10 +29,22 @@ var SourceTopK = map[model.Source]int{
 
 var tenantConfigMap = map[model.TenantID]TenantConfig{
 	model.TenantID_PythonChannelQaBot: {
-		Sources:                 append([]model.Source{model.Source_AzureSDKForPython, model.Source_AzureSDKForPythonWiki}, typespecSources...),
+		Sources: append([]model.Source{model.Source_AzureSDKForPython, model.Source_AzureSDKForPythonWiki, model.Source_AzureSDKGuidelines, model.Source_AzureSDKDocsEng}, typespecSources...),
+		SourceFilter: map[model.Source]string{
+			model.Source_AzureSDKGuidelines: "search.ismatch('python_*', 'title')",
+		},
 		PromptTemplate:          "language_channel.md",
 		IntensionPromptTemplate: "intension.md",
 		AgenticSearchPrompt:     "You are an Azure SDK for Python expert query analyzer. Your task is to decompose complex user questions into specific, searchable sub-queries that can be processed in parallel to retrieve comprehensive information from Azure SDK documentation, Python-specific guides, and TypeSpec resources.\n\n## Query Analysis Guidelines:\n1. **Identify Core Concepts**: Extract the main technical topics, SDK services, Python patterns, and TypeSpec elements\n2. **Separate Concerns**: Split questions about installation, configuration, implementation, troubleshooting, and best practices\n3. **Consider Context**: Include both Python-specific and general Azure SDK aspects\n4. **Target Sources**: Create queries that align with different knowledge sources (Python SDK docs, wikis, TypeSpec specs)\n\n## Sub-Query Generation Strategy:\n- **Installation/Setup**: How to install, configure, or initialize specific components\n- **API Usage**: Method signatures, parameters, return types, and usage patterns\n- **Authentication**: Authentication methods, credential management, and security patterns\n- **Error Handling**: Common errors, troubleshooting steps, and exception handling\n- **Best Practices**: Recommended patterns, performance optimization, and code examples\n- **Integration**: How components work together, dependencies, and compatibility\n\n## Search Optimization:\n- Use specific technical terms and SDK method names\n- Include both conceptual and implementation-focused queries\n- Add context about Python version compatibility when relevant\n- Consider async/sync patterns for Python-specific searches\n\nGenerate 3-7 focused sub-queries that together will provide comprehensive coverage of the user's question, ensuring parallel search efficiency and minimal overlap.",
+	},
+	model.TenantID_GolangChannelQaBot: {
+		Sources: append([]model.Source{model.Source_AzureSDKForGo, model.Source_AzureSDKGuidelines}, typespecSources...),
+		SourceFilter: map[model.Source]string{
+			model.Source_AzureSDKGuidelines: "search.ismatch('golang_*', 'title')",
+		},
+		PromptTemplate:          "language_channel.md",
+		IntensionPromptTemplate: "intension.md",
+		AgenticSearchPrompt:     "You are an Azure SDK for Golang expert query analyzer. Your task is to decompose complex user questions into specific, searchable sub-queries that can be processed in parallel to retrieve comprehensive information from Azure SDK documentation, Golang-specific guides, and TypeSpec resources.\n\n## Query Analysis Guidelines:\n1. **Identify Core Concepts**: Extract the main technical topics, SDK services, Golang patterns, and TypeSpec elements\n2. **Separate Concerns**: Split questions about installation, configuration, implementation, troubleshooting, and best practices\n3. **Consider Context**: Include both Golang-specific and general Azure SDK aspects\n4. **Target Sources**: Create queries that align with different knowledge sources (Golang SDK docs, wikis, TypeSpec specs)\n\n## Sub-Query Generation Strategy:\n- **Installation/Setup**: How to install, configure, or initialize specific components\n- **API Usage**: Method signatures, parameters, return types, and usage patterns\n- **Authentication**: Authentication methods, credential management, and security patterns\n- **Error Handling**: Common errors, troubleshooting steps, and exception handling\n- **Best Practices**: Recommended patterns, performance optimization, and code examples\n- **Integration**: How components work together, dependencies, and compatibility\n\n## Search Optimization:\n- Use specific technical terms and SDK method names\n- Include both conceptual and implementation-focused queries\n- Add context about Golang version compatibility when relevant\n- Consider async/sync patterns for Golang-specific searches\n\nGenerate 3-7 focused sub-queries that together will provide comprehensive coverage of the user's question, ensuring parallel search efficiency and minimal overlap.",
 	},
 	model.TenantID_AzureSDKQaBot: {
 		PromptTemplate:          "typespec.md",

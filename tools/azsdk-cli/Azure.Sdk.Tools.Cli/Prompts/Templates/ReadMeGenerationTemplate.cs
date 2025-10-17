@@ -37,7 +37,7 @@ public class ReadMeGenerationTemplate : BasePromptTemplate
     /// Builds the complete README generation prompt using the configured parameters.
     /// </summary>
     /// <returns>Complete structured prompt for README generation</returns>
-    public string BuildPrompt()
+    public override string BuildPrompt()
     {
         var taskInstructions = BuildTaskInstructions(_templateContent, _serviceDocumentation, _packagePath);
         var constraints = BuildTaskConstraints(_additionalRules);

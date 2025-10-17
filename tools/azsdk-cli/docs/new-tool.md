@@ -12,6 +12,7 @@ Help me create a new tool using #new-tool.md as a reference
 
    * [Tool Architecture Overview](#tool-architecture-overview)
    * [Step-by-Step Implementation Guide](#step-by-step-implementation-guide)
+   * [CLI Command Hierarchy](#cli-command-hierarchy)
    * [Code Examples and Templates](#code-examples-and-templates)
    * [Dependency Injection](#dependency-injection)
    * [Response Handling](#response-handling)
@@ -35,7 +36,7 @@ All tools in the azsdk-cli project follow a consistent architecture:
 1. **Class Declaration**: Inherits from `MCPTool` or `MCPMultiCommandTool` with appropriate attributes
 2. **Constructor**: Uses dependency injection to receive required services
 3. **Command Configuration**: CLI options, arguments, and command hierarchy
-4. **CLI Handler**: `GetCommand()` (for `MCPTool`) or `GetCommands()` (for `MCPMultiCommandTool`) and `HandleCommand()` methods
+4. **CLI Handler**: `GetCommand()` (for `MCPTool`) or `GetCommands()` (for `MCPMultiCommandTool`) with a `HandleCommand(ParseResult parseResult, CancellationToken ct)` implementation
 5. **MCP Methods**: Methods decorated with `[McpServerTool]` for LLM access
 6. **Error Handling**: Comprehensive try/catch blocks and response error management
 
@@ -103,6 +104,10 @@ public override CommandGroup[] CommandHierarchy { get; set; } = [
 - `IDevOpsService` - For Azure DevOps operations
 - Custom service interfaces for your tool's specific needs
 
+## CLI command hierarchy
+
+Refer to [CLI command hierarchy](cli-commands-guidelines.md) for guidelines on CLI command structure.
+
 ## Code Examples and Templates
 
 A working example of multiple tool types and usage of services can be found at [`ExampleTool.cs`](../Azure.Sdk.Tools.Cli/Tools/Example/ExampleTool.cs)
@@ -119,10 +124,9 @@ In [`Azure.Sdk.Cli.Tools.Cli/Tools/YourToolCategory/YourTool.cs`](../Azure.Sdk.T
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
-using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Services;
 using ModelContextProtocol.Server;
@@ -140,28 +144,37 @@ public class YourTool(
     ];
 
     // CLI Options and Arguments
-    private readonly Argument<string> requiredArg = new Argument<string>(
-        name: "input",
-        description: "Description of required argument"
-    ) { Arity = ArgumentArity.ExactlyOne };
+    private readonly Argument<string> requiredArg = new("input")
+    {
+        Description = "Description of required argument",
+        Arity = ArgumentArity.ExactlyOne,
+    };
 
-    private readonly Option<string> optionalParam = new(["--param", "-p"], "Optional parameter description");
-    private readonly Option<bool> flagOption = new(["--flag", "-f"], () => false, "Boolean flag description");
+    private readonly Option<string> optionalParam = new("--param", "-p")
+    {
+        Description = "Optional parameter description",
+        Required = false,
+    };
+
+    private readonly Option<bool> flagOption = new("--flag", "-f")
+    {
+        Description = "Boolean flag description",
+        DefaultValueFactory = _ => false,
+    };
 
     // CLI Command Configuration
-    protected override Command GetCommand() =>
-        new("your-command", "Description for CLI help")
-        {
-            requiredArg, optionalParam, flagOption
-        };
+    protected override Command GetCommand() => new("your-command", "Description for CLI help")
+    {
+        requiredArg, optionalParam, flagOption
+    }
 
     // CLI Command Handler
-    public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+    public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
         // Extract parameters from CLI context
-        var input = ctx.ParseResult.GetValueForArgument(requiredArg);
-        var param = ctx.ParseResult.GetValueForOption(optionalParam);
-        var flag = ctx.ParseResult.GetValueForOption(flagOption);
+        var input = parseResult.GetValue(requiredArg);
+        var param = parseResult.GetValue(optionalParam);
+        var flag = parseResult.GetValue(flagOption);
 
         // Call your main logic (can be shared with MCP methods)
         return await ProcessRequest(input, param, flag, ct);
@@ -204,30 +217,51 @@ public class ComplexTool(
     private const string SubCommandName1 = "sub-command-1";
     private const string SubCommandName2 = "sub-command-2";
 
-    private readonly Option<string> fooOption = new(["--foo"], "Foo") { IsRequired = true };
-    private readonly Option<string> barOption = new(["--bar"], "Bar");
-
-    protected override List<Command> GetCommands() => [
-        new(SubCommandName1, "Analyze something", { fooOption }),
-        new(SubCommandName2, "Process something", { fooOption, barOption })
-    ];
-
-    public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+    private readonly Option<string> fooOption = new("--foo")
     {
-        var commandName = ctx.ParseResult.CommandResult.Command.Name;
+        Description = "Foo",
+        Required = true,
+    };
+
+    private readonly Option<string> barOption = new("--bar")
+    {
+        Description = "Bar",
+        Required = false,
+    };
+
+    private readonly Option<string> bazOption = new("--baz")
+    {
+        Description = "Baz",
+        Required = false,
+    };
+
+    protected override List<Command> GetCommands() =>
+    [
+        new(SubCommandName1, "Analyze something") { fooOption },
+        new(SubCommandName2, "Process something")
+        {
+            fooOption, barOption, bazOption
+        }
+    ]
+
+    public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
+    {
+        var commandName = parseResult.CommandResult.Command.Name;
 
         if (commandName == SubCommandName1)
         {
-            var foo = ctx.ParseResult.GetValueForOption(fooOption);
+            var foo = parseResult.GetValue(fooOption);
             return await SubCommand1(foo, ct);
         }
 
         if (commandName == SubCommandName2)
         {
-            var foo = ctx.ParseResult.GetValueForOption(fooOption);
-            var bar = ctx.ParseResult.GetValueForOption(barOption);
+            var foo = parseResult.GetValue(fooOption);
+            var bar = parseResult.GetValue(barOption);
             return await SubCommand2(foo, bar, ct);
         }
+
+        return new DefaultCommandResponse { ResponseError = $"Unknown command: '{commandName}'" };
     }
 
     [McpServerTool(Name = "azsdk_sub_command_1"), Description("Handles first stuff")]
@@ -417,13 +451,13 @@ public class MyCustomTemplate : BasePromptTemplate
     /// <param name="inputData">The data to analyze</param>
     /// <param name="analysisType">Type of analysis to perform</param>
     /// <returns>Complete structured prompt for custom analysis</returns>
-    public string BuildPrompt(string inputData, string analysisType = "general")
+    public override string BuildPrompt(string inputData, string analysisType = "general")
     {
         var taskInstructions = $"""
         You are a data analysis assistant.
-        
+
         Analyze the following data using {analysisType} analysis techniques:
-        
+
         **Data to Analyze:**
         ```
         {inputData}
@@ -598,9 +632,9 @@ public async Task<ProcessResponse> ProcessData(string input, CancellationToken c
 }
 
 // Good: Shared logic between CLI and MCP
-public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
 {
-    var input = ctx.ParseResult.GetValueForArgument(inputArg);
+    var input = parseResult.GetValue(inputArg);
     return await ProcessData(input, ct);
 }
 ```

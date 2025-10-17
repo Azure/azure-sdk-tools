@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Models;
@@ -43,8 +43,17 @@ public class VerifySetupTool : MCPTool
         SharedCommandGroups.Verify,
     ];
 
-    private readonly Option<string> languagesParam = new(["--langs", "-l"], "Comma-separated list of programming languages to check requirements for (java, python, dotnet, javascript, go). Defaults to current repo's language.") { IsRequired = false };
-    private readonly Option<bool> allLangOption = new(["--all"], () => false, "Check requirements for all supported languages.");
+    private readonly Option<string> languagesParam = new("--langs", "-l")
+    {
+        Description = "Comma-separated list of programming languages to check requirements for (java, python, dotnet, javascript, go). Defaults to current repo's language.",
+        Required = false
+    };
+
+    private readonly Option<bool> allLangOption = new("--all")
+    {
+        Description = "Check requirements for all supported languages.",
+        DefaultValueFactory = _ => false
+    };
 
     protected override Command GetCommand() =>
         new("setup", "Verify environment setup for MCP release tools")
@@ -54,12 +63,12 @@ public class VerifySetupTool : MCPTool
             SharedOptions.PackagePath
         };
 
-    public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+    public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
-        var langs = ctx.ParseResult.GetValueForOption(languagesParam);
-        var allLangs = ctx.ParseResult.GetValueForOption(allLangOption);
+        var langs = parseResult.GetValue(languagesParam);
+        var allLangs = parseResult.GetValue(allLangOption);
         var parsed = allLangs ? LANGUAGES : ParseLanguages(langs);
-        var packagePath = ctx.ParseResult.GetValueForOption(SharedOptions.PackagePath);
+        var packagePath = parseResult.GetValue(SharedOptions.PackagePath);
         return await VerifySetup(parsed, packagePath, ct);
     }
 
@@ -209,7 +218,6 @@ public class VerifySetupTool : MCPTool
 
     private async Task<List<SetupRequirements.Requirement>> GetCoreRequirements(CancellationToken ct)
     {
-        // TODO this code is redundant but functional for V1 purposes 
         var requirementsJson = await File.ReadAllTextAsync(PATH_TO_REQS, ct);
         var setupRequirements = JsonSerializer.Deserialize<SetupRequirements>(requirementsJson);
 

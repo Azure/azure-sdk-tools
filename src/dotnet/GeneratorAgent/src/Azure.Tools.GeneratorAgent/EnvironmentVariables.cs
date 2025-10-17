@@ -18,5 +18,12 @@ namespace Azure.Tools.GeneratorAgent
         public static string? GitHubToken => Environment.GetEnvironmentVariable($"{Prefix}GITHUB_TOKEN") 
                                            ?? Environment.GetEnvironmentVariable("GITHUB_TOKEN");
 
+        /// <summary>
+        /// Gets the OpenAI API key from environment variables.
+        /// Checks AZURE_GENERATOR_OPENAI_API_KEY first, then falls back to OPENAI_API_KEY.
+        /// </summary>
+        public static string? OpenAIApiKey => Environment.GetEnvironmentVariable($"{Prefix}OPENAI_API_KEY") 
+                                            ?? Environment.GetEnvironmentVariable("OPENAI_API_KEY");
+
     }
 }

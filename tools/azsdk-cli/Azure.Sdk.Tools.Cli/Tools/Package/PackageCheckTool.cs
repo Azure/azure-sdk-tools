@@ -128,7 +128,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 return CreateUnsupportedLanguageResponse(packagePath);
             }
 
-            var dependencyCheckResult = await languageChecks.AnalyzeDependenciesAsync(packagePath, fixCheckErrors, ct);
+            var dependencyCheckResult = await languageChecks.AnalyzeDependencies(packagePath, fixCheckErrors, ct);
             results.Add(dependencyCheckResult);
             if (dependencyCheckResult.ExitCode != 0)
             {
@@ -144,7 +144,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             // Run changelog validation
-            var changelogValidationResult = await languageChecks.ValidateChangelogAsync(packagePath, fixCheckErrors, ct);
+            var changelogValidationResult = await languageChecks.ValidateChangelog(packagePath, fixCheckErrors, ct);
             results.Add(changelogValidationResult);
             if (changelogValidationResult.ExitCode != 0)
             {
@@ -160,7 +160,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             // Run README validation
-            var readmeValidationResult = await languageChecks.ValidateReadmeAsync(packagePath, fixCheckErrors, ct);
+            var readmeValidationResult = await languageChecks.ValidateReadme(packagePath, fixCheckErrors, ct);
             results.Add(readmeValidationResult);
             if (readmeValidationResult.ExitCode != 0)
             {
@@ -176,7 +176,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             // Run spelling check
-            var spellingCheckResult = await languageChecks.CheckSpellingAsync(packagePath, fixCheckErrors, ct);
+            var spellingCheckResult = await languageChecks.CheckSpelling(packagePath, fixCheckErrors, ct);
             results.Add(spellingCheckResult);
             if (spellingCheckResult.ExitCode != 0)
             {
@@ -192,7 +192,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             // Run snippet update
-            var snippetUpdateResult = await languageChecks.UpdateSnippetsAsync(packagePath, fixCheckErrors, ct);
+            var snippetUpdateResult = await languageChecks.UpdateSnippets(packagePath, fixCheckErrors, ct);
             results.Add(snippetUpdateResult);
             if (snippetUpdateResult.ExitCode != 0)
             {
@@ -208,7 +208,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             // Run code linting
-            var lintCodeResult = await languageChecks.LintCodeAsync(packagePath, fixCheckErrors, ct);
+            var lintCodeResult = await languageChecks.LintCode(packagePath, fixCheckErrors, ct);
             results.Add(lintCodeResult);
             if (lintCodeResult.ExitCode != 0)
             {
@@ -224,7 +224,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             // Run code formatting
-            var formatCodeResult = await languageChecks.FormatCodeAsync(packagePath, fixCheckErrors, ct);
+            var formatCodeResult = await languageChecks.FormatCode(packagePath, fixCheckErrors, ct);
             results.Add(formatCodeResult);
             if (formatCodeResult.ExitCode != 0)
             {
@@ -323,7 +323,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 return CreateUnsupportedLanguageResponse(packagePath);
             }
 
-            var result = await languageChecks.ValidateChangelogAsync(packagePath, fixCheckErrors, ct);
+            var result = await languageChecks.ValidateChangelog(packagePath, fixCheckErrors, ct);
 
             if (result.ExitCode != 0)
             {
@@ -357,7 +357,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 return CreateUnsupportedLanguageResponse(packagePath);
             }
 
-            var result = await languageChecks.AnalyzeDependenciesAsync(packagePath, fixCheckErrors, ct);
+            var result = await languageChecks.AnalyzeDependencies(packagePath, fixCheckErrors, ct);
 
             if (result.ExitCode != 0)
             {
@@ -390,7 +390,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 return CreateUnsupportedLanguageResponse(packagePath);
             }
 
-            var result = await languageChecks.ValidateReadmeAsync(packagePath, fixCheckErrors, ct);
+            var result = await languageChecks.ValidateReadme(packagePath, fixCheckErrors, ct);
 
             if (result.ExitCode != 0)
             {
@@ -423,7 +423,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 return CreateUnsupportedLanguageResponse(packagePath);
             }
 
-            var result = await languageChecks.CheckSpellingAsync(packagePath, fixCheckErrors, ct);
+            var result = await languageChecks.CheckSpelling(packagePath, fixCheckErrors, ct);
             return result;
         }
 
@@ -437,7 +437,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 return CreateUnsupportedLanguageResponse(packagePath);
             }
 
-            var result = await languageChecks.UpdateSnippetsAsync(packagePath, fixCheckErrors, ct);
+            var result = await languageChecks.UpdateSnippets(packagePath, fixCheckErrors, ct);
             return result;
         }
 
@@ -451,7 +451,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 return CreateUnsupportedLanguageResponse(packagePath);
             }
 
-            var result = await languageChecks.LintCodeAsync(packagePath, fixCheckErrors, ct);
+            var result = await languageChecks.LintCode(packagePath, fixCheckErrors, ct);
             return result;
         }
 
@@ -465,7 +465,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 return CreateUnsupportedLanguageResponse(packagePath);
             }
 
-            var result = await languageChecks.FormatCodeAsync(packagePath, fixCheckErrors, ct);
+            var result = await languageChecks.FormatCode(packagePath, fixCheckErrors, ct);
             return result;
         }
 

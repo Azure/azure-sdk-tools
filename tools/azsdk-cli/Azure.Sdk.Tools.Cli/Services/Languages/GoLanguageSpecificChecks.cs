@@ -68,7 +68,7 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
 
     #endregion
 
-    public async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    public async Task<CLICheckResponse> AnalyzeDependencies(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         try
         {
@@ -85,11 +85,11 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(AnalyzeDependenciesAsync));
-            return new CLICheckResponse(1, "", $"{nameof(AnalyzeDependenciesAsync)} failed with an exception: {ex.Message}");
+            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(AnalyzeDependencies));
+            return new CLICheckResponse(1, "", $"{nameof(AnalyzeDependencies)} failed with an exception: {ex.Message}");
         }
     }
-    public async Task<CLICheckResponse> FormatCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    public async Task<CLICheckResponse> FormatCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         try
         {
@@ -102,12 +102,12 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(FormatCodeAsync));
-            return new CLICheckResponse(1, "", $"{nameof(FormatCodeAsync)} failed with an exception: {ex.Message}");
+            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(FormatCode));
+            return new CLICheckResponse(1, "", $"{nameof(FormatCode)} failed with an exception: {ex.Message}");
         }
     }
 
-    public async Task<CLICheckResponse> LintCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    public async Task<CLICheckResponse> LintCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         try
         {
@@ -116,12 +116,12 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(LintCodeAsync));
-            return new CLICheckResponse(1, "", $"{nameof(LintCodeAsync)} failed with an exception: {ex.Message}");
+            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(LintCode));
+            return new CLICheckResponse(1, "", $"{nameof(LintCode)} failed with an exception: {ex.Message}");
         }
     }
 
-    public async Task<CLICheckResponse> RunTestsAsync(string packagePath, CancellationToken ct)
+    public async Task<CLICheckResponse> RunTests(string packagePath, CancellationToken ct)
     {
         try
         {
@@ -130,12 +130,12 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(RunTestsAsync));
-            return new CLICheckResponse(1, "", $"{nameof(RunTestsAsync)} failed with an exception: {ex.Message}");
+            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(RunTests));
+            return new CLICheckResponse(1, "", $"{nameof(RunTests)} failed with an exception: {ex.Message}");
         }
     }
 
-    public async Task<CLICheckResponse> BuildProjectAsync(string packagePath, CancellationToken ct)
+    public async Task<CLICheckResponse> BuildProject(string packagePath, CancellationToken ct)
     {
         try
         {
@@ -144,8 +144,8 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(BuildProjectAsync));
-            return new CLICheckResponse(1, "", $"{nameof(BuildProjectAsync)} failed with an exception: {ex.Message}");
+            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(BuildProject));
+            return new CLICheckResponse(1, "", $"{nameof(BuildProject)} failed with an exception: {ex.Message}");
         }
     }
 
@@ -162,16 +162,16 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
         return await Task.FromResult(relativePath.Replace(Path.DirectorySeparatorChar, '/'));
     }
 
-    public async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    public async Task<CLICheckResponse> UpdateSnippets(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         return await Task.FromResult(new CLICheckResponse());
     }
 
-    public async Task<CLICheckResponse> ValidateChangelogAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    public async Task<CLICheckResponse> ValidateChangelog(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         // Implementation for validating CHANGELOG in a Python project
         // Could use markdownlint, etc.
-        return await CommonLanguageHelpers.ValidateChangelogCommonAsync(this, _processHelper, _gitHelper, _logger, packagePath, fixCheckErrors, cancellationToken);
+        return await CommonLanguageHelpers.ValidateChangelogCommon(this, _processHelper, _gitHelper, _logger, packagePath, fixCheckErrors, cancellationToken);
     }
 }
 

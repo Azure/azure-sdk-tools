@@ -46,7 +46,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
         _logger = logger;
     }
 
-    public async Task<CLICheckResponse> FormatCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    public async Task<CLICheckResponse> FormatCode(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -54,7 +54,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
 
             // Validate Maven and POM prerequisites
             var pomPath = Path.Combine(packagePath, "pom.xml");
-            var prerequisiteCheck = await ValidateMavenPrerequisitesAsync(packagePath, pomPath, cancellationToken);
+            var prerequisiteCheck = await ValidateMavenPrerequisites(packagePath, pomPath, cancellationToken);
             if (prerequisiteCheck != null)
             {
                 return prerequisiteCheck;
@@ -100,7 +100,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
         }
     }
 
-    public async Task<CLICheckResponse> LintCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    public async Task<CLICheckResponse> LintCode(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -108,7 +108,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
 
             // Validate Maven and POM prerequisites
             var pomPath = Path.Combine(packagePath, "pom.xml");
-            var prerequisiteCheck = await ValidateMavenPrerequisitesAsync(packagePath, pomPath, cancellationToken);
+            var prerequisiteCheck = await ValidateMavenPrerequisites(packagePath, pomPath, cancellationToken);
             if (prerequisiteCheck != null)
             {
                 return prerequisiteCheck;
@@ -266,7 +266,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
         return results;
     }
 
-    public async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, CancellationToken cancellationToken = default)
+    public async Task<CLICheckResponse> UpdateSnippets(string packagePath, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -274,7 +274,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
 
             // Validate Maven and POM prerequisites
             var pomPath = Path.Combine(packagePath, "pom.xml");
-            var prerequisiteCheck = await ValidateMavenPrerequisitesAsync(packagePath, pomPath, cancellationToken);
+            var prerequisiteCheck = await ValidateMavenPrerequisites(packagePath, pomPath, cancellationToken);
             if (prerequisiteCheck != null)
             {
                 return prerequisiteCheck;
@@ -319,7 +319,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
     /// <param name="pomPath">The path to the pom.xml file</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>CLICheckResponse with error details if validation fails, null if validation passes</returns>
-    private async Task<CLICheckResponse?> ValidateMavenPrerequisitesAsync(string packagePath, string pomPath, CancellationToken cancellationToken)
+    private async Task<CLICheckResponse?> ValidateMavenPrerequisites(string packagePath, string pomPath, CancellationToken cancellationToken)
     {
         // Check if Maven is available
         var mavenCheckResult = await _processHelper.Run(new("mvn", ["--version"], timeout: TimeSpan.FromSeconds(10)), cancellationToken);
@@ -348,17 +348,17 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
         return null; // No error, prerequisites are valid
     }
 
-        public async Task<CLICheckResponse> ValidateReadmeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+        public async Task<CLICheckResponse> ValidateReadme(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         // Implementation for validating README in a Python project
         // Could use markdownlint, etc.
-        return await CommonLanguageHelpers.ValidateReadmeCommonAsync(_processHelper, _gitHelper, _logger, packagePath, fixCheckErrors, cancellationToken);
+        return await CommonLanguageHelpers.ValidateReadmeCommon(_processHelper, _gitHelper, _logger, packagePath, fixCheckErrors, cancellationToken);
     }
 
-    public async Task<CLICheckResponse> ValidateChangelogAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    public async Task<CLICheckResponse> ValidateChangelog(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         // Implementation for validating CHANGELOG in a Python project
         // Could use markdownlint, etc.
-        return await CommonLanguageHelpers.ValidateChangelogCommonAsync(this, _processHelper, _gitHelper, _logger, packagePath, fixCheckErrors, cancellationToken);
+        return await CommonLanguageHelpers.ValidateChangelogCommon(this, _processHelper, _gitHelper, _logger, packagePath, fixCheckErrors, cancellationToken);
     }
 }

@@ -320,10 +320,16 @@ public class LanguageChecks : ILanguageChecks
     {
         try
         {
+            var languageSpecificCheck = await _languageSpecificChecks.Resolve(packagePath);
             var (packageRepoRoot, errorResponse) = ValidatePackageAndDiscoverRepo(packagePath);
             if (errorResponse != null)
             {
                 return errorResponse;
+            }
+
+            if (languageSpecificCheck == null)
+            {
+                return new CLICheckResponse(1, "", $"No language-specific check handler found for package at {packagePath}. Supported languages may not include this package type.");
             }
 
             // Construct the path to the cspell config file
@@ -339,10 +345,16 @@ public class LanguageChecks : ILanguageChecks
 
             var npxOptions = new NpxOptions(
                 null,
-                ["cspell", "lint", "--config", cspellConfigPath, "--root", packageRepoRoot, $"." + Path.DirectorySeparatorChar + relativePath + Path.DirectorySeparatorChar + "**"],
+                ["cspell", "lint", "--config", cspellConfigPath, "--root", packageRepoRoot, await languageSpecificCheck.GetSpellingCheckPath(packageRepoRoot, packagePath)],
                 logOutputStream: true
             );
             var processResult = await _npxHelper.Run(npxOptions, ct: ct);
+
+            // If cspell checked 0 files, treat as success
+            if (processResult.Output != null && processResult.Output.Contains("Files checked: 0"))
+            {
+                return new CLICheckResponse(0, processResult.Output);
+            }
 
             // If fix is requested and there are spelling issues, use Microagent to automatically apply fixes
             if (fixCheckErrors && processResult.ExitCode != 0 && !string.IsNullOrWhiteSpace(processResult.Output))

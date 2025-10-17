@@ -27,4 +27,17 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
         _gitHelper = gitHelper;
         _logger = logger;
     }
+
+    /// <summary>
+    /// Gets the language-specific path pattern for spelling checks.
+    /// </summary>
+    /// <param name="packageRepoRoot">Repository root path</param>
+    /// <param name="packagePath">Package path</param>
+    /// <returns>Path pattern for spelling checks</returns>
+    public Task<string> GetSpellingCheckPath(string packageRepoRoot, string packagePath)
+    {
+        var relativePath = Path.GetRelativePath(packageRepoRoot, packagePath);
+        var defaultPath = $"." + Path.DirectorySeparatorChar + relativePath + Path.DirectorySeparatorChar + "**" + Path.DirectorySeparatorChar + "api" + Path.DirectorySeparatorChar + "*.cs";
+        return Task.FromResult(defaultPath);
+    }
 }

@@ -167,4 +167,12 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
     {
         return await Task.FromResult(new PackageCheckResponse());
     }
+
+    public async Task<CLICheckResponse> ValidateChangelogAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    {
+        // Implementation for validating CHANGELOG in a Python project
+        // Could use markdownlint, etc.
+        return await CommonLanguageHelpers.ValidateChangelogCommonAsync(this, _processHelper, _gitHelper, _logger, packagePath, fixCheckErrors, cancellationToken);
+    }
 }
+

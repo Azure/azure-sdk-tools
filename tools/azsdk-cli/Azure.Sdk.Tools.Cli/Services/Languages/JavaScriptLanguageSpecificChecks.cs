@@ -196,4 +196,18 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
         var defaultPath = $"." + Path.DirectorySeparatorChar + relativePath + Path.DirectorySeparatorChar + "review" + Path.DirectorySeparatorChar + "*.md";
         return Task.FromResult(defaultPath);
     }
+
+        public async Task<CLICheckResponse> ValidateReadmeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    {
+        // Implementation for validating README in a Python project
+        // Could use markdownlint, etc.
+        return await CommonLanguageHelpers.ValidateReadmeCommonAsync(_processHelper, _gitHelper, _logger, packagePath, fixCheckErrors, cancellationToken);
+    }
+
+    public async Task<CLICheckResponse> ValidateChangelogAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    {
+        // Implementation for validating CHANGELOG in a Python project
+        // Could use markdownlint, etc.
+        return await CommonLanguageHelpers.ValidateChangelogCommonAsync(this, _processHelper, _gitHelper, _logger, packagePath, fixCheckErrors, cancellationToken);
+    }
 }

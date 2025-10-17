@@ -265,16 +265,17 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
         return Task.FromResult(defaultPath);
     }
         public async Task<CLICheckResponse> ValidateReadmeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+        public async Task<CLICheckResponse> ValidateReadme(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         // Implementation for validating README in a Python project
         // Could use markdownlint, etc.
-        return await CommonLanguageHelpers.ValidateReadmeCommonAsync(_processHelper, _gitHelper, _logger, packagePath, fixCheckErrors, cancellationToken);
+        return await CommonLanguageHelpers.ValidateReadmeCommon(_processHelper, _gitHelper, _logger, packagePath, fixCheckErrors, cancellationToken);
     }
 
-    public async Task<CLICheckResponse> ValidateChangelogAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    public async Task<CLICheckResponse> ValidateChangelog(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         // Implementation for validating CHANGELOG in a Python project
         // Could use markdownlint, etc.
-        return await CommonLanguageHelpers.ValidateChangelogCommonAsync(this, _processHelper, _gitHelper, _logger, packagePath, fixCheckErrors, cancellationToken);
+        return await CommonLanguageHelpers.ValidateChangelogCommon(this, _processHelper, _gitHelper, _logger, packagePath, fixCheckErrors, cancellationToken);
     }
 }

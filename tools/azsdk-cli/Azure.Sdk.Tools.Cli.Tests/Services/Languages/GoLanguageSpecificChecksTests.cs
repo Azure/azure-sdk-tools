@@ -68,7 +68,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 WorkingDirectory = _tempDir.DirectoryPath
             })!.WaitForExitAsync();
 
-            var resp = await LangService.AnalyzeDependenciesAsync(_tempDir.DirectoryPath, false, CancellationToken.None);
+            var resp = await LangService.AnalyzeDependencies(_tempDir.DirectoryPath, false, CancellationToken.None);
             Assert.That(resp.ExitCode, Is.EqualTo(0));
 
             var identityLine = File.ReadAllLines(Path.Join(_tempDir.DirectoryPath, "go.mod"))
@@ -77,13 +77,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 .First();
             Assert.That(identityLine, Is.Not.EqualTo("github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.10.0"));
 
-            resp = await LangService.FormatCodeAsync(_tempDir.DirectoryPath, false, CancellationToken.None);
+            resp = await LangService.FormatCode(_tempDir.DirectoryPath, false, CancellationToken.None);
             Assert.That(File.ReadAllText(Path.Join(_tempDir.DirectoryPath, "main.go")), Does.Not.Contain("azservicebus"));
 
-            resp = await LangService.BuildProjectAsync(_tempDir.DirectoryPath, CancellationToken.None);
+            resp = await LangService.BuildProject(_tempDir.DirectoryPath, CancellationToken.None);
             Assert.That(resp.ExitCode, Is.EqualTo(0));
 
-            resp = await LangService.LintCodeAsync(_tempDir.DirectoryPath, false, CancellationToken.None);
+            resp = await LangService.LintCode(_tempDir.DirectoryPath, false, CancellationToken.None);
             Assert.That(resp.ExitCode, Is.EqualTo(0));
         }
 
@@ -101,7 +101,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 }
                 """);
 
-            var resp = await LangService.BuildProjectAsync(_tempDir.DirectoryPath, CancellationToken.None);
+            var resp = await LangService.BuildProject(_tempDir.DirectoryPath, CancellationToken.None);
             Assert.Multiple(() =>
             {
                 Assert.That(resp.ExitCode, Is.EqualTo(1));
@@ -124,7 +124,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
                 }
                 """);
 
-            var resp = await LangService.LintCodeAsync(_tempDir.DirectoryPath, false, CancellationToken.None);
+            var resp = await LangService.LintCode(_tempDir.DirectoryPath, false, CancellationToken.None);
             Assert.Multiple(() =>
             {
                 Assert.That(resp.ExitCode, Is.EqualTo(1));

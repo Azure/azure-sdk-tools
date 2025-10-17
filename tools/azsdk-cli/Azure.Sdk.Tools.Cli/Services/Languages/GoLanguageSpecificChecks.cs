@@ -69,7 +69,7 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
 
     #endregion
 
-    public async Task<PackageCheckResponse> AnalyzeDependenciesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    public async Task<PackageCheckResponse> AnalyzeDependencies(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         try
         {
@@ -90,7 +90,7 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
             return new PackageCheckResponse(1, "", $"{nameof(AnalyzeDependenciesAsync)} failed with an exception: {ex.Message}");
         }
     }
-    public async Task<PackageCheckResponse> FormatCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    public async Task<PackageCheckResponse> FormatCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         try
         {
@@ -108,7 +108,7 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
         }
     }
 
-    public async Task<PackageCheckResponse> LintCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    public async Task<PackageCheckResponse> LintCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         try
         {
@@ -122,7 +122,7 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
         }
     }
 
-    public async Task<PackageCheckResponse> RunTestsAsync(string packagePath, CancellationToken ct)
+    public async Task<PackageCheckResponse> RunTests(string packagePath, CancellationToken ct)
     {
         try
         {
@@ -136,7 +136,7 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
         }
     }
 
-    public async Task<PackageCheckResponse> BuildProjectAsync(string packagePath, CancellationToken ct)
+    public async Task<PackageCheckResponse> BuildProject(string packagePath, CancellationToken ct)
     {
         try
         {
@@ -145,8 +145,8 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(BuildProjectAsync));
-            return new PackageCheckResponse(1, "", $"{nameof(BuildProjectAsync)} failed with an exception: {ex.Message}");
+            _logger.LogError(ex, "{MethodName} failed with an exception", nameof(BuildProject));
+            return new PackageCheckResponse(1, "", $"{nameof(BuildProject)} failed with an exception: {ex.Message}");
         }
     }
 
@@ -163,16 +163,16 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
         return await Task.FromResult(relativePath.Replace(Path.DirectorySeparatorChar, '/'));
     }
 
-    public async Task<PackageCheckResponse> UpdateSnippetsAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    public async Task<PackageCheckResponse> UpdateSnippets(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         return await Task.FromResult(new PackageCheckResponse());
     }
 
-    public async Task<CLICheckResponse> ValidateChangelogAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    public async Task<PackageCheckResponse> ValidateChangelog(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         // Implementation for validating CHANGELOG in a Python project
         // Could use markdownlint, etc.
-        return await CommonLanguageHelpers.ValidateChangelogCommonAsync(this, _processHelper, _gitHelper, _logger, packagePath, fixCheckErrors, cancellationToken);
+        return await CommonLanguageHelpers.ValidateChangelogCommon(this, _processHelper, _gitHelper, _logger, packagePath, fixCheckErrors, cancellationToken);
     }
 }
 

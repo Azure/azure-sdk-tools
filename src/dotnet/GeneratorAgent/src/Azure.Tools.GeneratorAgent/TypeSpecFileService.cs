@@ -246,7 +246,7 @@ namespace Azure.Tools.GeneratorAgent
         /// Updates a TypeSpec file in the current working directory with security validation.
         /// Used for iterative error fixing.
         /// </summary>
-        public async Task<Result<bool>> UpdateTypeSpecFileAsync(string fileName, string content, ValidationContext validationContext, CancellationToken cancellationToken = default)
+        public async Task<bool> UpdateTypeSpecFileAsync(string fileName, string content, ValidationContext validationContext, CancellationToken cancellationToken = default)
         {
             ObjectDisposedException.ThrowIf(IsDisposed, this);
             ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
@@ -260,7 +260,7 @@ namespace Azure.Tools.GeneratorAgent
             }
             catch (Exception ex)
             {
-                return Result<bool>.Failure(new SecurityException($"TypeSpec filename validation failed: {fileName}", ex));
+               throw new SecurityException($"TypeSpec filename validation failed: {fileName}", ex);
             }
 
             string currentDir = validationContext.CurrentTypeSpecDir;
@@ -271,17 +271,17 @@ namespace Azure.Tools.GeneratorAgent
             string fullFilePath = Path.GetFullPath(filePath);
             if (!fullFilePath.StartsWith(fullCurrentDir, StringComparison.OrdinalIgnoreCase))
             {
-                return Result<bool>.Failure(new SecurityException($"File '{fileName}' attempts to write outside current directory"));
+                throw new SecurityException($"File '{fileName}' attempts to write outside current directory");
             }
 
             try
             {
                 await File.WriteAllTextAsync(filePath, content, Encoding.UTF8, cancellationToken).ConfigureAwait(false);
-                return Result<bool>.Success(true);
+                return true;
             }
             catch (Exception ex)
             {
-                return Result<bool>.Failure(new InvalidOperationException($"Failed to write TypeSpec file '{fileName}': {ex.Message}", ex));
+                throw new InvalidOperationException($"Failed to write TypeSpec file '{fileName}': {ex.Message}", ex);
             }
         }
 

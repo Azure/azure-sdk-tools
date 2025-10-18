@@ -49,7 +49,6 @@ internal class GenerationOrchestrator
         if (!string.IsNullOrWhiteSpace(validationContext.ValidatedCommitId))
         {
             await TypeSpecFileService.DownloadGitHubTypeSpecFilesAsync(validationContext, cancellationToken);
-            Logger.LogDebug("GitHub TypeSpec files downloaded successfully");
         }
 
         // Setup local environment
@@ -78,27 +77,15 @@ internal class GenerationOrchestrator
 
             if (workflowResult.IsSuccess)
             {
-                Logger.LogInformation("Build workflow completed successfully");
+                Logger.LogInformation("No compile or build errors found");
                 return;
             }
 
-            var errorOutput = workflowResult?.ProcessException?.Output;
-            if (string.IsNullOrEmpty(errorOutput))
-            {
-                Logger.LogWarning("No output available for analysis");
-                throw new InvalidOperationException("Build workflow failed without producing any error output for analysis.");
-            }
+            var errorOutput = workflowResult?.ProcessException?.Output ?? string.Empty;
 
             // Generate fixes from error output
-            var fixesResult = await ErrorAnalysisService.GenerateFixesFromResultAsync(errorOutput, validationContext, cancellationToken);
+            var fixes = await ErrorAnalysisService.GenerateFixesFromFailureLogsAsync(errorOutput, cancellationToken);
 
-            if (fixesResult.IsFailure)
-            {
-                Logger.LogError("Failed to analyze errors: {Error}", fixesResult.Exception?.Message);
-                throw fixesResult.Exception!;
-            }
-
-            var fixes = fixesResult.Value!.ToList();
             if (fixes.Count == 0)
             {
                 Logger.LogWarning("No fixes generated for compilation/build errors - errors may not be addressable");
@@ -108,12 +95,11 @@ internal class GenerationOrchestrator
             Logger.LogInformation("Generated {FixCount} fixes for iteration {Iteration}", fixes.Count, currentIteration + 1);
 
             // Apply fixes and apply the changes
-            var patchSuccess = await GenerateAndApplyFixesAsync(fixes, validationContext, cancellationToken);
-            if (!patchSuccess)
-            {
-                Logger.LogError("Failed to generate or apply fixes");
-                throw new InvalidOperationException("Patch generation or application failed");
-            }
+            var patchResponse = await AIService.GenerateFixesAsync(fixes, validationContext, cancellationToken);
+        
+            // Apply patch
+            await PatchApplicator.ApplyPatchAsync(
+                patchResponse, validationContext.ValidatedTypeSpecDir, cancellationToken);
 
             Logger.LogInformation("Iteration {Current} completed - fixes applied", currentIteration + 1);
             currentIteration++;
@@ -122,19 +108,4 @@ internal class GenerationOrchestrator
         Logger.LogWarning(" Maximum iterations ({Max}) reached without resolution", maxIterations);
         throw new InvalidOperationException($"Maximum iterations ({maxIterations}) reached");
     }
-
-    private async Task<bool> GenerateAndApplyFixesAsync(
-        List<Fix> fixes, 
-        ValidationContext validationContext, 
-        CancellationToken cancellationToken)
-    {
-        var patchResponse = await AIService.GenerateFixesAsync(fixes, validationContext, cancellationToken);
-        
-        // Apply patch
-        var success = await PatchApplicator.ApplyPatchAsync(
-            patchResponse, validationContext.ValidatedTypeSpecDir, cancellationToken);
-
-        return success;
-    }
 }
-

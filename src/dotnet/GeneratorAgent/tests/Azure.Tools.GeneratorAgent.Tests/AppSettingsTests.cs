@@ -18,7 +18,17 @@ namespace Azure.Tools.GeneratorAgent.Tests.Configuration
 
         private static Mock<IConfiguration> CreateConfigurationMock()
         {
-            return new Mock<IConfiguration>();
+            var mock = new Mock<IConfiguration>();
+            
+            // Setup GetSection to return empty sections for any key
+            mock.Setup(x => x.GetSection(It.IsAny<string>()))
+                .Returns(() => {
+                    var sectionMock = new Mock<IConfigurationSection>();
+                    sectionMock.Setup(s => s.Value).Returns((string?)null);
+                    return sectionMock.Object;
+                });
+                
+            return mock;
         }
 
         private static Mock<ILogger<AppSettings>> CreateLoggerMock()

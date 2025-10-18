@@ -1,6 +1,5 @@
 using Azure.Tools.GeneratorAgent.Configuration;
 using Azure.Tools.GeneratorAgent.Constants;
-using Azure.Tools.GeneratorAgent.Tools;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 
@@ -11,13 +10,11 @@ namespace Azure.Tools.GeneratorAgent.Agent;
 /// </summary>
 internal class ToolExecutor
 {
-    private readonly ITypeSpecToolHandler ToolHandler;
-    private readonly ILogger<ToolExecutor> Logger;
+    private readonly TypeSpecToolHandler ToolHandler;
 
-    public ToolExecutor(ITypeSpecToolHandler toolHandler, ILogger<ToolExecutor> logger)
+    public ToolExecutor(TypeSpecToolHandler toolHandler)
     {
         ToolHandler = toolHandler ?? throw new ArgumentNullException(nameof(toolHandler));
-        Logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     /// <summary>
@@ -30,32 +27,40 @@ internal class ToolExecutor
     public async Task<string> ExecuteToolCallAsync(string toolName, string argumentsJson, ValidationContext validationContext, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(validationContext);
+
+        if (string.IsNullOrWhiteSpace(toolName))
+        {
+            return CreateErrorResponse("Tool name cannot be null or empty");
+        }
         
         try
         {
             return toolName switch
             {
-                ToolNames.ListTypeSpecFiles => await ExecuteListTypeSpecFilesAsync(validationContext, argumentsJson, cancellationToken),
+                ToolNames.ListTypeSpecFiles => await ExecuteListTypeSpecFilesAsync(validationContext, cancellationToken),
                 ToolNames.GetTypeSpecFile => await ExecuteGetTypeSpecFileAsync(validationContext, argumentsJson, cancellationToken),
                 _ => CreateErrorResponse($"Unknown tool: {toolName}")
             };
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error executing tool {ToolName}", toolName);
             return CreateErrorResponse($"Tool execution failed: {ex.Message}");
         }
     }
 
-    private async Task<string> ExecuteListTypeSpecFilesAsync(ValidationContext validationContext, string argumentsJson, CancellationToken cancellationToken)
+    private async Task<string> ExecuteListTypeSpecFilesAsync(ValidationContext validationContext, CancellationToken cancellationToken)
     {
-        // This tool doesn't need arguments
         var result = await ToolHandler.ListTypeSpecFilesAsync(validationContext, cancellationToken);
         return JsonSerializer.Serialize(result);
     }
 
     private async Task<string> ExecuteGetTypeSpecFileAsync(ValidationContext validationContext, string argumentsJson, CancellationToken cancellationToken)
     {
+        if (string.IsNullOrEmpty(argumentsJson))
+        {
+            argumentsJson = "{}"; // Default to empty object
+        }
+        
         // Parse arguments to get the filename
         using var args = JsonSerializer.Deserialize<JsonDocument>(argumentsJson);
         if (args?.RootElement.TryGetProperty("path", out var pathElement) == true)

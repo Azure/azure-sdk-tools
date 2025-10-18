@@ -36,69 +36,39 @@ namespace Azure.Tools.GeneratorAgent
         /// <param name="typeSpecDirectory">Directory containing the TypeSpec files</param>
         /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>True if patch was successfully applied, false otherwise</returns>
-        public async Task<bool> ApplyPatchAsync(string patchJson, string typeSpecDirectory, CancellationToken cancellationToken = default)
+        public async Task ApplyPatchAsync(PatchRequest patchRequest, string typeSpecDirectory, CancellationToken cancellationToken = default)
         {
-            ArgumentNullException.ThrowIfNull(patchJson);
+            ArgumentNullException.ThrowIfNull(patchRequest);
             ArgumentNullException.ThrowIfNull(typeSpecDirectory);
 
             Logger.LogInformation("Applying patch to TypeSpec files...");
 
             try
             {
-                // Step 1: Parse the patch request
-                var patchRequest = ParsePatchRequest(patchJson);
-                if (patchRequest == null)
-                {
-                    return false;
-                }
+            // Step 1: Validate the patch
+            ValidatePatch(patchRequest, typeSpecDirectory); // Throws on failure
 
-                Logger.LogDebug("Parsed patch for file '{File}' with {ChangeCount} changes. Reason: {Reason}", 
-                    patchRequest.File, patchRequest.Changes.Count, patchRequest.Reason);
-
-                // Step 2: Validate the patch
-                if (!ValidatePatch(patchRequest, typeSpecDirectory))
-                {
-                    return false;
-                }
-
-                // Step 3: Apply the changes
-                return await ApplyChangesToFileAsync(patchRequest, typeSpecDirectory, cancellationToken).ConfigureAwait(false);
+            // Step 2: Apply the changes
+            await ApplyChangesToFileAsync(patchRequest, typeSpecDirectory, cancellationToken);
+            
+            Logger.LogInformation("Successfully applied {ChangeCount} changes to {File}", 
+                patchRequest.Changes.Count, patchRequest.File);
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Error applying patch: {Error}", ex.Message);
-                return false;
+                throw new InvalidOperationException($"Error applying patch: {ex.Message}", ex);
             }
         }
 
-        private PatchRequest? ParsePatchRequest(string patchJson)
-        {
-            try
-            {
-                var patchRequest = JsonSerializer.Deserialize<PatchRequest>(patchJson, JsonOptions);
-                if (patchRequest == null)
-                {
-                    Logger.LogError("Failed to deserialize patch request - result was null");
-                    return null;
-                }
+        
 
-                return patchRequest;
-            }
-            catch (JsonException ex)
-            {
-                Logger.LogError(ex, "Failed to parse patch JSON: {Error}", ex.Message);
-                return null;
-            }
-        }
-
-        private bool ValidatePatch(PatchRequest patchRequest, string typeSpecDirectory)
+        private void ValidatePatch(PatchRequest patchRequest, string typeSpecDirectory)
         {
             // Check file exists
             string filePath = Path.Combine(typeSpecDirectory, patchRequest.File);
             if (!File.Exists(filePath))
             {
-                Logger.LogError("Target file does not exist: {FilePath}", filePath);
-                return false;
+                throw new FileNotFoundException($"Target file does not exist: {filePath}");
             }
 
             // Check version consistency
@@ -109,32 +79,22 @@ namespace Azure.Tools.GeneratorAgent
                     patchRequest.File, patchRequest.FromVersion, currentFileInfo.Version);
             }
 
-            // Validate change count (safety check)
-            if (patchRequest.Changes.Count > 20)
-            {
-                Logger.LogError("Patch contains too many changes ({Count}). Maximum allowed: 20", patchRequest.Changes.Count);
-                return false;
-            }
-
             // Validate change types
             foreach (var change in patchRequest.Changes)
             {
                 if (string.IsNullOrWhiteSpace(change.Type) || 
                     !IsValidChangeType(change.Type))
                 {
-                    Logger.LogError("Invalid change type: {Type}", change.Type);
-                    return false;
+                    throw new InvalidOperationException($"Invalid change type: {change.Type}");
                 }
 
                 if (change.StartLine <= 0 || change.EndLine <= 0 || change.StartLine > change.EndLine)
                 {
-                    Logger.LogError("Invalid line numbers in change. Start: {Start}, End: {End}", change.StartLine, change.EndLine);
-                    return false;
+                    throw new InvalidOperationException($"Invalid line numbers in change. Start: {change.StartLine}, End: {change.EndLine}");
                 }
             }
 
             Logger.LogDebug("Patch validation passed for {File}", patchRequest.File);
-            return true;
         }
 
         private static bool IsValidChangeType(string changeType)
@@ -144,7 +104,7 @@ namespace Azure.Tools.GeneratorAgent
                    changeType.Equals("delete", StringComparison.OrdinalIgnoreCase);
         }
 
-        private async Task<bool> ApplyChangesToFileAsync(PatchRequest patchRequest, string typeSpecDirectory, CancellationToken cancellationToken)
+        private async Task ApplyChangesToFileAsync(PatchRequest patchRequest, string typeSpecDirectory, CancellationToken cancellationToken)
         {
             string filePath = Path.Combine(typeSpecDirectory, patchRequest.File);
             
@@ -152,7 +112,6 @@ namespace Azure.Tools.GeneratorAgent
             {
                 // Read current file content
                 string[] lines = await File.ReadAllLinesAsync(filePath, cancellationToken).ConfigureAwait(false);
-                Logger.LogDebug("Read {LineCount} lines from {File}", lines.Length, patchRequest.File);
 
                 // Sort changes by line number in descending order to avoid line number shifts
                 var sortedChanges = patchRequest.Changes
@@ -164,11 +123,7 @@ namespace Azure.Tools.GeneratorAgent
                 // Apply each change
                 foreach (var change in sortedChanges)
                 {
-                    if (!ApplySingleChange(change, modifiedLines))
-                    {
-                        Logger.LogError("Failed to apply change at lines {Start}-{End}", change.StartLine, change.EndLine);
-                        return false;
-                    }
+                    ApplySingleChange(change, modifiedLines);
                 }
 
                 // Write the modified content back to file
@@ -180,41 +135,32 @@ namespace Azure.Tools.GeneratorAgent
 
                 Logger.LogInformation("Successfully applied {ChangeCount} changes to {File}", 
                     patchRequest.Changes.Count, patchRequest.File);
-
-                return true;
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Error applying changes to file {File}: {Error}", patchRequest.File, ex.Message);
-                return false;
+                throw new InvalidOperationException($"Failed to apply changes to file {patchRequest.File}: {ex.Message}");
             }
         }
 
-        private bool ApplySingleChange(PatchChange change, List<string> lines)
+        private void ApplySingleChange(PatchChange change, List<string> lines)
         {
-            try
+            switch (change.Type.ToLowerInvariant())
             {
-                switch (change.Type.ToLowerInvariant())
-                {
-                    case "replace":
-                        return ApplyReplaceChange(change, lines);
-                    case "insert":
-                        return ApplyInsertChange(change, lines);
-                    case "delete":
-                        return ApplyDeleteChange(change, lines);
-                    default:
-                        Logger.LogError("Unknown change type: {Type}", change.Type);
-                        return false;
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Error applying single change: {Error}", ex.Message);
-                return false;
+                case "replace":
+                    ApplyReplaceChange(change, lines);
+                    break;
+                case "insert":
+                    ApplyInsertChange(change, lines);
+                    break;
+                case "delete":
+                    ApplyDeleteChange(change, lines);
+                    break;
+                default:
+                    throw new InvalidOperationException($"Unknown change type: {change.Type}");
             }
         }
 
-        private bool ApplyReplaceChange(PatchChange change, List<string> lines)
+        private void ApplyReplaceChange(PatchChange change, List<string> lines)
         {
             // Convert from 1-based to 0-based indexing
             int startIndex = change.StartLine - 1;
@@ -225,14 +171,12 @@ namespace Azure.Tools.GeneratorAgent
             {
                 var newLines = change.NewContent.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
                 lines.AddRange(newLines);
-                return true;
+                return;
             }
 
             if (startIndex < 0 || endIndex >= lines.Count || startIndex > endIndex)
             {
-                Logger.LogError("Replace change line numbers out of bounds. Start: {Start}, End: {End}, Total lines: {Total}",
-                    change.StartLine, change.EndLine, lines.Count);
-                return false;
+                throw new InvalidOperationException($"Replace change line numbers out of bounds. Start: {change.StartLine}, End: {change.EndLine}, Total lines: {lines.Count}");
             }
 
             // Verify old content matches (optional validation)
@@ -272,30 +216,25 @@ namespace Azure.Tools.GeneratorAgent
                 Logger.LogDebug("Replaced lines {Start}-{End} with {NewLineCount} new lines", 
                     change.StartLine, change.EndLine, newLines.Length);
             }
-
-            return true;
         }
 
-        private bool ApplyInsertChange(PatchChange change, List<string> lines)
+        private void ApplyInsertChange(PatchChange change, List<string> lines)
         {
             // Convert from 1-based to 0-based indexing
             int insertIndex = change.StartLine - 1;
 
             if (insertIndex < 0 || insertIndex > lines.Count)
             {
-                Logger.LogError("Insert change line number out of bounds: {Line}, Total lines: {Total}",
-                    change.StartLine, lines.Count);
-                return false;
+                throw new InvalidOperationException($"Insert change line number out of bounds: {change.StartLine}, Total lines: {lines.Count}");
             }
 
             var newLines = change.NewContent.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
             lines.InsertRange(insertIndex, newLines);
 
             Logger.LogDebug("Inserted {LineCount} lines at position {Position}", newLines.Length, change.StartLine);
-            return true;
         }
 
-        private bool ApplyDeleteChange(PatchChange change, List<string> lines)
+        private void ApplyDeleteChange(PatchChange change, List<string> lines)
         {
             // Convert from 1-based to 0-based indexing
             int startIndex = change.StartLine - 1;
@@ -303,9 +242,7 @@ namespace Azure.Tools.GeneratorAgent
 
             if (startIndex < 0 || endIndex >= lines.Count || startIndex > endIndex)
             {
-                Logger.LogError("Delete change line numbers out of bounds. Start: {Start}, End: {End}, Total lines: {Total}",
-                    change.StartLine, change.EndLine, lines.Count);
-                return false;
+                throw new InvalidOperationException($"Delete change line numbers out of bounds. Start: {change.StartLine}, End: {change.EndLine}, Total lines: {lines.Count}");
             }
 
             // Remove lines in reverse order to maintain indices
@@ -315,7 +252,6 @@ namespace Azure.Tools.GeneratorAgent
             }
 
             Logger.LogDebug("Deleted lines {Start}-{End}", change.StartLine, change.EndLine);
-            return true;
         }
     }
 }

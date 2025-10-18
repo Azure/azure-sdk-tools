@@ -213,7 +213,6 @@ The `name` column contains one of the following event types:
 - **`SystemStarted`**: MCP server or CLI process started
 - **`SystemStopped`**: MCP server or CLI process stopped normally
 - **`SystemCrashed`**: MCP server or CLI process crashed unexpectedly
-- **`SystemConfigured`**: User changed configuration settings
 - **`SystemUpdated`**: MCP server or CLI was updated to a new version
 
 ### Custom Dimensions Schema
@@ -230,6 +229,8 @@ The `customDimensions` column contains a JSON object with the following properti
 | `macAddressHash` | SHA-256 hash of MAC address | `7b1a2a70a41d8154f6aeaf50e67b052fb9ca194de22c...` |
 | `devDeviceId` | Hash of DevDeviceId | `9b705c2e5b927992ab862a50e3552cadcc35f0fa0000...` |
 | `platform` | Execution platform | `VSCode`, `CLI`, `GitHub`, `JetBrains` |
+| `telemetryEnabled` | Whether telemetry is enabled | `true`, `false` |
+| `logLevel` | Current logging level | `debug`, `info`, `warning`, `error` |
 
 #### Agent-Specific Properties (MCP Server Only)
 
@@ -263,7 +264,6 @@ The `customDimensions` column contains a JSON object with the following properti
 | `eventType` | Type of system event | `install`, `start`, `stop`, `crash`, `update` |
 | `previousVersion` | Previous version (for updates) | `0.5.5.0` |
 | `crashReason` | Reason for crash (if applicable) | `UnhandledException` |
-| `configChanges` | Configuration changes (JSON) | `{"telemetryEnabled":false}` |
 
 ### Example Telemetry Events
 
@@ -285,6 +285,8 @@ The `customDimensions` column contains a JSON object with the following properti
     "macAddressHash": "7b1a2a70a41d8154f6aeaf50e67b052fb9ca194de22c...",
     "devDeviceId": "9b705c2e5b927992ab862a50e3552cadcc35f0fa0000...",
     "platform": "VSCode",
+    "telemetryEnabled": true,
+    "logLevel": "info",
     "clientName": "Visual Studio Code",
     "clientVersion": "1.100.1",
     "agentName": "GitHub Copilot",
@@ -357,6 +359,8 @@ The `customDimensions` column contains a JSON object with the following properti
     "macAddressHash": "7b1a2a70a41d8154f6aeaf50e67b052fb9ca194de22c...",
     "devDeviceId": "9b705c2e5b927992ab862a50e3552cadcc35f0fa0000...",
     "platform": "VSCode",
+    "telemetryEnabled": true,
+    "logLevel": "info",
     "clientName": "Visual Studio Code",
     "clientVersion": "1.100.1",
     "eventType": "start"
@@ -496,25 +500,6 @@ In addition to user-triggered tool invocations, the telemetry system tracks key 
     "version": "0.5.7.0",
     "previousVersion": "0.5.6.0",
     "updateMethod": "automatic", // or "manual"
-    "platform": "VSCode"
-  }
-}
-```
-
-#### Configuration Change Event
-
-**When**: User modifies MCP server configuration settings
-
-**Purpose**: Understand which settings users change, track opt-out rate for telemetry
-
-**Event Properties**:
-```json
-{
-  "name": "SystemConfigured",
-  "customDimensions": {
-    "eventType": "configure",
-    "version": "0.5.6.0",
-    "configChanges": "{\"telemetryEnabled\":false,\"logLevel\":\"debug\"}",
     "platform": "VSCode"
   }
 }

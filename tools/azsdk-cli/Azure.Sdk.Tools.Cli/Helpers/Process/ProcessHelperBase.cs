@@ -36,6 +36,15 @@ public abstract class ProcessHelperBase<T>(ILogger<T> logger, IRawOutputHelper o
             processStartInfo.ArgumentList.Add(arg);
         }
 
+        // Set environment variables if provided
+        if (options.EnvironmentVariables != null)
+        {
+            foreach (var (key, value) in options.EnvironmentVariables)
+            {
+                processStartInfo.EnvironmentVariables[key] = value;
+            }
+        }
+
         ProcessResult result = new() { ExitCode = 1 };
 
         using (var process = new Process())

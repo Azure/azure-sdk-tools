@@ -189,8 +189,6 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
             {
                 ("pylint", new[] { "azpysdk", "pylint", packagePath }),
                 ("mypy", new[] { "azpysdk", "mypy", packagePath }),
-                ("veriftypes", new[] { "azpysdk", "veriftypes", packagePath }),
-                ("pyright", new[] { "azpysdk", "pyright", packagePath })
             };
 
             _logger.LogInformation("Starting {Count} linting tools in parallel", lintingTools.Length);

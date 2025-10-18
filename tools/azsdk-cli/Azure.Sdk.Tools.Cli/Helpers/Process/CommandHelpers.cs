@@ -1,6 +1,5 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-using System.Runtime.InteropServices;
 
 /*
  * This file contains types for running sub-processes that require custom options classes

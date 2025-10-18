@@ -12,7 +12,6 @@ public interface IProcessOptions
     TimeSpan Timeout { get; }
     bool LogOutputStream { get; }
     string ShortName { get; }
-    Dictionary<string, string>? EnvironmentVariables { get; }
 }
 
 public class ProcessOptions : IProcessOptions
@@ -25,7 +24,6 @@ public class ProcessOptions : IProcessOptions
     public string WorkingDirectory { get; }
     public TimeSpan Timeout { get; }
     public bool LogOutputStream { get; }
-    public Dictionary<string, string>? EnvironmentVariables { get; }
 
     private string shortName;
     public virtual string ShortName
@@ -45,9 +43,8 @@ public class ProcessOptions : IProcessOptions
         string[] args,
         bool logOutputStream = true,
         string? workingDirectory = null,
-        TimeSpan? timeout = null,
-        Dictionary<string, string>? environmentVariables = null
-    ) : this(command, args, command, args, logOutputStream, workingDirectory, timeout, environmentVariables) { }
+        TimeSpan? timeout = null
+    ) : this(command, args, command, args, logOutputStream, workingDirectory, timeout) { }
 
     public ProcessOptions(
         string unixCommand,
@@ -56,8 +53,7 @@ public class ProcessOptions : IProcessOptions
         string[] windowsArgs,
         bool logOutputStream = true,
         string? workingDirectory = null,
-        TimeSpan? timeout = null,
-        Dictionary<string, string>? environmentVariables = null
+        TimeSpan? timeout = null
     )
     {
         if (string.IsNullOrWhiteSpace(workingDirectory))
@@ -79,7 +75,6 @@ public class ProcessOptions : IProcessOptions
         this.WorkingDirectory = workingDirectory;
         this.Timeout = timeout ?? TimeSpan.FromSeconds(DEFAULT_PROCESS_TIMEOUT_SECONDS);
         this.LogOutputStream = logOutputStream;
-        this.EnvironmentVariables = environmentVariables;
     }
 
     public void AddArgs(params string[] args)

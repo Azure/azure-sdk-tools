@@ -370,6 +370,22 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                     return $"Unsupported SDK language found. Supported languages are: {string.Join(", ", supportedLanguages)}";
                 }
 
+                // Validate SDK Package names
+                var languagePrefixMap = new Dictionary<string, List<string>>
+                (StringComparer.OrdinalIgnoreCase)
+                {
+                    { ".NET", new List<string> { "Azure." } },
+                    { "JavaScript", new List<string> { "@azure/" } },
+                    { "Java", new List<string> { "azure-", "com.azure." } },
+                    { "Go", new List<string> { "sdk/" } },
+                    { "Python", new List<string> { "azure-" } }
+                };
+                if (SdkInfos.Any(sdk => languagePrefixMap.TryGetValue(sdk.Language, out var prefixes) && !prefixes.Any( prefix => sdk.PackageName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))))
+                {
+                    var prefixRules = string.Join(", ", languagePrefixMap.Select(kvp => $"{kvp.Key}: starts with {string.Join(" or ", kvp.Value)}"));
+                    return $"Unsupported package name. Package names must follow these rules: ${prefixRules}";
+                }
+                
                 StringBuilder sb = new();
                 // Update SDK package name and languages in work item
                 var updated = await devOpsService.UpdateReleasePlanSDKDetailsAsync(releasePlanWorkItemId, SdkInfos);

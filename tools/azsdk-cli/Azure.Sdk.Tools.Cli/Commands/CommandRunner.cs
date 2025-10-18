@@ -45,9 +45,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
             var hostServer = ActivatorUtilities.CreateInstance<HostServerCommand>(serviceProvider);
             rootCommand.Subcommands.Add(hostServer.GetCommand());
 
-            var toolTypes = SharedOptions
-                                .GetFilteredToolTypes(args)
-                                .Where(t => t.Name != nameof(HostServerCommand));
+            var toolTypes = SharedOptions.ToolsList.Where(t => t.Name != nameof(HostServerCommand));
 
             // Many services are injected as scoped so they will be unique
             // per request when running in MCP server mode. Create a base scope

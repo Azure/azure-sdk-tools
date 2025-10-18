@@ -3,13 +3,18 @@ using Azure.Sdk.Tools.Cli.Models;
 
 namespace Azure.Sdk.Tools.Cli.Services.Tests;
 
-public class PythonTestRunner(IPythonHelper pythonHelper) : ITestRunner
+public class PythonTestRunner(IProcessHelper processHelper) : ITestRunner
 {
     public async Task<bool> RunAllTests(string packagePath, CancellationToken ct = default)
     {
-        await pythonHelper.EnsurePythonEnvironment(packagePath, null, ct);
-        var venvPath = await pythonHelper.CreateVirtualEnvironment(packagePath, ct);
-        var result = await pythonHelper.RunPytest(["tests"], packagePath, venvPath, ct);
+        var result = await processHelper.Run(new ProcessOptions(
+                command: "pytest",
+                args: ["tests"],
+                workingDirectory: packagePath
+            ),
+            ct
+        );
+
         return result.ExitCode == 0;
     }
 }

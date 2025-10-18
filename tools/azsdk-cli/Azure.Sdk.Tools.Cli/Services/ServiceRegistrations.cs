@@ -73,7 +73,6 @@ namespace Azure.Sdk.Tools.Cli.Services
             // Process Helper Classes
             services.AddSingleton<INpxHelper, NpxHelper>();
             services.AddSingleton<IPowershellHelper, PowershellHelper>();
-            services.AddSingleton<IPythonHelper, PythonHelper>();
             services.AddSingleton<IProcessHelper, ProcessHelper>();
 
             // Services that need to be scoped so we can track/update state across services per request

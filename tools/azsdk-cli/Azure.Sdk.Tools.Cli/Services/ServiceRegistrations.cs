@@ -135,7 +135,8 @@ namespace Azure.Sdk.Tools.Cli.Services
                             var loggerFactory = services.GetRequiredService<ILoggerFactory>();
                             var logger = loggerFactory.CreateLogger(toolType);
                             var telemetryService = services.GetRequiredService<ITelemetryService>();
-                            return new InstrumentedTool(telemetryService, logger, innerTool);
+                            var tokenUsageHelper = services.GetRequiredService<TokenUsageHelper>();
+                            return new InstrumentedTool(telemetryService, logger, tokenUsageHelper, innerTool);
                         }));
                     }
                 }

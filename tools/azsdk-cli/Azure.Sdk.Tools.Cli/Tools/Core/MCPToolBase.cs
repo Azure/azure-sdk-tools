@@ -11,27 +11,27 @@ using static Azure.Sdk.Tools.Cli.Telemetry.TelemetryConstants;
 
 namespace Azure.Sdk.Tools.Cli.Tools;
 
-/// <summary>
-/// This is the base class defining how an MCP enabled tool will interface with the server.
-///
-/// This covers:
-///     - route registration/disambiguation
-///     - compilation trim avoidance for reflection-included MCP tools
-/// </summary>
 public abstract class MCPToolBase
 {
     private bool initialized = false;
     private bool debug = false;
     private IOutputHelper output { get; set; }
     private ITelemetryService telemetryService { get; set; }
+    private TokenUsageHelper tokenUsageHelper { get; set; }
 
     public virtual CommandGroup[] CommandHierarchy { get; set; } = [];
 
-    public void Initialize(IOutputHelper outputHelper, ITelemetryService telemetryService, bool debug = false)
+    public void Initialize(
+        IOutputHelper outputHelper,
+        ITelemetryService telemetryService,
+        TokenUsageHelper tokenUsageHelper,
+        bool debug = false
+    )
     {
         this.debug = debug;
         this.output = outputHelper;
         this.telemetryService = telemetryService;
+        this.tokenUsageHelper = tokenUsageHelper;
 
         this.initialized = true;
     }
@@ -43,6 +43,7 @@ public abstract class MCPToolBase
             throw new InvalidOperationException("Tool must be initialized with Initialize() before use");
         }
 
+        TelemetryContext.Reset(tokenUsageHelper);
         using var tracer = TelemetryService.RegisterCliTelemetry(debug);
 
         // TODO: add client info

@@ -325,12 +325,13 @@ A custom response class is not always necessary. It should be defined when the t
 All tool response classes must:
 
 1. **Inherit from `Response`** base class
-1. **Override `ToString()`** to format properties in a human readable way and return the base `ToString()` method to handle error formatting.
+1. **Override `Format()`** to format properties in a human readable way.
 1. **Set JSON serializer attributes** on all properties.
 
 Tools that may have error cases but no need for a custom type should use `DefaultCommandResponse` as
-the return type. The `.Result` property takes `object`, but it may not
-serialize or stringify correctly if `ToString()` is not overridden.
+the return type. The `.Result` property takes `object`, but must override `Format()` to serialize/stringify
+the value.
+
 
 ### Response Class Template
 
@@ -354,7 +355,7 @@ public class YourResponseType : Response
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Message { get; set; }
 
-    public override string ToString()
+    protected override string Format()
     {
         var output = new StringBuilder();
         if (!string.IsNullOrEmpty(Message))
@@ -365,7 +366,7 @@ public class YourResponseType : Response
         {
             output.AppendLine($"Result: {Result?.ToString() ?? "null"}");
         }
-        return ToString(output);
+        return output.ToString();
     }
 }
 ```
@@ -576,7 +577,7 @@ internal class YourToolTests
 
 ### 3. Responses
 - **Create/use response classes for both CLI and JSON consumption**
-- **Provide meaningful ToString() implementations** in response classes for CLI output
+- **Provide meaningful Format() implementations** in response classes for CLI output
 
 ### 4. MCP Server Integration
 - **Use descriptive MCP tool names** (snake_case: `azsdk_analyze_pipeline`)

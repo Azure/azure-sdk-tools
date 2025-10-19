@@ -23,7 +23,7 @@ public class CodeownersValidationResult : CommandResponse
     [JsonPropertyName("organizations")]
     public Dictionary<string, bool> Organizations { get; set; } = new();
 
-    public override string ToString()
+    protected override string Format()
     {
         var result = new StringBuilder();
         result.AppendLine($"Username: {Username}");

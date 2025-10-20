@@ -66,13 +66,13 @@ Formalizing Stage 6 as four cohesive tools improves reliability, supports automa
 
 **Description:** Data-plane packages typically defer version adjustment and release date update until the release preparedness phase, not immediately after Stage 6 baseline tasks.
 **Impact:** The `version update` tool may be a no-op for data-plane flows outside release prep.
-**Workaround:** Initial version of v1 milestone remains user decided and manual edits.
+**Workaround:** Initial version of milestone 1 remains user decided and manual edits.
 
 #### Exception 2: Changelog Auto-Generation (Data-Plane)
 
 **Description:** No automatic generation for data-plane; manual editing expected.
 **Impact:** Tool returns success with a `next_steps` message prompting manual edits.
-**Workaround:** Future LLM integration (post V1).
+**Workaround:** Future LLM integration (post milestone 1).
 
 #### Language-Specific Limitations
 
@@ -97,6 +97,8 @@ Implement four individual CLI + MCP tools. Each tool:
 3. Chooses inline command over script path if both present.
 4. Executes the relevant sub-script(s) in an ordered, fault-isolated manner.
 5. Aggregates structured result JSON with a `result`, human-readable `message`, and optional `next_steps` hint guiding subsequent tool invocation.
+
+Provide an aggregated CLI + MCP command that deterministically orchestrates the four tools (update-ci → update-changelog → update-version → update-metadata) and returns a combined JSON summary.
 
 ### Detailed Design
 
@@ -191,9 +193,9 @@ Behavior:
 2. Apply updates across language-specific files.
 3. Validate consistency (all files now share identical new version).
 4. For data-plane outside release: return `noop`.
-5. For data-plane prepare release: use current version from the metadata file or from user input (support may be post-v1).
+5. For data-plane prepare release: use current version from the metadata file or from user input (support may be post-milestone-1).
 
-> **Note:** In v1, Java management-plane packages will follow the same version update strategy as data-plane packages. Adjustments for Java-specific workflows may be introduced in later versions.
+> **Note:** In milestone 1, Java management-plane packages will follow the same version update strategy as data-plane packages. Adjustments for Java-specific workflows may be introduced in later versions.
 
 Outputs:
 
@@ -252,7 +254,7 @@ Behavior Steps:
 
 1. Apply updates to authoritative metadata files (`_metadata.json`, `pom.xml`, `package.json`, `go.mod`). Only overwrite a file when the new content differs from the existing content. If an expected file is missing, create a minimal safe skeleton when possible and warn otherwise.
 
-2. Return a structured summary in the tool JSON result including `changed_files` (array of relative paths) and `changed_count` (integer). When no files were modified return `changed_files: []` and `changed_count: 0` and set `message` to indicate "no changes (idempotent)" (`changed_files` may be supported post-v1).
+2. Return a structured summary in the tool JSON result including `changed_files` (array of relative paths) and `changed_count` (integer). When no files were modified return `changed_files: []` and `changed_count: 0` and set `message` to indicate "no changes (idempotent)" (`changed_files` may be supported post-milestone-1).
 
 Outputs:
 
@@ -291,7 +293,7 @@ Name (CLI): `azsdk package ci update`
 
 Name (MCP): `azsdk_package_ci_update`
 
-> **Note:** Support for this tool is planned for post‑v1.
+> **Note:** Support for this tool is planned for post‑milestone-1.
 
 Purpose: Create or update CI pipeline configuration.
 
@@ -332,6 +334,46 @@ update-ci.ps1 \
       -packagePath C:\dev\repos\azure-sdk-for-net\services\newservice
 ```
 
+#### 5. Aggregated Tool (chained execution)
+
+Name (CLI): `azsdk package update`
+
+Name (MCP): `azsdk_package_update`
+
+> **Note:** Support for this tool is planned for post‑milestone-1.
+
+Purpose: provide a single entrypoint that orchestrates the four tools in a deterministic sequence for common release-prep workflows.
+
+Sequence: update-ci -> update-changelog -> update-version -> update-metadata
+
+Behavior:
+
+- Validate the provided `packagePath` and fail fast if invalid.
+- Run `update-ci` first to ensure CI config is present/updated.
+- Run `update-changelog` next; if it returns `failed`, stop and return the error.
+- Run `update-version` after changelog succeeds; support `noop` for data-plane flows and propagate `failed` results upward.
+- Run `update-metadata` last to apply remaining metadata and documentation updates.
+- Aggregate each tool's JSON result into a top-level JSON summary with per-tool results, overall `result` (succeeded/failed), and an ordered `next_steps` hint.
+
+Failure semantics:
+
+- If any tool returns `failed`, the aggregated tool should stop execution and return `failed` with the failing tool's details.
+
+Example aggregated output (successful):
+
+```json
+{
+      "result": "succeeded",
+      "steps": [
+            {"tool":"update-ci", "result":"succeeded", "ci-file": "../ci.yml"},
+            {"tool":"update-changelog", "result":"succeeded"},
+            {"tool":"update-version", "result":"succeeded", "version":"1.2.0", "release-date": "2025-10-17"},
+            {"tool":"update-metadata", "result":"succeeded"}
+      ],
+      "message": "Package updates complete; next_steps: open PR"
+}
+```
+
 ### User Experience
 
 Typical CLI workflow:
@@ -342,6 +384,28 @@ azsdk package changelog update --package-path /abs/sdk/path
 azsdk package metadata update --package-path /abs/sdk/path
 azsdk package version update --package-path /abs/sdk/path --version 1.0.0 --release-date 2025-10-17
 ```
+
+### Architecture Diagram
+
+flowchart TD
+  Agent[/Agent / User/] --> azsdk_cli
+
+  subgraph azsdk_cli
+    direction TB
+    classifier[SDK Classifier]
+    resolver[Config Resolver]
+    executor[Script Executor]
+    serializer[Result Serializer]
+  end
+
+  classifier --> resolver
+  resolver --> executor
+  executor --> serializer
+
+  style azsdk_cli fill:#e3f2fd,stroke:#0277bd
+  style Agent fill:#e1f5fe,stroke:#0288d1
+
+---
 
 ### Workflow Diagram
 
@@ -549,7 +613,7 @@ azsdk package metadata update -package-path <absolute_folder_path_to_package>
 
 ## Implementation Plan
 
-### Phase 1: Core Tooling (V1)
+### Phase 1: Core Tooling (Milestone 1)
 
 - Milestone: Implement CLI + MCP entrypoints for three tools including update-changelog, update-version, and update-metadata; integrate configuration loader + executor; mgmt-plane happy path.
 - Timeline: 1 sprint.
@@ -565,7 +629,7 @@ azsdk package metadata update -package-path <absolute_folder_path_to_package>
 
 - Milestone: Optional telemetry events (success/failure, duration); pre-hooks for LLM changelog generation.
 - Timeline: 1–2 sprints.
-- Dependencies: V2 planning.
+- Dependencies: Planned post-milestone-1.
 
 ---
 

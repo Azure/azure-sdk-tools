@@ -16,8 +16,8 @@ public interface IProcessOptions
 
 public class ProcessOptions : IProcessOptions
 {
+    public static readonly int DEFAULT_PROCESS_TIMEOUT_SECONDS = 120;  // Default timeout of 2 minutes
     private const string CMD = "cmd.exe";
-    private const int DEFAULT_PROCESS_TIMEOUT_SECONDS = 120;  // Default timeout of 2 minutes
 
     public string Command { get; }
     public List<string> Args { get; } = [];

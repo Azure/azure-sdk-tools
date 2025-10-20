@@ -1,0 +1,622 @@
+# Spec: 6 Package - package-update
+
+## Table of Contents
+
+- [Definitions](#definitions)
+- [Background / Problem Statement](#background--problem-statement)
+- [Goals and Exceptions/Limitations](#goals-and-exceptionslimitations)
+- [Design Proposal](#design-proposal)
+- [Open Questions](#open-questions)
+- [Success Criteria](#success-criteria)
+- [Agent Prompts](#agent-prompts)
+- [CLI Commands](#cli-commands)
+- [Implementation Plan](#implementation-plan)
+- [Testing Strategy](#testing-strategy)
+- [Documentation Updates](#documentation-updates)
+- [Metrics/Telemetry](#metricstelemetry)
+
+---
+
+## Definitions
+
+- **Stage 6**: The standardized SDK preparation stage after code/tests/samples validation and before creating the release preparation PR.
+- **Metadata and Documentation Update**: Consolidated set of actions to ensure non-source assets (README, changelog, CI config, version numbers, additional descriptors) are accurate and consistent.
+- **Tool**: A discrete CLI (and MCP agent-exposed) command implementing one cohesive post-generation preparation task.
+- **Inline Script Command**: A single shell command provided directly in config that overrides a script path.
+
+---
+
+## Background / Problem Statement
+
+### Current State
+
+After SDK code generation, build, tests, and sample validation, engineers must perform repetitive cross-language housekeeping: updating changelogs, synchronizing README and language-specific files, adjusting package versions, exporting API surfaces (.NET), and inserting or validating CI configuration. Today these tasks are:
+
+- Partially automated in ad-hoc scripts per language / repo.
+- Inconsistent between management-plane and data-plane SDKs (especially version bump timing and changelog handling).
+- Error-prone when performed manually (missed version increments, stale README examples, inconsistent metadata presented across different files, like `pom.xml`, `_metadata.json`).
+- A barrier for integrating an AI agent workflow because required parameters and step order are not encapsulated as composable tools.
+
+### Why This Matters
+
+Without a unified tool layer:
+
+- Contributors spend time re-learning differing per-language conventions.
+- CI or release pipelines fail late due to missing metadata or mismatched versions.
+- Agents cannot reliably assist because state transitions ("now bump version", "now update changelog") aren't formalized.
+- Management-plane vs data-plane discrepancies introduce confusion (e.g., when to bump versions or generate changelog entries).
+
+Formalizing Stage 6 as four cohesive tools improves reliability, supports automation-first workflows, and prepares for future LLM-assisted changelog generation.
+
+---
+
+## Goals and Exceptions/Limitations
+
+### Goals
+
+- [ ] Provide four composable, idempotent tools exposed via CLI and MCP agent: CI Update, Changelog Update, Version Update, Metadata Update.
+- [ ] Normalize execution order and expected outputs across all supported languages.
+- [ ] Encode management-plane vs data-plane behavioral differences explicitly (especially version & changelog logic).
+- [ ] Emit structured JSON results (status + message + next steps hints) enabling orchestration by AI agents and pipelines.
+- [ ] Support configuration-driven per-language scripting (path or inline) without recompiling the tool.
+
+### Exceptions and Limitations
+
+#### Exception 1: Data-Plane Deferred Version Bump
+
+**Description:** Data-plane packages typically defer version adjustment and release date update until the release preparedness phase, not immediately after Stage 6 baseline tasks.
+**Impact:** The `version update` tool may be a no-op for data-plane flows outside release prep.
+**Workaround:** Initial version of v1 milestone remains user decided and manual edits.
+
+#### Exception 2: Changelog Auto-Generation (Data-Plane)
+
+**Description:** No automatic generation for data-plane; manual editing expected.
+**Impact:** Tool returns success with a `next_steps` message prompting manual edits.
+**Workaround:** Future LLM integration (post V1).
+
+#### Language-Specific Limitations
+
+| Language   | Limitation | Impact | Workaround |
+|------------|------------|--------|------------|
+| .NET       | Requires API export step | Extra time / possible failure if tools missing | Fail with actionable guidance |
+| Java       | `pom.xml` consistency required | Build failure if missed | Validate & patch automatically |
+| JavaScript | README snippet accuracy depends on snippet validator | Potential stale install commands | Run snippet validation separately earlier |
+| Python     | `_metadata.json` variance | Packaging warnings | Enforce schema during metadata update |
+| Go         | Formatting (gofmt) essential | Diff noise in PRs | Auto-run formatter in metadata update |
+
+---
+
+## Design Proposal
+
+### Overview
+
+Implement four individual CLI + MCP tools. Each tool:
+
+1. Resolves package path & language.
+2. Loads the configuration for the language.
+3. Chooses inline command over script path if both present.
+4. Executes the relevant sub-script(s) in an ordered, fault-isolated manner.
+5. Aggregates structured result JSON with a `result`, human-readable `message`, and optional `next_steps` hint guiding subsequent tool invocation.
+
+### Detailed Design
+
+The four tools are intentionally small, composable units. Each emits a machine-readable JSON payload to enable deterministic chaining by an agent or CI workflow. All tools share common behaviors:
+
+| Aspect | Standard Behavior |
+|--------|-------------------|
+| Invocation Mode | CLI and MCP (agent) alias; same semantics |
+| Input Path Validation | Must exist and contain a recognizable SDK language structure; errors early if not |
+| Config Resolution | Load `swagger_to_sdk_config.json`; prefer `inline command` over `script path` when both are configured |
+| Timeout (default) | 5 minutes per tool invocation |
+| Output Schema | JSON with fields: result, message (see schema below) |
+| Idempotency | Multiple successive runs produce identical filesystem state except for timestamps/logs |
+| Script Implementation | MUST be PowerShell `.ps1`. SHOULD accept named parameters (e.g., `sdkRepoPath`). MUST use exit code `0` for success/partial/noop; non-zero only on outright failure. Legacy non-PS scripts should be wrapped by a small PowerShell shim. Scripts MUST write a concise stderr line prefixed with `ERROR:`; include suggested mitigation steps and links to docs in the message where possible. |
+| Next Steps Hint | Plain language phrase embedded in `message` (e.g., `next_steps: update version`) |
+| Missing Required Tools | If a required external tool is not present (for example: `dotnet`, `gofmt`, `pwsh`), prompt the user to run the `verify-setup` tool which validates and documents missing prerequisites. |
+
+#### 1. Changelog Update Tool
+
+Name (CLI): `azsdk package changelog update`
+
+Name (MCP): `azsdk_package_changelog_update`
+
+Purpose: Ensure changelog is auto-generated and has an entry for the upcoming release (management-plane) or provide guidance (data-plane) where manual editing is expected.
+
+Inputs:
+
+- `--package-path <abs path>` (required)
+
+Behavior (Mgmt-Plane):
+
+1. Invoke changelog generation script or tool.
+2. Insert (or update) latest section with release date placeholder / actual date.
+3. Normalize section ordering / formatting.
+
+Behavior (Data-Plane):
+
+1. Return `noop` result advising manual edit and future version bump timing.
+
+Outputs:
+
+```json
+{"result":"succeeded", "message":"Changelog entry added for 2025-10-16; next_steps: update version"}
+```
+
+```json
+{"result":"noop", "message":"Data-plane changelog untouched; manual edits required; next_steps: update version"}
+```
+
+Failure Modes:
+
+- Missing `CHANGELOG.md` → create template (mgmt-plane) or noop (data-plane).
+- Script failure → `failed` with error output.
+
+##### Update Changelog script
+
+When the tool executes the language-specific `update-changelog` script it will pass the following parameters. All paths are absolute.
+
+| Parameter | Description | Type | Required |
+|-----------|-------------|-----:|:--------:|
+| `sdkRepoPath` | Absolute path to the root folder of the local SDK repository. | string | Yes |
+| `packagePath` | Absolute path to the root folder of the local SDK project (package). | string | Yes |
+
+Note: The script only needs to cover mgmt-plane.
+
+**Example invocations:**
+
+```powershell
+update-changelog.ps1 \
+      -sdkRepoPath C:\dev\repos\azure-sdk-for-net \
+      -packagePath C:\dev\repos\azure-sdk-for-net\services\newservice
+```
+
+#### 2. Version Update Tool
+
+Name (CLI): `azsdk package version update`
+
+Name (MCP): `azsdk_package_version_update`
+
+Purpose: Increment and propagate package version across all authoritative version surfaces (e.g., `pom.xml`, `_version.py`, `*.csproj`, `package.json`, `go.mod`, `CHANGELOG.md`).
+
+Inputs:
+
+- `--package-path <abs path>` (required)
+- `--release-type <stable|beta>` (optional)
+- `--version` (optional)
+- `--release-date` (optional)
+
+Behavior:
+
+1. Compute a version based on the given information (mgmt-plane).
+2. Apply updates across language-specific files.
+3. Validate consistency (all files now share identical new version).
+4. For data-plane outside release: return `noop`.
+5. For data-plane prepare release: use current version from the metadata file or from user input (support may be post-v1).
+
+> **Note:** In v1, Java management-plane packages will follow the same version update strategy as data-plane packages. Adjustments for Java-specific workflows may be introduced in later versions.
+
+Outputs:
+
+```json
+{"result":"succeeded", "version": "1.2.0", "release-date": "2025-10-17", "message":"Version updated 1.2.0-beta.2 -> 1.2.0; next_steps: update metadata"}
+```
+
+```json
+{"result":"noop", "version": "", "release-date": "", "message":"Data-plane pre-release context; no version bump performed; next_steps: update metadata"}
+```
+
+Failure Modes:
+
+- Version parse error (non-semver) → fail with offending token.
+- Partial update (one file locked) → `partial` list and errors.
+
+Idempotency: Re-running after success yields `succeeded` with `no changes` message when already at target version.
+
+##### Update Version script
+
+When the tool executes the language-specific `update-version` script it will pass the following parameters. All paths are absolute.
+
+| Parameter | Description | Type | Required |
+|-----------|-------------|------:|:--------:|
+| `sdkRepoPath` | Absolute path to the root folder of the local SDK repository. | string | Yes |
+| `packagePath` | Absolute path to the root folder of the local SDK project (package). | string | Yes |
+| `sdkReleaseType` | Specifies whether the next version is `beta` or `stable`. | string | No |
+| `sdkVersion` | Specifies the next version to set (explicit version string). | string | No |
+| `sdkReleaseDate` | Release date to write into changelog (YYYY-MM-DD). | string | No |
+
+Note: For management-plane (mgmt) packages, at least one of `--sdk-version` or `--sdk-release-type` MUST be provided; the script will fail with an error if neither is supplied or validation fails.
+
+**Example invocations:**
+
+```powershell
+update-version.ps1 \
+      -sdkRepoPath C:\dev\repos\azure-sdk-for-net \
+      -packagePath C:\dev\repos\azure-sdk-for-net\services\newservice \
+      -sdkReleaseType stable \
+      -sdkReleaseDate 2025-10-17
+```
+
+#### 3. Metadata Update Tool
+
+Name (CLI): `azsdk package metadata update`
+
+Name (MCP): `azsdk_package_metadata_update`
+
+Purpose: Update additional language-specific metadata and documentation, such as `_metadata.json`, `pom.xml` etc., export API surface (.NET).
+
+Inputs:
+
+- `--package-path <abs path>` (required)
+
+Behavior Steps:
+
+1. Apply updates to authoritative metadata files (`_metadata.json`, `pom.xml`, `package.json`, `go.mod`). Only overwrite a file when the new content differs from the existing content. If an expected file is missing, create a minimal safe skeleton when possible and warn otherwise.
+
+2. Return a structured summary in the tool JSON result including `changed_files` (array of relative paths) and `changed_count` (integer). When no files were modified return `changed_files: []` and `changed_count: 0` and set `message` to indicate "no changes (idempotent)" (`changed_files` may be supported post-v1).
+
+Outputs:
+
+```json
+{"result":"succeeded", "changed_files":["..\\pom.xml","C:\\dev\\repos\\azure-sdk-for-java\\pom.xml"], "changed_count": 2, "message":"All relevant pom.xml files have been updated."}
+```
+
+```json
+{"result":"failed","message":"API export failed: missing dotnet tool; next_steps: call verify-setup tool"}
+```
+
+Failure Modes:
+
+- Missing expected file (e.g., `_metadata.json`) → report error.
+
+##### Update Metadata script
+
+When the tool executes the language-specific `update-metadata` script it will pass the following parameters. All paths are absolute.
+
+| Parameter | Description | Type | Required |
+|-----------|-------------|-----:|:--------:|
+| `sdkRepoPath` | Absolute path to the root folder of the local SDK repository. | string | Yes |
+| `packagePath` | Absolute path to the root folder of the local SDK project (package). | string | Yes |
+
+**Example invocations:**
+
+```powershell
+update-metadata.ps1 \
+      -sdkRepoPath C:\dev\repos\azure-sdk-for-net \
+      -packagePath C:\dev\repos\azure-sdk-for-net\services\newservice
+```
+
+#### 4. CI Update Tool
+
+Name (CLI): `azsdk package ci update`
+
+Name (MCP): `azsdk_package_ci_update`
+
+> **Note:** Support for this tool is planned for post‑v1.
+
+Purpose: Create or update CI pipeline configuration.
+
+Inputs:
+
+- `-package-path <abs path>` (required) – Absolute path to the root of the SDK package.
+
+Behavior:
+
+1. Create the corresponding YAML file, like `ci.yaml`, which will be used to setup pipeline.
+2. Update the relevant CI YAML file accordingly
+3. Return the changed file name with the result.
+
+Outputs (examples):
+
+```json
+{"result":"succeeded", "ci-file": "../ci.yml", "message":"CI files created: ci.yml; next_steps: update changelog"}
+```
+
+```json
+{"result":"failed", "message":"script exited 127: missing pwsh"}
+```
+
+##### Update CI script
+
+When the tool executes the language-specific `update-ci` script it will pass the following parameters. All paths are absolute.
+
+| Parameter | Description | Type | Required |
+|-----------|-------------|-----:|:--------:|
+| `sdkRepoPath` | Absolute path to the root folder of the local SDK repository. | string | Yes |
+| `packagePath` | Absolute path to the root folder of the local SDK project (package). | string | Yes |
+
+**Example invocations:**
+
+```powershell
+update-ci.ps1 \
+      -sdkRepoPath C:\dev\repos\azure-sdk-for-net \
+      -packagePath C:\dev\repos\azure-sdk-for-net\services\newservice
+```
+
+### User Experience
+
+Typical CLI workflow:
+
+```bash
+azsdk package ci update --package-path /abs/sdk/path
+azsdk package changelog update --package-path /abs/sdk/path
+azsdk package metadata update --package-path /abs/sdk/path
+azsdk package version update --package-path /abs/sdk/path --version 1.0.0 --release-date 2025-10-17
+```
+
+### Workflow Diagram
+
+#### Update-Changelog (mgmt-plane)
+
+```mermaid
+flowchart TD
+      A[Start: UpdateChangelogAsync] --> B[Validate packagePath] 
+      B --> C{packagePath valid?}
+      C -->|No| D[Return failure: Package path required/invalid]
+      C -->|Yes| E[Discover SDK repository root] 
+    
+      E --> F{Repository root found?}
+      F -->|No| G[Return failure: Failed to discover SDK repo]
+      F -->|Yes| H[Get update-changelog-script configuration] 
+    
+      H --> I{Configuration retrieval successful?}
+      I -->|No| J[Return failure: Failed to get update-changelog-script configuration] 
+      I -->|Yes| K{Configuration type?}
+    
+      K -->|Command| L[Prepare update-changelog command] 
+      K -->|ScriptPath| M[Prepare update-changelog script] 
+    
+      L --> N[Execute update-changelog command/script] 
+      M --> N
+    
+      N --> O{update-changelog process completed?} 
+      O -->|Failed| P[Return failure with exit code and output]
+      O -->|Success| Q[Return success]
+    
+      style A fill:#e1f5fe
+      style Q fill:#c8e6c9
+      style D fill:#ffcdd2
+      style G fill:#ffcdd2
+      style J fill:#ffcdd2
+      style P fill:#ffcdd2
+```
+
+> **Note:** Other tools (version update, metadata update, CI update) follow a similar flowchart pattern.
+
+---
+
+## Open Questions
+
+---
+
+## Success Criteria
+
+This tool set is complete when:
+
+- [ ] All four tools emit structured JSON with consistent schema.
+- [ ] Management-plane package run updates version + changelog automatically.
+- [ ] Data-plane run returns advisory for changelog and version.
+- [ ] Cross-language scripts execute without manual intervention.
+- [ ] Errors surface actionable mitigation text.
+
+---
+
+## Agent Prompts
+
+### Scenario 1: Update Management-Plane Package (existing SDK) for Release
+
+**Prompt:**
+
+```text
+Update the package at /home/dev/sdk/healthdataaiservices/Azure.ResourceManager.HealthDataAIServices for a stable release.
+```
+
+**Expected Agent Activity:**
+
+1. Run changelog update (auto-generation script).
+2. Run version update with inferred `--release-type stable`.
+3. Run metadata update (README, API export, formatting if needed) and summarize JSON results.
+
+### Scenario 2: Update Version for Stable Release (Data-Plane)
+
+**Prompt:**
+
+```text
+Update the version for package at /repo/sdk/healthdataaiservices/Azure.Health.Deidentification.
+```
+
+**Expected Agent Activity:**
+
+1. Confirm with user on the version to use.
+2. Run version update with the confirmed version.
+3. Report the result.
+
+### Scenario 3: Create CI Config for New SDK
+
+**Prompt:**
+
+```text
+Add initial CI configuration for a new SDK at /work/sdk/new-service/new-package.
+```
+
+**Expected Agent Activity:**
+
+1. Run CI update tool.
+2. Report the created configuration file.
+3. Suggest running update-changelog tool next.
+
+---
+
+## CLI Commands
+
+### package ci update
+
+**Command:**
+
+```bash
+azsdk package ci update --package-path <absolute_folder_path_to_package>
+```
+
+**Options:**
+
+- `--package-path <path>`: Absolute path to the root of the SDK package (required).
+
+**Expected Output (example):**
+
+```json
+{"result":"succeeded", "ci-file": "../ci.yml", "message":"CI files created: ci.yml; next_steps: update changelog"}
+```
+
+**Error Case (example):**
+
+```json
+{"result":"failed", "message":"script exited 127: missing pwsh"}
+```
+
+### package changelog update
+
+**Command:**
+
+```bash
+azsdk package changelog update -package-path <absolute_folder_path_to_package>
+```
+
+**Options:**
+
+- `-package-path <path>`: Package root (required).
+
+**Expected Output (mgmt):**
+
+```text
+{"result":"succeeded","message":"Changelog entry added for 2025-10-16; next_steps: update version"}
+```
+
+**Expected Output (data-plane no-op):**
+
+```text
+{"result":"succeeded","message":"Data-plane changelog no-op; manual edits required; next_steps: update version (if release)"}
+```
+
+### package version update
+
+**Command:**
+
+```bash
+azsdk package version update -package-path <absolute_folder_path_to_package> -sdk-release-type <stable|beta>
+```
+
+**Options:**
+
+- `-package-path <path>`: Package root (required).
+- `-sdk-release-type <stable|beta>`: Determines increment strategy (required for mgmt; optional for data-plane release context).
+
+**Expected Output:**
+
+```json
+{"result":"succeeded", "version": "1.2.0", "release-date": "2025-10-17", "message":"Version updated 1.2.0-beta.2 -> 1.2.0; next_steps: update metadata"}
+```
+
+**Failed Output:**
+
+```json
+{"result":"failed", "version": "", "release-date": "", "message":"ERROR: the input version is invalid. next_steps: refer to aka-link to provide a valid version"}
+```
+
+### package metadata update
+
+**Command:**
+
+```bash
+azsdk package metadata update -package-path <absolute_folder_path_to_package>
+```
+
+**Options:**
+
+- `-package-path <path>`: Package root (required).
+
+**Expected Output:**
+
+```json
+{"result":"succeeded", "changed_files":["..\\pom.xml","C:\\dev\\repos\\azure-sdk-for-java\\pom.xml"], "changed_count": 2, "message":"All relevant pom.xml files have been updated."}
+```
+
+**Failure Example:**
+
+```json
+{"result":"failed", "message":"Missing pom.xml", "next_steps": "refer to aka-link"}
+```
+
+---
+
+## Implementation Plan
+
+### Phase 1: Core Tooling (V1)
+
+- Milestone: Implement CLI + MCP entrypoints for three tools including update-changelog, update-version, and update-metadata; integrate configuration loader + executor; mgmt-plane happy path.
+- Timeline: 1 sprint.
+- Dependencies: language-specific automation scripts.
+
+### Phase 2: Data-Plane Enhancements and the remained tools
+
+- Milestone: Advisory logic for version deferral; improved changelog no-op messaging; implement update-ci tool and the aggregated tool; add copilot instructions to streamline the end-to-end workflow.
+- Timeline: 1 sprint.
+- Dependencies: Phase 1 release.
+
+### Phase 3: Telemetry & Extensibility
+
+- Milestone: Optional telemetry events (success/failure, duration); pre-hooks for LLM changelog generation.
+- Timeline: 1–2 sprints.
+- Dependencies: V2 planning.
+
+---
+
+## Testing Strategy
+
+### Unit Tests
+
+- Config resolution precedence (inline command vs script path).
+- JSON result schema validation (success, failed).
+- Mgmt-plane vs data-plane branching logic for version/changelog.
+
+### Integration Tests
+
+- Execute each tool against a fixture per language with mock scripts.
+- Simulate script failures (non-zero exit) and validate error messaging.
+- Confirm idempotency: running twice yields same artifact state.
+
+### Manual Testing
+
+- Real repository dry run for each language.
+- Observing run result formatting and readability.
+- End-to-end workflow.
+
+### Cross-Language Validation
+
+- Matrix test ensuring each language path executes all expected sub-tasks.
+
+---
+
+## Metrics/Telemetry
+
+### Metrics to Track
+
+| Metric Name | Description | Purpose |
+|-------------|-------------|---------|
+| tool_run_count | Count of executions per tool per language | Adoption tracking |
+| tool_failure_rate | Failures / total runs | Reliability signal and priority remidation |
+| avg_duration_ms | Mean execution time per tool | Performance tuning |
+| version_mismatch_detected | Count of times version update found inconsistent files | Detect systemic config issues |
+
+### Privacy Considerations
+
+- Do not log file contents; only aggregate metrics.
+- Strip absolute paths before telemetry (hash or redact) if enabled.
+
+---
+
+## Documentation Updates
+
+- [ ] Update `aka.ms/azsdk/agent` with new commands and new scenarios.
+- [ ] Add agent usage examples to `docs/specs/` index or workflow guide.
+- [ ] Provide troubleshooting guide (common failures & mitigations).
+
+---

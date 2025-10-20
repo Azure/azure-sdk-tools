@@ -5,8 +5,8 @@ using Azure.Sdk.Tools.Cli.Helpers;
 namespace Azure.Sdk.Tools.Cli.Services.Tests;
 
 public class JavaTestRunner(
-    IProcessHelper processHelper,
-    ILogger<JavaTestRunner logger
+    IProcessHelper _processHelper,
+    ILogger<JavaTestRunner> _logger
 ) : ITestRunner
 {
     // Test execution timeout

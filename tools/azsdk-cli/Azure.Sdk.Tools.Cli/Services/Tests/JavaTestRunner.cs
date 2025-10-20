@@ -10,7 +10,7 @@ public class JavaTestRunner(
 ) : ITestRunner
 {
     // Test execution timeout
-    private static readonly TimeSpan TestTimeout = TimeSpan.FromMinutes(30);
+    private static readonly TimeSpan TestTimeout = TimeSpan.FromMinutes(5);
 
     public async Task<bool> RunAllTests(string packagePath, CancellationToken ct = default)
     {

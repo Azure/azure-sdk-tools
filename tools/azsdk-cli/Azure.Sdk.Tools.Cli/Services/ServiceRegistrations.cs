@@ -130,8 +130,8 @@ namespace Azure.Sdk.Tools.Cli.Services
                     toolMethods = toolMethods.Where(m =>
                     {
                         var attr = m.GetCustomAttribute<McpServerToolAttribute>();
-                        return toolMatchList.Any(glob => FileSystemName.MatchesSimpleExpression(glob, attr?.Name));
-                    }).ToList();
+                        return attr?.Name is not null && toolMatchList.Any(glob => FileSystemName.MatchesSimpleExpression(glob, attr.Name));
+                    });
                 }
 
                 foreach (var toolMethod in toolMethods)

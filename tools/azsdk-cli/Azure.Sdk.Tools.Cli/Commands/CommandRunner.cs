@@ -42,7 +42,10 @@ namespace Azure.Sdk.Tools.Cli.Commands
             // singletons within WithStdioServerTransport() and will not run
             // within the DI scope we create for CLI commands.
             var hostServer = ActivatorUtilities.CreateInstance<HostServerCommand>(serviceProvider);
-            rootCommand.Subcommands.Add(hostServer.GetCommand());
+            foreach (var cmd in hostServer.GetCommands())
+            {
+                rootCommand.Subcommands.Add(cmd);
+            }
 
             var toolTypes = SharedOptions
                                 .GetFilteredToolTypes(args)

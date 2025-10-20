@@ -13,14 +13,14 @@ namespace Azure.Sdk.Tools.Cli.Commands.HostServer
             Required = false,
         };
 
-        public Command GetCommand()
+        public List<Command> GetCommands()
         {
             Command cmd = new("mcp", "Starts the MCP server (stdio mode)") { toolOption };
             Command legacyStartCmd = new("start", "Starts the MCP server (stdio mode)") { toolOption };
             legacyStartCmd.Hidden = true;
             cmd.SetAction((_, cancellationToken) => HandleCommand(cancellationToken));
             legacyStartCmd.SetAction((_, cancellationToken) => HandleCommand(cancellationToken));
-            return cmd;
+            return [cmd, legacyStartCmd];
         }
 
         public async Task<int> HandleCommand(CancellationToken ct)

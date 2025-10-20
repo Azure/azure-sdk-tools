@@ -4,21 +4,13 @@ using Azure.Sdk.Tools.Cli.Helpers;
 
 namespace Azure.Sdk.Tools.Cli.Services.Tests;
 
-public class JavaTestRunner : ITestRunner
+public class JavaTestRunner(
+    IProcessHelper processHelper,
+    ILogger<JavaTestRunner logger
+) : ITestRunner
 {
-    private readonly IProcessHelper _processHelper;
-    private readonly ILogger<JavaTestRunner> _logger;
-
     // Test execution timeout
     private static readonly TimeSpan TestTimeout = TimeSpan.FromMinutes(30);
-
-    public JavaTestRunner(
-        IProcessHelper processHelper,
-        ILogger<JavaTestRunner> logger)
-    {
-        _processHelper = processHelper;
-        _logger = logger;
-    }
 
     public async Task<bool> RunAllTests(string packagePath, CancellationToken ct = default)
     {

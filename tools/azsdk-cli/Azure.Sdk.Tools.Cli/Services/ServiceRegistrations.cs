@@ -53,6 +53,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddLanguageSpecific<ITestRunner>(new LanguageSpecificImplementations
             {
                 JavaScript = typeof(JavaScriptTestRunner),
+                Python = typeof(PythonTestRunner),
             });
 
             // Helper classes

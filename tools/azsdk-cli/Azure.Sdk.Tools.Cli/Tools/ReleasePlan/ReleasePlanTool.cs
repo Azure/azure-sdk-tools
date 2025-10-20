@@ -226,6 +226,16 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             try
             {
                 sdkReleaseType = sdkReleaseType?.ToLower() ?? "";
+                var sdkReleaseTypeMappings = new Dictionary<string, string>
+                {
+                    { "ga", "stable" },
+                    { "preview", "beta" }
+                };
+                if (sdkReleaseTypeMappings.TryGetValue(sdkReleaseType, out var mappedType))
+                {
+                    sdkReleaseType = mappedType;
+                }
+                
                 ValidateCreateReleasePlanInputAsync(typeSpecProjectPath, serviceTreeId, productTreeId, specPullRequestUrl, sdkReleaseType, specApiVersion);
 
                 // Check for existing release plan for the given pull request URL.
@@ -397,7 +407,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 return new DefaultCommandResponse
                 {
                     Message = sb.ToString(),
-                    NextSteps = excludedLanguages.Any() ? ["Prompt the user for justification for excluded languages and update it in the release plan."] : []
+                    NextSteps = excludedLanguages.Any() && string.IsNullOrEmpty(releasePlan.LanguageExclusionRequesterNote) ? ["Prompt the user for justification for excluded languages and update it in the release plan."] : []
                 };
             }
             catch (Exception ex)
@@ -497,7 +507,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             {
                 if (releasePlanWorkItem <= 0)
                 {
-                    return "Invalid release plan ID.";
+                    return "Invalid release plan work item ID.";
                 }
                 if (string.IsNullOrEmpty(justification))
                 {
@@ -525,7 +535,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 var updatedWorkItem = await devOpsService.UpdateWorkItemAsync(releasePlanWorkItem, fieldsToUpdate);
                 if (updatedWorkItem == null)
                 {
-                    return new DefaultCommandResponse { ResponseError = "Failed to update the language exclusion justification in release plan." };
+                    return new DefaultCommandResponse { ResponseError = $"Failed to update the language exclusion justification in release plan work item {releasePlanWorkItem}." };
                 }
                 else
                 {
@@ -538,7 +548,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Failed to update release plan with language exclusion justification");
+                logger.LogError(ex, $"Failed to update release plan with language exclusion justification in release plan work item {releasePlanWorkItem}");
                 return new DefaultCommandResponse { ResponseError = $"Failed to update release plan with language exclusion justification: {ex.Message}" };
             }
         }

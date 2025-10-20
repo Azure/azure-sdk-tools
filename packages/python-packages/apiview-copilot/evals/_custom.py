@@ -80,6 +80,19 @@ def _filter_comment_metadata(testcase: str, response: str, language: str, except
     return {"actual": result}
 
 
+def _filter_existing_comment(testcase: str, response: str, language: str, existing: str, comment: str):
+    prompty_path = Path(__file__).parent.parent / "prompts" / "api_review" / "filter_existing_comment.prompty"
+    prompty_kwargs = {
+        "testcase": testcase,
+        "response": response,
+        "language": language,
+        "existing": existing,
+        "comment": comment,
+    }
+    result = prompty.execute(prompty_path, inputs=prompty_kwargs)
+    return {"actual": result}
+
+
 class BaseEvaluator(ABC):
     """Base class for custom evaluators in the evals framework.
 
@@ -139,22 +152,6 @@ class BaseEvaluator(ABC):
             processed_results: Results from process_results method
         """
         pass
-
-    def post_process(
-        self, processed_results: dict, tests_directory: str, test_file: str, guideline_ids: set = None
-    ) -> None:
-        """Optional post-processing after results are shown (e.g., baselines, coverage).
-
-        Override this method if your evaluator needs additional processing like
-        baseline establishment or coverage calculation.
-
-        Args:
-            processed_results: Results from process_results method
-            tests_directory: Path to tests directory
-            test_file: Name of test file being run
-            guideline_ids: Set of guideline IDs collected during evaluation (optional)
-        """
-        pass  # Default: no post-processing
 
     @classmethod
     def validate_config_schema(cls, raw_config: dict) -> dict | None:
@@ -367,18 +364,6 @@ class CustomAPIViewEvaluator(BaseEvaluator):
         review_eval["score"] = self._calculate_overall_score(review_eval)
         return review_eval
 
-    def post_process(
-        self, processed_results: dict, tests_directory: str, test_file: str, guideline_ids: set = None
-    ) -> None:
-        """APIView-specific post-processing: baselines and coverage."""
-        # TODO: Re-enable or remove as desired
-        # self._establish_baseline(processed_results, tests_directory)
-
-        # # Only calculate coverage if all tests were run and we have guideline_ids
-        # if test_file == "all" and guideline_ids is not None:
-        #     self._calculate_coverage(guideline_ids, tests_directory)
-        pass
-
     def process_results(self, raw_results: list, guideline_ids: set) -> dict:
         """Process  evaluation results for APIView evaluator."""
         all_results = {}
@@ -458,56 +443,6 @@ class CustomAPIViewEvaluator(BaseEvaluator):
                             baseline_results["average_score"] = 0.0
 
             self._output_table(baseline_results, test_results, name)
-
-    def _establish_baseline(
-        self, processed_results: dict, tests_directory: str, test_file: str, guideline_ids: set = None
-    ) -> None:
-        """Establish baseline for APIView evaluator."""
-        # only ask if we're not in CI
-        if not bool(os.getenv("TF_BUILD")):
-            establish_baseline = input("\nDo you want to establish this as the new baseline? (y/n): ")
-            if establish_baseline.lower() == "y":
-                for name, result in processed_results.items():
-                    output_path = pathlib.Path(tests_directory).parent / "results" / name[:-1]
-                    output_path.parent.mkdir(parents=True, exist_ok=True)
-                    with open(str(output_path), "w", encoding="utf-8") as f:
-                        json.dump(result, indent=4, fp=f)
-
-        # whether or not we establish a baseline, we want to write results to a temp dir
-        log_path = pathlib.Path(tests_directory).parent / "results" / ".log"
-        if not log_path.exists():
-            log_path.mkdir(parents=True, exist_ok=True)
-
-        for name, result in processed_results.items():
-            output_path = log_path / name[:-1]
-            with open(str(output_path), "w", encoding="utf-8") as f:
-                json.dump(result, indent=4, fp=f)
-
-    def _calculate_coverage(self, guideline_ids: set, language: str, tests_directory: str) -> None:
-        """Calculate coverage for APIView evaluator."""
-        # only update coverage if all tests are run (this logic might need to be passed in)
-        output_path = pathlib.Path(tests_directory).parent / "results" / language / "coverage.json"
-        guidelines_path = pathlib.Path(tests_directory).parent.parent / "guidelines" / language
-        guidelines = []
-        for file in guidelines_path.glob("*.json"):
-            with open(file, "r", encoding="utf-8") as f:
-                guidelines.extend(json.loads(f.read()))
-        guideline_rule_ids = [rule["id"] for rule in guidelines]
-        difference = set(guideline_rule_ids).difference(guideline_ids)
-
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(str(output_path), "w+", encoding="utf-8") as f:
-            f.write(
-                json.dumps(
-                    {
-                        "tested": list(guideline_ids),
-                        "not_tested": list(difference),
-                        "coverage": len(guideline_ids) / len(guideline_rule_ids) * 100,
-                    },
-                    indent=4,
-                )
-            )
-        print(f"\nTest coverage for {language}: {len(guideline_ids) / len(guideline_rule_ids) * 100:.2f}%")
 
     def _format_terminal_diff(self, new: float, old: float, format_str: str = ".1f", reverse: bool = False) -> str:
         """Format difference with ANSI colors for terminal output."""
@@ -758,6 +693,7 @@ class PromptyEvaluator(BaseEvaluator):
             "mention_action": _mention_action_workflow,
             "thread_resolution_action": _thread_resolution_action_workflow,
             "filter_comment_metadata": _filter_comment_metadata,
+            "filter_existing_comment": _filter_existing_comment,
             # Add more workflows as needed
         }
 

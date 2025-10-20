@@ -15,9 +15,9 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
     private readonly ILogger<PythonLanguageSpecificChecks> _logger;
 
     public PythonLanguageSpecificChecks(
-        IProcessHelper processHelper, 
-        INpxHelper npxHelper, 
-        IGitHelper gitHelper, 
+        IProcessHelper processHelper,
+        INpxHelper npxHelper,
+        IGitHelper gitHelper,
         ILogger<PythonLanguageSpecificChecks> logger)
     {
         _processHelper = processHelper;
@@ -25,46 +25,8 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
         _gitHelper = gitHelper;
         _logger = logger;
     }
-    public string SupportedLanguage => "Python";
 
-    /// <summary>
-    /// Ensures azure-sdk-tools is installed and available for Python operations.
-    /// </summary>
-    /// <param name="packagePath">The package path to determine repository root</param>
-    /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>CLICheckResponse indicating success or failure</returns>
-    private async Task<CLICheckResponse> EnsureAzureSdkToolsInstalledAsync(string packagePath, CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            // Check if azure-sdk-tools is already installed
-            var checkResult = await _processHelper.Run(new("pip", ["show", "azure-sdk-tools"], timeout: TimeSpan.FromSeconds(30)), cancellationToken);
-            
-            if (checkResult.ExitCode == 0)
-            {
-                return new CLICheckResponse(0, "azure-sdk-tools is already installed");
-            }
-
-            // Find repository root and construct path to azure-sdk-tools
-            var repoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
-            var azureSdkToolsPath = Path.Combine(repoRoot, "eng", "tools", "azure-sdk-tools");
-
-            _logger.LogInformation("Installing azure-sdk-tools from: {AzureSdkToolsPath}", azureSdkToolsPath);
-
-            var installResult = await _processHelper.Run(new("pip", ["install", azureSdkToolsPath], timeout: TimeSpan.FromMinutes(5)), cancellationToken);
-
-            return installResult.ExitCode == 0 
-                ? new CLICheckResponse(0, "Successfully installed azure-sdk-tools")
-                : new CLICheckResponse(installResult.ExitCode, installResult.Output, "Failed to install azure-sdk-tools");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Exception occurred while ensuring azure-sdk-tools is installed");
-            return new CLICheckResponse(1, "", $"Error ensuring azure-sdk-tools is installed: {ex.Message}");
-        }
-    }
-
-    public async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct = default)
+    public async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         try
         {
@@ -112,7 +74,7 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
         }
     }
 
-    public async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, CancellationToken cancellationToken = default)
+    public async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -170,105 +132,71 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
         }
     }
 
-    public async Task<CLICheckResponse> LintCodeAsync(string packagePath, bool fix = false, CancellationToken cancellationToken = default)
+    public async Task<CLICheckResponse> LintCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         try
         {
             _logger.LogInformation("Starting code linting for Python project at: {PackagePath}", packagePath);
-
-            // Ensure azure-sdk-tools is installed before proceeding
-            var installCheckResult = await EnsureAzureSdkToolsInstalledAsync(packagePath, cancellationToken);
-            if (installCheckResult.ExitCode != 0)
-            {
-                return installCheckResult;
-            }
-
-            // Check if Python is available
-            var pythonCheckResult = await _processHelper.Run(new("python", ["--version"], timeout: TimeSpan.FromSeconds(10)), cancellationToken);
-            if (pythonCheckResult.ExitCode != 0)
-            {
-                _logger.LogError("Python is not installed or not available in PATH");
-                return new CLICheckResponse(1, "", "Python is not installed or not available in PATH. Please install Python to use linting functionality.");
-            }
-
-            _logger.LogInformation("Python is available: {PythonVersion}", pythonCheckResult.Output.Trim());
-
-            var timeout = TimeSpan.FromMinutes(10); // Linting tools can take longer than other operations
-            var allResults = new List<(string tool, ProcessResult result)>();
+            var timeout = TimeSpan.FromMinutes(10); 
 
             // Run multiple linting tools
             var lintingTools = new[]
             {
-                ("azpysdk pylint", new[] { "azpysdk", "pylint", packagePath }),
-                ("azpysdk mypy", new[] { "azpysdk", "mypy", packagePath }),
-                ("azpysdk veriftypes", new[] { "azpysdk", "veriftypes", packagePath }),
-                ("pyright", new[] { "pyright", packagePath })
+                ("pylint", new[] { "azpysdk", "pylint", "--isolate", packagePath }),
+                ("mypy", new[] { "azpysdk", "mypy", "--isolate", packagePath }),
             };
 
-            foreach (var (toolName, command) in lintingTools)
+            _logger.LogInformation("Starting {Count} linting tools in parallel", lintingTools.Length);
+
+            // Create tasks for all linting tools to run in parallel
+            var lintingTasks = lintingTools.Select(tool =>
             {
-                _logger.LogInformation("Executing command: {ToolName} - {Command}", toolName, string.Join(" ", command));
-                var result = await _processHelper.Run(new(command[0], command.Skip(1).ToArray(), workingDirectory: packagePath, timeout: timeout), cancellationToken);
-                allResults.Add((toolName, result));
-                
+                var (toolName, command) = tool;
+                var result = _processHelper.Run(new(command[0], command.Skip(1).ToArray(), workingDirectory: packagePath, timeout: timeout), cancellationToken);
                 _logger.LogInformation("{ToolName} completed with exit code {ExitCode}", toolName, result.ExitCode);
-            }
+                return (toolName, result);
+            });
+
+            // Wait for all linting tools to complete
+            var allResults = await Task.WhenAll(lintingTasks);
 
             // Analyze results
-            var failedTools = allResults.Where(r => r.result.ExitCode != 0).ToList();
-            
+            var failedTools = allResults.Where(r => r.ExitCode != 0).ToList();
+
             if (failedTools.Count == 0)
             {
                 _logger.LogInformation("All linting tools completed successfully - no issues found");
-                return new CLICheckResponse(0, "All linting tools completed successfully - no issues found");
+                return Task.FromResult(new CLICheckResponse(0, "All linting tools completed successfully - no issues found"));
             }
             else
             {
-                var failedToolNames = string.Join(", ", failedTools.Select(t => t.tool));
-                var combinedOutput = string.Join("\n\n", failedTools.Select(t => $"=== {t.tool} ===\n{t.result.Output}"));
+                var failedToolNames = string.Join(", ", failedTools.Select(t => t.toolName));
+                var combinedOutput = string.Join("\n\n", failedTools.Select(t => $"=== {t.toolName} ===\n{t.result.Output}"));
                 
                 _logger.LogWarning("Linting found issues in {FailedCount}/{TotalCount} tools: {FailedTools}", 
-                    failedTools.Count, allResults.Count, failedToolNames);
+                    failedTools.Count, allResults.Result.Length, failedToolNames);
                 
-                return new CLICheckResponse(1, combinedOutput, $"Linting issues found in: {failedToolNames}");
+                return Task.FromResult(new CLICheckResponse(1, combinedOutput, $"Linting issues found in: {failedToolNames}"));
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error running code linting for Python project at: {PackagePath}", packagePath);
-            return new CLICheckResponse(1, "", $"Error running code linting: {ex.Message}");
+            return Task.FromResult(new CLICheckResponse(1, "", $"Error running code linting: {ex.Message}"));
         }
     }
 
-    public async Task<CLICheckResponse> FormatCodeAsync(string packagePath, bool fix = false, CancellationToken cancellationToken = default)
+    public async Task<CLICheckResponse> FormatCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         try
         {
             _logger.LogInformation("Starting code formatting for Python project at: {PackagePath}", packagePath);
-
-            // Ensure azure-sdk-tools is installed before proceeding
-            var installCheckResult = await EnsureAzureSdkToolsInstalledAsync(packagePath, cancellationToken);
-            if (installCheckResult.ExitCode != 0)
-            {
-                return installCheckResult;
-            }
-
-            // Check if Python is available
-            var pythonCheckResult = await _processHelper.Run(new("python", ["--version"], timeout: TimeSpan.FromSeconds(10)), cancellationToken);
-            if (pythonCheckResult.ExitCode != 0)
-            {
-                _logger.LogError("Python is not installed or not available in PATH");
-                return new CLICheckResponse(1, "", "Python is not installed or not available in PATH. Please install Python to use linting functionality.");
-            }
-
-            _logger.LogInformation("Python is available: {PythonVersion}", pythonCheckResult.Output.Trim());
-
             // Run azpysdk black
             var command = "azpysdk";
-            var args = new[] { "black", packagePath };
+            var args = new[] { "black", "--isolate", packagePath };
 
             _logger.LogInformation("Executing command: {Command} {Arguments}", command, string.Join(" ", args));
-            var timeout = TimeSpan.FromMinutes(10); // Pylint can take longer than other operations
+            var timeout = TimeSpan.FromMinutes(10);
             var result = await _processHelper.Run(new(command, args, workingDirectory: packagePath, timeout: timeout), cancellationToken);
 
             if (result.ExitCode == 0)

@@ -1,0 +1,22 @@
+{
+  "testcase": "discard_functionally_identical_comment",
+  "language": "Python",
+  "existing": [
+    {
+      "line_no": 4,
+      "commentText": "Where's your async client? It should be `azure.widget.aio.WidgetClient`.",
+      "createdBy": "tjprescott"
+    }
+  ],
+  "comment": {
+    "line_no": 4,
+    "bad_code": "class azure.widget.WidgetClient():",
+    "suggestion": "",
+    "comment": "You must have an async client named `WidgetClient` in the azure.widget.aio namespace.",
+    "source": "guideline"
+  },
+  "response": {
+    "action": "DISCARD",
+    "rationale": "The existing comment already covers the requirement for an async client in the `azure.widget.aio` namespace, so the proposed comment does not add any new information."
+  }
+}

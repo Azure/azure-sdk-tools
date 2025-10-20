@@ -80,7 +80,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         }
 
         [McpServerTool(Name = "azsdk_package_run_check"), Description("Run validation checks for SDK packages. Provide package path, check type (All, Changelog, Dependency, Readme, Cspell, Snippets), and whether to fix errors.")]
-        public async Task<CLICheckResponse> RunPackageCheck(string packagePath, PackageCheckType checkType, bool fixCheckErrors, CancellationToken ct = default)
+        public async Task<CLICheckResponse> RunPackageCheck(string packagePath, PackageCheckType checkType, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             try
             {
@@ -93,11 +93,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 return checkType switch
                 {
                     PackageCheckType.All => await RunAllChecks(packagePath, fixCheckErrors, ct),
-                    PackageCheckType.Changelog => await RunChangelogValidation(packagePath, ct),
-                    PackageCheckType.Dependency => await RunDependencyCheck(packagePath, ct),
-                    PackageCheckType.Readme => await RunReadmeValidation(packagePath, ct),
+                    PackageCheckType.Changelog => await RunChangelogValidation(packagePath, fixCheckErrors, ct),
+                    PackageCheckType.Dependency => await RunDependencyCheck(packagePath, fixCheckErrors, ct),
+                    PackageCheckType.Readme => await RunReadmeValidation(packagePath, fixCheckErrors, ct),
                     PackageCheckType.Cspell => await RunSpellingValidation(packagePath, fixCheckErrors, ct),
-                    PackageCheckType.Snippets => await RunSnippetUpdate(packagePath, ct),
+                    PackageCheckType.Snippets => await RunSnippetUpdate(packagePath, fixCheckErrors, ct),
                     PackageCheckType.Linting => await RunLintCode(packagePath, fixCheckErrors, ct),
                     PackageCheckType.Format => await RunFormatCode(packagePath, fixCheckErrors, ct),
                     _ => throw new ArgumentOutOfRangeException(
@@ -113,7 +113,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
         }
 
-        private async Task<CLICheckResponse> RunAllChecks(string packagePath, bool fixCheckErrors, CancellationToken ct)
+        private async Task<CLICheckResponse> RunAllChecks(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             logger.LogInformation("Running all validation checks");
 
@@ -122,7 +122,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             var failedChecks = new List<string>();
 
             // Run dependency check
-            var dependencyCheckResult = await languageChecks.AnalyzeDependenciesAsync(packagePath, ct);
+            var dependencyCheckResult = await languageChecks.AnalyzeDependenciesAsync(packagePath, fixCheckErrors, ct);
             results.Add(dependencyCheckResult);
             if (dependencyCheckResult.ExitCode != 0)
             {
@@ -131,7 +131,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             // Run changelog validation
-            var changelogValidationResult = await languageChecks.ValidateChangelogAsync(packagePath, ct);
+            var changelogValidationResult = await languageChecks.ValidateChangelogAsync(packagePath, fixCheckErrors, ct);
             results.Add(changelogValidationResult);
             if (changelogValidationResult.ExitCode != 0)
             {
@@ -140,7 +140,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             // Run README validation
-            var readmeValidationResult = await languageChecks.ValidateReadmeAsync(packagePath, ct);
+            var readmeValidationResult = await languageChecks.ValidateReadmeAsync(packagePath, fixCheckErrors, ct);
             results.Add(readmeValidationResult);
             if (readmeValidationResult.ExitCode != 0)
             {
@@ -158,7 +158,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             // Run snippet update
-            var snippetUpdateResult = await languageChecks.UpdateSnippetsAsync(packagePath, ct);
+            var snippetUpdateResult = await languageChecks.UpdateSnippetsAsync(packagePath, fixCheckErrors, ct);
             results.Add(snippetUpdateResult);
             if (snippetUpdateResult.ExitCode != 0)
             {
@@ -167,7 +167,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             // Run code linting
-            var lintCodeResult = await languageChecks.LintCodeAsync(packagePath, fix: fixCheckErrors, ct);
+            var lintCodeResult = await languageChecks.LintCodeAsync(packagePath, fixCheckErrors, ct);
             results.Add(lintCodeResult);
             if (lintCodeResult.ExitCode != 0)
             {
@@ -176,7 +176,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
 
             // Run code formatting
-            var formatCodeResult = await languageChecks.FormatCodeAsync(packagePath, fix: fixCheckErrors, ct);
+            var formatCodeResult = await languageChecks.FormatCodeAsync(packagePath, fixCheckErrors, ct);
             results.Add(formatCodeResult);
             if (formatCodeResult.ExitCode != 0)
             {
@@ -212,11 +212,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 : new CLICheckResponse(1, combinedOutput, message) { NextSteps = nextSteps };
         }
 
-        private async Task<CLICheckResponse> RunChangelogValidation(string packagePath, CancellationToken ct)
+        private async Task<CLICheckResponse> RunChangelogValidation(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             logger.LogInformation("Running changelog validation");
 
-            var result = await languageChecks.ValidateChangelogAsync(packagePath, ct);
+            var result = await languageChecks.ValidateChangelogAsync(packagePath, fixCheckErrors, ct);
 
             if (result.ExitCode != 0)
             {
@@ -240,11 +240,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return result;
         }
 
-        private async Task<CLICheckResponse> RunDependencyCheck(string packagePath, CancellationToken ct)
+        private async Task<CLICheckResponse> RunDependencyCheck(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             logger.LogInformation("Running dependency check");
 
-            var result = await languageChecks.AnalyzeDependenciesAsync(packagePath, ct);
+            var result = await languageChecks.AnalyzeDependenciesAsync(packagePath, fixCheckErrors, ct);
 
             if (result.ExitCode != 0)
             {
@@ -267,11 +267,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return result;
         }
 
-        private async Task<CLICheckResponse> RunReadmeValidation(string packagePath, CancellationToken ct = default)
+        private async Task<CLICheckResponse> RunReadmeValidation(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             logger.LogInformation("Running README validation");
 
-            var result = await languageChecks.ValidateReadmeAsync(packagePath, ct);
+            var result = await languageChecks.ValidateReadmeAsync(packagePath, fixCheckErrors, ct);
 
             if (result.ExitCode != 0)
             {
@@ -302,11 +302,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             return result;
         }
 
-        private async Task<CLICheckResponse> RunSnippetUpdate(string packagePath, CancellationToken ct = default)
+        private async Task<CLICheckResponse> RunSnippetUpdate(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
         {
             logger.LogInformation("Running snippet update");
 
-            var result = await languageChecks.UpdateSnippetsAsync(packagePath, ct);
+            var result = await languageChecks.UpdateSnippetsAsync(packagePath, fixCheckErrors, ct);
             return result;
         }
 
@@ -314,7 +314,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             logger.LogInformation("Running code linting");
 
-            var result = await languageChecks.LintCodeAsync(packagePath, fix: fixCheckErrors, ct);
+            var result = await languageChecks.LintCodeAsync(packagePath, fixCheckErrors, ct);
             return result;
         }
 
@@ -322,7 +322,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             logger.LogInformation("Running code formatting");
 
-            var result = await languageChecks.FormatCodeAsync(packagePath, fix: fixCheckErrors, ct);
+            var result = await languageChecks.FormatCodeAsync(packagePath, fixCheckErrors, ct);
             return result;
         }
     }

@@ -1,6 +1,12 @@
 # Release History
 
-## 0.5.2 (Unreleased)
+## 0.5.3 (Unreleased)
+
+### Bugs Fixed
+
+- Added a language specific way to get package name for validation checks, to account for different language naming (JS uses package.json name)
+
+## 0.5.2 (2025-10-13)
 
 ### Features
 

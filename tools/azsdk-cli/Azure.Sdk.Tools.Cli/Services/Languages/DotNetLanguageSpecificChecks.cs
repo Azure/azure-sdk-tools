@@ -27,6 +27,4 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
         _gitHelper = gitHelper;
         _logger = logger;
     }
-
-    public string SupportedLanguage => "dotnet";
 }

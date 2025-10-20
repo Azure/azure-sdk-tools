@@ -52,7 +52,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public async Task Test_Create_releasePlan_with_invalid_SDK_type()
         {
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
-            var releaseplan = await releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "12345678-1234-5678-9012-123456789012", "12345678-1234-5678-9012-123456789012", "2025-01-01", "https://github.com/Azure/azure-rest-api-specs/pull/35446", "Preview", isTestReleasePlan: true);
+            var releaseplan = await releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "12345678-1234-5678-9012-123456789012", "12345678-1234-5678-9012-123456789012", "2025-01-01", "https://github.com/Azure/azure-rest-api-specs/pull/35446", "invalid-sdk-type", isTestReleasePlan: true);
             Assert.IsNotNull(releaseplan);
             Assert.IsNotNull(releaseplan.ResponseError);
             Assert.True(releaseplan.ResponseError.Contains("Invalid SDK release type"));
@@ -102,23 +102,27 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public async Task Test_Create_releasePlan_with_valid_inputs()
         {
             var testCodeFilePath = "TypeSpecTestData/specification/testcontoso/Contoso.Management";
-            var releaseplan = await releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "12345678-1234-5678-9012-123456789012", "12345678-1234-5678-9012-123456789012", "2025-01-01", "https://github.com/Azure/azure-rest-api-specs/pull/35446", "beta", isTestReleasePlan: true);
 
-            var releaseplanObj = releaseplan.Result as ReleasePlanDetails;
-            Assert.IsNotNull(releaseplanObj);
-            Assert.IsNotNull(releaseplanObj.WorkItemId);
-            Assert.IsNotNull(releaseplanObj.ReleasePlanId);
-            Assert.IsNotNull(releaseplanObj.ReleasePlanLink);
+            var releasePlanTasks = new[]{
+                releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "12345678-1234-5678-9012-123456789012", "12345678-1234-5678-9012-123456789012", "2025-01-01", "https://github.com/Azure/azure-rest-api-specs/pull/35446", "beta", isTestReleasePlan: true),
+                releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "12345678-1234-5678-9012-123456789012", "12345678-1234-5678-9012-123456789012", "2025-01-01-preview", "https://github.com/Azure/azure-rest-api-specs-pr/pull/35446", "stable", isTestReleasePlan: true),
+                releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "12345678-1234-5678-9012-123456789012", "12345678-1234-5678-9012-123456789012", "2025-01-01-preview", "https://github.com/Azure/azure-rest-api-specs-pr/pull/35446", "Preview", isTestReleasePlan: true),
+                releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "12345678-1234-5678-9012-123456789012", "12345678-1234-5678-9012-123456789012", "2025-01-01", "https://github.com/Azure/azure-rest-api-specs/pull/35446", "GA", isTestReleasePlan: true),
+            };
 
+            var releasePlanResults = await Task.WhenAll(releasePlanTasks);
 
-            releaseplan = await releasePlanTool.CreateReleasePlan(testCodeFilePath, "July 2025", "12345678-1234-5678-9012-123456789012", "12345678-1234-5678-9012-123456789012", "2025-01-01-preview", "https://github.com/Azure/azure-rest-api-specs-pr/pull/35446", "beta", isTestReleasePlan: true);
+            var releasePlans = releasePlanResults
+                .Select(r => r.Result as ReleasePlanDetails)
+                .ToList();
 
-            releaseplanObj = releaseplan.Result as ReleasePlanDetails;
-            Assert.IsNotNull(releaseplanObj);
-            Assert.IsNotNull(releaseplanObj.WorkItemId);
-            Assert.IsNotNull(releaseplanObj.ReleasePlanId);
-            Assert.IsNotNull(releaseplanObj.ReleasePlanLink);
-
+            foreach (var plan in releasePlans)
+            {
+                Assert.IsNotNull(plan);
+                Assert.IsNotNull(plan.WorkItemId);
+                Assert.IsNotNull(plan.ReleasePlanId);
+                Assert.IsNotNull(plan.ReleasePlanLink);
+            }
         }
 
         [Test]

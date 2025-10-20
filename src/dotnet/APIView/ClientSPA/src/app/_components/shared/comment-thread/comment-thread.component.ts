@@ -568,7 +568,9 @@ export class CommentThreadComponent {
   }
 
   hasRelatedComments(comment: CommentItemModel): boolean {
-    return CommentRelationHelper.hasRelatedComments(comment, this.allComments, this.allCodePanelRowData);
+    // Temporarily disabled for production - return false to hide related comments feature
+    return false;
+    // return CommentRelationHelper.hasRelatedComments(comment, this.allComments, this.allCodePanelRowData);
   }
 
   showRelatedComments(comment: CommentItemModel) {

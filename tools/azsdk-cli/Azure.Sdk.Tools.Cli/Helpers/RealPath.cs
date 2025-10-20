@@ -8,8 +8,63 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
+/// <summary>
+/// Utility for obtaining a normalized absolute path with symbolic link / reparse point resolution.
+/// </summary>
+/// <remarks>
+/// <para>
+/// This helper walks a path segment by segment, resolving at most <c>maxDepth</c> symbolic link hops.
+/// It purposely resolves *one* hop at a time so that chained links (A -> B -> C ...) each consume depth,
+/// allowing detection of pathological cycles or very deep chains. When a link is encountered its target
+/// is spliced together with any remaining yet-to-be-processed segments and traversal restarts on the
+/// new absolute path. This approach avoids recursively expanding the entire chain in one call which could
+/// mask link depth.
+/// </para>
+/// <para>
+/// If a segment does not exist (file nor directory) the remainder of the original input is appended and
+/// the resulting fully qualified path is returned without further existence checks. This means the method
+/// can be used for paths that are partially materialized on disk (e.g. preparing output paths) while still
+/// canonicalizing the portion that does exist and resolving links encountered early in the chain.
+/// </para>
+/// <para>
+/// The implementation uses <see cref="FileSystemInfo.LinkTarget"/> where supported. On platforms where
+/// link resolution API throws <see cref="PlatformNotSupportedException"/>, a manual fallback combines the
+/// (possibly relative) <c>LinkTarget</c> with the base directory. All returned paths are passed through
+/// <see cref="Path.GetFullPath(string)"/> for normalization.
+/// </para>
+/// <para>
+/// Safety guards:
+/// <list type="bullet">
+///   <item><description><c>segmentVisits</c> is capped (2048) to avoid infinite enumeration loops.</description></item>
+///   <item><description><c>linkResolves</c> is capped by <c>maxDepth</c> to prevent excessive / cyclic link chains.</description></item>
+/// </list>
+/// </para>
+/// <para>
+/// Example:
+/// <code>
+/// var real = RealPath.GetRealPath("./some/symlink/../target");
+/// Console.WriteLine(real); // => /abs/path/to/target (after resolving symlink and normalizing)
+/// </code>
+/// </para>
+/// </remarks>
 public static class RealPath
 {
+    /// <summary>
+    /// Returns an absolute, normalized path for <paramref name="path"/> with up to <paramref name="maxDepth"/>
+    /// symbolic link hops resolved.
+    /// </summary>
+    /// <param name="path">The input path. May be relative or absolute. Must not be null, empty, or whitespace.</param>
+    /// <param name="maxDepth">Maximum number of link hops to resolve. Acts as a guard against cyclic or excessive link chains. Default is 64.</param>
+    /// <returns>The fully qualified path with resolved link hops and normalized directory separators.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="path"/> is null, empty, or whitespace.</exception>
+    /// <exception cref="IOException">
+    /// Thrown when too many segments are processed (potential loop), when more than <paramref name="maxDepth"/> link hops
+    /// are encountered, or when a link target cannot be resolved.
+    /// </exception>
+    /// <remarks>
+    /// Link resolution is performed one hop at a time; chains longer than <paramref name="maxDepth"/> trigger an <see cref="IOException"/>.
+    /// Non-existent tail segments are appended without validation so callers can use this for paths being created.
+    /// </remarks>
     public static string GetRealPath(string path, int maxDepth = 64)
     {
         if (string.IsNullOrWhiteSpace(path))
@@ -113,6 +168,16 @@ public static class RealPath
     /// Splits a path into a sequence of segments where the first element is the root
     /// (drive/UNC on Windows, "/" on Unix), followed by each directory/file name.
     /// </summary>
+    /// <summary>
+    /// Enumerates path segments for a given path, yielding the root (drive / UNC / "/") as the first element
+    /// followed by each directory or file component in order.
+    /// </summary>
+    /// <param name="path">The path to split. May be relative; it is first normalized to a full path.</param>
+    /// <returns>An enumerable whose first element is the root and subsequent elements are individual components.</returns>
+    /// <remarks>
+    /// Implements its own splitting logic instead of <see cref="string.Split(char[])"/> to avoid allocating empty segments
+    /// and to treat alternate directory separators uniformly.
+    /// </remarks>
     private static IEnumerable<string> EnumerateSegments(string path)
     {
         var full = Path.GetFullPath(path);

@@ -56,15 +56,16 @@ def save_cached_result(workflow_name: str, testcase: str, result: dict):
 
 def cached_target_function(workflow_name: str):
     """Decorator to add caching to target functions."""
+    _use_cache = os.environ.get('EVALS_USE_CACHE', 'false').lower() == 'true'
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            # Extract testcase from kwargs (should be first named param in all target functions)
-            testcase = kwargs.get('testcase')
-            if not testcase:
-                # Fallback: assume first positional arg is testcase if not in kwargs
-                testcase = args[0] if args else None
+            # Check if caching enabled
+            if not _use_cache:
+                return func(*args, **kwargs)
             
+            # Extract testcase from kwargs
+            testcase = kwargs.get('testcase', args[0] if args else None)
             if not testcase:
                 # No testcase identifier - skip caching
                 return func(*args, **kwargs)
@@ -83,7 +84,8 @@ def cached_target_function(workflow_name: str):
         return wrapper
     return decorator
 
-def _review_apiview(query: str, language: str):
+@cached_target_function("apiview")
+def _review_apiview(testcase: str, query: str, language: str):
     """APIView review target function for evals framework."""
     from src._apiview_reviewer import ApiViewReview
 
@@ -219,7 +221,7 @@ class BaseEvaluator(ABC):
 class CustomAPIViewEvaluator(BaseEvaluator):
     """Evaluator for comparing expected and actual APIView comments."""
 
-    def __init__(self, config=None):
+    def __init__(self, config=None, jsonl_file: str = None):
         settings = SettingsManager()
         # for best results, this should always be a different model from the one we are evaluating
         self._judge_model = "gpt-4.1"

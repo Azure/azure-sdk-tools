@@ -181,7 +181,7 @@ public class VerifySetupTool : MCPTool
         var reqGetter = null as IEnvRequirementsCheck;
         if (languages == null || languages.Count == 0)
         {
-            // detect language if none given
+            // Detect language if none given
             reqGetter = await envRequirementsCheck.Resolve(packagePath);
 
             if (reqGetter == null)
@@ -315,7 +315,7 @@ public class VerifySetupTool : MCPTool
             return new List<string> ();
         }
 
-        // validate and sanitize languages
+        // Validate languages
         List<string> parsed = new List<string>(langs.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
         List<string> parsedResult = new List<string>();
         foreach (var lang in parsed)

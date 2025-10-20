@@ -61,6 +61,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
                     _tool.Initialize(
                         scopedProvider.GetRequiredService<IOutputHelper>(),
                         scopedProvider.GetRequiredService<ITelemetryService>(),
+                        scopedProvider.GetRequiredService<TokenUsageHelper>(),
                         debug);
                     return _tool;
                 })

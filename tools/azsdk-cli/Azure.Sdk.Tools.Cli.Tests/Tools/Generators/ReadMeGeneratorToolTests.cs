@@ -28,7 +28,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools.Generators
                 new TestLogger<ReadMeGeneratorTool>(),
                 mockMicroAgentService.Object
             );
-            tool.Initialize(outputHelper, telemetryServiceMock.Object);
+            tool.Initialize(outputHelper, telemetryServiceMock.Object, new TokenUsageHelper(outputHelper));
         }
 
         [Test]

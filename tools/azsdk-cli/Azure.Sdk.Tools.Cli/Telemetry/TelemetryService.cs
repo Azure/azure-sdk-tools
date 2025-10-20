@@ -5,7 +5,6 @@ using System.Diagnostics;
 using Microsoft.Extensions.Options;
 using ModelContextProtocol.Protocol;
 using OpenTelemetry;
-using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Azure.Sdk.Tools.Cli.Configuration;
 using Azure.Sdk.Tools.Cli.Telemetry.InformationProvider;

@@ -6,12 +6,14 @@ using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Telemetry;
 using static Azure.Sdk.Tools.Cli.Telemetry.TelemetryConstants;
+using Azure.Sdk.Tools.Cli.Helpers;
 
 namespace Azure.Sdk.Tools.Cli.Tools;
 
 public class InstrumentedTool(
     ITelemetryService telemetryService,
     ILogger logger,
+    TokenUsageHelper tokenUsageHelper,
     McpServerTool innerTool
 ) : DelegatingMcpServerTool(innerTool)
 {
@@ -22,6 +24,7 @@ public class InstrumentedTool(
 
     public override async ValueTask<CallToolResult> InvokeAsync(RequestContext<CallToolRequestParams> request, CancellationToken ct = default)
     {
+        TelemetryContext.Reset(tokenUsageHelper);
         using var activity = await telemetryService.StartActivity(ActivityName.ToolExecuted, request?.Server?.ClientInfo);
         Activity.Current = activity;
         if (request?.Params == null || string.IsNullOrEmpty(request.Params.Name))

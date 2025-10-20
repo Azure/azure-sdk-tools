@@ -42,7 +42,7 @@ export class RAGModel implements PromptCompletionModel {
       this.channelConfigManager.getRagTenant(channelId),
       this.channelConfigManager.getRagEndpoint(channelId),
     ]);
-    logger.info(`Processing request for channel ${channelId} on rag tenant: ${ragTenantId}`, { meta });
+    logger.info(`Processing request for channel ${channelId} on rag tenant: ${ragTenantId}, endpoint: ${ragEndpoint}`, { meta });
     const ragOptions: RAGOptions = {
       endpoint: ragEndpoint,
       accessToken: token ? token.token : undefined

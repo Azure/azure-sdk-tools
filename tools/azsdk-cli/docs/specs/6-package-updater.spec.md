@@ -109,6 +109,7 @@ The four tools are intentionally small, composable units. Each emits a machine-r
 | Output Schema | JSON with fields: result, message (see schema below) |
 | Idempotency | Multiple successive runs produce identical filesystem state except for timestamps/logs |
 | Script Implementation | MUST be PowerShell `.ps1`. SHOULD accept named parameters (e.g., `sdkRepoPath`). MUST use exit code `0` for success/partial/noop; non-zero only on outright failure. Legacy non-PS scripts should be wrapped by a small PowerShell shim. Scripts MUST write a concise stderr line prefixed with `ERROR:`; include suggested mitigation steps and links to docs in the message where possible. |
+| Script Execution Environment | All scripts are executed using PowerShell Core (`pwsh`) terminal |
 | Next Steps Hint | Plain language phrase embedded in `message` (e.g., `next_steps: update version`) |
 | Missing Required Tools | If a required external tool is not present (for example: `dotnet`, `gofmt`, `pwsh`), prompt the user to run the `verify-setup` tool which validates and documents missing prerequisites. |
 
@@ -155,8 +156,8 @@ When the tool executes the language-specific `update-changelog` script it will p
 
 | Parameter | Description | Type | Required |
 |-----------|-------------|-----:|:--------:|
-| `sdkRepoPath` | Absolute path to the root folder of the local SDK repository. | string | Yes |
-| `packagePath` | Absolute path to the root folder of the local SDK project (package). | string | Yes |
+| `SdkRepoPath` | Absolute path to the root folder of the local SDK repository. | string | Yes |
+| `PackagePath` | Absolute path to the root folder of the local SDK project (package). | string | Yes |
 
 Note: The script only needs to cover mgmt-plane.
 
@@ -164,8 +165,8 @@ Note: The script only needs to cover mgmt-plane.
 
 ```powershell
 update-changelog.ps1 \
-      -sdkRepoPath C:\dev\repos\azure-sdk-for-net \
-      -packagePath C:\dev\repos\azure-sdk-for-net\services\newservice
+      -SdkRepoPath C:\dev\repos\azure-sdk-for-net \
+      -PackagePath C:\dev\repos\azure-sdk-for-net\services\newservice
 ```
 
 #### 2. Version Update Tool
@@ -216,22 +217,22 @@ When the tool executes the language-specific `update-version` script it will pas
 
 | Parameter | Description | Type | Required |
 |-----------|-------------|------:|:--------:|
-| `sdkRepoPath` | Absolute path to the root folder of the local SDK repository. | string | Yes |
-| `packagePath` | Absolute path to the root folder of the local SDK project (package). | string | Yes |
-| `sdkReleaseType` | Specifies whether the next version is `beta` or `stable`. | string | No |
-| `sdkVersion` | Specifies the next version to set (explicit version string). | string | No |
-| `sdkReleaseDate` | Release date to write into changelog (YYYY-MM-DD). | string | No |
+| `SdkRepoPath` | Absolute path to the root folder of the local SDK repository. | string | Yes |
+| `PackagePath` | Absolute path to the root folder of the local SDK project (package). | string | Yes |
+| `SdkReleaseType` | Specifies whether the next version is `beta` or `stable`. | string | No |
+| `SdkVersion` | Specifies the next version to set (explicit version string). | string | No |
+| `SdkReleaseDate` | Release date to write into changelog (YYYY-MM-DD). | string | No |
 
-Note: For management-plane (mgmt) packages, at least one of `sdkVersion` or `sdkReleaseType` MUST be provided; the script will fail with an error if neither is supplied or validation fails.
+Note: For management-plane (mgmt) packages, at least one of `SdkVersion` or `SdkReleaseType` MUST be provided; the script will fail with an error if neither is supplied or validation fails.
 
 **Example invocations:**
 
 ```powershell
 update-version.ps1 \
-      -sdkRepoPath C:\dev\repos\azure-sdk-for-net \
-      -packagePath C:\dev\repos\azure-sdk-for-net\services\newservice \
-      -sdkReleaseType stable \
-      -sdkReleaseDate 2025-10-17
+      -SdkRepoPath C:\dev\repos\azure-sdk-for-net \
+      -PackagePath C:\dev\repos\azure-sdk-for-net\services\newservice \
+      -SdkReleaseType stable \
+      -SdkReleaseDate 2025-10-17
 ```
 
 #### 3. Metadata Update Tool
@@ -272,15 +273,15 @@ When the tool executes the language-specific `update-metadata` script it will pa
 
 | Parameter | Description | Type | Required |
 |-----------|-------------|-----:|:--------:|
-| `sdkRepoPath` | Absolute path to the root folder of the local SDK repository. | string | Yes |
-| `packagePath` | Absolute path to the root folder of the local SDK project (package). | string | Yes |
+| `SdkRepoPath` | Absolute path to the root folder of the local SDK repository. | string | Yes |
+| `PackagePath` | Absolute path to the root folder of the local SDK project (package). | string | Yes |
 
 **Example invocations:**
 
 ```powershell
 update-metadata.ps1 \
-      -sdkRepoPath C:\dev\repos\azure-sdk-for-net \
-      -packagePath C:\dev\repos\azure-sdk-for-net\services\newservice
+      -SdkRepoPath C:\dev\repos\azure-sdk-for-net \
+      -PackagePath C:\dev\repos\azure-sdk-for-net\services\newservice
 ```
 
 #### 4. CI Update Tool
@@ -319,15 +320,15 @@ When the tool executes the language-specific `update-ci` script it will pass the
 
 | Parameter | Description | Type | Required |
 |-----------|-------------|-----:|:--------:|
-| `sdkRepoPath` | Absolute path to the root folder of the local SDK repository. | string | Yes |
-| `packagePath` | Absolute path to the root folder of the local SDK project (package). | string | Yes |
+| `SdkRepoPath` | Absolute path to the root folder of the local SDK repository. | string | Yes |
+| `PackagePath` | Absolute path to the root folder of the local SDK project (package). | string | Yes |
 
 **Example invocations:**
 
 ```powershell
 update-ci.ps1 \
-      -sdkRepoPath C:\dev\repos\azure-sdk-for-net \
-      -packagePath C:\dev\repos\azure-sdk-for-net\services\newservice
+      -SdkRepoPath C:\dev\repos\azure-sdk-for-net \
+      -PackagePath C:\dev\repos\azure-sdk-for-net\services\newservice
 ```
 
 #### 5. Aggregated Tool (chained execution)

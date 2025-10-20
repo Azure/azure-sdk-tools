@@ -78,11 +78,7 @@ Formalizing Stage 6 as four cohesive tools improves reliability, supports automa
 
 | Language   | Limitation | Impact | Workaround |
 |------------|------------|--------|------------|
-| .NET       | Requires API export step | Extra time / possible failure if tools missing | Fail with actionable guidance |
-| Java       | `pom.xml` consistency required | Build failure if missed | Validate & patch automatically |
-| JavaScript | README snippet accuracy depends on snippet validator | Potential stale install commands | Run snippet validation separately earlier |
-| Python     | `_metadata.json` variance | Packaging warnings | Enforce schema during metadata update |
-| Go         | Formatting (gofmt) essential | Diff noise in PRs | Auto-run formatter in metadata update |
+| JavaScript | Code formatting isn't hooked up to the emitter | Noisy diffs or linter failures | Run code formatting step in the `update-metadata.ps1` script |
 
 ---
 

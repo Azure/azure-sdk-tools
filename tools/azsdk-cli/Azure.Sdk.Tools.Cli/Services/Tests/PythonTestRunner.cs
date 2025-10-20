@@ -1,14 +1,15 @@
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Models;
 
 namespace Azure.Sdk.Tools.Cli.Services.Tests;
 
-public class JavaScriptTestRunner(IProcessHelper processHelper) : ITestRunner
+public class PythonTestRunner(IProcessHelper processHelper) : ITestRunner
 {
     public async Task<bool> RunAllTests(string packagePath, CancellationToken ct = default)
     {
         var result = await processHelper.Run(new ProcessOptions(
-                command: "npm",
-                args: ["run", "test"],
+                command: "pytest",
+                args: ["tests"],
                 workingDirectory: packagePath
             ),
             ct

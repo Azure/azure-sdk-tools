@@ -238,8 +238,9 @@ namespace APIViewWeb.Managers
         /// <param name="packageName"></param>
         /// <param name="language"></param>
         /// <param name="isClosed"></param>
+        /// <param name="packageType">Optional package type. If not provided, will be automatically classified.</param>
         /// <returns></returns>
-        public async Task<ReviewListItemModel> CreateReviewAsync(string packageName, string language, bool isClosed=true)
+        public async Task<ReviewListItemModel> CreateReviewAsync(string packageName, string language, bool isClosed = true, PackageType? packageType = null)
         {
             if (string.IsNullOrEmpty(packageName) || string.IsNullOrEmpty(language)) 
             {
@@ -250,6 +251,7 @@ namespace APIViewWeb.Managers
             {
                 PackageName = packageName,
                 Language = language,
+                PackageType = packageType,
                 CreatedOn = DateTime.UtcNow,
                 CreatedBy = ApiViewConstants.AzureSdkBotName,
                 IsClosed = isClosed,
@@ -263,6 +265,22 @@ namespace APIViewWeb.Managers
                     }
                 }
             };
+
+            await _reviewsRepository.UpsertReviewAsync(review);
+            return review;
+        }
+
+        /// <summary>
+        /// Update an existing review
+        /// </summary>
+        /// <param name="review">The review to update</param>
+        /// <returns></returns>
+        public async Task<ReviewListItemModel> UpdateReviewAsync(ReviewListItemModel review)
+        {
+            if (review == null)
+            {
+                throw new ArgumentNullException(nameof(review));
+            }
 
             await _reviewsRepository.UpsertReviewAsync(review);
             return review;

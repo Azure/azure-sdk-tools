@@ -28,8 +28,7 @@ namespace Azure.Tools.GeneratorAgent
         
         public async Task InstallTypeSpecDependencies(CancellationToken cancellationToken)
         {
-            Logger.LogDebug("Installing TypeSpec dependencies globally");
-
+            Logger.LogInformation("Installing TypeSpec dependencies globally");
             string arguments;
             
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -41,15 +40,11 @@ namespace Azure.Tools.GeneratorAgent
                 arguments = $"install --global {AppSettings.TypespecCompiler} {AppSettings.TypespecEmitterPackage}";
             }
 
-            Result<string> argValidation = InputValidator.ValidateProcessArguments(arguments);
-            if (argValidation.IsFailure)
-            {
-                throw new InvalidOperationException($"Invalid npm install arguments: {argValidation.Exception?.Message}", argValidation.Exception);
-            }
+            string validatedArguments = InputValidator.ValidateProcessArguments(arguments);
 
             Result<object> result = await ProcessExecutionService.ExecuteAsync(
                 SecureProcessConfiguration.NpmExecutable,
-                argValidation.Value!,
+                validatedArguments,
                 Path.GetTempPath(),
                 cancellationToken,
                 TimeSpan.FromMinutes(3)).ConfigureAwait(false);
@@ -79,15 +74,11 @@ namespace Azure.Tools.GeneratorAgent
                 arguments = $"tsp compile . --emit {AppSettings.TypespecEmitterPackage} --option \"{AppSettings.TypespecEmitterPackage}.emitter-output-dir={tspOutputPath}\"";
             }
             
-            Result<string> argValidation = InputValidator.ValidateProcessArguments(arguments);
-            if (argValidation.IsFailure)
-            {
-                return Result<object>.Failure(argValidation.Exception!);
-            }
+            string validatedArguments = InputValidator.ValidateProcessArguments(arguments);
 
             Result<object> result = await ProcessExecutionService.ExecuteAsync(
                 SecureProcessConfiguration.NpxExecutable,
-                argValidation.Value!,
+                validatedArguments,
                 currentTypeSpecDir,
                 cancellationToken,
                 TimeSpan.FromMinutes(5)).ConfigureAwait(false);

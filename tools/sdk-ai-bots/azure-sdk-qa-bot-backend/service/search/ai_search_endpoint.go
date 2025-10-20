@@ -145,7 +145,7 @@ func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources [
 		}
 		req.Filter = fmt.Sprintf("context_id eq '%s'", source)
 		if sourceFilterStr, ok := sourceFilter[source]; ok && sourceFilterStr != "" {
-			req.Filter = fmt.Sprintf("(%s) and (%s)", req.Filter, sourceFilterStr)
+			req.Filter = fmt.Sprintf("(%s and %s)", req.Filter, sourceFilterStr)
 		}
 
 		resp, err := s.QueryIndex(context.Background(), &req)
@@ -321,7 +321,7 @@ func (s *SearchClient) CompleteChunk(chunk model.Index) model.Index {
 	return chunk
 }
 
-func (s *SearchClient) AgenticSearch(ctx context.Context, query string, sources []model.Source, agenticSearchPrompt string) (*model.AgenticSearchResponse, error) {
+func (s *SearchClient) AgenticSearch(ctx context.Context, query string, sources []model.Source, sourceFilter map[model.Source]string, agenticSearchPrompt string) (*model.AgenticSearchResponse, error) {
 	var messages []model.KnowledgeAgentMessage
 
 	// Use custom prompt if provided, otherwise fall back to default
@@ -351,8 +351,13 @@ func (s *SearchClient) AgenticSearch(ctx context.Context, query string, sources 
 
 	filters := make([]string, 0, len(sources))
 	for _, source := range sources {
-		filters = append(filters, fmt.Sprintf("context_id eq '%s'", source))
+		filter := fmt.Sprintf("context_id eq '%s'", source)
+		if sourceFilterStr, ok := sourceFilter[source]; ok && sourceFilterStr != "" {
+			filter = fmt.Sprintf("(%s and %s)", filter, sourceFilterStr)
+		}
+		filters = append(filters, filter)
 	}
+
 	targetIndexParam := model.KnowledgeAgentIndexParams{
 		IndexName:         s.Index,
 		RerankerThreshold: model.RerankScoreMediumRelevanceThreshold,

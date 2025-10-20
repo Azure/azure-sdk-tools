@@ -43,7 +43,7 @@ public class VerifySetupTool : MCPTool
         SharedCommandGroups.Verify,
     ];
 
-    private readonly Option<string> languagesParam = new("--langs", "-l")
+    private readonly Option<string> languagesParam = new("--languages", "-l")
     {
         Description = "Comma-separated list of programming languages to check requirements for (java, python, dotnet, javascript, go). Defaults to current repo's language.",
         Required = false
@@ -73,7 +73,7 @@ public class VerifySetupTool : MCPTool
         return await VerifySetup(parsed, packagePath, ct);
     }
 
-    [McpServerTool(Name = "azsdk_verify_setup"), Description("Verifies the developer environment for MCP release tool requirements")]
+    [McpServerTool(Name = "azsdk_verify_setup"), Description("Verifies the developer environment for MCP release tool requirements. Accepts a list of supported languages to check requirements for (java, python, dotnet, javascript, go), and the packagePath of the repo to check.")]
     public async Task<VerifySetupResponse> VerifySetup(List<string> langs = null, string packagePath = null, CancellationToken ct = default)
     {
         try

@@ -1,5 +1,4 @@
 using System.CommandLine;
-using System.CommandLine.Parsing;
 using System.ComponentModel;
 using System.Text.RegularExpressions;
 using ModelContextProtocol.Server;
@@ -49,7 +48,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         };
 
         protected override Command GetCommand() =>
-            new(GenerateSdkCommandName, "Generates SDK code for a specified language based on the provided 'tspconfig.yaml' or 'tsp-location.yaml'.")
+            new(GenerateSdkCommandName, "Generates SDK code for a specified language based on the provided 'tspconfig.yaml' or 'tsp-location.yaml'")
             {
                 localSdkRepoPathOpt, tspConfigPathOpt, tspLocationPathOpt, emitterOpt,
             };

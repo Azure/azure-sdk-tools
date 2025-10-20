@@ -25,7 +25,7 @@ public class CustomizedCodeUpdateTool: LanguageMcpTool
     {
         this.tspClientHelper = tspClientHelper;
     }
-    public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.TypeSpec];
+    public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.TypeSpec, SharedCommandGroups.TypeSpecClient];
 
     private readonly Argument<string> updateCommitSha = new("update-commit-sha")
     {

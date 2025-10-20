@@ -63,7 +63,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
             }
         }
 
-        [McpServerTool(Name = "azsdk_check_github_service_label"), Description("Checks if a service label exists and returns its details")]
+        [McpServerTool(Name = "azsdk_check_service_label"), Description("Checks if a service label exists and returns its details")]
         public async Task<ServiceLabelResponse> CheckServiceLabel(string serviceLabel)
         {
             try
@@ -103,7 +103,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
             return result;
         }
 
-        [McpServerTool(Name = "azsdk_create_github_service_label"), Description("Creates a pull request to add a new service label")]
+        [McpServerTool(Name = "azsdk_create_service_label"), Description("Creates a pull request to add a new service label")]
         public async Task<ServiceLabelResponse> CreateServiceLabel(string label, string link)
         {
             try

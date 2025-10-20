@@ -14,7 +14,7 @@
             {
                 "requirement": "tsp-client >= 0.24.0",
                 "check": ["tsp-client", "--version"],
-                "instructions": ["npm install -g @azure-tools/typespec-client-generator-cli@latest @typespec/compiler@latest"]
+                "instructions": ["cd eng/common/tsp-client", "`npm ci`"]
             },
             {
                 "requirement": "tsp >= 1.0.0",
@@ -93,16 +93,6 @@
                 "requirement": "generator",
                 "check": ["generator", "--help"],
                 "instructions": ["go install github.com/Azure/azure-sdk-for-go/eng/tools/generator@latest"]
-            },
-            {
-                "requirement": "azcore",
-                "check": ["go", "list", "-m", "github.com/Azure/azure-sdk-for-go/sdk/azcore"],
-                "instructions": ["go get -u github.com/Azure/azure-sdk-for-go/sdk/azcore toolchain@none go@1.23.0"]
-            },
-            {
-                "requirement": "azidentity",
-                "check": ["go", "list", "-m", "github.com/Azure/azure-sdk-for-go/sdk/azidentity"],
-                "instructions": ["go get -u github.com/Azure/azure-sdk-for-go/sdk/azidentity toolchain@none go@1.23.0"]
             }
         ],
         "python": [

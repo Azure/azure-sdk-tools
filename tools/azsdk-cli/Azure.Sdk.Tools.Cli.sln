@@ -1,11 +1,9 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.13.35931.197
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.Sdk.Tools.Cli", "Azure.Sdk.Tools.Cli\Azure.Sdk.Tools.Cli.csproj", "{162CDABB-D3C2-46DF-A955-183488D5716F}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.Sdk.Tools.Cli.Contract", "Azure.Sdk.Tools.Cli.Contract\Azure.Sdk.Tools.Cli.Contract.csproj", "{D16D6FB0-A629-4878-B215-8503041C56CE}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.Sdk.Tools.Cli.Tests", "Azure.Sdk.Tools.Cli.Tests\Azure.Sdk.Tools.Cli.Tests.csproj", "{97D903D8-ADC9-4C01-8922-9ADB9137B584}"
 EndProject

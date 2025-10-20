@@ -24,6 +24,7 @@ from apistubgentest.models import (
     SomethingWithOverloads,
     SomethingWithProperties,
     SomeProtocolDecorator,
+    SomethingWithLiterals,
 )
 
 from pytest import fail
@@ -605,3 +606,33 @@ class TestClassParsing:
         assert metadata["RelatedToLine"] == 0
         # class type with no defined body
         assert metadata["IsContextEndLine"] == 0
+
+    def test_literals(self):
+        obj = SomethingWithLiterals
+        class_node = ClassNode(
+            name=obj.__name__,
+            namespace=obj.__name__,
+            parent_node=None,
+            obj=obj,
+            pkg_root_namespace=self.pkg_namespace,
+            apiview=MockApiView,
+        )
+        tokens = _tokenize(class_node)
+        actuals = _render_lines(tokens)
+        expected = [
+            "class SomethingWithLiterals:",
+            "property literal_property: Literal[\"read\", \"write\", \"admin\"]    # Read-only",
+            "cvar literal_cvar: ClassVar[Union[Literal[\"production\", \"development\"], bool]]",
+            "ivar literal_ivar: Literal[\"active\", \"inactive\", SomeEnum.ONE_ENUM]",
+            "",
+            "def literal_mixed(self, option: Literal[\"auto\", 42, True, SomeEnum.TWO_ENUM]) -> None",
+            "",
+            "def literal_return(self) -> Literal[\"success\", 2]",
+            "",
+            "",
+        ]
+        _check_all(actuals, expected, obj)
+        metadata = {"RelatedToLine": 0, "IsContextEndLine": 0}
+        metadata = _count_review_line_metadata(tokens, metadata)
+        assert metadata["RelatedToLine"] == 4
+        assert metadata["IsContextEndLine"] == 1

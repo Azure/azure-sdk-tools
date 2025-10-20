@@ -16,7 +16,7 @@ public class ExtraLabelValidation : IValidation
         var res = new TResult();
         var errorList = new List<string>();
 
-        var ignoreList = IgnoreData.GetIgnoreList("ExtraLabelValidation");
+        var ignoreList = IgnoreData.GetIgnoreList("ExtraLabelValidation", "contains");
 
         // Define a list (labelList) containing various HTML tags and entities.
         var labelList = new List<string> {
@@ -61,6 +61,12 @@ public class ExtraLabelValidation : IValidation
                 {
                     // This is a self-closing tag, skip it
                     index += label.Length + 2;
+                    continue;
+                }
+
+                if (ignoreList.Any(ignore => htmlText.Contains(ignore.IgnoreText)))
+                {
+                    // If the label is in the ignore list, skip it
                     continue;
                 }
 

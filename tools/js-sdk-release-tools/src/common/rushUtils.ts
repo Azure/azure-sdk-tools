@@ -134,10 +134,12 @@ export async function buildPackage(
         await runCommand(`pnpm`, ['install'], runCommandOptions, false);
         logger.info(`Pnpm install successfully.`);
 
-        await lintFix(packageDirectory);
+        if(options.runMode === RunMode.Local || options.runMode === RunMode.Release){
+            await lintFix(packageDirectory);
+        }
 
         logger.info(`Start to build package '${name}'.`);
-        await runCommand('pnpm', ['build', '--filter', `${name}...`], runCommandOptions);
+        await runCommand('pnpm', ['turbo', 'build', '--filter', `${name}...`, '--token 1'], runCommandOptions);
     }
 
     const apiViewContext = await addApiViewInfo(packageDirectory, options.sdkRepoRoot, name, packageResult);

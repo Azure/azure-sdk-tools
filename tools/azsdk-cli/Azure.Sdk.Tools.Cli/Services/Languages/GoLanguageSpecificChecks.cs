@@ -36,8 +36,6 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
 
     #region Go specific functions, not part of the LanguageRepoService
 
-    public string SupportedLanguage => "Go";
-
     public async Task<bool> CheckDependencies(CancellationToken ct)
     {
         try
@@ -49,7 +47,7 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
         }
         catch (Exception ex)
         {
-            _logger.LogDebug($"Exception occurred while checking dependencies {ex}");
+            _logger.LogDebug(ex, "Exception occurred while checking dependencies");
             return false;
         }
     }
@@ -58,7 +56,7 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
     {
         try
         {
-            var result = await _processHelper.Run(new ProcessOptions(compilerName, ["mod", "init", moduleName], workingDirectory: packagePath), ct);
+            var result = await _processHelper.Run(new ProcessOptions(compilerName, ["mod", "init", moduleName], compilerNameWindows, ["mod", "init", moduleName], workingDirectory: packagePath), ct);
             return new CLICheckResponse(result);
         }
         catch (Exception ex)
@@ -70,19 +68,19 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
 
     #endregion
 
-    public async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, CancellationToken ct)
+    public async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         try
         {
             // Update all dependencies to the latest first
-            var updateResult = await _processHelper.Run(new ProcessOptions(compilerName, ["get", "-u", "all"], workingDirectory: packagePath), ct);
+            var updateResult = await _processHelper.Run(new ProcessOptions(compilerName, ["get", "-u", "all"], compilerNameWindows, ["get", "-u", "all"], workingDirectory: packagePath), ct);
             if (updateResult.ExitCode != 0)
             {
                 return new CLICheckResponse(updateResult);
             }
 
             // Now tidy, to cleanup any deps that aren't needed
-            var tidyResult = await _processHelper.Run(new ProcessOptions(compilerName, ["mod", "tidy"], workingDirectory: packagePath), ct);
+            var tidyResult = await _processHelper.Run(new ProcessOptions(compilerName, ["mod", "tidy"], compilerNameWindows, ["mod", "tidy"], workingDirectory: packagePath), ct);
             return new CLICheckResponse(tidyResult);
         }
         catch (Exception ex)
@@ -91,7 +89,7 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
             return new CLICheckResponse(1, "", $"{nameof(AnalyzeDependenciesAsync)} failed with an exception: {ex.Message}");
         }
     }
-    public async Task<CLICheckResponse> FormatCodeAsync(string packagePath, CancellationToken ct)
+    public async Task<CLICheckResponse> FormatCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         try
         {
@@ -109,11 +107,11 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
         }
     }
 
-    public async Task<CLICheckResponse> LintCodeAsync(string packagePath, CancellationToken ct)
+    public async Task<CLICheckResponse> LintCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
         try
         {
-            var result = await _processHelper.Run(new ProcessOptions(linterName, ["run"], workingDirectory: packagePath), ct);
+            var result = await _processHelper.Run(new ProcessOptions(linterName, ["run"], linterNameWindows, ["run"], workingDirectory: packagePath), ct);
             return new CLICheckResponse(result);
         }
         catch (Exception ex)
@@ -127,7 +125,7 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
     {
         try
         {
-            var result = await _processHelper.Run(new ProcessOptions(compilerName, ["test", "-v", "-timeout", "1h", "./..."], workingDirectory: packagePath), ct);
+            var result = await _processHelper.Run(new ProcessOptions(compilerName, ["test", "-v", "-timeout", "1h", "./..."], compilerNameWindows, ["test", "-v", "-timeout", "1h", "./..."], workingDirectory: packagePath), ct);
             return new CLICheckResponse(result);
         }
         catch (Exception ex)
@@ -141,7 +139,7 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
     {
         try
         {
-            var result = await _processHelper.Run(new ProcessOptions(compilerName, ["build"], workingDirectory: packagePath), ct);
+            var result = await _processHelper.Run(new ProcessOptions(compilerName, ["build"], compilerNameWindows, ["build"], workingDirectory: packagePath), ct);
             return new CLICheckResponse(result);
         }
         catch (Exception ex)
@@ -151,7 +149,7 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
         }
     }
 
-    public string GetSDKPackagePath(string repo, string packagePath)
+    public async Task<string> GetSDKPackageName(string repo, string packagePath, CancellationToken cancellationToken = default)
     {
         if (!repo.EndsWith(Path.DirectorySeparatorChar))
         {
@@ -159,6 +157,13 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
         }
 
         // ex: sdk/messaging/azservicebus/
-        return packagePath.Replace(repo, "");
+        var relativePath = packagePath.Replace(repo, "");
+        // Ensure forward slashes for Go package names
+        return await Task.FromResult(relativePath.Replace(Path.DirectorySeparatorChar, '/'));
+    }
+
+    public async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    {
+        return await Task.FromResult(new CLICheckResponse());
     }
 }

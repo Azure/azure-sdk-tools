@@ -1,12 +1,13 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.ComponentModel;
 using ModelContextProtocol.Server;
+using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Configuration;
-using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Services;
 
@@ -16,59 +17,49 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
     [McpServerToolType, Description("Tools for working with GitHub labels for services")]
     public class GitHubLabelsTool(
         ILogger<GitHubLabelsTool> logger,
-        IOutputHelper output,
         IGitHubService githubService
-    ) : MCPTool
+    ) : MCPMultiCommandTool
     {
+        public override CommandGroup[] CommandHierarchy { get; set; } = [new("github-labels", "GitHub service labels tools")];
+
         //command names
         private const string checkServiceLabelCommandName = "check-service-label";
         private const string createServiceLabelCommandName = "create-service-label";
 
         // Command options
-        private readonly Option<string> serviceLabelOpt = new(["--service", "-s"], "Proposed Service name used to create a PR for a new label.") { IsRequired = true };
-        private readonly Option<string> documentationLinkOpt = new(["--link", "-l"], "Brand documentation link used to create a PR for a new label.") { IsRequired = true };
-
-        public override Command GetCommand()
+        private readonly Option<string> serviceLabelOpt = new("--service", "-s")
         {
-            var command = new Command("github-labels", "GitHub service labels tools");
-            var subCommands = new[]
-            {
-                new Command(checkServiceLabelCommandName, "Check if a service label exists in the common labels CSV") { serviceLabelOpt },
-                new Command(createServiceLabelCommandName, "Creates a PR for a new label given a proposed label and brand documentation.") { serviceLabelOpt, documentationLinkOpt },
-            };
+            Description = "Proposed Service name used to create a PR for a new label.",
+            Required = true,
+        };
 
-            foreach (var subCommand in subCommands)
-            {
-                subCommand.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
-                command.AddCommand(subCommand);
-            }
-            return command;
-        }
-
-        public override async Task HandleCommand(InvocationContext ctx, CancellationToken ct)
+        private readonly Option<string> documentationLinkOpt = new("--link", "-l")
         {
-            var command = ctx.ParseResult.CommandResult.Command.Name;
-            var commandParser = ctx.ParseResult;
+            Description = "Brand documentation link used to create a PR for a new label.",
+            Required = true,
+        };
+
+        protected override List<Command> GetCommands() =>
+        [
+            new(checkServiceLabelCommandName, "Check if a service label exists in the common labels CSV") { serviceLabelOpt },
+            new(createServiceLabelCommandName, "Creates a PR for a new label given a proposed label and brand documentation.") { serviceLabelOpt, documentationLinkOpt },
+        ];
+
+        public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
+        {
+            var command = parseResult.CommandResult.Command.Name;
 
             switch (command)
             {
                 case checkServiceLabelCommandName:
-                    var serviceLabel = commandParser.GetValueForOption(serviceLabelOpt);
-                    var result = await CheckServiceLabel(serviceLabel);
-                    ctx.ExitCode = ExitCode;
-                    output.Output(result);
-                    return;
+                    var serviceLabel = parseResult.GetValue(serviceLabelOpt);
+                    return await CheckServiceLabel(serviceLabel);
                 case createServiceLabelCommandName:
-                    var proposedServiceLabel = commandParser.GetValueForOption(serviceLabelOpt);
-                    var documentationLink = commandParser.GetValueForOption(documentationLinkOpt);
-                    var createdPRResult = await CreateServiceLabel(proposedServiceLabel, documentationLink ?? "");
-                    ctx.ExitCode = ExitCode;
-                    output.Output(createdPRResult);
-                    return;
+                    var proposedServiceLabel = parseResult.GetValue(serviceLabelOpt);
+                    var documentationLink = parseResult.GetValue(documentationLinkOpt);
+                    return await CreateServiceLabel(proposedServiceLabel, documentationLink ?? "");
                 default:
-                    SetFailure();
-                    output.OutputError($"Unknown command: '{command}'");
-                    return;
+                    return new DefaultCommandResponse { ResponseError = $"Unknown command: '{command}'" };
             }
         }
 
@@ -86,7 +77,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
             }
             catch (Exception ex)
             {
-                SetFailure();
                 logger.LogError(ex, "Error occurred while checking service label: {serviceLabel}", serviceLabel);
                 return new ServiceLabelResponse
                 {
@@ -169,7 +159,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
                     headBranch: $"add_service_label_{normalizedLabel}",
                     title: $"[Service Label] Add service label: {label}",
                     body: $"This PR adds the service label '{label}' to the repository. Documentation link: {link}",
-                    draft : true
+                    draft: true
                 );
 
                 // Extract the pull request URL from the result
@@ -184,8 +174,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
             }
             catch (Exception ex)
             {
-                SetFailure();
-                logger.LogError(ex, $"Failed to create pull request for service label '{label}': {ex.Message}");
+                logger.LogError(ex, "Failed to create pull request for service label '{label}': {error}", label, ex.Message);
 
                 return new ServiceLabelResponse
                 {

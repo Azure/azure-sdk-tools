@@ -1,3 +1,10 @@
+# 1.1.1
+
+- Fixed duplicate line ID generation that was causing Copilot review failures (#11860):
+    - Enhanced line ID sanitization to preserve semantic distinctions (e.g., `&` → `ref_`, `<` → `of_`)
+    - Improved external re-export handling to prevent path-based collisions
+    - Added defensive duplicate detection with automatic counter-based fixing
+
 # 1.1.0 
 
 - Enhanced rendering of `use` items to more closely match the rustdoc (docs.rs) HTML view:

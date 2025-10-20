@@ -8,7 +8,7 @@ namespace Azure.Sdk.Tools.Cli.Models;
 /// <summary>
 /// Response model for Azure service example operations
 /// </summary>
-public class ExampleServiceResponse : Response
+public class ExampleServiceResponse : CommandResponse
 {
     [JsonPropertyName("service_name")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

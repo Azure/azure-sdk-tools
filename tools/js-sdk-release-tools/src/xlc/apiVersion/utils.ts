@@ -19,10 +19,26 @@ function tryFindVersionInFunctionBody(func: FunctionDeclaration): string | undef
     return extractApiVersionFromText(text);
 }
 
+function getFunctionNameCaseInsensitive(sourceFile: SourceFile, functionName: string): string {
+    const allFunctions = sourceFile.getFunctions();
+    const functionNameLower = functionName.toLowerCase();
+    const matchingFunction = allFunctions.find(func => {
+        const name = func.getName();
+        return name && name.toLowerCase() === functionNameLower;
+    });
+    
+    return matchingFunction?.getName() || functionName;
+}
+
 function tryFindFunctionWithApiVersion(clientPath: string, functionName: string): FunctionDeclaration | undefined {
     const sourceFile = getTsSourceFile(clientPath);
-    const createClientFunction = sourceFile?.getFunction(functionName);
-    return createClientFunction;
+    if (!sourceFile) return undefined;
+    
+    // Get the exact function name with correct case
+    const exactFunctionName = getFunctionNameCaseInsensitive(sourceFile, functionName);
+    
+    // Get the function using the exact name
+    return sourceFile.getFunction(exactFunctionName);
 }
 
 const extractApiVersionFromText = (text: string): string | undefined => {

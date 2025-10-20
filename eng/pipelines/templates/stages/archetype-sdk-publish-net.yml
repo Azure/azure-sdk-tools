@@ -6,7 +6,8 @@ parameters:
   RequireStrongNames: true
   PublishEnvironment: ''
   ExeMatrix: []
-
+  VerifyChangelog: false
+  ToolDirectory: ''
 # Needs Github Release variable group linked.
 # Needs AzureSDK Nuget Release Pipelines Secrets variable group linked.
 
@@ -34,6 +35,7 @@ stages:
     parameters:
       ArtifactName: packages
       Feed: ${{ parameters.Feed }}
+      VerifyChangelog: ${{ parameters.VerifyChangelog }}
       ${{ if parameters.PublishEnvironment }}:
         PublishEnvironment: ${{ parameters.PublishEnvironment }}
 
@@ -96,6 +98,36 @@ stages:
             pwsh: true
           env:
             GH_TOKEN: $(azuresdk-github-pat)
+
+
+      # if we are verifying the changelog, we should definitely submit an increment version + changelog update PR
+      - ${{ if eq(parameters.VerifyChangelog, true) }}:
+        - task: PowerShell@2 # will set runtime variable $(NewVersion)
+          displayName: 'Increment version in csproj'
+          inputs:
+            targetType: filePath
+            filePath: '$(Build.SourcesDirectory)/azure-sdk-tools/eng/scripts/Increment-dotnet-package.ps1'
+            arguments: '-ToolDirectory "$(Build.SourcesDirectory)/azure-sdk-tools/${{ parameters.ToolDirectory }}"'
+            pwsh: true
+
+        - task: PowerShell@2
+          displayName: 'Update Changelog'
+          inputs:
+            workingDirectory: '$(Build.SourcesDirectory)/azure-sdk-tools/'
+            targetType: filePath
+            filePath: '$(Build.SourcesDirectory)/azure-sdk-tools/eng/common/scripts/Update-Changelog.ps1'
+            # run this locally and figure out what the inputs should be
+            arguments: '-Version $(NewVersion) -ChangelogPath "${{ parameters.ToolDirectory }}/CHANGELOG.md"'
+            pwsh: true
+
+        - template: /eng/common/pipelines/templates/steps/create-pull-request.yml
+          parameters:
+            RepoName: azure-sdk-tools
+            PRBranchName: increment-package-version-${{ parameters.ToolDirectory }}-$(Build.BuildId)
+            CommitMsg: "Increment package version after release of ${{ parameters.ToolDirectory }}"
+            PRTitle: "Increment version for ${{ parameters.ToolDirectory }} releases"
+            WorkingDirectory: $(Build.SourcesDirectory)/azure-sdk-tools/
+            ScriptDirectory: azure-sdk-tools/eng/common/scripts/
 
       - task: 1ES.PublishPipelineArtifact@1
         displayName: 'Publish processed files'

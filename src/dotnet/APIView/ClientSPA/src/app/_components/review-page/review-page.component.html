@@ -27,9 +27,10 @@
                     [isDiffView]="!!diffApiRevisionId"
                     [reviewId]="reviewId!" [activeApiRevisionId]="activeApiRevisionId!"
                     [userProfile]="userProfile"
+                    [allComments]="comments"
                     [loadFailed]="loadFailed"
                     [loadFailedMessage]="loadFailedMessage"
-                    [showLineNumbers]="showLineNumbers" 
+                    [showLineNumbers]="showLineNumbers"
                     [scrollToNodeIdHashed]="scrollToNodeIdHashed"
                     [scrollToNodeId]="scrollToNodeId"
                     [codeLineSearchText]="codeLineSearchText"
@@ -72,7 +73,8 @@
                     (diffNavaigationEmitter)="handleDiffNavaigationEmitter($event)"
                     (copyReviewTextEmitter)="handleCopyReviewTextEmitter($event)"
                     (codeLineSearchTextEmitter)="handleCodeLineSearchTextEmitter($event)"
-                    (codeLineSearchInfoEmitter)="handleCodeLineSearchInfoEmitter($event)"></app-review-page-options>
+                    (codeLineSearchInfoEmitter)="handleCodeLineSearchInfoEmitter($event)"
+                    (namespaceApprovalEmitter)="handleNamespaceApprovalEmitter($event)"></app-review-page-options>
             </div>
         </ng-template>
     </p-splitter>
@@ -90,7 +92,7 @@
             <a [routerLink]="['/conversation', this.reviewId]" class="h4">Conversations</a>
         </div>
     </ng-template>
-    <app-conversations 
+    <app-conversations
         [apiRevisions]="apiRevisions"
         [comments]="comments"
         [review]="review"
@@ -110,7 +112,7 @@
     <div class="py-3" *ngFor="let groupedRevision of crossLanguageAPIRevisions">
         <span>
             <img src="{{assetsPath}}/images/{{ groupedRevision.label! | languageNames: userProfile?.preferences?.theme }}-original.svg" width="25" height="25">
-            <app-revision-options 
+            <app-revision-options
             [crossLanguageAPIRevisions]="groupedRevision.items"
             (crossLangaugeAPIRevisionChange)="handleCrossLangaugeAPIRevisionChange($event)"></app-revision-options>
         </span>

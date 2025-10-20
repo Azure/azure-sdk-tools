@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models;
 
-public class AnalyzePipelineResponse : Response
+public class AnalyzePipelineResponse : CommandResponse
 {
     [JsonPropertyName("failed_test_titles")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

@@ -2,8 +2,53 @@
     <small class="d-flex align-items-center">This thread is marked resolved by<b>&nbsp;{{ threadResolvedBy }}&nbsp;</b><span class="resolved-toggler" (click)="toggleResolvedCommentExpandState()"><i class="bi {{threadResolvedStateToggleIcon}}"></i>&nbsp;{{threadResolvedStateToggleText}}&nbsp;Resolved</span>
     </small>
 </div>
-<div *ngIf="!codePanelRowData!.isResolvedCommentThread || threadResolvedAndExpanded" class="border rounded {{spacingBasedOnResolvedState}} py-2 comment-thread-container {{ floatItemStart }}">
-    <p-timeline [value]="codePanelRowData!.comments">
+<div *ngIf="!codePanelRowData!.isResolvedCommentThread || threadResolvedAndExpanded" 
+     class="border rounded {{spacingBasedOnResolvedState}} py-2 comment-thread-container {{ floatItemStart }}"
+     [class.thread-collapsed]="isThreadCollapsed">
+    <div *ngIf="instanceLocation === 'code-panel' && codePanelRowData!.comments && codePanelRowData!.comments.length > 0" 
+         class="comment-thread-header d-flex justify-content-between align-items-center p-2 pb-1 mb-2"
+         [class.collapsed]="isThreadCollapsed">
+        <div class="d-flex align-items-center" (click)="toggleThreadCollapse()" style="cursor: pointer;">
+            <i class="bi" 
+               [class.bi-chevron-down]="!isThreadCollapsed" 
+               [class.bi-chevron-right]="isThreadCollapsed" 
+               style="font-size: 0.8rem; color: var(--text-muted-color); margin-right: 0.5rem;"></i>
+            <span class="text-muted" style="font-size: 0.9rem;">Comment on line {{ actualLineNumber }}</span>
+        </div>
+        <div *ngIf="codePanelRowData!.comments && codePanelRowData!.comments.length > 0 && 
+                    hasSeverity(codePanelRowData!.comments[0].severity)" 
+             class="severity-header-container">
+            <div *ngIf="canEditSeverity">
+                <div *ngIf="isEditingSeverity === codePanelRowData!.comments[0].id" class="severity-edit-container">
+                    <p-dropdown 
+                        [options]="severityOptions" 
+                        [ngModel]="getSeverityEnumValue(codePanelRowData!.comments[0].severity)"
+                        (ngModelChange)="onSeverityChange($event, codePanelRowData!.comments[0].id)"
+                        (onHide)="onSeverityDropdownHide()"
+                        optionLabel="label" 
+                        optionValue="value"
+                        [style]="{'min-width': '100px', 'font-size': '0.75rem'}"
+                        styleClass="severity-dropdown"
+                        (click)="$event.stopPropagation()">
+                    </p-dropdown>
+                </div>
+                <div *ngIf="isEditingSeverity !== codePanelRowData!.comments[0].id" 
+                     class="severity-badge-editable d-flex align-items-center" 
+                     [ngClass]="getSeverityBadgeClass(codePanelRowData!.comments[0].severity)"
+                     (click)="startEditingSeverity(codePanelRowData!.comments[0].id); $event.stopPropagation()">
+                    <span class="severity-text">{{ getSeverityLabel(codePanelRowData!.comments[0].severity) }}</span>
+                    <i class="pi pi-pencil ms-1 severity-edit-icon"></i>
+                </div>
+            </div>
+            <div *ngIf="!canEditSeverity">
+                <span [ngClass]="getSeverityBadgeClass(codePanelRowData!.comments[0].severity)" class="severity-badge px-2 py-1 rounded text-xs">
+                    {{ getSeverityLabel(codePanelRowData!.comments[0].severity) }}
+                </span>
+            </div>
+        </div>
+    </div>
+    <div *ngIf="!isThreadCollapsed" class="timeline-container">
+        <p-timeline [value]="codePanelRowData!.comments">
         <ng-template pTemplate="marker" let-comment>
             <img *ngIf="comment.createdBy !== 'azure-sdk'" [alt]="comment.createdBy" src="https://github.com/{{ comment.createdBy }}.png?size=40" width="40" height="40" class="user-avartar"/>
             <img *ngIf="comment.createdBy === 'azure-sdk'" alt="Azure SDK Copilot" src="{{assetsPath}}/icons/copilot.svg" width="40" height="40" class="user-avartar"/>
@@ -17,6 +62,13 @@
                     </div>
                 </ng-template>
                 <div *ngIf="!comment.isInEditMode" [innerHTML]="(comment.commentText | markdownToHtml | async)" class="pe-5 rendered-comment-content">
+                </div>
+                <div *ngIf="!comment.isInEditMode && hasRelatedComments(comment)" class="mt-2">
+                    <button class="related-comments-btn" (click)="showRelatedComments(comment)" pTooltip="View related issues" tooltipPosition="bottom">
+                        <span class="related-comments-indicator">
+                            <i class="pi pi-eye me-1"></i>{{ getRelatedCommentsCount(comment) }} related
+                        </span>
+                    </button>
                 </div>
                 <div *ngIf="comment.isInEditMode" class="mt-2 p-2 edit-editor-container">
                     <app-editor [content]="comment.commentText" [editorId]="comment.id" [style]="{ width: '100%'}"></app-editor>
@@ -57,7 +109,27 @@
             </p-panel>
         </ng-template>
     </p-timeline>
-    <div *ngIf="(codePanelRowData!.showReplyTextBox)" class="border-top border-bottom mt-2 p-2 reply-editor-container">
+    </div>
+    <div *ngIf="!isThreadCollapsed && (codePanelRowData!.showReplyTextBox)" class="px-2 pb-2 reply-editor-container">
+        <div *ngIf="!codePanelRowData!.comments || codePanelRowData!.comments.length === 0" 
+             class="d-flex justify-content-between align-items-center mb-1 pb-1 border-bottom">
+            <div class="d-flex align-items-center" style="margin-left: 18px;">
+                <img [alt]="userProfile?.userName" src="https://github.com/{{ userProfile?.userName }}.png?size=20" width="20" height="20" class="user-avartar me-2"/>
+                <span class="text-muted">Add comment on line {{ actualLineNumber }}</span>
+            </div>
+            <div class="d-flex align-items-center" style="margin-right: 20px;">
+                <p-dropdown 
+                    id="severity-select"
+                    [options]="severityOptions" 
+                    [(ngModel)]="selectedSeverity" 
+                    (ngModelChange)="onSeveritySelectionChange($event)"
+                    optionLabel="label" 
+                    optionValue="value"
+                    [style]="{'min-width': '120px'}"
+                    [showClear]="false">
+                </p-dropdown>
+            </div>
+        </div>
         <app-editor editorId="replyEditor" [style]="{ width: '100%'}"></app-editor>
         <div class="btn-group mt-2" role="group" aria-label="Comment Action Buttons">
             <button type="button" class="btn btn-sm btn-outline-success editor-action-btn submit" [disabled]="getEditorContent('replyEditor').length === 0" (click)="saveCommentAction($event)">Add comment</button>
@@ -77,7 +149,7 @@
             </button>
         </div>
     </div>
-    <div class="mt-2 d-grid gap-2">
+    <div *ngIf="!isThreadCollapsed" class="mt-2 d-grid gap-2">
         <div *ngIf="!(codePanelRowData!.showReplyTextBox)" class="border-top border-bottom reply-button-container p-2" style="display: flex; align-items: center;">
             <img [alt]="userProfile?.userName" src="https://github.com/{{ userProfile?.userName }}.png?size=40" width="40" height="40" class="user-avartar mx-4"/>
             <button type="button" style="flex-grow: 1;" class="btn btn-sm border text-muted text-start me-4 reply-button" (click)="showReplyEditor($event)">Reply...</button>
@@ -85,7 +157,15 @@
         <button *ngIf="codePanelRowData!.comments?.length! > 0" type="button" (click)="handleThreadResolutionButtonClick(resolveThreadButtonText)" class="btn btn-outline-secondary comment-action-btn btn-sm mx-2">{{resolveThreadButtonText}} Conversation</button>
     </div>
 </div>
-<div *ngIf="instanceLocation === 'code-panel' && (!codePanelRowData!.isResolvedCommentThread || threadResolvedAndExpanded)" class="btn-group-vertical comment-thread-navigation ms-2 {{ floatItemEnd }}" role="group" aria-label="Comment Navigation Button">
+<div *ngIf="instanceLocation === 'code-panel' && !isThreadCollapsed && (!codePanelRowData!.isResolvedCommentThread || threadResolvedAndExpanded)" class="btn-group-vertical comment-thread-navigation ms-2 {{ floatItemEnd }}" role="group" aria-label="Comment Navigation Button">
     <button type="button" class="btn btn-sm btn-outline-secondary" pTooltip="Previous Comment" tooltipPosition="top" (click)="handleCommentThreadNavaigation($event, CodeLineRowNavigationDirection.prev)"><i class="bi bi-arrow-up"></i></button>
     <button type="button" class="btn btn-sm btn-outline-secondary" pTooltip="Next Comment" tooltipPosition="bottom" (click)="handleCommentThreadNavaigation($event, CodeLineRowNavigationDirection.next)"><i class="bi bi-arrow-down"></i></button>
 </div>
+
+<app-related-comments-dialog
+  [relatedComments]="relatedComments"
+  [selectedCommentId]="selectedCommentId"
+  [allCodePanelRowData]="allCodePanelRowData"
+  [(visible)]="showRelatedCommentsDialog"
+  (resolveSelectedComments)="onResolveSelectedComments($event)">
+</app-related-comments-dialog>

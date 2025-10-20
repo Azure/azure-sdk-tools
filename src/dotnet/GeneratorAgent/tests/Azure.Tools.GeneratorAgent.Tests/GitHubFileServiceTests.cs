@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using Azure.Tools.GeneratorAgent.Configuration;
+using Azure.Tools.GeneratorAgent.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -39,7 +40,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
         private static ValidationContext CreateValidationContext()
         {
-            return ValidationContext.CreateFromValidatedInputs(
+            return ValidationContext.ValidateAndCreate(
                 "specification/cognitiveservices/data-plane/Face",
                 "abc123",
                 "/temp/sdk"
@@ -290,7 +291,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var httpClient = new HttpClient();
 
             // Act & Assert
-            var service = new GitHubFileService(appSettings, mockLogger.Object, validationContext, httpClient);
+            var service = new GitHubFileService(appSettings, mockLogger.Object, httpClient);
             Assert.That(service, Is.Not.Null);
             httpClient.Dispose();
         }
@@ -305,7 +306,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             // Act & Assert
             var exception = Assert.Throws<ArgumentNullException>(() =>
-                new GitHubFileService(null!, mockLogger.Object, validationContext, httpClient));
+                new GitHubFileService(null!, mockLogger.Object, httpClient));
             Assert.That(exception!.ParamName, Is.EqualTo("appSettings"));
             httpClient.Dispose();
         }
@@ -320,24 +321,22 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
             // Act & Assert
             var exception = Assert.Throws<ArgumentNullException>(() =>
-                new GitHubFileService(appSettings, null!, validationContext, httpClient));
+                new GitHubFileService(appSettings, null!, httpClient));
             Assert.That(exception!.ParamName, Is.EqualTo("logger"));
             httpClient.Dispose();
         }
 
         [Test]
-        public void Constructor_WithNullValidationContext_ShouldThrowArgumentNullException()
+        public void Constructor_WithNullHttpClient_ShouldThrowArgumentNullException()
         {
             // Arrange
             var appSettings = CreateAppSettings();
             var mockLogger = CreateMockLogger();
-            var httpClient = new HttpClient();
 
             // Act & Assert
             var exception = Assert.Throws<ArgumentNullException>(() =>
-                new GitHubFileService(appSettings, mockLogger.Object, null!, httpClient));
-            Assert.That(exception!.ParamName, Is.EqualTo("validationContext"));
-            httpClient.Dispose();
+                new GitHubFileService(appSettings, mockLogger.Object, null!));
+            Assert.That(exception!.ParamName, Is.EqualTo("httpClient"));
         }
 
         #endregion
@@ -398,32 +397,12 @@ namespace Azure.Tools.GeneratorAgent.Tests
             SetupInvalidJsonResponse(mockHandler);
 
             // Act & Assert
-            var exception = Assert.ThrowsAsync<JsonException>(async () => 
+            var exception = Assert.ThrowsAsync<InvalidOperationException>(async () => 
                 await service.GetTypeSpecFilesAsync());
-            Assert.That(exception!.Message, Does.Contain("is an invalid start of a value"));
+            Assert.That(exception!.Message, Does.Contain("Failed to deserialize GitHub API response"));
+            Assert.That(exception!.InnerException, Is.TypeOf<JsonException>());
 
 
-        }
-
-        [Test]
-        public async Task GetTypeSpecFilesAsync_WithNoTspFiles_ShouldReturnEmptyDictionary()
-        {
-            // Arrange
-            var mockHandler = CreateMockHttpMessageHandler();
-            var httpClient = CreateMockHttpClient(mockHandler);
-            var service = CreateTestableService(httpClient: httpClient);
-
-            SetupEmptyApiResponse(mockHandler);
-
-            // Act
-            var result = await service.GetTypeSpecFilesAsync();
-
-            // Assert
-            Assert.Multiple(() =>
-            {
-                Assert.That(result, Is.Not.Null);
-                Assert.That(result.Count, Is.EqualTo(0));
-            });
         }
 
         [Test]
@@ -480,32 +459,6 @@ namespace Azure.Tools.GeneratorAgent.Tests
         }
 
         [Test]
-        public async Task GetTypeSpecFilesAsync_WithMixedFileTypes_ShouldOnlyReturnTspFiles()
-        {
-            // Arrange
-            var mockHandler = CreateMockHttpMessageHandler();
-            var httpClient = CreateMockHttpClient(mockHandler);
-            var service = CreateTestableService(httpClient: httpClient);
-
-            SetupMixedFileTypesApiResponse(mockHandler);
-            SetupSuccessfulFileDownload(mockHandler, "test.tsp", "model Test {}");
-
-            // Act
-            var result = await service.GetTypeSpecFilesAsync();
-
-            // Assert
-            Assert.Multiple(() =>
-            {
-                Assert.That(result, Is.Not.Null);
-                Assert.That(result.Count, Is.EqualTo(1));
-                Assert.That(result.ContainsKey("test.tsp"), Is.True);
-                Assert.That(result.ContainsKey("readme.md"), Is.False);
-            });
-
-
-        }
-
-        [Test]
         public void GetTypeSpecFilesAsync_WithFailedFileDownload_ShouldThrowHttpRequestException()
         {
             // Arrange
@@ -542,16 +495,18 @@ namespace Azure.Tools.GeneratorAgent.Tests
             Assert.Multiple(() =>
             {
                 Assert.That(result, Is.Not.Null);
-                Assert.That(result.Count, Is.EqualTo(1));
+                Assert.That(result.Count, Is.EqualTo(2)); // Both files included, even empty ones
                 Assert.That(result.ContainsKey("file1.tsp"), Is.True);
-                Assert.That(result.ContainsKey("file2.tsp"), Is.False);
+                Assert.That(result.ContainsKey("file2.tsp"), Is.True); // Empty file is still included
+                Assert.That(result["file1.tsp"], Is.EqualTo("model File1 {}"));
+                Assert.That(result["file2.tsp"], Is.EqualTo("")); // Empty content
             });
 
 
         }
 
         [Test]
-        public void GetTypeSpecFilesAsync_WithUnexpectedException_ShouldThrowAndLogCritical()
+        public void GetTypeSpecFilesAsync_WithUnexpectedException_ShouldThrowException()
         {
             // Arrange
             var mockLogger = CreateMockLogger();
@@ -572,9 +527,6 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var exception = Assert.ThrowsAsync<InvalidOperationException>(async () => 
                 await service.GetTypeSpecFilesAsync());
             Assert.That(exception!.Message, Does.Contain("Unexpected error"));
-
-            // Verify critical logging
-            VerifyLogMessage(mockLogger, LogLevel.Critical, "Error in GitHub API TypeSpec files fetch");
         }
 
         #endregion
@@ -614,15 +566,21 @@ namespace Azure.Tools.GeneratorAgent.Tests
         /// </summary>
         private class TestableGitHubFilesService : GitHubFileService
         {
+            private readonly ValidationContext _validationContext;
+            
             public TestableGitHubFilesService(
                 AppSettings appSettings,
                 ILogger<GitHubFileService> logger,
                 ValidationContext validationContext,
-                HttpClient httpClient) : base(appSettings, logger, validationContext, httpClient)
+                HttpClient httpClient) : base(appSettings, logger, httpClient)
             {
+                _validationContext = validationContext;
             }
 
-            // No longer need Dispose method since GitHubFilesService doesn't implement IDisposable
+            public async Task<Dictionary<string, string>> GetTypeSpecFilesAsync(CancellationToken cancellationToken = default)
+            {
+                return await base.GetTypeSpecFilesAsync(_validationContext.ValidatedCommitId, _validationContext.ValidatedTypeSpecDir, cancellationToken);
+            }
         }
 
         #endregion

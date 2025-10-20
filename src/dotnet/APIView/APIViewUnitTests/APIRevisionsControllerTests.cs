@@ -4,6 +4,8 @@ using System.Linq;
 using System.Net.Http;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using ApiView;
+using APIViewWeb;
 using APIViewWeb.Helpers;
 using APIViewWeb.Hubs;
 using APIViewWeb.LeanControllers;
@@ -25,6 +27,7 @@ namespace APIViewUnitTests;
 public class APIRevisionsControllerTests
 {
     private readonly APIRevisionsTokenAuthController _controller;
+    private readonly Mock<IBlobCodeFileRepository> _mockBlobCodeFileRepository;
     private readonly Mock<IAPIRevisionsManager> _mockApiRevisionsManager;
     private readonly Mock<ILogger<APIRevisionsTokenAuthController>> _mockLogger;
 
@@ -32,6 +35,7 @@ public class APIRevisionsControllerTests
     {
         _mockLogger = new Mock<ILogger<APIRevisionsTokenAuthController>>();
         _mockApiRevisionsManager = new Mock<IAPIRevisionsManager>();
+        _mockBlobCodeFileRepository = new Mock<IBlobCodeFileRepository>();
 
         Mock<IReviewManager> mockReviewManager = new();
         Mock<INotificationManager> mockNotificationManager = new();
@@ -41,8 +45,9 @@ public class APIRevisionsControllerTests
         Mock<IPullRequestManager> mockPullRequestManager = new();
 
         _controller = new APIRevisionsTokenAuthController(
-            _mockLogger.Object,
-            _mockApiRevisionsManager.Object
+            _mockBlobCodeFileRepository.Object,
+            _mockApiRevisionsManager.Object,
+            _mockLogger.Object
         );
 
         List<Claim> claims = new() { new Claim("login", "testuser") };
@@ -55,7 +60,7 @@ public class APIRevisionsControllerTests
     }
 
     [Fact]
-    public async Task GetAPIRevisionTextAsync_SpecificType_WithValidId_ReturnsRevisionText()
+    public async Task GetAPIRevisionTextAsync_WithValidId_ReturnsRevisionText()
     {
         string reviewId = "review123";
         string apiRevisionId = "revision456";
@@ -71,9 +76,7 @@ public class APIRevisionsControllerTests
             .Setup(x => x.GetApiRevisionText(expectedRevision))
             .ReturnsAsync(expectedText);
 
-        ActionResult<string> result = await _controller.GetAPIRevisionTextAsync(
-            reviewId,
-            apiRevisionId);
+        ActionResult<string> result = await _controller.GetAPIRevisionContentAsync(apiRevisionId, reviewId);
 
         LeanJsonResult actionResult = Assert.IsType<LeanJsonResult>(result.Result);
         Assert.Equal(expectedText, actionResult.Value);
@@ -83,21 +86,38 @@ public class APIRevisionsControllerTests
     }
 
     [Fact]
-    public async Task GetAPIRevisionTextAsync_SpecificType_WithoutId_ReturnsBadRequest()
+    public async Task GetAPIRevisionCodeFileAsync_WithValidId_ReturnsCodeFile()
     {
         string reviewId = "review123";
-        ActionResult<string> result = await _controller.GetAPIRevisionTextAsync(
-            reviewId);
+        string apiRevisionId = "revision456";
 
-        BadRequestObjectResult badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
-        Assert.Equal("apiRevisionId is required when selectionType is Specific",
-            badRequestResult.Value);
+        APIRevisionListItemModel expectedRevision = CreateMockAPIRevision(apiRevisionId);
+
+        _mockApiRevisionsManager
+            .Setup(x => x.GetAPIRevisionAsync(It.IsAny<ClaimsPrincipal>(), apiRevisionId))
+            .ReturnsAsync(expectedRevision);
+
+        _mockBlobCodeFileRepository.Setup(x => x.GetCodeFileFromStorageAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(new CodeFile());
+
+        await _controller.GetAPIRevisionContentAsync(apiRevisionId, reviewId, contentReturnType: APIRevisionContentReturnType.CodeFile);
+        _mockApiRevisionsManager.Verify(x => x.GetAPIRevisionAsync(It.IsAny<ClaimsPrincipal>(), apiRevisionId),
+            Times.Once);
+        _mockBlobCodeFileRepository.Verify(x => x.GetCodeFileFromStorageAsync(It.IsAny<string>(), It.IsAny<string>()));
     }
 
     [Fact]
-    public async Task GetAPIRevisionTextAsync_SpecificType_WithDeletedRevision_ReturnsNoContent()
+    public async Task GetAPIRevisionTextAsync_WithOnlyReviewId_ReturnsBadRequest()
     {
         string reviewId = "review123";
+        ActionResult<string> result = await _controller.GetAPIRevisionContentAsync(null, reviewId);
+
+        BadRequestObjectResult badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
+        Assert.Equal("apiRevisionId is required", badRequestResult.Value);
+    }
+
+    [Fact]
+    public async Task GetAPIRevisionTextAsync_WithDeletedRevision_ReturnsNoContent()
+    {
         string apiRevisionId = "revision456";
         APIRevisionListItemModel deletedRevision = CreateMockAPIRevision(apiRevisionId, true);
 
@@ -105,12 +125,10 @@ public class APIRevisionsControllerTests
             .Setup(x => x.GetAPIRevisionAsync(It.IsAny<ClaimsPrincipal>(), apiRevisionId))
             .ReturnsAsync(deletedRevision);
 
-        ActionResult<string> result = await _controller.GetAPIRevisionTextAsync(
-            reviewId,
-            apiRevisionId);
+        ActionResult<string> result = await _controller.GetAPIRevisionContentAsync(apiRevisionId);
 
-        LeanJsonResult actionResult = Assert.IsType<LeanJsonResult>(result.Result);
-        Assert.Null(actionResult.Value);
+        NotFoundObjectResult notFoundResult = Assert.IsType<NotFoundObjectResult>(result.Result);
+        Assert.Equal("No API revision found for selection type: Undefined", notFoundResult.Value);
     }
 
     [Fact]
@@ -128,9 +146,9 @@ public class APIRevisionsControllerTests
             .Setup(x => x.GetApiRevisionText(expectedRevision))
             .ReturnsAsync(expectedText);
 
-        ActionResult<string> result = await _controller.GetAPIRevisionTextAsync(
-            reviewId,
+        ActionResult<string> result = await _controller.GetAPIRevisionContentAsync(
             null,
+            reviewId,
             APIRevisionSelectionType.Latest);
 
         LeanJsonResult actionResult = Assert.IsType<LeanJsonResult>(result.Result);
@@ -163,9 +181,9 @@ public class APIRevisionsControllerTests
             .Setup(x => x.GetApiRevisionText(expectedRevision))
             .ReturnsAsync(expectedText);
 
-        ActionResult<string> result = await _controller.GetAPIRevisionTextAsync(
-            reviewId,
+        ActionResult<string> result = await _controller.GetAPIRevisionContentAsync(
             null,
+            reviewId,
             APIRevisionSelectionType.LatestApproved);
 
         LeanJsonResult actionResult = Assert.IsType<LeanJsonResult>(result.Result);
@@ -188,10 +206,7 @@ public class APIRevisionsControllerTests
             .Setup(x => x.GetAPIRevisionsAsync(reviewId, "", APIRevisionType.All))
             .ReturnsAsync(allRevisions);
 
-        ActionResult<string> result = await _controller.GetAPIRevisionTextAsync(
-            reviewId,
-            null,
-            APIRevisionSelectionType.LatestApproved);
+        ActionResult<string> result = await _controller.GetAPIRevisionContentAsync(null, reviewId, APIRevisionSelectionType.LatestApproved);
 
         NotFoundObjectResult notFoundResult = Assert.IsType<NotFoundObjectResult>(result.Result);
         Assert.Equal("No API revision found for selection type: LatestApproved", notFoundResult.Value);
@@ -212,9 +227,9 @@ public class APIRevisionsControllerTests
             .Setup(x => x.GetApiRevisionText(expectedRevision))
             .ReturnsAsync(expectedText);
 
-        ActionResult<string> result = await _controller.GetAPIRevisionTextAsync(
-            reviewId,
+        ActionResult<string> result = await _controller.GetAPIRevisionContentAsync(
             null,
+            reviewId,
             APIRevisionSelectionType.LatestManual);
 
         LeanJsonResult actionResult = Assert.IsType<LeanJsonResult>(result.Result);
@@ -232,9 +247,9 @@ public class APIRevisionsControllerTests
             .Setup(x => x.GetLatestAPIRevisionsAsync(reviewId, null, APIRevisionType.All))
             .ReturnsAsync((APIRevisionListItemModel)null);
 
-        ActionResult<string> result = await _controller.GetAPIRevisionTextAsync(
-            reviewId,
+        ActionResult<string> result = await _controller.GetAPIRevisionContentAsync(
             null,
+            reviewId,
             APIRevisionSelectionType.Latest);
 
         NotFoundObjectResult notFoundResult = Assert.IsType<NotFoundObjectResult>(result.Result);
@@ -244,15 +259,13 @@ public class APIRevisionsControllerTests
     [Fact]
     public async Task GetAPIRevisionTextAsync_ExceptionThrown_ReturnsInternalServerError()
     {
-        string reviewId = "review123";
         string apiRevisionId = "revision456";
 
         _mockApiRevisionsManager
             .Setup(x => x.GetAPIRevisionAsync(It.IsAny<ClaimsPrincipal>(), apiRevisionId))
             .ThrowsAsync(new Exception("Database error"));
 
-        ActionResult<string> result = await _controller.GetAPIRevisionTextAsync(
-            reviewId,
+        ActionResult<string> result = await _controller.GetAPIRevisionContentAsync(
             apiRevisionId);
 
         ObjectResult statusCodeResult = Assert.IsType<ObjectResult>(result.Result);
@@ -273,7 +286,7 @@ public class APIRevisionsControllerTests
             IsApproved = isApproved,
             CreatedOn = createdOn ?? DateTime.UtcNow,
             ReviewId = "review123",
-            Files = [],
+            Files = [new APICodeFileModel { FileId = "1" }],
             ChangeHistory = [],
             Approvers = [],
             ViewedBy = [],

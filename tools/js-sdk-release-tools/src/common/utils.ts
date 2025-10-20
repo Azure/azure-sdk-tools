@@ -206,10 +206,17 @@ export async function loadTspConfig(typeSpecDirectory: string): Promise<Exclude<
 // generated path is in posix format
 // e.g. sdk/mongocluster/arm-mongocluster
 export async function getGeneratedPackageDirectory(typeSpecDirectory: string, sdkRepoRoot: string): Promise<string> {
-    const tspConfig = await resolveOptions(typeSpecDirectory);
+    const tspConfig = await resolveOptions(typeSpecDirectory, sdkRepoRoot);
+    const emitterOptions = tspConfig.options?.[emitterName];
+    // Try to get package directory from emitter-output-dir first    
+    const emitterOutputDir = emitterOptions?.['emitter-output-dir'];
+    if (emitterOutputDir) {
+        // emitter-output-dir is an absolute path, return it directly
+        return emitterOutputDir;
+    }
+
     let packageDir = tspConfig.configFile.parameters?.["package-dir"]?.default;
     let serviceDir = tspConfig.configFile.parameters?.["service-dir"]?.default;
-    const emitterOptions = tspConfig.options?.[emitterName];
     const serviceDirFromEmitter = emitterOptions?.['service-dir'];
     if (serviceDirFromEmitter) {
         serviceDir = serviceDirFromEmitter;
@@ -227,7 +234,6 @@ export async function getGeneratedPackageDirectory(typeSpecDirectory: string, sd
     const packageDirFromRoot = posix.join(sdkRepoRoot, serviceDir, packageDir);
     return packageDirFromRoot;
 }
-
 
 export async function runCommand(
     command: string,
@@ -314,13 +320,16 @@ export async function existsAsync(path: string): Promise<boolean> {
     }
 }
 
-export async function resolveOptions(typeSpecDirectory: string): Promise<Exclude<any, null | undefined>> {
+export async function resolveOptions(typeSpecDirectory: string, sdkRepoRoot?: string): Promise<Exclude<any, null | undefined>> {
     const [{ config, ...options }, diagnostics] = await compiler.resolveCompilerOptions(
         compiler.NodeHost,
         {
             cwd: process.cwd(),
             entrypoint: typeSpecDirectory, // not really used here
             configPath: typeSpecDirectory,
+            overrides: {
+                outputDir: sdkRepoRoot || process.cwd() // Use sdkRepoRoot if provided, otherwise use current directory
+            }
         });
     return options
 }

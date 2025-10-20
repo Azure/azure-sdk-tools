@@ -101,7 +101,7 @@ func (s *SearchClient) BatchGetChunks(ctx context.Context, chunkIDs []string) ([
 	return httpResp.Value, nil
 }
 
-func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources []model.Source) ([]model.Index, error) {
+func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources []model.Source, sourceFilter map[model.Source]string) ([]model.Index, error) {
 	// Base request template
 	baseReq := model.QueryIndexRequest{
 		Search: query,
@@ -114,11 +114,10 @@ func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources [
 				Kind:   "text",
 			},
 		},
-		QueryType:             "semantic",
-		SemanticConfiguration: "vector-1741167123942-semantic-configuration",
-		Captions:              "extractive",
-		Answers:               "extractive|count-3",
-		QueryLanguage:         "en-us",
+		QueryType:     "semantic",
+		Captions:      "extractive",
+		Answers:       "extractive|count-3",
+		QueryLanguage: "en-us",
 	}
 
 	// If no sources specified, search all at once
@@ -145,6 +144,9 @@ func (s *SearchClient) SearchTopKRelatedDocuments(query string, k int, sources [
 			req.Top = val
 		}
 		req.Filter = fmt.Sprintf("context_id eq '%s'", source)
+		if sourceFilterStr, ok := sourceFilter[source]; ok && sourceFilterStr != "" {
+			req.Filter = fmt.Sprintf("(%s) and (%s)", req.Filter, sourceFilterStr)
+		}
 
 		resp, err := s.QueryIndex(context.Background(), &req)
 		if err != nil {

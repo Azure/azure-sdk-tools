@@ -6,6 +6,11 @@ export enum FirstReleaseApproval {
   All
 }
 
+export enum PackageType {
+  client = 'client',
+  mgmt = 'mgmt'
+}
+
 export class Review {
   id: string
   packageName: string
@@ -15,6 +20,8 @@ export class Review {
   isApproved: boolean
   changeHistory: ChangeHistory[]
   subscribers: string[]
+  namespaceReviewStatus: string
+  packageType?: PackageType | null  // Optional - undefined or null if not yet classified
 
   constructor() {
     this.id = ''
@@ -23,6 +30,8 @@ export class Review {
     this.lastUpdatedOn = ''
     this.isDeleted = false
     this.isApproved = false
+
+    this.namespaceReviewStatus = 'NotStarted'
     this.changeHistory = []
     this.subscribers = []
   }

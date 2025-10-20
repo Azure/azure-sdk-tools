@@ -1,0 +1,33 @@
+{
+  "type": "json_schema",
+  "json_schema": {
+    "name": "correlation_ids_result",
+    "strict": true,
+    "schema": {
+      "type": "object",
+      "properties": {
+        "results": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "result": {
+                "type": "array",
+                "items": { "type": "integer" },
+                "description": "A list of integer IDs that are correlated together."
+              },
+              "theme": {
+                "type": "string",
+                "description": "A short description of the theme or reason for the correlation."
+              }
+            },
+            "required": ["result", "theme"],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": ["results"],
+      "additionalProperties": false
+    }
+  }
+}

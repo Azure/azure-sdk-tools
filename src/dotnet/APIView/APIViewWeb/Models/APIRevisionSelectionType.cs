@@ -2,10 +2,7 @@ namespace APIViewWeb.Models;
 
 public enum APIRevisionSelectionType
 {
-    /// <summary>
-    ///     Use the specific API revision ID provided in activeApiRevisionId parameter
-    /// </summary>
-    Specific = 0,
+    Undefined = 0,
 
     /// <summary>
     ///     Use the latest revision regardless of approval status
@@ -26,4 +23,10 @@ public enum APIRevisionSelectionType
     ///     Use the latest manual revision (non-automatic)
     /// </summary>
     LatestManual = 4
+}
+
+public enum APIRevisionContentReturnType
+{
+    Text,
+    CodeFile
 }

@@ -3,6 +3,12 @@ using Azure.Sdk.Tools.Cli.Models;
 
 namespace Azure.Sdk.Tools.Cli.Helpers;
 
+public interface IRawOutputHelper
+{
+    void OutputConsole(string output);
+    void OutputConsoleError(string output);
+}
+
 public interface IOutputHelper
 {
     string Format(object response);
@@ -11,15 +17,36 @@ public interface IOutputHelper
     void Output(string output);
     void OutputError(object output);
     void OutputError(string output);
-    void OutputConsole(string output);
-    void OutputConsoleError(string output);
+    void OutputCommandResponse(CommandResponse output);
 }
 
-public class OutputHelper : IOutputHelper
+public class OutputHelper : IOutputHelper, IRawOutputHelper
 {
     private OutputModes OutputMode { get; set; }
 
-    public OutputHelper(OutputModes outputMode)
+    public enum StreamType
+    {
+        Stdout,
+        Stderr
+    }
+
+    public enum OutputModes
+    {
+        Json,
+        Plain,
+        Mcp,
+        Hidden
+    }
+
+    private readonly object outputLock = new();
+    public List<(StreamType Stream, string Output)> Outputs { get; } = [];
+
+    private readonly JsonSerializerOptions serializerOptions = new()
+    {
+        WriteIndented = true,
+    };
+
+    public OutputHelper(OutputModes outputMode = OutputModes.Hidden)
     {
         OutputMode = outputMode;
         if (OutputMode == OutputModes.Mcp)
@@ -28,14 +55,9 @@ public class OutputHelper : IOutputHelper
         }
     }
 
-    private readonly JsonSerializerOptions serializerOptions = new()
-    {
-        WriteIndented = true,
-    };
-
     public string Format(object response)
     {
-        if (OutputMode != OutputModes.Plain)
+        if (OutputMode != OutputModes.Plain && OutputMode != OutputModes.Hidden)
         {
             return JsonSerializer.Serialize(response, serializerOptions);
         }
@@ -77,7 +99,17 @@ public class OutputHelper : IOutputHelper
 
     public virtual void Output(string output)
     {
-        Console.WriteLine(output);
+        if (OutputMode == OutputModes.Hidden)
+        {
+            lock (outputLock)
+            {
+                Outputs.Add((StreamType.Stdout, output));
+            }
+        }
+        else
+        {
+            Console.WriteLine(output);
+        }
     }
 
     public virtual void OutputError(object output)
@@ -87,12 +119,30 @@ public class OutputHelper : IOutputHelper
 
     public virtual void OutputError(string output)
     {
-        Console.Error.WriteLine(output);
+        if (OutputMode == OutputModes.Hidden)
+        {
+            lock (outputLock)
+            {
+                Outputs.Add((StreamType.Stderr, output));
+            }
+        }
+        else
+        {
+            lock (outputLock)
+            {
+                var original = Console.ForegroundColor;
+                Console.ForegroundColor = ConsoleColor.Red;
+
+                Console.Error.WriteLine(output);
+
+                Console.ForegroundColor = original;
+            }
+        }
     }
 
     public virtual void OutputConsole(string output)
     {
-        if (OutputMode != OutputModes.Mcp)
+        if (OutputMode != OutputModes.Mcp && OutputMode != OutputModes.Hidden)
         {
             Console.WriteLine(output);
         }
@@ -100,9 +150,29 @@ public class OutputHelper : IOutputHelper
 
     public virtual void OutputConsoleError(string output)
     {
-        if (OutputMode != OutputModes.Mcp)
+        if (OutputMode != OutputModes.Mcp && OutputMode != OutputModes.Hidden)
         {
-            Console.Error.WriteLine(output);
+            lock (outputLock)
+            {
+                var original = Console.ForegroundColor;
+                Console.ForegroundColor = ConsoleColor.Red;
+
+                Console.Error.WriteLine(output);
+
+                Console.ForegroundColor = original;
+            }
+        }
+    }
+
+    public void OutputCommandResponse(CommandResponse output)
+    {
+        if (OutputMode != OutputModes.Mcp && output.ExitCode > 0)
+        {
+            OutputError(Format(output));
+        }
+        else
+        {
+            Output(Format(output));
         }
     }
 }

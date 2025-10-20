@@ -13,13 +13,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public void GetCommand_ShouldReturnCommand()
         {
             // Arrange
-            var npxHelper = new Mock<INpxHelper>().Object;
             var logger = new Mock<ILogger<TypeSpecConvertTool>>().Object;
-            var outputService = new Mock<IOutputHelper>().Object;
-            var tool = new TypeSpecConvertTool(npxHelper, logger, outputService);
+            var tspHelper = new Mock<ITspClientHelper>().Object;
+            var tool = new TypeSpecConvertTool(logger, tspHelper);
 
             // Act
-            var command = tool.GetCommand();
+            var command = tool.GetCommandInstances().First();
 
             Assert.Multiple(() =>
             {
@@ -32,10 +31,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public async Task ConvertSwagger_WithInvalidFileExtension_ShouldReturnError()
         {
             // Arrange
-            var npxHelper = new Mock<INpxHelper>().Object;
             var logger = new Mock<ILogger<TypeSpecConvertTool>>().Object;
-            var outputService = new Mock<IOutputHelper>().Object;
-            var tool = new TypeSpecConvertTool(npxHelper, logger, outputService);
+            var tspHelper = new Mock<ITspClientHelper>().Object;
+            var tool = new TypeSpecConvertTool(logger, tspHelper);
 
             // Act
             var result = await tool.ConvertSwaggerAsync("swagger.json", @"C:\temp", false, false, false, CancellationToken.None);
@@ -49,10 +47,9 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         public async Task ConvertSwagger_WithNonExistentFile_ShouldReturnError()
         {
             // Arrange
-            var npxHelper = new Mock<INpxHelper>().Object;
             var logger = new Mock<ILogger<TypeSpecConvertTool>>().Object;
-            var outputService = new Mock<IOutputHelper>().Object;
-            var tool = new TypeSpecConvertTool(npxHelper, logger, outputService);
+            var tspHelper = new Mock<ITspClientHelper>().Object;
+            var tool = new TypeSpecConvertTool(logger, tspHelper);
 
             // Act
             var result = await tool.ConvertSwaggerAsync(@"C:\nonexistent\readme.md", @"C:\temp", false, false, false, CancellationToken.None);

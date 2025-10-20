@@ -24,4 +24,6 @@ pr:
 extends:
   template: /eng/pipelines/templates/stages/archetype-sdk-tool-dotnet.yml
   parameters:
+    ${{ if eq(variables['Build.SourceBranchName'], 'main') }}:
+      SkipReleaseStage: false
     PackageDirectory: $(Build.SourcesDirectory)/tools/apiview/parsers/csharp-api-parser/CSharpAPIParser

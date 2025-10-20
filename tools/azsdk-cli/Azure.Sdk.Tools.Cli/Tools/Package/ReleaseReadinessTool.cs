@@ -2,12 +2,12 @@
 // Licensed under the MIT License.
 
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.ComponentModel;
 using Microsoft.TeamFoundation.Build.WebApi;
 using ModelContextProtocol.Server;
-using Azure.Sdk.Tools.Cli.Contract;
 using Azure.Sdk.Tools.Cli.Helpers;
+using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses;
 using Azure.Sdk.Tools.Cli.Services;
 
@@ -15,29 +15,33 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 {
     [Description("This class contains an MCP tool that checks the release readiness status of a package")]
     [McpServerToolType]
-    public class ReleaseReadinessTool(IDevOpsService devopsService,
-        IOutputHelper output,
-        ILogger<ReleaseReadinessTool> logger) : MCPTool
+    public class ReleaseReadinessTool(
+        IDevOpsService devopsService,
+        ILogger<ReleaseReadinessTool> logger
+    ) : MCPTool
     {
-        private readonly Option<string> packageNameOpt = new(["--package-name"], "SDK package name") { IsRequired = true };
-        private readonly Option<string> languageOpt = new(["--language"], "SDK language from one of the following ['.NET', 'Python', 'Java', 'JavaScript', Go]") { IsRequired = true };
+        private readonly Option<string> packageNameOpt = new("--package-name")
+        {
+            Description = "SDK package name",
+            Required = true,
+        };
+
+        private readonly Option<string> languageOpt = new("--language")
+        {
+            Description = "SDK language from one of the following ['.NET', 'Python', 'Java', 'JavaScript', Go]",
+            Required = true,
+        };
         private static readonly string Pipeline_Success_Status = "Succeeded";
 
-        public override Command GetCommand()
-        {
-            var command = new Command("release-readiness", "Checks release readiness of a SDK package.") { packageNameOpt, languageOpt };
-            command.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
-            return command;
-        }
+        protected override Command GetCommand() =>
+            new("release-readiness", "Checks release readiness of a SDK package.") { packageNameOpt, languageOpt };
 
-        public async override Task HandleCommand(InvocationContext ctx, CancellationToken ct)
+        public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
-            var cmd = ctx.ParseResult.CommandResult.Command.Name;
-            var packageName = ctx.ParseResult.GetValueForOption(packageNameOpt);
-            var language = ctx.ParseResult.GetValueForOption(languageOpt);
-            logger.LogInformation($"Running release readiness check for {packageName} in {language}");
-            var result = await CheckPackageReleaseReadinessAsync(packageName, language);
-            output.Output(result);
+            var packageName = parseResult.GetValue(packageNameOpt);
+            var language = parseResult.GetValue(languageOpt);
+            logger.LogInformation("Running release readiness check for {packageName} in {language}", packageName, language);
+            return await CheckPackageReleaseReadinessAsync(packageName, language);
         }
 
         [McpServerTool(Name = "azsdk_check_package_release_readiness"), Description("Checks if SDK package is ready to release (release readiness). This includes checking pipeline status, apiview status, change log status, and namespace approval status.")]
@@ -54,7 +58,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                         Language = language,
                         ResponseError = $"No package work item found for package '{packageName}' in language '{language}'. Please check the package name and language."
                     };
-                    SetFailure();
                     return package;
                 }
 
@@ -131,7 +134,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     IsPackageReady = false,
                     ResponseError = $"Failed to check package readiness for '{packageName}' in language '{language}'. Error {ex.Message}"
                 };
-                SetFailure();
                 return package;
             }
         }

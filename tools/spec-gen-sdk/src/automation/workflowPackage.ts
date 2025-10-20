@@ -35,7 +35,13 @@ export const workflowPkgMain = async (context: WorkflowContext, pkg: PackageData
 };
 
 export const workflowPkgCallBuildScript = async (context: WorkflowContext, pkg: PackageData) => {
-  const runOptions = context.swaggerToSdkConfig.packageOptions.buildScript;
+  const generateScript = context.swaggerToSdkConfig.generateOptions.generateScript;
+  if (generateScript) {
+    context.logger.info('GenerateScript configured in swagger_to_sdk_config.json; skipping buildScript.');
+    return;
+  }
+
+  const runOptions = context.swaggerToSdkConfig.packageOptions.buildScript; 
   if (!runOptions) {
     context.logger.info('buildScript of packageOptions is not configured in swagger_to_sdk_config.json.');
     return;

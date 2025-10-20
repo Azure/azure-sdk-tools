@@ -12,7 +12,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
     {
         private TestLogger<SdkReleaseTool> logger;
         private IDevOpsService devOpsService;
-        private IOutputHelper outputService;
         private SdkReleaseTool sdkReleaseTool;
 
         [SetUp]
@@ -67,16 +66,12 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 });
             devOpsService = mockDevOpsService.Object;
 
-            var outputServiceMock = new Mock<IOutputHelper>();
-            outputServiceMock.Setup(x => x.Format(It.IsAny<object>())).Returns<object>(obj => obj?.ToString() ?? "");
-            outputService = outputServiceMock.Object;
             var releaseReadinessToolLogger = new TestLogger<ReleaseReadinessTool>();
 
             sdkReleaseTool = new SdkReleaseTool(
                 devOpsService,
                 logger,
-                releaseReadinessToolLogger,
-                outputService);
+                releaseReadinessToolLogger);
         }
 
         [Test]

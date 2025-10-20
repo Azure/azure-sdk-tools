@@ -1,36 +1,26 @@
-### Local test(You need to install REST Client extension for your vscode, to run this test)
-POST https://azuresdkbot-preview-d5bugqfmc3bjh6ef.eastasia-01.azurewebsites.net/completion HTTP/1.1
+### You need to install REST Client extension for your vscode, to run this test
+
+### Remote test (refer to README to get the backend endpoint and access token)
+POST https://[backend_endpoint]/completion HTTP/1.1
 Content-type: application/json; charset=utf-8
-X-API-Key: xK9d#mP2$vR4nL7@jF5hQ8*wC3tY6bN9eZ2^mA4uW8gB
+Authorization: Bearer [AccessToken]
 
 {
     "tenant_id": "azure_sdk_qa_bot",
     "message": {
-        "name": "jiaqi",
         "role": "user",
-        "content": "Our RP api-version exists in azure-rest-api-specs-pr/main, but not in RPSaasMaster. So before I raise PR for a new api version for RPSaasMaster, the change should be made on the latest api version. If yes, could you please help who can merge from main to RpSaasMaster?\n \nMain - 2024-09-30-preview is latest public preview  version\nazure-rest-api-specs-pr/specification/codesigning/resource-manager/Microsoft.CodeSigning/preview at main · Azure/azure-rest-api-specs-pr\n \nRPSaasMaster is missing the 2024-09-30-preview - \nazure-rest-api-specs-pr/specification/codesigning/resource-manager/Microsoft.CodeSigning/preview at RPSaaSMaster · Azure/azure-rest-api-specs-pr\n \ncc: Mike Harder"
+        "content": "how to onboard typespec?"
     }
 }
 
-### Local test(You need to install REST Client extension for your vscode, to run this test)
+### Local test
 POST http://localhost:8088/completion HTTP/1.1
 Content-type: application/json; charset=utf-8
-X-API-Key: xK9d#mP2$vR4nL7@jF5hQ8*wC3tY6bN9eZ2^mA4uW8gB
 
 {
     "tenant_id": "azure_sdk_qa_bot",
-    "prompt_template": null,
-    "prompt_template_arguments": null,
-    "top_k": null,
-    "sources": null,
     "message": {
         "role": "user",
-        "content": "\u003cp\u003e\u003cspan style=\"font-size:inherit\"\u003eHi, take the following typespec as an example, how to write it so that Pet2501Preview would not show up in c2024_08_30? \u0026nbsp;I want preview to be separate from stable\u0026nbsp;\u003c/span\u003e\u003c/p\u003e\n\u003cp\u003e\u0026nbsp;\u003c/p\u003e\n\u003cp\u003e\u003cspan style=\"font-size:inherit\"\u003e@versioned(Versions)\u003c/span\u003e\u003c/p\u003e\n\u003cp\u003e\u003cspan style=\"font-size:inherit\"\u003enamespace PetStore;\u003c/span\u003e\u003c/p\u003e\n\u003cp\u003e\u0026nbsp;\u003c/p\u003e\n\u003cp\u003e\u003cspan style=\"font-size:inherit\"\u003eenum Versions {\u003c/span\u003e\u003c/p\u003e\n\u003cp\u003e\u003cspan style=\"font-size:inherit\"\u003e\u0026nbsp; c2024_02_01: \"2024-02-01\",\u003c/span\u003e\u003c/p\u003e\n\u003cp\u003e\u003cspan style=\"font-size:inherit\"\u003e\u0026nbsp; c2025_01_15_Preview: \"2025-01-15-preview\",\u003c/span\u003e\u003c/p\u003e\n\u003cp\u003e\u003cspan style=\"font-size:inherit\"\u003e\u0026nbsp; c2024_08_30: \"2024-08-30\",\u003c/span\u003e\u003c/p\u003e\n\u003cp\u003e\u003cspan style=\"font-size:inherit\"\u003e}\u003c/span\u003e\u003c/p\u003e\n\u003cp\u003e\u0026nbsp;\u003c/p\u003e\n\u003cp\u003e\u003cspan style=\"font-size:inherit\"\u003e@added(Versions.c2025_01_15_Preview)\u003c/span\u003e\u003c/p\u003e\n\u003cp\u003e\u003cspan style=\"font-size:inherit\"\u003emodel Pet2501Preview {\u003c/span\u003e\u003c/p\u003e\n\u003cp\u003e\u003cspan style=\"font-size:inherit\"\u003e\u0026nbsp; id: int32;\u003c/span\u003e\u003c/p\u003e\n\u003cp\u003e\u003cspan style=\"font-size:inherit\"\u003e\u0026nbsp; name: string;\u003c/span\u003e\u003c/p\u003e\n\u003cp\u003e\u003cspan style=\"font-size:inherit\"\u003e\u0026nbsp; age: int32;\u003c/span\u003e\u003c/p\u003e\n\u003cp\u003e\u003cspan style=\"font-size:inherit\"\u003e}\u003c/span\u003e\u003c/p\u003e\n\u003cp\u003e\u0026nbsp;\u003c/p\u003e\n\u003cp\u003e\u003cspan style=\"color:#2B9B62; font-size:inherit\"\u003e// we don't want Pet2501Preview to show up in c2024_08_30\u003c/span\u003e\u003c/p\u003e\n\u003cp\u003e\u003cspan style=\"font-size:inherit\"\u003e@added(Versions.c2024_08_30)\u003c/span\u003e\u003c/p\u003e\n\u003cp\u003e\u003cspan style=\"font-size:inherit\"\u003emodel Pet2408Stable {\u003c/span\u003e\u003c/p\u003e\n\u003cp\u003e\u003cspan style=\"font-size:inherit\"\u003e\u0026nbsp; id: int32;\u003c/span\u003e\u003c/p\u003e\n\u003cp\u003e\u003cspan style=\"font-size:inherit\"\u003e\u0026nbsp; name: string;\u003c/span\u003e\u003c/p\u003e\n\u003cp\u003e\u003cspan style=\"font-size:inherit\"\u003e\u0026nbsp; age: int32;\u003c/span\u003e\u003c/p\u003e\n\u003cp\u003e\u003cspan style=\"font-size:inherit\"\u003e\u0026nbsp; kind: petType;\u003c/span\u003e\u003c/p\u003e\n\u003cp\u003e\u003cspan style=\"font-size:inherit\"\u003e}\u003c/span\u003e\u003c/p\u003e\n\u003cp\u003e\u0026nbsp;\u003c/p\u003e\n\u003cp\u003e\u003cspan style=\"font-size:inherit\"\u003emodel Pet {\u003c/span\u003e\u003c/p\u003e\n\u003cp\u003e\u003cspan style=\"font-size:inherit\"\u003e\u0026nbsp; id: int32;\u003c/span\u003e\u003c/p\u003e\n\u003cp\u003e\u003cspan style=\"font-size:inherit\"\u003e\u0026nbsp; name: string;\u003c/span\u003e\u003c/p\u003e\n\u003cp\u003e\u0026nbsp;\u003c/p\u003e\n\u003cp\u003e\u003cspan style=\"font-size:inherit\"\u003e}\u003c/span\u003e\u003c/p\u003e\n\u003cp\u003e\u003cspan style=\"font-size:inherit\"\u003e\u0026nbsp;\u003c/span\u003e\u003c/p\u003e",
-        "name": "Janine Zhang"
-    },
-    "history": [
-
-    ],
-    "with_full_context": null,
-    "with_preprocess": null
+        "content": "how to onboard typespec?"
+    }
 }

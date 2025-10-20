@@ -42,6 +42,7 @@ export class CodePanelComponent implements OnChanges{
   @Input() codeLineSearchText: string | undefined;
   @Input() codeLineSearchInfo: CodeLineSearchInfo | undefined = undefined;
   @Input() preferredApprovers : string[] = [];
+  @Input() allComments: CommentItemModel[] = [];
 
   @Output() hasActiveConversationEmitter : EventEmitter<boolean> = new EventEmitter<boolean>();
   @Output() codeLineSearchInfoEmitter : EventEmitter<CodeLineSearchInfo> = new EventEmitter<CodeLineSearchInfo>();
@@ -532,7 +533,7 @@ export class CodePanelComponent implements OnChanges{
         });
     }
     else {
-      this.commentsService.createComment(this.reviewId!, this.activeApiRevisionId!, commentUpdates.nodeId!, commentUpdates.commentText!, CommentType.APIRevision, commentUpdates.allowAnyOneToResolve)
+      this.commentsService.createComment(this.reviewId!, this.activeApiRevisionId!, commentUpdates.nodeId!, commentUpdates.commentText!, CommentType.APIRevision, commentUpdates.allowAnyOneToResolve, commentUpdates.severity)
         .pipe(take(1)).subscribe({
             next: (response: CommentItemModel) => {
               this.addCommentToCommentThread(commentUpdates, response);

@@ -100,18 +100,7 @@ async function initProcessDataAndWriteTspLocation(
   let emitterOutputDir = tspConfigData?.options?.[emitterData.emitter]?.["emitter-output-dir"];
   const packageDir = tspConfigData?.options?.[emitterData.emitter]?.["package-dir"];
   let newPackageDir;
-  if (emitterOutputDir) {
-    const [options, _] = await resolveCompilerOptions(NodeHost, {
-      cwd: process.cwd(),
-      entrypoint: "main.tsp",
-      configPath: tspConfigPath,
-      overrides: {
-        outputDir: outputDir,
-      },
-    });
-    emitterOutputDir = options.options?.[emitterData.emitter]?.["emitter-output-dir"];
-    newPackageDir = resolve(emitterOutputDir);
-  } else if (packageDir) {
+  if (packageDir) {
     // Warn that this behavior is deprecated
     Logger.warn(
       `Please update your tspconfig.yaml to include the "emitter-output-dir" option under the "${emitterData.emitter}" emitter options. "package-dir" support is deprecated and will be removed in future versions.`,
@@ -120,6 +109,17 @@ async function initProcessDataAndWriteTspLocation(
     newPackageDir = resolve(
       joinPaths(outputDir, getServiceDir(tspConfigData, emitterData.emitter), packageDir!),
     );
+  } else if (emitterOutputDir) {
+    const [options, _] = await resolveCompilerOptions(NodeHost, {
+      cwd: process.cwd(),
+      entrypoint: "main.tsp",
+      configPath: tspConfigPath,
+      overrides: {
+        outputDir: repoRoot,
+      },
+    });
+    emitterOutputDir = options.options?.[emitterData.emitter]?.["emitter-output-dir"];
+    newPackageDir = resolve(emitterOutputDir);
   } else {
     throw new Error(
       `Missing emitter-output-dir in ${emitterData.emitter} options of tspconfig.yaml. Please refer to https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml for the right schema.`,
@@ -132,7 +132,11 @@ async function initProcessDataAndWriteTspLocation(
     // If the update-if-exists flag is set, check if there's an existing tsp-location.yaml
     // and update it with the new values while maintaining previously existing data.
     Logger.debug(`Trying to read existing tsp-location.yaml at ${newPackageDir}`);
-    tspLocationData = await updateExistingTspLocation(tspLocationData, newPackageDir);
+    tspLocationData = await updateExistingTspLocation(
+      tspLocationData,
+      newPackageDir,
+      emitterPackageOverride,
+    );
   }
   await mkdir(newPackageDir, { recursive: true });
   await writeTspLocationYaml(tspLocationData, newPackageDir);
@@ -415,7 +419,9 @@ export async function generateCommand(argv: any) {
     );
   }
 
-  const legacyPathResolution = !tspConfigData?.options?.[emitter]?.["emitter-output-dir"];
+  // Give preference to package-dir if both are specified
+  // This is to avoid breaking existing behavior
+  const legacyPathResolution = tspConfigData?.options?.[emitter]?.["package-dir"];
 
   if (skipInstall) {
     Logger.info("Skipping installation of dependencies");

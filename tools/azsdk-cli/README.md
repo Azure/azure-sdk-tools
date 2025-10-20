@@ -4,7 +4,7 @@ This project is the primary integration point for all `azure-sdk` provided [MCP]
 
 ## Table of Contents
 
-* [Azure SDK CLI and MCP server](#azure-sdk-cli-and-mcp-server)   
+* [Azure SDK CLI and MCP server](#azure-sdk-cli-and-mcp-server)
    * [Table of Contents](#table-of-contents)
    * [Getting Started](#getting-started)
       * [Install standalone](#install-standalone)
@@ -88,6 +88,11 @@ To run the tests:
 ```sh
 dotnet test
 ```
+
+### Test Mode
+
+This tool can be run in test mode when the `AZSDKTOOLS_AGENT_TESTING` environment variable is set to `true`.
+When testing is enabled, release plans will be automatically generated in the test environment.
 
 ### Test with GitHub Coding Agent
 
@@ -333,7 +338,7 @@ Release - https://dev.azure.com/azure-sdk/internal/_build?definitionId=7684
   - For functionality that differs in implementation between CLI and MCP, create abstractions where possible.
 - Return structured data from all tools/commands. Define response classes that can `ToString()` or `ToJson()` for different output modes (and handle failure flows)
 - Use structured logging with appropriate levels: `LogInformation` for business events, `LogDebug` for diagnostics.
-- Tools SHOULD NOT log to standard output directly using `Console` APIs. Instead, use available abstractions such as `IOutputService` and the logger. This helps ensure that the output is directed to the right place regardless of whether the tool is being run as an MCP tool or through the CLI directly.
+- Tools SHOULD NOT log to standard output directly using `Console` APIs. Instead, use available abstractions such as response classes and the logger. This helps ensure that the output is directed to the right place regardless of whether the tool is being run as an MCP tool or through the CLI directly.
 - Where possible, avoid dependencies/pre-requisites requiring manual setup, prefer being able to set them up within the app (e.g. az login, gh login, etc.)
 - Reusable instructions should be placed under [azsdk instructions](https://github.com/Azure/azure-sdk-tools/tree/main/eng/common/instructions/azsdk-tools) where they will be synced to all azure sdk repositories.
 
@@ -352,8 +357,3 @@ Or manually, see [docs/new-tool.md](./docs/new-tool.md) for more details.
 ## Data Collection
 
 The software may collect information about you and your use of the software and send it to Microsoft. Microsoft may use this information to provide services and improve our products and services. You may turn off the telemetry as described in the repository. There are also some features in the software that may enable you and Microsoft to collect data from users of your applications. If you use these features, you must comply with applicable law, including providing appropriate notices to users of your applications together with a copy of Microsoft's [privacy statement](https://www.microsoft.com/privacy/privacystatement) and [data privacy statement](https://www.microsoft.com/en-us/privacy/data-privacy-notice). You can learn more about data collection and use in the help documentation and our privacy statement. Your use of the software operates as your consent to these practices.
-
-### Telemetry Configuration
-Telemetry collection is on by default.
-
-To opt out, set the environment variable AZSDKTOOLS_MCP_COLLECT_TELEMETRY to false in your environment.

@@ -177,6 +177,25 @@ namespace APIViewWeb.Managers
             return comment;
         }
 
+        public async Task<CommentItemModel> UpdateCommentSeverityAsync(ClaimsPrincipal user, string reviewId, string commentId, CommentSeverity? severity)
+        {
+            var comment = await _commentsRepository.GetCommentAsync(reviewId, commentId);
+            await AssertOwnerAsync(user, comment);
+            
+            comment.ChangeHistory.Add(
+                new CommentChangeHistoryModel()
+                {
+                    ChangeAction = CommentChangeAction.Edited,
+                    ChangedBy = user.GetGitHubLogin(),
+                    ChangedOn = DateTime.Now,
+                });
+            comment.LastEditedOn = DateTime.Now;
+            comment.Severity = severity;
+
+            await _commentsRepository.UpsertCommentAsync(comment);
+            return comment;
+        }
+
         public async Task RequestAgentReply(ClaimsPrincipal user, CommentItemModel comment, string activeRevisionId)
         {
             ReviewListItemModel review = await _reviewRepository.GetReviewAsync(comment.ReviewId);

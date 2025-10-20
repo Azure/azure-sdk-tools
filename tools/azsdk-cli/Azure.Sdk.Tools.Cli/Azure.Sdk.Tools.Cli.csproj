@@ -11,15 +11,29 @@
     <NoWarn>ASP0000;CS8603;CS8618;CS8625;CS8604</NoWarn>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <AssemblyName>azsdk</AssemblyName>
+    <VersionPrefix>0.5.3</VersionPrefix>
+    <VersionSuffix></VersionSuffix>
+    <!-- Package metadata -->
+    <PackageReleaseNotes>See CHANGELOG.md for release notes</PackageReleaseNotes>
+    <RepositoryUrl>https://github.com/Azure/azure-sdk-tools</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>azure;sdk;tools;cli</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Azure.AI.Agents.Persistent" Version="1.0.0" />
-    <PackageReference Include="Azure.AI.OpenAI" Version="2.1.0" />
+    <PackageReference Include="Azure.AI.Agents.Persistent" Version="1.2.0-beta.5" />
+    <PackageReference Include="Azure.AI.OpenAI" Version="2.3.0-beta.2" />
+    <PackageReference Include="Azure.Monitor.OpenTelemetry.Exporter" Version="1.4.0" />
     <PackageReference Include="Microsoft.Extensions.Azure" Version="1.12.0" />
     <PackageReference Include="Microsoft.Graph" Version="5.79.0" />
+    <PackageReference Include="OpenTelemetry" Version="1.12.0" />
+    <PackageReference Include="OpenTelemetry.Exporter.Console" Version="1.12.0" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.12.0" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.12.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.12.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.12.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
-    <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta5.25277.114" />
     <PackageReference Include="Azure.Identity" Version="1.14.2" />
     <PackageReference Include="LibGit2Sharp" Version="0.31.0" />
     <PackageReference Include="Octokit" Version="14.0.0" />
@@ -34,10 +48,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../Azure.Sdk.Tools.Cli.Contract/Azure.Sdk.Tools.Cli.Contract.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="../Azure.Sdk.Tools.Cli.Analyzer/Azure.Sdk.Tools.Cli.Analyzer.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
   </ItemGroup>
 
@@ -47,5 +57,11 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Images/quokka.ansi" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Include changelog and documentation files in the package -->
+    <None Include="CHANGELOG.md" Pack="true" PackagePath="CHANGELOG.md" />
+    <None Include="../README.md" Pack="true" PackagePath="README.md" />
   </ItemGroup>
 </Project>

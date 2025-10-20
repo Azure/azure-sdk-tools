@@ -20,7 +20,6 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(CleanupTool),
             typeof(CodeownersTools),
             typeof(GitHubLabelsTool),
-            typeof(HostServerTool),
             typeof(LogAnalysisTool),
             typeof(PipelineTool),
             typeof(PipelineAnalysisTool),
@@ -29,6 +28,8 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(ReadMeGeneratorTool),
             typeof(ReleasePlanTool),
             typeof(ReleaseReadinessTool),
+            typeof(SdkBuildTool),
+            typeof(SdkGenerationTool),
             typeof(SdkReleaseTool),
             typeof(SpecCommonTools),
             typeof(PullRequestTools),
@@ -39,8 +40,8 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(TypeSpecInitTool),
             typeof(TspClientUpdateTool),
             typeof(TypeSpecPublicRepoValidationTool),
-
-            #if DEBUG
+            typeof(TestTool),
+#if DEBUG
             // only add these tools in debug mode
             typeof(ExampleTool),
             typeof(HelloWorldTool),
@@ -50,41 +51,48 @@ namespace Azure.Sdk.Tools.Cli.Commands
         public static Option<string> ToolOption = new("--tools")
         {
             Description = "If provided, the tools server will only respond to CLI or MCP server requests for tools named the same as provided in this option. Glob matching is honored.",
-            IsRequired = false,
+            Required = false,
         };
 
-        public static Option<string> Format = new(["--output", "-o"], () => "plain")
+        public static Option<string> Format = new("--output", "-o")
         {
             Description = "The format of the output. Supported formats are: plain, json",
-            IsRequired = false,
+            Required = false,
+            Recursive = true,
+            DefaultValueFactory = _ => "plain",
         };
 
-        public static Option<bool> Debug = new(["--debug"], () => false)
+        public static Option<bool> Debug = new("--debug")
         {
             Description = "Enable debug logging",
-            IsRequired = false,
+            Required = false,
+            Recursive = true,
+            DefaultValueFactory = _ => false,
         };
 
-        public static Option<string> PackagePath = new(["--package-path", "-p"], () => Environment.CurrentDirectory, "Path to the package directory to check. Defaults to the current working directory")
+        public static Option<string> PackagePath = new("--package-path", "-p")
         {
-            IsRequired = false
+            Description = "Path to the package directory to check. Defaults to the current working directory",
+            Required = false,
+            DefaultValueFactory = _ => Environment.CurrentDirectory,
         };
 
-        public static (string, bool) GetGlobalOptionValues(string[] args)
+        public static (string outputFormat, bool debug) GetGlobalOptionValues(string[] args)
         {
             var root = new RootCommand
             {
                 TreatUnmatchedTokensAsErrors = false
             };
-            root.AddGlobalOption(Format);
-            root.AddGlobalOption(Debug);
+            root.Options.Add(Format);
+            root.Options.Add(Debug);
 
-            var parser = new Parser(root);
-            var result = parser.Parse(args);
+            var result = root.Parse(args);
 
-            var raw = result.GetValueForOption(Format)?.ToLowerInvariant() ?? "";
-            var debug = result.GetValueForOption(Debug);
-            return (raw, debug);
+            // Note: When --help is present, GetValue returns null instead of calling DefaultValueFactory
+            // because the command isn't actually being invoked. The ?? "plain" fallback handles this case.
+            var outputFormat = result.GetValue(Format)?.ToLowerInvariant() ?? "plain";
+            var debug = result.GetValue(Debug);
+            return (outputFormat, debug);
         }
 
         public static string[] GetToolsFromArgs(string[] args)
@@ -93,12 +101,11 @@ namespace Azure.Sdk.Tools.Cli.Commands
             {
                 TreatUnmatchedTokensAsErrors = false
             };
-            root.AddOption(ToolOption);
+            root.Options.Add(ToolOption);
 
-            var parser = new Parser(root);
-            var result = parser.Parse(args);
+            var result = root.Parse(args);
 
-            var raw = result.GetValueForOption(ToolOption);
+            var raw = result.GetValue(ToolOption);
             if (string.IsNullOrWhiteSpace(raw))
             {
                 return new string[] { };
@@ -112,7 +119,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
 
         public static List<Type> GetFilteredToolTypes(string[] args)
         {
-            var toolMatchList = SharedOptions.GetToolsFromArgs(args);
+            var toolMatchList = GetToolsFromArgs(args);
 
             if (toolMatchList.Length > 0)
             {

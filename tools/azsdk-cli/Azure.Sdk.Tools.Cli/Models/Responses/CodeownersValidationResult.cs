@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models.Responses;
 
-public class CodeownersValidationResult : Response
+public class CodeownersValidationResult : CommandResponse
 {
     [JsonPropertyName("username")]
     public string Username { get; set; } = "";

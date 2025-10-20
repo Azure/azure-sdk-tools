@@ -700,11 +700,12 @@ namespace Azure.Sdk.Tools.PerfAutomation
             }
             return new()
             {
-                LatencyMean = latencySum / count,
+                TotalOperations = latencies.Count,
+                LatencyMean = Math.Round(latencySum / count, 2),
                 LatencyMax = latencyMax,
                 LatencyMin = latencyMin,
                 LatencyPercentiles = latencyPercentiles,
-                ThroughputMBpsMean = throughputMean,
+                ThroughputMBpsMean = Math.Round(throughputMean, 2),
             };
         }
     }

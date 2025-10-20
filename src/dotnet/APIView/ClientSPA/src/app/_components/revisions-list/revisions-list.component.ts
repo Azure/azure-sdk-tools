@@ -130,7 +130,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
       details = (filters.details.value != null) ? filters.details.value.map((item: any) => item.data): details;
     }
 
-    this.apiRevisionsService.getAPIRevisions(noOfItemsRead, pageSize, reviewId, label, author, details, sortField, sortOrder, 
+    this.apiRevisionsService.getAPIRevisions(noOfItemsRead, pageSize, reviewId, label, author, details, sortField, sortOrder,
       this.showDeletedAPIRevisions, this.showAPIRevisionsAssignedToMe).subscribe({
       next: (response: any) => {
         if (response.result && response.pagination) {
@@ -176,7 +176,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
         { label: 'Restore', icon: 'pi pi-folder-open', disabled: disableDeleteOrRestore, command: () => this.viewRevision(this.selectedRevision) }
       ];
     }
-    else 
+    else
     {
       this.contextMenuItems = [
         { label: 'View', icon: 'pi pi-folder-open', command: () => this.viewRevision(this.selectedRevision) },
@@ -203,7 +203,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
     ];
   }
 
-  createRevisionFilters() {     
+  createRevisionFilters() {
     this.details = [
       {
         label: 'Status',
@@ -240,7 +240,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
       this.apiRevisionsService.openDiffOfAPIRevisions(this.selectedRevisions[0], this.selectedRevisions[1], this.route);
     }
   }
-  
+
   viewRevision(apiRevision: APIRevision) {
     if (!this.showDeletedAPIRevisions)
     {
@@ -293,7 +293,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
   */
   tableHasFilters() : boolean {
     return (
-      this.sortField != "lastUpdatedOn" || this.sortOrder != 1 || 
+      this.sortField != "lastUpdatedOn" || this.sortOrder != 1 ||
       (this.filters && (this.filters.label.value != null || this.filters.author.value != null || this.filters.details.value != null)) ||
       this.showDeletedAPIRevisions || this.showAPIRevisionsAssignedToMe);
   }
@@ -495,7 +495,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
     switch(this.createRevisionForm.get('selectedCRLanguage')?.value?.data){
       case "C":
         this.createRevisionInstruction = [
-          `Install clang 10 or later.`, 
+          `Install clang 10 or later.`,
           `Run <code>clang [inputs like az_*.h] -Xclang -ast-dump=json -I ..\\..\\..\\core\\core\\inc -I "c:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Preview\\VC\\Tools\\MSVC\\14.26.28801\\include\\" > az_core.ast</code>`,
           `Archive the file <code>Compress-Archive az_core.ast -DestinationPath az_core.zip</code>`,
           `Upload the resulting archive.`
@@ -506,7 +506,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
         break;
       case "C#":
         this.createRevisionInstruction = [
-          `Run <code>dotnet pack</code>`, 
+          `Run <code>dotnet pack</code>`,
           `Upload the resulting .nupkg or .dll file.`
         ];
         this.acceptedFilesForReviewUpload = ".nupkg, .dll";
@@ -532,7 +532,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
         break;
       case "Python":
         this.createRevisionInstruction = [
-          `Generate wheel for the package. <code>python setup.py bdist_wheel -d [dest_folder]</code>`,
+          `Generate wheel for the package. <code>pip install build; python -m build --wheel --outdir [dest_folder]</code>`,
           `Upload generated whl file`
         ];
         this.acceptedFilesForReviewUpload = ".whl";
@@ -598,7 +598,7 @@ export class RevisionsListComponent implements OnInit, OnChanges {
         this.acceptedFilesForReviewUpload = undefined;
     }
 
-    if (this.revisionCreationFileUpload) {    
+    if (this.revisionCreationFileUpload) {
       this.revisionCreationFileUpload.clear();
     }
 

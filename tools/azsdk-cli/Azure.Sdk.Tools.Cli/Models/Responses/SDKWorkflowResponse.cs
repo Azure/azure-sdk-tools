@@ -1,10 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+using System.Text;
 using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models;
 
-public class GenericResponse
+public class SDKWorkflowResponse : CommandResponse
 {
     [JsonPropertyName("status")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
@@ -16,8 +17,12 @@ public class GenericResponse
 
     public override string ToString()
     {
-        return $"Status: {Status}" +
-               $"\nDetails:\n" +
-               $"{string.Join("\n- ", Details)}\n";
+        var result = new StringBuilder();
+        result.AppendLine($"Status: {Status}");
+        foreach (var detail in Details)
+        {
+            result.AppendLine($"- {detail}");
+        }
+        return ToString(result);
     }
 }

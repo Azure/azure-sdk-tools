@@ -37,13 +37,7 @@ This is the SDK developer experience CLI and MCP server. It is intended to:
    - Select `azure-sdk-mcp` and press enter
    - Select `Start Server` and press enter
 
-4. **Test the connection** by prompting Copilot (`Ctrl + Shift + I`):
-
-   ```text
-   "Use the hello-world MCP tool to echo back 'Testing the tool'"
-   ```
-
-    ![Screenshot showing Github Copilot successfully interacting with the MCP server.](/tools/azsdk-cli/Azure.Sdk.Tools.Cli/Images/MCP-Success-Output.png)
+4. **Test the connection** by prompting Copilot (`Ctrl + Shift + I`) with any of our recommended prompts from the [documentation](https://aka.ms/azsdk/agent#agentic-workflow-scenarios)
 
 ## Usage Modes
 
@@ -128,3 +122,13 @@ dotnet run --project Azure.Sdk.Tools.Cli -- release-plan get --work-item-id YOUR
 In either case, the _same_ code will be invoked to get both results.
 
 This server is intended to run in **local mcp mode only** and will utilize your environment cached settings to communicate where authentication is necessary.
+
+## Telemetry Configuration
+Telemetry collection is on by default.
+
+To opt out, set the environment variable `AZSDKTOOLS_COLLECT_TELEMETRY` to false in your environment.
+
+If you need to direct telemetry to an alternate Application Insights instance (for local testing or private collection), set one of the following environment variables in your environment or in your hosting configuration:
+
+- `AZSDKTOOLS_APPLICATIONINSIGHTS_CONNECTION_STRING`: the full Application Insights connection string.
+

@@ -506,7 +506,6 @@ namespace APIViewWeb.Helpers
         public static List<ReviewLine> FindDiff(List<ReviewLine> activeLines, List<ReviewLine> diffLines)
         {
             List<ReviewLine> resultLines = [];
-            Dictionary<string, int> refCountMap = [];
 
             //Set lines from diff revision as not from active revision
             foreach (var line in diffLines)
@@ -517,45 +516,67 @@ namespace APIViewWeb.Helpers
             UpdateMissingRelatedLineId(activeLines);
             UpdateMissingRelatedLineId(diffLines);
 
-            var intersectLines = diffLines.Intersect(activeLines);
-            var interleavedLines = activeLines.InterleavedUnion(diffLines);
+            List<ReviewLine> intersectLines = diffLines.Intersect(activeLines).ToList();
+            IEnumerable<ReviewLine> interleavedLines = activeLines.InterleavedUnion(diffLines);
 
             foreach (var line in interleavedLines)
             {
                 if (line.IsDocumentation || line.Processed || (!line.IsActiveRevisionLine && line.IsSkippedFromDiff()))
                     continue;
 
+                //Check if diff revision has a line at same level with same Line Id. This is to handle where an API was removed and added back in different order.
+                // This will also ensure added and modified lines are visible next to each other in the review.
+                ReviewLine relatedLine = line.IsActiveRevisionLine ? diffLines.FirstOrDefault(l => !string.IsNullOrEmpty(l.LineId) && l.LineId == line.LineId) :
+                    activeLines.FirstOrDefault(l => !string.IsNullOrEmpty(l.LineId) && l.LineId == line.LineId);
 
                 // Current node is not in both revisions. Mark current node as added or removed and then go to next sibling.
-                // If a node is diff then no need to check it's children as they will be marked as diff as well.
                 if (!intersectLines.Contains(line))
                 {
-                    //Recursively mark line as added or removed if line is not skipped from diff
+                    //Mark line as added or removed if line is not skipped from diff
                     if (!line.IsSkippedFromDiff())
                     {
-                        MarkTreeNodeAsModified(line, line.IsActiveRevisionLine ? DiffKind.Added : DiffKind.Removed);
+                        DiffKind lineDiffKind = line.IsActiveRevisionLine ? DiffKind.Added : DiffKind.Removed;
+                        if (relatedLine != null)
+                        {
+                            line.DiffKind = lineDiffKind;
+                        }
+                        else
+                        {
+                            MarkTreeNodeAsModified(line, lineDiffKind);
+                        }
                     }
 
-                    //Check if diff revision has a line at same level with same Line Id. This is to handle where a API was removed and added back in different order.
-                    // This will also ensure added and modified lines are visible next to each other in the review.
-                    var relatedLine = line.IsActiveRevisionLine ? diffLines.FirstOrDefault(l => !string.IsNullOrEmpty(l.LineId) && l.LineId == line.LineId) :
-                        activeLines.FirstOrDefault(l => !string.IsNullOrEmpty(l.LineId) && l.LineId == line.LineId);
                     if (relatedLine != null)
                     {
                         relatedLine.Processed = true;
                         if (!relatedLine.IsSkippedFromDiff())
                         {
-                            MarkTreeNodeAsModified(relatedLine, relatedLine.IsActiveRevisionLine ? DiffKind.Added : DiffKind.Removed);
-                            //Identify the tokens within modified lines and highlight them in the UI
-                            FindModifiedTokens(line, relatedLine);
-                        }                        
-                    }
+                            DiffKind relatedLineDiffKind = relatedLine.IsActiveRevisionLine ? DiffKind.Added : DiffKind.Removed;
+                            relatedLine.DiffKind = relatedLineDiffKind;
 
-                    if (relatedLine != null)
-                    {
-                        // First add removed line and then added line
-                        resultLines.Add(line.IsActiveRevisionLine ? relatedLine : line);
-                        resultLines.Add(line.IsActiveRevisionLine ? line : relatedLine);
+                            if (relatedLine.Children.Count > 0 && line.Children.Count > 0)
+                            {
+                                // Process children based on which line is active revision
+                                (ReviewLine primaryLine, ReviewLine secondaryLine) = line.IsActiveRevisionLine ? (line, relatedLine) : (relatedLine, line);
+                                List<ReviewLine> resultantChildSubTree = FindDiff(primaryLine.Children ?? [],
+                                    secondaryLine.Children ?? []);
+                                
+                                primaryLine.Children.Clear();
+                                primaryLine.Children.AddRange(resultantChildSubTree);
+                                secondaryLine.Children.Clear();
+                                resultLines.Add(secondaryLine);
+                            }
+                            else
+                            {
+                                MarkTreeNodeAsModified(relatedLine, relatedLineDiffKind);
+                                resultLines.Add(line.IsActiveRevisionLine ? relatedLine : line);
+                            }
+                            
+                            FindModifiedTokens(line, relatedLine);
+                        }
+                        
+                        ReviewLine changedActiveLine = line.IsActiveRevisionLine ? line : relatedLine;
+                        resultLines.Add(changedActiveLine);
                     }
                     else
                     {

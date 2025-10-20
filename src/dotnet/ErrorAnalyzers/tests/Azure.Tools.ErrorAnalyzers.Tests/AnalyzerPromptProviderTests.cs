@@ -10,89 +10,88 @@ namespace Azure.Tools.ErrorAnalyzers.Tests
     public class AnalyzerPromptsTests
     {
         [Test]
-        public void TryGetPromptFix_WithNullRuleId_ReturnsFalse()
+        public void GetPromptFix_WithNullRuleId_ReturnsFallback()
         {
             // Arrange
             string? ruleId = null;
 
             // Act
-            bool result = AnalyzerPrompts.TryGetPromptFix(ruleId!, out AgentPromptFix? fix);
+            var fix = AnalyzerPrompts.GetPromptFix(ruleId!);
 
             // Assert
-            Assert.That(result, Is.False);
-            Assert.That(fix, Is.Null);
+            Assert.That(fix, Is.Not.Null);
+            Assert.That(fix.Prompt, Does.Contain("Analyze and Fix Unknown Error"));
         }
 
         [Test]
-        public void TryGetPromptFix_WithEmptyRuleId_ReturnsFalse()
+        public void GetPromptFix_WithEmptyRuleId_ReturnsFallback()
         {
             // Arrange
             string ruleId = string.Empty;
 
             // Act
-            bool result = AnalyzerPrompts.TryGetPromptFix(ruleId, out AgentPromptFix? fix);
+            var fix = AnalyzerPrompts.GetPromptFix(ruleId);
 
             // Assert
-            Assert.That(result, Is.False);
-            Assert.That(fix, Is.Null);
+            Assert.That(fix, Is.Not.Null);
+            Assert.That(fix.Prompt, Does.Contain("Analyze and Fix Unknown Error"));
         }
 
         [Test]
-        public void TryGetPromptFix_WithWhitespaceRuleId_ReturnsFalse()
+        public void GetPromptFix_WithWhitespaceRuleId_ReturnsFallback()
         {
             // Arrange
             string ruleId = "   ";
 
             // Act
-            bool result = AnalyzerPrompts.TryGetPromptFix(ruleId, out AgentPromptFix? fix);
+            var fix = AnalyzerPrompts.GetPromptFix(ruleId);
 
             // Assert
-            Assert.That(result, Is.False);
-            Assert.That(fix, Is.Null);
+            Assert.That(fix, Is.Not.Null);
+            Assert.That(fix.Prompt, Does.Contain("Analyze and Fix Unknown Error"));
         }
 
         [Test]
-        public void TryGetPromptFix_WithUnknownRuleId_ReturnsFalse()
+        public void GetPromptFix_WithUnknownRuleId_ReturnsFallback()
         {
             // Arrange
             string ruleId = "UNKNOWN_RULE";
 
             // Act
-            bool result = AnalyzerPrompts.TryGetPromptFix(ruleId, out AgentPromptFix? fix);
+            var fix = AnalyzerPrompts.GetPromptFix(ruleId);
 
             // Assert
-            Assert.That(result, Is.False);
-            Assert.That(fix, Is.Null);
+            Assert.That(fix, Is.Not.Null);
+            Assert.That(fix.Prompt, Does.Contain("Analyze and Fix Unknown Error"));
         }
 
         [Test]
-        public void TryGetPromptFix_WithValidRuleId_ReturnsTrue()
+        public void GetPromptFix_WithValidRuleId_ReturnsSpecificFix()
         {
             // Arrange
             string ruleId = "AZC0012"; // This should exist in the prompts
 
             // Act
-            bool result = AnalyzerPrompts.TryGetPromptFix(ruleId, out AgentPromptFix? fix);
+            var fix = AnalyzerPrompts.GetPromptFix(ruleId);
 
             // Assert
-            Assert.That(result, Is.True);
             Assert.That(fix, Is.Not.Null);
-            Assert.That(fix!.Prompt, Is.Not.Empty);
+            Assert.That(fix.Prompt, Is.Not.Empty);
+            Assert.That(fix.Prompt, Does.Not.Contain("Analyze and Fix Unknown Error")); // Should not be fallback
         }
 
         [Test]
-        public void TryGetPromptFix_WithValidRuleId_ReturnsCorrectData()
+        public void GetPromptFix_WithValidRuleId_ReturnsCorrectData()
         {
             // Arrange
             string ruleId = "AZC0012";
 
             // Act
-            bool result = AnalyzerPrompts.TryGetPromptFix(ruleId, out AgentPromptFix? fix);
+            var fix = AnalyzerPrompts.GetPromptFix(ruleId);
 
             // Assert
-            Assert.That(result, Is.True);
             Assert.That(fix, Is.Not.Null);
-            Assert.That(fix!.Prompt, Does.Contain("Fix AZC0012"));
+            Assert.That(fix.Prompt, Does.Contain("Fix AZC0012"));
             Assert.That(fix.Context, Is.Not.Empty);
         }
 

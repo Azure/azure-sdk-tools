@@ -1,14 +1,12 @@
 using System.Reflection;
 using ApiView;
-using System;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using Newtonsoft.Json.Schema;
 using Newtonsoft.Json.Linq;
 using System.Text.Json.Serialization;
 using APIView.Model.V2;
 using Microsoft.CodeAnalysis;
-using NuGet.ContentModel;
+using System.CommandLine.Parsing;
 
 
 namespace CSharpAPIParserTests
@@ -122,6 +120,29 @@ namespace CSharpAPIParserTests
             Assert.Equal("public virtual Task<Response<BlobContainerClient>> UndeleteBlobContainerAsync(string deletedContainerName, string deletedContainerVersion, CancellationToken cancellationToken = default);", methodLine.ToString().Trim());
         }
 
+        [Fact]
+        public void NoDuplicateLineIds()
+        {
+            var lines = coreCodeFile.ReviewLines;
+            HashSet<string> lineIds = new HashSet<string>();
+
+            AssertNoDupes(lines, lineIds);
+
+            Assert.True(lineIds.Count > 10);
+        }
+
+        private void AssertNoDupes(List<ReviewLine> lines, HashSet<string> lineIds)
+        {
+            foreach (var line in lines)
+            {
+                if (!string.IsNullOrEmpty(line.LineId))
+                {
+                    Assert.True(lineIds.Add(line.LineId), $"Duplicate lineId found: {line.LineId}");
+                }
+                AssertNoDupes(line.Children, lineIds);
+            }
+        }
+
         public static IEnumerable<object[]> PackageCodeFiles => new List<object[]>
         {
             new object[] { templateCodeFile },
@@ -135,7 +156,7 @@ namespace CSharpAPIParserTests
         {
             // If current line is for class then next line at same level is expected to be a end of context line
             var lines = codeFile.ReviewLines;
-            foreach(var namespaceLine in lines)
+            foreach (var namespaceLine in lines)
             {
                 Assert.NotNull(namespaceLine);
                 bool expectEndOfContext = false;
@@ -153,7 +174,7 @@ namespace CSharpAPIParserTests
                         t.RenderClasses.Contains("struct") ||
                         t.RenderClasses.Contains("interface")) && !classLines[i].Tokens.Any(t => t.Value == "abstract"));
                 }
-            }            
+            }
         }
 
         [Fact]
@@ -280,7 +301,7 @@ namespace Microsoft.Extensions.Azure {
 
         [Fact]
         public void VerifyAttributeHAsRelatedLine()
-        {            
+        {
             Assert.Equal(11, CountAttributeRelatedToProperty(storageCodeFile.ReviewLines));
         }
 
@@ -290,7 +311,7 @@ namespace Microsoft.Extensions.Azure {
 
             foreach (var line in lines)
             {
-                if(line.LineId != null && line.LineId.StartsWith("System.FlagsAttribute.") && !string.IsNullOrEmpty(line.RelatedToLine))
+                if (line.LineId != null && line.LineId.StartsWith("System.FlagsAttribute().") && !string.IsNullOrEmpty(line.RelatedToLine))
                 {
                     count++;
                 }
@@ -385,6 +406,82 @@ namespace Microsoft.Extensions.Azure {
             bool isRequiresDynamicCode = classLine.Children?.Any(l => l.Tokens.Any(t => t.Value == "RequiresDynamicCode")) ?? false;
             Assert.False(isRequiresUnreferencedCodePresent);
             Assert.False(isRequiresDynamicCode);
+        }
+
+        [Fact]
+        public void VerifyCodeFileBuilderThrowsOnDuplicateLineIdsInBuildProcess()
+        {
+            // This test verifies that CodeFileBuilder.Build() properly throws InvalidOperationException
+            // when duplicate LineIds are generated during the build process. We simulate this by
+            // creating a custom SymbolOrderProvider that returns duplicate members.
+            
+            var sourceCode = @"
+using System;
+
+namespace TestNamespace
+{
+    public class TestClass
+    {
+        public void Method1() { }
+        public void Method2() { }
+        public int Property1 { get; set; }
+    }
+}";
+
+            // Create a syntax tree from the source
+            var syntaxTree = Microsoft.CodeAnalysis.CSharp.CSharpSyntaxTree.ParseText(sourceCode);
+            
+            // Create a compilation with the syntax tree
+            var compilation = Microsoft.CodeAnalysis.CSharp.CSharpCompilation.Create(
+                "TestAssembly",
+                new[] { syntaxTree },
+                new[] { 
+                    MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
+                    MetadataReference.CreateFromFile(typeof(Console).Assembly.Location)
+                },
+                new Microsoft.CodeAnalysis.CSharp.CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+
+            // Get the assembly symbol
+            var assemblySymbol = compilation.Assembly;
+            
+            // Create the builder with a custom SymbolOrderProvider that duplicates members
+            var builder = new CSharpAPIParser.TreeToken.CodeFileBuilder();
+            builder.SymbolOrderProvider = new DuplicatingSymbolOrderProvider();
+            
+            // The Build method should throw InvalidOperationException when it calls VerifyCodeFile
+            // because the DuplicatingSymbolOrderProvider causes duplicate LineIds to be generated
+            var exception = Assert.Throws<InvalidOperationException>(() => 
+                builder.Build(assemblySymbol, false, null));
+            
+            Assert.Contains("Duplicate LineId values found", exception.Message);
+        }
+
+        // Custom SymbolOrderProvider that returns members twice to simulate duplicate LineIds
+        private class DuplicatingSymbolOrderProvider : ICodeFileBuilderSymbolOrderProvider
+        {
+            public IEnumerable<INamespaceSymbol> OrderNamespaces(IEnumerable<INamespaceSymbol> namespaces)
+            {
+                return namespaces;
+            }
+
+            public IEnumerable<T> OrderTypes<T>(IEnumerable<T> symbols) where T : ITypeSymbol
+            {
+                return symbols;
+            }
+
+            public IEnumerable<ISymbol> OrderMembers(IEnumerable<ISymbol> members)
+            {
+                // Return each member twice to create duplicate LineIds
+                var membersList = members.ToList();
+                foreach (var member in membersList)
+                {
+                    yield return member;
+                }
+                foreach (var member in membersList)
+                {
+                    yield return member;
+                }
+            }
         }
     }
 }

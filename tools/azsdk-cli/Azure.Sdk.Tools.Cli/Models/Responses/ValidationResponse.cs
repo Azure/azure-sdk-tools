@@ -5,7 +5,7 @@ namespace Azure.Sdk.Tools.Cli.Models;
 /// <summary>
 /// Response model for prompt validation operations
 /// </summary>
-public class ValidationResponse : Response
+public class ValidationResponse : CommandResponse
 {
     [JsonPropertyName("message")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]

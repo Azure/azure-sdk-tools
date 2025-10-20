@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
@@ -31,28 +31,25 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     {
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Generators];
 
-        private readonly Option<string> promptOption = new(
-            name: "--prompt",
-            description: "Prompt to use for the sample generation. It is either a path to a .md file containing the sample description, or a text prompt")
+        private readonly Option<string> promptOption = new("--prompt")
         {
-            IsRequired = true,
+            Description = "Prompt to use for the sample generation. It is either a path to a .md file containing the sample description, or a text prompt",
+            Required = true,
         };
 
 
-        private readonly Option<bool> overwriteOption = new(
-            name: "--overwrite",
-            getDefaultValue: () => false,
-            description: "Overwrite existing files without prompting")
+        private readonly Option<bool> overwriteOption = new("--overwrite")
         {
-            IsRequired = false,
+            Description = "Overwrite existing files without prompting",
+            Required = false,
+            DefaultValueFactory = _ => false,
         };
 
-        private readonly Option<string> modelOption = new(
-            name: "--model",
-            getDefaultValue: () => "gpt-4.1",
-            description: "Azure OpenAI deployment name to use (default: `gpt-4.1`)")
+        private readonly Option<string> modelOption = new("--model")
         {
-            IsRequired = false,
+            Description = "Azure OpenAI deployment name to use (default: `gpt-4.1`)",
+            Required = false,
+            DefaultValueFactory = _ => "gpt-4.1",
         };
 
         protected override Command GetCommand() => new("samples", "Generates sample files")
@@ -63,10 +60,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             modelOption
         };
 
-        public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+        public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
             // Retrieve raw prompt argument
-            string rawPrompt = ctx.ParseResult.GetValueForOption(promptOption) ?? "";
+            string rawPrompt = parseResult.GetValue(promptOption) ?? "";
             string prompt = rawPrompt;
 
             // If the raw prompt looks like a path to a markdown file (no newlines, ends with .md/.markdown, file exists), load its content.
@@ -93,9 +90,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     prompt = rawPrompt; // fallback
                 }
             }
-            string packagePath = ctx.ParseResult.GetValueForOption(SharedOptions.PackagePath) ?? ".";
-            bool overwrite = ctx.ParseResult.GetValueForOption(overwriteOption);
-            string model = ctx.ParseResult.GetValueForOption(modelOption) ?? "gpt-4.1";
+            string packagePath = parseResult.GetValue(SharedOptions.PackagePath) ?? ".";
+            bool overwrite = parseResult.GetValue(overwriteOption);
+            string model = parseResult.GetValue(modelOption) ?? "gpt-4.1";
 
             try
             {

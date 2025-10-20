@@ -187,8 +187,8 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
             // Run multiple linting tools
             var lintingTools = new[]
             {
-                ("pylint", new[] { "azpysdk", "pylint", packagePath }),
-                ("mypy", new[] { "azpysdk", "mypy", packagePath }),
+                ("pylint", new[] { "azpysdk", "pylint", "--isolate", packagePath }),
+                ("mypy", new[] { "azpysdk", "mypy", "--isolate", packagePath }),
             };
 
             _logger.LogInformation("Starting {Count} linting tools in parallel", lintingTools.Length);
@@ -246,7 +246,7 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
 
             // Run azpysdk black
             var command = "azpysdk";
-            var args = new[] { "black", packagePath };
+            var args = new[] { "black", "--isolate", packagePath };
 
             _logger.LogInformation("Executing command: {Command} {Arguments}", command, string.Join(" ", args));
             var timeout = TimeSpan.FromMinutes(10);

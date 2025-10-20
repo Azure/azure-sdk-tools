@@ -61,7 +61,14 @@ class SettingsManager:
             except Exception:
                 pass
         # Fallback: direct URI string
-        if isinstance(value, str) and value.startswith("https://") and ".vault.azure.net" in value:
+        # Only treat it as a secret URI if it points to a secret (contains '/secrets/')
+        # This avoids trying to resolve a vault root URL like https://<vault>.vault.azure.net/
+        if (
+            isinstance(value, str)
+            and value.startswith("https://")
+            and ".vault.azure.net" in value
+            and "/secrets/" in value
+        ):
             secret_value = self._get_secret_from_keyvault(value)
             self._cache[cache_key] = secret_value
             return secret_value

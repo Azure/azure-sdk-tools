@@ -12,7 +12,7 @@ public class VerifySetupResponse : CommandResponse
     [JsonPropertyName("results")]
     public List<RequirementCheckResult>? Results { get; set; } // all checks with details
 
-    public override string ToString()
+    protected override string Format()
     {
         var sb = new StringBuilder();
         sb.AppendLine($"AllRequirementsSatisfied: {AllRequirementsSatisfied}");

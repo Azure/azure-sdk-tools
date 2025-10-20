@@ -74,7 +74,7 @@ public class VerifySetupTool : MCPTool
     }
 
     [McpServerTool(Name = "azsdk_verify_setup"), Description("Verifies the developer environment for MCP release tool requirements")]
-    public async Task<VerifySetupResponse> VerifySetup(List<string> langs = null, string packagePath = null, CancellationToken ct = default)
+    public async Task<VerifySetupResponse> VerifySetup(List<string> langs = null, string packagePath = Environment.CurrentDirectory, CancellationToken ct = default)
     {
         try
         {

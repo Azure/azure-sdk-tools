@@ -149,11 +149,10 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
             _logger.LogInformation("Starting {Count} linting tools in parallel", lintingTools.Length);
 
             // Create tasks for all linting tools to run in parallel
-            var lintingTasks = lintingTools.Select(tool =>
+            var lintingTasks = lintingTools.Select(async tool =>
             {
                 var (toolName, command) = tool;
-                var result = _processHelper.Run(new(command[0], command.Skip(1).ToArray(), workingDirectory: packagePath, timeout: timeout), cancellationToken);
-                _logger.LogInformation("{ToolName} completed with exit code {ExitCode}", toolName, result.ExitCode);
+                var result = await _processHelper.Run(new(command[0], command.Skip(1).ToArray(), workingDirectory: packagePath, timeout: timeout), cancellationToken);
                 return (toolName, result);
             });
 
@@ -161,12 +160,12 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
             var allResults = await Task.WhenAll(lintingTasks);
 
             // Analyze results
-            var failedTools = allResults.Where(r => r.ExitCode != 0).ToList();
+            var failedTools = allResults.Where(r => r.result.ExitCode != 0).ToList();
 
             if (failedTools.Count == 0)
             {
                 _logger.LogInformation("All linting tools completed successfully - no issues found");
-                return Task.FromResult(new CLICheckResponse(0, "All linting tools completed successfully - no issues found"));
+                return new CLICheckResponse(0, "All linting tools completed successfully - no issues found");
             }
             else
             {
@@ -174,15 +173,15 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
                 var combinedOutput = string.Join("\n\n", failedTools.Select(t => $"=== {t.toolName} ===\n{t.result.Output}"));
                 
                 _logger.LogWarning("Linting found issues in {FailedCount}/{TotalCount} tools: {FailedTools}", 
-                    failedTools.Count, allResults.Result.Length, failedToolNames);
+                    failedTools.Count, allResults.Length, failedToolNames);
                 
-                return Task.FromResult(new CLICheckResponse(1, combinedOutput, $"Linting issues found in: {failedToolNames}"));
+                return new CLICheckResponse(1, combinedOutput, $"Linting issues found in: {failedToolNames}");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error running code linting for Python project at: {PackagePath}", packagePath);
-            return Task.FromResult(new CLICheckResponse(1, "", $"Error running code linting: {ex.Message}"));
+            return new CLICheckResponse(1, "", $"Error running code linting: {ex.Message}");
         }
     }
 

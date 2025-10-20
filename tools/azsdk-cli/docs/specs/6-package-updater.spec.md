@@ -226,7 +226,7 @@ When the tool executes the language-specific `update-version` script it will pas
 | `sdkVersion` | Specifies the next version to set (explicit version string). | string | No |
 | `sdkReleaseDate` | Release date to write into changelog (YYYY-MM-DD). | string | No |
 
-Note: For management-plane (mgmt) packages, at least one of `--sdk-version` or `--sdk-release-type` MUST be provided; the script will fail with an error if neither is supplied or validation fails.
+Note: For management-plane (mgmt) packages, at least one of `sdkVersion` or `sdkReleaseType` MUST be provided; the script will fail with an error if neither is supplied or validation fails.
 
 **Example invocations:**
 
@@ -299,7 +299,7 @@ Purpose: Create or update CI pipeline configuration.
 
 Inputs:
 
-- `-package-path <abs path>` (required) – Absolute path to the root of the SDK package.
+- `--package-path <abs path>` (required) – Absolute path to the root of the SDK package.
 
 Behavior:
 
@@ -541,12 +541,12 @@ azsdk package ci update --package-path <absolute_folder_path_to_package>
 **Command:**
 
 ```bash
-azsdk package changelog update -package-path <absolute_folder_path_to_package>
+azsdk package changelog update --package-path <absolute_folder_path_to_package>
 ```
 
 **Options:**
 
-- `-package-path <path>`: Package root (required).
+- `--package-path <path>`: Package root (required).
 
 **Expected Output (mgmt):**
 
@@ -565,13 +565,13 @@ azsdk package changelog update -package-path <absolute_folder_path_to_package>
 **Command:**
 
 ```bash
-azsdk package version update -package-path <absolute_folder_path_to_package> -sdk-release-type <stable|beta>
+azsdk package version update --package-path <absolute_folder_path_to_package> --release-type <stable|beta>
 ```
 
 **Options:**
 
-- `-package-path <path>`: Package root (required).
-- `-sdk-release-type <stable|beta>`: Determines increment strategy (required for mgmt; optional for data-plane release context).
+- `--package-path <path>`: Package root (required).
+- `--release-type <stable|beta>`: Determines increment strategy (required for mgmt; optional for data-plane release context).
 
 **Expected Output:**
 
@@ -590,12 +590,12 @@ azsdk package version update -package-path <absolute_folder_path_to_package> -sd
 **Command:**
 
 ```bash
-azsdk package metadata update -package-path <absolute_folder_path_to_package>
+azsdk package metadata update --package-path <absolute_folder_path_to_package>
 ```
 
 **Options:**
 
-- `-package-path <path>`: Package root (required).
+- `--package-path <path>`: Package root (required).
 
 **Expected Output:**
 
@@ -666,7 +666,7 @@ azsdk package metadata update -package-path <absolute_folder_path_to_package>
 | Metric Name | Description | Purpose |
 |-------------|-------------|---------|
 | tool_run_count | Count of executions per tool per language | Adoption tracking |
-| tool_failure_rate | Failures / total runs | Reliability signal and priority remidation |
+| tool_failure_rate | Failures / total runs | Reliability signal and priority remediation |
 | avg_duration_ms | Mean execution time per tool | Performance tuning |
 | version_mismatch_detected | Count of times version update found inconsistent files | Detect systemic config issues |
 

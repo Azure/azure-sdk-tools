@@ -90,7 +90,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error initializing TypeSpec project");
-                return new() { ResponseError = ex.Message };
+                return new DefaultCommandResponse { ResponseError = ex.Message };
             }
         }
 

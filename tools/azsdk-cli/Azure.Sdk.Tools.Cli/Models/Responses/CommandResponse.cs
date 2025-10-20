@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models;
 
-public class CommandResponse
+public abstract class CommandResponse
 {
     private int? exitCode = null;
     [JsonIgnore]
@@ -44,13 +44,12 @@ public class CommandResponse
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public List<string>? NextSteps { get; set; }
 
-    protected string ToString(StringBuilder value)
-    {
-        return ToString(value.ToString());
-    }
+    protected abstract string Format();
 
-    protected string ToString(string value)
+    public override string ToString()
     {
+        var value = Format();
+
         List<string> messages = [];
         if (!string.IsNullOrEmpty(ResponseError))
         {

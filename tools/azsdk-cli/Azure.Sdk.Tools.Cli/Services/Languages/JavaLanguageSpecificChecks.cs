@@ -111,8 +111,9 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
                 return prerequisiteCheck;
             }
 
-            // Use Azure SDK approach: mvn install with linting properties (based on run-and-validate-linting.yml)
-            // This matches the Azure SDK for Java pipeline which runs linting during install phase
+            // Use mvn install with ALL linting tools in fail-safe mode
+            // This follows the "accumulate all errors" pattern instead of failing fast
+            // The -am flag ensures parent POMs are built/resolved automatically
             var command = "mvn";
             var args = new List<string>
             {
@@ -120,22 +121,24 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
                 "--no-transfer-progress",
                 "-DskipTests",
                 "-Dgpg.skip",
-                "-Dmaven.javadoc.skip=true",
+                "-DtrimStackTrace=false",
+                "-Dmaven.javadoc.skip=false",
                 "-Dcodesnippet.skip=true",
-                "-Dspotless.apply.skip=true",
+                "-Dspotless.skip=false",
+                "-Djacoco.skip=true",
                 "-Dshade.skip=true",
                 "-Dmaven.antrun.skip=true",
                 "-am",
                 "-f", pomPath
             };
 
-            // Configure linting behavior to match Azure SDK pipeline
-            // Note: There's no automated "fix" mode for linting - all tools require manual review
+            // Configure ALL linting tools in fail-safe mode - accumulate errors instead of failing fast
             args.AddRange([
                 "-Dcheckstyle.failOnViolation=false",
                 "-Dcheckstyle.failsOnError=false",
                 "-Dspotbugs.failOnError=false",
                 "-Drevapi.failBuildOnProblemsFound=false"
+                // Note: Javadoc doesn't have a failOnError flag - it contributes to build exit code
             ]);
 
             var result = await _processHelper.Run(new(command, [.. args], workingDirectory: packagePath, timeout: MavenLintTimeout), cancellationToken);
@@ -144,28 +147,16 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
             var output = result.Output;
             var lintingResults = ParseLintingResults(output);
 
-            // Run javadoc validation as separate step (following Azure SDK pipeline pattern)
-            _logger.LogInformation("Running javadoc validation");
-            var javadocArgs = new[] { "--no-transfer-progress", "javadoc:jar", "-f", pomPath };
-            var javadocResult = await _processHelper.Run(new("mvn", javadocArgs, workingDirectory: packagePath, timeout: MavenLintTimeout), cancellationToken);
-            
-            // Add javadoc results to linting results
-            var javadocHasIssues = javadocResult.ExitCode != 0;
-            lintingResults.Add(("Javadoc", javadocHasIssues));
-            
-            // Combine outputs for comprehensive reporting
-            var combinedOutput = $"{output}\n\n--- Javadoc Validation ---\n{javadocResult.Output}";
-
             var failedTools = lintingResults.Where(r => r.HasIssues).ToList();
             var passedTools = lintingResults.Where(r => !r.HasIssues).ToList();
 
             if (failedTools.Count == 0)
             {
-                var message = result.ExitCode == 0 && javadocResult.ExitCode == 0
+                var message = result.ExitCode == 0
                     ? $"Code linting passed - All tools successful: {string.Join(", ", passedTools.Select(t => t.Tool))}"
                     : "Code linting completed, but build had other issues. Check Maven output for details.";
                 _logger.LogInformation(message);
-                return new CLICheckResponse(Math.Max(result.ExitCode, javadocResult.ExitCode), message);
+                return new CLICheckResponse(result.ExitCode, message);
             }
             else
             {
@@ -196,7 +187,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
                 nextSteps.Add("Review the linting errors and fix them manually - no auto-fix available");
                 nextSteps.Add("Use -Dcheckstyle.skip=true, -Dspotbugs.skip=true, -Drevapi.skip=true, -Dmaven.javadoc.skip=true to skip specific tools during development");
 
-                return new CLICheckResponse(Math.Max(result.ExitCode, javadocResult.ExitCode), combinedOutput, errorMessage)
+                return new CLICheckResponse(result.ExitCode, output, errorMessage)
                 {
                     NextSteps = nextSteps
                 };
@@ -257,8 +248,22 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
         }
         results.Add(("RevAPI", revapiHasIssues));
 
-        _logger.LogInformation("Linting results parsed: Checkstyle ran={CheckstyleRan} issues={CheckstyleIssues}, SpotBugs ran={SpotBugsRan} issues={SpotBugsIssues}, RevAPI ran={RevapiRan} issues={RevapiIssues}",
-            checkstyleRan, checkstyleHasIssues, spotbugsRan, spotbugsHasIssues, revapiRan, revapiHasIssues);
+        // Check for Javadoc execution and results (included in linting)
+        var javadocRan = output.Contains("maven-javadoc-plugin") && !output.Contains("-Dmaven.javadoc.skip=true");
+        var javadocHasIssues = false;
+        if (javadocRan)
+        {
+            // Look for javadoc errors or warnings
+            var javadocSuccess = !output.Contains("Javadoc Warnings") && 
+                                !output.Contains("javadoc: error") && 
+                                !output.Contains("javadoc: warning") &&
+                                !output.Contains("[ERROR] Failed to execute goal org.apache.maven.plugins:maven-javadoc-plugin");
+            javadocHasIssues = !javadocSuccess;
+        }
+        results.Add(("Javadoc", javadocHasIssues));
+
+        _logger.LogDebug("Linting results parsed: Checkstyle ran={CheckstyleRan} issues={CheckstyleIssues}, SpotBugs ran={SpotBugsRan} issues={SpotBugsIssues}, RevAPI ran={RevapiRan} issues={RevapiIssues}, Javadoc ran={JavadocRan} issues={JavadocIssues}",
+            checkstyleRan, checkstyleHasIssues, spotbugsRan, spotbugsHasIssues, revapiRan, revapiHasIssues, javadocRan, javadocHasIssues);
 
         return results;
     }

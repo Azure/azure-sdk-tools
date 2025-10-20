@@ -24,7 +24,7 @@ $ToolsRepo = "Azure/azure-sdk-tools"
 
 $ghloggedInUser = (gh api user -q .login)
 # Get a temp access token from the logged in az cli user for azure devops resource
-$account = (az account show | ConvertFrom-Json)
+$account = (az account show -o json | ConvertFrom-Json)
 if ($LASTEXITCODE -ne 0) {
   Write-Host "Az login failed, try logging in again."
   exit $LASTEXITCODE

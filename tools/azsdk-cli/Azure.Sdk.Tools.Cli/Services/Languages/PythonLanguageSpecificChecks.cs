@@ -132,7 +132,7 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
         }
     }
 
-    public async Task<CLICheckResponse> LintCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    public Task<CLICheckResponse> LintCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -166,7 +166,7 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
             if (failedTools.Count == 0)
             {
                 _logger.LogInformation("All linting tools completed successfully - no issues found");
-                return new CLICheckResponse(0, "All linting tools completed successfully - no issues found");
+                return Task.FromResult(new CLICheckResponse(0, "All linting tools completed successfully - no issues found"));
             }
             else
             {
@@ -176,13 +176,13 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
                 _logger.LogWarning("Linting found issues in {FailedCount}/{TotalCount} tools: {FailedTools}", 
                     failedTools.Count, allResults.Result.Length, failedToolNames);
                 
-                return new CLICheckResponse(1, combinedOutput, $"Linting issues found in: {failedToolNames}");
+                return Task.FromResult(new CLICheckResponse(1, combinedOutput, $"Linting issues found in: {failedToolNames}"));
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error running code linting for Python project at: {PackagePath}", packagePath);
-            return new CLICheckResponse(1, "", $"Error running code linting: {ex.Message}");
+            return Task.FromResult(new CLICheckResponse(1, "", $"Error running code linting: {ex.Message}"));
         }
     }
 

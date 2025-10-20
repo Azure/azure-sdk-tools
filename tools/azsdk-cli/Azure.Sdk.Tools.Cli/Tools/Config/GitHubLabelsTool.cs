@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Parsing;
 using System.ComponentModel;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Commands;
@@ -20,17 +19,18 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
         IGitHubService githubService
     ) : MCPMultiCommandTool
     {
-        public override CommandGroup[] CommandHierarchy { get; set; } = [new("github-labels", "GitHub service labels tools")];
+        public override CommandGroup[] CommandHierarchy { get; set; } = [
+            SharedCommandGroups.Config,
+            new("github-label", "GitHub service label commands")
+        ];
 
         //command names
-        private const string checkServiceLabelCommandName = "check-service-label";
-        private const string createServiceLabelCommandName = "create-service-label";
+        private const string checkServiceLabelCommandName = "check";
+        private const string createServiceLabelCommandName = "create";
 
-        // Command options
-        private readonly Option<string> serviceLabelOpt = new("--service", "-s")
+        private readonly Argument<string> serviceLabelArg = new("service")
         {
-            Description = "Proposed Service name used to create a PR for a new label.",
-            Required = true,
+            Description = "Proposed Service name used to create a PR for a new label."
         };
 
         private readonly Option<string> documentationLinkOpt = new("--link", "-l")
@@ -41,8 +41,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
 
         protected override List<Command> GetCommands() =>
         [
-            new(checkServiceLabelCommandName, "Check if a service label exists in the common labels CSV") { serviceLabelOpt },
-            new(createServiceLabelCommandName, "Creates a PR for a new label given a proposed label and brand documentation.") { serviceLabelOpt, documentationLinkOpt },
+            new(checkServiceLabelCommandName, "Check if a service label exists in the common labels CSV") { serviceLabelArg },
+            new(createServiceLabelCommandName, "Creates a PR for a new label given a proposed label and brand documentation") { serviceLabelArg, documentationLinkOpt },
         ];
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
@@ -52,10 +52,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
             switch (command)
             {
                 case checkServiceLabelCommandName:
-                    var serviceLabel = parseResult.GetValue(serviceLabelOpt);
+                    var serviceLabel = parseResult.GetValue(serviceLabelArg);
                     return await CheckServiceLabel(serviceLabel);
                 case createServiceLabelCommandName:
-                    var proposedServiceLabel = parseResult.GetValue(serviceLabelOpt);
+                    var proposedServiceLabel = parseResult.GetValue(serviceLabelArg);
                     var documentationLink = parseResult.GetValue(documentationLinkOpt);
                     return await CreateServiceLabel(proposedServiceLabel, documentationLink ?? "");
                 default:
@@ -63,7 +63,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
             }
         }
 
-        [McpServerTool(Name = "azsdk_check_service_label"), Description("Checks if a service label exists and returns its details")]
+        [McpServerTool(Name = "azsdk_check_github_service_label"), Description("Checks if a service label exists and returns its details")]
         public async Task<ServiceLabelResponse> CheckServiceLabel(string serviceLabel)
         {
             try
@@ -103,7 +103,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
             return result;
         }
 
-        [McpServerTool(Name = "azsdk_create_service_label"), Description("Creates a pull request to add a new service label")]
+        [McpServerTool(Name = "azsdk_create_github_service_label"), Description("Creates a pull request to add a new service label")]
         public async Task<ServiceLabelResponse> CreateServiceLabel(string label, string link)
         {
             try

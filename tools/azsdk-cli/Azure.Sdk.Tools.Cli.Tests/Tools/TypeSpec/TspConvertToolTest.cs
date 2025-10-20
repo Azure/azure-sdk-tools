@@ -10,24 +10,6 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
     public class TspConvertToolTests
     {
         [Test]
-        public void GetCommand_ShouldReturnCommand()
-        {
-            // Arrange
-            var logger = new Mock<ILogger<TypeSpecConvertTool>>().Object;
-            var tspHelper = new Mock<ITspClientHelper>().Object;
-            var tool = new TypeSpecConvertTool(logger, tspHelper);
-
-            // Act
-            var command = tool.GetCommandInstances().First();
-
-            Assert.Multiple(() =>
-            {
-                Assert.That(command.Name, Is.EqualTo("convert-swagger"));
-                Assert.That(command.Description, Does.Contain("Convert an existing Azure service swagger definition to a TypeSpec project"));
-            });
-        }
-
-        [Test]
         public async Task ConvertSwagger_WithInvalidFileExtension_ShouldReturnError()
         {
             // Arrange

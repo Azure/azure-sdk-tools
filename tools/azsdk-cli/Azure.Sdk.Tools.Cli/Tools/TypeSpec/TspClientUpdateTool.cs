@@ -19,7 +19,7 @@ public class TspClientUpdateTool(
     ITspClientHelper tspClientHelper
 ) : MCPTool
 {
-    public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.TypeSpec];
+    public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.TypeSpec, SharedCommandGroups.TypeSpecClient];
 
     private readonly Argument<string> updateCommitSha = new("update-commit-sha")
     {
@@ -34,7 +34,7 @@ public class TspClientUpdateTool(
     };
 
     protected override Command GetCommand() =>
-        new("customized-update", "Update customized TypeSpec-generated client code. Runs the full pipeline by default: regenerate -> diff -> map -> propose -> apply")
+        new("update", "Update customized TypeSpec-generated client code. Runs the full pipeline by default: regenerate -> diff -> map -> propose -> apply")
         {
             updateCommitSha, SharedOptions.PackagePath, newGenOpt,
         };

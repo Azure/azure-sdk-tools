@@ -25,7 +25,6 @@ namespace Azure.Sdk.Tools.Cli.Commands
             help.Aliases.Clear();  // get rid of stuff like '-?' which just doesn't even work in some shells
             help.Aliases.Add("-h");
 
-            rootCommand.Options.Add(SharedOptions.ToolOption);
             rootCommand.Options.Add(SharedOptions.Debug);
 
             SharedOptions.Format.Validators.Add(result =>
@@ -68,6 +67,10 @@ namespace Azure.Sdk.Tools.Cli.Commands
 
             PopulateToolHierarchy(rootCommand, toolInstances);
 
+#if DEBUG
+            ValidateCommandTree(rootCommand);
+#endif
+
             var parseResult = rootCommand.Parse(args);
             return await parseResult.InvokeAsync();
         }
@@ -109,6 +112,14 @@ namespace Azure.Sdk.Tools.Cli.Commands
                             }
                         }
 
+                        if (segment.Aliases != null)
+                        {
+                            foreach (var alias in segment.Aliases)
+                            {
+                                groupCommand.Aliases.Add(alias);
+                            }
+                        }
+
                         parentMap[segment.Verb] = groupCommand;
                     }
 
@@ -139,5 +150,24 @@ namespace Azure.Sdk.Tools.Cli.Commands
                 }
             }
         }
+
+#if DEBUG
+        private static void ValidateCommandTree(Command command)
+        {
+            var nameSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var sub in command.Subcommands)
+            {
+                if (!nameSet.Add(sub.Name))
+                {
+                    Console.WriteLine($"Duplicate command '{sub.Name}' under '{command.Name}'. Current children: {string.Join(", ", command.Subcommands.Select(c => c.Name))}");
+                }
+            }
+
+            foreach (var sub in command.Subcommands)
+            {
+                ValidateCommandTree(sub);
+            }
+        }
+#endif
     }
 }

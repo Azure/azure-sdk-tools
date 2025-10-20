@@ -21,11 +21,11 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         ILanguageSpecificResolver<ITestRunner> testRunnerResolver
     ) : MCPTool
     {
-        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
+        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package, SharedCommandGroups.PackageTest];
 
-        private const string TestCommandName = "test";
+        private const string RunCommandName = "run";
 
-        protected override Command GetCommand() => new(TestCommandName, "Run tests for SDK packages")
+        protected override Command GetCommand() => new Command(RunCommandName, "Run tests for SDK packages")
         {
             SharedOptions.PackagePath,
         };

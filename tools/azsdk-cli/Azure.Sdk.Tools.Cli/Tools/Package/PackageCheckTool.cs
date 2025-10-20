@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Parsing;
 using System.ComponentModel;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Commands;
@@ -18,11 +17,17 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
     public class PackageCheckTool(
         ILogger<PackageCheckTool> logger,
         ILanguageChecks languageChecks
-    ) : MCPMultiCommandTool
+    ) : MCPTool
     {
-        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Package];
+        public override CommandGroup[] CommandHierarchy { get; set; } = [
+            SharedCommandGroups.Package,
+        ];
 
-        private const string RunChecksCommandName = "run-checks";
+        private readonly Argument<PackageCheckType> checkTypeArg = new("check-type")
+        {
+            Description = "Type of validation check to run",
+            DefaultValueFactory = _ => PackageCheckType.All
+        };
 
         private readonly Option<bool> fixOption = new("--fix")
         {
@@ -30,49 +35,18 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             Required = false,
         };
 
-        protected override List<Command> GetCommands()
-        {
-            // Add the package path option to the parent command so it can be used without subcommands
-            Command parentCommand = new(RunChecksCommandName, "Run validation checks for SDK packages") { SharedOptions.PackagePath, fixOption };
-
-            // Create sub-commands for each check type
-            var checkTypeValues = Enum.GetValues<PackageCheckType>();
-            foreach (var checkType in checkTypeValues)
-            {
-                var checkName = checkType.ToString().ToLowerInvariant();
-                Command subCommand = new(checkName, $"Run {checkName} validation check") { SharedOptions.PackagePath, fixOption };
-                parentCommand.Subcommands.Add(subCommand);
-            }
-
-            // Return all commands - parent and subcommands so the handlers get registered
-            return [parentCommand, .. parentCommand.Subcommands];
-        }
+        protected override Command GetCommand() =>
+            new("validate", "Run validation checks for SDK packages") { checkTypeArg, SharedOptions.PackagePath, fixOption };
 
         public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
             // Get the command name which corresponds to the check type
             var command = parseResult.CommandResult.Command;
             var commandName = command.Name;
+            var checkType = parseResult.GetValue(checkTypeArg);
             var packagePath = parseResult.GetValue(SharedOptions.PackagePath);
             var fixCheckErrors = parseResult.GetValue(fixOption);
-
-            // If this is the parent command (run-checks), default to All
-            if (commandName == RunChecksCommandName)
-            {
-                return await RunPackageCheck(packagePath, PackageCheckType.All, fixCheckErrors, ct);
-            }
-
-            // Check if this is a subcommand by checking if its parent is the run-checks command
-            if (command.Parents.Any(p => p.Name == RunChecksCommandName))
-            {
-                // Parse the subcommand name back to enum
-                if (Enum.TryParse<PackageCheckType>(commandName, true, out var checkType))
-                {
-                    return await RunPackageCheck(packagePath, checkType, fixCheckErrors, ct);
-                }
-            }
-
-            throw new ArgumentException($"Unknown command: {commandName}");
+            return await RunPackageCheck(packagePath, checkType, fixCheckErrors, ct);
         }
 
         [McpServerTool(Name = "azsdk_package_run_check"), Description("Run validation checks for SDK packages. Provide package path, check type (All, Changelog, Dependency, Readme, Cspell, Snippets), and whether to fix errors.")]

@@ -1,14 +1,13 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Parsing;
 using Azure.Sdk.Tools.Cli.Helpers;
 
 namespace Azure.Sdk.Tools.Cli.Commands.HostServer
 {
     public class HostServerCommand(ILogger<HostServerCommand> logger, IRawOutputHelper outputHelper)
     {
-        public static Option<string> ToolOption = new("--tools")
+        private static readonly Option<string> toolOption = new("--tools")
         {
             Description = "If provided, the mcp server will only list and respond to tools named the same as provided in this option. Glob matching is honored.",
             Required = false,
@@ -16,9 +15,11 @@ namespace Azure.Sdk.Tools.Cli.Commands.HostServer
 
         public Command GetCommand()
         {
-            Command cmd = new("mcp", "Starts the MCP server (stdio mode)");
-            cmd.Aliases.Add("start");  // backwards compatibility
+            Command cmd = new("mcp", "Starts the MCP server (stdio mode)") { toolOption };
+            Command legacyStartCmd = new("start", "Starts the MCP server (stdio mode)") { toolOption };
+            legacyStartCmd.Hidden = true;
             cmd.SetAction((_, cancellationToken) => HandleCommand(cancellationToken));
+            legacyStartCmd.SetAction((_, cancellationToken) => HandleCommand(cancellationToken));
             return cmd;
         }
 

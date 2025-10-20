@@ -9,7 +9,7 @@ Azure SDK developers and service team can use these CLI commands to generate, bu
 
 ```
 Tools/
-├── Package/          # Package-level operations 
+├── Package/          # Package-level operations
 ├── ReleasePlan/      # Release planning operations
 ├── TypeSpec/         # TypeSpec operations
 ```
@@ -20,9 +20,9 @@ All CLI commands must follow a predefined top-level command hierarchy. Commands 
 
 ### 1. **package** - Package Operations
 
-**Namespace:** `Azure.Sdk.Tools.Cli.Tools.Package`  
-**Command Group:** `SharedCommandGroups.Package`  
-**Verb:** `package`  or `pkg`
+**Namespace:** `Azure.Sdk.Tools.Cli.Tools.Package`
+**Command Group:** `SharedCommandGroups.Package`
+**Verb:** `package`  (alias `pkg`)
 
 For operations at the SDK package level. The package group has further sub-grouping for better organization:
 
@@ -37,11 +37,11 @@ For operations at the SDK package level. The package group has further sub-group
 #### Sub-Groups:
 
 ##### **readme** - README Operations
- 
+
 For generating and updating README files:
 
 - Generate README
-- Update README 
+- Update README
 
 ##### **sample** - Sample Operations
 
@@ -73,9 +73,9 @@ For creating, updating, and running tests for SDK packages:
 
 ### 2. **release-plan** - Release Plan
 
-**Namespace:** `Azure.Sdk.Tools.Cli.Tools.ReleasePlan`  
-**Command Group:** Custom (no predefined group)  
-**Verb:** `release-plan` 
+**Namespace:** `Azure.Sdk.Tools.Cli.Tools.ReleasePlan`
+**Command Group:** Custom (no predefined group)
+**Verb:** `release-plan`
 
 For release planning and SDK coordination:
 
@@ -90,9 +90,9 @@ For release planning and SDK coordination:
 
 ### 3. **typespec** - TypeSpec Operations and TypeSpec Client Operations
 
-**Namespace:** `Azure.Sdk.Tools.Cli.Tools.TypeSpec`  
-**Command Group:** `SharedCommandGroups.TypeSpec`  
-**Verb:** `tsp`  
+**Namespace:** `Azure.Sdk.Tools.Cli.Tools.TypeSpec`
+**Command Group:** `SharedCommandGroups.TypeSpec`
+**Verb:** `tsp`  (alias `typespec`)
 
 For TypeSpec-related operations:
 
@@ -106,3 +106,5 @@ For TypeSpec-related operations:
 - `tsp convert --swagger-file ./swagger.json`
 - `tsp init --name MyService`
 - `tsp validate --project-path ./typespec`
+- `tsp client update --package-path ./sdk/storage --update-commit-sha <sha>`
+- `tsp project modified-projects --repo-root ./azure-rest-api-specs`

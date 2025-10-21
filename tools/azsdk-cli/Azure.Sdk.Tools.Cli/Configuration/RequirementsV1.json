@@ -105,6 +105,16 @@
                 "requirement": "azpysdk",
                 "check": ["azpysdk", "--help"],
                 "instructions": ["Ensure your virtual environment is activated", "python -m pip install eng/tools/azure-sdk-tools[build]", "Check that it was installed with `azpysdk --help`"]
+            },
+            {
+                "requirement": "sdk_generator",
+                "check": ["sdk_generator", "--help"],
+                "instructions": ["Ensure your virtual environment is activated", "python -m pip install eng/tools/azure-sdk-tools[sdk_generator]", "Check that it was installed with `sdk_generator --help`"]
+            },
+            {
+                "requirement": "pytest >= 8.3.5",
+                "check": ["pytest", "--version"],
+                "instructions": ["Ensure your virtual environment is activated", "python -m pip install pytest", "Check that it was installed with `pytest --version`"]
             }
         ]
     }

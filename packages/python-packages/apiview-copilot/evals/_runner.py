@@ -256,8 +256,8 @@ class EvaluationRunner:
                     append_results_to_cache(fresh_test_file_paths, fresh_results)
             
             # Combine all results
-            cached_rows = [{"row": row} for row in cached_azure_rows]
-            fresh_rows = [{"row": row} for result in fresh_results for row in result.get("rows", [])]
+            cached_rows = [row for row in cached_azure_rows]
+            fresh_rows = [row for result in fresh_results for row in result.get("rows", [])]
             all_cached_rows = cached_rows + fresh_rows
             combined_result = construct_fake_azure_result(all_cached_rows)
             

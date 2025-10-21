@@ -1,5 +1,4 @@
 import argparse
-import os
 import dotenv
 from _discovery import discover_targets
 from _runner import EvaluationRunner

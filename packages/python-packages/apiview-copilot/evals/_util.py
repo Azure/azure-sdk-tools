@@ -1,4 +1,5 @@
 import json
+import yaml
 from pathlib import Path
 from typing import Any, Optional
 
@@ -51,7 +52,6 @@ def append_results_to_cache(test_file_paths: list[Path], azure_results: list[dic
                 if test_file_path.suffix == ".json":
                     test_data = json.load(f)
                 elif test_file_path.suffix in [".yaml", ".yml"]:
-                    import yaml
                     test_data = yaml.safe_load(f)
                 else:
                     continue
@@ -138,7 +138,7 @@ def save_result_to_cache(testcase_id: str, test_file_path: Path, azure_result_ro
     
     try:
         with cache_file.open("w", encoding="utf-8") as f:
-            json.dump(cache_data, f, indent=3, ensure_ascii=False)
+            json.dump(cache_data, f, indent=2, ensure_ascii=False)
     except IOError:
         # Continue without caching if write fails
         pass

@@ -86,13 +86,22 @@ public class VerifySetupTool : MCPTool
                 Results = new List<RequirementCheckResult>()
             };
 
+            // Start all checks concurrently
+            var checkTasks = new List<Task<(SetupRequirements.Requirement req, DefaultCommandResponse result)>>();
+            
             foreach (var req in reqsToCheck)
             {
                 logger.LogInformation("Checking requirement: {Requirement}, Check: {Check}, Instructions: {Instructions}",
                     req.requirement, req.check, req.instructions);
 
-                var result = await RunCheck(req, packagePath, ct);
+                var task = RunCheck(req, packagePath, ct).ContinueWith(t => (req, t.Result), TaskScheduler.Default);
+                checkTasks.Add(task);
+            }
 
+            var results = await Task.WhenAll(checkTasks);
+
+            foreach (var (req, result) in results)
+            {
                 if (result.ExitCode != 0)
                 {
                     logger.LogWarning("Requirement check failed for {Requirement}. Suggested install command: {Instruction}", req.requirement, req.instructions);
@@ -186,7 +195,7 @@ public class VerifySetupTool : MCPTool
 
             if (reqGetter == null)
             {
-                logger.LogWarning("Could not resolve requirements checker for the specified languages. Checking only core requirements. Please provide languages using --langs option to check language requirements.");
+                logger.LogWarning("Could not resolve requirements checker for the specified languages. Checking only core requirements. Please provide languages using --languages option to check language requirements.");
                 return reqsToCheck;
             }
 

@@ -109,6 +109,10 @@ extends:
             steps:
               - template: /eng/pipelines/templates/steps/install-dotnet.yml
 
+              - task: GoTool@0
+                inputs:
+                  version: '1.24.1'
+
               - script: 'dotnet pack /p:ArtifactsPackagesDir=$(packagesToPublishDir) $(Warn) -c Release'
                 displayName: 'Build and Package'
                 workingDirectory: '${{ coalesce(parameters.PackageDirectory, parameters.ToolDirectory) }}'

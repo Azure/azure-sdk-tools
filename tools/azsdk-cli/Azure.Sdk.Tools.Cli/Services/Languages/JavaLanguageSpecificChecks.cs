@@ -262,8 +262,10 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
         }
         results.Add(("Javadoc", javadocHasIssues));
 
-        _logger.LogDebug("Linting results parsed: Checkstyle ran={CheckstyleRan} issues={CheckstyleIssues}, SpotBugs ran={SpotBugsRan} issues={SpotBugsIssues}, RevAPI ran={RevapiRan} issues={RevapiIssues}, Javadoc ran={JavadocRan} issues={JavadocIssues}",
-            checkstyleRan, checkstyleHasIssues, spotbugsRan, spotbugsHasIssues, revapiRan, revapiHasIssues, javadocRan, javadocHasIssues);
+        _logger.LogDebug("Checkstyle: ran={CheckstyleRan}, issues={CheckstyleIssues}", checkstyleRan, checkstyleHasIssues);
+        _logger.LogDebug("SpotBugs: ran={SpotBugsRan}, issues={SpotBugsIssues}", spotbugsRan, spotbugsHasIssues);
+        _logger.LogDebug("RevAPI: ran={RevapiRan}, issues={RevapiIssues}", revapiRan, revapiHasIssues);
+        _logger.LogDebug("Javadoc: ran={JavadocRan}, issues={JavadocIssues}", javadocRan, javadocHasIssues);
 
         return results;
     }

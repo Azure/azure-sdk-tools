@@ -99,6 +99,8 @@ stages:
       path: s/autorest
 
     - checkout: azure-sdk-tools
+    
+    - task: NuGetAuthenticate@1
 
     - task: UseNode@1
       displayName: 'Install Node.js'

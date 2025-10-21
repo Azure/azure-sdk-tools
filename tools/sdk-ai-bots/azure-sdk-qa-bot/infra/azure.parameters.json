@@ -34,6 +34,9 @@
     },
     "dockerImageTag": {
       "value": "${{DOCKER_IMAGE_TAG}}"
+    },
+    "dockerContainerName": {
+      "value": "${{DOCKER_CONTAINER_NAME}}"
     }
   }
 }

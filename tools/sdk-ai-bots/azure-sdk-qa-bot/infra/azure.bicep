@@ -24,7 +24,8 @@ param webAppSKU string
 
 // Docker Configuration
 param dockerImageTag string
-param dockerRegistryUrl string = '${resourceBaseName}.azurecr.io'  // Use the ACR we create
+param dockerContainerName string
+param dockerRegistryUrl string = '${dockerContainerName}.azurecr.io'  // Use the ACR we create
 param dockerImageName string = '${dockerRegistryUrl}/azure-sdk-qa-bot:${dockerImageTag}'
 
 // Bot
@@ -32,7 +33,7 @@ param dockerImageName string = '${dockerRegistryUrl}/azure-sdk-qa-bot:${dockerIm
 param botDisplayName string
 
 // Email notification settings (semicolon-separated string from env file)
-param alertEmailAddresses string = 'wanl@microsoft.com'
+param alertEmailAddresses string = 'chunyu@microsoft.com'
 
 // Storage Account
 param storageAccountName string = 'azuresdkqabotstorage'

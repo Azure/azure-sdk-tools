@@ -252,6 +252,7 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
             _logger.LogWarning(ex, "Failed to check AotCompatOptOut in project file for package: {PackageName}", packageName);
             return false;
         }
+    }
     /// <summary>
     /// Gets the language-specific path pattern for spelling checks.
     /// </summary>
@@ -264,8 +265,8 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
         var defaultPath = $"." + Path.DirectorySeparatorChar + relativePath + Path.DirectorySeparatorChar + "api" + Path.DirectorySeparatorChar + "*.cs";
         return Task.FromResult(defaultPath);
     }
-        public async Task<CLICheckResponse> ValidateReadmeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
-        public async Task<CLICheckResponse> ValidateReadme(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+
+    public async Task<CLICheckResponse> ValidateReadme(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         // Implementation for validating README in a Python project
         // Could use markdownlint, etc.

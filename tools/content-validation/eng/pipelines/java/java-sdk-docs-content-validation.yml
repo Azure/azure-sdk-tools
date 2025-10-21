@@ -47,7 +47,7 @@ parameters:
 
 - name: rule_MissingGenerics
   type: boolean
-  default: true
+  default: false
   displayName: "Create issue for rule MissingGenerics"
 
 

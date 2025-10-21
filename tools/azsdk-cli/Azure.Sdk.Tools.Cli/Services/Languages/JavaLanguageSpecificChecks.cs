@@ -10,7 +10,7 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// </summary>
 public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
 {
-    private readonly IProcessHelper _processHelper;
+    private readonly IMavenHelper _mavenHelper;
     private readonly IGitHelper _gitHelper;
     private readonly ILogger<JavaLanguageSpecificChecks> _logger;
     private readonly ICommonValidationHelpers _commonValidationHelpers;
@@ -39,12 +39,12 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
     ];
 
     public JavaLanguageSpecificChecks(
-        IProcessHelper processHelper,
+        IMavenHelper mavenHelper,
         IGitHelper gitHelper,
         ILogger<JavaLanguageSpecificChecks> logger,
         ICommonValidationHelpers commonValidationHelpers)
     {
-        _processHelper = processHelper;
+        _mavenHelper = mavenHelper;
         _gitHelper = gitHelper;
         _logger = logger;
         _commonValidationHelpers = commonValidationHelpers;
@@ -67,10 +67,8 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
 
             // Determine the Maven goal based on fix parameter
             var goal = fixCheckErrors ? "spotless:apply" : "spotless:check";
-            var command = "mvn";
-            var args = new[] { goal, "-f", pomPath };
 
-            var result = await _processHelper.Run(new(command, args, workingDirectory: packagePath, timeout: MavenFormatTimeout), cancellationToken);
+            var result = await _mavenHelper.Run(new(goal, [], pomPath, workingDirectory: packagePath, timeout: MavenFormatTimeout), cancellationToken);
 
             if (result.ExitCode == 0)
             {
@@ -120,13 +118,12 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
                 return prerequisiteCheck;
             }
 
-            // Use mvn install with ALL linting tools in fail-safe mode
+            // Use Azure SDK approach: mvn install with linting properties (based on run-and-validate-linting.yml)
+            // This matches the Azure SDK for Java pipeline which runs linting during install phase
             // This follows the "accumulate all errors" pattern instead of failing fast
             // The -am flag ensures parent POMs are built/resolved automatically
-            var command = "mvn";
             var args = new List<string>
             {
-                "install",
                 "--no-transfer-progress",
                 "-DskipTests",
                 "-Dgpg.skip",
@@ -137,8 +134,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
                 "-Djacoco.skip=true",
                 "-Dshade.skip=true",
                 "-Dmaven.antrun.skip=true",
-                "-am",
-                "-f", pomPath
+                "-am"
             };
 
             // Configure ALL linting tools in fail-safe mode - accumulate errors instead of failing fast
@@ -150,12 +146,22 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
                 // Note: Javadoc doesn't have a failOnError flag - it contributes to build exit code
             ]);
 
-            var result = await _processHelper.Run(new(command, [.. args], workingDirectory: packagePath, timeout: MavenLintTimeout), cancellationToken);
+            var result = await _mavenHelper.Run(new("install", [.. args], pomPath, workingDirectory: packagePath, timeout: MavenLintTimeout), cancellationToken);
 
             // Parse Maven output to determine which linting tools found issues
             var output = result.Output;
             var lintingResults = ParseLintingResults(output);
 
+            // Run javadoc validation as separate step (following Azure SDK pipeline pattern)
+            _logger.LogInformation("Running javadoc validation");
+            var javadocResult = await _mavenHelper.Run(new("javadoc:jar", ["--no-transfer-progress"], pomPath, workingDirectory: packagePath, timeout: MavenLintTimeout), cancellationToken);
+            
+            // Add javadoc results to linting results
+            var javadocHasIssues = javadocResult.ExitCode != 0;
+            lintingResults.Add(("Javadoc", javadocHasIssues));
+            
+            // Combine outputs for comprehensive reporting
+            var combinedOutput = $"{output}\n\n--- Javadoc Validation ---\n{javadocResult.Output}";
             var failedTools = lintingResults.Where(r => r.HasIssues).ToList();
             var passedTools = lintingResults.Where(r => !r.HasIssues).ToList();
 
@@ -205,7 +211,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
                 nextSteps.Add("Review the linting errors and fix them manually - no auto-fix available");
                 nextSteps.Add("Use -Dcheckstyle.skip=true, -Dspotbugs.skip=true, -Drevapi.skip=true, -Dmaven.javadoc.skip=true to skip specific tools during development");
 
-                return new PackageCheckResponse(result.ExitCode, output, errorMessage)
+                return new PackageCheckResponse(result.ExitCode, combinedOutput, errorMessage)
                 {
                     NextSteps = nextSteps
                 };
@@ -236,10 +242,7 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
             }
 
             // Use Azure SDK approach: mvn com.azure.tools:codesnippet-maven-plugin:update-codesnippet
-            var command = "mvn";
-            var args = new[] { "com.azure.tools:codesnippet-maven-plugin:update-codesnippet", "-f", pomPath };
-
-            var result = await _processHelper.Run(new(command, args, workingDirectory: packagePath, timeout: MavenSnippetTimeout), cancellationToken);
+            var result = await _mavenHelper.Run(new("com.azure.tools:codesnippet-maven-plugin:update-codesnippet", [], pomPath, workingDirectory: packagePath, timeout: MavenSnippetTimeout), cancellationToken);
 
             if (result.ExitCode == 0)
             {
@@ -304,10 +307,9 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
     /// <returns>Analysis results</returns>
     private async Task<PackageCheckResponse> AnalyzeDependencyTree(string packagePath, string pomPath, CancellationToken cancellationToken)
     {
-        var command = "mvn";
-        var args = new[] { "dependency:tree", "-Dverbose", "-f", pomPath };
+        var args = new[] { "-Dverbose" };
 
-        var result = await _processHelper.Run(new(command, args, workingDirectory: packagePath, timeout: TimeSpan.FromMinutes(5)), cancellationToken);
+        var result = await _mavenHelper.Run(new("dependency:tree", args, pomPath, workingDirectory: packagePath, timeout: TimeSpan.FromMinutes(5)), cancellationToken);
 
         var output = result.Output;
         
@@ -341,8 +343,8 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
     /// <returns>PackageCheckResponse with error details if validation fails, null if validation passes</returns>
     private async Task<PackageCheckResponse?> ValidateMavenPrerequisites(string packagePath, string pomPath, CancellationToken cancellationToken)
     {
-        // Check if Maven is available
-        var mavenCheckResult = await _processHelper.Run(new("mvn", ["--version"], timeout: TimeSpan.FromSeconds(10)), cancellationToken);
+        // Check if Maven is available  
+        var mavenCheckResult = await _mavenHelper.Run(new("--version", [], logOutputStream: true, workingDirectory: null, timeout: TimeSpan.FromSeconds(10)), cancellationToken);
         if (mavenCheckResult.ExitCode != 0)
         {
             _logger.LogError("Maven is not installed or not available in PATH");

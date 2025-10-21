@@ -237,7 +237,11 @@ public static class Program
                         {
                             var fileInfo = new FileInfo(file);
                             var path = Path.Combine(tempFolder, dep.Name, fileInfo.Name);
-                            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+                            var directory = Path.GetDirectoryName(path);
+                            if (!string.IsNullOrEmpty(directory))
+                            {
+                                Directory.CreateDirectory(directory);
+                            }
                             using Stream entryStream = reader.GetStream(file);
                             await using FileStream destinationStream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None);
                             await entryStream.CopyToAsync(destinationStream).ConfigureAwait(false);

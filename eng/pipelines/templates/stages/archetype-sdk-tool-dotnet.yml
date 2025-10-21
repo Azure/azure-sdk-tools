@@ -200,6 +200,10 @@ extends:
               steps:
                 - template: /eng/pipelines/templates/steps/install-dotnet.yml
 
+                - task: GoTool@0
+                  inputs:
+                    version: '1.24.1'
+
                 - ${{ parameters.TestPreSteps }}
 
                 - script: 'dotnet test /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) $(Warn) --logger trx'

@@ -1,5 +1,7 @@
 import uuid
-from typing import Optional
+from dataclasses import asdict, dataclass, field
+from datetime import date
+from typing import Dict, Optional
 
 import prompty
 import prompty.azure
@@ -12,25 +14,72 @@ from src._models import APIViewComment, CosmosMetricDocument
 from src._utils import get_prompt_path, to_epoch_seconds
 
 
-class AdoptionMetric:
-    """Helper class to track adoption metrics."""
+@dataclass
+class MetricsSegment:
+    """
+    Represents one time-window ("segment") of Copilot metrics
+    for a specific dimension (e.g., language) or for all (dimension = {}).
+    """
 
-    def __init__(self):
-        self.total_count = 0
-        self.copilot_count = 0
+    start_date: date
+    end_date: date
+    segment_days: Optional[int] = None
 
-    @property
-    def adoption_rate(self) -> float:
-        if self.total_count == 0:
-            return 0.0
-        return self.copilot_count / self.total_count
+    # Core review counts
+    active_review_count: Optional[int] = None
+    active_copilot_review_count: Optional[int] = None
 
-    def as_dict(self) -> dict:
-        return {
-            "adoption_rate": f"{self.adoption_rate:.2f}",
-            "active_reviews": self.total_count,
-            "active_copilot_reviews": self.copilot_count,
-        }
+    # Human comment counts
+    human_comment_count_with_ai: Optional[int] = None
+    human_comment_count_without_ai: Optional[int] = None
+
+    # AI comment classifications
+    upvoted_ai_comment_count: Optional[int] = None
+    neutral_ai_comment_count: Optional[int] = None
+    downvoted_ai_comment_count: Optional[int] = None
+
+    # Dimension (e.g., {"language": "python"}) or {} for "All"
+    dimension: Dict[str, str] = field(default_factory=dict)
+
+    # Cosmos metadata
+    type: str = field(default="metrics_segment", init=False)
+    id: Optional[str] = None
+    pk: Optional[str] = None
+
+    def compute_ids(self):
+        """Generate deterministic CosmosDB ID and partition key."""
+        start = self.start_date
+        end = self.end_date
+
+        dim_key = (
+            "dim:all"
+            if not self.dimension
+            else "dim:" + ";".join(f"{k}={v}" for k, v in sorted(self.dimension.items()))
+        )
+        # Use ISO strings for stable IDs
+        self.id = f"{start.isoformat()}|{end.isoformat()}|{dim_key}"
+        self.pk = start.strftime("%Y_%m")
+
+    def to_dict(self) -> Dict:
+        """Return JSON-serializable dict for CosmosDB upsert."""
+        if not self.id or not self.pk:
+            self.compute_ids()
+        d = asdict(self)
+        d["start_date"] = self.start_date.isoformat()
+        d["end_date"] = self.end_date.isoformat()
+        return d
+
+    def __post_init__(self):
+        """Normalize dates and compute segment_days automatically."""
+        # Normalize to date objects if strings were passed
+        if isinstance(self.start_date, str):
+            self.start_date = date.fromisoformat(self.start_date)
+        if isinstance(self.end_date, str):
+            self.end_date = date.fromisoformat(self.end_date)
+
+        # Compute inclusive segment days (at least 1)
+        delta_days = (self.end_date - self.start_date).days + 1
+        self.segment_days = max(1, delta_days)
 
 
 def _calculate_language_adoption(start_date: str, end_date: str, environment: str = "production") -> dict:
@@ -170,7 +219,7 @@ def _generate_cosmosdb_documents(data: dict) -> list[dict]:
 
 def get_metrics_report(
     start_date: str, end_date: str, environment: str, markdown: bool = False, save: bool = False
-) -> Optional[dict]:
+) -> Optional[Dict[str, MetricsSegment]]:
     """Generate a metrics report for a date range."""
     # validate that start_date and end_date are in YYYY-MM-DD format
     bad_dates = []
@@ -182,6 +231,15 @@ def get_metrics_report(
     if bad_dates:
         print(f"ValueError: Dates must be in YYYY-MM-DD format. Invalid date(s) found: {', '.join(bad_dates)}")
         return
+
+    overall_metrics = MetricsSegment(start_date=start_date, end_date=end_date)
+
+    active_reviews = get_active_reviews(start_date, end_date, environment=environment)
+    active_review_ids = {r.review_id for r in active_reviews}
+    ai_review_ids = set()
+    comments = get_comments_in_date_range(start_date, end_date, environment=environment)
+
+    raise NotImplementedError("Not finished!")
 
     # Calculate language adoption
     language_adoption = _calculate_language_adoption(start_date, end_date, environment=environment)

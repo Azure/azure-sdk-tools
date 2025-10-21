@@ -208,6 +208,8 @@ stages:
     steps:
     - checkout: azure-sdk-tools
 
+    - task: NuGetAuthenticate@1
+
     - task: UseNode@1
       displayName: 'Install Node.js'
       inputs:

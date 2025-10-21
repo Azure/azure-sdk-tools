@@ -57,7 +57,7 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
         }
     }
     
-    public async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    public async Task<CLICheckResponse> UpdateSnippets(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         try
         {

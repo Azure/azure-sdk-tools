@@ -52,7 +52,7 @@ internal class VerifySetupToolTests
         {
             mockProcessHelper
                 .Setup(x => x.Run(
-                    It.Is<ProcessOptions>(opt => opt.Command == command && (opt.Args.Contains("--version") || opt.Args.Contains("-version"))),
+                    It.Is<ProcessOptions>(opt => opt.Command.Contains(command) || opt.Args.Contains(command)), // Handle cases where command might be wrapped
                     It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ProcessResult 
                 { 
@@ -66,7 +66,7 @@ internal class VerifySetupToolTests
     {
         mockProcessHelper
             .Setup(x => x.Run(
-                It.Is<ProcessOptions>(opt => opt.Command == command && opt.Args.Contains("--version")),
+                It.Is<ProcessOptions>(opt => opt.Command.Contains(command) || opt.Args.Contains(command)),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ProcessResult 
             { 

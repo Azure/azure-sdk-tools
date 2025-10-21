@@ -871,6 +871,107 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
 
         #endregion
 
+        #region AnalyzeDependenciesAsync Tests
+
+        /// <summary>
+        /// Sets up successful Maven dependency tree analysis.
+        /// </summary>
+        private void SetupSuccessfulDependencyAnalysis()
+        {
+            MockProcessHelper.Setup(x => x.Run(It.Is<ProcessOptions>(p => 
+                (p.Command == "mvn" || p.Command == "cmd.exe") && 
+                p.Args.Contains("dependency:tree") && 
+                p.Args.Contains("-Dverbose")), 
+                It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ProcessResult { 
+                    ExitCode = 0, 
+                    OutputDetails = [(StdioLevel.StandardOutput, "[INFO] BUILD SUCCESS\n[INFO] Total time: 5.123 s")] 
+                });
+        }
+
+        /// <summary>
+        /// Sets up failed Maven dependency tree analysis with conflicts.
+        /// </summary>
+        private void SetupFailedDependencyAnalysis()
+        {
+            MockProcessHelper.Setup(x => x.Run(It.Is<ProcessOptions>(p => 
+                (p.Command == "mvn" || p.Command == "cmd.exe") && 
+                p.Args.Contains("dependency:tree") && 
+                p.Args.Contains("-Dverbose")), 
+                It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new ProcessResult { 
+                    ExitCode = 1, 
+                    OutputDetails = [(StdioLevel.StandardError, "[ERROR] Failed to execute goal on project: Maven dependency analysis failed")] 
+                });
+        }
+
+        [Test]
+        public async Task TestAnalyzeDependenciesAsync_Success()
+        {
+            // Arrange
+            SetupSuccessfulMavenVersionCheck();
+            SetupSuccessfulDependencyAnalysis();
+
+            // Act
+            var result = await LangService.AnalyzeDependenciesAsync(JavaPackageDir, false, CancellationToken.None);
+
+            // Assert
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.ExitCode, Is.EqualTo(0));
+                Assert.That(result.CheckStatusDetails, Does.Contain("Dependency analysis completed - no conflicts detected"));
+                Assert.That(result.NextSteps, Is.Null.Or.Empty);
+            });
+
+            // Verify correct Maven command was called
+            var pomPath = Path.Combine(JavaPackageDir, "pom.xml");
+            MockProcessHelper.Verify(x => x.Run(It.Is<ProcessOptions>(p => 
+                (p.Command == "mvn" || p.Command == "cmd.exe") &&
+                p.Args.Contains("dependency:tree") &&
+                p.Args.Contains("-Dverbose") &&
+                p.Args.Contains("-f") &&
+                p.Args.Contains(pomPath) &&
+                p.WorkingDirectory == JavaPackageDir &&
+                p.Timeout == TimeSpan.FromMinutes(5)), 
+                It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Test]
+        public async Task TestAnalyzeDependenciesAsync_Failure()
+        {
+            // Arrange
+            SetupSuccessfulMavenVersionCheck();
+            SetupFailedDependencyAnalysis();
+
+            // Act
+            var result = await LangService.AnalyzeDependenciesAsync(JavaPackageDir, false, CancellationToken.None);
+
+            // Assert
+            Assert.Multiple(() =>
+            {
+                Assert.That(result.ExitCode, Is.EqualTo(1));
+                Assert.That(result.ResponseError, Does.Contain("Dependency analysis found issues"));
+                Assert.That(result.NextSteps, Is.Not.Null);
+                Assert.That(result.NextSteps, Has.Count.GreaterThan(0));
+                Assert.That(result.NextSteps!.Any(step => step.Contains("Azure SDK BOM")), Is.True);
+                Assert.That(result.NextSteps!.Any(step => step.Contains("github.com/Azure/azure-sdk-for-java")), Is.True);
+            });
+
+            // Verify correct Maven command was called
+            var pomPath = Path.Combine(JavaPackageDir, "pom.xml");
+            MockProcessHelper.Verify(x => x.Run(It.Is<ProcessOptions>(p => 
+                (p.Command == "mvn" || p.Command == "cmd.exe") &&
+                p.Args.Contains("dependency:tree") &&
+                p.Args.Contains("-Dverbose") &&
+                p.Args.Contains("-f") &&
+                p.Args.Contains(pomPath) &&
+                p.WorkingDirectory == JavaPackageDir &&
+                p.Timeout == TimeSpan.FromMinutes(5)), 
+                It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        #endregion
+
         #region Helper Methods for Cross-Platform Command Validation
 
         /// <summary>

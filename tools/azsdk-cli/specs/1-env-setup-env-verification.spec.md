@@ -278,7 +278,7 @@ To fix missing requirements:
   3. Add MAVEN_HOME/bin to your PATH environment variable
   4. Restart your IDE
 
-After installing, run 'azsdk verify-setup --langs python' again to verify.
+After installing, run 'azsdk verify-setup --langs python,java' again to verify.
 ```
 
 #### MCP Agent Interaction

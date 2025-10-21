@@ -112,6 +112,11 @@
                 "instructions": ["Ensure your virtual environment is activated", "python -m pip install eng/tools/azure-sdk-tools[sdk_generator]", "Check that it was installed with `sdk_generator --help`"]
             },
             {
+                "requirement": "ghtools",
+                "check": ["python", "-m", "pip", "show", "GitPython"],
+                "instructions": ["Ensure your virtual environment is activated", "python -m pip install eng/tools/azure-sdk-tools[ghtools]", "Check that it was installed with `pip show GitPython`"]
+            },
+            {
                 "requirement": "pytest >= 8.3.5",
                 "check": ["pytest", "--version"],
                 "instructions": ["Ensure your virtual environment is activated", "python -m pip install pytest", "Check that it was installed with `pytest --version`"]

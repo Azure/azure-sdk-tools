@@ -40,7 +40,7 @@ public class PythonRequirementsCheck : EnvRequirementsCheck, IEnvRequirementsChe
         foreach (var req in reqs)
         {
             var binDir = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Scripts" : "bin";
-            req.check[0] = Path.Combine(venvPath, binDir, req.check[0]); // this assumes all checks are of the form <command> --<flag>
+            req.check[0] = Path.Combine(venvPath, binDir, req.check[0]);
         }
 
         return reqs;

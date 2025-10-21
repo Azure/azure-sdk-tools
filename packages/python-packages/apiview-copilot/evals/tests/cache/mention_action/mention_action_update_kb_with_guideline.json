@@ -1,0 +1,26 @@
+{
+   "testcase": "mention_action_update_kb_with_guideline",
+   "row": {
+      "outputs.actual": "{\n  \"action\": \"update_kb\",\n  \"reasoning\": \"The architect's comment indicates that while the guideline cited by copilot was correct, the specific suggestion made ('WidgetObject') was not ideal and was actually more verbose than necessary. The correct suggestion should have been 'Widget'. This implies copilot made a mistake in its recommendation, and the Knowledge Base should be updated to reflect this for future improvements.\"\n}",
+      "inputs.testcase": "mention_action_update_kb_with_guideline",
+      "inputs.language": "python",
+      "inputs.package_name": "azure.widget",
+      "inputs.code": "class WidgetObject:",
+      "inputs.other_comments": "[\n  {\n    \"CreatedBy\": \"azure-sdk\",\n    \"CommentText\": \"This name is unnecessarily verbose.\\n\\nSuggestion: `Widget`.\\n\\n**GUIDELINES**\\n\\n'https://azure.github.io/azure-sdk/python_design.html#naming-conventions'.\",\n    \"Downvotes\": [\"tjprescott\"],\n    \"CreatedOn\": \"2025-03-17T17:48:25.920445-04:00\"\n  },\n  {\n    \"CreatedBy\": \"noodle\",\n    \"CommentText\": \"We discussed it internally and want to keep it as is because we used that name in the JS SDK and we want to keep them the same.\",\n    \"CreatedOn\": \"2025-03-18T13:15:19.1494832-04:00\"\n  },\n  {\n    \"CreatedBy\": \"tjprescott\",\n    \"CommentText\": \"@noodle, sorry, that's not a valid reason. If you wanted the names to be consistent you should have had them reviewed at the same time. The suffix `Object` adds no useful information and just results in a longer name.\",\n    \"CreatedOn\": \"2025-03-19T17:48:25.920445-04:00\"\n  }\n]\n",
+      "inputs.trigger_comment": "{\n  \"CreatedBy\": \"tjprescott\",\n  \"CommentText\": \"@azure-sdk, your comment is correct, but your suggestion was bad because it was actually more verbose! The name should be `Widget`.\",\n  \"CreatedOn\": \"2025-03-19T17:48:25.920445-04:00\"\n}\n",
+      "inputs.response": {
+         "action": "update_kb",
+         "reasoning": "The architect indicates that while the copilot's comment about verbosity was correct, the suggestion itself was flawed and more verbose than needed.\nThis suggests the copilot's suggestion logic needs improvement and should be recorded in the Knowledge Base.\n"
+      },
+      "outputs.metrics.correct_action": true,
+      "outputs.metrics.actual": "{\n  \"action\": \"update_kb\",\n  \"reasoning\": \"The architect's comment indicates that while the guideline cited by copilot was correct, the specific suggestion made ('WidgetObject') was not ideal and was actually more verbose than necessary. The correct suggestion should have been 'Widget'. This implies copilot made a mistake in its recommendation, and the Knowledge Base should be updated to reflect this for future improvements.\"\n}",
+      "outputs.metrics.expected": {
+         "action": "update_kb",
+         "reasoning": "The architect indicates that while the copilot's comment about verbosity was correct, the suggestion itself was flawed and more verbose than needed.\nThis suggests the copilot's suggestion logic needs improvement and should be recorded in the Knowledge Base.\n"
+      },
+      "outputs.metrics.testcase": "mention_action_update_kb_with_guideline",
+      "outputs.metrics.score": 100,
+      "outputs.metrics.expected_action": "update_kb",
+      "outputs.metrics.actual_action": "update_kb"
+   }
+}

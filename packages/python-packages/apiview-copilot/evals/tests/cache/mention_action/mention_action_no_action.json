@@ -1,0 +1,39 @@
+{
+   "testcase": "mention_action_no_action",
+   "row": {
+      "outputs.actual": "{\n  \"action\": \"no_action\",\n  \"reasoning\": \"The architect's comment confirms that the copilot's suggestion is correct and does not indicate any error or need for improvement. There is no implication that the Knowledge Base should be updated.\"\n}",
+      "inputs.testcase": "mention_action_no_action",
+      "inputs.language": "python",
+      "inputs.package_name": "azure.widget",
+      "inputs.code": "async def list_widgets(): AsyncPageItem[Widget]",
+      "inputs.other_comments": [
+         {
+            "CreatedBy": "azure-sdk",
+            "CreatedOn": "2025-07-03T09:15:00-07:00",
+            "CommentText": "You should not define list operations that return AsyncPageItem with the async keyword.\n\nSuggestion: `def list_widgets(): AsyncPageItem[Widget]`\n",
+            "Upvotes": [
+               "annatisch"
+            ]
+         }
+      ],
+      "inputs.trigger_comment": {
+         "CreatedBy": "annatisch",
+         "CreatedOn": "2025-07-03T09:20:00-07:00",
+         "CommentText": "@azure-sdk yes that's right!"
+      },
+      "inputs.response": {
+         "action": "no_action",
+         "reasoning": "The architect is merely agreeing with the copilot's comment without providing  any additional insights or corrections. Therefore, there is no new information  to add to the Knowledge Base."
+      },
+      "outputs.metrics.correct_action": true,
+      "outputs.metrics.actual": "{\n  \"action\": \"no_action\",\n  \"reasoning\": \"The architect's comment confirms that the copilot's suggestion is correct and does not indicate any error or need for improvement. There is no implication that the Knowledge Base should be updated.\"\n}",
+      "outputs.metrics.expected": {
+         "action": "no_action",
+         "reasoning": "The architect is merely agreeing with the copilot's comment without providing  any additional insights or corrections. Therefore, there is no new information  to add to the Knowledge Base."
+      },
+      "outputs.metrics.testcase": "mention_action_no_action",
+      "outputs.metrics.score": 100,
+      "outputs.metrics.expected_action": "no_action",
+      "outputs.metrics.actual_action": "no_action"
+   }
+}

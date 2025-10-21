@@ -1,0 +1,24 @@
+{
+   "testcase": "discard_azure_sdk_repeat_comment",
+   "row": {
+      "outputs.actual": "{\"comment\":\"Be more specific than Widget. That's very generic!\",\"action\":\"DISCARD\",\"rationale\":\"There is already an existing comment by 'azure-sdk', so per instructions, no new comment should be proposed.\"}",
+      "inputs.testcase": "discard_azure_sdk_repeat_comment",
+      "inputs.language": "Python",
+      "inputs.existing": "[\n  {\n    \"line_no\": 4,\n    \"commentText\": \"You must have an async client named `WidgetClient` in the azure.widget.aio namespace.\",\n    \"createdBy\": \"azure-sdk\"\n  },\n  {\n    \"line_no\": 4,\n    \"commentText\": \"That's right, you need both a sync and async client.\",\n    \"createdBy\": \"tjprescott\"\n  },\n  {\n    \"line_no\": 4,\n    \"commentText\": \"Ditto this. Please fix.\",\n    \"createdBy\": \"annatisch\"\n  },\n  {\n    \"line_no\": 4,\n    \"commentText\": \"No, we really like this structure. Please let us keep it.\",\n    \"createdBy\": \"serviceguy\"\n  },\n  {\n    \"line_no\": 4,\n    \"commentText\": \"Sorry serviceguy, that's a big NO.\",\n    \"createdBy\": \"tjprescott\"\n  }\n]\n",
+      "inputs.comment": "{\n  \"line_no\": 4,\n  \"bad_code\": \"class azure.widget.WidgetClient():\",\n  \"suggestion\": \"\",\n  \"comment\": \"Be more specific than Widget. That's very generic!\",\n  \"source\": \"generic\"\n}\n",
+      "inputs.response": {
+         "action": "DISCARD",
+         "rationale": "azure-sdk has already commented in this thread and is not allowed to comment a second time."
+      },
+      "outputs.metrics.correct_action": true,
+      "outputs.metrics.actual": "{\"comment\":\"Be more specific than Widget. That's very generic!\",\"action\":\"DISCARD\",\"rationale\":\"There is already an existing comment by 'azure-sdk', so per instructions, no new comment should be proposed.\"}",
+      "outputs.metrics.expected": {
+         "action": "DISCARD",
+         "rationale": "azure-sdk has already commented in this thread and is not allowed to comment a second time."
+      },
+      "outputs.metrics.testcase": "discard_azure_sdk_repeat_comment",
+      "outputs.metrics.score": 100,
+      "outputs.metrics.expected_action": "DISCARD",
+      "outputs.metrics.actual_action": "DISCARD"
+   }
+}

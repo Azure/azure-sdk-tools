@@ -217,31 +217,44 @@ class EvaluationRunner:
         try:
             # Resolve cache strategy
             if self._use_cache:
-                cache_file = get_cache_file_path(target.workflow_name)
-                cache_lookup = load_cache_lookup(cache_file)
-                cache_save_fn = lambda results: append_results_to_cache(cache_file, results)
+                # Collect testcase info from test files
+                testcase_ids = []
+                test_file_paths = []
+                
+                for test_file in target.test_files:
+                    test_case = self._context._load_test_file(test_file)
+                    testcase_id = test_case.get("testcase")
+                    if testcase_id:
+                        testcase_ids.append(testcase_id)
+                        test_file_paths.append(test_file)
+                
+                # Load cache for these specific testcases
+                cache_lookup = load_cache_lookup(testcase_ids, test_file_paths)
             else:
-                cache_lookup = {}  # Everything is fresh
-                cache_save_fn = lambda results: None  # No-op
+                cache_lookup = {}
             
             # Partition test data based on cache
             cached_azure_rows = []
             fresh_testcases = []
+            fresh_test_file_paths = []
             
             for test_file in target.test_files:
                 test_case = self._context._load_test_file(test_file)
                 testcase_id = test_case.get("testcase")
                 
-                if testcase_id in cache_lookup:
+                if testcase_id and testcase_id in cache_lookup:
                     cached_azure_rows.append(cache_lookup[testcase_id])
                 else:
                     fresh_testcases.append(test_case)
+                    fresh_test_file_paths.append(test_file)
             
             # Execute fresh testcases if needed
             fresh_results = []
             if fresh_testcases:
                 fresh_results = self._run_azure_evaluation(fresh_testcases, target)
-                cache_save_fn(fresh_results)  # Save to cache (or no-op)
+                
+                if self._use_cache: 
+                    append_results_to_cache(fresh_test_file_paths, fresh_results)
             
             # Combine all results
             cached_rows = [{"row": row} for row in cached_azure_rows]

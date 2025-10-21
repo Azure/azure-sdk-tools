@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { REVIEW_ID_ROUTE_PARAM } from 'src/app/_helpers/router-helpers';
 import { NotificationsFilter, SiteNotification } from 'src/app/_models/notificationsModel';
 import { UserProfile } from 'src/app/_models/userProfile';
@@ -17,6 +18,7 @@ import { environment } from 'src/environments/environment';
 export class NavBarComponent implements OnInit {
   userProfile : UserProfile | undefined;
   logoutPageWebAppUrl : string  = this.configService.webAppUrl + "Account/Logout"
+  RequestReviewPageUrl: string = this.configService.webAppUrl + "Assemblies/RequestedReviews"
   assetsPath : string = environment.assetsPath;
   notificationsSidePanel : boolean | undefined = undefined;
   notifications: SiteNotification[] = [];
@@ -27,9 +29,11 @@ export class NavBarComponent implements OnInit {
   notificationsFilter : NotificationsFilter = NotificationsFilter.All;
   isLoggedIn: boolean = false;
   reviewId: string | null = null;
+  isApprover: boolean = false;
 
   constructor(private userProfileService: UserProfileService, private configService: ConfigService,
-    private notificationsService: NotificationsService, private authService: AuthService, private route: ActivatedRoute
+    private notificationsService: NotificationsService, private authService: AuthService, private route: ActivatedRoute,
+    private http: HttpClient
   ) { }
 
   ngOnInit(): void {
@@ -41,6 +45,8 @@ export class NavBarComponent implements OnInit {
     this.userProfileService.getUserProfile().subscribe(
       (userProfile : any) => {
         this.userProfile = userProfile;
+        // Check if user is an approver
+        this.checkApproverStatus();
       }
     );
 
@@ -69,5 +75,25 @@ export class NavBarComponent implements OnInit {
 
   clearAllNotification() {
     this.notificationsService.clearAll();
+  }
+
+  private checkApproverStatus() {
+    if (this.userProfile?.userName) {
+      // Call the API to get allowed approvers
+      this.http.get<string>(`${this.configService.apiUrl}/Reviews/allowedApprovers`).subscribe({
+        next: (allowedApprovers) => {
+          if (allowedApprovers) {
+            // Split comma-separated string and check if current user is in the list
+            const approversList = allowedApprovers.split(',').map(username => username.trim());
+            this.isApprover = approversList.includes(this.userProfile?.userName || '');
+          }
+        },
+        error: (error) => {
+          console.error('Failed to fetch allowed approvers:', error);
+          this.isApprover = false;
+          // Optionally, notify the user here if desired
+        }
+      });
+    }
   }
 }

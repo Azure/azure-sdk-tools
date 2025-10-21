@@ -16,7 +16,8 @@ async function automationGenerateInPipeline(
     outputJsonPath: string,
     use: string | undefined,
     typespecEmitter: string | undefined,
-    sdkGenerationType: string | undefined
+    sdkGenerationType: string | undefined,
+    localOverride?: boolean
 ) {
     const inputJson = JSON.parse(fs.readFileSync(inputJsonPath, { encoding: 'utf-8' }));
     const {
@@ -35,8 +36,8 @@ async function automationGenerateInPipeline(
         runMode,
         sdkReleaseType,
     } = await parseInputJson(inputJson);
-
-    const local = runMode === RunMode.Local;
+    // If --local parameter is used, local is true; otherwise, determine from runMode
+    const local = localOverride || (runMode === RunMode.Local);
     try {
         if (!local) {
             await backupNodeModules(String(shell.pwd()));
@@ -135,7 +136,7 @@ const optionDefinitions = [
 ];
 import commandLineArgs from 'command-line-args';
 const options = commandLineArgs(optionDefinitions);
-automationGenerateInPipeline(options.inputJsonPath, options.outputJsonPath, options.use, options.typespecEmitter, options.sdkGenerationType).catch(e => {
+automationGenerateInPipeline(options.inputJsonPath, options.outputJsonPath, options.use, options.typespecEmitter, options.sdkGenerationType, options.local).catch(e => {
     logger.error(e.message);
     process.exit(1);
 });

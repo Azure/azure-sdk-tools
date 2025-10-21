@@ -28,8 +28,9 @@ namespace Azure.Sdk.Tools.Cli.Commands
             SharedOptions.Format.AddValidator(result =>
             {
                 var value = result.GetValueForOption(SharedOptions.Format);
-                if (value != "plain" && value != "json")
+                if (value != "plain" && value != "json" && value != "hidden")
                 {
+                    // hidden is used for tests, don't include in help text
                     result.ErrorMessage = $"Invalid output format '{value}'. Supported formats are: plain, json";
                 }
             });

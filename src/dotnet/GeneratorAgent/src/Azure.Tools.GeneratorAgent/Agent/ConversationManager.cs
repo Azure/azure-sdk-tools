@@ -76,6 +76,7 @@ internal class ConversationManager
 
         // Step 2: Create and process the run
         var response = await ProcessRunAsync(cancellationToken);
+        Logger.LogDebug("Agent Response: {response}", response);
         
         return response;
     }

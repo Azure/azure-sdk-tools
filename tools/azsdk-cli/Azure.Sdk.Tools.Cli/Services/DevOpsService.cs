@@ -100,6 +100,7 @@ namespace Azure.Sdk.Tools.Cli.Services
         public Task<PackageResponse> GetPackageWorkItemAsync(string packageName, string language, string packageVersion = "");
         public Task<Build> RunPipelineAsync(int pipelineDefinitionId, Dictionary<string, string> templateParams, string apiSpecBranchRef = "main");
         public Task<Dictionary<string, List<string>>> GetPipelineLlmArtifacts(string project, int buildId);
+        public Task<WorkItem> UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields);
     }
 
     public partial class DevOpsService(ILogger<DevOpsService> logger, IDevOpsConnection connection) : IDevOpsService
@@ -155,7 +156,9 @@ namespace Azure.Sdk.Tools.Cli.Services
                 IsCreatedByAgent = workItem.Fields.TryGetValue("Custom.IsCreatedByAgent", out value) && "Copilot".Equals(value?.ToString()),
                 ReleasePlanSubmittedByEmail = workItem.Fields.TryGetValue("Custom.ReleasePlanSubmittedByEmail", out value) ? value?.ToString() ?? string.Empty : string.Empty,
                 SDKLanguages = workItem.Fields.TryGetValue("Custom.SDKLanguages", out value) ? value?.ToString() ?? string.Empty : string.Empty,
-                IsSpecApproved = workItem.Fields.TryGetValue("Custom.APISpecApprovalStatus", out value) && "Approved".Equals(value?.ToString())
+                IsSpecApproved = workItem.Fields.TryGetValue("Custom.APISpecApprovalStatus", out value) && "Approved".Equals(value?.ToString()),
+                LanguageExclusionRequesterNote = workItem.Fields.TryGetValue("Custom.ReleaseExclusionRequestNote", out value) ? value?.ToString() ?? string.Empty : string.Empty,
+                LanguageExclusionApproverNote = workItem.Fields.TryGetValue("Custom.ReleaseExclusionApprovalNote", out value) ? value?.ToString() ?? string.Empty : string.Empty
             };
 
             var languages = new string[] { "Dotnet", "JavaScript", "Python", "Java", "Go" };
@@ -164,6 +167,9 @@ namespace Azure.Sdk.Tools.Cli.Services
                 var sdkGenPipelineUrl = workItem.Fields.TryGetValue($"Custom.SDKGenerationPipelineFor{lang}", out value) ? value?.ToString() ?? string.Empty : string.Empty;
                 var sdkPullRequestUrl = workItem.Fields.TryGetValue($"Custom.SDKPullRequestFor{lang}", out value) ? value?.ToString() ?? string.Empty : string.Empty;
                 var packageName = workItem.Fields.TryGetValue($"Custom.{lang}PackageName", out value) ? value?.ToString() ?? string.Empty : string.Empty;
+                var releaseStatus = workItem.Fields.TryGetValue($"Custom.ReleaseStatusFor{lang}", out value) ? value?.ToString() ?? string.Empty : string.Empty;
+                var pullRequestStatus = workItem.Fields.TryGetValue($"Custom.SDKPullRequestStatusFor{lang}", out value) ? value?.ToString() ?? string.Empty : string.Empty;
+                var exclusionStatus = workItem.Fields.TryGetValue($"Custom.ReleaseExclusionStatusFor{lang}", out value) ? value?.ToString() ?? string.Empty : string.Empty;
 
                 if (!string.IsNullOrEmpty(sdkGenPipelineUrl) || !string.IsNullOrEmpty(sdkPullRequestUrl) || !string.IsNullOrEmpty(packageName))
                 {
@@ -172,8 +178,10 @@ namespace Azure.Sdk.Tools.Cli.Services
                         {
                             Language = MapLanguageIdToName(lang),
                             GenerationPipelineUrl = sdkGenPipelineUrl,
-                            SdkPullRequestUrl = sdkPullRequestUrl,
-                            PackageName = packageName
+                            SdkPullRequestUrl = sdkPullRequestUrl,          
+                            ReleaseStatus = releaseStatus,
+                            PackageName = packageName,
+                            ReleaseExclusionStatus = exclusionStatus
                         }
                     );
                 }
@@ -277,6 +285,13 @@ namespace Azure.Sdk.Tools.Cli.Services
 
                 // Link API spec as child of release plan
                 await LinkWorkItemAsChildAsync(releasePlanWorkItemId, apiSpecWorkItem.Url);
+
+                // Update release plan status to in progress
+                releasePlanWorkItem = await UpdateWorkItemAsync(releasePlanWorkItemId, new Dictionary<string, string>
+                {
+                    { "System.State", "In Progress" }
+                });
+
                 if (releasePlanWorkItem != null)
                 {
                     return releasePlanWorkItem;
@@ -383,7 +398,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             }
         }
 
-        private static string MapLanguageToId(string language)
+        public static string MapLanguageToId(string language)
         {
             var lang = language.ToLower();
             return lang switch
@@ -398,7 +413,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             };
         }
 
-        private static string MapLanguageIdToName(string language)
+        public static string MapLanguageIdToName(string language)
         {
             var lang = language.ToLower();
             return lang switch
@@ -1121,6 +1136,26 @@ namespace Azure.Sdk.Tools.Cli.Services
                 return await GetLlmArtifactsUnauthenticated(project, buildId);
             }
             return await GetLlmArtifactsAuthenticated(project, buildId);
+        }
+
+        public async Task<WorkItem> UpdateWorkItemAsync(int workItemId, Dictionary<string, string> fields)
+        {
+            var jsonLinkDocument = new Microsoft.VisualStudio.Services.WebApi.Patch.Json.JsonPatchDocument();
+            foreach (var item in fields)
+            {
+                logger.LogDebug("Updating field {field} to {value}", item.Key, item.Value);
+                jsonLinkDocument.Add(
+                    new JsonPatchOperation
+                    {
+                        Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
+                        Path = $"/fields/{item.Key}",
+                        Value = item.Value
+                    }
+                );
+            }
+            var workItem = await connection.GetWorkItemClient().UpdateWorkItemAsync(jsonLinkDocument, workItemId);
+            logger.LogDebug("Updated work item {workItemId}", workItem.Id);
+            return workItem;
         }
     }
 }

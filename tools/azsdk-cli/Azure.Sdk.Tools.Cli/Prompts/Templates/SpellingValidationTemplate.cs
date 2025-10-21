@@ -34,7 +34,7 @@ public class SpellingValidationTemplate : BasePromptTemplate
     /// Builds the complete spelling validation prompt using the configured parameters.
     /// </summary>
     /// <returns>Complete structured prompt for spelling validation</returns>
-    public string BuildPrompt()
+    public override string BuildPrompt()
     {
         var taskInstructions = BuildTaskInstructions(_cspellOutput, _repositoryContext);
         var constraints = BuildTaskConstraints(_additionalRules);

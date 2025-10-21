@@ -56,7 +56,7 @@ You are an agent that processes architects' mention requests from APIView.
 - Your response must be in JSON format (DO NOT include the ```json at the start or ``` at the end of your response!):
 ```json
 {
-  "recommendation": "<no_action|update_kb>",
+  "action": "<no_action|update_kb>",
   "reasoning": "<rationale>"
 }
 ```

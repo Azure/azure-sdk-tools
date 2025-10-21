@@ -97,9 +97,9 @@ steps:
     PackageName: ${{ parameters.packageName }}
     Language: ${{ parameters.language }}
     Rules: ${{ parameters.rules }}
-    GitHubToken: $(GITHUB_PAT)
-    Owner: $(GITHUB_OWNER)
-    Repo: $(GITHUB_REPO_FOR_JAVASCRIPT)
+    GitHubToken: $(azuresdk-github-pat)
+    Owner: 'Azure'
+    Repo: 'azure-sdk-for-js'
   inputs:
     command: 'run'
     workingDirectory: '$(System.DefaultWorkingDirectory)/tools/content-validation/ReportHelper'

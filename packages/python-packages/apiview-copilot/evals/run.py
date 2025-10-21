@@ -29,8 +29,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     targets = discover_targets(args.test_paths)
-    os.environ['EVALS_USE_CACHE'] = 'true' if args.use_cache else 'false'
-    runner = EvaluationRunner(num_runs=args.num_runs)
+    runner = EvaluationRunner(num_runs=args.num_runs, use_cache=args.use_cache)
     results = runner.run(targets)
     runner.show_results(results)
     runner.show_summary(results)

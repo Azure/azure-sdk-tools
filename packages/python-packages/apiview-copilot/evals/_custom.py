@@ -20,71 +20,6 @@ from evals._util import ensure_json_obj
 from src._settings import SettingsManager
 from src._utils import get_prompt_path
 
-def get_cached_result(workflow_name: str, testcase: str) -> dict | None:
-    """Get cached result for a specific testcase in a workflow."""
-    cache_file = Path(__file__).parent / "tests/cache" / f"{workflow_name}.jsonl"
-    if not cache_file.exists():
-        return None
-        
-    try:
-        with open(cache_file, 'r', encoding='utf-8') as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                data = json.loads(line)
-                if data.get("testcase") == testcase:
-                    return {"actual": data["actual"]}
-    except (json.JSONDecodeError, IOError):
-        # Cache file corrupted or inaccessible - skip cache
-        return None
-    return None
-
-def save_cached_result(workflow_name: str, testcase: str, result: dict):
-    """Save result to cache for a specific testcase."""
-    cache_dir = Path(__file__).parent / "tests/cache"
-    cache_dir.mkdir(exist_ok=True)
-    
-    cache_file = cache_dir / f"{workflow_name}.jsonl"
-    try:
-        cache_entry = {"testcase": testcase, "actual": result["actual"]}
-        with open(cache_file, 'a', encoding='utf-8') as f:
-            f.write(json.dumps(cache_entry, ensure_ascii=False) + '\n')
-    except (IOError, KeyError):
-        # Failed to cache - just continue
-        pass
-
-def cached_target_function(workflow_name: str):
-    """Decorator to add caching to target functions."""
-    _use_cache = os.environ.get('EVALS_USE_CACHE', 'false').lower() == 'true'
-    def decorator(func):
-        @functools.wraps(func)
-        def wrapper(*args, **kwargs):
-            # Check if caching enabled
-            if not _use_cache:
-                return func(*args, **kwargs)
-            
-            # Extract testcase from kwargs
-            testcase = kwargs.get('testcase', args[0] if args else None)
-            if not testcase:
-                # No testcase identifier - skip caching
-                return func(*args, **kwargs)
-            
-            # Check cache first
-            cached_result = get_cached_result(workflow_name, testcase)
-            if cached_result is not None:
-                return cached_result
-            
-            # Cache miss - execute function
-            result = func(*args, **kwargs)
-            
-            # Cache the result
-            save_cached_result(workflow_name, testcase, result)
-            return result
-        return wrapper
-    return decorator
-
-@cached_target_function("apiview")
 def _review_apiview(testcase: str, query: str, language: str):
     """APIView review target function for evals framework."""
     from src._apiview_reviewer import ApiViewReview
@@ -94,7 +29,6 @@ def _review_apiview(testcase: str, query: str, language: str):
     reviewer.close()
     return {"actual": review.model_dump_json()}
 
-@cached_target_function("mention_action")
 def _mention_action_workflow(
     testcase: str, response: str, language: str, package_name: str, code: str, other_comments: str, trigger_comment: str
 ):
@@ -111,7 +45,6 @@ def _mention_action_workflow(
     result = prompty.execute(prompty_path, inputs=prompty_kwargs)
     return {"actual": result}
 
-@cached_target_function("thread_resolution_action")
 def _thread_resolution_action_workflow(
     testcase: str, response: str, language: str, package_name: str, code: str, comments: str
 ):
@@ -129,7 +62,6 @@ def _thread_resolution_action_workflow(
     result = prompty.execute(prompty_path, inputs=prompty_kwargs)
     return {"actual": result}
 
-@cached_target_function("filter_comment_metadata")
 def _filter_comment_metadata(testcase: str, response: str, language: str, exceptions: str, outline: str, content: str):
     prompty_path = Path(__file__).parent.parent / "prompts" / "api_review" / "filter_comment_with_metadata.prompty"
     prompty_kwargs = {
@@ -143,7 +75,6 @@ def _filter_comment_metadata(testcase: str, response: str, language: str, except
     result = prompty.execute(prompty_path, inputs=prompty_kwargs)
     return {"actual": result}
 
-@cached_target_function("filter_existing_comment")
 def _filter_existing_comment(testcase: str, response: str, language: str, existing: str, comment: str):
     prompty_path = Path(__file__).parent.parent / "prompts" / "api_review" / "filter_existing_comment.prompty"
     prompty_kwargs = {

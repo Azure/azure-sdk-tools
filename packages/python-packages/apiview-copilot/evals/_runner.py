@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 import sys
@@ -5,7 +6,7 @@ import tempfile
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Any, List
+from typing import Any, List, Optional
 
 import yaml
 from azure.ai.evaluation import evaluate
@@ -17,6 +18,12 @@ import evals._custom
 from evals._config_loader import get_evaluator_class
 from evals._discovery import DiscoveryResult, EvaluationTarget
 from src._settings import SettingsManager
+from evals._util import (
+    load_cache_lookup,
+    append_results_to_cache,
+    get_cache_file_path,
+    construct_fake_azure_result
+)
 
 DEFAULT_NUM_RUNS: int = 1
 
@@ -108,7 +115,7 @@ class ExecutionContext:
 class EvaluationResult:
     """Result of evaluating a single evaluation target."""
 
-    def __init__(self, target: EvaluationTarget, raw_results: list[dict], success: bool, error: str | None = None):
+    def __init__(self, target: EvaluationTarget, raw_results: list[dict], success: bool, error: Optional[str] = None):
         self.target = target
         self.raw_results = raw_results
         self.success = success
@@ -126,10 +133,15 @@ class EvaluationResult:
 class EvaluationRunner:
     """Executes evaluations targets with shared context"""
 
-    def __init__(self, *, num_runs: int = DEFAULT_NUM_RUNS):
+    def __init__(self, *, num_runs: int = DEFAULT_NUM_RUNS, use_cache: bool = False):
         self.num_runs = num_runs
-        self._context: ExecutionContext | None = None
+        self._context: Optional[ExecutionContext] = None
         self._results_lock = threading.Lock()
+        self._use_cache = use_cache
+
+    def _ensure_context(self):
+        if self._context is None:
+            self._context = ExecutionContext()
 
     def run(self, discovery_result: DiscoveryResult) -> List[EvaluationResult]:
         """Execute all targets in the discovery result.
@@ -197,52 +209,95 @@ class EvaluationRunner:
 
         return results
 
-    def _ensure_context(self):
-        """Lazy initialize execution context."""
-        if self._context is None:
-            print("🔧 Initializing shared execution context...")
-            self._context = ExecutionContext()
-
     def _execute_target_with_progress(self, target: EvaluationTarget, index: int, total: int) -> EvaluationResult:
         print(f"[{index}/{total}] Started {target.workflow_name}...")
         return self._execute_target(target)
 
     def _execute_target(self, target: EvaluationTarget) -> EvaluationResult:
         try:
-            # Create evaluator for target, passing jsonl_file as argument
-            jsonl_file = self._context.create_temporary_jsonl_file(target)
-            evaluator_class = get_evaluator_class(target.config.kind)
-            evaluator = evaluator_class(target.config, jsonl_file=jsonl_file)
-
-            # Execute runs
-            all_run_results = []
-            for run in range(self.num_runs):
-                if self.num_runs > 1:
-                    print(f"  📋 Run {run + 1}/{self.num_runs}...")
-                result = evaluate(
-                    data=str(jsonl_file),
-                    evaluators={"metrics": evaluator},
-                    evaluator_config={"metrics": evaluator.evaluator_config},
-                    target=evaluator.target_function,
-                    fail_on_evaluator_errors=False,
-                    # FIXME: Enable this?
-                    # azure_ai_project=azure_ai_project,
-                    **self._context._credential_kwargs,
-                )
-                all_run_results.append({jsonl_file.name: result})
-
-            # Process results with evaluator
-            guideline_ids = set()
-            processed_results = evaluator.process_results(all_run_results, guideline_ids)
-
+            # Resolve cache strategy
+            if self._use_cache:
+                cache_file = get_cache_file_path(target.workflow_name)
+                cache_lookup = load_cache_lookup(cache_file)
+                cache_save_fn = lambda results: append_results_to_cache(cache_file, results)
+            else:
+                cache_lookup = {}  # Everything is fresh
+                cache_save_fn = lambda results: None  # No-op
+            
+            # Partition test data based on cache
+            cached_azure_rows = []
+            fresh_testcases = []
+            
+            for test_file in target.test_files:
+                test_case = self._context._load_test_file(test_file)
+                testcase_id = test_case.get("testcase")
+                
+                if testcase_id in cache_lookup:
+                    cached_azure_rows.append(cache_lookup[testcase_id])
+                else:
+                    fresh_testcases.append(test_case)
+            
+            # Execute fresh testcases if needed
+            fresh_results = []
+            if fresh_testcases:
+                fresh_results = self._run_azure_evaluation(fresh_testcases, target)
+                cache_save_fn(fresh_results)  # Save to cache (or no-op)
+            
+            # Combine all results
+            cached_rows = [{"row": row} for row in cached_azure_rows]
+            fresh_rows = [{"row": row} for result in fresh_results for row in result.get("rows", [])]
+            all_cached_rows = cached_rows + fresh_rows
+            combined_result = construct_fake_azure_result(all_cached_rows)
+            
             return EvaluationResult(
                 target=target,
-                raw_results=all_run_results,
+                raw_results=[{f"{target.workflow_name}.jsonl": combined_result}],
                 success=True,
             )
-
+            
         except Exception as e:
             return EvaluationResult(target=target, raw_results=[], success=False, error=str(e))
+
+    def _run_azure_evaluation(self, testcases: list[dict], target: EvaluationTarget) -> list[dict]:
+        """Run Azure AI evaluation on a list of testcases."""
+        if not testcases:
+            return []
+        
+        # Create temporary file for testcases
+        tmp_dir = Path(tempfile.mkdtemp(prefix="evals_fresh_"))
+        fresh_jsonl = tmp_dir / f"fresh_{target.workflow_name}.jsonl"
+        
+        with fresh_jsonl.open("w", encoding="utf-8") as f:
+            for test_case in testcases:
+                f.write(json.dumps(test_case, separators=(",", ":"), ensure_ascii=False) + "\n")
+        
+        # Execute evaluation
+        evaluator_class = get_evaluator_class(target.config.kind)
+        evaluator = evaluator_class(target.config, jsonl_file=fresh_jsonl)
+        
+        results = []
+        for run in range(self.num_runs):
+            if self.num_runs > 1:
+                print(f"  📋 Run {run + 1}/{self.num_runs}...")
+            
+            result = evaluate(
+                data=str(fresh_jsonl),
+                evaluators={"metrics": evaluator},
+                evaluator_config={"metrics": evaluator.evaluator_config},
+                target=evaluator.target_function,
+                fail_on_evaluator_errors=False,
+                **self._context._credential_kwargs,
+            )
+            results.append(result)
+        
+        # Cleanup
+        try:
+            fresh_jsonl.unlink()
+            tmp_dir.rmdir()
+        except OSError:
+            pass
+        
+        return results
 
     def show_results(self, results: List[EvaluationResult]):
         """Display detailed results from all evaluations."""

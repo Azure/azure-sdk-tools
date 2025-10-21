@@ -53,27 +53,27 @@ parameters:
   - name: TestMatrix
     type: object
     default:
-      - name: Windows
+      - name: Windows1
         Pool: $(WINDOWSPOOL)
         Image: $(WINDOWSVMIMAGE)
         Os: windows
-      - name: Linux1
-        Pool: $(LINUXPOOL)
-        Image: $(LINUXVMIMAGE)
-        Os: linux
-      - name: Linux2
-        Pool: $(LINUXPOOL)
-        Image: $(LINUXVMIMAGE)
-        Os: linux
-      - name: Linux3
-        Pool: $(LINUXPOOL)
-        Image: $(LINUXVMIMAGE)
-        Os: linux
-      - name: Linux4
-        Pool: $(LINUXPOOL)
-        Image: $(LINUXVMIMAGE)
-        Os: linux
-      - name: Linux5
+      - name: Windows2
+        Pool: $(WINDOWSPOOL)
+        Image: $(WINDOWSVMIMAGE)
+        Os: windows
+      - name: Windows3
+        Pool: $(WINDOWSPOOL)
+        Image: $(WINDOWSVMIMAGE)
+        Os: windows
+      - name: Windows4
+        Pool: $(WINDOWSPOOL)
+        Image: $(WINDOWSVMIMAGE)
+        Os: windows
+      - name: Windows5
+        Pool: $(WINDOWSPOOL)
+        Image: $(WINDOWSVMIMAGE)
+        Os: windows
+      - name: Linux
         Pool: $(LINUXPOOL)
         Image: $(LINUXVMIMAGE)
         Os: linux

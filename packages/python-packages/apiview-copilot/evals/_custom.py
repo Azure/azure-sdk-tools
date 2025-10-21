@@ -4,7 +4,7 @@ import os
 import pathlib
 import sys
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Set, Tuple
+from typing import Any, Set
 
 import prompty
 import prompty.azure_beta
@@ -95,7 +95,7 @@ class BaseEvaluator(ABC):
     """
 
     @abstractmethod
-    def __call__(self, **kwargs) -> Dict[str, Any]:
+    def __call__(self, **kwargs) -> dict[str, Any]:
         """Evaluate the given inputs and return evaluation metrics.
 
         Args:
@@ -103,18 +103,18 @@ class BaseEvaluator(ABC):
                      The specific arguments depend on the evaluator implementation.
 
         Returns:
-            Dict[str, Any]: A dictionary containing evaluation metrics and results.
+            dict[str, Any]: A dictionary containing evaluation metrics and results.
                            The structure depends on the evaluator implementation.
         """
         pass
 
     @property
     @abstractmethod
-    def evaluator_config(self) -> Dict[str, Any]:
+    def evaluator_config(self) -> dict[str, Any]:
         """Return the evaluator configuration for the Azure AI evaluation framework.
 
         Returns:
-            Dict[str, Any]: Configuration dictionary containing column mappings
+            dict[str, Any]: Configuration dictionary containing column mappings
                            and other evaluator-specific settings.
         """
         pass
@@ -170,7 +170,7 @@ class CustomAPIViewEvaluator(BaseEvaluator):
         }
 
     @property
-    def evaluator_config(self) -> Dict[str, Any]:
+    def evaluator_config(self) -> dict[str, Any]:
         """Return the evaluator configuration for the Azure AI evaluation framework."""
         return {
             "column_mapping": {
@@ -224,7 +224,7 @@ class CustomAPIViewEvaluator(BaseEvaluator):
         normalized_score = max(0, min(100, score * 100))
         return round(normalized_score)
 
-    def _get_comment_matches(self, expected: dict[str, Any], actual: dict[str, Any]) -> Tuple[Set, Set, Set]:
+    def _get_comment_matches(self, expected: dict[str, Any], actual: dict[str, Any]) -> tuple[Set, Set, Set]:
         """Compare comments based on both line numbers and rule IDs."""
         exact_matches = set()
         rule_matches_wrong_line = set()
@@ -644,7 +644,7 @@ class PromptyEvaluator(BaseEvaluator):
         """Peek at JSONL to see what fields are available."""
 
     @property
-    def evaluator_config(self) -> Dict[str, Any]:
+    def evaluator_config(self) -> dict[str, Any]:
         config = {}
         with open(self._jsonl_file, encoding="utf-8") as f:
             first_line = json.loads(f.readline())

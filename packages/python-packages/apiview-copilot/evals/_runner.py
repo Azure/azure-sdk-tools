@@ -5,7 +5,7 @@ import tempfile
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Any, List
+from typing import Any
 
 import yaml
 from azure.ai.evaluation import evaluate
@@ -142,7 +142,7 @@ class EvaluationRunner:
         if self._context is None:
             self._context = ExecutionContext()
 
-    def run(self, discovery_result: DiscoveryResult) -> List[EvaluationResult]:
+    def run(self, discovery_result: DiscoveryResult) -> list[EvaluationResult]:
         """Execute all targets in the discovery result.
 
         Args:
@@ -162,7 +162,7 @@ class EvaluationRunner:
         finally:
             self.cleanup()
 
-    def _run_parallel(self, discovery_result: DiscoveryResult) -> List[EvaluationResult]:
+    def _run_parallel(self, discovery_result: DiscoveryResult) -> list[EvaluationResult]:
         """Parallel execution using ThreadPoolExecutor."""
         cpu_count = os.cpu_count() or 4
         max_workers = min(cpu_count * 2, len(discovery_result.targets))
@@ -312,7 +312,7 @@ class EvaluationRunner:
         
         return results
 
-    def show_results(self, results: List[EvaluationResult]):
+    def show_results(self, results: list[EvaluationResult]):
         """Display detailed results from all evaluations."""
         print("=" * 60)
         print("📈 EVALUATION RESULTS")
@@ -345,7 +345,7 @@ class EvaluationRunner:
             print("No evaluation results to display.")
             print()
 
-    def show_summary(self, results: List[EvaluationResult]):
+    def show_summary(self, results: list[EvaluationResult]):
         """Display aggregated results from all evaluations."""
         successful = [r for r in results if r.success]
         failed = [r for r in results if not r.success]

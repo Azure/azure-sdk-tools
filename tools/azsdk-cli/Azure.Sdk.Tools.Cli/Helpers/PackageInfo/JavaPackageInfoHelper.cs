@@ -1,15 +1,17 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
+using Azure.Sdk.Tools.Cli.Models;
 
 namespace Azure.Sdk.Tools.Cli.Helpers;
 
-public sealed class JavaPackageInfoHelper(IGitHelper gitHelper) : IPackageInfoHelper
+public sealed partial class JavaPackageInfoHelper(IGitHelper gitHelper) : IPackageInfoHelper
 {
     public Task<PackageInfo> ResolvePackageInfo(string packagePath, CancellationToken ct = default)
     {
         var realPath = RealPath.GetRealPath(packagePath);
-        var (repoRoot, relativePath, fullPath) = Parse(gitHelper, realPath);
+        var (repoRoot, relativePath, fullPath) = PackagePathParser.Parse(gitHelper, realPath);
         var model = new PackageInfo
         {
             PackagePath = fullPath,
@@ -17,7 +19,7 @@ public sealed class JavaPackageInfoHelper(IGitHelper gitHelper) : IPackageInfoHe
             RelativePath = relativePath,
             PackageName = Path.GetFileName(fullPath),
             ServiceName = Path.GetFileName(Path.GetDirectoryName(fullPath)) ?? string.Empty,
-            Language = "java",
+            Language = SdkLanguage.Java,
             SamplesDirectoryProvider = (pi, _) => Task.FromResult(BuildSamplesDirectory(pi.PackagePath)),
             FileExtensionProvider = _ => ".java",
             VersionProvider = (pi, token) => TryGetVersionAsync(pi.PackagePath, token)
@@ -42,23 +44,22 @@ public sealed class JavaPackageInfoHelper(IGitHelper gitHelper) : IPackageInfoHe
         if (!File.Exists(path)) { return null; }
         try
         {
-            var content = await File.ReadAllTextAsync(path, ct);
-            var projectStart = content.IndexOf("<project", StringComparison.OrdinalIgnoreCase);
-            if (projectStart >= 0)
+            using var stream = File.OpenRead(path);
+            var doc = await XDocument.LoadAsync(stream, LoadOptions.None, ct);
+            var root = doc.Root;
+            if (root == null) { return null; }
+            // Maven POM uses a default namespace; capture it to access elements.
+            var ns = root.Name.Namespace;
+            string? version = root.Element(ns + "version")?.Value?.Trim();
+            if (string.IsNullOrWhiteSpace(version))
             {
-                var dependenciesIndex = content.IndexOf("<dependencies", projectStart, StringComparison.OrdinalIgnoreCase);
-                var searchSegment = dependenciesIndex > projectStart
-                    ? content.Substring(projectStart, dependenciesIndex - projectStart)
-                    : content.Substring(projectStart);
-                var match = _pomVersionRegex.Value.Match(searchSegment);
-                if (match.Success)
-                {
-                    return match.Groups[1].Value.Trim();
-                }
+                // Fallback to parent version if project version not declared directly.
+                var parent = root.Element(ns + "parent");
+                version = parent?.Element(ns + "version")?.Value?.Trim();
             }
+            return string.IsNullOrWhiteSpace(version) ? null : version;
         }
-        catch { }
-        return null;
+        catch { return null; }
     }
 
     private static string? TryGetJavaModuleName(string packagePath)
@@ -74,18 +75,4 @@ public sealed class JavaPackageInfoHelper(IGitHelper gitHelper) : IPackageInfoHe
         catch { return null; }
     }
 
-    private static (string RepoRoot, string RelativePath, string FullPath) Parse(IGitHelper gitHelper, string realPackagePath)
-    {
-        var full = realPackagePath;
-        var repoRoot = gitHelper.DiscoverRepoRoot(full);
-        var sdkRoot = Path.Combine(repoRoot, "sdk");
-        if (!full.StartsWith(sdkRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) && !string.Equals(full, sdkRoot, StringComparison.OrdinalIgnoreCase))
-        {
-            throw new ArgumentException($"Path '{realPackagePath}' is not under the expected 'sdk' folder of repo root '{repoRoot}'. Expected structure: <repoRoot>/sdk/<service>/<package>", nameof(realPackagePath));
-        }
-        var relativePath = Path.GetRelativePath(sdkRoot, full).TrimStart(Path.DirectorySeparatorChar);
-        return (repoRoot, relativePath, full);
-    }
-
-    private static readonly Lazy<Regex> _pomVersionRegex = new(() => new Regex("<version>([^<]+)</version>", RegexOptions.Compiled));
 }

@@ -11,19 +11,6 @@ namespace Azure.Sdk.Tools.Cli.Helpers
     /// </summary>
     public static class FileHelper
     {
-        // Cache for glob pattern matchers to avoid recreating them for each file
-        private static readonly ConcurrentDictionary<string, Matcher> _globMatcherCache = new();
-        
-        // Limits for cache size to prevent memory leaks
-        private const int MaxCacheSize = 100;
-
-        /// <summary>
-        /// Clears the glob pattern matcher cache. Useful for long-running processes to prevent memory leaks.
-        /// </summary>
-        public static void ClearPatternCache()
-        {
-            _globMatcherCache.Clear();
-        }
 
         /// <summary>
         /// Validates that the specified directory exists and is empty.
@@ -331,11 +318,18 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             Func<FileMetadata, int> priorityFunc,
             ILogger? logger = null)
         {
-            var extensionSet = includeExtensions.Length > 0 
+            var extensionSet = includeExtensions.Length > 0
                 ? new HashSet<string>(includeExtensions, StringComparer.OrdinalIgnoreCase)
                 : null;
             var fileInfos = new List<FileMetadata>();
             var processedFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            Matcher? excludeMatcher = null;
+            if (excludeGlobPatterns.Length > 0)
+            {
+                excludeMatcher = new Matcher(StringComparison.OrdinalIgnoreCase);
+                excludeMatcher.AddIncludePatterns(excludeGlobPatterns);
+            }
 
             foreach (var file in filePaths)
             {
@@ -343,22 +337,22 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
                 if (File.Exists(fullPath))
                 {
-                    TryProcessFile(fullPath, extensionSet, excludeGlobPatterns, relativeTo, priorityFunc, fileInfos, processedFiles, logger);
+                    TryProcessFile(fullPath, extensionSet, excludeMatcher, relativeTo, priorityFunc, fileInfos, processedFiles, logger);
                 }
                 else if (Directory.Exists(fullPath))
                 {
                     logger?.LogDebug("Scanning directory {fullPath}", fullPath);
-                    
+
                     var enumerationOptions = new EnumerationOptions
                     {
                         RecurseSubdirectories = true,
                         IgnoreInaccessible = true,
                         AttributesToSkip = FileAttributes.Hidden | FileAttributes.System
                     };
-                    
+
                     foreach (var filePath in Directory.EnumerateFiles(fullPath, "*.*", enumerationOptions))
                     {
-                        TryProcessFile(filePath, extensionSet, excludeGlobPatterns, relativeTo, priorityFunc, fileInfos, processedFiles, logger);
+                        TryProcessFile(filePath, extensionSet, excludeMatcher, relativeTo, priorityFunc, fileInfos, processedFiles, logger);
                     }
                 }
                 else
@@ -373,8 +367,8 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 return priorityComparison != 0 ? priorityComparison : a.FileSize.CompareTo(b.FileSize);
             });
 
-            logger?.LogDebug("File discovery completed. Found {fileCount} files, total size: {totalSize:N0} bytes", 
-                fileInfos.Count, 
+            logger?.LogDebug("File discovery completed. Found {fileCount} files, total size: {totalSize:N0} bytes",
+                fileInfos.Count,
                 fileInfos.Count > 0 ? fileInfos.Sum(f => f.FileSize) : 0);
 
             if (logger != null && fileInfos.Count > 0 && logger.IsEnabled(LogLevel.Debug))
@@ -666,7 +660,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         private static void TryProcessFile(
             string filePath,
             ISet<string>? extensionSet,
-            string[] excludeGlobPatterns,
+            Matcher? excludeMatcher,
             string relativeTo,
             Func<FileMetadata, int> priorityFunc,
             List<FileMetadata> fileInfos,
@@ -687,10 +681,13 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             }
 
             // Match exclude patterns against a path relative to the provided root.
-            var globPath = Path.GetRelativePath(relativeTo, filePath);
-            if (IsMatchingExcludePattern(globPath, excludeGlobPatterns))
+            if (excludeMatcher != null)
             {
-                return;
+                var globPath = Path.GetRelativePath(relativeTo, filePath).Replace(Path.DirectorySeparatorChar, '/');
+                if (excludeMatcher.Match(globPath).HasMatches)
+                {
+                    return;
+                }
             }
 
             var fileInfo = new FileInfo(filePath);
@@ -709,41 +706,5 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 metadata.RelativePath, metadata.FileSize, metadata.Priority);
         }
 
-    /// <summary>
-    /// Determines whether a relative file path matches any exclusion glob pattern.
-    /// </summary>
-    /// <param name="filePath">Path relative to the chosen root (<c>relativeTo</c> in discovery methods).</param>
-    /// <param name="excludeGlobPatterns">Glob patterns treated as exclusions. An empty array yields <c>false</c>.</param>
-    /// <returns><c>true</c> if the path is excluded; otherwise <c>false</c>.</returns>
-    /// <remarks>
-    /// Internally caches compiled <see cref="Matcher"/> instances keyed by the joined pattern list (up to 100 entries, then reset) to reduce allocations
-    /// for repeated discovery passes in long-running processes.
-    /// </remarks>
-        public static bool IsMatchingExcludePattern(string filePath, string[] excludeGlobPatterns)
-        {
-            if (excludeGlobPatterns == null || excludeGlobPatterns.Length == 0)
-            {
-                return false;
-            }
-
-            var cacheKey = string.Join("|", excludeGlobPatterns);
-            
-            var matcher = _globMatcherCache.GetOrAdd(cacheKey, key =>
-            {
-                if (_globMatcherCache.Count >= MaxCacheSize)
-                {
-                    _globMatcherCache.Clear();
-                }
-                
-                var newMatcher = new Matcher(StringComparison.OrdinalIgnoreCase);
-                newMatcher.AddIncludePatterns(excludeGlobPatterns);
-                return newMatcher;
-            });
-
-            // Normalize path separators to forward slashes for consistent globbing and match
-            var normalizedPath = filePath.Replace(Path.DirectorySeparatorChar, '/');
-            var result = matcher.Match(normalizedPath);
-            return result.HasMatches;
-        }
     }
 }

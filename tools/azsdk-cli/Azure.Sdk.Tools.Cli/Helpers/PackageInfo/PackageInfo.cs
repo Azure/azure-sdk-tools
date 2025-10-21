@@ -1,5 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+using Azure.Sdk.Tools.Cli.Models;
+
 namespace Azure.Sdk.Tools.Cli.Helpers;
 
 /// <summary>
@@ -49,7 +51,7 @@ public class PackageInfo
     /// <remarks>
     /// Used for selecting language specific strategies (sample folder layout, file extensions, version extraction, etc.).
     /// </remarks>
-    public required string Language { get; init; }
+    public required SdkLanguage Language { get; init; }
 
     // Internal strategy delegates filled by language-specific helper at construction time.
     /// <summary>
@@ -89,8 +91,7 @@ public class PackageInfo
     /// <summary>
     /// Gets the canonical file extension (including leading <c>.</c>) to be used when creating sample files.
     /// </summary>
-    /// <returns>File extension string such as <c>.ts</c>, <c>.py</c>, <c>.cs</c>.</returns>
-    public string GetFileExtension() => FileExtensionProvider(this);
+    public string FileExtension => FileExtensionProvider(this);
 
     /// <summary>
     /// Attempts to resolve the package's current version.

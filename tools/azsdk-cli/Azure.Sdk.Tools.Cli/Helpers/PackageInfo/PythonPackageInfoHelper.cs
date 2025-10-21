@@ -4,12 +4,12 @@ using System.Text.RegularExpressions;
 
 namespace Azure.Sdk.Tools.Cli.Helpers;
 
-public sealed class PythonPackageInfoHelper(IGitHelper gitHelper) : IPackageInfoHelper
+public sealed partial class PythonPackageInfoHelper(IGitHelper gitHelper) : IPackageInfoHelper
 {
     public Task<PackageInfo> ResolvePackageInfo(string packagePath, CancellationToken ct = default)
     {
         var realPath = RealPath.GetRealPath(packagePath);
-        var (repoRoot, relativePath, fullPath) = Parse(gitHelper, realPath);
+        var (repoRoot, relativePath, fullPath) = PackagePathParser.Parse(gitHelper, realPath);
         var model = new PackageInfo
         {
             PackagePath = fullPath,
@@ -17,7 +17,7 @@ public sealed class PythonPackageInfoHelper(IGitHelper gitHelper) : IPackageInfo
             RelativePath = relativePath,
             PackageName = Path.GetFileName(fullPath),
             ServiceName = Path.GetFileName(Path.GetDirectoryName(fullPath)) ?? string.Empty,
-            Language = "python",
+            Language = Models.SdkLanguage.Python,
             SamplesDirectoryProvider = (pi, _) => Task.FromResult(Path.Combine(pi.PackagePath, "samples")),
             FileExtensionProvider = _ => ".py",
             VersionProvider = (pi, token) => TryGetVersionAsync(pi.PackagePath, token)
@@ -36,25 +36,13 @@ public sealed class PythonPackageInfoHelper(IGitHelper gitHelper) : IPackageInfo
 
         string? Extract(string content)
         {
-            var match = _pythonTomlRegex.Value.Match(content);
+            var match = MyRegex().Match(content);
             return match.Success ? match.Groups[1].Value : null;
         }
 
         return await TryFileAsync("pyproject.toml", Extract) ?? await TryFileAsync("setup.py", Extract);
     }
 
-    private static (string RepoRoot, string RelativePath, string FullPath) Parse(IGitHelper gitHelper, string realPackagePath)
-    {
-        var full = realPackagePath;
-        var repoRoot = gitHelper.DiscoverRepoRoot(full);
-        var sdkRoot = Path.Combine(repoRoot, "sdk");
-        if (!full.StartsWith(sdkRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) && !string.Equals(full, sdkRoot, StringComparison.OrdinalIgnoreCase))
-        {
-            throw new ArgumentException($"Path '{realPackagePath}' is not under the expected 'sdk' folder of repo root '{repoRoot}'. Expected structure: <repoRoot>/sdk/<service>/<package>", nameof(realPackagePath));
-        }
-        var relativePath = Path.GetRelativePath(sdkRoot, full).TrimStart(Path.DirectorySeparatorChar);
-        return (repoRoot, relativePath, full);
-    }
-
-    private static readonly Lazy<Regex> _pythonTomlRegex = new(() => new Regex("(?i)version\\s*=\\s*['\"]([^'\"]+)['\"]", RegexOptions.Compiled));
+    [GeneratedRegex("(?i)version\\s*=\\s*['\"]([^'\"]+)['\"]", RegexOptions.Compiled, "")]
+    private static partial Regex MyRegex();
 }

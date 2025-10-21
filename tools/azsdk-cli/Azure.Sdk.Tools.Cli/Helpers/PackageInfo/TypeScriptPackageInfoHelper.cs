@@ -1,6 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-using System.Text.RegularExpressions;
+using System.Text.Json;
 
 namespace Azure.Sdk.Tools.Cli.Helpers;
 
@@ -9,7 +9,7 @@ public sealed class TypeScriptPackageInfoHelper(IGitHelper gitHelper) : IPackage
     public Task<PackageInfo> ResolvePackageInfo(string packagePath, CancellationToken ct = default)
     {
         var realPath = RealPath.GetRealPath(packagePath);
-        var (repoRoot, relativePath, fullPath) = Parse(gitHelper, realPath);
+        var (repoRoot, relativePath, fullPath) = PackagePathParser.Parse(gitHelper, realPath);
         var model = new PackageInfo
         {
             PackagePath = fullPath,
@@ -17,7 +17,7 @@ public sealed class TypeScriptPackageInfoHelper(IGitHelper gitHelper) : IPackage
             RelativePath = relativePath,
             PackageName = Path.GetFileName(fullPath),
             ServiceName = Path.GetFileName(Path.GetDirectoryName(fullPath)) ?? string.Empty,
-            Language = "typescript",
+            Language = Models.SdkLanguage.JavaScript,
             SamplesDirectoryProvider = (pi, _) => Task.FromResult(Path.Combine(pi.PackagePath, "samples-dev")),
             FileExtensionProvider = _ => ".ts",
             VersionProvider = (pi, token) => TryGetVersionAsync(pi.PackagePath, token)
@@ -31,23 +31,23 @@ public sealed class TypeScriptPackageInfoHelper(IGitHelper gitHelper) : IPackage
         {
             var path = Path.Combine(packagePath, "package.json");
             if (!File.Exists(path)) { return null; }
-            var content = await File.ReadAllTextAsync(path, ct);
-            var match = Regex.Match(content, "\"version\"\\s*:\\s*\"([^\\\"]+)\"");
-            return match.Success ? match.Groups[1].Value : null;
+            await using var stream = File.OpenRead(path);
+            using var doc = await JsonDocument.ParseAsync(stream, new JsonDocumentOptions
+            {
+                AllowTrailingCommas = true,
+                CommentHandling = JsonCommentHandling.Skip
+            }, ct);
+            if (doc.RootElement.TryGetProperty("version", out var versionProp) && versionProp.ValueKind == JsonValueKind.String)
+            {
+                var value = versionProp.GetString();
+                if (!string.IsNullOrWhiteSpace(value)) { return value; }
+            }
+            return null;
         }
-        catch { return null; }
+        catch
+        {
+            return null;
+        }
     }
 
-    private static (string RepoRoot, string RelativePath, string FullPath) Parse(IGitHelper gitHelper, string realPackagePath)
-    {
-        var full = realPackagePath;
-        var repoRoot = gitHelper.DiscoverRepoRoot(full);
-        var sdkRoot = Path.Combine(repoRoot, "sdk");
-        if (!full.StartsWith(sdkRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) && !string.Equals(full, sdkRoot, StringComparison.OrdinalIgnoreCase))
-        {
-            throw new ArgumentException($"Path '{realPackagePath}' is not under the expected 'sdk' folder of repo root '{repoRoot}'. Expected structure: <repoRoot>/sdk/<service>/<package>", nameof(realPackagePath));
-        }
-        var relativePath = Path.GetRelativePath(sdkRoot, full).TrimStart(Path.DirectorySeparatorChar);
-        return (repoRoot, relativePath, full);
-    }
 }

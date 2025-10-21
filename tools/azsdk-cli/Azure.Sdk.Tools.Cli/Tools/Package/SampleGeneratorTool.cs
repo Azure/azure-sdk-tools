@@ -47,9 +47,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
         private readonly Option<string> modelOption = new("--model")
         {
-            Description = "Azure OpenAI deployment name to use (default: `gpt-4.1`)",
-            Required = false,
-            DefaultValueFactory = _ => "gpt-4.1",
+            Description = "Azure OpenAI deployment name to use ",
+            Required = false
         };
 
         protected override Command GetCommand() => new("samples", "Generates sample files")
@@ -74,7 +73,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 try
                 {
                     var trimmed = rawPrompt.Trim();
-                    if ((trimmed.EndsWith(".md", StringComparison.OrdinalIgnoreCase) || trimmed.EndsWith(".markdown", StringComparison.OrdinalIgnoreCase)))
+                    if (trimmed.EndsWith(".md", StringComparison.OrdinalIgnoreCase) || trimmed.EndsWith(".markdown", StringComparison.OrdinalIgnoreCase))
                     {
                         var fullPath = Path.GetFullPath(trimmed);
                         if (File.Exists(fullPath))
@@ -92,7 +91,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
             string packagePath = parseResult.GetValue(SharedOptions.PackagePath) ?? ".";
             bool overwrite = parseResult.GetValue(overwriteOption);
-            string model = parseResult.GetValue(modelOption) ?? "gpt-4.1";
+            var model = parseResult.GetValue(modelOption);
 
             try
             {
@@ -115,7 +114,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             IPackageInfoHelper? helper = await packageInfoResolver.Resolve(packagePath, ct) ?? throw new ArgumentException("Unable to determine language for package (resolver returned null). Ensure repository structure and Language-Settings.ps1 are correct.");
             var packageInfo = await helper.ResolvePackageInfo(packagePath, ct);
-            var resolvedLanguage = packageInfo.Language;
+            var resolvedLanguage = packageInfo.Language == SdkLanguage.JavaScript ? "TypeScript" : packageInfo.Language.ToString();
             var resolvedOutputDirectory = await packageInfo.GetSamplesDirectoryAsync(ct);
 
             logger.LogInformation("Starting sample generation with prompt: {prompt}", prompt);
@@ -155,11 +154,9 @@ Scenarios description:
             logger.LogDebug("Starting microagent with model: {model}", model);
             logger.LogDebug("Enhanced prompt length: {promptLength} characters", enhancedPrompt.Length);
 
-            var microagent = new Microagent<List<GeneratedSample>>()
-            {
-                Instructions = enhancedPrompt,
-                Model = model
-            };
+            var microagent = string.IsNullOrEmpty(model)
+                ? new Microagent<List<GeneratedSample>>() { Instructions = enhancedPrompt }
+                : new Microagent<List<GeneratedSample>>() { Instructions = enhancedPrompt, Model = model };
 
             try
             {
@@ -201,7 +198,7 @@ Scenarios description:
                         }
 
                         // Prefer language helper's canonical extension if provided; fall back to sampleContext.
-                        var fileExtension = packageInfo.GetFileExtension();
+                        var fileExtension = packageInfo.FileExtension;
                         if (string.IsNullOrWhiteSpace(fileExtension)) { fileExtension = sampleContext.FileExtension; }
 
                         var cleanFileName = Path.GetFileNameWithoutExtension(sample.FileName.Replace('/', '_').Replace('\\', '_'));

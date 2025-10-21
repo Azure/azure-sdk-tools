@@ -3,6 +3,7 @@
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Tests.TestHelpers;
+using Azure.Sdk.Tools.Cli.Models;
 using LibGit2Sharp;
 using Moq;
 
@@ -60,7 +61,7 @@ public class PackageInfoContractTests
             Assert.That(info.RelativePath, Is.EqualTo(expectedRelative));
             Assert.That(info.ServiceName, Is.EqualTo(service));
             Assert.That(info.PackageName, Is.EqualTo(package));
-            Assert.That(info.Language, Is.EqualTo(language));
+            Assert.That(info.Language, Is.EqualTo(MapLanguage(language)));
         });
     }
 
@@ -72,8 +73,7 @@ public class PackageInfoContractTests
     [TestCase("go")]
     public void Resolve_InvalidPath_Throws(string language)
     {
-        // Construct a path inside the repo root but not under the required sdk/<service>/<package> (and in go case sdk/<group>/<service>/<package>) depth.
-    var repoRoot = Path.Combine(_tempRoot.DirectoryPath, "azure-sdk-repo-root-invalid");
+        var repoRoot = Path.Combine(_tempRoot.DirectoryPath, "azure-sdk-repo-root-invalid");
         Directory.CreateDirectory(repoRoot);
         if (!Directory.Exists(Path.Combine(repoRoot, ".git"))) { Repository.Init(repoRoot); }
         // Invalid because missing sdk segment entirely or insufficient depth under sdk.
@@ -125,6 +125,16 @@ public class PackageInfoContractTests
         "python" => new PythonPackageInfoHelper(gitHelper),
         "typescript" => new TypeScriptPackageInfoHelper(gitHelper),
         "go" => new GoPackageInfoHelper(gitHelper),
+        _ => throw new ArgumentException($"Unsupported language '{language}'", nameof(language))
+    };
+
+    private static SdkLanguage MapLanguage(string language) => language switch
+    {
+        "dotnet" => SdkLanguage.DotNet,
+        "java" => SdkLanguage.Java,
+        "python" => SdkLanguage.Python,
+        "typescript" => SdkLanguage.JavaScript, // TypeScript packages represented by JavaScript enum value
+        "go" => SdkLanguage.Go,
         _ => throw new ArgumentException($"Unsupported language '{language}'", nameof(language))
     };
 }

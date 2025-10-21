@@ -55,15 +55,14 @@ namespace Azure.Template.Tests.Samples
 }";
 
     public Task<string> GetClientLibrarySourceCodeAsync(string packagePath, int totalBudget, int perFileLimit, ILogger? logger = null, CancellationToken ct = default)
-        => LoadSourceAsync(new DotNetSourceInputProvider(), packagePath, totalBudget, perFileLimit, logger, ct);
-
-    private static Task<string> LoadSourceAsync(DotNetSourceInputProvider provider, string packagePath, int totalBudget, int perFileLimit, ILogger? logger, CancellationToken ct)
     {
         static int Priority(FileHelper.FileMetadata f)
         {
-            var name = Path.GetFileNameWithoutExtension(f.FilePath).ToLowerInvariant();
-            return name.Contains("client") || name.Contains("service") || name.EndsWith("client") || name.EndsWith("service") ? 1 : 10;
+            var name = Path.GetFileNameWithoutExtension(f.FilePath);
+            return name.Contains("client", StringComparison.OrdinalIgnoreCase) ? 1 : 10;
         }
+
+        var provider = new DotNetSourceInputProvider();
         var inputs = provider.Create(packagePath);
         return FileHelper.LoadFilesAsync(inputs, packagePath, totalBudget, perFileLimit, Priority, logger, ct);
     }

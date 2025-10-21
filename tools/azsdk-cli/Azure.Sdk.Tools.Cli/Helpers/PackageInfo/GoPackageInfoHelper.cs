@@ -21,7 +21,7 @@ public sealed class GoPackageInfoHelper(IGitHelper gitHelper) : IPackageInfoHelp
             RelativePath = relativePath,
             PackageName = Path.GetFileName(fullPath),
             ServiceName = Path.GetFileName(Path.GetDirectoryName(fullPath)) ?? string.Empty,
-            Language = "go",
+            Language = Models.SdkLanguage.Go,
             SamplesDirectoryProvider = (pi, _) => Task.FromResult(pi.PackagePath),
             FileExtensionProvider = _ => ".go",
             VersionProvider = (pi, token) => TryGetVersionAsync(pi.PackagePath, token)

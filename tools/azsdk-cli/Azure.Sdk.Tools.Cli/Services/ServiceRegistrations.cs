@@ -54,6 +54,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             {
                 JavaScript = typeof(JavaScriptTestRunner),
                 Python = typeof(PythonTestRunner),
+                DotNet = typeof(DotNetTestRunner),
             });
 
             // Helper classes

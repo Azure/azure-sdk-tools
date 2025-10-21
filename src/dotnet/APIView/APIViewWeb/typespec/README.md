@@ -99,8 +99,51 @@ For API Revisions and Comments APIs, include the Azure AD bearer token:
 Authorization: Bearer <azure-ad-token>
 ```
 
+## Reviewing the API Documentation
+
+The compiled OpenAPI specification (`tsp-output/openapi.yaml`) can be:
+
+1. **Viewed in Swagger UI**: Upload the YAML file to https://editor.swagger.io/ to visualize and test the APIs
+2. **Reviewed in APIView**: Upload the TypeSpec files to APIView for API design review by the archboard
+3. **Used for Code Generation**: Generate client libraries using OpenAPI generators
+4. **Imported into Postman**: Create automated API tests and documentation
+
+## Example Usage
+
+### Using AutoReview API to Upload a Review
+
+```bash
+curl -X POST "https://apiview.dev/AutoReview/UploadAutoReview?label=v1.0.0" \
+  -H "ApiKey: your-api-key-here" \
+  -F "file=@path/to/api-review-file.json"
+```
+
+### Getting API Revision Content with Azure AD Token
+
+```bash
+curl -X GET "https://apiview.dev/api/apirevisions/getRevisionContent?apiRevisionId=abc123" \
+  -H "Authorization: Bearer your-azure-ad-token"
+```
+
+### Getting Comments for a Revision
+
+```bash
+curl -X GET "https://apiview.dev/api/comments/getRevisionComments?apiRevisionId=abc123" \
+  -H "Authorization: Bearer your-azure-ad-token"
+```
+
+## Design Principles
+
+This TypeSpec documentation follows these principles:
+
+1. **External-Only**: Only documents APIs that external teams should use (API Key or Azure AD auth)
+2. **Complete**: All parameters, responses, and error cases are documented
+3. **Standards-Based**: Uses OpenAPI 3.0 standard for maximum compatibility
+4. **Reviewable**: Can be uploaded to APIView itself for API design review
+
 ## Additional Resources
 
 - [TypeSpec Documentation](https://typespec.io/)
 - [TypeSpec HTTP Library](https://typespec.io/docs/libraries/http/reference)
 - [OpenAPI Specification](https://swagger.io/specification/)
+- [Swagger Editor](https://editor.swagger.io/) - Online tool to view and test the generated OpenAPI spec

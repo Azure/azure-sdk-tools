@@ -229,6 +229,7 @@ public static class Program
                     NullLogger.Instance,
                     CancellationToken.None))
                     {
+                        packageStream.Seek(0, SeekOrigin.Begin);
                         using PackageArchiveReader reader = new PackageArchiveReader(packageStream);
                         NuspecReader nuspec = reader.NuspecReader;
                         var file = reader.GetFiles().FirstOrDefault(f => f.EndsWith(dep.Name + ".dll"));
@@ -236,7 +237,10 @@ public static class Program
                         {
                             var fileInfo = new FileInfo(file);
                             var path = Path.Combine(tempFolder, dep.Name, fileInfo.Name);
-                            var tmp = reader.ExtractFile(file, path, NullLogger.Instance);
+                            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+                            using Stream entryStream = reader.GetStream(file);
+                            await using FileStream destinationStream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None);
+                            await entryStream.CopyToAsync(destinationStream).ConfigureAwait(false);
                         }
                     }
                 }

@@ -115,9 +115,9 @@ The four tools are intentionally small, composable units. Each emits a machine-r
 
 #### 1. Changelog Update Tool
 
-Name (CLI): `azsdk package changelog update`
+Name (CLI): `azsdk package update changelog`
 
-Name (MCP): `azsdk_package_changelog_update`
+Name (MCP): `azsdk_package_update_changelog`
 
 Purpose: Ensure changelog is auto-generated and has an entry for the upcoming release (management-plane) or provide guidance (data-plane) where manual editing is expected.
 
@@ -171,9 +171,9 @@ update-changelog.ps1 \
 
 #### 2. Version Update Tool
 
-Name (CLI): `azsdk package version update`
+Name (CLI): `azsdk package update version`
 
-Name (MCP): `azsdk_package_version_update`
+Name (MCP): `azsdk_package_update_version`
 
 Purpose: Increment and propagate package version across all authoritative version surfaces (e.g., `pom.xml`, `_version.py`, `*.csproj`, `package.json`, `go.mod`, `CHANGELOG.md`).
 
@@ -237,9 +237,9 @@ update-version.ps1 \
 
 #### 3. Metadata Update Tool
 
-Name (CLI): `azsdk package metadata update`
+Name (CLI): `azsdk package update metadata`
 
-Name (MCP): `azsdk_package_metadata_update`
+Name (MCP): `azsdk_package_update_metadata`
 
 Purpose: Update additional language-specific metadata and documentation, such as `_metadata.json`, `pom.xml` etc., export API surface (.NET).
 
@@ -286,9 +286,9 @@ update-metadata.ps1 \
 
 #### 4. CI Update Tool
 
-Name (CLI): `azsdk package ci update`
+Name (CLI): `azsdk package update ci`
 
-Name (MCP): `azsdk_package_ci_update`
+Name (MCP): `azsdk_package_update_ci`
 
 > **Note:** Support for this tool is planned for post‑milestone-1.
 
@@ -337,9 +337,9 @@ update-ci.ps1 \
 
 #### 5. Aggregated Tool (chained execution)
 
-Name (CLI): `azsdk package update`
+Name (CLI): `azsdk package update all`
 
-Name (MCP): `azsdk_package_update`
+Name (MCP): `azsdk_package_update_all`
 
 > **Note:** Support for this tool is planned for post‑milestone-1.
 
@@ -380,10 +380,10 @@ Example aggregated output (successful):
 Typical CLI workflow:
 
 ```bash
-azsdk package ci update --package-path /abs/sdk/path
-azsdk package changelog update --package-path /abs/sdk/path
-azsdk package metadata update --package-path /abs/sdk/path
-azsdk package version update --package-path /abs/sdk/path --version 1.0.0 --release-date 2025-10-17
+azsdk package update ci --package-path /abs/sdk/path
+azsdk package update changelog --package-path /abs/sdk/path
+azsdk package update metadata --package-path /abs/sdk/path
+azsdk package update version --package-path /abs/sdk/path --version 1.0.0 --release-date 2025-10-17
 ```
 
 ### Architecture Diagram
@@ -515,12 +515,12 @@ Add initial CI configuration for a new SDK at /work/sdk/new-service/new-package.
 
 ## CLI Commands
 
-### package ci update
+### package update ci
 
 **Command:**
 
 ```bash
-azsdk package ci update --package-path <absolute_folder_path_to_package>
+azsdk package update ci --package-path <absolute_folder_path_to_package>
 ```
 
 **Options:**
@@ -539,12 +539,12 @@ azsdk package ci update --package-path <absolute_folder_path_to_package>
 "failed, script exited 1: missing pwsh"
 ```
 
-### package changelog update
+### package update changelog
 
 **Command:**
 
 ```bash
-azsdk package changelog update --package-path <absolute_folder_path_to_package>
+azsdk package update changelog --package-path <absolute_folder_path_to_package>
 ```
 
 **Options:**
@@ -563,12 +563,12 @@ azsdk package changelog update --package-path <absolute_folder_path_to_package>
 "succeeded, Data-plane changelog no-op; manual edits required; next_steps: update version (if release)."
 ```
 
-### package version update
+### package update version
 
 **Command:**
 
 ```bash
-azsdk package version update --package-path <absolute_folder_path_to_package> --release-type <stable|beta>
+azsdk package update version --package-path <absolute_folder_path_to_package> --release-type <stable|beta>
 ```
 
 **Options:**
@@ -588,12 +588,12 @@ azsdk package version update --package-path <absolute_folder_path_to_package> --
 "failed, ERROR: the input version is invalid. next_steps: refer to aka-link to provide a valid version."
 ```
 
-### package metadata update
+### package update metadata
 
 **Command:**
 
 ```bash
-azsdk package metadata update --package-path <absolute_folder_path_to_package>
+azsdk package update metadata --package-path <absolute_folder_path_to_package>
 ```
 
 **Options:**

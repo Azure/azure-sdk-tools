@@ -71,7 +71,7 @@ public abstract class ProcessHelperBase<T>(ILogger<T> logger, IRawOutputHelper o
             };
 
             // Notify if the command might take a while
-            var timeoutMessage = options.Timeout > TimeSpan.FromSeconds(ProcessOptions.DEFAULT_PROCESS_TIMEOUT_SECONDS)
+            var timeoutMessage = options.Timeout > ProcessOptions.DEFAULT_PROCESS_TIMEOUT
                                     ? $"with timeout {options.Timeout.TotalMinutes} minutes "
                                     : "";
 

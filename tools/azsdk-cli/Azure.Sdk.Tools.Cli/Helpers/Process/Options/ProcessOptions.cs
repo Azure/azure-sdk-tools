@@ -16,7 +16,7 @@ public interface IProcessOptions
 
 public class ProcessOptions : IProcessOptions
 {
-    public static readonly int DEFAULT_PROCESS_TIMEOUT_SECONDS = 120;  // Default timeout of 2 minutes
+    public static readonly TimeSpan DEFAULT_PROCESS_TIMEOUT = TimeSpan.FromMinutes(2);
     private static readonly TimeSpan maxProcessTimeout = TimeSpan.FromHours(2);
 
     private const string CMD = "cmd.exe";
@@ -81,7 +81,7 @@ public class ProcessOptions : IProcessOptions
             throw new ArgumentOutOfRangeException(nameof(timeout), "timeout cannot exceed 2 hours.");
         }
 
-        this.Timeout = timeout ?? TimeSpan.FromSeconds(DEFAULT_PROCESS_TIMEOUT_SECONDS);
+        this.Timeout = timeout ?? DEFAULT_PROCESS_TIMEOUT;
         this.LogOutputStream = logOutputStream;
     }
 

@@ -88,10 +88,10 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
         /// Query Criteria
         ///     Issue is open
         ///     Issue has label "issue-addressed"
-        ///     Issue was last updated more than 7 days ago
+        ///     Issue was last updated more than 3 business days ago
         /// Resulting Action:
         ///     Close the issue
-        ///     Create a comment "Hi @${issueAuthor}, since you haven’t asked that we `/unresolve` the issue, we’ll close this out. If you believe further discussion is needed, please add a comment `/unresolve` to reopen the issue."
+        ///     Create a comment "Hi @${issueAuthor}, since you haven't asked that we `/unresolve` the issue, we'll close this out. If you believe further discussion is needed, please add a comment `/unresolve` to reopen the issue."
         /// </summary>
         /// <param name="gitHubEventClient">Authenticated GitHubEventClient</param>
         /// <param name="scheduledEventPayload">ScheduledEventGitHubPayload deserialized from the json event payload</param>
@@ -105,11 +105,17 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                 {
                     TriageLabelConstants.IssueAddressed
                 };
+
+                // Calculate the equivalent calendar days for 3 business days ago
+                // This uses approximately 5 calendar days to ensure we capture issues that are 3+ business days old
+                DateTime threeBusinessDaysAgo = Utils.BusinessDaysUtils.CalculateBusinessDaysAgo(3);
+                int calendarDaysEquivalent = (int)Math.Ceiling((DateTime.UtcNow - threeBusinessDaysAgo).TotalDays);
+
                 SearchIssuesRequest request = gitHubEventClient.CreateSearchRequest(scheduledEventPayload.Repository.Owner.Login,
                                                                  scheduledEventPayload.Repository.Name,
                                                                  IssueTypeQualifier.Issue,
                                                                  ItemState.Open,
-                                                                 7, // more than 7 days old
+                                                                 calendarDaysEquivalent, // equivalent calendar days for 3 business days
                                                                  new List<IssueIsQualifier> { IssueIsQualifier.Unlocked },
                                                                  includeLabels);
                 // Need to stop updating when the we hit the limit but, until then, after exhausting every
@@ -130,19 +136,24 @@ namespace Azure.Sdk.Tools.GitHubEventProcessor.EventProcessing
                         )
                     {
                         Issue issue = result.Items[iCounter++];
-                        // This rule only sets the state
-                        IssueUpdate issueUpdate = gitHubEventClient.GetIssueUpdate(issue, false);
-                        issueUpdate.State = ItemState.Closed;
-                        issueUpdate.StateReason = ItemStateReason.Completed;
-                        gitHubEventClient.AddToIssueUpdateList(scheduledEventPayload.Repository.Id,
-                                                               issue.Number,
-                                                               issueUpdate);
-                        string comment = $"Hi @{issue.User.Login}, since you haven’t asked that we `/unresolve` the issue, we’ll close this out. If you believe further discussion is needed, please add a comment `/unresolve` to reopen the issue.";
-                        gitHubEventClient.CreateComment(scheduledEventPayload.Repository.Id,
-                                                        issue.Number,
-                                                        comment);
-                        // There are 2 updates per result
-                        numUpdates += 2;
+                        
+                        // Verify that the issue has actually been inactive for 3 business days
+                        if (issue.UpdatedAt.HasValue && Utils.BusinessDaysUtils.HasBusinessDaysElapsed(issue.UpdatedAt.Value.UtcDateTime, 3))
+                        {
+                            // This rule only sets the state
+                            IssueUpdate issueUpdate = gitHubEventClient.GetIssueUpdate(issue, false);
+                            issueUpdate.State = ItemState.Closed;
+                            issueUpdate.StateReason = ItemStateReason.Completed;
+                            gitHubEventClient.AddToIssueUpdateList(scheduledEventPayload.Repository.Id,
+                                                                   issue.Number,
+                                                                   issueUpdate);
+                            string comment = $"Hi @{issue.User.Login}, since you haven't asked that we `/unresolve` the issue, we'll close this out. If you believe further discussion is needed, please add a comment `/unresolve` to reopen the issue.";
+                            gitHubEventClient.CreateComment(scheduledEventPayload.Repository.Id,
+                                                            issue.Number,
+                                                            comment);
+                            // There are 2 updates per result
+                            numUpdates += 2;
+                        }
                     }
 
                     // The number of items in the query isn't known until the query is run.

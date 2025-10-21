@@ -632,13 +632,13 @@ OR
 
 - Issue is open
 - Issue has label "issue-addressed"
-- Issue was last updated more than 7 days ago
+- Issue was last updated more than 3 business days ago
 
 ### Actions
 
 - Close the issue
 - Create the following comment
-  - "Hi @{issueAuthor}, since you haven’t asked that we “`/unresolve`” the issue, we’ll close this out. If you believe further discussion is needed, please add a comment “`/unresolve`” to reopen the issue."
+  - "Hi @{issueAuthor}, since you haven't asked that we "`/unresolve`" the issue, we'll close this out. If you believe further discussion is needed, please add a comment "`/unresolve`" to reopen the issue."
 
 ## Lock closed issues
 

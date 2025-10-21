@@ -18,6 +18,7 @@ namespace Azure.Sdk.Tools.Cli.Commands.HostServer
         {
             Command cmd = new("mcp", "Starts the MCP server (stdio mode)");
             cmd.Aliases.Add("start");  // backwards compatibility
+            cmd.Options.Add(ToolOption);
             cmd.SetAction((_, cancellationToken) => HandleCommand(cancellationToken));
             return cmd;
         }

@@ -21,6 +21,7 @@ var typespecSources = []model.Source{
 	model.Source_AzureRestAPISpec,
 	model.Source_TypeSpecMigration,
 	model.Source_TypeSpecHttpSpecs,
+	model.Source_StaticAzureDocs,
 }
 
 var SourceTopK = map[model.Source]int{

@@ -21,7 +21,6 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
             var tools = await _mcpClient.ListToolsAsync();
             var result = new List<ChatResponseUpdate>();
             var toolsCalled = new HashSet<string>();
-
             var chatOptions =
                 new ChatOptions
                 {
@@ -57,31 +56,29 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
         public async Task<ChatResponse> GetChatResponseWithExpectedResponseAsync(IEnumerable<ChatMessage> chat, Dictionary<string, ChatMessage> expectedToolResults)
         {
             var tools = await _mcpClient.ListToolsAsync();
-
             var conversationMessages = chat.ToList();
-
             var chatOptions = new ChatOptions
             {
                 Tools = [.. tools]
             };
-
-            var maxToolCalls = expectedToolResults.Count;
-
             var response = await _chatClient.GetResponseAsync(chat, chatOptions);
-
-            var toolsCalled = 0;
-
             var chatInitialIndex = conversationMessages.Count;
 
             while (response.FinishReason == ChatFinishReason.ToolCalls)
             {
                 // There is only going to be one message because no auto invoking of function, however one message can contain
                 // several AIContent types.
-                var message = response.Messages.First();
+                var message = response.Messages.FirstOrDefault();
+
+                // No message to process exit.
+                if (message == null)
+                {
+                    break;
+                }
 
                 conversationMessages.Add(message);
-
                 var functionCalls = message.Contents.OfType<FunctionCallContent>();
+
                 foreach (var functionCall in functionCalls)
                 {
                     // Use the expected tool result if we have it.
@@ -108,13 +105,6 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
 
                         conversationMessages.Add(errorResponseMessage);
                     }
-                    
-                    toolsCalled++;
-                }
-
-                if(toolsCalled >= maxToolCalls)
-                {
-                    break;
                 }
 
                 response = await _chatClient.GetResponseAsync(conversationMessages, chatOptions);

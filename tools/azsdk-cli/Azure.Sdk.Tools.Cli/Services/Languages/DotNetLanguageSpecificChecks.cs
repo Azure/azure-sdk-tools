@@ -253,18 +253,6 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
             return false;
         }
     }
-    /// <summary>
-    /// Gets the language-specific path pattern for spelling checks.
-    /// </summary>
-    /// <param name="packageRepoRoot">Repository root path</param>
-    /// <param name="packagePath">Package path</param>
-    /// <returns>Path pattern for spelling checks</returns>
-    public Task<string> GetSpellingCheckPath(string packageRepoRoot, string packagePath)
-    {
-        var relativePath = Path.GetRelativePath(packageRepoRoot, packagePath);
-        var defaultPath = $"." + Path.DirectorySeparatorChar + relativePath + Path.DirectorySeparatorChar + "api" + Path.DirectorySeparatorChar + "*.cs";
-        return Task.FromResult(defaultPath);
-    }
 
     public async Task<CLICheckResponse> ValidateReadme(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
@@ -275,8 +263,8 @@ public class DotNetLanguageSpecificChecks : ILanguageSpecificChecks
 
     public async Task<CLICheckResponse> ValidateChangelog(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
-        // Implementation for validating CHANGELOG in a Python project
-        // Could use markdownlint, etc.
-        return await CommonLanguageHelpers.ValidateChangelogCommon(this, _processHelper, _gitHelper, _logger, packagePath, fixCheckErrors, cancellationToken);
+        var repoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
+        var packageName = CommonLanguageHelpers.GetDefaultSDKPackageName(packagePath);
+        return await CommonLanguageHelpers.ValidateChangelogCommon(packageName, _processHelper, _gitHelper, _logger, packagePath, fixCheckErrors, cancellationToken);
     }
 }

@@ -410,8 +410,8 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
 
     public async Task<PackageCheckResponse> ValidateChangelog(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
-        // Implementation for validating CHANGELOG in a Python project
-        // Could use markdownlint, etc.
-        return await CommonLanguageHelpers.ValidateChangelogCommon(this, _processHelper, _gitHelper, _logger, packagePath, fixCheckErrors, cancellationToken);
+        var repoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
+        var packageName = CommonLanguageHelpers.GetDefaultSDKPackageName(packagePath);
+        return await CommonLanguageHelpers.ValidateChangelogCommon(packageName, _processHelper, _gitHelper, _logger, packagePath, fixCheckErrors, cancellationToken);
     }
 }

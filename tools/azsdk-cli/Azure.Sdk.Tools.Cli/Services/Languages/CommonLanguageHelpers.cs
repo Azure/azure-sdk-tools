@@ -19,10 +19,31 @@ namespace Azure.Sdk.Tools.Cli.Services;
 public static class CommonLanguageHelpers
 {
     /// <summary>
+    /// Gets the default SDK package name from the package path.
+    /// </summary>
+    /// <param name="packagePath">Package path</param>
+    /// <returns>SDK package name (directory name)</returns>
+    public static string GetDefaultSDKPackageName(string packagePath)
+    {
+        return Path.GetFileName(packagePath);
+    }
+
+    /// <summary>
+    /// Gets the default spelling check path pattern for a package.
+    /// </summary>
+    /// <param name="packageRepoRoot">Repository root path</param>
+    /// <param name="packagePath">Package path</param>
+    /// <returns>Path pattern for spelling checks</returns>
+    public static string GetDefaultSpellingCheckPath(string packageRepoRoot, string packagePath)
+    {
+        var relativePath = Path.GetRelativePath(packageRepoRoot, packagePath);
+        return $"." + Path.DirectorySeparatorChar + relativePath + Path.DirectorySeparatorChar + "**";
+    }
+    /// <summary>
     /// Common changelog validation implementation that works for most Azure SDK languages.
     /// Uses the PowerShell script from eng/common/scripts/Verify-ChangeLog.ps1.
     /// </summary>
-    /// <param name="languageChecks">The language-specific checks instance</param>
+    /// <param name="packageName">SDK package name (provided by language-specific implementation)</param>
     /// <param name="processHelper">Process helper for running commands</param>
     /// <param name="gitHelper">Git helper for repository operations</param>
     /// <param name="logger">Logger instance</param>
@@ -31,7 +52,7 @@ public static class CommonLanguageHelpers
     /// <param name="ct">Cancellation token</param>
     /// <returns>CLI check response containing success/failure status and response message</returns>
     public static async Task<CLICheckResponse> ValidateChangelogCommon(
-        ILanguageSpecificChecks languageChecks,
+        string packageName,
         IProcessHelper processHelper,
         IGitHelper gitHelper,
         ILogger logger,
@@ -56,7 +77,7 @@ public static class CommonLanguageHelpers
             }
 
             var command = "pwsh";
-            var args = new[] { "-File", scriptPath, "-PackageName", await languageChecks.GetSDKPackageName(packageRepoRoot, packagePath, ct) };
+            var args = new[] { "-File", scriptPath, "-PackageName", packageName };
 
             // Use a longer timeout for changelog validation - 5 minutes should be sufficient
             var timeout = TimeSpan.FromMinutes(5);
@@ -136,7 +157,7 @@ public static class CommonLanguageHelpers
     /// <summary>
     /// Common spelling check implementation that checks for spelling issues and optionally applies fixes.
     /// </summary>
-    /// <param name="languageChecks">The language-specific checks instance</param>
+    /// <param name="spellingCheckPath">Path to check for spelling errors (provided by language-specific implementation)</param>
     /// <param name="processHelper">Process helper for running commands</param>
     /// <param name="npxHelper">NPX helper for running Node.js tools</param>
     /// <param name="gitHelper">Git helper for repository operations</param>
@@ -147,7 +168,7 @@ public static class CommonLanguageHelpers
     /// <param name="ct">Cancellation token</param>
     /// <returns>CLI check response containing success/failure status and response message</returns>
     public static async Task<CLICheckResponse> CheckSpellingCommon(
-        ILanguageSpecificChecks languageChecks,
+        string spellingCheckPath,
         IProcessHelper processHelper,
         INpxHelper npxHelper,
         IGitHelper gitHelper,
@@ -175,7 +196,7 @@ public static class CommonLanguageHelpers
 
             var npxOptions = new NpxOptions(
                 null,
-                ["cspell", "lint", "--config", cspellConfigPath, "--root", packageRepoRoot, await languageChecks.GetSpellingCheckPath(packageRepoRoot, packagePath)],
+                ["cspell", "lint", "--config", cspellConfigPath, "--root", packageRepoRoot, spellingCheckPath],
                 logOutputStream: true
             );
             var processResult = await npxHelper.Run(npxOptions, ct: ct);

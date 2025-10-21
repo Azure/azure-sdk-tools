@@ -126,31 +126,4 @@ public interface ILanguageSpecificChecks
     {
         return Task.FromResult(new CLICheckResponse(1, "", "Not implemented for this language."));
     }
-
-    /// <summary>
-    /// Gets the SDK package name.
-    /// </summary>
-    /// <param name="repo">Repository root path</param>
-    /// <param name="packagePath">Package path</param>
-    /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>SDK package name</returns>
-    Task<string> GetSDKPackageName(string repo, string packagePath, CancellationToken cancellationToken = default)
-    {
-        // Default implementation: use the directory name as the package path
-        return Task.FromResult(Path.GetFileName(packagePath));
-    }
-
-    /// <summary>
-    /// Gets the language-specific path pattern for spelling checks.
-    /// </summary>
-    /// <param name="packageRepoRoot">Repository root path</param>
-    /// <param name="packagePath">Package path</param>
-    /// <returns>Path pattern for spelling checks</returns>
-    Task<string> GetSpellingCheckPath(string packageRepoRoot, string packagePath)
-    {
-        // Default implementation: check all files in the package directory
-        var relativePath = Path.GetRelativePath(packageRepoRoot, packagePath);
-        var defaultPath = $"." + Path.DirectorySeparatorChar + relativePath + Path.DirectorySeparatorChar + "**";
-        return Task.FromResult(defaultPath);
-    }
 }

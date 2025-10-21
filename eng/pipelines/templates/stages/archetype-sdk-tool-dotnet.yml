@@ -168,6 +168,10 @@ extends:
               steps:
                 - template: /eng/pipelines/templates/steps/install-dotnet.yml
 
+                - task: GoTool@0
+                  inputs:
+                    version: '1.24.1'
+
                 - template: /eng/pipelines/templates/steps/produce-net-standalone-packs.yml
                   parameters:
                     StagingDirectory: $(Build.ArtifactStagingDirectory)

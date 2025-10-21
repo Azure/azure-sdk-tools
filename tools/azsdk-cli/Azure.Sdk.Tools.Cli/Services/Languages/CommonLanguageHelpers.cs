@@ -39,8 +39,6 @@ public static class CommonLanguageHelpers
         bool fixCheckErrors = false, 
         CancellationToken ct = default)
     {
-        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-
         try
         {
             var (packageRepoRoot, errorResponse) = ValidatePackageAndDiscoverRepo(packagePath, gitHelper);
@@ -63,7 +61,6 @@ public static class CommonLanguageHelpers
             // Use a longer timeout for changelog validation - 5 minutes should be sufficient
             var timeout = TimeSpan.FromMinutes(5);
             var processResult = await processHelper.Run(new(command, args, timeout: timeout, workingDirectory: packagePath), ct);
-            stopwatch.Stop();
 
             return new CLICheckResponse(processResult);
         }

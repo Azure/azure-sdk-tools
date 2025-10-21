@@ -17,17 +17,38 @@
       </small>
     </div>
 
-    <!-- Select All Checkbox -->
-    <div class="d-flex align-items-center mb-3 p-2 bg-light rounded">
-      <p-checkbox 
-        [binary]="true"
-        [ngModel]="selectAll"
-        (onChange)="onSelectAllChange($event)"
-        styleClass="me-2">
-      </p-checkbox>
-      <label class="form-check-label fw-semibold">
-        Select All ({{ relatedComments.length }} issues)
-      </label>
+    <!-- Select All Checkbox with inline voting -->
+    <div class="d-flex align-items-center justify-content-between mb-3 p-2 bg-light rounded">
+      <div class="d-flex align-items-center">
+        <p-checkbox 
+          [binary]="true"
+          [ngModel]="selectAll"
+          (onChange)="onSelectAllChange($event)"
+          styleClass="me-2">
+        </p-checkbox>
+        <label class="form-check-label fw-semibold mb-0">
+          Select All ({{ relatedComments.length }} issues)
+        </label>
+      </div>
+      
+      <div class="d-flex align-items-center vote-section">
+        <div class="d-flex align-items-center vote-buttons">
+          <button 
+            type="button"
+            class="btn btn-link p-2 vote-btn"
+            title="Upvote selected issues"
+            (click)="toggleBatchVote('up')">
+            <span [ngClass]="hasBatchUpvote() ? 'bi bi-hand-thumbs-up-fill emoji-active fs-5' : 'bi bi-hand-thumbs-up text-muted fs-5'"></span>
+          </button>
+          <button 
+            type="button"
+            class="btn btn-link p-2 vote-btn"
+            title="Downvote selected issues"
+            (click)="toggleBatchVote('down')">
+            <span [ngClass]="hasBatchDownvote() ? 'bi bi-hand-thumbs-down-fill emoji-active fs-5' : 'bi bi-hand-thumbs-down text-muted fs-5'"></span>
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Related Comments List -->
@@ -88,6 +109,18 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <div class="resolution-comment-section mt-4">
+      <label class="form-label fw-semibold">
+        Message (Optional):
+      </label>
+      <textarea 
+        class="form-control resolution-comment-textarea"
+        [(ngModel)]="resolutionComment"
+        placeholder=" Add a comment when resolving the selected issues.."
+        rows="3">
+      </textarea>
     </div>
   </div>
 

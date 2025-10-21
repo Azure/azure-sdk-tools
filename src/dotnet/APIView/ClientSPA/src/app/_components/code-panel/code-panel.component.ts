@@ -575,6 +575,50 @@ export class CodePanelComponent implements OnChanges{
     }
   }
 
+  handleBatchResolutionActionEmitter(commentUpdates: CommentUpdatesDto) {
+    commentUpdates.reviewId = this.reviewId!;
+    switch (commentUpdates.commentThreadUpdateAction) {
+      case CommentThreadUpdateAction.CommentCreated:
+        if (commentUpdates.comment) {
+          this.addCommentToCommentThread(commentUpdates, commentUpdates.comment);
+        }
+        break;
+      case CommentThreadUpdateAction.CommentResolved:
+        this.applyCommentResolutionUpdate(commentUpdates);
+        break;
+      case CommentThreadUpdateAction.CommentUpVoteToggled:
+        const upCommentRow = this.codePanelRowData.find(row => 
+          row.nodeIdHashed === commentUpdates.nodeIdHashed && 
+          row.type === CodePanelRowDatatype.CommentThread &&
+          row.associatedRowPositionInGroup === commentUpdates.associatedRowPositionInGroup
+        );
+        const upComment = upCommentRow?.comments?.find(c => c.id === commentUpdates.commentId);
+        if (upComment) {
+          const hasUpvote = upComment.upvotes.includes(this.userProfile?.userName!);
+          if (!hasUpvote) {
+            this.toggleCommentUpVote(commentUpdates);
+          }
+        }
+        break;
+      case CommentThreadUpdateAction.CommentDownVoteToggled:
+        const downCommentRow = this.codePanelRowData.find(row => 
+          row.nodeIdHashed === commentUpdates.nodeIdHashed && 
+          row.type === CodePanelRowDatatype.CommentThread &&
+          row.associatedRowPositionInGroup === commentUpdates.associatedRowPositionInGroup
+        );
+        const downComment = downCommentRow?.comments?.find(c => c.id === commentUpdates.commentId);
+        if (downComment) {
+          const hasDownvote = downComment.downvotes.includes(this.userProfile?.userName!);
+          if (!hasDownvote) {
+            this.toggleCommentDownVote(commentUpdates);
+          }
+        }
+        break;
+    }
+    
+    this.signalRService.pushCommentUpdates(commentUpdates);
+  }
+
   handleCommentUpvoteActionEmitter(commentUpdates: CommentUpdatesDto){
     commentUpdates.reviewId = this.reviewId!;
     this.commentsService.toggleCommentUpVote(this.reviewId!, commentUpdates.commentId!).pipe(take(1)).subscribe({
@@ -1077,7 +1121,8 @@ export class CodePanelComponent implements OnChanges{
   }
 
   private applyCommentResolutionUpdate(commentUpdates: CommentUpdatesDto) {
-    this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread[commentUpdates.associatedRowPositionInGroup!].isResolvedCommentThread = (commentUpdates.commentThreadUpdateAction === CommentThreadUpdateAction.CommentResolved)? true : false;
+    this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread[commentUpdates.associatedRowPositionInGroup!].isResolvedCommentThread = 
+      (commentUpdates.commentThreadUpdateAction === CommentThreadUpdateAction.CommentResolved);
     this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread[commentUpdates.associatedRowPositionInGroup!].commentThreadIsResolvedBy = commentUpdates.resolvedBy!;
     this.updateItemInScroller({ ...this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread[commentUpdates.associatedRowPositionInGroup!]});
     this.updateHasActiveConversations();

@@ -11,6 +11,7 @@ import { CommentSeverity } from 'src/app/_models/commentItemModel';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { CommentItemModel } from 'src/app/_models/commentItemModel';
 import { CommentRelationHelper } from 'src/app/_helpers/comment-relation.helper';
+import { CommentResolutionData } from '../related-comments-dialog/related-comments-dialog.component';
 
 @Component({
   selector: 'app-comment-thread',
@@ -38,6 +39,7 @@ export class CommentThreadComponent {
   @Output() commentUpvoteActionEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() commentDownvoteActionEmitter : EventEmitter<any> = new EventEmitter<any>();
   @Output() commentThreadNavaigationEmitter : EventEmitter<any> = new EventEmitter<any>();
+  @Output() batchResolutionActionEmitter : EventEmitter<CommentUpdatesDto> = new EventEmitter<CommentUpdatesDto>();
 
   @ViewChildren(Menu) menus!: QueryList<Menu>;
   @ViewChildren(EditorComponent) editor!: QueryList<EditorComponent>;
@@ -568,9 +570,7 @@ export class CommentThreadComponent {
   }
 
   hasRelatedComments(comment: CommentItemModel): boolean {
-    // Temporarily disabled for production - return false to hide related comments feature
-    return false;
-    // return CommentRelationHelper.hasRelatedComments(comment, this.allComments, this.allCodePanelRowData);
+    return CommentRelationHelper.hasRelatedComments(comment, this.allComments, this.allCodePanelRowData);
   }
 
   showRelatedComments(comment: CommentItemModel) {
@@ -594,22 +594,94 @@ export class CommentThreadComponent {
     this.showRelatedCommentsDialog = true;
   }
 
-  onResolveSelectedComments(commentIds: string[]) {
+  onResolveSelectedComments(resolutionData: CommentResolutionData) {
+    const { commentIds, batchVote, resolutionComment } = resolutionData;
+    
+    if (commentIds.length === 0) {
+      this.showRelatedCommentsDialog = false;
+      return;
+    }
+
+    this.commentsService.resolveBatchComments(this.reviewId, {
+      commentIds: commentIds,
+      vote: batchVote || 'none',
+      commentReply: resolutionComment || undefined
+    }).subscribe({
+      next: (response) => {
+        const createdComments = response.body || [];
+        
+        if (batchVote && batchVote !== 'none' && this.userProfile?.userName) {
+          this.applyBatchVotes(commentIds, batchVote, this.userProfile.userName);
+        }
+        this.emitResolutionEvents(commentIds);
+        this.emitCreationEvents(createdComments);
+        
+        this.showRelatedCommentsDialog = false;
+      },
+      error: (error) => {
+        console.error('Failed to resolve batch comments:', error);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Resolution Failed',
+          detail: 'Failed to resolve comments. Please try again.',
+          key: 'bc',
+          life: 5000
+        });
+      }
+    });
+  }
+
+  private applyBatchVotes(commentIds: string[], voteType: 'up' | 'down', userName: string): void {
+    commentIds.forEach(commentId => {
+      const commentCodeRow = this.allCodePanelRowData?.find(row => 
+        row.comments?.some(c => c.id === commentId)
+      );
+      
+      if (commentCodeRow) {
+        const voteAction = voteType === 'up' 
+          ? CommentThreadUpdateAction.CommentUpVoteToggled 
+          : CommentThreadUpdateAction.CommentDownVoteToggled;
+          
+        this.batchResolutionActionEmitter.emit({
+          commentThreadUpdateAction: voteAction,
+          commentId: commentId,
+          nodeIdHashed: commentCodeRow.nodeIdHashed,
+          associatedRowPositionInGroup: commentCodeRow.associatedRowPositionInGroup || 0
+        } as CommentUpdatesDto);
+      }
+    });
+  }
+
+  private emitResolutionEvents(commentIds: string[]): void {
     commentIds.forEach(commentId => {
       const comment = this.relatedComments.find(c => c.id === commentId);
       if (comment) {
         const commentCodeRow = this.allCodePanelRowData?.find(row => row.nodeId === comment.elementId);
         
-        this.commentResolutionActionEmitter.emit({
+        this.batchResolutionActionEmitter.emit({
           commentThreadUpdateAction: CommentThreadUpdateAction.CommentResolved,
           elementId: comment.elementId,
+          commentId: comment.id,
           nodeIdHashed: commentCodeRow?.nodeIdHashed ?? this.codePanelRowData?.nodeIdHashed,
           associatedRowPositionInGroup: commentCodeRow?.associatedRowPositionInGroup ?? this.codePanelRowData?.associatedRowPositionInGroup,
-          resolvedBy: this.userProfile?.userName,
-          commentId: commentId
+          resolvedBy: this.userProfile?.userName
         } as CommentUpdatesDto);
       }
     });
-    this.showRelatedCommentsDialog = false;
+  }
+
+  private emitCreationEvents(createdComments: CommentItemModel[]): void {
+    createdComments.forEach(createdComment => {
+      const commentCodeRow = this.allCodePanelRowData?.find(row => row.nodeId === createdComment.elementId);
+      
+      this.batchResolutionActionEmitter.emit({
+        commentThreadUpdateAction: CommentThreadUpdateAction.CommentCreated,
+        comment: createdComment,
+        elementId: createdComment.elementId,
+        nodeIdHashed: commentCodeRow?.nodeIdHashed,
+        associatedRowPositionInGroup: commentCodeRow?.associatedRowPositionInGroup,
+        reviewId: this.reviewId
+      } as CommentUpdatesDto);
+    });
   }
 }

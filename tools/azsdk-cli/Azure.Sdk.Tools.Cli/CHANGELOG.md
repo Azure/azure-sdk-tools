@@ -5,6 +5,7 @@
 ### Features
 
 - Updated System.CommandLine dependency to 2.5 beta
+- Add support for generating samples for Azure client libraries across all languages
 
 ### Bugs Fixed
 

@@ -8,7 +8,7 @@
 
 ### Bugs Fixed
 
-- Fix in create release plan tool to use Active spec PR URL field in the query to resovle the failure in DevOps side.
+- Fix in create release plan tool to use Active spec PR URL field in the query to resolve the failure in DevOps side.
 
 ## 0.5.3 (2025-10-17)
 

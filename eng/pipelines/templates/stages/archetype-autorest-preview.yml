@@ -356,6 +356,10 @@ stages:
 
     - task: NuGetAuthenticate@1
 
+    - task: UseDotNet@2
+      inputs:
+        useGlobalJson: true
+
     - task: UseNode@1
       displayName: 'Install Node.js'
       inputs:

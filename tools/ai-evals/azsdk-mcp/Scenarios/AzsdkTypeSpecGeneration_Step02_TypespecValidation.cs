@@ -38,7 +38,7 @@ namespace Azure.Sdk.Tools.McpEvals.Scenarios
 
             // Pass the expected outcome through the additional context. 
             var additionalContext = new ExpectedToolInputEvaluatorContext(json.ExpectedOutcome, s_toolNames);
-            var result = await expectedToolInputEvaluator.EvaluateAsync(fullChat, response, additionalContext: [additionalContext]);
+            var result = await scenarioRun.EvaluateAsync(fullChat, response, additionalContext: [additionalContext]);
 
             // 4. Assert the results
             EvaluationRating[] expectedRatings = [EvaluationRating.Good, EvaluationRating.Exceptional];

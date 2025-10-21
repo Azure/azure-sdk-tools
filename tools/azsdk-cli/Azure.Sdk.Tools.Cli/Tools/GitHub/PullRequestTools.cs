@@ -2,13 +2,11 @@
 // Licensed under the MIT License.
 using System.ComponentModel;
 using System.Text.Json;
+using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Services;
 using Azure.Sdk.Tools.Cli.Models;
-using ModelContextProtocol.Server;
-using System.CommandLine;
-using System.CommandLine.Parsing;
 
 namespace Azure.Sdk.Tools.Cli.Tools.GitHub
 {
@@ -19,92 +17,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.GitHub
         IGitHelper gitHelper,
         ISpecPullRequestHelper prHelper,
         ILogger<PullRequestTools> logger
-    ) : MCPMultiCommandTool
+    ) : MCPNoCommandTool
     {
-        public override CommandGroup[] CommandHierarchy { get; set; } = [new("spec-pr", "Pull request tools")];
-
-        // Commands
-        private const string getPullRequestForCurrentBranchCommandName = "get-pr-for-current-branch";
-        private const string createPullRequestCommandName = "create-pr";
-        private const string getPullRequestCommandName = "get-pr-details";
-
-        // Options
-        private readonly Option<string> repoPathOpt = new("--repo-path")
-        {
-            Description = "Path to repository root",
-            Required = true,
-        };
-
-        private readonly Option<string> titleOpt = new("--title")
-        {
-            Description = "Title for the pull request",
-            Required = true,
-        };
-
-        private readonly Option<string> descriptionOpt = new("--description")
-        {
-            Description = "Description for the pull request",
-            Required = true,
-        };
-
-        private readonly Option<bool> draftOpt = new("--draft")
-        {
-            Description = "Create pull request as draft (default: true)",
-            Required = false,
-            DefaultValueFactory = _ => true,
-        };
-
-        private readonly Option<string> targetBranchOpt = new("--target-branch")
-        {
-            Description = "Target branch for the pull request",
-            Required = false,
-            DefaultValueFactory = _ => "main",
-        };
-
-        private readonly Option<int> pullRequestNumberOpt = new("--pr")
-        {
-            Description = "Pull request number",
-            Required = true,
-        };
-
-        protected override List<Command> GetCommands() =>
-        [
-            new(getPullRequestForCurrentBranchCommandName, "Get pull request for current branch") { repoPathOpt },
-            new(createPullRequestCommandName, "Create pull request")
-            {
-                titleOpt, descriptionOpt, repoPathOpt, targetBranchOpt, draftOpt,
-            },
-            new(getPullRequestCommandName, "Get pull request details") { pullRequestNumberOpt, repoPathOpt }
-        ];
-
-        public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
-        {
-            var commandName = parseResult.CommandResult.Command.Name;
-            switch (commandName)
-            {
-                case getPullRequestForCurrentBranchCommandName:
-                    var repoPath = parseResult.GetValue(repoPathOpt);
-                    var pullRequestLink = await GetPullRequestForCurrentBranch(repoPath);
-                    return new DefaultCommandResponse { Result = "Pull request link: " + pullRequestLink };
-                case createPullRequestCommandName:
-                    var title = parseResult.GetValue(titleOpt);
-                    var description = parseResult.GetValue(descriptionOpt);
-                    var createPrRepoPath = parseResult.GetValue(repoPathOpt);
-                    var targetBranch = parseResult.GetValue(targetBranchOpt);
-                    var draft = parseResult.GetValue(draftOpt);
-                    var createPullRequestResponse = await CreatePullRequest(title, description, createPrRepoPath, targetBranch, draft);
-                    return new DefaultCommandResponse { Result = "Create pull request response: " + string.Join("\n", createPullRequestResponse) };
-                case getPullRequestCommandName:
-                    var pullRequestNumber = parseResult.GetValue(pullRequestNumberOpt);
-                    var getPRrepoPath = parseResult.GetValue(repoPathOpt);
-                    var pullRequestDetails = await GetPullRequest(pullRequestNumber, getPRrepoPath);
-                    return new DefaultCommandResponse { Result = "Pull request details: " + pullRequestDetails };
-                default:
-                    return new DefaultCommandResponse { ResponseError = "Unknown command: " + commandName };
-            }
-        }
-
-
         [McpServerTool(Name = "azsdk_get_github_user_details"), Description("Connect to GitHub using personal access token.")]
         public async Task<DefaultCommandResponse> GetGitHubUserDetails()
         {

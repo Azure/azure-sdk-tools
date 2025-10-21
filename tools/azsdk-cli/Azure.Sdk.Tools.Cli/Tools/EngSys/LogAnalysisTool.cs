@@ -16,7 +16,10 @@ public class LogAnalysisTool(
     ILogger<LogAnalysisTool> logger
 ) : MCPTool
 {
-    public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Log];
+    public override CommandGroup[] CommandHierarchy { get; set; } = [
+        SharedCommandGroups.AzurePipelines,
+        SharedCommandGroups.Log
+    ];
 
     // Command names
     private const string AnalyzeCommandName = "analyze";

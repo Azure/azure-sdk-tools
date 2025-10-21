@@ -24,7 +24,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.TypeSpec];
 
         // commands
-        private const string ConvertSwaggerCommandName = "convert-swagger";
+        private const string ConvertCommandName = "convert";
 
         // command options
         private readonly Option<string> outputDirectoryArg = new("--output-directory")
@@ -52,7 +52,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         };
 
         protected override Command GetCommand() =>
-            new(ConvertSwaggerCommandName, "Convert an existing Azure service swagger definition to a TypeSpec project")
+            new(ConvertCommandName, "Convert an existing Azure service swagger definition to a TypeSpec project")
             {
                 swaggerReadmeArg, outputDirectoryArg, isArmOption, fullyCompatibleOption,
             };

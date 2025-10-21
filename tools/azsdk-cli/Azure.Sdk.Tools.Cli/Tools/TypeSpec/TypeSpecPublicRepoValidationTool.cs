@@ -3,6 +3,7 @@
 using System.CommandLine;
 using System.CommandLine.Parsing;
 using System.ComponentModel;
+using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 using ModelContextProtocol.Server;
@@ -16,6 +17,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
     [McpServerToolType]
     public class TypeSpecPublicRepoValidationTool(ITypeSpecHelper typeSpecHelper, ILogger<TypeSpecPublicRepoValidationTool> logger) : MCPTool
     {
+        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.TypeSpec];
+
         // Commands
         private const string checkPublicRepoCommandName = "check-public-repo";
 

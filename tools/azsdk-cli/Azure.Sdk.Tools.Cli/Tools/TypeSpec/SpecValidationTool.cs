@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 using ModelContextProtocol.Server;
+using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Models;
 
@@ -20,8 +21,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
     [McpServerToolType]
     public class SpecValidationTools(ITypeSpecHelper typeSpecHelper, ILogger<SpecValidationTools> logger) : MCPTool
     {
+        public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.TypeSpec];
+
         // Commands
-        private const string TypespecValidationCommandName = "validate-typespec";
+        private const string TypespecValidationCommandName = "validate";
 
         // Options
         private readonly Option<string> typeSpecProjectPathOpt = new("--typespec-project")

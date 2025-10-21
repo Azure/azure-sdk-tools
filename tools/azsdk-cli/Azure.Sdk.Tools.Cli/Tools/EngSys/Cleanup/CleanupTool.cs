@@ -10,6 +10,7 @@ using Azure.Sdk.Tools.Cli.Models;
 
 namespace Azure.Sdk.Tools.Cli.Tools.EngSys;
 
+#if DEBUG
 [McpServerToolType, Description("Cleans up various engsys resources")]
 public class CleanupTool : MCPTool
 {
@@ -66,3 +67,4 @@ public class CleanupTool : MCPTool
         }
     }
 }
+#endif

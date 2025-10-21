@@ -7,12 +7,15 @@ using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Tools.Pipeline;
 using Azure.Sdk.Tools.Cli.Services;
 using ModelContextProtocol.Server;
+using Azure.Sdk.Tools.Cli.Commands;
 
 namespace Azure.Sdk.Tools.Cli.Tools.EngSys;
 
 [McpServerToolType, Description("Processes and analyzes test results from TRX files")]
 public class TestAnalysisTool(ITestHelper testHelper, ILogger<PipelineAnalysisTool> logger) : MCPTool()
 {
+    public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.PackageTest];
+
     // Options
     private readonly Option<string> trxPathOpt = new("--trx-file")
     {
@@ -33,7 +36,7 @@ public class TestAnalysisTool(ITestHelper testHelper, ILogger<PipelineAnalysisTo
     };
 
     protected override Command GetCommand() =>
-        new("test-results", "Analyze test results")
+        new("results", "Analyze test results")
         {
             trxPathOpt,
             filterOpt,

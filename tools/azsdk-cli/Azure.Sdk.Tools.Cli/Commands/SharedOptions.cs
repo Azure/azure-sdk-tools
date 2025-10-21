@@ -1,6 +1,5 @@
 using System;
 using System.CommandLine;
-using System.CommandLine.Parsing;
 using System.IO.Enumeration;
 using Azure.Sdk.Tools.Cli.Tools;
 using Azure.Sdk.Tools.Cli.Tools.EngSys;
@@ -17,8 +16,7 @@ namespace Azure.Sdk.Tools.Cli.Commands
     {
         public static readonly List<Type> ToolsList = [
             typeof(PackageCheckTool),
-            typeof(CleanupTool),
-            typeof(CodeownersTools),
+            typeof(CodeownersTool),
             typeof(GitHubLabelsTool),
             typeof(LogAnalysisTool),
             typeof(PipelineTool),
@@ -43,16 +41,11 @@ namespace Azure.Sdk.Tools.Cli.Commands
             typeof(TestTool),
 #if DEBUG
             // only add these tools in debug mode
+            typeof(CleanupTool),
             typeof(ExampleTool),
             typeof(HelloWorldTool),
 #endif
         ];
-
-        public static Option<string> ToolOption = new("--tools")
-        {
-            Description = "If provided, the tools server will only respond to CLI or MCP server requests for tools named the same as provided in this option. Glob matching is honored.",
-            Required = false,
-        };
 
         public static Option<string> Format = new("--output", "-o")
         {
@@ -101,14 +94,15 @@ namespace Azure.Sdk.Tools.Cli.Commands
             {
                 TreatUnmatchedTokensAsErrors = false
             };
-            root.Options.Add(ToolOption);
+            Option<string> toolOption = new("--tools");
+            root.Options.Add(toolOption);
 
             var result = root.Parse(args);
 
-            var raw = result.GetValue(ToolOption);
+            var raw = result.GetValue(toolOption);
             if (string.IsNullOrWhiteSpace(raw))
             {
-                return new string[] { };
+                return [];
             }
 
             return raw

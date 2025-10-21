@@ -5,7 +5,7 @@ import tempfile
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any, List
 
 import yaml
 from azure.ai.evaluation import evaluate
@@ -114,7 +114,7 @@ class ExecutionContext:
 class EvaluationResult:
     """Result of evaluating a single evaluation target."""
 
-    def __init__(self, target: EvaluationTarget, raw_results: list[dict], success: bool, error: Optional[str] = None):
+    def __init__(self, target: EvaluationTarget, raw_results: list[dict], success: bool, error: str | None = None):
         self.target = target
         self.raw_results = raw_results
         self.success = success
@@ -134,7 +134,7 @@ class EvaluationRunner:
 
     def __init__(self, *, num_runs: int = DEFAULT_NUM_RUNS, use_cache: bool = False):
         self.num_runs = num_runs
-        self._context: Optional[ExecutionContext] = None
+        self._context: ExecutionContext | None = None
         self._results_lock = threading.Lock()
         self._use_cache = use_cache
 

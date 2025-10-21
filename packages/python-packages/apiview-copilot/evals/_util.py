@@ -1,7 +1,7 @@
 import json
 import yaml
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 def ensure_json_obj(val):
     """Helper to ensure input is a dict (parsed JSON)."""
@@ -71,7 +71,7 @@ def append_results_to_cache(test_file_paths: list[Path], azure_results: list[dic
                 save_result_to_cache(testcase_id, test_file_path, row)
 
 
-def extract_testcase_id(row: dict) -> Optional[str]:
+def extract_testcase_id(row: dict) -> str | None:
     """Extract testcase identifier from Azure AI evaluation result row.
     
     Args:
@@ -90,7 +90,7 @@ def extract_testcase_id(row: dict) -> Optional[str]:
 
 
 def get_cache_file_path(
-        testcase_id: str, test_file_path: Optional[Path] = None, cache_base_dir: Optional[Path] = None
+        testcase_id: str, test_file_path: Path | None = None, cache_base_dir: Path | None = None
     ) -> Path:
     """Get cache file path for a specific testcase, mirroring test structure.
     

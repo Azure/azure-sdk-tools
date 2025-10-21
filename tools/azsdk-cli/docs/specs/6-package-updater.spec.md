@@ -94,13 +94,13 @@ Implement four individual CLI + MCP tools. Each tool:
 4. Executes the relevant sub-script(s) in an ordered, fault-isolated manner.
 5. Aggregates structured result JSON with a `result`, human-readable `message`, and optional `next_steps` hint guiding subsequent tool invocation.
 
-Provide an aggregated CLI + MCP command that deterministically orchestrates the four tools (update-ci → update-changelog → update-version → update-metadata) and returns a combined JSON summary.
+Provides a singular CLI + MCP command that orchestrates the four tools (update-ci → update-changelog → update-version → update-metadata) and returns a combined JSON summary.
 
 ### Detailed Design
 
 The four tools are intentionally small, composable units. Each emits a machine-readable JSON payload to enable deterministic chaining by an agent or CI workflow. All tools share common behaviors:
 
-| Aspect | Standard Behavior |
+| Area | Expected Behavior |
 |--------|-------------------|
 | Invocation Mode | CLI and MCP (agent) alias; same semantics |
 | Input Path Validation | Must exist and contain a recognizable SDK language structure; errors early if not |
@@ -125,24 +125,24 @@ Inputs:
 
 - `--package-path <abs path>` (required)
 
-Behavior (Mgmt-Plane):
+Execution Steps (Mgmt-Plane):
 
 1. Invoke changelog generation script or tool.
 2. Insert (or update) latest section with release date placeholder / actual date.
 3. Normalize section ordering / formatting.
 
-Behavior (Data-Plane):
+Execution Steps (Data-Plane):
 
 1. Return `noop` result advising manual edit and future version bump timing.
 
 Outputs:
 
 ```json
-{"result":"succeeded", "message":"Changelog entry added for 2025-10-16; next_steps: update version"}
+{"result":"succeeded", "message":"Changelog entry added for 2025-10-16", "next_steps": "update version"}
 ```
 
 ```json
-{"result":"noop", "message":"Data-plane changelog untouched; manual edits required; next_steps: update version"}
+{"result":"noop", "message":"Data-plane changelog untouched; manual edits required", "next_steps": "update version"}
 ```
 
 Failure Modes:
@@ -184,7 +184,7 @@ Inputs:
 - `--version` (optional)
 - `--release-date` (optional)
 
-Behavior:
+Execution Steps:
 
 1. Compute a version based on the given information (mgmt-plane).
 2. Apply updates across language-specific files.
@@ -197,11 +197,11 @@ Behavior:
 Outputs:
 
 ```json
-{"result":"succeeded", "version": "1.2.0", "release-date": "2025-10-17", "message":"Version updated 1.2.0-beta.2 -> 1.2.0; next_steps: update metadata"}
+{"result":"succeeded", "version": "1.2.0", "release-date": "2025-10-17", "message":"Version updated 1.2.0-beta.2 -> 1.2.0", "next_steps": "update metadata"}
 ```
 
 ```json
-{"result":"noop", "version": "", "release-date": "", "message":"Data-plane pre-release context; no version bump performed; next_steps: update metadata"}
+{"result":"noop", "version": "", "release-date": "", "message":"Data-plane pre-release context; no version bump performed", "next_steps": "update metadata"}
 ```
 
 Failure Modes:
@@ -247,11 +247,11 @@ Inputs:
 
 - `--package-path <abs path>` (required)
 
-Behavior Steps:
+Execution Steps:
 
 1. Apply updates to authoritative metadata files (`_metadata.json`, `pom.xml`, `package.json`, `go.mod`). Only overwrite a file when the new content differs from the existing content. If an expected file is missing, create a minimal safe skeleton when possible and warn otherwise.
 
-2. Return a structured summary in the tool JSON result including `changed_files` (array of relative paths) and `changed_count` (integer). When no files were modified return `changed_files: []` and `changed_count: 0` and set `message` to indicate "no changes (idempotent)" (`changed_files` may be supported post-milestone-1).
+2. Return a structured summary in the tool JSON result including `changed_files` (array of relative paths) and `changed_files_count` (integer). When no files were modified return `changed_files: []` and `changed_files_count: 0` and set `message` to indicate "no changes" (`changed_files` may be supported post-milestone-1).
 
 Outputs:
 
@@ -260,7 +260,7 @@ Outputs:
 ```
 
 ```json
-{"result":"failed","message":"API export failed: missing dotnet tool; next_steps: call verify-setup tool"}
+{"result":"failed","message":"API export failed: missing dotnet tool", "next_steps": "call verify-setup tool"}
 ```
 
 Failure Modes:
@@ -298,21 +298,25 @@ Inputs:
 
 - `--package-path <abs path>` (required) – Absolute path to the root of the SDK package.
 
-Behavior:
+Execution Steps:
 
-1. Create the corresponding YAML file, like `ci.yaml`, which will be used to setup pipeline.
+1. Create the corresponding YAML file, like `ci.yml`, which will be used to setup pipeline.
 2. Update the relevant CI YAML file accordingly
 3. Return the changed file name with the result.
 
 Outputs (examples):
 
 ```json
-{"result":"succeeded", "ci-file": "../ci.yml", "message":"CI files created: ci.yml; next_steps: update changelog"}
+{"result":"succeeded", "ci-file": "../ci.yml", "message":"CI files created: ci.yml", "next_steps": "update changelog"}
 ```
 
 ```json
-{"result":"failed", "message":"script exited 127: missing pwsh"}
+{"result":"failed", "message":"script exited 1: missing pwsh"}
 ```
+
+Failure Modes:
+
+- Create file fails due to insufficient permissions → return `failed` with error.
 
 ##### Update CI script
 
@@ -343,7 +347,7 @@ Purpose: provide a single entrypoint that orchestrates the four tools in a deter
 
 Sequence: update-ci -> update-changelog -> update-version -> update-metadata
 
-Behavior:
+Execution Steps:
 
 - Validate the provided `packagePath` and fail fast if invalid.
 - Run `update-ci` first to ensure CI config is present/updated.
@@ -352,7 +356,7 @@ Behavior:
 - Run `update-metadata` last to apply remaining metadata and documentation updates.
 - Aggregate each tool's JSON result into a top-level JSON summary with per-tool results, overall `result` (succeeded/failed), and an ordered `next_steps` hint.
 
-Failure semantics:
+Failure Modes:
 
 - If any tool returns `failed`, the aggregated tool should stop execution and return `failed` with the failing tool's details.
 
@@ -367,7 +371,7 @@ Example aggregated output (successful):
             {"tool":"update-version", "result":"succeeded", "version":"1.2.0", "release-date": "2025-10-17"},
             {"tool":"update-metadata", "result":"succeeded"}
       ],
-      "message": "Package updates complete; next_steps: open PR"
+      "message": "Package updates complete", "next_steps": "open PR"
 }
 ```
 
@@ -384,6 +388,7 @@ azsdk package version update --package-path /abs/sdk/path --version 1.0.0 --rele
 
 ### Architecture Diagram
 
+```mermaid
 flowchart TD
   Agent[/Agent / User/] --> azsdk_cli
 
@@ -401,6 +406,7 @@ flowchart TD
 
   style azsdk_cli fill:#e3f2fd,stroke:#0277bd
   style Agent fill:#e1f5fe,stroke:#0288d1
+```
 
 ---
 
@@ -523,14 +529,14 @@ azsdk package ci update --package-path <absolute_folder_path_to_package>
 
 **Expected Output (example):**
 
-```json
-{"result":"succeeded", "ci-file": "../ci.yml", "message":"CI files created: ci.yml; next_steps: update changelog"}
+```text
+"succeeded, ../ci.yml, CI files created: ci.yml, next_steps: update changelog."
 ```
 
 **Error Case (example):**
 
-```json
-{"result":"failed", "message":"script exited 127: missing pwsh"}
+```text
+"failed, script exited 1: missing pwsh"
 ```
 
 ### package changelog update
@@ -548,13 +554,13 @@ azsdk package changelog update --package-path <absolute_folder_path_to_package>
 **Expected Output (mgmt):**
 
 ```text
-{"result":"succeeded","message":"Changelog entry added for 2025-10-16; next_steps: update version"}
+"succeeded, Changelog entry added for 2025-10-16, next_steps: update version."
 ```
 
 **Expected Output (data-plane no-op):**
 
 ```text
-{"result":"succeeded","message":"Data-plane changelog no-op; manual edits required; next_steps: update version (if release)"}
+"succeeded, Data-plane changelog no-op; manual edits required; next_steps: update version (if release)."
 ```
 
 ### package version update
@@ -572,14 +578,14 @@ azsdk package version update --package-path <absolute_folder_path_to_package> --
 
 **Expected Output:**
 
-```json
-{"result":"succeeded", "version": "1.2.0", "release-date": "2025-10-17", "message":"Version updated 1.2.0-beta.2 -> 1.2.0; next_steps: update metadata"}
+```text
+"succeeded, version: 1.2.0, release-date: 2025-10-17, Version updated 1.2.0-beta.2 -> 1.2.0, next_steps: update metadata."
 ```
 
 **Failed Output:**
 
-```json
-{"result":"failed", "version": "", "release-date": "", "message":"ERROR: the input version is invalid. next_steps: refer to aka-link to provide a valid version"}
+```text
+"failed, ERROR: the input version is invalid. next_steps: refer to aka-link to provide a valid version."
 ```
 
 ### package metadata update
@@ -596,14 +602,14 @@ azsdk package metadata update --package-path <absolute_folder_path_to_package>
 
 **Expected Output:**
 
-```json
-{"result":"succeeded", "changed_files":["..\\pom.xml","C:\\dev\\repos\\azure-sdk-for-java\\pom.xml"], "changed_count": 2, "message":"All relevant pom.xml files have been updated."}
+```text
+"succeeded, changed_files:["..\\pom.xml","C:\\dev\\repos\\azure-sdk-for-java\\pom.xml"], changed_files_count: 2, All relevant pom.xml files have been updated."
 ```
 
 **Failure Example:**
 
-```json
-{"result":"failed", "message":"Missing pom.xml", "next_steps": "refer to aka-link"}
+```text
+"failed, Missing pom.xml, next_steps: refer to aka-link."
 ```
 
 ---

@@ -1,5 +1,5 @@
 import { TableEntity } from "@azure/data-tables";
-import * as XLSX from "xlsx";
+import * as XLSX from "@e965/xlsx";
 import * as readline from "readline";
 import path from "path";
 import fs from "fs";

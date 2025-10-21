@@ -33,9 +33,41 @@ const router = express.Router();
 // TODO: add logging
 router.post('/preprocess', authApiKey, async (req: Request, res: Response) => {
   const body = req.body as PreprocessRequestBody;
-  const inlineLinkUrls = body.text ? body.text.match(urlRegex)?.map((link) => new URL(link)) || [] : [];
+  
+  // Extract and validate URLs
+  const inlineLinkUrls: URL[] = [];
+  if (body.text) {
+    const urlMatches = body.text.match(urlRegex) || [];
+    for (const urlStr of urlMatches) {
+      try {
+        const url = new URL(urlStr);
+        // Only allow HTTPS URLs for security
+        if (url.protocol === 'https:') {
+          inlineLinkUrls.push(url);
+        }
+      } catch (e) {
+        // Invalid URL, skip it
+      }
+    }
+  }
+  
+  // Validate and parse image URLs
+  const imageUrls: URL[] = [];
+  if (body.images) {
+    for (const urlStr of body.images) {
+      try {
+        const url = new URL(urlStr);
+        // Only allow HTTPS URLs for security
+        if (url.protocol === 'https:') {
+          imageUrls.push(url);
+        }
+      } catch (e) {
+        // Invalid URL, skip it
+      }
+    }
+  }
+  
   const linkContents = await linkContentExtractor.extract(inlineLinkUrls);
-  const imageUrls = body.images?.map((url) => new URL(url)) || [];
   const imageContents = await imageContentExtractor.extract(imageUrls);
   const prompt = promptGenerator.generate(undefined, body.text, imageContents, linkContents);
   const warnings: PreprocessWarning[] = [

@@ -41,6 +41,13 @@ export class ImageContentExtractor {
     return Promise.all(
       imageUrls.map(async (url, index) => {
         const id = `image-${index}`;
+        
+        // Validate URL to prevent SSRF attacks
+        if (!this.isAllowedImageUrl(url)) {
+          const error = new Error('URL not allowed: Only HTTPS URLs from trusted domains are supported');
+          return { text: '', url, id, error };
+        }
+        
         const { image, error } =
           process.env.MODE === 'EVALUATION'
             ? await this.getImageResponseEvaluation(url)
@@ -50,6 +57,33 @@ export class ImageContentExtractor {
         return { text: recognizeResult.text, url, id, error: recognizeResult.error };
       })
     );
+  }
+  
+  private isAllowedImageUrl(url: URL): boolean {
+    // Only allow HTTPS URLs
+    if (url.protocol !== 'https:') {
+      return false;
+    }
+    
+    // Block private IP ranges and localhost to prevent SSRF
+    const hostname = url.hostname.toLowerCase();
+    
+    // Block localhost
+    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1') {
+      return false;
+    }
+    
+    // Block private IP ranges (simplified check)
+    if (hostname.match(/^(10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.)/)) {
+      return false;
+    }
+    
+    // Block link-local addresses
+    if (hostname.match(/^169\.254\./)) {
+      return false;
+    }
+    
+    return true;
   }
 
   public async recognizeText(image: HttpRequestBody): Promise<{ text: string; error?: Error }> {

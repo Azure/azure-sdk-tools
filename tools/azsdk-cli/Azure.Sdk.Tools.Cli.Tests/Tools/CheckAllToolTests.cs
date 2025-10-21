@@ -36,9 +36,13 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
 
             var languageChecks = new List<ILanguageSpecificChecks> { pythonCheck };
             var mockPowershellHelper = new Mock<IPowershellHelper>();
-            var resolver = Mock.Of<ILanguageSpecificResolver<ILanguageSpecificChecks>>();
             
-            _packageCheckTool = new PackageCheckTool(_mockLogger.Object, resolver);
+            // Setup the mock resolver to return the PythonLanguageSpecificChecks instance
+            var mockResolver = new Mock<ILanguageSpecificResolver<ILanguageSpecificChecks>>();
+            mockResolver.Setup(x => x.Resolve(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                       .ReturnsAsync(pythonCheck);
+            
+            _packageCheckTool = new PackageCheckTool(_mockLogger.Object, mockResolver.Object);
 
             // Setup default mock responses
             var defaultProcessResult = new ProcessResult { ExitCode = 0, OutputDetails = new List<(StdioLevel, string)>() };

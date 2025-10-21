@@ -214,20 +214,21 @@ class EvaluationRunner:
 
     def _execute_target(self, target: EvaluationTarget) -> EvaluationResult:
         try:
+            # Load each test file once and reuse parsed data
+            test_file_to_case = {}
+            testcase_ids = []
+            test_file_paths = []
+            
+            for test_file in target.test_files:
+                test_case = self._context._load_test_file(test_file)
+                test_file_to_case[test_file] = test_case
+                testcase_id = test_case.get("testcase")
+                if testcase_id:
+                    testcase_ids.append(testcase_id)
+                    test_file_paths.append(test_file)
+            
             # Resolve cache strategy
             if self._use_cache:
-                # Collect testcase info from test files
-                testcase_ids = []
-                test_file_paths = []
-                
-                for test_file in target.test_files:
-                    test_case = self._context._load_test_file(test_file)
-                    testcase_id = test_case.get("testcase")
-                    if testcase_id:
-                        testcase_ids.append(testcase_id)
-                        test_file_paths.append(test_file)
-                
-                # Load cache for these specific testcases
                 cache_lookup = load_cache_lookup(testcase_ids, test_file_paths)
             else:
                 cache_lookup = {}
@@ -238,7 +239,7 @@ class EvaluationRunner:
             fresh_test_file_paths = []
             
             for test_file in target.test_files:
-                test_case = self._context._load_test_file(test_file)
+                test_case = test_file_to_case[test_file]
                 testcase_id = test_case.get("testcase")
                 
                 if testcase_id and testcase_id in cache_lookup:

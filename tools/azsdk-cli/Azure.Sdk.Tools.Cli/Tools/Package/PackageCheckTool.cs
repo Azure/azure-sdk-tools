@@ -96,6 +96,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     PackageCheckType.Snippets => await RunSnippetUpdate(packagePath, fixCheckErrors, ct),
                     PackageCheckType.Linting => await RunLintCode(packagePath, fixCheckErrors, ct),
                     PackageCheckType.Format => await RunFormatCode(packagePath, fixCheckErrors, ct),
+                    PackageCheckType.CheckAotCompat => await RunCheckAotCompat(packagePath, fixCheckErrors, ct),
+                    PackageCheckType.GeneratedCodeChecks => await RunCheckGeneratedCode(packagePath, fixCheckErrors, ct),
                     PackageCheckType.Samples => await RunSampleValidation(packagePath, fixCheckErrors, ct),
                     _ => throw new ArgumentOutOfRangeException(
                         nameof(checkType),
@@ -179,6 +181,24 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             {
                 overallSuccess = false;
                 failedChecks.Add("Format");
+            }
+
+            // Run AOT compatibility check
+            var aotCompatResult = await languageChecks.CheckAotCompat(packagePath, fixCheckErrors, ct);
+            results.Add(aotCompatResult);
+            if (aotCompatResult.ExitCode != 0)
+            {
+                overallSuccess = false;
+                failedChecks.Add("AOT Compatibility");
+            }
+
+            // Run generated code check
+            var generatedCodeResult = await languageChecks.CheckGeneratedCode(packagePath, fixCheckErrors, ct);
+            results.Add(generatedCodeResult);
+            if (generatedCodeResult.ExitCode != 0)
+            {
+                overallSuccess = false;
+                failedChecks.Add("Generated Code");
             }
 
             // Run sample validation
@@ -329,6 +349,22 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             logger.LogInformation("Running code formatting");
 
             var result = await languageChecks.FormatCodeAsync(packagePath, fixCheckErrors, ct);
+            return result;
+        }
+
+        private async Task<CLICheckResponse> RunCheckGeneratedCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+        {
+            logger.LogInformation("Running generated code checks");
+
+            var result = await languageChecks.CheckGeneratedCode(packagePath, fixCheckErrors, ct);
+            return result;
+        }
+
+        private async Task<CLICheckResponse> RunCheckAotCompat(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+        {
+            logger.LogInformation("Running AOT compatibility checks");
+
+            var result = await languageChecks.CheckAotCompat(packagePath, fixCheckErrors, ct);
             return result;
         }
 

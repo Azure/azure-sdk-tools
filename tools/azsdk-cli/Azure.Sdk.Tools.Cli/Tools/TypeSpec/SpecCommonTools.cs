@@ -55,7 +55,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
                     return modifiedProjects;
 
                 default:
-                    return new() { ResponseError = $"Unknown command: '{command}'" };
+                    return new DefaultCommandResponse { ResponseError = $"Unknown command: '{command}'" };
             }
         }
 

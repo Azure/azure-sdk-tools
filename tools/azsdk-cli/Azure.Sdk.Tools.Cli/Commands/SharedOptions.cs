@@ -1,4 +1,3 @@
-using System;
 using System.CommandLine;
 using System.CommandLine.Parsing;
 using System.IO.Enumeration;
@@ -116,20 +115,6 @@ namespace Azure.Sdk.Tools.Cli.Commands
                 .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 .Select(s => s.ToLowerInvariant())
                 .ToArray();
-        }
-
-        public static List<Type> GetFilteredToolTypes(string[] args)
-        {
-            var toolMatchList = GetToolsFromArgs(args);
-
-            if (toolMatchList.Length > 0)
-            {
-                return ToolsList
-                             .Where(t => toolMatchList.Any(x => FileSystemName.MatchesSimpleExpression(x, t.Name) || t.Name.StartsWith("HostServer")))
-                             .ToList();
-            }
-
-            return ToolsList;
         }
     }
 }

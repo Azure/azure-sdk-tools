@@ -1,3 +1,4 @@
+import uuid
 from typing import Optional
 
 import prompty
@@ -198,7 +199,10 @@ def get_metrics_report(
     }
 
     if save:
-        documents = _generate_cosmosdb_documents(report)
+        # documents = _generate_cosmosdb_documents(report)
+        # TODO: Revert. Just to see how queryable the data is in untransformed form.
+        report["id"] = str(uuid.uuid4())
+        documents = [report]
         if documents:
             db_manager = get_database_manager()
             cosmos_client = db_manager.get_container_client("metrics")

@@ -1,4 +1,5 @@
 namespace Azure.Sdk.Tools.Cli.Services;
+using Azure.Sdk.Tools.Cli.Models;
 
 /// <summary>
 /// Provides a mechanism for resolving services that have language-specific implementations based on a package path.
@@ -21,5 +22,5 @@ public interface ILanguageSpecificResolver<T> where T : class
     /// <param name="languages">A list of language identifiers (e.g. "python", "java").</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>A list of resolved service instances (null for languages that could not be resolved).</returns>
-    public List<T?> Resolve(List<string> languages, CancellationToken ct = default);
+    public List<T?> Resolve(List<SdkLanguage> languages, CancellationToken ct = default);
 }

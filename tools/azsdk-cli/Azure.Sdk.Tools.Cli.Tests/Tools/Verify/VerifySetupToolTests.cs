@@ -75,11 +75,11 @@ internal class VerifySetupToolTests
             });
     }
 
-    private void SetupLanguageRequirementsMocks(Dictionary<string, (string requirement, string[] checkCommand, List<string> instructions)> languageSpecs)
+    private void SetupLanguageRequirementsMocks(Dictionary<SdkLanguage, (string requirement, string[] checkCommand, List<string> instructions)> languageSpecs)
     {
         mockEnvRequirementsCheck
-            .Setup(x => x.Resolve(It.IsAny<List<string>>(), It.IsAny<CancellationToken>()))
-            .Returns((List<string> langs, CancellationToken _) =>
+            .Setup(x => x.Resolve(It.IsAny<List<SdkLanguage>>(), It.IsAny<CancellationToken>()))
+            .Returns((List<SdkLanguage> langs, CancellationToken _) =>
             {
                 var checkers = new List<IEnvRequirementsCheck?>();
                 foreach (var lang in langs)
@@ -114,14 +114,14 @@ internal class VerifySetupToolTests
     public async Task VerifySetup_Succeeds_WhenAllRequirementsMet()
     {
         // Arrange
-        var languageSpecs = new Dictionary<string, (string, string[], List<string>)>
+        var languageSpecs = new Dictionary<SdkLanguage, (string requirement, string[] checkCommand, List<string> instructions)>
         {
-            { "python", ("Python >= 3.8", new[] { "python", "--version" }, new List<string> { "Install Python 3.8 or higher" }) }
+            { SdkLanguage.Python, ("Python >= 3.8", new[] { "python", "--version" }, new List<string> { "Install Python 3.8 or higher" }) }
         };
         SetupLanguageRequirementsMocks(languageSpecs);
-        
+
         // Act
-        var result = await tool.VerifySetup(new List<string> { "python" }, "/test/path");
+        var result = await tool.VerifySetup(new List<SdkLanguage> { SdkLanguage.Python }, "/test/path");
 
         // Assert
         Assert.That(result.AllRequirementsSatisfied, Is.True);
@@ -132,16 +132,16 @@ internal class VerifySetupToolTests
     [Test]
     public async Task VerifySetup_Fails_WhenSomeRequirementsNotMet()
     {
-        var languageSpecs = new Dictionary<string, (string, string[], List<string>)>
+        var languageSpecs = new Dictionary<SdkLanguage, (string, string[], List<string>)>
         {
-            { "python", ("Python >= 3.8", new[] { "python", "--version" }, new List<string> { "Install Python 3.8 or higher" }) }
+            { SdkLanguage.Python, ("Python >= 3.8", new[] { "python", "--version" }, new List<string> { "Install Python 3.8 or higher" }) }
         };
         SetupLanguageRequirementsMocks(languageSpecs);
 
         SetupFailedProcessMock("node", 1, "node: command not found");
 
         // Act
-        var result = await tool.VerifySetup(new List<string> { "python" }, "/test/path");
+        var result = await tool.VerifySetup(new List<SdkLanguage> { SdkLanguage.Python }, "/test/path");
 
         // Assert
         Assert.That(result.AllRequirementsSatisfied, Is.False);
@@ -149,18 +149,18 @@ internal class VerifySetupToolTests
         Assert.That(result.Results.Any(r => r.Requirement.Contains("Node.js")), Is.True);
         Assert.That(result.ResponseError, Is.Null);
     }
-    
+
     [Test]
     public async Task VerifySetup_Fails_WhenSomeRequirementsVersionNotMet()
     {
-        var languageSpecs = new Dictionary<string, (string, string[], List<string>)>
+        var languageSpecs = new Dictionary<SdkLanguage, (string requirement, string[] checkCommand, List<string> instructions)>
         {
-            { "python", ("Python >= 3.14", new[] { "python", "--version" }, new List<string> { "Install Python 3.14 or higher" }) }
+            { SdkLanguage.Python, ("Python >= 3.14", new[] { "python", "--version" }, new List<string> { "Install Python 3.14 or higher" }) }
         };
         SetupLanguageRequirementsMocks(languageSpecs);
-        
+
         // Act
-        var result = await tool.VerifySetup(new List<string> { "python" }, "/test/path");
+        var result = await tool.VerifySetup(new List<SdkLanguage> { SdkLanguage.Python }, "/test/path");
 
         // Assert
         Assert.That(result.AllRequirementsSatisfied, Is.False);
@@ -173,18 +173,18 @@ internal class VerifySetupToolTests
     public async Task VerifySetup_OnlyChecksSpecifiedLanguages()
     {
         // Arrange - Set up multiple language specs, but only request python
-        var languageSpecs = new Dictionary<string, (string, string[], List<string>)>
+        var languageSpecs = new Dictionary<SdkLanguage, (string, string[], List<string>)>
         {
-            { "python", ("Python >= 3.8", new[] { "python", "--version" }, new List<string> { "Install Python 3.8" }) },
-            { "java", ("Java >= 17", new[] { "java", "-version" }, new List<string> { "Install Java 17" }) },
-            { "dotnet", (".NET >= 8.0", new[] { "dotnet", "--version" }, new List<string> { "Install .NET 8.0" }) }
+            { SdkLanguage.Python, ("Python >= 3.8", new[] { "python", "--version" }, new List<string> { "Install Python 3.8" }) },
+            { SdkLanguage.Java, ("Java >= 17", new[] { "java", "-version" }, new List<string> { "Install Java 17" }) },
+            { SdkLanguage.DotNet, (".NET >= 8.0", new[] { "dotnet", "--version" }, new List<string> { "Install .NET 8.0" }) }
         };
 
         SetupLanguageRequirementsMocks(languageSpecs);
         SetupFailedProcessMock("java", 1, "java: command not found");
 
         // Act
-        var result = await tool.VerifySetup(new List<string> { "python" }, "/test/path");
+        var result = await tool.VerifySetup(new List<SdkLanguage> { SdkLanguage.Python }, "/test/path");
 
         // Assert
         Assert.That(result.AllRequirementsSatisfied, Is.True);
@@ -192,15 +192,15 @@ internal class VerifySetupToolTests
 
         // Verify that only Python language resolver was called, not Java or .NET
         mockEnvRequirementsCheck.Verify(
-            x => x.Resolve(It.Is<List<string>>(langs => langs.Contains("python") && langs.Count == 1), It.IsAny<CancellationToken>()),
+            x => x.Resolve(It.Is<List<SdkLanguage>>(langs => langs.Contains(SdkLanguage.Python) && langs.Count == 1), It.IsAny<CancellationToken>()),
             Times.Once);
-        
+
         mockEnvRequirementsCheck.Verify(
-            x => x.Resolve(It.Is<List<string>>(langs => langs.Contains("java")), It.IsAny<CancellationToken>()),
+            x => x.Resolve(It.Is<List<SdkLanguage>>(langs => langs.Contains(SdkLanguage.Java)), It.IsAny<CancellationToken>()),
             Times.Never);
-        
+
         mockEnvRequirementsCheck.Verify(
-            x => x.Resolve(It.Is<List<string>>(langs => langs.Contains("dotnet")), It.IsAny<CancellationToken>()),
+            x => x.Resolve(It.Is<List<SdkLanguage>>(langs => langs.Contains(SdkLanguage.DotNet)), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -208,16 +208,16 @@ internal class VerifySetupToolTests
     public async Task VerifySetup_ChecksMultipleSpecifiedLanguages()
     {
         // Arrange
-        var languageSpecs = new Dictionary<string, (string, string[], List<string>)>
+        var languageSpecs = new Dictionary<SdkLanguage, (string, string[], List<string>)>
         {
-            { "python", ("Python >= 3.8", new[] { "python", "--version" }, new List<string> { "Install Python 3.8" }) },
-            { "java", ("Java >= 17", new[] { "java", "-version" }, new List<string> { "Install Java 17" }) }
+            { SdkLanguage.Python, ("Python >= 3.8", new[] { "python", "--version" }, new List<string> { "Install Python 3.8" }) },
+            { SdkLanguage.Java, ("Java >= 17", new[] { "java", "-version" }, new List<string> { "Install Java 17" }) }
         };
-        
+
         SetupLanguageRequirementsMocks(languageSpecs);
 
         // Act - Request both Python and Java
-        var result = await tool.VerifySetup(new List<string> { "python", "java" }, "/test/path");
+        var result = await tool.VerifySetup(new List<SdkLanguage> { SdkLanguage.Python, SdkLanguage.Java }, "/test/path");
 
         // Assert
         Assert.That(result.AllRequirementsSatisfied, Is.True);
@@ -225,20 +225,20 @@ internal class VerifySetupToolTests
 
         // Verify that resolver was called with both languages
         mockEnvRequirementsCheck.Verify(
-            x => x.Resolve(It.Is<List<string>>(langs => langs.Contains("python") && langs.Contains("java") && langs.Count == 2), It.IsAny<CancellationToken>()),
+            x => x.Resolve(It.Is<List<SdkLanguage>>(langs => langs.Contains(SdkLanguage.Python) && langs.Contains(SdkLanguage.Java) && langs.Count == 2), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
     [Test]
     public async Task VerifySetup_HandlesInvalidLanguageInput()
-    {        
+    {
         // Mock the resolver to return empty list for invalid languages (simulating no valid languages found)
         mockEnvRequirementsCheck
-            .Setup(x => x.Resolve(It.IsAny<List<string>>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Resolve(It.IsAny<List<SdkLanguage>>(), It.IsAny<CancellationToken>()))
             .Returns(new List<IEnvRequirementsCheck?>()); // Return empty list, not null
 
         // Act - Pass invalid language
-        var result = await tool.VerifySetup(new List<string> { "invalidlang" }, "/test/path");
+        var result = await tool.VerifySetup(new List<SdkLanguage> { (SdkLanguage)(-1) }, "/test/path");
 
         // Assert - Should succeed with just core requirements
         Assert.That(result.AllRequirementsSatisfied, Is.True);

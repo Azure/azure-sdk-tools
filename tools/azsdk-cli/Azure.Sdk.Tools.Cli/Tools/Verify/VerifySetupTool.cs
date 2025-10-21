@@ -36,17 +36,17 @@ public class VerifySetupTool : MCPTool
         this.envRequirementsCheck = envRequirementsCheck;
     }
 
-    private static readonly List<string> LANGUAGES = new() { "python", "java", "dotnet", "javascript", "go" };
     private const int COMMAND_TIMEOUT_IN_SECONDS = 30;
 
     public override CommandGroup[] CommandHierarchy { get; set; } = [
         SharedCommandGroups.Verify,
     ];
 
-    private readonly Option<string> languagesParam = new("--languages", "-l")
+    private readonly Option<List<SdkLanguage>> languagesParam = new("--languages", "-l")
     {
-        Description = "Comma-separated list of programming languages to check requirements for (java, python, dotnet, javascript, go). Defaults to current repo's language.",
-        Required = false
+        Description = $"List of space-separated languages to check requirements for ({string.Join(", ", Enum.GetNames(typeof(SdkLanguage)))}). Defaults to current repo's language.",
+        Required = false,
+        AllowMultipleArgumentsPerToken = true
     };
 
 
@@ -68,13 +68,13 @@ public class VerifySetupTool : MCPTool
     {
         var langs = parseResult.GetValue(languagesParam);
         var allLangs = parseResult.GetValue(allLangOption);
-        var parsed = allLangs ? LANGUAGES : ParseLanguages(langs);
+        var parsed = allLangs ? Enum.GetValues<SdkLanguage>().ToList() : langs;
         var packagePath = parseResult.GetValue(SharedOptions.PackagePath);
         return await VerifySetup(parsed, packagePath, ct);
     }
 
-    [McpServerTool(Name = "azsdk_verify_setup"), Description("Verifies the developer environment for MCP release tool requirements. Accepts a list of supported languages to check requirements for (java, python, dotnet, javascript, go), and the packagePath of the repo to check.")]
-    public async Task<VerifySetupResponse> VerifySetup(List<string> langs = null, string packagePath = null, CancellationToken ct = default)
+    [McpServerTool(Name = "azsdk_verify_setup"), Description("Verifies the developer environment for MCP release tool requirements. Accepts a list of supported languages to check requirements for, and the packagePath of the repo to check.")]
+    public async Task<VerifySetupResponse> VerifySetup(List<SdkLanguage> langs = null, string packagePath = null, CancellationToken ct = default)
     {
         try
         {
@@ -181,7 +181,7 @@ public class VerifySetupTool : MCPTool
         };
     }
 
-    private async Task<List<SetupRequirements.Requirement>> GetRequirements(List<string> languages, string packagePath, CancellationToken ct)
+    private async Task<List<SetupRequirements.Requirement>> GetRequirements(List<SdkLanguage> languages, string packagePath, CancellationToken ct)
     {
         // Check core requirements before language-specific requirements
         var reqsToCheck = await GetCoreRequirements(ct);
@@ -315,28 +315,5 @@ public class VerifySetupTool : MCPTool
         }
 
         return 0;
-    }
-
-    private List<string> ParseLanguages(string? langs)
-    {
-        if (string.IsNullOrWhiteSpace(langs))
-        {
-            return new List<string> ();
-        }
-
-        // Validate languages
-        List<string> parsed = new List<string>(langs.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
-        List<string> parsedResult = new List<string>();
-        foreach (var lang in parsed)
-        {
-            if (!LANGUAGES.Contains(lang.ToLower().Trim()))
-            {
-                logger.LogError("Unsupported language: {lang}. Supported languages are: {supportedLanguages}.", lang, string.Join(", ", LANGUAGES));
-                continue;
-            }
-            parsedResult.Add(lang);
-        }
-
-        return parsedResult;
     }
 }

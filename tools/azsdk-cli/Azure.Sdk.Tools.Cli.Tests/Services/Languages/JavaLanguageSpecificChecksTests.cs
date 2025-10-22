@@ -33,7 +33,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         /// </summary>
         private void SetupSuccessfulMavenVersionCheck()
         {
-            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => p.Goal == "--version"), 
+            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => p.Args.Contains("--version")), 
                 It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ProcessResult { ExitCode = 0, OutputDetails = [(StdioLevel.StandardOutput, "Apache Maven 3.9.9")] });
         }
@@ -43,7 +43,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         /// </summary>
         private void SetupFailedMavenVersionCheck()
         {
-            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => p.Goal == "--version"), 
+            MockMavenHelper.Setup(x => x.Run(It.Is<MavenOptions>(p => p.Args.Contains("--version")), 
                 It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new ProcessResult { ExitCode = 1, OutputDetails = [(StdioLevel.StandardError, "Maven not found")] });
         }
@@ -848,7 +848,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
         /// <summary>
         /// Checks if the MavenOptions represents a Maven version check command.
         /// </summary>
-        private static bool IsMavenVersionCheck(MavenOptions options) => options.Goal == "--version";
+        private static bool IsMavenVersionCheck(MavenOptions options) => options.Args.Contains("--version");
 
         /// <summary>
         /// Checks if the MavenOptions represents a Maven install command (Azure SDK approach).

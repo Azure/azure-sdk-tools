@@ -26,9 +26,9 @@ public interface ILanguageSpecificChecks
     /// <param name="fixCheckErrors">Whether to attempt to automatically fix README issues</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Result of the README validation</returns>
-    Task<CLICheckResponse> ValidateReadme(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    Task<PackageCheckResponse> ValidateReadme(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(new CLICheckResponse(1, "", "Not implemented for this language."));
+        return Task.FromResult(new PackageCheckResponse(1, "", "Not implemented for this language."));
     }
 
     /// <summary>
@@ -38,9 +38,9 @@ public interface ILanguageSpecificChecks
     /// <param name="fixCheckErrors">Whether to attempt to automatically fix spelling issues where supported by cspell</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Result of the spelling check</returns>
-    Task<CLICheckResponse> CheckSpelling(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    Task<PackageCheckResponse> CheckSpelling(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(new CLICheckResponse(1, "", "Not implemented for this language."));
+        return Task.FromResult(new PackageCheckResponse(1, "", "Not implemented for this language."));
     }
 
     /// <summary>
@@ -118,8 +118,8 @@ public interface ILanguageSpecificChecks
     /// <param name="fixCheckErrors">Whether to attempt to automatically fix changelog issues</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Result of the changelog validation</returns>
-    Task<CLICheckResponse> ValidateChangelog(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
+    Task<PackageCheckResponse> ValidateChangelog(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(new CLICheckResponse(1, "", "Not implemented for this language."));
+        return Task.FromResult(new PackageCheckResponse(1, "", "Not implemented for this language."));
     }
 }

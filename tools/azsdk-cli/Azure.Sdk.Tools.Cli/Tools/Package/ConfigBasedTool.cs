@@ -36,6 +36,13 @@ public abstract class ConfigBasedTool : MCPTool
     {
         var response = new T();
         response.ResponseErrors = [message];
+        
+        // Set Result to "failed" for DefaultCommandResponse
+        if (response is DefaultCommandResponse defaultResponse)
+        {
+            defaultResponse.Result = "failed";
+        }
+        
         return response;
     }
 

@@ -71,7 +71,7 @@ public class SpecGenSdkConfigHelperTests
         var result = await _helper.GetBuildConfigurationAsync(_tempDirectory);
 
         // Assert
-        Assert.That(result.type, Is.EqualTo(BuildConfigType.Command));
+        Assert.That(result.type, Is.EqualTo(ConfigContentType.Command));
         Assert.That(result.value, Is.EqualTo("dotnet build {packagePath}"));
     }
 
@@ -95,7 +95,7 @@ public class SpecGenSdkConfigHelperTests
         var result = await _helper.GetBuildConfigurationAsync(_tempDirectory);
 
         // Assert
-        Assert.That(result.type, Is.EqualTo(BuildConfigType.ScriptPath));
+        Assert.That(result.type, Is.EqualTo(ConfigContentType.ScriptPath));
         Assert.That(result.value, Is.EqualTo("eng/scripts/build.sh"));
     }
 
@@ -120,7 +120,7 @@ public class SpecGenSdkConfigHelperTests
         var result = await _helper.GetBuildConfigurationAsync(_tempDirectory);
 
         // Assert
-        Assert.That(result.type, Is.EqualTo(BuildConfigType.Command));
+        Assert.That(result.type, Is.EqualTo(ConfigContentType.Command));
         Assert.That(result.value, Is.EqualTo("dotnet build {packagePath}"));
     }
 
@@ -379,6 +379,93 @@ public class SpecGenSdkConfigHelperTests
 
         // Assert
         Assert.That(result, Is.EqualTo(new[] { "dotnet" }));
+    }
+
+    #endregion
+
+    #region GetConfigurationAsync Tests
+
+    [Test]
+    public async Task GetConfigurationAsync_BuildConfigType_ReturnsCommand()
+    {
+        // Arrange
+        var configContent = new
+        {
+            packageOptions = new
+            {
+                buildScript = new
+                {
+                    command = "dotnet build {packagePath}"
+                }
+            }
+        };
+        File.WriteAllText(_configFilePath, JsonSerializer.Serialize(configContent, new JsonSerializerOptions { WriteIndented = true }));
+
+        // Act
+        var result = await _helper.GetConfigurationAsync(_tempDirectory, ConfigType.Build);
+
+        // Assert
+        Assert.That(result.type, Is.EqualTo(ConfigContentType.Command));
+        Assert.That(result.value, Is.EqualTo("dotnet build {packagePath}"));
+    }
+
+    [Test]
+    public async Task GetConfigurationAsync_UpdateChangelogConfigType_ReturnsCommand()
+    {
+        // Arrange
+        var configContent = new
+        {
+            packageOptions = new
+            {
+                updateChangelogScript = new
+                {
+                    command = "python eng/scripts/update_changelog.py {SdkRepoPath} {PackagePath}"
+                }
+            }
+        };
+        File.WriteAllText(_configFilePath, JsonSerializer.Serialize(configContent, new JsonSerializerOptions { WriteIndented = true }));
+
+        // Act
+        var result = await _helper.GetConfigurationAsync(_tempDirectory, ConfigType.UpdateChangelog);
+
+        // Assert
+        Assert.That(result.type, Is.EqualTo(ConfigContentType.Command));
+        Assert.That(result.value, Is.EqualTo("python eng/scripts/update_changelog.py {SdkRepoPath} {PackagePath}"));
+    }
+
+    [Test]
+    public async Task GetConfigurationAsync_UpdateChangelogScriptPath_ReturnsScriptPath()
+    {
+        // Arrange
+        var configContent = new
+        {
+            packageOptions = new
+            {
+                updateChangelogScript = new
+                {
+                    path = "eng/scripts/update_changelog.py"
+                }
+            }
+        };
+        File.WriteAllText(_configFilePath, JsonSerializer.Serialize(configContent, new JsonSerializerOptions { WriteIndented = true }));
+
+        // Act
+        var result = await _helper.GetConfigurationAsync(_tempDirectory, ConfigType.UpdateChangelog);
+
+        // Assert
+        Assert.That(result.type, Is.EqualTo(ConfigContentType.ScriptPath));
+        Assert.That(result.value, Is.EqualTo("eng/scripts/update_changelog.py"));
+    }
+
+    [Test]
+    public void GetConfigurationAsync_UnsupportedConfigType_ThrowsException()
+    {
+        // Arrange
+        File.WriteAllText(_configFilePath, "{}");
+
+        // Act & Assert
+        var ex = Assert.ThrowsAsync<ArgumentException>(() => _helper.GetConfigurationAsync(_tempDirectory, (ConfigType)999));
+        Assert.That(ex.Message, Does.Contain("Unsupported config type"));
     }
 
     #endregion

@@ -194,6 +194,9 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             {
                 ConfigType.Build => (BuildCommandJsonPath, BuildScriptPathJsonPath),
                 ConfigType.UpdateChangelog => (UpdateChangelogCommandJsonPath, UpdateChangelogScriptPathJsonPath),
+                ConfigType.UpdateVersion => (UpdateVersionCommandJsonPath, UpdateVersionScriptPathJsonPath),
+                ConfigType.UpdateMetadata => (UpdateMetadataCommandJsonPath, UpdateMetadataScriptPathJsonPath),
+                ConfigType.UpdateCi => (UpdateCiCommandJsonPath, UpdateCiScriptPathJsonPath),
                 _ => throw new ArgumentException($"Unsupported config type: {configType}")
             };
         }

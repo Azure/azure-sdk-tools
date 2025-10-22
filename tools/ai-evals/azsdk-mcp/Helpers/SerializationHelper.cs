@@ -37,7 +37,7 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
             // For some reason above method will give all the messages user role. It still does the heavy lifting so I'll keep it and just change the roles. 
             var fixedChatMessages = ChatMessageHelper.EnsureChatMessageRole(translatedChatMessages, chatMessages);
 
-            await RebuildAttachmentsInChatMessagesAsync(fixedChatMessages);
+            RebuildAttachmentsInChatMessagesAsync(fixedChatMessages);
 
             return ChatMessageHelper.ParseChatMessagesIntoScenarioData(fixedChatMessages);
         }
@@ -47,7 +47,7 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
         /// with files from the configured instruction directories.
         /// </summary>
         /// <param name="chatMessages">The chat messages to process</param>
-        public static async Task RebuildAttachmentsInChatMessagesAsync(List<ChatMessage> chatMessages)
+        public static void RebuildAttachmentsInChatMessagesAsync(List<ChatMessage> chatMessages)
         {
             // Only process the first message (typically the system message)
             if (chatMessages.Count == 0)
@@ -56,60 +56,37 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
             var firstMessage = chatMessages[0];
             if (firstMessage.Contents[0] is TextContent textContent && !string.IsNullOrEmpty(textContent.Text))
             {
-                textContent.Text = await RebuildAttachmentsInTextAsync(textContent.Text);
+                textContent.Text = RebuildAttachmentsInTextAsync(textContent.Text);
             }
         }
 
         /// <summary>
         /// Rebuilds attachment sections in text content by loading files from instruction directories.
         /// </summary>
-        private static async Task<string> RebuildAttachmentsInTextAsync(string text)
+        private static string RebuildAttachmentsInTextAsync(string text)
         {
-            // Regex to match attachment tags
-            var attachmentPattern = @"<attachment filePath=""([^""]+)"">.*?</attachment>";
-            var regex = new Regex(attachmentPattern, RegexOptions.Singleline);
-
-            var result = text;
+            // Find the last <instructions>...</instructions> block
+            var instructionsPattern = @"<instructions>.*?</instructions>";
+            var regex = new Regex(instructionsPattern, RegexOptions.Singleline);
             var matches = regex.Matches(text);
 
-            foreach (Match match in matches)
+            if (matches.Count > 0)
             {
-                var filePath = match.Groups[1].Value;
-                var fileName = Path.GetFileName(filePath);
-                
-                // Try to find the file in our instruction directories
-                var fileContent = await LoadInstructionFileAsync(fileName);
-                
-                if (fileContent != null)
-                {
-                    var newAttachment = $"<attachment filePath=\"{filePath}\">{fileContent}</attachment>";
-                    result = result.Replace(match.Value, newAttachment);
-                }
+                // Get the last match
+                var lastMatch = matches[matches.Count - 1];
+
+                // Get the new instructions content
+                var newInstructions = LLMSystemInstructions.BuildLLMInstructions();
+
+                // Replace the last instructions block
+                var newInstructionsBlock = $"<instructions>{newInstructions}</instructions>";
+                var result = text.Remove(lastMatch.Index, lastMatch.Length);
+                result = result.Insert(lastMatch.Index, newInstructionsBlock);
+
+                return result;
             }
 
-            return result;
-        }
-
-        /// <summary>
-        /// Loads an instruction file by matching the filename in the instruction directories.
-        /// </summary>
-        private static async Task<string?> LoadInstructionFileAsync(string fileName)
-        {
-            var azsdkToolsInstructionsPath = TestSetup.AzsdkToolsInstructionsPath;
-            var customInstructionsPath = TestSetup.CopilotInstructionsPath;
-
-            if (Path.GetFileName(customInstructionsPath) == fileName)
-            {
-                return await File.ReadAllTextAsync(customInstructionsPath);
-            }
-
-            var azsdkFilePath = Path.Combine(azsdkToolsInstructionsPath, fileName);
-            if (File.Exists(azsdkFilePath))
-            {
-                return await File.ReadAllTextAsync(azsdkFilePath);
-            }
-
-            return null;
+            return text;
         }
 
         private static IEnumerable<OpenAIChatMessage> DeserializeMessages(BinaryData data)

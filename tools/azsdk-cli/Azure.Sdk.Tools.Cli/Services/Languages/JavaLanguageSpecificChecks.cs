@@ -343,8 +343,8 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
     /// <returns>PackageCheckResponse with error details if validation fails, null if validation passes</returns>
     private async Task<PackageCheckResponse?> ValidateMavenPrerequisites(string packagePath, string pomPath, CancellationToken cancellationToken)
     {
-        // Check if Maven is available  
-        var mavenCheckResult = await _mavenHelper.Run(new("--version", [], logOutputStream: true, workingDirectory: null, timeout: TimeSpan.FromSeconds(10)), cancellationToken);
+        // Check if Maven is available
+        var mavenCheckResult = await _mavenHelper.Run(new(["--version"], timeout: TimeSpan.FromSeconds(10)), cancellationToken);
         if (mavenCheckResult.ExitCode != 0)
         {
             _logger.LogError("Maven is not installed or not available in PATH");

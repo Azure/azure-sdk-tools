@@ -24,6 +24,15 @@ public class MavenOptions : ProcessOptions, IProcessOptions
     }
 
     public MavenOptions(
+        string[] args,
+        bool logOutputStream = true,
+        string? workingDirectory = null,
+        TimeSpan? timeout = null
+    ) : base(MVN, args, logOutputStream, workingDirectory, timeout)
+    {
+    }
+
+    public MavenOptions(
         string goal,
         string[] args,
         bool logOutputStream = true,

@@ -56,9 +56,21 @@
         <ng-template pTemplate="content" let-comment>
             <p-panel [toggleable]="false" [attr.data-comment-id]="comment.id">
                 <ng-template pTemplate="header">
-                    <div class="flex align-items-center gap-2">
+                    <div class="d-flex align-items-center">
                         <span class="fw-bold">{{ comment.createdBy }}</span>
                         <span class="small ms-2">{{ comment.createdOn | timeago }}</span>
+                        <!-- AI-generated Badge - Simple custom design -->
+                        <span *ngIf="isAIGenerated(comment) && hasAIInfo(comment)"
+                              class="ai-badge-custom ms-2"
+                              (click)="showAIInfo($event, comment)"
+                              title="Click to view AI information">
+                            AI-generated <i class="pi pi-info-circle"></i>
+                        </span>
+                        <!-- AI-generated Badge without icon - when no AI info available -->
+                        <span *ngIf="isAIGenerated(comment) && !hasAIInfo(comment)"
+                              class="ai-badge-custom ms-2">
+                            AI-generated
+                        </span>
                     </div>
                 </ng-template>
                 <div *ngIf="!comment.isInEditMode" [innerHTML]="(comment.commentText | markdownToHtml | async)" class="pe-5 rendered-comment-content">
@@ -169,3 +181,29 @@
   [(visible)]="showRelatedCommentsDialog"
   (resolveSelectedComments)="onResolveSelectedComments($event)">
 </app-related-comments-dialog>
+
+<!-- AI Information Overlay Panel -->
+<p-overlayPanel #aiInfoPanel styleClass="ai-info-overlay" appendTo="body">
+    <ng-template pTemplate="content">
+        <div class="ai-info-content" *ngIf="currentAIInfoStructured">
+            <div class="ai-info-body">
+                <div class="ai-info-item" *ngFor="let item of currentAIInfoStructured.items">
+                    <i class="pi ai-info-icon" [ngClass]="item.icon"></i>
+                    <div class="ai-info-details">
+                        <span class="ai-info-label">{{ item.label }}</span>
+                        <span class="ai-info-value" [ngClass]="item.valueClass || ''">
+                            <ng-container *ngIf="item.icon === 'pi-chart-bar'; else codeList">
+                                {{ item.value }}
+                            </ng-container>
+                            <ng-template #codeList>
+                                <code *ngFor="let id of item.value.split(', '); let last = last">
+                                    {{ id }}<ng-container *ngIf="!last">, </ng-container>
+                                </code>
+                            </ng-template>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </ng-template>
+</p-overlayPanel>

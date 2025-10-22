@@ -1,16 +1,28 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, Output, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, Output, QueryList, SimpleChanges, ViewChildren, ViewChild } from '@angular/core';
 import { MenuItem, MenuItemCommandEvent, MessageService } from 'primeng/api';
 import { Menu } from 'primeng/menu';
+import { OverlayPanel } from 'primeng/overlaypanel';
 import { environment } from 'src/environments/environment';
 import { EditorComponent } from '../editor/editor.component';
 import { CodePanelRowData } from 'src/app/_models/codePanelModels';
 import { UserProfile } from 'src/app/_models/userProfile';
 import { CommentThreadUpdateAction, CommentUpdatesDto } from 'src/app/_dtos/commentThreadUpdateDto';
 import { CodeLineRowNavigationDirection } from 'src/app/_helpers/common-helpers';
-import { CommentSeverity } from 'src/app/_models/commentItemModel';
+import { CommentSeverity, CommentSource } from 'src/app/_models/commentItemModel';
 import { CommentsService } from 'src/app/_services/comments/comments.service';
 import { CommentItemModel } from 'src/app/_models/commentItemModel';
 import { CommentRelationHelper } from 'src/app/_helpers/comment-relation.helper';
+
+interface AICommentInfoItem {
+  icon: string;
+  label: string;
+  value: string;
+  valueClass?: string;
+}
+
+interface AICommentInfo {
+  items: AICommentInfoItem[];
+}
 
 @Component({
   selector: 'app-comment-thread',
@@ -41,8 +53,10 @@ export class CommentThreadComponent {
 
   @ViewChildren(Menu) menus!: QueryList<Menu>;
   @ViewChildren(EditorComponent) editor!: QueryList<EditorComponent>;
+  @ViewChild('aiInfoPanel') aiInfoPanel!: OverlayPanel;
   
   assetsPath : string = environment.assetsPath;
+  currentAIInfoStructured: AICommentInfo | null = null;
   menuItemAllUsers: MenuItem[] = [];
   menuItemsLoggedInUsers: MenuItem[] = [];
   menuItemsLoggedInArchitects: MenuItem[] = [];
@@ -611,5 +625,55 @@ export class CommentThreadComponent {
       }
     });
     this.showRelatedCommentsDialog = false;
+  }
+
+  isAIGenerated(comment: any): boolean {
+    return comment.commentSource === CommentSource.AIGenerated;
+  }
+
+  hasAIInfo(comment: any): boolean {
+    if (!this.isAIGenerated(comment)) {
+      return false;
+    }
+    const info = this.getAICommentInfoStructured(comment);
+    return info.items.length > 0;
+  }
+
+  getAICommentInfoStructured(comment: any): AICommentInfo {
+    const items: AICommentInfoItem[] = [];
+    
+    if (comment.confidenceScore && comment.confidenceScore > 0) {
+      const score = Math.round(comment.confidenceScore * 100);
+      const scoreClass = score >= 80 ? 'high-confidence' : score >= 60 ? 'medium-confidence' : 'low-confidence';
+      items.push({
+        icon: 'pi-chart-bar',
+        label: 'Confidence Score',
+        value: `${score}%`,
+        valueClass: scoreClass
+      });
+    }
+    
+    if (comment.guidelineIds && comment.guidelineIds.length > 0) {
+      items.push({
+        icon: 'pi-book',
+        label: 'Guidelines Referenced',
+        value: comment.guidelineIds.join(', ')
+      });
+    }
+    
+    if (comment.memoryIds && comment.memoryIds.length > 0) {
+      items.push({
+        icon: 'pi-database',
+        label: 'Memory References',
+        value: comment.memoryIds.join(', ')
+      });
+    }
+    
+    return { items };
+  }
+
+  showAIInfo(event: Event, comment: any): void {
+    this.currentAIInfoStructured = this.getAICommentInfoStructured(comment);
+    this.aiInfoPanel.toggle(event);
   }
 }

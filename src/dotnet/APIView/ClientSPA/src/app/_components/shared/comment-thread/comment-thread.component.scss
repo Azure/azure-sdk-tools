@@ -1,6 +1,32 @@
 :host ::ng-deep {
     font-family: var(--font-family);
 
+    .ai-badge-custom {
+        display: inline-flex;
+        align-items: center;
+        background-color: var(--base-fg-color);
+        color: var(--text-color-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 0.125rem 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        white-space: nowrap;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        
+        &:hover {
+            background-color: var(--base-bg-color);
+            border-color: var(--text-muted-color);
+        }
+        
+        .pi {
+            font-size: 0.8rem;
+            margin-left: 0.25rem;
+            margin-top: 0.20rem;
+        }
+    }
+
     .comment-thread-container {
         width: 100%;
         max-width: 1000px;
@@ -427,6 +453,111 @@
         &:active .related-comments-indicator {
             transform: translateY(0);
             box-shadow: 0 1px 2px var(--shadow-color);
+        }
+    }
+}
+
+// AI Info Overlay Panel Styling
+::ng-deep .ai-info-overlay {
+    &.p-overlaypanel {
+        border-radius: 8px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        z-index: 9999 !important;
+        min-width: 320px;
+        width: auto;
+        background-color: var(--base-bg-color) !important;
+        border: 1px solid var(--border-color) !important;
+        
+        .p-overlaypanel-content {
+            background-color: var(--base-bg-color) !important;
+            padding: 0 !important;
+        }
+        
+        &:before {
+            border-bottom-color: var(--border-color) !important;
+        }
+        
+        &:after {
+            border-bottom-color: var(--base-bg-color) !important;
+        }
+    }
+    
+    .ai-info-content {
+        padding: 0.5rem;
+    }
+    
+    .ai-info-body {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .ai-info-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 0.5rem;
+        background-color: var(--base-fg-color);
+        border-radius: 6px;
+        transition: background-color 0.2s;
+        
+        &:hover {
+            background-color: var(--editor-bg-color);
+        }
+    }
+    
+    .ai-info-icon {
+        color: var(--primary-color);
+        font-size: 1.1rem;
+        margin-top: 0.15rem;
+        flex-shrink: 0;
+    }
+    
+    .ai-info-details {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        flex: 1;
+    }
+    
+    .ai-info-label {
+        font-weight: 600;
+        font-size: 0.8rem;
+        color: var(--text-color-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .ai-info-value {
+        font-size: 0.9rem;
+        color: var(--base-text-color);
+        line-height: 1.4;
+        
+        code {
+            background-color: var(--editor-bg-color);
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-size: 0.85rem;
+            color: var(--primary-color);
+            font-family: 'Courier New', monospace;
+        }
+        
+        &.high-confidence {
+            color: #22c55e;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        
+        &.medium-confidence {
+            color: #f59e0b;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        
+        &.low-confidence {
+            color: #ef4444;
+            font-weight: 600;
+            font-size: 1rem;
         }
     }
 }

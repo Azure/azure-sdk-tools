@@ -81,7 +81,7 @@
         },
         "CrossLanguageMetadata": {
             "$ref": "#/$defs/CrossLanguageMetadata",
-            "description": "Metadata to identify Reviews for different languages generated from the same TypeSpec specification."
+            "description": "Metadata for different languages generated from the same TypeSpec specification."
         },
         "ReviewLines": {
             "type": "array",
@@ -120,7 +120,7 @@
                     "type": "string"
                 },
                 "CrossLanguageDefinitionId": {
-                    "$ref": "#/$defs/RecordString"
+                    "$ref": "#/$defs/LanguageIdMap"
                 }
             },
             "required": [
@@ -226,12 +226,13 @@
                 "Tags"
             ]
         },
-        "RecordString": {
+        "LanguageIdMap": {
             "type": "object",
             "properties": {},
-            "unevaluatedProperties": {
+            "additionalProperties": {
                 "type": "string"
-            }
+            },
+            "description": "Maps a language-specific ID (key) to a TypeSpec ID (value).\nKey: Language-specific ID (e.g., 'en-US', 'fr-FR')\nValue: Cross-language TypeSpec ID"
         },
         "ReviewToken": {
             "type": "object",
@@ -297,6 +298,13 @@
                 3,
                 4
             ]
+        },
+        "RecordString": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": {
+                "type": "string"
+            }
         },
         "TokenKind": {
             "type": "number",

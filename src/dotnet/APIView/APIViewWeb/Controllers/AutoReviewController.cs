@@ -80,7 +80,6 @@ namespace APIViewWeb.Controllers
                     error = "Failed to create API review",
                     message = e.Message,
                     exceptionType = e.GetType().Name,
-                    stackTrace = e.StackTrace
                 });
             }
   
@@ -146,7 +145,6 @@ namespace APIViewWeb.Controllers
                     error = "Failed to get review status",
                     message = e.Message,
                     exceptionType = e.GetType().Name,
-                    stackTrace = e.StackTrace,
                     details = new
                     {
                         packageName,
@@ -216,8 +214,6 @@ namespace APIViewWeb.Controllers
                 {
                     error = "Failed to create API review from DevOps artifacts",
                     message = e.Message,
-                    exceptionType = e.GetType().Name,
-                    stackTrace = e.StackTrace,
                     details = new
                     {
                         buildId,

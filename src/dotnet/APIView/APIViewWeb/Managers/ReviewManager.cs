@@ -506,21 +506,13 @@ namespace APIViewWeb.Managers
                 {
                     // Look up pull requests directly by revision ID - much more reliable than extracting PR numbers
                     var pullRequestModels = await _pullRequestsRepository.GetPullRequestsAsync(typeSpecReviewId, revisionId);
-                    _logger.LogInformation("FindRelatedReviewsByPullRequestAsync - Found {PullRequestCount} pull request models for review {ReviewId}, revision {RevisionId}", 
-                        pullRequestModels.Count(), typeSpecReviewId, revisionId);
-                    
+
                     PullRequestModel prModel = pullRequestModels.FirstOrDefault();
                     if (prModel != null)
                     {
-                        _logger.LogInformation("Using pull request: Number={PullRequestNumber}, RepoName={RepoName}", 
-                            prModel.PullRequestNumber, prModel.RepoName);
-                        
                         // Use the repository name from the pull request model instead of hardcoding
                         var repoName = !string.IsNullOrEmpty(prModel.RepoName) ? prModel.RepoName : "Azure/azure-rest-api-specs";
                         var pullRequests = await _pullRequestsRepository.GetPullRequestsAsync(prModel.PullRequestNumber, repoName);
-                        
-                        _logger.LogInformation("Found {PullRequestCount} pull requests for PR number {PullRequestNumber} in repo {RepoName}", 
-                            pullRequests.Count(), prModel.PullRequestNumber, repoName);
                         
                         // Get all review IDs from pull requests first to batch the database calls
                         var reviewIds = pullRequests
@@ -533,12 +525,7 @@ namespace APIViewWeb.Managers
                         if (reviewIds.Count > 0)
                         {
                             relatedReviews = (List<ReviewListItemModel>)await _reviewsRepository.GetReviewsAsync(reviewIds);
-                            _logger.LogInformation("Retrieved {RelatedReviewCount} related reviews from database", relatedReviews.Count);
                         }
-                    }
-                    else
-                    {
-                        _logger.LogWarning("No pull request model found for review {ReviewId}, revision {RevisionId}", typeSpecReviewId, revisionId);
                     }
                 }
                 catch (Exception ex)
@@ -777,11 +764,8 @@ namespace APIViewWeb.Managers
                 // Only approve TypeSpec namespace if there are no more pending SDK reviews
                 if (pendingSdkReviews.Any())
                 {
-                    _logger.LogInformation("CheckAndApproveNamespaceForTypeSpec - Still have {PendingCount} pending SDK reviews, not approving TypeSpec namespace yet", pendingSdkReviews.Count);
                     return;
                 }
-
-                _logger.LogInformation("CheckAndApproveNamespaceForTypeSpec - All SDK reviews approved, approving TypeSpec namespace and sending notification");
                 typeSpecReview.NamespaceReviewStatus = NamespaceReviewStatus.Approved;
                 await _reviewsRepository.UpsertReviewAsync(typeSpecReview);
 

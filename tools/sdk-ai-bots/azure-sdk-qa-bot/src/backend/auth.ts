@@ -8,7 +8,7 @@ export async function getAccessTokenByManagedIdentity(credential: TokenCredentia
       logger.info(`Succeed to get Access Token for ${credential}`);
       return token;
     } catch (err) {
-      console.error(`Failed to acquire token for ${credential}`, err.message);
+      logger.error(`Failed to acquire token for ${credential}`, err.message);
     }
 
     return undefined;

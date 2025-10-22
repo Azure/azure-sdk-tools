@@ -79,17 +79,17 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
 
             return new ScenarioData
             {
-                ChatHistory = chatMessages.Take(lastUserMessageIndex).ToList(),
+                ChatHistory = [.. chatMessages.Take(lastUserMessageIndex)],
                 NextMessage = chatMessages[lastUserMessageIndex],
-                ExpectedOutcome = chatMessages.Skip(lastUserMessageIndex + 1).ToList()
+                ExpectedOutcome = [.. chatMessages.Skip(lastUserMessageIndex + 1)]
             };
         }
 
-        public static ScenarioData LoadScenarioFromPrompt(string prompt, IEnumerable<string> tools)
+        public static async Task<ScenarioData> LoadScenarioFromPrompt(string prompt, IEnumerable<string> tools)
         {
             var history = new List<ChatMessage>
             {
-                new ChatMessage(ChatRole.System, LLMSystemInstructions.BuildLLMInstructions())
+                new ChatMessage(ChatRole.System, await LLMSystemInstructions.BuildLLMInstructions())
             };
             var nextMessage = new ChatMessage(ChatRole.User, prompt);
             var toolCalls = ToolMocks.ToolMocks.GetToolMocks(tools);

@@ -7,10 +7,10 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
     public static class LLMSystemInstructions
     {
         private static string s_copilotPath = ".github\\copilot-instructions.md";
-        public static string BuildLLMInstructions()
+        public static async Task<string> BuildLLMInstructions()
         {
             var toolInstructions = DefaultToolInstructions;
-            toolInstructions += $"<instructions>{LoadInstructions()}</instructions";
+            toolInstructions += $"<instructions>{await LoadInstructions()}</instructions";
             return toolInstructions;
         }
 
@@ -22,7 +22,7 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
             foreach (Match match in linkRegex.Matches(copilotInstructions))
             {
                 var relativePath = match.Groups[2].Value;
-                var instruction = GetMentionedInstructions(relativePath);
+                var instruction = await GetMentionedInstructions(relativePath);
 
                 copilotInstructions += "\n" + instruction;
             }
@@ -40,16 +40,16 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
             return copilotInstructions.Content;
         }
 
-        private static async Task<string> GetMentionedInstructions(string copilotRelativePath)
+        private static async Task<string> GetMentionedInstructions(string instructionRelativePath)
         {
             var copilotBaseDirectory = Path.GetDirectoryName(s_copilotPath);
-            string instructionPath = Path.GetFullPath(Path.Combine(copilotBaseDirectory!, copilotRelativePath));
+            string instructionPath = Path.Combine(copilotBaseDirectory!, instructionRelativePath);
 
             var logger = new LoggerFactory().CreateLogger<GitHubService>();
             var githubService = new GitHubService(logger);
-            var copilotInstructions = await githubService.GetContentsSingleAsync("Azure", "azure-rest-api-specs", instructionPath);
+            var instructions = await githubService.GetContentsSingleAsync("Azure", "azure-rest-api-specs", instructionPath);
             //return File.ReadAllText(instructionPath);
-            return copilotInstructions.Content;
+            return instructions.Content;
         }
 
         private static readonly string DefaultToolInstructions =

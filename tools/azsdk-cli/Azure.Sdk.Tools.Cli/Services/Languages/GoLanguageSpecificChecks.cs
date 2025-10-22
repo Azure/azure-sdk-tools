@@ -158,8 +158,9 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
 
         // ex: sdk/messaging/azservicebus/
         var relativePath = packagePath.Replace(repo, "");
-        // Ensure forward slashes for Go package names
-        return await Task.FromResult(relativePath.Replace(Path.DirectorySeparatorChar, '/'));
+        // Ensure forward slashes for Go package names and remove trailing slash
+        var packageName = relativePath.Replace(Path.DirectorySeparatorChar, '/');
+        return await Task.FromResult(packageName.TrimEnd('/'));
     }
 
     public async Task<CLICheckResponse> UpdateSnippets(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)

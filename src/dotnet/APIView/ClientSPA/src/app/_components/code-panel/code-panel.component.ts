@@ -587,30 +587,20 @@ export class CodePanelComponent implements OnChanges{
         this.applyCommentResolutionUpdate(commentUpdates);
         break;
       case CommentThreadUpdateAction.CommentUpVoteToggled:
-        const upCommentRow = this.codePanelRowData.find(row => 
-          row.nodeIdHashed === commentUpdates.nodeIdHashed && 
-          row.type === CodePanelRowDatatype.CommentThread &&
-          row.associatedRowPositionInGroup === commentUpdates.associatedRowPositionInGroup
-        );
-        const upComment = upCommentRow?.comments?.find(c => c.id === commentUpdates.commentId);
+        const upComment = this.allComments?.find(c => c.id === commentUpdates.commentId);
         if (upComment) {
           const hasUpvote = upComment.upvotes.includes(this.userProfile?.userName!);
           if (!hasUpvote) {
-            this.toggleCommentUpVote(commentUpdates);
+            this.toggleVoteUp(upComment);
           }
         }
         break;
       case CommentThreadUpdateAction.CommentDownVoteToggled:
-        const downCommentRow = this.codePanelRowData.find(row => 
-          row.nodeIdHashed === commentUpdates.nodeIdHashed && 
-          row.type === CodePanelRowDatatype.CommentThread &&
-          row.associatedRowPositionInGroup === commentUpdates.associatedRowPositionInGroup
-        );
-        const downComment = downCommentRow?.comments?.find(c => c.id === commentUpdates.commentId);
+        const downComment = this.allComments?.find(c => c.id === commentUpdates.commentId);
         if (downComment) {
           const hasDownvote = downComment.downvotes.includes(this.userProfile?.userName!);
           if (!hasDownvote) {
-            this.toggleCommentDownVote(commentUpdates);
+            this.toggleVoteDown(downComment);
           }
         }
         break;
@@ -1131,6 +1121,21 @@ export class CodePanelComponent implements OnChanges{
   private toggleCommentUpVote(data: CommentUpdatesDto) {
     const comment = this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup!].comments.find(c => c.id === data.commentId);
     if (comment) {
+      this.toggleVoteUp(comment);
+      this.updateItemInScroller(this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup!]);
+    }
+  }
+
+  private toggleCommentDownVote(data: CommentUpdatesDto) {
+    const comment = this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup!].comments.find(c => c.id === data.commentId);
+    if (comment) {
+      this.toggleVoteDown(comment);
+      this.updateItemInScroller(this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup!]);
+    }
+  }
+
+  private toggleVoteUp(comment: CommentItemModel) {
+    if (comment) {
       if (comment.upvotes.includes(this.userProfile?.userName!)) {
         comment.upvotes.splice(comment.upvotes.indexOf(this.userProfile?.userName!), 1);
       } else {
@@ -1139,12 +1144,10 @@ export class CodePanelComponent implements OnChanges{
           comment.downvotes.splice(comment.downvotes.indexOf(this.userProfile?.userName!), 1);
         }
       }
-      this.updateItemInScroller(this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup!]);
     }
   }
 
-  private toggleCommentDownVote(data: CommentUpdatesDto) {
-    const comment = this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup!].comments.find(c => c.id === data.commentId);
+   private toggleVoteDown(comment: CommentItemModel) {
     if (comment) {
       if (comment.downvotes.includes(this.userProfile?.userName!)) {
         comment.downvotes.splice(comment.downvotes.indexOf(this.userProfile?.userName!), 1);
@@ -1154,7 +1157,6 @@ export class CodePanelComponent implements OnChanges{
           comment.upvotes.splice(comment.upvotes.indexOf(this.userProfile?.userName!), 1);
         }
       }
-      this.updateItemInScroller(this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup!]);
     }
   }
 

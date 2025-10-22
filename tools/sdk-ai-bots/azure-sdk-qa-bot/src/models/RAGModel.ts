@@ -11,7 +11,6 @@ import { ChannelConfigManager } from '../config/channel.js';
 import { ConversationHandler, ConversationMessage, Prompt } from '../input/ConversationHandler.js';
 import { parseConversationId } from '../common/shared.js';
 import { AccessToken, ManagedIdentityCredential, TokenCredential } from '@azure/identity';
-import { promises } from 'node:dns';
 import { getAccessTokenByManagedIdentity } from '../backend/auth.js';
 
 export class RAGModel implements PromptCompletionModel {

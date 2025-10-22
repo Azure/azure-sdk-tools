@@ -10,6 +10,7 @@ using Azure.Sdk.Tools.Cli.Services.VerifySetup;
 using Azure.Sdk.Tools.Cli.Helpers;
 using ModelContextProtocol.Server;
 using System.Text.Json;
+using System.Reflection;
 using System.Net;
 using System.Text.Json.Serialization;
 using System.IO.Pipelines;
@@ -26,8 +27,6 @@ public class VerifySetupTool : MCPTool
     private readonly ILogger<VerifySetupTool> logger;
 
     private readonly ILanguageSpecificResolver<IEnvRequirementsCheck> envRequirementsCheck;
-
-    private readonly string PATH_TO_REQS = Path.Combine(AppContext.BaseDirectory, "Configuration", "RequirementsV1.json");
 
     public VerifySetupTool(IProcessHelper processHelper, ILogger<VerifySetupTool> logger, ILanguageSpecificResolver<IEnvRequirementsCheck> envRequirementsCheck)
     {
@@ -229,7 +228,12 @@ public class VerifySetupTool : MCPTool
 
     private async Task<List<SetupRequirements.Requirement>> GetCoreRequirements(CancellationToken ct)
     {
-        var requirementsJson = await File.ReadAllTextAsync(PATH_TO_REQS, ct);
+        var assembly = Assembly.GetExecutingAssembly();
+        var names = assembly.GetManifestResourceNames();
+        using var stream = assembly.GetManifestResourceStream("Azure.Sdk.Tools.Cli.Configuration.RequirementsV1.json");
+        using var reader = new StreamReader(stream);
+        var requirementsJson = await reader.ReadToEndAsync(ct);
+
         var setupRequirements = JsonSerializer.Deserialize<SetupRequirements>(requirementsJson);
 
         if (setupRequirements == null)

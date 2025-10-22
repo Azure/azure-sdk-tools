@@ -5,7 +5,7 @@ using Azure.ClientGenerator.Core;
 using TypeSpec.JsonSchema;
 
 @usage(Usage.input | Usage.output)
-@service({title: "Schemas"})
+@service(#{title: "Schemas"})
 namespace Schemas;
 
 /** ReviewFile represents entire API review object. This will be processed to render review lines. */

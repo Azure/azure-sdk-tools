@@ -23,7 +23,7 @@ from ._models import (
     ReviewToken as TokenImpl,
     ReviewLine as ReviewLineImpl,
     CodeDiagnostic as Diagnostic,
-    CrossLanguageMetadata
+    CrossLanguageMetadata,
 )
 from ._enums import TokenKind
 
@@ -96,7 +96,7 @@ class ApiView(CodeFile):
         if self.metadata_map.cross_language_map:
             cross_language_metadata = CrossLanguageMetadata(
                 cross_language_package_id=self.metadata_map.cross_language_package_id,
-                cross_language_definition_id=self.metadata_map.cross_language_map
+                cross_language_definition_id=self.metadata_map.cross_language_map,
             )
         self.review_lines: ReviewLines
         super().__init__(

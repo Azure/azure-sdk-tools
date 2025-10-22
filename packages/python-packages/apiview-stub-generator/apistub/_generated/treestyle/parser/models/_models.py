@@ -86,8 +86,8 @@ class CodeFile(_Model):
     :ivar language_variant: Language variant is applicable only for java variants. Is one of the
      following types: Literal["None"], Literal["Spring"], Literal["Android"]
     :vartype language_variant: str or str or str
-    :ivar cross_language_metadata: Metadata to identify Reviews for different languages generated
-     from the same TypeSpec specification.
+    :ivar cross_language_metadata: Metadata for different languages generated from the same
+     TypeSpec specification.
     :vartype cross_language_metadata: ~treestyle.parser.models.CrossLanguageMetadata
     :ivar review_lines: Required.
     :vartype review_lines: list[~treestyle.parser.models.ReviewLine]
@@ -121,8 +121,7 @@ class CodeFile(_Model):
     cross_language_metadata: Optional["_models.CrossLanguageMetadata"] = rest_field(
         name="CrossLanguageMetadata", visibility=["read", "create", "update", "delete", "query"]
     )
-    """Metadata to identify Reviews for different languages generated from the same TypeSpec
-     specification."""
+    """Metadata for different languages generated from the same TypeSpec specification."""
     review_lines: list["_models.ReviewLine"] = rest_field(
         name="ReviewLines", visibility=["read", "create", "update", "delete", "query"]
     )
@@ -174,14 +173,14 @@ class CrossLanguageMetadata(_Model):
     :ivar cross_language_package_id: Required.
     :vartype cross_language_package_id: str
     :ivar cross_language_definition_id: Required.
-    :vartype cross_language_definition_id: dict[str, str]
+    :vartype cross_language_definition_id: ~treestyle.parser.models.LanguageIdMap
     """
 
     cross_language_package_id: str = rest_field(
         name="CrossLanguagePackageId", visibility=["read", "create", "update", "delete", "query"]
     )
     """Required."""
-    cross_language_definition_id: dict[str, str] = rest_field(
+    cross_language_definition_id: "_models.LanguageIdMap" = rest_field(
         name="CrossLanguageDefinitionId", visibility=["read", "create", "update", "delete", "query"]
     )
     """Required."""
@@ -191,7 +190,7 @@ class CrossLanguageMetadata(_Model):
         self,
         *,
         cross_language_package_id: str,
-        cross_language_definition_id: dict[str, str],
+        cross_language_definition_id: "_models.LanguageIdMap",
     ) -> None: ...
 
     @overload
@@ -203,6 +202,14 @@ class CrossLanguageMetadata(_Model):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
+
+
+class LanguageIdMap(_Model):
+    """Maps a language-specific ID (key) to a TypeSpec ID (value).
+    Key: Language-specific ID (e.g., 'en-US', 'fr-FR')
+    Value: Cross-language TypeSpec ID.
+
+    """
 
 
 class NavigationItem(_Model):

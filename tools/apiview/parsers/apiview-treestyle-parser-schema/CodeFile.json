@@ -229,7 +229,7 @@
         "LanguageIdMap": {
             "type": "object",
             "properties": {},
-            "additionalProperties": {
+            "unevaluatedProperties": {
                 "type": "string"
             },
             "description": "Maps a language-specific ID (key) to a TypeSpec ID (value).\nKey: Language-specific ID (e.g., 'en-US', 'fr-FR')\nValue: Cross-language TypeSpec ID"
@@ -302,7 +302,7 @@
         "RecordString": {
             "type": "object",
             "properties": {},
-            "additionalProperties": {
+            "unevaluatedProperties": {
                 "type": "string"
             }
         },

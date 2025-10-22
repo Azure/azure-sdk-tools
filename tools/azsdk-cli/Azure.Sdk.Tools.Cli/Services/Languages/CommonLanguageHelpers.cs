@@ -12,16 +12,13 @@ using ModelContextProtocol.Protocol;
 namespace Azure.Sdk.Tools.Cli.Services;
 
 /// <summary>
-/// Provides common helper methods for language-specific checks that can be optionally used
-/// by language implementations. Each language can choose to call these helpers or implement
-/// their own custom logic.
+/// Provides common helper methods for validation checks
 /// </summary>
 public static class CommonLanguageHelpers
 {
 
     /// <summary>
-    /// Common changelog validation implementation that works for most Azure SDK languages.
-    /// Uses the PowerShell script from eng/common/scripts/Verify-ChangeLog.ps1.
+    /// Common changelog validation implementation
     /// </summary>
     /// <param name="packageName">SDK package name (provided by language-specific implementation)</param>
     /// <param name="processHelper">Process helper for running commands</param>
@@ -48,7 +45,6 @@ public static class CommonLanguageHelpers
                 return errorResponse;
             }
 
-            // Construct the path to the PowerShell script in the SDK repository
             var scriptPath = Path.Combine(packageRepoRoot, "eng", "common", "scripts", "Verify-ChangeLog.ps1");
 
             if (!File.Exists(scriptPath))
@@ -59,7 +55,6 @@ public static class CommonLanguageHelpers
             var command = "pwsh";
             var args = new[] { "-File", scriptPath, "-PackageName", packageName };
 
-            // Use a longer timeout for changelog validation - 5 minutes should be sufficient
             var timeout = TimeSpan.FromMinutes(5);
             var processResult = await processHelper.Run(new(command, args, timeout: timeout, workingDirectory: packagePath), ct);
 
@@ -73,8 +68,7 @@ public static class CommonLanguageHelpers
     }
 
     /// <summary>
-    /// Common README validation implementation that works for most Azure SDK languages.
-    /// Uses the PowerShell script from eng/common/scripts/Verify-Readme.ps1.
+    /// Common README validation implementation
     /// </summary>
     /// <param name="processHelper">Process helper for running commands</param>
     /// <param name="gitHelper">Git helper for repository operations</param>
@@ -99,7 +93,6 @@ public static class CommonLanguageHelpers
                 return errorResponse;
             }
 
-            // Construct the path to the PowerShell script in the SDK repository
             var scriptPath = Path.Combine(packageRepoRoot, Constants.ENG_COMMON_SCRIPTS_PATH, "Verify-Readme.ps1");
 
             if (!File.Exists(scriptPath))
@@ -107,7 +100,6 @@ public static class CommonLanguageHelpers
                 return new CLICheckResponse(1, "", $"PowerShell script not found at expected location: {scriptPath}");
             }
 
-            // Construct the path to the doc settings file
             var settingsPath = Path.Combine(packageRepoRoot, "eng", ".docsettings.yml");
 
             if (!File.Exists(settingsPath))
@@ -135,7 +127,7 @@ public static class CommonLanguageHelpers
     }
 
     /// <summary>
-    /// Common spelling check implementation that checks for spelling issues and optionally applies fixes.
+    /// Common spelling check implementation
     /// </summary>
     /// <param name="spellingCheckPath">Path to check for spelling errors (provided by language-specific implementation)</param>
     /// <param name="processHelper">Process helper for running commands</param>
@@ -166,7 +158,6 @@ public static class CommonLanguageHelpers
                 return errorResponse;
             }
 
-            // Construct the path to the cspell config file
             var cspellConfigPath = Path.Combine(packageRepoRoot, ".vscode", "cspell.json");
 
             if (!File.Exists(cspellConfigPath))
@@ -224,7 +215,6 @@ public static class CommonLanguageHelpers
             return (null, new CLICheckResponse(1, "", $"Package path does not exist: {packagePath}"));
         }
 
-        // Find the SDK repository root by looking for common repository indicators
         var packageRepoRoot = gitHelper.DiscoverRepoRoot(packagePath);
         if (string.IsNullOrEmpty(packageRepoRoot))
         {

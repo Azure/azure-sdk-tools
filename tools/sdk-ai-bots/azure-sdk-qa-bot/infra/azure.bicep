@@ -6,7 +6,6 @@ param azureTableNameForConversation string
 
 // RAG
 @secure()
-param ragApiKey string
 param ragScope string
 
 // Resources
@@ -134,10 +133,6 @@ resource webApp 'Microsoft.Web/sites@2021-02-01' = {
           value: 'UserAssignedMsi'
         }
         // RAG
-        {
-          name: 'RAG_API_KEY'
-          value: ragApiKey
-        }
         {
           name: 'RAG_SERVICE_SCOPE'
           value: ragScope

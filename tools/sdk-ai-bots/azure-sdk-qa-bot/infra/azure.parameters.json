@@ -11,9 +11,6 @@
     "azureTableNameForConversation": {
       "value": "${{AZURE_TABLE_NAME_FOR_CONVERSATION}}"
     },
-    "ragApiKey": {
-      "value": "${{SECRET_RAG_API_KEY}}"
-    },
     "ragScope": {
       "value": "${{RAG_SERVICE_SCOPE}}"
     },

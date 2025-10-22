@@ -47,6 +47,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
         private const string _sdkDirectory = "sdk";
         private const string _cargoName = "cargo";
         private string _resultsDirectory = "testResults";
+        private bool _debug = false;
+        private string _testCommand = "";
         private string _targetResultsDirectory;
         public bool IsTest { get; set; } = false;
         public bool IsWindows { get; set; } = Util.IsWindows;
@@ -60,10 +62,27 @@ namespace Azure.Sdk.Tools.PerfAutomation
             IDictionary<string, string> packageVersions,
             bool debug)
         {
+
             // just make sure we have the target directory cleaned up of previous results in case of a test issue in a previous test / run
             _targetResultsDirectory = await CleanupAsync(project);
             Directory.CreateDirectory(_targetResultsDirectory);
-            return (String.Empty, String.Empty, String.Empty);
+            _debug = debug;
+
+            StringBuilder outputBuilder = new StringBuilder();
+            StringBuilder errorBuilder = new StringBuilder();
+            string flavor;
+            if (debug)
+            {
+                flavor = "debug";
+            }
+            else
+            {
+                flavor = "release";
+            }
+            _testCommand = $"--{flavor} --package {primaryPackage} --test perf";
+            await Util.RunAsync(_cargoName, $"build {_testCommand}", WorkingDirectory, null, outputBuilder, errorBuilder);
+
+            return (outputBuilder.ToString(), errorBuilder.ToString(), String.Empty);
         }
         public override async Task<IterationResult> RunAsync(
             string project,
@@ -76,10 +95,19 @@ namespace Azure.Sdk.Tools.PerfAutomation
             string profilerOptions,
             object context)
         {
-            // Set AZURE_TEST_MODE environment variable to "live" before invoking the compiler
-            Environment.SetEnvironmentVariable("AZURE_TEST_MODE", "live");
-            // set up the params for cargo
-            string finalParams = $"test --release --package {primaryPackage} --test perf -- --test-results {_targetResultsDirectory}/{testName}-results.json \"{testName}\" {arguments}";
+            // The Rust SDK uses environment variables to determine if the tests should run in playback or live mode.
+            // If --test-proxy is in the command line arguments, set AZURE_TEST_MODE environment variable to "playback" to indicate that we are going to use the test proxy.
+            // Otherwise set test mode to `live`.
+            if (arguments.Contains("test-proxy"))
+            {
+                Environment.SetEnvironmentVariable("AZURE_TEST_MODE", "playback");
+            }
+            else
+            {
+                Environment.SetEnvironmentVariable("AZURE_TEST_MODE", "live");
+            }
+            // set up the params for cargo. Some of the arguments were established in the setup stage.
+            string finalParams = $"test {_testCommand} -- --test-results {_targetResultsDirectory}/{testName}-results.json \"{testName}\" {arguments}";
             ProcessResult result = new ProcessResult(0, String.Empty, String.Empty);
             if (IsTest)
             {

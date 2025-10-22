@@ -18,17 +18,6 @@ namespace Azure.Sdk.Tools.Cli.Services;
 /// </summary>
 public static class CommonLanguageHelpers
 {
-    /// <summary>
-    /// Gets the default spelling check path pattern for a package.
-    /// </summary>
-    /// <param name="packageRepoRoot">Repository root path</param>
-    /// <param name="packagePath">Package path</param>
-    /// <returns>Path pattern for spelling checks</returns>
-    public static string GetDefaultSpellingCheckPath(string packageRepoRoot, string packagePath)
-    {
-        var relativePath = Path.GetRelativePath(packageRepoRoot, packagePath);
-        return $"." + Path.DirectorySeparatorChar + relativePath + Path.DirectorySeparatorChar + "**";
-    }
 
     /// <summary>
     /// Common changelog validation implementation that works for most Azure SDK languages.

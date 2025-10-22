@@ -190,7 +190,8 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
     public async Task<CLICheckResponse> CheckSpelling(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         var repoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
-        var spellingCheckPath = CommonLanguageHelpers.GetDefaultSpellingCheckPath(repoRoot, packagePath);
+        var relativePath = Path.GetRelativePath(repoRoot, packagePath);
+        var spellingCheckPath = $"." + Path.DirectorySeparatorChar + relativePath + Path.DirectorySeparatorChar + "**";
         return await CommonLanguageHelpers.CheckSpellingCommon(spellingCheckPath, _processHelper, _npxHelper, _gitHelper, _logger, _microagentHostService, packagePath, fixCheckErrors, cancellationToken);
     }
 }

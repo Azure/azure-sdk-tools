@@ -190,13 +190,6 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
         return Path.GetFileName(packagePath);
     }
 
-    public Task<string> GetSpellingCheckPath(string packageRepoRoot, string packagePath)
-    {
-        var relativePath = Path.GetRelativePath(packageRepoRoot, packagePath);
-        var defaultPath = $"." + Path.DirectorySeparatorChar + relativePath + Path.DirectorySeparatorChar + "review" + Path.DirectorySeparatorChar + "*.md";
-        return Task.FromResult(defaultPath);
-    }
-
     public async Task<CLICheckResponse> ValidateReadme(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         // Implementation for validating README in a JavaScript project

@@ -1,8 +1,4 @@
-using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Models.Responses.Package;
-using Azure.Sdk.Tools.Cli.Helpers;
-using Azure.Sdk.Tools.Cli.Microagents;
-using Microsoft.Extensions.Logging;
 
 namespace Azure.Sdk.Tools.Cli.Services;
 

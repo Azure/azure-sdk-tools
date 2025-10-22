@@ -5,6 +5,12 @@ using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models;
 
+public enum Status
+{
+    Succeeded = 0,
+    Failed = 1
+}
+
 public abstract class CommandResponse
 {
     private int? exitCode = null;
@@ -45,14 +51,14 @@ public abstract class CommandResponse
     public List<string>? NextSteps { get; set; }
 
     /// <summary>
-    /// ToolSucceeded shows whether the tool operation was successful.
+    /// Status shows whether the command operation was successful.
     /// </summary>
-    [JsonPropertyName("tool_succeeded")]
-    public bool ToolSucceeded
+    [JsonPropertyName("status")]
+    public Status Status
     {
         get
         {
-            return string.IsNullOrEmpty(ResponseError) && (ResponseErrors == null || ResponseErrors.Count == 0);
+            return string.IsNullOrEmpty(ResponseError) && (ResponseErrors == null || ResponseErrors.Count == 0)? Status.Succeeded : Status.Failed;
         }
     }
 

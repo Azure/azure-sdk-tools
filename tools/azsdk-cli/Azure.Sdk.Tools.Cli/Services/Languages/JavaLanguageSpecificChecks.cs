@@ -203,73 +203,6 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
         }
     }
 
-    /// <summary>
-    /// Parses Maven output to determine which linting tools found issues.
-    /// Based on Azure SDK for Java pipeline patterns that run linting during install phase.
-    /// </summary>
-    /// <param name="output">Maven command output</param>
-    /// <returns>List of linting results per tool</returns>
-    private List<(string Tool, bool HasIssues)> ParseLintingResults(string output)
-    {
-        var results = new List<(string Tool, bool HasIssues)>();
-
-        // Check for Checkstyle execution and results
-        var checkstyleRan = output.Contains("checkstyle:") && output.Contains(":check");
-        var checkstyleHasIssues = false;
-        if (checkstyleRan)
-        {
-            // Look for explicit success indicators - if not found, assume there are issues
-            var checkstyleSuccess = output.Contains("You have 0 Checkstyle violations.") ||
-                                   output.Contains("Audit done."); // Sometimes just shows "Audit done." for clean runs
-            checkstyleHasIssues = !checkstyleSuccess;
-        }
-        results.Add(("Checkstyle", checkstyleHasIssues));
-
-        // Check for SpotBugs execution and results
-        var spotbugsRan = output.Contains("spotbugs:") && output.Contains(":check");
-        var spotbugsHasIssues = false;
-        if (spotbugsRan)
-        {
-            // Look for explicit success indicators - SpotBugs reports success patterns
-            var spotbugsSuccess = (output.Contains("BugInstance size is 0") && output.Contains("No errors/warnings found")) ||
-                                 output.Contains("Error size is 0") && output.Contains("No errors/warnings found");
-            spotbugsHasIssues = !spotbugsSuccess;
-        }
-        results.Add(("SpotBugs", spotbugsHasIssues));
-
-        // Check for RevAPI execution and results
-        var revapiRan = output.Contains("revapi:") && output.Contains(":check");
-        var revapiHasIssues = false;
-        if (revapiRan)
-        {
-            // Look for explicit success indicators
-            var revapiSuccess = output.Contains("API checks completed without failures.");
-            revapiHasIssues = !revapiSuccess;
-        }
-        results.Add(("RevAPI", revapiHasIssues));
-
-        // Check for Javadoc execution and results (included in linting)
-        var javadocRan = output.Contains("maven-javadoc-plugin") && !output.Contains("-Dmaven.javadoc.skip=true");
-        var javadocHasIssues = false;
-        if (javadocRan)
-        {
-            // Look for javadoc errors or warnings
-            var javadocSuccess = !output.Contains("Javadoc Warnings") && 
-                                !output.Contains("javadoc: error") && 
-                                !output.Contains("javadoc: warning") &&
-                                !output.Contains("[ERROR] Failed to execute goal org.apache.maven.plugins:maven-javadoc-plugin");
-            javadocHasIssues = !javadocSuccess;
-        }
-        results.Add(("Javadoc", javadocHasIssues));
-
-        _logger.LogDebug("Checkstyle: ran={CheckstyleRan}, issues={CheckstyleIssues}", checkstyleRan, checkstyleHasIssues);
-        _logger.LogDebug("SpotBugs: ran={SpotBugsRan}, issues={SpotBugsIssues}", spotbugsRan, spotbugsHasIssues);
-        _logger.LogDebug("RevAPI: ran={RevapiRan}, issues={RevapiIssues}", revapiRan, revapiHasIssues);
-        _logger.LogDebug("Javadoc: ran={JavadocRan}, issues={JavadocIssues}", javadocRan, javadocHasIssues);
-
-        return results;
-    }
-
     public async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, CancellationToken cancellationToken = default)
     {
         try
@@ -331,7 +264,6 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
             }
 
             // Azure SDK for Java uses BOM-based dependency management
-            // Focus on analysis and validation rather than automatic fixes
             return await AnalyzeDependencyTreeAsync(packagePath, pomPath, cancellationToken);
         }
         catch (Exception ex)
@@ -421,4 +353,37 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
         _logger.LogInformation("Using Maven project at: {PackagePath}", packagePath);
         return null; // No error, prerequisites are valid
     }
+
+    /// <summary>
+    /// Parses Maven output to determine which linting tools found issues.
+    /// Based on Azure SDK for Java pipeline patterns that run linting during install phase.
+    /// </summary>
+    /// <param name="output">Maven command output</param>
+    /// <returns>List of linting results per tool</returns>
+    private static List<(string Tool, bool HasIssues)> ParseLintingResults(string output)
+    {
+        return [
+            ("Checkstyle", HasCheckstyleIssues(output)),
+            ("SpotBugs", HasSpotBugsIssues(output)), 
+            ("RevAPI", HasRevapiIssues(output)),
+            ("Javadoc", HasJavadocIssues(output))
+        ];
+    }
+
+    private static bool HasCheckstyleIssues(string output) =>
+        output.Contains("Checkstyle violations") && 
+        !output.Contains("You have 0 Checkstyle violations.") && 
+        !output.Contains("Audit done.");
+
+    private static bool HasSpotBugsIssues(string output) =>
+        output.Contains("BugInstance size is") && !output.Contains("BugInstance size is 0");
+
+    private static bool HasRevapiIssues(string output) =>
+        output.Contains("API problems detected") && 
+        !output.Contains("API checks completed without failures.");
+
+    private static bool HasJavadocIssues(string output) =>
+        output.Contains("Error while generating Javadoc:") ||
+        (output.Contains("maven-javadoc-plugin") && output.Contains("[ERROR]") &&
+         !output.Contains("Building jar:") && !output.Contains("-javadoc.jar"));
 }

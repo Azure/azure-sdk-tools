@@ -163,12 +163,12 @@ public class VerifySetupTool : MCPTool
                 };
             }
         }
-        catch
+        catch (Exception ex)
         {
-            logger.LogError("Command {Command} failed to execute.", string.Join(' ', command));
+            logger.LogError("Command {Command} failed to execute. Exception: {Exception}", string.Join(' ', command), ex);
             return new DefaultCommandResponse
             {
-                ResponseError = $"Command {string.Join(' ', command)} failed to execute."
+                ResponseError = $"Command {string.Join(' ', command)} failed to execute. Exception: {ex.Message}"
             };
         }
 
@@ -194,7 +194,7 @@ public class VerifySetupTool : MCPTool
 
             if (reqGetter == null)
             {
-                logger.LogWarning("Could not resolve requirements checker for the specified languages. Checking only core requirements. Please provide languages using --languages option to check language requirements.");
+                logger.LogWarning("Could not resolve requirements checker for the specified languages from path {PackagePath}. Checking only core requirements. Please provide languages explicitly to check language requirements.", packagePath);
                 return reqsToCheck;
             }
 
@@ -273,7 +273,7 @@ public class VerifySetupTool : MCPTool
         string operatorSymbol = match.Groups[1].Value;
         string requiredVersion = match.Groups[2].Value;
 
-        logger.LogInformation($"Requires version: {requiredVersion}");
+        logger.LogInformation("Requires version: {requiredVersion}", requiredVersion);
 
         // Parse the output version
         var outputVersionMatch = System.Text.RegularExpressions.Regex.Match(output, @"[\d\.]+");
@@ -285,7 +285,7 @@ public class VerifySetupTool : MCPTool
 
         string installedVersion = outputVersionMatch.Value;
 
-        logger.LogInformation($"Installed version: {installedVersion}");
+        logger.LogInformation("Installed version: {installedVersion}", installedVersion);
 
         int comparison = CompareVersions(installedVersion, requiredVersion);
 

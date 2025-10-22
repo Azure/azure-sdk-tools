@@ -7,11 +7,6 @@
                 "instructions": ["Download Node.js"]
             },
             {
-                "requirement": "npm",
-                "check": ["npm", "--version"],
-                "instructions": ["Download Node.js"]
-            },
-            {
                 "requirement": "tsp-client >= 0.24.0",
                 "check": ["tsp-client", "--version"],
                 "instructions": ["cd eng/common/tsp-client", "`npm ci`"]

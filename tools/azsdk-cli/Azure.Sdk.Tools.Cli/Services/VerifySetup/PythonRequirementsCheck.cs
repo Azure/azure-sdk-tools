@@ -82,8 +82,9 @@ public class PythonRequirementsCheck : EnvRequirementsCheck, IEnvRequirementsChe
                 return Path.GetFullPath(venvPath);
             }
         }
-        catch
+        catch (Exception ex)
         {
+            logger.LogError(ex, "Exception occurred while trying to find or create a Python virtual environment at path: {PackagePath}", packagePath);
             return null;
         }
 

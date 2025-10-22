@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Text.Json;
 using Azure.Tools.GeneratorAgent.Agent;
 using Azure.Tools.GeneratorAgent.Models;
 using NUnit.Framework;
@@ -11,30 +12,13 @@ namespace Azure.Tools.GeneratorAgent.Tests
     {
 
         [Test]
-        public void ParseErrors_WithNullParameter_ThrowsInvalidOperationException()
+        public void ParseErrors_WithInvalidInput_ThrowsInvalidOperationException()
         {
-            // Act & Assert
-            var ex = Assert.Throws<InvalidOperationException>(() =>
-                AgentResponseParser.ParseErrors(null!).ToList());
-            Assert.That(ex?.Message, Does.Contain("Agent response is not in the expected JSON format"));
-        }
-
-        [Test]
-        public void ParseErrors_WithEmptyString_ThrowsInvalidOperationException()
-        {
-            // Act & Assert
-            var ex = Assert.Throws<InvalidOperationException>(() =>
-                AgentResponseParser.ParseErrors(string.Empty).ToList());
-            Assert.That(ex?.Message, Does.Contain("Agent response is not in the expected JSON format"));
-        }
-
-        [Test]
-        public void ParseErrors_WithWhitespaceOnly_ThrowsInvalidOperationException()
-        {
-            // Act & Assert
-            var ex = Assert.Throws<InvalidOperationException>(() =>
-                AgentResponseParser.ParseErrors("   \n\t  ").ToList());
-            Assert.That(ex?.Message, Does.Contain("Agent response is not in the expected JSON format"));
+            // Test multiple invalid input scenarios
+            Assert.Throws<ArgumentNullException>(() => AgentResponseParser.ParseErrors(null!).ToList());
+            Assert.Throws<InvalidOperationException>(() => AgentResponseParser.ParseErrors(string.Empty).ToList());
+            Assert.Throws<InvalidOperationException>(() => AgentResponseParser.ParseErrors("   \n\t  ").ToList());
+            Assert.Throws<InvalidOperationException>(() => AgentResponseParser.ParseErrors("```json\n\n```").ToList());
         }
 
 
@@ -402,30 +386,27 @@ Some text in between
         }
 
         [Test]
-        public void ParsePatchRequest_WithNullParameter_ThrowsInvalidOperationException()
+        public void ParsePatchRequest_WithNullParameter_ThrowsArgumentNullException()
         {
             // Act & Assert
-            var ex = Assert.Throws<InvalidOperationException>(() =>
+            var ex = Assert.Throws<ArgumentNullException>(() =>
                 AgentResponseParser.ParsePatchRequest(null!));
-            Assert.That(ex?.Message, Does.Contain("Failed to parse patch JSON"));
         }
 
         [Test]
-        public void ParsePatchRequest_WithEmptyString_ThrowsInvalidOperationException()
+        public void ParsePatchRequest_WithEmptyString_ThrowsJsonException()
         {
             // Act & Assert
-            var ex = Assert.Throws<InvalidOperationException>(() =>
+            var ex = Assert.Throws<JsonException>(() =>
                 AgentResponseParser.ParsePatchRequest(string.Empty));
-            Assert.That(ex?.Message, Does.Contain("Failed to parse patch JSON"));
         }
 
         [Test]
-        public void ParsePatchRequest_WithWhitespaceOnly_ThrowsInvalidOperationException()
+        public void ParsePatchRequest_WithWhitespaceOnly_ThrowsJsonException()
         {
             // Act & Assert
-            var ex = Assert.Throws<InvalidOperationException>(() =>
+            var ex = Assert.Throws<JsonException>(() =>
                 AgentResponseParser.ParsePatchRequest("   \n\t  "));
-            Assert.That(ex?.Message, Does.Contain("Failed to parse patch JSON"));
         }
 
         [Test]
@@ -548,15 +529,14 @@ Some text in between
         }
 
         [Test]
-        public void ParsePatchRequest_WithInvalidJsonSyntax_ThrowsInvalidOperationException()
+        public void ParsePatchRequest_WithInvalidJsonSyntax_ThrowsJsonException()
         {
             // Arrange
             string invalidJson = @"{invalid json syntax}";
 
             // Act & Assert
-            var ex = Assert.Throws<InvalidOperationException>(() =>
+            var ex = Assert.Throws<JsonException>(() =>
                 AgentResponseParser.ParsePatchRequest(invalidJson));
-            Assert.That(ex?.Message, Does.Contain("Failed to parse patch JSON"));
         }
 
         [Test]

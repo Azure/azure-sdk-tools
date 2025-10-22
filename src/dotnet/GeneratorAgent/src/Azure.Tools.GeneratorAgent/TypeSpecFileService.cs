@@ -253,25 +253,17 @@ namespace Azure.Tools.GeneratorAgent
             ArgumentNullException.ThrowIfNull(content);
             ArgumentNullException.ThrowIfNull(validationContext);
 
-            // Validate filename
-            try
-            {
-                var validatedFileName = InputValidator.ValidateDirTraversal(fileName, "TypeSpec filename");
-            }
-            catch (Exception ex)
-            {
-               throw new SecurityException($"TypeSpec filename validation failed: {fileName}", ex);
-            }
+            var validatedFileName = InputValidator.ValidateDirTraversal(fileName, "TypeSpec filename");
 
             string currentDir = validationContext.CurrentTypeSpecDir;
-            string filePath = Path.Combine(currentDir, fileName);
+            string filePath = Path.Combine(currentDir, validatedFileName);
             
             // Ensure file is within current directory
             string fullCurrentDir = Path.GetFullPath(currentDir);
             string fullFilePath = Path.GetFullPath(filePath);
             if (!fullFilePath.StartsWith(fullCurrentDir, StringComparison.OrdinalIgnoreCase))
             {
-                throw new SecurityException($"File '{fileName}' attempts to write outside current directory");
+                throw new SecurityException($"File '{validatedFileName}' attempts to write outside current directory");
             }
 
             try

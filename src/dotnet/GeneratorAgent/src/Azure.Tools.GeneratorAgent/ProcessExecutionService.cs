@@ -153,11 +153,11 @@ namespace Azure.Tools.GeneratorAgent
             }
 
             return Result<object>.Failure(
-                        new ProcessExecutionException($"Process failed with exit code {process.ExitCode} because of timeout",
+                        new ProcessExecutionException($"Process failed with exit code {timeout.TotalMilliseconds} because of timeout",
                             command,
                             partialOutput,
                             partialError,
-                            process.ExitCode));
+                            null));
         }
 
         private void LogExecutionResult(bool success, int exitCode, string command, string error, string output = "")

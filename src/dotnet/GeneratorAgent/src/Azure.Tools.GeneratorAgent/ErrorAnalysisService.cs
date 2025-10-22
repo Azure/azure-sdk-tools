@@ -33,7 +33,7 @@ namespace Azure.Tools.GeneratorAgent
         {
             if (string.IsNullOrWhiteSpace(errorOutput))
             {
-                throw new InvalidOperationException("No output available for analysis");
+               return new List<Fix>();
             }
 
             Logger.LogDebug("Generating fixes from failure logs");

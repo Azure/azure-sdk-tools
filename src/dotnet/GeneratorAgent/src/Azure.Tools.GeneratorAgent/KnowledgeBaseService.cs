@@ -34,7 +34,7 @@ internal class KnowledgeBaseService
     {
         try
         {
-            var knowledgePath = Path.Combine(Directory.GetCurrentDirectory(), "knowledge.md");
+            var knowledgePath = Path.Combine(AppContext.BaseDirectory, "knowledge.md");
 
             if (File.Exists(knowledgePath))
             {

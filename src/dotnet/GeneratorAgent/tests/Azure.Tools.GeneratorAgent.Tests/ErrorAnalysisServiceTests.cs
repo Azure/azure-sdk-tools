@@ -45,27 +45,33 @@ namespace Azure.Tools.GeneratorAgent.Tests
         }
 
         [Test]
-        public void GenerateFixesFromFailureLogsAsync_WithNullErrorOutput_ShouldThrowInvalidOperationException()
+        public async Task GenerateFixesFromFailureLogsAsync_WithNullErrorOutput_ShouldReturnEmptyList()
         {
             // Arrange
             var service = CreateErrorAnalysisService();
 
-            // Act & Assert
-            Assert.ThrowsAsync<InvalidOperationException>(() =>
-                service.GenerateFixesFromFailureLogsAsync(null!, CancellationToken.None));
+            // Act
+            var result = await service.GenerateFixesFromFailureLogsAsync(null!, CancellationToken.None);
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.Empty);
         }
 
         [TestCase("")]
         [TestCase("   ")]
         [TestCase("\n\n\t  \r\n")]
-        public void GenerateFixesFromFailureLogsAsync_WithEmptyOrWhitespaceErrorOutput_ShouldThrowInvalidOperationException(string errorOutput)
+        public async Task GenerateFixesFromFailureLogsAsync_WithEmptyOrWhitespaceErrorOutput_ShouldReturnEmptyList(string errorOutput)
         {
             // Arrange
             var service = CreateErrorAnalysisService();
 
-            // Act & Assert
-            Assert.ThrowsAsync<InvalidOperationException>(() =>
-                service.GenerateFixesFromFailureLogsAsync(errorOutput, CancellationToken.None));
+            // Act
+            var result = await service.GenerateFixesFromFailureLogsAsync(errorOutput, CancellationToken.None);
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.Empty);
         }
 
         [Test]

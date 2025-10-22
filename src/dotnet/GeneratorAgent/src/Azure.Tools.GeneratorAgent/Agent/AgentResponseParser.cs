@@ -22,10 +22,6 @@ namespace Azure.Tools.GeneratorAgent.Agent
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(rawResponse))
-                {
-                    throw new InvalidOperationException("Agent response is Null or empty");
-                }
                 var jsonContent = CleanJsonResponse(rawResponse);
 
                 var response = JsonSerializer.Deserialize<AgentErrorResponse>(jsonContent, JsonOptions);
@@ -45,7 +41,7 @@ namespace Azure.Tools.GeneratorAgent.Agent
                     string.IsNullOrWhiteSpace(e.Type) ? "UnspecifiedError" : e.Type, 
                     string.IsNullOrWhiteSpace(e.Message) ? "No message provided" : e.Message));
             }
-            catch (Exception ex)
+            catch (JsonException ex)
             {
                 throw new InvalidOperationException("Agent response is not in the expected JSON format", ex);
             }
@@ -54,21 +50,8 @@ namespace Azure.Tools.GeneratorAgent.Agent
 
         public static PatchRequest ParsePatchRequest(string response)
         {
-            try
-            {
-                var cleanPatchJson = CleanJsonResponse(response);
-
-                var patchRequest = JsonSerializer.Deserialize<PatchRequest>(cleanPatchJson, JsonOptions);
-                if (patchRequest == null)
-                {
-                    throw new InvalidOperationException("Failed to deserialize patch request - result was null");
-                }
-                return patchRequest;
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException($"Failed to parse patch JSON: {ex.Message}", ex);
-            }
+            var cleanPatchJson = CleanJsonResponse(response);
+            return JsonSerializer.Deserialize<PatchRequest>(cleanPatchJson, JsonOptions)!;
         }
 
         /// <summary>
@@ -127,37 +110,52 @@ namespace Azure.Tools.GeneratorAgent.Agent
                 }
             }
 
-            // Look for JSON object in mixed content (plain text + JSON)
+            // Look for JSON object in mixed content using progressive deserialization
             var openBraceIndex = trimmedResponse.IndexOf('{');
             if (openBraceIndex >= 0)
             {
-                // Find the matching closing brace
-                int braceCount = 0;
-                int closeBraceIndex = -1;
-                
-                for (int i = openBraceIndex; i < trimmedResponse.Length; i++)
-                {
-                    if (trimmedResponse[i] == '{')
-                        braceCount++;
-                    else if (trimmedResponse[i] == '}')
-                    {
-                        braceCount--;
-                        if (braceCount == 0)
-                        {
-                            closeBraceIndex = i;
-                            break;
-                        }
-                    }
-                }
-
-                if (closeBraceIndex > openBraceIndex)
-                {
-                    return trimmedResponse.Substring(openBraceIndex, closeBraceIndex - openBraceIndex + 1);
-                }
+                return ExtractJsonUsingProgressiveDeserialization(trimmedResponse, openBraceIndex);
             }
 
             // No JSON found, return original response
             return trimmedResponse;
+        }
+
+        /// <summary>
+        /// Extracts JSON from mixed content by attempting deserialization on progressively larger substrings
+        /// </summary>
+        private static string ExtractJsonUsingProgressiveDeserialization(string content, int startIndex)
+        {
+            // Try progressively larger substrings starting from the first brace
+            for (int endIndex = startIndex + 1; endIndex <= content.Length; endIndex++)
+            {
+                try
+                {
+                    var candidate = content.Substring(startIndex, endIndex - startIndex);
+                    
+                    // Quick check: must end with closing brace to be complete JSON object
+                    if (!candidate.TrimEnd().EndsWith('}'))
+                        continue;
+
+                    // Attempt to parse as JsonDocument to validate structure
+                    using var document = JsonDocument.Parse(candidate, new JsonDocumentOptions 
+                    { 
+                        AllowTrailingCommas = true,
+                        CommentHandling = JsonCommentHandling.Skip
+                    });
+                    
+                    // If we get here, it's valid JSON - return it
+                    return candidate;
+                }
+                catch (JsonException)
+                {
+                    // Not valid JSON yet, continue trying larger substrings
+                    continue;
+                }
+            }
+
+            // Fallback: if no valid JSON found, return everything from first brace to end
+            return content.Substring(startIndex);
         }
     }
 }

@@ -5,16 +5,21 @@ using Azure.Sdk.Tools.Cli.Helpers;
 
 namespace Azure.Sdk.Tools.Cli.SampleGeneration;
 
-public sealed class TypeScriptSampleLanguageContext : ISampleLanguageContext
+public sealed class TypeScriptSampleLanguageContext : SampleLanguageContext
 {
-    public string Language => "typescript";
-    public string FileExtension => ".ts";
-    public string GetSampleGenerationInstructions() => @"
+    public TypeScriptSampleLanguageContext(IFileHelper fileHelper) : base(fileHelper)
+    {
+    }
+
+    public override string Language => "typescript";
+    public override string FileExtension => ".ts";
+
+    protected override string GetLanguageSpecificInstructions() => @"
 Language-specific instructions for TypeScript:
 - Filenames must be descriptive without file extension (e.g., ""createKey"", ""retrieveKeys"")
 - Follow this template:
-" + GetSampleExample();
-    public string GetSampleExample() => @"// Copyright (c) Microsoft Corporation.
+";
+    public override string GetSampleExample() => @"// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
 /**
@@ -42,15 +47,10 @@ async function main(): Promise<void> {
 main().catch((err) => {
   console.error(""The sample encountered an error:"", err);
 });";
-    public Task<string> GetClientLibrarySourceCodeAsync(string packagePath, int totalBudget, int perFileLimit, ILogger? logger = null, CancellationToken ct = default)
+    public override Task<string> GetClientLibrarySourceCodeAsync(string packagePath, int totalBudget, int perFileLimit, CancellationToken ct = default)
     {
-        static int Priority(FileHelper.FileMetadata f)
-        {
-            var name = Path.GetFileNameWithoutExtension(f.FilePath);
-            return name.Contains("client", StringComparison.OrdinalIgnoreCase) ? 1 : 10;
-        }
         var provider = new TypeScriptSourceInputProvider();
         var inputs = provider.Create(packagePath);
-        return FileHelper.LoadFilesAsync(inputs, packagePath, totalBudget, perFileLimit, Priority, logger, ct);
+        return FileHelper.LoadFilesAsync(inputs, packagePath, totalBudget, perFileLimit, GetSourcePriority, ct);
     }
 }

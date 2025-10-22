@@ -26,7 +26,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         IMicroagentHostService microagentHostService,
         ILogger<SampleGeneratorTool> logger,
         ILanguageSpecificResolver<IPackageInfoHelper> packageInfoResolver,
-        ILanguageSpecificResolver<ISampleLanguageContext> sampleContextResolver
+        ILanguageSpecificResolver<SampleLanguageContext> sampleContextResolver
     ) : MCPTool
     {
         public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.Generators];
@@ -114,30 +114,29 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         {
             IPackageInfoHelper? helper = await packageInfoResolver.Resolve(packagePath, ct) ?? throw new ArgumentException("Unable to determine language for package (resolver returned null). Ensure repository structure and Language-Settings.ps1 are correct.");
             var packageInfo = await helper.ResolvePackageInfo(packagePath, ct);
-            var resolvedLanguage = packageInfo.Language == SdkLanguage.JavaScript ? "TypeScript" : packageInfo.Language.ToString();
             var resolvedOutputDirectory = await packageInfo.GetSamplesDirectoryAsync(ct);
 
+            logger.LogDebug("Loading source code context from {packagePath}", packageInfo.PackagePath);
+            SampleLanguageContext sampleContext = await sampleContextResolver.Resolve(packagePath, ct) ?? throw new ArgumentException("Unable to determine language for package (resolver returned null). Ensure repository structure and Language-Settings.ps1 are correct.");
+            var language = sampleContext.Language;
+
             logger.LogInformation("Starting sample generation with prompt: {prompt}", prompt);
-            logger.LogDebug("Package path: {packagePath}, Language: {language}, Output: {outputDirectory}", packageInfo.PackagePath, resolvedLanguage, resolvedOutputDirectory);
+            logger.LogDebug("Package path: {packagePath}, Language: {language}, Output: {outputDirectory}", packageInfo.PackagePath, language, resolvedOutputDirectory);
             logger.LogDebug("Package info: {packageName} at {repoRoot}", packageInfo.PackageName, packageInfo.RepoRoot);
-            logger.LogDebug("Detected/Resolved language: {language}", resolvedLanguage);
             logger.LogDebug("Samples directory: {outputDirectory}", resolvedOutputDirectory);
 
-            logger.LogDebug("Loading source code context from {packagePath}", packageInfo.PackagePath);
-            ISampleLanguageContext sampleContext = await sampleContextResolver.Resolve(packagePath, ct) ?? throw new ArgumentException("Unable to determine language for package (resolver returned null). Ensure repository structure and Language-Settings.ps1 are correct.");
-            var sourceContext = await sampleContext.GetClientLibrarySourceCodeAsync(packageInfo.PackagePath, totalBudget: 3000000, perFileLimit: 50000, logger: logger, ct);
+            var sourceContext = await sampleContext.GetClientLibrarySourceCodeAsync(packageInfo.PackagePath, totalBudget: 3000000, perFileLimit: 50000, ct);
             logger.LogDebug("Loaded source context: {length} characters", sourceContext.Length);
 
             if (string.IsNullOrWhiteSpace(sourceContext))
             {
-                throw new InvalidOperationException($"No source code content could be loaded from the package path '{packageInfo.PackagePath}'. Please verify the path contains valid source files for language '{resolvedLanguage}'.");
+                throw new InvalidOperationException($"No source code content could be loaded from the package path '{packageInfo.PackagePath}'. Please verify the path contains valid source files for language '{language}'.");
             }
 
             var languageInstructions = sampleContext.GetSampleGenerationInstructions();
-            logger.LogDebug("Using language-specific instructions for: {language}", resolvedLanguage);
 
             var enhancedPrompt = $@"
-Generate samples for the {packageInfo.PackageName} client library in {resolvedLanguage} with the following guidelines:
+Generate samples for the {packageInfo.PackageName} client library in {language} with the following guidelines:
 - IMPORTANT: Create a SEPARATE sample file for each distinct scenario
 {languageInstructions}
 
@@ -197,10 +196,7 @@ Scenarios description:
                             continue;
                         }
 
-                        // Prefer language helper's canonical extension if provided; fall back to sampleContext.
-                        var fileExtension = packageInfo.FileExtension;
-                        if (string.IsNullOrWhiteSpace(fileExtension)) { fileExtension = sampleContext.FileExtension; }
-
+                        var fileExtension = sampleContext.FileExtension;
                         var cleanFileName = Path.GetFileNameWithoutExtension(sample.FileName.Replace('/', '_').Replace('\\', '_'));
                         var sampleFileName = $"{cleanFileName}{fileExtension}";
 
@@ -228,7 +224,5 @@ Scenarios description:
 
             logger.LogInformation("Sample generation completed");
         }
-
-        // Removed old helper (GetSourceContextAsync) in favor of ISampleLanguageContext implementations.
     }
 }

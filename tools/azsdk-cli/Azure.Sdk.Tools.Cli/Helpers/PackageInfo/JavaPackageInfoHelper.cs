@@ -21,7 +21,6 @@ public sealed partial class JavaPackageInfoHelper(IGitHelper gitHelper) : IPacka
             ServiceName = Path.GetFileName(Path.GetDirectoryName(fullPath)) ?? string.Empty,
             Language = SdkLanguage.Java,
             SamplesDirectoryProvider = (pi, _) => Task.FromResult(BuildSamplesDirectory(pi.PackagePath)),
-            FileExtensionProvider = _ => ".java",
             VersionProvider = (pi, token) => TryGetVersionAsync(pi.PackagePath, token)
         };
         return Task.FromResult(model);

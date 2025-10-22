@@ -5,17 +5,21 @@ using Azure.Sdk.Tools.Cli.Helpers;
 
 namespace Azure.Sdk.Tools.Cli.SampleGeneration;
 
-public sealed class PythonSampleLanguageContext : ISampleLanguageContext
+public sealed class PythonSampleLanguageContext : SampleLanguageContext
 {
-    public string Language => "python";
-    public string FileExtension => ".py";
-    public string GetSampleGenerationInstructions() => @"
+    public PythonSampleLanguageContext(IFileHelper fileHelper) : base(fileHelper)
+    {
+    }
+
+    public override string Language => "python";
+    public override string FileExtension => ".py";
+    protected override string GetLanguageSpecificInstructions() => @"
 Language-specific instructions for Python:
 - Filenames must be descriptive without file extension (e.g., ""create_key"", ""retrieve_key"")
 - IMPORTANT: When relevant, generate TWO separate samples for each scenario: one ending with 'sync' (synchronous) and one ending with 'async' (asynchronous) under a nested async_samples folder
 - Follow this template:
-" + GetSampleExample();
-    public string GetSampleExample() => @"# ------------------------------------
+";
+    public override string GetSampleExample() => @"# ------------------------------------
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 # ------------------------------------
@@ -100,15 +104,10 @@ client.begin_delete_key(rsa_key.name)
 print(f""Deleted key '{ec_key.name}'"")
 print(f""Deleted key '{rsa_key.name}'"")
 ";
-    public Task<string> GetClientLibrarySourceCodeAsync(string packagePath, int totalBudget, int perFileLimit, ILogger? logger = null, CancellationToken ct = default)
+    public override Task<string> GetClientLibrarySourceCodeAsync(string packagePath, int totalBudget, int perFileLimit, CancellationToken ct = default)
     {
-        static int Priority(FileHelper.FileMetadata f)
-        {
-            var name = Path.GetFileNameWithoutExtension(f.FilePath);
-            return name.Contains("client", StringComparison.OrdinalIgnoreCase) ? 1 : 10;
-        }
         var provider = new PythonSourceInputProvider();
         var inputs = provider.Create(packagePath);
-        return FileHelper.LoadFilesAsync(inputs, packagePath, totalBudget, perFileLimit, Priority, logger, ct);
+        return FileHelper.LoadFilesAsync(inputs, packagePath, totalBudget, perFileLimit, GetSourcePriority, ct);
     }
 }

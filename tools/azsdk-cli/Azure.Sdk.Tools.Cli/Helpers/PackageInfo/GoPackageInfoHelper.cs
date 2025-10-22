@@ -23,7 +23,6 @@ public sealed class GoPackageInfoHelper(IGitHelper gitHelper) : IPackageInfoHelp
             ServiceName = Path.GetFileName(Path.GetDirectoryName(fullPath)) ?? string.Empty,
             Language = Models.SdkLanguage.Go,
             SamplesDirectoryProvider = (pi, _) => Task.FromResult(pi.PackagePath),
-            FileExtensionProvider = _ => ".go",
             VersionProvider = (pi, token) => TryGetVersionAsync(pi.PackagePath, token)
         };
         return Task.FromResult(model);

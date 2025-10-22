@@ -19,7 +19,6 @@ public sealed partial class PythonPackageInfoHelper(IGitHelper gitHelper) : IPac
             ServiceName = Path.GetFileName(Path.GetDirectoryName(fullPath)) ?? string.Empty,
             Language = Models.SdkLanguage.Python,
             SamplesDirectoryProvider = (pi, _) => Task.FromResult(Path.Combine(pi.PackagePath, "samples")),
-            FileExtensionProvider = _ => ".py",
             VersionProvider = (pi, token) => TryGetVersionAsync(pi.PackagePath, token)
         };
         return Task.FromResult(model);

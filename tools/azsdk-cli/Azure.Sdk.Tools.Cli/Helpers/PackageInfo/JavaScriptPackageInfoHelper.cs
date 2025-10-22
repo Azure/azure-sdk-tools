@@ -4,7 +4,7 @@ using System.Text.Json;
 
 namespace Azure.Sdk.Tools.Cli.Helpers;
 
-public sealed class TypeScriptPackageInfoHelper(IGitHelper gitHelper) : IPackageInfoHelper
+public sealed class JavaScriptPackageInfoHelper(IGitHelper gitHelper) : IPackageInfoHelper
 {
     public Task<PackageInfo> ResolvePackageInfo(string packagePath, CancellationToken ct = default)
     {
@@ -19,7 +19,6 @@ public sealed class TypeScriptPackageInfoHelper(IGitHelper gitHelper) : IPackage
             ServiceName = Path.GetFileName(Path.GetDirectoryName(fullPath)) ?? string.Empty,
             Language = Models.SdkLanguage.JavaScript,
             SamplesDirectoryProvider = (pi, _) => Task.FromResult(Path.Combine(pi.PackagePath, "samples-dev")),
-            FileExtensionProvider = _ => ".ts",
             VersionProvider = (pi, token) => TryGetVersionAsync(pi.PackagePath, token)
         };
         return Task.FromResult(model);

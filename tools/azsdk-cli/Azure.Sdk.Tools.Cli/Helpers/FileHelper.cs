@@ -1,6 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-using System.Collections.Concurrent;
+
 using System.Text;
 using Microsoft.Extensions.FileSystemGlobbing;
 
@@ -9,15 +9,21 @@ namespace Azure.Sdk.Tools.Cli.Helpers
     /// <summary>
     /// Helper class for file and directory operations.
     /// </summary>
-    public static class FileHelper
+    public class FileHelper : IFileHelper
     {
+        private readonly ILogger<FileHelper> _logger;
+
+        public FileHelper(ILogger<FileHelper> logger)
+        {
+            _logger = logger;
+        }
 
         /// <summary>
         /// Validates that the specified directory exists and is empty.
         /// </summary>
         /// <param name="dir">The directory path to validate.</param>
         /// <returns>An error message if validation fails, or null if validation passes.</returns>
-        public static string? ValidateEmptyDirectory(string dir)
+        public string? ValidateEmptyDirectory(string dir)
         {
             if (string.IsNullOrWhiteSpace(dir))
             {
@@ -152,17 +158,16 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         /// </list>
         /// Recommended usage: supply a lightweight <paramref name="priorityFunc"/> (e.g. categorize by path prefixes) to avoid perf costs during large repository scans.
         /// </remarks>
-        public static async Task<string> LoadFilesAsync(
+        public async Task<string> LoadFilesAsync(
             IEnumerable<SourceInput> inputs,
             string relativeTo,
             int totalBudget,
             int perFileLimit,
             Func<FileMetadata, int> priorityFunc,
-            ILogger? logger = null,
             CancellationToken ct = default)
         {
-            var plan = CreateFileLoadingPlan(inputs, relativeTo, totalBudget, perFileLimit, priorityFunc, logger);
-            return await ExecuteFileLoadingPlanAsync(plan, logger, ct);
+            var plan = CreateFileLoadingPlan(inputs, relativeTo, totalBudget, perFileLimit, priorityFunc);
+            return await ExecuteFileLoadingPlanAsync(plan, ct);
         }
 
         /// <summary>
@@ -181,7 +186,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         /// <remarks>
         /// Behaves identically to the <see cref="LoadFilesAsync(IEnumerable{SourceInput}, string, int, int, Func{FileMetadata, int}, ILogger?, CancellationToken)"/> overload except that filtering rules are shared across all <paramref name="filePaths"/>.
         /// </remarks>
-        public static async Task<string> LoadFilesAsync(
+        public async Task<string> LoadFilesAsync(
             IEnumerable<string> filePaths,
             string[] includeExtensions,
             string[] excludeGlobPatterns,
@@ -189,11 +194,10 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             int totalBudget,
             int perFileLimit,
             Func<FileMetadata, int> priorityFunc,
-            ILogger? logger = null,
             CancellationToken ct = default)
         {
-            var plan = CreateFileLoadingPlan(filePaths, includeExtensions, excludeGlobPatterns, relativeTo, totalBudget, perFileLimit, priorityFunc, logger);
-            return await ExecuteFileLoadingPlanAsync(plan, logger, ct);
+            var plan = CreateFileLoadingPlan(filePaths, includeExtensions, excludeGlobPatterns, relativeTo, totalBudget, perFileLimit, priorityFunc);
+            return await ExecuteFileLoadingPlanAsync(plan, ct);
         }
 
         /// <summary>
@@ -209,7 +213,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         /// <param name="logger">Optional logger.</param>
         /// <param name="ct">Cancellation token applied during file reads only.</param>
         /// <returns>Concatenated structured content string for included files.</returns>
-        public static async Task<string> LoadFilesAsync(
+        public async Task<string> LoadFilesAsync(
             string dir,
             string[] includeExtensions,
             string[] excludeGlobPatterns,
@@ -217,18 +221,16 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             int totalBudget,
             int perFileLimit,
             Func<FileMetadata, int> priorityFunc,
-            ILogger? logger = null,
             CancellationToken ct = default)
         {
             return await LoadFilesAsync(
-                [dir],
+                new[] { dir },
                 includeExtensions,
                 excludeGlobPatterns,
                 relativeTo,
                 totalBudget,
                 perFileLimit,
                 priorityFunc,
-                logger,
                 ct);
         }
 
@@ -244,11 +246,10 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         /// <remarks>
         /// Duplicates (same full path) are removed across inputs. Sorting occurs by ascending priority then ascending file size.
         /// </remarks>
-        public static List<FileMetadata> DiscoverFiles(
+        public List<FileMetadata> DiscoverFiles(
             IEnumerable<SourceInput> inputs,
             string relativeTo,
-            Func<FileMetadata, int> priorityFunc,
-            ILogger? logger = null)
+            Func<FileMetadata, int> priorityFunc)
         {
             var allFiles = new List<FileMetadata>();
             var processedFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -256,12 +257,11 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             foreach (var input in inputs)
             {
                 var files = DiscoverFiles(
-                    [input.Path],
+                    new[] { input.Path },
                     input.IncludeExtensions ?? [],
                     input.ExcludeGlobPatterns ?? [],
                     relativeTo,
-                    priorityFunc,
-                    logger);
+                    priorityFunc);
 
                 foreach (var file in files)
                 {
@@ -279,18 +279,18 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 return priorityComparison != 0 ? priorityComparison : a.FileSize.CompareTo(b.FileSize);
             });
 
-            logger?.LogDebug("File discovery from inputs completed. Found {fileCount} files total", allFiles.Count);
-            if (logger != null && allFiles.Count > 0 && logger.IsEnabled(LogLevel.Debug))
+            _logger.LogDebug("File discovery from inputs completed. Found {fileCount} files total", allFiles.Count);
+            if (allFiles.Count > 0 && _logger.IsEnabled(LogLevel.Debug))
             {
                 var previewCount = Math.Min(10, allFiles.Count);
                 var preview = string.Join(", ", allFiles.Take(previewCount).Select(f => f.RelativePath));
                 if (allFiles.Count > previewCount)
                 {
-                    logger.LogDebug("First {previewCount} files: {preview} ... (+{remaining} more)", previewCount, preview, allFiles.Count - previewCount);
+                    _logger.LogDebug("First {previewCount} files: {preview} ... (+{remaining} more)", previewCount, preview, allFiles.Count - previewCount);
                 }
                 else
                 {
-                    logger.LogDebug("Discovered files: {preview}", preview);
+                    _logger.LogDebug("Discovered files: {preview}", preview);
                 }
             }
             return allFiles;
@@ -310,13 +310,12 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         /// Directory enumeration uses <see cref="EnumerationOptions"/> with recursion enabled and skips hidden/system entries.
         /// Individual file access failures during size retrieval will throw; there is no suppression at discovery time.
         /// </remarks>
-        public static List<FileMetadata> DiscoverFiles(
+        public List<FileMetadata> DiscoverFiles(
             IEnumerable<string> filePaths,
             string[] includeExtensions,
             string[] excludeGlobPatterns,
             string relativeTo,
-            Func<FileMetadata, int> priorityFunc,
-            ILogger? logger = null)
+            Func<FileMetadata, int> priorityFunc)
         {
             var extensionSet = includeExtensions.Length > 0
                 ? new HashSet<string>(includeExtensions, StringComparer.OrdinalIgnoreCase)
@@ -337,11 +336,11 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
                 if (File.Exists(fullPath))
                 {
-                    TryProcessFile(fullPath, extensionSet, excludeMatcher, relativeTo, priorityFunc, fileInfos, processedFiles, logger);
+                    TryProcessFile(fullPath, extensionSet, excludeMatcher, relativeTo, priorityFunc, fileInfos, processedFiles);
                 }
                 else if (Directory.Exists(fullPath))
                 {
-                    logger?.LogDebug("Scanning directory {fullPath}", fullPath);
+                    _logger.LogDebug("Scanning directory {fullPath}", fullPath);
 
                     var enumerationOptions = new EnumerationOptions
                     {
@@ -352,12 +351,12 @@ namespace Azure.Sdk.Tools.Cli.Helpers
 
                     foreach (var filePath in Directory.EnumerateFiles(fullPath, "*.*", enumerationOptions))
                     {
-                        TryProcessFile(filePath, extensionSet, excludeMatcher, relativeTo, priorityFunc, fileInfos, processedFiles, logger);
+                        TryProcessFile(filePath, extensionSet, excludeMatcher, relativeTo, priorityFunc, fileInfos, processedFiles);
                     }
                 }
                 else
                 {
-                    logger?.LogWarning("Path does not exist: {fullPath}", fullPath);
+                    _logger.LogWarning("Path does not exist: {fullPath}", fullPath);
                 }
             }
 
@@ -367,21 +366,21 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 return priorityComparison != 0 ? priorityComparison : a.FileSize.CompareTo(b.FileSize);
             });
 
-            logger?.LogDebug("File discovery completed. Found {fileCount} files, total size: {totalSize:N0} bytes",
+            _logger.LogDebug("File discovery completed. Found {fileCount} files, total size: {totalSize:N0} bytes",
                 fileInfos.Count,
                 fileInfos.Count > 0 ? fileInfos.Sum(f => f.FileSize) : 0);
 
-            if (logger != null && fileInfos.Count > 0 && logger.IsEnabled(LogLevel.Debug))
+            if (fileInfos.Count > 0 && _logger.IsEnabled(LogLevel.Debug))
             {
                 var previewCount = Math.Min(10, fileInfos.Count);
                 var preview = string.Join(", ", fileInfos.Take(previewCount).Select(f => f.RelativePath));
                 if (fileInfos.Count > previewCount)
                 {
-                    logger.LogDebug("First {previewCount} files: {preview} ... (+{remaining} more)", previewCount, preview, fileInfos.Count - previewCount);
+                    _logger.LogDebug("First {previewCount} files: {preview} ... (+{remaining} more)", previewCount, preview, fileInfos.Count - previewCount);
                 }
                 else
                 {
-                    logger.LogDebug("Discovered files: {preview}", preview);
+                    _logger.LogDebug("Discovered files: {preview}", preview);
                 }
             }
 
@@ -398,21 +397,19 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         /// <param name="priorityFunc">Priority function.</param>
         /// <param name="logger">Optional logger.</param>
         /// <returns>Sorted list of discovered file metadata.</returns>
-        public static List<FileMetadata> DiscoverFiles(
+        public List<FileMetadata> DiscoverFiles(
             string dir,
             string[] includeExtensions,
             string[] excludeGlobPatterns,
             string relativeTo,
-            Func<FileMetadata, int> priorityFunc,
-            ILogger? logger = null)
+            Func<FileMetadata, int> priorityFunc)
         {
             return DiscoverFiles(
                 new[] { dir },
                 includeExtensions,
                 excludeGlobPatterns,
                 relativeTo,
-                priorityFunc,
-                logger);
+                priorityFunc);
         }
 
         /// <summary>
@@ -431,11 +428,10 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         /// <item><description>Token estimation uses a simple 4 characters ≈ 1 token heuristic suitable for coarse budgeting.</description></item>
         /// </list>
         /// </remarks>
-        public static FileLoadingPlan CreateLoadingPlanFromMetadata(
+        public FileLoadingPlan CreateLoadingPlanFromMetadata(
             List<FileMetadata> files,
             int totalBudget,
-            int perFileLimit,
-            ILogger? logger = null)
+            int perFileLimit)
         {
             var planItems = new List<FileLoadingItem>();
             int remainingBudget = totalBudget;
@@ -471,7 +467,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 remainingBudget -= contentToLoad + headerOverhead;
             }
 
-            logger?.LogDebug("Loading plan created: {includedFiles}/{totalFiles} files, {usedBudget}/{totalBudget} budget used", 
+            _logger.LogDebug("Loading plan created: {includedFiles}/{totalFiles} files, {usedBudget}/{totalBudget} budget used", 
                 planItems.Count, files.Count, totalBudget - remainingBudget, totalBudget);
 
             return new FileLoadingPlan(
@@ -494,17 +490,16 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         /// <param name="priorityFunc">Priority selector (lower first).</param>
         /// <param name="logger">Optional logger.</param>
         /// <returns>Loading plan ready for execution.</returns>
-        public static FileLoadingPlan CreateFileLoadingPlan(
+        public FileLoadingPlan CreateFileLoadingPlan(
             IEnumerable<SourceInput> inputs,
             string relativeTo,
             int totalBudget,
             int perFileLimit,
-            Func<FileMetadata, int> priorityFunc,
-            ILogger? logger = null)
+            Func<FileMetadata, int> priorityFunc)
         {
-            var files = DiscoverFiles(inputs, relativeTo, priorityFunc, logger);
-            var plan = CreateLoadingPlanFromMetadata(files, totalBudget, perFileLimit, logger);
-            logger?.LogDebug("Created loading plan from inputs: {totalFiles} files found, {includedFiles} files included, {budgetUsed}/{totalBudget} budget used", 
+            var files = DiscoverFiles(inputs, relativeTo, priorityFunc);
+            var plan = CreateLoadingPlanFromMetadata(files, totalBudget, perFileLimit);
+            _logger.LogDebug("Created loading plan from inputs: {totalFiles} files found, {includedFiles} files included, {budgetUsed}/{totalBudget} budget used", 
                 plan.TotalFilesFound, plan.TotalFilesIncluded, plan.BudgetUsed, plan.TotalBudget);
             return plan;
         }
@@ -521,19 +516,18 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         /// <param name="priorityFunc">Priority selector (lower first).</param>
         /// <param name="logger">Optional logger.</param>
         /// <returns>Loading plan ready for execution.</returns>
-        public static FileLoadingPlan CreateFileLoadingPlan(
+        public FileLoadingPlan CreateFileLoadingPlan(
             IEnumerable<string> filePaths,
             string[] includeExtensions,
             string[] excludeGlobPatterns,
             string relativeTo,
             int totalBudget,
             int perFileLimit,
-            Func<FileMetadata, int> priorityFunc,
-            ILogger? logger = null)
+            Func<FileMetadata, int> priorityFunc)
         {
-            var files = DiscoverFiles(filePaths, includeExtensions, excludeGlobPatterns, relativeTo, priorityFunc, logger);
-            var plan = CreateLoadingPlanFromMetadata(files, totalBudget, perFileLimit, logger);
-            logger?.LogDebug("Created loading plan: {totalFiles} files found, {includedFiles} files included, {budgetUsed}/{totalBudget} budget used", 
+            var files = DiscoverFiles(filePaths, includeExtensions, excludeGlobPatterns, relativeTo, priorityFunc);
+            var plan = CreateLoadingPlanFromMetadata(files, totalBudget, perFileLimit);
+            _logger.LogDebug("Created loading plan: {totalFiles} files found, {includedFiles} files included, {budgetUsed}/{totalBudget} budget used", 
                 plan.TotalFilesFound, plan.TotalFilesIncluded, plan.BudgetUsed, plan.TotalBudget);
             return plan;
         }
@@ -550,25 +544,23 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         /// <param name="priorityFunc">Priority selector (lower first).</param>
         /// <param name="logger">Optional logger.</param>
         /// <returns>Loading plan ready for execution.</returns>
-        public static FileLoadingPlan CreateFileLoadingPlan(
+        public FileLoadingPlan CreateFileLoadingPlan(
             string dir,
             string[] includeExtensions,
             string[] excludeGlobPatterns,
             string relativeTo,
             int totalBudget,
             int perFileLimit,
-            Func<FileMetadata, int> priorityFunc,
-            ILogger? logger = null)
+            Func<FileMetadata, int> priorityFunc)
         {
             return CreateFileLoadingPlan(
-                [dir],
+                new[] { dir },
                 includeExtensions,
                 excludeGlobPatterns,
                 relativeTo,
                 totalBudget,
                 perFileLimit,
-                priorityFunc,
-                logger);
+                priorityFunc);
         }
 
     /// <summary>
@@ -583,7 +575,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
     /// Individual file read failures do not throw; instead an error element is written. This design favors resilience
     /// for large scans where sporadic IO issues may occur. Partial reads (truncation) append a human-readable marker.
     /// </remarks>
-        public static async Task<string> ExecuteFileLoadingPlanAsync(FileLoadingPlan plan, ILogger? logger = null, CancellationToken ct = default)
+        public async Task<string> ExecuteFileLoadingPlanAsync(FileLoadingPlan plan, CancellationToken ct = default)
         {
             if (plan.Items.Count == 0)
             {
@@ -629,14 +621,14 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 }
                 catch (Exception ex)
                 {
-                    logger?.LogWarning("Failed to load file {relativePath}: {error}", item.RelativePath, ex.Message);
+                    _logger.LogWarning("Failed to load file {relativePath}: {error}", item.RelativePath, ex.Message);
                     sb.AppendLine($"<file path=\"{item.RelativePath}\" error=\"{ex.Message}\" />");
                     sb.AppendLine();
                     failedFiles++;
                 }
             }
 
-            logger?.LogDebug("File loading completed: {processedFiles} processed, {failedFiles} failed", processedFiles, failedFiles);
+            _logger.LogDebug("File loading completed: {processedFiles} processed, {failedFiles} failed", processedFiles, failedFiles);
 
             if (plan.TotalFilesFound > plan.TotalFilesIncluded)
             {
@@ -657,15 +649,14 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         /// <param name="priorityFunc">Function to calculate file priority</param>
         /// <param name="fileInfos">List to add the file metadata to</param>
         /// <param name="processedFiles">Set to track processed files and avoid duplicates</param>
-        private static void TryProcessFile(
+        private void TryProcessFile(
             string filePath,
             ISet<string>? extensionSet,
             Matcher? excludeMatcher,
             string relativeTo,
             Func<FileMetadata, int> priorityFunc,
             List<FileMetadata> fileInfos,
-            HashSet<string> processedFiles,
-            ILogger? logger = null)
+            HashSet<string> processedFiles)
         {
             if (processedFiles.Contains(filePath))
             {
@@ -702,7 +693,7 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             processedFiles.Add(filePath);
 
             // Use very fine-grained level so normal info/debug users don't see per-file chatter.
-            logger?.LogTrace("Discovered file {relativePath} (size {size} bytes, priority {priority})", 
+            _logger.LogTrace("Discovered file {relativePath} (size {size} bytes, priority {priority})", 
                 metadata.RelativePath, metadata.FileSize, metadata.Priority);
         }
 

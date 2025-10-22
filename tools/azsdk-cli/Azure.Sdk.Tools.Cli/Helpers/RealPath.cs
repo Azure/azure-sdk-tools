@@ -192,16 +192,13 @@ public static class RealPath
 
         yield return root;
 
-        // NOTE: Avoid ReadOnlySpan<char> across yield boundaries (CS4007). Using string instead.
-        var remainder = full.Substring(root.Length);
-        var ds = Path.DirectorySeparatorChar;
-        var ads = Path.AltDirectorySeparatorChar;
+        var remainder = full[root.Length..];
 
         int start = 0;
         for (int idx = 0; idx <= remainder.Length; idx++)
         {
             bool atEnd = idx == remainder.Length;
-            bool isSep = !atEnd && (remainder[idx] == ds || remainder[idx] == ads);
+            bool isSep = !atEnd && (remainder[idx] == Path.DirectorySeparatorChar || remainder[idx] == Path.AltDirectorySeparatorChar);
 
             if (atEnd || isSep)
             {

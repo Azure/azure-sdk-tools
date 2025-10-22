@@ -56,11 +56,11 @@ namespace Azure.Sdk.Tools.Cli.Services
                 DotNet = typeof(DotNetPackageInfoHelper),
                 Java = typeof(JavaPackageInfoHelper),
                 Python = typeof(PythonPackageInfoHelper),
-                JavaScript = typeof(TypeScriptPackageInfoHelper),
+                JavaScript = typeof(JavaScriptPackageInfoHelper),
                 Go = typeof(GoPackageInfoHelper),
             });
 
-            services.AddLanguageSpecific<ISampleLanguageContext>(new LanguageSpecificImplementations
+            services.AddLanguageSpecific<SampleLanguageContext>(new LanguageSpecificImplementations
             {
                 DotNet = typeof(DotNetSampleLanguageContext),
                 Java = typeof(JavaSampleLanguageContext),
@@ -78,6 +78,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             });
 
             // Helper classes
+            services.AddSingleton<IFileHelper, FileHelper>();
             services.AddSingleton<ILogAnalysisHelper, LogAnalysisHelper>();
             services.AddSingleton<IGitHelper, GitHelper>();
             services.AddSingleton<ITestHelper, TestHelper>();

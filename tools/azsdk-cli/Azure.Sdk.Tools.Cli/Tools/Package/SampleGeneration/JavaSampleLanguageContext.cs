@@ -5,17 +5,21 @@ using Azure.Sdk.Tools.Cli.Helpers;
 
 namespace Azure.Sdk.Tools.Cli.SampleGeneration;
 
-public sealed class JavaSampleLanguageContext : ISampleLanguageContext
+public sealed class JavaSampleLanguageContext : SampleLanguageContext
 {
-    public string Language => "java";
-    public string FileExtension => ".java";
-    public string GetSampleGenerationInstructions() => @"
+    public JavaSampleLanguageContext(IFileHelper fileHelper) : base(fileHelper)
+    {
+    }
+
+    public override string Language => "java";
+    public override string FileExtension => ".java";
+    protected override string GetLanguageSpecificInstructions() => @"
 Language-specific instructions for Java:
 - Filenames must be descriptive without file extension (e.g., ""CreateKey"", ""RetrieveKey"")
 - IMPORTANT: When relevant, generate TWO separate samples for each scenario: one ending with 'Sync' (synchronous) and one ending with 'Async' (asynchronous)
 - Follow this template:
-" + GetSampleExample();
-    public string GetSampleExample() => @"// Copyright (c) Microsoft Corporation. All rights reserved.
+";
+    public override string GetSampleExample() => @"// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
 package com.azure.security.keyvault.keys;
@@ -106,15 +110,10 @@ public class HelloWorld {
     }
 }
 ";
-    public Task<string> GetClientLibrarySourceCodeAsync(string packagePath, int totalBudget, int perFileLimit, ILogger? logger = null, CancellationToken ct = default)
+    public override Task<string> GetClientLibrarySourceCodeAsync(string packagePath, int totalBudget, int perFileLimit, CancellationToken ct = default)
     {
-        static int Priority(FileHelper.FileMetadata f)
-        {
-            var name = Path.GetFileNameWithoutExtension(f.FilePath);
-            return name.Contains("client", StringComparison.OrdinalIgnoreCase) ? 1 : 10;
-        }
         var provider = new JavaSourceInputProvider();
         var inputs = provider.Create(packagePath);
-        return FileHelper.LoadFilesAsync(inputs, packagePath, totalBudget, perFileLimit, Priority, logger, ct);
+        return FileHelper.LoadFilesAsync(inputs, packagePath, totalBudget, perFileLimit, GetSourcePriority, ct);
     }
 }

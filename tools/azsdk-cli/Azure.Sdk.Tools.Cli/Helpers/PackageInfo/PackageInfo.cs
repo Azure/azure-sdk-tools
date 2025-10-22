@@ -33,11 +33,8 @@ public class PackageInfo
     public required string RelativePath { get; init; }
 
     /// <summary>
-    /// Canonical package identifier (language specific). For example: <c>@azure/storage-blob</c>, <c>Azure.Storage.Blobs</c>, <c>azure-storage-blob</c>.
+    /// The name of the package folder.
     /// </summary>
-    /// <remarks>
-    /// Resolved by language specific helpers when constructing the instance.
-    /// </remarks>
     public required string PackageName { get; init; }
 
     /// <summary>
@@ -64,14 +61,6 @@ public class PackageInfo
     internal Func<PackageInfo, CancellationToken, Task<string>> SamplesDirectoryProvider { get; init; } = (pi, ct) => Task.FromResult(Path.Combine(pi.PackagePath, "samples"));
 
     /// <summary>
-    /// Delegate that resolves the primary source file extension used by generated samples for this package / language.
-    /// </summary>
-    /// <remarks>
-    /// The default value is <c>.txt</c> as a placeholder; language helpers must override to provide a meaningful extension (e.g. <c>.ts</c>, <c>.py</c>, <c>.cs</c>).
-    /// </remarks>
-    internal Func<PackageInfo, string> FileExtensionProvider { get; init; } = pi => ".txt"; // default placeholder
-
-    /// <summary>
     /// Delegate that returns the current package version string, or <c>null</c> if it cannot be determined cheaply.
     /// </summary>
     /// <remarks>
@@ -87,11 +76,6 @@ public class PackageInfo
     /// <returns>Absolute directory path as a string.</returns>
     /// <exception cref="OperationCanceledException">If the provided <paramref name="ct"/> is canceled.</exception>
     public Task<string> GetSamplesDirectoryAsync(CancellationToken ct = default) => SamplesDirectoryProvider(this, ct);
-
-    /// <summary>
-    /// Gets the canonical file extension (including leading <c>.</c>) to be used when creating sample files.
-    /// </summary>
-    public string FileExtension => FileExtensionProvider(this);
 
     /// <summary>
     /// Attempts to resolve the package's current version.

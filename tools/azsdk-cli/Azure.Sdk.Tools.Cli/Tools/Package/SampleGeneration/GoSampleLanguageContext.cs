@@ -5,16 +5,20 @@ using Azure.Sdk.Tools.Cli.Helpers;
 
 namespace Azure.Sdk.Tools.Cli.SampleGeneration;
 
-public sealed class GoSampleLanguageContext : ISampleLanguageContext
+public sealed class GoSampleLanguageContext : SampleLanguageContext
 {
-    public string Language => "go";
-    public string FileExtension => ".go";
-    public string GetSampleGenerationInstructions() => @"
+	public GoSampleLanguageContext(IFileHelper fileHelper) : base(fileHelper)
+	{
+	}
+
+	public override string Language => "go";
+	public override string FileExtension => ".go";
+	protected override string GetLanguageSpecificInstructions() => @"
 Language-specific instructions for Go:
 - Filenames must be example_<sample name>_test.go, e.g., example_create_key_test.go, example_retrieve_keys_test.go
 - Follow this template:
-" + GetSampleExample();
-    public string GetSampleExample() => @"// Copyright (c) Microsoft Corporation. All rights reserved.
+";
+	public override string GetSampleExample() => @"// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 package azopenai_test
@@ -179,15 +183,10 @@ func Example_audioTranslation() {
 	fmt.Fprintf(os.Stderr, ""Translated text: %s\n"", resp.Text)
 }
 ";
-    public Task<string> GetClientLibrarySourceCodeAsync(string packagePath, int totalBudget, int perFileLimit, ILogger? logger = null, CancellationToken ct = default)
+	public override Task<string> GetClientLibrarySourceCodeAsync(string packagePath, int totalBudget, int perFileLimit, CancellationToken ct = default)
 	{
-		static int Priority(FileHelper.FileMetadata f)
-		{
-			var name = Path.GetFileNameWithoutExtension(f.FilePath);
-			return name.Contains("client", StringComparison.OrdinalIgnoreCase) ? 1 : 10;
-		}
 		var provider = new GoSourceInputProvider();
 		var inputs = provider.Create(packagePath);
-		return FileHelper.LoadFilesAsync(inputs, packagePath, totalBudget, perFileLimit, Priority, logger, ct);
+		return FileHelper.LoadFilesAsync(inputs, packagePath, totalBudget, perFileLimit, GetSourcePriority, ct);
 	}
 }

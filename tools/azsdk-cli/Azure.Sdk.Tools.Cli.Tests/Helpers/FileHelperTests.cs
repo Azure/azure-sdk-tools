@@ -12,7 +12,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
     public class FileHelperTests
     {
     private TempDirectory _tempDir;
-        private ILogger _logger;
+        private ILogger<FileHelper> _logger;
+        private FileHelper _fileHelper;
 
         [SetUp]
         public void SetUp()
@@ -20,7 +21,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             _tempDir = TempDirectory.Create("FileHelperTests");
             
             var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
-            _logger = loggerFactory.CreateLogger<FileHelperTests>();
+            _logger = loggerFactory.CreateLogger<FileHelper>();
+            _fileHelper = new FileHelper(_logger);
         }
 
         [TearDown]
@@ -40,7 +42,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             await File.WriteAllTextAsync(testFile, content);
 
             // Act
-            var result = await FileHelper.LoadFilesAsync(
+            var result = await _fileHelper.LoadFilesAsync(
                 filePaths: new[] { testFile },
                 includeExtensions: new[] { ".cs" },
                 excludeGlobPatterns: Array.Empty<string>(),
@@ -71,7 +73,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             await File.WriteAllTextAsync(txtFile, "Documentation");
 
             // Act
-            var result = await FileHelper.LoadFilesAsync(
+            var result = await _fileHelper.LoadFilesAsync(
                 filePaths: new[] { _tempDir.DirectoryPath },
                 includeExtensions: new[] { ".cs", ".js" },
                 excludeGlobPatterns: Array.Empty<string>(),
@@ -104,7 +106,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             await File.WriteAllTextAsync(srcFile, "// Main code");
 
             // Act
-            var result = await FileHelper.LoadFilesAsync(
+            var result = await _fileHelper.LoadFilesAsync(
                 filePaths: new[] { _tempDir.DirectoryPath },
                 includeExtensions: new[] { ".cs" },
                 excludeGlobPatterns: new[] { "**/test/**" },
@@ -131,7 +133,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             await File.WriteAllTextAsync(file2, longContent);
 
             // Act - Set budget that can only fit one file + overhead
-            var result = await FileHelper.LoadFilesAsync(
+            var result = await _fileHelper.LoadFilesAsync(
                 filePaths: new[] { _tempDir.DirectoryPath },
                 includeExtensions: new[] { ".cs" },
                 excludeGlobPatterns: Array.Empty<string>(),
@@ -155,7 +157,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             await File.WriteAllTextAsync(testFile, longContent);
 
             // Act
-            var result = await FileHelper.LoadFilesAsync(
+            var result = await _fileHelper.LoadFilesAsync(
                 filePaths: new[] { testFile },
                 includeExtensions: new[] { ".cs" },
                 excludeGlobPatterns: Array.Empty<string>(),
@@ -196,7 +198,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             };
 
             // Act
-            var result = await FileHelper.LoadFilesAsync(
+            var result = await _fileHelper.LoadFilesAsync(
                 inputs: inputs,
                 relativeTo: _tempDir.DirectoryPath,
                 totalBudget: 2000,
@@ -217,7 +219,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             Directory.CreateDirectory(emptyDir);
 
             // Act
-            var result = await FileHelper.LoadFilesAsync(
+            var result = await _fileHelper.LoadFilesAsync(
                 filePaths: new[] { emptyDir },
                 includeExtensions: new[] { ".cs" },
                 excludeGlobPatterns: Array.Empty<string>(),
@@ -250,7 +252,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             File.WriteAllText(file3, "// Script");
 
             // Act
-            var files = FileHelper.DiscoverFiles(
+            var files = _fileHelper.DiscoverFiles(
                 filePaths: new[] { _tempDir.DirectoryPath },
                 includeExtensions: new[] { ".cs" },
                 excludeGlobPatterns: Array.Empty<string>(),
@@ -281,7 +283,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             File.WriteAllText(largeFile, new string('x', 100));
 
             // Act - Priority by size (ascending)
-            var files = FileHelper.DiscoverFiles(
+            var files = _fileHelper.DiscoverFiles(
                 filePaths: new[] { _tempDir.DirectoryPath },
                 includeExtensions: new[] { ".cs" },
                 excludeGlobPatterns: Array.Empty<string>(),
@@ -311,7 +313,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             };
 
             // Act
-            var plan = FileHelper.CreateLoadingPlanFromMetadata(files, totalBudget: 800, perFileLimit: 400);
+            var plan = _fileHelper.CreateLoadingPlanFromMetadata(files, totalBudget: 800, perFileLimit: 400);
 
             // Assert
             Assert.That(plan.TotalFilesFound, Is.EqualTo(3));
@@ -336,7 +338,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
             };
 
             // Act
-            var plan = FileHelper.CreateLoadingPlanFromMetadata(files, totalBudget: 0, perFileLimit: 100);
+            var plan = _fileHelper.CreateLoadingPlanFromMetadata(files, totalBudget: 0, perFileLimit: 100);
 
             // Assert
             Assert.That(plan.Items.Count, Is.EqualTo(0));
@@ -368,7 +370,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
                 TotalBudget: 1000);
 
             // Act
-            var result = await FileHelper.ExecuteFileLoadingPlanAsync(plan, _logger);
+            var result = await _fileHelper.ExecuteFileLoadingPlanAsync(plan);
 
             // Assert
             Assert.That(result, Does.Contain("<file path=\"test.cs\""));
@@ -397,7 +399,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
                 TotalBudget: 1000);
 
             // Act
-            var result = await FileHelper.ExecuteFileLoadingPlanAsync(plan, _logger);
+            var result = await _fileHelper.ExecuteFileLoadingPlanAsync(plan);
 
             // Assert
             Assert.That(result, Does.Contain("large.cs"));
@@ -426,7 +428,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Helpers
                 TotalBudget: 1000);
 
             // Act
-            var result = await FileHelper.ExecuteFileLoadingPlanAsync(plan, _logger);
+            var result = await _fileHelper.ExecuteFileLoadingPlanAsync(plan);
 
             // Assert
             Assert.That(result, Does.Contain("missing.cs"));

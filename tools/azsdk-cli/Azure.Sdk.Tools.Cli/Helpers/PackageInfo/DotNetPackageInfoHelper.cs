@@ -22,7 +22,6 @@ public sealed partial class DotNetPackageInfoHelper(IGitHelper gitHelper) : IPac
             ServiceName = Path.GetFileName(Path.GetDirectoryName(fullPath)) ?? string.Empty,
             Language = Models.SdkLanguage.DotNet,
             SamplesDirectoryProvider = (pi, _) => Task.FromResult(Path.Combine(pi.PackagePath, "tests", "samples")),
-            FileExtensionProvider = _ => ".cs",
             VersionProvider = (pi, token) => TryGetVersionAsync(pi.PackagePath, token)
         };
         return Task.FromResult(model);

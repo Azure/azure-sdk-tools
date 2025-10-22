@@ -410,9 +410,11 @@ azsdk package run-checks <check-type> --package-path <path_to_sdk_package>/
 ```
 [ERROR] Some checks failed
 [NEXT STEPS]
-The following checks failed: Dependency, Changelog, README, Linting, AOT Compatibility, Generated Code, Samples
+Successful checks: Spelling, Snippets, Format
+Failed checks: Changelog, README, Linting
 Address the issues identified above before proceeding with package release.
 Re-run the package checks after making corrections to verify all issues are resolved.
+Note: The following checks are not implemented for this language: Dependency, AOT Compatibility, Generated Code, Sample Validation
 ```
 
 ---

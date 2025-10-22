@@ -1,0 +1,21 @@
+testcase: keep_constructive_comment
+language: Python
+existing: |
+  [
+    {
+      "line_no": 4,
+      "commentText": "Where's your async client?",
+      "createdBy": "tjprescott"
+    }
+  ]
+comment: |
+  {
+    "line_no": 4,
+    "bad_code": "class azure.widget.WidgetClient():",
+    "suggestion": "",
+    "comment": "You must have an async client named `WidgetClient` in the azure.widget.aio namespace.",
+    "source": "guideline"
+  }
+response:
+  action: KEEP
+  rationale: The proposed comment provides specific guidance about the async client naming and namespace, which is not present in the existing comment. 

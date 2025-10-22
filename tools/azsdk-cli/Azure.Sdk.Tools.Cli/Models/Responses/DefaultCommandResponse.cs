@@ -25,7 +25,7 @@ public class DefaultCommandResponse : CommandResponse
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public long Duration { get; set; }
 
-    public override string ToString()
+    protected override string Format()
     {
         var output = new StringBuilder();
         if (!string.IsNullOrEmpty(Message))
@@ -52,7 +52,7 @@ public class DefaultCommandResponse : CommandResponse
             output.AppendLine($"Duration: {Duration}ms");
         }
 
-        return ToString(output);
+        return output.ToString();
     }
 
     public static implicit operator DefaultCommandResponse(string s) => new() { Message = s };

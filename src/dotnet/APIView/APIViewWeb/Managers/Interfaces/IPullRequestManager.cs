@@ -15,6 +15,6 @@ namespace APIViewWeb.Managers
         public Task<string> CreateAPIRevisionIfAPIHasChanges(
             string buildId, string artifactName, string originalFileName, string commitSha, string repoName,
             string packageName, int prNumber, string hostName, CreateAPIRevisionAPIResponse responseContent,
-            string codeFileName = null, string baselineCodeFileName = null, string language = null, string project = "internal");
+            string codeFileName = null, string baselineCodeFileName = null, string language = null, string project = "internal", string packageType = null);
     }
 }

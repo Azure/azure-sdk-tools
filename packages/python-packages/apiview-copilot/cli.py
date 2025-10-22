@@ -172,11 +172,17 @@ def run_test_case(test_paths: list[str], num_runs: int = 1):
     """
     Runs the specified test case(s).
     """
-    from evals._runner import EvalRunner
+    from evals._discovery import discover_targets
+    from evals._runner import EvaluationRunner
 
-    runners = [EvalRunner(test_path=x, num_runs=num_runs) for x in test_paths]
-    for runner in runners:
-        runner.run()
+    targets = discover_targets(test_paths)
+    runner = EvaluationRunner(num_runs=num_runs)
+    try:
+        results = runner.run(targets)
+        runner.show_results(results)
+        runner.show_summary(results)
+    finally:
+        runner.cleanup()
 
 
 def deploy_flask_app():
@@ -1019,9 +1025,10 @@ class CliCommandsLoader(CLICommandsLoader):
             ac.argument(
                 "test_paths",
                 type=str,
-                nargs="+",
+                nargs="*",
                 options_list=["--test-paths", "-p"],
-                help="The full paths to the folder(s) containing the test files. Must have a `test-config.yaml` file.",
+                default=[],
+                help="The full paths to the folder(s) containing the test files. Must have a `test-config.yaml` file. If omitted, runs all workflows.",
             )
 
         with ArgumentsContext(self, "search") as ac:

@@ -96,6 +96,11 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 result = await Util.RunAsync(_cargoName, finalParams, WorkingDirectory);
             }
 
+            if (result.ExitCode != 0)
+            {
+                throw new Exception($"Error running the benchmark test {testName} in project {project}. Error: {result.StandardError}");
+            }
+
             //parse the samples file for the test and calculate the ops per second
             var opsPerSecond = ExtractOpsPerSecond(testName);
 

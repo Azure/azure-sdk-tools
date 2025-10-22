@@ -378,8 +378,8 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         private static bool IsNotImplemented(CLICheckResponse result)
         {
             return result.ExitCode != 0 && 
-                   (result.CheckStatusDetails?.Contains("Not implemented for this language") == true ||
-                    result.ResponseError?.Contains("Not implemented for this language") == true);
+                   (result.CheckStatusDetails?.Contains("Not implemented for this language") ||
+                    result.ResponseError?.Contains("Not implemented for this language"));
         }
 
         private async Task<CLICheckResponse> RunChangelogValidation(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)

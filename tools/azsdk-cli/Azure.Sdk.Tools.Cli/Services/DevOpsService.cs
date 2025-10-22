@@ -406,6 +406,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                 ".net" => "Dotnet",
                 "csharp" => "Dotnet",
                 "js" => "JavaScript",
+                "javascript" => "JavaScript",
                 "python" => "Python",
                 "java" => "Java",
                 "go" => "Go",
@@ -455,7 +456,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                         new JsonPatchOperation
                         {
                             Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
-                            Path = $"/fields/Custom.SDKGenerationPipelineFor{language}",
+                            Path = $"/fields/Custom.SDKGenerationPipelineFor{MapLanguageToId(language)}",
                             Value = sdkGenerationPipelineUrl
                         });
                 }
@@ -465,7 +466,7 @@ namespace Azure.Sdk.Tools.Cli.Services
                         new JsonPatchOperation
                         {
                             Operation = Microsoft.VisualStudio.Services.WebApi.Patch.Operation.Add,
-                            Path = $"/fields/Custom.SDKPullRequestFor{language}",
+                            Path = $"/fields/Custom.SDKPullRequestFor{MapLanguageToId(language)}",
                             Value = sdkPullRequestUrl
                         });
                 }

@@ -29,9 +29,19 @@ import static com.azure.tools.apiview.processor.diagnostics.rules.general.BadAnn
  */
 public class Diagnostics {
     final List<DiagnosticRule> rules;
+    private final boolean enabled;
 
-    public Diagnostics(APIListing apiListing) {
-        rules = new ArrayList<>();
+    /**
+     * Creates a diagnostics runner. When {@code enabled} is false this instance becomes a no-op and
+     * contributes no rules and performs no scanning. This avoids the need for null checks while still
+     * allowing callers (e.g. diff mode) to disable the overhead of diagnostics analysis.
+     */
+    public Diagnostics(APIListing apiListing, boolean enabled) {
+        this.enabled = enabled;
+        this.rules = new ArrayList<>();
+        if (!enabled) {
+            return; // no-op instance
+        }
 
         System.out.println("  Setting up diagnostics...");
 
@@ -143,6 +153,9 @@ public class Diagnostics {
      * Runs any diagnostics that can be run against the single compilation unit that has been provided.
      */
     public void scanIndividual(CompilationUnit cu, APIListing listing) {
+        if (!enabled) {
+            return; // no-op
+        }
         // We do not scan compilation units that are missing any primary type (i.e. they are completely commented out).
         if (!cu.getPrimaryType().isPresent()) {
             return;
@@ -154,6 +167,9 @@ public class Diagnostics {
      * Called once to allow for any full analysis to be performed after all individual scans have been completed.
      */
     public void scanFinal(APIListing listing) {
+        if (!enabled) {
+            return; // no-op
+        }
         rules.forEach(rule -> rule.scanFinal(listing));
     }
 }

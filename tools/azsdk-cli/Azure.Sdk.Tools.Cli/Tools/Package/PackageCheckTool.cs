@@ -119,6 +119,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             var results = new List<CLICheckResponse>();
             var overallSuccess = true;
             var failedChecks = new List<string>();
+            var successfulChecks = new List<string>();
             var notImplementedChecks = new List<string>();
 
             // Run dependency check
@@ -142,6 +143,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     failedChecks.Add("Dependency");
                 }
             }
+            else
+            {
+                successfulChecks.Add("Dependency");
+            }
 
             // Run changelog validation
             var changelogValidationResult = await languageChecks.ValidateChangelog(packagePath, fixCheckErrors, ct);
@@ -157,6 +162,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     overallSuccess = false;
                     failedChecks.Add("Changelog");
                 }
+            }
+            else
+            {
+                successfulChecks.Add("Changelog");
             }
 
             // Run README validation
@@ -174,6 +183,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     failedChecks.Add("README");
                 }
             }
+            else
+            {
+                successfulChecks.Add("README");
+            }
 
             // Run spelling check
             var spellingCheckResult = await languageChecks.CheckSpelling(packagePath, fixCheckErrors, ct);
@@ -189,6 +202,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     overallSuccess = false;
                     failedChecks.Add("Spelling");
                 }
+            }
+            else
+            {
+                successfulChecks.Add("Spelling");
             }
 
             // Run snippet update
@@ -206,6 +223,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     failedChecks.Add("Snippets");
                 }
             }
+            else
+            {
+                successfulChecks.Add("Snippets");
+            }
 
             // Run code linting
             var lintCodeResult = await languageChecks.LintCode(packagePath, fixCheckErrors, ct);
@@ -221,6 +242,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     overallSuccess = false;
                     failedChecks.Add("Linting");
                 }
+            }
+            else
+            {
+                successfulChecks.Add("Linting");
             }
 
             // Run code formatting
@@ -238,6 +263,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     failedChecks.Add("Format");
                 }
             }
+            else
+            {
+                successfulChecks.Add("Format");
+            }
 
             // Run AOT compatibility check
             var aotCompatResult = await languageChecks.CheckAotCompat(packagePath, fixCheckErrors, ct);
@@ -253,6 +282,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     overallSuccess = false;
                     failedChecks.Add("AOT Compatibility");
                 }
+            }
+            else
+            {
+                successfulChecks.Add("AOT Compatibility");
             }
 
             // Run generated code check
@@ -270,6 +303,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     failedChecks.Add("Generated Code");
                 }
             }
+            else
+            {
+                successfulChecks.Add("Generated Code");
+            }
             // Run sample validation
             var sampleValidationResult = await languageChecks.ValidateSamplesAsync(packagePath, fixCheckErrors, ct);
             results.Add(sampleValidationResult);
@@ -285,6 +322,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     failedChecks.Add("Sample Validation");
                 }
             }
+            else
+            {
+                successfulChecks.Add("Sample Validation");
+            }
 
             var message = overallSuccess ? "All checks completed successfully" : "Some checks failed";
             var combinedOutput = string.Join("\n", results.Select(r => r.CheckStatusDetails));
@@ -294,6 +335,10 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             if (overallSuccess)
             {
                 nextSteps.Add("All package validation checks passed! Your package is ready for the next steps in the development process.");
+                if (successfulChecks.Any())
+                {
+                    nextSteps.Add($"Successful checks: {string.Join(", ", successfulChecks)}");
+                }
                 if (notImplementedChecks.Any())
                 {
                     nextSteps.Add($"Note: The following checks are not implemented for this language: {string.Join(", ", notImplementedChecks)}");
@@ -302,9 +347,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             }
             else
             {
+                if (successfulChecks.Any())
+                {
+                    nextSteps.Add($"Successful checks: {string.Join(", ", successfulChecks)}");
+                }
                 if (failedChecks.Any())
                 {
-                    nextSteps.Add($"The following checks failed: {string.Join(", ", failedChecks)}");
+                    nextSteps.Add($"Failed checks: {string.Join(", ", failedChecks)}");
                     nextSteps.Add("Address the issues identified above before proceeding with package release.");
                     nextSteps.Add("Re-run the package checks after making corrections to verify all issues are resolved.");
                 }

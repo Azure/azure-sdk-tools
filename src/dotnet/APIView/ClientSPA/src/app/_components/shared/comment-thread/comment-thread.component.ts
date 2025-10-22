@@ -17,6 +17,7 @@ interface AICommentInfoItem {
   icon: string;
   label: string;
   value: string;
+  valueList?: string[];
   valueClass?: string;
 }
 
@@ -627,11 +628,11 @@ export class CommentThreadComponent {
     this.showRelatedCommentsDialog = false;
   }
 
-  isAIGenerated(comment: any): boolean {
+  isAIGenerated(comment: CommentItemModel): boolean {
     return comment.commentSource === CommentSource.AIGenerated;
   }
 
-  hasAIInfo(comment: any): boolean {
+  hasAIInfo(comment: CommentItemModel): boolean {
     if (!this.isAIGenerated(comment)) {
       return false;
     }
@@ -639,7 +640,7 @@ export class CommentThreadComponent {
     return info.items.length > 0;
   }
 
-  getAICommentInfoStructured(comment: any): AICommentInfo {
+  getAICommentInfoStructured(comment: CommentItemModel): AICommentInfo {
     const items: AICommentInfoItem[] = [];
     
     if (comment.confidenceScore && comment.confidenceScore > 0) {
@@ -657,7 +658,8 @@ export class CommentThreadComponent {
       items.push({
         icon: 'pi-book',
         label: 'Guidelines Referenced',
-        value: comment.guidelineIds.join(', ')
+        value: '',
+        valueList: comment.guidelineIds
       });
     }
     
@@ -665,14 +667,15 @@ export class CommentThreadComponent {
       items.push({
         icon: 'pi-database',
         label: 'Memory References',
-        value: comment.memoryIds.join(', ')
+        value: '',
+        valueList: comment.memoryIds
       });
     }
     
     return { items };
   }
 
-  showAIInfo(event: Event, comment: any): void {
+  showAIInfo(event: Event, comment: CommentItemModel): void {
     this.currentAIInfoStructured = this.getAICommentInfoStructured(comment);
     this.aiInfoPanel.toggle(event);
   }

@@ -196,7 +196,7 @@
                                 {{ item.value }}
                             </ng-container>
                             <ng-template #codeList>
-                                <code *ngFor="let id of item.value.split(', '); let last = last">
+                                <code *ngFor="let id of item.valueList; let last = last">
                                     {{ id }}<ng-container *ngIf="!last">, </ng-container>
                                 </code>
                             </ng-template>

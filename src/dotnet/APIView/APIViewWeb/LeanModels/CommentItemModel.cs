@@ -24,7 +24,6 @@ namespace APIViewWeb.LeanModels
     }
 
     [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
-    [JsonConverter(typeof(StringEnumConverter))]
     public enum CommentSource
     {
         UserGenerated,

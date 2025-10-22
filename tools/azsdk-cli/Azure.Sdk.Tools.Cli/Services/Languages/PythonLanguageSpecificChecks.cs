@@ -175,8 +175,6 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
 
     public async Task<CLICheckResponse> ValidateReadme(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
-        // Implementation for validating README in a Python project
-        // Could use markdownlint, etc.
         return await CommonLanguageHelpers.ValidateReadmeCommon(_processHelper, _gitHelper, _logger, packagePath, fixCheckErrors, cancellationToken);
     }
 

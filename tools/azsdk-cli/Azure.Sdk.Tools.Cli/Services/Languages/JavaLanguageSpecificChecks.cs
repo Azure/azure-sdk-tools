@@ -403,8 +403,6 @@ public class JavaLanguageSpecificChecks : ILanguageSpecificChecks
 
     public async Task<PackageCheckResponse> ValidateReadme(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
-        // Implementation for validating README in a Python project
-        // Could use markdownlint, etc.
         return await CommonLanguageHelpers.ValidateReadmeCommon(_processHelper, _gitHelper, _logger, packagePath, fixCheckErrors, cancellationToken);
     }
 

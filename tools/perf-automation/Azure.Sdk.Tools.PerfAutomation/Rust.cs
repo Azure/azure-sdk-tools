@@ -70,15 +70,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
             StringBuilder outputBuilder = new StringBuilder();
             StringBuilder errorBuilder = new StringBuilder();
-            string flavor;
-            if (debug)
-            {
-                flavor = "debug";
-            }
-            else
-            {
-                flavor = "release";
-            }
+            string flavor = debug ? "debug" : "release";
             _testCommand = $"--{flavor} --package {primaryPackage} --test perf";
             await Util.RunAsync(_cargoName, $"build {_testCommand}", WorkingDirectory, null, outputBuilder, errorBuilder);
 

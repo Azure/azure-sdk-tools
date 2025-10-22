@@ -15,7 +15,8 @@ namespace Azure.Sdk.Tools.Cli.Helpers
     {
         // Config value retrieval methods
         Task<T> GetConfigValueFromRepoAsync<T>(string repositoryRoot, string jsonPath);
-        Task<(BuildConfigType type, string value)> GetBuildConfigurationAsync(string repositoryRoot);
+        Task<(ConfigContentType type, string value)> GetBuildConfigurationAsync(string repositoryRoot);
+        Task<(ConfigContentType type, string value)> GetConfigurationAsync(string repositoryRoot, ConfigType configType);
         
         // Command processing methods
         string SubstituteCommandVariables(string command, Dictionary<string, string> variables);
@@ -40,7 +41,16 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         // Constants
         private const string BuildCommandJsonPath = "packageOptions/buildScript/command";
         private const string BuildScriptPathJsonPath = "packageOptions/buildScript/path";
+        private const string UpdateChangelogCommandJsonPath = "packageOptions/updateChangelogScript/command";
+        private const string UpdateChangelogScriptPathJsonPath = "packageOptions/updateChangelogScript/path";
+        private const string UpdateVersionCommandJsonPath = "packageOptions/updateVersionScript/command";
+        private const string UpdateVersionScriptPathJsonPath = "packageOptions/updateVersionScript/path";
+        private const string UpdateMetadataCommandJsonPath = "packageOptions/updateMetadataScript/command";
+        private const string UpdateMetadataScriptPathJsonPath = "packageOptions/updateMetadataScript/path";
+        private const string UpdateCiCommandJsonPath = "packageOptions/updateCiScript/command";
+        private const string UpdateCiScriptPathJsonPath = "packageOptions/updateCiScript/path";
         private const string SpecToSdkConfigPath = "eng/swagger_to_sdk_config.json";
+        
 
         private readonly ILogger<SpecGenSdkConfigHelper> _logger;
 
@@ -91,41 +101,49 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         }
 
         // Get build configuration (either command or script path)
-        public async Task<(BuildConfigType type, string value)> GetBuildConfigurationAsync(string repositoryRoot)
+        public async Task<(ConfigContentType type, string value)> GetBuildConfigurationAsync(string repositoryRoot)
         {
+            return await GetConfigurationAsync(repositoryRoot, ConfigType.Build);
+        }
+
+        // Get configuration for a specific type (either command or script path)
+        public async Task<(ConfigContentType type, string value)> GetConfigurationAsync(string repositoryRoot, ConfigType configType)
+        {
+            var (commandPath, scriptPath) = GetConfigPaths(configType);
+            
             // Try command first
             try
             {
-                var command = await GetConfigValueFromRepoAsync<string>(repositoryRoot, BuildCommandJsonPath);
+                var command = await GetConfigValueFromRepoAsync<string>(repositoryRoot, commandPath);
                 if (!string.IsNullOrEmpty(command))
                 {
-                    _logger.LogDebug("Found build command configuration");
-                    return (BuildConfigType.Command, command);
+                    _logger.LogDebug("Found {ConfigType} command configuration", configType);
+                    return (ConfigContentType.Command, command);
                 }
             }
             catch (InvalidOperationException)
             {
                 // Command not found, continue to try path
-                _logger.LogDebug("No build command found, trying script path");
+                _logger.LogDebug("No {ConfigType} command found, trying script path", configType);
             }
 
             // Try path
             try
             {
-                var path = await GetConfigValueFromRepoAsync<string>(repositoryRoot, BuildScriptPathJsonPath);
+                var path = await GetConfigValueFromRepoAsync<string>(repositoryRoot, scriptPath);
                 if (!string.IsNullOrEmpty(path))
                 {
-                    _logger.LogDebug("Found build script path configuration");
-                    return (BuildConfigType.ScriptPath, path);
+                    _logger.LogDebug("Found {ConfigType} script path configuration", configType);
+                    return (ConfigContentType.ScriptPath, path);
                 }
             }
             catch (InvalidOperationException)
             {
                 // Path not found either
-                _logger.LogError("No build configuration found");
+                _logger.LogError("No {ConfigType} configuration found", configType);
             }
 
-            throw new InvalidOperationException($"Neither '{BuildCommandJsonPath}' nor '{BuildScriptPathJsonPath}' found in configuration.");
+            throw new InvalidOperationException($"Neither '{commandPath}' nor '{scriptPath}' found in configuration for {configType}.");
         }
 
         // Substitute template variables in command strings
@@ -169,6 +187,17 @@ namespace Azure.Sdk.Tools.Cli.Helpers
             return tokens;
         }
 
+        // Get the configuration paths for a specific config type
+        private (string commandPath, string scriptPath) GetConfigPaths(ConfigType configType)
+        {
+            return configType switch
+            {
+                ConfigType.Build => (BuildCommandJsonPath, BuildScriptPathJsonPath),
+                ConfigType.UpdateChangelog => (UpdateChangelogCommandJsonPath, UpdateChangelogScriptPathJsonPath),
+                _ => throw new ArgumentException($"Unsupported config type: {configType}")
+            };
+        }
+
         // Try to get a JSON element by its path
         private (bool found, JsonElement element) TryGetJsonElementByPath(JsonElement root, string path)
         {
@@ -192,9 +221,24 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         }
     }
 
-    public enum BuildConfigType
+    /// <summary>
+    /// Represents different content types for configuration values.
+    /// </summary>
+    public enum ConfigContentType
     {
         Command,
         ScriptPath
+    }
+
+    /// <summary>
+    /// Represents different types of configuration that can be retrieved from swagger_to_sdk_config.json
+    /// </summary>
+    public enum ConfigType
+    {
+        Build,
+        UpdateChangelog,
+        UpdateVersion,
+        UpdateMetadata,
+        UpdateCi
     }
 }

@@ -398,30 +398,11 @@ namespace APIViewWeb.Managers
                 relatedReviews.Add(typeSpecReview);
             }
 
-            // Log the related reviews found
-            _logger.LogInformation("Namespace review request - Found {RelatedReviewCount} related reviews for TypeSpec review {ReviewId}, revision {RevisionId}", 
-                relatedReviews.Count, reviewId, revisionId);
-            
-            foreach (var review in relatedReviews)
-            {
-                _logger.LogInformation("Related review: ID={ReviewId}, Language={Language}, PackageName={PackageName}", 
-                    review.Id, review.Language, review.PackageName);
-            }
-
             // Filter SDK language reviews before processing to avoid unnecessary work
             var sdkLanguageReviews = relatedReviews
                                 .Where(r => r != null && LanguageHelper.IsSDKLanguage(r.Language))
                                 .ToList();
 
-            // Log the SDK language reviews after filtering
-            _logger.LogInformation("Namespace review request - Found {SdkLanguageReviewCount} SDK language reviews after filtering", 
-                sdkLanguageReviews.Count);
-            
-            foreach (var review in sdkLanguageReviews)
-            {
-                _logger.LogInformation("SDK Language review: ID={ReviewId}, Language={Language}, PackageName={PackageName}", 
-                    review.Id, review.Language, review.PackageName);
-            }
 
             // Update the reviews identified by review IDs with namespace approval fields
             await MarkAssociatedReviewsForNamespaceReview(relatedReviews, userId, requestedOn, reviewGroupId);
@@ -457,14 +438,14 @@ namespace APIViewWeb.Managers
                 {
                     try
                     {
-                        if (review != null && LanguageHelper.IsSDKLanguageOrTypeSpec(review.Language) && review.NamespaceReviewStatus == NamespaceReviewStatus.NotStarted && !review.IsApproved)
+                        if (review != null && LanguageHelper.IsSDKLanguageOrTypeSpec(review.Language) && review.NamespaceReviewStatus != NamespaceReviewStatus.Approved && !review.IsApproved)
                         {
                             review.ReviewGroupId = reviewGroupId;
-                            
+
                             // Check if any revision for this review is already approved
                             var revisions = await _apiRevisionsManager.GetAPIRevisionsAsync(review.Id);
                             var hasApprovedRevision = revisions.Any(r => r.IsApproved);
-                            
+
                             if (hasApprovedRevision)
                             {
                                 // If any revision is approved, approve the namespace too (implicit approval)
@@ -477,6 +458,16 @@ namespace APIViewWeb.Managers
                                 review.NamespaceApprovalRequestedBy = userId;
                                 review.NamespaceApprovalRequestedOn = requestedOn;
                             }
+
+                            await _reviewsRepository.UpsertReviewAsync(review);
+                        }
+                        else if (review != null && LanguageHelper.IsSDKLanguageOrTypeSpec(review.Language) && (review.NamespaceReviewStatus == NamespaceReviewStatus.Approved || review.IsApproved))
+                        {
+                            // Handle reviews that are already approved - ensure they have the group information
+                            review.NamespaceReviewStatus = NamespaceReviewStatus.Approved;
+                            review.ReviewGroupId = reviewGroupId;
+                            review.NamespaceApprovalRequestedBy = userId;
+                            review.NamespaceApprovalRequestedOn = requestedOn;
                             
                             await _reviewsRepository.UpsertReviewAsync(review);
                         }
@@ -779,6 +770,14 @@ namespace APIViewWeb.Managers
                     return;
                 }
 
+                // Only approve TypeSpec namespace if there are no more pending SDK reviews
+                if (pendingSdkReviews.Any())
+                {
+                    _logger.LogInformation("CheckAndApproveNamespaceForTypeSpec - Still have {PendingCount} pending SDK reviews, not approving TypeSpec namespace yet", pendingSdkReviews.Count);
+                    return;
+                }
+
+                _logger.LogInformation("CheckAndApproveNamespaceForTypeSpec - All SDK reviews approved, approving TypeSpec namespace and sending notification");
                 typeSpecReview.NamespaceReviewStatus = NamespaceReviewStatus.Approved;
                 await _reviewsRepository.UpsertReviewAsync(typeSpecReview);
 

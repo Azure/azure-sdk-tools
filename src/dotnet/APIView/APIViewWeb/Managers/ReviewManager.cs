@@ -453,10 +453,14 @@ namespace APIViewWeb.Managers
                             }
                             else
                             {
-                                // Otherwise set to pending
-                                review.NamespaceReviewStatus = NamespaceReviewStatus.Pending;
-                                review.NamespaceApprovalRequestedBy = userId;
-                                review.NamespaceApprovalRequestedOn = requestedOn;
+                                // Otherwise set to pending - but preserve existing values if already set
+                                if (review.NamespaceReviewStatus == NamespaceReviewStatus.NotStarted)
+                                {
+                                    review.NamespaceReviewStatus = NamespaceReviewStatus.Pending;
+                                    review.NamespaceApprovalRequestedBy = userId;
+                                    review.NamespaceApprovalRequestedOn = requestedOn;
+                                }
+                                // If already pending, preserve the original requester and timestamp
                             }
 
                             await _reviewsRepository.UpsertReviewAsync(review);

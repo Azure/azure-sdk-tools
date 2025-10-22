@@ -30,8 +30,8 @@ namespace Azure.Sdk.Tools.McpEvals.Evaluators
             }
 
             // Get tool calls to compare them
-            var expectedToolCalls = GetToolContent(context.ChatMessages, context.ToolNames, true);
-            var actualToolCalls = GetToolContent(modelResponse.Messages, context.ToolNames, false);
+            var expectedToolCalls = Helpers.ChatMessageHelper.GetToolContent(context.ChatMessages, context.ToolNames, true);
+            var actualToolCalls = Helpers.ChatMessageHelper.GetToolContent(modelResponse.Messages, context.ToolNames, false);
 
             // Make sure we have tool calls to compare
             if (!expectedToolCalls.Any())
@@ -74,9 +74,9 @@ namespace Azure.Sdk.Tools.McpEvals.Evaluators
                     return result;
                 }
 
-                if(toolCall.exp.Arguments == null)
+                // No arguments to compare or flag indicates to skip checking inputs
+                if (toolCall.exp.Arguments == null || !context.CheckInputs)
                 {
-                    // No arguments to compare
                     continue;
                 }
 
@@ -141,32 +141,6 @@ namespace Azure.Sdk.Tools.McpEvals.Evaluators
                 metric.Interpretation = new EvaluationMetricInterpretation(
                     EvaluationRating.Exceptional,
                     reason: "Result matched what was expected.");
-            }
-        }
-
-        private IEnumerable<FunctionCallContent> GetToolContent(IEnumerable<ChatMessage> messages, IEnumerable<string> toolNames, bool simplify)
-        {
-            var result = messages
-                .Where(message => message.Role == ChatRole.Assistant)
-                .SelectMany(message => message.Contents)
-                .OfType<FunctionCallContent>()
-                // Filter for tool names in the MCP Server. 
-                // Ends with because copilot will often start mcp names with "mcp_<tool name>"
-                .Where(toolCall => toolNames.Any(name => toolCall.Name.EndsWith(name)));
-
-
-            // Remove consecutive duplicates if requested
-            // Sometimes Copilot will call a tool multiple times if something went wrong (ex. wrong arguments to tool).
-            // This is expected, simplfiy down to last call. 
-            if (simplify)
-            {
-                return result
-                    .GroupBy(m => m.Name)
-                    .Select(g => g.Last());
-            }
-            else
-            {
-                return result;
             }
         }
 

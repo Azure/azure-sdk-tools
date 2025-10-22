@@ -103,5 +103,31 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
                 ExpectedOutcome = expectedOutcome
             };
         }
+
+        public static IEnumerable<FunctionCallContent> GetToolContent(IEnumerable<ChatMessage> messages, IEnumerable<string> toolNames, bool simplify)
+        {
+            var result = messages
+                .Where(message => message.Role == ChatRole.Assistant)
+                .SelectMany(message => message.Contents)
+                .OfType<FunctionCallContent>()
+                // Filter for tool names in the MCP Server. 
+                // Ends with because copilot will often start mcp names with "mcp_<tool name>"
+                .Where(toolCall => toolNames.Any(name => toolCall.Name.EndsWith(name)));
+
+
+            // Remove consecutive duplicates if requested
+            // Sometimes Copilot will call a tool multiple times if something went wrong (ex. wrong arguments to tool).
+            // This is expected, simplfiy down to last call. 
+            if (simplify)
+            {
+                return result
+                    .GroupBy(m => m.Name)
+                    .Select(g => g.Last());
+            }
+            else
+            {
+                return result;
+            }
+        }
     }
 }

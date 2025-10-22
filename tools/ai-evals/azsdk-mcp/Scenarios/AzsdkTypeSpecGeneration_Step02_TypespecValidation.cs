@@ -4,9 +4,7 @@ using Azure.Sdk.Tools.McpEvals.Helpers;
 using Azure.Sdk.Tools.McpEvals.Models;
 using Microsoft.Extensions.AI.Evaluation;
 using Microsoft.Extensions.AI.Evaluation.Reporting;
-using Microsoft.Extensions.AI.Evaluation.Reporting.Formats.Html;
 using Microsoft.Extensions.AI.Evaluation.Reporting.Storage;
-using ModelContextProtocol.Protocol;
 using NUnit.Framework;
 
 namespace Azure.Sdk.Tools.McpEvals.Scenarios
@@ -22,7 +20,7 @@ namespace Azure.Sdk.Tools.McpEvals.Scenarios
             var fullChat = json.ChatHistory.Append(json.NextMessage);
 
             // 2. Get chat response
-            var expectedToolResults = SerializationHelper.GetExpectedToolsByName(json.ExpectedOutcome, s_toolNames);
+            var expectedToolResults = ChatMessageHelper.GetExpectedToolsByName(json.ExpectedOutcome, s_toolNames);
             var response = await s_chatCompletion!.GetChatResponseWithExpectedResponseAsync(fullChat, expectedToolResults);
 
             // 3. Custom Evaluator to check tool inputs
@@ -37,7 +35,7 @@ namespace Azure.Sdk.Tools.McpEvals.Scenarios
             await using ScenarioRun scenarioRun = await reportingConfiguration.CreateScenarioRunAsync(this.ScenarioName);
 
             // Pass the expected outcome through the additional context. 
-            var additionalContext = new ExpectedToolInputEvaluatorContext(json.ExpectedOutcome, s_toolNames);
+            var additionalContext = new ExpectedToolInputEvaluatorContext(json.ExpectedOutcome, s_toolNames, true);
             var result = await scenarioRun.EvaluateAsync(fullChat, response, additionalContext: [additionalContext]);
 
             // 4. Assert the results

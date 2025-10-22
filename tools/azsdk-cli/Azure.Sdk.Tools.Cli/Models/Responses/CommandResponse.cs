@@ -44,6 +44,18 @@ public abstract class CommandResponse
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public List<string>? NextSteps { get; set; }
 
+    /// <summary>
+    /// ToolSucceeded shows whether the tool operation was successful.
+    /// </summary>
+    [JsonPropertyName("tool_succeeded")]
+    public bool ToolSucceeded
+    {
+        get
+        {
+            return string.IsNullOrEmpty(ResponseError) && (ResponseErrors == null || ResponseErrors.Count == 0);
+        }
+    }
+
     protected abstract string Format();
 
     public override string ToString()

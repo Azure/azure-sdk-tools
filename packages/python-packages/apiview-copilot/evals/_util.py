@@ -96,13 +96,13 @@ def get_cache_file_path(
     Args:
         testcase_id: The test case identifier
         test_file_path: Path to the original test file (to determine structure)
-        cache_base_dir: Base directory for cache files (defaults to evals/tests/cache)
+        cache_base_dir: Base directory for cache files (defaults to evals/cache)
         
     Returns:
         Path to the individual JSON cache file for this testcase
     """
     if cache_base_dir is None:
-        cache_base_dir = Path(__file__).parent / "tests" / "cache"
+        cache_base_dir = Path(__file__).parent / "cache"
     
     # If we have test file path, mirror its structure
     if test_file_path:

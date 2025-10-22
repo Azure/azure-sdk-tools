@@ -21,7 +21,7 @@ if (Test-Path $codeowners_utils_source) {
         Write-Host "Successfully copied codeowners-utils to current directory."
     }
 } else {
-    Write-Warning "codeowners-utils not found at $codeowners-utils_source"
+    Write-Warning "codeowners-utils not found at $codeowners_utils_source"
     Write-Host "Expected path: $(Resolve-Path $codeowners_utils_source -ErrorAction SilentlyContinue)"
 }
 

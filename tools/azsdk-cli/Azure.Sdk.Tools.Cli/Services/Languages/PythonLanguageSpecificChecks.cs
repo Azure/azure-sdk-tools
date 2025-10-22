@@ -183,7 +183,7 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
     public async Task<CLICheckResponse> ValidateChangelog(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         var repoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
-        var packageName = CommonLanguageHelpers.GetDefaultSDKPackageName(packagePath);
+        var packageName = Path.GetFileName(packagePath);
         return await CommonLanguageHelpers.ValidateChangelogCommon(packageName, _processHelper, _gitHelper, _logger, packagePath, fixCheckErrors, cancellationToken);
     }
 

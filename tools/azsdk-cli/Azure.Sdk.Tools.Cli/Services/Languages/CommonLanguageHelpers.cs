@@ -19,16 +19,6 @@ namespace Azure.Sdk.Tools.Cli.Services;
 public static class CommonLanguageHelpers
 {
     /// <summary>
-    /// Gets the default SDK package name from the package path.
-    /// </summary>
-    /// <param name="packagePath">Package path</param>
-    /// <returns>SDK package name (directory name)</returns>
-    public static string GetDefaultSDKPackageName(string packagePath)
-    {
-        return Path.GetFileName(packagePath);
-    }
-
-    /// <summary>
     /// Gets the default spelling check path pattern for a package.
     /// </summary>
     /// <param name="packageRepoRoot">Repository root path</param>
@@ -39,6 +29,7 @@ public static class CommonLanguageHelpers
         var relativePath = Path.GetRelativePath(packageRepoRoot, packagePath);
         return $"." + Path.DirectorySeparatorChar + relativePath + Path.DirectorySeparatorChar + "**";
     }
+
     /// <summary>
     /// Common changelog validation implementation that works for most Azure SDK languages.
     /// Uses the PowerShell script from eng/common/scripts/Verify-ChangeLog.ps1.

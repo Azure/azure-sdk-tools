@@ -143,42 +143,6 @@
   color: #ff8c00 !important;
 }
 
-.feedback-buttons-section {
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--border-color);
-  
-  small {
-    font-size: 0.875rem;
-  }
-}
-
-.vote-buttons {
-  gap: 0.25rem;
-  
-  .vote-btn {
-    padding: 0.25rem 0.5rem !important;
-    border-radius: 0.25rem;
-    transition: all 0.15s ease;
-    line-height: 1;
-    
-    span {
-      font-size: 1.25rem;
-    }
-    
-    &:hover {
-      background-color: var(--border-color);
-      
-      span {
-        transform: scale(1.15);
-        display: inline-block;
-      }
-    }
-    
-    &:active {
-      transform: scale(0.95);
-    }
-  }
-}
 
 .resolution-comment-section {
   padding: 1rem;

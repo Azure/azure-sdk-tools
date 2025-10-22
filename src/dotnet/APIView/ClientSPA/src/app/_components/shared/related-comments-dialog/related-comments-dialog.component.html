@@ -93,29 +93,27 @@
     </div>
 
     <div class="resolution-comment-section mt-4">
-      <!-- Feedback Section -->
-      <div class="feedback-buttons-section mb-3">
-        <div class="d-flex align-items-center vote-buttons">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <label class="form-label fw-semibold mb-0">
+          Message (Optional):
+        </label>
+        <div class="d-flex align-items-center vote-section">
           <button 
             type="button"
-            class="btn btn-link p-1 vote-btn"            
+            class="btn btn-link p-2 vote-btn"
             title="Upvote selected issues"
             (click)="toggleBatchVote('up')">
-            <span [ngClass]="hasBatchUpvote() ? 'bi bi-hand-thumbs-up-fill emoji-active' : 'bi bi-hand-thumbs-up text-muted'"></span>
+            <span [ngClass]="hasBatchUpvote() ? 'bi bi-hand-thumbs-up-fill emoji-active fs-5' : 'bi bi-hand-thumbs-up text-muted fs-5'"></span>
           </button>
           <button 
             type="button"
-            class="btn btn-link p-1 vote-btn"
+            class="btn btn-link p-2 vote-btn"
             title="Downvote selected issues"
             (click)="toggleBatchVote('down')">
-            <span [ngClass]="hasBatchDownvote() ? 'bi bi-hand-thumbs-down-fill emoji-active' : 'bi bi-hand-thumbs-down text-muted'"></span>
+            <span [ngClass]="hasBatchDownvote() ? 'bi bi-hand-thumbs-down-fill emoji-active fs-5' : 'bi bi-hand-thumbs-down text-muted fs-5'"></span>
           </button>
         </div>
       </div>
-      
-      <label class="form-label fw-semibold">
-        Message (Optional):
-      </label>
       <textarea 
         class="form-control resolution-comment-textarea"
         [(ngModel)]="resolutionComment"

@@ -22,6 +22,7 @@ namespace Azure.Sdk.Tools.McpEvals.ToolMocks
                 // Add all mocks here
                 new TypespecCheckProjectInPublicRepo(),
                 new RunTypespecValidation(),
+                new GetModifiedTypespecProjects(),
             };
 
             foreach (var mock in mockInstances)
@@ -42,11 +43,16 @@ namespace Azure.Sdk.Tools.McpEvals.ToolMocks
         public static IEnumerable<IToolMock> GetToolMocks(IEnumerable<string> toolNames)
         {
             var tools = new List<IToolMock>();
+            var missing = new List<string>();
             foreach (var toolName in toolNames)
             {
                 if (Mocks.TryGetValue(toolName, out var mock))
                 {
                     tools.Add(mock);
+                }
+                else
+                {
+                    missing.Add(toolName);
                 }
             }
 
@@ -55,7 +61,7 @@ namespace Azure.Sdk.Tools.McpEvals.ToolMocks
                 return tools;
             }
 
-            throw new ArgumentException($"No mock found for tools: {string.Join(", ", toolNames)}");
+            throw new ArgumentException($"No mock found for tools: {string.Join(", ", missing)}");
         }
     }
 }

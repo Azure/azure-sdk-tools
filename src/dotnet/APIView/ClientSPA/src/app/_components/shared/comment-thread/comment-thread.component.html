@@ -192,13 +192,18 @@
                     <div class="ai-info-details">
                         <span class="ai-info-label">{{ item.label }}</span>
                         <span class="ai-info-value" [ngClass]="item.valueClass || ''">
-                            <ng-container *ngIf="item.icon === 'pi-chart-bar'; else codeList">
-                                {{ item.value }}
-                            </ng-container>
-                            <ng-template #codeList>
+                            <ng-container *ngIf="item.valueList && item.valueList.length > 0; else singleValue">
                                 <code *ngFor="let id of item.valueList; let last = last">
                                     {{ id }}<ng-container *ngIf="!last">, </ng-container>
                                 </code>
+                            </ng-container>
+                            <ng-template #singleValue>
+                                <ng-container *ngIf="item.valueClass; else codeValue">
+                                    {{ item.value }}
+                                </ng-container>
+                                <ng-template #codeValue>
+                                    <code>{{ item.value }}</code>
+                                </ng-template>
                             </ng-template>
                         </span>
                     </div>

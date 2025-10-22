@@ -642,7 +642,12 @@ export class CommentThreadComponent {
 
   getAICommentInfoStructured(comment: CommentItemModel): AICommentInfo {
     const items: AICommentInfoItem[] = [];
-    
+    items.push({
+        icon: 'pi-id-card',
+        label: 'Id',
+        value: comment.id,
+      });
+
     if (comment.confidenceScore && comment.confidenceScore > 0) {
       const score = Math.round(comment.confidenceScore * 100);
       const scoreClass = score >= 80 ? 'high-confidence' : score >= 60 ? 'medium-confidence' : 'low-confidence';

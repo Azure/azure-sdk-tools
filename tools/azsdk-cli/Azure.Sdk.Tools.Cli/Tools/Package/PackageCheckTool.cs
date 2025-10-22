@@ -249,8 +249,15 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             results.Add(aotCompatResult);
             if (aotCompatResult.ExitCode != 0)
             {
-                overallSuccess = false;
-                failedChecks.Add("AOT Compatibility");
+                if (IsNotImplemented(aotCompatResult))
+                {
+                    notImplementedChecks.Add("AOT Compatibility");
+                }
+                else
+                {
+                    overallSuccess = false;
+                    failedChecks.Add("AOT Compatibility");
+                }
             }
 
             // Run generated code check
@@ -258,17 +265,30 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
             results.Add(generatedCodeResult);
             if (generatedCodeResult.ExitCode != 0)
             {
-                overallSuccess = false;
-                failedChecks.Add("Generated Code");
+                if (IsNotImplemented(generatedCodeResult))
+                {
+                    notImplementedChecks.Add("Generated Code");
+                }
+                else
+                {
+                    overallSuccess = false;
+                    failedChecks.Add("Generated Code");
+                }
             }
-
             // Run sample validation
             var sampleValidationResult = await languageChecks.ValidateSamplesAsync(packagePath, fixCheckErrors, ct);
             results.Add(sampleValidationResult);
             if (sampleValidationResult.ExitCode != 0)
             {
-                overallSuccess = false;
-                failedChecks.Add("Samples");
+                if (IsNotImplemented(sampleValidationResult))
+                {
+                    notImplementedChecks.Add("Sample Validation");
+                }
+                else
+                {
+                    overallSuccess = false;
+                    failedChecks.Add("Sample Validation");
+                }
             }
 
             var message = overallSuccess ? "All checks completed successfully" : "Some checks failed";

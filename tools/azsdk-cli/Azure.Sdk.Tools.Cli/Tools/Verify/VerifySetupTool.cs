@@ -104,7 +104,11 @@ public class VerifySetupTool : MCPTool
                 if (result.ExitCode != 0)
                 {
                     logger.LogWarning("Requirement check failed for {Requirement}. Suggested install command: {Instruction}", req.requirement, req.instructions);
+
                     response.AllRequirementsSatisfied = false;
+                    response.ResponseErrors ??= new List<string>() ;
+                    response.ResponseErrors.Add($"Requirement check failed for {req.requirement}. Error: {result.ResponseError}");
+
                     response.Results.Add(new RequirementCheckResult
                     {
                         Requirement = req.requirement,

@@ -1,10 +1,20 @@
 # Release History
 
-## 0.5.4 (2025-10-22)
+## 0.5.5 (2025-10-22)
 
 ### Features
 
 - Added new tool to update the changelog file in package
+
+## 0.5.4 (2025-10-21)
+
+### Features
+
+- None
+
+### Bugs Fixed
+
+- Fix in create release plan tool to use Active spec PR URL field in the query to resolve the failure in DevOps side.
 
 ## 0.5.3 (2025-10-17)
 

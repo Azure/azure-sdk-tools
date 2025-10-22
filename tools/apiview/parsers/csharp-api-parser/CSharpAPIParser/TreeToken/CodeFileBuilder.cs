@@ -47,7 +47,7 @@ namespace CSharpAPIParser.TreeToken
 
         public ICodeFileBuilderSymbolOrderProvider SymbolOrderProvider { get; set; } = new CodeFileBuilderSymbolOrderProvider();
 
-        public const string CurrentVersion = "29.6";
+        public const string CurrentVersion = "29.7";
 
         private IEnumerable<INamespaceSymbol> EnumerateNamespaces(IAssemblySymbol assemblySymbol)
         {
@@ -137,7 +137,7 @@ namespace CSharpAPIParser.TreeToken
                         if (!String.IsNullOrEmpty(param))
                         {
                             var firstComma = param?.IndexOf(',');
-                            param = firstComma > 0 ? param?[..(int)firstComma] : param;
+                            param = firstComma > 0 ? param?[..(int)firstComma] + "_" + param?[^5..] : param;
                             reviewLines.Add(new ReviewLine()
                             {
                                 LineId = attribute.AttributeClass?.Name + "_" + param,
@@ -475,13 +475,13 @@ namespace CSharpAPIParser.TreeToken
                         continue;
                     }
 
-                    var arg = attribute.ConstructorArguments.FirstOrDefault();
+                    string args = String.Join(", ", attribute.ConstructorArguments.Select(a => GetTypedConstantValue(a)));
 
                     var attributeLine = new ReviewLine()
                     {
                         // GetId() is not unique for attribute class. for e.g. attribute class id is something like "System.FlagsAttribute"
                         // So, using a unique id for attribute line
-                        LineId = $"{attribute.AttributeClass.GetId()}({GetTypedConstantValue(arg)}).{relatedTo}",
+                        LineId = $"{attribute.AttributeClass.GetId()}({args}).{relatedTo}",
                         IsHidden = isHidden
                     };
 

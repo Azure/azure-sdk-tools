@@ -1,5 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
+using System.IO.Enumeration;
 using System.Reflection;
 using System.Text.Json;
 using Microsoft.Extensions.Azure;
@@ -13,7 +14,6 @@ using Azure.Sdk.Tools.Cli.Services.ClientUpdate;
 using Azure.Sdk.Tools.Cli.Telemetry;
 using Azure.Sdk.Tools.Cli.Tools;
 using Azure.Sdk.Tools.Cli.Services.Tests;
-using Azure.Sdk.Tools.Cli.Models;
 
 namespace Azure.Sdk.Tools.Cli.Services
 {
@@ -52,8 +52,10 @@ namespace Azure.Sdk.Tools.Cli.Services
 
             services.AddLanguageSpecific<ITestRunner>(new LanguageSpecificImplementations
             {
+                Java = typeof(JavaTestRunner),
                 JavaScript = typeof(JavaScriptTestRunner),
                 Python = typeof(PythonTestRunner),
+                DotNet = typeof(DotNetTestRunner),
             });
 
             // Helper classes
@@ -112,7 +114,8 @@ namespace Azure.Sdk.Tools.Cli.Services
         public static void RegisterInstrumentedMcpTools(IServiceCollection services, string[] args)
         {
             JsonSerializerOptions? serializerOptions = null;
-            var toolTypes = SharedOptions.GetFilteredToolTypes(args);
+            var toolTypes = SharedOptions.ToolsList;
+            var toolMatchList = SharedOptions.GetToolsFromArgs(args);
 
             foreach (var toolType in toolTypes)
             {
@@ -121,23 +124,32 @@ namespace Azure.Sdk.Tools.Cli.Services
                     continue;
                 }
 
-                foreach (var toolMethod in toolType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance))
-                {
-                    if (toolMethod.GetCustomAttribute<McpServerToolAttribute>() is not null)
-                    {
-                        services.AddSingleton((Func<IServiceProvider, McpServerTool>)(services =>
-                        {
-                            var options = new McpServerToolCreateOptions { Services = services, SerializerOptions = serializerOptions };
-                            var innerTool = toolMethod.IsStatic
-                                ? McpServerTool.Create(toolMethod, options: options)
-                                : McpServerTool.Create(toolMethod, r => ActivatorUtilities.CreateInstance(r.Services, toolType), options);
+                var toolMethods = toolType.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance)
+                                    .Where(m => m.GetCustomAttribute<McpServerToolAttribute>() is not null);
 
-                            var loggerFactory = services.GetRequiredService<ILoggerFactory>();
-                            var logger = loggerFactory.CreateLogger(toolType);
-                            var telemetryService = services.GetRequiredService<ITelemetryService>();
-                            return new InstrumentedTool(telemetryService, logger, innerTool);
-                        }));
-                    }
+                if (toolMatchList.Length > 0)
+                {
+                    toolMethods = toolMethods.Where(m =>
+                    {
+                        var attr = m.GetCustomAttribute<McpServerToolAttribute>();
+                        return attr?.Name is not null && toolMatchList.Any(glob => FileSystemName.MatchesSimpleExpression(glob, attr.Name));
+                    });
+                }
+
+                foreach (var toolMethod in toolMethods)
+                {
+                    services.AddSingleton((Func<IServiceProvider, McpServerTool>)(services =>
+                    {
+                        var options = new McpServerToolCreateOptions { Services = services, SerializerOptions = serializerOptions };
+                        var innerTool = toolMethod.IsStatic
+                            ? McpServerTool.Create(toolMethod, options: options)
+                            : McpServerTool.Create(toolMethod, r => ActivatorUtilities.CreateInstance(r.Services, toolType), options);
+
+                        var loggerFactory = services.GetRequiredService<ILoggerFactory>();
+                        var logger = loggerFactory.CreateLogger(toolType);
+                        var telemetryService = services.GetRequiredService<ITelemetryService>();
+                        return new InstrumentedTool(telemetryService, logger, innerTool);
+                    }));
                 }
             }
         }

@@ -115,11 +115,11 @@ The four tools are intentionally small, composable units. Each emits a machine-r
 
 #### 1. Changelog Update Tool
 
-Name (CLI): `azsdk package update changelog`
+Name (CLI): `azsdk package update-changelog-content`
 
 Name (MCP): `azsdk_package_update_changelog`
 
-Purpose: Ensure changelog is auto-generated and has an entry for the upcoming release (management-plane) or provide guidance (data-plane) where manual editing is expected.
+Purpose: Ensure changelog is auto-generated and has an entry for the upcoming release (management-plane) or provide guidance (data-plane) where manual editing is expected. This tool only modifies changelog content and does not change release date or version numbers.
 
 Inputs:
 
@@ -128,8 +128,7 @@ Inputs:
 Execution Steps (Mgmt-Plane):
 
 1. Invoke changelog generation script or tool.
-2. Insert (or update) latest section with release date placeholder / actual date.
-3. Normalize section ordering / formatting.
+2. Normalize section ordering / formatting.
 
 Execution Steps (Data-Plane):
 
@@ -148,6 +147,7 @@ Outputs:
 Failure Modes:
 
 - Missing `CHANGELOG.md` → create template (mgmt-plane) or noop (data-plane).
+Note: we should consdier adding recovery support for the generation scenario after milestone 1.
 - Script failure → `failed` with error output.
 
 ##### Update Changelog script
@@ -171,7 +171,7 @@ update-changelog.ps1 \
 
 #### 2. Version Update Tool
 
-Name (CLI): `azsdk package update version`
+Name (CLI): `azsdk package update-version`
 
 Name (MCP): `azsdk_package_update_version`
 
@@ -237,7 +237,7 @@ update-version.ps1 \
 
 #### 3. Metadata Update Tool
 
-Name (CLI): `azsdk package update metadata`
+Name (CLI): `azsdk package update-metadata`
 
 Name (MCP): `azsdk_package_update_metadata`
 
@@ -286,7 +286,7 @@ update-metadata.ps1 \
 
 #### 4. CI Update Tool
 
-Name (CLI): `azsdk package update ci`
+Name (CLI): `azsdk package update-ci`
 
 Name (MCP): `azsdk_package_update_ci`
 
@@ -337,11 +337,11 @@ update-ci.ps1 \
 
 #### 5. Aggregated Tool (chained execution)
 
-Name (CLI): `azsdk package update all`
+Name (CLI): `azsdk package update-all`
 
 Name (MCP): `azsdk_package_update_all`
 
-> **Note:** Support for this tool is planned for post‑milestone-1.
+> **Note:** Support for this tool is planned for post‑milestone-1. Consider making the tool attempt safe, deterministic fixes where reasonable instead of immediately failing and delegating remediation to the caller.
 
 Purpose: provide a single entrypoint that orchestrates the four tools in a deterministic sequence for common release-prep workflows.
 
@@ -380,10 +380,10 @@ Example aggregated output (successful):
 Typical CLI workflow:
 
 ```bash
-azsdk package update ci --package-path /abs/sdk/path
-azsdk package update changelog --package-path /abs/sdk/path
-azsdk package update metadata --package-path /abs/sdk/path
-azsdk package update version --package-path /abs/sdk/path --version 1.0.0 --release-date 2025-10-17
+azsdk package update-ci --package-path /abs/sdk/path
+azsdk package update-changelog-content --package-path /abs/sdk/path
+azsdk package update-metadata --package-path /abs/sdk/path
+azsdk package update-version --package-path /abs/sdk/path --version 1.0.0 --release-date 2025-10-17
 ```
 
 ### Architecture Diagram
@@ -488,7 +488,7 @@ Update the package at /home/dev/sdk/healthdataaiservices/Azure.ResourceManager.H
 **Prompt:**
 
 ```text
-Update the version for package at /repo/sdk/healthdataaiservices/Azure.Health.Deidentification.
+Update the version and release date for package at /repo/sdk/healthdataaiservices/Azure.Health.Deidentification.
 ```
 
 **Expected Agent Activity:**
@@ -520,7 +520,7 @@ Add initial CI configuration for a new SDK at /work/sdk/new-service/new-package.
 **Command:**
 
 ```bash
-azsdk package update ci --package-path <absolute_folder_path_to_package>
+azsdk package update-ci --package-path <absolute_folder_path_to_package>
 ```
 
 **Options:**
@@ -544,7 +544,7 @@ azsdk package update ci --package-path <absolute_folder_path_to_package>
 **Command:**
 
 ```bash
-azsdk package update changelog --package-path <absolute_folder_path_to_package>
+azsdk package update-changelog-content --package-path <absolute_folder_path_to_package>
 ```
 
 **Options:**
@@ -568,7 +568,7 @@ azsdk package update changelog --package-path <absolute_folder_path_to_package>
 **Command:**
 
 ```bash
-azsdk package update version --package-path <absolute_folder_path_to_package> --release-type <stable|beta>
+azsdk package update-version --package-path <absolute_folder_path_to_package> --release-type <stable|beta>
 ```
 
 **Options:**
@@ -593,7 +593,7 @@ azsdk package update version --package-path <absolute_folder_path_to_package> --
 **Command:**
 
 ```bash
-azsdk package update metadata --package-path <absolute_folder_path_to_package>
+azsdk package update-metadata --package-path <absolute_folder_path_to_package>
 ```
 
 **Options:**

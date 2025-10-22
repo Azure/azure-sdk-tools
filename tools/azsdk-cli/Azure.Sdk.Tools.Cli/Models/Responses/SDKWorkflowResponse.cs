@@ -15,7 +15,7 @@ public class SDKWorkflowResponse : CommandResponse
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public List<string> Details { get; set; } = [];
 
-    public override string ToString()
+    protected override string Format()
     {
         var result = new StringBuilder();
         result.AppendLine($"Status: {Status}");
@@ -23,6 +23,6 @@ public class SDKWorkflowResponse : CommandResponse
         {
             result.AppendLine($"- {detail}");
         }
-        return ToString(result);
+        return result.ToString();
     }
 }

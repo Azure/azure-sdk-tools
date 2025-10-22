@@ -12,11 +12,11 @@ namespace Azure.Sdk.Tools.Cli.Models.Responses
         [JsonPropertyName("is_successful")]
         public bool IsSuccessful { get; set; }
 
-        public override string ToString()
+        protected override string Format()
         {
             if (!IsSuccessful)
             {
-                return ToString(string.Empty);
+                return string.Empty;
             }
             else
             {

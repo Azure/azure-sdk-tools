@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Tools.Pipeline;
@@ -14,25 +14,38 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys;
 public class TestAnalysisTool(ITestHelper testHelper, ILogger<PipelineAnalysisTool> logger) : MCPTool()
 {
     // Options
-    private readonly Option<string> trxPathOpt = new(["--trx-file"], "Path to the TRX file for failed test runs") { IsRequired = true };
-    private readonly Option<string> filterOpt = new(["--filter-title"], "Test case title to filter results");
-    private readonly Option<bool> titlesOpt = new(["--titles"], "Only return test case titles, not full details");
-
-    protected override Command GetCommand()
+    private readonly Option<string> trxPathOpt = new("--trx-file")
     {
-        var analyzeTestCommand = new Command("test-results", "Analyze test results") {
-            trxPathOpt, filterOpt, titlesOpt
+        Description = "Path to the TRX file for failed test runs",
+        Required = true,
+    };
+
+    private readonly Option<string> filterOpt = new("--filter-title")
+    {
+        Description = "Test case title to filter results",
+        Required = false,
+    };
+
+    private readonly Option<bool> titlesOpt = new("--titles")
+    {
+        Description = "Only return test case titles, not full details",
+        Required = false,
+    };
+
+    protected override Command GetCommand() =>
+        new("test-results", "Analyze test results")
+        {
+            trxPathOpt,
+            filterOpt,
+            titlesOpt,
         };
-        analyzeTestCommand.SetHandler(async ctx => { await HandleCommand(ctx, ctx.GetCancellationToken()); });
-        return analyzeTestCommand;
-    }
 
-    public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+    public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
-        var cmd = ctx.ParseResult.CommandResult.Command.Name;
-        var trxPath = ctx.ParseResult.GetValueForOption(trxPathOpt);
-        var filterTitle = ctx.ParseResult.GetValueForOption(filterOpt);
-        var titlesOnly = ctx.ParseResult.GetValueForOption(titlesOpt);
+        var cmd = parseResult.CommandResult.Command.Name;
+        var trxPath = parseResult.GetValue(trxPathOpt);
+        var filterTitle = parseResult.GetValue(filterOpt);
+        var titlesOnly = parseResult.GetValue(titlesOpt);
 
         if (titlesOnly)
         {

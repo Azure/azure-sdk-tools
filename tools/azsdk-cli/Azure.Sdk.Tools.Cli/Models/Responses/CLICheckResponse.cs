@@ -33,9 +33,9 @@ public class CLICheckResponse : CommandResponse
         CheckStatusDetails = processResult.Output;
     }
 
-    public override string ToString()
+    protected override string Format()
     {
-        return ToString(CheckStatusDetails);
+        return CheckStatusDetails;
     }
 }
 
@@ -52,9 +52,9 @@ public class CookbookCLICheckResponse : CLICheckResponse
         CookbookReference = cookbookReference;
     }
 
-    public override string ToString()
+    protected override string Format()
     {
-        return ToString(CheckStatusDetails);
+        return CheckStatusDetails;
     }
 }
 

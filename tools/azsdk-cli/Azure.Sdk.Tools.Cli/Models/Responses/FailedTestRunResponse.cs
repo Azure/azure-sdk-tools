@@ -28,7 +28,7 @@ public class FailedTestRunResponse : CommandResponse
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public string Uri { get; set; }
 
-    public override string ToString()
+    protected override string Format()
     {
         var output = "";
         output += $"## {TestCaseTitle}{Environment.NewLine}";
@@ -44,6 +44,6 @@ public class FailedTestRunResponse : CommandResponse
         output += $"{Environment.NewLine}### Stack Trace{Environment.NewLine}{StackTrace}{Environment.NewLine}";
         output += $"### Error Message{Environment.NewLine}{ErrorMessage}{Environment.NewLine}";
 
-        return ToString(output);
+        return output;
     }
 }

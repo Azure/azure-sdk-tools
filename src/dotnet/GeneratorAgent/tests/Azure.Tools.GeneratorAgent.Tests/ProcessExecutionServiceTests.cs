@@ -389,7 +389,7 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var arguments = fixture.CreateValidArguments();
             var invalidDir = fixture.CreateInvalidWorkingDirectory();
 
-            var exception = Assert.ThrowsAsync<SecurityException>(async () =>
+            var exception = Assert.ThrowsAsync<DirectoryNotFoundException>(async () =>
                 await executor.ExecuteAsync(
                     command,
                     arguments,

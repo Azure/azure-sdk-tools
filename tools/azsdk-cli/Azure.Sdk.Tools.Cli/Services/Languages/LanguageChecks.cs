@@ -1,11 +1,13 @@
-using Azure.Sdk.Tools.Cli.Models;
-using Azure.Sdk.Tools.Cli.Helpers;
+using System.ComponentModel;
+using System.Threading;
 using Azure.Sdk.Tools.Cli.Configuration;
-using Azure.Sdk.Tools.Cli.Prompts;
-using Azure.Sdk.Tools.Cli.Prompts.Templates;
+using Azure.Sdk.Tools.Cli.Helpers;
 using Azure.Sdk.Tools.Cli.Microagents;
 using Azure.Sdk.Tools.Cli.Microagents.Tools;
-using System.ComponentModel;
+using Azure.Sdk.Tools.Cli.Models;
+using Azure.Sdk.Tools.Cli.Prompts;
+using Azure.Sdk.Tools.Cli.Prompts.Templates;
+using ModelContextProtocol.Protocol;
 
 namespace Azure.Sdk.Tools.Cli.Services;
 
@@ -76,6 +78,30 @@ public interface ILanguageChecks
     /// <param name="ct">Cancellation token</param>
     /// <returns>Result of the code formatting operation</returns>
     Task<CLICheckResponse> FormatCodeAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
+
+    /// <summary>
+    /// Checks AOT compatibility for the specific package.
+    /// </summary>
+    /// <param name="packagePath">Path to the package directory</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Result of the AOT compatibility check</returns>
+    Task<CLICheckResponse> CheckAotCompat(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
+
+    /// <summary>
+    /// Checks generated code for the specific package.
+    /// </summary>
+    /// <param name="packagePath">Path to the package directory</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Result of the generated code check</returns>
+    Task<CLICheckResponse> CheckGeneratedCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
+    
+    /// <summary>
+    /// Validates samples for the specific package.
+    /// </summary>
+    /// <param name="packagePath">Path to the package directory</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Result of the sample validation</returns>
+    Task<CLICheckResponse> ValidateSamplesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default);
 }
 
 /// <summary>
@@ -203,6 +229,55 @@ public class LanguageChecks : ILanguageChecks
         }
 
         return await languageSpecificCheck.FormatCodeAsync(packagePath, fixCheckErrors, ct);
+    }
+
+    public virtual async Task<CLICheckResponse> ValidateSamplesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    {
+        var languageSpecificCheck = await _languageSpecificChecks.Resolve(packagePath);
+
+        if (languageSpecificCheck == null)
+        {
+            _logger.LogError("No language-specific check handler found for package at {PackagePath}. Supported languages may not include this package type.", packagePath);
+            return new CLICheckResponse(
+                exitCode: 1,
+                checkStatusDetails: $"No language-specific check handler found for package at {packagePath}. Supported languages may not include this package type.",
+                error: "Unsupported package type"
+            );
+        }
+        return await languageSpecificCheck.ValidateSamplesAsync(packagePath, fixCheckErrors, ct);
+    }
+
+    public virtual async Task<CLICheckResponse> CheckAotCompat(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    {
+        var languageSpecificCheck = await _languageSpecificChecks.Resolve(packagePath);
+
+        if (languageSpecificCheck == null)
+        {
+            _logger.LogError("No language-specific check handler found for package at {PackagePath}. Supported languages may not include this package type.", packagePath);
+            return new CLICheckResponse(
+                exitCode: 1,
+                checkStatusDetails: $"No language-specific check handler found for package at {packagePath}. Supported languages may not include this package type.",
+                error: "Unsupported package type"
+            );
+        }
+        return await languageSpecificCheck.CheckAotCompat(packagePath, fixCheckErrors, ct);
+    }
+
+    public virtual async Task<CLICheckResponse> CheckGeneratedCode(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    {
+        var languageSpecificCheck = await _languageSpecificChecks.Resolve(packagePath);
+
+        if (languageSpecificCheck == null)
+        {
+            _logger.LogError("No language-specific check handler found for package at {PackagePath}. Supported languages may not include this package type.", packagePath);
+            return new CLICheckResponse(
+                exitCode: 1,
+                checkStatusDetails: $"No language-specific check handler found for package at {packagePath}. Supported languages may not include this package type.",
+                error: "Unsupported package type"
+            );
+        }
+
+        return await languageSpecificCheck.CheckGeneratedCode(packagePath, fixCheckErrors, ct);
     }
 
     /// <summary>

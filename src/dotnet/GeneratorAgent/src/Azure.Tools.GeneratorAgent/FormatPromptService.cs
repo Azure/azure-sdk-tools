@@ -12,17 +12,14 @@ namespace Azure.Tools.GeneratorAgent
     /// </summary>
     internal class FormatPromptService
     {
-        private readonly ILogger<FormatPromptService> Logger;
         private readonly AppSettings AppSettings;
         
         private static readonly ConcurrentDictionary<string, string> RuleIdCache = new();
         private static readonly Regex RuleIdRegex = new(@"(AZC\d{4}|FALLBACK)", RegexOptions.Compiled);
 
-        public FormatPromptService(ILogger<FormatPromptService> logger, AppSettings appSettings)
+        public FormatPromptService(AppSettings appSettings)
         {
-            ArgumentNullException.ThrowIfNull(logger);
             ArgumentNullException.ThrowIfNull(appSettings);
-            Logger = logger;
             AppSettings = appSettings;
         }
 
@@ -127,7 +124,7 @@ namespace Azure.Tools.GeneratorAgent
         {
             if (string.IsNullOrEmpty(context)) return "Unknown error";
 
-            var lines = context.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            var lines = context.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
             // Look for the actual error message line
             var errorLine = lines.FirstOrDefault(l => l.StartsWith("ERROR:"));

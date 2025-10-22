@@ -22,7 +22,7 @@ public class AnalyzePipelineResponse : CommandResponse
         WriteIndented = true,
     };
 
-    public override string ToString()
+    protected override string Format()
     {
         var output = "";
 
@@ -42,6 +42,6 @@ public class AnalyzePipelineResponse : CommandResponse
             output += string.Join(Environment.NewLine, FailedTasks.Select(t => t.ToString())) + Environment.NewLine;
         }
 
-        return ToString(output);
+        return output;
     }
 }

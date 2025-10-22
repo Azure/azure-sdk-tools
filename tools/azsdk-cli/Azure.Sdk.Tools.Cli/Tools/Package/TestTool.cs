@@ -25,14 +25,14 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
 
         private const string TestCommandName = "test";
 
-        protected override Command GetCommand() => new Command(TestCommandName, "Run tests for SDK packages")
+        protected override Command GetCommand() => new(TestCommandName, "Run tests for SDK packages")
         {
             SharedOptions.PackagePath,
         };
 
-        public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+        public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
-            var packagePath = ctx.ParseResult.GetValueForOption(SharedOptions.PackagePath);
+            var packagePath = parseResult.GetValue(SharedOptions.PackagePath);
 
             return await RunPackageTests(packagePath, ct);
         }
@@ -55,12 +55,25 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                     };
                 }
 
-                await testRunner.RunAllTests(packagePath, ct);
+                var success = await testRunner.RunAllTests(packagePath, ct);
 
-                return new DefaultCommandResponse
+                if (success)
                 {
-                    Result = $"Tests for package at '{packagePath}' completed successfully."
-                };
+                    return new DefaultCommandResponse
+                    {
+                        ExitCode = 0,
+                        Result = $"Test run for package at '{packagePath}' completed successfully.",
+                    };
+                }
+                else
+                {
+                    return new DefaultCommandResponse
+                    {
+                        ExitCode = 1,
+                        Result = $"Test run for package at '{packagePath}' was not successful.",
+                        NextSteps = ["Analyze the test output to identify the cause of the failure."],
+                    };
+                }
             }
             catch (Exception ex)
             {

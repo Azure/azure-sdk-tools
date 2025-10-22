@@ -10,7 +10,7 @@ public class ServiceCodeownersResult : CommandResponse
     [JsonPropertyName("code_owners")]
     public List<CodeownersValidationResult> CodeOwners { get; set; } = new();
 
-    public override string ToString()
+    protected override string Format()
     {
         var lines = new List<string>
         {
@@ -26,6 +26,6 @@ public class ServiceCodeownersResult : CommandResponse
             }
         }
 
-        return ToString(string.Join(Environment.NewLine, lines));
+        return string.Join(Environment.NewLine, lines);
     }
 }

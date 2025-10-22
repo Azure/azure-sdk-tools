@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.ComponentModel;
 using ModelContextProtocol.Server;
 using Azure.Sdk.Tools.Cli.Commands;
@@ -27,26 +27,42 @@ namespace Azure.Sdk.Tools.Cli.Tools.TypeSpec
         private const string ConvertSwaggerCommandName = "convert-swagger";
 
         // command options
-        private readonly Option<string> outputDirectoryArg = new("--output-directory", "The output directory for the generated TypeSpec project. This directory must already exist and be empty.") { IsRequired = true };
-        private readonly Option<string> swaggerReadmeArg = new("--swagger-readme", "The path or URL to an Azure swagger README file.") { IsRequired = true };
-        private readonly Option<bool> isArmOption = new("--arm", "Whether the generated TypeSpec project is for an Azure Resource Management (ARM) API. This should be true if the swagger's path contains 'resource-manager'.");
-        private readonly Option<bool> fullyCompatibleOption = new("--fully-compatible", "Whether to generate a TypeSpec project that is fully compatible with the swagger. It is recommended not to set this to true so that the converted TypeSpec project leverages TypeSpec built-in libraries with standard patterns and templates.");
+        private readonly Option<string> outputDirectoryArg = new("--output-directory")
+        {
+            Description = "The output directory for the generated TypeSpec project. This directory must already exist and be empty.",
+            Required = true,
+        };
+
+        private readonly Option<string> swaggerReadmeArg = new("--swagger-readme")
+        {
+            Description = "The path or URL to an Azure swagger README file.",
+            Required = true,
+        };
+
+        private readonly Option<bool> isArmOption = new("--arm")
+        {
+            Description = "Whether the generated TypeSpec project is for an Azure Resource Management (ARM) API. This should be true if the swagger's path contains 'resource-manager'.",
+            Required = false,
+        };
+
+        private readonly Option<bool> fullyCompatibleOption = new("--fully-compatible")
+        {
+            Description = "Whether to generate a TypeSpec project that is fully compatible with the swagger. It is recommended not to set this to true so that the converted TypeSpec project leverages TypeSpec built-in libraries with standard patterns and templates.",
+            Required = false,
+        };
 
         protected override Command GetCommand() =>
             new(ConvertSwaggerCommandName, "Convert an existing Azure service swagger definition to a TypeSpec project")
             {
-                swaggerReadmeArg,
-                outputDirectoryArg,
-                isArmOption,
-                fullyCompatibleOption
+                swaggerReadmeArg, outputDirectoryArg, isArmOption, fullyCompatibleOption,
             };
 
-        public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+        public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
-            var swaggerReadme = ctx.ParseResult.GetValueForOption(swaggerReadmeArg);
-            var outputDirectory = ctx.ParseResult.GetValueForOption(outputDirectoryArg);
-            var isArm = ctx.ParseResult.GetValueForOption(isArmOption);
-            var fullyCompatible = ctx.ParseResult.GetValueForOption(fullyCompatibleOption);
+            var swaggerReadme = parseResult.GetValue(swaggerReadmeArg);
+            var outputDirectory = parseResult.GetValue(outputDirectoryArg);
+            var isArm = parseResult.GetValue(isArmOption);
+            var fullyCompatible = parseResult.GetValue(fullyCompatibleOption);
 
             return await ConvertSwaggerAsync(swaggerReadme, outputDirectory, isArm, fullyCompatible, true, ct);
         }

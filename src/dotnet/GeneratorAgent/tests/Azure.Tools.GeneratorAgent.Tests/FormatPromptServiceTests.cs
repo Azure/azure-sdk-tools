@@ -18,26 +18,15 @@ namespace Azure.Tools.GeneratorAgent.Tests
             var logger = NullLogger<FormatPromptService>.Instance;
             var appSettings = CreateTestAppSettings();
 
-            var service = new FormatPromptService(logger, appSettings);
+            var service = new FormatPromptService(appSettings);
 
             Assert.That(service, Is.Not.Null);
         }
 
         [Test]
-        public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
-        {
-            var appSettings = CreateTestAppSettings();
-
-            var ex = Assert.Throws<ArgumentNullException>(() => new FormatPromptService(null!, appSettings));
-            Assert.That(ex?.ParamName, Is.EqualTo("logger"));
-        }
-
-        [Test]
         public void Constructor_WithNullAppSettings_ShouldThrowArgumentNullException()
         {
-            var logger = NullLogger<FormatPromptService>.Instance;
-
-            var ex = Assert.Throws<ArgumentNullException>(() => new FormatPromptService(logger, null!));
+            var ex = Assert.Throws<ArgumentNullException>(() => new FormatPromptService(null!));
             Assert.That(ex?.ParamName, Is.EqualTo("appSettings"));
         }
 
@@ -177,9 +166,8 @@ namespace Azure.Tools.GeneratorAgent.Tests
 
         private FormatPromptService CreateFormatPromptService()
         {
-            var logger = NullLogger<FormatPromptService>.Instance;
             var appSettings = CreateTestAppSettings();
-            return new FormatPromptService(logger, appSettings);
+            return new FormatPromptService(appSettings);
         }
 
         private AppSettings CreateTestAppSettings()

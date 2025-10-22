@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.ComponentModel;
 using Azure.Sdk.Tools.Cli.Commands;
 using Azure.Sdk.Tools.Cli.Models;
@@ -21,22 +21,29 @@ public class TspClientUpdateTool(
 {
     public override CommandGroup[] CommandHierarchy { get; set; } = [SharedCommandGroups.TypeSpec];
 
-    private readonly Argument<string> updateCommitSha = new(name: "update-commit-sha", description: "SHA of the commit to apply update changes for") { Arity = ArgumentArity.ExactlyOne };
-    private readonly Option<string?> newGenOpt = new(["--new-gen"], () => "./tmpgen", "Directory for regenerated TypeSpec output (optional)");
+    private readonly Argument<string> updateCommitSha = new("update-commit-sha")
+    {
+        Description = "SHA of the commit to apply update changes for",
+        Arity = ArgumentArity.ExactlyOne
+    };
+    private readonly Option<string?> newGenOpt = new("--new-gen")
+    {
+        Description = "Directory for regenerated TypeSpec output (optional)",
+        Required = false,
+        DefaultValueFactory = _ => "./tmpgen",
+    };
 
     protected override Command GetCommand() =>
         new("customized-update", "Update customized TypeSpec-generated client code. Runs the full pipeline by default: regenerate -> diff -> map -> propose -> apply")
         {
-            updateCommitSha,
-            SharedOptions.PackagePath,
-            newGenOpt
+            updateCommitSha, SharedOptions.PackagePath, newGenOpt,
         };
 
-    public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+    public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
     {
-        var spec = ctx.ParseResult.GetValueForArgument(updateCommitSha);
-        var packagePath = ctx.ParseResult.GetValueForOption(SharedOptions.PackagePath);
-        var newGenPath = ctx.ParseResult.GetValueForOption(newGenOpt);
+        var spec = parseResult.GetValue(updateCommitSha);
+        var packagePath = parseResult.GetValue(SharedOptions.PackagePath);
+        var newGenPath = parseResult.GetValue(newGenOpt);
         try
         {
             logger.LogInformation("Starting client update (CLI) for package at: {packagePath} with new-gen: {newGenPath}", packagePath, newGenPath);

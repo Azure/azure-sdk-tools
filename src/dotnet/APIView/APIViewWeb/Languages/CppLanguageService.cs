@@ -121,7 +121,7 @@ namespace APIViewWeb
 
         public override bool CanUpdate(string versionString) => versionString != CurrentVersion;
 
-        public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis)
+        public override async Task<CodeFile> GetCodeFileAsync(string originalName, Stream stream, bool runAnalysis, string crossLanguageMetadata = null)
         {
             MemoryStream astStream = new MemoryStream();
             await stream.CopyToAsync(astStream);

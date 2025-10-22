@@ -1,6 +1,6 @@
 using System.ComponentModel;
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.Text.RegularExpressions;
 
 using ModelContextProtocol.Server;
@@ -28,14 +28,55 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
         ];
 
         // Core command options
-        private readonly Option<string> repoOption = new(["--repo", "-r"], "The repository name") { IsRequired = true };
-        private readonly Option<bool> isMgmtPlaneOption = new(["--mgmt-plane"], "Indicates whether this service is a management-plane library") { IsRequired = true };
-        private readonly Option<string> pathOptionOptional = new(["--path", "-p"], "The repository path to check/validate") { IsRequired = false };
-        private readonly Option<string> serviceLabelOption = new(["--service-label"], "The service label") { IsRequired = false };
-        private readonly Option<string[]> serviceOwnersOption = new(["--service-owners"], "The service owners (space-separated)") { IsRequired = false };
-        private readonly Option<string[]> sourceOwnersOption = new(["--source-owners"], "The source owners (space-separated)") { IsRequired = false };
-        private readonly Option<bool> isAddingOption = new(["--is-adding"], "Whether to add (true) or remove (false) owners") { IsRequired = false };
-        private readonly Option<string> workingBranchOption = new(["--branch"], "Branch to make edits to, only if provided.") { IsRequired = false };
+        private readonly Option<string> repoOption = new("--repo", "-r")
+        {
+            Description = "The repository name",
+            Required = true,
+        };
+
+        private readonly Option<bool> isMgmtPlaneOption = new("--mgmt-plane")
+        {
+            Description = "Indicates whether this service is a management-plane library",
+            Required = true,
+        };
+
+        private readonly Option<string> pathOptionOptional = new("--path", "-p")
+        {
+            Description = "The repository path to check/validate",
+            Required = false,
+        };
+
+        private readonly Option<string> serviceLabelOption = new("--service-label")
+        {
+            Description = "The service label",
+            Required = false,
+        };
+
+        private readonly Option<string[]> serviceOwnersOption = new("--service-owners")
+        {
+            Description = "The service owners (space-separated)",
+            Required = false,
+            AllowMultipleArgumentsPerToken = true,
+        };
+
+        private readonly Option<string[]> sourceOwnersOption = new("--source-owners")
+        {
+            Description = "The source owners (space-separated)",
+            Required = false,
+            AllowMultipleArgumentsPerToken = true,
+        };
+
+        private readonly Option<bool> isAddingOption = new("--is-adding")
+        {
+            Description = "Whether to add (true) or remove (false) owners",
+            Required = false,
+        };
+
+        private readonly Option<string> workingBranchOption = new("--branch")
+        {
+            Description = "Branch to make edits to, only if provided.",
+            Required = false,
+        };
 
         private readonly IGitHubService githubService;
         private readonly ILogger<CodeownersTools> logger;
@@ -62,46 +103,39 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
             CodeownersUtils.Utils.Log.Configure(loggerFactory);
         }
 
-        protected override List<Command> GetCommands()
-        {
-            List<Command> subCommands = [
-                new(updateCodeownersCommandName, "Update codeowners in a repository")
-                {
-                    repoOption,
-                    isMgmtPlaneOption,
-                    pathOptionOptional,
-                    serviceLabelOption,
-                    serviceOwnersOption,
-                    sourceOwnersOption,
-                    isAddingOption,
-                    workingBranchOption,
-                },
-                new(validateCodeownersEntryCommandName, "Validate codeowners for an existing service entry")
-                {
-                    repoOption,
-                    serviceLabelOption,
-                    pathOptionOptional
-                }
-            ];
+        protected override List<Command> GetCommands() =>
+        [
+            new(updateCodeownersCommandName, "Update codeowners in a repository")
+            {
+                repoOption,
+                isMgmtPlaneOption,
+                pathOptionOptional,
+                serviceLabelOption,
+                serviceOwnersOption,
+                sourceOwnersOption,
+                isAddingOption,
+                workingBranchOption,
+            },
+            new(validateCodeownersEntryCommandName, "Validate codeowners for an existing service entry")
+            {
+                repoOption, serviceLabelOption, pathOptionOptional,
+            }
+        ];
 
-            return subCommands;
-        }
-
-        public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+        public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
-            var command = ctx.ParseResult.CommandResult.Command.Name;
-            var commandParser = ctx.ParseResult;
+            var command = parseResult.CommandResult.Command.Name;
 
             if (command == updateCodeownersCommandName)
             {
-                var repoValue = commandParser.GetValueForOption(repoOption);
-                var isMgmtPlaneValue = commandParser.GetValueForOption(isMgmtPlaneOption);
-                var pathValue = commandParser.GetValueForOption(pathOptionOptional);
-                var serviceLabelValue = commandParser.GetValueForOption(serviceLabelOption);
-                var serviceOwnersValue = commandParser.GetValueForOption(serviceOwnersOption);
-                var sourceOwnersValue = commandParser.GetValueForOption(sourceOwnersOption);
-                var isAddingValue = commandParser.GetValueForOption(isAddingOption);
-                var workingBranchValue = commandParser.GetValueForOption(workingBranchOption);
+                var repoValue = parseResult.GetValue(repoOption);
+                var isMgmtPlaneValue = parseResult.GetValue(isMgmtPlaneOption);
+                var pathValue = parseResult.GetValue(pathOptionOptional);
+                var serviceLabelValue = parseResult.GetValue(serviceLabelOption);
+                var serviceOwnersValue = parseResult.GetValue(serviceOwnersOption);
+                var sourceOwnersValue = parseResult.GetValue(sourceOwnersOption);
+                var isAddingValue = parseResult.GetValue(isAddingOption);
+                var workingBranchValue = parseResult.GetValue(workingBranchOption);
 
                 var addResult = await UpdateCodeowners(
                     repoValue ?? "",
@@ -118,9 +152,9 @@ namespace Azure.Sdk.Tools.Cli.Tools.EngSys
 
             if (command == validateCodeownersEntryCommandName)
             {
-                var validateRepo = commandParser.GetValueForOption(repoOption);
-                var validateServiceLabel = commandParser.GetValueForOption(serviceLabelOption);
-                var validateRepoPath = commandParser.GetValueForOption(pathOptionOptional);
+                var validateRepo = parseResult.GetValue(repoOption);
+                var validateServiceLabel = parseResult.GetValue(serviceLabelOption);
+                var validateRepoPath = parseResult.GetValue(pathOptionOptional);
 
                 var validateResult = await ValidateCodeownersEntryForService(
                     validateRepo ?? "",

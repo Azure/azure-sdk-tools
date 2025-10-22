@@ -1,5 +1,5 @@
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.ComponentModel;
 using System.Text.RegularExpressions;
 using ModelContextProtocol.Server;
@@ -23,24 +23,42 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         private const int CommandTimeoutInMinutes = 30;
 
         // Generate command options
-        private readonly Option<string> localSdkRepoPathOpt = new(["--local-sdk-repo-path", "-r"], "Absolute path to the local azure-sdk-for-{language} repository") { IsRequired = false };
-        private readonly Option<string> tspConfigPathOpt = new(["--tsp-config-path", "-t"], "Path to the 'tspconfig.yaml' configuration file, it can be a local path or remote HTTPS URL") { IsRequired = false };
-        private readonly Option<string> tspLocationPathOpt = new(["--tsp-location-path", "-l"], "Absolute path to the 'tsp-location.yaml' configuration file") { IsRequired = false };
-        private readonly Option<string> emitterOpt = new(["--emitter-options", "-o"], "Emitter options in key-value format. Example: 'package-version=1.0.0-beta.1'") { IsRequired = false };
+        private readonly Option<string> localSdkRepoPathOpt = new("--local-sdk-repo-path", "-r")
+        {
+            Description = "Absolute path to the local azure-sdk-for-{language} repository",
+            Required = false,
+        };
+
+        private readonly Option<string> tspConfigPathOpt = new("--tsp-config-path", "-t")
+        {
+            Description = "Path to the 'tspconfig.yaml' configuration file, it can be a local path or remote HTTPS URL",
+            Required = false,
+        };
+
+        private readonly Option<string> tspLocationPathOpt = new("--tsp-location-path", "-l")
+        {
+            Description = "Absolute path to the 'tsp-location.yaml' configuration file",
+            Required = false,
+        };
+
+        private readonly Option<string> emitterOpt = new("--emitter-options", "-o")
+        {
+            Description = "Emitter options in key-value format. Example: 'package-version=1.0.0-beta.1'",
+            Required = false,
+        };
 
         protected override Command GetCommand() =>
             new(GenerateSdkCommandName, "Generates SDK code for a specified language based on the provided 'tspconfig.yaml' or 'tsp-location.yaml'.")
             {
-                localSdkRepoPathOpt, tspConfigPathOpt, tspLocationPathOpt, emitterOpt
+                localSdkRepoPathOpt, tspConfigPathOpt, tspLocationPathOpt, emitterOpt,
             };
 
-        public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+        public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
-            var commandParser = ctx.ParseResult;
-            var localSdkRepoPath = commandParser.GetValueForOption(localSdkRepoPathOpt);
-            var tspConfigPath = commandParser.GetValueForOption(tspConfigPathOpt);
-            var tspLocationPath = commandParser.GetValueForOption(tspLocationPathOpt);
-            var emitterOptions = commandParser.GetValueForOption(emitterOpt);
+            var localSdkRepoPath = parseResult.GetValue(localSdkRepoPathOpt);
+            var tspConfigPath = parseResult.GetValue(tspConfigPathOpt);
+            var tspLocationPath = parseResult.GetValue(tspLocationPathOpt);
+            var emitterOptions = parseResult.GetValue(emitterOpt);
             return await GenerateSdkAsync(localSdkRepoPath, tspConfigPath, tspLocationPath, emitterOptions, ct);
         }
 

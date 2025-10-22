@@ -3,7 +3,6 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.CommandLine;
 using System.CommandLine.Parsing;
 
 namespace Azure.Sdk.Tools.Cli.Helpers
@@ -163,14 +162,8 @@ namespace Azure.Sdk.Tools.Cli.Helpers
                 return Array.Empty<string>();
             }
 
-            // Use System.CommandLine.Parser
-            var parser = new Parser(new RootCommand());
-            var result = parser.Parse(command);
-            
-            // Get all tokens
-            var tokens = result.Tokens
-                .Select(t => t.Value)
-                .ToArray();
+            // Use System.CommandLine.CommandLineParser to split respecting quotes
+            var tokens = CommandLineParser.SplitCommandLine(command).ToArray();
 
             _logger.LogDebug("Parsed command into {Count} parts: {Parts}", tokens.Length, string.Join(", ", tokens));
             return tokens;

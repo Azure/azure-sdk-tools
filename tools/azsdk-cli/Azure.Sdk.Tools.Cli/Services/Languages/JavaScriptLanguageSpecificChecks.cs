@@ -27,18 +27,40 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
         _logger = logger;
     }
 
-    public async Task<CLICheckResponse> AnalyzeDependenciesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
+    public async Task<CLICheckResponse> ValidateSamplesAsync(string packagePath, bool fixCheckErrors = false, CancellationToken ct = default)
     {
-        // Implementation for analyzing dependencies in a JavaScript project
-        return await Task.FromResult(new CLICheckResponse());
-    }
+        try
+        {
+            var result = await _processHelper.Run(new(
+                    "pnpm",
+                    ["run", "build:samples"],
+                    workingDirectory: packagePath
+                ),
+                ct
+            );
 
+            if (result.ExitCode != 0)
+            {
+                _logger.LogError("'pnpm run build:samples' failed with exit code {ExitCode}", result.ExitCode);
+                return new CLICheckResponse(result)
+                {
+                    NextSteps = ["Review the error output and attempt to resolve the issue."]
+                };
+            }
+
+            return new CLICheckResponse(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error validating samples for JavaScript project at: {PackagePath}", packagePath);
+            return new CLICheckResponse(1, "", $"Error validating samples: {ex.Message}");
+        }
+    }
+    
     public async Task<CLICheckResponse> UpdateSnippetsAsync(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Running 'pnpm run update-snippets' in {PackagePath}", packagePath);
-
             var result = await _processHelper.Run(new(
                     "pnpm",
                     ["run", "update-snippets"],
@@ -70,7 +92,6 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
         try
         {
             var subcommand = fix ? "lint:fix" : "lint";
-            _logger.LogInformation($"Running 'pnpm run {subcommand}' in {packagePath}");
 
             var result = await _processHelper.Run(new(
                     "pnpm",
@@ -106,7 +127,6 @@ public class JavaScriptLanguageSpecificChecks : ILanguageSpecificChecks
         try
         {
             var subcommand = fix ? "format" : "check-format";
-            _logger.LogInformation($"Running 'pnpm run {subcommand}' in {packagePath}");
             var result = await _processHelper.Run(new(
                     "pnpm",
                     ["run", subcommand],

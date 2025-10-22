@@ -9,16 +9,6 @@ namespace Azure.Tools.GeneratorAgent
     /// </summary>
     internal sealed class CommandLineConfiguration
     {
-        private const int ExitCodeSuccess = 0;
-        private const int ExitCodeFailure = 1;    
-        private readonly ILogger<CommandLineConfiguration> Logger;
-
-        public CommandLineConfiguration(ILogger<CommandLineConfiguration> logger)
-        {
-            ArgumentNullException.ThrowIfNull(logger);
-            Logger = logger;
-        }
-
         /// <summary>
         /// Creates and configures the root command for the application.
         /// </summary>
@@ -57,23 +47,5 @@ namespace Azure.Tools.GeneratorAgent
 
             return rootCommand;
         }
-
-        /// <summary>
-        /// Validates input and logs errors. Returns 0 for success, 1 for failure.
-        /// Single responsibility - validate and log once at boundary.
-        /// </summary>
-        internal int ValidateInput(string? typespecDir, string? commitId, string sdkDir)
-        {
-            var result = ValidationContext.TryValidateAndCreate(typespecDir, commitId, sdkDir);
-            
-            if (result.IsFailure)
-            {
-                Logger.LogError("Input validation failed: {Error}", result.Exception?.Message ?? "Unknown validation error");
-                return ExitCodeFailure;
-            }
-            
-            Logger.LogDebug("Input validation completed successfully");
-            return ExitCodeSuccess;
-        } 
     }
 }

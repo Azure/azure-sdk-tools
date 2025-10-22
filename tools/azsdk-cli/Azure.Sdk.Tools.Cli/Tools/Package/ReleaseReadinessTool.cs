@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 using System.CommandLine;
-using System.CommandLine.Invocation;
+using System.CommandLine.Parsing;
 using System.ComponentModel;
 using Microsoft.TeamFoundation.Build.WebApi;
 using ModelContextProtocol.Server;
@@ -20,17 +20,26 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         ILogger<ReleaseReadinessTool> logger
     ) : MCPTool
     {
-        private readonly Option<string> packageNameOpt = new(["--package-name"], "SDK package name") { IsRequired = true };
-        private readonly Option<string> languageOpt = new(["--language"], "SDK language from one of the following ['.NET', 'Python', 'Java', 'JavaScript', Go]") { IsRequired = true };
+        private readonly Option<string> packageNameOpt = new("--package-name")
+        {
+            Description = "SDK package name",
+            Required = true,
+        };
+
+        private readonly Option<string> languageOpt = new("--language")
+        {
+            Description = "SDK language from one of the following ['.NET', 'Python', 'Java', 'JavaScript', Go]",
+            Required = true,
+        };
         private static readonly string Pipeline_Success_Status = "Succeeded";
 
         protected override Command GetCommand() =>
             new("release-readiness", "Checks release readiness of a SDK package.") { packageNameOpt, languageOpt };
 
-        public override async Task<CommandResponse> HandleCommand(InvocationContext ctx, CancellationToken ct)
+        public override async Task<CommandResponse> HandleCommand(ParseResult parseResult, CancellationToken ct)
         {
-            var packageName = ctx.ParseResult.GetValueForOption(packageNameOpt);
-            var language = ctx.ParseResult.GetValueForOption(languageOpt);
+            var packageName = parseResult.GetValue(packageNameOpt);
+            var language = parseResult.GetValue(languageOpt);
             logger.LogInformation("Running release readiness check for {packageName} in {language}", packageName, language);
             return await CheckPackageReleaseReadinessAsync(packageName, language);
         }

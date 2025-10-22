@@ -14,7 +14,7 @@ public class ServiceLabelResponse : CommandResponse
     [JsonPropertyName("label")]
     public string Label { get; set; } = string.Empty;
 
-    public override string ToString()
+    protected override string Format()
     {
         var output = $"Status: {Status}" + Environment.NewLine +
                      $"Label: {Label}";
@@ -24,6 +24,6 @@ public class ServiceLabelResponse : CommandResponse
             output += Environment.NewLine + $"Pull Request URL: {PullRequestUrl}";
         }
 
-        return ToString(output);
+        return output;
     }
 }

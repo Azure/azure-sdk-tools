@@ -20,7 +20,7 @@ public class LogAnalysisResponse : CommandResponse
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public string SuggestedFix { get; set; }
 
-    public override string ToString()
+    protected override string Format()
     {
         var output = $"### Summary:" + Environment.NewLine +
                      $"{Summary}" + Environment.NewLine + Environment.NewLine;
@@ -41,7 +41,7 @@ public class LogAnalysisResponse : CommandResponse
                       Environment.NewLine;
         }
 
-        return ToString(output);
+        return output;
     }
 }
 

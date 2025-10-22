@@ -26,25 +26,17 @@ namespace Azure.Tools.GeneratorAgent
         public async Task<Result<object>> BuildSdkAsync(string sdkOutputDir, CancellationToken cancellationToken = default)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(sdkOutputDir);
-            Logger.LogDebug("Starting library build in directory: {SdkOutputDir}", sdkOutputDir);
+            Logger.LogInformation("Starting library build in directory: {SdkOutputDir}", sdkOutputDir);
 
-            Result<string> buildTargetResult = DetermineBuildTarget(sdkOutputDir);
-            if (buildTargetResult.IsFailure)
-            {
-                return Result<object>.Failure(buildTargetResult.Exception!);
-            }
+            string buildTargetResult = DetermineBuildTarget(sdkOutputDir);
 
-            string arguments = $"build \"{buildTargetResult.Value}\"";
+            string arguments = $"build \"{buildTargetResult}\"";
             
-            Result<string> argValidation = InputValidator.ValidateProcessArguments(arguments);
-            if (argValidation.IsFailure)
-            {
-                return Result<object>.Failure(argValidation.Exception!);
-            }
+            string validatedArguments = InputValidator.ValidateProcessArguments(arguments);
 
             Result<object> buildResult = await ProcessExecutionService.ExecuteAsync(
                 SecureProcessConfiguration.DotNetExecutable,
-                argValidation.Value!,
+                validatedArguments,
                 sdkOutputDir,
                 cancellationToken).ConfigureAwait(false);
 
@@ -67,7 +59,7 @@ namespace Azure.Tools.GeneratorAgent
         /// </summary>
         /// <param name="sdkOutputDir">The SDK output directory to search</param>
         /// <returns>Result containing the path to the build target, or failure if none found</returns>
-        private Result<string> DetermineBuildTarget(string sdkOutputDir)
+        private string DetermineBuildTarget(string sdkOutputDir)
         {
             try
             {
@@ -76,7 +68,7 @@ namespace Azure.Tools.GeneratorAgent
                 {
                     string solutionFile = solutionFiles[0];
                     Logger.LogDebug("Found solution file: {SolutionFile}", solutionFile);
-                    return Result<string>.Success(solutionFile);
+                    return solutionFile;
                 }
 
                 // If no solution file, look for project files in src directory (common pattern)
@@ -87,10 +79,8 @@ namespace Azure.Tools.GeneratorAgent
                     if (projectFiles.Length > 0)
                     {
                         string projectFile = projectFiles[0];
-
-                            Logger.LogDebug("Found project file in src: {ProjectFile}", projectFile);
-
-                        return Result<string>.Success(projectFile);
+                        Logger.LogDebug("Found project file in src: {ProjectFile}", projectFile);
+                        return projectFile;
                     }
                 }
 
@@ -99,18 +89,16 @@ namespace Azure.Tools.GeneratorAgent
                 if (rootProjectFiles.Length > 0)
                 {
                     string projectFile = rootProjectFiles[0];
-
-                    Logger.LogDebug("Found project file in root: {ProjectFile}", projectFile);
-                    
-                    return Result<string>.Success(projectFile);
+                    Logger.LogDebug("Found project file in root: {ProjectFile}", projectFile); 
+                    return projectFile;
                 }
 
-                return Result<string>.Failure(new FileNotFoundException($"No solution (.sln) or project (.csproj) files found in: {sdkOutputDir}"));
+                throw new FileNotFoundException($"No solution (.sln) or project (.csproj) files found in: {sdkOutputDir}");
             }
             catch (Exception ex)
             {
                 Logger.LogError(ex, "Error while determining build target in {SdkOutputDir}", sdkOutputDir);
-                return Result<string>.Failure(ex);
+                throw;
             }
         }
     }

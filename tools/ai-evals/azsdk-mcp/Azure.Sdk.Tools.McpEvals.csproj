@@ -28,4 +28,8 @@
     <None Include="TestData\**\*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\azsdk-cli\Azure.Sdk.Tools.Cli\Azure.Sdk.Tools.Cli.csproj" />
+  </ItemGroup>
+
 </Project>

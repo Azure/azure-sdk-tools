@@ -660,6 +660,11 @@ namespace Azure.Sdk.Tools.PerfAutomation
 
         private static async Task<List<OperationResult>> ParseOperationResults(string resultsFile)
         {
+            if (!File.Exists(resultsFile))
+            {
+                return [];
+            }
+
             string json = await File.ReadAllTextAsync(resultsFile);
             return JsonSerializer.Deserialize<List<OperationResult>>(json);
         }

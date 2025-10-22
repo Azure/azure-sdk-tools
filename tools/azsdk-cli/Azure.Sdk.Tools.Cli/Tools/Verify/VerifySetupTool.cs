@@ -113,7 +113,6 @@ public class VerifySetupTool : MCPTool
                     {
                         Requirement = req.requirement,
                         Instructions = req.instructions,
-                        Output = result.ResponseError,
                     });
                 }
             }

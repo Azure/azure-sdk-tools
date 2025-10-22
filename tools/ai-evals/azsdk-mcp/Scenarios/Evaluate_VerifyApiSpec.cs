@@ -23,12 +23,12 @@ namespace Azure.Sdk.Tools.McpEvals.Scenarios
             ];
 
             // 1. Load Scenario Data from prompt
-            var scenarioData = ChatMessageHelper.LoadScenarioFromPrompt(prompt, expectedTools);
+            var scenarioData = await ChatMessageHelper.LoadScenarioFromPrompt(prompt, expectedTools);
             var fullChat = scenarioData.ChatHistory.Append(scenarioData.NextMessage);
 
             // 2. Get chat response
             var expectedToolResults = ChatMessageHelper.GetExpectedToolsByName(scenarioData.ExpectedOutcome, s_toolNames);
-            var response = await s_chatCompletion!.GetChatResponseWithExpectedResponseAsync(scenarioData.ChatHistory, expectedToolResults);
+            var response = await s_chatCompletion!.GetChatResponseWithExpectedResponseAsync(fullChat, expectedToolResults);
 
             // 3. Custom Evaluator to check tool inputs
             // Layers the reporting configuration on top of it for a nice html report. 

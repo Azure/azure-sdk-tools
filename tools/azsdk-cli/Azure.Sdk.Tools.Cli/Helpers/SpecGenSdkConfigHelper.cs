@@ -50,7 +50,6 @@ namespace Azure.Sdk.Tools.Cli.Helpers
         private const string UpdateCiCommandJsonPath = "packageOptions/updateCiScript/command";
         private const string UpdateCiScriptPathJsonPath = "packageOptions/updateCiScript/path";
         private const string SpecToSdkConfigPath = "eng/swagger_to_sdk_config.json";
-        
 
         private readonly ILogger<SpecGenSdkConfigHelper> _logger;
 

@@ -143,33 +143,6 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
         }
 
         /// <summary>
-        /// Determines the SDK repository root from the package path.
-        /// </summary>
-        /// <param name="packagePath">The package path to start searching from.</param>
-        /// <returns>The SDK repository root path, or null if not found.</returns>
-        private string? DetermineSdkRepositoryRoot(string packagePath)
-        {
-            var currentPath = packagePath;
-            
-            // Look for common SDK repository indicators
-            var repoIndicators = new[] { ".git", "eng", "sdk", "packages" };
-            
-            while (!string.IsNullOrEmpty(currentPath) && currentPath != Path.GetPathRoot(currentPath))
-            {
-                if (repoIndicators.Any(indicator => Directory.Exists(Path.Combine(currentPath, indicator))))
-                {
-                    logger.LogInformation($"Detected SDK repository root at: {currentPath}");
-                    return currentPath;
-                }
-                
-                currentPath = Path.GetDirectoryName(currentPath);
-            }
-
-            logger.LogWarning($"Could not determine SDK repository root from package path: {packagePath}");
-            return null;
-        }
-
-        /// <summary>
         /// Determines the package type (mgmt vs data-plane) for the specified package.
         /// </summary>
         /// <param name="packagePath">The package path.</param>

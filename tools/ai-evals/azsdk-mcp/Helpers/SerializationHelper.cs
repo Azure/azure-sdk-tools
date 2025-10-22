@@ -46,6 +46,22 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
             return ParseChatMessagesIntoScenarioData(fixedChatMessages);
         }
 
+        public static ScenarioData LoadScenarioFromPrompt(string prompt, IEnumerable<string> tools)
+        {
+            var history = new List<ChatMessage>
+            {
+                new(ChatRole.System, LLMSystemInstructions.BuildLLMInstructions())
+            };
+            var nextMessage = new ChatMessage(ChatRole.User, prompt);
+            var expectedOutcome = new List<ChatMessage>();
+            return new ScenarioData
+            {
+                ChatHistory = history,
+                NextMessage = nextMessage,
+                ExpectedOutcome = expectedOutcome
+            };
+        }
+
         /// <summary>
         /// Rebuilds attachments in the first chat message by replacing attachment content
         /// with files from the configured instruction directories.

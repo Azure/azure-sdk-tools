@@ -11,17 +11,24 @@ namespace Azure.Sdk.Tools.McpEvals.Scenarios
 {
     public partial class Scenario
     {
-    [Test]
-        public async Task AzsdkTypeSpecGeneration_Step02_TypespecValidation()
+        [Test]
+        public async Task Evaluate_VerifyApiSpec()
         {
-            // 1. Load Scenario Data from JSON for this test. 
-            var filePath = Path.Combine(TestContext.CurrentContext.TestDirectory, "TestData", "example.json");
-            var json = await SerializationHelper.LoadScenarioFromChatMessagesAsync(filePath);
-            var fullChat = json.ChatHistory.Append(json.NextMessage);
+            const string prompt = "Help me verify my api spec is properly setup for sdk generation. The path to my typespec is C:\\Users\\juanospina\\source\\repos\\azure-rest-api-specs\\specification\\contosowidgetmanager\\Contoso.WidgetManager\\main.tsp.";
+            string[] expectedTools =
+            [
+                "azsdk_typespec_check_project_in_public_repo",
+                "azsdk_run_typespec_validation",
+                "azsdk_get_modified_typespec_projects"
+            ];
+
+            // 1. Load Scenario Data from prompt
+            var scenarioData = ChatMessageHelper.LoadScenarioFromPrompt(prompt, expectedTools);
+            var fullChat = scenarioData.ChatHistory.Append(scenarioData.NextMessage);
 
             // 2. Get chat response
-            var expectedToolResults = ChatMessageHelper.GetExpectedToolsByName(json.ExpectedOutcome, s_toolNames);
-            var response = await s_chatCompletion!.GetChatResponseWithExpectedResponseAsync(fullChat, expectedToolResults);
+            var expectedToolResults = ChatMessageHelper.GetExpectedToolsByName(scenarioData.ExpectedOutcome, s_toolNames);
+            var response = await s_chatCompletion!.GetChatResponseWithExpectedResponseAsync(scenarioData.ChatHistory, expectedToolResults);
 
             // 3. Custom Evaluator to check tool inputs
             // Layers the reporting configuration on top of it for a nice html report. 
@@ -35,8 +42,8 @@ namespace Azure.Sdk.Tools.McpEvals.Scenarios
             await using ScenarioRun scenarioRun = await reportingConfiguration.CreateScenarioRunAsync(this.ScenarioName);
 
             // Pass the expected outcome through the additional context. 
-            var checkInputs = true;
-            var additionalContext = new ExpectedToolInputEvaluatorContext(json.ExpectedOutcome, s_toolNames, checkInputs);
+            var checkInputs = false;
+            var additionalContext = new ExpectedToolInputEvaluatorContext(scenarioData.ExpectedOutcome, s_toolNames, checkInputs);
             var result = await scenarioRun.EvaluateAsync(fullChat, response, additionalContext: [additionalContext]);
 
             // 4. Assert the results

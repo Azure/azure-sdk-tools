@@ -1,4 +1,3 @@
-import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import date
 from typing import Dict, Optional
@@ -48,15 +47,21 @@ class MetricsSegment:
     pk: Optional[str] = None
 
     def compute_ids(self):
-        """Generate deterministic CosmosDB ID and partition key."""
+        """Generate deterministic CosmosDB ID and partition key, lowercasing dimension values and normalizing language."""
         start = self.start_date
         end = self.end_date
 
-        dim_key = (
-            "dim:all"
-            if not self.dimension
-            else "dim:" + ";".join(f"{k}={v}" for k, v in sorted(self.dimension.items()))
-        )
+        def normalize_dim_item(k, v):
+            k = k.lower()
+            v = v.lower()
+            if k == "language" and v == "c#":
+                v = "csharp"
+            return f"{k}={v}"
+
+        if not self.dimension:
+            dim_key = "dim:all"
+        else:
+            dim_key = "dim:" + ";".join(normalize_dim_item(k, v) for k, v in sorted(self.dimension.items()))
         # Use ISO strings for stable IDs
         self.id = f"{start.isoformat()}|{end.isoformat()}|{dim_key}"
         self.pk = start.strftime("%Y_%m")
@@ -71,7 +76,7 @@ class MetricsSegment:
         return d
 
     def __post_init__(self):
-        """Normalize dates and compute segment_days automatically."""
+        """Normalize dates, compute segment_days, and always set id/pk."""
         # Normalize to date objects if strings were passed
         if isinstance(self.start_date, str):
             self.start_date = date.fromisoformat(self.start_date)
@@ -92,12 +97,11 @@ def get_metrics_report(
     if save:
         db_manager = get_database_manager()
         cosmos_client = db_manager.get_container_client("metrics")
-        for key, doc in data.items():
+        for doc in data.values():
             try:
-                cosmos_client.upsert(doc["id"], data=doc)
+                cosmos_client.upsert(doc.id, data=doc.to_dict())
             except Exception as e:
-                # FIXME: debug issues here...
-                print(f"Error upserting document {doc['id']}: {e}")
+                print(f"Error upserting document {doc.id}: {e}")
     report = _build_metrics_report(data)
     if markdown:
         prompt_path = get_prompt_path(folder="other", filename="summarize_metrics")
@@ -123,6 +127,8 @@ def _build_metrics_segment(
         metrics.dimension = {"language": language}
     else:
         metrics.dimension = {}
+    # need language set to compute IDs
+    metrics.compute_ids()
 
     metrics.active_review_count = len(reviews)
 

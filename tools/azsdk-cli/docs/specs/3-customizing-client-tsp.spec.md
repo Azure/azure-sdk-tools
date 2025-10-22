@@ -18,6 +18,8 @@ _Terms used throughout this spec with precise meanings:_
 
 - **<a id="typespec-customizations"></a>TypeSpec Customizations**: SDK-specific customizations made in the `client.tsp` file to control SDK generation. This term does not refer to modifications of the service API TypeSpec files.
 
+- **<a id="code-customizations"></a>Code Customizations**: Hand-written modifications made directly to generated SDK code after generation. These customizations exist within the SDK language repositories and must be preserved across regeneration. Examples include adding convenience methods, custom error handling, or language-specific optimizations. Also known as "handwritten code" or "customization layer."
+
 - **<a id="api-view"></a>API View**: A web-based tool for reviewing SDK APIs. It allows language architects and SDK team members to provide feedback on just the SDK APIs without needing to understand the underlying implementation.
 
 ---
@@ -30,10 +32,11 @@ Service teams cannot be expected to understand the nuances of each SDK language 
 
 ### Current State
 
-Currently, feedback for adding client customizations to `client.tsp` can come in 2 ways:
+Currently, feedback for adding client customizations to `client.tsp` can come in a few forms:
 
-1. From manual reviews, e.g. API View feedback
+1. From reviews, e.g. API View feedback
 2. From automated processes, e.g. code analyzers
+3. From manually triggered processes, e.g. breaking changes analysis
 
 **.NET**:
 The .NET SDK has code analyzers that run during their SDK build (`dotnet build`) that identifies problematic code (e.g. class names that don't follow .NET naming conventions) and suggests fixes.
@@ -51,7 +54,7 @@ All language SDKs have their APIs reviewed in API View. Common feedback includes
 
 We should minimize the amount of time service teams spend on customizing their TypeSpec for each SDK language. Let them focus on what they are experts on - the service API - rather than figuring out how to apply SDK-specific feedback to their TypeSpec.
 
-For automated processes like .NET, we can reduce the time spent in the outer loop of SDK build failures by proactively applying customizations to `client.tsp` before creating a PR in the azure-rest-api-specs repo.
+For automated processes like .NET, we can reduce the time spent in the outer loop of SDK build failures by proactively applying customizations to `client.tsp`.
 
 For manual processes like API View reviews, we can improve the authoring experience to reduce the tedium and cognitive load of applying customizations manually.
 

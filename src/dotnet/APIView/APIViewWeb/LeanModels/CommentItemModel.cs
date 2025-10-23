@@ -23,6 +23,14 @@ namespace APIViewWeb.LeanModels
         MustFix = 3
     }
 
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
+    public enum CommentSource
+    {
+        UserGenerated,
+        AIGenerated,
+        Diagnostic
+    }
+
     public class CommentItemModel
     {
         [System.Text.Json.Serialization.JsonPropertyName("id")]
@@ -43,6 +51,7 @@ namespace APIViewWeb.LeanModels
         public HashSet<string> TaggedUsers { get; set; } = new HashSet<string>();
         public CommentType CommentType { get; set; }
         public CommentSeverity? Severity { get; set; }
+        public CommentSource CommentSource { get; set; } = CommentSource.UserGenerated;
         public bool ResolutionLocked { get; set; } = false;
         public string CreatedBy { get; set; }
         public DateTime CreatedOn { get; set; }
@@ -51,6 +60,7 @@ namespace APIViewWeb.LeanModels
         public bool IsGeneric { get; set; }
         public List<string> GuidelineIds { get; set; } = [];
         public List<string> MemoryIds { get; set; } = [];
+        public float ConfidenceScore { get; set; }
 
         public static CommentSeverity ParseSeverity(string value)
         {

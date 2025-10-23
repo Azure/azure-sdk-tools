@@ -575,6 +575,40 @@ export class CodePanelComponent implements OnChanges{
     }
   }
 
+  handleBatchResolutionActionEmitter(commentUpdates: CommentUpdatesDto) {
+    commentUpdates.reviewId = this.reviewId!;
+    switch (commentUpdates.commentThreadUpdateAction) {
+      case CommentThreadUpdateAction.CommentCreated:
+        if (commentUpdates.comment) {
+          this.addCommentToCommentThread(commentUpdates, commentUpdates.comment);
+        }
+        break;
+      case CommentThreadUpdateAction.CommentResolved:
+        this.applyCommentResolutionUpdate(commentUpdates);
+        break;
+      case CommentThreadUpdateAction.CommentUpVoteToggled:
+        const upComment = this.allComments?.find(c => c.id === commentUpdates.commentId);
+        if (upComment) {
+          const hasUpvote = upComment.upvotes.includes(this.userProfile?.userName!);
+          if (!hasUpvote) {
+            this.toggleVoteUp(upComment);
+          }
+        }
+        break;
+      case CommentThreadUpdateAction.CommentDownVoteToggled:
+        const downComment = this.allComments?.find(c => c.id === commentUpdates.commentId);
+        if (downComment) {
+          const hasDownvote = downComment.downvotes.includes(this.userProfile?.userName!);
+          if (!hasDownvote) {
+            this.toggleVoteDown(downComment);
+          }
+        }
+        break;
+    }
+    
+    this.signalRService.pushCommentUpdates(commentUpdates);
+  }
+
   handleCommentUpvoteActionEmitter(commentUpdates: CommentUpdatesDto){
     commentUpdates.reviewId = this.reviewId!;
     this.commentsService.toggleCommentUpVote(this.reviewId!, commentUpdates.commentId!).pipe(take(1)).subscribe({
@@ -1077,7 +1111,8 @@ export class CodePanelComponent implements OnChanges{
   }
 
   private applyCommentResolutionUpdate(commentUpdates: CommentUpdatesDto) {
-    this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread[commentUpdates.associatedRowPositionInGroup!].isResolvedCommentThread = (commentUpdates.commentThreadUpdateAction === CommentThreadUpdateAction.CommentResolved)? true : false;
+    this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread[commentUpdates.associatedRowPositionInGroup!].isResolvedCommentThread = 
+      (commentUpdates.commentThreadUpdateAction === CommentThreadUpdateAction.CommentResolved);
     this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread[commentUpdates.associatedRowPositionInGroup!].commentThreadIsResolvedBy = commentUpdates.resolvedBy!;
     this.updateItemInScroller({ ...this.codePanelData!.nodeMetaData[commentUpdates.nodeIdHashed!].commentThread[commentUpdates.associatedRowPositionInGroup!]});
     this.updateHasActiveConversations();
@@ -1085,6 +1120,21 @@ export class CodePanelComponent implements OnChanges{
 
   private toggleCommentUpVote(data: CommentUpdatesDto) {
     const comment = this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup!].comments.find(c => c.id === data.commentId);
+    if (comment) {
+      this.toggleVoteUp(comment);
+      this.updateItemInScroller(this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup!]);
+    }
+  }
+
+  private toggleCommentDownVote(data: CommentUpdatesDto) {
+    const comment = this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup!].comments.find(c => c.id === data.commentId);
+    if (comment) {
+      this.toggleVoteDown(comment);
+      this.updateItemInScroller(this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup!]);
+    }
+  }
+
+  private toggleVoteUp(comment: CommentItemModel) {
     if (comment) {
       if (comment.upvotes.includes(this.userProfile?.userName!)) {
         comment.upvotes.splice(comment.upvotes.indexOf(this.userProfile?.userName!), 1);
@@ -1094,12 +1144,10 @@ export class CodePanelComponent implements OnChanges{
           comment.downvotes.splice(comment.downvotes.indexOf(this.userProfile?.userName!), 1);
         }
       }
-      this.updateItemInScroller(this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup!]);
     }
   }
 
-  private toggleCommentDownVote(data: CommentUpdatesDto) {
-    const comment = this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup!].comments.find(c => c.id === data.commentId);
+   private toggleVoteDown(comment: CommentItemModel) {
     if (comment) {
       if (comment.downvotes.includes(this.userProfile?.userName!)) {
         comment.downvotes.splice(comment.downvotes.indexOf(this.userProfile?.userName!), 1);
@@ -1109,7 +1157,6 @@ export class CodePanelComponent implements OnChanges{
           comment.upvotes.splice(comment.upvotes.indexOf(this.userProfile?.userName!), 1);
         }
       }
-      this.updateItemInScroller(this.codePanelData!.nodeMetaData[data.nodeIdHashed!].commentThread[data.associatedRowPositionInGroup!]);
     }
   }
 

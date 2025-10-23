@@ -180,8 +180,8 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
       this.selectedApprovers = this.activeAPIRevision!.assignedReviewers.map(reviewer => reviewer.assingedTo);
       this.isCopilotReviewSupported = this.isCopilotReviewSupportedForPackage();
       this.setAPIRevisionApprovalStates();
-      this.setNamespaceReviewStates();
       this.setPullRequestsInfo();
+      this.setNamespaceReviewStates();
       if (this.activeAPIRevision?.copilotReviewInProgress) {
         this.aiReviewGenerationState = 'InProgress';
         this.generateAIReviewButtonText = 'Generating review...';
@@ -423,7 +423,11 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
 
   setNamespaceReviewStates() {
     // Only show namespace review request for TypeSpec language AND if feature is enabled AND review is not already approved
-    this.canRequestNamespaceReview = this.review?.language === 'TypeSpec' && this.namespaceReviewEnabled && !this.review?.isApproved;
+    // AND there are associated API revisions
+    this.canRequestNamespaceReview = this.review?.language === 'TypeSpec' &&
+                                      this.namespaceReviewEnabled &&
+                                      !this.review?.isApproved &&
+                                      this.pullRequestsOfAssociatedAPIRevisions.length > 0;
 
     // Check if namespace review has been requested for this revision
     this.isNamespaceReviewRequested = this.activeAPIRevision?.hasRequestedNamespaceReview || false;

@@ -108,7 +108,7 @@ The four tools are intentionally small, composable units. Each emits a machine-r
 | Timeout (default) | 5 minutes per tool invocation |
 | Output Schema | JSON with fields: result, message (see schema below) |
 | Idempotency | Multiple successive runs produce identical filesystem state except for timestamps/logs |
-| Script Implementation | MUST be PowerShell `.ps1`. SHOULD accept named parameters (e.g., `sdkRepoPath`). MUST use exit code `0` for success/partial/noop; non-zero only on outright failure. Legacy non-PS scripts should be wrapped by a small PowerShell shim. Scripts MUST write a concise stderr line prefixed with `ERROR:`; include suggested mitigation steps and links to docs in the message where possible. |
+| Script Implementation | MUST be PowerShell `.ps1`. SHOULD accept named parameters (e.g., `sdkRepoPath`). MUST use exit code `0` for success/noop; non-zero only on outright failure. Legacy non-PS scripts should be wrapped by a small PowerShell shim. Scripts MUST write a concise stderr line prefixed with `ERROR:`; include suggested mitigation steps and links to docs in the message where possible. |
 | Script Execution Environment | All scripts are executed using PowerShell Core (`pwsh`) terminal |
 | Next Steps Hint | Plain language phrase embedded in `message` (e.g., `next_steps: update version`) |
 | Missing Required Tools | If a required external tool is not present (for example: `dotnet`, `gofmt`, `pwsh`), prompt the user to run the `verify-setup` tool which validates and documents missing prerequisites. |
@@ -141,7 +141,7 @@ Outputs:
 ```
 
 ```json
-{"result":"noop", "message":"Data-plane changelog untouched; manual edits required", "next_steps": "update version"}
+{"result":"noop", "message":"Data-plane changelog untouched", "next_steps": "Manually edit the changelog, and update version"}
 ```
 
 Failure Modes:
@@ -201,7 +201,7 @@ Outputs:
 ```
 
 ```json
-{"result":"noop", "version": "", "release-date": "", "message":"Data-plane pre-release context; no version bump performed", "next_steps": "update metadata"}
+{"result":"noop", "version": "", "release-date": "", "message":"no version bump performed", "next_steps": "update metadata"}
 ```
 
 Failure Modes:
@@ -560,7 +560,7 @@ azsdk package update-changelog-content --package-path <absolute_folder_path_to_p
 **Expected Output (data-plane no-op):**
 
 ```text
-"succeeded, Data-plane changelog no-op; manual edits required; next_steps: update version (if release)."
+"noop; Data-plane changelog untouched; next_steps: manually edit the changelog, and update version."
 ```
 
 ### package update version

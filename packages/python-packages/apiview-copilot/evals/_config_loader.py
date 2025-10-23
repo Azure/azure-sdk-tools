@@ -125,8 +125,6 @@ def load_workflow_config(path: str | os.PathLike) -> WorkflowConfig:
     if not isinstance(runs, int) or runs < 1:
         _fail(f"runs must be positive integer (got: {runs!r})")
 
-    evaluator_class = get_evaluator_class(kind)
-
     return WorkflowConfig(
         name=name,
         kind=kind,

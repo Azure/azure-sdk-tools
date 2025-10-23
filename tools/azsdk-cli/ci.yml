@@ -24,6 +24,9 @@ extends:
     ReleaseBinaries: true
     ToolDirectory: tools/azsdk-cli/Azure.Sdk.Tools.Cli
     TestDirectory: tools/azsdk-cli/Azure.Sdk.Tools.Cli.Tests
+    EvalProject: tools/ai-evals/azsdk-mcp
+    OpenAIEndPoint: $(AZURE_OPENAI_ENDPOINT)
+    Model: 'gpt-4'
     VerifyChangelog: true
     StandaloneExeMatrix:
       - rid: linux-x64

@@ -5,7 +5,7 @@ import tempfile
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Any, List
+from typing import Any
 
 import yaml
 from azure.ai.evaluation import evaluate
@@ -17,6 +17,12 @@ import evals._custom
 from evals._config_loader import get_evaluator_class
 from evals._discovery import DiscoveryResult, EvaluationTarget
 from src._settings import SettingsManager
+from evals._util import (
+    load_cache_lookup,
+    append_results_to_cache,
+    get_cache_file_path,
+    construct_fake_azure_result
+)
 
 DEFAULT_NUM_RUNS: int = 1
 
@@ -126,12 +132,17 @@ class EvaluationResult:
 class EvaluationRunner:
     """Executes evaluations targets with shared context"""
 
-    def __init__(self, *, num_runs: int = DEFAULT_NUM_RUNS):
+    def __init__(self, *, num_runs: int = DEFAULT_NUM_RUNS, use_cache: bool = False):
         self.num_runs = num_runs
         self._context: ExecutionContext | None = None
         self._results_lock = threading.Lock()
+        self._use_cache = use_cache
 
-    def run(self, discovery_result: DiscoveryResult) -> List[EvaluationResult]:
+    def _ensure_context(self):
+        if self._context is None:
+            self._context = ExecutionContext()
+
+    def run(self, discovery_result: DiscoveryResult) -> list[EvaluationResult]:
         """Execute all targets in the discovery result.
 
         Args:
@@ -151,7 +162,7 @@ class EvaluationRunner:
         finally:
             self.cleanup()
 
-    def _run_parallel(self, discovery_result: DiscoveryResult) -> List[EvaluationResult]:
+    def _run_parallel(self, discovery_result: DiscoveryResult) -> list[EvaluationResult]:
         """Parallel execution using ThreadPoolExecutor."""
         cpu_count = os.cpu_count() or 4
         max_workers = min(cpu_count * 2, len(discovery_result.targets))
@@ -197,54 +208,111 @@ class EvaluationRunner:
 
         return results
 
-    def _ensure_context(self):
-        """Lazy initialize execution context."""
-        if self._context is None:
-            print("🔧 Initializing shared execution context...")
-            self._context = ExecutionContext()
-
     def _execute_target_with_progress(self, target: EvaluationTarget, index: int, total: int) -> EvaluationResult:
         print(f"[{index}/{total}] Started {target.workflow_name}...")
         return self._execute_target(target)
 
     def _execute_target(self, target: EvaluationTarget) -> EvaluationResult:
         try:
-            # Create evaluator for target, passing jsonl_file as argument
-            jsonl_file = self._context.create_temporary_jsonl_file(target)
-            evaluator_class = get_evaluator_class(target.config.kind)
-            evaluator = evaluator_class(target.config, jsonl_file=jsonl_file)
-
-            # Execute runs
-            all_run_results = []
-            for run in range(self.num_runs):
-                if self.num_runs > 1:
-                    print(f"  📋 Run {run + 1}/{self.num_runs}...")
-                result = evaluate(
-                    data=str(jsonl_file),
-                    evaluators={"metrics": evaluator},
-                    evaluator_config={"metrics": evaluator.evaluator_config},
-                    target=evaluator.target_function,
-                    fail_on_evaluator_errors=False,
-                    # FIXME: Enable this?
-                    # azure_ai_project=azure_ai_project,
-                    **self._context._credential_kwargs,
-                )
-                all_run_results.append({jsonl_file.name: result})
-
-            # Process results with evaluator
-            guideline_ids = set()
-            processed_results = evaluator.process_results(all_run_results, guideline_ids)
-
+            # Load each test file once and reuse parsed data
+            test_file_to_case = {}
+            testcase_ids = []
+            test_file_paths = []
+            
+            for test_file in target.test_files:
+                test_case = self._context._load_test_file(test_file)
+                test_file_to_case[test_file] = test_case
+                testcase_id = test_case.get("testcase")
+                if testcase_id:
+                    testcase_ids.append(testcase_id)
+                    test_file_paths.append(test_file)
+            
+            # Resolve cache strategy
+            if self._use_cache:
+                cache_lookup = load_cache_lookup(testcase_ids, test_file_paths)
+            else:
+                cache_lookup = {}
+            
+            # Partition test data based on cache
+            cached_azure_rows = []
+            fresh_testcases = []
+            fresh_test_file_paths = []
+            
+            for test_file in target.test_files:
+                test_case = test_file_to_case[test_file]
+                testcase_id = test_case.get("testcase")
+                
+                if testcase_id and testcase_id in cache_lookup:
+                    cached_azure_rows.append(cache_lookup[testcase_id])
+                else:
+                    fresh_testcases.append(test_case)
+                    fresh_test_file_paths.append(test_file)
+            
+            # Execute fresh testcases if needed
+            fresh_results = []
+            if fresh_testcases:
+                fresh_results = self._run_azure_evaluation(fresh_testcases, target)
+                
+                if self._use_cache: 
+                    append_results_to_cache(fresh_test_file_paths, fresh_results)
+            
+            # Combine all results
+            cached_rows = [row for row in cached_azure_rows]
+            fresh_rows = [row for result in fresh_results for row in result.get("rows", [])]
+            all_cached_rows = cached_rows + fresh_rows
+            combined_result = construct_fake_azure_result(all_cached_rows)
+            
             return EvaluationResult(
                 target=target,
-                raw_results=all_run_results,
+                raw_results=[{f"{target.workflow_name}.jsonl": combined_result}],
                 success=True,
             )
-
+            
         except Exception as e:
             return EvaluationResult(target=target, raw_results=[], success=False, error=str(e))
 
-    def show_results(self, results: List[EvaluationResult]):
+    def _run_azure_evaluation(self, testcases: list[dict], target: EvaluationTarget) -> list[dict]:
+        """Run Azure AI evaluation on a list of testcases."""
+        if not testcases:
+            return []
+        
+        # Create temporary file for testcases
+        tmp_dir = Path(tempfile.mkdtemp(prefix="evals_fresh_"))
+        fresh_jsonl = tmp_dir / f"fresh_{target.workflow_name}.jsonl"
+        
+        with fresh_jsonl.open("w", encoding="utf-8") as f:
+            for test_case in testcases:
+                f.write(json.dumps(test_case, separators=(",", ":"), ensure_ascii=False) + "\n")
+        
+        # Execute evaluation
+        evaluator_class = get_evaluator_class(target.config.kind)
+        evaluator = evaluator_class(target.config, jsonl_file=fresh_jsonl)
+        
+        results = []
+        for run in range(self.num_runs):
+            if self.num_runs > 1:
+                print(f"  📋 Run {run + 1}/{self.num_runs}...")
+            
+            result = evaluate(
+                data=str(fresh_jsonl),
+                evaluators={"metrics": evaluator},
+                evaluator_config={"metrics": evaluator.evaluator_config},
+                target=evaluator.target_function,
+                fail_on_evaluator_errors=False,
+                **self._context._credential_kwargs,
+            )
+            results.append(result)
+        
+        # Cleanup
+        try:
+            fresh_jsonl.unlink()
+            tmp_dir.rmdir()
+        except OSError:
+            pass
+        
+        return results
+
+    def show_results(self, results: list[EvaluationResult]):
         """Display detailed results from all evaluations."""
         print("=" * 60)
         print("📈 EVALUATION RESULTS")
@@ -277,7 +345,7 @@ class EvaluationRunner:
             print("No evaluation results to display.")
             print()
 
-    def show_summary(self, results: List[EvaluationResult]):
+    def show_summary(self, results: list[EvaluationResult]):
         """Display aggregated results from all evaluations."""
         successful = [r for r in results if r.success]
         failed = [r for r in results if not r.success]

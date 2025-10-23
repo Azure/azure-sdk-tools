@@ -149,8 +149,8 @@ Developer experience depends on this decision - blocking is safer but less infor
 
 The `verify-setup` tool checks whether required dependencies for SDK development are installed in the environment. It operates in two modes:
 
-1. **Automatic**: Runs when MCP server starts, checking requirements for the detected language
-2. **Explicit**: Developer or agent explicitly invokes the tool with specific language(s)
+1. **Implicit**: Agent will suggest to run this tool before other tools, checking requirements for the detected language of the repo
+2. **Explicit**: Developer or agent explicitly invokes the tool
 
 The tool uses a hard-coded registry of requirements (V1) that includes:
 

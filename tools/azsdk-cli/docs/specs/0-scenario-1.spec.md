@@ -178,7 +178,7 @@ _If you create a PR to compare the generated library with the existing library a
 ### 4. Validating
 
 **Tools**: `run-checks` ([#11431](https://github.com/orgs/Azure/projects/865/views/4?pane=issue&itemId=122229127))  
-**Action**: Run [PR CI checks](#pr-checks) locally before creating PRs  
+**Action**: Run [validation checks](#pr-checks) locally before creating PRs  
 **Success**: All checks pass for all languages - PR will be green
 
 ---
@@ -263,7 +263,7 @@ Update the package metadata for Health Deidentification SDKs to prepare for a pr
 
 **Prompt:**
 ```
-Run all PR checks locally for the Health Deidentification SDKs before I create pull requests.
+Run all validation checks locally for the Health Deidentification SDKs before I create pull requests.
 ```
 
 **Expected Agent Activity:**
@@ -378,7 +378,7 @@ Updating package metadata for Health Deidentification SDK...
 Package metadata updated for 5/5 languages
 ```
 
-### 4. Run PR Checks
+### 4. Run Validation Checks
 
 
 **Command:**
@@ -433,5 +433,5 @@ Note: The following checks are not implemented for this language: Dependency, AO
 - [Generate SDK - #11403](https://github.com/Azure/azure-sdk-tools/issues/11403)
 - [Package Metadata Update - #11827](https://github.com/Azure/azure-sdk-tools/issues/11827)
 - [Build SDK](https://github.com/orgs/Azure/projects/865/views/4?pane=issue&itemId=122043733)
-- [Run PR Checks - #11431](https://github.com/orgs/Azure/projects/865/views/4?pane=issue&itemId=122229127)
+- [Run validation Checks - #11431](https://github.com/orgs/Azure/projects/865/views/4?pane=issue&itemId=122229127)
 - [DevEx Inner Loop Project](https://github.com/orgs/Azure/projects/865/views/4)

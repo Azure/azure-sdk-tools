@@ -71,15 +71,8 @@ namespace Azure.Sdk.Tools.PerfAutomation
             Directory.CreateDirectory(_targetResultsDirectory);
             _debug = debug;
 
-            string flavor;
-            if (debug)
-            {
-                flavor = "debug";
-            }
-            else
-            {
-                flavor = "release";
-            }
+
+            string flavor = debug ? "debug" : "release";
             _testCommand = $"--{flavor} --package {primaryPackage} --test perf ";
             var result = await Util.RunAsync(_cargoName, $"build {_testCommand} --message-format=json", WorkingDirectory, log: false);
             // Look for errors in the build.

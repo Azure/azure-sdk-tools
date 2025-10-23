@@ -10,7 +10,8 @@ options:
     package-dir: "apiview-stub-generator"
     package-name: "treestyle-parser"
     emitter-output-dir: "{project-root}/../../../../packages/python-packages/apiview-stub-generator/apistub/_generated"
-    package-version: 0.3.13
+    namespace: "treestyle.parser"
+    package-version: 0.3.23
     generate-packaging-files: false
     generate-test: false
     generate-sample: false

@@ -426,8 +426,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     // AND there are associated API revisions
     this.canRequestNamespaceReview = this.review?.language === 'TypeSpec' &&
                                       this.namespaceReviewEnabled &&
-                                      !this.review?.isApproved &&
-                                      this.pullRequestsOfAssociatedAPIRevisions.length > 0;
+                                      !this.review?.isApproved;
 
     // Check if namespace review has been requested for this revision
     this.isNamespaceReviewRequested = this.activeAPIRevision?.hasRequestedNamespaceReview || false;
@@ -457,6 +456,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
           }
         }
       });
+
     }
   }
 

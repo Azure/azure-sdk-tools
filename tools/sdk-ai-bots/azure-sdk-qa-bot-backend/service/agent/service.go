@@ -135,7 +135,7 @@ func (s *CompletionService) RecongnizeIntension(promptTemplate string, messages 
 	}
 
 	if len(resp.Choices) > 0 {
-		result, err := promptParser.ParseResponse(*resp.Choices[0].Message.Content, "intension.md")
+		result, err := promptParser.ParseResponse(*resp.Choices[0].Message.Content, promptTemplate)
 		if err != nil {
 			log.Printf("Failed to parse intension response: %v, content: %s", err, *resp.Choices[0].Message.Content)
 			return nil, err

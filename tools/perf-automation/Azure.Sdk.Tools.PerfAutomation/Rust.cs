@@ -3,6 +3,8 @@ using Microsoft.Crank.Agent;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -48,6 +50,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
         private const string _cargoName = "cargo";
         private string _resultsDirectory = "testResults";
         private bool _debug = false;
+        private string _executablePath = "";
         private string _testCommand = "";
         private string _targetResultsDirectory;
         public bool IsTest { get; set; } = false;
@@ -68,8 +71,6 @@ namespace Azure.Sdk.Tools.PerfAutomation
             Directory.CreateDirectory(_targetResultsDirectory);
             _debug = debug;
 
-            StringBuilder outputBuilder = new StringBuilder();
-            StringBuilder errorBuilder = new StringBuilder();
             string flavor;
             if (debug)
             {
@@ -79,10 +80,48 @@ namespace Azure.Sdk.Tools.PerfAutomation
             {
                 flavor = "release";
             }
-            _testCommand = $"--{flavor} --package {primaryPackage} --test perf";
-            await Util.RunAsync(_cargoName, $"build {_testCommand}", WorkingDirectory, null, outputBuilder, errorBuilder);
+            _testCommand = $"--{flavor} --package {primaryPackage} --test perf ";
+            var result = await Util.RunAsync(_cargoName, $"build {_testCommand} --message-format=json", WorkingDirectory, log: false);
+            // Look for errors in the build.
+            if (result.ExitCode != 0)
+            {
+                return (result.StandardOutput, result.StandardError, null);
+            }
 
-            return (outputBuilder.ToString(), errorBuilder.ToString(), String.Empty);
+            Console.WriteLine("Parsing build output to find test executables...");
+            string[] json_elements = result.StandardOutput.Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+            string[] executables = new string[0];
+            foreach (string element in json_elements)
+            {
+                try
+                {
+                    using (JsonDocument doc = JsonDocument.Parse(element))
+                    {
+                        if (doc.RootElement.TryGetProperty("executable", out JsonElement executableElement) && executableElement.ValueKind == JsonValueKind.String)
+                        {
+                            Console.WriteLine($"Found executable: {executableElement.GetString()}");
+                            executables = executables.Append(executableElement.GetString()).ToArray();
+                        }
+                    }
+                }
+                catch (JsonException e)
+                {
+                    Console.WriteLine($"Exception {e} parsing line as JSON, skipping line.");
+                    // Ignore lines that are not valid JSON
+                }
+            }
+            if (executables.Length != 1)
+            {
+                Console.WriteLine($"Found {executables.Length} test executables after building the project.");
+                foreach (var exe in executables)
+                {
+                    Console.WriteLine($"Executable: {exe}");
+                }
+                throw new Exception($"No test executables were found after building the project, found {executables}");
+            }
+            _executablePath = executables[0];
+
+            return (result.ToString(), result.ToString(), null);
         }
         public override async Task<IterationResult> RunAsync(
             string project,
@@ -106,22 +145,45 @@ namespace Azure.Sdk.Tools.PerfAutomation
             {
                 Environment.SetEnvironmentVariable("AZURE_TEST_MODE", "live");
             }
-            // set up the params for cargo. Some of the arguments were established in the setup stage.
-            string finalParams = $"test {_testCommand} -- --test-results {_targetResultsDirectory}/{testName}-results.json \"{testName}\" {arguments}";
             ProcessResult result = new ProcessResult(0, String.Empty, String.Empty);
-            if (IsTest)
+            if (_executablePath == String.Empty)
             {
-                UtilMethodCall(this, new UtilEventArgs(
-                    "RunAsync",
-                    new string[] {
+                Console.WriteLine("Executable path is empty, building test.");
+                // set up the params for cargo. Some of the arguments were established in the setup stage.
+                string finalParams = $"test {_testCommand} -- --test-results {_targetResultsDirectory}/{testName}-results.json \"{testName}\" {arguments}";
+                if (IsTest)
+                {
+                    UtilMethodCall(this, new UtilEventArgs(
+                        "RunAsync",
+                        new string[] {
                         _cargoName,
                         finalParams,
                         WorkingDirectory}));
-                result = new ProcessResult(0, "cargo bench result", "error");
+                    result = new ProcessResult(0, "cargo bench result", "error");
+                }
+                else
+                {
+                    result = await Util.RunAsync(_cargoName, finalParams, WorkingDirectory);
+                }
             }
             else
             {
-                result = await Util.RunAsync(_cargoName, finalParams, WorkingDirectory);
+                string finalParams = $" --test-results {_targetResultsDirectory}/{testName}-results.json \"{testName}\" {arguments}";
+                if (IsTest)
+                {
+                    UtilMethodCall(this, new UtilEventArgs(
+                        "RunAsync",
+                        new string[] {
+                        _executablePath,
+                        finalParams,
+                        WorkingDirectory}));
+                    result = new ProcessResult(0, "cargo bench result", "error");
+                }
+                else
+                {
+                    result = await Util.RunAsync(_executablePath, finalParams, WorkingDirectory);
+                }
+
             }
 
             if (result.ExitCode != 0)

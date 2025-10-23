@@ -452,19 +452,13 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
                 }
 
                 // Validate SDK Package names
-                var languagePrefixMap = new Dictionary<string, List<string>>
-                (StringComparer.OrdinalIgnoreCase)
+                foreach (var sdk in SdkInfos)
                 {
-                    { ".NET", new List<string> { "Azure." } },
-                    { "JavaScript", new List<string> { "@azure/" } },
-                    { "Java", new List<string> { "azure-", "com.azure." } },
-                    { "Go", new List<string> { "sdk/" } },
-                    { "Python", new List<string> { "azure-" } }
-                };
-                if (SdkInfos.Any(sdk => languagePrefixMap.TryGetValue(sdk.Language, out var prefixes) && !prefixes.Any( prefix => sdk.PackageName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))))
-                {
-                    var prefixRules = string.Join(", ", languagePrefixMap.Select(kvp => $"{kvp.Key}: starts with {string.Join(" or ", kvp.Value)}"));
-                    return $"Unsupported package name. Package names must follow these rules: ${prefixRules}";
+                    var response = ValidatePackageName(sdk.Language, sdk.PackageName);
+                    if (response.IsValid != true)
+                    {
+                        return new DefaultCommandResponse { ResponseError = response.ResponseError, Message = response.Message};
+                    }
                 }
                 
                 StringBuilder sb = new();
@@ -647,6 +641,37 @@ namespace Azure.Sdk.Tools.Cli.Tools.ReleasePlan
             {
                 logger.LogError(ex, $"Failed to update release plan with language exclusion justification in release plan work item {releasePlanWorkItem}");
                 return new DefaultCommandResponse { ResponseError = $"Failed to update release plan with language exclusion justification: {ex.Message}" };
+            }
+        }
+
+        [McpServerTool(Name = "azsdk_package_validate_name"), Description("Validate package name based on language")]
+        public ValidationResponse ValidatePackageName(string language, string packageName)
+        {
+            try
+            {
+                var languagePrefixMap = new Dictionary<string, List<string>>
+                (StringComparer.OrdinalIgnoreCase)
+                {
+                    { ".NET", new List<string> { "Azure." } },
+                    { "JavaScript", new List<string> { "@azure/", "@azure-rest/" } },
+                    { "Java", new List<string> { "azure-", "com.azure." } },
+                    { "Go", new List<string> { "sdk/" } },
+                    { "Python", new List<string> { "azure-" } }
+                };
+
+                languagePrefixMap.TryGetValue(language, out var prefixes);
+                if (prefixes.Any(prefix => packageName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)))
+                {
+                    return new ValidationResponse { Message = $"Package Name [{packageName}] is valid.", IsValid = true };
+                }
+
+                var prefixRules = string.Join(", ", languagePrefixMap.Select(kvp => $"{kvp.Key}: starts with {string.Join(" or ", kvp.Value)}"));
+                return new ValidationResponse { Message = $"Unsupported package name. Package names must follow these rules: {prefixRules}", IsValid = false };
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, $"Failed to validate package name {packageName}");
+                return new ValidationResponse { ResponseError = $"Failed to validate package name {packageName}: {ex.Message}" };
             }
         }
     }

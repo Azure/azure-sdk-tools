@@ -255,7 +255,7 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
         }
 
         [Test]
-        public async Task Test()
+        public async Task Test_Update_SDK_Details_invalid_package_name()
         {
             var languagePackageMap = new Dictionary<string, string>
             {
@@ -273,12 +273,53 @@ namespace Azure.Sdk.Tools.Cli.Tests.Tools
                 Assert.That(updateStatus.Message, Does.Contain("Unsupported package name"));
             }
         }
-        
+
         [Test]
         public async Task Test_update_language_exclusion_justification()
         {
             var updateStatus = await releasePlanTool.UpdateLanguageExclusionJustification(100, "This is a test justification for excluding certain languages.");
             Assert.That(updateStatus.Message, Does.Contain("Updated language exclusion justification in release plan"));
+        }
+
+        [Test]
+        public void Test_package_validate_name()
+        {
+            var languagePackageMap = new Dictionary<string, List<string>>
+            {
+                { ".NET", new List<string> { "Azure.package.name" } },
+                { "JavaScript", new List<string> { "@azure/package/name", "@azure-rest/package/name"} },
+                { "Java", new List<string> { "azure-package-name", "com.azure.package.name" } },
+                { "Go", new List<string> { "sdk/package/name" } },
+                { "Python", new List<string> { "azure-package-name" } }
+            };
+
+            foreach (var (language, packages) in languagePackageMap)
+            {
+                foreach (var package in packages)
+                {
+                    var response = releasePlanTool.ValidatePackageName(language, package);  
+                    Assert.True(response.IsValid); 
+                } 
+            }
+        }
+        
+        [Test]
+        public void Test_package_validate_name_invalid_inputs()
+        {
+            var languagePackageMap = new Dictionary<string, string>
+            {
+                { ".NET", "@azure/package/name" },
+                { "Javascript", "azure.package.name" },
+                { "Java", "sdk/package/name" },
+                { "Go", "com.azure.package.name" },
+                { "Python", "@azure/package/name" }
+            };
+
+            foreach (var (language, package) in languagePackageMap)
+            {
+                var response = releasePlanTool.ValidatePackageName(language, package);
+                Assert.False(response.IsValid);
+            }
         }
     }
 }

@@ -53,7 +53,7 @@
         ],
         "dotnet": [
             {
-                "requirement": "dotnet",
+                "requirement": "dotnet >= 9.0.306",
                 "check": ["dotnet", "--version"],
                 "instructions": ["Install .NET SDK with version at least higher than defined in global.json file in the repo root."]
             }

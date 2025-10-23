@@ -29,7 +29,7 @@ Describe 'Tool Version' {
 
     It 'Should have the correct version' -Tag 'UnitTest' {
         # Arrange
-        $expectedPackageVersion = '6.31.2'
+        $expectedPackageVersion = '9.2.1'
 
         # Act
         $actual = &"$PSScriptRoot/../../common/spelling/Invoke-Cspell.ps1" `

@@ -10,8 +10,8 @@
   "author": "Microsoft",
   "license": "MIT",
   "devDependencies": {
-    "@typespec/compiler": "latest",
-    "@typespec/http": "latest",
-    "@typespec/openapi3": "latest"
+    "@typespec/compiler": "^1.5.0",
+    "@typespec/http": "^1.5.0",
+    "@typespec/openapi3": "^1.5.0"
   }
 }

@@ -68,7 +68,7 @@ namespace Azure.Sdk.Tools.McpEvals.Evaluators
 
                 // If the names do not align then the tool calls were made in the wrong order by the LLM
                 // Ends with because copilot attaches mcp_ to name
-                if (actToolName.EndsWith(expToolName))
+                if (!actToolName.EndsWith(expToolName))
                 {
                     MetricError($"Tool call made in the wrong order. Expected the {expToolName} tool but the LLM called {actToolName} tool. This was tool call #{countCalls}", metric);
                     return result;
@@ -134,13 +134,13 @@ namespace Azure.Sdk.Tools.McpEvals.Evaluators
                     new EvaluationMetricInterpretation(
                         EvaluationRating.Unacceptable,
                         failed: true,
-                        reason: "Result did not match the expected outcome.");
+                        reason: "Result did not match the expected outcome. " + PrintDiagnostics(metric));
             }
             else
             {
                 metric.Interpretation = new EvaluationMetricInterpretation(
                     EvaluationRating.Exceptional,
-                    reason: "Result matched what was expected.");
+                    reason: "Result matched what was expected. " + PrintDiagnostics(metric));
             }
         }
 
@@ -154,6 +154,11 @@ namespace Azure.Sdk.Tools.McpEvals.Evaluators
             metric.AddDiagnostics(EvaluationDiagnostic.Error(message));
             metric.Value = false;
             Interpret(metric);
+        }
+
+        private static string PrintDiagnostics(BooleanMetric metric)
+        {
+            return metric.Diagnostics is not null ? string.Join("\n", metric.Diagnostics.Select(t => t.Severity >= EvaluationDiagnosticSeverity.Warning? t.Message: "")) : "";
         }
     }
 }

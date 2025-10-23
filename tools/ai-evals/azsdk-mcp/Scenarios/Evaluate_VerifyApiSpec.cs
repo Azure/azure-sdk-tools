@@ -19,7 +19,6 @@ namespace Azure.Sdk.Tools.McpEvals.Scenarios
             [
                 "azsdk_typespec_check_project_in_public_repo",
                 "azsdk_run_typespec_validation",
-                "azsdk_get_modified_typespec_projects"
             ];
 
             // 1. Load Scenario Data from prompt

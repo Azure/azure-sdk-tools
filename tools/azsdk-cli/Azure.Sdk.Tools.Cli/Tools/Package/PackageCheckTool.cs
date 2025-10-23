@@ -365,7 +365,7 @@ namespace Azure.Sdk.Tools.Cli.Tools.Package
                 
                 if (notImplementedChecks.Any())
                 {
-                    nextSteps.Add($"Note: The following checks are not implemented for this language: {string.Join(", ", notImplementedChecks)}");
+                    logger.LogDebug($"Note: The following checks are not implemented for this language: {string.Join(", ", notImplementedChecks)}");
                 }
 
                 // Add specific guidance from individual check failures (exclude not implemented ones)

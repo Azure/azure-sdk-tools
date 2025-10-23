@@ -10,6 +10,7 @@ namespace APIView;
  * These endpoints require Azure AD token authentication via Bearer token.
  */
 @route("/api/apirevisions")
+@useAuth(BearerAuth)
 namespace APIRevisions {
     /**
      * Get the outline for an API revision

@@ -10,6 +10,7 @@ namespace APIView;
  * These endpoints require API Key authentication via the 'ApiKey' header.
  */
 @route("/AutoReview")
+@useAuth(ApiKeyAuth<ApiKeyLocation.header, "ApiKey">)
 namespace AutoReview {
     /**
      * Upload an automatic API review file
@@ -95,6 +96,5 @@ namespace AutoReview {
         @body reviewUrl: string;
     } | {
         @statusCode statusCode: 204;
-        @body message: string;
     } | UnauthorizedErrorResponse | InternalServerErrorResponse;
 }

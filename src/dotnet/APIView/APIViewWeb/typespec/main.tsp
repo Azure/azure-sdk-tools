@@ -16,6 +16,4 @@ using TypeSpec.Http;
 })
 @server("https://apiview.dev/", "APIView Production")
 @server("https://apiviewstaging.azurewebsites.net/", "APIView Staging")
-
-@useAuth(ApiKeyAuth<ApiKeyLocation.header, "ApiKey"> | BearerAuth | OpenIdConnectAuth<"AzureAD">)
 namespace APIView;

@@ -10,6 +10,7 @@ namespace APIView;
  * These endpoints require Azure AD token authentication via Bearer token.
  */
 @route("/api/comments")
+@useAuth(BearerAuth)
 namespace Comments {
     /**
      * Retrieve visible comments for a revision

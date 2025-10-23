@@ -1,6 +1,6 @@
 # APIView External API TypeSpec Documentation
 
-This directory contains TypeSpec documentation for APIView's external-facing APIs that support API Key Authentication or Azure AD Token Authentication.
+This directory contains TypeSpec documentation for APIView's external-facing APIs that support API Key Authentication, Github Token or Azure AD Token Authentication.
 
 ## Overview
 
@@ -61,7 +61,7 @@ npm install
 ### Compile TypeSpec to OpenAPI
 
 ```bash
-npm run build
+tsp compile .
 ```
 
 This generates OpenAPI 3.0 specification in `tsp-output/openapi.yaml`.
@@ -97,6 +97,14 @@ For API Revisions and Comments APIs, include the Azure AD bearer token:
 
 ```
 Authorization: Bearer <azure-ad-token>
+```
+
+### Github Token Authentication
+
+For API Revisions and Comments APIs, include the Azure AD bearer token:
+
+```
+Authorization: Bearer <github-token>
 ```
 
 ## Reviewing the API Documentation

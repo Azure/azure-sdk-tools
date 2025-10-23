@@ -191,7 +191,8 @@ def get_active_reviews(
 
     # Filter out omitted languages if specified
     if omit_languages:
-        metadata = [r for r in metadata if r.language.lower() not in [l.lower() for l in omit_languages]]
+        omit_lower = {l.lower() for l in omit_languages}
+        metadata = [r for r in metadata if r.language.lower() not in omit_lower]
 
     return metadata
 

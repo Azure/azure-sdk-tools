@@ -146,7 +146,7 @@ _If you create a PR to compare the generated library with the existing library a
    └─ Validate: versions, READMEs, changelogs
 
 4. Validating → run-checks
-   └─ Run commonly failing PR CI checks locally to ensure green PR
+   └─ Run commonly failing validation checks locally to ensure green PR
 
 ⚠️  STOP: This is a test scenario only. Do NOT commit these changes or create release PRs.
 ```

@@ -76,7 +76,7 @@ What are we trying to achieve with this design?
 
 _Known cases where this approach doesn't work or has limitations._
 
-#### Exception 1: Hard-Coded Requirements (V1 Limitation)
+#### Exception 1: Hard-Coded Requirements (Scenario 1 Limitation)
 
 **Description:**
 

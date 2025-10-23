@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	neturl "net/url"
 	"strings"
 	"sync"
 	"time"
@@ -183,10 +184,25 @@ func processName(name *string) *string {
 }
 
 func getImageDataURI(url string) (string, error) {
-	if !strings.HasPrefix(url, "https://smba.trafficmanager.net") {
-		log.Printf("URL does not start with expected prefix: %s", url)
-		return url, nil
+	// Parse and validate the URL to prevent SSRF attacks
+	parsedURL, err := neturl.Parse(url)
+	if err != nil {
+		log.Printf("Invalid URL format: %s, error: %v", url, err)
+		return "", fmt.Errorf("invalid URL format: %w", err)
 	}
+
+	// Validate scheme is HTTPS
+	if parsedURL.Scheme != "https" {
+		log.Printf("URL scheme is not HTTPS: %s", url)
+		return "", fmt.Errorf("only HTTPS URLs are allowed")
+	}
+
+	// Validate hostname is exactly smba.trafficmanager.net
+	if parsedURL.Hostname() != "smba.trafficmanager.net" {
+		log.Printf("URL hostname is not allowed: %s", parsedURL.Hostname())
+		return "", fmt.Errorf("only smba.trafficmanager.net hostname is allowed")
+	}
+
 	cred, err := azidentity.NewManagedIdentityCredential(&azidentity.ManagedIdentityCredentialOptions{
 		ID: azidentity.ClientID(config.GetBotClientID()),
 	})

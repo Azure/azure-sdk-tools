@@ -1,7 +1,7 @@
 :host ::ng-deep {
     font-family: var(--font-family);
 
-    .ai-badge-custom, .related-comments-indicator {
+    .ai-badge-custom {
         display: inline-flex;
         align-items: center;
         background-color: var(--base-fg-color);
@@ -13,15 +13,27 @@
         white-space: nowrap;
         cursor: pointer;
         transition: all .2s;
-        &:hover { background-color: var(--base-bg-color); border-color: var(--text-muted-color); transform: translateY(-1px); box-shadow: 0 2px 4px var(--shadow-color); }
-    }
-
-    .ai-badge-custom {
         color: var(--text-color-secondary);
+        &:hover { background-color: var(--base-bg-color); border-color: var(--text-muted-color); transform: translateY(-1px); box-shadow: 0 2px 4px var(--shadow-color); }
         .pi { font-size: .8rem; margin: .2rem 0 0 .25rem; }
     }
 
+    .related-comments-btn {
+        background: none;
+        border: none;
+        padding: 0;
+    }
+
     .related-comments-indicator {
+        display: inline-flex;
+        align-items: center;
+        background-color: var(--base-fg-color);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: .125rem .5rem;
+        font-size: .75rem;
+        font-weight: 500;
+        white-space: nowrap;
         color: var(--base-text-color);
         line-height: 1;
         .pi { font-size: .7rem; }
@@ -148,7 +160,7 @@
 ::ng-deep .ai-info-overlay {
     &.p-overlaypanel {
         border-radius: 8px;
-        box-shadow: 0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -1px rgba(0,0,0,.06);
+        box-shadow: none;
         z-index: 9999 !important;
         min-width: 320px;
         width: auto;

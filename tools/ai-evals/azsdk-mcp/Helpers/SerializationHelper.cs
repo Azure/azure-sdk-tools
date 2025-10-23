@@ -5,10 +5,6 @@ using Azure.Sdk.Tools.McpEvals.Models;
 using Microsoft.Extensions.AI;
 using MicrosoftExtensionsAIChatExtensions = OpenAI.Chat.MicrosoftExtensionsAIChatExtensions;
 using OpenAIChatMessage = OpenAI.Chat.ChatMessage;
-using AssistantChatMessage = OpenAI.Chat.AssistantChatMessage;
-using UserChatMessage = OpenAI.Chat.UserChatMessage;
-using SystemChatMessage = OpenAI.Chat.SystemChatMessage;
-using ToolChatMessage = OpenAI.Chat.ToolChatMessage;
 
 namespace Azure.Sdk.Tools.McpEvals.Helpers
 {
@@ -39,11 +35,11 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
             var translatedChatMessages = MicrosoftExtensionsAIChatExtensions.AsChatMessages(chatMessages);
 
             // For some reason above method will give all the messages user role. It still does the heavy lifting so I'll keep it and just change the roles. 
-            var fixedChatMessages = EnsureChatMessageRole(translatedChatMessages, chatMessages);
+            var fixedChatMessages = ChatMessageHelper.EnsureChatMessageRole(translatedChatMessages, chatMessages);
 
             await RebuildAttachmentsInChatMessagesAsync(fixedChatMessages);
 
-            return ParseChatMessagesIntoScenarioData(fixedChatMessages);
+            return ChatMessageHelper.ParseChatMessagesIntoScenarioData(fixedChatMessages);
         }
 
         /// <summary>
@@ -64,73 +60,33 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
             }
         }
 
-        private static ScenarioData ParseChatMessagesIntoScenarioData(List<ChatMessage> chatMessages)
-        {
-            // Use List<T>.FindLastIndex for clear intent and minimal code.
-            int lastUserMessageIndex = chatMessages.FindLastIndex(m => m.Role == ChatRole.User);
-            if (lastUserMessageIndex < 0)
-            {
-                throw new InvalidOperationException("No user message found in the chat messages list");
-            }
-
-            return new ScenarioData
-            {
-                ChatHistory = chatMessages.Take(lastUserMessageIndex).ToList(),
-                NextMessage = chatMessages[lastUserMessageIndex],
-                ExpectedOutcome = chatMessages.Skip(lastUserMessageIndex + 1).ToList()
-            };
-        }
-
         /// <summary>
         /// Rebuilds attachment sections in text content by loading files from instruction directories.
         /// </summary>
         private static async Task<string> RebuildAttachmentsInTextAsync(string text)
         {
-            // Regex to match attachment tags
-            var attachmentPattern = @"<attachment filePath=""([^""]+)"">.*?</attachment>";
-            var regex = new Regex(attachmentPattern, RegexOptions.Singleline);
-
-            var result = text;
+            // Find the last <instructions>...</instructions> block
+            var instructionsPattern = @"<instructions>.*?</instructions>";
+            var regex = new Regex(instructionsPattern, RegexOptions.Singleline);
             var matches = regex.Matches(text);
 
-            foreach (Match match in matches)
+            if (matches.Count > 0)
             {
-                var filePath = match.Groups[1].Value;
-                var fileName = Path.GetFileName(filePath);
-                
-                // Try to find the file in our instruction directories
-                var fileContent = await LoadInstructionFileAsync(fileName);
-                
-                if (fileContent != null)
-                {
-                    var newAttachment = $"<attachment filePath=\"{filePath}\">{fileContent}</attachment>";
-                    result = result.Replace(match.Value, newAttachment);
-                }
+                // Get the last match
+                var lastMatch = matches[matches.Count - 1];
+
+                // Get the new instructions content
+                var newInstructions = await LLMSystemInstructions.BuildLLMInstructions();
+
+                // Replace the last instructions block
+                var newInstructionsBlock = $"<instructions>{newInstructions}</instructions>";
+                var result = text.Remove(lastMatch.Index, lastMatch.Length);
+                result = result.Insert(lastMatch.Index, newInstructionsBlock);
+
+                return result;
             }
 
-            return result;
-        }
-
-        /// <summary>
-        /// Loads an instruction file by matching the filename in the instruction directories.
-        /// </summary>
-        private static async Task<string?> LoadInstructionFileAsync(string fileName)
-        {
-            var azsdkToolsInstructionsPath = TestSetup.AzsdkToolsInstructionsPath;
-            var customInstructionsPath = TestSetup.CopilotInstructionsPath;
-
-            if (Path.GetFileName(customInstructionsPath) == fileName)
-            {
-                return await File.ReadAllTextAsync(customInstructionsPath);
-            }
-
-            var azsdkFilePath = Path.Combine(azsdkToolsInstructionsPath, fileName);
-            if (File.Exists(azsdkFilePath))
-            {
-                return await File.ReadAllTextAsync(azsdkFilePath);
-            }
-
-            return null;
+            return text;
         }
 
         private static IEnumerable<OpenAIChatMessage> DeserializeMessages(BinaryData data)
@@ -141,64 +97,6 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
             {
                 yield return ModelReaderWriter.Read<OpenAIChatMessage>(BinaryData.FromObjectAsJson(jsonElement), ModelReaderWriterOptions.Json);
             }
-        }
-
-        private static List<ChatMessage> EnsureChatMessageRole(IEnumerable<ChatMessage> translatedMessages, IEnumerable<OpenAIChatMessage> openAIMessages)
-        {
-            var result = new List<ChatMessage>();
-
-            foreach (var (translated, openAI) in translatedMessages.Zip(openAIMessages))
-            {
-                // Create a copy or modify the existing one
-                var modifiedMessage = translated; // or create a copy if you don't want to modify the original
-
-                switch (openAI)
-                {
-                    case AssistantChatMessage:
-                        modifiedMessage.Role = ChatRole.Assistant;
-                        break;
-                    case UserChatMessage:
-                        modifiedMessage.Role = ChatRole.User;
-                        break;
-                    case SystemChatMessage:
-                        modifiedMessage.Role = ChatRole.System;
-                        break;
-                    case ToolChatMessage:
-                        modifiedMessage.Role = ChatRole.Tool;
-                        break;
-                }
-
-                result.Add(modifiedMessage);
-            }
-
-            return result;
-        }
-
-        public static Dictionary<string, ChatMessage> GetExpectedToolsByName(IEnumerable<ChatMessage> expectedOutcome, IEnumerable<string> toolNames)
-        {
-            var expectedToolResults = new Dictionary<string, ChatMessage>();
-
-            // Create CallId -> ToolName mapping
-            // Tool Name is not available in FunctionResultContent
-            // Normalize function names and remove tools used not in toolNames list
-            var callIdToName = expectedOutcome
-                .SelectMany(m => m.Contents.OfType<FunctionCallContent>())
-                .Select(fc => new { fc.CallId, Normalized = NormalizeFunctionName(fc.Name, toolNames) })
-                .Where(x => !string.IsNullOrEmpty(x.Normalized))
-                .ToDictionary(x => x.CallId, x => x.Normalized);
-
-            foreach (var message in expectedOutcome)
-            {
-                foreach (var content in message.Contents)
-                {
-                    if (content is FunctionResultContent funcResult && callIdToName.TryGetValue(funcResult.CallId, out var functionName))
-                    {
-                        expectedToolResults[functionName] = message;
-                    }
-                }
-            }
-
-            return expectedToolResults;
         }
         
         public static string NormalizeFunctionName(string functionName, IEnumerable<string> toolNames)

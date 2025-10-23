@@ -51,12 +51,6 @@ func (s *CompletionService) CheckArgs(req *model.CompletionReq) error {
 		if req.Sources == nil {
 			req.Sources = tenantConfig.Sources
 		}
-		if req.PromptTemplate == nil {
-			req.PromptTemplate = &tenantConfig.PromptTemplate
-		}
-		if req.IntensionPromptTemplate == nil {
-			req.IntensionPromptTemplate = &tenantConfig.IntensionPromptTemplate
-		}
 	} else {
 		return model.NewInvalidTenantIDError(string(req.TenantID))
 	}
@@ -94,7 +88,8 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 	}
 
 	// 4. Build prompt
-	prompt, err := s.buildPrompt(intension, chunks, *req.PromptTemplate)
+	tenantConfig, _ := config.GetTenantConfig(req.TenantID)
+	prompt, err := s.buildPrompt(intension, chunks, tenantConfig.PromptTemplate)
 	if err != nil {
 		log.Printf("Prompt building failed: %v", err)
 		return nil, err
@@ -102,7 +97,7 @@ func (s *CompletionService) ChatCompletion(ctx context.Context, req *model.Compl
 
 	// 5. Get answer from LLM
 	llmMessages = append(llmMessages, &azopenai.ChatRequestSystemMessage{Content: azopenai.NewChatRequestSystemMessageContent(prompt)})
-	result, err := s.getLLMResult(llmMessages, *req.PromptTemplate)
+	result, err := s.getLLMResult(llmMessages, tenantConfig.PromptTemplate)
 	if err != nil {
 		log.Printf("LLM request failed: %v", err)
 		return nil, model.NewLLMServiceFailureError(err)
@@ -357,7 +352,8 @@ func (s *CompletionService) buildQueryForSearch(req *model.CompletionReq, messag
 		query = *req.Message.RawContent
 	}
 	intentStart := time.Now()
-	intentResult, err := s.RecongnizeIntension(*req.IntensionPromptTemplate, messages)
+	tenantConfig, _ := config.GetTenantConfig(req.TenantID)
+	intentResult, err := s.RecongnizeIntension(tenantConfig.IntensionPromptTemplate, messages)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
 	} else if intentResult != nil {

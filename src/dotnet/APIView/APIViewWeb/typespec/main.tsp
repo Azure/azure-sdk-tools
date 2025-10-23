@@ -15,7 +15,7 @@ using TypeSpec.Http;
     title: "APIView External APIs"
 })
 @server("https://apiview.dev/", "APIView Production")
-@server("https://apiviewstagingmain.z13.web.core.windows.net/", "APIView Staging")
+@server("https://apiviewstaging.azurewebsites.net/", "APIView Staging")
 
-@useAuth(ApiKeyAuth<ApiKeyLocation.header, "ApiKey"> | BearerAuth)
+@useAuth(ApiKeyAuth<ApiKeyLocation.header, "ApiKey"> | BearerAuth | OpenIdConnectAuth<"AzureAD">)
 namespace APIView;

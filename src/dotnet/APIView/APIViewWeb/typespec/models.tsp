@@ -34,22 +34,6 @@ enum APIRevisionContentReturnType {
 }
 
 /**
- * Review state
- */
-enum ReviewState {
-    Open: "Open",
-    Closed: "Closed"
-}
-
-/**
- * Approval status
- */
-enum ApprovalStatus {
-    Pending: "Pending",
-    Approved: "Approved"
-}
-
-/**
  * Language of the API
  */
 enum Language {
@@ -78,6 +62,104 @@ enum CommentType {
 }
 
 /**
+ * Code file token
+ */
+model CodeFileToken {
+    /** Definition ID */
+    DefinitionId?: string;
+
+    /** Navigation display name */
+    NavigationDisplayName?: string;
+
+    /** Value */
+    Value?: string;
+
+    /** Kind */
+    Kind: int32;
+
+    /** Line ID */
+    LineId?: string;
+
+    /** Cross language definition ID */
+    CrossLanguageDefinitionId?: string;
+}
+
+/**
+ * Navigation item
+ */
+model NavigationItem {
+    /** Text */
+    Text?: string;
+
+    /** Navigation ID */
+    NavigationId?: string;
+
+    /** Child items */
+    ChildItems?: NavigationItem[];
+
+    /** Tags */
+    Tags?: Record<string>;
+
+    /** Is hidden */
+    IsHidden?: boolean;
+}
+
+/**
+ * Code diagnostic
+ */
+model CodeDiagnostic {
+    /** Diagnostic ID */
+    DiagnosticId: string;
+
+    /** Text */
+    Text: string;
+
+    /** Help link URI */
+    HelpLinkUri?: string;
+
+    /** Target ID */
+    TargetId: string;
+
+    /** Level (0=Info, 1=Warning, 2=Error) */
+    Level: int32;
+}
+
+/**
+ * CodeFile response model for API revision content
+ */
+model CodeFileResponse {
+    /** Version string */
+    VersionString?: string;
+
+    /** Package name */
+    PackageName: string;
+
+    /** Name */
+    Name: string;
+
+    /** Language */
+    Language: Language;
+
+    /** Cross language package ID */
+    CrossLanguagePackageId?: string;
+
+    /** Package version */
+    PackageVersion?: string;
+
+    /** Parser version */
+    ParserVersion?: string;
+
+    /** Tokens representing the code structure */
+    Tokens: CodeFileToken[];
+
+    /** Navigation items */
+    Navigation: NavigationItem[];
+
+    /** Diagnostics */
+    Diagnostics: CodeDiagnostic[];
+}
+
+/**
  * File information in an API revision
  */
 model APICodeFileModel {
@@ -98,68 +180,6 @@ model APICodeFileModel {
 
     /** Cross language package ID */
     CrossLanguagePackageId?: string;
-}
-
-/**
- * API Revision list item model
- */
-model APIRevisionListItemModel {
-    /** Revision ID */
-    Id: string;
-
-    /** Review ID */
-    ReviewId: string;
-
-    /** Revision label */
-    Label?: string;
-
-    /** Creation date */
-    CreatedOn: utcDateTime;
-
-    /** Last updated date */
-    LastUpdatedOn?: utcDateTime;
-
-    /** Created by */
-    CreatedBy: string;
-
-    /** API revision type */
-    APIRevisionType: APIRevisionType;
-
-    /** Is approved */
-    IsApproved: boolean;
-
-    /** Is deleted */
-    IsDeleted: boolean;
-
-    /** Approvers */
-    Approvers: string[];
-
-    /** Files */
-    Files: APICodeFileModel[];
-
-    /** Language */
-    Language: Language;
-
-    /** Package name */
-    PackageName: string;
-
-    /** Package version */
-    PackageVersion?: string;
-
-    /** Viewed by users */
-    ViewedBy: string[];
-
-    /** Reviewers */
-    Reviewers: string[];
-
-    /** Is released */
-    IsReleased: boolean;
-
-    /** Copilot review in progress */
-    CopilotReviewInProgress: boolean;
-
-    /** Copilot review job ID */
-    CopilotReviewJobId?: string;
 }
 
 /**
@@ -191,20 +211,11 @@ model ApiViewAgentComment {
     Lines: string[];
 }
 
-/**
- * Error response
- */
-@error
-model ErrorResponse {
-    @statusCode statusCode: int32;
-    
-    /** Error message */
-    message: string;
-}
 
 /**
  * Bad request error response
  */
+@error
 model BadRequestErrorResponse {
     @statusCode statusCode: 400;
     
@@ -215,6 +226,7 @@ model BadRequestErrorResponse {
 /**
  * Not found error response
  */
+@error
 model NotFoundErrorResponse {
     @statusCode statusCode: 404;
     
@@ -225,6 +237,7 @@ model NotFoundErrorResponse {
 /**
  * Unauthorized error response
  */
+@error
 model UnauthorizedErrorResponse {
     @statusCode statusCode: 401;
     
@@ -235,6 +248,7 @@ model UnauthorizedErrorResponse {
 /**
  * Internal server error response
  */
+@error
 model InternalServerErrorResponse {
     @statusCode statusCode: 500;
     

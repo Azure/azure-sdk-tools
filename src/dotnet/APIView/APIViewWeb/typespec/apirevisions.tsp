@@ -23,7 +23,7 @@ namespace APIRevisions {
     ): {
         @statusCode statusCode: 200;
         @body outline: string;
-    } | UnauthorizedErrorResponse | NotFoundErrorResponse | InternalServerErrorResponse;
+    } | UnauthorizedErrorResponse | InternalServerErrorResponse;
 
     /**
      * Generate review text or CodeFile for an API revision
@@ -44,102 +44,4 @@ namespace APIRevisions {
         @statusCode statusCode: 200;
         @body content: string | CodeFileResponse;
     } | BadRequestErrorResponse | UnauthorizedErrorResponse | NotFoundErrorResponse | InternalServerErrorResponse;
-}
-
-/**
- * CodeFile response model for API revision content
- */
-model CodeFileResponse {
-    /** Version string */
-    VersionString?: string;
-
-    /** Package name */
-    PackageName: string;
-
-    /** Name */
-    Name: string;
-
-    /** Language */
-    Language: Language;
-
-    /** Cross language package ID */
-    CrossLanguagePackageId?: string;
-
-    /** Package version */
-    PackageVersion?: string;
-
-    /** Parser version */
-    ParserVersion?: string;
-
-    /** Tokens representing the code structure */
-    Tokens: CodeFileToken[];
-
-    /** Navigation items */
-    Navigation: NavigationItem[];
-
-    /** Diagnostics */
-    Diagnostics: CodeDiagnostic[];
-}
-
-/**
- * Code file token
- */
-model CodeFileToken {
-    /** Definition ID */
-    DefinitionId?: string;
-
-    /** Navigation display name */
-    NavigationDisplayName?: string;
-
-    /** Value */
-    Value?: string;
-
-    /** Kind */
-    Kind: int32;
-
-    /** Line ID */
-    LineId?: string;
-
-    /** Cross language definition ID */
-    CrossLanguageDefinitionId?: string;
-}
-
-/**
- * Navigation item
- */
-model NavigationItem {
-    /** Text */
-    Text?: string;
-
-    /** Navigation ID */
-    NavigationId?: string;
-
-    /** Child items */
-    ChildItems?: NavigationItem[];
-
-    /** Tags */
-    Tags?: Record<string>;
-
-    /** Is hidden */
-    IsHidden?: boolean;
-}
-
-/**
- * Code diagnostic
- */
-model CodeDiagnostic {
-    /** Diagnostic ID */
-    DiagnosticId: string;
-
-    /** Text */
-    Text: string;
-
-    /** Help link URI */
-    HelpLinkUri?: string;
-
-    /** Target ID */
-    TargetId: string;
-
-    /** Level (0=Info, 1=Warning, 2=Error) */
-    Level: int32;
 }

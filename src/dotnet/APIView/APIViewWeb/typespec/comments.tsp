@@ -23,5 +23,5 @@ namespace Comments {
     ): {
         @statusCode statusCode: 200;
         @body comments: ApiViewAgentComment[];
-    } | BadRequestErrorResponse | UnauthorizedErrorResponse | NotFoundErrorResponse | InternalServerErrorResponse;
+    } | UnauthorizedErrorResponse | NotFoundErrorResponse | InternalServerErrorResponse;
 }

@@ -149,7 +149,7 @@ namespace APIViewWeb.LeanControllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error while creating API revision if API has changes.");
-                responseContent.ErrorMessage = ex.Message;
+                responseContent.Message = ex.Message;
                 return new LeanJsonResult(responseContent, StatusCodes.Status500InternalServerError);
             }
         }

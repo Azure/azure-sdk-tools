@@ -86,7 +86,7 @@ namespace APIViewWeb.Helpers
     public class CreateAPIRevisionAPIResponse
     {
         public string APIRevisionUrl { get; set; }
-        public string ErrorMessage { get; set; }
+        public string Message { get; set; }
         public List<string> ActionsTaken { get; set; } = new List<string>();
     }
 

@@ -44,7 +44,7 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
         public static async Task<IMcpClient> GetMcpClientAsync(ILogger? logger = null)
         {
             logger?.LogDebug("Starting MCP client creation...");
-            logger?.LogDebug("Command: dotnet run --project ..\\..\\..\\..\\..\\tools\\azsdk-cli\\Azure.Sdk.Tools.Cli -- start");
+            logger?.LogDebug("Command: dotnet run --project ../../../../../tools/azsdk-cli/Azure.Sdk.Tools.Cli -- start");
             
             try
             {
@@ -57,7 +57,7 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
                             Arguments = [
                                 "run",
                                 "--project",
-                                @"..\..\..\..\..\tools\azsdk-cli\Azure.Sdk.Tools.Cli",
+                                @"../../../../../tools/azsdk-cli/Azure.Sdk.Tools.Cli",
                                 "--",
                                 "start" 
                             ]

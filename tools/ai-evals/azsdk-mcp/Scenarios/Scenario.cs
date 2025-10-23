@@ -37,7 +37,7 @@ namespace Azure.Sdk.Tools.McpEvals.Scenarios
                 builder.AddConsole().SetMinimumLevel(LogLevel.Debug));
             s_logger = loggerFactory.CreateLogger<Scenario>();
 
-            s_logger.LogInformation("Starting GlobalSetup...");
+            Console.WriteLine("Starting GlobalSetup...");
 
             s_logger.LogDebug("Getting chat client...");
             s_chatClient = TestSetup.GetChatClient(s_logger);
@@ -53,7 +53,7 @@ namespace Azure.Sdk.Tools.McpEvals.Scenarios
             s_logger.LogDebug("Getting chat completion...");
             s_chatCompletion = TestSetup.GetChatCompletion(s_chatClient, s_mcpClient);
             s_logger.LogDebug("Chat completion obtained successfully");
-
+            
             s_logger.LogDebug("Listing tools from MCP client...");
             s_toolNames = (await s_mcpClient.ListToolsAsync()).Select(tool => tool.Name)!;
             s_logger.LogDebug($"Tools listed successfully. Found {s_toolNames.Count()} tools: {string.Join(", ", s_toolNames)}");

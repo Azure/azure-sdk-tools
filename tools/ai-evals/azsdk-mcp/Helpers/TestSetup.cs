@@ -3,6 +3,7 @@ using Azure.Core;
 using Azure.Identity;
 using Azure.Sdk.Tools.Cli.Services;
 using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Client;
 
 namespace Azure.Sdk.Tools.McpEvals.Helpers
@@ -18,43 +19,59 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
             Environment.GetEnvironmentVariable("AZURE_OPENAI_MODEL_DEPLOYMENT_NAME") 
             ?? throw new InvalidOperationException("AZURE_OPENAI_MODEL_DEPLOYMENT_NAME environment variable is required");
 
-        public static TokenCredential GetCredential()
+        public static TokenCredential GetCredential(ILogger? logger = null)
         {
+            logger?.LogDebug("Getting Azure credential...");
             var azureService = new AzureService();
-            return azureService.GetCredential();
+            var credential = azureService.GetCredential();
+            logger?.LogDebug("Azure credential obtained successfully");
+            return credential;
         }
 
-        public static AzureOpenAIClient GetAzureOpenAIClient()
+        public static AzureOpenAIClient GetAzureOpenAIClient(ILogger? logger = null)
         {
-            var credential = GetCredential();
+            var credential = GetCredential(logger);
             return new AzureOpenAIClient(new Uri(AzureOpenAIEndpoint), credential);
         }
 
-        public static IChatClient GetChatClient()
+        public static IChatClient GetChatClient(ILogger? logger = null)
         {
-            var azureClient = GetAzureOpenAIClient();
+            var azureClient = GetAzureOpenAIClient(logger);
             return new ChatClientBuilder(azureClient.GetChatClient(AzureOpenAIModelDeploymentName).AsIChatClient())
                 .Build();
         }
 
-        public static async Task<IMcpClient> GetMcpClientAsync()
+        public static async Task<IMcpClient> GetMcpClientAsync(ILogger? logger = null)
         {
-            // Run your local MCP server directly with dotnet run
-            return await McpClientFactory.CreateAsync(
-                new StdioClientTransport(
-                    new()
-                    {
-                        Command = "dotnet",
-                        Arguments = [
-                            "run",
-                            "--project",
-                            @"..\..\..\..\..\tools\azsdk-cli\Azure.Sdk.Tools.Cli",
-                            "--",
-                            "start" 
-                        ]
-                    }
-                )
-            );
+            logger?.LogDebug("Starting MCP client creation...");
+            logger?.LogDebug("Command: dotnet run --project ..\\..\\..\\..\\..\\tools\\azsdk-cli\\Azure.Sdk.Tools.Cli -- start");
+            
+            try
+            {
+                // Run your local MCP server directly with dotnet run
+                var mcpClient = await McpClientFactory.CreateAsync(
+                    new StdioClientTransport(
+                        new()
+                        {
+                            Command = "dotnet",
+                            Arguments = [
+                                "run",
+                                "--project",
+                                @"..\..\..\..\..\tools\azsdk-cli\Azure.Sdk.Tools.Cli",
+                                "--",
+                                "start" 
+                            ]
+                        }
+                    )
+                );
+                logger?.LogDebug("MCP client created successfully");
+                return mcpClient;
+            }
+            catch (Exception ex)
+            {
+                logger?.LogError(ex, "Failed to create MCP client");
+                throw;
+            }
         }
 
         public static ChatCompletion GetChatCompletion(IChatClient chatClient, IMcpClient mcpClient)

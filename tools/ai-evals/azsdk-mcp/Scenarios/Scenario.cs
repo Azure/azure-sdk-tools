@@ -30,12 +30,38 @@ namespace Azure.Sdk.Tools.McpEvals.Scenarios
         [OneTimeSetUp]
         public async Task GlobalSetup()
         {
-            s_chatClient = TestSetup.GetChatClient();
-            s_mcpClient = await TestSetup.GetMcpClientAsync();
-            s_chatConfig = new ChatConfiguration(s_chatClient);
-            s_chatCompletion = TestSetup.GetChatCompletion(s_chatClient, s_mcpClient);
-            s_toolNames = (await s_mcpClient.ListToolsAsync()).Select(tool => tool.Name)!;
-            s_executionName = $"{DateTime.Now:yyyyMMddTHHmmss}";
+            // Initialize logger first
+            using var loggerFactory = LoggerFactory.Create(builder =>
+                builder.AddConsole().SetMinimumLevel(LogLevel.Debug));
+            s_logger = loggerFactory.CreateLogger<Scenario>();
+
+            s_logger.LogInformation("Starting GlobalSetup...");
+                
+                s_logger.LogDebug("Getting chat client...");
+                s_chatClient = TestSetup.GetChatClient(loggerFactory);
+                s_logger.LogDebug("Chat client obtained successfully");
+                
+                s_logger.LogDebug("Getting MCP client async...");
+                s_mcpClient = await TestSetup.GetMcpClientAsync(loggerFactory);
+                s_logger.LogDebug("MCP client obtained successfully");
+                
+                s_logger.LogDebug("Creating chat configuration...");
+                s_chatConfig = new ChatConfiguration(s_chatClient);
+                s_logger.LogDebug("Chat configuration created successfully");
+                
+                s_logger.LogDebug("Getting chat completion...");
+                s_chatCompletion = TestSetup.GetChatCompletion(s_chatClient, s_mcpClient);
+                s_logger.LogDebug("Chat completion obtained successfully");
+                
+                s_logger.LogDebug("Listing tools from MCP client...");
+                s_toolNames = (await s_mcpClient.ListToolsAsync()).Select(tool => tool.Name)!;
+                s_logger.LogDebug($"Tools listed successfully. Found {s_toolNames.Count()} tools: {string.Join(", ", s_toolNames)}");
+                
+                s_logger.LogDebug("Creating execution name...");
+                s_executionName = $"{DateTime.Now:yyyyMMddTHHmmss}";
+                s_logger.LogDebug($"Execution name created: {s_executionName}");
+                
+                s_logger.LogInformation("GlobalSetup completed successfully");
         }
 
 

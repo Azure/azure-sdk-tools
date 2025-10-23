@@ -66,10 +66,10 @@ func validateTemplateName(template string) error {
 	// Additional validation: only allow safe characters for filenames
 	// Allow alphanumeric, underscore, hyphen, and dot
 	for _, char := range template {
-		if !((char >= 'a' && char <= 'z') ||
-			(char >= 'A' && char <= 'Z') ||
-			(char >= '0' && char <= '9') ||
-			char == '_' || char == '-' || char == '.') {
+		if (char < 'a' || char > 'z') &&
+			(char < 'A' || char > 'Z') &&
+			(char < '0' || char > '9') &&
+			char != '_' && char != '-' && char != '.' {
 			return fmt.Errorf("template name contains invalid characters")
 		}
 	}

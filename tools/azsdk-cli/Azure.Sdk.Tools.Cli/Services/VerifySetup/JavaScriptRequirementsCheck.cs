@@ -7,10 +7,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.Cli.Models;
 
-public class JavaScriptRequirementsCheck : EnvRequirementsCheck, IEnvRequirementsCheck
+public class JavaScriptRequirementsCheck : IEnvRequirementsCheck
 {
-    public async Task<List<SetupRequirements.Requirement>> GetRequirements(string packagePath, CancellationToken ct = default)
+    public List<SetupRequirements.Requirement> GetRequirements(string packagePath, Dictionary<string, List<SetupRequirements.Requirement>> categories, CancellationToken ct = default)
     {
-        return await base.ParseRequirements("javascript", ct);
+        return categories.TryGetValue("javascript", out var requirements) ? requirements : new List<SetupRequirements.Requirement>();
     }
 }

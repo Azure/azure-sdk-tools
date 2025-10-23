@@ -7,10 +7,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using Azure.Sdk.Tools.Cli.Models;
 
-public class DotNetRequirementsCheck : EnvRequirementsCheck, IEnvRequirementsCheck
+public class DotNetRequirementsCheck : IEnvRequirementsCheck
 {
-    public async Task<List<SetupRequirements.Requirement>> GetRequirements(string packagePath, CancellationToken ct = default)
+    public List<SetupRequirements.Requirement> GetRequirements(string packagePath, Dictionary<string, List<SetupRequirements.Requirement>> categories, CancellationToken ct = default)
     {
-        return await base.ParseRequirements("dotnet", ct);
+        return categories.TryGetValue("dotnet", out var requirements) ? requirements : new List<SetupRequirements.Requirement>();
     }
 }

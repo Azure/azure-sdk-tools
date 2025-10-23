@@ -9,7 +9,7 @@ using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Helpers;
 using System.Runtime.InteropServices;
 
-public class PythonRequirementsCheck : EnvRequirementsCheck, IEnvRequirementsCheck
+public class PythonRequirementsCheck : IEnvRequirementsCheck
 {
     private readonly IProcessHelper processHelper;
 
@@ -21,14 +21,14 @@ public class PythonRequirementsCheck : EnvRequirementsCheck, IEnvRequirementsChe
         this.logger = logger;
     }
 
-    public async Task<List<SetupRequirements.Requirement>> GetRequirements(string packagePath, CancellationToken ct = default)
+    public List<SetupRequirements.Requirement> GetRequirements(string packagePath, Dictionary<string, List<SetupRequirements.Requirement>> categories, CancellationToken ct = default)
     {
-        return await GetRequirements(packagePath, null, ct);
+        return GetRequirements(packagePath, categories, null, ct);
     }
 
-    public async Task<List<SetupRequirements.Requirement>> GetRequirements(string packagePath, string venvPath, CancellationToken ct = default)
+    public List<SetupRequirements.Requirement> GetRequirements(string packagePath, Dictionary<string, List<SetupRequirements.Requirement>> categories, string venvPath, CancellationToken ct = default)
     {
-        var reqs = await base.ParseRequirements("python", ct);
+        var reqs = categories.TryGetValue("python", out var requirements) ? requirements : new List<SetupRequirements.Requirement>();
 
         if (string.IsNullOrWhiteSpace(venvPath))
         {

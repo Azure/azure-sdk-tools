@@ -89,8 +89,8 @@ internal class VerifySetupToolTests
                         var mockChecker = new Mock<IEnvRequirementsCheck>();
                         var spec = languageSpecs[lang];
                         mockChecker
-                            .Setup(x => x.GetRequirements(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                            .ReturnsAsync(new List<SetupRequirements.Requirement>
+                            .Setup(x => x.GetRequirements(It.IsAny<string>(), It.IsAny<Dictionary<string, List<SetupRequirements.Requirement>>>(), It.IsAny<CancellationToken>()))
+                            .Returns(new List<SetupRequirements.Requirement>
                             {
                                 new SetupRequirements.Requirement
                                 {

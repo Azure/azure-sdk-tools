@@ -195,7 +195,8 @@ public class VerifySetupTool : MCPTool
     private async Task<List<SetupRequirements.Requirement>> GetRequirements(HashSet<SdkLanguage> languages, string packagePath, string venvPath, CancellationToken ct)
     {
         // Check core requirements before language-specific requirements
-        var reqsToCheck = await GetCoreRequirements(ct);
+        var parsedReqs = ParseRequirements(ct);
+        var reqsToCheck = GetCoreRequirements(parsedReqs, ct);
 
         // Per-language requirements
         var reqGetters = null as List<IEnvRequirementsCheck?>;
@@ -230,47 +231,39 @@ public class VerifySetupTool : MCPTool
             if (getter is PythonRequirementsCheck pythonReqCheck && !string.IsNullOrEmpty(venvPath))
             {
                 // If checking Python and venv path provided, use it
-                reqsToCheck.AddRange(await pythonReqCheck.GetRequirements(packagePath, venvPath, ct));
+                reqsToCheck.AddRange(pythonReqCheck.GetRequirements(packagePath, parsedReqs, venvPath, ct));
                 continue;
-            } 
-            
-            reqsToCheck.AddRange(await getter.GetRequirements(packagePath, ct));
-            
+            }
+
+            reqsToCheck.AddRange(getter.GetRequirements(packagePath, parsedReqs, ct));
         }
 
         return reqsToCheck ?? new List<SetupRequirements.Requirement>();
     }
 
-    private async Task<List<SetupRequirements.Requirement>> GetCoreRequirements(CancellationToken ct)
+    private List<SetupRequirements.Requirement> GetCoreRequirements(Dictionary<string, List<SetupRequirements.Requirement>> categories, CancellationToken ct)
+    {
+        if (categories.TryGetValue("core", out var reqs))
+        {
+            return reqs;
+        }
+        logger.LogWarning("No core requirements found in the requirements JSON.");
+        return new List<SetupRequirements.Requirement>();
+    }
+
+    private Dictionary<string, List<SetupRequirements.Requirement>> ParseRequirements(CancellationToken ct = default)
     {
         var assembly = Assembly.GetExecutingAssembly();
         var names = assembly.GetManifestResourceNames();
         using var stream = assembly.GetManifestResourceStream("Azure.Sdk.Tools.Cli.Configuration.RequirementsV1.json");
-        using var reader = new StreamReader(stream);
-        var requirementsJson = await reader.ReadToEndAsync(ct);
-
-        var setupRequirements = JsonSerializer.Deserialize<SetupRequirements>(requirementsJson);
+        var setupRequirements = JsonSerializer.Deserialize<SetupRequirements>(stream);
 
         if (setupRequirements == null)
         {
             throw new Exception("Failed to parse requirements JSON.");
         }
 
-        var reqs = new List<SetupRequirements.Requirement>();
-        foreach (var kv in setupRequirements.categories)
-        {
-            var category = kv.Key;
-            var requirements = kv.Value;
-            if (string.Equals(category, "core", StringComparison.OrdinalIgnoreCase))
-            {
-                if (requirements != null)
-                {
-                    reqs.AddRange(requirements);
-                }
-            }
-        }
-
-        return reqs;
+        return setupRequirements.categories;
     }
 
     private string CheckVersion(string output, SetupRequirements.Requirement req)

@@ -71,7 +71,6 @@ namespace Azure.Sdk.Tools.PerfAutomation
             Directory.CreateDirectory(_targetResultsDirectory);
             _debug = debug;
 
-
             string flavor = debug ? "debug" : "release";
             _testCommand = $"--{flavor} --package {primaryPackage} --test perf ";
             var result = await Util.RunAsync(_cargoName, $"build {_testCommand} --message-format=json", WorkingDirectory, log: false);
@@ -110,7 +109,7 @@ namespace Azure.Sdk.Tools.PerfAutomation
                 {
                     Console.WriteLine($"Executable: {exe}");
                 }
-                throw new Exception($"No test executables were found after building the project, found {executables}");
+                throw new Exception($"No test executables were found after building the project");
             }
             _executablePath = executables[0];
 

@@ -6,7 +6,7 @@ namespace Azure.Sdk.Tools.Cli.Models;
 
 public class VerifySetupResponse : CommandResponse
 {
-    [JsonPropertyName("allRequirementsSatisfied")]
+    [JsonPropertyName("all_requirements_satisfied")]
     public bool AllRequirementsSatisfied { get; set; }
 
     [JsonPropertyName("results")]

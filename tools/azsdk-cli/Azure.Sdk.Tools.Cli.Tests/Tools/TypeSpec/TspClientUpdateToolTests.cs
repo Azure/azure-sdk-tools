@@ -119,7 +119,7 @@ public class TspClientUpdateToolAutoTests
         private readonly IClientUpdateLanguageService _svc;
         public SingleResolver(IClientUpdateLanguageService svc) { _svc = svc; }
         public Task<IClientUpdateLanguageService?> Resolve(string packagePath, CancellationToken ct = default) => Task.FromResult(_svc);
-        public List<IClientUpdateLanguageService?> Resolve(List<SdkLanguage> languages, CancellationToken ct = default) => languages.Select(_ => _svc).ToList();
+        public List<IClientUpdateLanguageService?> Resolve(HashSet<SdkLanguage> languages, CancellationToken ct = default) => languages.Select(_ => _svc).ToList();
     }
 }
 

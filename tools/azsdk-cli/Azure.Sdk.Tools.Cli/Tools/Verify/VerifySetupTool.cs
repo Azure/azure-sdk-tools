@@ -75,14 +75,14 @@ public class VerifySetupTool : MCPTool
     {
         var langs = parseResult.GetValue(languagesParam);
         var allLangs = parseResult.GetValue(allLangOption);
-        var parsed = allLangs ? Enum.GetValues<SdkLanguage>().ToList() : langs;
+        var parsed = allLangs ? Enum.GetValues<SdkLanguage>().ToHashSet() : langs.ToHashSet();
         var packagePath = parseResult.GetValue(SharedOptions.PackagePath);
         var venvPath = parseResult.GetValue(venvOption);
         return await VerifySetup(parsed, packagePath, venvPath, ct);
     }
 
     [McpServerTool(Name = "azsdk_verify_setup"), Description("Verifies the developer environment for MCP release tool requirements. Accepts a list of supported languages to check requirements for, and the packagePath of the repo to check. Accepts a specific Python virtual environment path to use for Python requirements checks.")]
-    public async Task<VerifySetupResponse> VerifySetup(List<SdkLanguage> langs = null, string packagePath = null, string venvPath = null, CancellationToken ct = default)
+    public async Task<VerifySetupResponse> VerifySetup(HashSet<SdkLanguage> langs = null, string packagePath = null, string venvPath = null, CancellationToken ct = default)
     {
         try
         {
@@ -192,17 +192,17 @@ public class VerifySetupTool : MCPTool
         };
     }
 
-    private async Task<List<SetupRequirements.Requirement>> GetRequirements(List<SdkLanguage> languages, string packagePath, string venvPath, CancellationToken ct)
+    private async Task<List<SetupRequirements.Requirement>> GetRequirements(HashSet<SdkLanguage> languages, string packagePath, string venvPath, CancellationToken ct)
     {
         // Check core requirements before language-specific requirements
         var reqsToCheck = await GetCoreRequirements(ct);
 
         // Per-language requirements
-        var reqGetters = null as List<IEnvRequirementsCheck>;
+        var reqGetters = null as List<IEnvRequirementsCheck?>;
         if (languages == null || languages.Count == 0)
         {
             // Detect language if none given
-            reqGetters = new List<IEnvRequirementsCheck> { await envRequirementsCheck.Resolve(packagePath) };
+            reqGetters = new List<IEnvRequirementsCheck?> { await envRequirementsCheck.Resolve(packagePath) };
 
             if (reqGetters == null || reqGetters.Count == 0)
             {

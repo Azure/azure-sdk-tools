@@ -25,6 +25,11 @@
                 "requirement": "github CLI >= 2.30.0",
                 "check": ["gh", "--version"],
                 "instructions": ["Download and install GitHub CLI"]
+            },
+            {
+                "requirement": "python",
+                "check": ["python", "--version"],
+                "instructions": ["Install Python from https://www.python.org/downloads/"]
             }
         ],
         "java": [

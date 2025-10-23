@@ -78,8 +78,8 @@ internal class VerifySetupToolTests
     private void SetupLanguageRequirementsMocks(Dictionary<SdkLanguage, (string requirement, string[] checkCommand, List<string> instructions)> languageSpecs)
     {
         mockEnvRequirementsCheck
-            .Setup(x => x.Resolve(It.IsAny<List<SdkLanguage>>(), It.IsAny<CancellationToken>()))
-            .Returns((List<SdkLanguage> langs, CancellationToken _) =>
+            .Setup(x => x.Resolve(It.IsAny<HashSet<SdkLanguage>>(), It.IsAny<CancellationToken>()))
+            .Returns((HashSet<SdkLanguage> langs, CancellationToken _) =>
             {
                 var checkers = new List<IEnvRequirementsCheck?>();
                 foreach (var lang in langs)
@@ -121,7 +121,7 @@ internal class VerifySetupToolTests
         SetupLanguageRequirementsMocks(languageSpecs);
 
         // Act
-        var result = await tool.VerifySetup(new List<SdkLanguage> { SdkLanguage.Python }, "/test/path");
+        var result = await tool.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.Python }, "/test/path");
 
         // Assert
         Assert.That(result.AllRequirementsSatisfied, Is.True);
@@ -141,7 +141,7 @@ internal class VerifySetupToolTests
         SetupFailedProcessMock("node", 1, "node: command not found");
 
         // Act
-        var result = await tool.VerifySetup(new List<SdkLanguage> { SdkLanguage.Python }, "/test/path");
+        var result = await tool.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.Python }, "/test/path");
 
         // Assert
         Assert.That(result.AllRequirementsSatisfied, Is.False);
@@ -160,7 +160,7 @@ internal class VerifySetupToolTests
         SetupLanguageRequirementsMocks(languageSpecs);
 
         // Act
-        var result = await tool.VerifySetup(new List<SdkLanguage> { SdkLanguage.Python }, "/test/path");
+        var result = await tool.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.Python }, "/test/path");
 
         // Assert
         Assert.That(result.AllRequirementsSatisfied, Is.False);
@@ -184,7 +184,7 @@ internal class VerifySetupToolTests
         SetupFailedProcessMock("java", 1, "java: command not found");
 
         // Act
-        var result = await tool.VerifySetup(new List<SdkLanguage> { SdkLanguage.Python }, "/test/path");
+        var result = await tool.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.Python }, "/test/path");
 
         // Assert
         Assert.That(result.AllRequirementsSatisfied, Is.True);
@@ -192,15 +192,15 @@ internal class VerifySetupToolTests
 
         // Verify that only Python language resolver was called, not Java or .NET
         mockEnvRequirementsCheck.Verify(
-            x => x.Resolve(It.Is<List<SdkLanguage>>(langs => langs.Contains(SdkLanguage.Python) && langs.Count == 1), It.IsAny<CancellationToken>()),
+            x => x.Resolve(It.Is<HashSet<SdkLanguage>>(langs => langs.Contains(SdkLanguage.Python) && langs.Count == 1), It.IsAny<CancellationToken>()),
             Times.Once);
 
         mockEnvRequirementsCheck.Verify(
-            x => x.Resolve(It.Is<List<SdkLanguage>>(langs => langs.Contains(SdkLanguage.Java)), It.IsAny<CancellationToken>()),
+            x => x.Resolve(It.Is<HashSet<SdkLanguage>>(langs => langs.Contains(SdkLanguage.Java)), It.IsAny<CancellationToken>()),
             Times.Never);
 
         mockEnvRequirementsCheck.Verify(
-            x => x.Resolve(It.Is<List<SdkLanguage>>(langs => langs.Contains(SdkLanguage.DotNet)), It.IsAny<CancellationToken>()),
+            x => x.Resolve(It.Is<HashSet<SdkLanguage>>(langs => langs.Contains(SdkLanguage.DotNet)), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -217,7 +217,7 @@ internal class VerifySetupToolTests
         SetupLanguageRequirementsMocks(languageSpecs);
 
         // Act - Request both Python and Java
-        var result = await tool.VerifySetup(new List<SdkLanguage> { SdkLanguage.Python, SdkLanguage.Java }, "/test/path");
+        var result = await tool.VerifySetup(new HashSet<SdkLanguage> { SdkLanguage.Python, SdkLanguage.Java }, "/test/path");
 
         // Assert
         Assert.That(result.AllRequirementsSatisfied, Is.True);
@@ -225,7 +225,7 @@ internal class VerifySetupToolTests
 
         // Verify that resolver was called with both languages
         mockEnvRequirementsCheck.Verify(
-            x => x.Resolve(It.Is<List<SdkLanguage>>(langs => langs.Contains(SdkLanguage.Python) && langs.Contains(SdkLanguage.Java) && langs.Count == 2), It.IsAny<CancellationToken>()),
+            x => x.Resolve(It.Is<HashSet<SdkLanguage>>(langs => langs.Contains(SdkLanguage.Python) && langs.Contains(SdkLanguage.Java) && langs.Count == 2), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -234,11 +234,11 @@ internal class VerifySetupToolTests
     {
         // Mock the resolver to return empty list for invalid languages (simulating no valid languages found)
         mockEnvRequirementsCheck
-            .Setup(x => x.Resolve(It.IsAny<List<SdkLanguage>>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Resolve(It.IsAny<HashSet<SdkLanguage>>(), It.IsAny<CancellationToken>()))
             .Returns(new List<IEnvRequirementsCheck?>()); // Return empty list, not null
 
         // Act - Pass invalid language
-        var result = await tool.VerifySetup(new List<SdkLanguage> { (SdkLanguage)(-1) }, "/test/path");
+        var result = await tool.VerifySetup(new HashSet<SdkLanguage> { (SdkLanguage)(-1) }, "/test/path");
 
         // Assert - Should succeed with just core requirements
         Assert.That(result.AllRequirementsSatisfied, Is.True);

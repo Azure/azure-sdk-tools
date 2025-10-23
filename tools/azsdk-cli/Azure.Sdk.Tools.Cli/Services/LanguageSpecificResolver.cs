@@ -36,7 +36,7 @@ public class LanguageSpecificResolver<T>(
         };
     }
 
-    public List<T?> Resolve(List<SdkLanguage> languages, CancellationToken ct = default)
+    public List<T?> Resolve(HashSet<SdkLanguage> languages, CancellationToken ct = default)
     {
         var services = new List<T?>();
 

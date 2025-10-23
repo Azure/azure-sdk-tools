@@ -5,6 +5,7 @@
     <RootNamespace>Azure.Sdk.Tools.McpEvals</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <NoWarn>CS8618,CS8603</NoWarn>
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
 

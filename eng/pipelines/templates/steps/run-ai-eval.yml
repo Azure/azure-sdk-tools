@@ -1,7 +1,7 @@
 parameters:
-  - EvalProject: ''
-  - OpenAIEndPoint: ''
-  - Model: 'gpt-4'
+  EvalProject: ''
+  OpenAIEndPoint: ''
+  Model: 'gpt-4'
 
 steps:
   - checkout: self
@@ -10,11 +10,11 @@ steps:
 
   - task: AzureCLI@2
     displayName: 'Run eval'
-    workingDirectory: '${{ parameters.EvalProject }}'
     inputs:
       azureSubscription: opensource-api-connection
       scriptType: 'bash'
       scriptLocation: 'inlineScript'
+      workingDirectory: '${{ parameters.EvalProject }}'
       inlineScript: |
         echo "Logged in to Azure"
         echo "Running eval in project ${{ parameters.EvalProject }}"

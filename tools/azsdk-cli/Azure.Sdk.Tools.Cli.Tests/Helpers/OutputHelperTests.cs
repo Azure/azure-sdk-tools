@@ -41,7 +41,7 @@ internal class OutputHelperTests
     }
   ],
   ""suggested_fix"": ""a test suggested fix"",
-  ""status"": 0
+  ""command_status"": ""Succeeded""
 }";
 
         var output = new OutputHelper(OutputHelper.OutputModes.Json);

@@ -1,14 +1,14 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
-using System.Text;
 using System.Text.Json.Serialization;
 
 namespace Azure.Sdk.Tools.Cli.Models;
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum Status
 {
-    Succeeded = 0,
-    Failed = 1
+    Succeeded,
+    Failed
 }
 
 public abstract class CommandResponse
@@ -53,8 +53,8 @@ public abstract class CommandResponse
     /// <summary>
     /// Status shows whether the command operation was successful.
     /// </summary>
-    [JsonPropertyName("status")]
-    public Status Status
+    [JsonPropertyName("command_status")]
+    public Status CommandStatus
     {
         get
         {

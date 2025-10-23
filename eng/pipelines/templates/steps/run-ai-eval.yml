@@ -1,0 +1,35 @@
+parameters:
+  - EvalProject: ''
+  - OpenAIEndPoint: ''
+  - Model: 'gpt-4'
+
+steps:
+  - checkout: self
+
+  - template: /eng/pipelines/templates/steps/install-dotnet.yml
+
+  - task: AzureCLI@2
+    displayName: 'Run eval'
+    workingDirectory: '${{ parameters.EvalProject }}'
+    inputs:
+      azureSubscription: opensource-api-connection
+      scriptType: 'bash'
+      scriptLocation: 'inlineScript'
+      inlineScript: |
+        echo "Logged in to Azure"
+        echo "Running eval in project ${{ parameters.EvalProject }}"
+        dotnet test /p:ArtifactsPackagesDir=$(Build.ArtifactStagingDirectory) $(Warn) --logger trx
+    env:
+      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+      DOTNET_CLI_TELEMETRY_OPTOUT: 1
+      DOTNET_MULTILEVEL_LOOKUP: 0
+      AZURE_OPENAI_MODEL_DEPLOYMENT_NAME: ${{ parameters.Model }}
+      AZURE_OPENAI_ENDPOINT: ${{ parameters.OpenAIEndPoint }}
+
+  - task: PublishTestResults@2
+    condition: succeededOrFailed()
+    inputs:
+      testResultsFiles: '**/*.trx'
+      testRunTitle: $(System.JobDisplayName)
+      testResultsFormat: 'VSTest'
+      mergeTestResults: true

@@ -65,6 +65,15 @@ parameters:
         Pool: $(MACPOOL)
         Image: $(MACVMIMAGE)
         Os: macOS
+  - name: EvalProject
+    type: string
+    default: ''
+  - name: OpenAIEndPoint
+    type: string
+    default: ''
+  - name: Model
+    type: string
+    default: ''
 
 extends:
   template: /eng/pipelines/templates/stages/1es-redirect.yml
@@ -213,6 +222,21 @@ extends:
                     mergeTestResults: true
 
                 - template: /eng/pipelines/templates/steps/upload-llm-artifacts.yml
+
+          - ${{ if ne(parameters.EvalProject, '') }}:
+            - job: Eval
+              displayName: 'Run AI Eval'
+              pool:
+                name: $(LINUXPOOL)
+                image: $(LINUXVMIMAGE)
+                os: linux
+
+              steps:
+                - template: /eng/pipelines/templates/steps/run-ai-eval.yml
+                  parameters:
+                    EvalProject: ${{ parameters.EvalProject }}
+                    OpenAIEndPoint: ${{ parameters.OpenAIEndPoint }}
+                    Model: ${{ parameters.Model }}
 
           - ${{ if not(eq(length(parameters.DockerDeployments), 0)) }}:
             - template: /eng/pipelines/publish-docker-image-isolated.yml

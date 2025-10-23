@@ -23,22 +23,32 @@ public class PythonRequirementsCheck : EnvRequirementsCheck, IEnvRequirementsChe
 
     public async Task<List<SetupRequirements.Requirement>> GetRequirements(string packagePath, CancellationToken ct = default)
     {
+        return await GetRequirements(packagePath, null, ct);
+    }
+
+    public async Task<List<SetupRequirements.Requirement>> GetRequirements(string packagePath, string venvPath, CancellationToken ct = default)
+    {
         var reqs = await base.ParseRequirements("python", ct);
 
-        // use venv
-        var venvPath = FindOrCreateVenv(packagePath);
-
-        logger.LogInformation("Using virtual environment at: {VenvPath}", venvPath);
-        
-        if (venvPath == null)
+        if (string.IsNullOrWhiteSpace(venvPath))
         {
-            logger.LogWarning("No venv path determined for Python requirements check");
-            return reqs;
+            venvPath = FindOrCreateVenv(packagePath);
         }
 
-        // update checks to use venv path
+        if (string.IsNullOrWhiteSpace(venvPath) || !Directory.Exists(venvPath))
+        {
+            logger.LogWarning("Provided venv path is invalid or does not exist: {VenvPath}", venvPath);
+            return reqs;
+        }
+        logger.LogInformation("Using virtual environment at: {VenvPath}", venvPath);
+        return UpdateChecksWithVenv(reqs, venvPath);
+    }
+
+    private List<SetupRequirements.Requirement> UpdateChecksWithVenv(List<SetupRequirements.Requirement> reqs, string venvPath)
+    {
         foreach (var req in reqs)
         {
+            // Update checks to use venv path
             var binDir = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Scripts" : "bin";
             req.check[0] = Path.Combine(venvPath, binDir, req.check[0]);
         }
@@ -46,7 +56,7 @@ public class PythonRequirementsCheck : EnvRequirementsCheck, IEnvRequirementsChe
         return reqs;
     }
 
-    private string? FindOrCreateVenv(string packagePath)
+    private string FindOrCreateVenv(string packagePath)
     {
         try
         {

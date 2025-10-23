@@ -17,7 +17,7 @@
                 "instructions": ["npm install -g @azure-tools/typespec-client-generator-cli@latest @typespec/compiler@latest"]
             },
             {
-                "requirement": "Powershell >= 7",
+                "requirement": "Powershell >= 7.0",
                 "check": ["pwsh", "--version"],
                 "instructions": ["Download and install PowerShell"]
             },
@@ -34,7 +34,7 @@
         ],
         "java": [
             {
-                "requirement": "java >= 17",
+                "requirement": "java >= 17.0.0",
                 "check": ["java", "-version"],
                 "instructions": ["Download JDK", "Set JAVA_HOME environment variable to the JDK installation path", "Add JAVA_HOME/bin to your PATH environment variable", "Restart your IDE."]
             },

@@ -211,7 +211,7 @@ internal class VerifySetupToolTests
         var languageSpecs = new Dictionary<SdkLanguage, (string, string[], List<string>)>
         {
             { SdkLanguage.Python, ("Python >= 3.8", new[] { "python", "--version" }, new List<string> { "Install Python 3.8" }) },
-            { SdkLanguage.Java, ("Java >= 17", new[] { "java", "-version" }, new List<string> { "Install Java 17" }) }
+            { SdkLanguage.Java, ("Java >= 17.0", new[] { "java", "-version" }, new List<string> { "Install Java 17" }) }
         };
 
         SetupLanguageRequirementsMocks(languageSpecs);

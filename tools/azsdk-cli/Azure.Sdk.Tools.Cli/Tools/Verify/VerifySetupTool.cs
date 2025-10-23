@@ -286,7 +286,7 @@ public class VerifySetupTool : MCPTool
         }
 
         string operatorSymbol = match.Groups[1].Value;
-        string requiredVersion = match.Groups[2].Value;
+        string requiredVersion = match.Groups[2].Value.Trim();
 
         logger.LogInformation("Requires version: {requiredVersion}", requiredVersion);
 
@@ -298,41 +298,25 @@ public class VerifySetupTool : MCPTool
             return requiredVersion;
         }
 
-        string installedVersion = outputVersionMatch.Value;
+        string installedVersion = outputVersionMatch.Value.Trim();
 
         logger.LogInformation("Installed version: {installedVersion}", installedVersion);
 
-        int comparison = CompareVersions(installedVersion, requiredVersion);
 
-        return operatorSymbol switch
+        if (Version.TryParse(requiredVersion, out var requiredVer) && Version.TryParse(installedVersion, out var installedVer))
         {
-            ">=" => comparison >= 0 ? string.Empty : requiredVersion,
-            "<=" => comparison <= 0 ? string.Empty : requiredVersion,
-            ">" => comparison > 0 ? string.Empty : requiredVersion,
-            "<" => comparison < 0 ? string.Empty : requiredVersion,
-            "=" => comparison == 0 ? string.Empty : requiredVersion,
-            _ => requiredVersion,
-        };
-    }
-
-    private int CompareVersions(string version1, string version2)
-    {
-        var v1Parts = version1.Split('.');
-        var v2Parts = version2.Split('.');
-
-        int length = Math.Max(v1Parts.Length, v2Parts.Length);
-        for (int i = 0; i < length; i++)
-        {
-            int v1Part = i < v1Parts.Length ? int.Parse(v1Parts[i]) : 0;
-            int v2Part = i < v2Parts.Length ? int.Parse(v2Parts[i]) : 0;
-
-            int comparison = v1Part.CompareTo(v2Part);
-            if (comparison != 0)
+            return operatorSymbol switch
             {
-                return comparison;
-            }
+                ">=" => installedVer >= requiredVer ? string.Empty : requiredVersion,
+                "<=" => installedVer <= requiredVer ? string.Empty : requiredVersion,
+                ">" => installedVer > requiredVer ? string.Empty : requiredVersion,
+                "<" => installedVer < requiredVer ? string.Empty : requiredVersion,
+                "=" => installedVer == requiredVer ? string.Empty : requiredVersion,
+                _ => requiredVersion,
+            };
         }
 
-        return 0;
+        logger.LogWarning("Failed to parse requirement versions as System.Version.");
+        return requiredVersion;
     }
 }

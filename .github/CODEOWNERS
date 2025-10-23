@@ -64,7 +64,7 @@
 # PRLabel: %azsdk-cli
 /tools/azsdk-cli/                       @azure/azsdk-cli
 # PRLabel: %azsdk-cli %design-discussion
-/tools/azsdk-cli/docs/specs             @azure/azsdk-cli
+/tools/azsdk-cli/docs/specs/            @azure/azsdk-cli
 
 
 ###########

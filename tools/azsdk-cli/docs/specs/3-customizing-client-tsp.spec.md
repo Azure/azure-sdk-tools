@@ -26,7 +26,7 @@ _Terms used throughout this spec with precise meanings:_
 
 ## Background / Problem Statement
 
-TypeSpec specs are written to describe service APIs. However, our team supports generating SDKs in no less than 5 languages, each differing in their idioms. The `client.tsp` file acts as a TypeSpec entry point for SDK emitters, applying language-specific customizations to the service spec that are then used by each respective SDK emitter.
+TypeSpec specs are written to describe service APIs. However, our team supports generating SDKs in no less than 7 languages, each differing in their idioms. The `client.tsp` file acts as a TypeSpec entry point for SDK emitters, applying language-specific customizations to the service spec that are then used by each respective SDK emitter.
 
 Service teams cannot be expected to understand the nuances of each SDK language and how to best customize the generated code for each. Applying changes also requires understanding how to use [Azure.ClientGenerator.Core](https://azure.github.io/typespec-azure/docs/libraries/typespec-client-generator-core/reference/).
 
@@ -66,12 +66,18 @@ For manual processes like API View reviews, we can improve the authoring experie
 
 What are we trying to achieve with this design?
 
-- [ ] Identify workflows that trigger the feedback required for identifying `client.tsp` customizations
 - [ ] Improve the service team experience for authoring `client.tsp` customizations
+- [ ] Simplify the process of _how_ to apply `client.tsp` customizations for language teams
 
 ## Design Proposal
 
-TBD: Need more scenarios to drive design details.
+The goals can be broken down into 3 main areas for this design to address:
+
+1. Make AI an expert on `client.tsp` customizations. The base expertise shouldn't have to be redefined by each language team.
+2. Provide the infra in azsdk-cli to to utilize this expertise. Let language teams focus on _what_ they want to update rather than the _how_ as possible.
+3. Update the `client.tsp` file, including from outside the azure-rest-api-specs repo.
+
+Design TBD
 
 ## Alternatives Considered
 

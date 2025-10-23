@@ -18,10 +18,6 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
             Environment.GetEnvironmentVariable("AZURE_OPENAI_MODEL_DEPLOYMENT_NAME") 
             ?? throw new InvalidOperationException("AZURE_OPENAI_MODEL_DEPLOYMENT_NAME environment variable is required");
 
-        public static readonly string CopilotInstructionsPath = 
-            Environment.GetEnvironmentVariable("COPILOT_INSTRUCTIONS_PATH") 
-            ?? throw new InvalidOperationException("COPILOT_INSTRUCTIONS_PATH environment variable is required");
-
         public static TokenCredential GetCredential()
         {
             var azureService = new AzureService();

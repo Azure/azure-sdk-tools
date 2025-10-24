@@ -7,39 +7,98 @@ using Azure.Sdk.Tools.Cli.Microagents.Tools;
 using Azure.Sdk.Tools.Cli.Models;
 using Azure.Sdk.Tools.Cli.Prompts;
 using Azure.Sdk.Tools.Cli.Prompts.Templates;
+using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Protocol;
 
 namespace Azure.Sdk.Tools.Cli.Services;
 
 /// <summary>
-/// Provides common helper methods for validation checks
+/// Interface for common helper methods for validation checks
 /// </summary>
-public static class CommonLanguageHelpers
+public interface ICommonValidationHelpers
 {
-
     /// <summary>
     /// Common changelog validation implementation
     /// </summary>
     /// <param name="packageName">SDK package name (provided by language-specific implementation)</param>
-    /// <param name="processHelper">Process helper for running commands</param>
-    /// <param name="gitHelper">Git helper for repository operations</param>
-    /// <param name="logger">Logger instance</param>
     /// <param name="packagePath">Absolute path to the package directory</param>
     /// <param name="fixCheckErrors">Whether to attempt to automatically fix changelog issues</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>CLI check response containing success/failure status and response message</returns>
-    public static async Task<CLICheckResponse> ValidateChangelogCommon(
+    Task<CLICheckResponse> ValidateChangelogCommon(
         string packageName,
+        string packagePath,
+        bool fixCheckErrors = false,
+        CancellationToken ct = default);
+
+    /// <summary>
+    /// Common README validation implementation
+    /// </summary>
+    /// <param name="packagePath">Absolute path to the package directory</param>
+    /// <param name="fixCheckErrors">Whether to attempt to automatically fix README issues</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>CLI check response containing success/failure status and response message</returns>
+    Task<CLICheckResponse> ValidateReadmeCommon(
+        string packagePath,
+        bool fixCheckErrors = false,
+        CancellationToken ct = default);
+
+    /// <summary>
+    /// Common spelling check implementation
+    /// </summary>
+    /// <param name="spellingCheckPath">Path to check for spelling errors (provided by language-specific implementation)</param>
+    /// <param name="packagePath">Absolute path to the package directory</param>
+    /// <param name="fixCheckErrors">Whether to attempt to automatically fix spelling issues where supported by cspell</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>CLI check response containing success/failure status and response message</returns>
+    Task<CLICheckResponse> CheckSpellingCommon(
+        string spellingCheckPath,
+        string packagePath,
+        bool fixCheckErrors = false,
+        CancellationToken ct = default);
+
+    /// <summary>
+    /// Validates package path and discovers repository root.
+    /// </summary>
+    /// <param name="packagePath">Absolute path to the package directory</param>
+    /// <returns>Repository root path if successful, or CLICheckResponse with error if validation fails</returns>
+    (string? repoRoot, CLICheckResponse? errorResponse) ValidatePackageAndDiscoverRepo(string packagePath);
+}
+
+/// <summary>
+/// Provides common helper methods for validation checks
+/// </summary>
+public class CommonValidationHelpers : ICommonValidationHelpers
+{
+    private readonly IProcessHelper _processHelper;
+    private readonly INpxHelper _npxHelper;
+    private readonly IGitHelper _gitHelper;
+    private readonly ILogger<CommonValidationHelpers> _logger;
+    private readonly IMicroagentHostService _microagentHostService;
+
+    public CommonValidationHelpers(
         IProcessHelper processHelper,
+        INpxHelper npxHelper,
         IGitHelper gitHelper,
-        ILogger logger,
+        ILogger<CommonValidationHelpers> logger,
+        IMicroagentHostService microagentHostService)
+    {
+        _processHelper = processHelper ?? throw new ArgumentNullException(nameof(processHelper));
+        _npxHelper = npxHelper ?? throw new ArgumentNullException(nameof(npxHelper));
+        _gitHelper = gitHelper ?? throw new ArgumentNullException(nameof(gitHelper));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _microagentHostService = microagentHostService ?? throw new ArgumentNullException(nameof(microagentHostService));
+    }
+
+    public async Task<CLICheckResponse> ValidateChangelogCommon(
+        string packageName,
         string packagePath, 
         bool fixCheckErrors = false, 
         CancellationToken ct = default)
     {
         try
         {
-            var (packageRepoRoot, errorResponse) = ValidatePackageAndDiscoverRepo(packagePath, gitHelper);
+            var (packageRepoRoot, errorResponse) = ValidatePackageAndDiscoverRepo(packagePath);
             if (errorResponse != null)
             {
                 return errorResponse;
@@ -56,38 +115,25 @@ public static class CommonLanguageHelpers
             var args = new[] { "-File", scriptPath, "-PackageName", packageName };
 
             var timeout = TimeSpan.FromMinutes(5);
-            var processResult = await processHelper.Run(new(command, args, timeout: timeout, workingDirectory: packagePath), ct);
+            var processResult = await _processHelper.Run(new(command, args, timeout: timeout, workingDirectory: packagePath), ct);
 
             return new CLICheckResponse(processResult);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error in ValidateChangelogCommon");
+            _logger.LogError(ex, "Error in ValidateChangelogCommon");
             return new CLICheckResponse(1, "", $"Unhandled exception: {ex.Message}");
         }
     }
 
-    /// <summary>
-    /// Common README validation implementation
-    /// </summary>
-    /// <param name="processHelper">Process helper for running commands</param>
-    /// <param name="gitHelper">Git helper for repository operations</param>
-    /// <param name="logger">Logger instance</param>
-    /// <param name="packagePath">Absolute path to the package directory</param>
-    /// <param name="fixCheckErrors">Whether to attempt to automatically fix README issues</param>
-    /// <param name="ct">Cancellation token</param>
-    /// <returns>CLI check response containing success/failure status and response message</returns>
-    public static async Task<CLICheckResponse> ValidateReadmeCommon(
-        IProcessHelper processHelper,
-        IGitHelper gitHelper,
-        ILogger logger,
+    public async Task<CLICheckResponse> ValidateReadmeCommon(
         string packagePath, 
         bool fixCheckErrors = false, 
         CancellationToken ct = default)
     {
         try
         {
-            var (packageRepoRoot, errorResponse) = ValidatePackageAndDiscoverRepo(packagePath, gitHelper);
+            var (packageRepoRoot, errorResponse) = ValidatePackageAndDiscoverRepo(packagePath);
             if (errorResponse != null)
             {
                 return errorResponse;
@@ -115,44 +161,26 @@ public static class CommonLanguageHelpers
             };
 
             var timeout = TimeSpan.FromMinutes(10);
-            var processResult = await processHelper.Run(new(command, args, timeout: timeout, workingDirectory: packagePath), ct);
+            var processResult = await _processHelper.Run(new(command, args, timeout: timeout, workingDirectory: packagePath), ct);
 
             return new CLICheckResponse(processResult);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error in ValidateReadmeCommon");
+            _logger.LogError(ex, "Error in ValidateReadmeCommon");
             return new CLICheckResponse(1, "", $"Unhandled exception: {ex.Message}");
         }
     }
 
-    /// <summary>
-    /// Common spelling check implementation
-    /// </summary>
-    /// <param name="spellingCheckPath">Path to check for spelling errors (provided by language-specific implementation)</param>
-    /// <param name="processHelper">Process helper for running commands</param>
-    /// <param name="npxHelper">NPX helper for running Node.js tools</param>
-    /// <param name="gitHelper">Git helper for repository operations</param>
-    /// <param name="logger">Logger instance</param>
-    /// <param name="microagentHostService">Microagent host service for AI-powered fixes</param>
-    /// <param name="packagePath">Absolute path to the package directory</param>
-    /// <param name="fixCheckErrors">Whether to attempt to automatically fix spelling issues where supported by cspell</param>
-    /// <param name="ct">Cancellation token</param>
-    /// <returns>CLI check response containing success/failure status and response message</returns>
-    public static async Task<CLICheckResponse> CheckSpellingCommon(
+    public async Task<CLICheckResponse> CheckSpellingCommon(
         string spellingCheckPath,
-        IProcessHelper processHelper,
-        INpxHelper npxHelper,
-        IGitHelper gitHelper,
-        ILogger logger,
-        IMicroagentHostService microagentHostService,
         string packagePath, 
         bool fixCheckErrors = false, 
         CancellationToken ct = default)
     {
         try
         {
-            var (packageRepoRoot, errorResponse) = ValidatePackageAndDiscoverRepo(packagePath, gitHelper);
+            var (packageRepoRoot, errorResponse) = ValidatePackageAndDiscoverRepo(packagePath);
             if (errorResponse != null)
             {
                 return errorResponse;
@@ -170,7 +198,7 @@ public static class CommonLanguageHelpers
                 ["cspell", "lint", "--config", cspellConfigPath, "--root", packageRepoRoot, spellingCheckPath],
                 logOutputStream: true
             );
-            var processResult = await npxHelper.Run(npxOptions, ct: ct);
+            var processResult = await _npxHelper.Run(npxOptions, ct: ct);
 
             // If cspell checked 0 files, treat as success
             if (processResult.Output != null && processResult.Output.Contains("Files checked: 0"))
@@ -183,12 +211,12 @@ public static class CommonLanguageHelpers
             {
                 try
                 {
-                    var fixResult = await RunSpellingFixMicroagent(packageRepoRoot, processResult.Output, microagentHostService, ct);
+                    var fixResult = await RunSpellingFixMicroagent(packageRepoRoot, processResult.Output, ct);
                     return new CLICheckResponse(0, fixResult.Summary);
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, "Error running spelling fix microagent");
+                    _logger.LogError(ex, "Error running spelling fix microagent");
                     return new CLICheckResponse(processResult.ExitCode, processResult.Output, ex.Message);
                 }
             }
@@ -197,25 +225,19 @@ public static class CommonLanguageHelpers
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error in CheckSpellingCommon");
+            _logger.LogError(ex, "Error in CheckSpellingCommon");
             return new CLICheckResponse(1, "", ex.Message);
         }
     }
 
-    /// <summary>
-    /// Validates package path and discovers repository root.
-    /// </summary>
-    /// <param name="packagePath">Absolute path to the package directory</param>
-    /// <param name="gitHelper">Git helper for repository operations</param>
-    /// <returns>Repository root path if successful, or CLICheckResponse with error if validation fails</returns>
-    public static (string? repoRoot, CLICheckResponse? errorResponse) ValidatePackageAndDiscoverRepo(string packagePath, IGitHelper gitHelper)
+    public (string? repoRoot, CLICheckResponse? errorResponse) ValidatePackageAndDiscoverRepo(string packagePath)
     {
         if (!Directory.Exists(packagePath))
         {
             return (null, new CLICheckResponse(1, "", $"Package path does not exist: {packagePath}"));
         }
 
-        var packageRepoRoot = gitHelper.DiscoverRepoRoot(packagePath);
+        var packageRepoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
         if (string.IsNullOrEmpty(packageRepoRoot))
         {
             return (null, new CLICheckResponse(1, "", $"Could not find repository root from package path: {packagePath}"));
@@ -236,10 +258,9 @@ public static class CommonLanguageHelpers
     /// </summary>
     /// <param name="repoRoot">Repository root path</param>
     /// <param name="cspellOutput">Output from cspell lint command</param>
-    /// <param name="microagentHostService">Microagent host service</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Result of the spelling fix operation</returns>
-    private static async Task<SpellingFixResult> RunSpellingFixMicroagent(string repoRoot, string cspellOutput, IMicroagentHostService microagentHostService, CancellationToken ct)
+    private async Task<SpellingFixResult> RunSpellingFixMicroagent(string repoRoot, string cspellOutput, CancellationToken ct)
     {
         var spellingTemplate = new SpellingValidationTemplate(cspellOutput, repoRoot);
         var agent = new Microagent<SpellingFixResult>
@@ -255,6 +276,6 @@ public static class CommonLanguageHelpers
             }
         };
 
-        return await microagentHostService.RunAgentToCompletion(agent, ct);
+        return await _microagentHostService.RunAgentToCompletion(agent, ct);
     }
 }

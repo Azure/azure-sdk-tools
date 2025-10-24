@@ -16,19 +16,22 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
     private readonly IGitHelper _gitHelper;
     private readonly ILogger<PythonLanguageSpecificChecks> _logger;
     private readonly IMicroagentHostService _microagentHostService;
+    private readonly ICommonValidationHelpers _commonValidationHelpers;
 
     public PythonLanguageSpecificChecks(
         IProcessHelper processHelper,
         INpxHelper npxHelper,
         IGitHelper gitHelper,
         ILogger<PythonLanguageSpecificChecks> logger,
-        IMicroagentHostService microagentHostService)
+        IMicroagentHostService microagentHostService,
+        ICommonValidationHelpers commonValidationHelpers)
     {
         _processHelper = processHelper;
         _npxHelper = npxHelper;
         _gitHelper = gitHelper;
         _logger = logger;
         _microagentHostService = microagentHostService;
+        _commonValidationHelpers = commonValidationHelpers;
     }
 
     public async Task<PackageCheckResponse> UpdateSnippets(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
@@ -175,14 +178,14 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
 
     public async Task<CLICheckResponse> ValidateReadme(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
-        return await CommonLanguageHelpers.ValidateReadmeCommon(_processHelper, _gitHelper, _logger, packagePath, fixCheckErrors, cancellationToken);
+        return await _commonValidationHelpers.ValidateReadmeCommon(packagePath, fixCheckErrors, cancellationToken);
     }
 
     public async Task<CLICheckResponse> ValidateChangelog(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
     {
         var repoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
         var packageName = Path.GetFileName(packagePath);
-        return await CommonLanguageHelpers.ValidateChangelogCommon(packageName, _processHelper, _gitHelper, _logger, packagePath, fixCheckErrors, cancellationToken);
+        return await _commonValidationHelpers.ValidateChangelogCommon(packageName, packagePath, fixCheckErrors, cancellationToken);
     }
 
     public async Task<CLICheckResponse> CheckSpelling(string packagePath, bool fixCheckErrors = false, CancellationToken cancellationToken = default)
@@ -190,6 +193,6 @@ public class PythonLanguageSpecificChecks : ILanguageSpecificChecks
         var repoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
         var relativePath = Path.GetRelativePath(repoRoot, packagePath);
         var spellingCheckPath = $"." + Path.DirectorySeparatorChar + relativePath + Path.DirectorySeparatorChar + "**";
-        return await CommonLanguageHelpers.CheckSpellingCommon(spellingCheckPath, _processHelper, _npxHelper, _gitHelper, _logger, _microagentHostService, packagePath, fixCheckErrors, cancellationToken);
+        return await _commonValidationHelpers.CheckSpellingCommon(spellingCheckPath, packagePath, fixCheckErrors, cancellationToken);
     }
 }

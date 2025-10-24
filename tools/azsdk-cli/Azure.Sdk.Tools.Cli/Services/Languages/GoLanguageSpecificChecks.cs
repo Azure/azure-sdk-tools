@@ -16,17 +16,20 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
     private readonly INpxHelper _npxHelper;
     private readonly IGitHelper _gitHelper;
     private readonly ILogger<GoLanguageSpecificChecks> _logger;
+    private readonly ICommonValidationHelpers _commonValidationHelpers;
 
     public GoLanguageSpecificChecks(
         IProcessHelper processHelper,
         INpxHelper npxHelper,
         IGitHelper gitHelper,
-        ILogger<GoLanguageSpecificChecks> logger)
+        ILogger<GoLanguageSpecificChecks> logger,
+        ICommonValidationHelpers commonValidationHelpers)
     {
         _processHelper = processHelper;
         _npxHelper = npxHelper;
         _gitHelper = gitHelper;
         _logger = logger;
+        _commonValidationHelpers = commonValidationHelpers;
     }
     private readonly string compilerName = "go";
     private readonly string compilerNameWindows = "go.exe";
@@ -173,7 +176,7 @@ public class GoLanguageSpecificChecks : ILanguageSpecificChecks
     {
         var repoRoot = _gitHelper.DiscoverRepoRoot(packagePath);
         var packageName = await GetSDKPackageName(repoRoot, packagePath, cancellationToken);
-        return await CommonLanguageHelpers.ValidateChangelogCommon(packageName, _processHelper, _gitHelper, _logger, packagePath, fixCheckErrors, cancellationToken);
+        return await _commonValidationHelpers.ValidateChangelogCommon(packageName, packagePath, fixCheckErrors, cancellationToken);
     }
 }
 

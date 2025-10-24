@@ -24,7 +24,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services.Languages
             LangService = new JavaLanguageSpecificChecks(
                 MockProcessHelper.Object,
                 new Mock<IGitHelper>().Object,
-                NullLogger<JavaLanguageSpecificChecks>.Instance);
+                NullLogger<JavaLanguageSpecificChecks>.Instance,
+                new Mock<ICommonValidationHelpers>().Object);
         }
 
         #region Setup Helpers

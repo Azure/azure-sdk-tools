@@ -20,11 +20,8 @@ namespace Azure.Sdk.Tools.Cli.Tests.Services
             _tempDir = TempDirectory.Create("golang_checks");
             var mockGitHubService = new Mock<IGitHubService>();
             var gitHelper = new GitHelper(mockGitHubService.Object, NullLogger<GitHelper>.Instance);
-            LangService = new GoLanguageSpecificChecks(
-                new ProcessHelper(NullLogger<ProcessHelper>.Instance, Mock.Of<IRawOutputHelper>()),
-                new NpxHelper(NullLogger<NpxHelper>.Instance, Mock.Of<IRawOutputHelper>()),
-                gitHelper,
-                NullLogger<GoLanguageSpecificChecks>.Instance);
+            var commonValidationHelpersMock = new Mock<ICommonValidationHelpers>();
+            LangService = new GoLanguageSpecificChecks(new ProcessHelper(NullLogger<ProcessHelper>.Instance, Mock.Of<IRawOutputHelper>()), new NpxHelper(NullLogger<NpxHelper>.Instance, Mock.Of<IRawOutputHelper>()), gitHelper, NullLogger<GoLanguageSpecificChecks>.Instance, commonValidationHelpersMock.Object);
 
             if (!await LangService.CheckDependencies(CancellationToken.None))
             {

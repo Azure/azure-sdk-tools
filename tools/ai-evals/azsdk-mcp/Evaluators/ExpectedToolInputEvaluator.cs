@@ -68,7 +68,7 @@ namespace Azure.Sdk.Tools.McpEvals.Evaluators
 
                 // If the names do not align then the tool calls were made in the wrong order by the LLM
                 // Ends with because copilot attaches mcp_ to name
-                if (!actToolName.EndsWith(expToolName))
+                if (!expToolName.EndsWith(actToolName))
                 {
                     MetricError($"Tool call made in the wrong order. Expected the {expToolName} tool but the LLM called {actToolName} tool. This was tool call #{countCalls}", metric);
                     return result;

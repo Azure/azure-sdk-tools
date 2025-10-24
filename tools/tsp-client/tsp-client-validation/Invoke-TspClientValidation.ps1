@@ -90,9 +90,9 @@ $PipelineMapping = @{
 function Write-Header {
     param([string]$Title)
     Write-Host "`n" -NoNewline
-    Write-Host "=" * 80 -ForegroundColor Cyan
+    Write-Host ("=" * 80) -ForegroundColor Cyan
     Write-Host " $Title" -ForegroundColor Yellow
-    Write-Host "=" * 80 -ForegroundColor Cyan
+    Write-Host ("=" * 80) -ForegroundColor Cyan
 }
 
 function Write-Step {
@@ -162,40 +162,6 @@ function Test-Prerequisites {
     }
     
     return $true
-}
-
-function Get-SyncPRInfo {
-    param([int]$PRNumber)
-    
-    Write-Step "Looking up sync PR information for PR #$PRNumber..."
-    
-    # Expected sync PR pattern based on PR number
-    $syncPRs = @{
-        "Python" = @{
-            Repository = "azure-sdk-for-python"
-            ExpectedBranch = "sync-eng/common-update-tsp-client-$PRNumber"
-        }
-        "NET" = @{
-            Repository = "azure-sdk-for-net"
-            ExpectedBranch = "sync-eng/common-update-tsp-client-$PRNumber"
-        }
-        "Java" = @{
-            Repository = "azure-sdk-for-java"
-            ExpectedBranch = "sync-eng/common-update-tsp-client-$PRNumber"
-        }
-        "JS" = @{
-            Repository = "azure-sdk-for-js"
-            ExpectedBranch = "sync-eng/common-update-tsp-client-$PRNumber"
-        }
-        "Go" = @{
-            Repository = "azure-sdk-for-go"
-            ExpectedBranch = "sync-eng/common-update-tsp-client-$PRNumber"
-        }
-    }
-    
-    Write-Info "Expected sync branch pattern: sync-eng/common-update-tsp-client-$PRNumber"
-    
-    return $syncPRs
 }
 
 function Invoke-PipelineRun {
@@ -415,8 +381,7 @@ if (-not (Test-Prerequisites)) {
     exit 1
 }
 
-# Get sync PR information
-$syncPRs = Get-SyncPRInfo -PRNumber $PRNumber
+Write-Info "Expected sync branch pattern: sync-eng/common-update-tsp-client-$PRNumber"
 
 # Display what will be done
 Write-Header "EXECUTION PLAN"

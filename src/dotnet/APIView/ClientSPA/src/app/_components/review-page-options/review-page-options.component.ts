@@ -181,7 +181,6 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
       this.isCopilotReviewSupported = this.isCopilotReviewSupportedForPackage();
       this.setAPIRevisionApprovalStates();
       this.setPullRequestsInfo();
-      this.setNamespaceReviewStates();
       if (this.activeAPIRevision?.copilotReviewInProgress) {
         this.aiReviewGenerationState = 'InProgress';
         this.generateAIReviewButtonText = 'Generating review...';
@@ -423,10 +422,12 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
 
   setNamespaceReviewStates() {
     // Only show namespace review request for TypeSpec language AND if feature is enabled AND review is not already approved
-    // AND there are associated API revisions
+    // AND there are associated API revisions (SDK language reviews) AND namespace is not already approved
     this.canRequestNamespaceReview = this.review?.language === 'TypeSpec' &&
                                       this.namespaceReviewEnabled &&
-                                      !this.review?.isApproved;
+                                      !this.review?.isApproved &&
+                                      this.review?.namespaceReviewStatus !== 'approved' &&
+                                      this.pullRequestsOfAssociatedAPIRevisions.length > 0;
 
     // Check if namespace review has been requested for this revision
     this.isNamespaceReviewRequested = this.activeAPIRevision?.hasRequestedNamespaceReview || false;
@@ -449,11 +450,15 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
 
       this.pullRequestService.getPullRequestsOfAssociatedAPIRevisions(this.activeAPIRevision.reviewId, this.activeAPIRevision.id).pipe(take(1)).subscribe({
         next: (response: PullRequestModel[]) => {
+          // Clear the array first to avoid duplicates
+          this.pullRequestsOfAssociatedAPIRevisions = [];
           for (const pr of response) {
             if (pr.reviewId != this.activeAPIRevision?.reviewId) {
               this.pullRequestsOfAssociatedAPIRevisions.push(pr);
             }
           }
+          // Re-evaluate namespace review states after associated reviews are loaded
+          this.setNamespaceReviewStates();
         }
       });
 
@@ -641,7 +646,7 @@ export class ReviewPageOptionsComponent implements OnInit, OnChanges {
     } else if (this.isNamespaceApproved()) {
       this.namespaceReviewBtnClass = "btn btn-outline-success";
       this.namespaceReviewBtnLabel = "Namespace Review Approved";
-      this.namespaceReviewMessage = "";
+      this.namespaceReviewMessage = "All associated SDK language reviews have been approved.";
     } else if (this.isNamespaceReviewRequested) {
       this.namespaceReviewBtnClass = "btn btn-secondary disabled";
       this.namespaceReviewBtnLabel = "Namespace Review Requested";

@@ -1,5 +1,9 @@
 # Release History
 
+## Version 0.3.24 (Unreleased)
+Fixed a bug where the old cross language mapping path was not being used when the new one was not found.
+Added the cross language metadata to the end of the token file for the cross language feature.
+
 ## Version 0.3.23 (2025-10-02)
 Fixed a bug where unexpanded **kwargs in docstring will show duplicate/incorrect kwargs in the API review function signature.
 Fixed a bug where string Literal types were not quoted and fully-qualified enum member names  were not being preserved in types.

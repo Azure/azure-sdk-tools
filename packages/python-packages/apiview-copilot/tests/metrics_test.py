@@ -41,6 +41,7 @@ class TestMetrics:
                 "CommentType": "ai",
                 "Upvotes": ["1"],
                 "Downvotes": [],
+                "CommentSource": "AIGenerated",
             },
             {
                 "id": "c2",
@@ -53,6 +54,7 @@ class TestMetrics:
                 "CommentType": "human",
                 "Upvotes": [],
                 "Downvotes": [],
+                "CommentSource": "UserGenerated",
             },
             {
                 "id": "c3",
@@ -65,6 +67,7 @@ class TestMetrics:
                 "CommentType": "ai",
                 "Upvotes": [],
                 "Downvotes": ["1"],
+                "CommentSource": "AIGenerated",
             },
         ]
 
@@ -140,6 +143,7 @@ class TestMetrics:
                 "CreatedBy": "azure-sdk",
                 "CreatedOn": created_on,
                 "CommentType": "ai",
+                "CommentSource": "AIGenerated",
                 "Upvotes": ["1"],
                 "Downvotes": [],
             },
@@ -152,6 +156,7 @@ class TestMetrics:
                 "CreatedBy": "azure-sdk",
                 "CreatedOn": created_on,
                 "CommentType": "ai",
+                "CommentSource": "AIGenerated",
                 "Upvotes": [],
                 "Downvotes": ["1"],
             },
@@ -229,6 +234,7 @@ class TestMetrics:
                 "CreatedBy": "azure-sdk",
                 "CreatedOn": created_on,
                 "CommentType": "ai",
+                "CommentSource": "AIGenerated",
                 "Upvotes": [],
                 "Downvotes": [],
             },
@@ -240,6 +246,7 @@ class TestMetrics:
                 "CommentText": "AI comment",
                 "CreatedBy": "azure-sdk",
                 "CreatedOn": created_on,
+                "CommentSource": "AIGenerated",
                 "CommentType": "ai",
                 "Upvotes": [],
                 "Downvotes": [],

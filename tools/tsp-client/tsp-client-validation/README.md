@@ -38,13 +38,11 @@ az devops configure --defaults project=29ec6040-b234-4e31-b139-33dc4287b756
 
 ### Basic Usage
 
-#### Option 1: PowerShell Direct
-
 ```powershell
 .\Invoke-TspClientValidation.ps1 -PRNumber 12360 -SyncBranch "sync-eng/common-update-tsp-client-12360"
 ```
 
-#### Option 2: Example Script (Current Scenario)
+#### Example Script
 
 ```powershell
 .\Example-Usage.ps1 -DryRun

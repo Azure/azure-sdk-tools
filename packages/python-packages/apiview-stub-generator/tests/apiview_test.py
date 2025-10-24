@@ -85,7 +85,9 @@ PYPROJECT_IDS = ["pyproject-source", "pyproject-whl", "pyproject-sdist"]
 ALL_PATHS = [PKG_PATH, WHL_PATH, SDIST_PATH, PYPROJECT_PKG_PATH, PYPROJECT_WHL_PATH, PYPROJECT_SDIST_PATH]
 ALL_PATH_IDS = ["setup-source", "setup-whl", "setup-sdist", "pyproject-source", "pyproject-whl", "pyproject-sdist"]
 
-MAPPING_PATHS = [(PKG_PATH, "apiview-properties.json"), (PYPROJECT_PKG_PATH, "apiview_mapping_python.json")]
+MAPPING_FILE_NAME = "apiview-properties.json"
+OLD_MAPPING_FILE_NAME = "apiview_mapping_python.json"
+MAPPING_PATHS = [(PKG_PATH, MAPPING_FILE_NAME), (PYPROJECT_PKG_PATH, OLD_MAPPING_FILE_NAME)]
 MAPPING_IDS = [mapping_file for _, mapping_file in MAPPING_PATHS]
 
 class TestApiView:
@@ -238,7 +240,11 @@ class TestApiView:
         assert os.path.exists(mapping_file_path)
 
         temp_path = tempfile.gettempdir()
-        stub_gen = StubGenerator(pkg_path=pkg_path, temp_path=temp_path)
+        stub_gen = StubGenerator(pkg_path=pkg_path, temp_path=temp_path, mapping_path=mapping_file_path)
+        # test passing in the new mapping file path which doesn't exist, so that that the default old one will be used
+        if mapping_file == OLD_MAPPING_FILE_NAME:
+            mapping_file_path = os.path.join(pkg_path, MAPPING_FILE_NAME)
+            stub_gen = StubGenerator(pkg_path=pkg_path, temp_path=temp_path, mapping_path=mapping_file_path)
         apiview = stub_gen.generate_tokens()
         self._validate_line_ids(apiview)
         cross_language_lines = []

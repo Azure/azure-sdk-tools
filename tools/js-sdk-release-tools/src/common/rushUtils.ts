@@ -147,7 +147,7 @@ export async function buildPackage(
             try {
                 await runCommand('pnpm', ['turbo', 'build', '--filter', `${name}...`, '--token 1'], runCommandOptions);
             } catch (error) {
-                logger.warning(`Failed to build data plane package due to ${(error as Error)?.stack ?? error}`);
+                logger.warn(`Failed to build data plane package due to ${(error as Error)?.stack ?? error}`);
                 buildStatus = `failed`;
             }
         } else {

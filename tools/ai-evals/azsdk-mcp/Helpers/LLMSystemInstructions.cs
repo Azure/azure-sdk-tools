@@ -42,8 +42,8 @@ namespace Azure.Sdk.Tools.McpEvals.Helpers
 
         private static async Task<string> GetMentionedInstructions(string instructionRelativePath)
         {
-            var copilotBaseDirectory = Path.GetDirectoryName(s_copilotPath);
-            string instructionPath = Path.Combine(copilotBaseDirectory!, instructionRelativePath);
+            //var copilotBaseDirectory = Path.GetDirectoryName(s_copilotPath);
+            string instructionPath = Path.Combine(/*copilotBaseDirectory!, */instructionRelativePath.Substring(3));
 
             var logger = new LoggerFactory().CreateLogger<GitHubService>();
             var githubService = new GitHubService(logger);

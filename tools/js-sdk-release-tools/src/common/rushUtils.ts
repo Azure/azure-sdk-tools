@@ -145,7 +145,7 @@ export async function buildPackage(
         if (modularSDKType === ModularSDKType.DataPlane) {
             await customizeCodes(packageDirectory);
             try {
-                await runCommand('pnpm', ['turbo', 'build', '--filter', `${name}...`, '--token 1'], runCommandOptions);
+                await runCommand('pnpm', ['turbo', 'build', '--filter', `${name}...`, '--token 1'], runCommandOptions, true, undefined, true);
             } catch (error) {
                 logger.warn(`Failed to build data plane package due to ${(error as Error)?.stack ?? error}`);
                 buildStatus = `failed`;

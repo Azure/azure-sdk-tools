@@ -140,13 +140,15 @@ def _build_metrics_segment(
     human_comments = []
     ai_comments = []
     for comment in active_review_comments:
-        if comment.created_by == "azure-sdk":
+        if comment.comment_source == "AIGenerated":
             ai_comments.append(comment)
         else:
             human_comments.append(comment)
 
     # sort the active_review_ids into those with and without AI comments
-    active_review_ids_with_ai_comments = {c.review_id for c in active_review_comments if c.created_by == "azure-sdk"}
+    active_review_ids_with_ai_comments = {
+        c.review_id for c in active_review_comments if c.comment_source == "AIGenerated"
+    }
     active_review_ids_without_ai_comments = active_review_ids.difference(active_review_ids_with_ai_comments)
 
     # sort the human comments into those which are part of a review with or without AI comments

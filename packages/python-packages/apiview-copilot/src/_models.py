@@ -81,6 +81,11 @@ class APIViewComment(BaseModel):
         description="The type of comment",
         alias="CommentType",
     )
+    comment_source: Optional[str] = Field(
+        description="The source of the comment: UserGenerated, AIGenerated, or Diagnostic",
+        alias="CommentSource",
+        default="UserGenerated",
+    )
     resolution_locked: Optional[bool] = Field(
         default=False,
         description="Whether the comment resolution is locked and cannot be changed.",

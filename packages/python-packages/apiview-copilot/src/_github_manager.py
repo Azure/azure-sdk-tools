@@ -14,9 +14,9 @@ import time
 from typing import Iterable, Optional
 
 import httpx
-from azure.identity import DefaultAzureCredential
 from azure.keyvault.keys import KeyClient
 from azure.keyvault.keys.crypto import CryptographyClient, SignatureAlgorithm
+from src._credential import get_credential
 from src._settings import SettingsManager
 
 logger = logging.getLogger(__name__)
@@ -54,29 +54,8 @@ class GithubManager:
                 "User-Agent": self._user_agent,
             },
         )
-
         self._app_id = settings.get("github_app_id")
-        self._client_secret = settings.get("github_app_client_secret")
         self._installation_tokens: dict[str, tuple[str, int]] = {}
-
-    def get_oauth_token(self, code: str) -> str:
-        """
-        Exchange an OAuth authorization code for an access token.
-        Returns the access token as a string.
-        """
-        url = "https://github.com/login/oauth/access_token"
-        payload = {
-            "client_id": str(self._app_id),
-            "client_secret": self._client_secret,
-            "code": code,
-        }
-        headers = {"Accept": "application/json"}
-        resp = self._client.post(url, data=payload, headers=headers)
-        resp.raise_for_status()
-        data = resp.json()
-        if "access_token" not in data:
-            raise RuntimeError(f"Failed to obtain access token: {data}")
-        return data["access_token"]
 
     def create_issue(
         self,
@@ -177,8 +156,6 @@ class GithubManager:
             raise RuntimeError(f"GitHub API error {last_exc.response.status_code}: {detail}") from last_exc
         raise last_exc or RuntimeError("Unknown GitHub request failure")
 
-    # === GitHub App authentication ===
-
     def _create_app_jwt(self) -> str:
         """
         Mint a GitHub App JWT using Azure Key Vault's asymmetric signing key.
@@ -195,7 +172,7 @@ class GithubManager:
         key_name = settings.get("github_app_key_name")
         app_id = settings.get("github_app_id")
 
-        credential = DefaultAzureCredential()
+        credential = get_credential()
         key_client = KeyClient(vault_url=keyvault_url, credential=credential)
         key = key_client.get_key(key_name)
         crypto_client = CryptographyClient(key, credential=credential)

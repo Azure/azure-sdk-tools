@@ -349,7 +349,7 @@ export function specifyApiVersionToGenerateSDKByTypeSpec(typeSpecDirectory: stri
         tspConfig = yamlLoad(tspConfigContent);
     } catch (error) {
         throw new Error(`Failed to parse tspconfig.yaml: ${error}`);
-    }    
+    }
 
     const emitterOptions = tspConfig.options?.[emitterName];
     if (!emitterOptions) {
@@ -379,32 +379,29 @@ export function generateRepoDataInTspLocation(repoUrl: string) {
  * @returns Promise that resolves when cleanup is complete
  */
 export async function cleanUpDirectory(
-    directory: string, 
+    directory: string,
     entriesToPreserve: string[] = []
-): Promise<void> {      
+): Promise<void> {
     // Check if directory exists first
     if (!fs.existsSync(directory)) {
         logger.info(`Directory ${directory} doesn't exist, nothing to clean up.`);
         return;
     }
-    
+
     // If nothing to preserve, remove the entire directory and create an empty one
     if (entriesToPreserve.length === 0) {
         logger.info(`Completely cleaning ${directory} directory and recreating it empty`);
         await rm(directory, { recursive: true, force: true });
         await mkdir(directory, { recursive: true });
         return;
-    } else if (entriesToPreserve.length === 1) {
-        await rm(path.join(directory, entriesToPreserve[0]), { recursive: true, force: true });
-        return;
     }
 
     // If we need to preserve some entries, selectively remove others
     logger.info(`Cleaning ${directory} directory, preserving: ${entriesToPreserve.join(', ')}`);
-    
+
     // Get all subdirectories and files
     const entries = await readdir(directory);
-    
+
     // Filter entries to exclude those that should be preserved
     const filteredEntries = entries.filter(entry => !entriesToPreserve.includes(entry));
 
@@ -431,28 +428,21 @@ export async function cleanUpPackageDirectory(
     const entriesToPreserveForMgmtPackages = pipelineRunMode ? ["test", "assets.json"] : [];
 
     const modularSDKType = getModularSDKType(packageDirectory);
-    let entriesForDataPlanePackages = ["src"];
     if (modularSDKType === ModularSDKType.DataPlane && pipelineRunMode) {
-            if (await exists(path.join(packageDirectory, "generated"))) {
-                entriesForDataPlanePackages[0] = "generated";
-            } else if (await exists(path.join(packageDirectory, "src", "generated"))) {
-                entriesForDataPlanePackages[0] = posix.join("src", "generated");
-            }
-            logger.info(`Should only remove ${entriesForDataPlanePackages[0]} for DataPlane Modular generation in ${runMode} mode.`)
-        }
-
-    await cleanUpDirectory(packageDirectory, modularSDKType === ModularSDKType.ManagementPlane ? entriesToPreserveForMgmtPackages : entriesForDataPlanePackages);
+        return;
+    }
+    await cleanUpDirectory(packageDirectory, entriesToPreserveForMgmtPackages);
 }
 
 export async function getPackageNameFromTspConfig(typeSpecDirectory: string): Promise<string | undefined> {
     const tspConfig = await resolveOptions(typeSpecDirectory);
     const emitterOptions = tspConfig.options?.[emitterName];
-    
+
     // Get from package-details.name which is the actual NPM package name
     if (emitterOptions?.['package-details']?.name) {
         return emitterOptions['package-details'].name;
     }
-    
+
     return undefined;
 }
 

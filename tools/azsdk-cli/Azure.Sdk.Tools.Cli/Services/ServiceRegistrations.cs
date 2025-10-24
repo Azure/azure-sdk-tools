@@ -90,7 +90,6 @@ namespace Azure.Sdk.Tools.Cli.Services
             services.AddSingleton<ISpecGenSdkConfigHelper, SpecGenSdkConfigHelper>();
             services.AddSingleton<IInputSanitizer, InputSanitizer>();
             services.AddSingleton<ITspClientHelper, TspClientHelper>();
-            services.AddScoped<ICommonValidationHelpers, CommonValidationHelpers>();
 
             // Process Helper Classes
             services.AddSingleton<INpxHelper, NpxHelper>();
@@ -104,6 +103,7 @@ namespace Azure.Sdk.Tools.Cli.Services
             // Services depending on other scoped services
             services.AddScoped<IMicroagentHostService, MicroagentHostService>();
             services.AddScoped<IAzureAgentServiceFactory, AzureAgentServiceFactory>();
+            services.AddScoped<ICommonValidationHelpers, CommonValidationHelpers>();
 
 
             // Telemetry

@@ -1,0 +1,45 @@
+{
+  "azureDevOps": {
+    "organization": "https://dev.azure.com/azure-sdk",
+    "projectId": "29ec6040-b234-4e31-b139-33dc4287b756",
+    "projectName": "public"
+  },
+  "pipelines": {
+    "Python": {
+      "pipelineId": 7519,
+      "repository": "azure-sdk-for-python",
+      "validationName": "SDK Validation - Python",
+      "prPattern": "Azure/azure-sdk-for-python/pull/"
+    },
+    "NET": {
+      "pipelineId": 7516,
+      "repository": "azure-sdk-for-net",
+      "validationName": "SDK Validation - .NET",
+      "prPattern": "Azure/azure-sdk-for-net/pull/"
+    },
+    "Java": {
+      "pipelineId": 7515,
+      "repository": "azure-sdk-for-java",
+      "validationName": "SDK Validation - Java",
+      "prPattern": "Azure/azure-sdk-for-java/pull/"
+    },
+    "JS": {
+      "pipelineId": 7518,
+      "repository": "azure-sdk-for-js",
+      "validationName": "SDK Validation - JavaScript",
+      "prPattern": "Azure/azure-sdk-for-js/pull/"
+    },
+    "Go": {
+      "pipelineId": 7517,
+      "repository": "azure-sdk-for-go",
+      "validationName": "SDK Validation - Go",
+      "prPattern": "Azure/azure-sdk-for-go/pull/"
+    }
+  },
+  "branchPatterns": {
+    "syncBranch": "sync-eng/common-update-tsp-client-{0}",
+    "prBranch": "update-tsp-client"
+  },
+  "lastUpdated": "2025-10-22T21:55:00Z",
+  "version": "1.0"
+}

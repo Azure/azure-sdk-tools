@@ -56,26 +56,29 @@ internal class ToolExecutor
 
     private async Task<string> ExecuteGetTypeSpecFileAsync(ValidationContext validationContext, string argumentsJson, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrEmpty(argumentsJson))
+        if (!string.IsNullOrEmpty(argumentsJson))
         {
-            argumentsJson = "{}"; // Default to empty object
-        }
-        
-        // Parse arguments to get the filename
-        using var args = JsonSerializer.Deserialize<JsonDocument>(argumentsJson);
-        if (args?.RootElement.TryGetProperty("path", out var pathElement) == true)
-        {
-            var filename = pathElement.GetString();
-            if (string.IsNullOrEmpty(filename))
+
+            // Parse arguments to get the filename
+            using var args = JsonSerializer.Deserialize<JsonDocument>(argumentsJson);
+            if (args?.RootElement.TryGetProperty("path", out var pathElement) == true)
             {
-                throw new ArgumentException("Missing or empty 'path' in arguments");
+                var filename = pathElement.GetString();
+                if (string.IsNullOrEmpty(filename))
+                {
+                    throw new ArgumentException("Missing or empty 'path' in arguments");
+                }
+
+                var result = await ToolHandler.GetTypeSpecFileAsync(filename, validationContext, cancellationToken);
+                return JsonSerializer.Serialize(result);
             }
-            
-            var result = await ToolHandler.GetTypeSpecFileAsync(filename, validationContext, cancellationToken);
-            return JsonSerializer.Serialize(result);
+
+            throw new ArgumentException("Missing 'path' property in arguments");
         }
-        
-        throw new ArgumentException("Missing 'path' property in arguments");
+        else
+        {
+            return "{}";
+        }
     }
 
     private static string CreateErrorResponse(string errorMessage)

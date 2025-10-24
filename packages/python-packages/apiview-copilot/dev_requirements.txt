@@ -3,6 +3,7 @@ aiohttp==3.12.14
 azure-appconfiguration==1.7.1
 azure-cosmos==4.9.0
 azure-identity==1.21.0
+azure-keyvault-keys==4.11.0
 azure-keyvault-secrets==4.10.0
 azure-search-documents==11.5.2
 black==25.1.0
